@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 422,
+  "candidate_count": 434,
   "capability_source_count": 104,
-  "support_only_count": 318,
-  "checks_total": 1586,
-  "checks_passed": 1586,
+  "support_only_count": 330,
+  "checks_total": 1634,
+  "checks_passed": 1634,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -131,6 +131,10 @@
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
     "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
+    "docs/control-plane/admin-evidence-20261020/README.md",
+    "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json",
+    "docs/control-plane/admin-evidence-20261020/funding-register.json",
+    "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
@@ -181,6 +185,8 @@
     "js/analytics-product.js",
     "js/chatfirst.js",
     "js/cohort-profile.js",
+    "js/control-room/analytics-unified.js",
+    "js/control-room/analytics.js",
     "js/control-room/clipping.js",
     "js/crm.js",
     "js/docket-cohort-showcase.js",
@@ -232,6 +238,7 @@
     "redirects/walls/eu-rally.html",
     "resume-it-support.html",
     "scripts/e2e/world-screen.e2e.mjs",
+    "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
@@ -345,6 +352,8 @@
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
     "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
+    "supabase/pending/20261020193357_funding_criteria_register_v1.sql",
+    "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/action_globe_demo_pins_v1.sql",
@@ -394,6 +403,7 @@
     "supabase/tests/action_mission_pins.stub.sql",
     "supabase/tests/action_mission_reset.stub.sql",
     "supabase/tests/analytics_geo_audience.behaviour.sql",
+    "supabase/tests/analytics_measurement.deps.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
@@ -409,7 +419,9 @@
     "vault.html",
     "walls/eu-rally.html",
     "workers/mccluster/src/ai/envelope.js",
+    "workers/mccluster/src/analytics/measurement-dictionary.js",
     "workers/mccluster/src/audio-sfu-rooms.js",
+    "workers/mccluster/src/company-site/news.js",
     "workers/mccluster/src/company-site/pages.generated.js",
     "workers/mccluster/src/entry-platform.js",
     "workers/mccluster/src/entry.js",
@@ -436,7 +448,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "422 entries"
+      "detail": "434 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2709,6 +2721,86 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/admin-evidence-20261020/README.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/README.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/README.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-register.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-register.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-register.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-register.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/branch-reconciliation-2026-09-26.json capability ids known",
       "passed": true,
       "detail": ""
@@ -3669,6 +3761,46 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "js/control-room/analytics-unified.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/analytics-unified.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/analytics-unified.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/analytics-unified.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/analytics.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/analytics.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/analytics.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/analytics.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/control-room/clipping.js capability ids known",
       "passed": true,
       "detail": ""
@@ -4600,6 +4732,26 @@
     },
     {
       "name": "scripts/e2e/world-screen.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/funding/validate-register-db.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/funding/validate-register-db.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/funding/validate-register-db.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/funding/validate-register-db.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -6759,6 +6911,46 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/README.md capability ids known",
       "passed": true,
       "detail": ""
@@ -7644,6 +7836,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/tests/analytics_measurement.deps.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/analytics_measurement.deps.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/analytics_measurement.deps.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/analytics_measurement.deps.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/tests/eu_platform_test.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -7934,6 +8146,26 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "workers/mccluster/src/analytics/measurement-dictionary.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/analytics/measurement-dictionary.js classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/analytics/measurement-dictionary.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/analytics/measurement-dictionary.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/src/audio-sfu-rooms.js capability ids known",
       "passed": true,
       "detail": ""
@@ -7950,6 +8182,26 @@
     },
     {
       "name": "workers/mccluster/src/audio-sfu-rooms.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/company-site/news.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/company-site/news.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "workers/mccluster/src/company-site/news.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/company-site/news.js support rationale present",
       "passed": true,
       "detail": ""
     },
