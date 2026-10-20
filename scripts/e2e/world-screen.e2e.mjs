@@ -166,7 +166,9 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     /* THE COUNTRY FEED: off unless a scenario names the connection country the Worker would read from request.cf */
     if (u.pathname === '/v1/world/place-scope') return json(route, { ok: true, enabled: !!world.placeHome, country: world.placeHome || null, source: 'cloudflare_country' });
     if (u.pathname === '/v1/world/live-places') return json(route, { ok: true, places: world.placeHome ? [{ code: 'GB', count: 2 }] : [] });
-    if (u.pathname === '/v1/world/region-feed') { const c = u.searchParams.get('country'); return json(route, { ok: true, available: true, country: c, posts: c === world.placeHome ? world.posts.slice(0, 3).map(item) : [], news: [], lives: c === world.placeHome ? [{ id: LIVE[0].id, title: LIVE[0].title, room_kind: 'mission', category_key: 'field', started_at: LIVE[0].started_at, country_code: c, host: { display_name: 'Fixture Ana', avatar_url: '' } }] : [], next_post_before: null, next_news_before: null }); }
+    /* the Worker's rule (world-region-feed.js): without a member's session, the connection's country only */
+    if (u.pathname === '/v1/world/region-feed' && !auth && u.searchParams.get('country') !== world.placeHome) return json(route, { error: 'Sign in to read another country\'s feed', detail: { sign_in: true, home: world.placeHome } }, 403);
+    if (u.pathname === '/v1/world/region-feed') { const c = u.searchParams.get('country'); return json(route, { ok: true, available: true, country: c, posts: c === world.placeHome ? world.posts.slice(0, 3).filter((p) => p.visibility === 'public').map((p) => { const x = item(p); x.post.media_locked = x.post.media.length; delete x.post.media; delete x.post.author_m_uid; return x; }) : [], news: [], lives: c === world.placeHome ? [{ id: LIVE[0].id, title: LIVE[0].title, room_kind: 'mission', category_key: 'field', started_at: LIVE[0].started_at, country_code: c, host: { display_name: 'Fixture Ana', avatar_url: '' } }] : [], next_post_before: null, next_news_before: null }); }
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     if (u.pathname === '/v1/world/news') {
       if (world.newsFail === 'abort') return route.abort('failed');
@@ -239,6 +241,9 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.pathname === '/v1/mnet/conversations') return json(route, { conversations: [{ conversation: { id: 'c1' }, my: { member_state: 'requested' }, members: [], last_message: null }] });
     if (u.pathname === '/v1/mnet/groups') return json(route, { groups: GROUPS });
     if (u.pathname === '/v1/mnet/groups/river-keepers') return json(route, { group: GROUPS[0], organization: null, campaigns: [], items: [] });
+    /* one post, for a member: what a country feed's "Show these photos" loads */
+    const onePost = m === 'GET' && u.pathname.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})$/);
+    if (onePost) { const p = world.posts.find((x) => x.id === onePost[1]); return !auth || !p ? json(route, { error: 'Post not found' }, 404) : json(route, item(p)); }
     if (u.pathname === '/v1/mnet/live/directory') return json(route, { sessions: LIVE });
     if (u.pathname === '/v1/mnet/live/eligibility') return json(route, { can_host: false, enabled: false });
     if (u.pathname === '/v1/analytics/my-creator') return json(route, { ok: true, creator: creator, audience: creator ? { countries: [{ country: 'US', views: 42 }, { country: 'GB', views: 7 }], elsewhere_views: 3, unknown_views: 1, min_views: 5 } : { countries: [] } });
@@ -736,6 +741,38 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
     await page.evaluate(()=>{const g=document.getElementById('mnGuestWhy');if(g)g.textContent='';});
     await page.evaluate(()=>document.querySelector('#mnFeed .mn__place-live').click());
     check(scope,'watching a placed live asks a visitor to sign in, as Live does',await page.textContent('#mnGuestWhy')==='Sign in to watch live rooms.');
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* A MEMBER MAY TRAVEL (owner, 2026-10-20: "they can't region hop unless they're logged in"): their session rides with
+   the country feed, so the Worker lets them read any country. */
+if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-member-region';
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,placeHome:'US'});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>window.__huCountries?.().ready,null,{timeout:25000});
+    await globe.evaluate(()=>parent.postMessage({type:'hu:country',country:{code:'FR',name:'France'}},location.origin));
+    await page.waitForFunction(()=>/France/.test(document.getElementById('huRegionLabel').textContent),null,{timeout:5000}).catch(()=>{});
+    await page.waitForTimeout(300);
+    const fr=world.requests.filter(r=>r.path==='/v1/world/region-feed'&&/country=FR/.test(r.search));
+    check(scope,'a member reads another country, with their session',/France/.test(await page.textContent('#huRegionLabel'))&&fr.length>0&&fr.every(r=>r.auth),fr);
+    check(scope,'and is never asked to sign in for it',!/Sign in to read another country/.test(await page.textContent('#mnFeed')));
+    /* back home: a country feed carries no media ids, so a member loads the post itself to see its photos */
+    await globe.evaluate(()=>parent.postMessage({type:'hu:country',country:{code:'US',name:'United States'}},location.origin));
+    const locked=page.locator('#mnFeed [data-unlock-media]').first();
+    await locked.waitFor({timeout:8000}).catch(()=>{});
+    check(scope,'a member is offered the photos, not asked to sign in',await locked.count()===1&&/^Show these photos and videos$/.test(await locked.textContent())&&await page.locator('#mnFeed [data-guest-ask=media]').count()===0);
+    const postId=await locked.getAttribute('data-unlock-media');
+    await locked.click();
+    await page.waitForSelector('#mnFeed article [data-mnet-media]',{timeout:8000}).catch(()=>{});
+    check(scope,'and Show loads the post with their session and draws its photos',world.requests.some(r=>r.path==='/v1/mnet/posts/'+postId&&r.auth)&&await page.locator('#mnFeed [data-mnet-media]').count()===3&&await page.locator('#mnFeed [data-unlock-media]').count()===1);
+    await page.evaluate(()=>{window.__copied=null;Object.defineProperty(navigator,'share',{value:undefined,configurable:true});navigator.clipboard.writeText=t=>{window.__copied=t;return Promise.resolve();};});
+    await page.locator('#mnFeed [data-action=share][data-post="'+postId+'"]').click();
+    await page.waitForFunction(()=>window.__copied,null,{timeout:3000}).catch(()=>{});
+    check(scope,'a country feed\'s public post can be shared',String(await page.evaluate(()=>window.__copied)).includes('post='+postId)&&!/Only public posts can be shared/.test(await page.textContent('#mnFeedStatus')));
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
     check(scope,'no JavaScript errors',errors.length===0,errors);
   }finally{await ctx.close();}
 }

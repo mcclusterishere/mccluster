@@ -283,6 +283,19 @@ test('the live directory returns sanitized room/song/mission context plus aggreg
   assert.equal(Object.hasOwn(s, 'viewer_m_uid'), false);
 });
 
+test('the live directory opens one broadcast by its id, past the newest fifty, and refuses a malformed id', async () => {
+  const calls = fake();
+  const res = await call(`/v1/mnet/live/directory?id=${SESSION}`);
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).sessions[0].id, SESSION);
+  const read = calls.find((c) => c.u.includes('/network_live_sessions') && c.u.includes('status=eq.live'));
+  assert.ok(read.u.includes(`id=eq.${SESSION}`), 'the read asks for that session, not the newest fifty');
+  const before = calls.length;
+  assert.equal((await call('/v1/mnet/live/directory?id=not-a-session')).status, 400);
+  assert.equal(calls.filter((c) => c.u.includes('/network_live_sessions')).length,
+    calls.slice(0, before).filter((c) => c.u.includes('/network_live_sessions')).length);
+});
+
 test('a signed-in non-host watch heartbeat records private audience presence', async () => {
   const calls = fake({ me: OTHER });
   const res = await call(`/v1/mnet/live/${SESSION}/watch`, 'POST', {});

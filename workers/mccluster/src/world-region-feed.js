@@ -5,8 +5,9 @@
    reported event has been independently geolocated. All reads are public
    projections: service-role access must NEVER turn into a private-post leak.
 */
-import { fail, reply } from './lib/http.js';
+import { corsHeaders, fail, reply } from './lib/http.js';
 import { ISO_TO_FIPS, isCountry, isoFromGdelt } from './intel/news-country-codes.js';
+import { bearerUser } from './world-layers.js';
 
 export const REGION_STATUS = '/v1/world/place-scope';
 export const REGION_FEED = '/v1/world/region-feed';
@@ -86,6 +87,9 @@ function publicPost(row, actor) {
 export async function handleRegionScope(req, env, { fetchImpl = fetch, now = () => Date.now() } = {}) {
   const url = new URL(req.url), path = url.pathname.replace(/\/+$/, '');
   if (path !== REGION_FEED && path !== REGION_STATUS && path !== LIVE_PLACES) return null;
+  /* a member's country feed carries their session, so the browser asks first */
+  if (req.method === 'OPTIONS' && path === REGION_FEED && req.headers.get('access-control-request-method'))
+    return new Response(null, { status: 204, headers: corsHeaders(req, env) });
   if (req.method !== 'GET') return fail(req, env, 'Method not allowed', 405);
   const enabled = placeScopeEnabled(env);
   if (path === REGION_STATUS) {
@@ -116,6 +120,11 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch, now = () 
   }
   const country = parseCountry(url.searchParams.get('country'));
   if (!country) return fail(req, env, 'A valid ISO 3166-1 country code is required', 400);
+  /* A SIGNED-OUT VISITOR STAYS IN THEIR REGION (owner, 2026-10-20): the country Cloudflare read from this
+     connection, and no other, unless a member's session rides with the request. The page's lock is a courtesy;
+     this is the rule. */
+  if (country !== visitorCountry(req) && !(await bearerUser(req, env, fetchImpl)))
+    return fail(req, env, 'Sign in to read another country\'s feed', 403, { sign_in: true, home: visitorCountry(req) });
   const rawLimit = url.searchParams.get('limit');
   const limit = rawLimit === null ? 20 : Number(rawLimit);
   if (!Number.isInteger(limit) || limit < 1 || limit > 30)
@@ -188,8 +197,9 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch, now = () 
     const res = reply(req, env, { ok:true, available:true,country,posts,news,lives,
       next_post_before:nextPost,next_news_before:nextNews,
       location_disclaimer:'News is associated with a place mentioned in the article; not a verified event location.' });
-    res.headers.set('cache-control','public, max-age=30');
-    res.headers.set('vary','origin');
+    /* who may read it depends on the connection's country and the session: no shared cache may keep it */
+    res.headers.set('cache-control','private, max-age=30');
+    res.headers.set('vary','origin, authorization');
     return res;
   } catch (error) {
     return fail(req, env, 'Country feed is unavailable', 503, { available: false });

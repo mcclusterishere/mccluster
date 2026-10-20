@@ -943,6 +943,10 @@ async function handleMnet(req,env,path,url){
       const filters=[`status=eq.live`,`last_seen_at=gt.${encodeURIComponent(cutoff)}`];
       if(kind)filters.push(`room_kind=eq.${encodeURIComponent(kind)}`);
       if(category)filters.push(`category_key=eq.${encodeURIComponent(category)}`);
+      /* one broadcast by its id: a country feed's live card opens it even when it is past the newest fifty */
+      const only=url.searchParams.get('id');
+      if(only!==null&&!uuidLike(only))return fail(req,env,'Invalid live session id',400);
+      if(only)filters.push(`id=eq.${only}`);
       const rows=await service(env,`network_live_sessions?${filters.join('&')}&select=id,host_m_uid,title,status,whep_url,post_id,started_at,last_seen_at,room_id,room_kind,category_key,action_mission_id,music_object_id,cohort_id,seat_limit,support_enabled&order=started_at.desc&limit=50`);
       const ids=(rows||[]).map(x=>x.id).filter(uuidLike);
       if(!ids.length)return reply(req,env,{sessions:[],kind:kind||'all',category:category||'all'});

@@ -172,6 +172,8 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .mn__place-live {flex:0 0 min(78%,260px);display:grid;gap:6px;justify-items:start;min-height:44px;padding:12px 14px;border:1px solid #ffffff22;border-radius:18px;background:radial-gradient(120% 120% at 100% 0%,#3a1020,#121619 60%);color:#f2f1ed;text-align:left;font:400 14px/1.4 var(--mn-ui);scroll-snap-align:start;cursor:pointer;}
 .mn__place-live b {font:400 18px/1.2 Georgia,'Times New Roman',serif;overflow-wrap:anywhere;}
 .mn__place-live span:last-child {color:#c9ced3;font-size:13px;}
+.mn__place-live span.mn__place-live-note {color:#ffb3b3;}
+.mn__place-live:disabled {opacity:.6;cursor:default;}
 @media (prefers-reduced-motion:reduce) {.mn__livehero-badge i {animation:none;}}
 /* media first: the picture or clip leads, the words sit beside it; actions run under both */
 .hu-editorial #mnFeed .mn__post-card.has-media {display:grid;grid-template-columns:112px minmax(0,1fr);column-gap:12px;align-items:start;}

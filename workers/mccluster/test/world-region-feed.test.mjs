@@ -11,6 +11,8 @@ const NEWS='66666666-6666-4666-8666-666666666666';
 const TIME='2026-10-19T21:15:00.000Z';
 const ENV={WORLD_PLACE_SCOPE_ENABLED:'true',SUPABASE_URL:'https://sb.example',SUPABASE_SERVICE_ROLE_KEY:'test-service'};
 const req=(path,cf,headers)=>{const request=new Request('https://api.mccluster.org'+path,{headers});if(cf)Object.defineProperty(request,'cf',{value:cf});return request;};
+/* a visitor whose connection Cloudflare reads as the United States */
+const reqUS=(path,headers)=>req(path,{country:'US'},headers);
 const json=(a,status=200)=>new Response(JSON.stringify(a),{status,headers:{'content-type':'application/json'}});
 function store(calls,{unpublished=false,emptyNews=false,profile=true,removed=false,lives=null}={}){
   return async(url,init)=>{
@@ -61,7 +63,7 @@ test('disabled feature fails closed with zero Supabase reads',async()=>{
   const status=await handleRegionScope(req(REGION_STATUS,{country:'US'}),off,{fetchImpl:()=>{called=true;}});
   assert.equal(status.status,200);
   assert.deepEqual((await status.json()).country,null);
-  const feed=await handleRegionScope(req(REGION_FEED+'?country=US'),off,{fetchImpl:()=>{called=true;}});
+  const feed=await handleRegionScope(reqUS(REGION_FEED+'?country=US'),off,{fetchImpl:()=>{called=true;}});
   assert.equal(feed.status,503);assert.equal(called,false);
   assert.equal(placeScopeEnabled(ENV),true);assert.equal(placeScopeEnabled(off),false);
 });
@@ -69,14 +71,14 @@ const REGION_STATUS='/v1/world/place-scope',REGION_FEED='/v1/world/region-feed';
 test('invalid country, cursor and cap are rejected before the database read',async()=>{
   let count=0;const opts={fetchImpl:async()=>{count++;return json([]);}};
   for(const q of ['country=XX','country=uk','country=US&limit=1000','country=US&post_before=bad','country=US&news=0&posts=0']){
-    const res=await handleRegionScope(req(REGION_FEED+'?'+q),ENV,opts);
+    const res=await handleRegionScope(reqUS(REGION_FEED+'?'+q),ENV,opts);
     assert.equal(res.status,400,q);
   }
   assert.equal(count,0);
 });
 test('public country projection returns only visible profile, one explicit-tag post, classified news',async()=>{
   const calls=[];
-  const res=await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{unpublished:true})});
+  const res=await handleRegionScope(reqUS(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{unpublished:true})});
   assert.equal(res.status,200);
   const data=await res.json();
   assert.equal(data.ok,true);assert.equal(data.country,'US');
@@ -94,28 +96,28 @@ test('public country projection returns only visible profile, one explicit-tag p
 });
 test('independent pagination never fetches an exhausted stream again',async()=>{
   const calls=[];
-  const res=await handleRegionScope(req(REGION_FEED+'?country=US&posts=0&news_before='+encodeURIComponent(TIME+'~'+NEWS)),ENV,{fetchImpl:store(calls,{unpublished:true})});
+  const res=await handleRegionScope(reqUS(REGION_FEED+'?country=US&posts=0&news_before='+encodeURIComponent(TIME+'~'+NEWS)),ENV,{fetchImpl:store(calls,{unpublished:true})});
   assert.equal(res.status,200);
   assert.deepEqual((await res.json()).posts,[]);
   assert.equal(calls.some(u=>u.pathname.endsWith('/network_posts')),false);
 });
 test('no public-profile match is treated as an empty region, not a fallback',async()=>{
   const calls=[];
-  const res=await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{profile:false,emptyNews:true})});
+  const res=await handleRegionScope(reqUS(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{profile:false,emptyNews:true})});
   assert.equal(res.status,200);
   const data=await res.json();
   assert.deepEqual(data.posts,[]);
   assert.deepEqual(data.news,[]);
 });
 test('database unavailability returns explicit 503 and no global records',async()=>{
-  const res=await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:async()=>json({error:'missing migration'},404)});
+  const res=await handleRegionScope(reqUS(REGION_FEED+'?country=US'),ENV,{fetchImpl:async()=>json({error:'missing migration'},404)});
   assert.equal(res.status,503);
   assert.equal((await res.json()).detail.available,false);
 });
 
 test('a post the desk removed never reaches a country feed, and like counts are the real ones',async()=>{
   const calls=[];
-  const res=await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{removed:true})});
+  const res=await handleRegionScope(reqUS(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{removed:true})});
   assert.equal(res.status,200);
   const data=await res.json();
   assert.equal(data.posts.length,1);
@@ -132,7 +134,7 @@ test('a country\'s feed leads with the lives its hosts placed there, without str
     country_code:'US',status:'live',whep_url:'https://customer.example/SECRET/webRTC/play'},
     {id:'88888888-8888-4888-8888-888888888888',title:'Somewhere else',room_kind:'home',started_at:TIME,host_m_uid:MEMBER_B,country_code:'FR',status:'live'}];
   const calls=[],at={now:()=>Date.parse(TIME)};
-  const body=await (await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{lives}),...at})).json();
+  const body=await (await handleRegionScope(reqUS(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{lives}),...at})).json();
   assert.deepEqual(body.lives,[{id:LIVE,title:'Cleanup on air',room_kind:'mission',category_key:'field',started_at:TIME,
     country_code:'US',host:{display_name:'Public person',avatar_url:''}}]);
   assert.doesNotMatch(JSON.stringify(body.lives),/SECRET|whep|11111111-1111/);
@@ -142,7 +144,7 @@ test('a country\'s feed leads with the lives its hosts placed there, without str
   assert.equal(q.searchParams.get('last_seen_at'),'gt.2026-10-19T21:13:00.000Z','only broadcasts still beating');
   assert.doesNotMatch(q.searchParams.get('select'),/whep|cf_input/);
   calls.length=0;
-  const more=await (await handleRegionScope(req(REGION_FEED+'?country=US&post_before='+encodeURIComponent(TIME+'~'+POST_A)),ENV,{fetchImpl:store(calls,{lives}),...at})).json();
+  const more=await (await handleRegionScope(reqUS(REGION_FEED+'?country=US&post_before='+encodeURIComponent(TIME+'~'+POST_A)),ENV,{fetchImpl:store(calls,{lives}),...at})).json();
   assert.deepEqual(more.lives,[],'later pages do not repeat the lives');
   assert.ok(!calls.some(u=>u.pathname.endsWith('/network_live_sessions')));
 });
@@ -161,4 +163,57 @@ test('live places are counts per country of broadcasts on air, nothing else, and
   assert.equal(calls[0].searchParams.get('select'),'country_code');
   assert.equal(calls[0].searchParams.get('status'),'eq.live');
   assert.equal(calls[0].searchParams.get('last_seen_at'),'gt.2026-10-19T21:13:00.000Z');
+});
+
+const MEMBER_USER='77777777-7777-4777-8777-777777777777';
+/* the store, plus Supabase's answer to "whose session is this" */
+function withAuth(calls,authCalls,{valid=true}={}){
+  const inner=store(calls);
+  return async(url,init)=>{
+    const u=new URL(url);
+    if(u.pathname==='/auth/v1/user'){
+      authCalls.push(init.headers.authorization);
+      return valid?json({id:MEMBER_USER}):json({error:'bad jwt'},401);
+    }
+    return inner(url,init);
+  };
+}
+test('a signed-out visitor reads their own country only; another country asks them to sign in, before any read',async()=>{
+  const calls=[],authCalls=[];
+  const home=await handleRegionScope(reqUS(REGION_FEED+'?country=US'),ENV,{fetchImpl:withAuth(calls,authCalls)});
+  assert.equal(home.status,200);
+  assert.equal(authCalls.length,0,'the home country needs no session');
+  calls.length=0;
+  const away=await handleRegionScope(reqUS(REGION_FEED+'?country=FR'),ENV,{fetchImpl:withAuth(calls,authCalls)});
+  assert.equal(away.status,403);
+  const body=await away.json();
+  assert.equal(body.detail.sign_in,true);
+  assert.equal(body.detail.home,'US');
+  assert.equal(calls.length,0,'nothing is read for a refused visitor');
+  /* a forged country header is not a connection country */
+  const forged=await handleRegionScope(req(REGION_FEED+'?country=FR',{country:'US'},{'CF-IPCountry':'FR'}),ENV,{fetchImpl:withAuth(calls,authCalls)});
+  assert.equal(forged.status,403);
+  /* no country read from the connection: no country without a session */
+  const unknown=await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:withAuth(calls,authCalls)});
+  assert.equal(unknown.status,403);
+  /* a session Supabase does not recognise is no session */
+  const bad=await handleRegionScope(reqUS(REGION_FEED+'?country=FR',{authorization:'Bearer not-a-member'}),ENV,{fetchImpl:withAuth(calls,authCalls,{valid:false})});
+  assert.equal(bad.status,403);
+  assert.equal(calls.length,0);
+});
+test('a signed-in member may read any country; the answer is private to them',async()=>{
+  const calls=[],authCalls=[];
+  const res=await handleRegionScope(reqUS(REGION_FEED+'?country=FR',{authorization:'Bearer member-jwt'}),ENV,{fetchImpl:withAuth(calls,authCalls)});
+  assert.equal(res.status,200);
+  assert.deepEqual(authCalls,['Bearer member-jwt']);
+  assert.equal((await res.json()).country,'FR');
+  assert.match(res.headers.get('cache-control'),/^private/);
+  assert.match(res.headers.get('vary'),/authorization/i);
+});
+test('the browser\'s preflight for a member\'s country feed is answered without a read',async()=>{
+  let called=false;
+  const pre=new Request('https://api.mccluster.org'+REGION_FEED+'?country=FR',{method:'OPTIONS',headers:{origin:'https://matthew.mccluster.org','access-control-request-method':'GET','access-control-request-headers':'authorization'}});
+  const res=await handleRegionScope(pre,ENV,{fetchImpl:()=>{called=true;}});
+  assert.equal(res.status,204);
+  assert.equal(called,false);
 });

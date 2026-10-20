@@ -544,14 +544,18 @@
     open: openWatch,
     /* the World's country feed opens a broadcast its host placed in that country (js/mnet.js), even when the
        directory on screen is filtered to something else */
+    /* resolves "open", "ended" or "failed", so the card that was tapped can say which */
     openPlaced: function (id) {
       if (!live.started) w.MCC_LIVE.start();
-      if (!M || !live.started) return;
-      if (live.list.some(function (x) { return x.id === id; })) { openWatch(id); return; }
-      M.api("/v1/mnet/live/directory").then(function (out) {
+      if (!M || !live.started) return Promise.resolve("failed");
+      if (live.list.some(function (x) { return x.id === id; })) { openWatch(id); return Promise.resolve("open"); }
+      /* by its id, not by searching the newest fifty worldwide */
+      return M.api("/v1/mnet/live/directory?id=" + encodeURIComponent(id)).then(function (out) {
         var s = ((out && out.sessions) || []).filter(function (x) { return x.id === id; })[0];
-        if (s) { live.list.push(s); openWatch(id); }
-      }).catch(function () {});
+        if (!s) return "ended";
+        live.list.push(s); openWatch(id);
+        return "open";
+      }).catch(function () { return "failed"; });
     },
     studio: function () { if (live.started) openStudio(); }
   };
