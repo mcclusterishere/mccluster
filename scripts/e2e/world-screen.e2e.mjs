@@ -42,12 +42,18 @@ try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
 /* ---------- a static server for this checkout ---------- */
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.webm': 'video/webm' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try {
-    const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
-    res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body);
+    const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)), type = TYPES[extname(path)] || 'application/octet-stream';
+    /* a video is read in ranges, the way storage serves it, so a player can seek */
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+    if (range && (range[1] || range[2])) {
+      const start = range[1] ? Number(range[1]) : Math.max(0, body.length - Number(range[2])), end = range[1] && range[2] ? Math.min(Number(range[2]), body.length - 1) : body.length - 1;
+      res.writeHead(206, { 'content-type': type, 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${body.length}`, 'content-length': end - start + 1 }); res.end(body.subarray(start, end + 1)); return;
+    }
+    res.writeHead(200, { 'content-type': type, 'accept-ranges': 'bytes' }); res.end(body);
   } catch { res.writeHead(404); res.end('not found'); }
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -111,6 +117,26 @@ function freshNews(now) {
   });
 }
 const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid, media: p.media || [] } });
+/* VIDEO POSTS (owner, 2026-10-20: "there's no thumbnail, just a black video"): the member's own clip with its picture,
+   a peer's clip that has none, and a peer's clip this browser cannot decode. The clip is the repository's own WebM
+   (Playwright's Chromium plays no MP4); the pictures are the owner's frames. */
+const VID = { mine: asset(20), poster: asset(21), bare: asset(22), broken: asset(23), brokenPoster: asset(24) };
+const VIDEO_MEDIA = {
+  [VID.mine]: { path: 'assets/video/hero.webm', media_type: 'video' }, [VID.poster]: { path: 'assets/frames/affix_0001.jpg', media_type: 'image' },
+  [VID.bare]: { path: 'assets/video/hero.webm', media_type: 'video' }, [VID.broken]: { path: 'assets/frames/church_0001.jpg', media_type: 'video' },
+  [VID.brokenPoster]: { path: 'assets/frames/bussalick_0001.jpg', media_type: 'image' },
+};
+function addVideoPosts(world) {
+  const now = Date.now(), at = (h) => new Date(now - h * 600e3).toISOString();
+  world.videoPosts = {
+    mine: { id: world.id(), author: ME, body: 'My clip from the river cleanup.', visibility: 'public', like_count: 0, liked_by_me: false, comments: [], created_at: at(1), media: [{ asset_id: VID.mine, type: 'video', mime_type: 'video/webm', poster_asset_id: VID.poster }] },
+    bare: { id: world.id(), author: PEERS[0], body: 'A clip with no picture of its own.', visibility: 'public', like_count: 0, liked_by_me: false, comments: [], created_at: at(2), media: [{ asset_id: VID.bare, type: 'video', mime_type: 'video/webm' }] },
+    broken: { id: world.id(), author: PEERS[1], body: 'A clip this browser cannot play.', visibility: 'public', like_count: 0, liked_by_me: false, comments: [], created_at: at(3), media: [{ asset_id: VID.broken, type: 'video', mime_type: 'video/quicktime', poster_asset_id: VID.brokenPoster }] },
+  };
+  world.posts.unshift(world.videoPosts.mine, world.videoPosts.bare, world.videoPosts.broken);
+}
+/* what the member uploaded, kept in this file's memory and served back from the fixture's storage */
+const STORAGE = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object';
 const TRAVEL_ROUTES = JSON.parse(await readFile(join(ROOT, 'scripts/e2e/fixtures/travel-new-haven-routes.json'), 'utf8')).routes;
 const TRAVEL_ORIGIN = TRAVEL_ROUTES[0].origin, TRAVEL_DESTINATION = TRAVEL_ROUTES[0].destination;
 
@@ -118,6 +144,18 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
+    /* STORAGE: a signed upload is kept; a signed read gives it back, open to any origin as storage is */
+    if (u.startsWith(STORAGE + '/')) {
+      const request = route.request(), method = request.method(), path = decodeURIComponent(new URL(u).pathname.replace(/^\/storage\/v1\/object\/(upload\/)?sign\/mnet-media\//, ''));
+      if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,PUT,POST', 'access-control-allow-headers': 'apikey,authorization,content-type,x-upsert' } });
+      if (method === 'PUT' || method === 'POST') {
+        (world.blobs ||= {})[path] = { body: request.postDataBuffer(), type: request.headers()['content-type'] || 'application/octet-stream' };
+        world.requests.push({ m: method, path: '/storage/' + path, auth: !!request.headers().authorization, bytes: world.blobs[path].body?.length || 0, type: world.blobs[path].type });
+        return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ Key: 'mnet-media/' + path }) });
+      }
+      const blob = world.blobs && world.blobs[path];
+      return blob ? route.fulfill({ status: 200, contentType: blob.type, headers: { 'access-control-allow-origin': '*' }, body: blob.body }) : route.fulfill({ status: 404, body: 'not found' });
+    }
     if (u.includes('/rest/v1/travel_journeys')) {
       const request=route.request(),method=request.method();world.journeys ||= [];
       world.requests.push({m:method,path:'/travel_journeys',auth:!!request.headers().authorization,body:request.postDataJSON()});
@@ -153,7 +191,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     const req = route.request(), u = new URL(req.url()), m = req.method(), auth = req.headers().authorization || '';
     const body = req.postData() ? JSON.parse(req.postData()) : null;
     world.requests.push({ m, path: u.pathname, search: u.search, auth: !!auth, body });
-    if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,PATCH,DELETE' } });
     if (u.pathname === '/v1/travel/route') {
       if (auth || m !== 'POST' || u.search || !body || Object.keys(body).sort().join(',') !== 'destination,mode,origin') return json(route, { error:'Invalid public route request' }, 400);
       const fixture = TRAVEL_ROUTES.find(r => r.mode === body.mode && JSON.stringify(r.origin) === JSON.stringify(body.origin) && JSON.stringify(r.destination) === JSON.stringify(body.destination));
@@ -249,13 +287,38 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.pathname === '/v1/mnet/live/directory') return json(route, { sessions: LIVE });
     if (u.pathname === '/v1/mnet/live/eligibility') return json(route, { can_host: false, enabled: false });
     if (u.pathname === '/v1/analytics/my-creator') return json(route, { ok: true, creator: creator, audience: creator ? { countries: [{ country: 'US', views: 42 }, { country: 'GB', views: 7 }], elsewhere_views: 3, unknown_views: 1, min_views: 5 } : { countries: [] } });
+    /* MEDIA, as mnet-media answers it: a signed upload slot, finalize, discard, and an hour-long read address */
+    if (u.pathname === '/v1/mnet/media/upload-url' && m === 'POST') {
+      const id = asset(100 + (world.uploadN = (world.uploadN || 0) + 1)), mime = String(body?.mime_type || ''), kind = /^video\//.test(mime) ? 'video' : /^image\//.test(mime) ? 'image' : 'file';
+      const path = `auth-you/${id}-${String(body?.file_name || 'file').replace(/[^a-zA-Z0-9._-]+/g, '-')}`;
+      (world.uploads ||= {})[id] = { path, mime, media_type: kind };
+      return json(route, { ok: true, asset: { id, object_path: path, media_type: kind, mime_type: mime, status: 'staged' }, upload: { path, token: 'tok-' + world.uploadN, signed_url: null } });
+    }
+    if (u.pathname === '/v1/mnet/media/finalize' && m === 'POST') { const up = world.uploads?.[body?.asset_id]; return up ? json(route, { ok: true, asset: { id: body.asset_id, media_type: up.media_type, mime_type: up.mime, width: body.width ?? null, height: body.height ?? null, duration_ms: body.duration_ms ?? null, status: 'ready' } }) : json(route, { error: 'asset not found' }, 404); }
+    if (u.pathname === '/v1/mnet/media/discard' && m === 'POST') return json(route, { ok: true, discarded: true });
+    const upMedia = u.pathname.match(/^\/v1\/mnet\/media\/([0-9a-f-]{36})\/url$/), uploaded = upMedia && world.uploads?.[upMedia[1]], fixed = upMedia && VIDEO_MEDIA[upMedia[1]];
+    if (uploaded) return json(route, { ok: true, asset_id: upMedia[1], url: `${STORAGE}/sign/mnet-media/${uploaded.path}?token=view`, expires_in: 3600, media_type: uploaded.media_type, mime_type: uploaded.mime });
+    if (fixed) return json(route, { ok: true, asset_id: upMedia[1], url: `${BASE}/${fixed.path}`, expires_in: 3600, media_type: fixed.media_type });
     const media = u.pathname.match(/^\/v1\/mnet\/media\/eeeeeeee-eeee-4eee-8eee-0*(\d+)\/url$/);
     if (media) return json(route, { url: `${BASE}/${PHOTOS[(Number(media[1]) - 1) % PHOTOS.length]}`, media_type: 'image' });
     if (u.pathname === '/v1/mnet/posts' && m === 'POST') {
       if (!body || !String(body.body || '').trim()) return json(route, { error: 'empty' }, 400);
-      const p = { id: world.id(), author: ME, body: body.body, visibility: body.visibility, like_count: 0, liked_by_me: false, comments: [], created_at: new Date().toISOString() };
+      const media = (body.media_asset_ids || []).map((id, i) => ({ asset_id: id, type: world.uploads?.[id]?.media_type || 'image', poster_asset_id: (body.poster_asset_ids || [])[i] || null }));
+      const p = { id: world.id(), author: ME, body: body.body, visibility: body.visibility, like_count: 0, liked_by_me: false, comments: [], created_at: new Date().toISOString(), ...(media.length ? { media } : {}) };
       world.posts.unshift(p);
       return json(route, { post: item(p).post }, 201);
+    }
+    /* THE THUMBNAIL of the member's own video post (the Worker's rules: workers/mccluster/test/mnet-post-thumbnail.test.mjs) */
+    const patchPost = m === 'PATCH' && u.pathname.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})$/);
+    if (patchPost) {
+      const p = world.posts.find((x) => x.id === patchPost[1]);
+      if (!p || p.author.m_uid !== ME.m_uid) return json(route, { error: 'Post not found' }, 404);
+      for (const [video, picture] of Object.entries(body?.poster_by_media || {})) {
+        const target = (p.media || []).find((x) => x.asset_id === video && x.type === 'video');
+        if (!target || (picture !== null && world.uploads?.[picture]?.media_type !== 'image')) return json(route, { error: 'A thumbnail must be one of your images.' }, 400);
+        target.poster_asset_id = picture;
+      }
+      return json(route, item(p));
     }
     const react = u.pathname.match(/^\/v1\/mnet\/posts\/([^/]+)\/reactions$/);
     if (react) {
@@ -300,8 +363,9 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, videoPosts = false }) {
   const world = freshWorld();
+  if (videoPosts) addVideoPosts(world);
   world.placeHome = placeHome;
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage; world.admin = admin;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
@@ -811,6 +875,179 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
     check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
     check(scope,'no JavaScript errors',errors.length===0,errors);
   }finally{await ctx.close();}
+}
+
+/* NO BLACK VIDEOS (owner, 2026-10-20: "when people upload videos, there's no thumbnail, just a black video ... I want
+   people to be even able to edit the videos they previously posted as a thumbnail"). A video post shows its picture; a
+   video with none starts a tenth of a second in so a first frame paints; one this device cannot play shows its picture
+   and says so; and the author changes the picture of their own video, by a frame or an image of their own. */
+const noSideways = (page) => page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth);
+const thumbOf = (page, id) => page.locator(`#mnFeed article[data-post-id="${id}"] [data-mnet-media]`).first();
+if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone-portrait', 'desktop'].includes(d.name) && (!process.env.EDITORIAL_DEVICE || d.name === process.env.EDITORIAL_DEVICE))) {
+  const scope = `editorial-video-poster-${device.name}`;
+  const { ctx, page, world, errors } = await open(device, { member: true, videoPosts: true });
+  try {
+    const { mine, bare, broken } = world.videoPosts;
+    await page.waitForSelector(`#mnFeed article[data-post-id="${mine.id}"] video[poster]`, { timeout: 15000 }).catch(() => {});
+    const read = (id) => thumbOf(page, id).evaluate((n) => { const v = n.querySelector('video'); return v ? { poster: v.getAttribute('poster'), preload: v.getAttribute('preload'), src: v.getAttribute('src'), playsinline: v.hasAttribute('playsinline') } : { html: n.innerHTML.slice(0, 200) }; });
+    const own = await read(mine.id);
+    check(scope, 'a video post shows its picture: video[poster], preload=metadata, inline', /assets\/frames\/affix_0001\.jpg$/.test(own.poster || '') && own.preload === 'metadata' && own.playsinline && /hero\.webm$/.test(own.src || ''), own);
+    await page.waitForSelector(`#mnFeed article[data-post-id="${bare.id}"] video`, { timeout: 10000 }).catch(() => {});
+    const none = await read(bare.id);
+    check(scope, 'a video with no picture starts a tenth of a second in (#t=0.1) so a first frame paints', !none.poster && /hero\.webm#t=0\.1$/.test(none.src || '') && none.preload === 'metadata', none);
+    await page.waitForSelector(`#mnFeed article[data-post-id="${broken.id}"] .mn__video-note`, { timeout: 10000 }).catch(() => {});
+    const bad = await thumbOf(page, broken.id).evaluate((n) => ({ note: (n.querySelector('.mn__video-note') || {}).textContent || '', img: (n.querySelector('img') || {}).src || '', video: !!n.querySelector('video') }));
+    check(scope, 'a video this device cannot play shows its picture and says so', /can.t play on this device/.test(bad.note) && /bussalick_0001\.jpg$/.test(bad.img) && !bad.video, bad);
+    check(scope, 'Thumbnail is offered on the member\'s own video post only, as a 44px tap target',
+      await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).count() === 1 &&
+      await page.locator(`#mnFeed article[data-post-id="${bare.id}"] [data-action=thumbnail], #mnFeed article[data-post-id="${broken.id}"] [data-action=thumbnail]`).count() === 0 &&
+      await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => { const r = b.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; }));
+    check(scope, 'no horizontal overflow with video posts in the feed', await noSideways(page));
+    const center = (id) => page.locator(`#mnFeed article[data-post-id="${id}"]`).evaluate((a) => a.scrollIntoView({ block: 'center' }));
+    await center(mine.id);
+    await page.waitForTimeout(400);
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"]`).screenshot({ path: join(OUT, scope + '-card.png') });
+
+    /* the editor: a frame of the video */
+    /* a tap, as the feed may still be settling under a software-rendered globe */
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
+    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 5000 });
+    await page.waitForFunction(() => !document.getElementById('mnThumbPick').hidden, null, { timeout: 15000 }).catch(() => {});
+    check(scope, 'the editor opens with the video\'s frames to pick from (same-origin storage: pixels readable)', !(await page.isHidden('#mnThumbPick')) && await page.isVisible('#mnThumbVideo'));
+    const fresh = req(world, 'GET', new RegExp(`^/v1/mnet/media/${VID.mine}/url$`));
+    check(scope, 'the editor asks for a fresh address for the video, with the member\'s session', fresh.length >= 2 && fresh.every((r) => r.auth), fresh.length);
+    check(scope, 'the video is read with CORS, so a frame may become a picture', await page.getAttribute('#mnThumbVideo', 'crossorigin') === 'anonymous');
+    await page.$eval('#mnThumbRange', (r) => { r.value = String(Math.round(Number(r.max) * 0.6)); r.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.waitForFunction(() => { const v = document.getElementById('mnThumbVideo'); return v.readyState >= 2 && !v.seeking && v.currentTime > 1; }, null, { timeout: 8000 }).catch(() => {});
+    const fit = await page.evaluate(() => {
+      const d = document.getElementById('mnThumbDialog').getBoundingClientRect(), tall = (id) => document.getElementById(id).offsetHeight; /* layout size: the sheet's entrance scale does not count */
+      return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, left: Math.round(d.left), right: Math.round(d.right), iw: innerWidth,
+        inner: document.getElementById('mnThumbDialog').scrollWidth <= document.getElementById('mnThumbDialog').clientWidth,
+        use: tall('mnThumbUseFrame'), upload: tall('mnThumbUpload'), range: tall('mnThumbRange'), close: tall('mnThumbClose') };
+    });
+    check(scope, 'the editor fits the screen: no horizontal scroll, nothing sideways inside it', fit.sw === fit.cw && fit.left >= 0 && fit.right <= fit.iw && fit.inner, fit);
+    check(scope, 'the editor\'s controls are full tap targets (44px)', fit.use >= 44 && fit.upload >= 44 && fit.range >= 44 && fit.close >= 44, fit);
+    /* a software-rendered globe under a blurred backdrop is slow to capture on a desktop runner */
+    await page.screenshot({ path: join(OUT, scope + '-editor.png'), timeout: 90000 });
+    const before = world.uploadN || 0;
+    await page.click('#mnThumbUseFrame');
+    await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {});
+    const frameId = asset(100 + before + 1), patch = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1);
+    const up = world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url').at(-1), fin = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
+    check(scope, 'Use this frame uploads the frame as a JPEG and finalizes it with its size', world.uploadN === before + 1 && up.body.mime_type === 'image/jpeg' && fin.body.asset_id === frameId && fin.body.width > 0 && fin.body.height > 0 && Math.max(fin.body.width, fin.body.height) <= 1080, { up: up && up.body, fin: fin && fin.body });
+    check(scope, 'and sends poster_by_media {video: new picture} for that post, with the member\'s session', !!patch && patch.auth && patch.path === '/v1/mnet/posts/' + mine.id && JSON.stringify(patch.body) === JSON.stringify({ poster_by_media: { [VID.mine]: frameId } }), patch && patch.body);
+    await page.waitForFunction((id) => { const n = document.querySelector(`#mnFeed article[data-post-id="${id}"] video[poster]`); return n && /token=view$/.test(n.getAttribute('poster')); }, mine.id, { timeout: 8000 }).catch(() => {});
+    const after = await read(mine.id);
+    check(scope, 'the card draws its new picture at once, from the new asset', (after.poster || '').endsWith(`${frameId}-thumbnail-poster.jpg?token=view`) && await thumbOf(page, mine.id).getAttribute('data-poster-asset') === frameId, after);
+    check(scope, 'the feed says so', /Thumbnail updated/.test(await page.textContent('#mnFeedStatus')));
+    await center(mine.id);
+    await page.waitForTimeout(600);
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"]`).screenshot({ path: join(OUT, scope + '-card-after.png') });
+
+    /* or a picture of the member's own */
+    /* a tap, as the feed may still be settling under a software-rendered globe */
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
+    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 5000 });
+    await page.setInputFiles('#mnThumbFile', join(ROOT, 'assets/frames/church_0001.jpg'));
+    await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {});
+    const imageId = asset(100 + before + 2), patch2 = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1), fin2 = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
+    check(scope, 'Upload an image sends that picture, finalized with its own size', JSON.stringify(patch2.body) === JSON.stringify({ poster_by_media: { [VID.mine]: imageId } }) && fin2.body.asset_id === imageId && fin2.body.width > 0, { patch: patch2.body, fin: fin2.body });
+    check(scope, 'no horizontal overflow after the edits', await noSideways(page));
+    check(scope, 'no JavaScript errors', errors.length === 0, errors);
+  } finally { await ctx.close(); }
+}
+
+/* the composer: the picture is taken while the clip uploads, shown on the chip, and posted beside the video */
+if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-video-composer';
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
+  try {
+    await page.waitForSelector('#mnPostBody');
+    await page.focus('#mnPostBody');
+    await page.waitForFunction(() => document.getElementById('mnComposer').classList.contains('is-open'), null, { timeout: 5000 }).catch(() => {});
+    await page.setInputFiles('#mnMediaInput', join(ROOT, 'assets/video/hero.webm'));
+    await page.waitForSelector('#mnMediaQueue .mn__media-chip.is-video', { timeout: 20000 }).catch(() => {});
+    const chip = await page.evaluate(() => { const c = document.querySelector('#mnMediaQueue .mn__media-chip.is-video'); const img = c && c.querySelector('img'); return c ? { img: img ? img.src.slice(0, 5) : '', w: img ? img.naturalWidth : 0, play: !!c.querySelector('.mn__media-play'), video: !!c.querySelector('video') } : null; });
+    check(scope, 'the chip shows the clip\'s picture with a play mark, not a black video', !!chip && chip.img === 'blob:' && chip.w > 0 && chip.play && !chip.video, chip);
+    const ups = world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url'), fins = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize');
+    const vUp = ups.find((r) => r.body.mime_type === 'video/webm'), pUp = ups.find((r) => r.body.mime_type === 'image/jpeg');
+    const vId = vUp && asset(100 + ups.indexOf(vUp) + 1), pId = pUp && asset(100 + ups.indexOf(pUp) + 1);
+    const vFin = fins.find((r) => r.body.asset_id === vId), pFin = fins.find((r) => r.body.asset_id === pId);
+    check(scope, 'the clip and its picture both go up; the clip is finalized with its size and length', !!vFin && vFin.body.width === 1280 && vFin.body.height === 720 && Math.abs(vFin.body.duration_ms - 8042) < 100, vFin && vFin.body);
+    check(scope, 'the picture is a JPEG no longer than 1080px, finalized with its size', !!pFin && pFin.body.width === 1080 && pFin.body.height === 608, pFin && pFin.body);
+    const stored = world.blobs && Object.entries(world.blobs).find(([k]) => k.includes(pId || 'none'));
+    check(scope, 'the picture uploaded is a real JPEG, not an empty frame', !!stored && stored[1].type === 'image/jpeg' && stored[1].body.length > 5000 && stored[1].body[0] === 0xff && stored[1].body[1] === 0xd8, stored && stored[1].body.length);
+    check(scope, 'no horizontal overflow with the chip', await noSideways(page));
+    await page.locator('#mnComposer').screenshot({ path: join(OUT, scope + '-chip.png') });
+    await page.fill('#mnPostBody', 'Fresh clip from the river.');
+    await page.click('#mnPost');
+    await page.waitForFunction(() => /Posted/.test(document.getElementById('mnPostStatus').textContent), null, { timeout: 8000 }).catch(() => {});
+    const sent = req(world, 'POST', /^\/v1\/mnet\/posts$/).at(-1);
+    check(scope, 'Post sends the clip with its picture beside it', !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([vId]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([pId]), sent && sent.body);
+    const posted = world.posts[0];
+    await page.waitForSelector(`#mnFeed article[data-post-id="${posted.id}"] video[poster]`, { timeout: 10000 }).catch(() => {});
+    const card = await thumbOf(page, posted.id).evaluate((n) => { const v = n.querySelector('video'); return v ? { poster: v.getAttribute('poster'), preload: v.getAttribute('preload') } : null; }).catch(() => null);
+    check(scope, 'the new post in the feed shows the picture that was taken, not black', !!card && (card.poster || '').startsWith(`https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/sign/mnet-media/auth-you/${pId}-`) && card.preload === 'metadata', card);
+    await page.waitForFunction((id) => { const v = document.querySelector(`#mnFeed article[data-post-id="${id}"] video`); return v && v.readyState >= 1; }, posted.id, { timeout: 8000 }).catch(() => {});
+    await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).evaluate((a) => a.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(600);
+    await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).screenshot({ path: join(OUT, scope + '-feed-card.png') });
+    check(scope, 'no JavaScript errors', errors.length === 0, errors);
+  } finally { await ctx.close(); }
+}
+
+/* Create: a cover is taken while the clip uploads; a tap on a frame of the strip chooses another; Post sends it */
+if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-video-create-cover';
+  const world = freshWorld();
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: DEVICES[0].viewport, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await ctx.addInitScript(() => {
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
+    const exp = Math.floor(Date.now() / 1000) + 3600;
+    localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp }));
+  });
+  await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, (r) => r.abort());
+  await routeBackends(ctx, world, { member: true });
+  const page = await ctx.newPage(), errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
+  try {
+    await page.goto(BASE + '/create.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#crMake:not([hidden])', { timeout: 10000 });
+    await page.setInputFiles('#crLibrary', join(ROOT, 'assets/video/hero.webm'));
+    await page.waitForFunction(() => !document.getElementById('crCoverImg').hidden, null, { timeout: 20000 }).catch(() => {});
+    const covers = () => world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url' && r.body.mime_type === 'image/jpeg');
+    const idOf = (r) => r && asset(100 + world.requests.filter((x) => x.path === '/v1/mnet/media/upload-url').indexOf(r) + 1);
+    /* the cover's upload request follows its picture by a tick (the session is checked first) */
+    const until = async (fn, ms = 15000) => { const t0 = Date.now(); while (!fn() && Date.now() - t0 < ms) await page.waitForTimeout(100); return fn(); };
+    await until(() => covers().length >= 1);
+    check(scope, 'a cover is taken for the clip and shown on the Cover chip, with its mark on the strip', !(await page.isHidden('#crCoverImg')) && !(await page.isHidden('#crCoverMark')) && covers().length === 1, covers().length);
+    await page.waitForFunction(() => /Uploaded/.test(document.getElementById('crUploadT').textContent), null, { timeout: 15000 }).catch(() => {});
+    check(scope, 'the edit step fits a phone: no horizontal scroll', await noSideways(page));
+    check(scope, 'Cover is a full tap target', await page.locator('#crCover').evaluate((b) => b.getBoundingClientRect().height >= 44));
+    const first = covers()[0], firstId = idOf(first);
+    const mark0 = await page.$eval('#crCoverMark', (m) => m.style.left);
+    /* the last frame of the strip */
+    const strip = await page.locator('#crStrip').boundingBox();
+    await page.mouse.click(strip.x + strip.width - 30, strip.y + strip.height / 2);
+    await page.waitForFunction((n) => document.getElementById('crCover').getAttribute('aria-busy') !== 'true' && document.getElementById('crCoverMark').style.left !== n, mark0, { timeout: 15000 }).catch(() => {});
+    await until(() => covers().length >= 2 && world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === firstId));
+    const mark1 = await page.$eval('#crCoverMark', (m) => parseFloat(m.style.left));
+    check(scope, 'a tap on a frame of the strip makes it the cover, and the old cover is discarded', covers().length === 2 && mark1 > 80 && !!firstId && world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === firstId), { covers: covers().length, mark1 });
+    await page.screenshot({ path: join(OUT, scope + '-edit.png') });
+    /* the account chip sits over Next at the top right of Create on a phone (as on main; reported, not changed here) */
+    await page.$eval('#crEditNext', (b) => b.click());
+    await page.waitForSelector('#crDetails:not([hidden])');
+    check(scope, 'the details step shows the cover beside the caption', await page.locator('#crThumb img[alt="Cover"]').count() === 1);
+    await page.fill('#crCaption', 'River cleanup, the cut.');
+    await page.click('#crPost');
+    await page.waitForSelector('#crDone:not([hidden])', { timeout: 15000 }).catch(() => {});
+    const sent = req(world, 'POST', /^\/v1\/mnet\/posts$/).at(-1), video = world.requests.find((r) => r.path === '/v1/mnet/media/upload-url' && r.body.mime_type === 'video/webm');
+    const coverId = idOf(covers()[1]);
+    check(scope, 'Post sends the clip and its chosen cover side by side', !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([idOf(video)]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([coverId]), sent && sent.body);
+    check(scope, 'the cover sent is never discarded', !world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === coverId));
+    check(scope, 'no JavaScript errors', errors.length === 0, errors);
+  } finally { await ctx.close(); }
 }
 
 /* The 2026-10-16 approved reference, including its explicit real-navigation exception.

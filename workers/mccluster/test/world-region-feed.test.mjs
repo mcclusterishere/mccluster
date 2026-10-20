@@ -24,7 +24,7 @@ function store(calls,{unpublished=false,emptyNews=false,profile=true,removed=fal
     if(table==='network_posts')return json([
       {id:POST_A,author_m_uid:MEMBER_A,body:'Community action in Connecticut',country_code:'US',
        post_type:'post',visibility:'public',group_id:null,reply_to_id:null,created_at:TIME,like_count:7,
-       metadata:{secret_internal:'do not expose',track:{title:'New Song'}},media:[{private_path:'never'}]},
+       metadata:{secret_internal:'do not expose',track:{title:'New Song'}},media:[{private_path:'never',type:'video',poster_asset_id:'77777777-7777-4777-8777-777777777777'}]},
       ...(removed?[{id:POST_B,author_m_uid:MEMBER_A,body:'taken down by the desk',country_code:'US',
         post_type:'post',visibility:'public',group_id:null,reply_to_id:null,created_at:TIME,
         removed_at:TIME,metadata:{},media:[]}]:[]),
@@ -87,7 +87,7 @@ test('public country projection returns only visible profile, one explicit-tag p
   assert.equal(data.posts[0].post.country_code,'US');
   assert.equal(data.posts[0].post.media_locked,1);
   assert.equal(data.posts[0].actor.display_name,'Public person');
-  assert.doesNotMatch(JSON.stringify(data),/secret_internal|private_path|private account leaked|author_m_uid|source_id/);
+  assert.doesNotMatch(JSON.stringify(data),/secret_internal|private_path|private account leaked|author_m_uid|source_id|poster|77777777-7777/);
   assert.equal(data.news.length,1);
   assert.equal(data.news[0].location_basis,'article_mentions_place');
   assert.equal(data.news[0].domain,'newspaper.example');

@@ -94,6 +94,7 @@
           <button class="cr__handle cr__handle--l" id="crHandleL" type="button" role="slider" aria-label="Start of the clip"></button>
           <button class="cr__handle cr__handle--r" id="crHandleR" type="button" role="slider" aria-label="End of the clip"></button>
           <i class="cr__head-line" id="crPlayhead" aria-hidden="true"></i>
+          <i class="cr__cover-mark" id="crCoverMark" aria-hidden="true" hidden></i>
         </div>
         <div class="cr__times">
           <span id="crTStart">0:00</span>
@@ -104,6 +105,13 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="cr__wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
           <span id="crMuteL">Sound on</span>
         </button>
+        <!-- THE COVER: the picture the post shows before it plays (owner, 2026-10-20). A frame from the strip, chosen
+             for itself unless the person picks one. -->
+        <button class="cr__chip cr__cover" id="crCover" type="button" aria-label="Cover: use the frame on screen" aria-describedby="crCoverHint">
+          <span class="cr__cover-pic" aria-hidden="true"><img id="crCoverImg" alt="" hidden></span>
+          <span>Cover</span>
+        </button>
+        <p class="cr__cover-hint" id="crCoverHint">Tap a frame on the strip to make it the cover.</p>
       </div>
       <p class="cr__upl" id="crUpload" role="status"><i id="crUploadBar"></i><span id="crUploadT">Uploading…</span><button class="cr__retry" id="crUploadRetry" type="button" hidden>Retry upload</button><button class="cr__cancel-upload" id="crUploadCancel" type="button" hidden>Cancel</button></p>
     </section>
@@ -175,6 +183,7 @@
 
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/create.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>
