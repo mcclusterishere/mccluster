@@ -146,3 +146,19 @@ test('a country\'s feed leads with the lives its hosts placed there, without str
   assert.deepEqual(more.lives,[],'later pages do not repeat the lives');
   assert.ok(!calls.some(u=>u.pathname.endsWith('/network_live_sessions')));
 });
+
+test('live places are counts per country of broadcasts on air, nothing else, and only with the flag on',async()=>{
+  const off=await handleRegionScope(req('/v1/world/live-places'),{...ENV,WORLD_PLACE_SCOPE_ENABLED:'false'},{fetchImpl:()=>{throw Error('no read');}});
+  assert.equal(off.status,503);
+  const calls=[];
+  const r=await handleRegionScope(req('/v1/world/live-places'),ENV,{now:()=>Date.parse(TIME),fetchImpl:async(url)=>{
+    const u=new URL(url);calls.push(u);
+    assert.equal(u.pathname,'/rest/v1/network_live_sessions');
+    return json([{country_code:'US'},{country_code:'US'},{country_code:'FR'},{country_code:'ZZ'},{country_code:null}]);
+  }});
+  assert.equal(r.status,200);
+  assert.deepEqual(await r.json(),{ok:true,places:[{code:'FR',count:1},{code:'US',count:2}]});
+  assert.equal(calls[0].searchParams.get('select'),'country_code');
+  assert.equal(calls[0].searchParams.get('status'),'eq.live');
+  assert.equal(calls[0].searchParams.get('last_seen_at'),'gt.2026-10-19T21:13:00.000Z');
+});

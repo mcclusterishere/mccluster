@@ -165,6 +165,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.pathname === '/v1/action-archive/docket-516r-2025') return json(route, COHORT_ARCHIVE);
     /* THE COUNTRY FEED: off unless a scenario names the connection country the Worker would read from request.cf */
     if (u.pathname === '/v1/world/place-scope') return json(route, { ok: true, enabled: !!world.placeHome, country: world.placeHome || null, source: 'cloudflare_country' });
+    if (u.pathname === '/v1/world/live-places') return json(route, { ok: true, places: world.placeHome ? [{ code: 'GB', count: 2 }] : [] });
     if (u.pathname === '/v1/world/region-feed') { const c = u.searchParams.get('country'); return json(route, { ok: true, available: true, country: c, posts: c === world.placeHome ? world.posts.slice(0, 3).map(item) : [], news: [], lives: c === world.placeHome ? [{ id: LIVE[0].id, title: LIVE[0].title, room_kind: 'mission', category_key: 'field', started_at: LIVE[0].started_at, country_code: c, host: { display_name: 'Fixture Ana', avatar_url: '' } }] : [], next_post_before: null, next_news_before: null }); }
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     if (u.pathname === '/v1/world/news') {
@@ -694,6 +695,9 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
     check(scope,'the country\'s lives lead its feed',await page.locator('#mnFeed .mn__place-lives .mn__place-live').count()===1 && /Live in United States/.test(await page.textContent('#mnFeed .mn__place-lives')));
     const row=await page.evaluate(()=>{const r=document.querySelector('.mn__place-lives-row');return r?[r.scrollWidth>0,document.documentElement.scrollWidth===document.documentElement.clientWidth]:[false,false];});
     check(scope,'the lives row scrolls inside itself, never the page',row[0]&&row[1],row);
+    await globe.waitForFunction(()=>window.__huLivePlaces?.().GB===2,null,{timeout:15000}).catch(()=>{});
+    check(scope,'the globe marks a country where a broadcast is on air',await globe.evaluate(()=>window.__huLivePlaces?.().GB)===2);
+    await page.screenshot({path:join(OUT,scope+'-home.png')});
     await globe.waitForFunction(()=>window.__huCountries?.().ready);
     await globe.evaluate(()=>parent.postMessage({type:'hu:country',country:{code:'FR',name:'France'}},location.origin));
     await page.waitForFunction(()=>/other regions/.test((document.getElementById('mnGuestWhy')||{}).textContent||''),null,{timeout:5000}).catch(()=>{});

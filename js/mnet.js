@@ -1035,7 +1035,19 @@
           setFeedScope("local"); // Country only; no GPS and no user-post location write.
         } else if (state.feedScope === "local") loadPlaceFeed(true);
         paintPlaceOptIn();
+        loadLivePlaces();
+        setInterval(function () { if (!document.hidden) loadLivePlaces(); }, 60000);
       }).catch(function () { /* remain on the working Global feed */ });
+  }
+  /* broadcasts their hosts placed in a country mark it on the globe (js/action-globe.js), beside the audio conversations */
+  function loadLivePlaces() {
+    fetch("https://api.mccluster.org/v1/world/live-places", { credentials:"omit", cache:"no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (out) {
+        if (!out || !Array.isArray(out.places)) return;
+        state.placeScope.livePlaces = out.places;
+        tellWorld({ type: "hu:live-places", source: "video", places: out.places });
+      }).catch(function () {});
   }
   function loadPlaceFeed(reset) {
     var p = state.placeScope, c = state.world.country;
@@ -3667,6 +3679,7 @@
       if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
       var d = ev.data || {}, caption = $("mnWorldCaption");
       if (d.type === "hu:globe-ready") {
+        if (state.placeScope.livePlaces) tellWorld({ type: "hu:live-places", source: "video", places: state.placeScope.livePlaces });
         state.world.pins = {}; state.world.missions = {}; state.world.latest = null;
         (Array.isArray(d.missionIds) ? d.missionIds : []).forEach(function (id) { if (WORLD_ID.test(String(id))) state.world.pins[id] = true; });
         (Array.isArray(d.missions) ? d.missions : []).forEach(function (m) {

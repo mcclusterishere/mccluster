@@ -383,6 +383,7 @@ if(d.type==='hu:search'&&typeof d.q==='string'&&viewer){searchPins(d.q.slice(0,8
 if(d.type==='hu:focus-mission'&&typeof d.missionId==='string'){if(!viewer||!focusMission(d.missionId))tell({type:'hu:selection-cleared'});return}
 if(d.type==='hu:regional'&&viewer){showCities=!!d.on;draw();tell({type:'hu:status',text:!showCities?'Regional impact is hidden.':cities.length?cities.length+(cities.length===1?' region shows its':' regions show their')+' totals: members who agreed to be counted, and verified actions.':'No region has five members who agreed to be counted yet.'});return}
 if(d.type==='hu:near-me'){const b=$('ctlLocate');if(b)b.click();return}
+if(d.type==='hu:live-places'&&!ANALYTICS){setLivePlaces(d.source,d.places);return}
 /* the page puts a signed-out visitor back in their own region (js/mnet.js); select() tells the page through hu:country */
 if(d.type==='hu:select-country'){if(countries&&typeof d.code==='string'&&/^[A-Z]{2}$/.test(d.code))countries.select(d.code);return}
 /* a news card's "On the Earth" (js/mnet.js): the place a story MENTIONS. Anything can post a message, so the numbers are checked here too */
@@ -441,6 +442,33 @@ let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto'
    decoration only: a tap falls through it to the pin, a marker or the country underneath, so a wide halo over a small country
    never swallows that country's tap. Reduced motion keeps the halo still. */
 const missionHalos=[],PULSE=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* WHERE PEOPLE ARE LIVE (owner, 2026-10-20: "go through the globe, just like you can go through Bigo … where people are live").
+   The page sends counts per country from each live source (audio conversations, broadcasts a host placed in a country); a
+   breathing red badge marks every country with something on air. A tap selects that country, which narrows the feed and
+   the conversations to it. Counts only: never a person, never a point finer than the country's label. */
+const liveSources={},livePins=[];let liveRetry=0;
+function setLivePlaces(source,places){
+ if(!/^[a-z]{1,16}$/.test(String(source||'')))return;
+ const m=new Map();(Array.isArray(places)?places:[]).slice(0,250).forEach(p=>{const c=String(p&&p.code||''),n=Math.floor(Number(p&&p.count));if(/^[A-Z]{2}$/.test(c)&&n>0&&n<1e5)m.set(c,(m.get(c)||0)+n)});
+ liveSources[source]=m;liveRetry=0;drawLivePlaces();
+}
+function drawLivePlaces(){
+ if(!viewer||!countries)return;
+ if(!countries.ready()){if(liveRetry++<40)setTimeout(drawLivePlaces,750);return}
+ livePins.splice(0).forEach(e=>viewer.entities.remove(e));
+ const total=new Map();Object.values(liveSources).forEach(m=>m.forEach((n,c)=>total.set(c,(total.get(c)||0)+n)));
+ total.forEach((n,code)=>{const pt=countries.point(code);if(!pt)return;const img=liveBadge(n);
+  livePins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(pt[0],pt[1],0),billboard:{image:img.url,width:img.w,height:img.h,
+   verticalOrigin:Cesium.VerticalOrigin.BOTTOM,pixelOffset:new Cesium.Cartesian2(0,-16),eyeOffset:new Cesium.Cartesian3(0,0,-200),
+   scale:PULSE?new Cesium.CallbackProperty(()=>1+.07*Math.sin(Date.now()/320),false):1},properties:{liveCountry:code}}))});
+ window.__huLivePlaces=()=>Object.fromEntries(total);
+}
+function liveBadge(n){const t='LIVE '+(n>99?'99+':n),key='live:'+t;if(pinCache[key])return pinCache[key];
+ const c=document.createElement('canvas'),g=c.getContext('2d'),f='700 22px Inter, system-ui, sans-serif';g.font=f;
+ const w=Math.ceil(g.measureText(t).width)+52,h=40;c.width=w;c.height=h;g.font=f;
+ g.fillStyle='#d8002a';g.beginPath();if(g.roundRect)g.roundRect(1,1,w-2,h-2,19);else g.rect(1,1,w-2,h-2);g.fill();g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=2;g.stroke();
+ g.fillStyle='#fff';g.beginPath();g.arc(21,20,6,0,Math.PI*2);g.fill();g.textBaseline='middle';g.fillText(t,34,21);
+ return(pinCache[key]={url:c.toDataURL(),w:w/2,h:h/2})}
 function pickSolid(position){const list=viewer.scene.drillPick(position,6)||[];return list.find(x=>!(x&&x.id&&x.id.properties&&x.id.properties.halo))||null}
 function glowHalo(color){const key='halo:'+color;if(pinCache[key])return pinCache[key];const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');const r=g.createRadialGradient(48,48,6,48,48,46);r.addColorStop(0,color+'e6');r.addColorStop(.35,color+'80');r.addColorStop(.7,color+'26');r.addColorStop(1,color+'00');g.fillStyle=r;g.fillRect(0,0,96,96);return pinCache[key]=c.toDataURL('image/png')}
 /* Mission markers share the refined enamel language: legible at phone zoom,
@@ -824,7 +852,7 @@ viewer.screenSpaceEventHandler.setInputAction(p=>{
   if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
   return;
  }
- const e=pickSolid(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+ const e=pickSolid(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}

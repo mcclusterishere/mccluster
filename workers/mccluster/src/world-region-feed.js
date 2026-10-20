@@ -10,6 +10,7 @@ import { ISO_TO_FIPS, isCountry, isoFromGdelt } from './intel/news-country-codes
 
 export const REGION_STATUS = '/v1/world/place-scope';
 export const REGION_FEED = '/v1/world/region-feed';
+export const LIVE_PLACES = '/v1/world/live-places';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
@@ -84,7 +85,7 @@ function publicPost(row, actor) {
 }
 export async function handleRegionScope(req, env, { fetchImpl = fetch, now = () => Date.now() } = {}) {
   const url = new URL(req.url), path = url.pathname.replace(/\/+$/, '');
-  if (path !== REGION_FEED && path !== REGION_STATUS) return null;
+  if (path !== REGION_FEED && path !== REGION_STATUS && path !== LIVE_PLACES) return null;
   if (req.method !== 'GET') return fail(req, env, 'Method not allowed', 405);
   const enabled = placeScopeEnabled(env);
   if (path === REGION_STATUS) {
@@ -97,6 +98,22 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch, now = () 
   }
   if (!enabled || !env?.SUPABASE_URL || !env?.SUPABASE_SERVICE_ROLE_KEY)
     return fail(req, env, 'Country feed is not enabled', 503, { enabled: false });
+  if (path === LIVE_PLACES) {
+    /* WHERE BROADCASTS ARE ON AIR, by the country their host placed them in: counts for the globe's live badges,
+       never a session, a host or a point finer than the country */
+    try {
+      const rows = await db(env, 'network_live_sessions?' + new URLSearchParams({ status: 'eq.live', country_code: 'not.is.null',
+        last_seen_at: 'gt.' + new Date(now() - 2 * 60 * 1000).toISOString(), select: 'country_code', limit: '500' }).toString(), fetchImpl);
+      const count = {};
+      rows.forEach(r => { if (parseCountry(r && r.country_code)) count[r.country_code] = (count[r.country_code] || 0) + 1; });
+      const res = reply(req, env, { ok: true, places: Object.keys(count).sort().map(code => ({ code, count: count[code] })) });
+      res.headers.set('cache-control', 'public, max-age=30');
+      res.headers.set('vary', 'origin');
+      return res;
+    } catch (error) {
+      return fail(req, env, 'Live places are unavailable', 503);
+    }
+  }
   const country = parseCountry(url.searchParams.get('country'));
   if (!country) return fail(req, env, 'A valid ISO 3166-1 country code is required', 400);
   const rawLimit = url.searchParams.get('limit');
