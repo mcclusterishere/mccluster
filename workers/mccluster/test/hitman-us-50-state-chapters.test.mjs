@@ -52,6 +52,12 @@ test('every captain is a separate, region-tagged fictional character leading a b
     assert.equal(c.story_geography.locality, null);
     assert.equal(c.story_geography.city, null);
     assert.equal(c.story_geography.real_world_presence, false);
+    assert.ok(Number.isFinite(c.story_geography.reference_point.latitude));
+    assert.ok(Number.isFinite(c.story_geography.reference_point.longitude));
+    assert.ok(c.story_geography.reference_point.latitude >= -90 && c.story_geography.reference_point.latitude <= 90);
+    assert.ok(c.story_geography.reference_point.longitude >= -180 && c.story_geography.reference_point.longitude <= 180);
+    assert.equal(c.story_geography.reference_point.kind, 'us_census_state_representative_point_not_character_gps');
+    assert.match(c.story_geography.reference_point.source, /Census Bureau 2025/);
     assert.equal(c.story_geography.public_pin_approved, false);
   }
 });
@@ -104,6 +110,10 @@ test('new fifty state captains do not overwrite the thirteen existing house spec
 test('pending SQL prepares all fifty chapters as private drafts, not a public feed or fake human roster', () => {
   const sql = readFileSync(new URL('../../../supabase/pending/20261019213000_hitman_us_50_state_chapters_v1.sql', import.meta.url), 'utf8');
   assert.equal((sql.match(/"character_id":/g) || []).length, 50);
+  assert.equal((sql.match(/\('US-[A-Z]{2}', 'US'/g) || []).length, 50,
+    'all fifty Census representative regional points are seeded before draft accounts');
+  assert.match(sql, /2025 National States Gazetteer/);
+  assert.match(sql, /on conflict do nothing/);
   assert.match(sql, /public\.house_system_accounts/);
   assert.match(sql, /from public\.action_globe_regions r where r\.region_key = s\.story_region_key/);
   assert.match(sql, /'draft', false, false, false, false, false, 0, 0, null/);
