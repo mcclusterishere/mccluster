@@ -1,0 +1,51 @@
+name: Security audit snapshot
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/security-audit-snapshot.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    if: github.head_ref == 'security/second-pass-hardening-20261020' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Package pinned text sources for offline review
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import io, json, pathlib, subprocess, tarfile
+          out = pathlib.Path('/tmp/security-audit-sources'); out.mkdir()
+          refs = {'main': '2463c71f0922d8b0220e1e956950b46a1f0d0e1f', 'claude': '8ae32383be82d1b7645a70e6c81fd071a63af7bb', 'base': '4e641b912bf688b65e556a3a86f7a203f137e3d8'}
+          excluded = {'.mcp.json', 'data/clients.json', 'whip/manufacturing-crm.json', 'data/vault-intake.json'}
+          for label, sha in refs.items():
+              tree = subprocess.check_output(['git', 'ls-tree', '-r', '-l', '-z', sha]).split(b'\0')
+              manifest = []; skipped = []
+              proc = subprocess.Popen(['git', 'cat-file', '--batch'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+              with tarfile.open(out / (label + '.tar.gz'), 'w:gz') as tar:
+                  for row in tree:
+                      if not row: continue
+                      meta, rawpath = row.split(b'\t', 1); mode, kind, oid, size = meta.split()
+                      path = rawpath.decode('utf8'); manifest.append({'path': path, 'sha': oid.decode(), 'size': int(size) if size != b'-' else None})
+                      if kind != b'blob' or mode == b'120000' or int(size) > 2000000 or path in excluded or path.startswith('dns/'):
+                          skipped.append(path); continue
+                      proc.stdin.write(oid + b'\n'); proc.stdin.flush()
+                      header = proc.stdout.readline().split(); data = proc.stdout.read(int(header[2])); proc.stdout.read(1)
+                      if b'\0' in data: skipped.append(path); continue
+                      try: data.decode('utf8')
+                      except UnicodeDecodeError: skipped.append(path); continue
+                      entry = tarfile.TarInfo(path); entry.size = len(data); entry.mode = int(mode, 8) & 0o777
+                      tar.addfile(entry, io.BytesIO(data))
+              proc.stdin.close(); proc.wait()
+              (out / (label + '-manifest.json')).write_text(json.dumps({'commit': sha, 'files': manifest, 'omitted': skipped}, indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: security-audit-pinned-text-sources
+          path: /tmp/security-audit-sources
+          retention-days: 1
