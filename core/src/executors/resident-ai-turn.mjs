@@ -1,4 +1,5 @@
 import { rest } from '../supabase.mjs';
+import { prepareLearningTurn } from '../learning.mjs';
 import { localAiChat } from '../compute/local-ai-client.mjs';
 import { callCoreCapability, unwrapCapabilityResult } from '../game-studio/capability-client.mjs';
 import { emitCoreEvent, jobTraceId } from '../observability.mjs';
@@ -227,11 +228,13 @@ export async function residentAiTurn(job) {
     }))
     .filter((message) => message.content);
 
+  const learning = await prepareLearningTurn({ job, userMessage });
+
   const previousUser = threadMessages
     .slice(0, turnIndex)
     .filter((message) => message.role === 'user')
     .at(-1);
-  const objective = needsCurrentResearch(userMessage.content)
+  const objective = !learning.handled && needsCurrentResearch(userMessage.content)
     ? researchObjective(userMessage.content, previousUser?.content)
     : '';
   const traceId = jobTraceId(job);
@@ -258,12 +261,15 @@ export async function residentAiTurn(job) {
     `The current time is ${new Date().toISOString()} (UTC). Never present remembered information as current; when an answer depends on the present and no current evidence is given, say you could not check.`,
   ];
   if (research) system.push(researchPrompt(research));
+  if (learning.prompt) system.push(learning.prompt);
   history.unshift({ role: 'system', content: system.join('\n\n') });
 
   let response;
   const inferenceStarted = Date.now();
   try {
-    response = await localAiChat({
+    response = learning.handled
+      ? { message: { content: learning.answer }, model: null, implementation: 'mccluster-learning-controller:v1' }
+      : await localAiChat({
       messages: history,
       temperature: 0.3,
       numCtx: 8192,
@@ -293,7 +299,7 @@ export async function residentAiTurn(job) {
     orgId, traceId, requestId: job.id, kind: 'dependency', name: 'ai.inference.completed',
     route: 'core:capability:ai.chat',
     resourceType: 'ops_ai_thread', resourceId: threadId, durationMs: Date.now() - inferenceStarted,
-    message: `Resident inference on ${response?.model || 'local model'}`,
+    message: learning.handled ? 'Resident learning command completed without answer-model inference' : `Resident inference on ${response?.model || 'local model'}`,
     detail: { model: response?.model || null, implementation: response?.implementation || null, queue_wait_ms: response?.queue_wait_ms ?? null },
   });
 
@@ -316,6 +322,7 @@ export async function residentAiTurn(job) {
       task_status: 'done',
       queue_wait_ms: response?.queue_wait_ms ?? null,
       current_research: researchRecord(research),
+      learning: learning.record,
     },
   };
 
@@ -338,6 +345,7 @@ export async function residentAiTurn(job) {
     model: assistant.model || response?.model || 'unknown',
     implementation: assistant.implementation || response?.implementation || 'mccluster-owned',
     replayed: false,
+    learning: learning.record,
     queue_wait_ms: response?.queue_wait_ms ?? null,
     current_research: research
       ? {

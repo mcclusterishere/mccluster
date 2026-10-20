@@ -1,0 +1,34 @@
+name: Resident learning proof
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'core/src/learning.mjs'
+      - 'core/src/executors/resident-ai-turn.mjs'
+      - 'core/test/learning*.test.mjs'
+      - 'supabase/pending/20261016_resident_learning_v1.sql'
+      - 'scripts/test/fixtures/resident-learning.sql'
+      - '.github/workflows/resident-learning.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: CPU-only learning and resident integration tests
+        run: node --test core/test/learning*.test.mjs core/test/resident-ai-turn.test.mjs core/test/completion-evidence.test.mjs
+      - name: Start throwaway local PostgreSQL (no Supabase connection or secrets)
+        run: |
+          sudo systemctl start postgresql
+          sudo -u postgres createdb mccluster_learning_test
+          install -D -m 644 scripts/test/fixtures/resident-learning.sql /tmp/mccluster-learning-proof/scripts/test/fixtures/resident-learning.sql
+          install -D -m 644 supabase/pending/20261016_resident_learning_v1.sql /tmp/mccluster-learning-proof/supabase/pending/20261016_resident_learning_v1.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d mccluster_learning_test -f /tmp/mccluster-learning-proof/scripts/test/fixtures/resident-learning.sql
