@@ -1,4 +1,5 @@
-/* The World's countries: data integrity, flags, the fade rule, the Countries preference, the tap, and the mission counts.
+/* The World's countries: data integrity, accuracy, the states, flags, the fade rule, the Countries preference, the tap, and the
+   mission counts.
    node --test scripts/test/world-countries.test.mjs */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,22 +11,81 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const read = (p) => readFileSync(ROOT + p, 'utf8');
 const C = createRequire(import.meta.url)(ROOT + 'js/world-countries.js');
-const data = JSON.parse(read('data/geo/world-countries-110m.json'));
-const feats = data.features;
-const NO_ISO = new Set(['CYN', 'SOL']); /* Northern Cyprus, Somaliland: no ISO 3166-1 code in Natural Earth */
+const data = JSON.parse(read('data/geo/world-countries-10m.json'));
+const feats = C.decode(data);
+const borders = JSON.parse(read('data/geo/world-borders-10m.json'));
+const states = JSON.parse(read('data/geo/world-states/index.json'));
+/* no ISO 3166-1 code in Natural Earth: the UK's bases on Cyprus, Guantanamo Bay, Bir Tawil, the Spratlys, Scarborough Reef */
+const NO_ISO = new Set(['ESB', 'WSB', 'USG', 'BRT', 'PGA', 'SCR']);
 
-test('the borders file says where it came from, its version and its licence, and stays small', () => {
-  assert.match(data.source, /Natural Earth 1:110m/);
-  assert.match(data.version, /v5\.1\.2/);
-  assert.match(data.licence, /Public domain/i);
-  assert.match(data.source_sha256, /^[0-9a-f]{64}$/);
-  assert.equal(data.generated_by, 'tools/build-world-countries.mjs');
-  assert.ok(existsSync(ROOT + 'tools/build-world-countries.mjs') && existsSync(ROOT + 'tools/build-flag-sprite.mjs'));
-  assert.ok(gzipSync(readFileSync(ROOT + 'data/geo/world-countries-110m.json')).length < 300 * 1024);
+test('the borders files say where they came from, their version and licence, and stay small', () => {
+  for (const d of [data, borders]) {
+    assert.match(d.source, /Natural Earth 1:10m/);
+    assert.match(d.source, /US point of view/);
+    assert.match(d.version, /v5\.1\.2.*ne_10m_admin_0_countries_usa/);
+    assert.match(d.licence, /Public domain/i);
+    assert.match(d.source_sha256, /^[0-9a-f]{64}$/);
+    assert.equal(d.generated_by, 'tools/build-world-countries.mjs');
+  }
+  assert.equal(states.generated_by, 'tools/build-world-states.mjs');
+  assert.ok(existsSync(ROOT + 'tools/build-world-countries.mjs') && existsSync(ROOT + 'tools/build-world-states.mjs') && existsSync(ROOT + 'tools/build-flag-sprite.mjs'));
+  /* the phone downloads these with the globe: the shapes, the land borders, and one country's states at a time */
+  assert.ok(gzipSync(readFileSync(ROOT + 'data/geo/world-countries-10m.json')).length < 160 * 1024);
+  assert.ok(gzipSync(readFileSync(ROOT + 'data/geo/world-borders-10m.json')).length < 40 * 1024);
+  for (const [cc, s] of Object.entries(states.countries)) assert.ok(gzipSync(readFileSync(ROOT + `data/geo/world-states/${cc}.json`)).length < 48 * 1024, cc);
+  assert.ok(!existsSync(ROOT + 'data/geo/world-countries-110m.json'), 'the 1:110m World borders are retired');
+});
+
+test('places land in the country they are in (the 1:110m borders put these in the wrong country or the sea)', () => {
+  const at = (lon, lat) => { const f = C.countryAt(feats, lon, lat); return f && (f.properties.a2 || f.properties.a3); };
+  for (const [name, lon, lat, cc] of [
+    ['Geneva', 6.14, 46.2, 'CH'], ['Windsor, Ontario', -83.03, 42.31, 'CA'], ['Ciudad Juárez', -106.45, 31.72, 'MX'],
+    ['Brazzaville', 15.28, -4.27, 'CG'], ['Kinshasa', 15.31, -4.33, 'CD'], ['Monaco', 7.42, 43.74, 'MC'], ['Andorra la Vella', 1.52, 42.51, 'AD'],
+    ['Singapore', 103.85, 1.29, 'SG'], ['Hong Kong', 114.17, 22.32, 'HK'], ['Isa Town, Bahrain', 50.548, 26.174, 'BH'], ['Valletta', 14.51, 35.9, 'MT'],
+    ['Port Louis', 57.5, -20.16, 'MU'], ['Bridgetown', -59.6, 13.1, 'BB'], ['New Haven', -72.93, 41.31, 'US'], ['Moscow', 37.62, 55.75, 'RU'],
+    /* the US point of view, as GDELT names these places */
+    ['Simferopol', 34.1, 44.95, 'UA'], ['Sevastopol', 33.52, 44.6, 'UA'], ['Laayoune', -13.2, 27.15, 'EH'], ['Hargeisa', 44.06, 9.56, 'SO'], ['North Nicosia', 33.36, 35.19, 'CY'],
+  ]) assert.equal(at(lon, lat), cc, name);
+});
+
+test('the land borders are lines two countries share; the states are lines inside one country', () => {
+  const pts = borders.lines.reduce((n, l) => n + l.length / 2, 0);
+  assert.ok(borders.lines.length > 300 && pts > 10000 && pts < 20000, `${borders.lines.length} lines, ${pts} points`);
+  for (const l of borders.lines) { const p = C.undelta(l); assert.ok(p.length >= 2); for (const [x, y] of p) assert.ok(Math.abs(x) <= 180 && Math.abs(y) <= 90); }
+  /* the US–Canada line along the 49th parallel is one of them */
+  assert.ok(borders.lines.some((l) => C.undelta(l).some(([x, y]) => x > -110 && x < -100 && Math.abs(y - 49) < 0.02)));
+  /* the states: where they are, so the globe asks only for the countries in view */
+  for (const cc of ['US', 'CA', 'MX', 'BR', 'IN', 'CN', 'RU', 'NG', 'DE', 'AU', 'UA']) assert.ok(states.countries[cc] && states.countries[cc].lines > 0, cc);
+  assert.ok(states.countries.US.bbox[0] < -120 && states.countries.US.bbox[2] > -72);
+  /* the well-known level: France's regions, not its departments; Britain's four nations, not its councils */
+  assert.ok(states.countries.FR.lines < 40 && states.countries.GB.lines <= 4, JSON.stringify([states.countries.FR, states.countries.GB]));
+  /* every state line stays inside its own country (a step off the line may cross a coast, so each point is checked for
+     being in the country or within a hair of its border) */
+  const us = JSON.parse(read('data/geo/world-states/US.json'));
+  assert.equal(us.c, 'US');
+  const inUS = C.undelta(us.lines[0]).filter(([x, y]) => { const f = C.countryAt(feats, x, y); return f && f.properties.a2 === 'US'; }).length;
+  assert.ok(inUS >= C.undelta(us.lines[0]).length - 2);
+  /* Crimea's line with Kherson is inside Ukraine on the US-view map */
+  const ua = JSON.parse(read('data/geo/world-states/UA.json'));
+  assert.ok(ua.lines.some((l) => C.undelta(l).some(([x, y]) => y > 45.9 && y < 46.3 && x > 33.4 && x < 35)), 'the Crimea–Kherson line');
+});
+
+test('the borders stay while the camera comes down; the states come in at a continent', () => {
+  assert.equal(C.lineTarget(2e7, 'auto'), 1);
+  assert.equal(C.lineTarget(2.6e6, 'auto'), 1, 'over a country, the borders are still drawn');
+  assert.equal(C.lineTarget(5e5, 'auto'), 0, 'the street map or aerial imagery takes over');
+  assert.equal(C.lineTarget(5e5, 'always'), 1);
+  assert.equal(C.lineTarget(2e7, 'off'), 0);
+  assert.equal(C.stateTarget(2e7, 'auto'), 0, 'a whole-Earth view is not a tangle of states');
+  assert.equal(C.stateTarget(4e6, 'auto'), 1);
+  const mid = C.stateTarget((C.STATES_FAR + C.STATES_NEAR) / 2, 'auto');
+  assert.ok(mid > 0 && mid < 1);
+  assert.equal(C.stateTarget(5e5, 'auto'), 0);
+  assert.equal(C.stateTarget(4e6, 'off'), 0);
 });
 
 test('every feature has a code, a name, a continent, a region and a real label point', () => {
-  assert.equal(feats.length, 177);
+  assert.equal(feats.length, 243);
   for (const f of feats) {
     const p = f.properties;
     assert.match(String(p.a3), /^[A-Z]{3}$/, p.name);
@@ -36,8 +96,10 @@ test('every feature has a code, a name, a continent, a region and a real label p
     assert.ok(Number.isFinite(lon) && Number.isFinite(lat) && Math.abs(lon) <= 180 && Math.abs(lat) <= 90, p.name);
     assert.ok(!(lon === 0 && lat === 0), p.name + ' label point is 0,0');
     assert.ok(['Polygon', 'MultiPolygon'].includes(f.geometry.type));
-    /* the label point is at the country (Natural Earth's points come from finer data: within half a degree of the 1:110m box) */
-    const b = p.bbox; assert.ok(lon >= b[0] - 0.5 && lon <= b[2] + 0.5 && lat >= b[1] - 0.5 && lat <= b[3] + 0.5, p.name);
+    /* the label point is at the country (within half a degree of its box; Natural Earth sets the two ocean territories'
+       a few degrees off their reefs) */
+    const b = p.bbox, k = p.continent === 'Seven seas (open ocean)' ? 6 : 0.5;
+    assert.ok(lon >= b[0] - k && lon <= b[2] + k && lat >= b[1] - k && lat <= b[3] + k, p.name);
   }
   assert.equal(new Set(feats.map((f) => f.properties.a3)).size, feats.length);
   assert.equal(new Set(feats.filter((f) => f.properties.a2).map((f) => f.properties.a2)).size, feats.filter((f) => f.properties.a2).length);
@@ -46,7 +108,7 @@ test('every feature has a code, a name, a continent, a region and a real label p
 test('the United States is there, with its main body apart from Alaska and Hawaii', () => {
   const us = feats.find((f) => f.properties.a2 === 'US').properties;
   assert.equal(us.a3, 'USA'); assert.equal(us.continent, 'North America'); assert.equal(us.flag, true);
-  assert.deepEqual(us.main_bbox, [-124.69, 25.08, -66.96, 49.39]);
+  assert.ok(Math.abs(us.main_bbox[0] + 124.7) < 0.1 && Math.abs(us.main_bbox[1] - 25.1) < 0.2 && Math.abs(us.main_bbox[2] + 66.95) < 0.1 && Math.abs(us.main_bbox[3] - 49.38) < 0.05, JSON.stringify(us.main_bbox));
   /* France and Norway, which plain ISO_A2 leaves as -99, carry their codes */
   assert.ok(feats.some((f) => f.properties.a2 === 'FR') && feats.some((f) => f.properties.a2 === 'NO'));
 });
@@ -54,7 +116,7 @@ test('the United States is there, with its main body apart from Alaska and Hawai
 test('a flag ships for every country shown with one, under its licence, and in the atlas', () => {
   const sprite = JSON.parse(read('assets/flags/flag-sprite-4x3.json'));
   const shown = feats.filter((f) => f.properties.flag).map((f) => f.properties.a2);
-  assert.equal(shown.length, 174);
+  assert.equal(shown.length, 174); /* the flags the atlas carries; the countries new at 1:10m have none yet */
   for (const a2 of shown) {
     assert.ok(statSync(ROOT + `assets/flags/4x3/${a2.toLowerCase()}.svg`).size > 0, a2);
     assert.ok(sprite.order.includes(a2), a2 + ' missing from the atlas');

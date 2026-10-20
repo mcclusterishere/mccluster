@@ -1334,6 +1334,14 @@
   }
 
   function renderFeed(append) {
+    state.shownNews = [];
+    try { return paintFeed(append); }
+    finally {
+      var ids = state.shownNews.map(function (n) { return n.id; }).join("|");
+      if (ids !== state.shownNewsKey) { state.shownNewsKey = ids; window.dispatchEvent(new CustomEvent("mcc:world-news-shown")); }
+    }
+  }
+  function paintFeed(append) {
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     paintMore();
@@ -1376,7 +1384,8 @@
     if (scope === "news") items = [];
     if (scope === "local" && !regionMode) {
       items = [];
-      news = place ? news.filter(function (n) { return placeInCountry(n.place, state.world.country || { name: place }); }) : [];
+      var picked = state.world.country || { name: place };
+      news = place ? news.filter(function (n) { return n.country_code && picked.code ? n.country_code === picked.code : placeInCountry(n.place, picked); }) : [];
     }
     if (!items.length && !news.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(
@@ -1387,6 +1396,7 @@
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
+    state.shownNews = news.slice();
     host.innerHTML = (regionMode ? placeLivesHtml() : "") + interleaveFeed(items, news).map(function (item) {
       if (item.news) {
         var card = newsCard(item), nkey = "news:" + item.id;
@@ -1482,9 +1492,15 @@
     var lat = Number(n.lat), lon = Number(n.lon), located = typeof n.lat === "number" && typeof n.lon === "number" && isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
     var domain = String(n.domain || "").trim();
     if (!domain) try { domain = new URL(url).hostname.replace(/^www\./, ""); } catch (e) {}
-    return { news: true, id: id, title: title, url: url, domain: domain.slice(0, 120), seen_at: String(n.seen_at || ""), place: n.place ? String(n.place).slice(0, 120) : "", lat: located ? lat : null, lon: located ? lon : null };
+    /* the country GDELT files the story under, as ISO 3166-1 (the Worker maps GDELT's FIPS codes; the browser never sees FIPS) */
+    var country = String(n.country || n.country_code || "").toUpperCase();
+    return { news: true, id: id, title: title, url: url, domain: domain.slice(0, 120), seen_at: String(n.seen_at || ""), place: n.place ? String(n.place).slice(0, 120) : "", lat: located ? lat : null, lon: located ? lon : null, country_code: /^[A-Z]{2}$/.test(country) ? country : "" };
   }
-  window.MCC_WORLD_NEWS_ITEMS = function () { return state.news.slice(); };
+  /* THE PINS ARE THE CARDS (owner, 2026-10-20: "not all pins are accurate to the map. I saw a post in Russia posted
+     somewhere else on the map"). The globe's news pins are the stories the feed is showing right now (a country's
+     stories when a country is picked, the search's when searching, none while a mission narrows the feed), never the
+     whole stream behind them; js/world-news-globe.js sends them on every render. */
+  window.MCC_WORLD_NEWS_ITEMS = function () { return (state.shownNews || []).slice(); };
   /* never rejects, nor throws (even building the address): { ok, items, next } for a page, { ok: false, status } for anything else */
   function fetchNews(before) {
     return Promise.resolve().then(function () {
@@ -1546,8 +1562,13 @@
     if (/^[A-Z]{2}$/.test(code)) {
       try { var name = new Intl.DisplayNames([navigator.language || "en"], { type: "region" }).of(code); if (name && name !== code) return name; } catch (e) {}
     }
-    var parts = String(n.place || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
-    return parts.length ? parts[parts.length - 1].slice(0, 60) : "";
+    /* GDELT's label: "City, Area, Country", with the gazetteer's own forms ("Bahamas, The", "Vietnam, Republic Of",
+       "Serbia (General)", "Pacific Ocean, Oceans"); the chip names the country, not "The" */
+    var parts = String(n.place || "").split(",").map(function (s) { return s.replace(/\s*\(general\)\s*$/i, "").trim(); }).filter(Boolean);
+    var tail = parts.pop() || "";
+    if (/^oceans?$/i.test(tail)) tail = parts[0] || "";
+    else if (/^(the|republic of|islamic republic of|federal republic of|people's republic of|democratic republic of)$/i.test(tail) && parts.length) tail = parts.pop();
+    return tail.slice(0, 60);
   }
   function newsCard(n) {
     var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>', from = newsCountry(n);
@@ -1597,7 +1618,8 @@
         if (state.world.focus) setWorldFocus(null);
         var caption = $("mnWorldCaption");
         if (caption) caption.textContent = label ? label + " \u00b7 mentioned in this story." : "A place this story mentions.";
-        tellWorld({ type: "hu:focus-place", lat: lat, lon: lon, label: label });
+        var card = b.closest("[data-news-id]");
+        tellWorld({ type: "hu:focus-place", lat: lat, lon: lon, label: label, id: card ? card.getAttribute("data-news-id") : "" });
         track("world_news_place", {});
       };
     });
