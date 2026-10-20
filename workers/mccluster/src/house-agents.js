@@ -2,6 +2,7 @@
 // System identities are not m_people, and drafts do not become network_posts.
 // Operator writes are house-owner only. Public reads are published-only.
 import { reply, fail } from './lib/http.js';
+import { compileCharacterBlueprint } from './character-studio.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const COUNTRY = /^[A-Z]{2}$/;
@@ -148,10 +149,34 @@ export async function handleHouseAgents(request, env, { requireHouseOwner } = {}
   const owner = await requireHouseOwner(request, env);
   const orgId = await houseOrg(env);
 
+
+  // Character Studio is the private authoring plane. Preview is side-effect
+  // free; save is one transactional RPC and always returns an inert draft.
+  if (path === '/v1/house-agents/owner/characters/preview' && request.method === 'POST') {
+    const blueprint = compileCharacterBlueprint(await checkedJson(request));
+    return noStore(reply(request, env, { blueprint, saved: false, published: false, model_called: false }));
+  }
+  if (path === '/v1/house-agents/owner/characters' && request.method === 'POST') {
+    const blueprint = compileCharacterBlueprint(await checkedJson(request));
+    const account = await db(env, 'rpc/house_character_create_draft_v1', {
+      method: 'POST',
+      body: JSON.stringify({ p_org_id: orgId, p_author_id: owner.id, p_blueprint: blueprint })
+    });
+    return noStore(reply(request, env, { character: account, saved: true, published: false, agent_running: false }, 201));
+  }
+  const revisions = path.match(/^\/v1\/house-agents\/owner\/characters\/([0-9a-f-]{36})\/revisions$/i);
+  if (revisions && request.method === 'GET') {
+    if (!UUID.test(revisions[1])) return fail(request, env, 'Invalid character ID');
+    const items = await db(env, 'house_character_revisions?org_id=eq.' + encodeURIComponent(orgId) +
+      '&account_id=eq.' + encodeURIComponent(revisions[1]) +
+      '&select=id,account_id,revision,compilation_version,blueprint,created_at&order=revision.desc&limit=25');
+    return noStore(reply(request, env, { revisions: items || [], scope: 'owner', published: false }));
+  }
+
   if (path === '/v1/house-agents/owner' && request.method === 'GET') {
     const accounts = await db(env,
       'house_system_accounts?org_id=eq.' + encodeURIComponent(orgId) +
-      '&select=id,character_id,handle,display_name,identity_kind,narrative_board,distribution_country,distribution_basis,region_key,region_provenance,editorial_mission,personality,canon_refs,disclosure,account_status,canon_approved,region_approved,rights_verified,external_publish_enabled,auto_reply_enabled,daily_draft_target,monthly_autospend_limit_cents,published_at,created_at,updated_at&order=handle.asc&limit=100'
+      '&select=id,character_id,handle,display_name,identity_kind,narrative_board,distribution_country,distribution_basis,region_key,region_provenance,editorial_mission,personality,agent_contract,canon_refs,disclosure,account_status,canon_approved,region_approved,rights_verified,external_publish_enabled,auto_reply_enabled,daily_draft_target,monthly_autospend_limit_cents,published_at,created_at,updated_at&order=handle.asc&limit=100'
     );
     return noStore(reply(request, env, { accounts: accounts || [], count: (accounts || []).length, scope: 'owner' }));
   }
