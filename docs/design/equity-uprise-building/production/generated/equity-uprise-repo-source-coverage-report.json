@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 497,
+  "candidate_count": 500,
   "capability_source_count": 104,
-  "support_only_count": 393,
-  "checks_total": 1886,
-  "checks_passed": 1886,
+  "support_only_count": 396,
+  "checks_total": 1898,
+  "checks_passed": 1898,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -209,6 +209,7 @@
     "hire.html",
     "identity-verify.html",
     "index.html",
+    "js/action-globe.js",
     "js/action.js",
     "js/analytics-product.js",
     "js/analytics-suite.js",
@@ -217,6 +218,8 @@
     "js/control-palette.js",
     "js/control-room-v2.js",
     "js/control-room/action-network.js",
+    "js/control-room/analytics-unified.js",
+    "js/control-room/analytics.js",
     "js/control-room/clipping.js",
     "js/control-room/identity-review.js",
     "js/control-room/instagram.js",
@@ -511,7 +514,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "497 entries"
+      "detail": "500 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4269,6 +4272,26 @@
       "detail": ""
     },
     {
+      "name": "js/action-globe.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/action-globe.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "js/action-globe.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/action-globe.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/action.js capability ids known",
       "passed": true,
       "detail": ""
@@ -4420,6 +4443,46 @@
     },
     {
       "name": "js/control-room/action-network.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/analytics-unified.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/analytics-unified.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "js/control-room/analytics-unified.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/analytics-unified.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/analytics.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/analytics.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "js/control-room/analytics.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/analytics.js support rationale present",
       "passed": true,
       "detail": ""
     },
