@@ -1,20 +1,20 @@
-# Human Uprise — the world is the feed
+# Equity Uprise — the world is the feed
 
-Owner direction, 2026-10-14: the Action Network is now **Human Uprise**, and
+Owner direction, 2026-10-20 supersedes the 2026-10-14 naming: the Action Network's public brand is now **Equity Uprise**, and
 its home is the globe. This file records what that means in the shipped code.
 It does not lift any release gate in `EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md`.
 
 ## Name
 
-- Public product name: **Human Uprise** (formerly the Uprise Action Network /
+- Public product name: **Equity Uprise** (formerly the Uprise Action Network /
   Action Network). The entity graph keeps both old names as `alternateName`
   and the stable `@id` (`mnet.html#uprise-action-network`) does not move.
-- Equity Uprise runs on Human Uprise as a program and remains its own
+- Equity Uprise's public-interest programs run on the Equity Uprise platform and remain
   McCluster Corp public-interest project. Per the owner’s 2026-10-14 copy
-  update, "A McCluster Corp program" sits under the Human Uprise wordmark.
+  update, "A McCluster Corp program" sits under the Equity Uprise wordmark.
   The profile form uses the equation "Hu=Up" and the heading "Profile".
   The owner-supplied Equity Uprise mark remains unchanged.
-- **There is no Human Uprise logo yet.** The header shows the name as text.
+- **Use only the owner-supplied Equity Uprise mark.** Text headers may use the Equity Uprise name.
   Do not draw one (AGENTS.md, "THE LOGOS ARE NOT YOURS TO DRAW"); ask the owner.
 - Unchanged on purpose, for compatibility: `mnet.html`, `/v1/mnet/*`,
   `action_*` tables and RPCs, `action-network-*.html` routes, analytics
@@ -86,7 +86,7 @@ same two:
 
 - **Material:** graphite and one red (the owner's later mockups): steel
   panels (`--w-steel`), dark glass pills with a faint red rim (`--w-rim`),
-  chrome type for HUMAN UPRISE (and only that, no WORLD line; the mark is
+  chrome type for EQUITY UPRISE (and only that, no WORLD line; the mark is
   the owner's to supply) with a red rule under it, the Earth in a bezel from
   600px with a "Global missions · n" corner tag, and an instrument scale
   down the frame's left edge (decoration only). No navy remains. The house
@@ -106,7 +106,7 @@ same two:
   public pins only and hide when their continent is round the back of the
   Earth. Floating controls: World (reset), Near me, zoom in/out, the layers
   cycle, and for a creator only, Your audience.
-- **Header:** HUMAN UPRISE set in type (no drawn mark), search,
+- **Header:** EQUITY UPRISE set in type (no drawn mark), search,
   bell (with the unread count) and avatar. The search is a bar in the header
   row at every width (the owner's iPhone mockup); on a phone a guest's row is
   wordmark, search and Sign in, with Join added from 600px. Search narrows the feed and the pins as you type and
@@ -878,7 +878,7 @@ page with its door to the World, `/album.html` → Matthew's site; the house
 root forwarding `?view=` to the World on its own origin (query and a carried
 fragment intact) while any other page with that query stays put; and the
 Globe tab tapped as a signed-in member on Matthew's site landing signed in
-on the company host. And on Human Uprise's host: the World
+on the company host. And on Equity Uprise's host: the World
 at its own root on an iPhone (this host's canonical and `og:url`, no
 `noindex`, the Earth's frame on the same host, the World's files through
 this host, `noindex` on the rooms and not on the front door, no sideways

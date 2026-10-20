@@ -1,4 +1,4 @@
-# Human Uprise: approved World and social interface
+# Equity Uprise: approved World and social interface
 
 **October 17 owner correction:** the logged-out World is travel first. Its
 controlling visual reference and default-content direction are now
@@ -73,7 +73,7 @@ and synthetic account/feed fixtures at 390×844, 844×390, 820×1180, 1180×820 
 1440×900, for guests and members. It checks overflow, stack/split composition,
 real navigation destinations, mission selection, search and feed filters.
 `site-navigation.e2e.mjs` separately covers the actual hosted-page profile and
-admin navigation. The Human Uprise responsive workflow preserves screenshots
+admin navigation. The Equity Uprise responsive workflow preserves screenshots
 and reports. These are browser emulations; physical-device Safari remains a
 release smoke check.
 
