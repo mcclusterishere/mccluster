@@ -69,6 +69,17 @@ LIVE_MISSIONS_ENABLED = "false"
 # supabase/pending/world_news_discussions_v1.sql exists.
 WORLD_NEWS_COMMENTS_ENABLED = "true"
 
+# The morning brief (src/news-briefs.js): each night after 00:20 New York time the
+# cron queues one Core local_analysis job per country for yesterday's headlines
+# (US first, then NEWS_BRIEF_COUNTRIES, region leaders' countries, and up to
+# NEWS_BRIEF_AUTO_MAX of the busiest others with at least NEWS_BRIEF_MIN_HEADLINES).
+# Off until this is "true". Reading and asking for a brief (brief.html) works for
+# the house owner either way.
+NEWS_BRIEFS_ENABLED = "true"
+NEWS_BRIEF_COUNTRIES = ""
+NEWS_BRIEF_AUTO_MAX = "10"
+NEWS_BRIEF_MIN_HEADLINES = "15"
+
 # Alerts on members' devices (src/web-push.js). Off until this is "true", the
 # pending SQL (supabase/pending/20261020150000_network_web_push.sql) is applied,
 # and these secrets are set, by name only: WEB_PUSH_VAPID_PUBLIC_KEY,
