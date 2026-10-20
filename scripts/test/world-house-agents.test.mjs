@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 const require=createRequire(import.meta.url);
-const H=require('../../../js/world-house-agents.js');
-const read=p=>readFileSync(new URL('../../../'+p,import.meta.url),'utf8');
+const H=require('../../js/world-house-agents.js');
+const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 const a=(id,country='US',region='US-CT')=>({
   actor_type:'fictional_system_account',
   account_id:id,
