@@ -158,7 +158,7 @@
   function mount(viewer, opts) {
     const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, states: new Map(), selectedStates: null };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, states: new Map(), selectedStates: null, selectGen: 0 };
     const scratchColor = new C.Color(), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), scratchRect = new C.Rectangle(), view = [0, 0, 0, 0];
     const INK = C.Color.fromCssColorString('#f4f1ea');
     /* the borders are the map: clear enough to read on the day and the night side, in the feed's small globe too */
@@ -210,13 +210,16 @@
     function select(f) {
       const code = f ? f.properties.a2 || f.properties.a3 : null;
       for (const k of ['highlight', 'outline', 'selectedStates']) if (st[k]) { viewer.scene.primitives.remove(st[k]); st[k] = null; }
+      if (!f) st.selectGen++;
       st.selected = f ? code : null;
       const n = paintCard(f);
       if (f) {
         st.highlight = viewer.scene.primitives.add(polygonPrimitive(f, C.Color.WHITE.withAlpha(0.16)));
         /* the chosen country's whole outline, its coast too, and its states whatever the height */
         st.outline = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: ringInstances(f, 'hu-country-selected', BORDER.width + 1, INK.withAlpha(0.95)), appearance: new C.PolylineColorAppearance({ translucent: true }), asynchronous: false }));
-        if (f.properties.a2) loadStates(f.properties.a2).then((lines) => { if (lines && st.selected === code) st.selectedStates = viewer.scene.primitives.add(linePrimitive(lines, STATE.width, selectedStateMat)); });
+        /* only the latest selection draws: a select() made again before the file arrives (refresh() re-applies one) leaves no stray lines */
+        const gen = ++st.selectGen;
+        if (f.properties.a2) loadStates(f.properties.a2).then((lines) => { if (lines && gen === st.selectGen && st.selected === code && !st.selectedStates) st.selectedStates = viewer.scene.primitives.add(linePrimitive(lines, STATE.width, selectedStateMat)); });
       }
       if (o.onSelect) o.onSelect(f ? { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0 } : null);
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();

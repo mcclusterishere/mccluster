@@ -217,6 +217,8 @@ test('a mission with no country code or region row is counted where its own pin 
 
 test('a country picked before the missions load is applied again when they arrive', () => {
   assert.match(read('js/world-countries.js'), /refresh: \(\) => \{ if \(st\.selected\) select\(/);
+  /* and selecting it again before its states arrive draws them once: only the latest selection's file is drawn */
+  assert.match(read('js/world-countries.js'), /const gen = \+\+st\.selectGen;[\s\S]{0,200}gen === st\.selectGen && st\.selected === code && !st\.selectedStates/);
   assert.match(read('js/action-globe.js'), /renderFeed\(\);if\(countries&&countries\.refresh\)countries\.refresh\(\);/);
 });
 
