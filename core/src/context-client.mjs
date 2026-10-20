@@ -2,6 +2,20 @@ const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const API_KEY = String(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '');
 const CONTEXT_TOKEN = String(process.env.MCCLUSTER_CONTEXT_TOKEN || '');
 
+export async function searchPrivateContext({ orgId, query, limit = 8, before = null } = {}) {
+  if (!SB || !CONTEXT_TOKEN) return { available: false, error: 'Private context reader is not configured', messages: [], memories: [], resident_messages: [] };
+  const response = await fetch(`${SB}/functions/v1/context-core`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-mccluster-context-token': CONTEXT_TOKEN, ...(API_KEY ? { apikey: API_KEY } : {}) },
+    body: JSON.stringify({ action: 'search', org_id: orgId, query: String(query || '').slice(0, 500), limit, before }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.error || `Private context search returned ${response.status}`);
+  if (!Array.isArray(data?.memories) || !Array.isArray(data?.resident_messages)) throw new Error('Private context search returned an invalid result');
+  return { ...data, available: true };
+}
+
 export async function fetchConversationContext({ orgId, conversationId, maxMessages = 40, maxChars = 96_000 } = {}) {
   if (!SB) throw new Error('SUPABASE_URL is required for private context reads');
   if (!CONTEXT_TOKEN) throw new Error('MCCLUSTER_CONTEXT_TOKEN is required for private context reads');
