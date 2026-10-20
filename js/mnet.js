@@ -15,6 +15,8 @@
     newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
+    placeScope: { enabled:false, country:null, home:null, posts:[], news:[], lives:[], postBefore:null, newsBefore:null,
+      loaded:false, error:'', seq:0, working:false },
     threadPost: null,
     currentView: "feed",
     mediaAssets: [],
@@ -471,7 +473,8 @@
     var line = { save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
       groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views.",
-      layers:"Sign in to see satellites and space missions on the Earth." }[why] || "Sign in to do that.";
+      layers:"Sign in to see satellites and space missions on the Earth.",
+      regions:"Sign in to explore posts, news and conversations in other regions." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
   }
@@ -789,7 +792,10 @@
       collaborationCardHtml(id) +
       trackCardHtml(item, post) +
       '</div>' +
-      (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
+      /* the country feed is public and carries no media ids: a guest is asked to sign in; a member loads the post itself */
+      (post.media_locked ? (state.guest
+        ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>'
+        : '<button class="mn__media-locked" type="button" data-unlock-media="' + esc(id) + '">Show ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>') : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
           /* A post keeps the familiar Comment, Share and Save actions; mission participation and funding still use their separate controlled routes. */
@@ -996,15 +1002,133 @@
     if (!name) return false;
     return [name].concat(aliases[name] || []).some(function (n) { return tail === n || tail.slice(-n.length - 2) === ", " + n; });
   }
+  /* The feature flag comes from the Worker. Country comes only from its
+     coarse Cloudflare edge signal; choosing a different country on the
+     globe overrides that default. Never auto-tag a member's posts. */
+  function placeName(code) {
+    try { return new Intl.DisplayNames([navigator.language || "en"],{type:"region"}).of(code) || code; }
+    catch (e) { return code; }
+  }
+  function paintPlaceOptIn() {
+    var widget = $("mnPostPlaceLabel"), check = $("mnPostPlaceOptIn"), country = state.world.country;
+    if (!widget) return;
+    var available = !!(state.placeScope.enabled && country && /^[A-Z]{2}$/.test(country.code||"") &&
+      $("mnVisibility") && $("mnVisibility").value === "public");
+    widget.hidden = !available;
+    var target = widget.querySelector("span");
+    if (target) target.textContent = available ? "Add this public post to " + (country.name || placeName(country.code)) + "'s local feed" : "";
+    if (!available && check) check.checked = false;
+  }
+  function ensurePlaceOptIn() {
+    if ($("mnPostPlaceLabel") || !$("mnComposer")) return;
+    var actions = $("mnComposer").querySelector(".mn__composer-actions");
+    if (!actions) return;
+    var label = document.createElement("label"), check = document.createElement("input"), txt = document.createElement("span");
+    label.id = "mnPostPlaceLabel"; label.className = "mn__place-optin"; label.hidden = true;
+    check.id = "mnPostPlaceOptIn"; check.type = "checkbox";
+    label.append(check,txt);
+    actions.parentNode.insertBefore(label,actions);
+    if ($("mnVisibility")) $("mnVisibility").addEventListener("change",paintPlaceOptIn);
+    paintPlaceOptIn();
+  }
+  function loadPlaceStatus() {
+    fetch("https://api.mccluster.org/v1/world/place-scope", { credentials:"omit", cache:"no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (status) {
+        if (!status || status.enabled !== true) return;
+        state.placeScope.enabled = true;
+        /* the country Cloudflare read from this connection: a signed-out visitor's region (owner, 2026-10-20) */
+        state.placeScope.home = typeof status.country === "string" && /^[A-Z]{2}$/.test(status.country) ? status.country : null;
+        ensurePlaceOptIn();
+        if (!state.world.country && typeof status.country === "string" && /^[A-Z]{2}$/.test(status.country)) {
+          var name = placeName(status.country);
+          state.world.country = { code:status.country, name:name };
+          if ($("huRegionLabel")) $("huRegionLabel").textContent = name;
+          setFeedScope("local"); // Country only; no GPS and no user-post location write.
+        } else if (state.feedScope === "local") loadPlaceFeed(true);
+        paintPlaceOptIn();
+        loadLivePlaces();
+        setInterval(function () { if (!document.hidden) loadLivePlaces(); }, 60000);
+      }).catch(function () { /* remain on the working Global feed */ });
+  }
+  /* broadcasts their hosts placed in a country mark it on the globe (js/action-globe.js), beside the audio conversations */
+  function loadLivePlaces() {
+    fetch("https://api.mccluster.org/v1/world/live-places", { credentials:"omit", cache:"no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (out) {
+        if (!out || !Array.isArray(out.places)) return;
+        state.placeScope.livePlaces = out.places;
+        tellWorld({ type: "hu:live-places", source: "video", places: out.places });
+      }).catch(function () {});
+  }
+  var GUEST_REGION_ASK = "Sign in to read another country's feed.";
+  function loadPlaceFeed(reset) {
+    var p = state.placeScope, c = state.world.country;
+    /* Clear prior country's contents synchronously; even a delayed old
+       response cannot reveal one country's feed beneath another heading. */
+    if (reset) {
+      p.seq++; p.country=c && c.code || null;
+      p.postBefore=null; p.newsBefore=null; p.posts=[]; p.news=[]; p.lives=[]; p.loaded=false; p.error="";
+    }
+    if (!p.enabled || !c || !/^[A-Z]{2}$/.test(c.code||"")) {
+      if (state.feedScope === "local") renderFeed(false);
+      return Promise.resolve();
+    }
+    if (!reset && !p.postBefore && !p.newsBefore) return Promise.resolve();
+    var seq = ++p.seq, url="https://api.mccluster.org/v1/world/region-feed?country=" +
+      encodeURIComponent(c.code) + "&limit=20";
+    if (!reset && p.postBefore) url += "&post_before=" + encodeURIComponent(p.postBefore);
+    else if (!reset) url += "&posts=0";
+    if (!reset && p.newsBefore) url += "&news_before=" + encodeURIComponent(p.newsBefore);
+    else if (!reset) url += "&news=0";
+    /* a signed-out visitor reads their own region only; the Worker holds the same rule (world-region-feed.js) */
+    if (state.guest && c.code !== p.home) {
+      p.working=false; p.loaded=true; p.error=GUEST_REGION_ASK;
+      if (state.feedScope === "local") renderFeed(false);
+      return Promise.resolve();
+    }
+    p.working=true; p.error="";
+    if (state.feedScope === "local") renderFeed(false);
+    /* a member's session rides along, so the Worker can tell a member who may travel from a visitor who may not */
+    var token = state.guest ? "" : sessionToken();
+    return fetch(url,{credentials:"omit",cache:"no-store",headers:token ? { authorization:"Bearer " + token } : {}}).then(function (r) {
+      if (r.status === 403) { var refused = new Error(GUEST_REGION_ASK); refused.signIn = true; throw refused; }
+      if (!r.ok) throw new Error("The country's feed is not available yet.");
+      return r.json();
+    }).then(function (data) {
+      if (seq !== p.seq || p.country !== c.code ||
+          !data || data.ok !== true || data.country !== c.code || data.available !== true)
+        return;
+      p.posts = reset ? (data.posts||[]) : p.posts.concat(data.posts||[]);
+      if (reset) p.lives = (data.lives||[]).filter(function (l) { return l && WORLD_ID.test(String(l.id||"")) && l.title; }).slice(0,6);
+      var incoming = (data.news||[]).map(cleanNews).filter(Boolean);
+      p.news = reset ? incoming : p.news.concat(incoming);
+      p.postBefore = data.next_post_before || null;
+      p.newsBefore = data.next_news_before || null;
+      p.loaded=true; p.error="";
+      if (state.feedScope === "local") renderFeed(false);
+      paintMore();
+    }).catch(function (error) {
+      if (seq !== p.seq) return;
+      p.error=error && error.signIn ? GUEST_REGION_ASK : "This country's feed is temporarily unavailable.";
+      p.loaded=true;
+      if (state.feedScope === "local") renderFeed(false);
+    }).finally(function () { if (seq === p.seq) p.working=false; });
+  }
   function paintFeedScope() {
     var scope = state.feedScope || "global";
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.feedScope === scope)); });
     var body = $("mnPostBody"), place = localPlace();
     if (body) body.placeholder = "Share a live moment from " + (place || "the world") + "\u2026";
+    paintPlaceOptIn();
   }
   function setFeedScope(scope) {
     state.feedScope = ["local", "global", "news"].indexOf(scope) >= 0 ? scope : "global";
-    paintFeedScope(); renderFeed(false); track("feed_scope", { scope: state.feedScope });
+    paintFeedScope();
+    if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
+    else renderFeed(false);
+    paintMore();
+    track("feed_scope", { scope: state.feedScope });
   }
   function feedMatches(item, query) {
     /* a news card answers to its headline, its publisher and the place it mentions */
@@ -1132,6 +1256,19 @@
       bindPostTaps(root);
       return;
     }
+    /* a Local post's media comes through the same authorized single-post read every post uses */
+    root.querySelectorAll("[data-unlock-media]").forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute("data-unlock-media"); b.disabled = true;
+        api("/v1/mnet/posts/" + encodeURIComponent(id)).then(function (one) {
+          if (!one || !one.post) throw new Error("This post is not available.");
+          var list = state.placeScope.posts || [];
+          for (var i = 0; i < list.length; i++) if ((list[i].post && list[i].post.id) === id || list[i].post_id === id)
+            list[i] = { item_type:"post", post_id:one.post.id, occurred_at:list[i].occurred_at || one.post.created_at, post:one.post, actor:one.actor || list[i].actor };
+          renderFeed(false);
+        }).catch(function (e) { b.disabled = false; setStatus($("mnFeedStatus"), e.message || "Could not open that post.", "error"); });
+      };
+    });
     root.querySelectorAll("[data-take-mission]").forEach(function (a) {
       a.onclick = function (e) {
         e.preventDefault();
@@ -1192,16 +1329,25 @@
     if (!append) host.innerHTML = "";
     paintMore();
     var focus = state.world.focus, query = state.world.query;
-    /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
+    var regionMode = state.feedScope === "local" && state.placeScope.enabled;
+    var items = regionMode ? state.placeScope.posts : state.feed;
+    /* World geography is a country-scoped server read when the feature is enabled. */
     var news = focus && focus.filter ? [] : state.news;
+    if (regionMode && !(focus && focus.filter)) news = state.placeScope.news;
     paintNewsCredit(false);
-    if (!state.feed.length && !news.length) {
+    if (!items.length && !news.length) {
+      if (regionMode) {
+        host.innerHTML=placeLivesHtml() + '<div class="mn__empty">' + esc(
+          state.placeScope.error || (!state.world.country ? "Tap a country on the globe." :
+          !state.placeScope.loaded ? "Loading local posts and news…" :
+          "No public post or news item is associated with this country yet.")) + '</div>';
+        bindPlaceLives(host); paintMore(); return;
+      }
       host.innerHTML = state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
-    var items = state.feed;
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
@@ -1219,7 +1365,7 @@
     }
     var scope = state.feedScope || "global", place = scope === "local" ? localPlace() : "";
     if (scope === "news") items = [];
-    if (scope === "local") {
+    if (scope === "local" && !regionMode) {
       items = [];
       news = place ? news.filter(function (n) { return placeInCountry(n.place, state.world.country || { name: place }); }) : [];
     }
@@ -1232,7 +1378,7 @@
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
-    host.innerHTML = interleaveFeed(items, news).map(function (item) {
+    host.innerHTML = (regionMode ? placeLivesHtml() : "") + interleaveFeed(items, news).map(function (item) {
       if (item.news) {
         var card = newsCard(item), nkey = "news:" + item.id;
         if (!seen[nkey]) {
@@ -1258,6 +1404,36 @@
     bindFeedActions(host);
     bindNewsActions(host);
     bindDiscussions(host);
+    bindPlaceLives(host);
+  }
+  /* LIVES OF THE PLACE (owner, 2026-10-19: "the news plus the posts and lives of that area"): broadcasts their host
+     placed in this country lead its feed. Watching a broadcast is for members, as everywhere else on Live. */
+  function placeLivesHtml() {
+    var list = state.placeScope.lives || [], c = state.world.country;
+    if (!list.length || !c) return "";
+    var where = c.name || placeName(c.code);
+    return '<section class="mn__place-lives" aria-label="Live in ' + esc(where) + '"><p class="mn__eyebrow">Live in ' + esc(where) + '</p>' +
+      '<div class="mn__place-lives-row">' + list.map(function (l) {
+        return '<button class="mn__place-live" type="button" data-place-live="' + esc(l.id) + '"><span class="mn__livehero-badge"><i aria-hidden="true"></i>Live</span>' +
+          '<b>' + esc(l.title) + '</b><span>' + esc((l.host && l.host.display_name) || "Host") + ' · ' + esc(timeAgo(l.started_at)) + '</span></button>';
+      }).join("") + '</div></section>';
+  }
+  function bindPlaceLives(host) {
+    host.querySelectorAll("[data-place-live]").forEach(function (b) {
+      b.onclick = function () {
+        if (state.guest) { askToSignIn("live"); return; }
+        if (!(window.MCC_LIVE && window.MCC_LIVE.openPlaced)) return;
+        Promise.resolve(window.MCC_LIVE.openPlaced(b.getAttribute("data-place-live"))).then(function (how) {
+          if (how === "open") return;
+          /* never a tap that silently does nothing */
+          var note = b.querySelector("[data-place-live-note]") || document.createElement("span");
+          note.setAttribute("data-place-live-note", ""); note.className = "mn__place-live-note";
+          note.textContent = how === "ended" ? "This broadcast has ended." : "This broadcast could not be opened. Try again.";
+          if (!note.parentNode) b.appendChild(note);
+          if (how === "ended") b.disabled = true;
+        });
+      };
+    });
   }
 
   /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
@@ -1384,13 +1560,20 @@
   /* Load more while either stream has another page (the news only counts while it is shown) */
   function paintMore() {
     var more = $("mnMore"), focus = state.world.focus;
-    if (more) more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
+    if (!more) return;
+    if (state.feedScope === "local" && state.placeScope.enabled) {
+      more.hidden = !(state.placeScope.postBefore || state.placeScope.newsBefore);
+      return;
+    }
+    more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
   }
   function bindNewsActions(root) {
     root.querySelectorAll("[data-news-open]").forEach(function (b) {
       b.onclick = function (e) {
         e.preventDefault(); e.stopPropagation();
-        var id = b.getAttribute("data-news-open"), story = state.news.find(function (n) { return n.id === id; });
+        var id = b.getAttribute("data-news-open"),
+          all = state.feedScope === "local" && state.placeScope.enabled ? state.placeScope.news : state.news,
+          story = all.find(function (n) { return n.id === id; });
         if (!story) return;
         if (window.MCC_WORLD_NEWS_READER && window.MCC_WORLD_NEWS_READER.open) window.MCC_WORLD_NEWS_READER.open(story, b);
         else setStatus($("mnFeedStatus"), "The in-app news reader is temporarily unavailable.", "error");
@@ -1533,7 +1716,11 @@
     setStatus($("mnPostStatus"), "Posting…");
     var draft = { body:body, visibility:$("mnVisibility").value, track:selectedTrack,
              media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }),
-             poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }) };
+             poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }),
+             /* Opt-in, never inferred from visitor IP or automatic globe scope. */
+             country_code:state.placeScope.enabled && $("mnPostPlaceOptIn") &&
+               $("mnPostPlaceOptIn").checked && $("mnVisibility").value === "public" &&
+               state.world.country ? state.world.country.code : undefined };
     if (news) draft.newsroom = true;
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
@@ -1543,6 +1730,8 @@
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
       if ($("mnNewsroom")) $("mnNewsroom").checked = false;
       clearMediaQueue();
+      if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
+      if (state.placeScope.enabled && state.feedScope === "local") loadPlaceFeed(true);
       var id = out && out.post && out.post.id;
       if (news && id && /^[0-9a-f-]{36}$/i.test(id)) {
         /* the article's own address; the newsroom sends it on to the headline's slug */
@@ -1567,9 +1756,11 @@
     }).finally(function () { button.disabled = false; });
   }
 
+  // a post can be on the main feed or on a country's Local feed: share, save and mission taps look in both
   function findPost(postId) {
-    for (var i=0; i<state.feed.length; i++) {
-      var item = state.feed[i];
+    var lists = [state.feed, state.placeScope.posts || []];
+    for (var l=0; l<lists.length; l++) for (var i=0; i<lists[l].length; i++) {
+      var item = lists[l][i];
       if ((item.post && item.post.id) === postId || item.post_id === postId) return item;
     }
     return null;
@@ -2328,7 +2519,10 @@
         .then(function () { $("mnAcceptConversation").hidden=true; $("mnMessageForm").hidden=false; setStatus($("mnConversationStatus"),"Accepted.","ok"); return loadConversations(); })
         .catch(function (e) { setStatus($("mnConversationStatus"),e.message||"Could not accept request.","error"); });
     };
-    $("mnMore").onclick = function () { loadFeed(false); };
+    $("mnMore").onclick = function () {
+      if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(false);
+      else loadFeed(false);
+    };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
     $("mnPushToggle").onclick = togglePush;
     wireMenu();
@@ -2338,8 +2532,9 @@
     $("mnSignedOutBack").onclick = function () { showGate("app"); setView("feed"); if (!state.feed.length) loadFeed(true); };
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
-    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { setFeedScope(b.dataset.feedScope); }; });
+    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { state.world.scopeFromTap = false; setFeedScope(b.dataset.feedScope); }; });
     paintFeedScope();
+    loadPlaceStatus();
     $("mnBell").onclick = function () { setView("notifications"); };
     $("mnComposerLive").onclick = function () { if (window.MCC_LIVE && MCC_LIVE.studio) MCC_LIVE.studio(); };
     $("mnProfileBlocked").onclick = function () { setView("discover"); loadBlocked(); };
@@ -2759,6 +2954,8 @@
   window.MCC_MNET = {
     markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
     api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
+    /* the live studio (js/mnet-live.js) offers to place a broadcast in the country on the globe, when the country feed is on */
+    placeForLive: function () { var c = state.world.country; return state.placeScope.enabled && c && /^[A-Z]{2}$/.test(c.code || "") ? { code: c.code, name: c.name || placeName(c.code) } : null; },
     identity: function () { return identity(); },
     /* the member desk (js/member-desk.js) reads the profile and opens the editor */
     profile: function () { return profile(); },
@@ -3648,6 +3845,7 @@
       if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
       var d = ev.data || {}, caption = $("mnWorldCaption");
       if (d.type === "hu:globe-ready") {
+        if (state.placeScope.livePlaces) tellWorld({ type: "hu:live-places", source: "video", places: state.placeScope.livePlaces });
         state.world.pins = {}; state.world.missions = {}; state.world.latest = null;
         (Array.isArray(d.missionIds) ? d.missionIds : []).forEach(function (id) { if (WORLD_ID.test(String(id))) state.world.pins[id] = true; });
         (Array.isArray(d.missions) ? d.missions : []).forEach(function (m) {
@@ -3684,10 +3882,29 @@
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
       } else if (d.type === "hu:country") {
+        /* A SIGNED-OUT VISITOR STAYS IN THEIR REGION (owner, 2026-10-20: "if they're logged out and their IP address
+           says somewhere, that's where they're gonna go … they can't region hop unless they're logged in"). Outside
+           Travel, another country asks them to sign in and the globe goes back home; letting go also goes home. */
+        var home = state.guest && state.placeScope.enabled ? state.placeScope.home : null,
+            tapped = d.country && typeof d.country.code === "string" ? d.country.code.toUpperCase() : null;
+        if (home && tapped !== home && !(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel")) {
+          if (tapped) askToSignIn("regions");
+          tellWorld({ type: "hu:select-country", code: home });
+          return;
+        }
         $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
         /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
         state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80) } : null;
-        paintFeedScope(); if (state.feedScope === "local") renderFeed(false);
+        if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
+        paintFeedScope();
+        /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
+           that country with no extra press; letting the country go returns the feed to Global, unless the member chose
+           Local themselves. In Travel a tap picks a destination and leaves the feed alone. */
+        var travelTap = !!(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel");
+        if (state.world.country && !travelTap && state.feedScope !== "local") { state.world.scopeFromTap = true; setFeedScope("local"); }
+        else if (!state.world.country && state.world.scopeFromTap) { state.world.scopeFromTap = false; setFeedScope("global"); }
+        else if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
+        else if (state.feedScope === "local") renderFeed(false);
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
       } else if (d.type === "hu:ask-sign-in") {

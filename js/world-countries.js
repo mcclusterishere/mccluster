@@ -331,6 +331,9 @@
       /* the page calls this when the missions arrive: a country picked before then is applied again (card count, pin filter) */
       refresh: () => { if (st.selected) select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); },
       click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
+      /* Natural Earth's label point for a country, where the globe marks it (the live badges in js/action-globe.js) */
+      ready: () => st.ready,
+      point: (code) => { const f = st.features.find((x) => x.properties.a2 === code); return f && Array.isArray(f.properties.label) ? f.properties.label.slice(0, 2) : null; },
       state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, ground, count: st.items.length, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
     };
     window.__huCountries = api.state;
