@@ -37,3 +37,19 @@
   .world-house-agents {padding:16px}
   .world-house-agents ul {grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
 }
+
+/* The actual Human Uprise World embeds this globe and intentionally hides
+   #deck. Use a visible, scrollable in-frame dossier there instead of
+   mounting into the hidden mission sheet. No new global navigation. */
+html.globe-surface-network .world-house-agents {
+  position:fixed;
+  z-index:30;
+  top:8px;
+  left:8px;
+  right:8px;
+  margin:0;
+  max-height:calc(100dvh - 16px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
