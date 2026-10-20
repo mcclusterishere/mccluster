@@ -1,0 +1,3933 @@
+{
+  "schema_version": "prim3.hitman.us-state-chapters.v0.1",
+  "status": "PROPOSED_OWNER_REVIEW_NOT_CANON",
+  "scope": "50 proposed fictional U.S. state Hitman chapter leaders and small crews; not live user accounts or geopolitical claims",
+  "generated_date": "2026-10-19",
+  "authority_dependencies": [
+    "CANON.md",
+    "story/IMMEDIATE-CAST-CANON.md",
+    "story/HITMAN-CHARACTER-DOSSIERS.md"
+  ],
+  "narrative_owner": "mcclusterishere/Prim3",
+  "platform_runtime_owner": "mcclusterishere/mccluster",
+  "default_region_release": "private_until_canon_and_rights_review",
+  "national_hierarchy": {
+    "sovereign": "Royce",
+    "existing_hitman_immediate_cast_count": 12,
+    "established_hitman_immediate_cast_role": "national story characters and specialist ensemble; do not force their locations into states",
+    "new_state_chapter_captains": 50,
+    "new_captains_status": "satellite_development_cast_not_39_immediate_recurring_cast",
+    "federal_district": "District of Columbia is national council location only, no 51st state captain",
+    "protagonist_exception": "McCluster is a PRIM-side Wildcard, NOT assigned as a Hitman state leader"
+  },
+  "political_reference": {
+    "fixed_election": "2024 U.S. presidential statewide results",
+    "source_url": "https://www.archives.gov/electoral-college/2024",
+    "red_state_count": 31,
+    "blue_state_count": 19,
+    "definition": "Statewide presidential election winner; not gubernatorial or legislative party control",
+    "maine_nebraska": "Classified by statewide winner despite split district electoral votes",
+    "disclaimer": "The red/blue fiction mapping is a storytelling convention, NOT a factual statement linking real political parties, voters, states or demographic groups to crime."
+  },
+  "chapter_structure": {
+    "red": "More mature organized fictional syndicates: legacy charter councils, inherited rank and long-standing compacts",
+    "blue": "Still-developing fictional street coalitions: younger neighborhood crews, fluid coalitions and cultural influence",
+    "contested": "States with competitive election histories may include rival factions and unstable succession; fiction only",
+    "crews": "Each state leader commands a 4–7-person fictional ensemble, including themselves. Supporting slots are templates, not added named recurring canon characters.",
+    "rivalries": "Curated, fictional interstate narrative tension; no real criminal network or street operation implied"
+  },
+  "global_prohibitions": [
+    "No claims of real criminal affiliation",
+    "No real politicians as fictional gang members",
+    "No invented live account metrics, followers or endorsements",
+    "No active Core agent runner or social publisher",
+    "No GPS or person-residency inference",
+    "No leaked PRIM3 endgame spoilers",
+    "No crime instructions"
+  ],
+  "chapters": [
+    {
+      "state_code": "AL",
+      "state_name": "Alabama",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-al-yara-bain",
+      "leader": {
+        "name": "Yara Bain",
+        "alias": "Ledger",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "measured, stubborn, quietly intimidating",
+        "inner_conflict": "power inherited versus earned",
+        "story_mission": "keep a legacy family council together while younger heirs demand elections",
+        "editorial_mission": "Produce fictional drama about power inherited versus earned in Alabama.",
+        "series": "The Family Vote",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-al",
+        "name": "Iron Orchard",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "MS"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-AL",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 32.739579,
+          "longitude": -86.843447,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.al.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-al",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "AK",
+      "state_name": "Alaska",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ak-elias-sato",
+      "leader": {
+        "name": "Elias Sato",
+        "alias": "Northline",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "patient, distant, exact about promises",
+        "inner_conflict": "autonomy versus protection",
+        "story_mission": "keep an isolated chapter from becoming a disposable outpost of national command",
+        "editorial_mission": "Produce fictional drama about autonomy versus protection in Alaska.",
+        "series": "Last Outpost",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ak",
+        "name": "Northern Ledger",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "HI"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-AK",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 63.347356,
+          "longitude": -152.839733,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ak.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ak",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "AZ",
+      "state_name": "Arizona",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "highly_contested_internal_coalitions"
+      },
+      "character_id": "hitman-az-dario-solis",
+      "leader": {
+        "name": "Dario Solis",
+        "alias": "Dust",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "restless, charismatic, calculating",
+        "inner_conflict": "loyalty across competing charters",
+        "story_mission": "keep rival houses from dividing a contested state charter",
+        "editorial_mission": "Produce fictional drama about loyalty across competing charters in Arizona.",
+        "series": "Borderline Authority",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-az",
+        "name": "Sunline Council",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NM"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-AZ",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 34.203936,
+          "longitude": -111.606345,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.az.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-az",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "AR",
+      "state_name": "Arkansas",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ar-august-holt",
+      "leader": {
+        "name": "August Holt",
+        "alias": "Pine",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "ritualistic, loyal, resistant to change",
+        "inner_conflict": "family tradition versus new leadership",
+        "story_mission": "negotiate an inheritance dispute between two founding crews",
+        "editorial_mission": "Produce fictional drama about family tradition versus new leadership in Arkansas.",
+        "series": "The Old Oath",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ar",
+        "name": "Pine Table",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "OK"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-AR",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 34.895526,
+          "longitude": -92.444626,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ar.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ar",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "CA",
+      "state_name": "California",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ca-nia-reyes",
+      "leader": {
+        "name": "Nia Reyes",
+        "alias": "Voltage",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "improvisational, bold, culture-first",
+        "inner_conflict": "independence versus a common voice",
+        "story_mission": "unite competing creative street crews without turning into a dictator",
+        "editorial_mission": "Produce fictional drama about independence versus a common voice in California.",
+        "series": "Afterlight Sessions",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ca",
+        "name": "Afterlight Blocks",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NV"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-CA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 37.155177,
+          "longitude": -119.543418,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ca.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ca",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "CO",
+      "state_name": "Colorado",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-co-keenan-price",
+      "leader": {
+        "name": "Keenan Price",
+        "alias": "Altitude",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "idealistic, quick, bad at compromise",
+        "inner_conflict": "freedom versus coordination",
+        "story_mission": "build a temporary peace between city collectives while legacy chapters demand structure",
+        "editorial_mission": "Produce fictional drama about freedom versus coordination in Colorado.",
+        "series": "Higher Ground",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-co",
+        "name": "Front Range Assembly",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "WY"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-CO",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.993767,
+          "longitude": -105.508712,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.co.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-co",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "CT",
+      "state_name": "Connecticut",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ct-talia-brooks",
+      "leader": {
+        "name": "Talia Brooks",
+        "alias": "Transit",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "witty, observant, fiercely local",
+        "inner_conflict": "small-state loyalty versus outside influence",
+        "story_mission": "keep an emerging Connecticut scene independent of a larger neighboring chapter",
+        "editorial_mission": "Produce fictional drama about small-state loyalty versus outside influence in Connecticut.",
+        "series": "The Soundline",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ct",
+        "name": "Soundline Crew",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NY"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-CT",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 41.579864,
+          "longitude": -72.746657,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ct.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ct",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "DE",
+      "state_name": "Delaware",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-de-imani-parks",
+      "leader": {
+        "name": "Imani Parks",
+        "alias": "Bridge",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "diplomatic, strategic, underestimated",
+        "inner_conflict": "survival without selling out",
+        "story_mission": "balance a small street coalition against larger neighboring power centers",
+        "editorial_mission": "Produce fictional drama about survival without selling out in Delaware.",
+        "series": "Small State Big Moves",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-de",
+        "name": "First State Circle",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "MD"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-DE",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.998566,
+          "longitude": -75.441644,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.de.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-de",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "FL",
+      "state_name": "Florida",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-fl-mateo-vega",
+      "leader": {
+        "name": "Mateo Vega",
+        "alias": "Palm",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "smooth, ambitious, image-conscious",
+        "inner_conflict": "public glamour versus private obligations",
+        "story_mission": "hold together a polished legacy commission after a disputed succession",
+        "editorial_mission": "Produce fictional drama about public glamour versus private obligations in Florida.",
+        "series": "The Sunward Table",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-fl",
+        "name": "Sunward Families",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "GA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-FL",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 28.398978,
+          "longitude": -82.5143,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.fl.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-fl",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "GA",
+      "state_name": "Georgia",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "highly_contested_internal_coalitions"
+      },
+      "character_id": "hitman-ga-zuri-ellis",
+      "leader": {
+        "name": "Zuri Ellis",
+        "alias": "Crown",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "persuasive, impatient, sharper than her patrons expect",
+        "inner_conflict": "generational authority versus inherited rank",
+        "story_mission": "challenge a legacy board that excludes its younger leaders",
+        "editorial_mission": "Produce fictional drama about generational authority versus inherited rank in Georgia.",
+        "series": "The Crown Session",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ga",
+        "name": "Peachtree Table",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "FL"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-GA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 32.629579,
+          "longitude": -83.423511,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ga.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ga",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "HI",
+      "state_name": "Hawaii",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-hi-leilani-kamaka",
+      "leader": {
+        "name": "Leilani Kamaka",
+        "alias": "Tide",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "calm, inventive, fiercely protective of her crew",
+        "inner_conflict": "belonging versus national reach",
+        "story_mission": "defend a self-governing island creative scene from distant national demands",
+        "editorial_mission": "Produce fictional drama about belonging versus national reach in Hawaii.",
+        "series": "Tidehouse Stories",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-hi",
+        "name": "Tidehouse Collective",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "AK"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-HI",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 19.828167,
+          "longitude": -155.495042,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.hi.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-hi",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "ID",
+      "state_name": "Idaho",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-id-mara-bell",
+      "leader": {
+        "name": "Mara Bell",
+        "alias": "Sawtooth",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "disciplined, skeptical, proud",
+        "inner_conflict": "control versus adaptation",
+        "story_mission": "enforce an old mountain charter as new western alliances challenge it",
+        "editorial_mission": "Produce fictional drama about control versus adaptation in Idaho.",
+        "series": "The Charter Line",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-id",
+        "name": "Sawtooth Council",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "WA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-ID",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.348422,
+          "longitude": -114.558854,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.id.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-id",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "IL",
+      "state_name": "Illinois",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-il-darnell-monroe",
+      "leader": {
+        "name": "Darnell Monroe",
+        "alias": "Relay",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "quick-witted, socially connected, stubborn",
+        "inner_conflict": "fame versus solidarity",
+        "story_mission": "broker cooperation among competing artistic neighborhood factions",
+        "editorial_mission": "Produce fictional drama about fame versus solidarity in Illinois.",
+        "series": "Relay City",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-il",
+        "name": "Lakefront Assembly",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "IN"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-IL",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.102875,
+          "longitude": -89.152611,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.il.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-il",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "IN",
+      "state_name": "Indiana",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-in-adrian-cross",
+      "leader": {
+        "name": "Adrian Cross",
+        "alias": "Foundry",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "methodical, rigid, secretly sentimental",
+        "inner_conflict": "discipline versus relevance",
+        "story_mission": "defend an inherited syndicate's rules as nearby street crews ignore old boundaries",
+        "editorial_mission": "Produce fictional drama about discipline versus relevance in Indiana.",
+        "series": "Crossroads Ledger",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-in",
+        "name": "Crossroads Union",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "IL"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-IN",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 39.901314,
+          "longitude": -86.291913,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.in.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-in",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "IA",
+      "state_name": "Iowa",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ia-june-mercer",
+      "leader": {
+        "name": "June Mercer",
+        "alias": "Grain",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "plainspoken, diplomatic, ruthless at negotiation",
+        "inner_conflict": "obligation versus merit",
+        "story_mission": "resolve a family leadership challenge before the old council fractures",
+        "editorial_mission": "Produce fictional drama about obligation versus merit in Iowa.",
+        "series": "The Prairie Compact",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ia",
+        "name": "Prairie Compact",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NE"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-IA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.070023,
+          "longitude": -93.493349,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ia.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ia",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "KS",
+      "state_name": "Kansas",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ks-micah-cole",
+      "leader": {
+        "name": "Micah Cole",
+        "alias": "Flint",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "disciplined, outwardly friendly, competitive",
+        "inner_conflict": "prestige versus partnership",
+        "story_mission": "hold a border commission together under rivalry with Missouri",
+        "editorial_mission": "Produce fictional drama about prestige versus partnership in Kansas.",
+        "series": "Flint and Steel",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ks",
+        "name": "Flint Council",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "MO"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-KS",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.498546,
+          "longitude": -98.38343,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ks.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ks",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "KY",
+      "state_name": "Kentucky",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ky-laurel-hayes",
+      "leader": {
+        "name": "Laurel Hayes",
+        "alias": "Bluegrass",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "elegant, blunt, ambitious",
+        "inner_conflict": "legitimacy versus inheritance",
+        "story_mission": "earn an inherited chair despite a council that doubts her authority",
+        "editorial_mission": "Produce fictional drama about legitimacy versus inheritance in Kentucky.",
+        "series": "The Derby Vote",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ky",
+        "name": "Derby Table",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "TN"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-KY",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 37.533684,
+          "longitude": -85.29298,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ky.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ky",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "LA",
+      "state_name": "Louisiana",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-la-simone-duvall",
+      "leader": {
+        "name": "Simone Duvall",
+        "alias": "Bayou",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "theatrical, tradition-minded, privately compassionate",
+        "inner_conflict": "heritage versus reinvention",
+        "story_mission": "stop a legacy organization's competing heirs from destroying its community ties",
+        "editorial_mission": "Produce fictional drama about heritage versus reinvention in Louisiana.",
+        "series": "Concord Sessions",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-la",
+        "name": "Bayou Concord",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "MS"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-LA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 30.708319,
+          "longitude": -91.604621,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.la.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-la",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "ME",
+      "state_name": "Maine",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-me-rowan-vale",
+      "leader": {
+        "name": "Rowan Vale",
+        "alias": "Harbor",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "dry, independent, loyal to outsiders",
+        "inner_conflict": "independence versus community",
+        "story_mission": "keep disconnected coastal crews together against rival northern coalitions",
+        "editorial_mission": "Produce fictional drama about independence versus community in Maine.",
+        "series": "Harbor Radio",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-me",
+        "name": "Downeast Bloc",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NH"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-ME",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 45.409284,
+          "longitude": -68.666616,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.me.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-me",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "MD",
+      "state_name": "Maryland",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-md-ayana-scott",
+      "leader": {
+        "name": "Ayana Scott",
+        "alias": "Mariner",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "analytical, empathetic, politically adept",
+        "inner_conflict": "compromise versus identity",
+        "story_mission": "unite smaller street crews without being absorbed by neighboring power brokers",
+        "editorial_mission": "Produce fictional drama about compromise versus identity in Maryland.",
+        "series": "Chesapeake Stories",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-md",
+        "name": "Chesapeake Circle",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "DE"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-MD",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.946658,
+          "longitude": -76.674494,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.md.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-md",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "MA",
+      "state_name": "Massachusetts",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ma-dominic-bellini",
+      "leader": {
+        "name": "Dominic Bellini",
+        "alias": "Beacon",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "intellectual, competitive, loyal",
+        "inner_conflict": "local history versus reinvention",
+        "story_mission": "build an emerging coalition across old cultural rivalries",
+        "editorial_mission": "Produce fictional drama about local history versus reinvention in Massachusetts.",
+        "series": "The Beacon Debate",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ma",
+        "name": "Beacon Block Union",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "RI"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-MA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.15652,
+          "longitude": -71.489592,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ma.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ma",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "MI",
+      "state_name": "Michigan",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "highly_contested_internal_coalitions"
+      },
+      "character_id": "hitman-mi-jalen-pierce",
+      "leader": {
+        "name": "Jalen Pierce",
+        "alias": "Motor",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "direct, industrious, slow to forgive",
+        "inner_conflict": "legacy versus reform",
+        "story_mission": "modernize a powerful industrial syndicate after a contested charter vote",
+        "editorial_mission": "Produce fictional drama about legacy versus reform in Michigan.",
+        "series": "Motor City Oath",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-mi",
+        "name": "Motor Compact",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "OH"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-MI",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.844177,
+          "longitude": -85.660491,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.mi.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-mi",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "MN",
+      "state_name": "Minnesota",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-mn-celeste-wynn",
+      "leader": {
+        "name": "Celeste Wynn",
+        "alias": "Northstar",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "soft-spoken, principled, fiercely persistent",
+        "inner_conflict": "solidarity versus ambition",
+        "story_mission": "keep music and community factions allied when neighboring councils pressure them",
+        "editorial_mission": "Produce fictional drama about solidarity versus ambition in Minnesota.",
+        "series": "Northstar Nights",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-mn",
+        "name": "Northstar Assembly",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "WI"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-MN",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 46.315957,
+          "longitude": -94.199604,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.mn.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-mn",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "MS",
+      "state_name": "Mississippi",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ms-clarence-knox",
+      "leader": {
+        "name": "Clarence Knox",
+        "alias": "Delta",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "grave, traditional, protective",
+        "inner_conflict": "loyalty versus accountability",
+        "story_mission": "settle a council succession dispute without sacrificing longstanding friendships",
+        "editorial_mission": "Produce fictional drama about loyalty versus accountability in Mississippi.",
+        "series": "The Delta Oath",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ms",
+        "name": "Delta Circle",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "AL",
+        "LA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-MS",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 32.686471,
+          "longitude": -89.656138,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ms.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ms",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "MO",
+      "state_name": "Missouri",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-mo-fletcher-king",
+      "leader": {
+        "name": "Fletcher King",
+        "alias": "Arch",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "charming, proprietary, quick to distrust",
+        "inner_conflict": "history versus earned influence",
+        "story_mission": "defend a legacy gateway council from a rival charter across the border",
+        "editorial_mission": "Produce fictional drama about history versus earned influence in Missouri.",
+        "series": "Under the Arch",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-mo",
+        "name": "Gateway Charter",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "KS"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-MO",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.350751,
+          "longitude": -92.456782,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.mo.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-mo",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "MT",
+      "state_name": "Montana",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-mt-sage-reid",
+      "leader": {
+        "name": "Sage Reid",
+        "alias": "Copper",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "self-reliant, taciturn, deliberate",
+        "inner_conflict": "independence versus shared governance",
+        "story_mission": "arbitrate conflicting old-family agreements across the mountain region",
+        "editorial_mission": "Produce fictional drama about independence versus shared governance in Montana.",
+        "series": "Big Sky Rules",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-mt",
+        "name": "Big Sky Trust",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "WY"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-MT",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 47.051177,
+          "longitude": -109.634817,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.mt.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-mt",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "NE",
+      "state_name": "Nebraska",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ne-owen-rivera",
+      "leader": {
+        "name": "Owen Rivera",
+        "alias": "Plains",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "careful, pragmatic, burdened by expectations",
+        "inner_conflict": "stability versus change",
+        "story_mission": "hold an old chapter seat as the next generation questions its succession process",
+        "editorial_mission": "Produce fictional drama about stability versus change in Nebraska.",
+        "series": "Seat at the Table",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ne",
+        "name": "Prairie Seat",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "IA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-NE",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 41.543305,
+          "longitude": -99.811864,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ne.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ne",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "NV",
+      "state_name": "Nevada",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "highly_contested_internal_coalitions"
+      },
+      "character_id": "hitman-nv-nadia-torres",
+      "leader": {
+        "name": "Nadia Torres",
+        "alias": "Neon",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "brilliant, flashy, relentlessly strategic",
+        "inner_conflict": "spectacle versus institutional survival",
+        "story_mission": "keep a mature entertainment-world commission intact against emerging cultural rivals",
+        "editorial_mission": "Produce fictional drama about spectacle versus institutional survival in Nevada.",
+        "series": "Neon After Dark",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-nv",
+        "name": "Neon Commission",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "CA",
+        "UT"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-NV",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 39.331093,
+          "longitude": -116.615147,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.nv.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-nv",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "NH",
+      "state_name": "New Hampshire",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-nh-blake-foster",
+      "leader": {
+        "name": "Blake Foster",
+        "alias": "Granite",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "stubborn, sardonic, allergic to orders",
+        "inner_conflict": "freedom versus unity",
+        "story_mission": "form alliances without accepting a permanent street-level ruler",
+        "editorial_mission": "Produce fictional drama about freedom versus unity in New Hampshire.",
+        "series": "No Permanent Chair",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-nh",
+        "name": "Granite Free Crew",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "ME",
+        "VT"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-NH",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 43.672794,
+          "longitude": -71.584189,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.nh.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-nh",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "NJ",
+      "state_name": "New Jersey",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-nj-serena-deluca",
+      "leader": {
+        "name": "Serena DeLuca",
+        "alias": "Exit",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "fast-talking, protective, competitive",
+        "inner_conflict": "local voice versus outside dominance",
+        "story_mission": "maintain an independent street coalition caught between two powerful neighboring states",
+        "editorial_mission": "Produce fictional drama about local voice versus outside dominance in New Jersey.",
+        "series": "Take the Exit",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-nj",
+        "name": "Turnpike Circle",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NY",
+        "PA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-NJ",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.107274,
+          "longitude": -74.665201,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.nj.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-nj",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "NM",
+      "state_name": "New Mexico",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-nm-ximena-chavez",
+      "leader": {
+        "name": "Ximena Chavez",
+        "alias": "Mesa",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "creative, skeptical, quietly fierce",
+        "inner_conflict": "identity versus consolidation",
+        "story_mission": "connect grassroots culture crews as rival legacy charters claim regional authority",
+        "editorial_mission": "Produce fictional drama about identity versus consolidation in New Mexico.",
+        "series": "Mesa Frequency",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-nm",
+        "name": "Mesa Bloc",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "AZ",
+        "TX"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-NM",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 34.434684,
+          "longitude": -106.131618,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.nm.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-nm",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "NY",
+      "state_name": "New York",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ny-malik-carter",
+      "leader": {
+        "name": "Malik Carter",
+        "alias": "Five",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "magnetic, impatient, overextended",
+        "inner_conflict": "unity versus local sovereignty",
+        "story_mission": "convince fiercely independent borough collectives to speak with one voice",
+        "editorial_mission": "Produce fictional drama about unity versus local sovereignty in New York.",
+        "series": "Five Borough Stories",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ny",
+        "name": "Five Borough Exchange",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "CT",
+        "NJ"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-NY",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.913397,
+          "longitude": -75.596272,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ny.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ny",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "NC",
+      "state_name": "North Carolina",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "highly_contested_internal_coalitions"
+      },
+      "character_id": "hitman-nc-andre-moore",
+      "leader": {
+        "name": "Andre Moore",
+        "alias": "Queen",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "coolheaded, hierarchical, proud",
+        "inner_conflict": "continuity versus ambition",
+        "story_mission": "hold a developed council together as neighboring border coalitions challenge its legitimacy",
+        "editorial_mission": "Produce fictional drama about continuity versus ambition in North Carolina.",
+        "series": "Assembly Sessions",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-nc",
+        "name": "Carolina Assembly",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "SC",
+        "VA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-NC",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 35.53971,
+          "longitude": -79.130864,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.nc.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-nc",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "ND",
+      "state_name": "North Dakota",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-nd-ingrid-voss",
+      "leader": {
+        "name": "Ingrid Voss",
+        "alias": "Frost",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "stoic, precise, reluctant to delegate",
+        "inner_conflict": "continuity versus isolation",
+        "story_mission": "defend an old regional compact against a disputed cross-state inheritance",
+        "editorial_mission": "Produce fictional drama about continuity versus isolation in North Dakota.",
+        "series": "Frost Line",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-nd",
+        "name": "Northern Compact",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "SD"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-ND",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 47.442174,
+          "longitude": -100.460826,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.nd.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-nd",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "OH",
+      "state_name": "Ohio",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-oh-quentin-shaw",
+      "leader": {
+        "name": "Quentin Shaw",
+        "alias": "River",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "formal, watchful, quietly inventive",
+        "inner_conflict": "authority versus renewal",
+        "story_mission": "reform an industrial leadership commission without losing its oldest families",
+        "editorial_mission": "Produce fictional drama about authority versus renewal in Ohio.",
+        "series": "The Directorate",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-oh",
+        "name": "Buckeye Directorate",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "MI"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-OH",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.41493,
+          "longitude": -82.711997,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.oh.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-oh",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "OK",
+      "state_name": "Oklahoma",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ok-silas-dunn",
+      "leader": {
+        "name": "Silas Dunn",
+        "alias": "Crosswind",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "stubborn, genial, suspicious of novelty",
+        "inner_conflict": "loyalty versus openness",
+        "story_mission": "keep a regional legacy oath intact while its neighbors demand concessions",
+        "editorial_mission": "Produce fictional drama about loyalty versus openness in Oklahoma.",
+        "series": "Crosswind Council",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ok",
+        "name": "Red Earth Council",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "AR"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-OK",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 35.590081,
+          "longitude": -97.486779,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ok.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ok",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "OR",
+      "state_name": "Oregon",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-or-cass-morgan",
+      "leader": {
+        "name": "Cass Morgan",
+        "alias": "Rain",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "irreverent, collaborative, difficult to pin down",
+        "inner_conflict": "anti-hierarchy versus leadership",
+        "story_mission": "unite independent street-art circles without copying entrenched hierarchies",
+        "editorial_mission": "Produce fictional drama about anti-hierarchy versus leadership in Oregon.",
+        "series": "Cascade Commons",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-or",
+        "name": "Cascade Block Union",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "WA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-OR",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 43.971712,
+          "longitude": -120.622958,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.or.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-or",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "PA",
+      "state_name": "Pennsylvania",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "highly_contested_internal_coalitions"
+      },
+      "character_id": "hitman-pa-elias-ward",
+      "leader": {
+        "name": "Elias Ward",
+        "alias": "Keystone",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "urbane, stern, obsessed with precedent",
+        "inner_conflict": "power versus legitimacy",
+        "story_mission": "preserve a major legacy commission during a fight over interstate influence",
+        "editorial_mission": "Produce fictional drama about power versus legitimacy in Pennsylvania.",
+        "series": "Keystone Hearings",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-pa",
+        "name": "Keystone Commission",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NJ"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-PA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.904604,
+          "longitude": -77.827523,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.pa.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-pa",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "RI",
+      "state_name": "Rhode Island",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ri-gianna-russo",
+      "leader": {
+        "name": "Gianna Russo",
+        "alias": "Anchor",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "competitive, funny, strategic",
+        "inner_conflict": "small-crew self-determination",
+        "story_mission": "prevent a small cultural crew from being quietly swallowed by its neighbor",
+        "editorial_mission": "Produce fictional drama about small-crew self-determination in Rhode Island.",
+        "series": "Anchor Down",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ri",
+        "name": "Ocean State Bloc",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "MA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-RI",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 41.596485,
+          "longitude": -71.52649,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ri.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ri",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "SC",
+      "state_name": "South Carolina",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-sc-bennett-clay",
+      "leader": {
+        "name": "Bennett Clay",
+        "alias": "Palmetto",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "formal, charming, deeply conservative about protocol",
+        "inner_conflict": "ritual versus reform",
+        "story_mission": "defend a long-established regional charter during a dispute with North Carolina",
+        "editorial_mission": "Produce fictional drama about ritual versus reform in South Carolina.",
+        "series": "Palmetto Protocol",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-sc",
+        "name": "Palmetto Families",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NC"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-SC",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 33.874178,
+          "longitude": -80.854264,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.sc.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-sc",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "SD",
+      "state_name": "South Dakota",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-sd-petra-hall",
+      "leader": {
+        "name": "Petra Hall",
+        "alias": "Badlands",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "laconic, observant, principled in unexpected ways",
+        "inner_conflict": "duty versus autonomy",
+        "story_mission": "keep a regional inheritance agreement from unraveling after a leadership absence",
+        "editorial_mission": "Produce fictional drama about duty versus autonomy in South Dakota.",
+        "series": "Badlands Minutes",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-sd",
+        "name": "Badlands Charter",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "ND"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-SD",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.446796,
+          "longitude": -100.238176,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.sd.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-sd",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "TN",
+      "state_name": "Tennessee",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-tn-marisol-price",
+      "leader": {
+        "name": "Marisol Price",
+        "alias": "Vinyl",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "sophisticated, artistic, commanding",
+        "inner_conflict": "artistry versus power",
+        "story_mission": "keep a longstanding music-world commission from losing its creative legitimacy",
+        "editorial_mission": "Produce fictional drama about artistry versus power in Tennessee.",
+        "series": "The Vinyl Council",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-tn",
+        "name": "Music Row Table",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "KY"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-TN",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 35.85846,
+          "longitude": -86.349634,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.tn.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-tn",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "TX",
+      "state_name": "Texas",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-tx-solomon-vega",
+      "leader": {
+        "name": "Solomon Vega",
+        "alias": "Lone Star",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "confident, imposing, practiced at compromise",
+        "inner_conflict": "centralization versus local houses",
+        "story_mission": "prevent competing powerful houses from dividing the biggest regional commission",
+        "editorial_mission": "Produce fictional drama about centralization versus local houses in Texas.",
+        "series": "The Lone Star Seat",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-tx",
+        "name": "Lone Star Board",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NM"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-TX",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 31.434703,
+          "longitude": -99.281824,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.tx.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-tx",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "UT",
+      "state_name": "Utah",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-ut-noelle-park",
+      "leader": {
+        "name": "Noelle Park",
+        "alias": "Summit",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "reserved, disciplined, protective of old obligations",
+        "inner_conflict": "duty versus personal freedom",
+        "story_mission": "find a successor willing to defend the charter without repeating its mistakes",
+        "editorial_mission": "Produce fictional drama about duty versus personal freedom in Utah.",
+        "series": "Summit Charter",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-ut",
+        "name": "Wasatch Trust",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NV"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-UT",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 39.334993,
+          "longitude": -111.656333,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.ut.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-ut",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "VT",
+      "state_name": "Vermont",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-vt-eira-reed",
+      "leader": {
+        "name": "Eira Reed",
+        "alias": "Maple",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "wry, cooperative, anti-authoritarian",
+        "inner_conflict": "community versus control",
+        "story_mission": "protect small independent crews from a neighboring coalition's centralizing plans",
+        "editorial_mission": "Produce fictional drama about community versus control in Vermont.",
+        "series": "Maple Street Radio",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-vt",
+        "name": "Green Mountain Crew",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NH"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-VT",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.058954,
+          "longitude": -72.671017,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.vt.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-vt",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "VA",
+      "state_name": "Virginia",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-va-theo-grant",
+      "leader": {
+        "name": "Theo Grant",
+        "alias": "Commonwealth",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "measured, persuasive, perpetually mediating",
+        "inner_conflict": "negotiation versus belonging",
+        "story_mission": "bridge separate street crews while rival legacy systems demand allegiance",
+        "editorial_mission": "Produce fictional drama about negotiation versus belonging in Virginia.",
+        "series": "Commonwealth Lines",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-va",
+        "name": "Tidewater Coalition",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "NC",
+        "WV"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-VA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 37.522251,
+          "longitude": -78.668194,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.va.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-va",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "WA",
+      "state_name": "Washington",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "blue",
+        "winner_party": "Democratic",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "emerging_street_coalition",
+        "governing_body": "local_crew_assembly",
+        "development": "emerging_fragmented",
+        "succession": "negotiated_coalitions_and_challenger_votes",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-wa-hana-kim",
+      "leader": {
+        "name": "Hana Kim",
+        "alias": "Raincheck",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "creative, precise, distrustful of hierarchy",
+        "inner_conflict": "innovation versus loyalty",
+        "story_mission": "keep a media-and-tech-driven coalition independent of inherited western councils",
+        "editorial_mission": "Produce fictional drama about innovation versus loyalty in Washington.",
+        "series": "Raincheck Sessions",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-wa",
+        "name": "Puget Sound Crew",
+        "proposed_total_people": 6,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "ID",
+        "OR"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-WA",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 47.407324,
+          "longitude": -120.5758,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.wa.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-wa",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "WV",
+      "state_name": "West Virginia",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-wv-gideon-flynn",
+      "leader": {
+        "name": "Gideon Flynn",
+        "alias": "Ridge",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "guarded, loyal, burdened by family history",
+        "inner_conflict": "survival versus tradition",
+        "story_mission": "decide whether to join a neighboring coalition or protect an old pact",
+        "editorial_mission": "Produce fictional drama about survival versus tradition in West Virginia.",
+        "series": "Ridge Council",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-wv",
+        "name": "Coalridge Compact",
+        "proposed_total_people": 7,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison",
+          "specialist",
+          "protege"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "VA"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-WV",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.647285,
+          "longitude": -80.618327,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.wv.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-wv",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "WI",
+      "state_name": "Wisconsin",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "highly_contested_internal_coalitions"
+      },
+      "character_id": "hitman-wi-nora-brennan",
+      "leader": {
+        "name": "Nora Brennan",
+        "alias": "Lakes",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "calm, calculating, deeply competitive",
+        "inner_conflict": "compromise versus control",
+        "story_mission": "hold a disputed industrial-lakes commission while cross-border coalitions test it",
+        "editorial_mission": "Produce fictional drama about compromise versus control in Wisconsin.",
+        "series": "Lakeside Ledger",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-wi",
+        "name": "Lakeside Commission",
+        "proposed_total_people": 4,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "MN"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-WI",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.630907,
+          "longitude": -89.709392,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.wi.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-wi",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    },
+    {
+      "state_code": "WY",
+      "state_name": "Wyoming",
+      "electoral_reference": {
+        "election": "2024 US presidential statewide winner",
+        "color": "red",
+        "winner_party": "Republican",
+        "source": "https://www.archives.gov/electoral-college/2024"
+      },
+      "fictional_political_structure": {
+        "form": "established_legacy_syndicate",
+        "governing_body": "legacy_council",
+        "development": "entrenched_developed",
+        "succession": "formal_council_succession_and_family_obligations",
+        "faction_tension": "local"
+      },
+      "character_id": "hitman-wy-calvin-boone",
+      "leader": {
+        "name": "Calvin Boone",
+        "alias": "Range",
+        "function": "leader_of_state_hitman_chapter",
+        "personality": "stoic, territorial, ceremonial",
+        "inner_conflict": "order versus legitimacy",
+        "story_mission": "preserve an old regional charter as mountain alliances move around it",
+        "editorial_mission": "Produce fictional drama about order versus legitimacy in Wyoming.",
+        "series": "Open Range Charter",
+        "voice_identity": "PENDING_VOICE_ART_DIRECTION"
+      },
+      "crew": {
+        "id": "hitman-us-wy",
+        "name": "High Plains Family",
+        "proposed_total_people": 5,
+        "slots": [
+          "regional_leader",
+          "deputy",
+          "story_producer",
+          "crew_operations",
+          "community_liaison"
+        ],
+        "leadership_status": "PROPOSED"
+      },
+      "rival_state_codes": [
+        "CO",
+        "MT"
+      ],
+      "story_geography": {
+        "country": "US",
+        "region_key": "US-WY",
+        "classification": "fictional_chapter_jurisdiction_not_residence",
+        "locality": null,
+        "city": null,
+        "public_pin_approved": false,
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.989659,
+          "longitude": -107.544392,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
+      },
+      "system_account": {
+        "handle": "hitman.wy.leader",
+        "identity_kind": "fictional_character",
+        "status": "proposed_not_provisioned",
+        "published": false,
+        "verified_human": false,
+        "agent_id": "house-agent:hitman-us-wy",
+        "agent_status": "specified_not_running",
+        "autonomous_spend_cents": 0,
+        "scheduled_publishing": false,
+        "auto_reply": false,
+        "requires_owner_review": true,
+        "disclosure": "Fictional PRIM3 Hitman story character, produced with AI tools by McCluster; not an independent human account."
+      },
+      "canon_status": "PROPOSED_NOT_LOCKED",
+      "release_status": "OWNER_ONLY_STORY_DEVELOPMENT"
+    }
+  ]
+}
