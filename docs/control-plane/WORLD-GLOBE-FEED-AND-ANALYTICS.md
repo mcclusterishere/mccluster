@@ -381,11 +381,14 @@ first, as for every core route).
      `js/analytics.js`; a test pins all three) and a parseable
      `privacy_acknowledged_at`. Where it lives: the join flow writes both
      fields at sign-up (`js/action.js`). Production on 2026-10-15: 110 auth
-     users, 33 with the current version on record. The site-entry gate
-     (`js/live-content.js`, `mcc_privacy_ack`) is browser storage the Worker
-     cannot read, so the other members record theirs with one tap on the
-     CCTV lock ("I agree to the Privacy Policy"), which writes the same two
-     fields to their own record with their own session (`PUT
+     users, 33 with the current version on record. The site-entry notice
+     (`js/live-content.js`, `mcc_privacy_ack`) is browser storage and a
+     cookie the Worker does not read, so on its own it does not count here.
+     Agreeing to that notice while signed in also writes the same two fields
+     to the member's record (owner, 2026-10-20: the notice is shown once per
+     version, on any McCluster host); the other members record theirs with
+     one tap on the CCTV lock ("I agree to the Privacy Policy"), which writes
+     the same two fields to their own record with their own session (`PUT
      /auth/v1/user`). `privacy.html` already discloses the automatic
      IP-derived country/region/city and that precise device location is read
      only when the browser permission is granted. The separate
