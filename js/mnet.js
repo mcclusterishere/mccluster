@@ -566,7 +566,15 @@
      (401) is let go: the member is a guest, with one card to sign in again. Anything else (the network, a server
      error, a session that could not be checked) keeps the session and shows the Earth and the public posts, with a
      card to try again or to sign in again. Posting, joining and the member rooms wait on the card. */
+  /* A PAGE ON ITS WAY OUT (a reload, a link) cancels what it was still reading. That is not a failure to show: nothing is
+     painted over a page that is leaving (owner, 2026-10-20: no flashes; the house owner's World reloads once to open with
+     all three modes, js/world-owner-modes.js). A leave that is called off clears itself. */
+  var leaving = false, leavingTimer = 0;
+  window.addEventListener("beforeunload", function () { leaving = true; clearTimeout(leavingTimer); leavingTimer = setTimeout(function () { leaving = false; }, 3000); });
+  window.addEventListener("pagehide", function () { leaving = true; });
+  window.addEventListener("pageshow", function () { leaving = false; });
   function showSignedInLoadError(error) {
+    if (leaving) return Promise.resolve(null);
     try { console.warn("[mnet] signed-in bootstrap failed", error); } catch (e) {}
     if (error && error.status === 401) return letSessionGo();
     state.stall = "retry";
@@ -2659,6 +2667,7 @@
   }
   function enterSession() {
     MCC.user().then(function (user) {
+      if (leaving) return;
       state.user = user;
       if (!user) {
         var existing = MCC.session && MCC.session();
@@ -2674,6 +2683,7 @@
         });
       });
     }).catch(function (error) {
+      if (leaving) return;
       var existing = MCC.session && MCC.session();
       if (existing && existing.access_token) showSignedInLoadError(error);
       else enterGuestWorld();
