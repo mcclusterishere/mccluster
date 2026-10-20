@@ -3,43 +3,82 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#07090f">
+  <meta name="theme-color" content="#050b14">
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex, nofollow">
   <base href="../../">
   <!-- Developer-local Helix lab: production deployment removes the whole _unfinished directory. -->
   <title>Helix · McCluster Music</title>
-  <meta name="description" content="Explore McCluster music through interactive 3D album DNA. Select a vial, enter a strand, and touch a song to listen.">
-  
+  <meta name="description" content="Explore McCluster music through an interactive 3D song genome, sonic brain and immersive music player.">
   <link rel="icon" href="assets/img/m-mark.png" type="image/png">
   <link rel="stylesheet" href="_unfinished/helix/helix.css">
 </head>
 <body>
   <main id="helixApp" class="helix-app" data-view="library">
-    <canvas id="helixCanvas" tabindex="0" aria-label="Interactive 3D music helix. Use left and right arrows for albums, up and down for tracks, Enter to select and Escape to move back."></canvas>
+    <!-- ONE continuous procedural helix behind all three zones. Its central viewing window has no DOM obstruction. -->
+    <canvas id="helixCanvas" tabindex="0" aria-label="Interactive 3D music helix. Left and right change albums, up and down change tracks, Enter selects and Escape moves back."></canvas>
     <div class="helix-vignette" aria-hidden="true"></div>
+
     <header class="helix-top">
       <a class="helix-exit" href="listen.html" aria-label="Back to Music">← <span>Music</span></a>
       <span class="helix-wordmark">McCluster <strong>HELIX</strong></span>
       <span class="helix-level" id="helixLevel">ALBUM DNA</span>
     </header>
-    <div class="helix-identification">
-      <p class="helix-eyebrow" id="helixEyebrow">SELECT A SPECIMEN</p>
-      <h1 id="helixAlbum">Your music, encoded.</h1>
-      <p class="helix-artist" id="helixArtist">McCluster Music</p>
-    </div>
-    <div class="helix-lower">
+
+    <!-- Top 30%: the 3D brain is rendered by the same scene, with data overlays. It is NOT an EEG reading. -->
+    <section class="helix-brain" id="helixBrain" aria-label="Song brain and audio analysis">
+      <p class="helix-brain__title">BRAIN <span>//</span> SONIC PROFILE</p>
+      <div class="helix-brain__readings">
+        <div class="helix-brain__metric"><span>BPM</span><strong id="helixBpm">—</strong></div>
+        <div class="helix-brain__metric"><span>KEY</span><strong id="helixKey">—</strong></div>
+        <div class="helix-brain__metric"><span>SIGNATURE</span><strong id="helixSignature">—</strong></div>
+      </div>
+      <p class="helix-brain__source" id="helixBrainSource">Verified audio analysis will appear here when available.</p>
+    </section>
+
+    <!-- Middle 30%, including an unobstructed 20% sightline. Song titles are actual 3D crossbar labels. -->
+    <div class="helix-spine-window" aria-hidden="true"></div>
+
+    <!-- Bottom 40%: a translucent information/player console, never a second audio element. -->
+    <section class="helix-player" id="helixPlayer" aria-label="Music player and selected song details">
+      <div class="helix-identification">
+        <img class="helix-art" id="helixArt" alt="" hidden>
+        <div class="helix-identification__copy">
+          <p class="helix-eyebrow" id="helixEyebrow">SELECT A SPECIMEN</p>
+          <h1 id="helixAlbum">Your music, encoded.</h1>
+          <p class="helix-artist" id="helixArtist">McCluster Music</p>
+        </div>
+      </div>
       <section class="helix-song" id="helixSong" aria-label="Selected track" hidden>
         <span class="helix-counter" id="helixCounter"></span>
         <h2 id="helixSongName"></h2>
         <p id="helixPlayback" class="helix-playback"></p>
       </section>
-      <section class="helix-lyrics" id="helixLyrics" aria-label="Song lyrics" hidden>
-        <p class="helix-lyrics__heading">WORDS INSIDE THE STRAND</p>
+      <div class="helix-transport">
+        <label for="helixSeek" class="helix-visually-hidden">Seek within selected song</label>
+        <input id="helixSeek" class="helix-seek" type="range" min="0" max="1000" value="0" disabled>
+        <div class="helix-times" aria-hidden="true"><span id="helixCurrent">0:00</span><span id="helixDuration">—:—</span></div>
+        <div class="helix-controls">
+          <button id="helixPrevious" type="button" aria-label="Previous track">⏮</button>
+          <button class="helix-controls__play" id="helixPlay" type="button" aria-label="Select or play track"><span id="helixPlayLabel">Select song</span></button>
+          <button id="helixNext" type="button" aria-label="Next track">⏭</button>
+        </div>
+      </div>
+      <div class="helix-player-tabs" role="group" aria-label="Song information">
+        <button type="button" class="is-selected" id="helixLyricsTab" aria-controls="helixLyrics" aria-pressed="true">LYRICS</button>
+        <button type="button" id="helixDetailsTab" aria-controls="helixDetails" aria-pressed="false">SONG DATA</button>
+      </div>
+      <section class="helix-lyrics" id="helixLyrics" aria-label="Lyrics" hidden>
         <p class="helix-lyrics__text" id="helixLyricText"></p>
       </section>
+      <section class="helix-details" id="helixDetails" aria-label="Track information" hidden>
+        <div><span>ALBUM</span><strong id="helixDetailAlbum">—</strong></div>
+        <div><span>TRACK</span><strong id="helixDetailTrack">—</strong></div>
+        <p id="helixDetailProvenance">Audio characteristics only appear after approved measurement. The strand's decorative waveform is not measured audio.</p>
+      </section>
       <p class="helix-help" id="helixHelp">Swipe sideways to change albums · Tap a vial to enter</p>
-    </div>
+    </section>
+
     <p class="helix-notice" id="helixNotice" role="status" aria-live="polite">Encoding the library…</p>
     <section class="helix-fallback" id="helixFallback" aria-label="Music library fallback" hidden>
       <h2>Music is still here.</h2>
@@ -49,11 +88,10 @@
     <nav class="helix-accessible" id="helixAccessible" aria-label="Keyboard and screen reader music controls"></nav>
   </main>
   <!-- Internal lab never loads analytics, account tokens, or signed-master entitlements.
-       Music Engine still plays canonical public masters and previews. -->
+       The sole canonical Music Engine plays accessible audio and public previews. -->
   <script src="js/music-engine.js"></script>
   <script type="module" src="_unfinished/helix/main.mjs"></script>
   <script>
-    // A blocked ES module or an unsupported graphics device must not strand a listener.
     window.addEventListener("error", function (event) {
       if (window.MCC_HELIX_READY || !event.target || event.target.tagName !== "SCRIPT") return;
       const fallback = document.getElementById("helixFallback");
