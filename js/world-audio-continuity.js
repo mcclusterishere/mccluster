@@ -170,24 +170,100 @@
     ["play", "pause", "ended", "volumechange", "loadedmetadata", "error"].forEach(function (name) {
       audio.addEventListener(name, function () {
         if (name === "play" || name === "pause" || name === "ended") lyricTick(audio);
-        if (name === "play" && theme && audio !== theme.audio) theme.audio.pause();
+        if (name === "play" && theme && audio !== theme.audio && !theme.audio.paused) { pauseBy = "other_music"; theme.audio.pause(); }
         if (name === "play" && typeof preference.muted === "boolean" && audio.muted !== preference.muted) audio.muted = preference.muted;
         if (name === "volumechange") { preference.muted = audio.muted; savePreference(); }
         paint();
       });
     });
   }
+  /* THE WORLD'S SONG IS A RANDOM ONE (owner, 2026-10-20: "randomize and select songs … see which songs get paused,
+     which songs the volume gets lowered on … it needs to be all songs mixed up"). The first tap on the World plays a
+     song drawn at random from every public song in data/albums.json, Heal the 3rd World among them, and another random
+     one follows when it ends. What the listener does once it starts is recorded as anonymous events, and only after
+     the privacy acknowledgement (js/analytics.js defines MCC_TRACK then): start, pause, resume, mute, unmute, a volume
+     change, the end, the tab going to the background and leaving the page, each with the song and the seconds. A
+     phone's own volume buttons are invisible to a web page, so a lowered volume is seen only when it is lowered here. */
+  var FALLBACK_SONG = {title:"Heal the 3rd World", src:"assets/audio/heal-the-3rd-world.m4a", slug:"heal-the-3rd-world", album:"heal-the-3"};
+  var rotation = null, rotationLoad = null, song = null, songOrd = 0, songStarted = 0, songBegun = false, pauseBy = "", soundWas = null;
+  function loadRotation() {
+    if (rotationLoad) return rotationLoad;
+    rotationLoad = fetch(ROOT + "data/albums.json", {credentials:"omit"}).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      var list = [];
+      (d && Array.isArray(d.albums) ? d.albums : []).forEach(function (a) {
+        (a && Array.isArray(a.tracks) ? a.tracks : []).forEach(function (t) {
+          var src = t && typeof t.src === "string" ? t.src : "";
+          // public catalog files only: never a gated master, a preview or anything off the house's audio folder
+          if (!t || t.gated || /preview/i.test(src) || !/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(src)) return;
+          list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60)});
+        });
+      });
+      rotation = list.length ? list : [FALLBACK_SONG];
+      return rotation;
+    }).catch(function () { rotation = [FALLBACK_SONG]; return rotation; });
+    return rotationLoad;
+  }
+  function pickSong() {
+    var list = rotation && rotation.length ? rotation : [FALLBACK_SONG], next = list[0];
+    for (var i = 0; i < 8 && list.length > 1; i++) { next = list[Math.floor(Math.random() * list.length)]; if (!song || next.src !== song.src) break; }
+    return next;
+  }
+  // The theme is made when the page opens, before the catalog arrives, so its first song is the fallback. Once the
+  // catalog is in, an unplayed song is drawn again from all of them (Heal the 3rd World one choice among the rest).
+  function rollUnplayed() {
+    if (!theme || songBegun || !theme.audio.paused || !rotation || rotation.length < 2) return;
+    var next = rotation[Math.floor(Math.random() * rotation.length)];
+    if (next.src === song.src) return;
+    song = Object.assign({}, next, {pick:"random", pool:rotation.length}); theme.title = song.title; theme.audio.src = ROOT + song.src; paint();
+  }
+  function songEvent(name, extra) {
+    if (!song || typeof root.MCC_TRACK !== "function") return;
+    var a = theme && theme.audio;
+    try {
+      root.MCC_TRACK(name, Object.assign({page:"world", song:song.slug, album:song.album, ord:songOrd, pick:song.pick, pool:song.pool, at_s:a ? Math.round(a.currentTime || 0) : 0,
+        after_s:songStarted ? Math.round((Date.now() - songStarted) / 1000) : 0}, extra || {}));
+    } catch (_) {}
+  }
+  // how the song was chosen is kept with it, so every event about one listen says the same thing
+  function loadSong(next) {
+    song = Object.assign({}, next, {pick:rotation ? "random" : "fallback", pool:rotation ? rotation.length : 1}); songOrd++; songBegun = false; songStarted = 0;
+    theme.title = song.title; theme.audio.src = ROOT + song.src;
+  }
+  function reactions(audio) {
+    audio.addEventListener("play", function () {
+      if (!songBegun) { songBegun = true; songStarted = Date.now(); songEvent("song_start", {trigger:songOrd === 1 ? "first_tap" : "next"}); }
+      else songEvent("song_resume");
+    });
+    audio.addEventListener("pause", function () {
+      if (audio.ended) return;
+      songEvent("song_pause", {by:pauseBy || "player"}); pauseBy = "";
+    });
+    audio.addEventListener("ended", function () {
+      songEvent("song_end");
+      loadSong(pickSong());
+      try { var p = audio.play(); if (p && p.catch) p.catch(paint); } catch (_) {}
+      paint();
+    });
+    audio.addEventListener("volumechange", function () {
+      var was = soundWas || {muted:false, volume:1}; soundWas = {muted:audio.muted, volume:audio.volume};
+      if (audio.muted !== was.muted) songEvent(audio.muted ? "song_mute" : "song_unmute");
+      else if (Math.abs(audio.volume - was.volume) >= 0.05) songEvent("song_volume", {from:Math.round(was.volume * 100), to:Math.round(audio.volume * 100)});
+    });
+    doc.addEventListener("visibilitychange", function () {
+      if (doc.visibilityState === "hidden" && songBegun && !audio.paused) songEvent("song_hidden");
+    });
+    root.addEventListener("pagehide", function () { if (songBegun) songEvent("song_leave", {playing:!audio.paused && !audio.ended}); });
+  }
   function ensureTheme() {
     if (theme) return theme;
-    var audio = new Audio(); audio.preload = "metadata"; audio.loop = true;
+    var audio = new Audio(); audio.preload = "metadata"; audio.loop = false;
     audio.setAttribute("playsinline", "");
-    // This is the existing public catalog source (data/albums.json, heal-the-3),
-    // prepared before any play gesture. It is not a gated master or signed URL.
-    audio.src = ROOT + "assets/audio/heal-the-3rd-world.m4a";
-    audio.muted = preference.muted === true;
-    theme = {audio:audio, title:"Heal the 3rd World", access:"full",
+    audio.muted = preference.muted === true; soundWas = {muted:audio.muted, volume:audio.volume};
+    theme = {audio:audio, title:"", access:"full",
       play:function () { return audio.play(); }, pause:function () { audio.pause(); }};
-    watch(audio);
+    // the source is set synchronously; rollUnplayed redraws it from the whole catalog once that arrives
+    loadSong(pickSong());
+    watch(audio); reactions(audio);
     return theme;
   }
   function playTheme() {
@@ -204,7 +280,7 @@
   }
   function pause() {
     var p = player(); if (!p) return;
-    if (p === theme) { preference.paused = true; savePreference(); }
+    if (p === theme) { preference.paused = true; savePreference(); pauseBy = "button"; }
     p.pause(); paint();
   }
   function toggle() {
@@ -449,12 +525,13 @@
     }, {capture:true, passive:true});
     return;
   }
-  root.MCC_WORLD_AUDIO = {navigate:navigate, leaveFrame:leaveFrame, touch:touch, active:function () {return open;}};
+  root.MCC_WORLD_AUDIO = {navigate:navigate, leaveFrame:leaveFrame, touch:touch, active:function () {return open;},
+    song:function () { return song ? {slug:song.slug, title:song.title, ord:songOrd, pick:song.pick, pool:rotation ? rotation.length : 0} : null; }};
   if (musicSurface()) {
-    ensureTheme(); // metadata only; no automatic playback on Music.
+    ensureTheme(); loadRotation().then(rollUnplayed); // metadata only; no automatic playback on Music.
     watch(root.MCC_MUSIC && root.MCC_MUSIC.audio); watch(doc.getElementById("deck"));
   }
-  if (IS_WORLD && root.parent === root) { ensureTheme(); ensureControls(); bindCluster(); paint(); }
+  if (IS_WORLD && root.parent === root) { ensureTheme(); loadRotation().then(rollUnplayed); ensureControls(); bindCluster(); paint(); }
   root.addEventListener("mcc:nowplaying", function (e) { lastAnnouncement = e.detail || {}; paint(); });
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);

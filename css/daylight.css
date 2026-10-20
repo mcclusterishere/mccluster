@@ -80,11 +80,24 @@ html[data-daylight="day"] .wt-leg, html[data-daylight="day"] .wt-leg-symbol { bo
 /* the bottom bar is shared chrome; by day it reads black on white */
 html[data-daylight="day"] .appbar { background:#ffffff; border:1px solid #00000022; box-shadow:0 10px 30px -14px #0005; color:#000000; }
 html[data-daylight="day"] .appbar .appbar__tab { color:#000000; }
+/* the M on the white bar is the owner's dark M (assets/img/m-mark-dark.png, supplied artwork, scaled only), as the light
+   theme already does; a member's own picture or initial is never swapped */
+html[data-daylight="day"] .appbar__tab[data-appnav="home"] .appbar__m,
+html[data-daylight="day"] .appbar__tab--slot .appbar__m { content:url("../assets/img/m-mark-dark.png"); }
+html[data-daylight="day"] .appbar__tab[data-appnav="home"] .appbar__m--creator,
+html[data-daylight="day"] .appbar__tab[data-appnav="home"] .appbar__m--initial { content:normal; }
 /* travel sheet (owner's reference, 2026-10-19) */
 html[data-daylight="day"] .wt-sheet-grab { background:#00000030; }
 html[data-daylight="day"] .wt-activity, html[data-daylight="day"] .wt-kinds button, html[data-daylight="day"] .wt-go-row button, html[data-daylight="day"] .wt-plan-cards button { background:#ffffff; border-color:#00000026; color:#000000; }
 html[data-daylight="day"] .wt-activity b, html[data-daylight="day"] .wt-plan-cards b, html[data-daylight="day"] .wt-plan-text small, html[data-daylight="day"] .wt-field-glyph { color:#555555; }
-html[data-daylight="day"] .wt-kinds [aria-pressed="true"] { background:#dc0f2d; border-color:#dc0f2d; color:#ffffff; }
+html[data-daylight="day"] .wt-kind { background:#ffffff; border-color:#00000022; }
+html[data-daylight="day"] .wt-kind-head { color:#000000; }
+html[data-daylight="day"] .wt-kind-head[aria-pressed="true"] { background:#dc0f2d; color:#ffffff; }
+html[data-daylight="day"] .wt-switch { background:#f1f1f1; }
+html[data-daylight="day"] .wt-switch button { color:#555555; }
+html[data-daylight="day"] .wt-switch [aria-pressed="true"] { background:#ffffff; color:#000000; }
+html[data-daylight="day"] .wt-car { background:#ffffff; color:#000000; }
+html[data-daylight="day"] .wt-car-price strong { color:#000000; }
 html[data-daylight="day"] .wt-trip { background:#ffffff; border-color:#00000026; }
 html[data-daylight="day"] .wt-trip::before { border-left-color:#00000055; }
 html[data-daylight="day"] .wt-trip .wt-field { background:transparent; }

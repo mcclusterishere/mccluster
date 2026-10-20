@@ -170,6 +170,8 @@
   margin:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.43fr) minmax(0,.57fr);
 }
 .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.35fr) minmax(0,.65fr); }
+/* Missions is one screen (css/mission-swipe-deck.css): the globe gives the deck the room, as it does for navigation */
+.hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.34fr) minmax(0,.66fr); }
 .hu-travel-enabled.mn-world-on .mn__world-home { margin:0;grid-row:1;grid-column:1; }
 .hu-travel-enabled.mn-world-on .mn__world-frame { inset:0;width:100%;height:100%; }
 .hu-travel-enabled.mn-world-on .wt-headline { top:70px;left:16px;font-size:24px;z-index:9; }
@@ -243,6 +245,7 @@
 @media (min-width:1000px), (min-width:600px) and (orientation:landscape) {
   .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
+  .hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on .mn__world-feed { grid-row:1;grid-column:2;margin:72px 16px 0 0;padding-top:20px;border:1px solid #ffffff20;border-radius:22px 22px 0 0; }
   .hu-travel-enabled.mn-world-on .wt-world-modes { bottom:calc(var(--mn-bar-clear,96px) + 28px); }
   .hu-travel-enabled.mn-world-on .wt-destination,.hu-travel-enabled.mn-world-on .hu-world-filters { bottom:calc(var(--mn-bar-clear,96px) + 58px); }
@@ -371,10 +374,38 @@ body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
 .wt-field-glyph { display:grid;place-items:center;width:44px;height:44px;color:#9aa6b0; }
 .wt-field-glyph .wt-icon { width:22px;height:22px; }
 .wt-trip .wt-suggest,.wt-trip .wt-field:nth-child(2) .wt-suggest { left:12px;right:12px;max-width:none; }
-.wt-kinds { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 10px; }
-.wt-kinds button { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 8px;border:1px solid #ffffff2a;border-radius:16px;background:#12171c;color:#e6eaee;font:500 14px var(--mn-ui);white-space:nowrap;cursor:pointer; }
-.wt-kinds button .wt-icon { width:20px;height:20px; }
-.wt-kinds [aria-pressed="true"] { background:#c00028;border-color:#f0284d;color:#fff; }
+/* two tiles, the icon on top, each split by an on/off switch (owner, 2026-10-20) */
+.wt-kinds { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 10px; }
+.wt-kind { display:grid;gap:6px;min-width:0;padding:5px;border:1px solid #ffffff2a;border-radius:18px;background:#12171c; }
+.wt-kind:has(.wt-kind-head[aria-pressed="true"]) { border-color:#f0284d;box-shadow:0 10px 26px -16px #ff1744; }
+.wt-kind-head { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;padding:6px 4px;border:0;border-radius:13px;background:transparent;color:#e6eaee;font:500 15px var(--mn-ui);cursor:pointer; }
+.wt-kind-head .wt-icon { width:26px;height:26px; }
+.wt-kind-head[aria-pressed="true"] { background:#c00028;color:#fff; }
+.wt-switch { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:2px;border-radius:13px;background:#0b0f13; }
+/* the light sits over the word, so Directions and Commercial stay whole at phone width */
+.wt-switch button { position:relative;min-height:44px;min-width:0;padding:14px 2px 5px;border:0;border-radius:10px;background:transparent;color:#9aa5af;font:500 clamp(10.5px,3.1vw,13px)/1.1 var(--mn-ui);letter-spacing:-.02em;white-space:nowrap;cursor:pointer; }
+/* the light: off is a dim bar, on glows */
+.wt-switch button::before { content:'';position:absolute;left:50%;top:7px;width:16px;height:4px;margin-left:-8px;border-radius:2px;background:#3a434c; }
+.wt-switch [aria-pressed="true"] { background:#1d252d;color:#ffffff; }
+.wt-switch [aria-pressed="true"]::before { background:#ff2d55;box-shadow:0 0 0 3px #ff2d5533,0 0 10px 2px #ff2d55; }
+.wt-kind:not(:has(.wt-kind-head[aria-pressed="true"])) .wt-switch [aria-pressed="true"]::before { background:#7d2638;box-shadow:none; }
+#wtPlanner[data-travel-view="rentals"] #wtGo,#wtPlanner[data-travel-view="rentals"] #wtGroundOptions,#wtPlanner[data-travel-view="rentals"] #wtDirections,
+#wtPlanner[data-travel-view="rentals"] #wtRidePanel,#wtPlanner[data-travel-view="rentals"] #wtOptions,
+#wtPlanner[data-travel-view="private"] #wtOptions,#wtPlanner[data-travel-view="private"] #wtDirections { display:none!important; }
+.wt-rentals,.wt-private { margin:8px 0 6px; }
+.wt-rentals[hidden],.wt-private[hidden] { display:none; }
+.wt-rentals-head { display:flex;align-items:center;justify-content:space-between;gap:10px; }
+.wt-rentals-head a { display:inline-flex;align-items:center;min-height:44px;color:#9fc3ff;font:400 13px var(--mn-ui);text-decoration:none; }
+.wt-rentals-by,.wt-private p { margin:2px 0 10px;color:#9ea8b1;font:400 12px/1.45 var(--mn-ui); }
+.wt-cars { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));gap:8px; }
+.wt-car { display:grid;gap:4px;min-width:0;padding:12px;border:1px solid #f0284d;border-radius:16px;background:#12171c;color:#eef1f3; }
+.wt-car-art { display:grid;place-items:center;height:64px; }
+.wt-car-svg { width:100%;max-width:150px;height:auto; }
+.wt-car h4 { margin:2px 0 0;font:600 16px/1.2 var(--mn-ui); }
+.wt-car p { margin:0;color:#a3adb6;font:400 12px var(--mn-ui); }
+.wt-car-price strong { color:#ffffff;font:600 20px var(--mn-ui); }
+.wt-car-price small { color:#a3adb6;font-size:12px;margin-left:2px; }
+.wt-car-go { display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:6px;border-radius:22px;background:#e0102f;color:#fff;font:600 14px var(--mn-ui);text-decoration:none; }
 .wt-section-h { margin:0;color:#f1efea;font:500 15px/1.3 var(--mn-ui); }
 .wt-go { margin:8px 0 4px; }
 .wt-go[hidden] { display:none; }
