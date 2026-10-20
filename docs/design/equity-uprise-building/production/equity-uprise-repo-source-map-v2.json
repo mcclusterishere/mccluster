@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 497,
+  "candidate_count": 500,
   "capability_source_count": 104,
-  "support_only_count": 393,
+  "support_only_count": 396,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -1520,6 +1520,13 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
+      "path": "js/action-globe.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise shared World or operator analytics runtime support; no physical building capability."
+    },
+    {
       "path": "js/action.js",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -1577,6 +1584,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/control-room/analytics-unified.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise shared World or operator analytics runtime support; no physical building capability."
+    },
+    {
+      "path": "js/control-room/analytics.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise shared World or operator analytics runtime support; no physical building capability."
     },
     {
       "path": "js/control-room/clipping.js",
