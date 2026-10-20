@@ -30,6 +30,15 @@ WORLD_NEWS_INGEST_ENABLED = "true"
 # The company's news on mccluster.org/news/ (src/company-site/news.js): the house owner's posts marked "Publish to the
 # newsroom", as articles with an RSS feed and a Google News sitemap. "false" sends /news/* to the personal host again.
 NEWSROOM_ENABLED = "true"
+# Audio-only rooms through Cloudflare Realtime SFU. Do not enable until
+# pending SQL 20261019235000_network_sfu_audio_rooms.sql is applied,
+# secrets AUDIO_SFU_APP_ID and AUDIO_SFU_APP_SECRET are configured,
+# privacy, moderation and multi-browser tests have passed.
+AUDIO_SFU_ROOMS_ENABLED = "false"
+# Signed-out visitors listening to a room in their own connection country (owner, 2026-10-20).
+# Needs AUDIO_SFU_ROOMS_ENABLED and the Worker secret AUDIO_ROOM_PASS_KEY (32+ random characters),
+# which signs the visitor's listening pass. Other regions, hands and speaking always need sign-in.
+AUDIO_ROOMS_VISITOR_LISTEN_ENABLED = "false"
 # Country-scoped public regional feeds and explicit author-assigned post countries.
 # Production SQL pending: supabase/pending/20261019222500_world_place_scope_v1.sql
 # Do not turn on until the migration is applied and public-only feed QA passes.
