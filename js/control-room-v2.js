@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
+  var CREATE_VIEWS = ["projects", "characters", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -1697,7 +1697,9 @@
     return banner + accountNote + summary + '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
   }
   function renderCreate() {
-    var body = state.createView === "projects" ? renderProjects()
+    var body = state.createView === "characters"
+      ? (window.CR.characterStudio ? window.CR.characterStudio.render() : empty("Character Studio unavailable", "Character Studio module did not load."))
+      : state.createView === "projects" ? renderProjects()
       : state.createView === "library" ? renderLibrary()
       : state.createView === "channels" ? renderChannels()
       : state.createView === "instagram"
@@ -1715,7 +1717,7 @@
       : state.createView === "build"
         ? (window.CR.buildCode ? window.CR.buildCode.render() : empty("Build unavailable", "The native Control module did not load."))
         : renderSchedule();
-    return renderHeader("Create", "Projects, assets, publishing, channels, music operations, clipping and Human Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    return renderHeader("Create", "Projects, characters, assets, publishing, channels, music operations, clipping and Human Uprise campaigns share one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
 
   /* CHANNELS — where publishing actually points.
@@ -3378,6 +3380,7 @@
     if (window.CR.instagram) window.CR.instagram.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
     if (window.CR.actionNetwork) window.CR.actionNetwork.bind($("crSurface"));
+    if (window.CR.characterStudio) window.CR.characterStudio.bind($("crSurface"));
     if (window.CR.fundingIntelligence) window.CR.fundingIntelligence.bind($("crSurface"));
     if (window.CR.clipping) window.CR.clipping.bind($("crSurface"));
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
@@ -3675,6 +3678,7 @@
   if (window.CR.instagram) window.CR.instagram.init({ request: request, render: render, org: function () { return state.org; } });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
   if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
+  if (window.CR.characterStudio) window.CR.characterStudio.init({ request: request, render: render });
   if (window.CR.fundingIntelligence) window.CR.fundingIntelligence.init({ request: request, render: render });
   if (window.CR.clipping) window.CR.clipping.init({ supa: supa, render: render, org: function () { return state.org; } });
   if (window.CR.work) window.CR.work.init({
