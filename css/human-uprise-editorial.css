@@ -165,6 +165,13 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .mn__livehero-host {color:#a9b1b8;font-size:13px;}
 .mn__livehero-join {display:inline-flex;align-items:center;gap:8px;min-height:48px;margin-top:14px;padding:0 20px;border:1px solid #ff3b5c;border-radius:26px;background:#d8002a;color:#fff;font:500 15px var(--mn-ui);cursor:pointer;}
 @keyframes mn-livehero-pulse {0%,100%{opacity:1;}50%{opacity:.35;}}
+/* the lives a host placed in the tapped country, leading its feed: a row that scrolls inside itself, never the page */
+.mn__place-lives {margin:4px 0 14px;min-width:0;}
+.mn__place-lives .mn__eyebrow {margin:0 0 8px;}
+.mn__place-lives-row {display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding-bottom:4px;}
+.mn__place-live {flex:0 0 min(78%,260px);display:grid;gap:6px;justify-items:start;min-height:44px;padding:12px 14px;border:1px solid #ffffff22;border-radius:18px;background:radial-gradient(120% 120% at 100% 0%,#3a1020,#121619 60%);color:#f2f1ed;text-align:left;font:400 14px/1.4 var(--mn-ui);scroll-snap-align:start;cursor:pointer;}
+.mn__place-live b {font:400 18px/1.2 Georgia,'Times New Roman',serif;overflow-wrap:anywhere;}
+.mn__place-live span:last-child {color:#c9ced3;font-size:13px;}
 @media (prefers-reduced-motion:reduce) {.mn__livehero-badge i {animation:none;}}
 /* media first: the picture or clip leads, the words sit beside it; actions run under both */
 .hu-editorial #mnFeed .mn__post-card.has-media {display:grid;grid-template-columns:112px minmax(0,1fr);column-gap:12px;align-items:start;}

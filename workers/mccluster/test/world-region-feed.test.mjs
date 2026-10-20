@@ -12,7 +12,7 @@ const TIME='2026-10-19T21:15:00.000Z';
 const ENV={WORLD_PLACE_SCOPE_ENABLED:'true',SUPABASE_URL:'https://sb.example',SUPABASE_SERVICE_ROLE_KEY:'test-service'};
 const req=(path,cf,headers)=>{const request=new Request('https://api.mccluster.org'+path,{headers});if(cf)Object.defineProperty(request,'cf',{value:cf});return request;};
 const json=(a,status=200)=>new Response(JSON.stringify(a),{status,headers:{'content-type':'application/json'}});
-function store(calls,{unpublished=false,emptyNews=false,profile=true,removed=false}={}){
+function store(calls,{unpublished=false,emptyNews=false,profile=true,removed=false,lives=null}={}){
   return async(url,init)=>{
     const u=new URL(url);
     assert.equal(u.origin,'https://sb.example');
@@ -38,6 +38,7 @@ function store(calls,{unpublished=false,emptyNews=false,profile=true,removed=fal
       headline_latitude:41.3,headline_longitude:-72.9,location_country_fips:'US'
     }]);
     if(table==='media_news_sources')return json([{id:SOURCE,domain:'newspaper.example'}]);
+    if(table==='network_live_sessions'&&lives)return json(lives);
     throw Error('Unexpected DB table '+table);
   };
 }
@@ -123,4 +124,25 @@ test('a post the desk removed never reaches a country feed, and like counts are 
   const read=calls.find(u=>u.pathname.endsWith('/network_posts'));
   assert.equal(read.searchParams.get('removed_at'),'is.null');
   assert.match(read.searchParams.get('select'),/like_count/);
+});
+
+test('a country\'s feed leads with the lives its hosts placed there, without stream URLs or host ids',async()=>{
+  const LIVE='77777777-7777-4777-8777-777777777777';
+  const lives=[{id:LIVE,title:'Cleanup on air',room_kind:'mission',category_key:'field',started_at:TIME,host_m_uid:MEMBER_A,
+    country_code:'US',status:'live',whep_url:'https://customer.example/SECRET/webRTC/play'},
+    {id:'88888888-8888-4888-8888-888888888888',title:'Somewhere else',room_kind:'home',started_at:TIME,host_m_uid:MEMBER_B,country_code:'FR',status:'live'}];
+  const calls=[],at={now:()=>Date.parse(TIME)};
+  const body=await (await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{lives}),...at})).json();
+  assert.deepEqual(body.lives,[{id:LIVE,title:'Cleanup on air',room_kind:'mission',category_key:'field',started_at:TIME,
+    country_code:'US',host:{display_name:'Public person',avatar_url:''}}]);
+  assert.doesNotMatch(JSON.stringify(body.lives),/SECRET|whep|11111111-1111/);
+  const q=calls.find(u=>u.pathname.endsWith('/network_live_sessions'));
+  assert.equal(q.searchParams.get('country_code'),'eq.US');
+  assert.equal(q.searchParams.get('status'),'eq.live');
+  assert.equal(q.searchParams.get('last_seen_at'),'gt.2026-10-19T21:13:00.000Z','only broadcasts still beating');
+  assert.doesNotMatch(q.searchParams.get('select'),/whep|cf_input/);
+  calls.length=0;
+  const more=await (await handleRegionScope(req(REGION_FEED+'?country=US&post_before='+encodeURIComponent(TIME+'~'+POST_A)),ENV,{fetchImpl:store(calls,{lives}),...at})).json();
+  assert.deepEqual(more.lives,[],'later pages do not repeat the lives');
+  assert.ok(!calls.some(u=>u.pathname.endsWith('/network_live_sessions')));
 });

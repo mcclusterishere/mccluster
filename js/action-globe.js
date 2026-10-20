@@ -383,6 +383,8 @@ if(d.type==='hu:search'&&typeof d.q==='string'&&viewer){searchPins(d.q.slice(0,8
 if(d.type==='hu:focus-mission'&&typeof d.missionId==='string'){if(!viewer||!focusMission(d.missionId))tell({type:'hu:selection-cleared'});return}
 if(d.type==='hu:regional'&&viewer){showCities=!!d.on;draw();tell({type:'hu:status',text:!showCities?'Regional impact is hidden.':cities.length?cities.length+(cities.length===1?' region shows its':' regions show their')+' totals: members who agreed to be counted, and verified actions.':'No region has five members who agreed to be counted yet.'});return}
 if(d.type==='hu:near-me'){const b=$('ctlLocate');if(b)b.click();return}
+/* the page puts a signed-out visitor back in their own region (js/mnet.js); select() tells the page through hu:country */
+if(d.type==='hu:select-country'){if(countries&&typeof d.code==='string'&&/^[A-Z]{2}$/.test(d.code))countries.select(d.code);return}
 /* a news card's "On the Earth" (js/mnet.js): the place a story MENTIONS. Anything can post a message, so the numbers are checked here too */
 if(d.type==='hu:focus-place'){if(viewer)focusPlace(d);return}
 /* the creator-only audience layer: the page says who may see the switch, and sends the points it fetched with the creator's own session */

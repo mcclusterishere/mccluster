@@ -357,6 +357,7 @@
     if (!live.can) { w.alert("The desk has not granted this account live host access."); return; }
     say($("mnStudioStatus"), "Loading your rooms…");
     $("mnStudioGo").hidden = false; $("mnStudioEnd").hidden = true; $("mnStudioTopic").disabled = false;
+    paintStudioPlace();
     if (!$("mnStudio").open) $("mnStudio").showModal();
     Promise.all([loadStudioOptions(), preview()]).then(function () {
       say($("mnStudioStatus"), "");
@@ -395,14 +396,32 @@
     var body = { title: title };
     if (room) {
       body.room_id = room.id;
-      return body;
+      return withPlace(body);
     }
     body.room_title = $("mnStudioRoomTitle").value.trim() || title;
     body.room_kind = $("mnStudioKind").value;
     body.category_key = $("mnStudioCategory").value;
     if (body.room_kind === "mission") body.action_mission_id = $("mnStudioMission").value;
     if ($("mnStudioMusic").value) body.music_object_id = $("mnStudioMusic").value;
+    return withPlace(body);
+  }
+  /* A broadcast is in a country's feed only when its host ticks the box; never placed from where they connect. */
+  function withPlace(body) {
+    var box = $("mnStudioPlace"), place = M.placeForLive && M.placeForLive();
+    if (box && box.checked && place && box.value === place.code) body.country_code = place.code;
     return body;
+  }
+  function paintStudioPlace() {
+    var place = M.placeForLive && M.placeForLive(), label = $("mnStudioPlaceLabel");
+    if (!label && place && $("mnStudioGo")) {
+      label = document.createElement("label"); label.id = "mnStudioPlaceLabel"; label.className = "mn__place-optin";
+      var box = document.createElement("input"); box.type = "checkbox"; box.id = "mnStudioPlace";
+      label.append(box, document.createElement("span"));
+      var row = $("mnStudioGo").closest(".mn__studio-row"); row.parentNode.insertBefore(label, row);
+    }
+    if (!label) return;
+    label.hidden = !place; $("mnStudioPlace").checked = false; $("mnStudioPlace").value = place ? place.code : "";
+    label.querySelector("span").textContent = place ? "Show this broadcast in " + place.name + "'s feed" : "";
   }
   function goLive(ev) {
     ev.preventDefault();
@@ -522,6 +541,17 @@
     },
     refresh: loadLive,
     open: openWatch,
+    /* the World's country feed opens a broadcast its host placed in that country (js/mnet.js), even when the
+       directory on screen is filtered to something else */
+    openPlaced: function (id) {
+      if (!live.started) w.MCC_LIVE.start();
+      if (!M || !live.started) return;
+      if (live.list.some(function (x) { return x.id === id; })) { openWatch(id); return; }
+      M.api("/v1/mnet/live/directory").then(function (out) {
+        var s = ((out && out.sessions) || []).filter(function (x) { return x.id === id; })[0];
+        if (s) { live.list.push(s); openWatch(id); }
+      }).catch(function () {});
+    },
     studio: function () { if (live.started) openStudio(); }
   };
 })(window, document);

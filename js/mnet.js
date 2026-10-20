@@ -15,7 +15,7 @@
     newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
-    placeScope: { enabled:false, country:null, posts:[], news:[], postBefore:null, newsBefore:null,
+    placeScope: { enabled:false, country:null, home:null, posts:[], news:[], lives:[], postBefore:null, newsBefore:null,
       loaded:false, error:'', seq:0, working:false },
     threadPost: null,
     currentView: "feed",
@@ -464,7 +464,8 @@
     var line = { save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
       groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views.",
-      layers:"Sign in to see satellites and space missions on the Earth." }[why] || "Sign in to do that.";
+      layers:"Sign in to see satellites and space missions on the Earth.",
+      regions:"Sign in to explore posts, news and conversations in other regions." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
   }
@@ -1024,6 +1025,8 @@
       .then(function (status) {
         if (!status || status.enabled !== true) return;
         state.placeScope.enabled = true;
+        /* the country Cloudflare read from this connection: a signed-out visitor's region (owner, 2026-10-20) */
+        state.placeScope.home = typeof status.country === "string" && /^[A-Z]{2}$/.test(status.country) ? status.country : null;
         ensurePlaceOptIn();
         if (!state.world.country && typeof status.country === "string" && /^[A-Z]{2}$/.test(status.country)) {
           var name = placeName(status.country);
@@ -1040,7 +1043,7 @@
        response cannot reveal one country's feed beneath another heading. */
     if (reset) {
       p.seq++; p.country=c && c.code || null;
-      p.postBefore=null; p.newsBefore=null; p.posts=[]; p.news=[]; p.loaded=false; p.error="";
+      p.postBefore=null; p.newsBefore=null; p.posts=[]; p.news=[]; p.lives=[]; p.loaded=false; p.error="";
     }
     if (!p.enabled || !c || !/^[A-Z]{2}$/.test(c.code||"")) {
       if (state.feedScope === "local") renderFeed(false);
@@ -1063,6 +1066,7 @@
           !data || data.ok !== true || data.country !== c.code || data.available !== true)
         return;
       p.posts = reset ? (data.posts||[]) : p.posts.concat(data.posts||[]);
+      if (reset) p.lives = (data.lives||[]).filter(function (l) { return l && WORLD_ID.test(String(l.id||"")) && l.title; }).slice(0,6);
       var incoming = (data.news||[]).map(cleanNews).filter(Boolean);
       p.news = reset ? incoming : p.news.concat(incoming);
       p.postBefore = data.next_post_before || null;
@@ -1286,11 +1290,11 @@
     paintNewsCredit(false);
     if (!items.length && !news.length) {
       if (regionMode) {
-        host.innerHTML='<div class="mn__empty">' + esc(
+        host.innerHTML=placeLivesHtml() + '<div class="mn__empty">' + esc(
           state.placeScope.error || (!state.world.country ? "Tap a country on the globe." :
           !state.placeScope.loaded ? "Loading local posts and news…" :
           "No public post or news item is associated with this country yet.")) + '</div>';
-        paintMore(); return;
+        bindPlaceLives(host); paintMore(); return;
       }
       host.innerHTML = state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
@@ -1327,7 +1331,7 @@
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
-    host.innerHTML = interleaveFeed(items, news).map(function (item) {
+    host.innerHTML = (regionMode ? placeLivesHtml() : "") + interleaveFeed(items, news).map(function (item) {
       if (item.news) {
         var card = newsCard(item), nkey = "news:" + item.id;
         if (!seen[nkey]) {
@@ -1353,6 +1357,27 @@
     bindFeedActions(host);
     bindNewsActions(host);
     bindDiscussions(host);
+    bindPlaceLives(host);
+  }
+  /* LIVES OF THE PLACE (owner, 2026-10-19: "the news plus the posts and lives of that area"): broadcasts their host
+     placed in this country lead its feed. Watching a broadcast is for members, as everywhere else on Live. */
+  function placeLivesHtml() {
+    var list = state.placeScope.lives || [], c = state.world.country;
+    if (!list.length || !c) return "";
+    var where = c.name || placeName(c.code);
+    return '<section class="mn__place-lives" aria-label="Live in ' + esc(where) + '"><p class="mn__eyebrow">Live in ' + esc(where) + '</p>' +
+      '<div class="mn__place-lives-row">' + list.map(function (l) {
+        return '<button class="mn__place-live" type="button" data-place-live="' + esc(l.id) + '"><span class="mn__livehero-badge"><i aria-hidden="true"></i>Live</span>' +
+          '<b>' + esc(l.title) + '</b><span>' + esc((l.host && l.host.display_name) || "Host") + ' · ' + esc(timeAgo(l.started_at)) + '</span></button>';
+      }).join("") + '</div></section>';
+  }
+  function bindPlaceLives(host) {
+    host.querySelectorAll("[data-place-live]").forEach(function (b) {
+      b.onclick = function () {
+        if (state.guest) { askToSignIn("live"); return; }
+        if (window.MCC_LIVE && window.MCC_LIVE.openPlaced) window.MCC_LIVE.openPlaced(b.getAttribute("data-place-live"));
+      };
+    });
   }
 
   /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
@@ -2772,6 +2797,8 @@
   window.MCC_MNET = {
     markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
     api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
+    /* the live studio (js/mnet-live.js) offers to place a broadcast in the country on the globe, when the country feed is on */
+    placeForLive: function () { var c = state.world.country; return state.placeScope.enabled && c && /^[A-Z]{2}$/.test(c.code || "") ? { code: c.code, name: c.name || placeName(c.code) } : null; },
     identity: function () { return identity(); },
     /* the member desk (js/member-desk.js) reads the profile and opens the editor */
     profile: function () { return profile(); },
@@ -3676,6 +3703,16 @@
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
       } else if (d.type === "hu:country") {
+        /* A SIGNED-OUT VISITOR STAYS IN THEIR REGION (owner, 2026-10-20: "if they're logged out and their IP address
+           says somewhere, that's where they're gonna go … they can't region hop unless they're logged in"). Outside
+           Travel, another country asks them to sign in and the globe goes back home; letting go also goes home. */
+        var home = state.guest && state.placeScope.enabled ? state.placeScope.home : null,
+            tapped = d.country && typeof d.country.code === "string" ? d.country.code.toUpperCase() : null;
+        if (home && tapped !== home && !(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel")) {
+          if (tapped) askToSignIn("regions");
+          tellWorld({ type: "hu:select-country", code: home });
+          return;
+        }
         $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
         /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
         state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80) } : null;

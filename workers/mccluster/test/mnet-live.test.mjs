@@ -220,6 +220,25 @@ test('a new governed Home room snapshots category and never stores the WHIP cred
   assert.ok(calls.some((c) => c.m === 'DELETE' && c.u.endsWith('/live_inputs/old-input')));
 });
 
+test('a broadcast is in a country\'s feed only when its host places it there, and only with the country feed on', async () => {
+  let calls = fake();
+  let res = await call('/v1/mnet/live', 'POST', { title: 'Building live', room_title: 'Build Lab', room_kind: 'home', category_key: 'build', country_code: 'US' });
+  assert.equal(res.status, 503, 'placement waits for WORLD_PLACE_SCOPE_ENABLED');
+  assert.equal(calls.filter((c) => c.u.startsWith('https://api.cloudflare.com/')).length, 0);
+  const on = { ...ENV, WORLD_PLACE_SCOPE_ENABLED: 'true' };
+  calls = fake();
+  res = await call('/v1/mnet/live', 'POST', { title: 'Building live', room_title: 'Build Lab', room_kind: 'home', category_key: 'build', country_code: 'ZZ' }, on);
+  assert.equal(res.status, 400);
+  calls = fake();
+  res = await call('/v1/mnet/live', 'POST', { title: 'Building live', room_title: 'Build Lab', room_kind: 'home', category_key: 'build', country_code: 'US' }, on);
+  assert.equal(res.status, 201);
+  assert.equal(calls.find((c) => c.u.endsWith('/network_live_sessions') && c.m === 'POST').body.country_code, 'US');
+  calls = fake();
+  res = await call('/v1/mnet/live', 'POST', { title: 'Building live', room_title: 'Build Lab', room_kind: 'home', category_key: 'build' }, on);
+  assert.equal(res.status, 201);
+  assert.equal('country_code' in calls.find((c) => c.u.endsWith('/network_live_sessions') && c.m === 'POST').body, false, 'never placed by default');
+});
+
 test('a host cannot use a category outside the explicit grant', async () => {
   const calls = fake({ basis: 'grant', allowed: ['music'] });
   const res = await call('/v1/mnet/live', 'POST', { title: 'Field work', room_kind: 'home', category_key: 'field' });

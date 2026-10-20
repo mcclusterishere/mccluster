@@ -6,9 +6,13 @@
 
 - `network_posts.country_code`: **user-selected ISO 3166-1 alpha-2 public association**, not detected location. Null means unplaced; private/group posts never appear in country discovery.
 - `media_news_articles.location_country_fips`: GDELT place *mention*, converted with the checked GeoNames crosswalk. Never describe it as a verified incident location. Unmapped country is excluded.
-- `network_live_sessions.country_code`: reserved metadata for a future opt-in audio/video-room filter. Existing live streams are not silently placed.
+- `network_live_sessions.country_code`: **host-selected** country for a video broadcast. In the live studio the host ticks "Show this broadcast in <country>'s feed" (offered only for the country on the globe, unticked by default); `POST /v1/mnet/live` accepts `country_code` only with the flag on. Never inferred from IP; existing broadcasts are not placed.
 - Visitor's default: `request.cf.country` at Cloudflare only; no GPS request, no server-side geo persistence, no trusting user-supplied location headers. Explicit globe selection replaces it. Unknown edge country stays global.
-- `/v1/world/place-scope`: public status and coarse country. `/v1/world/region-feed?country=US`: public region feed, keyset cursors independently for posts and news.
+- `/v1/world/place-scope`: public status and coarse country. `/v1/world/region-feed?country=US`: public region feed, keyset cursors independently for posts and news. The first page also carries `lives`: broadcasts on air now (heartbeat within two minutes) that their host placed in that country, projected to id, title, room kind, category, start time and the host's public name. No stream URL or host id leaves the Worker. The Local feed shows them as a "Live in <country>" row above the posts and news; watching one takes signing in, as Live does everywhere.
+
+## Signed-out visitors stay in their region (owner, 2026-10-20)
+
+"If they're logged out and their IP address says somewhere, that's where they're gonna go … they can't region hop unless they're logged in." With the flag on, a signed-out visitor's feed opens on Local for the country `request.cf.country` gives. Tapping another country outside Travel asks them to sign in ("Sign in to explore posts, news and conversations in other regions.") and puts the globe back on their country; letting the country go also returns there. Travel (directions) is unaffected, and the Global chip remains the existing all-public feed. Members hop freely. Conversations (audio rooms, #547) enforce the same rule on the server. A VPN can move a visitor's country: the lock is the owner's regional scope, not identity. E2E: `editorial-visitor-region` in `scripts/e2e/world-screen.e2e.mjs`.
 
 ## Privacy and access invariants
 
@@ -22,4 +26,4 @@ Only top-level published **public** posts from **public** author profiles, no gr
 4. Coordinate privacy-policy re-acknowledgement if any new capture/placement policy is introduced; do not turn on audio rooms with this flag.
 5. Set `WORLD_PLACE_SCOPE_ENABLED=true` in reviewed Wrangler vars, deploy Worker, smoke-test live, monitor errors; rollback by returning the flag to false.
 
-**Not yet provided by this slice:** multi-speaker Cloudflare Realtime SFU audio transport and verified live-room country filtering. Those require their own PR and migration, credentials, explicit mic consent and abuse/moderation controls.
+**Not in this slice:** multi-speaker audio rooms (Cloudflare Realtime SFU) are #547, with their own migration, credentials, explicit mic consent, visitor rules and moderation controls; its room list already follows the country on the globe.

@@ -163,6 +163,9 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     // These personas are ordinary members, not operators. A catch-all 200 must not grant admin navigation.
     if (u.pathname === '/v1/status') return json(route, { error: 'Forbidden' }, 403);
     if (u.pathname === '/v1/action-archive/docket-516r-2025') return json(route, COHORT_ARCHIVE);
+    /* THE COUNTRY FEED: off unless a scenario names the connection country the Worker would read from request.cf */
+    if (u.pathname === '/v1/world/place-scope') return json(route, { ok: true, enabled: !!world.placeHome, country: world.placeHome || null, source: 'cloudflare_country' });
+    if (u.pathname === '/v1/world/region-feed') { const c = u.searchParams.get('country'); return json(route, { ok: true, available: true, country: c, posts: c === world.placeHome ? world.posts.slice(0, 3).map(item) : [], news: [], lives: c === world.placeHome ? [{ id: LIVE[0].id, title: LIVE[0].title, room_kind: 'mission', category_key: 'field', started_at: LIVE[0].started_at, country_code: c, host: { display_name: 'Fixture Ana', avatar_url: '' } }] : [], next_post_before: null, next_news_before: null }); }
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     if (u.pathname === '/v1/world/news') {
       if (world.newsFail === 'abort') return route.abort('failed');
@@ -285,8 +288,9 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html' }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null }) {
   const world = freshWorld();
+  world.placeHome = placeHome;
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
@@ -673,6 +677,33 @@ if(runs('mission-archive')) {
     check(scope,'archive browsing makes no routing or persistence request',req(world,'POST',/^\/v1\/travel\/route$|^\/travel_journeys$/).length===0&&await page.evaluate(()=>__travelWatchStarts===0));
     check(scope,'completed link has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth&&innerWidth===390));
     await page.screenshot({path:join(OUT,scope+'.png')});
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* A SIGNED-OUT VISITOR STAYS IN THEIR REGION (owner, 2026-10-20). With the country feed on, the feed opens on the
+   connection country; another country tapped outside Travel asks for sign-in and the globe goes back home. */
+if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-visitor-region';
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:false,placeHome:'US'});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await page.waitForFunction(()=>/United States/.test(document.getElementById('huRegionLabel').textContent),null,{timeout:10000}).catch(()=>{});
+    check(scope,'a visitor opens on the country of their connection',/United States/.test(await page.textContent('#huRegionLabel')) && await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true');
+    check(scope,'and reads that country\'s feed',world.requests.some(r=>r.path==='/v1/world/region-feed'&&/country=US/.test(r.search)));
+    check(scope,'the country\'s lives lead its feed',await page.locator('#mnFeed .mn__place-lives .mn__place-live').count()===1 && /Live in United States/.test(await page.textContent('#mnFeed .mn__place-lives')));
+    const row=await page.evaluate(()=>{const r=document.querySelector('.mn__place-lives-row');return r?[r.scrollWidth>0,document.documentElement.scrollWidth===document.documentElement.clientWidth]:[false,false];});
+    check(scope,'the lives row scrolls inside itself, never the page',row[0]&&row[1],row);
+    await globe.waitForFunction(()=>window.__huCountries?.().ready);
+    await globe.evaluate(()=>parent.postMessage({type:'hu:country',country:{code:'FR',name:'France'}},location.origin));
+    await page.waitForFunction(()=>/other regions/.test((document.getElementById('mnGuestWhy')||{}).textContent||''),null,{timeout:5000}).catch(()=>{});
+    check(scope,'another country asks the visitor to sign in',await page.textContent('#mnGuestWhy')==='Sign in to explore posts, news and conversations in other regions.');
+    await globe.waitForFunction(()=>window.__huCountries?.().selected==='US',null,{timeout:5000}).catch(()=>{});
+    check(scope,'the globe goes back to the visitor\'s country',await globe.evaluate(()=>window.__huCountries().selected)==='US');
+    check(scope,'the feed never leaves it',/United States/.test(await page.textContent('#huRegionLabel')) && !world.requests.some(r=>r.path==='/v1/world/region-feed'&&/country=FR/.test(r.search)));
+    await page.evaluate(()=>{const g=document.getElementById('mnGuestWhy');if(g)g.textContent='';});
+    await page.evaluate(()=>document.querySelector('#mnFeed .mn__place-live').click());
+    check(scope,'watching a placed live asks a visitor to sign in, as Live does',await page.textContent('#mnGuestWhy')==='Sign in to watch live rooms.');
     check(scope,'no JavaScript errors',errors.length===0,errors);
   }finally{await ctx.close();}
 }

@@ -82,7 +82,7 @@ function publicPost(row, actor) {
       liked_by_me: false, bookmarked_by_me: false, like_count: Number(row.like_count) || 0 }
   };
 }
-export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
+export async function handleRegionScope(req, env, { fetchImpl = fetch, now = () => Date.now() } = {}) {
   const url = new URL(req.url), path = url.pathname.replace(/\/+$/, '');
   if (path !== REGION_FEED && path !== REGION_STATUS) return null;
   if (req.method !== 'GET') return fail(req, env, 'Method not allowed', 405);
@@ -124,15 +124,28 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
   }, 'published_at', newsBefore, limit,
   'id,title,canonical_url,published_at,headline_location_label,headline_latitude,headline_longitude,location_country_fips,source_id');
 
+  /* LIVES OF THE PLACE (owner, 2026-10-19: "the news plus the posts and lives of that area"): broadcasts on air
+     now that their host placed in this country, on the first page only. No stream URL or host id leaves here. */
+  const firstPage = !postBefore && !newsBefore;
+  const livePath = 'network_live_sessions?' + new URLSearchParams({ status: 'eq.live', country_code: 'eq.' + country,
+    last_seen_at: 'gt.' + new Date(now() - 2 * 60 * 1000).toISOString(),
+    select: 'id,title,room_kind,category_key,started_at,host_m_uid,country_code,status', order: 'started_at.desc', limit: '6' }).toString();
   try {
-    const [rawPosts, rawNews] = await Promise.all([
+    const [rawPosts, rawNews, rawLives] = await Promise.all([
       readPosts ? db(env, postPath, fetchImpl) : [],
-      readNews ? db(env, newsPath, fetchImpl) : []
+      readNews ? db(env, newsPath, fetchImpl) : [],
+      firstPage ? db(env, livePath, fetchImpl).catch(() => []) : []
     ]);
-    const authors = [...new Set(rawPosts.map(p => p.author_m_uid).filter(id => UUID.test(id)))];
+    const authors = [...new Set(rawPosts.map(p => p.author_m_uid).concat(rawLives.map(l => l.host_m_uid)).filter(id => UUID.test(id)))];
     const profiles = authors.length ? await db(env, 'network_profiles?m_uid=in.(' +
       authors.join(',') + ')&visibility=eq.public&select=m_uid,display_name,avatar_url,verification_state', fetchImpl) : [];
     const byUid = new Map(profiles.map(p => [p.m_uid,p]));
+    const lives = rawLives.filter(l => UUID.test(l.id) && l.status === 'live' && l.country_code === country).map(l => {
+      const host = byUid.get(l.host_m_uid) || {};
+      return { id: l.id, title: String(l.title || '').slice(0, 120), room_kind: l.room_kind === 'mission' ? 'mission' : 'home',
+        category_key: typeof l.category_key === 'string' ? l.category_key.slice(0, 64) : '', started_at: l.started_at || null,
+        country_code: country, host: { display_name: host.display_name || '', avatar_url: host.avatar_url || '' } };
+    });
     const allowed = rawPosts.filter(p => p.visibility === 'public' &&
       p.country_code === country && !p.deleted_at && !p.removed_at && !p.reply_to_id &&
       !p.group_id && byUid.has(p.author_m_uid));
@@ -155,7 +168,7 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
       : rawPosts.length === limit * 3 ? cursor(rawPosts[rawPosts.length-1],'created_at') : null;
     const nextNews = readNews && rawNews.length === limit
       ? cursor(rawNews[rawNews.length-1],'published_at') : null;
-    const res = reply(req, env, { ok:true, available:true,country,posts,news,
+    const res = reply(req, env, { ok:true, available:true,country,posts,news,lives,
       next_post_before:nextPost,next_news_before:nextNews,
       location_disclaimer:'News is associated with a place mentioned in the article; not a verified event location.' });
     res.headers.set('cache-control','public, max-age=30');

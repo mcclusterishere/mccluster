@@ -944,6 +944,13 @@ async function handleMnet(req,env,path,url){
       if(!liveEnabled(env))return fail(req,env,'Live video is not switched on yet.',503);
       const b=await json(req),title=String(b.title||'').trim().slice(0,120);
       if(!title)return fail(req,env,'Give this broadcast a title.',400);
+      /* A broadcast shows in a country's feed only when the host places it there; never inferred from IP. */
+      let liveCountry=null;
+      if(b.country_code!==undefined&&b.country_code!==null&&b.country_code!==''){
+        if(String(env.WORLD_PLACE_SCOPE_ENABLED||'').toLowerCase()!=='true')return fail(req,env,'Country placement is not switched on yet.',503);
+        if(typeof b.country_code!=='string'||!isCountry(b.country_code))return fail(req,env,'Choose a valid country on the globe.',400);
+        liveCountry=b.country_code;
+      }
       const muid=await currentMuid(env,user.id);if(!muid)return fail(req,env,'Your Action identity is not ready yet',409);
       const allowed=new Set(Array.isArray(eligibility.allowed_categories)?eligibility.allowed_categories:[]);
       let room=null;
@@ -990,7 +997,7 @@ async function handleMnet(req,env,path,url){
       const input=await cfStream(env,'POST','/live_inputs',{meta:{name:`action-network-live ${room.slug} ${muid}`},recording:{mode:'off'}});
       const whip=input?.webRTC?.url,whep=input?.webRTCPlayback?.url;
       if(!input?.uid||!whip||!whep){if(input?.uid)await cfStream(env,'DELETE',`/live_inputs/${input.uid}`).catch(()=>{});return fail(req,env,'Cloudflare did not return a live input.',502);}
-      const rows=await service(env,'network_live_sessions',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({host_m_uid:muid,host_user_id:user.id,title,status:'starting',cf_input_uid:input.uid,whep_url:whep,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,cohort_id:room.cohort_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit,support_enabled:false})});
+      const rows=await service(env,'network_live_sessions',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({host_m_uid:muid,host_user_id:user.id,title,status:'starting',cf_input_uid:input.uid,whep_url:whep,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,cohort_id:room.cohort_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit,support_enabled:false,...(liveCountry?{country_code:liveCountry}:{})})});
       const sess=rows?.[0];
       return reply(req,env,{session:{id:sess.id,title:sess.title,whep_url:whep,status:sess.status,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit},room,whip_url:whip,stage:{transport:'single_host_stream',multi_seat_ready:false}},201);
     }
