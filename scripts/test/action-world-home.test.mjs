@@ -70,7 +70,10 @@ test('Cesium imagery is constructed with the provider the runtime actually ships
 test('editorial Earth and street map preserve the NASA/OSM sources and analytics lighting modes',()=>{
   const js=read('js/action-globe.js'), html=read('action-globe.html');
   assert.match(js,/const DAY_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/BlueMarble_NextGeneration\//);
-  assert.match(js,/const NIGHT_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/VIIRS_Black_Marble\//);
+  assert.match(js,/const NIGHT_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/VIIRS_CityLights_2012\//);
+  /* city lights only at night (owner, 2026-10-20): never on the day side, in Travel or anywhere, and one setting for both */
+  assert.doesNotMatch(js,/nightLayer\.dayAlpha=travelMode/,'Travel never lights the day side');
+  assert.equal((js.match(/nightLayer\.brightness=NIGHT_LIGHTS\.brightness/g)||[]).length,2,'the editorial Earth and Travel share one night setting');
   assert.match(js,/const CLOUDS='assets\/img\/globe\/nasa-clouds-2048\.webp'/);
   assert.match(js,/sc\.globe\.enableLighting=true/,'the real sun lights the default Earth');
   assert.match(js,/viewer\.clock\.clockStep=Cesium\.ClockStep\.SYSTEM_CLOCK/,'real-time clock keeps the Sun and day/night boundary current');
@@ -79,7 +82,7 @@ test('editorial Earth and street map preserve the NASA/OSM sources and analytics
   assert.match(js,/setLayer\(EDITORIAL\?\(layerMode==='map'\?'auto':'map'\)/,'the editorial globe cycles between Earth and street map');
   assert.match(js,/nightLayer\.dayAlpha=night\?1:0/,'night mode shows the city lights everywhere');
   assert.match(js,/g\.enableLighting=EDITORIAL\|\|!night/);
-  assert.match(html,/NASA Blue Marble, Black Marble<\/a>, <a href="https:\/\/visibleearth\.nasa\.gov\/"/,'the imagery credit names its sources');
+  assert.match(html,/NASA Blue Marble, City Lights<\/a>, <a href="https:\/\/visibleearth\.nasa\.gov\/"/,'the imagery credit names its sources');
   assert.ok(require('node:fs').existsSync(new URL('../../assets/img/globe/nasa-clouds-2048.webp',import.meta.url)),'the cloud layer is committed');
 });
 test('embedded globe remains interactive and has a full-screen exit',()=>{

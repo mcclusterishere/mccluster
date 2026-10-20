@@ -92,7 +92,7 @@ same two:
   down the frame's left edge (decoration only). No navy remains. The house
   app bar is left to the house stylesheet.
 - **Globe:** a lit NASA Earth (owner's signed-out reference): Blue Marble Next
-  Generation by day, Black Marble city lights by night (lifted so the sea
+  Generation by day, NASA VIIRS City Lights by night (2026-10-20; Black Marble 2016 before) (lifted so the sea
   reads navy), the Visible Earth cloud composite (a still, not today's
   weather), an atmosphere rim, and the sun where it really is when the page
   opens, so the day/night line is the real one. The layers button cycles
@@ -405,7 +405,7 @@ signed-in members only** (`js/action-globe.js`, "THE EARTH UP CLOSE"):
   night lights would cover the day side.
 - **Aerial imagery.** From 3,000 km down, Bing Maps Aerial with Labels
   (asset 3) eases in over NASA's day, whole by 1,200 km, while the cloud and
-  the night lights ease out (Black Marble is opaque and Cesium's day and
+  the night lights ease out (the city lights are opaque and Cesium's day and
   night blend does not fade with height, so on the night side it would
   otherwise cover the ground at every height). If an asset fails, the next is
   tried once: Bing Maps Aerial (2), then Sentinel-2 (3954); if all fail,
@@ -920,3 +920,53 @@ should match the World's use before launch. The ion layers are now for
 signed-in members only, which bounds that draw to members; the plan,
 the token's asset scope and usage alerts are still the owner's to set. The creator audience is sampled like the rest of
 `my-creator`; an aggregate in the database would make it exact.
+
+## Owner UI pass (2026-10-20)
+
+- **Where a story is from.** A news card's place chip names the country the
+  story mentions ("Nigeria", "Kenya") instead of saying "On the Earth"; a tap
+  still turns the Earth there (`newsCountry` in `js/mnet.js`).
+- **City lights only at night.** The night layer is NASA's VIIRS City Lights
+  (brighter, crisper lights on a dark Earth than Black Marble 2016). It never
+  shows on the day side, in Travel or anywhere else, and one setting
+  (`NIGHT_LIGHTS` in `js/action-globe.js`) answers Cesium's 30% night shading so
+  lit cities read as lights.
+- **Missions is one screen.** While Missions is up the sheet does not scroll:
+  the globe gives the deck more room, the card's picture shrinks first, the
+  words stop with a fade ("Read full mission" opens every word), Pass and
+  Accept stay on screen, and a card takes the whole touch so a swipe is never a
+  scroll (`css/mission-swipe-deck.css`).
+- **Where to.** Choosing a destination with no starting point asks for the
+  location from that tap (the pickup reads "Use my location"); refused, the
+  pickup field takes focus. The route and "Go" follow as before.
+- **Rides and Flights.** Two tiles, the icon on top, each split by an on/off
+  switch: Rides is Directions (route, ride) or Rentals; Flights is Commercial
+  (the longer-trip planner) or Private (not bookable yet, said plainly).
+  Door-to-door stays under Plan a trip.
+- **Rentals.** Cars from Whip Equipped LLC, Matthew's separate company, named
+  as such. Isabeata is a fictional make; the Isabeata 2024 is the cheapest car,
+  $350 a week. Reserve opens Whip Equipped's rentals app on that car, which
+  takes it only once the fleet lists a vehicle named "Isabeata 2024" through the
+  operator console; until then its page says "Coming soon" and takes no
+  reservation, and it shows no invented rating or trip count.
+- **Daytime M.** On the white daytime bar the M is the owner's supplied dark
+  artwork (`assets/img/m-mark-dark.png`), as the light theme already uses;
+  nothing is recoloured.
+- **No sign-in flash.** The sign-in form ships hidden (`mnet.html`) and opens
+  only when something asks for it; a member with a stored session gets the
+  World shell at once while that session is checked, so switching to the World
+  never paints the form first.
+- **The World's song is random.** The first tap plays a song drawn at random
+  from every public song in `data/albums.json` (19 today, Heal the 3rd World
+  one of them); another random one follows when it ends
+  (`js/world-audio-continuity.js`). After the privacy acknowledgement, what
+  the listener does is recorded through `MCC_TRACK` with the song, its order in
+  the session and the seconds in: `song_start`, `song_pause` (by the corner
+  button, the player, or another song starting), `song_resume`, `song_mute`,
+  `song_unmute`, `song_volume` (from/to), `song_end`, `song_hidden` (tab to the
+  background) and `song_leave`. The song events add no account, place or
+  audio address of their own; they ride the site's existing analytics, so
+  they carry what every event already carries there (the visitor id and the
+  coarse location the collector records, under the privacy notice). A phone's
+  hardware volume buttons are not visible to a web page, so only volume
+  changed on the page is seen.

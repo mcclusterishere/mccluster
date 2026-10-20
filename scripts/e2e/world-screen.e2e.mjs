@@ -289,6 +289,12 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   const world = freshWorld();
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  /* every frame of the first seconds: did the sign-in form paint on the way into the World? (owner, 2026-10-20) */
+  await ctx.addInitScript(() => {
+    window.__gateFlash = 0;
+    const tick = () => { const g = document.getElementById('mnSignedOut'); if (g && !g.hidden && g.getClientRects().length) window.__gateFlash++; if (performance.now() < 8000) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
@@ -464,6 +470,23 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       &&(await page.locator('#wtGo button').allTextContents()).map(t=>t.trim()).join('|')==='Near me|Airports|Hotels|On the globe|Saved'
       &&await page.isVisible('[data-travel-plan=flights]')&&await page.isVisible('[data-travel-plan=multi]')&&await page.isHidden('[data-travel-kind=flight]')
       &&await page.evaluate(()=>{const f=document.getElementById('wtFrom').getBoundingClientRect(),t=document.getElementById('wtTo').getBoundingClientRect(),p=document.getElementById('wtPickTo').getBoundingClientRect(),l=document.getElementById('wtLocate').getBoundingClientRect();return f.bottom<=t.top+1&&p.width>=44&&p.height>=44&&l.width>=44&&l.height>=44&&p.top>=t.top-12&&p.bottom<=t.bottom+12;}));
+    /* the two tiles and their switches (owner, 2026-10-20): Rides is Directions or Rentals, Flights is Commercial or Private */
+    const tiles=await page.evaluate(()=>({kinds:document.querySelectorAll('.wt-kind').length,subs:[...document.querySelectorAll('[data-travel-sub]')].map(b=>b.textContent.trim()).join('|'),
+      directions:document.querySelector('[data-travel-sub=directions]')?.getAttribute('aria-pressed'),multi:document.querySelectorAll('[data-travel-chip=multi]').length}));
+    check(scope,'Rides and Flights are two tiles, each split by an on/off switch',tiles.kinds===2&&tiles.subs==='Directions|Rentals|Commercial|Private'&&tiles.directions==='true'&&tiles.multi===0,tiles);
+    await page.click('[data-travel-sub=rentals]');
+    check(scope,'Rentals shows the Isabeata 2024 at $350 a week from Whip Equipped; the route tools step aside',await page.isVisible('#wtRentals')
+      &&/Isabeata 2024/.test(await page.textContent('#wtCars'))&&/\$350\/week/.test((await page.textContent('#wtCars')).replace(/\s+/g,''))
+      &&/Whip Equipped LLC, a separate company/.test(await page.textContent('#wtRentals'))&&await page.isHidden('#wtGo')
+      &&await page.getAttribute('#wtCars a','href')==='https://matthew.mccluster.org/whip/rentals/?vehicle=we-rental-isabeata-2024'
+      &&await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    await page.screenshot({path:join(OUT,scope+'-rentals.png')});
+    await page.click('[data-travel-sub=private]');
+    const priv=await page.evaluate(()=>({shown:!document.getElementById('wtPrivate').hidden&&!!document.getElementById('wtPrivate').offsetHeight,rentals:!document.getElementById('wtRentals').offsetHeight,
+      flights:document.querySelector('[data-travel-chip=flights]')?.getAttribute('aria-pressed'),sub:document.querySelector('[data-travel-sub=private]')?.getAttribute('aria-pressed')}));
+    check(scope,'Private flights says it is not bookable yet, under the Flights tile',priv.shown&&priv.rentals&&priv.flights==='true'&&priv.sub==='true',priv);
+    await page.click('[data-travel-sub=directions]');
+    check(scope,'Directions brings the route tools back',await page.isVisible('#wtGo')&&await page.isHidden('#wtPrivate')&&await page.getAttribute('[data-travel-chip=rides]','aria-pressed')==='true');
     const [dock,expand,modes,credit,...controls]=await Promise.all([
       page.locator('.appbar').boundingBox(),page.locator('.mn__world-expand').boundingBox(),page.locator('.wt-world-modes').boundingBox(),
       globe.locator('.osm-credit a[href="https://www.openstreetmap.org/copyright"]').boundingBox(),
@@ -478,6 +501,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     check(scope,'location is requested once, denial keeps manual entry, no navigation watch starts',await page.evaluate(()=>window.__travelGeoRequests===1&&window.__travelWatchStarts===0)&&await page.isEnabled('#wtFrom')&&/Location access is off/.test(await page.textContent('#wtLocationStatus')));
     await chooseTravelPlace(page,'wtTo','350 Fifth Avenue');
     check(scope,'selected address reveals ground options and waits for a selected starting point',/Empire State Building/.test(await page.inputValue('#wtTo'))&&await page.isVisible('#wtGroundOptions')&&await page.isDisabled('#wtNavigate')&&await page.isHidden('[data-travel-kind=flight]')&&req(world,'POST',/^\/v1\/travel\/route$/).length===0);
+    check(scope,'a destination with no pickup asks for the location from that tap, then points at the pickup',await page.waitForFunction(()=>window.__travelGeoRequests===2&&document.activeElement&&document.activeElement.id==='wtFrom',null,{timeout:5000}).then(()=>true,()=>false));
     await chooseTravelPlace(page,'wtTo','Union Station');await chooseTravelPlace(page,'wtFrom','New Haven');
     await showTravelRoute(page);
     check(scope,'selecting both endpoints automatically presents directions and Go',req(world,'POST',/^\/v1\/travel\/route$/).length===1&&await page.textContent('#wtNavigate')==='Go');
@@ -684,9 +708,19 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
   const {ctx,page,world,errors} = await open(device,{member});
   try {
     const globe = page.frame({url:/action-globe\.html/});
+    check(scope,'the sign-in form never flashes on the way into the World',await page.evaluate(()=>window.__gateFlash)===0,await page.evaluate(()=>window.__gateFlash));
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    /* MISSIONS IS ONE SCREEN (owner, 2026-10-20): nothing scrolls, Pass and Accept clear the bar, a card takes the whole touch */
+    const fit=await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed'),a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),c=document.querySelector('.mn-swipe__card');
+      const overlap=a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;return{scroll:f.scrollHeight-f.clientHeight,bottom:Math.round(a.bottom),inner:innerHeight,overlap,touch:getComputedStyle(c).touchAction,card:Math.round(c.getBoundingClientRect().height)};});
+    check(scope,'Missions is one screen: nothing scrolls, Pass and Accept stay on screen clear of the bar, and a swipe is never a scroll',fit.scroll<=1&&fit.bottom<=fit.inner&&!fit.overlap&&fit.touch==='none'&&fit.card>=150,fit);
+    await page.screenshot({path:join(OUT,scope+'-missions.png')});
+    if(!member){
+      const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});
+      check(scope,'on the white daytime bar the M is the owner\'s supplied dark M',/m-mark-dark\.png/.test(dayM),dayM);
+    }
     check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
@@ -1307,6 +1341,7 @@ if (runs('news-guest')) {
    await modal.getByRole('button', { name: 'Close' }).click();
   const meta = await page.$eval('#mnFeed [data-news-id]', (c) => c.querySelector('.mn__news-meta').textContent);
   check(scope, 'a card reads publisher · time ago · the place it mentions', /^news0\.example\s*·\s*\d+[mh]\s*·\s*Nairobi, Nairobi Area, Kenya$/.test(meta.trim()), meta);
+  check(scope, 'a story\'s chip says where it is from (Kenya), not "On the Earth"', (await page.textContent('#mnFeed [data-news-id] [data-news-place]')).trim() === 'Kenya');
   check(scope, 'a card without a place has no "On the Earth"', (await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((c) => !!c.querySelector('[data-news-place]')))).every((has, k) => has === (k % 4 !== 2)));
   check(scope, 'nothing scrolls sideways at 390 with the news in; the long headline and publisher are cut inside their card, a short publisher is whole', st.sw === st.cw && st.cardsFit && st.domains[0] === true && st.domains[1] === false, { sw: st.sw, cw: st.cw, fit: st.cardsFit, domains: st.domains });
   /* the evidence: the feed with the news in it */

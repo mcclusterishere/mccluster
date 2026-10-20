@@ -279,9 +279,14 @@ try{
     await context.close();
   }
   {
-    const {context,page}=await setup();await world(page);
-    await page.waitForFunction(()=>__audioObjects.some(a=>/heal-the-3rd-world/.test(a.src)&&!a.paused));
-    check('World tap with no selected music starts the prepared Heal theme',await page.locator('#mccWorldAudioTitle').textContent()==='Heal the 3rd World');
+    const {context,page}=await setup();
+    /* the theme is drawn at random from every public song in data/albums.json, Heal the 3rd World among them */
+    const catalog=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    await page.waitForFunction(()=>window.MCC_WORLD_AUDIO?.song()?.pool>1);
+    await world(page);
+    await page.waitForFunction(()=>{const s=MCC_WORLD_AUDIO.song();return s&&__audioObjects.some(a=>a.src.includes('/assets/audio/'+s.slug+'.')&&!a.paused);});
+    const picked=await page.evaluate(()=>MCC_WORLD_AUDIO.song());
+    check('World tap with no selected music starts a song drawn from the whole public catalog',picked.pool===catalog.length&&catalog.some(t=>t.title===picked.title)&&await page.locator('#mccWorldAudioTitle').textContent()===picked.title,{picked,pool:catalog.length});
     await page.locator('.appbar [data-appnav="music"]').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     await play(page,'here','Runway Walk');
     check('choosing music silences the theme before a second player can overlap',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1&&MCC_MUSIC.current().title==='Runway Walk'));
@@ -290,24 +295,29 @@ try{
   {
     const {context,page}=await setup();
     /* timed lyrics are looked up by the audio file's slug; the theme has none in the repo, so the fixture supplies two lines */
-    await context.route('**/data/lyrics/heal-the-3rd-world.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Heal the 3rd World',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
+    await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Fixture song',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
     await page.goto(WORLD+'/?view=feed');
-    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&document.getElementById('mnWorldPlay'));
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool&&document.getElementById('mnWorldPlay'));
+    const theme=await page.evaluate(()=>MCC_WORLD_AUDIO.song());
+    await page.evaluate(()=>{window.__songEvents=[];window.MCC_TRACK=(name,params)=>{if(/^song_/.test(name))__songEvents.push({name,...params});};});
     check('standalone World prepares the theme without autoplay',await page.evaluate(()=>__audioObjects.every(a=>a.paused)));
     check('the corner play button sits in the globe stack with the fullscreen control and the floating transport stays out of the World',
       await page.locator('#mnWorldStack #mnWorldPlay').isVisible()&&await page.locator('#mnWorldStack .mn__world-expand').isVisible()&&await page.locator('#mccWorldAudioControls').isHidden()
       &&await page.evaluate(()=>{const p=document.getElementById('mnWorldPlay').getBoundingClientRect(),x=document.querySelector('.mn__world-expand').getBoundingClientRect();return p.width>=44&&p.height>=44&&((Math.abs(p.right-x.right)<2&&p.bottom<=x.top+1)||(Math.abs(p.top-x.top)<2&&p.right<=x.left+1));}));
-    check('before the first touch the title is named but still, and the headline is the headline',(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&(await page.locator('.wt-headline').textContent())==='The world is your feed.');
+    check('before the first touch the title is named but still, and the headline is the headline',(await page.locator('#mnNowPlayingText').textContent())===theme.title&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&(await page.locator('.wt-headline').textContent())==='The world is your feed.');
     await page.locator('#wtTo').click();
     await page.waitForFunction(()=>__audioObjects.some(a=>!a.paused));
     check('standalone World first touch starts its own theme directly',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1));
     await page.waitForFunction(()=>document.getElementById('mnNowPlaying').classList.contains('is-playing'));
-    check('the song title scrolls in the top bar while the theme plays',await page.locator('#mnNowPlaying').isVisible()&&(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'
+    check('the first touch is recorded once as the start of that song, the event adding no account or place of its own',
+      await page.evaluate(s=>__songEvents.length===1&&__songEvents[0].name==='song_start'&&__songEvents[0].trigger==='first_tap'&&__songEvents[0].song===s.slug&&__songEvents[0].pool===s.pool&&!Object.keys(__songEvents[0]).some(k=>/user|email|lat|lng|country/i.test(k)),theme),await page.evaluate(()=>__songEvents));
+    check('the song title scrolls in the top bar while the theme plays',await page.locator('#mnNowPlaying').isVisible()&&(await page.locator('#mnNowPlayingText').textContent())===theme.title
       &&await page.evaluate(()=>{/* the title sits between the mark and whatever the header shows next (the bell for members, the sign-in controls for guests) */const now=document.getElementById('mnNowPlaying'),b=now.getBoundingClientRect(),m=document.querySelector('.mn__brand').getBoundingClientRect();let next=now.nextElementSibling;while(next&&!(next.offsetWidth||next.offsetHeight))next=next.nextElementSibling;const edge=next?next.getBoundingClientRect().left:document.querySelector('.mn__top').getBoundingClientRect().right-16;return b.width>=100&&b.left>=m.right-1&&b.right<=edge+1&&getComputedStyle(document.getElementById('mnNowPlayingText')).color==='rgb(255, 255, 255)';}));
     await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='Fixture line one',null,{timeout:8000});
     check('timed lyrics take the headline line by line',await page.locator('.wt-headline').getAttribute('class')==='wt-headline is-lyric'&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Pause music');
     await page.locator('#mnWorldPlay').click();
     await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='The world is your feed.');
+    check('pausing from the corner is recorded as the listener pausing that song',await page.evaluate(s=>__songEvents.some(e=>e.name==='song_pause'&&e.by==='button'&&e.song===s.slug),theme),await page.evaluate(()=>__songEvents));
     check('pausing from the corner restores the headline and keeps the title static',await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&await page.locator('#mnNowPlaying').isVisible());
     await page.reload();
     await page.waitForSelector('#mnWorldPlay');await page.locator('#wtTo').click();
