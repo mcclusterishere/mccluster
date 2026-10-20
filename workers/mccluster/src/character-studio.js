@@ -29,6 +29,12 @@ const BLOCKED = [
   'm_uid', 'org_id', 'owner_id', 'social_accounts', 'verified_human', 'source_core_job_ref'
 ];
 
+const ALLOWED = new Set([
+  'display_name', 'handle', 'story_world', 'source_ip', 'story_country',
+  'identity_kind', 'editorial_mission', 'voice', 'desire', 'fear',
+  'contradiction', 'appearance_direction', 'content_pillars'
+]);
+
 /**
  * The compiler is deliberately provider-independent. A model-based creative
  * assistant may propose fields later, but this validated contract remains
@@ -39,6 +45,7 @@ export function compileCharacterBlueprint(input) {
   if (BLOCKED.some(key => Object.prototype.hasOwnProperty.call(input, key))) {
     invalid('A character brief cannot set approval, identity, agent, or publishing privileges');
   }
+  if (Object.keys(input).some(key => !ALLOWED.has(key))) invalid('Unknown character brief field');
   const displayName = field(input.display_name, 'Display name', 2, 120);
   const handle = field(input.handle, 'Handle', 3, 32).toLowerCase();
   if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(handle)) invalid('Handle must be 3–32 lowercase letters, digits, dots, dashes or underscores');
