@@ -73,13 +73,16 @@ test('a news card is the World card keyed data-news-id: first-party reader with 
   assert.equal(country({ place: 'Lagos, Lagos, Nigeria' }), 'Nigeria');
   assert.equal(country({ place: 'Nairobi, Nairobi Area, Kenya', country_code: 'KE' }), 'Kenya');
   assert.equal(country({ place: '' }), '', 'no place, the chip falls back to "On the Earth"');
-  assert.match(fnSource(js, 'bindNewsActions'), /tellWorld\(\{ type: "hu:focus-place", lat: lat, lon: lon, label: label \}\);/);
+  assert.match(fnSource(js, 'bindNewsActions'), /tellWorld\(\{ type: "hu:focus-place", lat: lat, lon: lon, label: label, id: card \? card\.getAttribute\("data-news-id"\) : "" \}\);/, 'the story\'s id rides along, so its own pin is the one marked');
   assert.match(fnSource(js, 'bindNewsActions'), /MCC_WORLD_NEWS_READER\.open\(story, b\)/, 'legacy feed opens the shared first-party reader');
   assert.match(fnSource(js, 'bindNewsActions'), /mentioned in this story/, 'the place is mentioned, never "where it happened"');
   /* the clean-up, run: only absolute http(s) links, and a place only when both numbers are real and in range */
   const clean = new Function('location', 'URL', fnSource(js, 'safeHttpUrl') + '\n' + fnSource(js, 'cleanNews') + '\nreturn cleanNews;')({ origin: 'https://mccluster.org' }, URL);
-  const ok = clean({ id: 'a', title: '  A  headline ', url: 'https://www.publisher.example/x', domain: '', seen_at: '2026-10-15T22:00:00.000Z', place: 'Nairobi, Kenya', lat: -1.28, lon: 36.81 });
-  assert.deepEqual(ok, { news: true, id: 'a', title: 'A headline', url: 'https://www.publisher.example/x', domain: 'publisher.example', seen_at: '2026-10-15T22:00:00.000Z', place: 'Nairobi, Kenya', lat: -1.28, lon: 36.81 });
+  const ok = clean({ id: 'a', title: '  A  headline ', url: 'https://www.publisher.example/x', domain: '', seen_at: '2026-10-15T22:00:00.000Z', place: 'Nairobi, Kenya', lat: -1.28, lon: 36.81, country: 'KE' });
+  assert.deepEqual(ok, { news: true, id: 'a', title: 'A headline', url: 'https://www.publisher.example/x', domain: 'publisher.example', seen_at: '2026-10-15T22:00:00.000Z', place: 'Nairobi, Kenya', lat: -1.28, lon: 36.81, country_code: 'KE' });
+  /* only an ISO code is kept: the Worker never sends FIPS, and nothing else gets through */
+  assert.equal(clean({ id: 'b', title: 't', url: 'https://x.example/b', country: 'Kenya' }).country_code, '');
+  assert.equal(clean({ id: 'c', title: 't', url: 'https://x.example/c' }).country_code, '');
   for (const url of ['javascript:alert(1)', '/relative', 'data:text/html,x', '']) assert.equal(clean({ id: 'b', title: 't', url }), null, url + ' is refused');
   assert.equal(clean({ id: 'c', title: '', url: 'https://p.example/' }), null, 'no headline, no card');
   for (const [lat, lon] of [[91, 0], [0, 181], ['1', 2], [null, 3], [NaN, 0], [Infinity, 0]]) {
@@ -97,7 +100,7 @@ test('a news card is the World card keyed data-news-id: first-party reader with 
 test('the GDELT credit is one quiet line over the feed, shown whenever news is, linking to the project in a new tab', async () => {
   const js = await read('js/mnet.js'), html = await read('mnet.html');
   assert.match(html, /<p class="mn__news-credit" id="mnNewsCredit" hidden>World news from <a href="https:\/\/www\.gdeltproject\.org\/" target="_blank" rel="noopener noreferrer">The GDELT Project<\/a><\/p>\n        <div class="mn__feed" id="mnFeed"/);
-  const render = fnSource(js, 'renderFeed');
+  const render = fnSource(js, 'paintFeed');
   assert.match(render, /paintNewsCredit\(news\.length > 0\);/);
   assert.match(render, /var news = focus && focus\.filter \? \[\] : state\.news;/, 'a mission picked on the Earth narrows the feed to its posts: the news steps aside');
   assert.match(render, /news = news\.filter\(function \(n\) \{ return feedMatches\(n, query\); \}\);/, 'search reads the news too');
@@ -150,4 +153,35 @@ test('Local matches a story to the picked country by its tail, by name or alias,
   assert.equal(inCountry('Kenya', { name:'Kenya' }), true, 'a country-level label matches on its own');
   assert.equal(inCountry('', { name:'Kenya' }), false);
   assert.equal(inCountry('Nairobi, Nairobi Area, Kenya', null), false);
+});
+
+test('the pins on the Earth are the stories on the screen (owner, 2026-10-20: "I saw a post in Russia posted somewhere else on the map")', async () => {
+  const js = await read('js/mnet.js'), bridge = await read('js/world-news-globe.js'), globe = await read('js/action-globe.js');
+  /* the globe is sent what the feed rendered, never the whole stream behind it */
+  assert.match(js, /window\.MCC_WORLD_NEWS_ITEMS = function \(\) \{ return \(state\.shownNews \|\| \[\]\)\.slice\(\); \};/);
+  assert.doesNotMatch(js, /MCC_WORLD_NEWS_ITEMS = function \(\) \{ return state\.news\.slice\(\); \}/);
+  const wrapper = fnSource(js, 'renderFeed'), paint = fnSource(js, 'paintFeed');
+  assert.match(wrapper, /state\.shownNews = \[\];\s*try \{ return paintFeed\(append\); \}/, 'every exit of a render starts from nothing shown');
+  assert.match(wrapper, /new CustomEvent\("mcc:world-news-shown"\)/);
+  assert.match(paint, /state\.shownNews = news\.slice\(\);\s*host\.innerHTML =/, 'only the list that is drawn is shown');
+  assert.match(bridge, /window\.addEventListener\('mcc:world-news-shown', sync\);/);
+  /* a tapped story's own pin is marked */
+  assert.match(fnSource(globe, 'focusPlace'), /focusedNews=lastPlace\.id;markNewsPin\(\);/);
+  assert.match(fnSource(globe, 'drawWorldNewsPins'), /markNewsPin\(\);/);
+});
+
+test('a story names its country: the ISO code the Worker sends, else the place\'s last part without GDELT\'s gazetteer forms', async () => {
+  const js = await read('js/mnet.js');
+  const sandbox = { navigator: { language: 'en-US' }, Intl };
+  const newsCountry = new Function('navigator', 'Intl', fnSource(js, 'newsCountry') + '; return newsCountry;')(sandbox.navigator, Intl);
+  assert.equal(newsCountry({ country_code: 'RU', place: 'Somewhere, Else, Ukraine' }), 'Russia');
+  assert.equal(newsCountry({ place: 'Nassau, New Providence, Bahamas, The' }), 'Bahamas');
+  assert.equal(newsCountry({ place: 'Hanoi, Ha Noi, Vietnam, Republic Of' }), 'Vietnam');
+  assert.equal(newsCountry({ place: 'Belgrade, Serbia (General), ' }), 'Serbia');
+  assert.equal(newsCountry({ place: 'Serbia (General), Serbia (General)' }), 'Serbia');
+  assert.equal(newsCountry({ place: 'Pacific Ocean, Oceans' }), 'Pacific Ocean');
+  assert.equal(newsCountry({ place: 'Lagos, Lagos, Nigeria' }), 'Nigeria');
+  assert.equal(newsCountry({ place: '' }), '');
+  const clean = fnSource(js, 'cleanNews');
+  assert.match(clean, /country_code: \/\^\[A-Z\]\{2\}\$\/\.test\(country\) \? country : ""/);
 });
