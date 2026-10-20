@@ -1,6 +1,6 @@
 {
   "schema_version": "2.1.0",
-  "audit_date": "2026-10-18",
+  "audit_date": "2026-10-20",
   "repo": "mcclusterishere/mccluster",
   "audited_head": "audit/branch-reconciliation-20260926",
   "purpose": "Exhaustive classification of Equity Uprise-specific and explicitly bound shared-platform product/support sources for the current Core V2 branch. Every discovered source must map to at least one canonical building capability or be explicitly support-only.",
@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 419,
+  "candidate_count": 496,
   "capability_source_count": 104,
-  "support_only_count": 315,
+  "support_only_count": 392,
   "entries": [
     {
       "path": ".cursorrules",
@@ -45,6 +45,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Single coordinated read-only-by-default Core V2 validation pipeline; generated repository writes are manual, serialized, and non-main only."
+    },
+    {
+      "path": ".github/workflows/human-uprise-editorial.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise public World visual/branding CI support; does not establish a separate building capability."
     },
     {
       "path": ".github/workflows/reconciliation-ci.yml",
@@ -341,11 +348,123 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "account.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-globe.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-artist.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-audio-engineer.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-clippers.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-cohorts.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-discovery.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-hire.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-influencers.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-producer.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-video-editor.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-network-videographer.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "action-policy.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "action/index.html",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Uprise Action Network campaign landing (/action/?c=<slug>) on the McCluster site, backed by the action_* tables; names Equity Uprise in its brand line. A mobilization surface, not a building program capability; mapping it into the building program is an owner decision."
+    },
+    {
+      "path": "album.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "analytics.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "anti-social-mission.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "assets/img/equity-uprise-logo.webp",
@@ -402,11 +521,53 @@
       "rationale": "Public profile for an organizer-confirmed Equity Uprise cohort participant, showing attributed completed work and the participant's separately controlled provider webpage. Extends the existing people directory and actual cohort record."
     },
     {
+      "path": "control.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "create.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "creator-selection-desk.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "creator.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "crm.html",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "css/action-globe.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "css/action.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "css/equity-uprise-app.css",
@@ -421,6 +582,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Institutional Desk styling; presentation only."
+    },
+    {
+      "path": "css/human-uprise-editorial.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "css/mission-swipe-deck.css",
@@ -795,6 +963,13 @@
       "rationale": "Public globe entry and its route documentation; separate from the physical Equity Uprise building capability registry."
     },
     {
+      "path": "docs/action-network/HUMAN-UPRISE-PRODUCTION-MIGRATION-RECONCILIATION-20261014.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise program/World architecture or governance reference; support-only, not geometry authority."
+    },
+    {
       "path": "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -847,6 +1022,20 @@
       "rationale": "Control-plane branch-governance documentation mentions Equity Uprise only to classify historical donor branches and sequencing; it does not define building program, geometry, capability, or runtime authority."
     },
     {
+      "path": "docs/control-plane/CANONICAL-ARCHITECTURE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise program/World architecture or governance reference; support-only, not geometry authority."
+    },
+    {
+      "path": "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise program/World architecture or governance reference; support-only, not geometry authority."
+    },
+    {
       "path": "docs/control-plane/DOMAINS-AND-ENTITIES.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -894,6 +1083,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
+      "path": "docs/control-plane/LIVE-MISSIONS.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise program/World architecture or governance reference; support-only, not geometry authority."
     },
     {
       "path": "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
@@ -1273,6 +1469,13 @@
       "rationale": "Public globe entry and its route documentation; separate from the physical Equity Uprise building capability registry."
     },
     {
+      "path": "fbi.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "feed.xml",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -1294,6 +1497,13 @@
       "rationale": "Heal the 3rd World EP gateway into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
     },
     {
+      "path": "help.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "hire.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -1303,6 +1513,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "identity-verify.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "index.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -1310,11 +1527,25 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
+      "path": "js/action.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "js/analytics-product.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared analytics frontend contains cross-product Equity Uprise context but does not define an independent Equity Uprise capability."
+    },
+    {
+      "path": "js/analytics-suite.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "js/chatfirst.js",
@@ -1334,11 +1565,67 @@
       "rationale": "Renders the public cohort profile, supported song credits and claimed account link from the published Action Network archive. Implements the existing people directory and actual Equity Uprise cohort record."
     },
     {
+      "path": "js/control-palette.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/control-room-v2.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/control-room/action-network.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "js/control-room/clipping.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "js/control-room/identity-review.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/control-room/instagram.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/control-room/profile-edit-review.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/control-room/social-compose.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/create.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "js/crm.js",
@@ -1402,6 +1689,20 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "js/fbi.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/gateway.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "js/here-material.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1439,6 +1740,13 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "js/mccluster-creator-account.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "js/member-desk-core.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1472,6 +1780,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network client; the ?group= deep link can open the Equity Uprise group. A mobilization surface, not a building capability (same rationale as mnet.html)."
+    },
+    {
+      "path": "js/music-creator-profile.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "js/offers.js",
@@ -1515,6 +1830,20 @@
       "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
+      "path": "js/site-navigation.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "js/socials-room.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "js/tabbar.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1552,6 +1881,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "live-mission.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "llms.txt",
       "classification": "capability_source",
       "capability_ids": [
@@ -1561,6 +1897,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "management.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "matthew-mccluster.html",
@@ -1577,11 +1920,25 @@
       "rationale": "McCluster Corp company/product hub references Equity Uprise as a public-interest product layer; it adds no Equity Uprise building capability."
     },
     {
+      "path": "mccluster-platform.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "mnet.html",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network primary social/mobilization surface carrying the Equity Uprise founding mark; not a building capability."
+    },
+    {
+      "path": "music-videos.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "native/app/(tabs)/_layout.tsx",
@@ -1591,11 +1948,25 @@
       "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
     },
     {
+      "path": "native/app/(tabs)/create.tsx",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "native/app/(tabs)/desk.tsx",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
+    },
+    {
+      "path": "native/app/(tabs)/profile.tsx",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "native/app/(tabs)/uprise.tsx",
@@ -1606,6 +1977,27 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "native/app/group/[slug].tsx",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "native/app/mission/[id].tsx",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "native/src/ActionNetworkScreen.tsx",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "native/src/AppBar.tsx",
@@ -1622,11 +2014,32 @@
       "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
     },
     {
+      "path": "native/src/actionNetwork.ts",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "native/src/content.ts",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
+    },
+    {
+      "path": "native/src/mcc.tsx",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "native/src/proofMedia.ts",
+      "classification": "native_runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "newsroom.html",
@@ -1712,6 +2125,13 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
+      "path": "receipt.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "redirects/equity-uprise.html",
       "classification": "redirect_support",
       "capability_ids": [],
@@ -1731,6 +2151,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+    },
+    {
+      "path": "scripts/action-economy-unit-economics.mjs",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "scripts/action-network-creator-pilot.mjs",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
+      "path": "scripts/e2e/human-uprise-door.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -1812,6 +2253,20 @@
       "rationale": "Regression tests for Action Network origin attribution, Control aggregate reads, proof-review context, and bounty retry fail-closed behavior; validates mobilization/runtime behavior but is not a physical building capability."
     },
     {
+      "path": "scripts/test/action-world-home.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
+    },
+    {
+      "path": "scripts/test/analytics-platform.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
+    },
+    {
       "path": "scripts/test/antisocial-three-levels.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1824,6 +2279,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared app-bar consistency regression test covers shell/navigation presentation across pages; it does not define a distinct Equity Uprise building capability."
+    },
+    {
+      "path": "scripts/test/creator-action-distribution.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
     },
     {
       "path": "scripts/test/domain-architecture.test.mjs",
@@ -1866,6 +2328,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/mnet-real-network.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
+    },
+    {
+      "path": "scripts/test/native-action-network.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
     },
     {
       "path": "scripts/test/policy-fellowship-ladder.test.mjs",
@@ -3004,6 +3480,13 @@
       "rationale": "Generator for catalogue.html structured data and static registry; tooling, not a capability."
     },
     {
+      "path": "tools/build-company-site.mjs",
+      "classification": "build_validation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Company-site build support for Equity Uprise metadata; not a building capability."
+    },
+    {
       "path": "tools/build-hire-schema.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -3047,6 +3530,13 @@
       "support_only": false
     },
     {
+      "path": "wigger-recovery.html",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "workers/mccluster/src/ai/envelope.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -3061,6 +3551,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Generated company property pages for mccluster.org; Equity Uprise appears as a product door to its existing page. Not a building capability."
+    },
+    {
+      "path": "workers/mccluster/src/company-site/router.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
     },
     {
       "path": "workers/mccluster/src/entry-platform.js",
@@ -3100,6 +3597,13 @@
       "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
+      "path": "workers/mccluster/src/live/stream.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "workers/mccluster/src/music/tracks.js",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -3130,11 +3634,25 @@
       "rationale": "Implements the read-only, entitlement-filtered Halo Globe projection contract."
     },
     {
+      "path": "workers/mccluster/src/social/router.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing public platform, client, or Worker runtime references Equity Uprise; no physical building capability."
+    },
+    {
       "path": "workers/mccluster/src/world-layers.js",
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "The World's data layers for the globe: flights (public), satellites and launches (members), fetched from OpenSky, CelesTrak and Launch Library 2 and cached by the Worker. Names the globe entry contract; not a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/company-site.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
     },
     {
       "path": "workers/mccluster/test/fbi.test.mjs",
@@ -3179,11 +3697,32 @@
       "rationale": "Worker test for the Action Network live routes; not a building capability."
     },
     {
+      "path": "workers/mccluster/test/mnet-post-limits.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
+    },
+    {
+      "path": "workers/mccluster/test/mnet-scheduled.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
+    },
+    {
       "path": "workers/mccluster/test/seek-first-catalogs.test.mjs",
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "workers/mccluster/test/social-outbox.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise network or brand regression test; no physical building capability."
     },
     {
       "path": "workers/mccluster/test/world-layers.test.mjs",
