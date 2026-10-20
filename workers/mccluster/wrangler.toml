@@ -36,6 +36,10 @@ AUDIO_SFU_ROOMS_ENABLED = "false"
 # Needs AUDIO_SFU_ROOMS_ENABLED and the Worker secret AUDIO_ROOM_PASS_KEY (32+ random characters),
 # which signs the visitor's listening pass. Other regions, hands and speaking always need sign-in.
 AUDIO_ROOMS_VISITOR_LISTEN_ENABLED = "false"
+# Country-scoped public regional feeds and explicit author-assigned post countries.
+# Production SQL pending: supabase/pending/20261019222500_world_place_scope_v1.sql
+# Do not turn on until the migration is applied and public-only feed QA passes.
+WORLD_PLACE_SCOPE_ENABLED = "false"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
