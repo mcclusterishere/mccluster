@@ -836,6 +836,19 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});
       check(scope,'on the white daytime bar the M is the owner\'s supplied dark M',/m-mark-dark\.png/.test(dayM),dayM);
     }
+    /* OVER THE GLOBE THE TOP STAYS TRANSPARENT (owner, 2026-10-20): by day as by night the header is a fade over the Earth,
+       never a solid band, and its words stay white; every World mode */
+    for(const mode of ['missions','travel','posts']){
+      await page.click('.wt-world-modes [data-world-mode='+mode+']');
+      const top=await page.evaluate(async()=>{const h=document.documentElement,was=h.getAttribute('data-daylight'),t=document.querySelector('.mn__top');
+        const read=()=>{const c=getComputedStyle(t);return {color:c.backgroundColor,image:c.backgroundImage,brand:getComputedStyle(t.querySelector('.mn__brand small')||t).color};};
+        h.setAttribute('data-daylight','day');await new Promise(r=>requestAnimationFrame(r));const day=read();
+        h.setAttribute('data-daylight','night');await new Promise(r=>requestAnimationFrame(r));const night=read();
+        if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return {day,night};});
+      check(scope,'by day the top over the globe is the same transparent fade as by night ('+mode+')',
+        top.day.color==='rgba(0, 0, 0, 0)'&&/linear-gradient/.test(top.day.image)&&top.day.image===top.night.image&&top.day.brand==='rgb(255, 255, 255)',top);
+    }
+    await page.click('.wt-world-modes [data-world-mode=missions]');
     check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
