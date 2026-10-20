@@ -2,6 +2,7 @@
    Read-only external discovery. No grant application, payment, bounty publication,
    or promise of award. Never call with an unchecked identity. */
 import { fail, reply } from './lib/http.js';
+import { evaluateFundingRegister, FUNDING_REGISTER_VERSION } from './funding-requirements.js';
 
 export const FUNDING_PREFIX = '/v1/control/funding';
 const GRANTS_URL = 'https://api.grants.gov/v1/api/search2';
@@ -89,6 +90,36 @@ export async function handleFundingIntelligence(request, env, { fetchImpl = fetc
   const url = new URL(request.url), path = url.pathname.replace(/\/+$/, '');
   if (!path.startsWith(FUNDING_PREFIX)) return null;
   if (request.method !== 'GET') return fail(request, env, 'Method not allowed', 405);
+  if (path === FUNDING_PREFIX + '/register') {
+    const route = url.searchParams.get('route_id');
+    if (route !== null && !/^[CDORN]\d{2}$/.test(route)) return fail(request, env, 'Invalid funding route identifier', 400);
+    if (!read) return fail(request, env, 'Catalog connection unavailable', 503);
+    try {
+      const filter = route ? '&criteria_register->>route_id=eq.' + route : '';
+      const rows = await read('action_funding_opportunities?select=opportunity_id,funder_name,program_title,source_url,availability,criteria_register' +
+        '&order=opportunity_id.asc&limit=101' + filter);
+      if (!Array.isArray(rows)) throw new Error('Invalid catalog response');
+      const selected = route ? rows.filter(row => row.criteria_register?.route_id === route) : rows;
+      return privateReply(request, env, {
+        ok: true, schema_state: 'installed', projection_version: FUNDING_REGISTER_VERSION,
+        source: 'action_funding_opportunities', checked_at: new Date().toISOString(),
+        items: selected.slice(0, 100).map(row => evaluateFundingRegister(row, { details: !!route })),
+        completeness: { state: selected.length > 100 ? 'truncated' : 'complete', limit: 100 },
+        funding_authorized: false, payout_enabled: false,
+        applicant_review: 'Requires an authorized private applicant record; catalog facts cannot establish eligibility.'
+      });
+    } catch (error) {
+      // PostgREST reports an absent selected column as 400/PGRST204; an absent
+      // relation can be 404. Neither is an empty opportunity market.
+      const missing = [400, 404, 406].includes(error?.status);
+      return privateReply(request, env, {
+        ok: false, schema_state: missing ? 'not_installed' : 'unavailable', items: [],
+        projection_version: FUNDING_REGISTER_VERSION,
+        message: missing ? 'Funding criteria register migration has not been installed.' : 'Funding criteria register could not be read.',
+        completeness: { state: 'unavailable', limit: 100 }, funding_authorized: false, payout_enabled: false
+      });
+    }
+  }
   if (path === FUNDING_PREFIX + '/catalog') {
     if (!read) return fail(request, env, 'Catalog connection unavailable', 503);
     // These relations must exist before Control can show drafts; missing is
