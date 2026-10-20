@@ -65,7 +65,7 @@ async function run(browser, width, name, opts = {}) {
   const calls = [];
   const ctx = await browser.newContext({ viewport: { width, height: width < 500 ? 844 : 900 }, deviceScaleFactor: 1 });
   await ctx.addInitScript(([uid]) => {
-    try { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() })); } catch (_) {}
+    try { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); } catch (_) {}
     try { localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'fixture-token', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: uid } })); } catch (_) {}
   }, [UID]);
   await ctx.route('https://esm.sh/**', (route) => route.fulfill({ status: 200, contentType: 'text/javascript',

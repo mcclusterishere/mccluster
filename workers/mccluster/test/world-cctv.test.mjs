@@ -29,7 +29,7 @@ const SOURCES = { sources: [
 ] };
 
 /* one world: who the user is, what the database holds, and what Halo answers */
-const ACK = { privacy_policy_version: '2026-09-26', privacy_acknowledged_at: '2026-10-01T00:00:00Z' };
+const ACK = { privacy_policy_version: '2026-10-19', privacy_acknowledged_at: '2026-10-01T00:00:00Z' };
 function world({ user = true, privacy = 'current', assignment = 'verified', halo = {} } = {}) {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {

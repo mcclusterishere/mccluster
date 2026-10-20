@@ -201,10 +201,15 @@ function wireTravelControlLayout(){
 }
 // Verification exposes counts only, never a visitor's precise location or route.
 window.__huNavigation=()=>({mapPicking:!!mapPickKind,travel:travelMode,routePoints:roadRoute?.geometry.length||0,routeEntities:roadEntities.length,routeVisible:travelMode&&roadEntities.length>0,location:!!currentLocation,locationEntities:locationEntities.length,locationVisible:travelMode&&locationEntities.length>0,following:travelMode&&currentLocation?.follow===true});
+/* CITY LIGHTS ONLY AT NIGHT, AND VISIBLE THERE (owner, 2026-10-20: "sections on the light side that have lights on … and
+   sections of the dark side where there is no light … doesn't make sense"). The city-lights layer never shows on the
+   day side, in Travel or anywhere else, and Cesium's 30% night shading is answered with enough lift and contrast that
+   lit cities read as lights while the dark land stays dark. */
+const NIGHT_LIGHTS={brightness:3.4,contrast:1.15,gamma:.9};
 function travelStyle(){
  if(!viewer||!EDITORIAL)return;
  dayLayer.saturation=1.1;dayLayer.brightness=1.05;
- if(nightLayer){nightLayer.show=true;nightLayer.dayAlpha=travelMode?.35:0;nightLayer.nightAlpha=1;nightLayer.brightness=travelMode?2:2.4;}
+ if(nightLayer){nightLayer.show=true;nightLayer.dayAlpha=0;nightLayer.nightAlpha=1;nightLayer.brightness=NIGHT_LIGHTS.brightness;nightLayer.contrast=NIGHT_LIGHTS.contrast;nightLayer.gamma=NIGHT_LIGHTS.gamma;}
  if(cloudLayer)cloudLayer.alpha=travelMode?.3:EDITORIAL_CLOUD_ALPHA;
 }
 function setTravelMode(on){
@@ -429,9 +434,10 @@ function paintMembersDoor(){const card=$('worldMembers');if(!card)return;let mem
    A lit NASA Earth (below), the street map one tap away, an atmosphere
    rim, glowing pins, and continent labels that count public pins only. */
 /* THE EARTH (owner's signed-out reference, 2026-10-14): NASA imagery only, all public domain. Day: Blue Marble Next Generation.
-   Night: Black Marble city lights. Clouds: the Visible Earth composite, a still, not today's weather. The globe's Sun position and day/night line track real time. */
+   Night: NASA's VIIRS City Lights. Clouds: the Visible Earth composite, a still, not today's weather. The globe's Sun position and day/night line track real time. */
 const DAY_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg';
-const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png';
+/* NASA's City Lights (VIIRS 2012): brighter, crisper lights on a dark Earth than Black Marble 2016's moonlit land */
+const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_CityLights_2012/default/2012-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg';
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
 const EDITORIAL_CLOUD_ALPHA=.65;
 let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto',selectionShown=false,continentLabels=[];const pinCache={};
@@ -485,11 +491,11 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
   sc.backgroundColor=Cesium.Color.fromCssColorString('#090b0d');sc.globe.baseColor=Cesium.Color.fromCssColorString('#082b4b');
   if(sc.skyBox)sc.skyBox.show=false;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
   /* DAY AND NIGHT BY THE REAL SUN (owner, 2026-10-19): the lit side and the dark side follow the actual time, not a studio lamp.
-     The night side carries the Black Marble city lights; the Sun disc itself stays hidden on the editorial globe. */
+     The night side carries NASA's city lights; the Sun disc itself stays hidden on the editorial globe. */
   sc.globe.enableLighting=true;sc.light=new Cesium.SunLight();sc.globe.dynamicAtmosphereLightingFromSun=true;sc.globe.atmosphereSaturationShift=.1;sc.globe.atmosphereBrightnessShift=-.05;
   if(sc.skyAtmosphere){sc.skyAtmosphere.saturationShift=.1;sc.skyAtmosphere.brightnessShift=.05}
   dayLayer.saturation=1.1;dayLayer.brightness=1.05;dayLayer.contrast=1.05;dayLayer.gamma=1.1;
-  if(nightLayer){nightLayer.show=true;nightLayer.dayAlpha=0;nightLayer.nightAlpha=1;nightLayer.brightness=2.4}if(cloudLayer){cloudLayer.show=true;cloudLayer.saturation=0;cloudLayer.brightness=1.1;cloudLayer.alpha=EDITORIAL_CLOUD_ALPHA}
+  if(nightLayer){nightLayer.show=true;nightLayer.dayAlpha=0;nightLayer.nightAlpha=1;nightLayer.brightness=NIGHT_LIGHTS.brightness;nightLayer.contrast=NIGHT_LIGHTS.contrast;nightLayer.gamma=NIGHT_LIGHTS.gamma}if(cloudLayer){cloudLayer.show=true;cloudLayer.saturation=0;cloudLayer.brightness=1.1;cloudLayer.alpha=EDITORIAL_CLOUD_ALPHA}
  }
  window.__huGlobeStyle=()=>({editorial:EDITORIAL,saturation:dayLayer&&dayLayer.saturation,cloudAlpha:cloudLayer&&cloudLayer.alpha,atmosphereSaturation:sc.globe.atmosphereSaturationShift,stars:!!(sc.skyBox&&sc.skyBox.show)});
  travelStyle();
@@ -804,7 +810,7 @@ function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartog
  if(!ionImageryTried&&auto&&h<ION_HI){ionImageryTried=true;addIonImagery(0)}
  if(ionImagery){const on=auto&&h<(ionImagery.show?ION_OFF:ION_HI);if(ionImagery.show!==on)ionImagery.show=on;const a=Math.min(1,Math.max(0,(ION_HI-h)/(ION_HI-ION_FULL)));if(ionImagery.alpha!==a)ionImagery.alpha=a;
   if(cloudLayer){const c=(ionImagery.ready&&on?1-a:1)*(EDITORIAL?EDITORIAL_CLOUD_ALPHA:1);if(cloudLayer.alpha!==c)cloudLayer.alpha=c}
-  /* Black Marble is opaque and sits over the aerial imagery; on the night side it would cover the ground at every height */
+  /* the city lights are opaque and sits over the aerial imagery; on the night side it would cover the ground at every height */
   if(nightLayer){const n=ionImagery.ready&&on?1-a:1;if(nightLayer.nightAlpha!==n)nightLayer.nightAlpha=n}}
  /* OSM Buildings sit on Cesium World Terrain's heights; on the flat fallback they would float or sink, so they wait for the real ground */
  if(!ionBuildingsTried&&ionGround&&auto&&h<BUILD_OFF*2){ionBuildingsTried=true;addIonBuildings()}

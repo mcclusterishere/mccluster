@@ -47,7 +47,7 @@ test('account creation requires legal first and last name, mailing address and p
     assert.match(html, new RegExp('id="' + id + '"'), id + ' must exist');
   }
   assert.match(html, /MCC_NAME_INTEGRITY\.validate\(first, last\)/);
-  assert.match(html, /privacy_policy_version:\s*"2026-09-26"/);
+  assert.match(html, /privacy_policy_version:\s*"2026-10-19"/);
   assert.match(html, /shipping_address_line1/);
   assert.match(html, /complete mailing address are required/i);
 });
@@ -55,7 +55,7 @@ test('account creation requires legal first and last name, mailing address and p
 test('site entry gate is versioned and analytics stays off before acknowledgement', async () => {
   const live = await readFile(join(ROOT, 'js/live-content.js'), 'utf8');
   const analytics = await readFile(join(ROOT, 'js/analytics.js'), 'utf8');
-  assert.match(live, /var VERSION = "2026-09-26"/);
+  assert.match(live, /var VERSION = "2026-10-19"/);
   assert.match(live, /I agree &amp; continue/);
   assert.match(live, /page === "privacy\.html"/, 'the policy itself must remain readable');
   assert.match(analytics, /if \(mccPrivacyAcknowledged\(\)\) \{/);

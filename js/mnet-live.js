@@ -132,10 +132,11 @@
      same directory the badge counts. Hidden when nobody is live; never a placeholder broadcast. */
   function liveHero(s) {
     var room = s.room || {}, host = s.host || {}, m = s.metrics || {};
+    // unique_viewers counts everyone who came during the session, not who is here now: "viewers", never "watching"
     var viewers = s.room_kind === "mission" ? Number(m.joined || 0) : Number(m.unique_viewers || 0);
     return '<article class="mn__livehero-card">' +
       '<div class="mn__livehero-top"><span class="mn__livehero-badge"><i aria-hidden="true"></i>Live</span>' +
-        '<span class="mn__livehero-count">' + esc(viewers.toLocaleString()) + (s.room_kind === "mission" ? " joined" : " watching") + '</span></div>' +
+        '<span class="mn__livehero-count">' + esc(viewers.toLocaleString()) + (s.room_kind === "mission" ? " joined" : viewers === 1 ? " viewer" : " viewers") + '</span></div>' +
       '<h3>' + esc(room.title || s.title) + '</h3>' +
       (room.title && room.title !== s.title ? '<p>' + esc(s.title) + '</p>' : '') +
       '<p class="mn__livehero-host">' + esc(personName(host)) + ' · ' + esc(since(s.started_at)) +
