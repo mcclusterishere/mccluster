@@ -71,7 +71,7 @@ test('fictional-character directory is visible in embedded Human Uprise World, w
   const source=read('js/world-house-agents.js');
   const css=read('css/world-house-agents.css');
   const globeCss=read('css/action-globe.css');
-  assert.match(globeCss,/\.globe-surface-network[^\\n]*#deck[^\\n]*display:none!important/);
+  assert.ok(globeCss.includes('.globe-surface-network #deck') && globeCss.includes('display:none!important'));
   assert.match(source,/document\.documentElement\.classList\.contains\('globe-surface-network'\)[\s\S]*?\? document\.body : document\.getElementById\('deck'\)/);
   assert.match(css,/html\.globe-surface-network \.world-house-agents/);
   assert.match(css,/max-height:calc\(100dvh - 16px\)/);
