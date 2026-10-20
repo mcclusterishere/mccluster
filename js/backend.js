@@ -79,6 +79,22 @@
   function session() { return jget("session", null); }
   function jwtExp(tok) { try { return JSON.parse(atob(tok.split(".")[1])).exp * 1000; } catch (e) { return 0; } }
 
+  /* the Supabase email flows that legitimately land a session in the URL fragment */
+  var FRAGMENT_TYPES = { magiclink: 1, signup: 1, recovery: 1, invite: 1, email_change: 1 };
+  function tokenSub(tok) {
+    try {
+      var part = String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (part.length % 4) part += "=";
+      var sub = JSON.parse(atob(part)).sub;
+      return typeof sub === "string" && sub ? sub : null;
+    } catch (e) { return null; }
+  }
+  function sameMemberOrSignedOut(sub) {
+    var cur = session();
+    if (!cur || !cur.access_token) return true;
+    return tokenSub(cur.access_token) === sub;
+  }
+
   // magic-link landing: tokens arrive in the URL hash. If Supabase bounced the
   // link (expired, wrong Site URL, redirect not allow-listed), the REASON lands
   // in the URL too; surface it instead of failing silently, so a broken link
@@ -94,8 +110,24 @@
       var p = kv.split("="); q[p[0]] = decodeURIComponent((p[1] || "").replace(/\+/g, " "));
     });
     if (q.access_token) {
-      saveSession({ access_token: q.access_token, refresh_token: q.refresh_token || "" });
-      history.replaceState(null, "", location.pathname + location.search);
+      // A fragment is navigation data anyone can put in a link, so a token in
+      // it is never trusted on sight. It is stripped from the URL at once,
+      // honoured only when Supabase's own email flows minted it (they carry a
+      // `type`), never replaces a different member already signed in on this
+      // device (login CSRF / session fixation), and is saved only after
+      // GoTrue confirms it belongs to a real user.
+      try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+      if (!FRAGMENT_TYPES.hasOwnProperty(q.type)) return;
+      var incoming = tokenSub(q.access_token);
+      if (!incoming || !sameMemberOrSignedOut(incoming)) return;
+      fetch(URL_ + "/auth/v1/user", {
+        headers: { apikey: KEY, Authorization: "Bearer " + q.access_token },
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (u) {
+        if (!u || u.id !== incoming || !sameMemberOrSignedOut(incoming)) return;
+        saveSession({ access_token: q.access_token, refresh_token: q.refresh_token || "" });
+        window.MCC_DB = sb;
+        try { window.dispatchEvent(new CustomEvent("mcc:auth-changed", { detail: { signed_in: true } })); } catch (e) {}
+      }).catch(function () {});
       return;
     }
     var msg = q.error_description || q.error_code || q.error;

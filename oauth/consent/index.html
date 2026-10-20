@@ -10,6 +10,19 @@
     *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0,#211411 0,var(--ink) 48%);color:var(--cream);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:24px}
     main{width:min(440px,100%)}.mark{width:54px;height:54px;border-radius:15px;background:var(--ruby);display:grid;place-items:center;font-weight:950;font-size:27px;margin-bottom:22px}.k{color:#ff7a72;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:900}.card{border:1px solid var(--edge);background:rgba(21,17,15,.94);border-radius:22px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.42)}h1{font-size:32px;line-height:1;margin:7px 0 12px}p{color:var(--dim);margin:0}.client{margin:22px 0;padding:15px;border:1px solid var(--edge);border-radius:15px}.client strong{display:block;color:var(--cream);font-size:18px}.redirect{margin-top:8px;font-size:12px;color:var(--dim);overflow-wrap:anywhere}.scope{display:flex;gap:9px;align-items:flex-start;margin:10px 0;color:var(--dim)}.scope b{color:#ff7a72}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}button,input{font:inherit}.primary,.secondary{border:0;border-radius:13px;padding:13px;font-weight:850;cursor:pointer}.primary{background:var(--ruby);color:white}.secondary{background:transparent;color:var(--cream);border:1px solid var(--edge)}.login{display:grid;gap:10px;margin-top:20px}.login input{width:100%;border-radius:12px;padding:13px;border:1px solid var(--edge);background:#0d0a09;color:var(--cream)}.msg{margin-top:12px;color:#ff9a91;font-size:13px}.who{margin-top:12px;font-size:13px;color:var(--dim)}[hidden]{display:none!important}
   </style>
+  <!-- Frame-busting: GitHub Pages cannot send X-Frame-Options or a
+       frame-ancestors CSP, and a meta CSP cannot carry frame-ancestors. The
+       consent page stays hidden unless it is the top-level document, so an
+       Approve button can never be clickjacked through an invisible frame. -->
+  <style id="antiClickjack">html{display:none!important}</style>
+  <script>
+    if (self === top) {
+      var antiClickjack = document.getElementById('antiClickjack');
+      antiClickjack.parentNode.removeChild(antiClickjack);
+    } else {
+      try { top.location = self.location; } catch (e) {}
+    }
+  </script>
 </head>
 <body>
 <main>
@@ -44,7 +57,7 @@
   </div>
 </main>
 <script type="module">
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2';
 
   const SUPABASE_URL='https://zmnhbrjyhxzhkxmhkexs.supabase.co';
   const SUPABASE_KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
@@ -79,7 +92,13 @@
     $('#redirectUri').textContent=data?.redirect_uri?`Returns to: ${data.redirect_uri}`:'';
     const scope=String(data?.scope||'').split(/\s+/).filter(Boolean);
     const labels={openid:'Know which McCluster account is signing in',profile:'Read your basic profile',email:'Read your account email',phone:'Read your account phone'};
-    $('#scopes').innerHTML=(scope.length?scope:['email']).map(x=>`<div class="scope"><b>✓</b><span>${labels[x]||x}</span></div>`).join('');
+    // Scope names come from the requesting client: render them as text, never HTML.
+    $('#scopes').replaceChildren(...(scope.length?scope:['email']).map(x=>{
+      const row=document.createElement('div');row.className='scope';
+      const tick=document.createElement('b');tick.textContent='✓';
+      const label=document.createElement('span');label.textContent=Object.hasOwn(labels,x)?labels[x]:x;
+      row.append(tick,label);return row;
+    }));
   }
 
   async function boot(){

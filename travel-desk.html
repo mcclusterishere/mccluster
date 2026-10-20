@@ -177,9 +177,22 @@
 <script>
 (function () {
   "use strict";
-  /* ?api= points the Desk at any deployment of the worker — the live one,
-     a preview, or the mock used to rehearse. Same-origin by default. */
-  var API = new URLSearchParams(location.search).get("api") || "";
+  /* The owner key must never be sent to a host chosen by a link. The Desk
+     talks to the worker routed on this origin (/api/travel/*). ?api= is
+     honoured only for a same-origin path or a loopback mock used to
+     rehearse (http://localhost, 127.0.0.1, [::1]); anything else is ignored. */
+  function trustedApi(raw) {
+    if (!raw || raw.indexOf("\\") !== -1 || /[\u0000-\u001f\u007f]/.test(raw)) return "";
+    try {
+      var u = new URL(raw, location.origin);
+      var loopback = u.protocol === "http:" &&
+        (u.hostname === "localhost" || u.hostname === "127.0.0.1" || u.hostname === "[::1]");
+      if (u.origin !== location.origin && !loopback) return "";
+      if (u.username || u.password) return "";
+      return (u.origin === location.origin ? "" : u.origin) + u.pathname.replace(/\/+$/, "");
+    } catch (e) { return ""; }
+  }
+  var API = trustedApi(new URLSearchParams(location.search).get("api"));
   var KEY = "";
   var $ = function (id) { return document.getElementById(id); };
 
@@ -230,9 +243,9 @@
     var up = d && !d.error && d.__status === 200;
     $("apiDot").className = "dot " + (up ? "dot--on" : "dot--off");
     $("apiState").textContent = up ? "reachable · base " + (d.base || "?").toUpperCase()
-      : "unreachable — deploy the worker or pass ?api=";
+      : "unreachable — deploy the worker on this origin";
   }).catch(function () {
-    $("apiState").textContent = "unreachable — deploy the worker or pass ?api=";
+    $("apiState").textContent = "unreachable — deploy the worker on this origin";
   });
 
   /* ---------- login: the key is session-scoped, nothing more ---------- */

@@ -298,19 +298,23 @@ try{
       await page.locator('#mnWorldStack #mnWorldPlay').isVisible()&&await page.locator('#mnWorldStack .mn__world-expand').isVisible()&&await page.locator('#mccWorldAudioControls').isHidden()
       &&await page.evaluate(()=>{const p=document.getElementById('mnWorldPlay').getBoundingClientRect(),x=document.querySelector('.mn__world-expand').getBoundingClientRect();return p.width>=44&&p.height>=44&&((Math.abs(p.right-x.right)<2&&p.bottom<=x.top+1)||(Math.abs(p.top-x.top)<2&&p.right<=x.left+1));}));
     check('before the first touch the title is named but still, and the headline is the headline',(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&(await page.locator('.wt-headline').textContent())==='The world is your feed.');
-    await page.locator('#wtTo').click();
+    await page.locator('#wtTo').click();await page.keyboard.type('a b');
+    check('tapping and typing (Space included) in the destination field never starts the theme',await page.evaluate(()=>__audioObjects.every(a=>a.paused)));
+    await page.locator('#wtTo').fill('');await page.keyboard.press('Escape');
+    await page.locator('#wtTitle').click();
     await page.waitForFunction(()=>__audioObjects.some(a=>!a.paused));
     check('standalone World first touch starts its own theme directly',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1));
     await page.waitForFunction(()=>document.getElementById('mnNowPlaying').classList.contains('is-playing'));
     check('the song title scrolls in the top bar while the theme plays',await page.locator('#mnNowPlaying').isVisible()&&(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'
       &&await page.evaluate(()=>{/* the title sits between the mark and whatever the header shows next (the bell for members, the sign-in controls for guests) */const now=document.getElementById('mnNowPlaying'),b=now.getBoundingClientRect(),m=document.querySelector('.mn__brand').getBoundingClientRect();let next=now.nextElementSibling;while(next&&!(next.offsetWidth||next.offsetHeight))next=next.nextElementSibling;const edge=next?next.getBoundingClientRect().left:document.querySelector('.mn__top').getBoundingClientRect().right-16;return b.width>=100&&b.left>=m.right-1&&b.right<=edge+1&&getComputedStyle(document.getElementById('mnNowPlayingText')).color==='rgb(255, 255, 255)';}));
-    await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='Fixture line one',null,{timeout:8000});
+    await page.waitForFunction(()=>document.querySelector('.wt-headline .wt-headline__lyric')?.textContent==='Fixture line one',null,{timeout:8000});
     check('timed lyrics take the headline line by line',await page.locator('.wt-headline').getAttribute('class')==='wt-headline is-lyric'&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Pause music');
+    check('the lyric is decoration: the heading keeps its own name for assistive tech',await page.locator('.wt-headline .wt-headline__lyric').getAttribute('aria-hidden')==='true'&&(await page.getByRole('heading',{level:1,name:'The world is your feed.'}).count())===1);
     await page.locator('#mnWorldPlay').click();
     await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='The world is your feed.');
     check('pausing from the corner restores the headline and keeps the title static',await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&await page.locator('#mnNowPlaying').isVisible());
     await page.reload();
-    await page.waitForSelector('#mnWorldPlay');await page.locator('#wtTo').click();
+    await page.waitForSelector('#mnWorldPlay');await page.locator('#wtTitle').click();
     check('World remembers an explicit pause on later visits',
       await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Play music');
     await context.close();

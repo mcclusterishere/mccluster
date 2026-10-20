@@ -144,9 +144,22 @@
       box.classList.toggle("is-playing", !!st.playing);
     }
     if (h) {
+      // The headline is the page's only <h1>. A lyric is shown in an
+      // aria-hidden span while the heading keeps its own words for
+      // assistive tech (visually hidden), so the outline never becomes a song.
       if (headlineBase === null) headlineBase = h.textContent;
-      var want = st.line || headlineBase;
-      if (h.textContent !== want) h.textContent = want;
+      var lyric = h.querySelector(".wt-headline__lyric");
+      if (st.line) {
+        if (!lyric) {
+          var base = doc.createElement("span");
+          base.className = "wt-headline__base"; base.textContent = headlineBase;
+          base.style.cssText = "position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap";
+          lyric = doc.createElement("span");
+          lyric.className = "wt-headline__lyric"; lyric.setAttribute("aria-hidden", "true");
+          h.textContent = ""; h.appendChild(base); h.appendChild(lyric);
+        }
+        if (lyric.textContent !== st.line) lyric.textContent = st.line;
+      } else if (lyric || h.textContent !== headlineBase) h.textContent = headlineBase;
       h.classList.toggle("is-lyric", !!st.line);
     }
   }
@@ -524,11 +537,21 @@
     if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status")) return;
     if (navigate(a.href)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
+  // Typing is not a request for music: Enter/Space in a field (the Travel
+  // destination, a search box, a composer) and pointing into one never start
+  // the theme.
+  function editableTarget(t) {
+    var el = t && t.nodeType === 1 ? t : t && t.parentElement;
+    if (!el || !el.closest) return false;
+    if (el.isContentEditable || el.closest("textarea,select,[contenteditable]:not([contenteditable='false'])")) return true;
+    var input = el.closest("input");
+    return !!input && !/^(button|submit|reset|image|checkbox|radio)$/i.test(input.type || "");
+  }
   doc.addEventListener("pointerdown", function (e) {
-    if (!e.isTrusted || e.target.closest?.("#mccWorldAudioControls,#mnWorldPlay,video,audio")) return;
+    if (!e.isTrusted || editableTarget(e.target) || e.target.closest?.("#mccWorldAudioControls,#mnWorldPlay,video,audio")) return;
     touch();
   }, {capture:true, passive:true});
-  doc.addEventListener("keydown", function (e) { if (e.isTrusted && (e.key === "Enter" || e.key === " ") && !e.target.closest?.("#mccWorldAudioControls,#mnWorldPlay")) touch(); }, true);
+  doc.addEventListener("keydown", function (e) { if (e.isTrusted && (e.key === "Enter" || e.key === " ") && !editableTarget(e.target) && !e.target.closest?.("#mccWorldAudioControls,#mnWorldPlay")) touch(); }, true);
   doc.addEventListener("play", function (e) {
     if (!attached || e.target.muted || e.target.volume === 0) return;
     root.parent.postMessage({channel:CHANNEL, type:"pause", id:channelId}, parentOrigin);
