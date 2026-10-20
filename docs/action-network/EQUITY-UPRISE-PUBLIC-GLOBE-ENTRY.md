@@ -1,13 +1,13 @@
-# Human Uprise — public globe entry and access contract
+# Equity Uprise — public globe entry and access contract
 
 ## Brand hierarchy
-- **Human Uprise** is the public parent platform, intended for `humanuprise.com`.
-- **Equity Uprise** is one program within Human Uprise, not the umbrella brand.
+- **Equity Uprise** is the public parent platform, intended for `humanuprise.com`.
+- **Equity Uprise** is one program within Equity Uprise, not the umbrella brand.
 - Other Uprise programs may share one M Account, the globe, and the mission infrastructure. Program membership and admin authorization remain separate.
 - Existing McCluster corporate/music pages retain their identity. Avoid mass renames of internal identifiers without a compatibility plan.
 
 ## Routes and roles
-- `equity-uprise.html` is the existing static public entry route, now displaying Human Uprise branding until a dedicated route is implemented. It embeds the interactive public mission globe and links to `action-globe.html`.
+- `equity-uprise.html` is the existing static public entry route, now displaying Equity Uprise branding until a dedicated route is implemented. It embeds the interactive public mission globe and links to `action-globe.html`.
 - `action-globe.html?embedded=1` uses **public RPCs only**, including when embedded; never expose private Halo data, member coordinates, or unpublished missions.
 - `mnet.html` provides sign-in and the member network. Server-side RLS, RPC checks, and role verification—not visible buttons—must enforce member permissions.
 - Admin-only publishing, moderation, analytics, and source management must be authorized on the server. Do not infer admin from client-side session flags.
@@ -23,7 +23,7 @@ root by the same mechanics (`workers/mccluster/src/company-site/router.js`,
 Route, the narrowed redirect rule, the Supabase redirect allowlist). Nothing
 below changes for `humanuprise.com`; routing it later is the same two
 Cloudflare steps plus flipping `WORLD_ORIGIN` in `js/tabbar.js`.
-- Owner, 2026-10-14: the World is Human Uprise's own solo experience at its own address, interconnected with the rest. The bar's Music and M go to Matthew's site; the Globe stays home.
+- Owner, 2026-10-14: the World is Equity Uprise's own solo experience at its own address, interconnected with the rest. The bar's Music and M go to Matthew's site; the Globe stays home.
 - Served by the one Worker `mccluster`, by host (`workers/mccluster/src/human-uprise/router.js`), the way the company property is. `/` is the World: `mnet.html` from `matthew.mccluster.org`, passed through with this host's own canonical and `og:url`; the `noindex` that belongs to Matthew's site does not follow it. The World's rooms (`action-globe.html`, `action-network-*.html`, `/action/`, `give.html`, `create.html`, `action-policy.html`, `world-news.html`, `privacy.html`), the sign-in pages (`account.html`, `login.html`, `forgot-password.html`, `reset-password.html`, `onboard.html`, `/auth/`), `sw.js` and the static files (`/js/`, `/css/`, `/assets/`, `/data/`) ride the same way, with `x-robots-tag: noindex` on documents. Every other path is a 301 to the same path on `matthew.mccluster.org` (Music, the M, creators, records, checkout). `www` is a 301 to the apex; `/mnet.html` is a 301 to `/` with its query. `robots.txt` and a one-URL `sitemap.xml` are the host's own. Nothing is rewritten beyond the World's head: no base tag, no link rewriting.
 - The API allows the origin (`workers/mccluster/src/lib/http.js` `DEFAULT_ORIGINS`; `workers/mccluster/wrangler.toml` `ALLOWED_ORIGINS`).
 - **One M Account, every host.** A session is per origin (localStorage, `js/backend.js`), so the bar carries the sign-in across (owner, 2026-10-14). Leaving one house for another while signed in, the bar (`js/tabbar.js`) puts the member's current access token in the link's URL fragment, as `auth/seek-first-handoff.html` already hands a token to the console: a fragment is never sent to a server and never appears in a Referer. Arriving, the bar scrubs the fragment before anything else runs, POSTs the token to `/v1/auth/handoff` (`workers/mccluster/src/auth-handoff.js`: the token is checked live with Supabase, the caller's Origin must be on the CORS allowlist, then Supabase's admin `generate_link` mints a magic-link token for the same account; nothing is emailed), turns that token into a session of this origin's own at `/auth/v1/verify` (type `magiclink`), stores it the ordinary way and reloads signed in. No password, no second sign-in. No refresh token ever crosses: each origin holds its own session, so Supabase's rotation never signs both out. A page that already holds a session keeps it; a guest carries nothing. Signing out on one host calls Supabase's logout, which revokes the account's refresh tokens everywhere, so the other host signs out at its next refresh.
@@ -55,7 +55,7 @@ Cloudflare steps plus flipping `WORLD_ORIGIN` in `js/tabbar.js`.
 - The entry route filename is legacy and must not be mistaken for the parent brand.
 
 ## Rise, movement tallies, and Street Credit (proposed product contract)
-- **Rise** is the native affirmative reaction. It replaces the ambiguous favorite/like vocabulary for Human Uprise movement participation, while ordinary content reactions may remain separate if required by existing clients.
+- **Rise** is the native affirmative reaction. It replaces the ambiguous favorite/like vocabulary for Equity Uprise movement participation, while ordinary content reactions may remain separate if required by existing clients.
 - A **verified, consented join** to a movement counts as exactly **one unique Rise** for that movement. Email/account verification alone does not automatically enroll a person into an unrelated movement.
 - Separate counters: `unique_risers` (distinct verified participants), `verified_actions` (completed reviewed contributions), and `supporter_reactions` (explicit reactions). Never conflate signups, reactions, or completed work.
 - Deduplicate joins using an immutable account/person identity and movement ID; enforce uniqueness in the database, not merely the browser. Retries, double taps, session changes, and concurrent requests must not double-count. Define account closure and consent withdrawal semantics before launch.
@@ -68,11 +68,11 @@ Cloudflare steps plus flipping `WORLD_ORIGIN` in `js/tabbar.js`.
 ## McCluster Corp program architecture and paid cohort handoff (founder direction, 2026-10-14)
 
 **Ownership and hierarchy**
-- **McCluster Corp** is the umbrella organization behind Human Uprise, Equity Uprise, Street Credit Bureau, and the creator/influencer initiatives. Preserve corporate ownership and brand separation in navigation, permissions, contracts, and reporting.
-- **Human Uprise** is the movement-creation platform: people discover movements, start their own, join with verified identity, perform missions, and generate verifiable records of contribution.
+- **McCluster Corp** is the umbrella organization behind Equity Uprise, Street Credit Bureau, and the creator/influencer initiatives. Preserve corporate ownership and brand separation in navigation, permissions, contracts, and reporting.
+- **Equity Uprise** is the movement-creation platform: people discover movements, start their own, join with verified identity, perform missions, and generate verifiable records of contribution.
 - **Equity Uprise** is a program under the umbrella, focused on equity-related movements and actions. It can produce evidence of completed activities but does not issue Street Credit independently.
 - **Street Credit Bureau** is the McCluster Corp program that issues, administers, audits, and handles appeals for **Street Credit**. Treat this as a contribution credential/reputation program, *not* a consumer credit reporting agency, FICO-like credit score, or claim of regulatory accreditation. Naming, public claims, consent, and applicable legal obligations require review before launch.
-- **Clipping / creator network** is a distinct, related product surface and workflow. Do **not** clutter the Human Uprise globe, movement creation, or public feed with clipper recruitment and campaign controls. Link into it from appropriate creator or program-management areas, sharing identity and verified ledger events where authorized.
+- **Clipping / creator network** is a distinct, related product surface and workflow. Do **not** clutter the Equity Uprise globe, movement creation, or public feed with clipper recruitment and campaign controls. Link into it from appropriate creator or program-management areas, sharing identity and verified ledger events where authorized.
 
 **Rise / Uprise accounting**
 - A movement's first verified, consented membership join produces **one unique Rise** on that movement. Explicit reactions and completed verified actions are separate event types; a verified account alone is not an automatic join.

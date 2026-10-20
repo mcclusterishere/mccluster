@@ -1,4 +1,4 @@
-/* SCHEDULED HUMAN UPRISE POSTS, run against a fake Supabase.
+/* SCHEDULED EQUITY UPRISE POSTS, run against a fake Supabase.
    The create page can post now or pick a time. These tests drive the real
    handler and the real cron publisher with fetch replaced, and pin:
      1. a future publish_at holds the post instead of publishing it

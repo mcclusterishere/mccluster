@@ -250,7 +250,7 @@ async function prepareNetworkPost(env,muid,b,appKey){
      they wrote without knowing. Comments are retired; every new row here is
      a top-level post, ideally carrying or reporting an action. */
   const body=String(b.body||'').trim();
-  if(b.reply_to_id)return {error:'Comments are retired on Human Uprise. Take the mission or share proof instead.',status:410};
+  if(b.reply_to_id)return {error:'Comments are retired on Equity Uprise. Take the mission or share proof instead.',status:410};
   if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const rawMediaIds=Array.isArray(b.media_asset_ids)?b.media_asset_ids.filter(uuidLike).slice(0,10):[];
   const mediaIds=uniq(rawMediaIds);
@@ -708,7 +708,7 @@ async function handleMnet(req,env,path,url){
     if(external)return fail(req,env,'Post mutation requires a McCluster user session',403);
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
     if(!post||post.author_m_uid!==muid||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
-    if(post.reply_to_id)return fail(req,env,'Comments are retired on Human Uprise. Take the mission or share proof instead.',410);
+    if(post.reply_to_id)return fail(req,env,'Comments are retired on Equity Uprise. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
@@ -824,7 +824,7 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/media/finalize'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'finalize',asset_id:b.asset_id,width:b.width,height:b.height,duration_ms:b.duration_ms}));}
   if(path==='/v1/mnet/media/discard'&&req.method==='POST'){if(external)return fail(req,env,'Media cleanup requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'discard',asset_id:b.asset_id}));}
   /* GOVERNED LIVE.
-     Live is a Human Uprise program surface, not a follower entitlement.
+     Live is a Equity Uprise program surface, not a follower entitlement.
      The database returns the caller's bounded host capability; the Worker
      validates that capability against a persistent Home/Mission room before
      it creates a one-use Cloudflare Stream input. Audience presence is

@@ -520,7 +520,7 @@
       $("crDoneH").textContent = at ? "Scheduled" : "Posted";
       $("crDoneP").textContent = at
         ? "It goes out " + whenText(new Date(out && out.scheduled && out.scheduled.publish_at || at)) + ". You can cancel it from Create until then."
-        : "It is on Human Uprise now.";
+        : "It is on Equity Uprise now.";
       S.completed = true; S.draftRestored = false; S.uploadPhase = "attached";
       clearDraft(); $("crDraftNotice").hidden = true;
       go("done");

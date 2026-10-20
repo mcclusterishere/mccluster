@@ -6,9 +6,9 @@
    repository, so the company host rides the one Worker, routed by host.
 
    WHAT THE HOST SERVES (owner, 2026-10-15: "we need mccluster.org to
-   actually show the World"). `/` is the World: mnet.html, Human Uprise's
+   actually show the World"). `/` is the World: mnet.html, Equity Uprise's
    globe, mission context and feed, passed through from the personal
-   origin with this host's own head (../world-host.js). Human Uprise is the
+   origin with this host's own head (../world-host.js). Equity Uprise is the
    company's platform, so the company's root is company-first: canonical
    https://mccluster.org/, site name McCluster Corp, and a WebPage node
    that belongs to the company WebSite and is about the Organization. The
@@ -51,7 +51,7 @@ const WORLD_NODE = JSON.stringify({
   '@type': 'WebPage',
   '@id': `${COMPANY_ORIGIN}/`,
   url: `${COMPANY_ORIGIN}/`,
-  name: 'Human Uprise · McCluster',
+  name: 'Equity Uprise · McCluster',
   isPartOf: { '@id': `${COMPANY_ORIGIN}/#website` },
   about: { '@id': 'https://matthew.mccluster.org/#mccluster-corp' },
   publisher: { '@id': 'https://matthew.mccluster.org/#mccluster-corp' }

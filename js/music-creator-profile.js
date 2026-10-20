@@ -151,7 +151,7 @@
     identityLink.className = "ap-door creator-action-network";
     identityLink.href = "mnet.html?profile=" + encodeURIComponent(p.handle);
     identityLink.textContent = "Put this music into action → @" + p.handle;
-    identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on Human Uprise");
+    identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on Equity Uprise");
     $("apDoors").appendChild(identityLink);
   }
 

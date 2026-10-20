@@ -10,7 +10,7 @@ import { companySiteResponse, COMPANY_PAGE_PATH, WORLD_HEAD } from '../src/compa
 import { PAGES } from '../src/company-site/pages.generated.js';
 
 const req = (url, method = 'GET', headers = {}) => new Request(url, { method, headers });
-const MNET = '<!doctype html><html><head><title>Human Uprise · McCluster</title>\n  <meta name="robots" content="noindex">\n  <link rel="stylesheet" href="css/mnet.css"></head><body><main id="mnWorld"></main><script src="js/mnet.js"></script></body></html>';
+const MNET = '<!doctype html><html><head><title>Equity Uprise · McCluster</title>\n  <meta name="robots" content="noindex">\n  <link rel="stylesheet" href="css/mnet.css"></head><body><main id="mnWorld"></main><script src="js/mnet.js"></script></body></html>';
 /* the personal origin, where the World's files live */
 const upstream = [];
 const fetchImpl = async (r) => {
@@ -137,7 +137,7 @@ test('robots, sitemap and llms belong to the company property and map the World 
   const llms = await (await ask('https://mccluster.org/llms.txt')).text();
   assert.match(llms, /^# McCluster Corp/);
   assert.match(llms, /do not merge them/);
-  assert.match(llms, /https:\/\/mccluster\.org\/ is the Human Uprise World/);
+  assert.match(llms, /https:\/\/mccluster\.org\/ is the Equity Uprise World/);
   assert.deepEqual(Object.keys(PAGES).sort(), ['/company', '/llms.txt', '/robots.txt', '/sitemap.xml']);
 });
 

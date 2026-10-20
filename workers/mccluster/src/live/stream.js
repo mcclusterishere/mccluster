@@ -1,7 +1,7 @@
 /* LIVE MISSIONS: the Cloudflare Stream calls, server side only.
 
    Secrets by name (never in the repo): CF_ACCOUNT_ID and a Stream-scoped
-   CF_STREAM_TOKEN, the same two the existing Human Uprise live rooms use
+   CF_STREAM_TOKEN, the same two the existing Equity Uprise live rooms use
    (platform-api.js). Every call goes through fetchNoCrossHostRedirect
    (lib/safe-fetch.js): redirect 'manual', so the bearer token never follows
    a redirect anywhere, and workerd never sees redirect: 'error'.

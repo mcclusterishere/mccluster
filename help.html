@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080b12"><title>Find Help | Human Uprise World</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080b12"><title>Find Help | Equity Uprise World</title>
 <meta name="description" content="Find official resource directories worldwide for yourself or someone you know. No account or proof required.">
 <link rel="stylesheet" href="css/style.css?v=__STAMP__">
 <style>
@@ -17,7 +17,7 @@ label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:13
 .card small{color:#ff8fa5;text-transform:uppercase;letter-spacing:.1em}.card h2{font-size:21px;margin:7px 0}.card p{flex:1;margin:0 0 22px}.card a{color:#fff;text-decoration:none;border:1px solid #697487;border-radius:10px;padding:11px 13px;align-self:flex-start}
 .notice{border-left:3px solid var(--ruby);padding:14px 20px;background:#141b28;margin:35px 0}footer{border-top:1px solid var(--line);padding-top:20px;color:#aeb6c4;font-size:13px}
 </style></head><body>
-<header><a class="brand" href="/">HUMAN UPRISE<strong>WORLD</strong></a><a href="/mnet.html?view=missions">← Action Network</a></header>
+<header><a class="brand" href="/">EQUITY UPRISE<strong>WORLD</strong></a><a href="/mnet.html?view=missions">← Action Network</a></header>
 <main><div class="eyebrow">Resource navigation / worldwide</div><h1>Find help.<br>Pass it forward.</h1>
 <p class="lead">For yourself or someone you know. Share this page onward. No account, photograph, public story, or proof of need required.</p>
 <div class="controls"><button type="button" class="active" data-for="self" aria-pressed="true">I need help</button><button type="button" data-for="other" aria-pressed="false">Someone I know</button><button type="button" id="share">Share this resource ↗</button></div>
@@ -25,8 +25,8 @@ label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:13
 <div class="filters"><label>Country or region<select id="country"><option value="all">All countries</option><option value="US">United States</option><option value="CA">Canada</option><option value="GB">United Kingdom</option><option value="AU">Australia</option><option value="other">Other countries</option></select></label>
 <label>Type of help<select id="category"><option value="all">All services</option><option value="general">Housing, food, benefits, local services</option><option value="displacement">Refugee and displacement</option><option value="humanitarian">Humanitarian organizations</option><option value="emotional">Emotional support</option></select></label></div>
 <div id="results" class="grid" aria-live="polite"></div>
-<p class="notice">These are independent public directories, not confirmed Human Uprise partners. Services, eligibility, hours and availability vary. If you are in immediate danger, contact local emergency services.</p>
-<footer>No personal information is sent to Human Uprise by this page. No referral rewards or public proof are required.</footer></main>
+<p class="notice">These are independent public directories, not confirmed Equity Uprise partners. Services, eligibility, hours and availability vary. If you are in immediate danger, contact local emergency services.</p>
+<footer>No personal information is sent to Equity Uprise by this page. No referral rewards or public proof are required.</footer></main>
 <script>
 (function(){'use strict';
 var sources=[
@@ -44,7 +44,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&am
 function render(){var c=$('country').value,t=$('category').value;var rows=sources.filter(function(s){return (c==='all'||s[1]==='global'||(c!=='other'&&s[1]===c))&&(t==='all'||s[2]===t);});$('results').innerHTML=rows.length?rows.map(function(s){return '<article class="card"><small>'+esc(s[1]==='global'?'International':s[1])+'</small><h2>'+esc(s[0])+'</h2><p>'+esc(s[4])+'</p><a href="'+esc(s[3])+'" target="_blank" rel="noopener noreferrer">Open official directory ↗</a></article>';}).join(''):'<p>No matching directory listed. Try another category or All countries.</p>';}
 $('country').addEventListener('change',render);$('category').addEventListener('change',render);
 document.querySelectorAll('[data-for]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('[data-for]').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});b.classList.add('active');b.setAttribute('aria-pressed','true');$('context').textContent=b.dataset.for==='other'?'Share the resource with the person, with their permission. Do not send us their personal details.':'Select a country and support category, then open an official provider directory.';});});
-$('share').addEventListener('click',function(){var u=location.href.split('#')[0];if(navigator.share){navigator.share({title:'Find help — Human Uprise World',url:u}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(u).then(function(){$('share').textContent='Link copied ✓';}).catch(function(){window.prompt('Copy this link',u);});}else{window.prompt('Copy this link',u);}});
+$('share').addEventListener('click',function(){var u=location.href.split('#')[0];if(navigator.share){navigator.share({title:'Find help — Equity Uprise World',url:u}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(u).then(function(){$('share').textContent='Link copied ✓';}).catch(function(){window.prompt('Copy this link',u);});}else{window.prompt('Copy this link',u);}});
 render();
 })();
 </script><script src="js/tabbar.js?v=__STAMP__"></script></body></html>

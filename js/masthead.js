@@ -244,7 +244,7 @@ html { scroll-behavior: smooth; }
       { href: "services.html",     label: "Services & case work" },
       { href: "gallery.html",      label: "Photography: the gallery" },
     ] },
-    /* Equity Uprise came back as a group on Human Uprise, and its
+    /* Equity Uprise came back as a group on Equity Uprise, and its
        front page is the Docket 516R record. Its older rooms stay put away
        in _unfinished/; only the record and the network are on the map. */
     { group: "Equity Uprise", rooms: [

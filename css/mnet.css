@@ -1,5 +1,5 @@
 /* ============================================================
-   HUMAN UPRISE — the McCluster social surface (mnet.html).
+   EQUITY UPRISE — the McCluster social surface (mnet.html).
 
    Rebuilt in one piece rather than patched: the old sheet had grown
    three layers of overrides (a six-tab bar on a five-column grid, a
@@ -544,7 +544,7 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
   .mn__composer, .mn__composer:focus-within { transform:none !important; }
 }
 
-/* Human Uprise identity: action is the product, not generic social posting. */
+/* Equity Uprise identity: action is the product, not generic social posting. */
 .mn__manifesto{margin:18px 0 20px;padding:24px 20px 20px;border:1px solid var(--mn-rule-2);border-radius:24px;background:radial-gradient(circle at 92% 0,rgba(255,77,61,.22),transparent 38%),linear-gradient(145deg,#191310,#0b0908 72%);overflow:hidden}
 .mn__manifesto p,.mn__rail-k{margin:0;color:var(--mn-hot);font-size:.64rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
 .mn__manifesto h1{max-width:9ch;margin:7px 0 18px;font-family:var(--mn-display);font-size:clamp(2.7rem,12vw,4.8rem);font-weight:400;line-height:.88;text-transform:uppercase}
@@ -816,7 +816,7 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
   .mn__cliprow:has(select + input + select) { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) minmax(0, 11rem) auto; }
 }
 
-/* Human Uprise four-tab primary navigation; secondary destinations remain accessible. */
+/* Equity Uprise four-tab primary navigation; secondary destinations remain accessible. */
 .mn__tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;overflow:visible}
 .mn__tabs>button{min-width:0;white-space:nowrap}
 .mn__quicklinks{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem 0 1rem}
@@ -1000,7 +1000,7 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 }
 .mn-world-on.mn-world-overlay .mn__top { background: linear-gradient(180deg, rgba(5, 5, 7, 0.92), rgba(5, 5, 7, 0)); }
 
-/* header: HUMAN UPRISE, and only that (owner, 2026-10-14), in chrome type
+/* header: EQUITY UPRISE, and only that (owner, 2026-10-14), in chrome type
    with a red rule under it (no drawn mark), the search bar, and round glass
    buttons. The name is set in type; a mark is the owner's to supply. */
 .mn-world-on .mn__brand-mark, .mn-world-on .mn__brand small { display: none; }

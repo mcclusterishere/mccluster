@@ -1,4 +1,4 @@
-/* HUMAN UPRISE'S OWN DOOR, IN A REAL BROWSER.
+/* EQUITY UPRISE'S OWN DOOR, IN A REAL BROWSER.
    ============================================================
    Three hosts, one bar. The Worker's host routers
    (workers/mccluster/src/company-site/router.js for https://mccluster.org,
@@ -65,7 +65,7 @@ const now = Date.now();
 const POSTS = [0, 1, 2].map((k) => ({ item_type: 'post', post_id: `dddddddd-dddd-4ddd-8ddd-00000000000${k + 1}`, occurred_at: new Date(now - (k + 1) * 3600e3).toISOString(), actor: { mccluster_id: 'fixture.ana', display_name: 'Fixture Ana' }, post: { id: `dddddddd-dddd-4ddd-8ddd-00000000000${k + 1}`, body: `Field note ${k + 1}: the north bank, and who can help.`, visibility: 'public', created_at: new Date(now - (k + 1) * 3600e3).toISOString(), media_locked: 0 } }));
 
 const landed = [];   // every cross-site arrival at Matthew's site
-const served = [];   // every request the Human Uprise host answered
+const served = [];   // every request the Equity Uprise host answered
 
 /* one M Account, every host: the session a member holds on Matthew's site,
    and the one Supabase mints for the World's host when the bar carries the
@@ -155,7 +155,7 @@ async function routeBackends(ctx) {
   });
   /* the World's hosts: the real Worker routers, in front of this checkout.
      The company host (mccluster.org) serves the World at its root today;
-     Human Uprise's own door (humanuprise.com) does the same when routed. */
+     Equity Uprise's own door (humanuprise.com) does the same when routed. */
   for (const [host, respond] of [[HU, humanUpriseResponse], ['https://www.humanuprise.com', humanUpriseResponse], [CO, companySiteResponse], ['https://www.mccluster.org', companySiteResponse]]) {
     await ctx.route(`${host}/**`, async (route) => {
       const r = route.request();

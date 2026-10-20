@@ -104,7 +104,7 @@ it should send those changes to the desk (`mnet.html?view=feed&desk=profile`).
 4. The Persona ID check through `POST /v1/identity/persona/inquiry` (now
    accepts a `profile_edit` submission). `PERSONA_ENABLED` stays `"false"`, so
    today the member is told the check is not switched on and the request waits.
-5. The owner reviews it in the control room → Human Uprise → **Identity**: the
+5. The owner reviews it in the control room → Equity Uprise → **Identity**: the
    same queue, a **Profile edit** type showing each change beside the current
    value and the reason, decided by `profile_edit_review_decide()`. Approve
    needs Persona `approved` (`profile_edit_settings.require_persona`, default

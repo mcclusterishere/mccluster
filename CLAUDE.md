@@ -12,10 +12,12 @@ You are in the McCluster ecosystem.
 8. Do not rewrite `index.html` or revive rejected visual systems.
 9. If you were about to create a new backend or a Worker named `mccluster-core`: stop. That Worker does not exist. The canonical API Worker is `mccluster`; the stateless `mccluster-mcp` transport shares its authority (see CANONICAL-ARCHITECTURE.md).
 
+**Brand authority (owner, 2026-10-20):** All public platform, program and World branding is **Equity Uprise**. Legacy domains, file paths and machine identifiers remain valid for backwards compatibility; do not advertise a second brand.
+
 Two public properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`):
 `https://matthew.mccluster.org` is **Matthew McCluster's** property (GitHub Pages, this repo);
-`https://mccluster.org` is **McCluster Corp's** property (Worker `mccluster`, host-routed once the owner routes the apex): its root is the Human Uprise World, the company's platform (owner, 2026-10-15), and the company page is `/company`. They are not the same site and not the same entity.
-`https://humanuprise.com` is Human Uprise's own door to the World, a **McCluster Corp** host (the same entity as `mccluster.org`, never a third one), served by Worker `mccluster` by host (`workers/mccluster/src/human-uprise/router.js`) and inert until the owner routes it (until then the World's door is `mccluster.org`); everything that is not the World 301s to `matthew.mccluster.org`.
+`https://mccluster.org` is **McCluster Corp's** property (Worker `mccluster`, host-routed once the owner routes the apex): its root is the Equity Uprise World, the company's platform (owner, 2026-10-15), and the company page is `/company`. They are not the same site and not the same entity.
+`https://humanuprise.com` is Equity Uprise's own door to the World, a **McCluster Corp** host (the same entity as `mccluster.org`, never a third one), served by Worker `mccluster` by host (`workers/mccluster/src/human-uprise/router.js`) and inert until the owner routes it (until then the World's door is `mccluster.org`); everything that is not the World 301s to `matthew.mccluster.org`.
 API Worker: `mccluster` on `https://api.mccluster.org`.
 Source: `workers/mccluster`.
 
