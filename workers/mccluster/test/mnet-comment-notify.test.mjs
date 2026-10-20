@@ -84,3 +84,33 @@ test('an alert that cannot be written never fails the comment', async () => {
   assert.equal(res.status, 201);
   assert.equal((await res.json()).comment.id, COMMENT);
 });
+
+/* A reply under a news story (owner, 2026-10-20: "i need the news articles to be able to be replied to") reaches the
+   people already talking about that story the same way: a story has no author to tell. */
+test('a news reply alerts the earlier repliers on that story, never the replier', async () => {
+  const ARTICLE = '88888888-8888-4888-8888-888888888888';
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    const u = decodeURIComponent(String(url)), m = init.method || 'GET';
+    calls.push({ u, m, body: init.body ? JSON.parse(init.body) : null });
+    const ok = (d, status = 200) => new Response(JSON.stringify(d), { status });
+    if (u.endsWith('/auth/v1/user')) return ok({ id: 'user-1' });
+    if (u.includes('/m_auth_user_links')) return ok([{ m_uid: ME }]);
+    if (u.includes('/media_news_articles?id=eq.' + ARTICLE)) return ok([{ id: ARTICLE, canonical_url: 'https://news.example/story', imported_at: '2026-10-20T10:00:00Z' }]);
+    if (u.includes('/m_people?id=eq.' + ME)) return ok([{ id: ME }]);
+    if (u.endsWith('/media_news_comments') && m === 'POST') return ok([{ id: COMMENT, article_id: ARTICLE, author_m_uid: ME, body: 'yes' }], 201);
+    if (u.includes('/media_news_comments?')) return ok([{ author_m_uid: ME }, { author_m_uid: EARLIER }]);
+    if (u.endsWith('/network_notifications') && m === 'POST') return ok(null, 201);
+    return ok([]);
+  };
+  const res = await handlePlatformApi(new Request(`https://api.test/v1/world/news/${ARTICLE}/comments`, {
+    method: 'POST', headers: { authorization: 'Bearer t', origin: 'https://mccluster.org', 'content-type': 'application/json' }, body: JSON.stringify({ body: 'yes' })
+  }), { ...ENV, WORLD_NEWS_COMMENTS_ENABLED: 'true' });
+  assert.equal(res.status, 201);
+  const rows = sent(calls);
+  assert.deepEqual(rows.map((r) => r.recipient_m_uid), [EARLIER]);
+  assert.deepEqual(rows[0], { recipient_m_uid: EARLIER, actor_m_uid: ME, type: 'news_comment', object_type: 'news', object_id: ARTICLE,
+    body: 'also replied to a story you replied to', metadata: { article_id: ARTICLE, comment_id: COMMENT } });
+  const earlier = calls.find((c) => c.u.includes('/media_news_comments?'));
+  assert.match(earlier.u, /article_id=eq\.8888.*state=eq\.visible.*created_at=gte\./, 'only visible replies from the last fortnight');
+});

@@ -49,14 +49,14 @@ async function networkActors(env,muids=[]){
   for(const p of profiles||[]) out[p.m_uid]={...out[p.m_uid],...p,mccluster_id:handleByMuid.get(p.m_uid)||''};
   return out;
 }
-/* A COMMENT IS HEARD (owner, 2026-10-20: people come back when someone answers them). The post's author and anyone who
-   commented on the same post in the last fortnight are told about a new comment: never the commenter, never across a
-   block either way, never someone who muted the commenter, and at most 20 people for one comment. A failure here
-   never fails the comment. */
-async function notifyComment(env,muid,post,comment){
+/* A COMMENT IS HEARD (owner, 2026-10-20: people come back when someone answers them). A new comment tells the post's
+   author (a news story has none) and anyone who commented in the same discussion in the last fortnight: never the
+   commenter, never across a block either way, never someone who muted the commenter, and at most 20 people for one
+   comment. A failure here never fails the comment. */
+async function notifyDiscussion(env,muid,{owner=null,earlier,type,objectType,objectId,ownerBody,otherBody,metadata}){
   const since=new Date(Date.now()-14*864e5).toISOString();
-  const earlier=await service(env,`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null&created_at=gte.${encodeURIComponent(since)}&select=author_m_uid&order=created_at.desc&limit=100`);
-  const ids=[...new Set([post.author_m_uid,...(earlier||[]).map(c=>c.author_m_uid)])].filter(id=>/^[0-9a-f-]{36}$/i.test(String(id||''))&&id!==muid).slice(0,20);
+  const before=await service(env,`${earlier}&created_at=gte.${encodeURIComponent(since)}&select=author_m_uid&order=created_at.desc&limit=100`);
+  const ids=[...new Set([owner,...(before||[]).map(c=>c.author_m_uid)])].filter(id=>/^[0-9a-f-]{36}$/i.test(String(id||''))&&id!==muid).slice(0,20);
   if(!ids.length)return 0;
   const list=ids.join(','),now=new Date().toISOString().replace(/\.\d{3}Z$/,'Z');
   const [blocks,mutes]=await Promise.all([
@@ -64,10 +64,19 @@ async function notifyComment(env,muid,post,comment){
     service(env,`network_mutes?muted_m_uid=eq.${muid}&muter_m_uid=in.(${list})&or=(expires_at.is.null,expires_at.gt.${now})&select=muter_m_uid&limit=100`)
   ]);
   const quiet=new Set([...(blocks||[]).map(b=>b.blocker_m_uid===muid?b.blocked_m_uid:b.blocker_m_uid),...(mutes||[]).map(m=>m.muter_m_uid)]);
-  const rows=ids.filter(id=>!quiet.has(id)).map(id=>({recipient_m_uid:id,actor_m_uid:muid,type:'comment',object_type:'post',object_id:post.id,
-    body:id===post.author_m_uid?'commented on your post':'also commented on a post you commented on',metadata:{post_id:post.id,comment_id:comment.id}}));
+  const rows=ids.filter(id=>!quiet.has(id)).map(id=>({recipient_m_uid:id,actor_m_uid:muid,type,object_type:objectType,object_id:objectId,
+    body:id===owner?ownerBody:otherBody,metadata}));
   if(rows.length)await service(env,'network_notifications',{method:'POST',headers:{prefer:'return=minimal'},body:JSON.stringify(rows)});
   return rows.length;
+}
+function notifyComment(env,muid,post,comment){
+  return notifyDiscussion(env,muid,{owner:post.author_m_uid,earlier:`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null`,type:'comment',objectType:'post',objectId:post.id,
+    ownerBody:'commented on your post',otherBody:'also commented on a post you commented on',metadata:{post_id:post.id,comment_id:comment.id}});
+}
+/* a reply under a news story reaches the people already talking about it */
+function notifyNewsComment(env,muid,articleId,comment){
+  return notifyDiscussion(env,muid,{earlier:`media_news_comments?article_id=eq.${articleId}&deleted_at=is.null&state=eq.visible`,type:'news_comment',objectType:'news',objectId:articleId,
+    otherBody:'also replied to a story you replied to',metadata:{article_id:articleId,comment_id:comment.id}});
 }
 async function networkBlocked(env,a,b){
   if(!a||!b||a===b)return false;
@@ -1320,7 +1329,9 @@ async function handleWorldNewsDiscussion(req,env,path){
       method:'POST',headers:{prefer:'return=representation'},
       body:JSON.stringify({article_id:articleId,author_m_uid:muid,body})
     });
-    return reply(req,env,{comment:created?.[0]||null},201);
+    const comment=created?.[0]||null;
+    if(comment)await notifyNewsComment(env,muid,articleId,comment).catch(()=>0);
+    return reply(req,env,{comment},201);
   }
   const rows=await service(env,'media_news_comments?article_id=eq.'+articleId+
     '&deleted_at=is.null&state=eq.visible&select=id,article_id,author_m_uid,body,created_at&order=created_at.asc&limit=100');

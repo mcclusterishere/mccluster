@@ -1315,7 +1315,7 @@
       .then(function (data) {
         if (data && data.available === true) {
           state.newsCommentsAvailable = true;
-          if ($('mnFeed')) renderFeed(false);
+          if ($('mnFeed')) { renderFeed(false); openLinkedPost(); }
         }
       }).catch(function () { /* disabled or unreachable: no unusable UI */ });
   }
@@ -1438,15 +1438,17 @@
 
   /* ?post= puts that post in view (a shared link, an alert). A post older than the first page is fetched on its own and
      shown first; arriving from a comment alert (?comments=1), its discussion is open already. */
-  var linkedFetched = false;
+  var linkedFetched = false, linkedOpened = false;
   function openLinkedPost() {
-    var q, id;
-    try { q = new URLSearchParams(location.search); id = q.get("post"); } catch (_) { return; }
-    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
-    function find() { return Array.prototype.find.call($("mnFeed").querySelectorAll("[data-post-id]"), function (node) { return node.getAttribute("data-post-id") === id; }); }
+    var q, id, news;
+    try { q = new URLSearchParams(location.search); news = !!q.get("news"); id = q.get(news ? "news" : "post"); } catch (_) { return; }
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id) || linkedOpened) return;
+    var attr = news ? "data-news-id" : "data-post-id";
+    function find() { return Array.prototype.find.call($("mnFeed").querySelectorAll("[" + attr + "]"), function (node) { return node.getAttribute(attr) === id; }); }
     var target = find();
     if (!target) {
-      if (state.guest || linkedFetched) return;
+      // a story is shown only while it is in the World's news window; a post can be fetched on its own
+      if (news || state.guest || linkedFetched) return;
       linkedFetched = true;
       api("/v1/mnet/posts/" + encodeURIComponent(id)).then(function (one) {
         if (!one || !one.post || findPost(id)) return;
@@ -1457,7 +1459,8 @@
     }
     target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true });
     var talk = q.get("comments") === "1" && target.querySelector("[data-discussion-toggle][aria-expanded=\"false\"]");
-    if (talk) { talk.click(); track("alert_open", { type:"comment" }); }
+    // a story's reply box appears once the server confirms replies are on; this runs again when it does
+    if (talk) { linkedOpened = true; talk.click(); track("alert_open", { type:news ? "news_comment" : "comment" }); }
   }
 
   /* THE CATALOGUE, LOADED ONCE. data/albums.json is the same file the
@@ -1573,9 +1576,12 @@
       if(n.type==="collaboration_published"&&/^[0-9a-f-]{36}$/i.test(String(meta.mission_id||""))){
         action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(meta.mission_id)+'">Confirm as my Level 3 →</a>';
       }
-      /* a comment opens the post with its discussion */
+      /* a comment opens the post, or the story, with its discussion */
       if(n.type==="comment"&&/^[0-9a-f-]{36}$/i.test(String(meta.post_id||""))){
         action='<a class="mn__notification-action" href="mnet.html?view=feed&amp;post='+encodeURIComponent(meta.post_id)+'&amp;comments=1">See the comment →</a>';
+      }
+      if(n.type==="news_comment"&&/^[0-9a-f-]{36}$/i.test(String(meta.article_id||""))){
+        action='<a class="mn__notification-action" href="mnet.html?view=feed&amp;news='+encodeURIComponent(meta.article_id)+'&amp;comments=1">See the reply →</a>';
       }
       if(n.type==="connection_accepted"&&meta.handle){
         action='<button class="mn__notification-action" type="button" data-person="'+esc(meta.handle)+'">View profile →</button>';

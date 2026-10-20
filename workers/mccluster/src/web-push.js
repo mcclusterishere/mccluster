@@ -82,6 +82,7 @@ export async function sendWebPush(env, sub, message) {
 export function alertUrl(n) {
   const meta = n?.metadata || {}, id = (v) => /^[0-9a-f-]{36}$/i.test(String(v || ''));
   if (n?.type === 'comment' && id(meta.post_id)) return `/mnet.html?view=feed&post=${meta.post_id}&comments=1`;
+  if (n?.type === 'news_comment' && id(meta.article_id)) return `/mnet.html?view=feed&news=${meta.article_id}&comments=1`;
   if (n?.type === 'reply' && id(meta.parent_post_id)) return `/mnet.html?view=feed&post=${meta.parent_post_id}`;
   if ((n?.type === 'action_proof_review' || n?.type === 'collaboration_published') && id(meta.mission_id)) return `/mnet.html?mission=${meta.mission_id}`;
   return '/mnet.html?view=notifications';

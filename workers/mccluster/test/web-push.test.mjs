@@ -76,6 +76,7 @@ test('a tap opens the place the bell would, and never anywhere else', () => {
   const P = '33333333-3333-4333-8333-333333333333';
   assert.equal(alertUrl({ type: 'comment', metadata: { post_id: P } }), `/mnet.html?view=feed&post=${P}&comments=1`);
   assert.equal(alertUrl({ type: 'reply', metadata: { parent_post_id: P } }), `/mnet.html?view=feed&post=${P}`);
+  assert.equal(alertUrl({ type: 'news_comment', metadata: { article_id: P } }), `/mnet.html?view=feed&news=${P}&comments=1`);
   assert.equal(alertUrl({ type: 'action_proof_review', metadata: { mission_id: P } }), `/mnet.html?mission=${P}`);
   assert.equal(alertUrl({ type: 'comment', metadata: { post_id: 'https://evil.example' } }), '/mnet.html?view=notifications');
   assert.equal(alertUrl({ type: 'follow' }), '/mnet.html?view=notifications');
