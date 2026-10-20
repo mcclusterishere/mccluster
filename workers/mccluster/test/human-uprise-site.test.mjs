@@ -1,4 +1,4 @@
-/* Human Uprise's own door on humanuprise.com: the World by host, inert
+/* Equity Uprise's own door on humanuprise.com: the World by host, inert
    elsewhere, the World's rooms and files passed through from the personal
    origin, and every other path sent to the property it belongs to.
    workers/mccluster/src/human-uprise/router.js,
@@ -24,7 +24,7 @@ function upstream(pages = {}) {
   };
   return { asked, fetchImpl };
 }
-const MNET = '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>Human Uprise · McCluster</title>\n  <meta name="viewport" content="width=device-width">\n  <meta name="robots" content="noindex">\n</head>\n<body></body></html>';
+const MNET = '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>Equity Uprise · McCluster</title>\n  <meta name="viewport" content="width=device-width">\n  <meta name="robots" content="noindex">\n</head>\n<body></body></html>';
 const PAGES = {
   '/mnet.html': { type: 'text/html; charset=utf-8', body: MNET },
   '/action-globe.html': { type: 'text/html; charset=utf-8', body: '<!doctype html><title>Globe</title>' },
@@ -60,9 +60,9 @@ test('the root is the World: mnet.html from the personal origin, with this host\
   const html = await r.text();
   assert.match(html, /<link rel="canonical" href="https:\/\/humanuprise\.com\/">/);
   assert.match(html, /<meta property="og:url" content="https:\/\/humanuprise\.com\/">/);
-  assert.match(html, /<meta property="og:site_name" content="Human Uprise">/);
+  assert.match(html, /<meta property="og:site_name" content="Equity Uprise">/);
   assert.doesNotMatch(html, /name="robots" content="noindex"/, 'the noindex that belongs to Matthew\'s site does not follow the World here');
-  assert.match(html, /<title>Human Uprise · McCluster<\/title>/, 'the page is otherwise untouched');
+  assert.match(html, /<title>Equity Uprise · McCluster<\/title>/, 'the page is otherwise untouched');
 });
 
 test('the root keeps its deep links: the query rides to the World unchanged', async () => {
@@ -160,7 +160,7 @@ test('the upstream is PUBLIC_ORIGIN when the Worker names one', async () => {
   assert.equal(r.headers.get('location'), `${PERSONAL_ORIGIN}/album.html`, 'the 301 names Matthew\'s public property whatever the upstream is');
 });
 
-test('the platform entry consults the Human Uprise router after the company router and before the API', async () => {
+test('the platform entry consults the Equity Uprise router after the company router and before the API', async () => {
   const src = await readFile(new URL('../src/entry-platform.js', import.meta.url), 'utf8');
   const i = src.indexOf('await companySiteResponse(request, env)');
   const j = src.indexOf('await humanUpriseResponse(request, env)');
@@ -168,7 +168,7 @@ test('the platform entry consults the Human Uprise router after the company rout
   assert.ok(i > 0 && j > i && k > j, 'host routing runs first and only for its own hosts');
 });
 
-test('the API answers the Human Uprise host: its origins are on the CORS allowlist', () => {
+test('the API answers the Equity Uprise host: its origins are on the CORS allowlist', () => {
   const list = allowedOrigins({});
   assert.ok(list.includes(HUMAN_UPRISE_ORIGIN), 'https://humanuprise.com');
   assert.ok(list.includes('https://www.humanuprise.com'));

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
-test('Human Uprise World tab puts the globe over the live feed',()=>{
+test('Equity Uprise World tab puts the globe over the live feed',()=>{
  const html=read('mnet.html');
  assert.match(html,/id="mnToWorld" type="button" data-mn-view="feed"/);
  assert.match(html,/id="mnFeedView"[\s\S]*?class="mn__world-home"/);

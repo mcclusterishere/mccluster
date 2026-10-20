@@ -1,4 +1,4 @@
-// Human Uprise creator pilot analysis. Offline, privacy-minimized prototype.
+// Equity Uprise creator pilot analysis. Offline, privacy-minimized prototype.
 // Input rows are synthetic or consented operational metrics, not identity records.
 // No guarantees of creator earnings or attribution to BIGO economics.
 export function analyzePilot(rows,{windowDays=28}={}){

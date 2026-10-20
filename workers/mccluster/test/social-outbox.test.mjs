@@ -61,7 +61,7 @@ test('a post without draft still goes straight to the queue', async () => {
   assert.equal(data.publish_job.state, 'queued');
 });
 
-test('an actionable Reel creates one content identity across Instagram and Human Uprise', async () => {
+test('an actionable Reel creates one content identity across Instagram and Equity Uprise', async () => {
   const calls = fake();
   const { data, error } = await run('/v1/social/publish', 'POST', {
     org_id: ORG,
@@ -89,7 +89,7 @@ test('an actionable Reel creates one content identity across Instagram and Human
   assert.equal(network.post_type, 'announcement');
 });
 
-test('saving an actionable Reel as a draft does not leak Human Uprise post before approval', async () => {
+test('saving an actionable Reel as a draft does not leak Equity Uprise post before approval', async () => {
   const calls = fake();
   const { data } = await run('/v1/social/publish', 'POST', {
     org_id: ORG,

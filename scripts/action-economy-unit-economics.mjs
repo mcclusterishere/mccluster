@@ -1,4 +1,4 @@
-// Human Uprise virtual gift unit economics: scenario tool, NOT production pricing.
+// Equity Uprise virtual gift unit economics: scenario tool, NOT production pricing.
 // Run: node scripts/action-economy-unit-economics.mjs
 // Rates are assumptions, not verified BIGO, Apple, Google or Stripe terms.
 export const packs=Object.freeze([

@@ -85,8 +85,8 @@ test('the World look is graphite and one red, scoped to the World screen',()=>{
  assert.match(look,/\.mn-world-on \.mn \{[^}]*--mn-hot: #ff2a4d/);
  assert.match(look,/--w-steel: linear-gradient\(180deg, #181b21, #0d0f13\)/);
  assert.doesNotMatch(look,/#0f1626|#131c31|#070b14/,'the navy of the earlier mockup is gone');
- assert.match(look,/\.mn-world-on \.mn__top \.mn__brand strong::after \{[^}]*background: var\(--mn-hot\)/,'the red rule under HUMAN UPRISE');
- assert.doesNotMatch(page,/mn__brand-world/,'the wordmark is Human Uprise, and only that');
+ assert.match(look,/\.mn-world-on \.mn__top \.mn__brand strong::after \{[^}]*background: var\(--mn-hot\)/,'the red rule under EQUITY UPRISE');
+ assert.doesNotMatch(page,/mn__brand-world/,'the wordmark is Equity Uprise, and only that');
  assert.doesNotMatch(look,/\.appbar/,'the house bar is styled by the house');
  assert.match(look,/\.mn__world-tag \{ display: none;/,'the corner tag waits for tablet width, where the credit line leaves room');
 });

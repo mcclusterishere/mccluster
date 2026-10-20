@@ -1,4 +1,4 @@
-/* Human Uprise World screen, end to end in a real browser.
+/* Equity Uprise World screen, end to end in a real browser.
 
    Owner's contract: docs/action-network/WORLD-SCREEN-UX-HANDOFF-20261014.md.
    Serves this checkout, puts a fake in front of api.mccluster.org and
