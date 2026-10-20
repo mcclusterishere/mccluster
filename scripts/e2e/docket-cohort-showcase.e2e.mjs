@@ -1,6 +1,7 @@
 /* Real archive data, real page/auth scripts, fixture APIs only. No claims,
    invitations, edits or media requests reach production. */
 import assert from 'node:assert/strict';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
@@ -15,7 +16,8 @@ try { ({chromium}=require('playwright')); }
 catch { ({chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules','x'))('playwright')); }
 const archive=JSON.parse(await readFile(join(ROOT,'data/action/docket-516r-archive.json'),'utf8'));
 const TYPES={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};
-async function file(path){const p=normalize(decodeURIComponent(path)).replace(/^([.][.][/\\])+/,'');return {body:await readFile(join(ROOT,p)),contentType:TYPES[extname(p)]||'application/octet-stream'};}
+/* Missions is switched off in the World as it ships; this suite guards the completed missions, so it drives them switched on */
+async function file(path){const p=normalize(decodeURIComponent(path)).replace(/^([.][.][/\\])+/,'');let body=await readFile(join(ROOT,p));if(/^[/\\]mnet\.html$/.test(p))body=Buffer.from(withTravelAndMissions(body));return {body,contentType:TYPES[extname(p)]||'application/octet-stream'};}
 const server=createServer(async(req,res)=>{try{const f=await file(new URL(req.url,'http://local').pathname);res.writeHead(200,{'content-type':f.contentType});res.end(f.body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const BASE=`http://127.0.0.1:${server.address().port}`,results=[];

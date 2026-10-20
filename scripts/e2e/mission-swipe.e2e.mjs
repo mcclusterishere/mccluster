@@ -2,6 +2,7 @@
    Exercises the World Missions deck with auth, rejected joins, pending joins,
    pointer gestures, competing touch navigation, and a missing WebGL globe. */
 import assert from 'node:assert/strict';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
@@ -25,7 +26,8 @@ catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/n
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://local').pathname)).replace(/^([.][.][/\\])+/, '');
-  try { const data = await readFile(join(ROOT, path)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(data); }
+  /* Missions is switched off in the World as it ships; this suite guards it, so it drives it switched on */
+  try { let data = await readFile(join(ROOT, path)); if (/^[/\\]mnet\.html$/.test(path)) data = Buffer.from(withTravelAndMissions(data)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(data); }
   catch { res.writeHead(404); res.end(); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
