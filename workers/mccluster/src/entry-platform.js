@@ -1,7 +1,8 @@
 import existing from './entry.js';
 import { build } from '../.wrangler/build-provenance.mjs';
 import { handlePlatformApi } from './platform-api-metered.js';
-import { publishDueNetworkPosts, reapStaleLiveSessions, pruneNetworkRateEvents } from './platform-api.js';
+import { publishDueNetworkPosts, reapStaleLiveSessions, pruneNetworkRateEvents, runNetworkPushCycle } from './platform-api.js';
+import { pushEnabled } from './web-push.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
@@ -130,6 +131,10 @@ export default {
     }));
     ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
+    /* alerts on members' devices (./web-push.js); off, with no database call, until WEB_PUSH_ENABLED and the VAPID keys */
+    if (pushEnabled(env)) ctx.waitUntil(runNetworkPushCycle(env).catch((error) => {
+      console.error(JSON.stringify({ event: 'mnet_web_push_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
     /* the World's news: GDELT's newest 15-minute file, read once, kept a week; off until
        WORLD_NEWS_INGEST_ENABLED is "true" (./world-news.js) */

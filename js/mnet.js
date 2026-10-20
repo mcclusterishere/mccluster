@@ -1316,7 +1316,7 @@
       .then(function (data) {
         if (data && data.available === true) {
           state.newsCommentsAvailable = true;
-          if ($('mnFeed')) renderFeed(false);
+          if ($('mnFeed')) { renderFeed(false); openLinkedPost(); }
         }
       }).catch(function () { /* disabled or unreachable: no unusable UI */ });
   }
@@ -1435,13 +1435,7 @@
       }
       drawn = true;
       renderFeed(false);
-      try {
-        var linkedPost = new URLSearchParams(location.search).get("post");
-        if (linkedPost && /^[0-9a-f-]{36}$/i.test(linkedPost)) {
-          var target = Array.prototype.find.call($("mnFeed").querySelectorAll("[data-post-id]"), function (node) { return node.getAttribute("data-post-id") === linkedPost; });
-          if (target) { target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true }); }
-        }
-      } catch (_) {}
+      openLinkedPost();
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming), loadCollaborationCards(incoming)]).then(function (flags) {
         if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
@@ -1451,6 +1445,33 @@
     }).catch(function (e) {
       setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
     }).finally(function () { state.loadingFeed = false; });
+  }
+
+  /* ?post= puts that post in view (a shared link, an alert). A post older than the first page is fetched on its own and
+     shown first; arriving from a comment alert (?comments=1), its discussion is open already. */
+  var linkedFetched = false, linkedOpened = false;
+  function openLinkedPost() {
+    var q, id, news;
+    try { q = new URLSearchParams(location.search); news = !!q.get("news"); id = q.get(news ? "news" : "post"); } catch (_) { return; }
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id) || linkedOpened) return;
+    var attr = news ? "data-news-id" : "data-post-id";
+    function find() { return Array.prototype.find.call($("mnFeed").querySelectorAll("[" + attr + "]"), function (node) { return node.getAttribute(attr) === id; }); }
+    var target = find();
+    if (!target) {
+      // a story is shown only while it is in the World's news window; a post can be fetched on its own
+      if (news || state.guest || linkedFetched) return;
+      linkedFetched = true;
+      api("/v1/mnet/posts/" + encodeURIComponent(id)).then(function (one) {
+        if (!one || !one.post || findPost(id)) return;
+        state.feed = [{ item_type:"post", post_id:one.post.id, occurred_at:one.post.created_at, post:one.post, actor:one.actor }].concat(state.feed);
+        renderFeed(false); openLinkedPost();
+      }).catch(function () {});
+      return;
+    }
+    target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true });
+    var talk = q.get("comments") === "1" && target.querySelector("[data-discussion-toggle][aria-expanded=\"false\"]");
+    // a story's reply box appears once the server confirms replies are on; this runs again when it does
+    if (talk) { linkedOpened = true; talk.click(); track("alert_open", { type:news ? "news_comment" : "comment" }); }
   }
 
   /* THE CATALOGUE, LOADED ONCE. data/albums.json is the same file the
@@ -1566,6 +1587,13 @@
       if(n.type==="collaboration_published"&&/^[0-9a-f-]{36}$/i.test(String(meta.mission_id||""))){
         action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(meta.mission_id)+'">Confirm as my Level 3 →</a>';
       }
+      /* a comment opens the post, or the story, with its discussion */
+      if(n.type==="comment"&&/^[0-9a-f-]{36}$/i.test(String(meta.post_id||""))){
+        action='<a class="mn__notification-action" href="mnet.html?view=feed&amp;post='+encodeURIComponent(meta.post_id)+'&amp;comments=1">See the comment →</a>';
+      }
+      if(n.type==="news_comment"&&/^[0-9a-f-]{36}$/i.test(String(meta.article_id||""))){
+        action='<a class="mn__notification-action" href="mnet.html?view=feed&amp;news='+encodeURIComponent(meta.article_id)+'&amp;comments=1">See the reply →</a>';
+      }
       if(n.type==="connection_accepted"&&meta.handle){
         action='<button class="mn__notification-action" type="button" data-person="'+esc(meta.handle)+'">View profile →</button>';
       }
@@ -1584,6 +1612,47 @@
     host.querySelectorAll("[data-person]").forEach(function(b){b.addEventListener("click",function(){openPerson(b.getAttribute("data-person"));});});
   }
 
+  /* ALERTS ON THIS DEVICE (owner, 2026-10-20; workers/mccluster/src/web-push.js). Never asked for on its own: the
+     browser's permission prompt appears only after the member taps Turn on. Hidden where the browser cannot take
+     push (an iPhone needs the site added to the Home Screen first) or while the server has it off. */
+  var push = { key:"", busy:false, mine:false };
+  function pushSupported() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+  function pushKeyBytes(key) {
+    var s = atob(key.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((key.length + 3) % 4)), out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  /* "on" means this browser's subscription belongs to the member signed in now (a shared browser may still hold
+     someone else's until they sign out), so the server is asked, not just the browser */
+  function paintPush() {
+    var box = $("mnPush"); if (!box || state.guest || !pushSupported()) return;
+    navigator.serviceWorker.getRegistration().then(function (reg) { return reg ? reg.pushManager.getSubscription() : null; }).then(function (sub) {
+      return api("/v1/mnet/push" + (sub ? "?endpoint=" + encodeURIComponent(sub.endpoint) : "")).then(function (cfg) {
+        if (!cfg || !cfg.enabled || !cfg.key) { box.hidden = true; return; }
+        push.key = cfg.key; push.mine = !!(sub && cfg.subscribed); box.hidden = false;
+        var on = push.mine && Notification.permission === "granted", b = $("mnPushToggle");
+        b.textContent = on ? "Turn off" : "Turn on"; b.setAttribute("aria-pressed", String(on));
+        b.disabled = Notification.permission === "denied";
+        if (Notification.permission === "denied") $("mnPushNote").textContent = "Alerts are blocked for this site in your browser settings.";
+      });
+    }).catch(function () { box.hidden = true; });
+  }
+  function togglePush() {
+    if (push.busy || !push.key) return; push.busy = true;
+    var b = $("mnPushToggle"); b.disabled = true;
+    navigator.serviceWorker.ready.then(function (reg) {
+      return reg.pushManager.getSubscription().then(function (sub) {
+        if (sub && push.mine) return api("/v1/mnet/push/subscriptions", { method:"DELETE", body:{ endpoint:sub.endpoint } }).then(function () { return sub.unsubscribe(); }).then(function () { track("push_off", {}); });
+        // this browser already has a subscription from someone else: it becomes this member's
+        if (sub) return api("/v1/mnet/push/subscriptions", { method:"POST", body:sub.toJSON() }).then(function () { track("push_on", {}); });
+        return reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:pushKeyBytes(push.key) }).then(function (fresh) {
+          return api("/v1/mnet/push/subscriptions", { method:"POST", body:fresh.toJSON() }).then(function () { track("push_on", {}); });
+        });
+      });
+    }).catch(function (e) {
+      setStatus($("mnNotificationStatus"), Notification.permission === "denied" ? "Alerts are blocked for this site in your browser settings." : (e.message || "Alerts could not be changed."), "error");
+    }).finally(function () { push.busy = false; b.disabled = false; paintPush(); });
+  }
   function loadNotificationsSilently() {
     return api("/v1/mnet/notifications").then(function (data) {
       var rows = data.notifications || [];
@@ -2014,7 +2083,7 @@
     if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
-    if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
+    if(name==="notifications"){loadNotificationsSilently().then(markNotificationsRead);paintPush();}
     if(name==="profile"){paintSelf();loadDeletion();paintCreatorDoor();}
     window.scrollTo({top:0,behavior:"smooth"});
     sizeWorld();
@@ -2239,6 +2308,7 @@
     };
     $("mnMore").onclick = function () { loadFeed(false); };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
+    $("mnPushToggle").onclick = togglePush;
     wireMenu();
     $("mnGuestSignIn").onclick = function () { openSignIn("signin"); };
     $("mnGuestJoin").onclick = function () { openSignIn("create"); };
@@ -2784,6 +2854,7 @@
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       if(worldMissionDeck)worldMissionDeck.update(missions.all);
       worldMissionDeckLoaded=true;
+      paintActionRecord();
       setStatus($("mnMissionStatus"),"");
       return true;
     }).catch(function(e){if(version===missionListVersion){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");if(worldMissionDeck)worldMissionDeck.fail(e.message||"Missions could not load.");}return false;});
@@ -2839,6 +2910,24 @@
       .then(function(){if(window.MCC_TRACK)window.MCC_TRACK("fellowship_apply",{});return loadActionRecord();})
       .catch(function(e){setStatus($("mnFellowStatus"),e.message||"Your application could not be sent.","error");b.disabled=false;});
   }
+  /* WHAT'S NEXT (owner, 2026-10-20: a finished mission should lead somewhere). Once something is verified, the record
+     names one open mission the member has not taken: one sharing a skill or a field with what they finished, else the
+     one most people have joined. Nothing shows when there is nothing new to take. */
+  function nextMission(r){
+    var taken={}, ref={};
+    (r.missions||[]).forEach(function(m){taken[m.mission_id]=m;});
+    var done=(r.missions||[]).filter(function(m){return m.status==="verified";});
+    var open=(missions.all||[]).filter(function(m){return !taken[m.id];});
+    if(!done.length||!open.length)return null;
+    // the record carries each finished mission's skills and field, even once that mission has closed
+    done.forEach(function(d){
+      var m=d.skills||d.domain?d:(missions.all||[]).find(function(x){return x.id===d.mission_id;});
+      if(m){(m.skills||[]).forEach(function(k){ref["s:"+k]=1;});if(m.domain)ref["d:"+m.domain]=1;}
+    });
+    function near(m){var n=m.domain&&ref["d:"+m.domain]?1:0;(m.skills||[]).forEach(function(k){if(ref["s:"+k])n+=2;});return n;}
+    function joined(m){return Number((missions.stats[m.id]||{}).joined)||0;}
+    return open.slice().sort(function(a,b){return near(b)-near(a)||joined(b)-joined(a);})[0];
+  }
   function paintActionRecord(){
     var r=missions.record; if(!r)return;
     var verified=Number(r.verified_actions)||0, points=Number(r.points)||0, cohorts=r.cohorts||[];
@@ -2860,7 +2949,9 @@
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
     }).join("");
     host.hidden=false;
+    var next=nextMission(r);
     host.innerHTML='<div class="mn__record-head"><div><p class="mn__eyebrow">Your Action Record</p><h2>'+verified+' verified '+(verified===1?"action":"actions")+'</h2></div><strong>'+points.toLocaleString()+' pts</strong></div>'+
+      (next?'<div class="mn__record-next"><p class="mn__eyebrow">Next for you</p><b>'+esc(next.title)+'</b><button class="mn__primary" type="button" data-open-mission="'+esc(next.id)+'">View mission</button></div>':"")+
       fellowship+
       (skills?'<ul class="mn__record-skills">'+skills+'</ul>':"")+
       (cohorts.length?'<ul class="mn__record-cohorts">'+cohorts.map(function(c){return '<li><b>'+esc(c.name)+'</b><span>'+esc(c.members)+' members · '+esc(Number(c.points).toLocaleString())+(c.goal_points?" of "+esc(Number(c.goal_points).toLocaleString()):"")+' pts</span></li>';}).join("")+'</ul>':"")+

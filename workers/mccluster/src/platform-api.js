@@ -1,4 +1,5 @@
 import { fail, reply } from './lib/http.js';
+import { pushEnabled, validSubscription, runPushCycle } from './web-push.js';
 
 const encoder = new TextEncoder();
 
@@ -47,6 +48,35 @@ async function networkActors(env,muids=[]){
   for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||''};
   for(const p of profiles||[]) out[p.m_uid]={...out[p.m_uid],...p,mccluster_id:handleByMuid.get(p.m_uid)||''};
   return out;
+}
+/* A COMMENT IS HEARD (owner, 2026-10-20: people come back when someone answers them). A new comment tells the post's
+   author (a news story has none) and anyone who commented in the same discussion in the last fortnight: never the
+   commenter, never across a block either way, never someone who muted the commenter, and at most 20 people for one
+   comment. A failure here never fails the comment. */
+async function notifyDiscussion(env,muid,{owner=null,earlier,type,objectType,objectId,ownerBody,otherBody,metadata}){
+  const since=new Date(Date.now()-14*864e5).toISOString();
+  const before=await service(env,`${earlier}&created_at=gte.${encodeURIComponent(since)}&select=author_m_uid&order=created_at.desc&limit=100`);
+  const ids=[...new Set([owner,...(before||[]).map(c=>c.author_m_uid)])].filter(id=>/^[0-9a-f-]{36}$/i.test(String(id||''))&&id!==muid).slice(0,20);
+  if(!ids.length)return 0;
+  const list=ids.join(','),now=new Date().toISOString().replace(/\.\d{3}Z$/,'Z');
+  const [blocks,mutes]=await Promise.all([
+    service(env,`network_blocks?or=(and(blocker_m_uid.eq.${muid},blocked_m_uid.in.(${list})),and(blocked_m_uid.eq.${muid},blocker_m_uid.in.(${list})))&select=blocker_m_uid,blocked_m_uid&limit=100`),
+    service(env,`network_mutes?muted_m_uid=eq.${muid}&muter_m_uid=in.(${list})&or=(expires_at.is.null,expires_at.gt.${now})&select=muter_m_uid&limit=100`)
+  ]);
+  const quiet=new Set([...(blocks||[]).map(b=>b.blocker_m_uid===muid?b.blocked_m_uid:b.blocker_m_uid),...(mutes||[]).map(m=>m.muter_m_uid)]);
+  const rows=ids.filter(id=>!quiet.has(id)).map(id=>({recipient_m_uid:id,actor_m_uid:muid,type,object_type:objectType,object_id:objectId,
+    body:id===owner?ownerBody:otherBody,metadata}));
+  if(rows.length)await service(env,'network_notifications',{method:'POST',headers:{prefer:'return=minimal'},body:JSON.stringify(rows)});
+  return rows.length;
+}
+function notifyComment(env,muid,post,comment){
+  return notifyDiscussion(env,muid,{owner:post.author_m_uid,earlier:`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null`,type:'comment',objectType:'post',objectId:post.id,
+    ownerBody:'commented on your post',otherBody:'also commented on a post you commented on',metadata:{post_id:post.id,comment_id:comment.id}});
+}
+/* a reply under a news story reaches the people already talking about it */
+function notifyNewsComment(env,muid,articleId,comment){
+  return notifyDiscussion(env,muid,{earlier:`media_news_comments?article_id=eq.${articleId}&deleted_at=is.null&state=eq.visible`,type:'news_comment',objectType:'news',objectId:articleId,
+    otherBody:'also replied to a story you replied to',metadata:{article_id:articleId,comment_id:comment.id}});
 }
 async function networkBlocked(env,a,b){
   if(!a||!b||a===b)return false;
@@ -393,6 +423,7 @@ export async function reapStaleLiveSessions(env,{limit=20}={}){
 }
 /* The limits only ever look back 24 hours, so anything older than two days
    in their ledger is dead weight. */
+export async function runNetworkPushCycle(env,options){ return runPushCycle(env,service,options); }
 export async function pruneNetworkRateEvents(env){
   const cutoff=new Date(Date.now()-2*24*60*60*1000).toISOString();
   await service(env,`network_rate_events?at=lt.${cutoff}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
@@ -620,7 +651,9 @@ async function handleMnet(req,env,path,url){
       const input=await json(req),body=String(input.body||'').trim();
       if(!body||body.length>1000)return fail(req,env,'Comment must contain 1–1000 characters',400);
       const created=await service(env,'network_post_comments',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({post_id:post.id,author_m_uid:muid,body})});
-      return reply(req,env,{comment:created?.[0]||null},201);
+      const comment=created?.[0]||null;
+      if(comment)await notifyComment(env,muid,post,comment).catch(()=>0);
+      return reply(req,env,{comment},201);
     }
     const comments=await service(env,`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null&select=id,post_id,author_m_uid,body,created_at&order=created_at.asc&limit=100`);
     const allowed=[];
@@ -658,6 +691,33 @@ async function handleMnet(req,env,path,url){
     if(await networkBlocked(env,muid,target))return fail(req,env,'Person not found',404);
     if(req.method==='POST'){await service(env,'network_follows',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({follower_m_uid:muid,followed_m_uid:target,status:'following'})});return reply(req,env,{following:true});}
     await service(env,`network_follows?follower_m_uid=eq.${muid}&followed_m_uid=eq.${target}`,{method:'DELETE',headers:{prefer:'return=minimal'}}); return reply(req,env,{following:false});
+  }
+  /* ALERTS ON THIS DEVICE (web-push.js): the key to subscribe with, then one subscription per browser, owned by the
+     member who last turned it on there. Ten devices at most; a push service URL only. */
+  if(path==='/v1/mnet/push'&&req.method==='GET'){
+    if(external)return fail(req,env,'Alerts require a McCluster user session',403);
+    if(!pushEnabled(env))return reply(req,env,{enabled:false});
+    // whether this browser's subscription belongs to this member (a shared browser can hold someone else's)
+    const endpoint=String(url.searchParams.get('endpoint')||'').slice(0,1000),muid=endpoint?await currentMuid(env,user.id):null;
+    const mine=muid?await service(env,`network_push_subscriptions?m_uid=eq.${muid}&endpoint=eq.${encodeURIComponent(endpoint)}&select=id&limit=1`):[];
+    return reply(req,env,{enabled:true,key:env.WEB_PUSH_VAPID_PUBLIC_KEY,subscribed:!!mine?.length});
+  }
+  if(path==='/v1/mnet/push/subscriptions'&&['POST','DELETE'].includes(req.method)){
+    if(external)return fail(req,env,'Alerts require a McCluster user session',403);
+    if(!pushEnabled(env))return fail(req,env,'Alerts on devices are not on yet',404);
+    const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'Sign in to turn on alerts',401);
+    const input=await json(req);
+    if(req.method==='DELETE'){
+      const endpoint=String(input.endpoint||'').slice(0,1000); if(!endpoint)return fail(req,env,'Which device?',400);
+      await service(env,`network_push_subscriptions?m_uid=eq.${muid}&endpoint=eq.${encodeURIComponent(endpoint)}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
+      return reply(req,env,{subscribed:false});
+    }
+    const sub=validSubscription(input); if(!sub)return fail(req,env,'That is not a browser push subscription',400);
+    const mine=await service(env,`network_push_subscriptions?m_uid=eq.${muid}&select=endpoint&limit=11`)||[];
+    if(mine.length>=10&&!mine.some(r=>r.endpoint===sub.endpoint))return fail(req,env,'Alerts are on for ten devices already. Turn one off first.',409);
+    await service(env,'network_push_subscriptions?on_conflict=endpoint',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({m_uid:muid,endpoint:sub.endpoint,p256dh:sub.p256dh,auth:sub.auth,user_agent:String(req.headers.get('user-agent')||'').slice(0,300),failures:0})});
+    return reply(req,env,{subscribed:true},201);
   }
   if(path==='/v1/mnet/notifications/read'&&req.method==='POST'){
     if(external)return fail(req,env,'Notifications require a McCluster user session',403); const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
@@ -1269,7 +1329,9 @@ async function handleWorldNewsDiscussion(req,env,path){
       method:'POST',headers:{prefer:'return=representation'},
       body:JSON.stringify({article_id:articleId,author_m_uid:muid,body})
     });
-    return reply(req,env,{comment:created?.[0]||null},201);
+    const comment=created?.[0]||null;
+    if(comment)await notifyNewsComment(env,muid,articleId,comment).catch(()=>0);
+    return reply(req,env,{comment},201);
   }
   const rows=await service(env,'media_news_comments?article_id=eq.'+articleId+
     '&deleted_at=is.null&state=eq.visible&select=id,article_id,author_m_uid,body,created_at&order=created_at.asc&limit=100');

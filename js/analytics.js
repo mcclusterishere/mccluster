@@ -67,6 +67,15 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register(swRoot + "sw.js").catch(function () {});
   });
+  /* SIGNING OUT TAKES THE DEVICE ALERTS WITH IT (owner, 2026-10-20; workers/mccluster/src/web-push.js). On a shared
+     browser the next person must never see the last member's alerts: the subscription is dropped here, and the
+     server forgets it the next time its push service answers that it is gone. */
+  window.addEventListener("mcc:auth-changed", function (e) {
+    if (!e.detail || e.detail.signed_in !== false) return;
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      return reg && reg.pushManager ? reg.pushManager.getSubscription() : null;
+    }).then(function (sub) { if (sub) return sub.unsubscribe(); }).catch(function () {});
+  });
 }
 
 window.MCC_TRACK = (function () {

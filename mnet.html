@@ -533,6 +533,11 @@
           <div><p class="mn__eyebrow">Equity Uprise</p><h2>Notifications</h2></div>
           <button class="mn__quiet" id="mnRefreshNotifications" type="button">Refresh</button>
         </div>
+        <!-- alerts on this device: shown only where the browser can take them and the server has them on -->
+        <div class="mn__push" id="mnPush" hidden>
+          <p><b>Alerts on this device</b><span id="mnPushNote">A reply, a comment or a review decision, even with this page closed. At most one alert every 15 minutes.</span></p>
+          <button class="mn__quiet" id="mnPushToggle" type="button" aria-pressed="false">Turn on</button>
+        </div>
         <div class="mn__notifications" id="mnNotifications"></div>
         <p class="mn__status mn__status--center" id="mnNotificationStatus"></p>
       </section>

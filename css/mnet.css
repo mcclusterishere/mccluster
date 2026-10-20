@@ -325,6 +325,12 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__person-sub, .mn__conversation-sub { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-faint); font-size: 0.82rem; }
 .mn__follow { min-height: 36px; padding: 0 14px !important; border-radius: 999px !important; background: var(--mn-ink) !important; color: var(--mn-bg) !important; font-weight: 800 !important; font-size: 0.85rem !important; }
 .mn__follow.is-active { background: transparent !important; color: var(--mn-dim) !important; box-shadow: inset 0 0 0 1px var(--mn-rule-2) !important; }
+/* alerts on this device: one line of why, one button */
+.mn__push { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--mn-raise-2); }
+.mn__push p { margin: 0; min-width: 0; font-size: 0.88rem; line-height: 1.4; color: var(--mn-dim); }
+.mn__push b { display: block; color: var(--mn-ink); }
+.mn__push button { min-height: 44px; }
+.mn__push[hidden] { display: none; }
 .mn__notification { padding: 14px 16px; }
 .mn__notification strong { display: block; font-size: 0.95rem; }
 .mn__notification-action { display: inline-flex; margin-top: 8px; font-weight: 750; text-decoration: none; }
@@ -577,6 +583,11 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__record-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .mn__record-head h2 { margin: 2px 0 0; font-family: var(--mn-display); font-weight: 400; font-size: 1.7rem; line-height: 1; text-transform: uppercase; }
 .mn__record-head strong { flex: none; color: var(--mn-gold); font-weight: 800; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+/* the next mission, right under the count: one line and one button */
+.mn__record-next { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; margin: 12px 0 0; padding: 12px; border-radius: 14px; background: var(--mn-raise-2); }
+.mn__record-next .mn__eyebrow { grid-column: 1 / -1; margin: 0; }
+.mn__record-next b { min-width: 0; color: var(--mn-ink); line-height: 1.3; overflow-wrap: anywhere; }
+.mn__record-next .mn__primary { min-height: 44px; }
 .mn__record-unlock { margin: 12px 0 0; padding: 10px 12px; border-radius: 14px; background: var(--mn-raise-2); color: var(--mn-dim); font-size: 0.88rem; line-height: 1.45; }
 .mn__record-unlock b { color: var(--mn-ink); }
 .mn__record-unlock.is-open { background: rgba(232, 200, 119, 0.12); box-shadow: inset 0 0 0 1px rgba(232, 200, 119, 0.4); }

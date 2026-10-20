@@ -65,6 +65,19 @@ CORE_BROKER_URL = "https://core.mccluster.org"
 # optionally, CF_STREAM_WEBHOOK_SECRET (Stream video webhook HMAC).
 LIVE_MISSIONS_ENABLED = "false"
 
+# Replies under World news stories (owner, 2026-10-20: "i need the news articles to
+# be able to be replied to"). On, but closed by itself: the capability check
+# answers available:false, and the page shows no reply box, until the table in
+# supabase/pending/world_news_discussions_v1.sql exists.
+WORLD_NEWS_COMMENTS_ENABLED = "true"
+
+# Alerts on members' devices (src/web-push.js). Off until this is "true", the
+# pending SQL (supabase/pending/20261020150000_network_web_push.sql) is applied,
+# and these secrets are set, by name only: WEB_PUSH_VAPID_PUBLIC_KEY,
+# WEB_PUSH_VAPID_PRIVATE_KEY (a P-256 key pair, base64url) and, optionally,
+# WEB_PUSH_CONTACT (a mailto: or https: address the push services can reach).
+WEB_PUSH_ENABLED = "false"
+
 # Free noncommercial directions pilot only: no paid routing or supplier
 # commissions. Global single-flight quota: <=1 request/sec, <=1000/day.
 # Replace BEFORE commercial/high-volume travel. Independent McCluster key:
