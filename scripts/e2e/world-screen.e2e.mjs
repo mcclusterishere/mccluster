@@ -229,7 +229,11 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.pathname === '/v1/mnet/bootstrap' && world.bootFail && world.bootFail.length) { const st = world.bootFail.shift(); return json(route, { error: st === 401 ? 'sign in first' : 'upstream failed' }, st); }
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') { const pg = pageOf(asOf(world.posts)); return json(route, { items: pg.list.map(item), next_before: pg.next }); }
-    if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null }] });
+    if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null },
+      { id: 'n2', type: 'comment', body: 'commented on your post', metadata: { post_id: CONTENT, comment_id: M2 }, created_at: new Date().toISOString(), read_at: null },
+      { id: 'n3', type: 'news_comment', body: 'also replied to a story you replied to', metadata: { article_id: M1, comment_id: M2 }, created_at: new Date().toISOString(), read_at: null }] });
+    /* alerts on devices are off on this fixture server */
+    if (u.pathname === '/v1/mnet/push') return json(route, { enabled: false });
     if (u.pathname === '/v1/mnet/notifications/read') { world.alertsRead = true; return json(route, {}); }
     if (u.pathname === '/v1/mnet/discover') { const q = (u.searchParams.get('q') || '').toLowerCase(); return json(route, { people: PEERS.filter((p) => (p.display_name + ' ' + p.mccluster_id).toLowerCase().includes(q)).map((p) => ({ ...p, following: false })) }); }
     if (u.pathname === '/v1/mnet/conversations') return json(route, { conversations: [{ conversation: { id: 'c1' }, my: { member_state: 'requested' }, members: [], last_message: null }] });
@@ -869,6 +873,16 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       await page.waitForFunction(()=>document.documentElement.classList.contains('mn-world-on'));
       await page.click('.wt-world-modes [data-world-mode=posts]');
       check(scope,'returning to World restores the scrolling feed',await page.locator('#mnWorldFeed').evaluate(e=>getComputedStyle(e).overflowY==='auto' && e.scrollHeight>e.clientHeight));
+      /* alerts (owner, 2026-10-20): a comment alert opens its post with the discussion; the device-alerts row stays out
+         of sight while the server has push off */
+      await page.evaluate(()=>window.MCC_MNET.setView('notifications'));
+      await page.waitForFunction(()=>!!document.querySelector('#mnNotifications a.mn__notification-action'),null,{timeout:10000}).catch(()=>{});
+      check(scope,'a comment alert links to its post with the discussion open',await page.getAttribute('#mnNotifications a.mn__notification-action','href')===`mnet.html?view=feed&post=${CONTENT}&comments=1`);
+      check(scope,'a news reply alert links to the story with its replies open',(await page.locator('#mnNotifications a.mn__notification-action').nth(1).getAttribute('href'))===`mnet.html?view=feed&news=${M1}&comments=1`);
+      /* the page asks the server only after looking up this browser's own subscription */
+      for(let i=0;i<50&&!req(world,'GET',/^\/v1\/mnet\/push$/).length;i++)await page.waitForTimeout(100);
+      check(scope,'the device-alerts row stays hidden while the server has push off',req(world,'GET',/^\/v1\/mnet\/push$/).length>=1&&await page.isHidden('#mnPush'));
+      await page.evaluate(()=>window.MCC_MNET.setView('feed'));
     }
     check(scope,'no JavaScript errors',errors.length===0,errors);
   } finally {await ctx.close();}
@@ -1027,7 +1041,7 @@ if (runs('member-interactions')) {
   check(scope, 'Create: the folded composer has a visible Record or create button', (await page.isVisible('#mnComposer .mn__create')) && (await page.getAttribute('#mnComposer .mn__create', 'href')) === 'create.html');
 
   // Alerts: the bell carries the count and opens them
-  check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '1');
+  check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '3');
   await page.click('#mnBell');
   await page.waitForSelector('#mnNotificationsView:not([hidden])');
   /* the list and the read receipt are two round trips; wait for both rather than a fixed beat */

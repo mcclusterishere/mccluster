@@ -107,3 +107,27 @@ self.addEventListener("fetch", function (e) {
     })
   );
 });
+
+/* ALERTS (owner, 2026-10-20). A push from the Worker (workers/mccluster/src/web-push.js) shows the alert the bell
+   already has; a tap opens that place on this same site, never another. Nothing is cached or fetched here. */
+self.addEventListener("push", function (e) {
+  var d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) {}
+  var url = typeof d.url === "string" && d.url.charAt(0) === "/" && d.url.charAt(1) !== "/" ? d.url : "/mnet.html?view=notifications";
+  e.waitUntil(self.registration.showNotification(String(d.title || "Equity Uprise").slice(0, 80), {
+    body: String(d.body || "").slice(0, 160), tag: String(d.tag || "mcc-alerts").slice(0, 40), renotify: true,
+    icon: "/assets/img/icon-192.png", badge: "/assets/img/icon-192.png", data: { url: url }
+  }));
+});
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  var target = new URL((e.notification.data && e.notification.data.url) || "/mnet.html?view=notifications", self.location.origin);
+  if (target.origin !== self.location.origin) return;
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    for (var i = 0; i < list.length; i++) {
+      // navigate() works only on a page this worker controls; any other page gets a new window instead
+      if (new URL(list[i].url).origin === self.location.origin && "navigate" in list[i]) return list[i].navigate(target.href).then(function (c) { return c ? c.focus() : self.clients.openWindow(target.href); }).catch(function () { return self.clients.openWindow(target.href); });
+    }
+    return self.clients.openWindow(target.href);
+  }));
+});
