@@ -32,7 +32,7 @@ const response=(data,status=200)=>new Response(JSON.stringify(data),{status,head
 const at=(o)=>({fetchImpl:o,now:()=>NOW});
 function fixture(log,{active=true,role='listener',muted=true,grant=true,blocked=false,pubSession=null,
   identity=HOST,roomStatus='live',subscribed=false,roomExists=true,roomCountry='US',visitorsMayListen=true,
-  hand=null,visitorExpires='2026-10-20T15:00:00Z',dbError=null}={}){
+  hand=null,visitorExpires='2026-10-20T15:00:00Z',dbError=null,closeError=false,priorSub=null}={}){
   const hostRoom={id:ROOM,status:roomStatus,title:'Public Audio',host_m_uid:HOST,
     country_code:roomCountry,visitors_may_listen:visitorsMayListen,category_key:'community',max_speakers:4,max_listeners:100};
   return async(url,opts={})=>{
@@ -48,7 +48,8 @@ function fixture(log,{active=true,role='listener',muted=true,grant=true,blocked=
           tracks:[{mid:'0',trackName:'mic'}]});
       }
       if(p.endsWith('/renegotiate'))return response({ok:true});
-      if(p.endsWith('/tracks/close'))return response({tracks:[{mid:'0',status:'closed'}]});
+      // Cloudflare answers 200 and names the failure on the track
+      if(p.endsWith('/tracks/close'))return response({tracks:[closeError?{mid:'0',errorCode:'track_not_found',errorDescription:'no such track'}:{mid:'0',status:'closed'}]});
       throw Error('Unexpected SFU path '+p);
     }
     if(p==='/auth/v1/user') {
@@ -100,6 +101,7 @@ function fixture(log,{active=true,role='listener',muted=true,grant=true,blocked=
       if(opts.method==='POST')return response([{id:SUB}],201);
       if(opts.method==='PATCH')return response([{id:SUB,status:'closed'}]);
       if(u.searchParams.has('id'))return response(subscribed?[{id:SUB,sfu_session_id:'sfu-session-alpha'}]:[]);
+      if(priorSub&&u.searchParams.has('listener_participant_id'))return response([{id:SUB,status:priorSub,sfu_session_id:'stale-receiver',sfu_mid:'0'}]);
       return response([]);
     }
     throw Error('Unexpected fetch '+url);
@@ -395,4 +397,36 @@ test('only public profiles lend a name to the stage; anyone else is Member',asyn
   }));
   const room=(await r.json()).rooms[0];
   assert.deepEqual(room.host,{display_name:'Host',avatar_url:''});
+});
+
+test('a track Cloudflare reports as failed inside a 200 fails the mute and keeps the media ids for a retry',async()=>{
+  const calls=[],r=await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/mic','POST',{unmute:false}),ENV,
+    at(fixture(calls,{identity:USER,role:'speaker',muted:false,pubSession:'pub-session'})));
+  assert.equal(r.status,200,'a clean close still mutes');
+  const failing=[],bad=await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/mic','POST',{unmute:false}),ENV,
+    at(fixture(failing,{identity:USER,role:'speaker',muted:false,pubSession:'pub-session',closeError:true})));
+  assert.equal(bad.status,503,'the room answers "temporarily unavailable", as for any provider failure');
+  assert.ok(failing.some(c=>c.path.endsWith('/tracks/close')));
+  assert.ok(!failing.some(c=>c.method==='PATCH'&&c.path.endsWith('/network_audio_members')),'the seat keeps its session and mid');
+});
+test('the host leaving ends the room for everyone, as End does',async()=>{
+  const calls=[],r=await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/leave','POST',{}),ENV,
+    at(fixture(calls,{role:'host',identity:HOST})));
+  assert.equal(r.status,200);
+  assert.equal((await r.json()).ended,true);
+  const ended=calls.find(c=>c.method==='PATCH'&&c.path.endsWith('/network_audio_rooms'));
+  assert.ok(ended&&/"status":"ended"/.test(ended.body)&&/status=eq\.live/.test(ended.query));
+  assert.ok(calls.some(c=>c.method==='PATCH'&&c.path.endsWith('/network_audio_members')&&/status=eq\.joined/.test(c.query)&&/"status":"left"/.test(c.body)),'everyone still seated is let go');
+});
+test('a listener whose answer never arrived can subscribe again; the half-made receiver is closed first',async()=>{
+  const calls=[],r=await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/subscribe','POST',{publisher:SEAT_OTHER}),ENV,
+    at(fixture(calls,{identity:USER,priorSub:'negotiating'})));
+  assert.equal(r.status,200);
+  const close=calls.findIndex(c=>c.path.endsWith('/sessions/stale-receiver/tracks/close'));
+  const retire=calls.findIndex(c=>c.method==='PATCH'&&c.path.endsWith('/network_audio_subscriptions')&&/status=eq\.negotiating/.test(c.query));
+  const fresh=calls.findIndex(c=>c.method==='POST'&&c.path.endsWith('/network_audio_subscriptions'));
+  assert.ok(close>=0&&retire>close&&fresh>retire,'close, then retire the row, then record the new receiver');
+  const dup=await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/subscribe','POST',{publisher:SEAT_OTHER}),ENV,
+    at(fixture([],{identity:USER,priorSub:'active'})));
+  assert.equal(dup.status,409,'a working subscription is never replaced');
 });

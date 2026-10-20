@@ -132,19 +132,23 @@ async function sfu(env,method,route,payload,fetchImpl) {
     return value;
   }finally {clearTimeout(timer);}
 }
+// Cloudflare reports a failed track inside an HTTP 200: errorCode/errorDescription on the reply or on each track
+// (https://developers.cloudflare.com/realtime/sfu/api/), so success is never read from the status alone.
+function sfuFailed(out) {
+  return !!(out?.errorCode||out?.errorDescription||(Array.isArray(out?.tracks)&&
+    out.tracks.some(t=>t&&(t.errorCode||t.errorDescription||t.error))));
+}
 async function closeMic(env,m,fetchImpl) {
   if(!m?.sfu_publication_session_id || !MID.test(m.sfu_publication_mid||''))return;
   const result=await sfu(env,'PUT','/sessions/'+encodeURIComponent(m.sfu_publication_session_id)+
     '/tracks/close',{tracks:[{mid:m.sfu_publication_mid}],force:true},fetchImpl);
-  if(Array.isArray(result?.tracks)&&result.tracks.some(t=>t.error))
-    throw Object.assign(new Error('sfu_mic_close_failed'),{status:502});
+  if(sfuFailed(result))throw Object.assign(new Error('sfu_mic_close_failed'),{status:502});
 }
 async function stopReceiver(env,s,fetchImpl) {
   if(!s?.sfu_session_id||!MID.test(s.sfu_mid||''))return;
   const out=await sfu(env,'PUT','/sessions/'+encodeURIComponent(s.sfu_session_id)+
     '/tracks/close',{tracks:[{mid:s.sfu_mid}],force:true},fetchImpl);
-  if(Array.isArray(out?.tracks)&&out.tracks.some(t=>t.error))
-    throw Object.assign(new Error('sfu_receiver_close_failed'),{status:502});
+  if(sfuFailed(out))throw Object.assign(new Error('sfu_receiver_close_failed'),{status:502});
 }
 async function closeSubscriptions(env,room,scope,fetchImpl) {
   // A removed or blocked listener must not keep receiving on a still-live
@@ -391,7 +395,7 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
       const negotiated=await sfu(env,'POST','/sessions/'+encodeURIComponent(sessionId)+'/tracks/new',{
         sessionDescription:b.offer,tracks:[{location:'local',mid:b.mid,trackName:'mic'}]
       },fetchImpl);
-      if(!validDescription(negotiated?.sessionDescription,'answer')) {
+      if(sfuFailed(negotiated)||!validDescription(negotiated?.sessionDescription,'answer')) {
         await closeMic(env,{sfu_publication_session_id:sessionId,sfu_publication_mid:b.mid},fetchImpl).catch(()=>{});
         return error(req,env,'Provider did not accept the audio offer',502);
       }
@@ -413,16 +417,23 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
         return error(req,env,'Speaker is not available',404);
       const existing=await service(env,'network_audio_subscriptions','room_id=eq.'+rid+
         '&listener_participant_id=eq.'+self.participant_id+'&publisher_participant_id=eq.'+publisher+
-        '&status=neq.closed&select=id&limit=1',{},fetchImpl);
-      if(existing?.length)return error(req,env,'Subscription already exists',409);
+        '&status=neq.closed&select=id,status,sfu_session_id,sfu_mid&limit=1',{},fetchImpl);
+      if(existing?.[0]?.status==='active')return error(req,env,'Subscription already exists',409);
+      // a browser that failed between the offer and its answer retries here: the half-made receiver is closed first
+      if(existing?.length) {
+        await stopReceiver(env,existing[0],fetchImpl);
+        await patch(env,'network_audio_subscriptions','id=eq.'+existing[0].id+'&status=eq.negotiating',{status:'closed'},fetchImpl);
+      }
       const session=await sfu(env,'POST','/sessions/new',undefined,fetchImpl),sid=session?.sessionId;
       if(typeof sid!=='string'||sid.length<5||sid.length>256)return error(req,env,'Provider session unavailable',502);
       const offer=await sfu(env,'POST','/sessions/'+encodeURIComponent(sid)+'/tracks/new',{
         tracks:[{location:'remote',sessionId:p.sfu_publication_session_id,trackName:'mic'}]
       },fetchImpl);
-      if(!validDescription(offer?.sessionDescription,'offer')||
-          !MID.test(offer?.tracks?.[0]?.mid||''))
+      if(sfuFailed(offer)||!validDescription(offer?.sessionDescription,'offer')||
+          !MID.test(offer?.tracks?.[0]?.mid||'')) {
+        await stopReceiver(env,{sfu_session_id:sid,sfu_mid:offer?.tracks?.[0]?.mid},fetchImpl).catch(()=>{});
         return error(req,env,'Provider did not offer audio',502);
+      }
       const rows=await record(env,'network_audio_subscriptions',{room_id:rid,listener_participant_id:self.participant_id,
         publisher_participant_id:publisher,sfu_session_id:sid,sfu_mid:offer.tracks[0].mid},fetchImpl);
       if(!validUuid(rows?.[0]?.id))return error(req,env,'Could not save receiving session',503);
@@ -439,7 +450,7 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
       if(!rows?.length)return error(req,env,'Subscription missing or already negotiated',404);
       const ok=await sfu(env,'PUT','/sessions/'+encodeURIComponent(rows[0].sfu_session_id)+
         '/renegotiate',{sessionDescription:b.answer},fetchImpl);
-      if(ok?.error)return error(req,env,'Provider rejected receive answer',502);
+      if(ok?.error||sfuFailed(ok))return error(req,env,'Provider rejected receive answer',502);
       await patch(env,'network_audio_subscriptions','id=eq.'+rows[0].id+'&status=eq.negotiating',
         {status:'active',updated_at:new Date(now()).toISOString()},fetchImpl);
       return respond(req,env,{connected:true});
@@ -476,6 +487,8 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
       }
       return respond(req,env,{removed:true});
     }
+    // a room with no host has nobody who can moderate it: the host leaving ends it
+    if(req.method==='POST'&&action==='leave'&&isHost)return await endRoom(req,env,rid,{fetchImpl,now});
     if(req.method==='POST'&&action==='leave') {
       if(self.sfu_publication_session_id)await closeMic(env,self,fetchImpl);
       await closeSubscriptions(env,rid,either(self.participant_id),fetchImpl);
@@ -490,24 +503,28 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
     }
     if(req.method==='POST'&&action==='end'){
       if(!isHost)return error(req,env,'Only the host can end the room',403);
-      await patch(env,'network_audio_rooms','id=eq.'+rid+'&status=eq.live',
-        {status:'ended',ended_at:new Date(now()).toISOString()},fetchImpl);
-      const live=await service(env,'network_audio_members','room_id=eq.'+rid+
-        '&sfu_publication_session_id=not.is.null&select=participant_id,sfu_publication_session_id,sfu_publication_mid',{},fetchImpl);
-      let cleanupFailed=0;
-      for(const peer of live||[]) {
-        try {await closeMic(env,peer,fetchImpl);await clearedMember(env,rid,peer,fetchImpl);}
-        catch {cleanupFailed++;}
-      }
-      await closeSubscriptions(env,rid,'id=not.is.null',fetchImpl).catch(()=>{cleanupFailed++;});
-      await remove(env,'network_audio_members','room_id=eq.'+rid+'&m_uid=is.null',fetchImpl).catch(()=>{cleanupFailed++;});
-      await patch(env,'network_audio_members','room_id=eq.'+rid+'&status=eq.joined',
-        {status:'left',muted:true,hand_raised_at:null,left_at:new Date(now()).toISOString()},fetchImpl);
-      return respond(req,env,{ended:true,cleanup_pending:cleanupFailed>0});
+      return await endRoom(req,env,rid,{fetchImpl,now});
     }
     if(who.visitor)return signIn(req,env,'Sign in to do that');
     return error(req,env,'Audio operation not found',404);
   }catch(e){return apiError(req,env,e);}
+}
+
+async function endRoom(req,env,rid,{fetchImpl,now}) {
+  await patch(env,'network_audio_rooms','id=eq.'+rid+'&status=eq.live',
+    {status:'ended',ended_at:new Date(now()).toISOString()},fetchImpl);
+  const live=await service(env,'network_audio_members','room_id=eq.'+rid+
+    '&sfu_publication_session_id=not.is.null&select=participant_id,sfu_publication_session_id,sfu_publication_mid',{},fetchImpl);
+  let cleanupFailed=0;
+  for(const peer of live||[]) {
+    try {await closeMic(env,peer,fetchImpl);await clearedMember(env,rid,peer,fetchImpl);}
+    catch {cleanupFailed++;}
+  }
+  await closeSubscriptions(env,rid,'id=not.is.null',fetchImpl).catch(()=>{cleanupFailed++;});
+  await remove(env,'network_audio_members','room_id=eq.'+rid+'&m_uid=is.null',fetchImpl).catch(()=>{cleanupFailed++;});
+  await patch(env,'network_audio_members','room_id=eq.'+rid+'&status=eq.joined',
+    {status:'left',muted:true,hand_raised_at:null,left_at:new Date(now()).toISOString()},fetchImpl);
+  return respond(req,env,{ended:true,cleanup_pending:cleanupFailed>0});
 }
 
 // A signed-out visitor takes a listening seat in a room of their own
