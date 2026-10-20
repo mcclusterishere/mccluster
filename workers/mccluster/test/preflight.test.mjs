@@ -15,7 +15,7 @@ test('every route family the World and the studios call from a browser answers i
   for (const path of ['/v1/mnet/bootstrap?app_key=mccluster-web', '/v1/mnet/feed', '/v1/mnet/notifications', '/v1/mnet/profile', '/v1/mnet/people/someone/follow',
     '/v1/mnet/live/directory', '/v1/mnet/media/upload-url', '/v1/developer/consumers', '/v1/fbi/desk', '/v1/compute/balance', '/v1/ai/route',
     '/v1/creator-sites/publish', '/v1/creator-billing/entitlement', '/v1/action-connect/status',
-    '/v1/action-archive/invitation', '/v1/action-archive/claim', '/v1/action-archive/invitations', '/v1/action-archive/provider/ocho-great', '/v1/platform/plans', '/v1/mnet']) {
+    '/v1/action-archive/invitation', '/v1/action-archive/claim', '/v1/action-archive/invitations', '/v1/action-archive/provider/ocho-great', '/v1/platform/plans', '/v1/mnet', '/v1/news-briefs', '/v1/news-briefs/request', '/v1/news-briefs/leads']) {
     const res = preflightResponse(preflight(path), env);
     assert.ok(res, path + ' is answered');
     assert.equal(res.status, 204, path);
