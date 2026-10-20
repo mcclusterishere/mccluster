@@ -11,6 +11,7 @@
  *     --input /srv/mccluster/public-export \
  *     --output /srv/mccluster/releases/new-dist \
  *     --commit <40-hex-source-sha>
+ *     [--publisher github-pages]   (deploy-pages.yml publishes this same tree)
  */
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
@@ -37,13 +38,17 @@ const allowedExtensions = new Set([
   '.pdf','.glb','.gltf','.bin','.obj','.mtl','.hdr','.ktx2',
   '.wasm','.geojson','.csv','.ics','.vcf','.docx'
 ]);
+/* Compared lower-cased: a case-insensitive filesystem or CDN serves
+   Data/Clients.json as data/clients.json. data/vault-intake.json is the
+   operator queue tools/vault-ingest.mjs reads (Drive links to unpublished
+   originals); no page loads it. */
 const forbiddenFiles = new Set([
   'AGENTS.md','CLAUDE.md','CODEX.md','GEMINI.md','README.md',
-  'package.json','package-lock.json','wrangler.toml','wrangler.jsonc',
+  'package.json','package-lock.json','wrangler.toml','wrangler.jsonc','capacitor.config.json',
   '.mcp.json','.cursorrules','CNAME','CITATION.cff',
   'data/analytics/application-schema-inventory.json',
-  'data/clients.json','whip/manufacturing-crm.json'
-]);
+  'data/clients.json','data/vault-intake.json','whip/manufacturing-crm.json'
+].map(name=>name.toLowerCase()));
 const forbiddenSegments = /^(?:\.git|\.github|\.cursor|\.claude|node_modules|__tests__|tests?|scripts?|src|\.env(?:\..*)?|\.dev\.vars(?:\..*)?)$/i;
 const privateName = /(?:^|[/])(?:[^/]*\.(?:pem|key|crt|p12|pfx|sql|db|sqlite|ts|tsx|py|sh|service|timer|map|md|mdx|yaml|yml|toml|lock)|[^/]*(?:credentials|secrets?|private-key)[^/]*)$/i;
 const credentialPatterns = [
@@ -53,9 +58,25 @@ const credentialPatterns = [
      36+ alphanumerics after the prefix, which keeps snake_case identifiers
      such as laughs_at_the_counter from matching. */
   /sk_live_[A-Za-z0-9]{10,}\b/,
+  /rk_live_[A-Za-z0-9]{10,}\b/,
+  /whsec_[A-Za-z0-9+/=]{20,}/,
   /gh[pousr]_[A-Za-z0-9]{36,}\b/,
+  /github_pat_[A-Za-z0-9_]{50,}/,
   /AKIA[0-9A-Z]{16}\b/
 ];
+/* Supabase anon JWTs (and sb_publishable_ keys) are public by design; a JWT
+   whose payload says role service_role bypasses RLS and is never public. */
+const jwtPattern = /eyJ[A-Za-z0-9_-]{8,}\.(eyJ[A-Za-z0-9_-]+)\.[A-Za-z0-9_-]+/g;
+function hasPrivilegedJwt(text) {
+  for (const [,payload] of text.matchAll(jwtPattern)) {
+    try { if (JSON.parse(Buffer.from(payload,'base64url').toString('utf8'))?.role === 'service_role') return true; }
+    catch { /* not a JWT payload */ }
+  }
+  return false;
+}
+function hasSecret(text) {
+  return credentialPatterns.some(pattern=>pattern.test(text)) || hasPrivilegedJwt(text);
+}
 const MAX_ASSET = 25 * 1024 * 1024;
 const MAX_FILES = 20000;
 const textTypes = /\.(?:html?|css|js|mjs|json|webmanifest|xml|txt|svg|geojson|csv)$/i;
@@ -69,7 +90,7 @@ function shouldPublish(path) {
   const posix = path.replaceAll('\\','/');
   const pieces = posix.split('/');
   if (pieces.some(x=>x.startsWith('.') || forbiddenSegments.test(x))) return false;
-  if (forbiddenFiles.has(posix) || privateName.test(posix)) return false;
+  if (forbiddenFiles.has(posix.toLowerCase()) || privateName.test(posix)) return false;
   if (pieces.length > 1 && !allowedDirectories.has(pieces[0])) return false;
   if (pieces[0] === 'assets') {
     if (pieces.length < 3 || !publicAssetGroups.has(pieces[1])) return false;
@@ -100,17 +121,19 @@ async function verifyText(path, rel) {
   let tail='';
   for await(const bytes of createReadStream(path,{highWaterMark:64*1024})) {
     const segment=tail+decoder.decode(bytes,{stream:true});
-    if(credentialPatterns.some(pattern=>pattern.test(segment)))
+    if(hasSecret(segment))
       throw new Error('Possible secret in web export; review before deploying: '+rel);
-    tail=segment.slice(-256);
+    tail=segment.slice(-2048);
   }
-  if(credentialPatterns.some(pattern=>pattern.test(tail+decoder.decode())))
+  if(hasSecret(tail+decoder.decode()))
     throw new Error('Possible secret in web export; review before deploying: '+rel);
 }
 async function stage() {
   const src = resolve(argument('--input')), dst = resolve(argument('--output'));
   const report = argv.includes('--report') ? resolve(argument('--report')) : dst+'.excluded.json';
   const commit = argument('--commit');
+  const publisher = argv.includes('--publisher') ? argument('--publisher') : 'cloudflare-pages-direct-upload';
+  if (!['cloudflare-pages-direct-upload','github-pages'].includes(publisher)) throw new Error('Unknown --publisher');
   if(report===dst || report.startsWith(dst+sep) || report===src || report.startsWith(src+sep))
     throw new Error('Excluded-file report must be OUTSIDE both source and public deployment directories');
   if (!/^[0-9a-f]{40}$/i.test(commit)) throw new Error('--commit must be a full 40-hex source SHA');
@@ -152,7 +175,8 @@ async function stage() {
     const info = await lstat(file.path);
     if (!info.isFile() || info.size > MAX_ASSET)
       throw new Error('Asset is not a regular Cloudflare Pages file or exceeds 25 MiB: ' + file.rel);
-    if (textTypes.test(file.rel)) await verifyText(file.path,file.rel);
+    /* Extensionless files (LICENSE) are text too and are scanned. */
+    if (textTypes.test(file.rel) || !basename(file.rel).includes('.')) await verifyText(file.path,file.rel);
     bytes += info.size;
     const fileHash = await digestFile(file.path);
     manifestHash.update(file.rel+'\t'+info.size+'\t'+fileHash+'\n');
@@ -168,7 +192,7 @@ async function stage() {
     manifest_sha256:manifestHash.digest('hex'),
     created_at:new Date().toISOString(),
     excluded_count:excluded.length,
-    publisher:'cloudflare-pages-direct-upload'
+    publisher
   };
   await writeFile(join(dst,'mccluster-release.json'),JSON.stringify(provenance,null,2)+'\n');
   /* This path report is operator-only evidence: NEVER put it in the web root. */
