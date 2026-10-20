@@ -46,6 +46,7 @@
    layers in world-layers.js once the World's layer access (#442) lands. */
 import { reply, fail } from './lib/http.js';
 import { fetchNoCrossHostRedirect } from './lib/safe-fetch.js';
+import { isoFromGdelt } from './intel/news-country-codes.js';
 
 export const GDELT_LASTUPDATE = 'https://data.gdeltproject.org/gdeltv2/lastupdate.txt';
 export const GDELT_HOSTS = Object.freeze(['https://data.gdeltproject.org/gdeltv2/', 'https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/']);
@@ -379,6 +380,21 @@ export async function serviceRpc(env, name, args, fetchImpl = fetch) {
   if (!res.ok) throw Object.assign(new Error((data && data.message) || `${name} ${res.status}`), { status: res.status, code: data && data.code });
   return data;
 }
+/* Each story's country, as ISO 3166-1, from GDELT's FIPS code (media_world_news predates the column, so this is the same
+   service read the country feed makes). The page names the country on the story's chip and matches it when a country is
+   picked; FIPS never leaves the Worker ("RS" is Russia in FIPS and Serbia in ISO). A failure leaves the stories without it. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function storyCountries(env, ids, fetchImpl) {
+  const want = ids.filter((id) => UUID_RE.test(id));
+  if (!want.length) return new Map();
+  try {
+    const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/media_news_articles?select=id,location_country_fips&id=in.(${want.join(',')})`, {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
+    });
+    const rows = res.ok ? JSON.parse(body || '[]') : [];
+    return new Map((Array.isArray(rows) ? rows : []).map((r) => [String(r.id), isoFromGdelt(r.location_country_fips)]));
+  } catch { return new Map(); }
+}
 const notProvisioned = (e) => e && (e.status === 404 || e.code === 'PGRST202' || e.code === '42883');
 
 /* ---------- the cron ---------- */
@@ -478,9 +494,11 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
     if (!configured) return { unavailable: true };
     try {
       const rows = await serviceRpc(env, 'media_world_news', { p_before_at: cursor ? cursor.at : null, p_before_id: cursor ? cursor.id : null, p_limit: limit }, fetchImpl);
-      const items = (Array.isArray(rows) ? rows : []).map((r) => ({
+      const list = Array.isArray(rows) ? rows : [];
+      const countries = await storyCountries(env, list.map((r) => String(r.id)), fetchImpl);
+      const items = list.map((r) => ({
         id: String(r.id), title: String(r.title || ''), url: String(r.url || ''), domain: String(r.domain || ''), seen_at: iso(r.seen_at),
-        place: r.place ? String(r.place) : null, lat: num(r.lat), lon: num(r.lon)
+        place: r.place ? String(r.place) : null, lat: num(r.lat), lon: num(r.lon), country: countries.get(String(r.id)) || null
       })).filter((n) => n.title && /^https?:\/\//.test(n.url) && n.seen_at);
       const last = items[items.length - 1];
       return { items, next_before: items.length === limit && last ? `${last.seen_at}~${last.id}` : null };

@@ -26,11 +26,11 @@ function wav(seconds=24){
 const AUDIO=wav();
 const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
 function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
-async function setup(width=390,member=false,{parentScript}={}){
+async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html'}={}){
   const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const requests=[],messages=[],errors=[];
-  await context.addInitScript(({HOUSE,member,token})=>{
-    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
+  await context.addInitScript(({HOUSE,member,token,privacy})=>{
+    if(privacy)localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(member&&location.origin===HOUSE&&!localStorage.getItem('mccdb_session'))localStorage.setItem('mccdb_session',JSON.stringify({access_token:token,refresh_token:'fixture-house-refresh',expires_at:Math.floor(Date.now()/1000)+3600}));
     const NativeAudio=window.Audio;
     window.__audioObjects=[];window.__audioEvents=[];window.__unloads=0;window.__bridgeMessages=[];
@@ -38,7 +38,7 @@ async function setup(width=390,member=false,{parentScript}={}){
     window.Audio.prototype=NativeAudio.prototype;
     addEventListener('beforeunload',()=>window.__unloads++);
     addEventListener('message',e=>{if(e.data?.channel==='mcc-world-audio-v1')window.__bridgeMessages.push(e.data);});
-  },{HOUSE,member,token:token(HOUSE)});
+  },{HOUSE,member,token:token(HOUSE),privacy});
   const json=(r,body,status=200)=>r.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
   await context.route('**/*',async r=>{
     const req=r.request(),u=new URL(req.url()),p=u.pathname;requests.push({url:u.href,method:req.method(),authorization:req.headers().authorization});
@@ -71,8 +71,8 @@ async function setup(width=390,member=false,{parentScript}={}){
     return r.abort();
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(HOUSE+'/listen.html',{waitUntil:parentScript?'domcontentloaded':'load'});
-  await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
+  await page.goto(HOUSE+start,{waitUntil:parentScript?'domcontentloaded':'load'});
+  if(start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
   return {context,page,requests,messages,errors};
 }
 async function play(page,album='here',title='Who Did The Shoot'){
@@ -357,6 +357,72 @@ try{
     check('World load failure keeps audio and visible recovery controls',await page.evaluate(()=>!MCC_MUSIC.audio.paused&&__unloads===0)&&await page.locator('.world-audio-status button').isVisible()&&await page.locator('.world-audio-status a').isVisible());
     await page.locator('.world-audio-status button').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     check('failed World can return to the same playing Music document',await page.evaluate(()=>!MCC_MUSIC.audio.paused&&__unloads===0));
+    await context.close();
+  }
+  /* THE PRIVACY NOTICE IS SHOWN ONCE (owner, 2026-10-20): nothing seeded here. The first page shows it; once it is
+     answered no other page, neither McCluster host, nor the World that Music opens in a frame shows it again. */
+  const notice=f=>f.evaluate(()=>({wall:!!document.getElementById('mccPrivacyGate'),pending:document.documentElement.getAttribute('data-privacy-gate'),banner:!!document.getElementById('mccPrivacyNotice')}));
+  const none=n=>!n.wall&&!n.pending&&!n.banner;
+  const privacyErrors=errors=>errors.filter(e=>/privacy|cookie/i.test(e));
+  const musicReady=page=>page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'));
+  {
+    const {context,page,errors}=await setup(390,false,{privacy:false});
+    const first=await notice(page);
+    check('privacy: a first visit sees the notice',first.wall&&first.pending==='pending',first);
+    check('privacy: the notice fits a phone',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth&&document.getElementById('mccPrivacyAgree').getBoundingClientRect().height>=44));
+    await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.locator('#mccPrivacyAgree').click()]);
+    check('privacy: I agree enters the page',none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()));
+    const agreed=(await context.cookies(HOUSE)).find(c=>c.name==='mcc_privacy_ack');
+    check('privacy: the agreement is one cookie every mccluster.org host reads',agreed?.domain==='.mccluster.org'&&agreed.value==='2026-10-19'&&agreed.secure&&agreed.sameSite==='Lax'&&agreed.path==='/',agreed);
+    for(const url of [HOUSE+'/press.html',HOUSE+'/account.html',WORLD+'/',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after I agree, ${u.host}${u.pathname} does not show it again`,none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()));
+    }
+    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
+    await play(page);const frame=await world(page);
+    check('privacy: after I agree, the World that Music opens does not show it again',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>MCC_PRIVACY.accepted()));
+    check('privacy: no notice errors after I agree',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
+  {
+    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
+    const first=await notice(page);
+    check('privacy: a first visit to a document page sees the banner, not the wall',first.banner&&!first.wall&&!first.pending,first);
+    await page.locator('#mccPrivacyNoticeLater').click();
+    check('privacy: Not now closes the banner',none(await notice(page)));
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: Not now is kept for every mccluster.org host, as seen and never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack'),jar);
+    for(const url of [HOUSE+'/newsroom.html',HOUSE+'/account.html',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after Not now, ${u.host}${u.pathname} shows neither banner nor wall, and nothing counts as agreed`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
+    }
+    check('privacy: after Not now, analytics on the World still records nothing',await page.evaluate(()=>window.MCC_TRACK('privacy_fixture')===false));
+    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
+    check('privacy: after Not now, Music shows no wall',none(await notice(page)));
+    await play(page);const frame=await world(page);
+    check('privacy: after Not now, the World that Music opens does not show it either',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
+    check('privacy: no notice errors after Not now',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
+  {
+    /* owner, 2026-10-20: "they see the privacy policy, and then they never see it again". The banner is seen once shown. */
+    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
+    const first=await notice(page);
+    check('privacy: an ignored banner is shown on the first document page',first.banner&&!first.wall&&!first.pending,first);
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: the banner counts as seen with no tap, for every mccluster.org host, and never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>MCC_PRIVACY.seen()&&!MCC_PRIVACY.accepted()),jar);
+    for(const url of [HOUSE+'/newsroom.html',HOUSE+'/account.html',WORLD+'/',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after an ignored banner, ${u.host}${u.pathname} shows neither banner nor wall, and nothing counts as agreed`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
+    }
+    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
+    check('privacy: after an ignored banner, Music shows no wall',none(await notice(page)));
+    await play(page);const frame=await world(page);
+    check('privacy: after an ignored banner, the World that Music opens shows no notice',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()));
+    check('privacy: no notice errors after an ignored banner',privacyErrors(errors).length===0,errors);
     await context.close();
   }
 }finally{
