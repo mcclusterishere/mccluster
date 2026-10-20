@@ -75,6 +75,8 @@
       <p class="nb__fine">This goes on the World feed under your name. Edit it to sound like you.</p>
       <label class="nb__field nb__field--wide">Post<textarea id="nbPostText" rows="12" maxlength="2000"></textarea></label>
       <p class="nb__count" id="nbPostCount"></p>
+      <!-- the house owner's brief can also be an article on mccluster.org/news, with the headlines it cites (docs/action-network/NEWSROOM.md) -->
+      <label class="nb__check" id="nbNewsroomRow" hidden><input type="checkbox" id="nbNewsroom" checked> <span>Also publish to the newsroom, as an article on mccluster.org/news with its sources. The first line is the headline.</span></label>
       <p class="nb__status" id="nbPublishStatus" role="status"></p>
       <div class="nb__actions">
         <button class="nb__button" type="button" id="nbPublishCancel">Cancel</button>
