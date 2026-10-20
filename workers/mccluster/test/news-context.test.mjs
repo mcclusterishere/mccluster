@@ -169,3 +169,17 @@ test('canonical Worker routes intel through its existing house-owner gate', () =
   assert.match(code, /handleIntelRequest\(request, env, \{ requireHouseOwner, authUser \}\)/);
   assert.match(code, /export\s*\{[^}]*HereTenantAgent/);
 });
+
+test('GDELT codes GeoNames does not carry are read, never written back as FIPS for another country', async () => {
+  const { isoFromGdelt, gdeltCodesFor, ISO_TO_FIPS } = await import('../src/intel/news-country-codes.js');
+  assert.equal(isoFromGdelt('GZ'), 'PS');
+  assert.equal(isoFromGdelt('RB'), 'RS');
+  assert.equal(isoFromGdelt('RS'), 'RU', 'FIPS RS is Russia');
+  assert.equal(isoFromGdelt('OS'), null, 'the oceans are no country');
+  assert.deepEqual(gdeltCodesFor('PS'), ['WE', 'GZ']);
+  assert.deepEqual(gdeltCodesFor('RS'), ['RI', 'RB']);
+  assert.deepEqual(gdeltCodesFor('US'), ['US']);
+  assert.deepEqual(gdeltCodesFor('ZZ'), []);
+  assert.equal(ISO_TO_FIPS.PS, 'WE');
+  assert.equal(ISO_TO_FIPS.RS, 'RI');
+});

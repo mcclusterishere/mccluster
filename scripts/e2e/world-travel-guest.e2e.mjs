@@ -6,6 +6,7 @@
    PLAYWRIGHT_EXECUTABLE_PATH=/path/to/chromium node scripts/e2e/world-travel-guest.e2e.mjs [outDir]
    CESIUM_DIR must contain the pinned 1.131 build used by action-globe.html. */
 import assert from 'node:assert/strict';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { extname, join } from 'node:path';
@@ -67,6 +68,8 @@ async function open(viewport, { automatic = false, webgl = true, audioParent = f
       try {
         const path = url.pathname === '/' ? '/mnet.html' : url.pathname;
         let body = await readFile(join(ROOT, path));
+        /* Travel is switched off in the World as it ships; this suite guards it, so it drives it switched on */
+        if (path === '/mnet.html') body = Buffer.from(withTravelAndMissions(body));
         if (path === '/js/action-globe.js') body = Buffer.from(body.toString().replace('viewer=new Cesium.Viewer(', 'viewer=window.__testViewer=new Cesium.Viewer('));
         return r.fulfill({ status:200, contentType:TYPES[extname(path)] || 'application/octet-stream', body });
       } catch { return r.fulfill({ status:404, body:'Fixture file unavailable' }); }

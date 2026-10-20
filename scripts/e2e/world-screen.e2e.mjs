@@ -29,6 +29,7 @@
    resolvable from here) and network access to the Cesium CDN and
    OpenStreetMap tiles. Exits non-zero on any failed check. */
 import { createServer } from 'node:http';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -46,7 +47,9 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try {
-    const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
+    let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
+    /* the World as it ships is the social feed; the suites that guard Travel and Missions get them switched back on */
+    if (/^[/\\]mnet\.html$/.test(path) && !/(?:^|; )world=social(?:;|$)/.test(req.headers.cookie || '')) body = Buffer.from(withTravelAndMissions(body));
     res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body);
   } catch { res.writeHead(404); res.end('not found'); }
 });
@@ -163,7 +166,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       return respond();
     }
     // These personas are ordinary members, not operators. A catch-all 200 must not grant admin navigation.
-    if (u.pathname === '/v1/status') return json(route, { error: 'Forbidden' }, 403);
+    if (u.pathname === '/v1/status') return world.owner && auth ? json(route, { ok: true }) : json(route, { error: 'Forbidden' }, 403);
     if (u.pathname === '/v1/action-archive/docket-516r-2025') return json(route, COHORT_ARCHIVE);
     /* THE COUNTRY FEED: off unless a scenario names the connection country the Worker would read from request.cf */
     if (u.pathname === '/v1/world/place-scope') return json(route, { ok: true, enabled: !!world.placeHome, country: world.placeHome || null, source: 'cloudflare_country' });
@@ -300,11 +303,14 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, social = false, owner = false }) {
   const world = freshWorld();
+  world.owner = owner;
   world.placeHome = placeHome;
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage; world.admin = admin;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  /* social: the World exactly as it ships (scripts/e2e/world-switch.mjs) */
+  if (social) await ctx.addCookies([{ name: 'world', value: 'social', url: BASE }]);
   /* every frame of the first seconds: did the sign-in form paint on the way into the World? (owner, 2026-10-20) */
   await ctx.addInitScript(() => {
     window.__gateFlash = 0;
@@ -813,6 +819,124 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
   }finally{await ctx.close();}
 }
 
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the social
+   feature will be the only feature with no tab selecting between the other two"; "open missions belong in missions not inside
+   the newsfeed"; "Notification should be a drop down menu not open a whole new page"). The page exactly as it ships. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&['iphone-portrait','desktop'].includes(d.name))||d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
+  const scope = `editorial-social-${device.name}-${member ? 'member' : 'guest'}`;
+  const {ctx,page,world,errors} = await open(device,{member,social:true});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
+    const shell = await page.evaluate(()=>{const h=document.documentElement,visible=el=>!!el&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
+      return {social:h.classList.contains('hu-social-only'),mode:h.dataset.worldMode,tabs:[...document.querySelectorAll('.wt-world-modes,.wt-world-modes button')].some(visible),
+        feed:!document.getElementById('mnFeedView').hidden,posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
+        planner:visible(document.getElementById('wtPlanner')),frame:document.getElementById('mnWorldFrame').getAttribute('src'),
+        expand:document.querySelector('.mn__world-expand').getAttribute('href')};});
+    check(scope,'the World is the social feed: no Travel or Missions tab, the feed is what it shows',shell.social&&shell.mode==='posts'&&!shell.tabs&&shell.feed&&shell.posts>0&&!shell.planner,shell);
+    check(scope,'the globe, and the expanded globe, are told to leave missions out',/[?&]missions=0(&|$)/.test(shell.frame)&&/[?&]missions=0(&|$)/.test(shell.expand),shell);
+    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&document.documentElement.classList.contains('globe-no-missions'),null,{timeout:25000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    check(scope,'the Earth carries no mission pins',await globe.evaluate(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()===0&&document.documentElement.classList.contains('globe-no-missions')));
+    const missionBits = await page.evaluate(()=>[...document.querySelectorAll('[data-take-mission],.mn__actcard:not(.mn__actcard--collab),#mnFeedMissions,#mnClipDoor,.hu-mission-preview,[data-mn-view="missions"],#mnProfileRecord,.mn-swipe__card')].filter(el=>el.getClientRects().length>0).map(el=>el.id||el.className));
+    check(scope,'no mission card, list or rail in the feed, and no door into Missions',missionBits.length===0,missionBits);
+    const promoted = await page.evaluate(()=>{const t=document.body.innerText;return {rail:!!document.getElementById('mnRail'),words:/WAYS TO MOVE|Campaigns & missions|See campaigns/i.test(t)};});
+    check(scope,'Ways to move is gone: no campaigns or missions promoted on the feed',!promoted.rail&&!promoted.words,promoted);
+    /* swiping the feed sideways used to change tabs; there is nothing to change to */
+    await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',300);fire('touchend',60);}catch(_){}});
+    check(scope,'a sideways swipe stays on the feed',await page.evaluate(()=>document.documentElement.dataset.worldMode)==='posts');
+    if (member) {
+      /* a search finds people and groups, never missions */
+      /* on a phone the field opens from the search button */
+      if (await page.isVisible('#huSearchToggle')) await page.click('#huSearchToggle');
+      await page.fill('#mnSearchInput','Mill River');
+      await page.waitForSelector('#mnSuggest:not([hidden])',{timeout:5000}).catch(()=>{});
+      check(scope,'search lists no missions',await page.evaluate(()=>![...document.querySelectorAll('#mnSuggest [data-suggest="mission"],#mnSuggest [data-suggest="globe"]')].some(b=>b.getClientRects().length)));
+      await page.fill('#mnSearchInput','');await page.keyboard.press('Escape');
+      if (await page.getAttribute('#huSearchToggle','aria-expanded')==='true') await page.click('#huSearchToggle');
+      /* a link into Missions lands on the feed */
+      await page.evaluate(()=>window.MCC_MNET.setView('missions'));
+      check(scope,'asking for Missions shows the feed',await page.evaluate(()=>!document.getElementById('mnFeedView').hidden&&document.getElementById('mnMissionsView').hidden));
+      /* NOTIFICATIONS DROP DOWN FROM THE BELL */
+      const before = await page.evaluate(()=>({feed:!document.getElementById('mnFeedView').hidden,scroll:document.getElementById('mnWorldFeed').scrollTop}));
+      await page.click('#mnBell');
+      await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.waitForFunction(()=>/Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent),null,{timeout:10000}).catch(()=>{});
+      const pop = await page.evaluate(()=>{const a=document.getElementById('mnAlerts').getBoundingClientRect(),b=document.getElementById('mnBell').getBoundingClientRect(),bar=document.querySelector('.appbar')?.getBoundingClientRect();
+        return {open:!document.getElementById('mnAlerts').hidden,expanded:document.getElementById('mnBell').getAttribute('aria-expanded'),feed:!document.getElementById('mnFeedView').hidden,
+          left:Math.round(a.left),right:Math.round(a.right),top:Math.round(a.top),bottom:Math.round(a.bottom),bellBottom:Math.round(b.bottom),iw:innerWidth,barTop:bar?Math.round(bar.top):null,
+          text:/Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
+      check(scope,'the bell drops the notifications down over the page, which stays the feed',pop.open&&pop.expanded==='true'&&pop.feed&&pop.text&&before.feed,pop);
+      check(scope,'the drop down sits under the bell, inside the screen and above the bottom bar',pop.top>=pop.bellBottom-2&&pop.left>=16&&pop.right<=pop.iw-16&&(pop.barTop===null||pop.bottom<=pop.barTop)&&pop.sw===pop.cw,pop);
+      await page.screenshot({path:join(OUT,scope+'-alerts.png')});
+      await page.keyboard.press('Escape');
+      check(scope,'Escape closes it, and the feed is where it was',await page.evaluate(b=>document.getElementById('mnAlerts').hidden&&document.getElementById('mnBell').getAttribute('aria-expanded')==='false'&&!document.getElementById('mnFeedView').hidden&&document.getElementById('mnWorldFeed').scrollTop===b.scroll,before));
+      await page.click('#mnBell');
+      await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.locator('.wt-headline').dispatchEvent('click');
+      check(scope,'a tap outside closes it',await page.isHidden('#mnAlerts'));
+      /* a tap on the globe happens inside its frame */
+      await page.click('#mnBell'); await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.evaluate(()=>document.getElementById('mnWorldFrame').focus());
+      await page.waitForFunction(()=>document.getElementById('mnAlerts').hidden,null,{timeout:3000}).catch(()=>{});
+      check(scope,'a tap on the globe closes it too',await page.isHidden('#mnAlerts'));
+      await page.click('#mnBell'); await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.click('#mnBell');
+      check(scope,'the bell closes it again',await page.isHidden('#mnAlerts'));
+    }
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    await page.screenshot({path:join(OUT,scope+'.png')});
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+
+/* ALL THREE FOR THE HOUSE OWNER (owner, 2026-10-20: "keep the social feed on and then develop those other projects in the
+   back end. Probably keep all three on admin"). The page as it ships; the server says this member is the house owner. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&d.name==='iphone-portrait')||d.name===process.env.EDITORIAL_DEVICE)) {
+  const scope = `editorial-owner-${device.name}`;
+  const {ctx,page,world,errors} = await open(device,{member:true,social:true,owner:true});
+  try {
+    /* the first time on this browser, the owner's answer opens the World again, once, with all three */
+    await page.waitForFunction(()=>!document.documentElement.classList.contains('hu-social-only')&&document.documentElement.hasAttribute('data-world-owner'),null,{timeout:20000}).catch(()=>{});
+    await page.waitForSelector('.wt-world-modes button',{state:'visible',timeout:15000}).catch(()=>{});
+    const shell=await page.evaluate(()=>({modes:[...document.querySelectorAll('.wt-world-modes button')].filter(b=>b.getClientRects().length).map(b=>b.dataset.worldMode),
+      mode:document.documentElement.dataset.worldMode,memo:JSON.parse(localStorage.getItem('mcc_world_owner')||'null'),reloaded:performance.getEntriesByType('navigation')[0].type,
+      expand:document.querySelector('.mn__world-expand').getAttribute('href')}));
+    check(scope,'the owner\'s World has Travel, Missions and Feed, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts'])&&shell.mode==='posts',shell);
+    check(scope,'the server\'s yes is remembered for this account; the World opened again once to show it',!!shell.memo&&/^aaaaaaaa/.test(shell.memo.sub)&&shell.reloaded==='reload',shell);
+    check(scope,'the expanded globe shows the missions too',!/missions=0/.test(shell.expand),shell.expand);
+    const globe=page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
+    check(scope,'the Earth carries the mission pins again for the owner',await globe.evaluate(()=>window.__huMissionPins()>0&&!document.documentElement.classList.contains('globe-no-missions')));
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.waitForSelector('.mn-swipe__card',{timeout:15000}).catch(()=>{});
+    check(scope,'Missions opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='missions'&&!!document.querySelector('.mn-swipe__card')));
+    await page.click('.wt-world-modes [data-world-mode=travel]');
+    check(scope,'Travel opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='travel'));
+    /* the next World opens with all three straight away: no second opening */
+    await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
+    const early=await page.evaluate(()=>({social:document.documentElement.classList.contains('hu-social-only'),type:performance.getEntriesByType('navigation')[0].type}));
+    await page.waitForTimeout(2500);
+    const after=await page.evaluate(()=>performance.getEntriesByType('navigation')[0].type);
+    check(scope,'the next visit opens with all three from the first paint, without opening again',!early.social&&early.type==='navigate'&&after==='navigate',{early,after});
+    /* signed out, the World is the social feed again */
+    await page.evaluate(()=>localStorage.removeItem('mccdb_session'));
+    await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
+    check(scope,'signed out, the World is the social feed and the remembered answer is gone',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+/* and a member who is not the owner keeps the social feed, with nothing remembered */
+if (runs('editorial')) {
+  const {ctx,page,errors} = await open(DEVICES.find(d=>d.name==='iphone-portrait'),{member:true,social:true});
+  try {
+    await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(2500);
+    check('editorial-not-owner','a member the server does not call the owner keeps the social feed, nothing remembered, no second opening',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')&&performance.getEntriesByType('navigation')[0].type==='navigate'));
+    check('editorial-not-owner','no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+
 /* The 2026-10-16 approved reference, including its explicit real-navigation exception.
    E2E_ONLY=editorial isolates this suite for CI; actual Cesium is never stubbed. */
 if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE || d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
@@ -1129,11 +1253,12 @@ if (runs('member-interactions')) {
   // Alerts: the bell carries the count and opens them
   check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '3');
   await page.click('#mnBell');
-  await page.waitForSelector('#mnNotificationsView:not([hidden])');
+  await page.waitForSelector('#mnAlerts:not([hidden])');
   /* the list and the read receipt are two round trips; wait for both rather than a fixed beat */
   await page.waitForFunction(() => /Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent) && document.getElementById('mnNotifBadge').hidden, null, { timeout: 10000 }).catch(() => {});
   check(scope, 'Alerts: the bell opens them and clears the count', /Fixture Ana liked your post/.test(await page.textContent('#mnNotifications')) && await page.isHidden('#mnNotifBadge'));
-  await page.click('#mnToWorld');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#mnAlerts', { state: 'hidden' });
   await page.waitForSelector('#mnFeedView:not([hidden])');
 
   // Groups from search: a matching group opens directly
@@ -1502,6 +1627,14 @@ if (runs('news-guest')) {
   await page.fill('#mnSearchInput', ''); await page.waitForTimeout(400);
   check(scope, 'search matches news headlines and publishers', byTitle.news === 19 && byTitle.posts === 0 && byDomain.news === world.news.slice(0, 20).filter((n) => n.domain === 'news2.example').length && byDomain.posts === 0, { byTitle: byTitle.news, byDomain: byDomain.news });
   const globe = page.frame({ url: /action-globe\.html/ });
+  /* THE PINS ARE THE CARDS (owner, 2026-10-20: "I saw a post in Russia posted somewhere else on the map"): every gold pin
+     on the Earth is a story on the screen, and a narrower feed is a narrower Earth */
+  const pinsAndCards = async () => { await page.waitForTimeout(500); return { pins: (await globe.evaluate(() => window.__huWorldNewsPins())).pins, cards: await page.$$eval('#mnFeed [data-news-id] [data-news-place]', (a) => a.length) }; };
+  await page.fill('#mnSearchInput', 'news2.example');
+  const pinsSearching = await pinsAndCards();
+  await page.fill('#mnSearchInput', '');
+  const pinsAll = await pinsAndCards();
+  check(scope, 'the gold pins are the stories on the screen, and a search narrows both', pinsAll.pins === pinsAll.cards && pinsAll.cards > 0 && pinsSearching.pins === pinsSearching.cards && pinsSearching.cards < pinsAll.cards, { pinsAll, pinsSearching });
   /* a story's place on the Earth, from its card */
   await page.click('#mnFeed [data-news-id] [data-news-place]');
   await globe.waitForFunction(() => window.__huFocusPlace && window.__huFocusPlace(), null, { timeout: 5000 }).catch(() => {});
@@ -1510,6 +1643,8 @@ if (runs('news-guest')) {
      below still requires the final altitude; only the sampling moment moves. */
   await globe.waitForFunction(() => Math.abs(window.__huIon().height - 900000) < 60000, null, { timeout: 12000 }).catch(() => {});
   const sent = await globe.evaluate(() => ({ place: window.__huFocusPlace(), height: window.__huIon().height }));
+  const firstPlaced = await page.$eval('#mnFeed [data-news-id] [data-news-place]', (b) => b.closest('[data-news-id]').getAttribute('data-news-id'));
+  check(scope, 'the tapped story\'s own pin is the one marked on the Earth', (await globe.evaluate(() => window.__huFocusedNewsPin())) === firstPlaced && sent.place && sent.place.id === firstPlaced, { marked: await globe.evaluate(() => window.__huFocusedNewsPin()), firstPlaced });
   check(scope, '"On the Earth" sends the story\'s place to the globe (hu:focus-place), which flies there', !!sent.place && sent.place.lat === -1.28 && sent.place.lon === 36.82 && sent.place.label === 'Nairobi, Nairobi Area, Kenya' && Math.abs(sent.height - 900000) < 60000 && /Nairobi, Nairobi Area, Kenya · mentioned in this story\./.test(await page.textContent('#mnWorldCaption')), sent);
   /* the frame checks what it is sent: strings, out-of-range and missing numbers move nothing */
   await page.evaluate(() => { const w = document.getElementById('mnWorldFrame').contentWindow; [{ type: 'hu:focus-place', lat: '10', lon: 10 }, { type: 'hu:focus-place', lat: 95, lon: 0 }, { type: 'hu:focus-place', lat: 0, lon: 200 }, { type: 'hu:focus-place', lat: NaN, lon: 0 }, { type: 'hu:focus-place' }].forEach((m) => w.postMessage(m, location.origin)); });
@@ -1520,10 +1655,13 @@ if (runs('news-guest')) {
   await globe.evaluate((id) => window.parent.postMessage({ type: 'hu:mission-selected', mission: { mission_id: id, title: 'Clean up the Mill River', region_label: 'Connecticut', action_path: 'show_up' } }, location.origin), M1);
   await page.waitForSelector('#mnWorldFocus:not([hidden])');
   const narrowed = await newsState(page);
+  const pinsNarrowed = await pinsAndCards();
   await page.click('#mnWorldFocusClear');
   await page.waitForTimeout(300);
   const back = await newsState(page);
   check(scope, 'a mission picked on the Earth hides the news and its credit; letting it go brings them back', narrowed.news === 0 && !narrowed.credit && back.news === 20 && back.credit, { narrowed: narrowed.news, back: back.news });
+  const pinsBack = await pinsAndCards();
+  check(scope, 'and the pins follow: none while the mission narrows the feed, the stories\' again after', pinsNarrowed.pins === 0 && pinsBack.pins === pinsBack.cards && pinsBack.cards === pinsAll.cards, { pinsNarrowed, pinsBack });
   /* Load more pages both streams, each from its own cursor, the news cursor passed back verbatim */
   check(scope, 'Load more shows while either stream has another page', st.more);
   await page.click('#mnMore');

@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const root = new URL('../../', import.meta.url);
 const input = new URL('docs/control-plane/admin-evidence-20261020/funding-register.json', root);
-const output = new URL('supabase/pending/20261020193357_funding_criteria_register_v1.sql', root);
+const output = new URL('supabase/migrations/20261020205959_funding_criteria_register_v1.sql', root);
 const data = JSON.parse(await readFile(input, 'utf8'));
 if (data.schema_version !== 1 || data.opportunities.length !== 72 ||
     new Set(data.opportunities.map(r => r.opportunity_id)).size !== 72 ||

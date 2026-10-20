@@ -2623,14 +2623,14 @@
       "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
     },
     {
-      "path": "supabase/pending/20261020193357_funding_criteria_register_v1.sql",
+      "path": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending screening metadata on the existing opportunity catalog; program references are requirements context and not an approved program or spatial capability."
     },
     {
-      "path": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql",
+      "path": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,

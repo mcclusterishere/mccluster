@@ -10,7 +10,7 @@ const db = new PGlite();
 try {
   for (const path of [
     'supabase/tests/analytics_measurement.deps.sql',
-    'supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql',
+    'supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql',
     'supabase/tests/analytics_measurement.behaviour.sql'
   ]) await db.exec(await readFile(resolve(root, path), 'utf8'));
   console.log('analytics measurement SQL: passed (DST boundary, repeat devices, tenant/bot isolation, taxonomy, account authority and role denial)');

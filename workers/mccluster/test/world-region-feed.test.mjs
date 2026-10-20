@@ -217,3 +217,10 @@ test('the browser\'s preflight for a member\'s country feed is answered without 
   assert.equal(res.status,204);
   assert.equal(called,false);
 });
+test('Palestine reads the stories GDELT files under the West Bank (WE) and the Gaza Strip (GZ)',async()=>{
+  const calls=[];
+  const res=await handleRegionScope(req(REGION_FEED+'?country=PS',{country:'PS'}),ENV,{fetchImpl:store(calls)});
+  assert.equal(res.status,200);
+  const news=calls.find(u=>u.pathname.endsWith('/media_news_articles'));
+  assert.equal(news.searchParams.get('location_country_fips'),'in.(WE,GZ)');
+});

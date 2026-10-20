@@ -34,6 +34,7 @@ html[data-daylight="day"] .mn__top .mn__brand strong, html[data-daylight="day"] 
 html[data-daylight="day"] .mn__top :is(.hu-search-toggle,.mn__bell,.mn__avatar-btn) { color:#ffffff; border-color:#ffffff33; background:transparent; }
 html[data-daylight="day"] .mn__guest-bar :is(.mn__guest-in,.mn__guest-join) { color:#ffffff; background:#161616; border:1px solid #ffffff33; }
 html[data-daylight="day"] .mn__menu { background:#ffffff; color:#000000; border:1px solid #00000022; box-shadow:0 12px 32px -12px #0006; }
+html[data-daylight="day"] .mn__alerts { background:#ffffff; color:#000000; border:1px solid #00000022; box-shadow:0 12px 32px -12px #0006; }
 html[data-daylight="day"] .mn__menu :is(button,a) { color:#000000; }
 /* the globe keeps its dark frame; its chrome goes white with black type */
 html[data-daylight="day"] .wt-headline { color:#ffffff; text-shadow:0 1px 10px #000000b0; }

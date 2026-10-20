@@ -14,6 +14,10 @@ const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): missions=0 (mnet.html, for the frame and the expanded globe) draws no
+   mission pins, regions or outlines and keeps the mission panels shut, until Missions comes back */
+/* the house owner's World keeps them (js/world-owner-modes.js lifts the switch on the page that holds this frame) */
+const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0'&&!(()=>{try{return !!parentFrame&&!parentFrame.document.documentElement.classList.contains('hu-social-only')}catch(e){return false}})();if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
 let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;
@@ -247,7 +251,7 @@ window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:
 /* Completed cohort events are public places supplied by the World Missions archive.
    Keep this layer separate from live missions, member locations and travel paths. */
 let completedEvents=[],completedPins=[],completedOn=false;
-let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false;
+let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='';
 function setWorldNewsPins(items,on){
  if(!parentFrame||ANALYTICS)return;
  publicNewsOn=on===true;const seen=new Set();
@@ -295,6 +299,7 @@ function drawWorldNewsPins(){
      distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,25000000)},
    properties:{worldNewsId:x.id}
  })));
+ markNewsPin();
 }
 window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
 
@@ -406,6 +411,8 @@ window.addEventListener('pagehide',()=>{
 window.addEventListener('pageshow',event=>{if(event.persisted&&readyMessage)tell(readyMessage)});
 async function rpc(name){const r=await fetch(SB+'/rest/v1/rpc/'+name,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});if(!r.ok)throw Error('RPC '+r.status);return r.json()}
 function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0}
+/* for the browser checks: how many mission pins the Earth carries (none while the World is the social feed) */
+window.__huMissionPins=()=>missionPins.length;
 function draw(){clear(missionPins);clear(missionHalos);clear(cityPins);drawContinents();
 /* a mission can have many pins (countries, an origin, a context region): every pin opens the same mission */
 if(showMissions)missions.forEach((m,n)=>(m.pins||[m]).forEach((p,k)=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context',color=off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e',size=EDITORIAL?(ctx?16:22):(ctx?22:30),position=Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000);
@@ -616,8 +623,13 @@ function drawLaunches(data){const L=layerState.launches;clearLayer('launches');(
 let lastPlace=null;
 /* a hook for the browser test, like __huGlobeSettled: the last place a news card sent */
 window.__huFocusPlace=()=>lastPlace;
+/* the story's own pin is the one marked (owner, 2026-10-20: a pin near the middle could be a different story): it grows and
+   sits in front; the others go back to their size */
+function markNewsPin(){publicNewsPins.forEach(e=>{const on=!!focusedNews&&e.properties&&e.properties.worldNewsId&&e.properties.worldNewsId.getValue()===focusedNews;e.billboard.scale=on?1.75:1;e.billboard.eyeOffset=new Cesium.Cartesian3(0,0,on?-500:0)})}
+window.__huFocusedNewsPin=()=>{const e=publicNewsPins.find(x=>x.billboard&&x.billboard.scale.getValue&&x.billboard.scale.getValue()>1);return e?e.properties.worldNewsId.getValue():''};
 function focusPlace(d){const lat=d.lat,lon=d.lon;if(typeof lat!=='number'||typeof lon!=='number'||!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return false;
- lastPlace={lat,lon,label:typeof d.label==='string'?d.label.slice(0,120):''};selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});
+ lastPlace={lat,lon,label:typeof d.label==='string'?d.label.slice(0,120):'',id:typeof d.id==='string'?d.id.slice(0,64):''};selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});
+ focusedNews=lastPlace.id;markNewsPin();
  viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(lon,lat,900000),duration:1.4});return true}
 /* the credit line grows when layers are on; the toggles and the controls stay above it, and the page is told how tall it is */
 function creditHeight(){const el=document.querySelector('.osm-credit');return el?Math.ceil(el.getBoundingClientRect().height):0}
@@ -847,7 +859,7 @@ function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartog
  if(ionBuildings){const on=auto&&h<(ionBuildings.show?BUILD_OFF:BUILD_ON);if(ionBuildings.show!==on)ionBuildings.show=on}}
 async function boot(){paintMembersDoor();
  /* the layout, the data toggles and the mission data do not wait on the ion status; only the Earth itself does */
- wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus()),new Promise(r=>setTimeout(()=>r(null),ION_WAIT))]),dataP=Promise.all([rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
+ wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus()),new Promise(r=>setTimeout(()=>r(null),ION_WAIT))]),dataP=Promise.all([NO_MISSIONS?Promise.resolve([]):rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
  ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
  viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();
@@ -870,7 +882,7 @@ let touchY;const deck=$('deck');deck.addEventListener('touchstart',e=>{touchY=e.
 // Navigation can start as soon as the renderer is ready. Public mission RPCs
 // enrich this message later; they cannot hold a visitor's street map hostage.
 if(!ANALYTICS){readyMessage={type:'hu:globe-ready',missionIds:[],dataPending:true};tell(readyMessage)}
-try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS){showMissions=false;showCities=false}draw();if(!ANALYTICS)drawBoundaries();$('status').textContent=missions.length?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
+try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS||NO_MISSIONS){showMissions=false;showCities=false}draw();if(!ANALYTICS&&!NO_MISSIONS)drawBoundaries();$('status').textContent=missions.length||NO_MISSIONS?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(NO_MISSIONS)$('status').hidden=true;if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
 // Layout and the parent-owned location request work even if WebGL cannot load.
 wireEditorialTools();wireTravelControlLayout();
 if(EDITORIAL&&parentFrame){$('ctlLocate').onclick=()=>{if(travelMode)tell({type:'hu:request-location'})};for(const id of ['ctlZoomIn','ctlZoomOut'])$(id).disabled=true;}

@@ -2,9 +2,9 @@
   "schema_version": "mccluster-drift-contract/v1",
   "supabase": {
     "project_ref": "zmnhbrjyhxzhkxmhkexs",
-    "migration_count": 323,
-    "latest_version": "20261017214808",
-    "latest_name": "mcp_approval_scope_v1",
-    "ledger_sha256": "07b9c016ee02f3a6e848992711df7715e3a5e4daa5d2c6834aab1df4fd6f5061"
+    "migration_count": 325,
+    "latest_version": "20261020205959",
+    "latest_name": "funding_criteria_register_v1",
+    "ledger_sha256": "2847e0ffa493dfdeda57e2982ad86d4e8f282553d8a71ca8c9e774980cd08daa"
   }
 }

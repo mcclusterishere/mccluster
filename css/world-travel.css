@@ -427,3 +427,7 @@ body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
   .wt-plan-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .wt-go-row button { font-size:12px; }
 }
+
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): Travel and Missions are off (hu-social-only on <html>, mnet.html), so
+   there is no tab to choose between them and no door into Missions: not in search, not on the profile, not on Live */
+.hu-social-only :is(.wt-world-modes,[data-mn-view="missions"],#mnProfileRecord,#mnClipDoor,#mnFeedMissions,.mn__actionboard,.mn__understand) { display:none!important; }

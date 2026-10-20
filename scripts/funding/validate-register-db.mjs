@@ -12,7 +12,7 @@ try {
     $$select coalesce(current_setting('test.is_admin', true),'false') = 'true'$$;`);
   const root = new URL('../../', import.meta.url);
   await db.exec(await readFile(new URL('supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql',root),'utf8'));
-  const sql = await readFile(new URL('supabase/pending/20261020193357_funding_criteria_register_v1.sql',root),'utf8');
+  const sql = await readFile(new URL('supabase/migrations/20261020205959_funding_criteria_register_v1.sql',root),'utf8');
   await db.exec(sql);
   const count = await db.query('select count(*)::int as n from action_funding_opportunities');
   assert.equal(count.rows[0].n,72);

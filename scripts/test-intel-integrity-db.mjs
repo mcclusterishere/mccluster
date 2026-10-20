@@ -1,17 +1,22 @@
 // Real SQL behavioral replay in isolated PostgreSQL/WASM. Install a pinned
 // @electric-sql/pglite outside the repo, then set PGLITE_ROOT to that package.
-// This is single-connection evidence; native multi-session races remain a gate.
+// Native CI mode also exercises real PostgreSQL lock waits and concurrent writes.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { persistProposal } from '../supabase/functions/context-decision/proposals.mjs';
 
-const root = process.env.PGLITE_ROOT;
-if (!root) throw new Error('Set PGLITE_ROOT to an installed @electric-sql/pglite package');
-const { PGlite } = await import(pathToFileURL(resolve(root, 'dist/index.js')));
-const { pgcrypto } = await import(pathToFileURL(resolve(root, 'dist/contrib/pgcrypto.js')));
-const db = new PGlite({ extensions: { pgcrypto } });
+import { nativeTestDb, migrationPath, waitForBlocked } from './native-admin-test-db.mjs';
+let db;
+if (process.env.NATIVE_TEST_DATABASE_URL) db = await nativeTestDb('intel');
+else {
+  const root = process.env.PGLITE_ROOT;
+  if (!root) throw new Error('Set PGLITE_ROOT to an installed @electric-sql/pglite package');
+  const { PGlite } = await import(pathToFileURL(resolve(root, 'dist/index.js')));
+  const { pgcrypto } = await import(pathToFileURL(resolve(root, 'dist/contrib/pgcrypto.js')));
+  db = new PGlite({ extensions: { pgcrypto } });
+}
 const apply = async file => {
   const sql = (await readFile(file, 'utf8')).replace(/^\\.*$/gm, '');
   await db.exec(sql);
@@ -25,7 +30,7 @@ function sqlTag(conn) {
     return (await conn.query(query,args)).rows;
   };
   tag.json = value => ({ __json: true, value });
-  tag.begin = callback => db.transaction(tx => callback(sqlTag(tx)));
+  tag.begin = callback => conn.transaction(tx => callback(sqlTag(tx)));
   return tag;
 }
 const sql = sqlTag(db);
@@ -45,7 +50,7 @@ try {
       actor_kind text not null default 'system',event text not null,capability text,
       resource_type text,resource_id text,command_id uuid,detail jsonb not null default '{}',at timestamptz not null default now());`);
   await apply('supabase/migrations/20261017030617_intel_mission_canon_v1.sql');
-  await apply('supabase/pending/20261020193457_intel_decision_integrity_v2.sql');
+  await apply(await migrationPath('intel_decision_integrity_v2'));
   await apply('supabase/tests/intel_mission_canon.behaviour.sql');
   const oldBriefing=(await one("select v from t_ids where k='briefing'")).v;
   const claim=(await one("select v from t_ids where k='claim'")).v;
@@ -60,6 +65,31 @@ try {
 
   const input={ title:'Review preparedness response', decision:'Prepare one follow-up mission', rationale_summary:'Reviewed USGS evidence',
     risk_class:'low',status:'proposed',idempotency_key:'partial-write-case',metadata:{source:'mccluster-intel',intel_briefing_id:briefing} };
+  if (db.native) {
+    const peer=db.fork(), peer2=db.fork();
+    try {
+      const raceInput={...input,idempotency_key:'native-concurrent-proposal'};
+      let release; const hold=new Promise(resolve=>{release=resolve;});
+      let held; const ready=new Promise(resolve=>{held=resolve;});
+      const blocker=db.transaction(async tx=>{
+        await tx.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[JSON.stringify([ORG,OWNER,raceInput.idempotency_key])]);
+        held(); await hold;
+      });
+      await ready;
+      const pending=Promise.all([peer,peer2].map(conn=>persistProposal(sqlTag(conn),ORG,OWNER,raceInput)));
+      const observer=db.fork();
+      try { await waitForBlocked(observer,2); } finally { release(); await observer.close(); }
+      await blocker;
+      const [firstRace,secondRace]=await pending;
+      assert.equal(secondRace.decision.id,firstRace.decision.id);
+      assert.equal(Number(firstRace.created)+Number(secondRace.created),1);
+      // Both sessions race to persist the basis and audit for the same proposal.
+      await Promise.all([db,peer].map(conn=>conn.query('select public.intel_record_decision_basis($1,$2,$3,$4)',[ORG,OWNER,firstRace.decision.id,briefing])));
+      assert.equal((await one("select count(*)::int as n from public.control_audit where resource_id=$1 and event='intel.decision.proposed'",[firstRace.decision.id])).n,1);
+      assert.equal((await one("select count(*)::int as n from ai_context.decisions where metadata->>'idempotency_key'=$1",[raceInput.idempotency_key])).n,1);
+      console.log('native Intel: real advisory-lock wait, same proposal ID and one audit receipt across sessions passed');
+    } finally { await peer.close(); await peer2.close(); }
+  }
   const first=await persistProposal(sql,ORG,OWNER,input);
   assert.equal(first.created,true);
   const id=first.decision.id;

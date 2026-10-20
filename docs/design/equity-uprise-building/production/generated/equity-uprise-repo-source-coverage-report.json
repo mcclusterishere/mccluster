@@ -348,12 +348,12 @@
     "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
     "supabase/migrations/20261017164335_action_archive_cohort_v1.sql",
     "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
+    "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql",
+    "supabase/migrations/20261020205959_funding_criteria_register_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
     "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
-    "supabase/pending/20261020193357_funding_criteria_register_v1.sql",
-    "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/action_globe_demo_pins_v1.sql",
@@ -6911,42 +6911,42 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql capability ids known",
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql classified",
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending/20261020193357_funding_criteria_register_v1.sql support rationale present",
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql capability ids known",
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql classified",
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending/20261020193436_analytics_measurement_semantics_v1.sql support rationale present",
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

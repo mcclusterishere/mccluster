@@ -240,6 +240,16 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_globe_rejoin_capacity.integration.sql
       - name: Verify ingestion leases, unknown measurements and private spatial storage
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/analytics_ingestion_pipeline.behaviour.sql
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Verify native PostgreSQL evidence and lease races
+        run: |
+          npm install --prefix "$RUNNER_TEMP/native-admin-tools" --ignore-scripts --no-audit --no-fund --package-lock=false postgres@3.4.7
+          export POSTGRES_MODULE_PATH="$RUNNER_TEMP/native-admin-tools/node_modules/postgres/src/index.js"
+          export NATIVE_TEST_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          node scripts/compute-lease-sql-check.mjs
+          node scripts/test-intel-integrity-db.mjs
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

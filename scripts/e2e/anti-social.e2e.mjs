@@ -14,6 +14,7 @@
      node scripts/e2e/anti-social.e2e.mjs [outDir]
    ============================================================ */
 import { createServer } from 'node:http';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -29,7 +30,8 @@ catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/n
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
-  try { const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
+  /* Missions is switched off in the World as it ships; this suite guards Anti-Social's missions, so it drives them switched on */
+  try { let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)); if (/^[/\\]mnet\.html$/.test(path)) body = Buffer.from(withTravelAndMissions(body)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
   catch { res.writeHead(404); res.end('not found'); }
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
