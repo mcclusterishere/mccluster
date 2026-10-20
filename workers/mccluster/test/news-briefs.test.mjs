@@ -60,7 +60,8 @@ function db({ jobs = [], leadsTable = false, leads = [], owner = true, leadOf = 
     }
     if (u.endsWith('/ops_agent_jobs') && m === 'POST') return ok([{ id: 'job-' + calls.length, ...JSON.parse(init.body) }], 201);
     if (u.includes('/network_profiles?')) return ok([{ m_uid: LEAD, display_name: 'Ada' }]);
-    if (u.includes('/platform_profiles?')) return ok([{ user_id: 'user-2' }]);
+    /* what ILIKE would return for a pattern: an unescaped underscore would also match "benxj" */
+    if (u.includes('/platform_profiles?')) return ok([{ user_id: 'user-2', mccluster_id: 'Ada' }, { user_id: 'user-3', mccluster_id: 'benxj' }]);
     return ok([]);
   };
   return calls;
@@ -155,4 +156,13 @@ test('only the owner grants region leaders, by handle, and the list says when th
   assert.deepEqual(write.body, { m_uid: LEAD, country_code: 'KE', granted_by: 'user-1' });
   db({ owner: false, leadsTable: true, leadOf: ['KE'] });
   assert.equal((await call('/v1/news-briefs/leads', 'POST', { handle: 'ada', country: 'KE' })).status, 403);
+});
+
+test('a handle grants exactly that member: an underscore is not a wildcard', async () => {
+  const calls = db({ leadsTable: true });
+  const res = await call('/v1/news-briefs/leads', 'POST', { handle: 'ben_j', country: 'KE' });
+  assert.equal(res.status, 404);
+  const look = calls.find((c) => c.u.includes('/platform_profiles?'));
+  assert.match(look.u, /mccluster_id=ilike\.ben\\_j&/); // decoded: the underscore arrives escaped
+  assert.equal(calls.filter((c) => c.u.includes('/news_region_leads?on_conflict')).length, 0);
 });

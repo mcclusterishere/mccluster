@@ -266,8 +266,11 @@ export async function handleNewsBriefs(req, env) {
         if (!muid) {
           const handle = String(input.handle || '').replace(/^@/, '').trim();
           if (!/^[a-z0-9._-]{2,40}$/i.test(handle)) return fail(req, env, "Give the leader's M handle", 400);
-          const prof = await service(env, `platform_profiles?mccluster_id=ilike.${encodeURIComponent(handle)}&select=user_id&limit=1`);
-          const link = prof?.[0] ? await service(env, `m_auth_user_links?auth_user_id=eq.${prof[0].user_id}&is_primary=eq.true&select=m_uid&limit=1`) : [];
+          /* handles are unique ignoring case; in ILIKE an underscore matches any character, so it is escaped and the
+             match is checked exactly: "ben_j" never grants "benxj" */
+          const prof = await service(env, `platform_profiles?mccluster_id=ilike.${encodeURIComponent(handle.replace(/_/g, '\\_'))}&select=user_id,mccluster_id&limit=5`);
+          const person = (prof || []).find((p) => String(p.mccluster_id || '').toLowerCase() === handle.toLowerCase());
+          const link = person ? await service(env, `m_auth_user_links?auth_user_id=eq.${person.user_id}&is_primary=eq.true&select=m_uid&limit=1`) : [];
           muid = link?.[0]?.m_uid || null;
           if (!muid) return fail(req, env, 'No member has that handle', 404);
         }
