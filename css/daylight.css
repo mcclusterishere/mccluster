@@ -27,8 +27,9 @@ html[data-daylight="day"], html[data-daylight="day"] body,
 html[data-daylight="day"].mn-world-on, html[data-daylight="day"].mn-world-on body { background:#ffffff; color:#000000; }
 /* the top bar is the one black band: the supplied white mark, the white title scroll, white icons */
 html[data-daylight="day"] .mn__top { background:#000000; border-bottom-color:#ffffff22; color:#ffffff; }
-/* the Travel World paints its header as a fade over the Earth at (0,4,0); the day band must outrank it */
-html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__top, html[data-daylight="day"].hu-travel-enabled.mn-world-on[data-world-mode] .mn__top { background:#000000; }
+/* OVER THE GLOBE THE TOP STAYS TRANSPARENT (owner, 2026-10-20: "for the globe section i want the top of it to be
+   transparent"). The World's header is the fade over the Earth by day as by night (css/world-travel.css, which outranks
+   the band above); only pages without the globe get the black band. Its words and icons stay white over the Earth. */
 html[data-daylight="day"] .mn__top .mn__brand strong, html[data-daylight="day"] .mn__top .mn__brand small, html[data-daylight="day"] .mn__now { color:#ffffff; }
 html[data-daylight="day"] .mn__top :is(.hu-search-toggle,.mn__bell,.mn__avatar-btn) { color:#ffffff; border-color:#ffffff33; background:transparent; }
 html[data-daylight="day"] .mn__guest-bar :is(.mn__guest-in,.mn__guest-join) { color:#ffffff; background:#161616; border:1px solid #ffffff33; }
