@@ -99,3 +99,17 @@ test('new fifty state captains do not overwrite the thirteen existing house spec
   assert.equal(chapters.national_hierarchy.existing_hitman_immediate_cast_count, 12);
   assert.equal(chapters.national_hierarchy.sovereign, 'Royce');
 });
+
+
+test('pending SQL prepares all fifty chapters as private drafts, not a public feed or fake human roster', () => {
+  const sql = readFileSync(new URL('../../../supabase/pending/20261019213000_hitman_us_50_state_chapters_v1.sql', import.meta.url), 'utf8');
+  assert.equal((sql.match(/"character_id":/g) || []).length, 50);
+  assert.match(sql, /public\.house_system_accounts/);
+  assert.match(sql, /from public\.action_globe_regions r where r\.region_key = s\.story_region_key/);
+  assert.match(sql, /'draft', false, false, false, false, false, 0, 0, null/);
+  assert.match(sql, /on conflict \(org_id, character_id\) do nothing/);
+  assert.match(sql, /'execution_enabled', false/);
+  assert.match(sql, /'max_autospend_cents', 0/);
+  assert.doesNotMatch(sql, /\binsert into public\.(m_people|network_posts|social_publish_jobs|action_missions)/i);
+  assert.doesNotMatch(sql, /\b(account_status\s*=\s*'published'|external_publish_enabled\s*=\s*true)\b/i);
+});
