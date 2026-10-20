@@ -15,6 +15,9 @@ const AGENT_VERSION = '0.2.0';
 const POLL_MS = Math.max(1_000, Number(process.env.MCCLUSTER_NODE_POLL_MS || 5_000));
 const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEAT_MS || 30_000));
 const ENGINE_PROBE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_ENGINE_PROBE_MS || 15_000));
+const REQUEST_TIMEOUT_MS = Math.max(1_000, Math.min(30_000, Number(process.env.MCCLUSTER_NODE_REQUEST_TIMEOUT_MS || 10_000)));
+const LEASE_EXTEND_SECONDS = 120;
+const LEASE_RENEW_MS = 30_000;
 const SHUTDOWN_GRACE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_SHUTDOWN_GRACE_MS || 30_000));
 
 if (!BASE_URL || !/^https:\/\//.test(BASE_URL)) throw new Error('MCCLUSTER_COMPUTE_URL must be an https:// URL');
@@ -78,6 +81,7 @@ function inventory(hardware, engineHealth = []) {
 
 async function rawRequest(pathname, { method = 'POST', body = {}, headers = {} } = {}) {
   const res = await fetch(`${BASE_URL}${pathname}`, {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     method,
     headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
     body: method === 'GET' ? undefined : JSON.stringify(body)
@@ -158,10 +162,13 @@ function assertLoopbackExecutor(urlString) {
   return url;
 }
 
-async function executeHttp(executor, task) {
+async function executeHttp(executor, task, signal) {
   const url = assertLoopbackExecutor(executor.url);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), Math.max(30_000, Number(executor.timeout_ms || 3_600_000)));
+  const abort = () => controller.abort(signal?.reason);
+  if (signal?.aborted) abort();
+  else signal?.addEventListener('abort', abort, { once: true });
+  const timeout = setTimeout(() => controller.abort(new Error('Executor timeout')), Math.max(30_000, Number(executor.timeout_ms || 600_000)));
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -179,12 +186,12 @@ async function executeHttp(executor, task) {
       throw error;
     }
     return result;
-  } finally { clearTimeout(timeout); }
+  } finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
 }
 
-async function executeTask(executor, task) {
+async function executeTask(executor, task, signal) {
   if (!executor) throw permanentError(`No local executor configured for ${task.implementation || task.capability}`);
-  if (executor.type === 'http') return executeHttp(executor, task);
+  if (executor.type === 'http') return executeHttp(executor, task, signal);
   throw permanentError(`Unsupported local executor type: ${executor.type || 'unknown'}`);
 }
 
@@ -216,8 +223,9 @@ async function run() {
   else console.log(JSON.stringify({ event: 'compute_node_existing_identity', node_id: identity.nodeId }));
 
   const active = new Map();
-  process.on('SIGTERM', () => gracefulShutdown(active, 'SIGTERM').then(() => process.exit(active.size ? 1 : 0)));
-  process.on('SIGINT', () => gracefulShutdown(active, 'SIGINT').then(() => process.exit(active.size ? 1 : 0)));
+  const activeControllers = new Map();
+  process.on('SIGTERM', () => { for (const controller of activeControllers.values()) controller.abort(new Error('Node shutdown')); gracefulShutdown(active, 'SIGTERM').then(() => process.exit(active.size ? 1 : 0)); });
+  process.on('SIGINT', () => { for (const controller of activeControllers.values()) controller.abort(new Error('Node shutdown')); gracefulShutdown(active, 'SIGINT').then(() => process.exit(active.size ? 1 : 0)));
 
   let lastHeartbeat = 0;
   let lastProbe = 0;
@@ -264,19 +272,53 @@ async function run() {
             continue;
           }
 
-          await signedRequest(identity, `/v1/compute/leases/${leaseId}/start`, { lease_token: leaseToken, extend_seconds: 120 });
-          const leaseHeartbeat = setInterval(() => {
-            signedRequest(identity, `/v1/compute/leases/${leaseId}/heartbeat`, {
-              lease_token: leaseToken,
-              progress: { state: 'running', agent_time: new Date().toISOString() },
-              extend_seconds: 120
-            }).catch((error) => console.error(JSON.stringify({ event: 'lease_heartbeat_failed', lease_id: leaseId, error: error.message })));
-          }, 30_000);
+          await signedRequest(identity, `/v1/compute/leases/${leaseId}/start`, { lease_token: leaseToken, extend_seconds: LEASE_EXTEND_SECONDS });
+          const controller = new AbortController();
+          activeControllers.set(leaseId, controller);
+          // Fail closed: the local executor must stop if the authoritative lease
+          // cannot be renewed before its last confirmed expiration.
+          let confirmedUntil = Date.now() + LEASE_EXTEND_SECONDS * 1000;
+          let renewing = false;
+          let lost = false;
+          const loseLease = (reason) => {
+            if (lost) return;
+            lost = true;
+            controller.abort(new Error(reason));
+            console.error(JSON.stringify({ event: 'lease_authority_lost', lease_id: leaseId, reason }));
+          };
+          const watchdog = setInterval(() => {
+            if (Date.now() >= confirmedUntil) loseLease('Lease renewal not confirmed before expiry');
+          }, 1000);
+          watchdog.unref();
+          const leaseHeartbeat = setInterval(async () => {
+            if (renewing || lost) return;
+            renewing = true;
+            try {
+              const reply = await signedRequest(identity, `/v1/compute/leases/${leaseId}/heartbeat`, {
+                lease_token: leaseToken,
+                progress: { state: 'running', agent_time: new Date().toISOString() },
+                extend_seconds: LEASE_EXTEND_SECONDS
+              });
+              if (!reply?.ok || !reply?.result) throw new Error('Lease renewal not acknowledged');
+              if (Date.now() >= confirmedUntil) return loseLease('Renewal arrived after last confirmed expiry');
+              confirmedUntil = Date.now() + LEASE_EXTEND_SECONDS * 1000;
+            } catch (error) {
+              if ([401, 403, 409].includes(error.status)) loseLease('Lease authorization or ownership revoked');
+              else console.error(JSON.stringify({ event: 'lease_heartbeat_failed', lease_id: leaseId, error: error.message }));
+            } finally { renewing = false; }
+          }, LEASE_RENEW_MS);
           leaseHeartbeat.unref();
 
-          const promise = executeTask(executor, task)
-            .then((result) => signedRequest(identity, `/v1/compute/leases/${leaseId}/complete`, { lease_token: leaseToken, result }))
+          const promise = executeTask(executor, task, controller.signal)
+            .then(async (result) => {
+              if (lost || controller.signal.aborted || Date.now() >= confirmedUntil) {
+                loseLease('Result arrived after lease authority lost');
+                return;
+              }
+              await signedRequest(identity, `/v1/compute/leases/${leaseId}/complete`, { lease_token: leaseToken, result });
+            })
             .catch(async (error) => {
+              if (lost || controller.signal.aborted || Date.now() >= confirmedUntil) return;
               try {
                 await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
                   lease_token: leaseToken,
@@ -287,7 +329,12 @@ async function run() {
                 console.error(JSON.stringify({ event: 'lease_failure_report_failed', lease_id: leaseId, task_id: task.id, error: reportError.message }));
               }
             })
-            .finally(() => { clearInterval(leaseHeartbeat); active.delete(leaseId); });
+            .finally(() => {
+              clearInterval(leaseHeartbeat);
+              clearInterval(watchdog);
+              activeControllers.delete(leaseId);
+              active.delete(leaseId);
+            });
           active.set(leaseId, promise);
         }
       }
