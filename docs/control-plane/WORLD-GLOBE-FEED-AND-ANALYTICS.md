@@ -286,12 +286,13 @@ for the ADMIN analytics view only.
   so the country edge and its state edges are one line
   (`data/geo/admin1/<CC>.json`, `tools/build-admin1-boundaries.mjs`; the
   10m source is simplified once with mapshaper, topology-preserving, 10%,
-  keep-shapes). The 1:110m file stays for the World globe.
+  keep-shapes).
 - **States and provinces for every country** (Natural Earth 1:10m Admin 1,
   239 country files): fetched only when that country is selected, cached,
   and their lines drawn for that country only. Only `control.html` loads
   `js/control-room/analytics-globe.js`; the public and member globes never
-  load a state file or the region read.
+  load these files (names, codes, polygons) or the region read. They draw
+  state LINES only, from their own derived files (C5).
 - **One selection** `{country, state}`: the location menu (all countries;
   the selected country's states listed under it as "US/US-CT"), the rows,
   Clear and a tap on the globe all go through `pickPlace()`, and the globe is
@@ -341,6 +342,44 @@ for the ADMIN analytics view only.
   Natural Earth"); natural-earth-vector v5.1.2. Recorded in each data file and
   in `data/geo/admin1/index.json`.
 
+### C5. The World globe's borders and states (owner, 2026-10-20)
+
+"The map needs to be clearly defined with clearly defined borders, and even
+within the countries clearly defined states within the countries, drawn
+accurately." (The same message: "I saw a post in Russia posted somewhere else
+on the map.")
+
+- **Countries at 1:10m, US point of view.** `data/geo/world-countries-10m.json`
+  (243 countries, Natural Earth `ne_10m_admin_0_countries_usa` simplified to
+  10% with mapshaper, delta-encoded hundredths of a degree;
+  `tools/build-world-countries.mjs`) replaces the World's 1:110m file, which
+  had no shape for 72 countries (Singapore, Hong Kong, Bahrain, Malta, Monaco,
+  Andorra …) and put Geneva in France and Windsor in the United States. The US
+  view matches the gazetteer GDELT's place names come from, so a Crimea story
+  that says "Ukraine" is pinned inside the drawn Ukraine. Drawing a border is
+  not a statement on any dispute.
+- **Land borders drawn once.** `data/geo/world-borders-10m.json`, the lines two
+  countries share; the coastline is the imagery's. They are the map, not
+  decoration: they stay while the camera comes down and give way below 700 km,
+  where the street map or aerial imagery (with its own borders) is the subject.
+  Flags, labels and the US ribbon keep their fade.
+- **States, lines only.** `data/geo/world-states/<A2>.json` +
+  `index.json` (`tools/build-world-states.mjs`): the edges two states of one
+  country share, derived from `data/geo/admin1` (same topology, so a state line
+  meets its neighbours exactly). No names, codes or data travel with them.
+  Where Natural Earth's first level is a finer unit, the well-known level is
+  drawn instead (France's regions, Italy's regions, Spain's communities, the
+  Philippines' regions, the UK's four nations …; `GROUP` in the tool). The globe
+  fetches a country's lines once the camera is below 7,500 km and the country
+  is in view, and always for a selected country.
+- **The pins are the cards.** The globe's news pins are the stories the feed
+  is showing (`window.MCC_WORLD_NEWS_ITEMS` is the rendered list, re-sent on
+  every render), and a news chip's tap marks that story's own pin. A story's
+  chip names its country from the ISO code the Worker sends
+  (`/v1/world/news` `country`, from GDELT's FIPS through
+  `workers/mccluster/src/intel/news-country-codes.js`, which also reads GDELT's
+  `GZ` Gaza Strip and `RB` Serbia).
+
 ### C3. The owner's five-tab bar (admin first)
 
 For the house owner only (`GET /v1/status`, the Control Room's own owner
@@ -381,11 +420,14 @@ first, as for every core route).
      `js/analytics.js`; a test pins all three) and a parseable
      `privacy_acknowledged_at`. Where it lives: the join flow writes both
      fields at sign-up (`js/action.js`). Production on 2026-10-15: 110 auth
-     users, 33 with the current version on record. The site-entry gate
-     (`js/live-content.js`, `mcc_privacy_ack`) is browser storage the Worker
-     cannot read, so the other members record theirs with one tap on the
-     CCTV lock ("I agree to the Privacy Policy"), which writes the same two
-     fields to their own record with their own session (`PUT
+     users, 33 with the current version on record. The site-entry notice
+     (`js/live-content.js`, `mcc_privacy_ack`) is browser storage and a
+     cookie the Worker does not read, so on its own it does not count here.
+     Agreeing to that notice while signed in also writes the same two fields
+     to the member's record (owner, 2026-10-20: the notice is shown once per
+     version, on any McCluster host); the other members record theirs with
+     one tap on the CCTV lock ("I agree to the Privacy Policy"), which writes
+     the same two fields to their own record with their own session (`PUT
      /auth/v1/user`). `privacy.html` already discloses the automatic
      IP-derived country/region/city and that precise device location is read
      only when the browser permission is granted. The separate
