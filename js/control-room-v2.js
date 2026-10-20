@@ -3678,7 +3678,7 @@
   if (window.CR.instagram) window.CR.instagram.init({ request: request, render: render, org: function () { return state.org; } });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
   if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
-  if (window.CR.characterStudio) window.CR.characterStudio.init({ request: request, render: render });
+  if (window.CR.characterStudio) window.CR.characterStudio.init({ request: request, render: render, getState: function () { return state; } });
   if (window.CR.fundingIntelligence) window.CR.fundingIntelligence.init({ request: request, render: render });
   if (window.CR.clipping) window.CR.clipping.init({ supa: supa, render: render, org: function () { return state.org; } });
   if (window.CR.work) window.CR.work.init({
