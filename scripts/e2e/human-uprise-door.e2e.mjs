@@ -129,6 +129,9 @@ async function routeBackends(ctx) {
     apiReads.push({ path: u.pathname, auth: !!(await req.allHeaders()).authorization });
     /* the World's Cesium ion (scripts/e2e/world-ion.e2e.mjs drives it): off here, so this Earth is NASA's alone */
     if (u.pathname === '/v1/world/ion') return json(route, { ok: true, available: false, binding: null });
+    /* the house owner's check (requireHouseOwner): nobody here is the owner. A 200 would tell js/world-owner-modes.js
+       this member is, and it opens the World again with all three modes, cutting off the page's own requests. */
+    if (u.pathname === '/v1/status') return json(route, { error: 'House owner only' }, 403);
     /* the World's news (GDELT, ingested by the Worker; scripts/e2e/world-screen.e2e.mjs drives it): free, never with a session */
     if (u.pathname === '/v1/world/news') return json(route, { ok: true, items: [{ id: 'ffffffff-ffff-4fff-8fff-000000000001', title: 'Councils weigh a budget for public transit', url: 'https://news.example/story/1', domain: 'news.example', seen_at: new Date(Date.now() - 600e3).toISOString(), place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28, lon: 36.82 }, { id: 'ffffffff-ffff-4fff-8fff-000000000002', title: 'A port reopens after the storm', url: 'https://news.example/story/2', domain: 'news.example', seen_at: new Date(Date.now() - 1200e3).toISOString(), place: null, lat: null, lon: null }], next_before: null, attribution: { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' } });
     if (u.pathname === '/v1/mnet/public-feed') return json(route, { items: POSTS, scope: 'public', next_before: null });

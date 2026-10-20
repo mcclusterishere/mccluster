@@ -59,8 +59,12 @@ test('account creation requires legal first and last name, mailing address and p
   assert.match(js, /named = MCC_NAME_INTEGRITY\.validate\(parts\.shift\(\) \|\| "", parts\.join\(" "\)\)/, 'page 2 screens the legal name');
   assert.match(js, /var missing = \["mnLegalName", "mnAddr1", "mnCity", "mnRegion", "mnPostal", "mnCountry"\]/, 'page 2 requires the whole address');
   assert.match(js, /Fill in your legal name and the whole address\./);
-  assert.match(js, /var ack = window\.MCC_PRIVACY \? \{ privacy_policy_version: MCC_PRIVACY\.version, privacy_acknowledged_at: new Date\(\)\.toISOString\(\) \} : \{\};/, 'the acknowledgement is recorded with the account');
+  /* the agreement is asked once: agreed on the way in reads a line; only seen ticks one box. Seen is never recorded as agreed. */
+  assert.match(js, /var ack = create && privacyAgreed\(\) \? \{ privacy_policy_version: MCC_PRIVACY\.version, privacy_acknowledged_at: new Date\(\)\.toISOString\(\) \} : \{\};/, 'the agreement is recorded with the account');
+  assert.match(js, /if \(create && !privacyAgreed\(\)\) \{\n\s*if \(!\$\("mnCreateAgreeBox"\)\.checked\) \{ authFail\("Tick the box to agree to the Privacy Policy\.", "mnCreateAgreeBox", "privacy_unchecked"\); return; \}\n\s*try \{ MCC_PRIVACY\.acknowledge\(\); \} catch \(e\) \{\}/, 'no agreement, no account');
+  assert.match(js, /return !!\(window\.MCC_PRIVACY && MCC_PRIVACY\.accepted && MCC_PRIVACY\.accepted\(\)\);/, 'agreed, never merely seen');
   assert.match(mnet, /<p class="mn__hint" id="mnCreatePrivacy" hidden>Creating an account means you agree to the <a href="privacy\.html">Privacy Policy<\/a>\.<\/p>/);
+  assert.match(mnet, /<label class="mn__check" id="mnCreateAgree" hidden><input type="checkbox" id="mnCreateAgreeBox"><span>I agree to the <a href="privacy\.html">Privacy Policy<\/a>\.<\/span><\/label>/);
   assert.match(await readFile(join(ROOT, 'js/live-content.js'), 'utf8'), /var VERSION = "2026-10-19"/, 'the version the person agreed to on the way in');
 });
 

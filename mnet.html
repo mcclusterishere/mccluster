@@ -135,7 +135,10 @@
         <!-- ONE SIGN-UP (owner, 2026-10-20): an account is an email and a password (or Google), and then the same three
              pages every new member fills in, straight away; the person goes back to where they started after the last one -->
         <p class="mn__hint" id="mnCreateNote" hidden>Next: your profile, where we can reach you, and your phone. One short page each.</p>
+        <!-- the privacy agreement is asked once: someone who agreed on the way in (js/live-content.js) reads the line;
+             someone who only saw the notice ticks the box, as the account page's own form asked -->
         <p class="mn__hint" id="mnCreatePrivacy" hidden>Creating an account means you agree to the <a href="privacy.html">Privacy Policy</a>.</p>
+        <label class="mn__check" id="mnCreateAgree" hidden><input type="checkbox" id="mnCreateAgreeBox"><span>I agree to the <a href="privacy.html">Privacy Policy</a>.</span></label>
         <button class="mn__secondary" id="mnForgot" type="button">Forgot or don't know your password?</button>
         <p class="mn__hint" id="mnPasswordHint" hidden>Use at least 8 characters.</p>
         <p class="mn__status" id="mnAuthStatus" role="status"></p>

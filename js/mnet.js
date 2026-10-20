@@ -2517,7 +2517,10 @@
     /* the account is the email and a password; the name, the address and the phone are the three pages after it */
     $("mnConfirmWrap").hidden = !create;
     $("mnCreateNote").hidden = !create;
-    $("mnCreatePrivacy").hidden = !create;
+    /* agreed on the way in: a line says so; only seen: one box to tick (seen is not agreed, js/live-content.js) */
+    var agreed = privacyAgreed();
+    $("mnCreatePrivacy").hidden = !create || !agreed;
+    $("mnCreateAgree").hidden = !create || agreed;
     $("mnSignInTab").classList.toggle("is-active", !create);
     $("mnCreateTab").classList.toggle("is-active", create);
     $("mnSignInTab").setAttribute("aria-selected", create ? "false" : "true");
@@ -2576,6 +2579,9 @@
     }
     if (reason) track("signup_blocked", { reason: reason });
   }
+  function privacyAgreed() {
+    try { return !!(window.MCC_PRIVACY && MCC_PRIVACY.accepted && MCC_PRIVACY.accepted()); } catch (e) { return false; }
+  }
   function submitPasswordAuth() {
     var create = $("mnSignedOut").getAttribute("data-auth-mode") === "create";
     var email = $("mnEmail").value.trim(), password = $("mnPassword").value;
@@ -2587,15 +2593,19 @@
     }
     if (create && password.length < 8) { authFail("Use at least 8 characters.", "mnPassword", "password_short"); return; }
     if (create && password !== $("mnPassword2").value) { authFail("Those passwords do not match.", "mnPassword2", "password_mismatch"); return; }
+    if (create && !privacyAgreed()) {
+      if (!$("mnCreateAgreeBox").checked) { authFail("Tick the box to agree to the Privacy Policy.", "mnCreateAgreeBox", "privacy_unchecked"); return; }
+      try { MCC_PRIVACY.acknowledge(); } catch (e) {}
+    }
 
     button.disabled = true;
     button.textContent = create ? "Creating…" : "Signing in…";
     setStatus($("mnAuthStatus"), "");
     $("mnAuthStatus").setAttribute("role", "status");
 
-    /* nothing is guessed for the name: page 1 asks for it. The privacy notice the person agreed to on the way in
-       (js/live-content.js) is recorded with the account, as the account page's form did. */
-    var ack = window.MCC_PRIVACY ? { privacy_policy_version: MCC_PRIVACY.version, privacy_acknowledged_at: new Date().toISOString() } : {};
+    /* nothing is guessed for the name: page 1 asks for it. The privacy agreement (on the way in, or the box above) is
+       recorded with the account, as the account page's form did; a notice only seen is never recorded as agreed. */
+    var ack = create && privacyAgreed() ? { privacy_policy_version: MCC_PRIVACY.version, privacy_acknowledged_at: new Date().toISOString() } : {};
     if (create) track("signup_started", { flow: "password" });
     var action = create
       ? MCC.signUpWithPassword(email, password, ack)
@@ -2663,7 +2673,7 @@
       if (e.key === "Enter" && $("mnSignedOut").getAttribute("data-auth-mode") !== "create") submitPasswordAuth();
     });
     $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
-    ["mnEmail", "mnPassword", "mnPassword2"].forEach(function (id) { $(id).addEventListener("input", function () { $(id).removeAttribute("aria-invalid"); }); });
+    ["mnEmail", "mnPassword", "mnPassword2", "mnCreateAgreeBox"].forEach(function (id) { $(id).addEventListener(id === "mnCreateAgreeBox" ? "change" : "input", function () { $(id).removeAttribute("aria-invalid"); }); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
     $("mnPasswordChange").onclick = changePassword;
     $("mnNewPassword2").addEventListener("keydown", function (e) {

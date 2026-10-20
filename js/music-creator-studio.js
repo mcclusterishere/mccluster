@@ -801,12 +801,15 @@ async function becomeCreator(input) {
 function paintAvatar(el, url, name) {
   el.replaceChildren();
   const safe = PAGE.safeArtwork(url);
+  const initial = () => { el.textContent = (String(name || "").trim().charAt(0) || "♪").toUpperCase(); };
   if (safe) {
     const img = document.createElement("img");
     img.src = safe; img.alt = ""; img.decoding = "async";
+    /* a picture that will not load (removed from storage) shows the initial, never a broken image */
+    img.onerror = () => { if (img.parentNode === el) { el.replaceChildren(); initial(); } };
     el.append(img);
   } else {
-    el.textContent = (String(name || "").trim().charAt(0) || "♪").toUpperCase();
+    initial();
   }
 }
 function paintOnboard(state) {

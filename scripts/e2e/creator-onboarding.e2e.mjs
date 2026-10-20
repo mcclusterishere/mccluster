@@ -83,6 +83,8 @@ async function run(browser, width, name, opts = {}) {
     const p = url.pathname;
     const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     if (p.startsWith('/auth/')) return json({});
+    /* a stored picture (the member's own, in mnet-avatars): a real image, so the card can show it */
+    if (p.startsWith('/storage/v1/object/public/')) return route.fulfill({ status: 200, contentType: 'image/jpeg', body: await readFile(join(HERE, 'assets/img/peaceful-places.jpg')) });
     if (p === '/rest/v1/rpc/m_my_uid') return json(MUID);
     if (p.startsWith('/rest/v1/rpc/music_')) {
       calls.push({ fn: p.slice('/rest/v1/rpc/'.length), body: req.postDataJSON() });
