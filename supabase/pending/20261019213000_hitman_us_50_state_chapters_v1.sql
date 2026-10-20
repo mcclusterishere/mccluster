@@ -8,6 +8,67 @@
 -- mcclusterishere/Prim3/world/HITMAN-US-50-STATE-CHAPTERS.v0.1.json
 -- State palette follows a fixed 2024 election reference as a FICTIONAL story
 -- convention, not a statement about political parties or crime.
+-- Add vetted first-level U.S. state region references BEFORE private chapter
+-- drafts. U.S. Census Bureau 2025 National States Gazetteer representative
+-- internal points; these are NOT personal locations or newly observed activity.
+-- https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.2025.html
+-- source ZIP: 2025_Gaz_state_national.zip (USPS / NAME / INTPTLAT / INTPTLONG).
+-- These region rows have no member presence, posts, or missions of their own.
+insert into public.action_globe_regions
+  (region_key, country_code, subdivision_code, region_label, centroid_lat, centroid_lon)
+values
+  ('US-AL', 'US', 'AL', 'Alabama', 32.739579, -86.843447),
+  ('US-AK', 'US', 'AK', 'Alaska', 63.347356, -152.839733),
+  ('US-AZ', 'US', 'AZ', 'Arizona', 34.203936, -111.606345),
+  ('US-AR', 'US', 'AR', 'Arkansas', 34.895526, -92.444626),
+  ('US-CA', 'US', 'CA', 'California', 37.155177, -119.543418),
+  ('US-CO', 'US', 'CO', 'Colorado', 38.993767, -105.508712),
+  ('US-CT', 'US', 'CT', 'Connecticut', 41.579864, -72.746657),
+  ('US-DE', 'US', 'DE', 'Delaware', 38.998566, -75.441644),
+  ('US-FL', 'US', 'FL', 'Florida', 28.398978, -82.5143),
+  ('US-GA', 'US', 'GA', 'Georgia', 32.629579, -83.423511),
+  ('US-HI', 'US', 'HI', 'Hawaii', 19.828167, -155.495042),
+  ('US-ID', 'US', 'ID', 'Idaho', 44.348422, -114.558854),
+  ('US-IL', 'US', 'IL', 'Illinois', 40.102875, -89.152611),
+  ('US-IN', 'US', 'IN', 'Indiana', 39.901314, -86.291913),
+  ('US-IA', 'US', 'IA', 'Iowa', 42.070023, -93.493349),
+  ('US-KS', 'US', 'KS', 'Kansas', 38.498546, -98.38343),
+  ('US-KY', 'US', 'KY', 'Kentucky', 37.533684, -85.29298),
+  ('US-LA', 'US', 'LA', 'Louisiana', 30.708319, -91.604621),
+  ('US-ME', 'US', 'ME', 'Maine', 45.409284, -68.666616),
+  ('US-MD', 'US', 'MD', 'Maryland', 38.946658, -76.674494),
+  ('US-MA', 'US', 'MA', 'Massachusetts', 42.15652, -71.489592),
+  ('US-MI', 'US', 'MI', 'Michigan', 44.844177, -85.660491),
+  ('US-MN', 'US', 'MN', 'Minnesota', 46.315957, -94.199604),
+  ('US-MS', 'US', 'MS', 'Mississippi', 32.686471, -89.656138),
+  ('US-MO', 'US', 'MO', 'Missouri', 38.350751, -92.456782),
+  ('US-MT', 'US', 'MT', 'Montana', 47.051177, -109.634817),
+  ('US-NE', 'US', 'NE', 'Nebraska', 41.543305, -99.811864),
+  ('US-NV', 'US', 'NV', 'Nevada', 39.331093, -116.615147),
+  ('US-NH', 'US', 'NH', 'New Hampshire', 43.672794, -71.584189),
+  ('US-NJ', 'US', 'NJ', 'New Jersey', 40.107274, -74.665201),
+  ('US-NM', 'US', 'NM', 'New Mexico', 34.434684, -106.131618),
+  ('US-NY', 'US', 'NY', 'New York', 42.913397, -75.596272),
+  ('US-NC', 'US', 'NC', 'North Carolina', 35.53971, -79.130864),
+  ('US-ND', 'US', 'ND', 'North Dakota', 47.442174, -100.460826),
+  ('US-OH', 'US', 'OH', 'Ohio', 40.41493, -82.711997),
+  ('US-OK', 'US', 'OK', 'Oklahoma', 35.590081, -97.486779),
+  ('US-OR', 'US', 'OR', 'Oregon', 43.971712, -120.622958),
+  ('US-PA', 'US', 'PA', 'Pennsylvania', 40.904604, -77.827523),
+  ('US-RI', 'US', 'RI', 'Rhode Island', 41.596485, -71.52649),
+  ('US-SC', 'US', 'SC', 'South Carolina', 33.874178, -80.854264),
+  ('US-SD', 'US', 'SD', 'South Dakota', 44.446796, -100.238176),
+  ('US-TN', 'US', 'TN', 'Tennessee', 35.85846, -86.349634),
+  ('US-TX', 'US', 'TX', 'Texas', 31.434703, -99.281824),
+  ('US-UT', 'US', 'UT', 'Utah', 39.334993, -111.656333),
+  ('US-VT', 'US', 'VT', 'Vermont', 44.058954, -72.671017),
+  ('US-VA', 'US', 'VA', 'Virginia', 37.522251, -78.668194),
+  ('US-WA', 'US', 'WA', 'Washington', 47.407324, -120.5758),
+  ('US-WV', 'US', 'WV', 'West Virginia', 38.647285, -80.618327),
+  ('US-WI', 'US', 'WI', 'Wisconsin', 44.630907, -89.709392),
+  ('US-WY', 'US', 'WY', 'Wyoming', 42.989659, -107.544392)
+on conflict do nothing;
+
 with house as (
   select id as org_id from public.orgs where slug = 'mccluster' limit 1
 ), chapter_seeds as (
