@@ -32,6 +32,10 @@ WORLD_NEWS_INGEST_ENABLED = "true"
 # secrets AUDIO_SFU_APP_ID and AUDIO_SFU_APP_SECRET are configured,
 # privacy, moderation and multi-browser tests have passed.
 AUDIO_SFU_ROOMS_ENABLED = "false"
+# Signed-out visitors listening to a room in their own connection country (owner, 2026-10-20).
+# Needs AUDIO_SFU_ROOMS_ENABLED and the Worker secret AUDIO_ROOM_PASS_KEY (32+ random characters),
+# which signs the visitor's listening pass. Other regions, hands and speaking always need sign-in.
+AUDIO_ROOMS_VISITOR_LISTEN_ENABLED = "false"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"

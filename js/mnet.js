@@ -462,7 +462,8 @@
     var line = { save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
       groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views.",
-      layers:"Sign in to see satellites and space missions on the Earth." }[why] || "Sign in to do that.";
+      layers:"Sign in to see satellites and space missions on the Earth.",
+      rooms:"Sign in to join conversations anywhere in the world, raise your hand and speak." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
   }
@@ -2651,6 +2652,8 @@
   window.MCC_MNET = {
     markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
     api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
+    /* the audio rooms (js/mnet-audio.js) send a signed-out visitor here to go past their own region */
+    signIn: function (why) { askToSignIn(why); },
     identity: function () { return identity(); },
     /* the member desk (js/member-desk.js) reads the profile and opens the editor */
     profile: function () { return profile(); },
