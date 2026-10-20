@@ -377,6 +377,9 @@
             </label>
             <button class="mn__post" id="mnPost" type="button">Post</button>
           </div>
+          <!-- THE NEWSROOM (owner, 2026-10-20): shown only to the house owner. A public post ticked here is also an article
+               on mccluster.org/news/, for search engines and news indexes (workers/mccluster/src/company-site/news.js). -->
+          <label class="mn__newsroom" id="mnNewsroomRow" hidden><input type="checkbox" id="mnNewsroom"> <span>Also publish to the newsroom, as an article on mccluster.org/news. The first line is its headline.</span></label>
           <p class="mn__status" id="mnMediaStatus" role="status"></p>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>

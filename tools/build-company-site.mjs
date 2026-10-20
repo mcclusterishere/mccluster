@@ -179,7 +179,8 @@ ${site.tagline ? `      <p><b>${esc(site.tagline)}</b></p>\n` : ""}      <p>© $
 }
 
 export function renderRobots(site) {
-  return `User-agent: *\nAllow: /\n\nSitemap: ${site.origin}/sitemap.xml\n`;
+  /* the company's news (workers/mccluster/src/company-site/news.js) keeps its own sitemap, with Google News' tags */
+  return `User-agent: *\nAllow: /\n\nSitemap: ${site.origin}/sitemap.xml\nSitemap: ${site.origin}/news/sitemap.xml\n`;
 }
 
 export function renderSitemap(site) {
