@@ -20,7 +20,7 @@ test('the page asks the Worker, with a trailing slash, and clears Cesium\'s buil
 test('the Earth far out is NASA\'s, as before', async () => {
   const js = await read('js/action-globe.js');
   assert.match(js, /const DAY_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/BlueMarble_NextGeneration\//);
-  assert.match(js, /const NIGHT_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/VIIRS_Black_Marble\//);
+  assert.match(js, /const NIGHT_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/VIIRS_CityLights_2012\//);
   assert.match(js, /baseLayer:\(dayLayer=new Cesium\.ImageryLayer\(new Cesium\.UrlTemplateImageryProvider\(\{url:DAY_TILES/);
   assert.match(js, /const ION_HI=3000000,ION_FULL=1200000,ION_OFF=3400000,BUILD_ON=50000,BUILD_OFF=60000,/, 'ion eases in from 3,000 km, whole by 1,200, buildings under 50');
   assert.match(js, /if\(!ionImageryTried&&auto&&h<ION_HI\)/, 'imagery is not even asked for far out');
