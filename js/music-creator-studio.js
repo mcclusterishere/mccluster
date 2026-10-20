@@ -784,65 +784,18 @@ $("trackForm").addEventListener("submit", async (e) => {
 const ONBOARD = window.MCC_CREATOR_ONBOARD;
 let onboardState = null;
 
-async function rpc(name, body = {}) {
-  const res = await fetch(SB + "/rest/v1/rpc/" + name, {
-    method: "POST",
-    headers: { apikey: KEY, authorization: "Bearer " + session.access_token, "content-type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  const text = await res.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
-  if (ONBOARD.rpcMissing(res.status, data)) return { missingRpc: true };
-  if (!res.ok) throw new Error(data?.message || data?.error || ("Request failed " + res.status));
-  return { data };
-}
-/* The member's own rows, for the browser-built answer while the RPC is not
-   deployed (js/creator-onboarding.js, fallbackState). */
-async function ownRows(extra = {}) {
-  const userId = session?.user?.id || "";
-  const one = (p) => rest(p).then((r) => (Array.isArray(r) ? r[0] || null : null)).catch(() => null);
-  const [creator, network, platform, presentation] = await Promise.all([
-    one("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=handle,artist_name,status,verification_state,avatar_url,banner_url&limit=1"),
-    one("network_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=display_name,bio,website_url&limit=1"),
-    userId ? one("platform_profiles?user_id=eq." + encodeURIComponent(userId) + "&select=mccluster_id,display_name&limit=1") : null,
-    one("identity_presentations?m_uid=eq." + encodeURIComponent(mUid) + "&select=music_enabled&limit=1")
-  ]);
-  return Object.assign({ creator, network, platform, linked: !!presentation?.music_enabled }, extra);
+/* The two calls live in js/creator-onboarding.js (ONBOARD.client), shared with every
+   "Become a creator" door on the site: the server functions, or while they are not
+   applied the same answer built from the member's own rows, with the same two writes
+   (the picture from the member's profile included). */
+function onboardClient() {
+  return ONBOARD.client({ token: session.access_token, mUid, userId: session?.user?.id || "" });
 }
 async function creatorState() {
-  const out = await rpc("music_creator_state");
-  if (!out.missingRpc) return out.data;
-  return ONBOARD.fallbackState(await ownRows());
+  return onboardClient().state();
 }
 async function becomeCreator(input) {
-  const out = await rpc("music_become_creator", {
-    p_handle: input.handle || null, p_artist_name: input.artist_name || null, p_accept_terms: true
-  });
-  if (!out.missingRpc) return out.data;
-  /* fallback: the same rules in the browser, then the same two writes */
-  const plan = ONBOARD.fallbackState(await ownRows({ input }));
-  if (plan.creator || !plan.insert) return plan;
-  try {
-    await rest("music_creator_profiles", {
-      method: "POST", headers: { Prefer: "return=minimal" },
-      body: JSON.stringify(Object.assign({ m_uid: mUid, terms_accepted_at: new Date().toISOString() }, plan.insert))
-    });
-  } catch (err) {
-    if (/duplicate|unique|409/i.test(String(err.message))) {
-      return ONBOARD.fallbackState(await ownRows({ input, takenHandle: plan.insert.handle }));
-    }
-    throw err;
-  }
-  try {
-    await rest("identity_presentations?on_conflict=m_uid", {
-      method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify({ m_uid: mUid, music_enabled: true })
-    });
-  } catch (_) { /* the presentation link is repaired by the server function once deployed */ }
-  const after = ONBOARD.fallbackState(await ownRows());
-  after.created = after.creator;
-  return after;
+  return onboardClient().become(input);
 }
 
 function paintAvatar(el, url, name) {
@@ -862,7 +815,8 @@ function paintOnboard(state) {
   const ask = ONBOARD.askFor(state);
   const name = pre.artist_name || "";
   const handle = pre.handle || "";
-  paintAvatar($("cobAvatar"), "", name || handle);
+  /* the member's own picture, the one their artist page starts with */
+  paintAvatar($("cobAvatar"), pre.avatar_url || "", name || handle);
   $("cobName").textContent = name || "Your artist page";
   $("cobHandle").textContent = handle ? "@" + handle : "";
   const nameField = $("cobNameField");
@@ -946,7 +900,7 @@ $("cobForm").addEventListener("submit", async (e) => {
 $("cobNameInput").addEventListener("input", () => {
   const v = $("cobNameInput").value.trim();
   $("cobName").textContent = v || onboardState?.prefill?.artist_name || "Your artist page";
-  paintAvatar($("cobAvatar"), "", v);
+  paintAvatar($("cobAvatar"), onboardState?.prefill?.avatar_url || "", v);
 });
 $("cobHandleInput").addEventListener("input", () => {
   /* the @ is drawn in the field; a typed one is dropped */
@@ -963,6 +917,12 @@ $("cobHandleInput").addEventListener("input", () => {
     const state = ok ? await creatorState() : null;
     const v = ONBOARD.view({ signedIn: ok, state, editing: ONBOARD.wantsEdit(location.search) });
     if (v === "signin") return;
+    if (v === "onboard") {
+      /* ONE SIGN-UP (owner, 2026-10-20): a profile that is not done goes through the three pages on the World,
+         which come back here for the one tap; nothing is asked twice on this page */
+      const done = await ONBOARD.profileDone({ token: session.access_token });
+      if (done === false) { location.replace(ONBOARD.FINISH_URL); return; }
+    }
     $("creatorGate").hidden = true;
     if (v === "onboard") {
       paintOnboard(state);

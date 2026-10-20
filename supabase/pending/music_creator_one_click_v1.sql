@@ -12,8 +12,8 @@
 --   public.music_become_creator(p_handle, p_artist_name, p_accept_terms)
 --     The one button. Builds the creator profile from data the member
 --     already gave the platform (artist name from their public profile
---     name, handle from their M handle, bio and https website from their
---     public profile); p_handle / p_artist_name are only for what is
+--     name, handle from their M handle, bio, https website and https
+--     picture from their public profile); p_handle / p_artist_name are only for what is
 --     missing. Inserts the music_creator_profiles row and links the
 --     presentation (identity_presentations.music_enabled) in ONE
 --     transaction. Idempotent: run it again and it inserts nothing,
@@ -25,7 +25,7 @@
 --   { ok, creator, created, linked, profile{handle,artist_name,status,
 --     verification_state,avatar_url,banner_url} | null,
 --     missing[] ('handle','artist_name'), problems{handle:'taken'|'invalid'},
---     prefill{handle,artist_name,handle_suggestion,has_bio,has_website},
+--     prefill{handle,artist_name,handle_suggestion,has_bio,has_website,avatar_url},
 --     terms_version, error? ('not_signed_in','terms_required') }
 --
 -- Owner repair of one account, as the service role (Supabase SQL editor /
@@ -52,11 +52,11 @@ declare
   c_terms constant text := 'music-creator-v1';
   v_row public.music_creator_profiles%rowtype;
   v_auth uuid;
-  v_np_name text; v_np_bio text; v_np_web text;
+  v_np_name text; v_np_bio text; v_np_web text; v_np_avatar text;
   v_pp_name text; v_mid text;
   v_handle text; v_problem text; v_suggest text; v_base text;
   v_name text; v_missing text[] := '{}';
-  v_bio text; v_web text;
+  v_bio text; v_web text; v_avatar text;
   v_created boolean := false;
   v_linked boolean := false;
   i int;
@@ -83,7 +83,7 @@ begin
 
   -- what the platform already knows about this member
   select auth_user_id into v_auth from public.m_auth_user_links where m_uid = p_m and is_primary limit 1;
-  select display_name, bio, website_url into v_np_name, v_np_bio, v_np_web
+  select display_name, bio, website_url, avatar_url into v_np_name, v_np_bio, v_np_web, v_np_avatar
     from public.network_profiles where m_uid = p_m;
   if v_auth is not null then
     select mccluster_id, display_name into v_mid, v_pp_name from public.platform_profiles where user_id = v_auth;
@@ -121,6 +121,8 @@ begin
 
   v_bio := left(coalesce(v_np_bio, ''), 2000);
   v_web := case when coalesce(v_np_web, '') ~* '^https://[^\s]+$' and length(v_np_web) <= 500 then v_np_web else '' end;
+  -- the member's picture comes along too (owner, 2026-10-20: never re-enter what the profile has); https only
+  v_avatar := case when coalesce(v_np_avatar, '') ~* '^https://[^\s]+$' and length(v_np_avatar) <= 2000 then v_np_avatar else '' end;
 
   if array_length(v_missing, 1) is not null or not p_write or not coalesce(p_accept_terms, false) then
     return jsonb_build_object(
@@ -130,14 +132,14 @@ begin
       'problems', case when v_problem is null then '{}'::jsonb else jsonb_build_object('handle', v_problem) end,
       'prefill', jsonb_build_object('handle', case when v_problem is null then v_handle end,
         'artist_name', v_name, 'handle_suggestion', v_suggest,
-        'has_bio', v_bio <> '', 'has_website', v_web <> ''),
+        'has_bio', v_bio <> '', 'has_website', v_web <> '', 'avatar_url', nullif(v_avatar, '')),
       'terms_version', c_terms,
       'error', case when p_write and not coalesce(p_accept_terms, false) then 'terms_required' end);
   end if;
 
   begin
-    insert into public.music_creator_profiles (m_uid, handle, artist_name, bio, website_url, terms_version, terms_accepted_at)
-    values (p_m, v_handle, v_name, v_bio, v_web, c_terms, now())
+    insert into public.music_creator_profiles (m_uid, handle, artist_name, bio, website_url, avatar_url, terms_version, terms_accepted_at)
+    values (p_m, v_handle, v_name, v_bio, v_web, v_avatar, c_terms, now())
     on conflict (m_uid) do nothing
     returning true into v_created;
   exception when unique_violation then
