@@ -2,6 +2,7 @@
    Music/World documents. No production API, account or audio request escapes
    the route fixtures. The globe renderer itself is covered by World suites. */
 import {createRequire} from 'node:module';
+import { withTravelAndMissions } from './world-switch.mjs';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {resolve, join, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -63,7 +64,8 @@ async function setup(width=390,member=false,{parentScript}={}){
       }
       const path=resolve(ROOT,'.'+(p==='/'?'/mnet.html':decodeURIComponent(p)));
       if(path.startsWith(resolve(ROOT)+sep)){
-        try{return r.fulfill({body:await readFile(path),contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
+        /* the World's first touch here is Travel's Where to, so this suite drives the World with Travel switched on */
+        try{let body=await readFile(path);if(path===resolve(ROOT,'mnet.html'))body=Buffer.from(withTravelAndMissions(body));return r.fulfill({body,contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
       }
       if(/\.(?:png|jpe?g|webp|gif)$/.test(p))return r.fulfill({contentType:'image/gif',body:IMAGE});
       return r.fulfill({status:404,body:'Fixture: file absent'});

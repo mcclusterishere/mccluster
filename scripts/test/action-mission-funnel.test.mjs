@@ -37,7 +37,8 @@ test("stale cached /action/mnet.html links self-heal through the 404 forwarder",
 test("mission deep links survive OAuth and first-profile onboarding", () => {
   assert.match(mnet, /var next=location\.pathname\+location\.search\+location\.hash/);
   assert.match(mnet, /\/auth\/\?next=" \+ encodeURIComponent\(next\)/);
-  assert.match(mnet, /missionDeepLink=\/\[\?&\]\(mission=\|view=missions/);
+  /* while the World is the social feed (owner, 2026-10-20) the link lands on the feed; the route is kept for Missions' return */
+  assert.match(mnet, /missionDeepLink=!MISSIONS_OFF&&\/\[\?&\]\(mission=\|view=missions/);
   assert.match(mnet, /if\(missionDeepLink\)\{\s*setView\("missions"\);\s*openDeepLinkedMission\(\)/);
   assert.match(mnet, /return u\.pathname\+u\.search\+u\.hash/);
   assert.match(mnet, /return "\/mnet\.html\?"\+q\.toString\(\)/);

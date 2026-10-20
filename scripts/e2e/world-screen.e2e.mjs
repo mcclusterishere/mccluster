@@ -29,6 +29,7 @@
    resolvable from here) and network access to the Cesium CDN and
    OpenStreetMap tiles. Exits non-zero on any failed check. */
 import { createServer } from 'node:http';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -46,7 +47,9 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try {
-    const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
+    let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
+    /* the World as it ships is the social feed; the suites that guard Travel and Missions get them switched back on */
+    if (/^[/\\]mnet\.html$/.test(path) && !/(?:^|; )world=social(?:;|$)/.test(req.headers.cookie || '')) body = Buffer.from(withTravelAndMissions(body));
     res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body);
   } catch { res.writeHead(404); res.end('not found'); }
 });
@@ -300,11 +303,13 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, social = false }) {
   const world = freshWorld();
   world.placeHome = placeHome;
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage; world.admin = admin;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  /* social: the World exactly as it ships (scripts/e2e/world-switch.mjs) */
+  if (social) await ctx.addCookies([{ name: 'world', value: 'social', url: BASE }]);
   /* every frame of the first seconds: did the sign-in form paint on the way into the World? (owner, 2026-10-20) */
   await ctx.addInitScript(() => {
     window.__gateFlash = 0;
@@ -813,6 +818,77 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
   }finally{await ctx.close();}
 }
 
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the social
+   feature will be the only feature with no tab selecting between the other two"; "open missions belong in missions not inside
+   the newsfeed"; "Notification should be a drop down menu not open a whole new page"). The page exactly as it ships. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&['iphone-portrait','desktop'].includes(d.name))||d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
+  const scope = `editorial-social-${device.name}-${member ? 'member' : 'guest'}`;
+  const {ctx,page,world,errors} = await open(device,{member,social:true});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
+    const shell = await page.evaluate(()=>{const h=document.documentElement,visible=el=>!!el&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
+      return {social:h.classList.contains('hu-social-only'),mode:h.dataset.worldMode,tabs:[...document.querySelectorAll('.wt-world-modes,.wt-world-modes button')].some(visible),
+        feed:!document.getElementById('mnFeedView').hidden,posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
+        planner:visible(document.getElementById('wtPlanner')),frame:document.getElementById('mnWorldFrame').getAttribute('src'),
+        expand:document.querySelector('.mn__world-expand').getAttribute('href')};});
+    check(scope,'the World is the social feed: no Travel or Missions tab, the feed is what it shows',shell.social&&shell.mode==='posts'&&!shell.tabs&&shell.feed&&shell.posts>0&&!shell.planner,shell);
+    check(scope,'the globe, and the expanded globe, are told to leave missions out',/[?&]missions=0(&|$)/.test(shell.frame)&&/[?&]missions=0(&|$)/.test(shell.expand),shell);
+    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&document.documentElement.classList.contains('globe-no-missions'),null,{timeout:25000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    check(scope,'the Earth carries no mission pins',await globe.evaluate(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()===0&&document.documentElement.classList.contains('globe-no-missions')));
+    const missionBits = await page.evaluate(()=>[...document.querySelectorAll('[data-take-mission],.mn__actcard:not(.mn__actcard--collab),#mnFeedMissions,#mnClipDoor,.hu-mission-preview,[data-mn-view="missions"],#mnProfileRecord,.mn-swipe__card')].filter(el=>el.getClientRects().length>0).map(el=>el.id||el.className));
+    check(scope,'no mission card, list or rail in the feed, and no door into Missions',missionBits.length===0,missionBits);
+    const promoted = await page.evaluate(()=>{const t=document.body.innerText;return {rail:!!document.getElementById('mnRail'),words:/WAYS TO MOVE|Campaigns & missions|See campaigns/i.test(t)};});
+    check(scope,'Ways to move is gone: no campaigns or missions promoted on the feed',!promoted.rail&&!promoted.words,promoted);
+    /* swiping the feed sideways used to change tabs; there is nothing to change to */
+    await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',300);fire('touchend',60);}catch(_){}});
+    check(scope,'a sideways swipe stays on the feed',await page.evaluate(()=>document.documentElement.dataset.worldMode)==='posts');
+    if (member) {
+      /* a search finds people and groups, never missions */
+      /* on a phone the field opens from the search button */
+      if (await page.isVisible('#huSearchToggle')) await page.click('#huSearchToggle');
+      await page.fill('#mnSearchInput','Mill River');
+      await page.waitForSelector('#mnSuggest:not([hidden])',{timeout:5000}).catch(()=>{});
+      check(scope,'search lists no missions',await page.evaluate(()=>![...document.querySelectorAll('#mnSuggest [data-suggest="mission"],#mnSuggest [data-suggest="globe"]')].some(b=>b.getClientRects().length)));
+      await page.fill('#mnSearchInput','');await page.keyboard.press('Escape');
+      if (await page.getAttribute('#huSearchToggle','aria-expanded')==='true') await page.click('#huSearchToggle');
+      /* a link into Missions lands on the feed */
+      await page.evaluate(()=>window.MCC_MNET.setView('missions'));
+      check(scope,'asking for Missions shows the feed',await page.evaluate(()=>!document.getElementById('mnFeedView').hidden&&document.getElementById('mnMissionsView').hidden));
+      /* NOTIFICATIONS DROP DOWN FROM THE BELL */
+      const before = await page.evaluate(()=>({feed:!document.getElementById('mnFeedView').hidden,scroll:document.getElementById('mnWorldFeed').scrollTop}));
+      await page.click('#mnBell');
+      await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.waitForFunction(()=>/Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent),null,{timeout:10000}).catch(()=>{});
+      const pop = await page.evaluate(()=>{const a=document.getElementById('mnAlerts').getBoundingClientRect(),b=document.getElementById('mnBell').getBoundingClientRect(),bar=document.querySelector('.appbar')?.getBoundingClientRect();
+        return {open:!document.getElementById('mnAlerts').hidden,expanded:document.getElementById('mnBell').getAttribute('aria-expanded'),feed:!document.getElementById('mnFeedView').hidden,
+          left:Math.round(a.left),right:Math.round(a.right),top:Math.round(a.top),bottom:Math.round(a.bottom),bellBottom:Math.round(b.bottom),iw:innerWidth,barTop:bar?Math.round(bar.top):null,
+          text:/Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
+      check(scope,'the bell drops the notifications down over the page, which stays the feed',pop.open&&pop.expanded==='true'&&pop.feed&&pop.text&&before.feed,pop);
+      check(scope,'the drop down sits under the bell, inside the screen and above the bottom bar',pop.top>=pop.bellBottom-2&&pop.left>=16&&pop.right<=pop.iw-16&&(pop.barTop===null||pop.bottom<=pop.barTop)&&pop.sw===pop.cw,pop);
+      await page.screenshot({path:join(OUT,scope+'-alerts.png')});
+      await page.keyboard.press('Escape');
+      check(scope,'Escape closes it, and the feed is where it was',await page.evaluate(b=>document.getElementById('mnAlerts').hidden&&document.getElementById('mnBell').getAttribute('aria-expanded')==='false'&&!document.getElementById('mnFeedView').hidden&&document.getElementById('mnWorldFeed').scrollTop===b.scroll,before));
+      await page.click('#mnBell');
+      await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.locator('.wt-headline').dispatchEvent('click');
+      check(scope,'a tap outside closes it',await page.isHidden('#mnAlerts'));
+      /* a tap on the globe happens inside its frame */
+      await page.click('#mnBell'); await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.evaluate(()=>document.getElementById('mnWorldFrame').focus());
+      await page.waitForFunction(()=>document.getElementById('mnAlerts').hidden,null,{timeout:3000}).catch(()=>{});
+      check(scope,'a tap on the globe closes it too',await page.isHidden('#mnAlerts'));
+      await page.click('#mnBell'); await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.click('#mnBell');
+      check(scope,'the bell closes it again',await page.isHidden('#mnAlerts'));
+    }
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    await page.screenshot({path:join(OUT,scope+'.png')});
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+
 /* The 2026-10-16 approved reference, including its explicit real-navigation exception.
    E2E_ONLY=editorial isolates this suite for CI; actual Cesium is never stubbed. */
 if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE || d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
@@ -1116,11 +1192,12 @@ if (runs('member-interactions')) {
   // Alerts: the bell carries the count and opens them
   check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '3');
   await page.click('#mnBell');
-  await page.waitForSelector('#mnNotificationsView:not([hidden])');
+  await page.waitForSelector('#mnAlerts:not([hidden])');
   /* the list and the read receipt are two round trips; wait for both rather than a fixed beat */
   await page.waitForFunction(() => /Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent) && document.getElementById('mnNotifBadge').hidden, null, { timeout: 10000 }).catch(() => {});
   check(scope, 'Alerts: the bell opens them and clears the count', /Fixture Ana liked your post/.test(await page.textContent('#mnNotifications')) && await page.isHidden('#mnNotifBadge'));
-  await page.click('#mnToWorld');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#mnAlerts', { state: 'hidden' });
   await page.waitForSelector('#mnFeedView:not([hidden])');
 
   // Groups from search: a matching group opens directly

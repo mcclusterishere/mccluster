@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark" class="hu-editorial hu-travel-enabled" data-world-mode="travel">
+<html lang="en" data-theme-lock="dark" class="hu-editorial hu-travel-enabled hu-social-only" data-world-mode="posts">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -23,6 +23,10 @@
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage">
+  <!-- THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the
+       social feature will be the only feature with no tab selecting between the other two"). Travel and Missions stay in
+       the code, switched off, until they are refined: hu-social-only on <html> is the switch, and missions=0 tells the
+       globe (the frame and the expanded globe) to draw no missions. Remove both to bring them back. -->
   <main class="mn">
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Equity Uprise home">
@@ -57,10 +61,25 @@
       </div>
       <!-- ALERTS LIVE ON THE BELL: the count of unread alerts, and the tap
            that opens them. There is no Alerts entry anywhere else. -->
-      <button class="mn__bell" id="mnBell" type="button" aria-label="Alerts" hidden>
+      <button class="mn__bell" id="mnBell" type="button" aria-label="Alerts" aria-expanded="false" aria-controls="mnAlerts" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
         <span class="mn__bell-count" id="mnNotifBadge" hidden></span>
       </button>
+      <!-- NOTIFICATIONS DROP DOWN FROM THE BELL (owner, 2026-10-20: "Notification should be a drop down menu not open a whole
+           new page"). The page stays where it is underneath; a tap outside, Escape or the bell again closes it. -->
+      <div class="mn__alerts" id="mnAlerts" role="dialog" aria-label="Notifications" hidden>
+        <div class="mn__alerts-head">
+          <h2>Notifications</h2>
+          <button class="mn__quiet" id="mnRefreshNotifications" type="button">Refresh</button>
+        </div>
+        <!-- alerts on this device: shown only where the browser can take them and the server has them on -->
+        <div class="mn__push" id="mnPush" hidden>
+          <p><b>Alerts on this device</b><span id="mnPushNote">A reply, a comment or a review decision, even with this page closed. At most one alert every 15 minutes.</span></p>
+          <button class="mn__quiet" id="mnPushToggle" type="button" aria-pressed="false">Turn on</button>
+        </div>
+        <div class="mn__notifications" id="mnNotifications"></div>
+        <p class="mn__status mn__status--center" id="mnNotificationStatus"></p>
+      </div>
       <!-- THE ACCOUNT MENU (owner, 2026-10-14): three destinations in the
            bar, one small account menu here, everything else in context.
            Alerts are the bell; missions are the pins, the mission card and
@@ -253,11 +272,11 @@
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
           <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News feed</button></nav>
-          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <!-- the globe's corner stack (owner, 2026-10-19): the World music play/pause sits with the fullscreen control, same size, same place -->
           <div class="mn__world-stack" id="mnWorldStack">
           <button class="mn__world-play" id="mnWorldPlay" type="button" aria-label="Play music" aria-pressed="false" hidden><span aria-hidden="true">▶</span></button>
-          <a class="mn__world-expand" href="action-globe.html?explore=1" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
+          <a class="mn__world-expand" href="action-globe.html?explore=1&amp;missions=0" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
           </div>
           <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
 
@@ -314,13 +333,6 @@
             <div class="hu-section-head hu-section-head--compact"><h2 id="huMissionHeading">Missions</h2>          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Browse all missions and your Action Record"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button></div>
             <div id="huMissionList"><p class="hu-muted">Loading missions…</p></div>
           </section>
-        <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
-             is the door into its campaign page; the dot pulses because the
-             count under it is live. -->
-        <section class="mn__rail" id="mnRail" aria-labelledby="mnRailH" hidden>
-          <div class="mn__rail-head"><div><p class="mn__rail-k">WAYS TO MOVE</p><h2 id="mnRailH">Campaigns & missions</h2></div><a href="action/">See all</a></div>
-          <div class="mn__rail-track" id="mnRailTrack"></div>
-        </section>
         <!-- a guest's door into the members' side: a real Equity Uprise rally
              (Bridgeport Creates), then the public posts, read-only -->
         <!-- THE FEED'S SCOPE (owner's reference, 2026-10-19): Local is the place the globe is on, Global is everything, Live and
@@ -529,20 +541,6 @@
         </div>
         <div class="mn__conversations" id="mnConversations"></div>
         <p class="mn__status mn__status--center" id="mnMessageStatus"></p>
-      </section>
-
-      <section class="mn__view" id="mnNotificationsView" hidden>
-        <div class="mn__section-head">
-          <div><p class="mn__eyebrow">Equity Uprise</p><h2>Notifications</h2></div>
-          <button class="mn__quiet" id="mnRefreshNotifications" type="button">Refresh</button>
-        </div>
-        <!-- alerts on this device: shown only where the browser can take them and the server has them on -->
-        <div class="mn__push" id="mnPush" hidden>
-          <p><b>Alerts on this device</b><span id="mnPushNote">A reply, a comment or a review decision, even with this page closed. At most one alert every 15 minutes.</span></p>
-          <button class="mn__quiet" id="mnPushToggle" type="button" aria-pressed="false">Turn on</button>
-        </div>
-        <div class="mn__notifications" id="mnNotifications"></div>
-        <p class="mn__status mn__status--center" id="mnNotificationStatus"></p>
       </section>
 
       <section class="mn__view" id="mnProfileView" hidden>

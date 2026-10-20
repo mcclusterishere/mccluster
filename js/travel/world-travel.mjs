@@ -36,7 +36,10 @@ const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coord
 const freshDraft = () => normalizeJourney({ mode:'drive' });
 let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0, tripShape = 'rides';
 let rideSub = 'directions', flightSub = 'commercial';
-let catalogPromise, currentMode = 'travel', hostVisible = document.body.dataset.worldAudioVisible !== 'false';
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): with hu-social-only on <html> (mnet.html) the feed is the only mode,
+   and nothing switches to Travel or Missions until they come back */
+const MODES = document.documentElement.classList.contains('hu-social-only') ? ['posts'] : ['travel', 'missions', 'posts'];
+let catalogPromise, currentMode = MODES[0], hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
 const addressSearch = createAddressSearch();
@@ -639,7 +642,7 @@ $('wtRideDirections').onclick = () => {
 };
 
 function setMode(mode) {
-  if (!['travel', 'missions', 'posts'].includes(mode)) return;
+  if (!MODES.includes(mode)) return;
   if (mode !== currentMode) { setMapPick(null); invalidateRoute(); closeSearches(); }
   currentMode = mode; root.dataset.worldMode = mode;
   if (mode !== 'travel') root.classList.remove('wt-expanded');
@@ -665,7 +668,7 @@ let touchStart = null;
 $('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.touches.length !== 1 || e.target.closest('input,select,button,a,summary,.wt-toolbar,[data-mission-deck]') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
 $('mnWorldFeed').addEventListener('touchend', e => {
   if (!touchStart) return; const dx = e.changedTouches[0].clientX - touchStart.x, dy = e.changedTouches[0].clientY - touchStart.y; touchStart = null;
-  if (Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2) { const modes = ['travel', 'missions', 'posts']; setMode(modes[(modes.indexOf(currentMode) + (dx < 0 ? 1 : 2)) % 3]); }
+  if (MODES.length > 1 && Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2) setMode(MODES[(MODES.indexOf(currentMode) + (dx < 0 ? 1 : MODES.length - 1)) % MODES.length]);
 }, { passive:true });
 $('mnWorldFeed').addEventListener('touchcancel', () => { touchStart = null; }, { passive:true });
 window.addEventListener('message', e => {
@@ -911,5 +914,6 @@ attachWhipBooking({
 });
 syncInputs(); sessionChanged();
 const query = new URLSearchParams(location.search), requestedMode = query.get('mode');
-setMode(query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : ['travel', 'missions', 'posts'].includes(requestedMode) ? requestedMode : 'travel');
+const wanted = query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : requestedMode;
+setMode(MODES.includes(wanted) ? wanted : MODES[0]);
 send({ type:'hu:hello' }); autoLocate();
