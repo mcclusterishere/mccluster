@@ -156,32 +156,8 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__tabs > .mn__tabs-thumb { position: absolute; }
 .mn__badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--mn-hot); color: #fff; font-weight: 800; font-size: 0.7rem; }
 
-/* ---------- campaigns rail ---------- */
-.mn__rail { margin: 0 -16px 18px; animation: mn-rise 0.6s var(--mn-ease) both; }
-.mn__rail-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 16px; margin-bottom: 10px; }
-.mn__rail-head h2 { margin: 0; font-family: var(--mn-display); font-weight: 400; font-size: 1.5rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; }
-.mn__rail-head a { color: var(--mn-dim); font-weight: 800; font-size: 0.85rem; text-decoration: none; }
-.mn__rail-track { display: flex; gap: 10px; padding: 2px 16px 6px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.mn__rail-track::-webkit-scrollbar { display: none; }
-.mn__camp {
-  --hue: 10;
-  position: relative; flex: none; display: grid; align-content: start; gap: 6px; width: 74%; max-width: 19rem; min-height: 168px;
-  padding: 16px; border-radius: 22px; overflow: hidden; scroll-snap-align: start; text-decoration: none; color: var(--mn-ink);
-  background:
-    radial-gradient(120% 90% at 100% 0%, hsla(var(--hue), 70%, 45%, 0.35), transparent 60%),
-    linear-gradient(160deg, #1d1715, #120f0d);
-  box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.12), 0 18px 40px -24px rgba(0, 0, 0, 0.9);
-  animation: mn-rise 0.6s var(--mn-ease) both; animation-delay: calc(var(--i, 0) * 70ms + 120ms);
-  transition: transform 0.25s var(--mn-ease);
-}
-.mn__camp:active { transform: scale(0.97); }
-.mn__camp-k { display: inline-flex; align-items: center; gap: 8px; color: rgba(244, 239, 230, 0.75); font-weight: 800; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; }
 .mn__live { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--mn-hot); }
 .mn__live::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--mn-hot); animation: mn-ping 1.8s var(--mn-ease) infinite; }
-.mn__camp > b { font-family: var(--mn-display); font-weight: 400; font-size: 1.7rem; line-height: 0.95; text-transform: uppercase; }
-.mn__camp small { color: var(--mn-dim); font-weight: 600; font-size: 0.85rem; line-height: 1.4; }
-.mn__camp-n { margin-top: auto; padding-top: 8px; color: var(--mn-dim); font-weight: 700; font-size: 0.82rem; }
-.mn__camp-n b { color: var(--mn-ink); font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
 /* ---------- the composer: one line until it is used ---------- */
 .mn__composer { padding: 10px 12px; border-radius: 26px; transition: border-radius 0.35s var(--mn-ease), box-shadow 0.35s var(--mn-ease), padding 0.35s var(--mn-ease); }
@@ -336,6 +312,14 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__person-sub, .mn__conversation-sub { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-faint); font-size: 0.82rem; }
 .mn__follow { min-height: 36px; padding: 0 14px !important; border-radius: 999px !important; background: var(--mn-ink) !important; color: var(--mn-bg) !important; font-weight: 800 !important; font-size: 0.85rem !important; }
 .mn__follow.is-active { background: transparent !important; color: var(--mn-dim) !important; box-shadow: inset 0 0 0 1px var(--mn-rule-2) !important; }
+/* NOTIFICATIONS DROP DOWN FROM THE BELL (owner, 2026-10-20): a panel under the header, the page left where it was.
+   Phone first: 16px from each edge; wider screens keep it a column at the right. It stops above the bottom bar. */
+.mn__alerts { position: fixed; z-index: 45; top: calc(env(safe-area-inset-top, 0px) + 64px); left: 16px; right: 16px; margin-left: auto; box-sizing: border-box; width: auto; max-width: 26rem; max-height: min(34rem, calc(100dvh - env(safe-area-inset-top, 0px) - 180px)); overflow-y: auto; overscroll-behavior: contain; padding: 12px; border-radius: 18px; background: var(--mn-raise); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 24px 48px -18px rgba(0, 0, 0, 0.9); pointer-events: auto; }
+.mn__alerts[hidden] { display: none; }
+.mn__alerts-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.mn__alerts-head h2 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+.mn__alerts-head .mn__quiet { min-height: 44px; }
+.mn-world-on .mn__alerts { background: #121418; color: #f2f1ed; box-shadow: var(--w-edge, inset 0 0 0 1px rgba(255, 255, 255, 0.12)), 0 24px 48px -18px rgba(0, 0, 0, 0.95); }
 /* alerts on this device: one line of why, one button */
 .mn__push { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--mn-raise-2); }
 .mn__push p { margin: 0; min-width: 0; font-size: 0.88rem; line-height: 1.4; color: var(--mn-dim); }
@@ -483,9 +467,6 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 @media (min-width: 600px) {
   .mn { padding-left: 24px; padding-right: 24px; }
   .mn__top { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; }
-  .mn__rail { margin-left: -24px; margin-right: -24px; }
-  .mn__rail-head, .mn__rail-track { padding-left: 24px; padding-right: 24px; }
-  .mn__camp { width: 17rem; }
   .mn__gate { padding-top: 64px; }
   .mn__composer { padding: 16px 18px; }
   .mng__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -531,11 +512,11 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__thread[open]::backdrop { animation: mn-backdrop-in .3s ease both; }
 .mn__thread::backdrop { background: rgba(4,3,3,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 
-.mn__camp, .mn__track, .mn__person, .mng__card {
+.mn__track, .mn__person, .mng__card {
   will-change: transform;
 }
 @media (hover:hover) {
-  .mn__camp:hover, .mn__track:hover, .mn__person:hover, .mng__card:hover {
+  .mn__track:hover, .mn__person:hover, .mng__card:hover {
     transform: translateY(-2px);
   }
   .mn__brand:hover .mn__brand-mark { transform: rotate(-5deg) scale(1.06); }
@@ -580,10 +561,9 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 
 /* Human Uprise identity: action is the product, not generic social posting. */
 .mn__manifesto{margin:18px 0 20px;padding:24px 20px 20px;border:1px solid var(--mn-rule-2);border-radius:24px;background:radial-gradient(circle at 92% 0,rgba(255,77,61,.22),transparent 38%),linear-gradient(145deg,#191310,#0b0908 72%);overflow:hidden}
-.mn__manifesto p,.mn__rail-k{margin:0;color:var(--mn-hot);font-size:.64rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+.mn__manifesto p{margin:0;color:var(--mn-hot);font-size:.64rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
 .mn__manifesto h1{max-width:9ch;margin:7px 0 18px;font-family:var(--mn-display);font-size:clamp(2.7rem,12vw,4.8rem);font-weight:400;line-height:.88;text-transform:uppercase}
 .mn__manifesto div{display:flex;gap:7px;overflow:auto;scrollbar-width:none}.mn__manifesto div::-webkit-scrollbar{display:none}.mn__manifesto span{flex:none;padding:8px 11px;border:1px solid var(--mn-rule-2);border-radius:999px;color:var(--mn-dim);font-size:.72rem;font-weight:800}
-.mn__rail-head>div{min-width:0}.mn__rail-k{margin-bottom:3px}
 .mn__post{padding-inline:16px}
 @media(min-width:700px){.mn__manifesto{padding:30px}.mn__manifesto h1{font-size:4.8rem}}
 
@@ -789,16 +769,13 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__mission-strip a:hover::after,.mn__understand>a:hover::after{transform:scaleX(1)}
 .mn__post-card{transition:transform .28s var(--mn-ease),box-shadow .28s var(--mn-ease),border-color .28s}
 .mn__post-card:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--mn-rule-2),0 22px 54px -38px rgba(0,0,0,.95)}
-.mn__camp::after{content:"";position:absolute;inset:-40% -70%;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.09) 50%,transparent 62%);transform:translateX(-45%) rotate(8deg);transition:transform .8s var(--mn-ease);pointer-events:none}
-.mn__camp:hover::after{transform:translateX(45%) rotate(8deg)}
-.mn__camp:hover{transform:translateY(-3px)}
 .mn__primary,.mn__post,.mn__follow.is-active{box-shadow:0 10px 28px -16px rgba(255,77,61,.72)}
 @media (hover:hover){
   .mn__manifesto:hover::before,.mn__actionboard:hover::before,.mn__understand:hover::before{transform:scale(1.07);opacity:.32}
 }
 @media (prefers-reduced-motion:reduce){
   .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before,
-  .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card,.mn__camp,.mn__camp::after{transition:none!important;animation:none!important}
+  .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card{transition:none!important;animation:none!important}
 }
 
 /* Organization-grade group fronts */

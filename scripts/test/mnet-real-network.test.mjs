@@ -198,7 +198,10 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.doesNotMatch(html, /Write a comment/);
   assert.match(js, /data-take-mission/);
   assert.match(js, /Verified action/);
-  assert.match(html, /id="mnRail"/);
+  /* WAYS TO MOVE IS GONE (owner, 2026-10-20: "The ways to move needs to go, like absolutely and totally"): no campaigns
+     and missions rail on the feed, in the page, the code or the styles */
+  assert.doesNotMatch(html, /id="mnRail"|WAYS TO MOVE|Campaigns &(amp;)? missions/);
+  assert.doesNotMatch(js, /function loadRail\(|mnRailTrack|action_campaigns_live/);
 });
 
 test("Action Network profile treats the member website as the identity front page", async()=>{

@@ -87,7 +87,7 @@ test('editorial Earth and street map preserve the NASA/OSM sources and analytics
 });
 test('embedded globe remains interactive and has a full-screen exit',()=>{
  const html=read('mnet.html');
- assert.match(html,/class="mn__world-expand" href="action-globe\.html\?explore=1"/);
+ assert.match(html,/class="mn__world-expand" href="action-globe\.html\?explore=1&amp;missions=0"/);
  const js=read('js/action-globe.js');
  assert.match(js,/globe-embedded/);
  assert.match(js,/ScreenSpaceEventType\.LEFT_CLICK/);
