@@ -235,4 +235,3 @@ revoke all on function public.analytics_stage_totals(timestamptz,timestamptz,uui
 grant execute on function public.analytics_stage_totals(timestamptz,timestamptz,uuid) to authenticated,service_role;
 comment on function public.analytics_stage_totals(timestamptz,timestamptz,uuid) is
   'Whole-window distinct device IDs by declared event stage, auth account totals separately. No cross-stage conversion rate or verified-payment claim; existing RLS plus admin gate.';
-

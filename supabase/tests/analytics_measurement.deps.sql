@@ -22,4 +22,3 @@ create policy owner_events on public.events for select to authenticated using(pu
 create policy owner_lean on public.events_lean for select to authenticated using(public.eu_is_admin());
 insert into public.event_taxonomy values
  ('page_view','view',''),('song_start','content',''),('click','engage',''),('purchase','purchase','Client report');
-
