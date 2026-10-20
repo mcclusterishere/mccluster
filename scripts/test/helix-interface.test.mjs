@@ -70,6 +70,45 @@ test("no publicly browsable Helix artifact and deploy fails closed", () => {
   assert.match(deploy,/rm -rf docs packages apps scripts supabase \.github tests node_modules redirects tools _unfinished workers/);
   assert.match(deploy,/Helix preview must never be shipped/);
 });
+
+test("brain 30%, unobstructed strand 30%, translucent canonical player 40%", () => {
+  const page = read("_unfinished/helix/index.html");
+  const css = read("_unfinished/helix/helix.css");
+  const main = read("_unfinished/helix/main.mjs");
+  for (const id of [
+    "helixBrain", "helixBpm", "helixKey", "helixSignature", "helixSpineWindow",
+    "helixPlayer", "helixSeek", "helixPlay", "helixLyrics", "helixDetails"
+  ]) {
+    if (id === "helixSpineWindow") {
+      assert.match(page, /class="helix-spine-window"/);
+    } else assert.ok(page.includes('id="' + id + '"'), "Missing interface element " + id);
+  }
+  assert.match(css, /\.helix-brain\s*\{[^}]*height: 30%/s);
+  assert.match(css, /\.helix-spine-window\s*\{[^}]*top: 30%; height: 30%/s);
+  assert.match(css, /\.helix-player\s*\{[^}]*top: 60%; bottom: 0/s);
+  assert.match(css, /\.helix-player\s*\{[^}]*backdrop-filter: blur/s);
+  assert.match(css, /#helixCanvas\s*\{[^}]*inset: 0/s);
+  assert.doesNotMatch(page, /<audio\b/i, "Helix must not add a second audio element");
+  assert.match(main, /transport\.play\(album\(\)\.slug, track\(\)\.title\)/);
+});
+
+test("3D labels attach to actual rungs and the brain display refuses unverified science", () => {
+  const scene = read("_unfinished/helix/scene.mjs");
+  const main = read("_unfinished/helix/main.mjs");
+  const page = read("_unfinished/helix/index.html");
+  assert.match(scene, /function rungLettering\(title, theta\)/);
+  assert.match(scene, /label\.rotation\.y = -theta/);
+  assert.match(scene, /strand\.add\(label\)/);
+  assert.match(scene, /function sonicBrain\(\)/);
+  assert.match(scene, /this\.camera\.add\(this\.brain\)/);
+  assert.match(main, /analysis\?\.provenance === "measured"/);
+  assert.match(main, /analysis\?\.provenance === "verified"/);
+  assert.match(main, /Audio analysis pending/);
+  assert.match(main, /!validDuration \|\| !!track\(\)\?\.gated/);
+  assert.match(page, /NOT an EEG reading/);
+  assert.doesNotMatch(main, /new Audio\(/);
+});
+
 test("real music library provides unique album slugs and songs", () => {
   const data=JSON.parse(read("data/albums.json"));
   const names=data.albums.map(a=>a.slug);
