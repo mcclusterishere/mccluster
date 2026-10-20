@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { amdInventoryFromSysfs, amdLoadFromSysfs, parseNvidiaInventoryCsv, parseNvidiaLoadCsv } from '../src/compute/hardware.mjs';
+import { amdInventoryFromSysfs, amdLoadFromSysfs, parseNvidiaInventoryCsv, parseNvidiaLoadCsv, parseAppleDisplayInventory } from '../src/compute/hardware.mjs';
 import { assertLoopbackUrl, capabilityReadiness, healthyCapabilities, probeExecutors, probeHttpExecutor } from '../src/compute/engine-probes.mjs';
 
 test('parses NVIDIA inventory and runtime telemetry', () => {
@@ -43,6 +43,15 @@ test('discovers AMD VRAM from Linux sysfs without requiring ROCm CLI', () => {
 test('engine probes reject non-loopback targets', () => {
   assert.throws(() => assertLoopbackUrl('https://example.com/health'), /loopback/i);
   assert.equal(assertLoopbackUrl('http://127.0.0.1:8188/system_stats').hostname, '127.0.0.1');
+});
+
+test('Apple Metal inventory never misrepresents unified memory as dedicated VRAM', () => {
+  const inventory = parseAppleDisplayInventory(JSON.stringify({ SPDisplaysDataType: [{ sppci_model: 'Apple M1', spdisplays_metal: 'spdisplays_metal3' }] }));
+  assert.equal(inventory[0].vendor, 'apple');
+  assert.equal(inventory[0].compute, 'metal');
+  assert.equal(inventory[0].vram_bytes, 0);
+  assert.equal(inventory[0].uuid, null);
+  assert.deepEqual(parseAppleDisplayInventory('{}'), []);
 });
 
 test('HTTP engine probe honors health status', async () => {

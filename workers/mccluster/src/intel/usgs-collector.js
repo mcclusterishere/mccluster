@@ -37,6 +37,7 @@ import { persistAdapterResult, entitlementRows } from '../seek-first/store.js';
 import { effectiveEntitlement, assertConsumable, LANES } from '../seek-first/entitlements.js';
 import { sourceByKey } from '../seek-first/source-registry.js';
 import { IntelError, configured, resolveHouseOrg, rpc } from './store.js';
+import { evidenceProjection } from './projection.js';
 
 export const USGS_CONNECTOR_KEY = 'usgs.earthquakes';
 export const USGS_ENDPOINT = 'https://earthquake.usgs.gov/fdsnws/event/1/query';
@@ -99,31 +100,51 @@ class UpstreamFailure extends Error {
 
 /* Fetches one page. Throws UpstreamFailure for anything that is not an
    explicit, well-formed answer from USGS. */
-export async function fetchUsgsPage(url, fetchImpl = fetch) {
+export async function fetchUsgsPage(url, fetchImpl = fetch, { timeoutMs = TIMEOUT_MS, maxBytes = 2_000_000 } = {}) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  let res;
-  try {
-    // Workers reject redirect:'error'; 'manual' plus the 3xx check below is the equivalent.
-    res = await fetchImpl(url.toString(), {
-      redirect: 'manual',
-      signal: controller.signal,
-      headers: { accept: 'application/json', 'user-agent': 'McCluster-Intel/1.0 (https://mccluster.org)' }
-    });
-  } catch (error) {
-    throw new UpstreamFailure(error?.name === 'AbortError' ? 'provider_timeout' : 'provider_network_error');
-  } finally {
-    clearTimeout(timer);
-  }
-  if (res.status === 204) return { features: [], provider_status: 204 };
-  if (res.status >= 300 && res.status < 400) throw new UpstreamFailure('provider_redirect', { provider_status: res.status });
-  if (!res.ok) throw new UpstreamFailure(`provider_http_${res.status}`, { provider_status: res.status });
-  let data;
-  try { data = await res.json(); } catch { throw new UpstreamFailure('provider_invalid_json', { provider_status: res.status }); }
-  if (!data || data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
-    throw new UpstreamFailure('provider_invalid_payload', { provider_status: res.status });
-  }
-  return { features: data.features, provider_status: res.status };
+  let timer;
+  const expired = new Promise((_, reject) => {
+    timer = setTimeout(() => { controller.abort(); reject(new UpstreamFailure('provider_timeout')); }, timeoutMs);
+  });
+  const read = async () => {
+    let res;
+    try {
+      res = await fetchImpl(url.toString(), {
+        redirect: 'manual', signal: controller.signal,
+        headers: { accept: 'application/json', 'user-agent': 'McCluster-Intel/1.0 (https://mccluster.org)' }
+      });
+    } catch (error) {
+      throw new UpstreamFailure(error?.name === 'AbortError' ? 'provider_timeout' : 'provider_network_error');
+    }
+    if (res.status === 204) return { features: [], provider_status: 204 };
+    if (res.status >= 300 && res.status < 400) throw new UpstreamFailure('provider_redirect', { provider_status: res.status });
+    if (!res.ok) throw new UpstreamFailure(`provider_http_${res.status}`, { provider_status: res.status });
+    if (Number(res.headers.get('content-length')) > maxBytes) throw new UpstreamFailure('provider_payload_too_large');
+    const reader = res.body?.getReader();
+    if (!reader) throw new UpstreamFailure('provider_invalid_json', { provider_status: res.status });
+    let data, size = 0, text = '';
+    const decoder = new TextDecoder();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > maxBytes) throw new UpstreamFailure('provider_payload_too_large');
+        text += decoder.decode(value, { stream: true });
+      }
+      text += decoder.decode();
+      data = JSON.parse(text);
+    } catch (error) {
+      if (error instanceof UpstreamFailure) throw error;
+      throw new UpstreamFailure(controller.signal.aborted ? 'provider_timeout' : 'provider_invalid_json', { provider_status: res.status });
+    }
+    if (!data || data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
+      throw new UpstreamFailure('provider_invalid_payload', { provider_status: res.status });
+    }
+    return { features: data.features, provider_status: res.status };
+  };
+  try { return await Promise.race([read(), expired]); }
+  finally { clearTimeout(timer); controller.abort(); }
 }
 
 async function sha256Hex(text) {
@@ -143,8 +164,9 @@ export async function normalizeFeature(feature, retrievedAt) {
   const p = feature?.properties || {};
   const time = finite(p.time);
   if (!id || time === null || !Number.isFinite(new Date(time).getTime())) return null;
-  const candidateUpdated = finite(p.updated) ?? time;
-  const updated = Number.isFinite(new Date(candidateUpdated).getTime()) ? candidateUpdated : time;
+  const candidateUpdated = finite(p.updated);
+  const revision = candidateUpdated !== null && Number.isFinite(new Date(candidateUpdated).getTime()) ? new Date(candidateUpdated).toISOString() : null;
+  const updated = revision ? candidateUpdated : time;
   const coords = Array.isArray(feature?.geometry?.coordinates) ? feature.geometry.coordinates : [];
   const lon = finite(coords[0]);
   const lat = finite(coords[1]);
@@ -153,18 +175,19 @@ export async function normalizeFeature(feature, retrievedAt) {
   const mag = finite(p.mag);
   const place = typeof p.place === 'string' ? p.place.slice(0, 200) : null;
   const sourceUrl = typeof p.url === 'string' && p.url.startsWith('https://') ? p.url : null;
+  const contentHash = await sha256Hex(JSON.stringify(feature));
   const record = {
     external_id: id,
     record_kind: 'earthquake',
-    idempotency_key: `usgs:${id}:${updated}`,
-    content_hash: await sha256Hex(JSON.stringify(feature)),
+    idempotency_key: revision ? `usgs:${id}:${updated}` : `usgs:${id}:sha256:${contentHash}`,
+    content_hash: contentHash,
     title: (typeof p.title === 'string' && p.title.trim()) ? p.title.slice(0, 500) : `M ${mag ?? '?'} earthquake${place ? ` - ${place}` : ''}`,
     summary: place ? `USGS ${p.status || 'reported'} event: ${place}` : 'USGS reported event',
     observed_at: new Date(time).toISOString(),
     retrieved_at: retrievedAt,
     source_url: sourceUrl,
     region_label: place,
-    source_ref: { provider: 'usgs', provider_id: id, url: sourceUrl, updated_at: new Date(updated).toISOString(), retrieved_at: retrievedAt },
+    source_ref: { provider: 'usgs', provider_id: id, url: sourceUrl, updated_at: revision, retrieved_at: retrievedAt },
     measures: {
       magnitude: mag,
       magnitude_type: typeof p.magType === 'string' ? p.magType : null,
@@ -176,6 +199,13 @@ export async function normalizeFeature(feature, retrievedAt) {
     payload: { type: 'Feature', id, properties: p, geometry: feature?.geometry ?? null }
   };
   if (located) { record.lat = lat; record.lon = lon; }
+  record.source_ref.projection = evidenceProjection({ ...record,
+    geo_source:located ? 'source_published' : 'none', license:USGS_CONNECTOR.license_policy.license,
+    attribution:USGS_CONNECTOR.license_policy.attribution }, {
+    sourceId:USGS_CONNECTOR_KEY, truthKind:'observation', sourceRevision:revision,
+    values:[{name:'magnitude',value:mag,unit:record.measures.magnitude_type},{name:'depth',value:record.measures.depth_km,unit:'km'}],
+    coverage:{ min_magnitude:MIN_MAGNITUDE, geographic_scope:'USGS published catalog; not all seismic events' }
+  });
   return record;
 }
 
@@ -215,7 +245,7 @@ export async function runUsgsCollector(env, { now = new Date(), fetchImpl = fetc
   let unidentifiable = 0;
   for (const feature of page.features.slice(0, PAGE_LIMIT)) {
     const record = await normalizeFeature(feature, retrievedAt);
-    if (record) records.push(record); else unidentifiable += 1;
+    if (record) { record.source_ref.projection.org_id = org.id; records.push(record); } else unidentifiable += 1;
   }
   // Unidentifiable features still go to the store so they are counted as rejected, not dropped silently.
   for (let i = 0; i < unidentifiable; i += 1) records.push({ external_id: '', title: '', idempotency_key: '', content_hash: '' });

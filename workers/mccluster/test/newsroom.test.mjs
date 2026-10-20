@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { companySiteResponse } from '../src/company-site/router.js';
 import { shapeArticle, slugify, renderSitemap } from '../src/company-site/news.js';
 import { PAGES } from '../src/company-site/pages.generated.js';
+import { approveNewsroomRevision } from '../src/newsroom-review.js';
 import { handlePlatformApi } from '../src/platform-api.js';
 import { screenReason } from '../src/world-news-discovery.js';
 
@@ -29,6 +30,8 @@ const ROWS = [
   row('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'Someone else\n\nA member marked their own post.', { author_m_uid: MEMBER }),
   row('ffffffff-ffff-4fff-8fff-ffffffffffff', '   ', { media: [{ asset_id: 'x' }] })
 ];
+
+for (const record of ROWS) if (record.metadata.newsroom) record.metadata.newsroom_review = await approveNewsroomRevision(record, record.author_m_uid);
 
 function store({ down = false } = {}) {
   const calls = [];
@@ -193,7 +196,10 @@ test('the house owner\'s post marked for the newsroom carries it, with https sou
   const res = await post({ body: 'Headline\n\nStory.', visibility: 'public', newsroom: true, newsroom_note: 'morning_brief',
     newsroom_sources: [{ title: 'Fed', url: 'https://news.example/fed' }, { title: 'x', url: 'javascript:alert(1)' }, { title: 'y', url: 'http://plain.example/' }] });
   assert.equal(res.status, 201);
-  assert.deepEqual(written(calls).metadata, { newsroom: true, newsroom_note: 'morning_brief',
+  const { newsroom_review, ...metadata } = written(calls).metadata;
+  assert.equal(newsroom_review.reviewer_m_uid, OWNER);
+  assert.match(newsroom_review.revision_sha256, /^[0-9a-f]{64}$/);
+  assert.deepEqual(metadata, { newsroom: true, newsroom_note: 'morning_brief',
     newsroom_sources: [{ url: 'https://news.example/fed', title: 'Fed', domain: 'news.example' }] });
 });
 
