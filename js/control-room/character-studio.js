@@ -5,7 +5,7 @@
   'use strict';
   window.CR = window.CR || {};
   var A = {
-    request: null, rerender: null, loading: false, loaded: false,
+    request: null, rerender: null, getState: null, loading: false, loaded: false,
     busy: false, error: '', message: '', accounts: [], preview: null,
     previewInput: '',
     form: {
@@ -56,6 +56,11 @@
     }).join('') + '</ul>';
   }
   function render() {
+    var context = A.getState ? A.getState() : null;
+    if (!context || !context.workspace || context.workspace.role !== 'owner' ||
+        (context.org && context.org.slug && context.org.slug !== 'mccluster')) {
+      return '<div class="cr-canvas ccs"><section class="ccs-preview"><h2>Character Studio is private</h2><p>Sign into the McCluster house owner workspace to design or inspect fictional digital performers.</p></section></div>';
+    }
     return '<div class="cr-canvas ccs" id="ccsRoot">' +
       '<header class="ccs-intro"><div><span class="ccs-overline">CHARACTER STUDIO · PRIVATE ALPHA</span>' +
       '<h2>Build a character that stays in character.</h2>' +
@@ -158,7 +163,7 @@
     };
   }
   window.CR.characterStudio = {
-    init: function (opts) { A.request = opts.request; A.rerender = opts.render; },
+    init: function (opts) { A.request = opts.request; A.rerender = opts.render; A.getState = opts.getState; },
     render: render, bind: bind, load: load, state: A
   };
 })();
