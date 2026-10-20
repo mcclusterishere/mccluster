@@ -11,6 +11,7 @@
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import postgres from 'npm:postgres@3.4.5'
+import { persistProposal } from './proposals.mjs'
 
 const SB = Deno.env.get('SUPABASE_URL') ?? ''
 const SRV = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -77,6 +78,13 @@ async function listDecisions(url: URL, userId: string) {
   const beforeId = url.searchParams.get('before_id')
 
   await requireOwnerAdmin(orgId, userId)
+
+  if (url.searchParams.get('contract') === 'intel-decision/v2') {
+    // Handshake prevents a newer Worker from sending retryable writes to an
+    // older function that does not yet honor idempotency keys.
+    const [schema] = await sql`select to_regprocedure('public.intel_decision_readiness(uuid,uuid)') is not null as ready`
+    return { contract: 'intel-decision/v2', schema_ready: schema?.ready === true }
+  }
 
   /* Every filter is a bound parameter — no fragment is built from input. The
      cursor is (created_at, id) so decisions sharing a timestamp still page. */
@@ -155,7 +163,7 @@ Deno.serve(async (req) => {
     try {
       return json(await listDecisions(new URL(req.url), String(user.id)))
     } catch (error) {
-      const status = Number((error as any)?.status) || 500
+      const status = Number((error as any)?.status) || (['42501', '23514', 'P0001'].includes((error as any)?.code) ? 409 : 500)
       if (status === 500) console.error(error)
       return json({ error: error instanceof Error ? error.message : 'decision read failed' }, status)
     }
@@ -168,7 +176,7 @@ Deno.serve(async (req) => {
     try {
       return json(await resolveDecision(body, String(user.id)))
     } catch (error) {
-      const status = Number((error as any)?.status) || 500
+      const status = Number((error as any)?.status) || (['42501', '23514', 'P0001'].includes((error as any)?.code) ? 409 : 500)
       if (status === 500) console.error(error)
       return json({ error: error instanceof Error ? error.message : 'decision transition failed' }, status)
     }
@@ -187,29 +195,11 @@ Deno.serve(async (req) => {
     try { await requireOwnerAdmin(orgId, String(user.id)) }
     catch { return json({ error: 'owner/admin required' }, 403) }
 
-    const [row] = await sql`
-      insert into ai_context.decisions (
-        org_id, title, decision, rationale_summary, risk_class, status,
-        proposed_by, source_conversation_id, source_message_ids, supersedes_id, metadata
-      ) values (
-        ${orgId}::uuid,
-        ${title},
-        ${decision},
-        ${body.rationale_summary ?? body.rationale ?? null},
-        ${riskClass},
-        ${status},
-        ${String(user.id)},
-        ${body.source_conversation_id ?? null}::uuid,
-        ${Array.isArray(body.source_message_ids) ? body.source_message_ids : []}::uuid[],
-        ${body.supersedes_id ?? null}::uuid,
-        ${sql.json({ ...(body.metadata && typeof body.metadata === 'object' ? body.metadata : {}), ingress: 'context-decision' })}
-      )
-      returning id, org_id, title, decision, rationale_summary, risk_class, status, proposed_by, created_at
-    `
-
-    return json({ decision: row }, 201)
+    const result = await persistProposal(sql, orgId, String(user.id), { ...body, title, decision, risk_class: riskClass, status })
+    return json(result, result.created ? 201 : 200)
   } catch (error) {
     console.error(error)
-    return json({ error: 'decision write failed', detail: error instanceof Error ? error.message : String(error) }, 500)
+    const code = Number((error as any)?.status) || 500
+    return json({ error: code < 500 && error instanceof Error ? error.message : 'decision write failed' }, code)
   }
 })
