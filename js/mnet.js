@@ -132,12 +132,19 @@
   }
 
   /* THE NEWSROOM: only the house owner (mnet_is_admin, the database's own definition) is offered it; the Worker checks
-     again on every post (platform-api.js), so this only decides what is shown */
-  var newsroomAsked = false;
+     again on every post (platform-api.js), so this only decides what is shown. It belongs to the account signed in now:
+     another account, or none, hides it and asks again. */
+  var newsroomFor = null;
   function paintNewsroom() {
-    if (newsroomAsked || state.guest || !$("mnNewsroomRow")) return;
-    newsroomAsked = true;
-    sbRpc("mnet_is_admin").then(function (yes) { $("mnNewsroomRow").hidden = yes !== true; }).catch(function () {});
+    var row = $("mnNewsroomRow");
+    if (!row) return;
+    var who = !state.guest && state.user && state.user.id || null;
+    if (who === newsroomFor) return;
+    newsroomFor = who;
+    row.hidden = true;
+    if ($("mnNewsroom")) $("mnNewsroom").checked = false;
+    if (!who) return;
+    sbRpc("mnet_is_admin").then(function (yes) { if (newsroomFor === who) row.hidden = yes !== true; }).catch(function () {});
   }
   function paintSelf() {
     paintNewsroom();
@@ -388,6 +395,7 @@
      opens sign-in instead, and the server refuses it anyway. */
   function enterGuestWorld() {
     state.guest = true;
+    paintNewsroom();
     document.documentElement.classList.add("mn-guest");
     $("mnGuestBar").hidden = false;
     var q = null; try { q = new URLSearchParams(location.search); } catch (_) {}

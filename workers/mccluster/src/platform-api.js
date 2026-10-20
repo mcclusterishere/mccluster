@@ -815,6 +815,8 @@ async function handleMnet(req,env,path,url){
     if(post.reply_to_id)return fail(req,env,'Comments are retired on Human Uprise. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
+    /* a newsroom article keeps its words (company-site/news.js renders the post's text as the article) */
+    if(post.metadata?.newsroom===true&&patch.body!==undefined&&!patch.body)return fail(req,env,'A newsroom article needs words. Delete the post to take the article down.',400);
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
     if(!String(patch.body===undefined?post.body:patch.body).trim()&&!(post.media||[]).length)return fail(req,env,'Post body or media is required',400);
     const out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});

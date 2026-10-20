@@ -26,7 +26,8 @@ const ROWS = [
   row(A2, 'Older piece without a short first line, which runs on and on well past the length a headline may have before it is cut at a word so it reads cleanly. Then more.', { created_at: ago(24 * 5), updated_at: ago(24 * 5) }),
   row(GONE, 'Taken back\n\nIt was deleted.', { deleted_at: ago(1) }),
   row(NOT_NEWS, 'Just a post\n\nNot for the newsroom.', { metadata: {} }),
-  row('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'Someone else\n\nA member marked their own post.', { author_m_uid: MEMBER })
+  row('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'Someone else\n\nA member marked their own post.', { author_m_uid: MEMBER }),
+  row('ffffffff-ffff-4fff-8fff-ffffffffffff', '   ', { media: [{ asset_id: 'x' }] })
 ];
 
 function store({ down = false } = {}) {
@@ -43,6 +44,7 @@ function store({ down = false } = {}) {
       // the store honours the filters the newsroom asks for; the newsroom checks again
       assert.equal(u.searchParams.get('metadata->>newsroom'), 'eq.true');
       assert.equal(u.searchParams.get('author_m_uid'), `in.(${OWNER})`);
+      // a store would return the emptied row too; the newsroom leaves it out
       return Response.json(ROWS.filter((r) => r.author_m_uid === OWNER && r.metadata.newsroom && !r.deleted_at));
     }
     throw new Error('unexpected ' + u.pathname);
@@ -100,6 +102,8 @@ test('only the house owner\'s live newsroom posts are articles: deleted is 410 G
   assert.equal((await get(`/news/taken-back-${GONE}`)).status, 410);
   assert.equal((await get(`/news/just-a-post-${NOT_NEWS}`)).status, 404);
   assert.equal((await get('/news/someone-else-eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee')).status, 404);
+  // edited down to only its media: the article has left, never an empty page
+  assert.equal((await get('/news/ffffffff-ffff-4fff-8fff-ffffffffffff')).status, 410);
   const nothing = await get('/news/not-an-article');
   assert.equal(nothing.status, 404);
   assert.match(await nothing.text(), /<meta name="robots" content="noindex">/);
@@ -110,7 +114,7 @@ test('the index, the RSS feed and the Google News sitemap list the articles, new
   assert.equal(index.status, 200);
   const html = await index.text();
   assert.ok(html.indexOf(A1) < html.indexOf(A2), 'newest first');
-  assert.doesNotMatch(html, new RegExp(GONE + '|' + NOT_NEWS));
+  assert.doesNotMatch(html, new RegExp(GONE + '|' + NOT_NEWS + '|ffffffff-ffff'));
   assert.equal(JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/s.exec(html)[1])['@type'], 'CollectionPage');
   assert.equal((await get('/news')).headers.get('location'), 'https://mccluster.org/news/');
 
@@ -118,7 +122,7 @@ test('the index, the RSS feed and the Google News sitemap list the articles, new
   assert.match(feed.headers.get('content-type'), /application\/rss\+xml/);
   const rss = await feed.text();
   assert.match(rss, /^<\?xml version="1.0" encoding="UTF-8"\?>\n<rss version="2.0"/);
-  assert.equal((rss.match(/<item>/g) || []).length, 2);
+  assert.equal((rss.match(/<item>/g) || []).length, 2, 'the emptied post is not an item');
   assert.match(rss, new RegExp(`<guid isPermaLink="true">https://mccluster.org/news/yesterday-in-the-united-states-what-moved-markets-${A1}</guid>`));
   assert.match(rss, /&lt;script&gt;/, 'escaped in the feed too');
 
@@ -224,4 +228,23 @@ test('a scheduled newsroom post is checked when it is asked for, and keeps its m
   assert.equal(res.status, 201);
   const saved = calls.find((c) => c.u.includes('/network_scheduled_posts') && c.m === 'POST').body;
   assert.equal(saved.payload.metadata.newsroom, true);
+});
+
+test('an edit cannot empty a newsroom article; it can be deleted instead', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    const u = String(url), m = init.method || 'GET';
+    calls.push({ u, m });
+    if (u.endsWith('/auth/v1/user')) return Response.json({ id: 'user-1' });
+    if (u.includes('/m_auth_user_links')) return Response.json([{ m_uid: OWNER }]);
+    if (u.includes('/network_posts') && m === 'GET') return Response.json([{ id: A1, author_m_uid: OWNER, body: 'Headline\n\nStory.', visibility: 'public', media: [{ asset_id: 'x' }], metadata: { newsroom: true } }]);
+    if (u.includes('/rpc/')) return Response.json(true);
+    return Response.json([]);
+  };
+  const res = await handlePlatformApi(new Request(`https://api.test/v1/mnet/posts/${A1}?app_key=mccluster-web`, {
+    method: 'PATCH', headers: { authorization: 'Bearer user', 'content-type': 'application/json' }, body: JSON.stringify({ body: '  ' }) }), ENV)
+    .catch((e) => new Response(JSON.stringify({ error: e.message }), { status: e.status || 500 }));
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /needs words/);
+  assert.equal(calls.filter((c) => c.u.includes('/network_posts') && c.m === 'PATCH').length, 0, 'nothing is written');
 });

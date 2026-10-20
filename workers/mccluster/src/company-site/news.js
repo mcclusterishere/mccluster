@@ -107,7 +107,9 @@ export async function ownerMuids(env, fetchImpl = fetch) {
   return (Array.isArray(rows) ? rows : []).map((r) => (typeof r === 'string' ? r : r?.mnet_admin_m_uids)).filter((id) => UUID.test(String(id || '')));
 }
 const isArticle = (row, owners) => !!row && owners.includes(row.author_m_uid) && row.metadata?.newsroom === true;
-const isLive = (row) => row.visibility === 'public' && !row.deleted_at && !row.removed_at && !row.group_id && !row.reply_to_id;
+/* an article has words: a post edited down to only its media has left the newsroom (410), never an empty page */
+const isLive = (row) => row.visibility === 'public' && !row.deleted_at && !row.removed_at && !row.group_id && !row.reply_to_id
+  && String(row.body || '').trim() !== '';
 async function latest(env, owners, limit, fetchImpl) {
   if (!owners.length) return [];
   const rows = await rest(env, 'network_posts?' + new URLSearchParams({
