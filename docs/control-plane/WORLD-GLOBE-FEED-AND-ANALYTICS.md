@@ -376,7 +376,7 @@ first, as for every core route).
   2. *privacy_acknowledged* (**location consent is the privacy
      acknowledgement**, owner 2026-10-15). The member's own Supabase auth
      record (`user_metadata`) has `privacy_policy_version` equal to the
-     current version (`2026-09-26`: `PRIVACY_VERSION` in `world-cctv.js`,
+     current version (`2026-10-19`: `PRIVACY_VERSION` in `world-cctv.js`,
      `VERSION` in `js/live-content.js`, `MCC_PRIVACY_REQUIRED_VERSION` in
      `js/analytics.js`; a test pins all three) and a parseable
      `privacy_acknowledged_at`. Where it lives: the join flow writes both
