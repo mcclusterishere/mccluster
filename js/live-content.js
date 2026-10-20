@@ -8,10 +8,11 @@
    again." The policy is one site-wide document, so seeing it is one
    site-wide event:
 
-   - SEEN IS NOT AGREED. Any answer to the notice ("I agree", or "Not now" on
-     a document page's banner) records that this visitor has seen THIS
-     version, and neither the banner nor the wall shows again for it, on any
-     page or any McCluster host. Agreement stays the separate, stronger
+   - SEEN IS NOT AGREED. A document page's banner counts as seen the moment
+     it is shown (answered or ignored), and so does any answer to the wall,
+     which covers the page and still needs "I agree" to enter. Once THIS
+     version is seen, neither the banner nor the wall shows again for it, on
+     any page or any McCluster host. Agreement stays the separate, stronger
      record: js/analytics.js records nothing until it exists, and a feature
      that needs it (the World's automatic location, the CCTV lock) asks at
      its own point of use through MCC_PRIVACY.accepted(). Nothing reopens
@@ -38,7 +39,7 @@
   "use strict";
   var VERSION = "2026-10-19";
   var KEY = "mcc_privacy_ack";    /* agreed: {version, accepted_at}; cookie mcc_privacy_ack=<VERSION> */
-  var SEEN = "mcc_privacy_seen";  /* answered "Not now": {version, seen_at}; cookie mcc_privacy_seen=<VERSION> */
+  var SEEN = "mcc_privacy_seen";  /* banner shown, or "Not now": {version, seen_at}; cookie mcc_privacy_seen=<VERSION> */
   var MAX_AGE = 34560000;         /* 400 days, the longest a browser keeps any cookie */
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -102,7 +103,7 @@
     }
     return true;
   }
-  /* SEEN: agreed, or answered "Not now". This alone decides whether the notice shows. */
+  /* SEEN: agreed, or the banner was shown. This alone decides whether the notice shows. */
   function readSeen() {
     if (readAck()) return true;
     var local = stored("localStorage", SEEN), sess = stored("sessionStorage", SEEN), cookie = cookieHas(SEEN);
@@ -126,7 +127,7 @@
     w.MCC_PRIVACY_ACK = value;
     return recordMember(value.accepted_at);
   }
-  /* "Not now": seen, not agreed, and never a downgrade of an agreement */
+  /* the banner shown, or "Not now": seen, not agreed, and never a downgrade of an agreement */
   function writeSeen() {
     if (readAck()) return;
     var value = { version: VERSION, seen_at: new Date().toISOString() };
@@ -190,8 +191,11 @@
      nothing, sets no device or session id and registers no service worker
      until the notice is agreed to; this branch only decides whether the
      words on the page can be read first. Agreeing here does not reload the
-     page, so recording begins on the next page view. "Not now" is an
-     answer too: the notice does not come back, and nothing is recorded.
+     page, so recording begins on the next page view. The bar counts as
+     seen as soon as it is shown (owner, 2026-10-20: "they see the privacy
+     policy, and then they never see it again"): whether it is agreed to,
+     dismissed with "Not now" or simply left, it does not come back, and
+     nothing is recorded until someone agrees.
 
      Why: Google's guidance on interstitials says a dialog covering the
      content "make[s] it hard for Google and other search engines to
@@ -236,6 +240,7 @@
         '<button type="button" class="mccpn__later" id="mccPrivacyNoticeLater">Not now</button>' +
         '</div>';
       d.body.appendChild(bar);
+      writeSeen();
       d.getElementById("mccPrivacyNoticeAgree").addEventListener("click", function () {
         writeAck();
         bar.remove();

@@ -229,6 +229,34 @@ test('the notice: "Not now" on a banner is an answer, so no banner or wall comes
   assert.equal((await visit({ url: 'https://matthew.mccluster.org/listen.html', cookies })).window.MCC_PRIVACY.accepted(), true);
 });
 
+test('the notice: a banner counts as seen once it is shown, so ignoring it is enough; the wall still needs an answer', async () => {
+  const cookies = jar();
+  const press = await visit({ url: 'https://matthew.mccluster.org/press.html', cookies });
+  assert.equal(press.banner(), true, 'the first document page shows the banner');
+  assert.equal(press.window.MCC_PRIVACY.seen(), true, 'shown is seen, with no tap');
+  assert.equal(press.window.MCC_PRIVACY.accepted(), false, 'and seen is not agreed');
+  assert.equal(press.banner(), true, 'the bar stays on this page until it is answered');
+  assert.equal(JSON.parse(press.window.localStorage.getItem('mcc_privacy_seen')).version, PRIVACY_VERSION);
+  assert.equal(cookies.all.get('mcc_privacy_seen|.mccluster.org').value, PRIVACY_VERSION, 'shared with every McCluster host');
+  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org'), undefined, 'no agreement is stored');
+  for (const url of ['https://matthew.mccluster.org/newsroom.html', 'https://matthew.mccluster.org/listen.html', 'https://mccluster.org/', 'https://mccluster.org/mnet.html']) {
+    const next = await visit({ url, cookies });
+    assert.equal(next.shown(), false, url + ': an ignored banner does not come back, and no wall either');
+    assert.equal(next.window.MCC_PRIVACY.accepted(), false, url + ': still not agreed');
+  }
+  /* the bar can still be agreed to on the page that shows it */
+  press.click('mccPrivacyNoticeAgree');
+  assert.equal(press.window.MCC_PRIVACY.accepted(), true);
+  assert.equal(cookies.all.get('mcc_privacy_ack|.mccluster.org').value, PRIVACY_VERSION);
+
+  const wallJar = jar();
+  const unanswered = await visit({ url: 'https://mccluster.org/mnet.html', cookies: wallJar });
+  assert.equal(unanswered.wall(), true);
+  assert.equal(unanswered.window.MCC_PRIVACY.seen(), false, 'the wall covers the page, so showing it is not seen');
+  assert.equal(wallJar.all.size, 0, 'and nothing is stored for it');
+  assert.equal((await visit({ url: 'https://mccluster.org/account.html', cookies: wallJar })).wall(), true, 'an unanswered wall still asks on the next wall page');
+});
+
 test('the notice: "I agree" on a banner records agreement without reloading', async () => {
   const cookies = jar();
   const press = await visit({ url: 'https://matthew.mccluster.org/press.html', cookies });

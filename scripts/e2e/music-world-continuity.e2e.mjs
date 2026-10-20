@@ -406,6 +406,25 @@ try{
     check('privacy: no notice errors after Not now',privacyErrors(errors).length===0,errors);
     await context.close();
   }
+  {
+    /* owner, 2026-10-20: "they see the privacy policy, and then they never see it again". The banner is seen once shown. */
+    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
+    const first=await notice(page);
+    check('privacy: an ignored banner is shown on the first document page',first.banner&&!first.wall&&!first.pending,first);
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: the banner counts as seen with no tap, for every mccluster.org host, and never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>MCC_PRIVACY.seen()&&!MCC_PRIVACY.accepted()),jar);
+    for(const url of [HOUSE+'/newsroom.html',HOUSE+'/account.html',WORLD+'/',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after an ignored banner, ${u.host}${u.pathname} shows neither banner nor wall, and nothing counts as agreed`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
+    }
+    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
+    check('privacy: after an ignored banner, Music shows no wall',none(await notice(page)));
+    await play(page);const frame=await world(page);
+    check('privacy: after an ignored banner, the World that Music opens shows no notice',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()));
+    check('privacy: no notice errors after an ignored banner',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
 }finally{
   await writeFile(join(OUT,'results.json'),JSON.stringify(result,null,2));await browser.close();
 }
