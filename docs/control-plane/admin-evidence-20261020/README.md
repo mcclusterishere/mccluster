@@ -113,8 +113,12 @@ explicit mocks. This fixes an inherited unmocked `db.invalid` fixture without
 allowing tests to contact a live backend. No real secret was present in that fixture.
 
 The local Deno check could not download the existing JSR/npm dependencies from
-this environment. The `context-decision` typecheck is added to CI; no local typecheck
-success is claimed. Browser proof and its exact fixture/viewport limits are in
+this environment. CI at `2c61d2f9f301c13f704f4db49eba2c02e7da27e2` passed
+`context-decision` typechecking, all four isolated pending-SQL replays, Core/Worker
+contracts and the existing native Supabase migration reset in
+[Reconciliation run 39488002016](https://github.com/mcclusterishere/mccluster/actions/runs/39488002016).
+The native reset does not apply the pending migrations or prove their concurrent
+behavior. No local typecheck success is claimed. Browser proof and its exact fixture/viewport limits are in
 `interface.md`. The scorer's actual synthetic replay is in
 `research-fixture-result.json`; it is not a model benchmark.
 
