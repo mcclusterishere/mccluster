@@ -317,6 +317,8 @@ try{
     check('timed lyrics take the headline line by line',await page.locator('.wt-headline').getAttribute('class')==='wt-headline is-lyric'&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Pause music');
     await page.locator('#mnWorldPlay').click();
     await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='The world is your feed.');
+    /* the headline follows at once; the media element's pause event, which records the pause, is queued after it */
+    await page.waitForFunction(()=>__songEvents.some(e=>e.name==='song_pause'),null,{timeout:5000}).catch(()=>{});
     check('pausing from the corner is recorded as the listener pausing that song',await page.evaluate(s=>__songEvents.some(e=>e.name==='song_pause'&&e.by==='button'&&e.song===s.slug),theme),await page.evaluate(()=>__songEvents));
     check('pausing from the corner restores the headline and keeps the title static',await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&await page.locator('#mnNowPlaying').isVisible());
     await page.reload();
