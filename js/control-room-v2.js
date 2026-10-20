@@ -1707,7 +1707,7 @@
       : state.createView === "clipping"
         ? (window.CR.clipping ? window.CR.clipping.render() : empty("Clipping unavailable", "The native Control module did not load."))
       : state.createView === "action-network"
-        ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Human Uprise unavailable", "The native Control module did not load."))
+        ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Equity Uprise unavailable", "The native Control module did not load."))
       : state.createView === "funding"
         ? (window.CR.fundingIntelligence ? window.CR.fundingIntelligence.render() : empty("Funding Intelligence unavailable", "The module did not load."))
       : state.createView === "song-test"
@@ -1715,7 +1715,7 @@
       : state.createView === "build"
         ? (window.CR.buildCode ? window.CR.buildCode.render() : empty("Build unavailable", "The native Control module did not load."))
         : renderSchedule();
-    return renderHeader("Create", "Projects, assets, publishing, channels, music operations, clipping and Human Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    return renderHeader("Create", "Projects, assets, publishing, channels, music operations, clipping and Equity Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
 
   /* CHANNELS — where publishing actually points.

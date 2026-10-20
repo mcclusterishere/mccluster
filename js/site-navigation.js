@@ -38,7 +38,7 @@
     }));
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
-      {label:'World', group:'Products', href:world, context:'Human Uprise'},
+      {label:'World', group:'Products', href:world, context:'Equity Uprise'},
       {label:'Your desk', group:'Operations', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       {label:'Hitman’s Halo', group:'Products', href:'https://prime.mccluster.org/', context:'Spatial intelligence'},
       {label:'PRIM3', group:'Products', href:new URL('prim3.html', house).href, context:'Learning'},
