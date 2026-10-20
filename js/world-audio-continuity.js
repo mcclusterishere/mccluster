@@ -213,7 +213,8 @@
   function rollUnplayed() {
     if (!theme || songBegun || !theme.audio.paused || !rotation || rotation.length < 2) return;
     var next = rotation[Math.floor(Math.random() * rotation.length)];
-    if (next.src === song.src) return;
+    /* the draw can land on the song already loaded: it is the catalog's pick all the same, and says so, without reloading */
+    if (next.src === song.src) { song = Object.assign({}, song, {pick:"random", pool:rotation.length}); return; }
     song = Object.assign({}, next, {pick:"random", pool:rotation.length}); theme.title = song.title; theme.audio.src = ROOT + song.src; paint();
   }
   function songEvent(name, extra) {

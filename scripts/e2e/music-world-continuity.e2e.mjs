@@ -293,6 +293,18 @@ try{
     await context.close();
   }
   {
+    /* the catalog's draw can land on the song the theme already holds (1 in 19): it is still the catalog's pick, and its
+       events say so (pick random, the whole pool), never a fallback of one */
+    const {context,page}=await setup();
+    await page.addInitScript(()=>{Math.random=()=>12.5/19;}); // index 12 of the 19 public songs: Heal the 3rd World
+    await page.goto(WORLD+'/?view=feed');
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool);
+    await page.waitForTimeout(200);
+    const same=await page.evaluate(()=>MCC_WORLD_AUDIO.song());
+    check('a catalog draw of the song already loaded is still the catalog\'s pick',same.slug==='heal-the-3rd-world'&&same.pick==='random'&&same.pool>1,same);
+    await context.close();
+  }
+  {
     const {context,page}=await setup();
     /* timed lyrics are looked up by the audio file's slug; the theme has none in the repo, so the fixture supplies two lines */
     await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Fixture song',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
