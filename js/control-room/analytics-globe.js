@@ -123,7 +123,7 @@
     var api = { ready: false, failed: null, data: { mode: "countries", points: [], cells: [], states: null }, sel: { country: null, state: null } };
     host.innerHTML = '<div class="crg-canvas" data-crg-canvas></div><div class="crg-credit" hidden data-crg-credit></div>' +
       '<div class="crg-tip" role="status" aria-live="polite" hidden data-crg-tip><small></small><b></b><span></span></div>' +
-      '<p class="crg-msg" data-crg-msg>Loading the globe…</p>';
+      '<p class="crg-msg" role="status" aria-live="polite" data-crg-msg>Loading the globe…</p>';
     var canvasBox = host.querySelector("[data-crg-canvas]"), tip = host.querySelector("[data-crg-tip]"), msg = host.querySelector("[data-crg-msg]");
     var Cs, widget, scene, camera, C = {}, fills = null, instancesByCode = {}, countries = [], polysByCode = {};
     var destroyed = false, active = true, resizeObserver = null, inputHandler = null, hoverFrame = 0;
@@ -475,7 +475,7 @@
           creditContainer: host.querySelector("[data-crg-credit]"),
           contextOptions: { webgl: { alpha: true, antialias: true, powerPreference: "low-power" } }
         });
-      } catch (e) { api.failed = e; say("This device cannot draw the globe (WebGL is unavailable). Every number is still in the cards below."); if (opts.onReady) opts.onReady(api); return; }
+      } catch (e) { api.failed = e; canvasBox.textContent = ""; say("WebGL unavailable. Use the list or cards."); if (opts.onReady) opts.onReady(api); return; }
       scene = widget.scene; camera = scene.camera;
       tokens();
       /* sharp on a retina phone without paying for 3x: at most two device pixels per CSS pixel */
