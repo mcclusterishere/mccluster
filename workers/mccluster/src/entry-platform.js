@@ -53,7 +53,7 @@ export default {
        to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
     const company = await companySiteResponse(request, env);
     if (company) return company;
-    /* Human Uprise's own door (humanuprise.com, www): the World by host, the
+    /* Equity Uprise's own door (humanuprise.com, www): the World by host, the
        same way. Null for every other host; inert until the owner routes it:
        docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md */
     const humanUprise = await humanUpriseResponse(request, env);
@@ -113,7 +113,7 @@ export default {
     return existing.fetch(request, env, ctx);
   },
   async scheduled(controller, env, ctx) {
-    /* Scheduled Human Uprise posts ride the same five-minute cron as the
+    /* Scheduled Equity Uprise posts ride the same five-minute cron as the
        social queue. A failure here is logged and never stops the rest. */
     ctx.waitUntil(publishDueNetworkPosts(env, { limit: 20 }).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_scheduled_publish_failed', message: error instanceof Error ? error.message : String(error) }));

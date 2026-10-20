@@ -1,8 +1,8 @@
-/* Human Uprise's own door: the World on the humanuprise.com host.
+/* Equity Uprise's own door: the World on the humanuprise.com host.
 
    Owner, 2026-10-14: "I want to have the globe experience as its own solo
    experience ... but it needs to be interconnected with all the systems."
-   Human Uprise is the public parent platform, intended for humanuprise.com
+   Equity Uprise is the public parent platform, intended for humanuprise.com
    (docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md). It is
    McCluster Corp's platform: the same entity as mccluster.org, not a third
    one (docs/control-plane/DOMAINS-AND-ENTITIES.md).
@@ -43,9 +43,9 @@ const SITEMAP = '<?xml version="1.0" encoding="UTF-8"?>\n' +
   `  <url><loc>${HUMAN_UPRISE_ORIGIN}/</loc></url>\n` +
   '</urlset>\n';
 
-/* The World's head on this host: Human Uprise's front door, so the noindex
+/* The World's head on this host: Equity Uprise's front door, so the noindex
    gives way to this host's canonical (../world-host.js). */
-const HEAD = { origin: HUMAN_UPRISE_ORIGIN, siteName: 'Human Uprise' };
+const HEAD = { origin: HUMAN_UPRISE_ORIGIN, siteName: 'Equity Uprise' };
 export function worldHead(html) {
   return worldHeadFor(html, HEAD);
 }

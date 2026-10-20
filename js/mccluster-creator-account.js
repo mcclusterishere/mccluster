@@ -18,7 +18,7 @@ document.getElementById('refreshAccount').addEventListener('click',refresh);
 db.auth.onAuthStateChange(()=>{setTimeout(refresh,0)});
 importLegacySession().catch(()=>{}).finally(refresh);
 
-// Persist through the existing owner-checked Human Uprise RPC; never write directly to network_profiles.
+// Persist through the existing owner-checked Equity Uprise RPC; never write directly to network_profiles.
 const save=document.getElementById('saveAccount');
 if(save)save.addEventListener('click',async()=>{
   save.disabled=true;

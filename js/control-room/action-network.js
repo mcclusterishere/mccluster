@@ -1,6 +1,6 @@
-/* Native Control · Create · Human Uprise.
+/* Native Control · Create · Equity Uprise.
 
-   The owner's side of Human Uprise (/action/?c=<slug>).
+   The owner's side of Equity Uprise (/action/?c=<slug>).
    A campaign is a row in public.action_campaigns, so the next one is
    launched here, not in a deploy: write it as a draft, check it, then
    set it live. Row-level security lets only the owner write.
@@ -373,7 +373,7 @@
     if(!A.loaded&&!A.loading)load();
     var c=current(),d=c&&A.detail[c.id];
     var chips='<div class="cro-chips">'+A.campaigns.map(function(x){return'<button class="cro-chip'+(x.id===A.sel&&A.tab!=="new"?" is-on":"")+'" type="button" data-crn-pick="'+e(x.id)+'">'+e(x.title)+' · '+e(x.status)+'</button>';}).join("")+'<button class="cro-chip'+(A.tab==="new"?" is-on":"")+'" type="button" data-crn-tab="new">+ New campaign</button></div>';
-    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
+    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Equity Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
     var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["memos","Policy memos"],["identity","Identity"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
