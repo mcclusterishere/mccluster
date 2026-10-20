@@ -37,6 +37,21 @@ concurrency:
   group: human-uprise-editorial-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  brand-copy:
+    name: brand-copy (Equity Uprise)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Reject obsolete public-brand copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -n -i -E 'human[[:space:]]+uprise' -- .; then
+            echo "::error::Legacy public-brand copy found. Use Equity Uprise."
+            exit 1
+          fi
   browser:
     name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
