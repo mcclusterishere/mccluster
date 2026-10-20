@@ -185,12 +185,14 @@ export function createWhipBookingGate(next=app,options={}) {
           if(path==='/api/offers'&&req.method==='GET')return clean({offers:[],service_live:false});
           if(presence&&req.method==='PATCH'){
             const b=await readBody(req.clone());
+            if(typeof b?.online!=='boolean')return problem('invalid_presence','online must be true or false.',400);
             if(b.online!==true)return next.fetch(req,env,ctx);
           }
           return noLive();
         }
         if(presence){
           const b=await readBody(req.clone());
+          if(typeof b?.online!=='boolean')return problem('invalid_presence','online must be true or false.',400);
           if(b.online!==true)return next.fetch(req,env,ctx);
           await driverClearance(env,req,presence[1],fetchFn,now());
         }

@@ -87,7 +87,7 @@
 
       <section class="state" id="arrivedState">
         <div class="trip-status"><span class="eyebrow">At pickup</span><h2>Meet your rider.</h2><p>Verify the 4-digit pickup code before starting the trip.</p></div>
-        <label class="pin-entry"><span>Pickup code</span><input id="pinInput" inputmode="numeric" maxlength="4" placeholder="••••" /></label>
+        <label class="pin-entry"><span>Pickup code</span><input id="pinInput" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" maxlength="6" placeholder="••••••" /></label>
         <div class="safety-tools"><button>Call rider</button><button>Message</button><button>Safety</button></div>
         <button class="primary-btn" id="verifyButton">Verify rider</button>
         <small class="inline-error" id="pinError"></small>
