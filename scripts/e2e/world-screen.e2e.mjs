@@ -745,6 +745,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await canvas.click({position:{x:tap.x,y:tap.y}});
     await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
     check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
+    check(scope,'tapping a country narrows the one feed to it (Local) with no extra press',await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true');
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.locator('.mn-swipe__card[data-mission="'+M1+'"] .mn-swipe__details').click();
     await page.waitForSelector('#mnMissionDialog[open]');
@@ -752,6 +753,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.click('#mnMissionClose');
     await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:5000}).catch(()=>{});
     check(scope,'a mission card outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
+    check(scope,'letting the tapped country go returns the feed to Global',await page.getAttribute('[data-feed-scope=global]','aria-pressed')==='true');
     check(scope,'mission card selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
     await page.click('.wt-world-modes [data-world-mode=posts]');

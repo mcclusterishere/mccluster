@@ -78,7 +78,8 @@ function publicPost(row, actor) {
     post: { id: row.id, body: row.body || '', post_type: row.post_type || 'post',
       visibility: 'public', country_code: row.country_code, created_at: row.created_at,
       media_locked: mediaCount, metadata: safeMeta(row.metadata),
-      liked_by_me: false, bookmarked_by_me: false, like_count: 0 }
+      /* the post's real count, as the public feed shows it; never a placeholder zero */
+      liked_by_me: false, bookmarked_by_me: false, like_count: Number(row.like_count) || 0 }
   };
 }
 export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
@@ -111,10 +112,11 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
     return fail(req, env, 'Invalid regional feed cursor', 400);
 
   const postPath = query('network_posts', {
-    country_code: 'eq.' + country, visibility: 'eq.public', deleted_at: 'is.null',
+    /* removed_at: a post the desk took down (moderation) never reaches a country feed, whatever its visibility */
+    country_code: 'eq.' + country, visibility: 'eq.public', deleted_at: 'is.null', removed_at: 'is.null',
     group_id: 'is.null', reply_to_id: 'is.null'
   }, 'created_at', postBefore, limit * 3,
-  'id,author_m_uid,body,post_type,visibility,media,metadata,country_code,created_at');
+  'id,author_m_uid,body,post_type,visibility,media,metadata,country_code,created_at,like_count,removed_at');
   const fips = ISO_TO_FIPS[country];
   const newsPath = query('media_news_articles', {
     location_country_fips: 'eq.' + fips, ingestion_provider: 'eq.gdelt_gkg_v2',
@@ -132,7 +134,7 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
       authors.join(',') + ')&visibility=eq.public&select=m_uid,display_name,avatar_url,verification_state', fetchImpl) : [];
     const byUid = new Map(profiles.map(p => [p.m_uid,p]));
     const allowed = rawPosts.filter(p => p.visibility === 'public' &&
-      p.country_code === country && !p.deleted_at && !p.reply_to_id &&
+      p.country_code === country && !p.deleted_at && !p.removed_at && !p.reply_to_id &&
       !p.group_id && byUid.has(p.author_m_uid));
     const posts = allowed.slice(0,limit).map(p => publicPost(p,byUid.get(p.author_m_uid)));
     const sourceIds = [...new Set(rawNews.map(n=>n.source_id).filter(id=>UUID.test(id)))];

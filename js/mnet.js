@@ -2355,7 +2355,7 @@
     $("mnSignedOutBack").onclick = function () { showGate("app"); setView("feed"); if (!state.feed.length) loadFeed(true); };
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
-    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { setFeedScope(b.dataset.feedScope); }; });
+    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { state.world.scopeFromTap = false; setFeedScope(b.dataset.feedScope); }; });
     paintFeedScope();
     loadPlaceStatus();
     $("mnBell").onclick = function () { setView("notifications"); };
@@ -3681,7 +3681,13 @@
         state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80) } : null;
         if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
         paintFeedScope();
-        if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
+        /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
+           that country with no extra press; letting the country go returns the feed to Global, unless the member chose
+           Local themselves. In Travel a tap picks a destination and leaves the feed alone. */
+        var travelTap = !!(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel");
+        if (state.world.country && !travelTap && state.feedScope !== "local") { state.world.scopeFromTap = true; setFeedScope("local"); }
+        else if (!state.world.country && state.world.scopeFromTap) { state.world.scopeFromTap = false; setFeedScope("global"); }
+        else if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
         else if (state.feedScope === "local") renderFeed(false);
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);

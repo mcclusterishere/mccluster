@@ -12,7 +12,7 @@ const TIME='2026-10-19T21:15:00.000Z';
 const ENV={WORLD_PLACE_SCOPE_ENABLED:'true',SUPABASE_URL:'https://sb.example',SUPABASE_SERVICE_ROLE_KEY:'test-service'};
 const req=(path,cf,headers)=>{const request=new Request('https://api.mccluster.org'+path,{headers});if(cf)Object.defineProperty(request,'cf',{value:cf});return request;};
 const json=(a,status=200)=>new Response(JSON.stringify(a),{status,headers:{'content-type':'application/json'}});
-function store(calls,{unpublished=false,emptyNews=false,profile=true}={}){
+function store(calls,{unpublished=false,emptyNews=false,profile=true,removed=false}={}){
   return async(url,init)=>{
     const u=new URL(url);
     assert.equal(u.origin,'https://sb.example');
@@ -21,8 +21,11 @@ function store(calls,{unpublished=false,emptyNews=false,profile=true}={}){
     const table=u.pathname.split('/').pop();
     if(table==='network_posts')return json([
       {id:POST_A,author_m_uid:MEMBER_A,body:'Community action in Connecticut',country_code:'US',
-       post_type:'post',visibility:'public',group_id:null,reply_to_id:null,created_at:TIME,
+       post_type:'post',visibility:'public',group_id:null,reply_to_id:null,created_at:TIME,like_count:7,
        metadata:{secret_internal:'do not expose',track:{title:'New Song'}},media:[{private_path:'never'}]},
+      ...(removed?[{id:POST_B,author_m_uid:MEMBER_A,body:'taken down by the desk',country_code:'US',
+        post_type:'post',visibility:'public',group_id:null,reply_to_id:null,created_at:TIME,
+        removed_at:TIME,metadata:{},media:[]}]:[]),
       ...(unpublished?[{id:POST_B,author_m_uid:MEMBER_B,body:'private account leaked',
         country_code:'US',post_type:'post',visibility:'public',group_id:null,reply_to_id:null,
         created_at:TIME,metadata:{secret_internal:'no'},media:[]}]:[])
@@ -107,4 +110,17 @@ test('database unavailability returns explicit 503 and no global records',async(
   const res=await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:async()=>json({error:'missing migration'},404)});
   assert.equal(res.status,503);
   assert.equal((await res.json()).detail.available,false);
+});
+
+test('a post the desk removed never reaches a country feed, and like counts are the real ones',async()=>{
+  const calls=[];
+  const res=await handleRegionScope(req(REGION_FEED+'?country=US'),ENV,{fetchImpl:store(calls,{removed:true})});
+  assert.equal(res.status,200);
+  const data=await res.json();
+  assert.equal(data.posts.length,1);
+  assert.doesNotMatch(JSON.stringify(data),/taken down by the desk/);
+  assert.equal(data.posts[0].post.like_count,7);
+  const read=calls.find(u=>u.pathname.endsWith('/network_posts'));
+  assert.equal(read.searchParams.get('removed_at'),'is.null');
+  assert.match(read.searchParams.get('select'),/like_count/);
 });
