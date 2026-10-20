@@ -68,7 +68,11 @@ test('a news card is the World card keyed data-news-id: first-party reader with 
   assert.doesNotMatch(card, /target="_blank"|href="/, 'a news headline cannot take the user to a publisher');
   assert.doesNotMatch(card, /<img|background-image|favicon|logo/i, 'no pictures and no publisher marks (CLAUDE.md rule 10)');
   assert.match(card, /data-news-place data-lat="' \+ esc\(n\.lat\) \+ '" data-lon="' \+ esc\(n\.lon\) \+ '"/);
-  assert.match(card, />On the Earth<\/button>/);
+  assert.match(card, /on the Earth">' \+ esc\(from \|\| "On the Earth"\) \+ '<\/button>'/, 'the chip names where the story is from');
+  const country = new Function('navigator', fnSource(js, 'newsCountry') + '\nreturn newsCountry;')({ language: 'en' });
+  assert.equal(country({ place: 'Lagos, Lagos, Nigeria' }), 'Nigeria');
+  assert.equal(country({ place: 'Nairobi, Nairobi Area, Kenya', country_code: 'KE' }), 'Kenya');
+  assert.equal(country({ place: '' }), '', 'no place, the chip falls back to "On the Earth"');
   assert.match(fnSource(js, 'bindNewsActions'), /tellWorld\(\{ type: "hu:focus-place", lat: lat, lon: lon, label: label \}\);/);
   assert.match(fnSource(js, 'bindNewsActions'), /MCC_WORLD_NEWS_READER\.open\(story, b\)/, 'legacy feed opens the shared first-party reader');
   assert.match(fnSource(js, 'bindNewsActions'), /mentioned in this story/, 'the place is mentioned, never "where it happened"');
@@ -121,7 +125,7 @@ test('a news card flies the Earth to the place it mentions, and the frame checks
 test('news cards fail closed until backend capability explicitly enables comment controls', async () => {
   const js = await read('js/mnet.js');
   const card = new Function('state','esc','timeAgo','ICON','discussionHtml',
-    fnSource(js, 'newsCard') + '\nreturn newsCard;');
+    fnSource(js, 'newsCountry') + '\n' + fnSource(js, 'newsCard') + '\nreturn newsCard;');
   const story = { id:'11111111-1111-4111-8111-111111111111',title:'A public news headline',
     domain:'publisher.example',seen_at:'2026-10-18T12:00:00Z',place:'',lat:null,lon:null };
   const esc = s => String(s);

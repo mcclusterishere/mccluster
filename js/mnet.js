@@ -1345,8 +1345,18 @@
   /* a news card wears the World's card, keyed data-news-id (data-post-id is a member's post): the publisher, when it was
      seen and the place it mentions, the headline in an in-app discovery reader, and the place on the Earth. No pictures and no
      publisher marks: the words only. */
+  /* WHERE A STORY IS FROM (owner, 2026-10-20: "they need to say where they're from, like Nigeria"): the chip names the
+     country of the place it mentions instead of saying "On the Earth"; a tap still turns the Earth there. */
+  function newsCountry(n) {
+    var code = String(n.country_code || "").toUpperCase();
+    if (/^[A-Z]{2}$/.test(code)) {
+      try { var name = new Intl.DisplayNames([navigator.language || "en"], { type: "region" }).of(code); if (name && name !== code) return name; } catch (e) {}
+    }
+    var parts = String(n.place || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    return parts.length ? parts[parts.length - 1].slice(0, 60) : "";
+  }
   function newsCard(n) {
-    var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>';
+    var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>', from = newsCountry(n);
     return '<article class="mn__post-card mn__news-card" data-news-id="' + esc(n.id) + '">' +
       '<p class="mn__news-meta"><span class="mn__news-avatar" aria-hidden="true" data-initials="' + esc(String(n.domain || "news").replace(/^www\./, "").slice(0, 2).toUpperCase()) + '"></span><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
         (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
@@ -1354,7 +1364,7 @@
       '<button type="button" class="mn__news-title" data-news-open="' + esc(n.id) + '">' + esc(n.title) +
         '<span class="sr-only"> (open story)</span></button>' +
       (n.lat !== null && n.lon !== null
-        ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="On the Earth: ' + esc(n.place || "the place this story mentions") + '">On the Earth</button>'
+        ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="Show ' + esc(n.place || from || "the place this story mentions") + ' on the Earth">' + esc(from || "On the Earth") + '</button>'
         : '') +
       (state.newsCommentsAvailable
         ? '<div class="mn__post-actions"><button type="button" class="mn__action mn__action--comment" data-discussion-toggle aria-expanded="false" aria-label="Comment on news">' + ICON.comment + '<span class="mn__action-label">Comment</span></button></div>' + discussionHtml('news', n.id)
@@ -2332,6 +2342,11 @@
       });
     }
 
+    /* NO SIGN-IN FLASH (owner, 2026-10-20: "before I hit the global screen, I see flashes of the sign-in screen"). The
+       sign-in form ships hidden and opens only when something asks for it. A member's World shell is up at once while
+       the stored session is checked over the network, instead of the form standing there for that wait. */
+    var stored = MCC.session && MCC.session();
+    if (stored && stored.access_token) showGate("app");
     MCC.user().then(function (user) {
       state.user = user;
       if (!user) {

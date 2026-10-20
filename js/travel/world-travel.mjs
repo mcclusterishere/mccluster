@@ -35,6 +35,7 @@ const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coord
   place.coordinates.every(Number.isFinite) && Math.abs(place.coordinates[0]) <= 180 && Math.abs(place.coordinates[1]) <= 90;
 const freshDraft = () => normalizeJourney({ mode:'drive' });
 let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0, tripShape = 'rides';
+let rideSub = 'directions', flightSub = 'commercial';
 let catalogPromise, currentMode = 'travel', hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
@@ -63,8 +64,24 @@ panel.innerHTML = `
       <div class="wt-field wt-origin-field"><span class="wt-trip-dot wt-trip-dot--from" aria-hidden="true"></span><label for="wtFrom">Pickup</label><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Use my location" aria-describedby="wtLocationStatus"><div class="wt-field-tools"><button type="button" id="wtPickFrom" class="wt-field-tool" data-map-pick="from" aria-pressed="false" aria-label="Pick your starting point on the globe" title="Pick on the globe">${icon('globe')}</button><button type="button" id="wtLocate" class="wt-locate wt-field-tool" aria-label="Use my current location" title="Use my location">${icon('target')}</button></div><div id="wtFromResults" class="wt-suggest" hidden></div></div>
       <div class="wt-field wt-destination-field"><span class="wt-trip-dot wt-trip-dot--to" aria-hidden="true"></span><label for="wtTo">Destination</label><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Where would you like to go?" required aria-describedby="wtEndpointHint wtRoutePrivacy"><div class="wt-field-tools"><span class="wt-field-glyph" aria-hidden="true">${icon('search')}</span><button type="button" id="wtPickTo" class="wt-field-tool" data-map-pick="to" aria-pressed="false" aria-label="Pick your destination on the globe" title="Pick on the globe">${icon('globe')}</button></div><div id="wtToResults" class="wt-suggest" hidden></div></div>
     </div>
-    <!-- trip type: Rides is the street route (drive, walk, bike, a ride); Flights and Multi-city open the longer-trip planner -->
-    <nav class="wt-kinds" aria-label="Trip type"><button type="button" data-travel-chip="rides" aria-pressed="true">${icon('drive')}<span>Rides</span></button><button type="button" data-travel-chip="flights" aria-pressed="false">${icon('flight')}<span>Flights</span></button><button type="button" data-travel-chip="multi" aria-pressed="false">${icon('route')}<span>Multi-city</span></button></nav>
+    <!-- TRIP TYPE (owner, 2026-10-20): two tiles, the icon on top, each split by an on/off switch. Rides is Directions (the
+         street route and a ride) or Rentals (cars to rent); Flights is Commercial (the longer-trip planner) or Private.
+         Door-to-door, the multi-city draft, stays under Plan a trip. -->
+    <div class="wt-kinds" role="group" aria-label="Trip type">
+      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="rides" aria-pressed="true">${icon('drive')}<span>Rides</span></button>
+        <div class="wt-switch" role="group" aria-label="Rides"><button type="button" data-travel-sub="directions" aria-pressed="true">Directions</button><button type="button" data-travel-sub="rentals" aria-pressed="false">Rentals</button></div></div>
+      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="flights" aria-pressed="false">${icon('flight')}<span>Flights</span></button>
+        <div class="wt-switch" role="group" aria-label="Flights"><button type="button" data-travel-sub="commercial" aria-pressed="true">Commercial</button><button type="button" data-travel-sub="private" aria-pressed="false">Private</button></div></div>
+    </div>
+    <section id="wtRentals" class="wt-rentals" aria-labelledby="wtRentalsTitle" hidden>
+      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Rent a car</h3><a href="https://matthew.mccluster.org/whip/rentals/" target="_blank" rel="noopener">See all ›</a></div>
+      <p class="wt-rentals-by">From Whip Equipped LLC, a separate company. Booking and payment happen in Whip Equipped's rentals app.</p>
+      <div class="wt-cars" id="wtCars"></div>
+    </section>
+    <section id="wtPrivate" class="wt-private" aria-labelledby="wtPrivateTitle" hidden>
+      <h3 id="wtPrivateTitle" class="wt-section-h">Private flights</h3>
+      <p>Private jets and charters aren't bookable here yet. Commercial flights plan from your destination.</p>
+    </section>
     <p id="wtLocationStatus" class="wt-location-status" role="status" aria-live="polite">Allow location, or enter your starting address.</p>
     <p id="wtEndpointHint" class="wt-location-status" role="status" aria-live="polite"></p>
     <p id="wtRoutePrivacy" class="wt-route-privacy">Choose a destination to get directions. Your starting point and destination are shared with the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>.</p>
@@ -338,7 +355,8 @@ function syncInputs() {
   $('wtAddReturn').textContent = draft.returning ? 'Remove return' : 'Add return date'; $('wtReturning').min = draft.departure;
   panel.querySelectorAll('[data-travel-kind][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.travelKind === draft.mode)));
   if (isGround() || draft.mode === 'transit') tripShape = 'rides'; else if (tripShape === 'rides') tripShape = 'flights';
-  panel.querySelectorAll('[data-travel-chip]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.travelChip === tripShape)));
+  panel.querySelectorAll('[data-travel-chip]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.travelChip === (tripShape === 'multi' ? 'flights' : tripShape))));
+  paintSubs();
   renderItinerary(); renderGlobe();
 }
 function setMapPick(kind = null) {
@@ -366,6 +384,11 @@ function choosePlace(key, row, { source = 'manual' } = {}) {
   changed({ preserveOriginLookup:key === 'to' }); closeSearches(); syncInputs(); renderGlobe(true);
   if (key === 'from') $('wtLocationStatus').textContent = liveFix ? 'Starting from your selected address. The blue dot shows your last location.' : 'Starting from your selected address.';
   if (key === 'from' || key === 'to') void requestRoute({ reveal:true });
+  /* A destination with no starting point takes the pickup's "Use my location" at its word (owner, 2026-10-20: "where to
+     still doesn't generate"): the location is asked for now, from this tap, and the route follows. Refused, the pickup
+     field is where the starting address goes. */
+  if (key === 'to' && hasCoordinates(draft.to) && !hasCoordinates(draft.from) && !locating && !draft.from?.label)
+    void locate().then(() => { if (!hasCoordinates(draft.from) && currentMode === 'travel') $('wtFrom').focus({ preventScroll:true }); });
 }
 // Cross-origin music chrome cannot be covered by the iframe's own z-index.
 function announceAddressPicking(){
@@ -710,6 +733,29 @@ function editField(key) {
   const ids = { from:'wtFrom', departureHub:'wtDepartureHub', arrivalHub:'wtArrivalHub', stay:'wtStay' };
   if (key !== 'from') { $('wtOptions').open = true; $('wtDetails').open = true; } $(ids[key] || 'wtFrom').focus();
 }
+/* RENTALS (owner, 2026-10-20: "it's meant to be a rental travel app"): cars for rent from Whip Equipped LLC, Matthew's
+   separate company. Isabeata is a fictional make and the Isabeata 2024 the cheapest car on the marketplace, at the owner's
+   price of $350 a week. Reserve continues in Whip Equipped's own rentals app, which takes the booking and the payment. */
+const RENTAL_CARS = [{ id:'we-rental-isabeata-2024', name:'Isabeata 2024', kind:'Economy', seats:5, weekly:350, color:'#c9ced4' }];
+const carArt = color => `<svg class="wt-car-svg" viewBox="0 0 120 50" aria-hidden="true"><path d="M8 35c0-5 4-8 12-9l17-10c4-2 9-3 15-3h21c6 0 10 2 14 6l8 7c9 1 15 4 17 8v3c0 2-2 3-4 3H12c-3 0-4-2-4-5z" fill="${color}"/><path d="M41 18l11-3h17v10H35zM72 15h7c3 0 6 2 9 5l3 5H72z" fill="#0f1a24" opacity=".75"/><circle cx="31" cy="39" r="8.5" fill="#0b0d10"/><circle cx="31" cy="39" r="3.6" fill="#b9bec4"/><circle cx="92" cy="39" r="8.5" fill="#0b0d10"/><circle cx="92" cy="39" r="3.6" fill="#b9bec4"/></svg>`;
+function renderCars() {
+  $('wtCars').innerHTML = RENTAL_CARS.map(car => `<article class="wt-car"><div class="wt-car-art">${carArt(car.color)}</div>
+    <h4>${esc(car.name)}</h4><p>${esc(car.kind)} · ${car.seats} seats</p><p class="wt-car-price"><strong>$${car.weekly}</strong><small>/week</small></p>
+    <a class="wt-car-go" href="https://matthew.mccluster.org/whip/rentals/?vehicle=${encodeURIComponent(car.id)}" target="_blank" rel="noopener" aria-label="Reserve the ${esc(car.name)} with Whip Equipped">Reserve</a></article>`).join('');
+}
+renderCars();
+/* the switch under each tile: one side on, the other off. Rentals and Private stand in for the route and the flight draft. */
+function paintSubs() {
+  const sub = tripShape === 'rides' ? rideSub : flightSub;
+  panel.dataset.travelView = sub;
+  panel.querySelectorAll('button[data-travel-sub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.travelSub === (['directions','rentals'].includes(b.dataset.travelSub) ? rideSub : flightSub))));
+  $('wtRentals').hidden = sub !== 'rentals'; $('wtPrivate').hidden = sub !== 'private';
+}
+function chooseSub(sub) {
+  if (sub === 'directions' || sub === 'rentals') { rideSub = sub; if (tripShape !== 'rides') chooseMode(isGround() || draft.mode === 'transit' ? draft.mode : 'drive', { shape:'rides' }); }
+  else { flightSub = sub; if (tripShape === 'rides') chooseMode('flight', { shape:'flights' }); }
+  paintSubs();
+}
 /* Rides, Flights and Multi-city are the three shapes a trip takes here. Rides is the street route (and a ride);
    Flights and Multi-city are the same longer-trip draft, Multi-city with the airports and stay fields open. */
 function chooseMode(kind, { shape = null, details = false } = {}) {
@@ -733,15 +779,20 @@ function goSomewhere(what) {
   }
 }
 panel.addEventListener('click', e => {
-  const mode = e.target.closest('[data-travel-kind]'), edit = e.target.closest('[data-edit]');
+  const mode = e.target.closest('[data-travel-kind]'), edit = e.target.closest('[data-edit]'), sub = e.target.closest('button[data-travel-sub]');
   const chip = e.target.closest('[data-travel-chip],[data-travel-plan]'), go = e.target.closest('[data-travel-go]');
   try {
+    if (sub) { chooseSub(sub.dataset.travelSub); return; }
     if (mode) {
       if (mode.dataset.travelKind === 'stay') { editField('stay'); return; }
+      // a flight picked from the trip's own options is a commercial plan, whatever the Flights switch last said
+      if (mode.dataset.travelKind === 'flight') flightSub = 'commercial';
       chooseMode(mode.dataset.travelKind); return;
     }
     if (chip) {
       const which = chip.dataset.travelChip || chip.dataset.travelPlan;
+      /* Search flights and Door-to-door are commercial planning; the Flights tile keeps whichever side its switch is on */
+      if (chip.dataset.travelPlan) flightSub = 'commercial';
       chooseMode(which === 'rides' ? (isGround() || draft.mode === 'transit' ? draft.mode : 'drive') : 'flight', { shape: which, details: which === 'multi' });
       if (which !== 'rides' && !draft.to) { $('wtEndpointHint').textContent = which === 'multi' ? 'Choose a destination to draft a door-to-door trip.' : 'Choose a destination to plan flights.'; $('wtTo').focus(); }
       return;
