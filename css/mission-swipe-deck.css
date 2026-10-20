@@ -123,8 +123,9 @@
 /* MISSIONS IS ONE SCREEN (owner, 2026-10-20: "I don't like the fact that I have to scroll down at all … it needs to be a
    solid screen"). While Missions is up, the World's sheet does not scroll: the globe gives the deck more room, the card
    takes what is left, its picture shrinks first, the words stop with a fade ("Read full mission" opens every word), and
-   Pass and Accept always sit on screen. A card takes the whole touch, so a swipe is never a scroll. */
-.mn-world-on[data-world-mode="missions"] #mnWorldFeed { overflow:hidden;display:flex;flex-direction:column; }
+   Pass and Accept always sit on screen. A card takes the whole touch, so a swipe is never a scroll. A card never goes
+   below 220px: on a screen too short for that (a phone on its side) the sheet scrolls to Pass and Accept instead. */
+.mn-world-on[data-world-mode="missions"] #mnWorldFeed { overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column; }
 .mn-world-on[data-world-mode="missions"] #wtSocial,
 .mn-world-on[data-world-mode="missions"] #wtSocial>.hu-mission-preview,
 .mn-world-on[data-world-mode="missions"] #huMissionList,
@@ -139,7 +140,7 @@
 .mn-world-on[data-world-mode="missions"] .mn-swipe__count { position:absolute;top:0;right:48px;height:38px;display:flex;align-items:center;margin:0;white-space:nowrap; }
 .mn-world-on[data-world-mode="missions"] .mn-swipe__stage { padding:4px 1px 2px; }
 .mn-world-on[data-world-mode="missions"] .mn-swipe__deck { flex:1 1 auto;min-height:0;display:flex;margin:0 0 6px; }
-.mn-world-on[data-world-mode="missions"] .mn-swipe__card { flex:1 1 auto;min-height:0;overflow:hidden;touch-action:none; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__card { flex:1 1 auto;min-height:220px;overflow:hidden;touch-action:none; }
 .mn-world-on[data-world-mode="missions"] .mn-swipe__art { flex:1 1 0;min-height:52px; }
 .mn-world-on[data-world-mode="missions"] .mn-swipe__body { flex:0 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column; }
 .mn-world-on[data-world-mode="missions"] .mn-swipe__description { min-height:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3; }

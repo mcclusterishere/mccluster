@@ -214,19 +214,19 @@
     if (!theme || songBegun || !theme.audio.paused || !rotation || rotation.length < 2) return;
     var next = rotation[Math.floor(Math.random() * rotation.length)];
     if (next.src === song.src) return;
-    song = next; theme.title = song.title; theme.audio.src = ROOT + song.src; paint();
+    song = Object.assign({}, next, {pick:"random", pool:rotation.length}); theme.title = song.title; theme.audio.src = ROOT + song.src; paint();
   }
   function songEvent(name, extra) {
     if (!song || typeof root.MCC_TRACK !== "function") return;
     var a = theme && theme.audio;
     try {
-      root.MCC_TRACK(name, Object.assign({page:"world", song:song.slug, album:song.album, ord:songOrd, pick:rotation ? "random" : "fallback",
-        pool:rotation ? rotation.length : 1, at_s:a ? Math.round(a.currentTime || 0) : 0,
+      root.MCC_TRACK(name, Object.assign({page:"world", song:song.slug, album:song.album, ord:songOrd, pick:song.pick, pool:song.pool, at_s:a ? Math.round(a.currentTime || 0) : 0,
         after_s:songStarted ? Math.round((Date.now() - songStarted) / 1000) : 0}, extra || {}));
     } catch (_) {}
   }
+  // how the song was chosen is kept with it, so every event about one listen says the same thing
   function loadSong(next) {
-    song = next; songOrd++; songBegun = false; songStarted = 0;
+    song = Object.assign({}, next, {pick:rotation ? "random" : "fallback", pool:rotation ? rotation.length : 1}); songOrd++; songBegun = false; songStarted = 0;
     theme.title = song.title; theme.audio.src = ROOT + song.src;
   }
   function reactions(audio) {
@@ -526,7 +526,7 @@
     return;
   }
   root.MCC_WORLD_AUDIO = {navigate:navigate, leaveFrame:leaveFrame, touch:touch, active:function () {return open;},
-    song:function () { return song ? {slug:song.slug, title:song.title, ord:songOrd, pool:rotation ? rotation.length : 0} : null; }};
+    song:function () { return song ? {slug:song.slug, title:song.title, ord:songOrd, pick:song.pick, pool:rotation ? rotation.length : 0} : null; }};
   if (musicSurface()) {
     ensureTheme(); loadRotation().then(rollUnplayed); // metadata only; no automatic playback on Music.
     watch(root.MCC_MUSIC && root.MCC_MUSIC.audio); watch(doc.getElementById("deck"));

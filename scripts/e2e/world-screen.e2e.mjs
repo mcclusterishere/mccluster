@@ -715,7 +715,10 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     /* MISSIONS IS ONE SCREEN (owner, 2026-10-20): nothing scrolls, Pass and Accept clear the bar, a card takes the whole touch */
     const fit=await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed'),a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),c=document.querySelector('.mn-swipe__card');
       const overlap=a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;return{scroll:f.scrollHeight-f.clientHeight,bottom:Math.round(a.bottom),inner:innerHeight,overlap,touch:getComputedStyle(c).touchAction,card:Math.round(c.getBoundingClientRect().height)};});
-    check(scope,'Missions is one screen: nothing scrolls, Pass and Accept stay on screen clear of the bar, and a swipe is never a scroll',fit.scroll<=1&&fit.bottom<=fit.inner&&!fit.overlap&&fit.touch==='none'&&fit.card>=150,fit);
+    if(fit.inner>=560)check(scope,'Missions is one screen: nothing scrolls, Pass and Accept stay on screen clear of the bar, and a swipe is never a scroll',fit.scroll<=1&&fit.bottom<=fit.inner&&!fit.overlap&&fit.touch==='none'&&fit.card>=150,fit);
+    /* a phone on its side is too short for that: the card keeps its full size and the sheet scrolls to Pass and Accept */
+    else check(scope,'on a short screen the card keeps its full size, a swipe is never a scroll, and the sheet reaches Pass and Accept',fit.card>=220&&fit.touch==='none'
+      &&await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');f.scrollTop=f.scrollHeight;const a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),r=a.bottom<=innerHeight&&!(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top);f.scrollTop=0;return r;}),fit);
     await page.screenshot({path:join(OUT,scope+'-missions.png')});
     if(!member){
       const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});
@@ -732,7 +735,9 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
     check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);
     check(scope,'globe and feed have no old raised-card decoration',await page.locator('#mnWorld').evaluate(e=>getComputedStyle(e).boxShadow==='none'));
-    check(scope,'approved travel headline is visible above the globe',await page.locator('.wt-headline').isVisible() && await page.textContent('.wt-headline')==='The world is your feed.');
+    /* the World's song is random (owner, 2026-10-20) and a song with timed lyrics takes the headline while it plays */
+    check(scope,'approved travel headline is visible above the globe, or the playing song\'s lyric in its place',await page.locator('.wt-headline').isVisible()
+      && (await page.textContent('.wt-headline')==='The world is your feed.' || /\bis-lyric\b/.test(await page.getAttribute('.wt-headline','class')||'')));
     check(scope,'feed scrolls while globe and page remain stationary',await page.evaluate(()=>{
       const feed=document.getElementById('mnWorldFeed'),globe=document.getElementById('mnWorld'),before=globe.getBoundingClientRect().toJSON(),pageY=scrollY;
       feed.scrollTop=120;

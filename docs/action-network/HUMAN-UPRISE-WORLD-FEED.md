@@ -935,7 +935,9 @@ the token's asset scope and usage alerts are still the owner's to set. The creat
   the globe gives the deck more room, the card's picture shrinks first, the
   words stop with a fade ("Read full mission" opens every word), Pass and
   Accept stay on screen, and a card takes the whole touch so a swipe is never a
-  scroll (`css/mission-swipe-deck.css`).
+  scroll (`css/mission-swipe-deck.css`). A card never shrinks below 220px: on a
+  phone turned on its side the sheet scrolls the last few pixels to Pass and
+  Accept instead.
 - **Where to.** Choosing a destination with no starting point asks for the
   location from that tap (the pickup reads "Use my location"); refused, the
   pickup field takes focus. The route and "Go" follow as before.
@@ -961,7 +963,9 @@ the token's asset scope and usage alerts are still the owner's to set. The creat
   one of them); another random one follows when it ends
   (`js/world-audio-continuity.js`). After the privacy acknowledgement, what
   the listener does is recorded through `MCC_TRACK` with the song, its order in
-  the session and the seconds in: `song_start`, `song_pause` (by the corner
+  the session, how it was chosen (`pick`: `random`, or `fallback` when the first
+  tap comes before the catalog has loaded, since playback must start inside the
+  tap itself) and the seconds in: `song_start`, `song_pause` (by the corner
   button, the player, or another song starting), `song_resume`, `song_mute`,
   `song_unmute`, `song_volume` (from/to), `song_end`, `song_hidden` (tab to the
   background) and `song_leave`. The song events add no account, place or
