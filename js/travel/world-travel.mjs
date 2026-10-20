@@ -915,5 +915,6 @@ attachWhipBooking({
 syncInputs(); sessionChanged();
 const query = new URLSearchParams(location.search), requestedMode = query.get('mode');
 const wanted = query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : requestedMode;
-setMode(MODES.includes(wanted) ? wanted : MODES[0]);
+/* the house owner's World (js/world-owner-modes.js) has all three and opens on the feed, the one everyone else sees */
+setMode(MODES.includes(wanted) ? wanted : document.documentElement.hasAttribute('data-world-owner') ? 'posts' : MODES[0]);
 send({ type:'hu:hello' }); autoLocate();

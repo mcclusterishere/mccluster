@@ -16,7 +16,8 @@ const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentF
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
 /* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): missions=0 (mnet.html, for the frame and the expanded globe) draws no
    mission pins, regions or outlines and keeps the mission panels shut, until Missions comes back */
-const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0';if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
+/* the house owner's World keeps them (js/world-owner-modes.js lifts the switch on the page that holds this frame) */
+const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0'&&!(()=>{try{return !!parentFrame&&!parentFrame.document.documentElement.classList.contains('hu-social-only')}catch(e){return false}})();if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
 let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;
