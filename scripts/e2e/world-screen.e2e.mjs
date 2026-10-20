@@ -166,7 +166,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       return respond();
     }
     // These personas are ordinary members, not operators. A catch-all 200 must not grant admin navigation.
-    if (u.pathname === '/v1/status') return json(route, { error: 'Forbidden' }, 403);
+    if (u.pathname === '/v1/status') return world.owner && auth ? json(route, { ok: true }) : json(route, { error: 'Forbidden' }, 403);
     if (u.pathname === '/v1/action-archive/docket-516r-2025') return json(route, COHORT_ARCHIVE);
     /* THE COUNTRY FEED: off unless a scenario names the connection country the Worker would read from request.cf */
     if (u.pathname === '/v1/world/place-scope') return json(route, { ok: true, enabled: !!world.placeHome, country: world.placeHome || null, source: 'cloudflare_country' });
@@ -303,8 +303,9 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, social = false }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, social = false, owner = false }) {
   const world = freshWorld();
+  world.owner = owner;
   world.placeHome = placeHome;
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage; world.admin = admin;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
@@ -886,6 +887,53 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
     await page.screenshot({path:join(OUT,scope+'.png')});
     check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+
+/* ALL THREE FOR THE HOUSE OWNER (owner, 2026-10-20: "keep the social feed on and then develop those other projects in the
+   back end. Probably keep all three on admin"). The page as it ships; the server says this member is the house owner. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&d.name==='iphone-portrait')||d.name===process.env.EDITORIAL_DEVICE)) {
+  const scope = `editorial-owner-${device.name}`;
+  const {ctx,page,world,errors} = await open(device,{member:true,social:true,owner:true});
+  try {
+    /* the first time on this browser, the owner's answer opens the World again, once, with all three */
+    await page.waitForFunction(()=>!document.documentElement.classList.contains('hu-social-only')&&document.documentElement.hasAttribute('data-world-owner'),null,{timeout:20000}).catch(()=>{});
+    await page.waitForSelector('.wt-world-modes button',{state:'visible',timeout:15000}).catch(()=>{});
+    const shell=await page.evaluate(()=>({modes:[...document.querySelectorAll('.wt-world-modes button')].filter(b=>b.getClientRects().length).map(b=>b.dataset.worldMode),
+      mode:document.documentElement.dataset.worldMode,memo:JSON.parse(localStorage.getItem('mcc_world_owner')||'null'),reloaded:performance.getEntriesByType('navigation')[0].type,
+      expand:document.querySelector('.mn__world-expand').getAttribute('href')}));
+    check(scope,'the owner\'s World has Travel, Missions and Feed, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts'])&&shell.mode==='posts',shell);
+    check(scope,'the server\'s yes is remembered for this account; the World opened again once to show it',!!shell.memo&&/^aaaaaaaa/.test(shell.memo.sub)&&shell.reloaded==='reload',shell);
+    check(scope,'the expanded globe shows the missions too',!/missions=0/.test(shell.expand),shell.expand);
+    const globe=page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
+    check(scope,'the Earth carries the mission pins again for the owner',await globe.evaluate(()=>window.__huMissionPins()>0&&!document.documentElement.classList.contains('globe-no-missions')));
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.waitForSelector('.mn-swipe__card',{timeout:15000}).catch(()=>{});
+    check(scope,'Missions opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='missions'&&!!document.querySelector('.mn-swipe__card')));
+    await page.click('.wt-world-modes [data-world-mode=travel]');
+    check(scope,'Travel opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='travel'));
+    /* the next World opens with all three straight away: no second opening */
+    await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
+    const early=await page.evaluate(()=>({social:document.documentElement.classList.contains('hu-social-only'),type:performance.getEntriesByType('navigation')[0].type}));
+    await page.waitForTimeout(2500);
+    const after=await page.evaluate(()=>performance.getEntriesByType('navigation')[0].type);
+    check(scope,'the next visit opens with all three from the first paint, without opening again',!early.social&&early.type==='navigate'&&after==='navigate',{early,after});
+    /* signed out, the World is the social feed again */
+    await page.evaluate(()=>localStorage.removeItem('mccdb_session'));
+    await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
+    check(scope,'signed out, the World is the social feed and the remembered answer is gone',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+/* and a member who is not the owner keeps the social feed, with nothing remembered */
+if (runs('editorial')) {
+  const {ctx,page,errors} = await open(DEVICES.find(d=>d.name==='iphone-portrait'),{member:true,social:true});
+  try {
+    await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(2500);
+    check('editorial-not-owner','a member the server does not call the owner keeps the social feed, nothing remembered, no second opening',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')&&performance.getEntriesByType('navigation')[0].type==='navigate'));
+    check('editorial-not-owner','no JavaScript errors',errors.length===0,errors);
   } finally { await ctx.close(); }
 }
 
