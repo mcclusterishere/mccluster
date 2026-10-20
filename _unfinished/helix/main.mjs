@@ -13,6 +13,7 @@ let scene = null;
 let pointer = null;
 let pinch = null;
 const lyricCache = new Map();
+let informationTab = "lyrics";
 
 function announce(message, persist = false) {
   notice.textContent = message;
@@ -40,21 +41,32 @@ function isCurrentTrack() {
 }
 
 function paintPlayback() {
-  if (state.mode !== "song") return;
   const audio = transport?.audio;
-  const active = isCurrentTrack();
+  const active = state.mode === "song" && isCurrentTrack();
   const access = active ? transport.access?.() : null;
   const duration = Number(audio?.duration);
-  const stamp = active && audio ? clock(audio.currentTime) +
-    (Number.isFinite(duration) ? " / " + clock(duration) : "") : "";
-  $("helixPlayback").textContent = access === "loading" ? "Preparing audio…" :
+  const validDuration = active && Number.isFinite(duration) && duration > 0;
+  const currentTime = active ? Number(audio?.currentTime) || 0 : 0;
+  const stamp = active ? clock(currentTime) +
+    (validDuration ? " / " + clock(duration) : "") : "";
+  $("helixPlayback").textContent = state.mode !== "song" ? "Choose a song on the DNA strand" :
+    access === "loading" ? "Preparing audio…" :
     access === "preview" ? "Preview · " + stamp :
     access === "unavailable" ? "Audio unavailable" :
     access === "spent" ? "This one-time listen has ended" :
     active ? (audio.paused ? "Paused" : "Playing") + (stamp ? " · " + stamp : "") :
-    "Tap the glowing crossbar to play";
-  // Never show a different track's playback position on the selected rung.
-  scene?.setAudio(active && state.mode === "song" ? audio : null);
+    "Tap the glowing crossbar or Play to listen";
+  const seek = $("helixSeek");
+  seek.disabled = !validDuration || !!track()?.gated;
+  seek.value = validDuration ? String(Math.round(clamp(currentTime / duration, 0, 1) * 1000)) : "0";
+  $("helixCurrent").textContent = active ? clock(currentTime) : "0:00";
+  $("helixDuration").textContent = validDuration ? clock(duration) : "—:—";
+  const label = state.mode === "library" ? "Enter album" : state.mode === "album" ?
+    "Play selected song" : active && !audio?.paused ? "Pause" : "Play";
+  $("helixPlayLabel").textContent = label;
+  $("helixPlay").setAttribute("aria-label", label);
+  // Progress belongs only to the selected active recording, never another track.
+  scene?.setAudio(active ? audio : null);
   scene?.setPlaying(active && !audio.paused);
 }
 
@@ -82,32 +94,77 @@ function renderAccessible() {
   nav.replaceChildren(fragment);
 }
 
+function renderInformationPanels() {
+  const showingSong = state.mode === "song";
+  $("helixLyrics").hidden = !showingSong || informationTab !== "lyrics";
+  $("helixDetails").hidden = !showingSong || informationTab !== "details";
+  for (const [name, id] of [["lyrics", "helixLyricsTab"], ["details", "helixDetailsTab"]]) {
+    const button = $(id);
+    const active = name === informationTab;
+    button.classList.toggle("is-selected", active);
+    button.setAttribute("aria-pressed", String(active));
+    button.disabled = !showingSong;
+  }
+}
+
+function renderSongData(record, item) {
+  // Only approved, provenance-tagged measurements may populate brain metrics.
+  // A 3D brain is illustrative: this is neither EEG nor an inferred mental state.
+  const analysis = item?.analysis;
+  const measured = analysis?.provenance === "measured" || analysis?.provenance === "verified";
+  const bpm = measured ? Number(analysis.bpm) : NaN;
+  $("helixBpm").textContent = Number.isFinite(bpm) && bpm >= 20 && bpm <= 360 ?
+    String(Math.round(bpm)) : "—";
+  $("helixKey").textContent = measured && typeof analysis.key === "string" ?
+    analysis.key.slice(0, 18) : "—";
+  $("helixSignature").textContent = measured && typeof analysis.spectralLabel === "string" ?
+    analysis.spectralLabel.slice(0, 22) : "—";
+  const source = measured ?
+    "Measured audio features · NOT a brain scan or biological reading" :
+    "Audio analysis pending · brain illustration is not an EEG";
+  $("helixBrainSource").textContent = source;
+  $("helixDetailProvenance").textContent = source +
+    ". Decorative DNA waveform is not a measured recording waveform.";
+  $("helixDetailAlbum").textContent = record.name;
+  $("helixDetailTrack").textContent = item?.title || "Select a track";
+}
+
 function render() {
   if (!albums.length) return;
   state.track = clamp(state.track, 0, album().tracks.length - 1);
   app.dataset.view = state.mode;
   scene.setMode(state.mode, state.album, state.track);
   const record = album();
+  const item = track();
   $("helixAlbum").textContent = record.name;
-  $("helixArtist").textContent = record.artist || "McCluster";
-  $("helixLevel").textContent =
-    state.mode === "library" ? "ALBUM DNA" :
+  $("helixArtist").textContent = record.artist || "Matthew McCluster";
+  $("helixLevel").textContent = state.mode === "library" ? "ALBUM DNA" :
     state.mode === "album" ? "THE STRAND" : "INSIDE THE SONG";
   $("helixEyebrow").textContent = state.mode === "library"
     ? "VIAL " + (state.album + 1) + " OF " + albums.length
     : state.mode === "album" ? "ALBUM GENOME" : "SONG GENOME";
+  const art = $("helixArt");
+  if (typeof record.art === "string" && /^assets\/(?:img|frames)\/[a-z0-9_./-]+$/i.test(record.art)) {
+    art.src = record.art;
+    art.alt = record.name + " cover art";
+    art.hidden = false;
+  } else {
+    art.removeAttribute("src");
+    art.hidden = true;
+  }
   const deep = state.mode !== "library";
   $("helixSong").hidden = !deep;
-  $("helixLyrics").hidden = state.mode !== "song";
   if (deep) {
     $("helixCounter").textContent = "RUNG " + (state.track + 1) + " / " + record.tracks.length;
-    $("helixSongName").textContent = track().title;
+    $("helixSongName").textContent = item.title;
   }
+  renderSongData(record, deep ? item : null);
+  renderInformationPanels();
   $("helixHelp").textContent = state.mode === "library"
-    ? "Swipe sideways to change albums · Tap the centered vial to enter"
+    ? "Swipe to change vials · Tap the centered vial to enter"
     : state.mode === "album"
-      ? "Swipe up or down to move through songs · Tap a crossbar to listen"
-      : "Drag across the selected crossbar to seek · Tap to pause or play · Pinch out to go back";
+      ? "Swipe up or down to browse crossbars · Tap one to listen"
+      : "Select a DNA rung · Touch the glowing rung to play · Pinch in to return";
   paintPlayback();
   renderAccessible();
 }
@@ -339,6 +396,32 @@ async function boot() {
   const index = albums.findIndex(a => a.slug === requested);
   if (index >= 0) enterAlbum(index);
   else showLibrary(0);
+
+  // The console controls the SAME canonical engine as the 3D crossbars.
+  $("helixPrevious").addEventListener("click", () =>
+    state.mode === "library" ? changeAlbum(-1) : stepTrack(-1));
+  $("helixNext").addEventListener("click", () =>
+    state.mode === "library" ? changeAlbum(1) : stepTrack(1));
+  $("helixPlay").addEventListener("click", () => {
+    if (state.mode === "library") enterAlbum();
+    else if (state.mode === "album") openSong();
+    else togglePlayback();
+  });
+  $("helixSeek").addEventListener("change", event => {
+    if (state.mode !== "song" || !isCurrentTrack() || track()?.gated) return;
+    const audio = transport.audio;
+    if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+    audio.currentTime = clamp(Number(event.target.value) / 1000, 0, 1) * audio.duration;
+    paintPlayback();
+  });
+  $("helixLyricsTab").addEventListener("click", () => {
+    informationTab = "lyrics";
+    renderInformationPanels();
+  });
+  $("helixDetailsTab").addEventListener("click", () => {
+    informationTab = "details";
+    renderInformationPanels();
+  });
 
   canvas.addEventListener("pointerdown", pointerDown);
   canvas.addEventListener("pointerup", pointerUp);
