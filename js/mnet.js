@@ -1428,7 +1428,12 @@
         var linkedPost = new URLSearchParams(location.search).get("post");
         if (linkedPost && /^[0-9a-f-]{36}$/i.test(linkedPost)) {
           var target = Array.prototype.find.call($("mnFeed").querySelectorAll("[data-post-id]"), function (node) { return node.getAttribute("data-post-id") === linkedPost; });
-          if (target) { target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true }); }
+          if (target) {
+            target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true });
+            // arriving from a comment alert, the discussion is open already
+            var talk = new URLSearchParams(location.search).get("comments") === "1" && target.querySelector("[data-discussion-toggle][aria-expanded=\"false\"]");
+            if (talk) { talk.click(); track("alert_open", { type:"comment" }); }
+          }
         }
       } catch (_) {}
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming), loadCollaborationCards(incoming)]).then(function (flags) {
@@ -1555,6 +1560,10 @@
       if(n.type==="collaboration_published"&&/^[0-9a-f-]{36}$/i.test(String(meta.mission_id||""))){
         action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(meta.mission_id)+'">Confirm as my Level 3 →</a>';
       }
+      /* a comment opens the post with its discussion */
+      if(n.type==="comment"&&/^[0-9a-f-]{36}$/i.test(String(meta.post_id||""))){
+        action='<a class="mn__notification-action" href="mnet.html?view=feed&amp;post='+encodeURIComponent(meta.post_id)+'&amp;comments=1">See the comment →</a>';
+      }
       if(n.type==="connection_accepted"&&meta.handle){
         action='<button class="mn__notification-action" type="button" data-person="'+esc(meta.handle)+'">View profile →</button>';
       }
@@ -1573,6 +1582,43 @@
     host.querySelectorAll("[data-person]").forEach(function(b){b.addEventListener("click",function(){openPerson(b.getAttribute("data-person"));});});
   }
 
+  /* ALERTS ON THIS DEVICE (owner, 2026-10-20; workers/mccluster/src/web-push.js). Never asked for on its own: the
+     browser's permission prompt appears only after the member taps Turn on. Hidden where the browser cannot take
+     push (an iPhone needs the site added to the Home Screen first) or while the server has it off. */
+  var push = { key:"", busy:false };
+  function pushSupported() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+  function pushKeyBytes(key) {
+    var s = atob(key.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((key.length + 3) % 4)), out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  function paintPush() {
+    var box = $("mnPush"); if (!box || state.guest || !pushSupported()) return;
+    (push.key ? Promise.resolve({ enabled:true, key:push.key }) : api("/v1/mnet/push")).then(function (cfg) {
+      if (!cfg || !cfg.enabled || !cfg.key) { box.hidden = true; return null; }
+      push.key = cfg.key; box.hidden = false;
+      return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) {
+        var on = !!sub && Notification.permission === "granted", b = $("mnPushToggle");
+        b.textContent = on ? "Turn off" : "Turn on"; b.setAttribute("aria-pressed", String(on));
+        b.disabled = Notification.permission === "denied";
+        if (Notification.permission === "denied") $("mnPushNote").textContent = "Alerts are blocked for this site in your browser settings.";
+      });
+    }).catch(function () { box.hidden = true; });
+  }
+  function togglePush() {
+    if (push.busy || !push.key) return; push.busy = true;
+    var b = $("mnPushToggle"); b.disabled = true;
+    navigator.serviceWorker.ready.then(function (reg) {
+      return reg.pushManager.getSubscription().then(function (sub) {
+        if (sub) return api("/v1/mnet/push/subscriptions", { method:"DELETE", body:{ endpoint:sub.endpoint } }).then(function () { return sub.unsubscribe(); }).then(function () { track("push_off", {}); });
+        return reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:pushKeyBytes(push.key) }).then(function (fresh) {
+          return api("/v1/mnet/push/subscriptions", { method:"POST", body:fresh.toJSON() }).then(function () { track("push_on", {}); });
+        });
+      });
+    }).catch(function (e) {
+      setStatus($("mnNotificationStatus"), Notification.permission === "denied" ? "Alerts are blocked for this site in your browser settings." : (e.message || "Alerts could not be changed."), "error");
+    }).finally(function () { push.busy = false; b.disabled = false; paintPush(); });
+  }
   function loadNotificationsSilently() {
     return api("/v1/mnet/notifications").then(function (data) {
       var rows = data.notifications || [];
@@ -2003,7 +2049,7 @@
     if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
-    if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
+    if(name==="notifications"){loadNotificationsSilently().then(markNotificationsRead);paintPush();}
     if(name==="profile"){paintSelf();loadDeletion();paintCreatorDoor();}
     window.scrollTo({top:0,behavior:"smooth"});
     sizeWorld();
@@ -2228,6 +2274,7 @@
     };
     $("mnMore").onclick = function () { loadFeed(false); };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
+    $("mnPushToggle").onclick = togglePush;
     wireMenu();
     $("mnGuestSignIn").onclick = function () { openSignIn("signin"); };
     $("mnGuestJoin").onclick = function () { openSignIn("create"); };
@@ -2766,6 +2813,7 @@
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       if(worldMissionDeck)worldMissionDeck.update(missions.all);
       worldMissionDeckLoaded=true;
+      paintActionRecord();
       setStatus($("mnMissionStatus"),"");
       return true;
     }).catch(function(e){if(version===missionListVersion){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");if(worldMissionDeck)worldMissionDeck.fail(e.message||"Missions could not load.");}return false;});
@@ -2821,6 +2869,23 @@
       .then(function(){if(window.MCC_TRACK)window.MCC_TRACK("fellowship_apply",{});return loadActionRecord();})
       .catch(function(e){setStatus($("mnFellowStatus"),e.message||"Your application could not be sent.","error");b.disabled=false;});
   }
+  /* WHAT'S NEXT (owner, 2026-10-20: a finished mission should lead somewhere). Once something is verified, the record
+     names one open mission the member has not taken: one sharing a skill or a field with what they finished, else the
+     one most people have joined. Nothing shows when there is nothing new to take. */
+  function nextMission(r){
+    var taken={}, ref={};
+    (r.missions||[]).forEach(function(m){taken[m.mission_id]=m;});
+    var done=(r.missions||[]).filter(function(m){return m.status==="verified";});
+    var open=(missions.all||[]).filter(function(m){return !taken[m.id];});
+    if(!done.length||!open.length)return null;
+    done.forEach(function(d){
+      var m=(missions.all||[]).find(function(x){return x.id===d.mission_id;});
+      if(m){(m.skills||[]).forEach(function(k){ref["s:"+k]=1;});if(m.domain)ref["d:"+m.domain]=1;}
+    });
+    function near(m){var n=m.domain&&ref["d:"+m.domain]?1:0;(m.skills||[]).forEach(function(k){if(ref["s:"+k])n+=2;});return n;}
+    function joined(m){return Number((missions.stats[m.id]||{}).joined)||0;}
+    return open.slice().sort(function(a,b){return near(b)-near(a)||joined(b)-joined(a);})[0];
+  }
   function paintActionRecord(){
     var r=missions.record; if(!r)return;
     var verified=Number(r.verified_actions)||0, points=Number(r.points)||0, cohorts=r.cohorts||[];
@@ -2842,7 +2907,9 @@
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
     }).join("");
     host.hidden=false;
+    var next=nextMission(r);
     host.innerHTML='<div class="mn__record-head"><div><p class="mn__eyebrow">Your Action Record</p><h2>'+verified+' verified '+(verified===1?"action":"actions")+'</h2></div><strong>'+points.toLocaleString()+' pts</strong></div>'+
+      (next?'<div class="mn__record-next"><p class="mn__eyebrow">Next for you</p><b>'+esc(next.title)+'</b><button class="mn__primary" type="button" data-open-mission="'+esc(next.id)+'">View mission</button></div>':"")+
       fellowship+
       (skills?'<ul class="mn__record-skills">'+skills+'</ul>':"")+
       (cohorts.length?'<ul class="mn__record-cohorts">'+cohorts.map(function(c){return '<li><b>'+esc(c.name)+'</b><span>'+esc(c.members)+' members · '+esc(Number(c.points).toLocaleString())+(c.goal_points?" of "+esc(Number(c.goal_points).toLocaleString()):"")+' pts</span></li>';}).join("")+'</ul>':"")+
