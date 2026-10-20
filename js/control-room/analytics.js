@@ -573,7 +573,7 @@
   }
   function communitySlide(){
     var m=S.data.business&&S.data.business.snapshot&&S.data.business.snapshot.mnet,w=function(k){return m&&m[k]?m[k].created_in_window:null;};
-    return slide("Community",big(w("posts"),"Posts","Human Uprise · "+(S.range&&S.range.label||""),m&&m.profiles?nn(m.profiles.total)+" member profiles in all":"")+
+    return slide("Community",big(w("posts"),"Posts","Equity Uprise · "+(S.range&&S.range.label||""),m&&m.profiles?nn(m.profiles.total)+" member profiles in all":"")+
       bars([{label:"Posts",v:w("posts")},{label:"Reactions",v:w("reactions")},{label:"Follows",v:w("follows")},{label:"New profiles",v:w("profiles")}],"label","v",4),"community");
   }
   function carousels(){
