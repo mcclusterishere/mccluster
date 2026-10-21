@@ -218,7 +218,13 @@ async function serviceRows(path: string): Promise<Record<string, unknown>[]> {
 
 async function resolveAnalyticsSite(body: Record<string, unknown>, h: Headers_) {
   const key = str(body.site_key, 64);
-  if (!key) return { siteId: null, host: null, consentMode: null, legacy: true };
+  if (!key) {
+    // Preserve NULL as the first-party analytics scope. Host is an observed
+    // browser claim, not authentication; never trust a body-supplied hostname.
+    const observed = requestHost(h);
+    const owned = new Set(['mccluster.org', 'www.mccluster.org', 'matthew.mccluster.org', 'humanuprise.com', 'www.humanuprise.com']);
+    return { siteId: null, host: observed && owned.has(observed) ? observed : null, consentMode: null, legacy: true };
+  }
   if (!SITE_KEY.test(key)) return { error: "invalid site key", status: 403 };
 
   const host = requestHost(h);

@@ -54,14 +54,14 @@ export const NEWS_ATTRIBUTION = Object.freeze({ name: 'The GDELT Project', url: 
 export const NEWS_PATH = '/v1/world/news';
 const GDELT_ALLOWED_HOSTS = Object.freeze(['data.gdeltproject.org', 'storage.googleapis.com']);
 
-const PER_FILE = 100;
+const PER_FILE = 1000;
 const PER_DOMAIN = 3;
 const BACKFILL_SLOTS = 4;
 const FILES_PER_TICK = 2;
 const FETCH_TIMEOUT_MS = 25000;
 const MAX_ZIP_BYTES = 24 * 1024 * 1024;
 const MAX_AGE_HOURS = 72;
-const KEEP_DAYS = 7;
+const KEEP_DAYS = 30;
 const FILE_RE = /^[0-9]{14}\.gkg\.csv\.zip$/;
 const NCOLS = 27;
 const COL = Object.freeze({ ID: 0, DATE: 1, COLLECTION: 2, DOMAIN: 3, URL: 4, THEMES: 7, LOCATIONS: 10, TONE: 15, IMAGE: 18, TRANSLATION: 25, EXTRAS: 26 });
