@@ -16,7 +16,8 @@
 # Run on the VPS (all checks) or anywhere (DNS checks only).
 #
 #   MAIL_MODE=send-only  (default) the box sends; mail is received elsewhere
-#   MAIL_MODE=full       the box sends AND receives; MX should point here
+#   MAIL_MODE=staged     mail host sends and receives, but MX remains external
+#   MAIL_MODE=full       the box sends AND receives; MX must point here
 # ============================================================
 set -uo pipefail
 
@@ -113,35 +114,43 @@ head_ "3. Where does incoming mail go?"
 # Default is send-only because that is the safe assumption: asserting a
 # host receives mail when it does not is how mail disappears.
 MAIL_MODE="${MAIL_MODE:-send-only}"
+case "${MAIL_MODE}" in
+  send-only|staged|full) ;;
+  *) bad "unknown MAIL_MODE=${MAIL_MODE}; use send-only, staged or full" ;;
+esac
 # Flattened to one line: a domain with five MX hosts otherwise smears a
 # single PASS across five lines and stops being readable at a glance.
 MX="$(dns "${MAIL_DOMAIN}" MX | tr '[:upper:]' '[:lower:]' | awk '{print $NF}' | sed 's/\.$//' | paste -sd' ' -)"
 echo "  mode: ${MAIL_MODE}"
 
-if [[ "${MAIL_MODE}" == "full" ]]; then
-  if [[ "${MX}" == *"${MAIL_HOST}"* ]]; then
-    ok "MX points at ${MAIL_HOST}"
-  elif [[ -z "${MX}" ]]; then
-    bad "${MAIL_DOMAIN} has no MX record. Mail to the domain is bouncing."
+if [[ "${MAIL_MODE}" == "full" || "${MAIL_MODE}" == "staged" ]]; then
+  if [[ "${MAIL_MODE}" == "full" ]]; then
+    if [[ "${MX}" == "${MAIL_HOST}" ]]; then
+      ok "MX points exclusively at ${MAIL_HOST}"
+    else
+      bad "full mode requires MX to point exclusively at ${MAIL_HOST}; observed: ${MX:-missing}"
+    fi
+  elif [[ -z "${MX}" || " ${MX} " == *" ${MAIL_HOST} "* ]]; then
+    bad "staged mode requires existing external MX, not an absent or prematurely switched MX; observed: ${MX:-missing}"
   else
-    warn "MX is '${MX}', not ${MAIL_HOST}. Mail still goes elsewhere -- correct if you have not cut over yet."
+    ok "staged mail host: existing external MX remains unchanged (${MX})"
   fi
   # In full mode the receiving side has to be real, not just pointed at.
-  if command -v postconf >/dev/null; then
-    if postconf -h virtual_mailbox_domains 2>/dev/null | grep -qi "${MAIL_DOMAIN}"; then
-      ok "postfix accepts mail for ${MAIL_DOMAIN}"
-    else
-      bad "MX says mail comes here but postfix does not accept ${MAIL_DOMAIN}. Every message will be rejected."
-    fi
-    if systemctl is-active --quiet dovecot 2>/dev/null; then ok "dovecot is running"
-    else bad "dovecot is not running -- accepted mail has nowhere to be delivered"; fi
+  if ! command -v postconf >/dev/null; then
+    bad "postconf is unavailable; receiving configuration cannot be verified on this host"
+  elif postconf -h virtual_mailbox_domains 2>/dev/null | grep -Fqi "${MAIL_DOMAIN}"; then
+    ok "postfix accepts mail for ${MAIL_DOMAIN}"
+  else
+    bad "postfix does not accept ${MAIL_DOMAIN}. Incoming messages cannot reach the mailbox."
   fi
+  if systemctl is-active --quiet dovecot 2>/dev/null; then ok "dovecot is running"
+  else bad "dovecot is not running -- accepted mail has nowhere to be delivered"; fi
   # IMAP has to be reachable and encrypted, or the mailbox cannot be read
   # without handing the password to the internet.
   if [[ -n "${A_REC}" ]] && timeout 8 bash -c ">/dev/tcp/${MAIL_HOST}/993" 2>/dev/null; then
     ok "IMAPS reachable on ${MAIL_HOST}:993"
   else
-    warn "could not reach ${MAIL_HOST}:993 from here (firewall, or not up yet)"
+    bad "could not reach ${MAIL_HOST}:993; IMAP availability is unverified"
   fi
 else
   if [[ "${MX}" == *"${MAIL_HOST}"* ]]; then
@@ -166,7 +175,7 @@ if [[ -n "${A_REC}" && "${HERE}" == "${A_REC}" ]]; then
     bad "outbound port 25 is BLOCKED on the mail host. Postfix will accept mail from Supabase and never deliver it -- which looks exactly like success to the website. OVH blocks 25 by default; this is a support request."
   fi
 else
-  warn "not running on ${MAIL_HOST} (this host is ${HERE:-unknown}), so outbound port 25 was not tested. Re-run this on the VPS before trusting it."
+  bad "not running on ${MAIL_HOST} (this host is ${HERE:-unknown}); outbound port 25 is UNVERIFIED. Readiness must be checked on the actual mail host."
 fi
 
 head_ "5. Are we an open relay?"
@@ -174,9 +183,9 @@ head_ "5. Are we an open relay?"
 # an open relay is on a blocklist within hours and takes the signup
 # confirmations down with it.
 if [[ -z "${A_REC}" ]]; then
-  warn "skipped: ${MAIL_HOST} does not resolve yet, so there is nothing to probe"
+  bad "open-relay probe skipped: ${MAIL_HOST} does not resolve"
 elif ! command -v python3 >/dev/null; then
-  warn "skipped: python3 not available to run the probe"
+  bad "open-relay probe skipped: python3 is unavailable"
 else
   RELAY="$(python3 - "$MAIL_HOST" <<'PY' 2>/dev/null
 import smtplib, socket, sys
@@ -200,7 +209,7 @@ PY
   case "${RELAY}" in
     REFUSED)     ok "relay refuses unauthenticated mail" ;;
     OPEN)        bad "THIS IS AN OPEN RELAY. Stop and fix smtpd_relay_restrictions before sending anything." ;;
-    *)           warn "could not reach ${MAIL_HOST}:587 to test relaying (firewall, or the server is not up yet)" ;;
+    *)           bad "could not reach ${MAIL_HOST}:587 to test relaying; open-relay safety is UNVERIFIED" ;;
   esac
 fi
 
@@ -210,4 +219,8 @@ if (( FAIL > 0 )); then
   printf '\033[31mNOT READY.\033[0m Do not point Supabase at this server yet: the failures above\nare all things that lose mail without reporting an error.\n\n'
   exit 1
 fi
-printf '\033[32mReady.\033[0m Send one real test to a Gmail address and confirm it lands in the\ninbox rather than spam before you move signup confirmations over.\n\n'
+if [[ "${MAIL_MODE}" == "staged" ]]; then
+  printf '\033[32mSTAGING PRECHECK PASSED.\033[0m Existing MX remains external. This is NOT proof of actual delivery or authorization to change MX. Run direct-to-host inbound and real-world inbox-placement tests before a cutover.\n\n'
+else
+  printf '\033[32mHOST PRECHECK PASSED.\033[0m This is NOT proof of actual delivery. Confirm a real message lands in the inbox with SPF/DKIM/DMARC PASS before switching any production sender or MX.\n\n'
+fi
