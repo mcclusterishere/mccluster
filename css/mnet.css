@@ -297,11 +297,12 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
    (showGate drops the class). (Inside the Music page's World frame the Music page keeps the one bar: css/style.css.) */
 .mn-boot-signin #mnApp { display: none !important; }
 /* a member's room asked for by address (?view=profile, set by the head of mnet.html) is the room painted first, never the
-   World and then the room; js/mnet.js takes it over at once (peekView, setView and showGate drop the attribute) */
+   World and then the room; js/mnet.js takes it over at once (peekView, setView and showGate drop the attribute).
+   !important: .mn [hidden] (above) is itself important, and these are the few hidden things shown before the script runs */
 html[data-boot-view] #mnFeedView { display: none !important; }
 html[data-boot-view="live"] #mnLiveView, html[data-boot-view="clips"] #mnClipsView, html[data-boot-view="discover"] #mnDiscoverView,
-html[data-boot-view="groups"] #mnGroupsView, html[data-boot-view="messages"] #mnMessagesView, html[data-boot-view="profile"] #mnProfileView { display: block; }
-html[data-boot-view] #mnToWorld { display: inline-flex; }
+html[data-boot-view="groups"] #mnGroupsView, html[data-boot-view="messages"] #mnMessagesView, html[data-boot-view="profile"] #mnProfileView { display: block !important; }
+html[data-boot-view] #mnToWorld { display: inline-flex !important; }
 /* loading lists keep the shape of what is coming (skeletons, below), never a sentence that the answer then replaces */
 .mn__skel--row { grid-template-columns: 44px minmax(0, 1fr) 72px; align-items: center; padding: 12px 14px; border-radius: 16px; }
 .mn__skel--row > div i:last-child { margin-bottom: 0; }
@@ -929,7 +930,7 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
 .mn__guest-bar[hidden] { display: none; }
 /* a guest's way in is in the header from the first paint: the head of mnet.html already knows a guest (html.mn-guest) before
    js/mnet.js unhides it, so the header does not shift when it does (owner, 2026-10-20: no flashes) */
-html.mn-guest .mn__guest-bar[hidden] { display: flex; }
+html.mn-guest .mn__guest-bar[hidden] { display: flex !important; }
 .mn__guest-in, .mn__guest-join { min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
 .mn__guest-in { border: 1px solid var(--mn-rule-2); background: rgba(10, 8, 7, 0.6); color: var(--mn-ink); }
 .mn__guest-join { border: 0; background: var(--mn-hot); color: var(--mn-hot-ink); }

@@ -62,7 +62,7 @@ test('before any script asks the network, the head of mnet.html already knows a 
   assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=feed' }), { classes: [], view: null });
   const css = read('css/mnet.css');
   assert.match(css, /html\[data-boot-view\] #mnFeedView \{ display: none !important; \}/);
-  assert.match(css, /html\[data-boot-view="profile"\] #mnProfileView \{ display: block; \}/);
+  assert.match(css, /html\[data-boot-view="profile"\] #mnProfileView \{ display: block !important; \}/, "beats .mn [hidden], which is itself important");
   const mnet = read('js/mnet.js');
   assert.equal((mnet.match(/document\.documentElement\.removeAttribute\("data-boot-view"\);/g) || []).length, 3, 'showGate, setView and peekView take the room over');
   assert.deepEqual(run({ session: { access_token: 'x' }, search: '?view=feed&mcc_audio=1', framed: true }), ['mn-music-frame'], 'inside the Music page, the Music page keeps the bar');
@@ -72,7 +72,7 @@ test('before any script asks the network, the head of mnet.html already knows a 
     'the Music page hears, with no data, that the World is alive and then that it has painted');
   run({ session: { access_token: 'x' }, search: '?view=feed&mcc_audio=1', framed: true, referrer: 'https://example.com/' });
   assert.deepEqual(said, []);
-  assert.match(read('css/mnet.css'), /html\.mn-guest \.mn__guest-bar\[hidden\] \{ display: flex; \}/, 'a guest\'s way in is in the header from the first paint');
+  assert.match(read('css/mnet.css'), /html\.mn-guest \.mn__guest-bar\[hidden\] \{ display: flex !important; \}/, 'a guest\'s way in is in the header from the first paint');
   assert.match(read('css/mnet.css'), /\.mn-boot-signin #mnApp \{ display: none !important; \}/);
   assert.match(read('css/style.css'), /html\.mn-music-frame \.appbar\{display:none!important\}/);
   const js = read('js/mnet.js');
