@@ -8,6 +8,19 @@
 - Supabase production: **336** applied ledger entries, latest `20261021050105_music_creator_one_click_v1`. Exact source equality verified for the new 10,368-character migration; public RPC permissions and absence of anon EXECUTE checked. Canonical repo ledger reconciliation is in draft **#581**, not yet merged. No new schema applied in this audit.
 - Last 12 released migrations from Oct 20–21 exist in the production ledger and their main objects were checked in the preceding audit. **Full byte-for-byte source comparison of all 336 historical migrations has not been completed.**
 
+## Historical SQL digest comparison (new read-only evidence)
+
+Production `supabase_migrations.schema_migrations.statements` was hashed for **all 336 applied versions** without exporting SQL or private rows. The snapshot is `production-sql-digests-20261021.json`; `scripts/audit-production-sql-digests.mjs` compares SHA256 to canonical files and uploads a CI report.
+
+Initial CI result against **main's 335-entry ledger**:
+- **89** exact canonical-source hashes.
+- **23** legacy four-digit replay anchors intentionally not exact source SQL.
+- **6** multi-statement migrations requiring statement-boundary-aware review.
+- **217** SQL hash mismatches; **94** are after the production SQL cutover. A mismatch is **not automatically production schema drift**: historical source anchors, rewritten SQL, or recorded-statement differences require classification.
+- **1** live migration not yet registered in main's ledger: `20261021050105_music_creator_one_click_v1`; separate #581 has exact applied SQL and corrected ledger.
+
+**Do not bulk-replay 217 migrations.** The next phase must classify each difference by original migration source, production stored statement boundaries, aliases and effective schema. Hash equality alone does not prove operational health; inequality alone does not prove a failed apply. The CI artifact preserves the full mismatch inventory. Snapshot will become stale when a new migration is applied; refresh it from read-only production before asserting a current state.
+
 ## Forward SQL under `supabase/pending/` (25 at pinned main)
 
 | Candidate | Classification | Action / gate |
