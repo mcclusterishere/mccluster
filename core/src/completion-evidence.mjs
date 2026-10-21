@@ -77,6 +77,17 @@ function policyEvidence(job, output) {
   const records = [];
 
   switch (type) {
+    case 'actor_live_comment': {
+      requireValue(job, output.actor_key === job.target_id, 'live actor must match job');
+      if (output.published === true) {
+        requireValue(job, Boolean(text(output.publication_id)) && Boolean(text(output.comment_id)), 'live publication requires durable receipt');
+        records.push({kind:'live_actor_comment',publication_id:output.publication_id,comment_id:output.comment_id});
+      } else {
+        requireValue(job, output.published === false && ['inactive_or_stale','review_withheld'].includes(output.reason), 'live actor skip needs reason');
+        records.push({kind:'bounded_noop',reason:output.reason});
+      }
+      break;
+    }
     case 'actor_news_comment': {
       requireValue(job, text(output.actor_key) === text(job.target_id), 'actor receipt must match job');
       if (output.published === true) {

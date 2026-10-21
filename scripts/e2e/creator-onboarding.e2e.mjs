@@ -6,11 +6,14 @@
    js/creator-onboarding.js, which the SQL behaviour test pins to the same
    answers). Nothing touches production.
 
-     1. complete profile  -> one click -> creator, no field asked
-     2. incomplete        -> only the missing name and handle are asked
+     1. complete profile  -> one click -> creator, no field asked, the picture copied
+     2. incomplete        -> the three profile pages on the World first (one sign-up, owner 2026-10-20),
+                             which come back here for the one tap
+     2b. bootstrap down   -> only the missing name and handle are asked, inline
      3. already a creator -> the onboarding is never shown, reload included
      4. ?edit=profile     -> the profile form, only when asked for
      5. RPC not deployed  -> the browser-built answer gives the same result
+     6. the door          -> Listen's "Become a creator" is the one tap: nothing asked, Creator Studio next
 
    Every view is measured at 390px: scrollWidth must equal clientWidth.
 
@@ -51,9 +54,12 @@ const UID = '00000000-0000-4000-8000-00000000a001';
 const MUID = '10000000-0000-4000-8000-00000000a001';
 
 /* the fixtures: invented people, no real member data */
+/* the member's profile picture: a creator's picture comes from it (owner, 2026-10-20) */
+const AVATAR = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/public/mnet-avatars/00000000-0000-4000-8000-00000000a001/avatar-1760000000000.png';
 const SCENARIOS = {
-  complete: { network: { display_name: 'Fixture Artist', bio: 'Songs from the fixture.', website_url: 'https://fixture.example' }, platform: { mccluster_id: 'fixture.artist', display_name: 'Fixture' }, creator: null },
-  incomplete: { network: { display_name: '', bio: '', website_url: '' }, platform: { mccluster_id: null, display_name: null }, creator: null },
+  complete: { network: { display_name: 'Fixture Artist', bio: 'Songs from the fixture.', website_url: 'https://fixture.example', avatar_url: AVATAR }, platform: { mccluster_id: 'fixture.artist', display_name: 'Fixture' }, creator: null, profileDone: true },
+  incomplete: { network: { display_name: '', bio: '', website_url: '' }, platform: { mccluster_id: null, display_name: null }, creator: null, profileDone: false },
+  'inline-fallback': { network: { display_name: '', bio: '', website_url: '' }, platform: { mccluster_id: null, display_name: null }, creator: null, profileDone: null },
   creator: { network: { display_name: 'Fixture Chase' }, platform: { mccluster_id: 'fixture-chase' }, creator: { handle: 'fixture-artist', artist_name: 'Fixture Artist', bio: 'Already here.', website_url: '', avatar_url: '', banner_url: '', status: 'active', verification_state: 'unverified', payout_state: 'not_started', settings: { experience_theme: {} }, updated_at: 't1' } }
 };
 
@@ -77,6 +83,8 @@ async function run(browser, width, name, opts = {}) {
     const p = url.pathname;
     const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     if (p.startsWith('/auth/')) return json({});
+    /* a stored picture (the member's own, in mnet-avatars): a real image, so the card can show it */
+    if (p.startsWith('/storage/v1/object/public/')) return route.fulfill({ status: 200, contentType: 'image/jpeg', body: await readFile(join(HERE, 'assets/img/peaceful-places.jpg')) });
     if (p === '/rest/v1/rpc/m_my_uid') return json(MUID);
     if (p.startsWith('/rest/v1/rpc/music_')) {
       calls.push({ fn: p.slice('/rest/v1/rpc/'.length), body: req.postDataJSON() });
@@ -99,16 +107,43 @@ async function run(browser, width, name, opts = {}) {
     if (p === '/rest/v1/identity_presentations') return req.method() === 'GET' ? json([{ music_enabled: !!db.creator }]) : route.fulfill({ status: 201, body: '' });
     return json([]);
   });
-  await ctx.route('https://api.mccluster.org/**', (route) => route.fulfill({ status: 200, contentType: 'application/json',
+  /* the World's bootstrap says whether the profile is done (true), not done (false), or cannot answer (null) */
+  await ctx.route('https://api.mccluster.org/v1/mnet/bootstrap**', (route) => {
+    calls.push({ fn: 'bootstrap' });
+    if (db.profileDone === null) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"down"}' });
+    const done = db.profileDone !== false;
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(done
+      ? { next_step: 'feed', identity: { mccluster_id: 'fixture.artist' }, profile: { display_name: 'Fixture Artist' } }
+      : { next_step: 'contact', identity: { mccluster_id: null }, profile: null }) });
+  });
+  await ctx.route(/^https:\/\/api\.mccluster\.org\/(?!v1\/mnet\/bootstrap)/, (route) => route.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ ok: true, creator: !!db.creator, tracks: [], counts: {}, page_traffic: { views: 0, sources: {} } }) }));
   await ctx.route(/^https:\/\/(?!zmnhbrjyhxzhkxmhkexs|api\.mccluster|esm\.sh)/, (route) => route.fulfill({ status: 204, body: '' }));
 
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(`${BASE}/creator.html${opts.query || ''}`, { waitUntil: 'load' });
+  /* the door: start on Listen and tap "Become a creator" */
+  if (name === 'door') {
+    await page.goto(`${BASE}/listen.html`, { waitUntil: 'load' });
+    await page.waitForSelector('a[data-creator-door]', { timeout: 10000 });
+    await page.waitForTimeout(400);
+    const card = await page.evaluate(() => { const a = document.querySelector('a[data-creator-door]'), r = a.getBoundingClientRect(); return { text: a.textContent, h: Math.round(r.height), terms: a.parentElement.querySelector('.music-launch__terms').textContent.replace(/\s+/g, ' ').trim() }; });
+    check(card.text === 'Become a creator' && card.h >= 44 && /Tapping accepts the Creator Terms/.test(card.terms), `${opts.prefix || 'after'}-${width}-door: Listen's door is one tap, 44px, with the terms beside it`);
+    if (width === 390) {
+      const m = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
+      check(m.s === m.c, `${opts.prefix || 'after'}-${width}-door listen: scrollWidth ${m.s} === clientWidth ${m.c}`);
+      await page.locator('.music-launch').scrollIntoViewIfNeeded();
+      await page.screenshot({ path: join(OUT, `${opts.prefix || 'after'}-${width}-door-0-listen.png`), fullPage: false });
+    }
+    await page.click('a[data-creator-door]');
+    await page.waitForURL((u) => u.pathname === '/creator.html', { timeout: 15000 });
+  } else {
+    await page.goto(`${BASE}/creator.html${opts.query || ''}`, { waitUntil: 'load' });
+  }
   /* settled: the page has decided between onboarding, studio and edit */
-  await page.waitForFunction(() => ['creatorOnboard', 'creatorSummary', 'creatorIdentity']
+  if (name === 'incomplete') await page.waitForURL((u) => u.pathname === '/mnet.html', { timeout: 15000 }).catch(() => {});
+  else await page.waitForFunction(() => ['creatorOnboard', 'creatorSummary', 'creatorIdentity']
     .some((id) => document.getElementById(id) && !document.getElementById(id).hidden), null, { timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(300);
   const tag = `${opts.prefix || 'after'}-${width}-${name}`;
@@ -125,6 +160,7 @@ async function run(browser, width, name, opts = {}) {
     check(await visible('#creatorOnboard'), `${tag}: the one-click card shows`);
     check(!(await visible('#cobNameField')) && !(await visible('#cobHandleField')), `${tag}: nothing is asked`);
     check((await page.textContent('#cobName')) === 'Fixture Artist' && (await page.textContent('#cobHandle')) === '@fixture.artist', `${tag}: prefilled from the profile`);
+    check((await page.getAttribute('#cobAvatar img', 'src').catch(() => null)) === AVATAR, `${tag}: the card shows the member's own picture`);
     await fit('onboarding'); await shot('1-card');
     await page.click('#cobGo');
     await page.waitForSelector('#creatorSummary:not([hidden])');
@@ -132,11 +168,27 @@ async function run(browser, width, name, opts = {}) {
     check(!(await visible('#creatorIdentity')), `${tag}: the profile form stays closed`);
     const become = calls.filter((c) => c.fn === 'music_become_creator');
     check(become.length === 1 && become[0].body.p_accept_terms === true && become[0].body.p_handle === null, `${tag}: exactly one become call, terms accepted, nothing typed`);
+    check(db.creator && db.creator.avatar_url === AVATAR, `${tag}: the profile picture became the artist picture`);
     await fit('studio'); await shot('2-studio');
     await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(400);
     check(!(await visible('#creatorOnboard')) && (await visible('#creatorSummary')), `${tag}: reload never shows the onboarding`);
   }
   if (name === 'incomplete') {
+    const u = new URL(page.url());
+    check(u.pathname === '/mnet.html' && u.searchParams.get('finish') === '1' && u.searchParams.get('next') === 'creator.html', `${tag}: an unfinished profile goes through the three pages, which come back here (${page.url()})`);
+    check(calls.every((c) => c.fn !== 'music_become_creator' && c.fn !== 'rest:insert'), `${tag}: nothing written before the profile is done`);
+    await ctx.close();
+    return;
+  }
+  if (name === 'door') {
+    await page.waitForSelector('#creatorSummary:not([hidden])', { timeout: 10000 }).catch(() => {});
+    const become = calls.filter((c) => c.fn === 'music_become_creator');
+    check(become.length === 1 && become[0].body.p_accept_terms === true && become[0].body.p_handle === null && become[0].body.p_artist_name === null, `${tag}: one tap, terms accepted, nothing asked`);
+    check(!(await visible('#creatorOnboard')) && await visible('#creatorSummary'), `${tag}: lands in Creator Studio as a creator`);
+    check(db.creator && db.creator.avatar_url === AVATAR && (await page.getAttribute('#cmeAvatar img', 'src').catch(() => null)) === AVATAR, `${tag}: the profile picture is the artist picture`);
+    await fit('studio'); await shot('1-studio');
+  }
+  if (name === 'inline-fallback') {
     check(await visible('#cobNameField') && await visible('#cobHandleField'), `${tag}: name and handle asked`);
     check((await page.locator('#cobForm input:visible').count()) === 2, `${tag}: only the two missing fields`);
     await fit('onboarding'); await shot('1-card');
@@ -184,6 +236,8 @@ try {
     }
     await run(browser, width, 'complete');
     await run(browser, width, 'incomplete');
+    await run(browser, width, 'inline-fallback');
+    await run(browser, width, 'door', { scenario: 'complete' });
     await run(browser, width, 'creator');
     await run(browser, width, 'edit', { scenario: 'creator', query: '?edit=profile' });
     await run(browser, width, 'fallback', { scenario: 'creator', noRpc: true });

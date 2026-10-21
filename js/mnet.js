@@ -19,6 +19,8 @@
     newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
+    /* the feed's first read has answered (renderFeed draws nothing over the loading shapes before it has) */
+    feedAnswered: false,
     placeScope: { enabled:false, country:null, home:null, posts:[], news:[], lives:[], postBefore:null, newsBefore:null,
       loaded:false, error:'', seq:0, working:false },
     threadPost: null,
@@ -37,6 +39,74 @@
   };
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+  /* ONE SIGN-UP (owner, 2026-10-20: "once you make a profile … you should be able to sign up to anything else without
+     having to enter any additional information unless your profile's not filled out … that 3-panel profile sign up
+     thing … should be the new sign up thing"). Every Join and Create account on the site lands here: the credentials
+     (email and a password, or Google), then the three pages at once, then back to where the person started.
+       ?next=<path>  where they started; this origin only (MCC.safeNext), never this page
+       ?join=1       open the account form on Create account
+       ?finish=1     a signed-in member whose profile is not done gets the pages at once
+       ?from=<slug>  the marketing segment the album's unlock carries into the contact row (it grants nothing)
+     A sign-up that waits on an emailed confirmation keeps its next on this device for a week, so the first sign-in
+     after it carries on into the pages and back. A returning member who just signs in still lands on the World, with
+     the step in its card (the World first, 2026-10-15). */
+  var FLOW = (function () {
+    var q = null; try { q = new URLSearchParams(location.search); } catch (_) {}
+    var get = function (k) { return q ? q.get(k) || "" : ""; };
+    var next = window.MCC && MCC.safeNext ? MCC.safeNext(get("next")) : "";
+    if (next && next.split(/[?#]/)[0] === location.pathname) next = "";
+    var from = /^[a-z0-9-]{1,40}$/i.test(get("from")) ? get("from").toLowerCase() : "";
+    var join = get("join") === "1", finish = get("finish") === "1";
+    return { next: next, from: from, join: join, finish: finish, on: join || finish || !!next };
+  })();
+  var PENDING_JOIN = "mcc.join.pending";
+  /* the pending sign-up belongs to the account that made it: kept with a SHA-256 of that account's email (never the
+     address itself), and only that account's first sign-in carries it on (adoptPendingJoin). No digest, no record. */
+  function emailKey(email) {
+    var e = String(email || "").trim().toLowerCase();
+    try {
+      if (!e || !window.crypto || !window.crypto.subtle) return Promise.resolve("");
+      return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(e)).then(function (buf) {
+        return Array.prototype.map.call(new Uint8Array(buf), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+      }).catch(function () { return ""; });
+    } catch (_) { return Promise.resolve(""); }
+  }
+  function rememberJoin(email) {
+    return emailKey(email).then(function (who) {
+      if (!who) return;
+      try { localStorage.setItem(PENDING_JOIN, JSON.stringify({ next: FLOW.next, from: FLOW.from, who: who, at: Date.now() })); } catch (_) {}
+    });
+  }
+  function forgetJoin() { try { localStorage.removeItem(PENDING_JOIN); } catch (_) {} }
+  function pendingJoin() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PENDING_JOIN) || "null");
+      if (p && p.at && Date.now() - p.at < 7 * 864e5) return p;
+    } catch (_) {}
+    forgetJoin();
+    return null;
+  }
+
+  /* A SIGN-IN CARRIED IN (owner, 2026-10-20: "I'll see like other screens flash up"). A member arriving from Matthew's site
+     brings their sign-in in #mcc_handoff, and js/tabbar.js trades it for this host's own session. The World used to boot as
+     a guest meanwhile and then reload: the guest's World, then the member's. It waits for the trade now and takes the
+     session in place, with no reload. Read here, before tabbar.js (later in the page) scrubs the fragment, and on the same
+     test tabbar.js uses: a page that already holds a session keeps it and carries nothing. */
+  var handoff = { pending: false, done: false, ok: false, waiters: [] };
+  try { handoff.pending = /(?:^#|&)mcc_handoff=[^&]/.test(location.hash) && !JSON.parse(localStorage.getItem("mccdb_session") || "null"); } catch (e) {}
+  window.addEventListener("mcc:handoff", function (e) {
+    handoff.done = true; handoff.ok = !!(e.detail && e.detail.ok);
+    /* still waiting: the session is taken in place, so tabbar.js leaves the page as it is */
+    if (handoff.ok && handoff.pending && e.cancelable) e.preventDefault();
+    handoff.waiters.splice(0).forEach(function (go) { go(); });
+  });
+  /* A ROOM ASKED FOR BY ADDRESS (?view=profile, the house's Profile chip) opens on that room for a member, never on the
+     World first and then the room once the member's World has loaded */
+  var DEEP_VIEW = "";
+  try {
+    var deepQ = new URLSearchParams(location.search), deepV = deepQ.get("view");
+    if (!deepQ.get("group") && !deepQ.get("mission") && /^(live|clips|discover|groups|messages|profile)$/.test(deepV || "")) DEEP_VIEW = deepV;
+  } catch (e) {}
 
   function $(id) { return document.getElementById(id); }
   function esc(value) {
@@ -207,12 +277,25 @@
   }
 
   /* THE ONBOARDING, THREE PAGES (owner, 2026-10-15: "three pages that look
-     all sexy … you put in this, that, that, boom, it all verifies").
-     One form, three steps, each saved on its own: 1 the handle (checked
-     live) and the name, the public profile; 2 the legal name and mailing
-     address, private (fan_profiles, the contact step); 3 phone, email and
-     password. Editing an existing profile is the same form on one page. */
+     all sexy … you put in this, that, that, boom, it all verifies"), and the
+     site's one sign-up since 2026-10-20 (FLOW, above). One form, three steps,
+     each saved on its own, in this order: 1 the public profile (the handle,
+     checked live, and the name); 2 where we can reach you, private (legal
+     name and mailing address: fan_profiles, the contact step); 3 phone and
+     sign-in (the phone, the account email, and a password only when the
+     account has none). It opens at the first page not yet done. Editing an
+     existing profile is the same form on one page. */
   var onboard = { step: 1, editing: false, contact: null, handleTimer: 0, handleOk: "", dialAuto: "" };
+  /* the first page with something missing: page 1 without a handle or a name, page 2 while the contact step is open */
+  function firstUnfinished() {
+    var id = identity(), p = profile();
+    if (!id.mccluster_id || !String(p.display_name || "").trim()) return 1;
+    return needsStep() === "contact" ? 2 : 1;
+  }
+  /* a password once is enough: page 3 asks for one only when the account has none (made with Google) */
+  function hasPassword() {
+    return !!(state.user && window.MCC && MCC.hasPassword && MCC.hasPassword(state.user));
+  }
   function fillProfileForm(editing) {
     var p = profile(), id = identity();
     onboard.editing = !!editing;
@@ -228,11 +311,16 @@
     setStatus($("mnPasswordChangeStatus"), "");
     setStatus($("mnProfileStatus"), "");
     paintHandleState(id.mccluster_id ? "ok" : "");
-    $("mnProfileTitle").innerHTML = editing ? "Edit your profile<em>.</em>" : "Make it yours<em>.</em>";
-    $("mnProfileLede").textContent = editing ? "Your public profile, and the password for your M Account." : "Your name. Your place in the movement.";
+    $("mnProfileTitle").innerHTML = editing ? "Edit your profile<em>.</em>" : "Make your profile<em>.</em>";
+    $("mnProfileLede").textContent = editing ? "Your public profile, and the password for your M Account." : "Your username and name. It's how people find you.";
     $("mnProfileBack").hidden = !editing;
     $("mnPasswordChange").hidden = !editing;
-    showStep(editing ? 0 : 1);
+    var asked = editing || !hasPassword();
+    $("mnProfileSecurity").hidden = !asked;
+    $("mnStep3Lede").textContent = asked
+      ? "Your phone is optional and private. Add a password to sign in with your email too."
+      : "Your phone is optional and private. You sign in with this email and your password.";
+    showStep(editing ? 0 : firstUnfinished());
     prefillContact();
     /* locked details (the profile edit gate, js/profile-edit-gate.js) read as locked; the database refuses the write anyway */
     if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.lockForm();
@@ -247,7 +335,8 @@
     $("mnStepEdit").hidden = !editing;
     $("mnStepsRow").hidden = editing;
     $("mnStepBack").hidden = editing || n <= 1;
-    $("mnCtaLabel").textContent = editing ? "Save changes" : n === 3 ? "Enter the World" : "Save & continue";
+    /* the last page says where it goes: back to where the person started, or the World */
+    $("mnCtaLabel").textContent = editing ? "Save changes" : n === 3 ? (FLOW.next ? "Done" : "Go to the World") : "Save & continue";
     Array.prototype.forEach.call(document.querySelectorAll("#mnSteps li"), function (li) {
       var k = Number(li.getAttribute("data-step"));
       li.classList.toggle("is-done", !editing && k < n);
@@ -258,18 +347,32 @@
     if (n === 3) fillDial();
     if (!editing) { try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { window.scrollTo(0, 0); } }
   }
+  /* DON'T ASK TWICE. Page 2 and page 3 arrive filled with what the member already gave: the stored contact row
+     (fan_profiles) first, then what their sign-up carried in the account's own metadata (the old account form kept
+     the mailing address there as shipping_*; a campaign sign-up kept the legal first and last name; Google brings a
+     name). Nothing the member has typed is overwritten. */
+  function contactFromSignup() {
+    var m = state.user && state.user.user_metadata || {};
+    var legal = m.first_name && m.last_name ? m.first_name + " " + m.last_name : (m.full_name || "");
+    return { legal_name: legal, address_line1: m.shipping_address_line1, address_line2: m.shipping_address_line2, city: m.shipping_city,
+      region: m.shipping_region, postal_code: m.shipping_postal_code, country: m.shipping_country };
+  }
   function prefillContact() {
-    if (!window.MCC_FAN || typeof MCC_FAN.load !== "function") return;
+    var signup = contactFromSignup();
+    var fill = function (row) {
+      var put = function (id, key) { var el = $(id), v = (row && row[key]) || signup[key] || ""; if (el && !el.value && v) el.value = String(v); };
+      put("mnLegalName", "legal_name"); put("mnAddr1", "address_line1"); put("mnAddr2", "address_line2");
+      put("mnCity", "city"); put("mnRegion", "region"); put("mnPostal", "postal_code");
+      var country = (row && row.country) || signup.country;
+      if (country) $("mnCountry").value = country;
+      if (row && row.phone_e164 && !$("mnPhone").value) { var parts = splitE164(row.phone_e164); $("mnDial").value = parts[0]; $("mnPhone").value = parts[1]; onboard.dialAuto = ""; }
+      else if (onboard.editing || onboard.step === 3) fillDial();
+    };
+    if (!window.MCC_FAN || typeof MCC_FAN.load !== "function") { fill(null); return; }
     MCC_FAN.load().then(function (row) {
       onboard.contact = row || null;
-      if (!row) { if (onboard.editing) fillDial(); return; }
-      var put = function (id, v) { var el = $(id); if (el && !el.value) el.value = v || ""; };
-      put("mnLegalName", row.legal_name); put("mnAddr1", row.address_line1); put("mnAddr2", row.address_line2);
-      put("mnCity", row.city); put("mnRegion", row.region); put("mnPostal", row.postal_code);
-      if (row.country) $("mnCountry").value = row.country;
-      if (row.phone_e164 && !$("mnPhone").value) { var parts = splitE164(row.phone_e164); $("mnDial").value = parts[0]; $("mnPhone").value = parts[1]; onboard.dialAuto = ""; }
-      else if (onboard.editing) fillDial();
-    }).catch(function () {});
+      fill(row);
+    }).catch(function () { fill(null); });
   }
   /* the handle, checked as it is typed: the pattern here, the name at the API (a person nobody can find is free) */
   var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/i;
@@ -358,6 +461,10 @@
     $("mnSignedOut").hidden = which !== "signedout";
     $("mnProfileGate").hidden = which !== "profile";
     $("mnApp").hidden = which !== "app";
+    /* the head of mnet.html held the World back under a ?signin=1 form, or put an addressed room up; a gate is chosen now,
+       so those holds are over */
+    document.documentElement.classList.remove("mn-boot-signin");
+    document.documentElement.removeAttribute("data-boot-view");
     /* the bar's sign-in chip steps aside while a gate is up, as it does on the World */
     document.documentElement.classList.toggle("mn-gate-on", which !== "app");
     sizeWorld();
@@ -380,7 +487,10 @@
         b.textContent = providerLabel(key);
         b.onclick = function () {
           b.disabled = true;
-          var next=location.pathname+location.search+location.hash;
+          /* back to this page; from Create account, back into the pages (?join=1, FLOW) */
+          var back = new URL(location.href);
+          if ($("mnSignedOut").getAttribute("data-auth-mode") === "create") back.searchParams.set("join", "1");
+          var next=back.pathname+back.search+back.hash;
           MCC.signInWithProvider(key, location.origin + "/auth/?next=" + encodeURIComponent(next)).catch(function (e) {
             b.disabled = false;
             setStatus($("mnAuthStatus"), e.message, "error");
@@ -404,6 +514,9 @@
     $("mnGuestBar").hidden = false;
     var q = null; try { q = new URLSearchParams(location.search); } catch (_) {}
     if (q && q.get("signin") === "1") { openSignIn("signin"); return; }
+    /* sent here to make an account, or to sign in and go back (FLOW): the form, at once */
+    if (FLOW.join) { openSignIn("create"); return; }
+    if (FLOW.on) { openSignIn("signin", "Sign in, or create an account, to carry on."); return; }
     showGate("app");
     setView("feed");
     loadFeed(true);
@@ -437,12 +550,15 @@
     card.hidden = !step;
     if ($("mnComposer")) $("mnComposer").hidden = !!step;
     if (!step) return;
-    var contact = step === "contact";
-    $("mnFinishTitle").textContent = contact ? "Complete your details." : "Finish your profile.";
-    $("mnFinishWhy").textContent = contact
-      ? "Three quick pages: your name, where to reach you, and how you get back in. Your address is private, never on your profile."
-      : "Pick a username so people can find and mention you. Then post, connect and join missions.";
-    $("mnFinishGo").textContent = contact ? "Complete your details \u2192" : "Finish your profile \u2192";
+    /* the card names the page it opens: the profile while there is no username or name, else the address */
+    var address = firstUnfinished() === 2;
+    $("mnFinishTitle").textContent = address ? "Add your mailing address." : "Make your profile.";
+    $("mnFinishWhy").textContent = address
+      ? "Your legal name and mailing address, then you can post, connect and join missions. Private, never on your profile."
+      : step === "contact"
+        ? "Three short pages: your profile, where we can reach you, and your phone. Then post, connect and join missions."
+        : "A username and a name, so people can find and mention you. Then post, connect and join missions.";
+    $("mnFinishGo").textContent = address ? "Add your address \u2192" : "Make your profile \u2192";
   }
   function askToFinish(why) {
     /* while the member's own World has not loaded, what needs it waits on the card that says so */
@@ -492,10 +608,39 @@
     openSignIn("signin", line);
   }
 
+  /* a sign-up that waited on its emailed confirmation: the first sign-in after it carries on (FLOW, above), for that
+     account only. Another account signed in on this device discards it unused: not its destination, not its from. */
+  function adoptPendingJoin() {
+    var p = pendingJoin();
+    if (!p) return Promise.resolve();
+    return emailKey(state.user && state.user.email).then(function (who) {
+      if (!who || p.who !== who) { forgetJoin(); return; }
+      FLOW.on = true;
+      if (!FLOW.next && window.MCC && MCC.safeNext) FLOW.next = MCC.safeNext(p.next);
+      if (!FLOW.from && /^[a-z0-9-]{1,40}$/.test(p.from || "")) FLOW.from = p.from;
+    });
+  }
+  /* ONE SIGN-UP: the pages, opened by the flow itself at the first unfinished one; the World is one tap away under them */
+  function openPages() {
+    $("mnBell").hidden = false;
+    paintSelf();
+    paintFinishCard();
+    fillProfileForm(false);
+    var back = $("mnProfileBack"); if (back) { back.hidden = false; back.textContent = "← Back to the World"; }
+    showGate("profile");
+    try { window.scrollTo(0, 0); } catch (_) {}
+    track("signup_pages_open", { step: String(onboard.step), next: FLOW.next ? "1" : "0" });
+  }
+
   function bootstrap() {
     return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
+      /* a sign-up that waited on its confirmation, if it is this account's (adoptPendingJoin) */
+      return needsStep() && !FLOW.on ? adoptPendingJoin().then(function () { return boot; }) : boot;
+    }).then(function (boot) {
       if (needsStep()) {
+        /* a new account, or someone sent here to finish (FLOW): the pages at once, not the card */
+        if (FLOW.on) { openPages(); return; }
         /* the World first (needsStep, above): the public posts, every pin,
            and the step in a card where the composer would be. The private
            mailing address lives in fan_profiles, never network_profiles. */
@@ -508,9 +653,14 @@
         requestAnimationFrame(function () { moveThumb(false); });
         return loadFeed(true);
       }
+      forgetJoin();
+      /* a finished profile sent here to sign in goes straight back to where it started */
+      if (FLOW.next) { location.replace(FLOW.next); return; }
       paintFinishCard();
       showGate("app");
-      setView("feed");
+      /* a room asked for by address is already up (boot, below) and is opened properly just after; the World is not
+         put on screen in between */
+      if (!DEEP_VIEW || state.currentView !== DEEP_VIEW) setView("feed");
       paintSelf();
       paintCreatorDoor();
       $("mnBell").hidden = false;
@@ -537,7 +687,15 @@
      (401) is let go: the member is a guest, with one card to sign in again. Anything else (the network, a server
      error, a session that could not be checked) keeps the session and shows the Earth and the public posts, with a
      card to try again or to sign in again. Posting, joining and the member rooms wait on the card. */
+  /* A PAGE ON ITS WAY OUT (a reload, a link) cancels what it was still reading. That is not a failure to show: nothing is
+     painted over a page that is leaving (owner, 2026-10-20: no flashes; the house owner's World reloads once to open with
+     all three modes, js/world-owner-modes.js). A leave that is called off clears itself. */
+  var leaving = false, leavingTimer = 0;
+  window.addEventListener("beforeunload", function () { leaving = true; clearTimeout(leavingTimer); leavingTimer = setTimeout(function () { leaving = false; }, 3000); });
+  window.addEventListener("pagehide", function () { leaving = true; });
+  window.addEventListener("pageshow", function () { leaving = false; });
   function showSignedInLoadError(error) {
+    if (leaving) return Promise.resolve(null);
     try { console.warn("[mnet] signed-in bootstrap failed", error); } catch (e) {}
     if (error && error.status === 401) return letSessionGo();
     state.stall = "retry";
@@ -633,18 +791,23 @@
     return Promise.resolve();
   }
 
+  /* NO SAVE WIPES WHAT THIS FORM DOES NOT SHOW. The banner is set from a member's front page, not here, and the Worker
+     used to write '' for every field a save left out: each World profile save erased the banner. The banner the member
+     already has rides along, and the Worker now keeps any field a save does not name (workers/mccluster/src/platform-api.js).
+     The answer of the save is not the bootstrap, so the bootstrap is read again for what the World paints. */
   function savePublicProfile() {
-    return saveDemographics().then(function () { return api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), {
-      method: "PATCH",
-      body: {
-        mccluster_id: $("mnHandle").value.trim(),
-        display_name: $("mnDisplay").value.trim(),
-        headline: $("mnHeadline").value.trim(),
-        bio: $("mnBio").value.trim(),
-        avatar_url: $("mnAvatarUrl").value.trim(),
-        website_url: $("mnWebsite").value.trim()
-      }
-    }); }).then(function (boot) { state.boot = boot; paintSelf(); return boot; });
+    var p = profile(), body = {
+      mccluster_id: $("mnHandle").value.trim(),
+      display_name: $("mnDisplay").value.trim(),
+      headline: $("mnHeadline").value.trim(),
+      bio: $("mnBio").value.trim(),
+      avatar_url: $("mnAvatarUrl").value.trim(),
+      website_url: $("mnWebsite").value.trim()
+    };
+    if (typeof p.banner_url === "string") body.banner_url = p.banner_url;
+    return saveDemographics().then(function () { return api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), { method: "PATCH", body: body }); })
+      .then(function () { return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)); })
+      .then(function (boot) { state.boot = boot; paintSelf(); return boot; });
   }
   function saveContact() {
     var v = function (id) { return $(id).value.trim(); };
@@ -652,6 +815,14 @@
     var missing = ["mnLegalName", "mnAddr1", "mnCity", "mnRegion", "mnPostal", "mnCountry"].filter(function (id) { return !v(id); });
     Array.prototype.forEach.call(document.querySelectorAll("#mnStep2 .mn__field"), function (f) { var i = f.querySelector("input"); f.classList.toggle("is-bad", !!(i && missing.indexOf(i.id) !== -1)); });
     if (missing.length) { $(missing[0]).focus(); return Promise.reject(new Error("Fill in your legal name and the whole address.")); }
+    /* the account form's rule, kept now that this page is the only place a new account gives its legal name: obvious
+       placeholder names are refused (js/name-integrity.js; a plausibility screen, not ID verification) */
+    if (window.MCC_NAME_INTEGRITY) {
+      var parts = values.legal_name.split(/\s+/).filter(Boolean), named = MCC_NAME_INTEGRITY.validate(parts.shift() || "", parts.join(" "));
+      if (!named.ok) { $("mnLegalName").closest(".mn__field").classList.add("is-bad"); $("mnLegalName").focus(); return Promise.reject(new Error(named.reason)); }
+      values.legal_name = named.legal_name;
+    }
+    if (FLOW.from) values.source = FLOW.from;
     if (!window.MCC_FAN) return Promise.reject(new Error("Could not save your details right now."));
     if (onboard.contact) { values.marketing_consent = !!onboard.contact.marketing_consent; values.share_consent = !!onboard.contact.share_consent; if (onboard.contact.phone_e164) values.phone_e164 = onboard.contact.phone_e164; }
     return MCC_FAN.save(values).then(function (row) { onboard.contact = row || onboard.contact; return row; });
@@ -673,6 +844,11 @@
     return steps;
   }
   function enterTheWorld() {
+    forgetJoin();
+    /* the last page done: back to where the person started (FLOW), or the World */
+    if (FLOW.next) { track("onboarding_done", { step: "next" }); location.assign(FLOW.next); return Promise.resolve(); }
+    FLOW.on = false;
+    try { if (/[?&](join|finish)=/.test(location.search)) history.replaceState(null, "", location.pathname + location.search.replace(/([?&])(join|finish)=1(&|$)/g, "$1").replace(/[?&]$/, "") + location.hash); } catch (_) {}
     return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
       paintFinishCard();
@@ -1402,6 +1578,10 @@
   }
 
   function renderFeed(append) {
+    /* until the feed's own read has answered, what is on screen stays (the shapes of posts, or the last posts, and the
+       globe's pins for them): a globe that is ready first used to draw "Nothing on the feed yet" over a feed that was on
+       its way (owner, 2026-10-20: no flashes) */
+    if (!append && !state.feedAnswered && !(state.feedScope === "local" && state.placeScope.enabled)) return;
     state.shownNews = [];
     try { return paintFeed(append); }
     finally {
@@ -1547,6 +1727,15 @@
   function skeleton(n) {
     var one = '<div class="mn__skel" aria-hidden="true"><i class="mn__skel-av"></i><div><i></i><i></i><i class="is-short"></i></div></div>';
     return new Array(n + 1).join(one);
+  }
+  /* the same, in the shape of the rows and cards a room is about to show (people, conversations, groups) */
+  function skeletonRows(n) {
+    var one = '<div class="mn__skel mn__skel--row" aria-hidden="true"><i class="mn__skel-av"></i><div><i></i><i class="is-short"></i></div><i class="mn__skel-pill"></i></div>';
+    return new Array(n + 1).join(one);
+  }
+  function skeletonCards(n) {
+    var one = '<div class="mn__skel mn__skel--card" aria-hidden="true"><div><i></i><i class="is-short"></i></div></div>';
+    return '<div class="mng__grid">' + new Array(n + 1).join(one) + "</div>";
   }
 
   /* WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like
@@ -1702,6 +1891,7 @@
     if (reset) {
       state.nextBefore = null;
       state.feed = [];
+      state.feedAnswered = false;
       setStatus($("mnFeedStatus"), "");
       if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
@@ -1727,6 +1917,7 @@
         state.nextBefore = data.next_before || null;
       }
       drawn = true;
+      state.feedAnswered = true;
       renderFeed(false);
       openLinkedPost();
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming), loadCollaborationCards(incoming)]).then(function (flags) {
@@ -1736,6 +1927,7 @@
       paintMore();
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
+      state.feedAnswered = true;
       setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
     }).finally(function () { state.loadingFeed = false; });
   }
@@ -2202,9 +2394,12 @@
   }
 
   function loadDiscover() {
-    var q=$("mnDiscoverQuery").value.trim().replace(/^@+/,""); setStatus($("mnDiscoverStatus"),"Searching…");
+    var q=$("mnDiscoverQuery").value.trim().replace(/^@+/,""), host=$("mnDiscoverResults");
+    /* the last people stay on screen while the next answer comes; the first time, rows in their shape */
+    if(!host.children.length||host.querySelector(".mn__skel")){host.innerHTML=skeletonRows(4);setStatus($("mnDiscoverStatus"),"");}
+    else setStatus($("mnDiscoverStatus"),q?"Searching…":"");
     return api("/v1/mnet/discover?q="+encodeURIComponent(q)+"&limit=50").then(function (data) {
-      var rows=data.people||[]; $("mnDiscoverResults").innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
+      var rows=data.people||[]; host.innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
       bindPeople($("mnDiscoverResults")); setStatus($("mnDiscoverStatus"),rows.length?rows.length+" people":"");
     }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not search the network.","error"); });
   }
@@ -2289,7 +2484,10 @@
     return api("/v1/mnet/conversations").then(function (data) { state.conversations=data.conversations||[]; paintMessageBadge(); }).catch(function () {});
   }
   function loadConversations() {
-    setStatus($("mnMessageStatus"),"Loading…");
+    /* the list on screen stays while it refreshes (Messages refreshes itself every 15 seconds); the first time, rows */
+    var list=$("mnConversations");
+    if(list&&!list.children.length)list.innerHTML=skeletonRows(4);
+    setStatus($("mnMessageStatus"),"");
     return api("/v1/mnet/conversations").then(function (data) {
       state.conversations=data.conversations||[];
       paintMessageBadge();
@@ -2300,7 +2498,7 @@
       $("mnConversations").querySelectorAll("[data-conversation]").forEach(function(b){b.onclick=function(){openConversation(b.dataset.conversation);};});
       setStatus($("mnMessageStatus"),"");
       return state.conversations;
-    }).catch(function (e) { setStatus($("mnMessageStatus"),e.message||"Could not load messages.","error"); return []; });
+    }).catch(function (e) { if(list&&list.querySelector(".mn__skel"))list.innerHTML=""; setStatus($("mnMessageStatus"),e.message||"Could not load messages.","error"); return []; });
   }
   function startConversation(target) {
     return api("/v1/mnet/conversations",{method:"POST",body:target||{}}).then(function (x) {
@@ -2396,6 +2594,7 @@
     if (MISSIONS_OFF && name === "missions") name = "feed";
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
+    document.documentElement.removeAttribute("data-boot-view");
     state.currentView = name;
     track("mnet_view", { view:name });
     closeAlerts();
@@ -2415,7 +2614,23 @@
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="profile"){paintSelf();loadDeletion();paintCreatorDoor();}
-    window.scrollTo({top:0,behavior:"smooth"});
+    /* the new room starts at its top at once: a smooth scroll moved the room on screen after it had already changed */
+    window.scrollTo(0,0);
+    sizeWorld();
+  }
+  /* a member's room asked for by address, put on screen while their World loads: only the panel, no reads (they wait for
+     the bootstrap, which opens the room properly), so nothing else is drawn first */
+  function peekView(name) {
+    document.documentElement.removeAttribute("data-boot-view");
+    ["live","clips","feed","missions","discover","groups","messages","profile"].forEach(function (view) {
+      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",profile:"mnProfileView"};
+      var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
+    });
+    if($("mnToWorld"))$("mnToWorld").hidden=name==="feed";
+    if(name==="discover"&&!$("mnDiscoverResults").children.length)$("mnDiscoverResults").innerHTML=skeletonRows(4);
+    if(name==="messages"&&!$("mnConversations").children.length)$("mnConversations").innerHTML=skeletonRows(4);
+    if(name==="groups"&&$("mngCards")&&(!groups||!groups.all.length))$("mngCards").innerHTML=skeletonCards(3);
+    state.currentView = name;
     sizeWorld();
   }
 
@@ -2464,8 +2679,13 @@
 
   function setAuthMode(mode) {
     var create = mode === "create";
-    $("mnCreateNameWrap").hidden = !create;
+    /* the account is the email and a password; the name, the address and the phone are the three pages after it */
     $("mnConfirmWrap").hidden = !create;
+    $("mnCreateNote").hidden = !create;
+    /* agreed on the way in: a line says so; only seen: one box to tick (seen is not agreed, js/live-content.js) */
+    var agreed = privacyAgreed();
+    $("mnCreatePrivacy").hidden = !create || !agreed;
+    $("mnCreateAgree").hidden = !create || agreed;
     $("mnSignInTab").classList.toggle("is-active", !create);
     $("mnCreateTab").classList.toggle("is-active", create);
     $("mnSignInTab").setAttribute("aria-selected", create ? "false" : "true");
@@ -2510,39 +2730,78 @@
     });
   }
 
+  /* A REFUSAL HAS TO BE SEEN (carried over from the account page's own form, which this replaces): the reason is
+     announced, the field that needs the person is focused, and the reason alone, never what was typed, is counted */
+  function authFail(msg, fieldId, reason) {
+    var st = $("mnAuthStatus");
+    setStatus(st, msg, "error");
+    st.setAttribute("role", "alert");
+    var f = fieldId ? $(fieldId) : null;
+    if (f) {
+      f.setAttribute("aria-invalid", "true");
+      try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); }
+      try { f.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+    }
+    if (reason) track("signup_blocked", { reason: reason });
+  }
+  function privacyAgreed() {
+    try { return !!(window.MCC_PRIVACY && MCC_PRIVACY.accepted && MCC_PRIVACY.accepted()); } catch (e) { return false; }
+  }
   function submitPasswordAuth() {
     var create = $("mnSignedOut").getAttribute("data-auth-mode") === "create";
     var email = $("mnEmail").value.trim(), password = $("mnPassword").value;
     var button = $("mnAuthGo");
-    if (!email || !password) { setStatus($("mnAuthStatus"), "Enter your email and password.", "error"); return; }
-    if (create && password.length < 8) { setStatus($("mnAuthStatus"), "Use at least 8 characters.", "error"); return; }
-    if (create && password !== $("mnPassword2").value) { setStatus($("mnAuthStatus"), "Those passwords do not match.", "error"); return; }
+    if (!email || !password) {
+      if (create) authFail("Enter your email and a password.", email ? "mnPassword" : "mnEmail", email ? "missing_password" : "missing_email");
+      else setStatus($("mnAuthStatus"), "Enter your email and password.", "error");
+      return;
+    }
+    if (create && password.length < 8) { authFail("Use at least 8 characters.", "mnPassword", "password_short"); return; }
+    if (create && password !== $("mnPassword2").value) { authFail("Those passwords do not match.", "mnPassword2", "password_mismatch"); return; }
+    if (create && !privacyAgreed()) {
+      if (!$("mnCreateAgreeBox").checked) { authFail("Tick the box to agree to the Privacy Policy.", "mnCreateAgreeBox", "privacy_unchecked"); return; }
+      try { MCC_PRIVACY.acknowledge(); } catch (e) {}
+    }
 
     button.disabled = true;
     button.textContent = create ? "Creating…" : "Signing in…";
     setStatus($("mnAuthStatus"), "");
+    $("mnAuthStatus").setAttribute("role", "status");
 
-    var name = $("mnCreateName").value.trim() || email.split("@")[0];
+    /* nothing is guessed for the name: page 1 asks for it. The privacy agreement (on the way in, or the box above) is
+       recorded with the account, as the account page's form did; a notice only seen is never recorded as agreed. */
+    var ack = create && privacyAgreed() ? { privacy_policy_version: MCC_PRIVACY.version, privacy_acknowledged_at: new Date().toISOString() } : {};
+    if (create) track("signup_started", { flow: "password" });
     var action = create
-      ? MCC.signUpWithPassword(email, password, { name:name, full_name:name })
+      ? MCC.signUpWithPassword(email, password, ack)
       : MCC.signInWithPassword(email, password);
 
     Promise.resolve(action).then(function (result) {
       if (create && result && result.existing) {
+        track("signup_existing_account", { flow: "password" });
         setAuthMode("signin");
         $("mnEmail").value = email;
         setStatus($("mnAuthStatus"), "An account already exists for that email. Sign in, or use Forgot password.", "error");
         return null;
       }
       if (create && result && result.confirm) {
+        track("signup_succeeded", { flow: "password", verification: "pending" });
         state.pendingVerificationEmail = email;
+        /* the first sign-in after the confirmation carries on into the pages, and back (FLOW) */
+        rememberJoin(email);
         setStatus($("mnAuthStatus"), "Check your email to verify your address. After verification, sign in with the password you just created.", "ok");
         $("mnResend").hidden = false;
         return null;
       }
+      /* a new account goes straight into the three pages */
+      if (create) { track("signup_succeeded", { flow: "password", verification: "immediate" }); FLOW.on = true; }
       return enterAfterAuth();
     }).catch(function (e) {
-      setStatus($("mnAuthStatus"), e.message || (create ? "Could not create that account." : "Could not sign in."), "error");
+      if (!create) { setStatus($("mnAuthStatus"), e.message || "Could not sign in.", "error"); return; }
+      var rateLimited = /429/.test(String(e && (e.code || e.status) || "")) || /rate.limit|too many requests/i.test(String(e && e.message || ""));
+      track("signup_failed", { flow: "password", reason: rateLimited ? "rate_limited" : "server_error" });
+      authFail(rateLimited ? "Too many sign-ups right now. Wait a minute before trying again, or sign in if you already have an account." : (e.message || "Could not create that account."),
+        null, "server_" + String(e && (e.code || e.status) || "error").slice(0, 40));
     }).finally(function () {
       button.disabled = false;
       button.textContent = create ? "Create account" : "Sign in";
@@ -2579,6 +2838,7 @@
       if (e.key === "Enter" && $("mnSignedOut").getAttribute("data-auth-mode") !== "create") submitPasswordAuth();
     });
     $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
+    ["mnEmail", "mnPassword", "mnPassword2", "mnCreateAgreeBox"].forEach(function (id) { $(id).addEventListener(id === "mnCreateAgreeBox" ? "change" : "input", function () { $(id).removeAttribute("aria-invalid"); }); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
     $("mnPasswordChange").onclick = changePassword;
     $("mnNewPassword2").addEventListener("keydown", function (e) {
@@ -2586,7 +2846,12 @@
     });
     wireAvatarPicker();
     wireTrackPicker();
-    $("mnProfileBack").onclick = function () { showGate("app"); setView(needsStep() ? "feed" : "profile"); };
+    $("mnProfileBack").onclick = function () {
+      /* leaving the pages: the World, with the step waiting in its card; the feed loads if the flow opened the pages first */
+      FLOW.on = false;
+      showGate("app"); setView(needsStep() ? "feed" : "profile");
+      if (!state.feed.length) { paintFinishCard(); requestAnimationFrame(function () { moveThumb(false); }); loadFeed(true); }
+    };
     $("mnFinishGo").onclick = function () {
       if (state.stall === "signin") { openSignIn("signin", "Your sign-in ended. Sign in again."); return; }
       if (state.stall === "retry") { retryStall(); return; }
@@ -2664,10 +2929,24 @@
 
     /* NO SIGN-IN FLASH (owner, 2026-10-20: "before I hit the global screen, I see flashes of the sign-in screen"). The
        sign-in form ships hidden and opens only when something asks for it. A member's World shell is up at once while
-       the stored session is checked over the network, instead of the form standing there for that wait. */
+       the stored session is checked over the network, instead of the form standing there for that wait. The World ships
+       open on its own room (mnet.html), so that shell is the World, never the Live room; a room asked for by address is
+       put up instead, empty, and filled once the member's World has loaded. */
     var stored = MCC.session && MCC.session();
-    if (stored && stored.access_token) showGate("app");
+    if ((stored && stored.access_token) || handoff.pending) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
+    /* a sign-in being carried in: the World waits for it (above) rather than opening as a guest first; if the trade
+       never answers, the visitor's World opens as it would have, and a late answer reloads the page as before */
+    if (handoff.pending && !handoff.done) {
+      var once = false, go = function () { if (once) return; once = true; handoff.pending = handoff.pending && handoff.done; enterSession(); };
+      handoff.waiters.push(go);
+      setTimeout(go, 8000);
+      return;
+    }
+    enterSession();
+  }
+  function enterSession() {
     MCC.user().then(function (user) {
+      if (leaving) return;
       state.user = user;
       if (!user) {
         var existing = MCC.session && MCC.session();
@@ -2683,6 +2962,7 @@
         });
       });
     }).catch(function (error) {
+      if (leaving) return;
       var existing = MCC.session && MCC.session();
       if (existing && existing.access_token) showSignedInLoadError(error);
       else enterGuestWorld();
@@ -2889,7 +3169,8 @@
   function loadGroups() {
     var host = $("mngCards");
     if (!host) return Promise.resolve();
-    if (!groups.all.length) host.innerHTML = '<p class="mng__empty">Loading rooms…</p>';
+    /* the first time, cards in their shape; after that the rooms on screen stay while they refresh */
+    if (!groups.all.length && !host.querySelector(".mn__skel")) host.innerHTML = skeletonCards(3);
     return api("/v1/mnet/groups").then(function (out) {
       groups.all = (out && out.groups) || [];
       assignSkins(groups.all);

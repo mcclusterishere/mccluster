@@ -45,3 +45,9 @@ html.globe-editorial, .globe-editorial body, .globe-editorial #globe {background
 
 /* Only an explicit pick action turns the Earth into a location selector. */
 .globe-map-picking #globe canvas { cursor:crosshair!important; }
+
+/* NO LOOSE CONTROLS FIRST (owner, 2026-10-20: no screen flashes). Until js/action-globe.js folds the controls into the
+   tools menu and writes the short credit (wireEditorialTools), they are not drawn: the raw toolbar and the long credit
+   used to stand on the Earth for a moment and then jump away. */
+.globe-editorial body > :is(.globe-controls,.globe-data) {visibility:hidden;}
+.globe-editorial .osm-credit:not(.is-editorial) {visibility:hidden;}

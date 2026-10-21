@@ -104,6 +104,14 @@ html, body { background: #0a0807; }
 .mn__handle-row { display: flex; align-items: center; gap: 8px; color: var(--mn-dim); font-weight: 800; }
 .mn__handle-row .mn__input { margin: 0; }
 .mn__hint { margin: 6px 0 0; color: var(--mn-faint); font-size: 0.8rem; line-height: 1.5; }
+.mn__hint a { color: var(--mn-dim); text-decoration: underline; text-underline-offset: 3px; }
+.mn__input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--mn-hot); }
+/* the one privacy box on Create account, for someone who only saw the notice: a thumb-sized row */
+.mn__check { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 12px; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.4; cursor: pointer; }
+.mn__check input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--mn-hot); }
+.mn__check input[aria-invalid="true"] { outline: 2px solid var(--mn-hot); outline-offset: 2px; }
+.mn__check span { flex: 1; min-width: 0; }
+.mn__check a { color: var(--mn-ink); text-decoration: underline; text-underline-offset: 3px; }
 .mn__primary, .mn__post {
   min-height: 48px; border: 0; border-radius: 14px; cursor: pointer;
   background: var(--mn-hot); color: var(--mn-hot-ink); font-family: inherit; font-weight: 800; font-size: max(16px, 0.95rem);
@@ -265,7 +273,8 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__action.is-pop svg { animation: mn-pop 0.5s var(--mn-spring); }
 .mn__danger { color: #ff9a91 !important; }
 .mn__more { display: block; width: 100%; min-height: 48px; margin-top: 12px; border: 0; border-radius: 999px; background: transparent; color: var(--mn-dim); box-shadow: inset 0 0 0 1px var(--mn-rule-2); cursor: pointer; font-family: inherit; font-weight: 800; font-size: max(16px, 0.9rem); }
-.mn__empty { padding: 40px 16px; border-radius: 22px; color: var(--mn-dim); text-align: center; font-size: 0.98rem; line-height: 1.6; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); animation: mn-rise 0.5s var(--mn-ease) both; }
+/* an empty room says so at once, in its final colours: it never fades up through grey (owner, 2026-10-20: no flashes) */
+.mn__empty { padding: 40px 16px; border-radius: 22px; color: var(--mn-dim); text-align: center; font-size: 0.98rem; line-height: 1.6; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
 
 /* loading: shapes of posts that shimmer, not a sentence */
 .mn__skel { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; padding: 16px; border-radius: 22px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
@@ -288,8 +297,25 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 @keyframes mn-ping { 0% { opacity: 0.8; transform: scale(0.6); } 80%, 100% { opacity: 0; transform: scale(1.8); } }
 @keyframes mn-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
 @keyframes mn-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
-.mn__view:not([hidden]) { animation: mn-fade 0.35s var(--mn-ease) both; }
-@keyframes mn-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* NO BLANK FRAMES BETWEEN ROOMS (owner, 2026-10-20: "I see a lot of shit flashing in between moving screens"). The room you
+   open is on screen, whole, in the same frame the last one leaves. It used to fade up from nothing, so every switch showed
+   the bare page first; and the World's own room, which ships open, would have faded in on every arrival. */
+.mn__view:not([hidden]) { animation: none; }
+/* before js/mnet.js has run: ?signin=1 asked for the sign-in form, so the World waits under it rather than showing first
+   (showGate drops the class). (Inside the Music page's World frame the Music page keeps the one bar: css/style.css.) */
+.mn-boot-signin #mnApp { display: none !important; }
+/* a member's room asked for by address (?view=profile, set by the head of mnet.html) is the room painted first, never the
+   World and then the room; js/mnet.js takes it over at once (peekView, setView and showGate drop the attribute).
+   !important: .mn [hidden] (above) is itself important, and these are the few hidden things shown before the script runs */
+html[data-boot-view] #mnFeedView { display: none !important; }
+html[data-boot-view="live"] #mnLiveView, html[data-boot-view="clips"] #mnClipsView, html[data-boot-view="discover"] #mnDiscoverView,
+html[data-boot-view="groups"] #mnGroupsView, html[data-boot-view="messages"] #mnMessagesView, html[data-boot-view="profile"] #mnProfileView { display: block !important; }
+html[data-boot-view] #mnToWorld { display: inline-flex !important; }
+/* loading lists keep the shape of what is coming (skeletons, below), never a sentence that the answer then replaces */
+.mn__skel--row { grid-template-columns: 44px minmax(0, 1fr) 72px; align-items: center; padding: 12px 14px; border-radius: 16px; }
+.mn__skel--row > div i:last-child { margin-bottom: 0; }
+.mn__skel--row .mn__skel-pill { width: 72px; height: 32px; margin: 0; }
+.mn__skel--card { grid-template-columns: minmax(0, 1fr); min-height: 132px; align-content: end; border-radius: 18px; }
 
 /* ---------- section heads, discover, messages, alerts ---------- */
 .mn__section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 8px 0 14px; }
@@ -910,6 +936,9 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
    door to sign in. The composer is replaced by a plain invitation. */
 .mn__guest-bar { display: flex; gap: 6px; align-items: center; }
 .mn__guest-bar[hidden] { display: none; }
+/* a guest's way in is in the header from the first paint: the head of mnet.html already knows a guest (html.mn-guest) before
+   js/mnet.js unhides it, so the header does not shift when it does (owner, 2026-10-20: no flashes) */
+html.mn-guest .mn__guest-bar[hidden] { display: flex !important; }
 .mn__guest-in, .mn__guest-join { min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
 .mn__guest-in { border: 1px solid var(--mn-rule-2); background: rgba(10, 8, 7, 0.6); color: var(--mn-ink); }
 .mn__guest-join { border: 0; background: var(--mn-hot); color: var(--mn-hot-ink); }
@@ -1468,6 +1497,15 @@ body.has-appbar { padding-bottom: 0; }
 .mn-world-on #mnFeed .mn__news-card .mn__post-actions{margin:9px 0 0;max-width:100%;min-width:0;box-sizing:border-box;flex-wrap:wrap}
 .mn-world-on #mnFeed .mn__news-card .mn__action--comment{max-width:100%;box-sizing:border-box}
 
+/* Live character controls inherit the host studio's house styling. */
+.mn__actor-controls { min-width:0; margin:18px 0 0; padding:14px; border:1px solid var(--mn-rule); border-radius:12px; display:grid; gap:12px; }
+.mn__actor-controls[hidden] { display:none; }
+.mn__actor-controls legend { padding:0 6px; font-weight:700; font-size:1rem; }
+.mn__actor-controls label { display:flex; align-items:flex-start; gap:10px; font-size:1rem; line-height:1.4; }
+.mn__actor-controls input[type="checkbox"] { flex:0 0 auto; width:20px; height:20px; margin:2px 0; }
+.mn__actor-controls p { margin:0; color:var(--mn-dim); font-size:.85rem; line-height:1.5; overflow-wrap:anywhere; }
+.mn__actor-controls button { justify-self:start; min-height:44px; font-size:16px; }
+.mn__actor-controls textarea { resize:vertical; }
 /* THE PLACE CARD (js/mnet.js paintPlaceCard; owner, 2026-10-21: "only in the middle" of the top, with the place's counts):
    centred, never the full width; below the page's bar; the globe's buttons step down while it shows (--mn-place-push) */
 .mn__place-card{position:absolute;z-index:4;top:10px;left:0;right:0;margin:0 auto;width:min(300px,calc(100% - 32px));box-sizing:border-box;display:grid;gap:4px;padding:6px 6px 8px 12px;border-radius:14px;background:rgba(13,14,18,.92);color:#eef0f4;font:500 13px/1.35 Inter,system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 10px 26px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:mn-place-in .22s ease-out}

@@ -26,6 +26,10 @@ test('only images the platform stores are shown, and only https links are follow
     cover.replace('https://', 'http://'), `${ART}${OWNER}/../creator-masters/x.wav`, `${ART}${OWNER}/a.jpg?x=1`,
     `${ART}not-a-uid/a.jpg`, `javascript:alert(1)//${ART}`, `${ART}${OWNER}/a b.jpg`
   ]) assert.equal(ALB.safeArtwork(bad), '', bad);
+  /* the member's own profile picture, which a creator profile starts with (one-tap opt-in, owner 2026-10-20) */
+  const picture = `https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/public/mnet-avatars/${OWNER}/avatar-1760000000000.png`;
+  assert.equal(ALB.safeArtwork(picture), picture);
+  for (const bad of [picture.replace(OWNER, 'not-a-uid'), picture.replace('mnet-avatars', 'mnet-media'), `${picture}?x=1`, picture.replace('https://', 'http://')]) assert.equal(ALB.safeArtwork(bad), '', bad);
   assert.equal(ALB.safeLink('https://example.com/artist'), 'https://example.com/artist');
   for (const bad of ['javascript:alert(1)', 'http://example.com', 'https://user:pw@example.com', 'data:text/html,x', ' ']) {
     assert.equal(ALB.safeLink(bad), '', bad);

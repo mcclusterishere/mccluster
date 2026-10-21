@@ -128,3 +128,12 @@ html[data-daylight="day"] .mn-swipe__dots i.is-on { background:#dc0f2d; }
 html[data-daylight="day"] .mn-swipe__filters { background:#ffffff; border-color:#00000026; }
 html[data-daylight="day"] .mn-swipe__filters button { color:#333333; }
 html[data-daylight="day"] .mn-swipe__filters button[aria-selected="true"] { background:#000000; color:#ffffff; border-color:#000000; }
+/* THE ROOMS BY DAY (owner, 2026-10-20: "I see a lot of shit flashing in between moving screens"): the profile's panels, an
+   empty room's card and the shapes a loading room shows take the day colours too. They stayed night-dark on the white
+   page, so every room switch flashed dark blocks, and an empty card faded up through grey to black. */
+html[data-daylight="day"].hu-editorial :is(.mn__panel, .mn__empty) { background:#ffffff; border-color:#00000018; color:#000000; }
+html[data-daylight="day"] .mn__skel { background:#ffffff; box-shadow:inset 0 0 0 1px #00000018; }
+html[data-daylight="day"] .mn__skel i { background:linear-gradient(90deg, #ededed 0%, #f6f6f6 40%, #ededed 80%); background-size:240% 100%; }
+/* a change of phase while the World is already on screen (js/daylight.js) fades across instead of flipping */
+html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:background-color .6s ease, color .6s ease, border-color .6s ease, fill .6s ease, stroke .6s ease !important; }
+@media (prefers-reduced-motion: reduce) { html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:none !important; } }

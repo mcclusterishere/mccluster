@@ -86,7 +86,10 @@ test('Action Network is world-first while live remains accessible and multi-seat
   assert.match(live, /live\.world = \(out && out\.sessions\) \|\| \[\]/, 'the badge and the feed hero count the whole directory, never a filtered list');
   assert.match(live, /list = live\.world \|\| \[\]/, 'the World signal paints from its own unfiltered copy');
   assert.match(live, /go\.hidden = !\(live\.can && live\.enabled\)/, 'Go live shows only when it would work');
-  assert.match(html, /id="mnFeedView" hidden/);
+  /* the World's own room ships open and Live ships shut, so a member never sees the Live room before the World
+     (owner, 2026-10-20: no screen flashes) */
+  assert.match(html, /<section class="mn__view" id="mnFeedView">/);
+  assert.match(html, /<section class="mn__view" id="mnLiveView" hidden>/);
   assert.match(html, /data-live-kind="mission"/);
   assert.match(html, /data-live-kind="home"/);
   for (const key of ['music','build','learn','field','forum']) assert.match(html, new RegExp('data-live-category="' + key + '"'));

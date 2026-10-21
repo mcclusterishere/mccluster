@@ -326,7 +326,20 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   /* every frame of the first seconds: did the sign-in form paint on the way into the World? (owner, 2026-10-20) */
   await ctx.addInitScript(() => {
     window.__gateFlash = 0;
-    const tick = () => { const g = document.getElementById('mnSignedOut'); if (g && !g.hidden && g.getClientRects().length) window.__gateFlash++; if (performance.now() < 8000) requestAnimationFrame(tick); };
+    /* and no other screen either (owner, 2026-10-20: "other screens flash up instead of just a smooth transition"): the Live
+       room before the World, a World screen with nothing in it, the bar drawing this page itself as a broken image, the
+       globe frame's own standalone screen (its deck) inside the World */
+    window.__liveFlash = 0; window.__blankWorld = 0; window.__barSelfImg = 0; window.__deckFlash = 0;
+    const shown = (el) => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+    const tick = () => {
+      const g = document.getElementById('mnSignedOut'); if (g && !g.hidden && g.getClientRects().length) window.__gateFlash++;
+      if (shown(document.getElementById('mnLiveView'))) window.__liveFlash++;
+      const app = document.getElementById('mnApp');
+      if (app && !shown(app) && !shown(g) && !shown(document.getElementById('mnProfileGate'))) window.__blankWorld++;
+      for (const img of document.querySelectorAll('.appbar img')) if (img.getAttribute('src') && img.src === location.href) window.__barSelfImg++;
+      if (/action-globe\.html$/.test(location.pathname) && window.parent !== window && shown(document.getElementById('deck'))) window.__deckFlash++;
+      if (performance.now() < 8000) requestAnimationFrame(tick);
+    };
     requestAnimationFrame(tick);
   });
   await ctx.addInitScript((m) => {
@@ -1048,6 +1061,17 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
   try {
     const globe = page.frame({url:/action-globe\.html/});
     check(scope,'the sign-in form never flashes on the way into the World',await page.evaluate(()=>window.__gateFlash)===0,await page.evaluate(()=>window.__gateFlash));
+    /* NO SCREEN FLASHES (owner, 2026-10-20), counted on every frame of the first eight seconds */
+    const flashes = await page.evaluate(()=>({live:window.__liveFlash,blank:window.__blankWorld,selfImg:window.__barSelfImg}));
+    check(scope,'no other room shows on the way into the World: never the Live room, never an empty World screen',flashes.live===0&&flashes.blank===0,flashes);
+    check(scope,'the bar never draws this page itself as a broken image',flashes.selfImg===0,flashes);
+    check(scope,'the globe frame never shows its standalone screen (the deck) inside the World',await globe.evaluate(()=>window.__deckFlash)===0,await globe.evaluate(()=>window.__deckFlash));
+    if (member) {
+      /* a member without a photo wears the initial of their name in the middle tab, and it is actually drawn */
+      await page.waitForSelector('.appbar [data-appnav="home"] .appbar__m--initial',{timeout:10000}).catch(()=>{});
+      const coin = await page.evaluate(()=>{const c=document.querySelector('.appbar [data-appnav="home"] .appbar__m--initial'),r=c&&c.getBoundingClientRect();return {coin:!!c,text:c?c.textContent:'',w:r?Math.round(r.width):0,img:!!document.querySelector('.appbar [data-appnav="home"] img.appbar__m--creator')};});
+      check(scope,'a member without a photo gets the initial of their name in the middle tab, drawn at full size, never an image',coin.coin&&coin.text==='F'&&coin.w>=20&&!coin.img,coin);
+    }
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
