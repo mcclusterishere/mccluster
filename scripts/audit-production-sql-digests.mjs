@@ -24,11 +24,13 @@ for(const entry of ledger.migrations){
  if(/^\d{4}$/.test(entry.version)) status='legacy_anchor_not_exact';
  else if(stored.statement_count!==1) status='multi_statement_review';
  else status=hash===stored.stored_sha256?'exact':'sql_hash_mismatch';
- results.push({version:entry.version,name:entry.name,status,...(status==='sql_hash_mismatch'?{stored_sha256:stored.stored_sha256,source_sha256:hash}: {})});
+ results.push({version:entry.version,name:entry.name,status,...(status==='sql_hash_mismatch'?{stored_sha256:stored.stored_sha256,source_sha256:hash,stored_bytes:stored.stored_bytes,source_bytes:Buffer.byteLength(sql,'utf8')}: {})});
 }
 for(const stored of rows)if(!ledger.migrations.some(x=>x.version===stored.version))results.push({version:stored.version,name:stored.name,status:'unregistered_live_migration'});
 const counts=Object.fromEntries([...new Set(results.map(x=>x.status))].sort().map(status=>[status,results.filter(x=>x.status===status).length]));
 const exceptions=results.filter(x=>!['exact','legacy_anchor_not_exact'].includes(x.status));
-const report={snapshot:snapshotPath,project_ref:snapshot.project_ref,live_count:rows.length,ledger_count:ledger.migrations.length,latest_version:snapshot.latest_version,counts,exceptions};
+const postCutover=results.filter(x=>x.version >= ledger.production_sql_cutover_version);
+const postCutoverCounts=Object.fromEntries([...new Set(postCutover.map(x=>x.status))].sort().map(status=>[status,postCutover.filter(x=>x.status===status).length]));
+const report={snapshot:snapshotPath,project_ref:snapshot.project_ref,live_count:rows.length,ledger_count:ledger.migrations.length,latest_version:snapshot.latest_version,counts,post_cutover_counts:postCutoverCounts,exceptions};
 console.log(JSON.stringify(report,null,2));
 if(process.argv.includes('--strict')&&exceptions.length)process.exitCode=1;
