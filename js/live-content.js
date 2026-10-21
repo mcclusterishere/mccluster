@@ -425,6 +425,8 @@
       } catch (e) { /* one bad row must not stop the rest */ }
     });
     d.documentElement.setAttribute("data-content-loaded", "1");
+    /* the rows, for a page's own settings that are not an element (index.html's "@front", read by js/main.js) */
+    w.MCC_CONTENT_ROWS = Array.isArray(rows) ? rows : [];
     w.dispatchEvent(new CustomEvent("mcc:content-applied"));
   }
 

@@ -75,7 +75,7 @@ test('site entry gate is versioned and analytics stays off before acknowledgemen
   assert.match(live, /I agree &amp; continue/);
   assert.match(live, /page === "privacy\.html"/, 'the policy itself must remain readable');
   assert.match(live, /'<small>Privacy notice version ' \+ VERSION \+ '<\/small>'/, 'the wall names the one version constant, never a second copy');
-  assert.match(analytics, /if \(mccPrivacyAcknowledged\(\)\) \{/);
+  assert.match(analytics, /if \(mccPrivacyAcknowledged\(\) && !mccControlPreview\(\)\) \{/, 'agreed, and not the owner\'s Control Room preview');
   assert.match(analytics, /window\.MCC_PRIVACY\.accepted\(\)/, 'analytics asks the notice when the page loads it');
   assert.match(analytics, /window\.MCC_TRACK = function \(\) \{ return false; \}/);
 });
@@ -397,7 +397,18 @@ test('the notice: a cross-host sign-in handoff is finished before the notice loo
 
 test('analytics asks the notice when it is on the page, and its own fallback reads the shared cookie safely', async () => {
   const src = await readFile(join(ROOT, 'js/analytics.js'), 'utf8');
-  const head = src.slice(0, src.indexOf('if (mccPrivacyAcknowledged()) {'));
+  const head = src.slice(0, src.indexOf('if (mccPrivacyAcknowledged() && !mccControlPreview()) {'));
+  assert.ok(head.length > 0, 'the gate is where the test reads it');
+  /* the owner's look at the front page inside Control → Front page records nothing (js/control-room/front-page.js) */
+  const preview = (parentPath, sameOrigin = true) => {
+    const self = { location: { origin: 'https://matthew.mccluster.org' } };
+    self.parent = parentPath === null ? self : { location: sameOrigin ? { origin: 'https://matthew.mccluster.org', pathname: parentPath } : { get origin() { throw new Error('SecurityError'); } } };
+    return vm.runInNewContext(head + '\nmccControlPreview()', { window: self, location: self.location, document: {}, JSON, String });
+  };
+  assert.equal(preview('/control.html'), true, 'framed by the Control Room on this origin: not a visit');
+  assert.equal(preview(null), false, 'the page on its own is a visit');
+  assert.equal(preview('/sites.html'), false, 'framed by another page of the house: still a visit');
+  assert.equal(preview('/control.html', false), false, 'framed by another origin: a visit, and no throw');
   const run = ({ privacy, cookie, cookieThrows, local } = {}) => {
     const document = {};
     Object.defineProperty(document, 'cookie', { get() { if (cookieThrows) throw new Error('SecurityError'); return cookie || ''; } });
