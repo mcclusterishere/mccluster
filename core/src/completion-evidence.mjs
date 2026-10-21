@@ -77,6 +77,17 @@ function policyEvidence(job, output) {
   const records = [];
 
   switch (type) {
+    case 'actor_news_comment': {
+      requireValue(job, text(output.actor_key) === text(job.target_id), 'actor receipt must match job');
+      if (output.published === true) {
+        requireValue(job, Boolean(text(output.publication_id)) && Boolean(text(output.comment_id)), 'published actor work requires durable publication and comment receipts');
+        records.push({ kind: 'platform_comment', publication_id: output.publication_id, comment_id: output.comment_id, article_id: output.article_id, actor_key: output.actor_key });
+      } else {
+        requireValue(job, output.published === false && ['actor_paused','daily_limit','no_recent_article','already_commented'].includes(output.reason), 'actor skip must have a bounded reason');
+        records.push({kind:'bounded_noop',reason:output.reason,actor_key:output.actor_key});
+      }
+      break;
+    }
     case 'ai_diagnostics': {
       requireValue(job, Boolean(text(output.installed?.ollama_version)) && Boolean(text(output.installed?.digest)), 'AI diagnostics require an installed version and model digest');
       if (job.input?.benchmark === true) requireValue(job, output.benchmarks?.length === 4 && output.benchmarks.every(sample => sample.exact_match && Number(sample.usage?.total_duration_ns) > 0), 'AI benchmarks require four correct timed results');
