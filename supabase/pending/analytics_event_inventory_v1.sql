@@ -79,3 +79,29 @@ revoke all on function public.analytics_event_inventory_v1()
   from public,anon,authenticated;
 grant execute on function public.analytics_event_inventory_v1()
   to service_role;
+
+
+-- Count only verified Instagram API observations belonging to the house.
+-- Manually reported snapshots and non-Instagram accounts are not evidence
+-- that Instagram authorization/discovery is operational.
+create or replace function public.analytics_instagram_source_status_v1(p_org uuid)
+returns table(instagram_posts bigint, verified_insight_snapshots bigint)
+language sql stable security invoker
+set search_path = ''
+as $$
+  select
+    (select count(*)::bigint
+      from public.social_posts p
+      join public.social_accounts a on a.id=p.account_id
+      where p.org_id=p_org and a.org_id=p_org and a.platform='instagram'),
+    (select count(*)::bigint
+      from public.social_metric_snapshots m
+      join public.social_posts p on p.id=m.post_id
+      join public.social_accounts a on a.id=p.account_id
+      where m.org_id=p_org and p.org_id=p_org and a.org_id=p_org
+        and a.platform='instagram' and m.source='platform_api');
+$$;
+revoke all on function public.analytics_instagram_source_status_v1(uuid)
+  from public,anon,authenticated;
+grant execute on function public.analytics_instagram_source_status_v1(uuid)
+  to service_role;

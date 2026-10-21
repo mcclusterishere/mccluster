@@ -1104,18 +1104,18 @@ export async function handleAnalyticsRequest(request, env, user) {
     const events=cleanInventory(await sbRows(env,
       'rpc/analytics_event_inventory_v1',));
     const safeOrg=encodeURIComponent(org.id);
-    const [accounts,posts,snapshots]=await Promise.allSettled([
+    const [accounts,counts]=await Promise.allSettled([
       sbRows(env,'social_accounts?org_id=eq.'+safeOrg+
         '&select=platform,status,media_discovery_error&limit=100'),
-      sbCountFiltered(env,'social_posts','id',{org_id:'eq.'+org.id}),
-      sbCountFiltered(env,'social_metric_snapshots','id',{org_id:'eq.'+org.id})
+      sbRows(env,'rpc/analytics_instagram_source_status_v1?p_org='+safeOrg)
     ]);
     let provider=null;
     try {
+      const found=counts.status==='fulfilled'&&counts.value?.length===1?counts.value[0]:null;
       provider=socialCoverage(
         accounts.status==='fulfilled'?accounts.value:[],
-        posts.status==='fulfilled'?posts.value:null,
-        snapshots.status==='fulfilled'?snapshots.value:null
+        found?.instagram_posts??null,
+        found?.verified_insight_snapshots??null
       );
       if(accounts.status!=='fulfilled') provider.instagram.status='unavailable';
     } catch {

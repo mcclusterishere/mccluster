@@ -52,8 +52,7 @@ test('owner sees stored event names and authenticated source status only',async(
     if(path.endsWith('/org_members'))return data([{role:'owner'}]);
     if(path.endsWith('/rpc/analytics_event_inventory_v1'))return data([{event_name:'music_play',raw_total:12,lean_total:12,bot_rows:0,recent_24h:1,recent_7d:8,taxonomy_stage:'content'}]);
     if(path.endsWith('/social_accounts'))return data([{platform:'instagram',status:'connected',media_discovery_error:'meta_error_190'}]);
-    if(path.endsWith('/social_posts'))return data([],200,0);
-    if(path.endsWith('/social_metric_snapshots'))return data([],200,0);
+    if(path.endsWith('/rpc/analytics_instagram_source_status_v1'))return data([{instagram_posts:0,verified_insight_snapshots:0}]);
     throw Error('Unexpected backend path '+path);
   };
   try{
