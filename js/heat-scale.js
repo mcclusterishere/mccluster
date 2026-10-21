@@ -10,8 +10,14 @@
    still looks it). Ties share a level; the smallest non-zero level is LOW, never invisible; a place with none has no level.
 
    The ramps run dark to bright (the anchor flipped for dark surfaces): the World's is semantic heat, deep red through
-   orange to pale yellow, its lightness rising at every stop; Analytics builds a one-hue ramp from its own accent token
+   orange to pale yellow, its lightness rising at every stop; Analytics runs from its land colour to its accent token
    (js/control-room/analytics-globe.js), since everything red on that screen derives from that token.
+
+   NO NEWS, NO COLOUR; THEN COLOUR (owner, 2026-10-21: "If there's no news about a region, it should be no color ... It
+   should be going no color to color"; of Analytics: "things that are not doing well should be gray, the same color as a
+   globe, and things that are having more shit going on should be red"). A place with none is never filled. The World's
+   ramp starts nearly clear and only becomes solid colour as it rises, so the least news is a breath of red and the most is
+   unmistakable; Analytics' ramp starts at the globe's own grey and ends at the accent's full red, no lighter tint past it.
 
    Pure: no DOM, no Cesium. Colours are [r, g, b, a] in 0..1; css() gives a CSS colour. */
 (function (root, factory) {
@@ -21,14 +27,14 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
   const LOW = 0.08;
-  /* the World's news heat over the satellite Earth, at night as by day: even the least is a clear crimson, the most a pale gold;
-     more opaque as it rises */
+  /* the World's news heat over the satellite Earth, at night as by day: from nearly clear (the least) to a solid pale gold
+     (the most), the colour deepening and the fill thickening together */
   const HEAT = Object.freeze([
-    Object.freeze({ at: 0, hex: '#8c1a3e', a: 0.55 }),
-    Object.freeze({ at: 0.25, hex: '#bf2a3c', a: 0.62 }),
-    Object.freeze({ at: 0.5, hex: '#e8562e', a: 0.68 }),
-    Object.freeze({ at: 0.75, hex: '#f8a12f', a: 0.75 }),
-    Object.freeze({ at: 1, hex: '#ffe27a', a: 0.84 }),
+    Object.freeze({ at: 0, hex: '#8c1a3e', a: 0.12 }),
+    Object.freeze({ at: 0.25, hex: '#bf2a3c', a: 0.34 }),
+    Object.freeze({ at: 0.5, hex: '#e8562e', a: 0.55 }),
+    Object.freeze({ at: 0.75, hex: '#f8a12f', a: 0.72 }),
+    Object.freeze({ at: 1, hex: '#ffe27a', a: 0.86 }),
   ]);
 
   const hexRgb = (hex) => { const h = String(hex).replace('#', ''); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255); };
@@ -62,9 +68,14 @@
       { at: 1, rgb: mix(accent, white, 0.62), a: opaque ? 1 : 0.85 },
     ];
   }
+  /* Analytics: the globe's own grey (little going on) straight to the accent's full red (the most) */
+  function greyRamp(surface, accent) {
+    return [{ at: 0, rgb: surface.slice(0, 3), a: 1 }, { at: 1, rgb: accent.slice(0, 3), a: 1 }];
+  }
   const css = (c) => 'rgba(' + Math.round(c[0] * 255) + ',' + Math.round(c[1] * 255) + ',' + Math.round(c[2] * 255) + ',' + (Math.round(c[3] * 100) / 100) + ')';
-  /* the legend's bar: the ramp, opaque, left (little) to right (most) */
-  function gradient(stops) { return 'linear-gradient(90deg,' + (stops || HEAT).map((s) => { const c = at(stops || HEAT, s.at); c[3] = 1; return css(c) + ' ' + Math.round(s.at * 100) + '%'; }).join(',') + ')'; }
+  /* the legend's bar: the ramp left (little) to right (most); opaque, or with the map's own fill (seeThrough) so it reads
+     from no colour to colour as the map does */
+  function gradient(stops, seeThrough) { return 'linear-gradient(90deg,' + (stops || HEAT).map((s) => { const c = at(stops || HEAT, s.at); if (!seeThrough) c[3] = 1; return css(c) + ' ' + Math.round(s.at * 100) + '%'; }).join(',') + ')'; }
   /* the OKLab lightness of an sRGB colour (0..1), for the test that each ramp only gets lighter */
   function lightness(c) {
     const lin = (u) => (u <= 0.04045 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4));
@@ -74,5 +85,5 @@
   }
   /* "1 story", "1,234 stories" */
   function stories(n) { const x = Math.max(0, Math.round(Number(n) || 0)); return x.toLocaleString('en-US') + (x === 1 ? ' story' : ' stories'); }
-  return { HEAT, LOW, levels, at, accentRamp, css, gradient, lightness, hexRgb, stories };
+  return { HEAT, LOW, levels, at, accentRamp, greyRamp, css, gradient, lightness, hexRgb, stories };
 });

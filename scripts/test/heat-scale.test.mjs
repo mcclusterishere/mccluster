@@ -42,12 +42,28 @@ test('each ramp only gets lighter, dark (little) to bright (most), and the heat 
   assert.ok(L[L.length - 1] - L[0] > 0.45, 'a wide lightness range: ' + (L[L.length - 1] - L[0]).toFixed(2));
   const A = steps.map((t) => H.at(H.HEAT, t)[3]);
   for (let i = 1; i < A.length; i++) assert.ok(A[i] >= A[i - 1]);
-  /* Analytics: one hue, from its land colour through its accent to a tint of it */
-  const ramp = H.accentRamp(H.hexRgb('#3b3e44'), H.hexRgb('#e11d2e'), true);
+  /* Analytics (owner, 2026-10-21: "not doing well should be gray, the same color as a globe ... more shit going on should
+     be red"): the land's own grey straight to the accent's full red */
+  const ramp = H.greyRamp(H.hexRgb('#26282d'), H.hexRgb('#e11d2e'));
   const LA = steps.map((t) => H.lightness(H.at(ramp, t)));
-  for (let i = 1; i < LA.length; i++) assert.ok(LA[i] > LA[i - 1], 'accent ramp lightness rises at ' + steps[i]);
+  for (let i = 1; i < LA.length; i++) assert.ok(LA[i] > LA[i - 1], 'grey-to-red lightness rises at ' + steps[i]);
   assert.ok(steps.every((t) => H.at(ramp, t)[3] === 1), 'opaque on the analytics globe');
-  assert.deepEqual(H.at(ramp, 0.5).slice(0, 3).map((v) => Math.round(v * 255)), [225, 29, 46], 'the middle is the accent itself');
+  assert.deepEqual(H.at(ramp, 0).slice(0, 3).map((v) => Math.round(v * 255)), [38, 40, 45], 'the least is the globe\'s own grey');
+  assert.deepEqual(H.at(ramp, 1).slice(0, 3).map((v) => Math.round(v * 255)), [225, 29, 46], 'the most is the accent\'s full red, no paler tint past it');
+  const low = H.at(ramp, H.LOW).slice(0, 3).map((v) => Math.round(v * 255));
+  assert.ok(Math.abs(low[0] - low[1]) < 40, 'a place doing little is still grey, not pink: ' + low);
+});
+
+test('the World: no news, no colour; then colour, from nearly clear to solid (owner, 2026-10-21: "It should be going no color to color")', () => {
+  assert.equal(H.levels([3, 10])(0), null, 'a place with no stories has no level, so no fill');
+  assert.ok(H.at(H.HEAT, 0)[3] <= 0.15, 'the bottom of the ramp is nearly clear');
+  assert.ok(H.at(H.HEAT, H.LOW)[3] < 0.2, 'the least news is a breath of colour: ' + H.at(H.HEAT, H.LOW)[3]);
+  assert.ok(H.at(H.HEAT, 1)[3] > 0.8, 'the most is solid');
+  assert.match(H.gradient(null, true), /^linear-gradient\(90deg,rgba\(140,26,62,0\.12\) 0%,.*rgba\(255,226,122,0\.86\) 100%\)$/, 'the legend reads clear to colour, as the map does');
+  assert.match(read('js/world-countries.js'), /window\.HuHeat\.gradient\(null, true\)/);
+  const wc = read('js/world-countries.js');
+  assert.match(wc, /if \(n <= 0\) continue;/, 'a country with no stories is never filled');
+  assert.match(wc, /if \(n > 0\) instances\.push\(\.\.\.heatInstances\(sf,/, 'nor is a state');
 });
 
 test('the legend bar is the ramp itself, and the count reads as English', () => {
@@ -57,15 +73,15 @@ test('the legend bar is the ramp itself, and the count reads as English', () => 
   assert.equal(H.stories(1234), '1,234 stories');
 });
 
-test('Analytics shades by the shared scale on its own accent; its legend bar is the same three stops', () => {
+test('Analytics shades by the shared scale from its land grey to its accent red; its legend bar is the same two stops', () => {
   const g = read('js/control-room/analytics-globe.js');
   assert.doesNotMatch(g, /0\.22\s*\+\s*0\.68\s*\*\s*Math\.sqrt/, 'the flat value ÷ max blend is gone');
-  assert.match(g, /H\.accentRamp\(\[C\.land\.red, C\.land\.green, C\.land\.blue\], \[C\.accent\.red, C\.accent\.green, C\.accent\.blue\], true\)/);
+  assert.match(g, /H\.greyRamp\(\[C\.land\.red, C\.land\.green, C\.land\.blue\], \[C\.accent\.red, C\.accent\.green, C\.accent\.blue\]\)/);
   assert.match(g, /window\.HuHeat\.levels\(values\(\)\)/);
   const html = read('control.html');
   assert.ok(html.indexOf('js/heat-scale.js') > 0 && html.indexOf('js/heat-scale.js') < html.indexOf('js/control-room/analytics-globe.js'), 'loaded before the globe');
   const css = read('css/control-analytics-deck.css');
-  assert.match(css, /\.cu-heat-legend i\{[^}]*linear-gradient\(90deg,color-mix\(in srgb,var\(--an-accent,#e11d2e\) 28%,var\(--an-land,#3b3e44\)\) 0%,var\(--an-accent,#e11d2e\) 50%,color-mix\(in srgb,var\(--an-accent,#e11d2e\) 38%,#fff\) 100%\)/);
+  assert.match(css, /\.cu-heat-legend i\{[^}]*linear-gradient\(90deg,var\(--an-land,#3b3e44\) 0%,var\(--an-accent,#e11d2e\) 100%\)/, 'the legend is grey to red too');
   /* the accent rule holds: no hard-coded red on the analytics screen */
   assert.doesNotMatch(css, /#393b40/);
 });
