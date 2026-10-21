@@ -1,0 +1,27 @@
+name: Historical production SQL digest audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-production-sql-digests.mjs'
+      - 'docs/control-plane/production-sql-digests-20261021.json'
+      - 'supabase/production-ledger.json'
+      - '.github/workflows/historical-sql-digest-audit.yml'
+  workflow_dispatch:
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare applied SQL against committed sources
+        run: node scripts/audit-production-sql-digests.mjs > production-sql-digest-report.json
+      - name: Print summary
+        run: node -e "const r=require('./production-sql-digest-report.json');console.log(JSON.stringify({live_count:r.live_count,ledger_count:r.ledger_count,counts:r.counts,exceptions:r.exceptions.length},null,2))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-sql-digest-report
+          path: production-sql-digest-report.json
+          retention-days: 14
