@@ -4008,7 +4008,8 @@
         var sameCountry = !!(prevCountry && state.world.country && prevCountry.code === state.world.country.code);
         if (state.world.country) state.world.country.stats = placeStats(d.country.stats);
         paintPlaceCard(state.world.country);
-        if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
+        /* a post stays placed in the country, so a state picked or let go there keeps the member's choice */
+        if ($("mnPostPlaceOptIn") && !sameCountry) $("mnPostPlaceOptIn").checked = false;
         paintFeedScope();
         /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
            that country with no extra press; letting the country go returns the feed to Global, unless the member chose

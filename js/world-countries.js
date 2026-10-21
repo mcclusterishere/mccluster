@@ -254,11 +254,13 @@
       if (!sp && a2) for (const r of (o.regions ? o.regions() : []) || []) { const m = Number(r && r.member_count); if (r && r.country_code === a2 && m >= 5) members = (members || 0) + m; }
       return { news, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members: sp ? null : members, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
     }
-    /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it) */
-    function told(f, n, sf) {
+    /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it).
+       stateOnly marks a state picked or let go inside the same country, so a listener that acts on a new country (Travel's
+       destination) leaves what it has */
+    function told(f, n, sf, stateOnly) {
       if (!f) return null;
       const sp = sf && sf.properties;
-      return { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, state: sp ? { key: sp.key, name: sp.name, type: sp.type || null, polygons: polygonsOf(sf) } : null, stats: statsFor(f, sf) };
+      return { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, state: sp ? { key: sp.key, name: sp.name, type: sp.type || null, polygons: polygonsOf(sf) } : null, stateOnly: !!stateOnly, stats: statsFor(f, sf) };
     }
     /* the counts moved under a selection already made (they arrive after the tap): the card and the page follow */
     function restat() {
@@ -278,7 +280,7 @@
         st.stateOutline = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: ringInstances(sf, 'hu-state-selected', BORDER.width, INK.withAlpha(0.95)), appearance: new C.PolylineColorAppearance({ translucent: true }), asynchronous: false }));
       }
       const n = paintCard(f, sf);
-      if (o.onSelect) o.onSelect(told(f, n, sf));
+      if (o.onSelect) o.onSelect(told(f, n, sf, true));
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
     }
     /* the state under a double tap in the selected country; the picked state again goes back to the whole country */
