@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const sql=readFileSync('supabase/pending/listener_state_v1.sql','utf8');
+const sql=readFileSync('supabase/migrations/20261021125121_listener_state_v1.sql','utf8');
 const client=readFileSync('js/pip.js','utf8');
 test('listener state has an owned, bounded, authenticated-only schema',()=>{
  assert.match(sql,/profile_id\s+uuid primary key references auth\.users\(id\) on delete cascade/i);
