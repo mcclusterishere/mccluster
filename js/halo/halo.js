@@ -302,7 +302,7 @@
     const groups = GROUPS.map((g) => '<div class="halo__group"><h3>' + esc(g.name) + '</h3>' + g.items.map((it) =>
       '<label class="halo-row" data-halo-layer="' + it.id + '" data-state="off"><input type="checkbox"><span class="halo-row__name">' + esc(it.label) + '</span><span class="halo-row__state" aria-live="polite"></span></label>').join('') + '</div>').join('');
     panel.innerHTML =
-      '<header class="halo__head"><h2>Hitman’s Halo</h2><button type="button" class="halo__close" aria-label="Close Halo">×</button></header>' +
+      '<div class="halo__head"><h2>Hitman’s Halo</h2><button type="button" class="halo__close" aria-label="Close Halo">×</button></div>' +
       '<form class="halo__search" role="search"><input type="search" name="q" aria-label="Search a place" placeholder="Search a place" autocomplete="off" maxlength="120" enterkeyhint="search"><button type="submit">Go</button></form>' +
       '<ul class="halo__results" hidden></ul>' +
       '<div class="halo__tabs" role="tablist" aria-label="Halo">' +

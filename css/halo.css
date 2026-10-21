@@ -1,13 +1,17 @@
 /* HITMAN'S HALO ON THE ADMIN GLOBE (js/halo/halo.js): the console in the current globe's own look (css/globe-editorial.css:
-   dark translucent plates, 44px round targets, Inter). Mobile first: on a phone the Halo pill sits top right across from the
-   way-back pill and the console opens beneath it, full width; from 900px it docks as a column on the left. Details for a
-   picked thing still open in the globe's own sheet (z-index 9), above the console (8). */
-.halo-pill{position:fixed;z-index:8;top:calc(10px + env(safe-area-inset-top,0px));right:12px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 12px;border:1px solid #ffffff26;border-radius:999px;background:rgba(13,14,18,.86);color:#eef0f4;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+   dark translucent plates, 44px round targets, Inter). Mobile first. The top of the full-screen globe is one row: "← World"
+   and "Just the globe" (the page's header) and, in the right corner, the profile chip (css/site-navigation.css, top 12px,
+   44px high). The Halo pill takes the corner's second row, under the chip; the console opens beneath that row, full width
+   on a phone, and from 900px docks as a column on the left under "← World". Its head is a div, not a header: the explore
+   page fixes every header to the top of the screen. Details for a picked thing still open in the globe's own sheet
+   (z-index 9), above the console (8). */
+.globe-explore{--halo-row2:calc(max(12px,env(safe-area-inset-top,0px)) + 52px);--halo-top:calc(var(--halo-row2) + 52px)}
+.halo-pill{position:fixed;z-index:8;top:var(--halo-row2);right:max(12px,env(safe-area-inset-right,0px));display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 12px;border:1px solid #ffffff26;border-radius:999px;background:rgba(13,14,18,.86);color:#eef0f4;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .halo-pill[aria-expanded="true"]{background:#282027;border-color:#a1455b}
 .halo-pill svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6}
 .halo-pill:focus-visible,.halo :is(button,input,a,summary):focus-visible,.halo-follow button:focus-visible{outline:2px solid #c6d5df;outline-offset:2px}
 
-.halo{position:fixed;z-index:8;top:calc(62px + env(safe-area-inset-top,0px));left:8px;right:8px;max-height:calc(100dvh - 62px - env(safe-area-inset-top,0px) - var(--hu-bar-h,0px) - 16px);display:flex;flex-direction:column;min-width:0;box-sizing:border-box;border:1px solid #ffffff28;border-radius:16px;background:rgba(13,14,18,.95);color:#eef0f4;font:400 14px/1.4 Inter,system-ui,sans-serif;box-shadow:0 18px 40px rgba(0,0,0,.45);overflow:hidden}
+.halo{position:fixed;z-index:8;top:var(--halo-top);left:8px;right:8px;max-height:calc(100dvh - var(--halo-top) - var(--hu-bar-h,0px) - 16px);display:flex;flex-direction:column;min-width:0;box-sizing:border-box;border:1px solid #ffffff28;border-radius:16px;background:rgba(13,14,18,.95);color:#eef0f4;font:400 14px/1.4 Inter,system-ui,sans-serif;box-shadow:0 18px 40px rgba(0,0,0,.45);overflow:hidden}
 .halo[hidden]{display:none}
 .halo__head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 4px 14px}
 .halo__head h2{margin:0;font-size:15px;font-weight:600;letter-spacing:.02em}
@@ -52,11 +56,18 @@
 .halo-follow button,.halo-follow-btn{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:#282027;color:#fff;font:600 13px/1 Inter,system-ui,sans-serif;cursor:pointer}
 .cctv-sheet .halo-follow-btn{margin-top:8px;border:1px solid #a1455b}
 
-/* the HUD's place: under the way-back pill on a phone (the console covers it while open), top centre when there is room */
-.halo-hud-host{position:fixed;z-index:7;top:calc(62px + env(safe-area-inset-top,0px));left:8px;max-width:calc(100% - 16px);pointer-events:none}
+/* the HUD's place: on a phone, where the console opens (and out of sight while the console is open there); from 900px beside the docked
+   console, left of the pill; from 1200px top centre, between "← World" and "Just the globe" */
+.halo-hud-host{position:fixed;z-index:7;top:var(--halo-top);left:8px;max-width:calc(100% - 16px);pointer-events:none}
+.halo:not([hidden])~.halo-hud-host{visibility:hidden}
 
 @media (min-width:900px){
+  .globe-explore{--halo-top:var(--halo-row2)}
   .halo{left:12px;right:auto;width:360px}
-  .halo-hud-host{left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px))}
+  .halo-hud-host,.halo:not([hidden])~.halo-hud-host{visibility:visible;left:384px;max-width:calc(100% - 384px - 124px)}
+  .halo[hidden]~.halo-hud-host{left:12px;max-width:calc(100% - 12px - 124px)}
+}
+@media (min-width:1200px){
+  .halo-hud-host,.halo[hidden]~.halo-hud-host,.halo:not([hidden])~.halo-hud-host{left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));max-width:calc(100% - 560px)}
 }
 @media (prefers-reduced-motion:reduce){.halo-pill,.halo{-webkit-backdrop-filter:none;backdrop-filter:none}}

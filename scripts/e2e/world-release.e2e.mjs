@@ -45,7 +45,11 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  check(scope,'the owner gets the Halo console, open from the link, on the Layers tab',!!st&&st.mounted&&st.open&&st.tab==='layers'&&await page.locator('#haloPanel').isVisible(),st);
  const box=await page.locator('#haloPanel').boundingBox(),pill=await page.locator('.halo-pill').boundingBox();
  check(scope,'the console fits the screen and its pill is a full tap target',!!box&&box.x>=0&&box.x+box.width<=width+0.5&&pill.height>=44&&pill.width>=44,{box,pill});
- check(scope,'every Halo row and tab is a full tap target',await page.evaluate(()=>[...document.querySelectorAll('#haloPanel .halo-row:not([hidden]),#haloPanel [role=tab]')].every(e=>e.getBoundingClientRect().height>=44)));
+ /* the top of the screen: "← World", "Just the globe", the profile chip, the Halo pill and the console's title never sit on each other */
+ const crowd=await page.evaluate(()=>{const els=['#worldBack','#bareEnter','#mccAuthChip','.halo-pill','#haloPanel .halo__head h2'].map(q=>[q,document.querySelector(q)]).filter(([,e])=>e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden'),hits=[];for(let i=0;i<els.length;i++)for(let j=i+1;j<els.length;j++){const a=els[i][1].getBoundingClientRect(),b=els[j][1].getBoundingClientRect();if(a.left<b.right-0.5&&b.left<a.right-0.5&&a.top<b.bottom-0.5&&b.top<a.bottom-0.5)hits.push(els[i][0]+' × '+els[j][0])}return{seen:els.map(([q])=>q),hits}});
+ check(scope,'the top controls and the console title do not overlap',crowd.hits.length===0&&crowd.seen.includes('.halo-pill')&&crowd.seen.includes('#worldBack'),crowd);
+ const small=await page.evaluate(()=>[...document.querySelectorAll('#haloPanel .halo-row,#haloPanel [role=tab],#haloPanel button,#haloPanel input[type=search]')].filter(e=>e.offsetParent!==null&&e.getBoundingClientRect().height<44).map(e=>e.className||e.tagName));
+ check(scope,'every visible Halo row, tab, button and the search field is a full tap target',small.length===0,small);
  /* layers: earthquakes draw, fires say they need a key, military flights draw */
  await page.locator('[data-halo-layer="quakes"] input').click();
  await page.waitForFunction(()=>HaloConsole.state().layers.quakes.state==='on',null,{timeout:8000}).catch(()=>{});
@@ -68,9 +72,11 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  /* vision and HUD */
  await page.locator('[role=tab][data-tab="vision"]').click();
  await page.locator('[data-halo-style="flir"]').click();
- await page.waitForTimeout(700);
+ /* the style fades in from the next animation frame, which software GL at desktop size can hold back past a fixed wait */
+ const stagesOn=()=>{const s=HuGlobe.viewer().scene.postProcessStages;let on=0;for(let i=0;i<s.length;i++)if(s.get(i).enabled)on++;return on};
+ await page.waitForFunction(stagesOn,null,{timeout:8000}).catch(()=>{});
  st=await state();
- const fx=await page.evaluate(()=>{const s=HuGlobe.viewer().scene.postProcessStages;let on=0;for(let i=0;i<s.length;i++)if(s.get(i).enabled)on++;return on});
+ const fx=await page.evaluate(stagesOn);
  check(scope,'Thermal turns on one post-process stage',st.style==='flir'&&fx>=1,{style:st.style,fx});
  await page.keyboard.press('1');
  await page.waitForTimeout(700);
@@ -79,7 +85,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.locator('[data-halo-tool="hud"]').click();
  await page.waitForTimeout(500);
  st=await state();
- check(scope,'the telemetry HUD shows a place in MGRS and the time in UTC',st.hud&&!!st.readout&&/^\d{1,2}[C-X]/.test(String(st.readout.mgrs||''))&&/UTC|Z/.test(await page.textContent('.halo-hud-host')),st.readout);
+ /* on a phone the open console covers the HUD's place, so the HUD shows once the console closes */
+ let hudSeen;if(width<900){await page.locator('.halo__close').click();hudSeen=await page.locator('.halo-hud-host .halo-hud').isVisible();await page.screenshot({path:join(OUT,'halo-hud-'+width+'.png')});await page.locator('.halo-pill').click()}else hudSeen=await page.locator('.halo-hud-host .halo-hud').isVisible();
+ check(scope,'the telemetry HUD shows a place in MGRS and the time in UTC',st.hud&&!!st.readout&&/^\d{1,2}[C-X] [A-Z]{2} \d+ \d+$/.test(String(st.readout.mgrs||''))&&/^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(String(st.readout.utc||''))&&hudSeen,st.readout);
  /* search flies to the place */
  await page.fill('.halo__search input','Paris');
  await page.locator('.halo__search button').click();

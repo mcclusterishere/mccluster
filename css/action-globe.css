@@ -166,6 +166,8 @@ header strong{display:none}
 .globe-explore .world-mode,.globe-explore .world-tools,.globe-explore #worldFeed,.globe-explore #worldFeed[hidden],.globe-explore header strong,.globe-explore #openFeed,.globe-explore #worldFilters label,.globe-explore .world-deck-top,.globe-explore #deck>small{display:none!important}
 .globe-explore header{position:fixed;top:0;left:0;right:0;z-index:7;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:none;pointer-events:none}
 .globe-explore header a{pointer-events:auto;display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:999px;background:rgba(13,14,18,.82);color:#eef0f4;font:600 13px/1 Inter,system-ui,sans-serif;text-decoration:none;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,42,77,.3),0 8px 20px rgba(0,0,0,.45)}
+/* the profile chip (css/site-navigation.css) holds the top right corner on every page: the header's links stop short of it */
+.globe-explore body[data-site-navigation] header{padding-right:calc(max(12px,env(safe-area-inset-right,0px)) + 112px)}
 .globe-explore #deck{position:fixed;inset:auto 0 var(--hu-bar-h) 0;z-index:6;height:auto;max-width:none;max-height:40dvh;margin:0;padding:10px 16px 14px;border:0;border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;background:rgba(13,14,18,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 -10px 30px rgba(0,0,0,.45);overflow-y:auto;touch-action:pan-y}
 .globe-explore #deck::before{content:"";display:block;width:36px;height:4px;margin:0 auto 10px;border-radius:2px;background:rgba(255,255,255,.22)}
 .globe-explore #deck h1{font-size:19px;line-height:1.15;margin:4px 0 6px}

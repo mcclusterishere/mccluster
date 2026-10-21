@@ -831,11 +831,10 @@ function wireEditorialTools(){
     the globe"): in the World, the corner that held the controls menu holds World, one tap back to the whole Earth. The rest of
     the controls (the Earth / street map switch, the data layers) stay on the full-screen globe; Travel keeps its own rail. */
  if(document.documentElement.classList.contains('globe-surface-network')){
-  const corner=document.createElement('div');corner.className='globe-editorial-world';
-  /* the owner's door to Halo: hidden until the server says owner (haloSync); it opens the full-screen globe with the console */
+  const corner=document.createElement('div');corner.className='globe-editorial-world';const world=$('ctlWorld');if(world)corner.appendChild(world);document.body.appendChild(corner);
+  /* the owner's door to Halo, above World: hidden until the server says owner (haloSync); it opens the full-screen globe with the console */
   const halo=document.createElement('a');halo.id='ctlHalo';halo.className='globe-ctl';halo.hidden=true;halo.href='action-globe.html?explore=1&halo=1';halo.target='_top';halo.setAttribute('aria-label',"Open Hitman's Halo");
-  halo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';corner.appendChild(halo);
-  const world=$('ctlWorld');if(world)corner.appendChild(world);document.body.appendChild(corner);
+  halo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';corner.insertBefore(halo,corner.firstChild);
   const shelf=document.createElement('div');shelf.className='globe-editorial-shelf';shelf.hidden=true;if(nav)shelf.appendChild(nav);if(row)shelf.appendChild(row);document.body.appendChild(shelf);
   const rail=document.createElement('nav');rail.className='globe-travel-controls';rail.setAttribute('aria-label','Travel globe controls');document.body.appendChild(rail);setTravelMode(travelMode);
   return;
