@@ -91,7 +91,7 @@ function pendingWorld() {
     APP: 'mccluster-web', state: { user: null, boot: null }, FLOW: null, opened: 0, world: 0,
     api: () => Promise.resolve({ next_step: 'contact', identity: { mccluster_id: null }, profile: null }),
     openPages() { ctx.opened++; }, loadFeed() { ctx.world++; return Promise.resolve(); },
-    fillProfileForm() {}, showGate() {}, setView() {}, paintSelf() {}, paintFinishCard() {}, moveThumb() {}, requestAnimationFrame() {},
+    fillProfileForm() {}, showGate() {}, setView() {}, paintSelf() {}, paintFinishCard() {}, moveThumb() {}, requestAnimationFrame() {}, addEventListener() {},
     $: () => ({ hidden: true })
   };
   ctx.window = ctx;
