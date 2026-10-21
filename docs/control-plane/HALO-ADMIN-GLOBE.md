@@ -56,6 +56,26 @@ Honesty, as in Halo: a layer says its count, "stale", "Needs a key", "Owner only
 snapshots; the visual modes are labelled as treatments, and the fake sensor read-outs some of the original shaders painted
 (temperatures, REC, frame counters) are removed.
 
+## Operations data: missions, people, water levels
+
+Owner-only data routes for the Halo operations view, in `workers/mccluster/src/world-halo-ops.js` (its header comment is
+the full contract; tests in `workers/mccluster/test/world-halo-ops.test.mjs`). Each path is a release feature, so the
+guard refuses everyone but the house owner before dispatch, and each handler verifies the bearer and asks `isHouseOwner`
+again (403 `owner_only`). Answers are `private, no-store`, varying on Origin and Authorization.
+
+| Route | Feature | Source | Answer |
+|---|---|---|---|
+| `GET /v1/world/halo/missions` | `halo-ops` | Supabase, service role: `action_missions`, `rpc/action_mission_stats`, `action_mission_assignments`, `action_proofs`, `action_globe_mission_regions` → `action_globe_regions`, `network_profiles`, `m_auth_user_links` | `halo-missions/v1`: up to 200 missions, review first, then active, blocked, planned, completed; each with counts, team (12), evidence (6, no media), the region's place, and `mnet.html?mission=<id>` unless a draft |
+| `GET /v1/world/halo/people` | `halo-ops` | Supabase, service role: `orgs`/`org_members` (house), `m_auth_user_links`, `action_mission_assignments` (last 90 days, plus the house members' own), `network_profiles`, `action_skill_progress`, `rpc/action_globe_public_online_total` | `halo-people/v1`: up to 200 people with role, skills, current missions, state and last activity |
+| `GET /v1/world/layers/tides` | `tides` | NOAA CO-OPS metadata API (`stations.json?type=waterlevels`), kept 24 h | `[id, name, lon, lat, state]` per station |
+| `GET /v1/world/tides/:station` | `tides` | NOAA CO-OPS data API (`datagetter`, water_level, MLLW, metric, GMT, 24 h), kept 6 min per station | `halo-water-level/v1`: observed water level, never a prediction; stale and unavailable said so; 400 on an id that is not seven digits |
+
+**The privacy rule.** Members consented only to regional aggregates of at least five people
+(`action_globe_member_regions`, `action_globe_presence`). The people route reads neither and returns no per-person region,
+presence, last-seen time, coordinate, location text, email or phone number; `location_shared` is always `false`. The only
+presence figure is `online`, the k-anonymous total from `action_globe_public_online_total()`, null under five. A mission's
+`place` is the mission's region centroid, never a member's location.
+
 ## Next phases (each its own PR)
 
 **Phase 2: tracking.**
@@ -90,7 +110,7 @@ snapshots; the visual modes are labelled as treatments, and the fake sensor read
 | OpenSky | Non-commercial research and education |
 | CelesTrak | Asks for citation |
 | Launch Library 2 | Credit |
-| USGS, NHC, NIFC, NASA FIRMS | Public / open |
+| USGS, NHC, NIFC, NASA FIRMS, NOAA CO-OPS | Public / open |
 | AISStream | Beta terms |
 | Photon and Nominatim | ODbL data; Nominatim at most 1 request a second, with a User-Agent |
 | Google Photorealistic 3D Tiles | Attribution stays on screen; no caching outside Cesium's |

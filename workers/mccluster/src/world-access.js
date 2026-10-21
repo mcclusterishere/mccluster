@@ -32,7 +32,10 @@ export const LAYER_RULES = Object.freeze({
   perimeters: { min: 'fan', label: 'Wildfire perimeters' },
   cyclones: { min: 'fan', label: 'Tropical cyclones' },
   vessels: { min: 'fan', label: 'Ships (AIS)' },
-  search: { min: 'fan', label: 'Place search' }
+  search: { min: 'fan', label: 'Place search' },
+  /* Halo operations and NOAA water levels (./world-halo-ops.js); owner-only through the release guard and the handler */
+  'halo-ops': { min: 'fan', label: 'Missions and people' },
+  tides: { min: 'fan', label: 'Coastal water levels' }
 });
 
 const rank = (level) => LEVELS.indexOf(level);

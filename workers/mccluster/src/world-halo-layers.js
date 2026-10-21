@@ -107,8 +107,9 @@ export const HALO_LAYERS = Object.freeze({
 const HALO_PATH = /^\/v1\/world\/layers\/(military|quakes|fires|perimeters|cyclones|vessels)$/;
 export const WORLD_GEOCODE_PATH = '/v1/world/geocode';
 
-/* ---------- trust nothing: numbers, strings and links from a provider ---------- */
-function finite(v) {
+/* ---------- trust nothing: numbers, strings and links from a provider ----------
+   (exported for ./world-halo-ops.js, which trusts Supabase rows no further) */
+export function finite(v) {
   if (v === null || v === undefined || typeof v === 'boolean') return null;
   if (typeof v === 'string' && !v.trim()) return null;
   const n = typeof v === 'number' ? v : Number(v);
@@ -116,14 +117,14 @@ function finite(v) {
 }
 const roundTo = (n, places) => { const f = 10 ** places; return Math.round(n * f) / f; };
 /* a finite number within [lo, hi], rounded; anything else is null, never 0 */
-function within(v, lo, hi, places = 3) {
+export function within(v, lo, hi, places = 3) {
   const n = finite(v);
   return n === null || n < lo || n > hi ? null : roundTo(n, places);
 }
-const latOf = (v, places = 4) => within(v, -90, 90, places);
-const lonOf = (v, places = 4) => within(v, -180, 180, places);
+export const latOf = (v, places = 4) => within(v, -90, 90, places);
+export const lonOf = (v, places = 4) => within(v, -180, 180, places);
 /* a provider string, control characters removed, trimmed, capped; empty is null */
-function clip(v, max) {
+export function clip(v, max) {
   if (v === null || v === undefined || typeof v === 'object') return null;
   const s = String(v).replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ').trim();
   return s ? s.slice(0, max).trim() : null;

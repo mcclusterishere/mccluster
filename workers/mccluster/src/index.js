@@ -8,6 +8,7 @@ import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleHaloLayers, handleWorldGeocode, WORLD_GEOCODE_PATH } from './world-halo-layers.js';
+import { handleHaloOps } from './world-halo-ops.js';
 import { handleWorldCctv } from './world-cctv.js';
 import { handleWorldAccess } from './world-access.js';
 import { handleIntelRequest } from './intel/router.js';
@@ -168,6 +169,15 @@ export default {
         /* Halo feeds on the admin globe, owner-only by the same guard (./world-halo-layers.js) */
         const halo = await handleHaloLayers(request, env);
         if (halo) return halo;
+        /* NOAA water-level stations, owner-only by the same guard and again in the handler (./world-halo-ops.js) */
+        const tides = await handleHaloOps(request, env);
+        if (tides) return tides;
+      }
+
+      /* Halo operations (the owner's missions and people) and one station's water level, owner-only twice (./world-halo-ops.js) */
+      if (path.startsWith('/v1/world/halo/') || path.startsWith('/v1/world/tides/')) {
+        const ops = await handleHaloOps(request, env);
+        if (ops) return ops;
       }
 
       /* place search for the admin globe, owner-only by the same guard */

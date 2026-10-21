@@ -3,8 +3,11 @@
    admin_preview is the existing wire value for operator-only access, not a
    promise of future public release. Account tiers cannot publish these feeds.
    The Halo feeds on the admin globe (military, quakes, fires, perimeters,
-   cyclones, vessels) and place search ride the same owner-only gate. */
-export const GLOBE_FEATURES = Object.freeze(['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search']);
+   cyclones, vessels) and place search ride the same owner-only gate, as do
+   Halo operations ('halo-ops': /v1/world/halo/*, the owner's missions and
+   people) and NOAA water levels ('tides': /v1/world/layers/tides and
+   /v1/world/tides/*). */
+export const GLOBE_FEATURES = Object.freeze(['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search','halo-ops','tides']);
 export const GLOBE_RELEASE_VERSION = 'globe-admin-preview/v1';
 export function globeRelease(feature, env = {}) {
   if (!GLOBE_FEATURES.includes(feature)) return 'withdrawn';
@@ -20,6 +23,8 @@ export function globeFeatureForPath(path) {
   if (path === '/v1/world/cctv' || path.startsWith('/v1/world/cctv/')) return 'cctv';
   if (path === '/v1/world/ion' || path.startsWith('/v1/world/ion/')) return 'ion';
   if (path === '/v1/world/geocode') return 'search';
+  if (path === '/v1/world/halo' || path.startsWith('/v1/world/halo/')) return 'halo-ops';
+  if (path === '/v1/world/tides' || path.startsWith('/v1/world/tides/')) return 'tides';
   if (path === '/v1/intel/geo' || path === '/v1/equity-uprise/halo-globe') return 'intel';
   return null;
 }
