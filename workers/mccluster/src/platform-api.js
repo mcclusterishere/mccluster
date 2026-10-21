@@ -1173,6 +1173,11 @@ async function handleMnet(req,env,path,url){
       if(act==='actors'&&req.method==='POST'){
         const b=await json(req);
         if(!Array.isArray(b.actor_keys)||b.actor_keys.length>3||b.actor_keys.some(k=>typeof k!=='string'||!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(k)))return fail(req,env,'Choose up to three platform characters',400);
+        if(b.actor_keys.length){
+          const cutoff=encodeURIComponent(new Date(Date.now()-120000).toISOString());
+          const nodes=await service(env,`ops_compute_nodes?display_name=eq.ovh-primary&state=eq.online&last_seen_at=gte.${cutoff}&select=id&limit=1`);
+          if(!nodes?.length)return fail(req,env,'Royce is offline while McCluster Core reconnects. You can keep broadcasting.',503);
+        }
         return reply(req,env,await service(env,'rpc/ops_live_actor_config',{method:'POST',body:JSON.stringify({p_session:sess.id,p_host:user.id,p_keys:b.actor_keys})}));
       }
       if(act==='cue'&&req.method==='POST'){

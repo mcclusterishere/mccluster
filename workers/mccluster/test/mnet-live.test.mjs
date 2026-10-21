@@ -67,7 +67,8 @@ function fake({
   directory = null,
   grantRows = [],
   actorKeys = [],
-  actorQueueFails = false
+  actorQueueFails = false,
+  coreOnline = true
 } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
@@ -120,6 +121,7 @@ function fake({
       return ok(room ? [room] : []);
     }
 
+    if(u.includes('/ops_compute_nodes?'))return ok(coreOnline?[{id:'node'}]:[]);
     if(u.includes('/rpc/ops_live_actor_config')) return ok({actor_keys:body.p_keys});
     if(u.includes('/rpc/ops_live_actor_tick')) return actorQueueFails?ok({message:'unavailable'},503):ok({queued:true});
     if (u.includes('/rpc/network_live_session_metrics')) return ok([{
@@ -414,4 +416,12 @@ test('AI queue failure does not break the broadcast heartbeat',async()=>{
  fake({status:'live',actorKeys:['royce.r01'],actorQueueFails:true});
  const r=await call('/v1/mnet/live/'+SESSION+'/heartbeat','POST',{});assert.equal(r.status,200);
  assert.equal((await r.json()).actors.error,'actor_queue_unavailable');
+});
+
+test('offline Core refuses new invitations but still permits pause',async()=>{
+ const calls=fake({status:'live',coreOnline:false});
+ const r=await call('/v1/mnet/live/'+SESSION+'/actors','POST',{actor_keys:['royce.r01']});
+ assert.equal(r.status,503);assert.match((await r.json()).error,/offline/);
+ assert.equal(calls.some(c=>c.u.includes('ops_live_actor_config')),false);
+ assert.equal((await call('/v1/mnet/live/'+SESSION+'/actors','POST',{actor_keys:[]})).status,200);
 });
