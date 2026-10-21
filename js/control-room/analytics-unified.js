@@ -108,7 +108,7 @@
     ])+'<p class="cu-note">'+(!h.collector?'Collector configuration is unknown.':!h.collector.enabled?'Collection is off. Provider snapshots do not populate the archive.':'Enabled describes configuration. Check the latest attempt and stored datasets to confirm receipt.')+'</p>'+button('Inspect stored datasets','inventory'));
   }
   function intelligence(){
-    var news=window.CR.newsContext?window.CR.newsContext.render():'';
+    var news=(window.CR.connections?window.CR.connections.render():'')+(window.CR.newsContext?window.CR.newsContext.render():'');
     if(H.busy&&!H.sources)return news+card('World intelligence','Halo / GEV source families','<p role="status">Reading source permissions and readiness…</p>');
     var sources=H.sources||[],shown=sources.filter(function(s){return (s.name+' '+s.key+' '+(s.capabilities||[]).join(' ')).toLowerCase().includes(H.query.toLowerCase());}),selected=sources.find(function(s){return s.key===H.source;});
     var ready=H.readiness&&H.readiness.database_schema_ready,warning=H.error?'<p class="cu-warning" role="alert">'+esc(H.error)+'</p>':ready===false?'<p class="cu-warning">Spatial archive is not provisioned. Authorized transient snapshots remain available; saved history is unavailable.</p>':'';
@@ -133,6 +133,7 @@
   }
   function bind(root,request,paint){
     if(window.CR.newsContext)window.CR.newsContext.bind(root,request,paint);
+    if(window.CR.connections)window.CR.connections.bind(root,request,paint);
     root.querySelectorAll('[data-cu-panel]').forEach(function(b){b.onclick=function(){H.panel=b.dataset.cuPanel;paint();};});
     root.querySelectorAll('[data-cu-dataset]').forEach(function(b){b.onclick=function(){H.dataset=b.dataset.cuDataset;paint();var host=window.CR.analytics.state.host;var detail=host&&host.querySelector('[data-cu-dataset-detail]');if(detail)detail.scrollIntoView({block:'nearest'});};});
     [['#cuDatasetSearch','datasetQuery'],['#cuDatasetFamily','family'],['#cuDatasetStatus','datasetStatus']].forEach(function(x){var el=root.querySelector(x[0]);if(el)el.onchange=function(){H[x[1]]=el.value;H.dataset='';paint();};});
