@@ -5,8 +5,8 @@
    The decision is server truth, never localStorage: the onboarding shows
    only while the member has no music_creator_profiles row. The server
    answers through public.music_creator_state() and the one button calls
-   public.music_become_creator() (supabase/pending/music_creator_one_click_v1.sql).
-   Until that SQL is applied in production the RPCs answer 404, and
+   public.music_become_creator() (supabase/migrations/20261021050105_music_creator_one_click_v1.sql).
+   On older environments without the RPCs they answer 404, and
    Creator Studio builds the same answer from the member's own rows
    (fallbackState below), so the page behaves the same either way.
 
@@ -147,7 +147,7 @@
   }
 
   /* THE TWO CALLS, for Creator Studio and for every "Become a creator" door on the site: the server functions in
-     supabase/pending/music_creator_one_click_v1.sql, and while those are not applied (404) the same answer built
+     supabase/migrations/20261021050105_music_creator_one_click_v1.sql, and if those are unavailable (404) the same answer built
      from the member's own rows (fallbackState) with the same two writes. o: { token, mUid, userId, fetch }. */
   function client(o) {
     var f = o.fetch || fetch;
