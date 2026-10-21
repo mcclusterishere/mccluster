@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { RUNNING_DEPLOYMENT_SHA } from './runtime-revision.mjs';
 import { createCapabilityRegistry } from './capabilities/registry.mjs';
 import { createToolRegistry } from './tools/registry.mjs';
 import { createEdgeVerifier, DEFAULT_EDGE_CLOCK_SKEW_MS } from './broker-edge-auth.mjs';
@@ -34,13 +34,7 @@ function json(res, status, body, extraHeaders = {}) {
 }
 
 function deployedRevision() {
-  try {
-    const parsed = JSON.parse(readFileSync('/opt/mccluster/core/.mccluster-deploy.json', 'utf8'));
-    const sha = String(parsed?.commit_sha || '');
-    return /^[a-f0-9]{40}$/.test(sha) ? sha : null;
-  } catch {
-    return null;
-  }
+  return RUNNING_DEPLOYMENT_SHA;
 }
 
 /* Capability dispatch is an event in the house org's observability tail.
