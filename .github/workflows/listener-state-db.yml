@@ -1,4 +1,6 @@
 name: Listener state database contract
+permissions:
+  contents: read
 on:
   pull_request:
     paths:
