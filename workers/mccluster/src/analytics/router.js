@@ -6,6 +6,7 @@ import { createExperienceAnalyticsRoutes } from './experience.js';
 import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
+import {cleanInventory, socialCoverage} from './event-inventory.js';
 import { readBoundedRows, measurementContext } from './measurement.js';
 import { loadBusinessEventCounts } from './business-event-counts.js';
 import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
@@ -1095,6 +1096,33 @@ export async function handleAnalyticsRequest(request, env, user) {
     return json({ ok:true, version:DICTIONARY_VERSION, source:DICTIONARY_SOURCE,
       unknown_event_policy:'unclassified', events:EVENT_DICTIONARY,
       metrics:METRIC_DICTIONARY, datasets:DATASETS });
+  }
+  if (path === '/v1/analytics/event-inventory') {
+    // All event names (including operations and unknown stages) are owner-only.
+    const {org}=await requireHouseOwner(env,user);
+    if(request.method!=='GET')return json({ok:false,error:'GET required'},405);
+    const events=cleanInventory(await sbRows(env,
+      'rpc/analytics_event_inventory_v1',));
+    const safeOrg=encodeURIComponent(org.id);
+    const [accounts,posts,snapshots]=await Promise.allSettled([
+      sbRows(env,'social_accounts?org_id=eq.'+safeOrg+
+        '&select=platform,status,media_discovery_error&limit=100'),
+      sbCountFiltered(env,'social_posts','id',{org_id:'eq.'+org.id}),
+      sbCountFiltered(env,'social_metric_snapshots','id',{org_id:'eq.'+org.id})
+    ]);
+    let provider=null;
+    try {
+      provider=socialCoverage(
+        accounts.status==='fulfilled'?accounts.value:[],
+        posts.status==='fulfilled'?posts.value:null,
+        snapshots.status==='fulfilled'?snapshots.value:null
+      );
+      if(accounts.status!=='fulfilled') provider.instagram.status='unavailable';
+    } catch {
+      provider={instagram:{status:'unavailable',imported_posts:null,metric_snapshots:null}};
+    }
+    return json({ok:true,measured_at:new Date().toISOString(),...events,providers:provider,
+      partial:provider.instagram.status==='unavailable'});
   }
   if (path === '/v1/analytics/coverage') {
     if (request.method !== 'GET') return json({ error: 'GET required' }, 405);

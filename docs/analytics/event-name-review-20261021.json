@@ -1,0 +1,561 @@
+{
+  "schema": "analytics-event-review/v1",
+  "snapshot_window": "rolling_last_7_days",
+  "observed_on": "2026-10-21",
+  "scope": "first_party_all_bot_statuses",
+  "limitation": "Observed event names, not full audit of every product emitter. Classifications must not be equated with verified outcomes.",
+  "reviewed_mapping_source": "supabase/pending/analytics_event_inventory_v1.sql",
+  "summary": {
+    "observed_unclassified_at_snapshot": 78,
+    "approved_pending_migration": 30,
+    "needs_review": 48
+  },
+  "events": [
+    {
+      "name": "mnet_view",
+      "events_7d": 509,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "view",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "feed_scope",
+      "events_7d": 167,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "ops",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "form_start",
+      "events_7d": 137,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "engage",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "world_focus",
+      "events_7d": 89,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "view",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "desk_signal",
+      "events_7d": 83,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "ops",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "gated_preview_end",
+      "events_7d": 60,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "music_preview_complete",
+      "events_7d": 43,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "music_preview_play",
+      "events_7d": 42,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "music_play",
+      "events_7d": 36,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "sound_gentle",
+      "events_7d": 36,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "music_complete",
+      "events_7d": 34,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "form_submit",
+      "events_7d": 32,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "lead",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "vr_gate_deny",
+      "events_7d": 22,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "ops",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "guest_sign_in_prompt",
+      "events_7d": 21,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "engage",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "pocket_advance",
+      "events_7d": 20,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "world_layer",
+      "events_7d": 20,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "action_view",
+      "events_7d": 19,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "view",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "song_leave",
+      "events_7d": 18,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "sites_layout",
+      "events_7d": 17,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "music_full_play",
+      "events_7d": 16,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "world_news_place",
+      "events_7d": 15,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "ops",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "gateway_view",
+      "events_7d": 13,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "view",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "float_pause",
+      "events_7d": 12,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "signup_started",
+      "events_7d": 12,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "engage",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "create_open",
+      "events_7d": 11,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "desk_open",
+      "events_7d": 11,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "record_view",
+      "events_7d": 10,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "nightcap_set",
+      "events_7d": 8,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "sound_beacon",
+      "events_7d": 8,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "music_now_open",
+      "events_7d": 7,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "world_rewind",
+      "events_7d": 7,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "ecosystem_view",
+      "events_7d": 6,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "signup_blocked",
+      "events_7d": 6,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "song_hidden",
+      "events_7d": 6,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "song_pause",
+      "events_7d": 6,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "finish_step_prompt",
+      "events_7d": 5,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "fund_open",
+      "events_7d": 5,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "onboarding_step",
+      "events_7d": 5,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "signup_succeeded",
+      "events_7d": 5,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "checkout_retired_link",
+      "events_7d": 4,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mnet_sign_out",
+      "events_7d": 4,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "pocket_return",
+      "events_7d": 4,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "vr_back_to_card",
+      "events_7d": 4,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "create_pick",
+      "events_7d": 3,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mission_join",
+      "events_7d": 3,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "lead",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "mnet_message_sent",
+      "events_7d": 3,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "engage",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "song_test_answer",
+      "events_7d": 3,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "beam_open",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "card_hub_view",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "card_view",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "docket_page_view",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "masters_keep",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mnet_tour_end",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mnet_tour_start",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "music_seek",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "play_failed",
+      "events_7d": 2,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "ops",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "precise_location",
+      "events_7d": 2,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "ops",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "rotation_add",
+      "events_7d": 2,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "song_end",
+      "events_7d": 2,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "action_joined",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "action_mission_handoff",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "actionable_selected",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "actionable_started",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "alert_open",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "app_install_open",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "copy",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "create_posted",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "gateway_lane",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "knowledge_release_attribution_probe",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "lockroom_answer",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mission_proof",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mnet_bookmark_added",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mnet_bookmark_removed",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "mnet_post_created",
+      "events_7d": 1,
+      "decision": "requires_semantic_review",
+      "stage": null,
+      "warning": "Unknown meaning/provenance. Exclude from verified outcomes and do not infer a stage."
+    },
+    {
+      "name": "onboarding_done",
+      "events_7d": 1,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "engage",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "signup_failed",
+      "events_7d": 1,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "ops",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "song_resume",
+      "events_7d": 1,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "content",
+      "warning": "Client observation only; see approved taxonomy note."
+    },
+    {
+      "name": "track_share",
+      "events_7d": 1,
+      "decision": "reviewed_client_signal_pending_migration",
+      "stage": "engage",
+      "warning": "Client observation only; see approved taxonomy note."
+    }
+  ]
+}

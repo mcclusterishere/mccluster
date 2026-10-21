@@ -1,0 +1,47 @@
+name: Analytics event inventory (isolated)
+on:
+  pull_request:
+    paths:
+      - 'supabase/pending/analytics_event_inventory_v1.sql'
+      - 'supabase/tests/analytics_event_inventory.behaviour.sql'
+      - 'workers/mccluster/src/analytics/event-inventory.js'
+      - 'workers/mccluster/src/analytics/router.js'
+      - 'workers/mccluster/test/analytics-event-inventory.test.mjs'
+      - 'js/control-room/analytics-unified.js'
+      - '.github/workflows/analytics-event-inventory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  event-inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Run source authorization and completeness tests
+        run: |
+          node --check workers/mccluster/src/analytics/event-inventory.js
+          node --check js/control-room/analytics-unified.js
+          node --test workers/mccluster/test/analytics-event-inventory.test.mjs
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+      - name: Validate source stages, counts and private service RPC
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/analytics_event_inventory.behaviour.sql
