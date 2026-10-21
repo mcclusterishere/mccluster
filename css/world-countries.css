@@ -15,3 +15,9 @@
 @keyframes country-card-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.country-card{animation:none}}
 @media(min-width:700px){.country-card{right:auto;width:340px;left:12px}}
+/* THE NEWS HEAT MAP's legend (js/world-countries.js): bottom left, above the credit line, out of the World button's corner */
+.heat-legend{position:fixed;z-index:7;left:12px;bottom:calc(var(--hu-credit-h,16px) + 10px);width:min(176px,calc(100vw - 96px));display:grid;gap:4px;padding:7px 9px 6px;border-radius:10px;background:rgba(13,14,18,.72);color:#eef0f4;font:500 11px/1.25 Inter,system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.1);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none}
+.heat-legend[hidden]{display:none}
+.heat-legend__bar{display:block;height:6px;border-radius:999px}
+.heat-legend__ends{display:flex;justify-content:space-between;color:#c7d0e0}
+.heat-legend__ends small{font-size:11px}

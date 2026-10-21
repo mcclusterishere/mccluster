@@ -29,6 +29,12 @@
      names it, and the page is told (onSelect's country.state). A double tap on the picked state, or a single tap inside
      the country, goes back to the whole country; a single tap with no state picked lets the country go, as before, once
      the double-tap gap has passed. A double tap on a country not yet selected selects the country only.
+   - THE NEWS HEAT MAP (owner, 2026-10-21: "instead of pins on the map ... aggregate each mention of a state or country
+     with a heat map of how many articles or mentions it has ... so people aren't just needlessly searching for tiny pins").
+     heat({countries}) shades each country by the stories that mention it (GET /v1/world/news-heat, the last day), on the
+     shared scale in js/heat-scale.js; a selected country shows its states instead, counted from the places of its stories
+     (opts.heatCells) with the state shapes; the card gives the count, and a legend says what the colours mean. The shading
+     shows while the borders do.
 
    The pure parts (decode, fades, preference, point-in-country, counts) are exported for node --test; the browser part
    needs Cesium. */
@@ -169,7 +175,7 @@
   function mount(viewer, opts) {
     const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0 };
     const scratchColor = new C.Color(), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), scratchRect = new C.Rectangle(), view = [0, 0, 0, 0];
     const INK = C.Color.fromCssColorString('#f4f1ea');
     /* the borders are the map: clear enough to read on the day and the night side, in the feed's small globe too */
@@ -179,6 +185,8 @@
     const borderMat = lineMat(BORDER.alpha), stateMat = lineMat(0), selectedStateMat = lineMat(0);
     const button = addButton();
     const card = addCard();
+    const legend = addLegend();
+    const Heat = window.HuHeat;
     /* when each tap went down, by the event's own clock: a busy frame can hold a tap's handling back, not its time */
     viewer.scene.canvas.addEventListener('pointerdown', (e) => { if (e.isPrimary) st.down = { t: e.timeStamp }; }, true);
     paintButton();
@@ -202,6 +210,15 @@
       button.setAttribute('aria-label', t); button.title = t; button.dataset.mode = st.mode;
     }
     function setMode(m) { st.mode = m; writeMode(safeStorage(), m); paintButton(); if (m === 'off') select(null); st.camKey = ''; }
+    /* what the colours mean: the ramp, few to many, and the window it counts */
+    function addLegend() {
+      const el = document.createElement('div');
+      el.className = 'heat-legend'; el.id = 'heatLegend'; el.hidden = true;
+      el.innerHTML = '<span class="heat-legend__title">News mentions · last 24 h</span><i class="heat-legend__bar"></i><span class="heat-legend__ends"><small>Fewer</small><small>More</small></span>';
+      if (window.HuHeat) el.querySelector('i').style.background = window.HuHeat.gradient();
+      document.body.appendChild(el);
+      return el;
+    }
     function addCard() {
       const el = document.createElement('div');
       el.className = 'country-card'; el.id = 'countryCard'; el.hidden = true;
@@ -213,9 +230,12 @@
       if (!f) { card.hidden = true; card.innerHTML = ''; return; }
       const p = f.properties, counts = missionCounts(o.missions ? o.missions() : [], o.regions ? o.regions() : [], st.features);
       const n = p.a2 ? counts[p.a2] || 0 : 0, idx = st.stateIndex, sp = sf && sf.properties;
+      /* with the heat map on: how many stories mention it; the missions line only where missions show */
+      const news = st.heat && Heat ? '<small class="country-card__news">' + escHtml(Heat.stories(sp ? (st.stateCounts && st.stateCounts[sp.key]) || 0 : st.heat[p.a2] || 0) + ' in the last 24 hours') + '</small>' : '';
+      const missions = !st.heat || !o.missionsOn || o.missionsOn() ? '<small>' + escHtml(countText(n)) + '</small>' : '';
       const text = sp
-        ? '<b>' + escHtml(sp.name) + '</b><small>' + escHtml(p.name) + '</small>'
-        : '<b>' + escHtml(p.name) + '</b><small>' + escHtml(countText(n)) + '</small>' + (p.a2 && idx && idx[p.a2] ? '<small class="country-card__hint">Double-tap a state to choose it</small>' : '');
+        ? '<b>' + escHtml(sp.name) + '</b><small>' + escHtml(p.name) + '</small>' + news
+        : '<b>' + escHtml(p.name) + '</b>' + news + missions + (p.a2 && idx && idx[p.a2] ? '<small class="country-card__hint">Double-tap a state to choose it</small>' : '');
       card.innerHTML = (p.flag && !quiet ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
         '<span class="country-card__text">' + text + '</span>' +
         '<button type="button" class="country-card__close" aria-label="' + (sp ? 'Show all of ' + escHtml(p.name) : 'Show every country') + '">×</button>';
@@ -264,7 +284,7 @@
       st.selected = f ? code : null;
       const n = paintCard(f);
       if (f) {
-        st.highlight = viewer.scene.primitives.add(polygonPrimitive(f, C.Color.WHITE.withAlpha(0.16)));
+        st.highlight = viewer.scene.primitives.add(polygonPrimitive(f, C.Color.WHITE.withAlpha(st.heat ? 0.07 : 0.16)));
         /* the chosen country's whole outline, its coast too, and its states whatever the height */
         st.outline = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: ringInstances(f, 'hu-country-selected', BORDER.width + 1, INK.withAlpha(0.95)), appearance: new C.PolylineColorAppearance({ translucent: true }), asynchronous: false }));
         /* only the latest selection draws: a select() made again before the file arrives (refresh() re-applies one) leaves no stray lines */
@@ -273,8 +293,68 @@
         /* its states' shapes too, so a double tap answers at once; and the card's hint once the index says it has states */
         if (f.properties.a2) { loadAreas(f.properties.a2); stateIndexP().then(() => { if (gen === st.selectGen && st.selected === code && !st.selectedState) paintCard(f); }); }
       }
+      drawStateHeat();
       if (o.onSelect) o.onSelect(told(f, n, null));
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
+    }
+    /* THE HEAT MAP: one fill per country with stories, coloured by how many; the selected country's own fill steps aside
+       for its states' */
+    function heatInstances(f, id, color) {
+      return polygonsOf(f).map((poly, k) => new C.GeometryInstance({
+        id: id + '-' + k,
+        geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(poly[0].slice(0, -1).flat()), poly.slice(1).map((h) => new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(h.slice(0, -1).flat())))), height: 2500, granularity: C.Math.RADIANS_PER_DEGREE * 2, vertexFormat: C.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT, arcType: C.ArcType.GEODESIC }),
+        attributes: { color: C.ColorGeometryInstanceAttribute.fromColor(color), show: new C.ShowGeometryInstanceAttribute(true) },
+      }));
+    }
+    const heatColor = (t) => { const c = Heat.at(Heat.HEAT, t); return new C.Color(c[0], c[1], c[2], c[3]); };
+    function setHeat(data) {
+      st.heat = data && data.countries && typeof data.countries === 'object' ? data.countries : null;
+      st.heatTotal = st.heat ? Number(data.total) || 0 : 0;
+      drawHeat();
+      if (legend && legend.hidden !== !st.heat) { legend.hidden = !st.heat; if (o.onLegend) o.onLegend(); }
+      if (st.selected) { const f = st.features.find((x) => (x.properties.a2 || x.properties.a3) === st.selected); if (f) { drawStateHeat(); paintCard(f, st.selectedState); } }
+      if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
+    }
+    function drawHeat() {
+      if (st.heatFill) { viewer.scene.primitives.remove(st.heatFill); st.heatFill = null; }
+      st.heatIds = {};
+      if (!st.heat || !st.ready || !Heat) return;
+      const level = Heat.levels(Object.values(st.heat)), instances = [];
+      for (const f of st.features) {
+        const code = f.properties.a2, n = code ? Number(st.heat[code]) || 0 : 0;
+        if (n <= 0) continue;
+        const list = heatInstances(f, 'hu-heat-' + code, heatColor(level(n)));
+        st.heatIds[code] = list.map((x) => x.id);
+        instances.push(...list);
+      }
+      if (instances.length) st.heatFill = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: instances, appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }), asynchronous: true }));
+    }
+    /* the selected country's states, coloured by the stories placed in each (when there are any to place) */
+    function drawStateHeat() {
+      if (st.stateHeat) { viewer.scene.primitives.remove(st.stateHeat); st.stateHeat = null; }
+      st.stateCounts = null;
+      showCountryHeat();
+      const code = st.selected, gen = ++st.heatGen;
+      if (!st.heat || !code || !(Number(st.heat[code]) > 0) || !o.heatCells || !/^[A-Z]{2}$/.test(code)) return;
+      Promise.all([loadAreas(code), o.heatCells(code)]).then(([areas, cells]) => {
+        if (gen !== st.heatGen || st.selected !== code || !areas || !Array.isArray(cells) || !st.heat) return;
+        const counts = {};
+        for (const c of cells) { if (!Array.isArray(c)) continue; const sf = countryAt(areas, Number(c[0]), Number(c[1])); if (sf) counts[sf.properties.key] = (counts[sf.properties.key] || 0) + (Number(c[2]) || 0); }
+        st.stateCounts = counts;
+        const level = Heat.levels(Object.values(counts)), instances = [];
+        for (const sf of areas) { const n = counts[sf.properties.key] || 0; if (n > 0) instances.push(...heatInstances(sf, 'hu-heat-state-' + sf.properties.key, heatColor(level(n)))); }
+        if (instances.length) { st.stateHeat = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: instances, appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }), asynchronous: true })); showCountryHeat(); }
+        const f = st.features.find((x) => (x.properties.a2 || x.properties.a3) === code);
+        if (f) paintCard(f, st.selectedState);
+        if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
+      });
+    }
+    /* a country's own fill shows unless its states are drawn in its place */
+    function showCountryHeat() {
+      if (!st.heatFill) return;
+      const apply = () => { for (const code in st.heatIds) { const hide = code === st.selected && !!st.stateHeat; for (const id of st.heatIds[code]) { const a = st.heatFill.getGeometryInstanceAttributes(id); if (a) a.show = C.ShowGeometryInstanceAttribute.toValue(!hide, a.show); } } };
+      /* an asynchronous primitive takes its attributes once it is ready (Cesium 1.131 has no readyPromise) */
+      if (st.heatFill.ready) apply(); else { const p = st.heatFill; setTimeout(() => { if (st.heatFill === p) showCountryHeat(); }, 200); }
     }
     function polygonInstances(f, color) {
       return polygonsOf(f).map((poly, k) => new C.GeometryInstance({
@@ -380,6 +460,8 @@
         if (p.rank <= 2) it.label = st.labels.add({ position: pos, text: p.a2 === 'US' ? 'United States' : p.name, font: '600 11px Inter, system-ui, sans-serif', fillColor: C.Color.WHITE, outlineColor: C.Color.fromCssColorString('#03060c'), outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE, verticalOrigin: C.VerticalOrigin.TOP, pixelOffset: new C.Cartesian2(0, it.flag ? (it.us ? 13 : 10) : 0), horizontalOrigin: C.HorizontalOrigin.CENTER, scaleByDistance: new C.NearFarScalar(4e6, 1.05, 2.2e7, 0.8), id: { layer: 'countries', code: it.code } });
       });
       st.ready = true;
+      /* counts that arrived before the shapes */
+      if (st.heat) { drawHeat(); if (legend) { legend.hidden = false; if (o.onLegend) o.onLegend(); } }
       viewer.scene.preRender.addEventListener(frame);
       if (o.onReady) o.onReady();
     }
@@ -426,6 +508,10 @@
       selectedStateMat.uniforms.color.alpha = STATE.alpha * Math.max(st.stateAlpha, st.lineAlpha);
       if (st.selectedStates) st.selectedStates.show = st.lineAlpha > 0.01;
       if (st.outline) st.outline.show = st.lineAlpha > 0.01;
+      /* the heat shows while the borders do: below them the street map or the imagery is the subject */
+      if (st.heatFill) st.heatFill.show = st.lineAlpha > 0.15;
+      if (st.stateHeat) st.stateHeat.show = st.lineAlpha > 0.15;
+      if (legend) { const hide = !st.heat || st.lineAlpha <= 0.15; if (legend.hidden !== hide) { legend.hidden = hide; if (o.onLegend) o.onLegend(); } }
       const wt = washTarget(st.height, st.mode);
       st.washAlpha = stepAlpha(st.washAlpha, Math.min(wt, usAlpha()), dt, reduced);
       if (st.wash && st.washMat) { const u = st.washMat.uniforms; u.evenColor.alpha = st.washBase[0] * st.washAlpha; u.oddColor.alpha = st.washBase[1] * st.washAlpha; st.wash.show = st.washAlpha > 0.01; }
@@ -494,13 +580,13 @@
     const api = {
       /* the page calls this when the missions arrive: a country picked before then is applied again (card count, pin filter) */
       refresh: () => { if (!st.selected) return; const keepState = st.selectedState; select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); if (keepState && st.selected) selectState(keepState); },
-      click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
+      heat: setHeat, click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
       ready: () => st.ready,
       /* Natural Earth's label point for a country, where the globe marks it (the live badges in js/action-globe.js) */
       point: (code) => { const f = st.features.find((x) => x.properties.a2 === code); return f && Array.isArray(f.properties.label) ? f.properties.label.slice(0, 2) : null; },
       /* the country a point falls in on the drawn map: its ISO code (or Natural Earth's own code where it has none), else null */
       at: (lon, lat) => { const f = countryAt(st.features, lon, lat); return f ? f.properties.a2 || f.properties.a3 : null; },
-      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, selectedState: st.selectedState ? st.selectedState.properties.key : null, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
+      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, selectedState: st.selectedState ? st.selectedState.properties.key : null, heat: st.heat ? { countries: Object.keys(st.heatIds).length, total: st.heatTotal, shown: !!(st.heatFill && st.heatFill.show), states: st.stateCounts ? Object.keys(st.stateCounts).length : 0, stateFill: !!st.stateHeat } : null, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
     };
     window.__huCountries = api.state;
     window.__huCountryAt = api.at;

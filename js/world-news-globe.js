@@ -1,7 +1,7 @@
 /* World news belongs to the same stream as community posts. This module owns
    only the in-app story view and geographic marker bridge, never a second feed.
-   The markers are the stories the feed is showing (window.MCC_WORLD_NEWS_ITEMS,
-   js/mnet.js), so every gold pin on the Earth is a card on the screen.
+   The globe is sent the stories the feed is showing (window.MCC_WORLD_NEWS_ITEMS, js/mnet.js); it draws no pin per
+   story (the news heat map counts them, js/action-globe.js), only the one whose place a card pointed to.
    GDELT mention/permission caveats are retained in internal data and docs. */
 (function () {
   'use strict';

@@ -104,6 +104,8 @@ function freshWorld() {
 const GDELT = { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' };
 const NEWS_PLACES = [{ place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28, lon: 36.82 }, { place: 'Lima, Lima, Peru', lat: -12.05, lon: -77.04 }, null, { place: 'Jakarta, Jakarta Raya, Indonesia', lat: -6.21, lon: 106.85 }];
 const LONG_DOMAIN = 'a-very-long-publisher-domain-name-that-never-seems-to-end.example.co.uk';
+/* the news heat map's day: a lopsided spread like the real one, from one story to hundreds */
+const HEAT_COUNTRIES = { US: 420, GB: 160, IN: 140, FR: 70, DE: 55, AU: 40, BR: 30, NG: 18, ZA: 12, KE: 8, PE: 8, ID: 7, EG: 4, AR: 3, JP: 2, MN: 1 };
 function freshNews(now) {
   return Array.from({ length: 30 }, (_, k) => {
     const pl = NEWS_PLACES[k % 4];
@@ -175,6 +177,13 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.pathname === '/v1/world/region-feed' && !auth && u.searchParams.get('country') !== world.placeHome) return json(route, { error: 'Sign in to read another country\'s feed', detail: { sign_in: true, home: world.placeHome } }, 403);
     if (u.pathname === '/v1/world/region-feed') { const c = u.searchParams.get('country'); return json(route, { ok: true, available: true, country: c, posts: c === world.placeHome ? world.posts.slice(0, 3).filter((p) => p.visibility === 'public').map((p) => { const x = item(p); x.post.media_locked = x.post.media.length; delete x.post.media; delete x.post.author_m_uid; return x; }) : [], news: [], lives: c === world.placeHome ? [{ id: LIVE[0].id, title: LIVE[0].title, room_kind: 'mission', category_key: 'field', started_at: LIVE[0].started_at, country_code: c, host: { display_name: 'Fixture Ana', avatar_url: '' } }] : [], next_post_before: null, next_news_before: null }); }
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
+    /* the news heat map's counts: the fixture's stories by the country each mentions, and Kenya's as places */
+    if (u.pathname === '/v1/world/news-heat') {
+      const c = u.searchParams.get('country');
+      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, attribution: GDELT });
+      if (c === 'KE') return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: 'KE', cells: [[36.8, -1.3, 8]], total: 8, capped: false, attribution: GDELT });
+      return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: c, cells: [], total: 0, capped: false, attribution: GDELT });
+    }
     if (u.pathname === '/v1/world/news') {
       if (world.newsFail === 'abort') return route.abort('failed');
       if (world.newsFail === 'unavailable') return json(route, { ok: true, items: [], next_before: null, unavailable: true, attribution: GDELT });
@@ -808,6 +817,11 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     const globe = page.frame({url:/action-globe\.html/});
     await globe.waitForFunction(()=>window.__huCountries?.().ready,null,{timeout:25000});
     await page.waitForSelector('#mnFeed [data-news-id]',{timeout:15000}).catch(()=>{});
+    /* the news heat map from afar: the countries the day's stories mention, shaded by how many */
+    await globe.waitForFunction(()=>window.__huCountries().heat?.countries===16,null,{timeout:20000}).catch(()=>{});
+    for(const [name,lon,lat] of [['americas',-75,20],['eurafrica',20,20]]){await globe.evaluate(([lon,lat])=>window.__huCountriesCam.view(lon,lat,1.4e7),[lon,lat]);await page.waitForTimeout(2500);await page.screenshot({path:join(OUT,scope+'-heat-'+name+'.png')});}
+    const legendBox=await page.evaluate(()=>{const f=document.getElementById('mnWorldFrame').getBoundingClientRect(),l=document.getElementById('mnWorldFrame').contentDocument.getElementById('heatLegend').getBoundingClientRect(),x=f.left+l.left+l.width/2,y=f.top+l.top+l.height/2,t=document.elementFromPoint(x,y);return{top:t&&t.id,w:Math.round(l.width),bottom:Math.round(f.height-l.bottom)}});
+    check(scope,'the heat map\'s legend sits on the globe where nothing on the page covers it',legendBox.top==='mnWorldFrame'&&legendBox.w>=120,legendBox);
     await globe.evaluate(()=>window.__huCountriesCam.view(37.6,-0.4,1.5e6));
     await globe.waitForFunction(()=>window.__huCountries().lines===1,null,{timeout:15000}).catch(()=>{});
     await page.waitForTimeout(800);
@@ -829,6 +843,10 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     const first = await now();
     check(scope,'a double tap on a country not yet selected selects the country only',first.selected==='KE'&&!first.state&&await page.textContent('#huRegionLabel')==='Kenya',first);
     check(scope,'its card says a state can be chosen',/Double-tap a state to choose it/.test(first.card||''),first.card);
+    /* THE NEWS HEAT MAP: the card gives the count, and the country's states are shaded by the stories placed in them */
+    await globe.waitForFunction(()=>window.__huCountries().heat?.stateFill,null,{timeout:15000}).catch(()=>{});
+    const kh=await globe.evaluate(()=>window.__huCountries().heat),kcard=(await now()).card;
+    check(scope,'the card counts the stories that mention Kenya, and its states take the heat',/8 stories in the last 24 hours/.test(kcard||'')&&!/missions/.test(kcard||'')&&kh&&kh.states===1&&kh.stateFill,{card:kcard,kh});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
     const kenya = await page.locator('#mnFeed [data-news-id]').count();
     check(scope,'Local shows Kenya\'s stories',kenya>0&&await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true',kenya);
@@ -837,7 +855,7 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     await globe.waitForFunction(()=>window.__huCountries().selectedState,null,{timeout:8000}).catch(()=>{});
     const east = await now();
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
-    check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
+    check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya\s*0 stories in the last 24 hours/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
     check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No story mentions Eastern, Kenya yet/.test(await page.textContent('#mnFeed')));
     await page.screenshot({path:join(OUT,scope+'-eastern.png')});
     await gap();
@@ -846,7 +864,7 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:5000}).catch(()=>{});
     const nb = await now();
-    check(scope,'a double tap on another state picks it, and its stories come back',/Nairobi/.test(nb.card||'')&&await page.textContent('#huRegionLabel')==='Nairobi, Kenya'&&await page.locator('#mnFeed [data-news-id]').count()===kenya,{nb,count:await page.locator('#mnFeed [data-news-id]').count(),kenya});
+    check(scope,'a double tap on another state picks it, and its stories come back',/Nairobi/.test(nb.card||'')&&/8 stories in the last 24 hours/.test(nb.card||'')&&await page.textContent('#huRegionLabel')==='Nairobi, Kenya'&&await page.locator('#mnFeed [data-news-id]').count()===kenya,{nb,count:await page.locator('#mnFeed [data-news-id]').count(),kenya});
     await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
     await gap();
     /* a single tap inside the country goes back to the whole country; another lets the country go, as before */
@@ -1740,14 +1758,14 @@ if (runs('news-guest')) {
   await page.fill('#mnSearchInput', ''); await page.waitForTimeout(400);
   check(scope, 'search matches news headlines and publishers', byTitle.news === 19 && byTitle.posts === 0 && byDomain.news === world.news.slice(0, 20).filter((n) => n.domain === 'news2.example').length && byDomain.posts === 0, { byTitle: byTitle.news, byDomain: byDomain.news });
   const globe = page.frame({ url: /action-globe\.html/ });
-  /* THE PINS ARE THE CARDS (owner, 2026-10-20: "I saw a post in Russia posted somewhere else on the map"): every gold pin
-     on the Earth is a story on the screen, and a narrower feed is a narrower Earth */
+  /* THE NEWS HEAT MAP (owner, 2026-10-21: "instead of pins on the map ... a heat map of how many articles or mentions it
+     has ... so people aren't just needlessly searching for tiny pins"): no pin per story; the countries carry the counts */
   const pinsAndCards = async () => { await page.waitForTimeout(500); return { pins: (await globe.evaluate(() => window.__huWorldNewsPins())).pins, cards: await page.$$eval('#mnFeed [data-news-id] [data-news-place]', (a) => a.length) }; };
-  await page.fill('#mnSearchInput', 'news2.example');
-  const pinsSearching = await pinsAndCards();
-  await page.fill('#mnSearchInput', '');
   const pinsAll = await pinsAndCards();
-  check(scope, 'the gold pins are the stories on the screen, and a search narrows both', pinsAll.pins === pinsAll.cards && pinsAll.cards > 0 && pinsSearching.pins === pinsSearching.cards && pinsSearching.cards < pinsAll.cards, { pinsAll, pinsSearching });
+  check(scope, 'no pin per story: the Earth carries no news pins, however many stories the feed shows', pinsAll.pins === 0 && pinsAll.cards > 0, pinsAll);
+  await globe.waitForFunction(() => window.__huCountries?.().heat?.countries === 16, null, { timeout: 15000 }).catch(() => {});
+  const heat = await globe.evaluate(() => ({ heat: window.__huCountries().heat, legend: !document.getElementById('heatLegend').hidden, text: document.getElementById('heatLegend').textContent, bar: getComputedStyle(document.querySelector('.heat-legend__bar')).backgroundImage }));
+  check(scope, 'the countries the stories mention are shaded by how many, with a legend that says what the colours mean', heat.heat && heat.heat.countries === 16 && heat.heat.total === 978 && heat.legend && /News mentions · last 24 h/.test(heat.text) && /Fewer/.test(heat.text) && /More/.test(heat.text) && /linear-gradient/.test(heat.bar), heat);
   /* a story's place on the Earth, from its card */
   await page.click('#mnFeed [data-news-id] [data-news-place]');
   await globe.waitForFunction(() => window.__huFocusPlace && window.__huFocusPlace(), null, { timeout: 5000 }).catch(() => {});
@@ -1757,7 +1775,7 @@ if (runs('news-guest')) {
   await globe.waitForFunction(() => Math.abs(window.__huIon().height - 900000) < 60000, null, { timeout: 12000 }).catch(() => {});
   const sent = await globe.evaluate(() => ({ place: window.__huFocusPlace(), height: window.__huIon().height }));
   const firstPlaced = await page.$eval('#mnFeed [data-news-id] [data-news-place]', (b) => b.closest('[data-news-id]').getAttribute('data-news-id'));
-  check(scope, 'the tapped story\'s own pin is the one marked on the Earth', (await globe.evaluate(() => window.__huFocusedNewsPin())) === firstPlaced && sent.place && sent.place.id === firstPlaced, { marked: await globe.evaluate(() => window.__huFocusedNewsPin()), firstPlaced });
+  check(scope, 'a tapped story\'s place gets the one pin on the Earth, that story\'s', (await globe.evaluate(() => window.__huFocusedNewsPin())) === firstPlaced && (await globe.evaluate(() => window.__huWorldNewsPins())).pins === 1 && sent.place && sent.place.id === firstPlaced, { marked: await globe.evaluate(() => window.__huFocusedNewsPin()), pins: await globe.evaluate(() => window.__huWorldNewsPins()), firstPlaced });
   check(scope, '"On the Earth" sends the story\'s place to the globe (hu:focus-place), which flies there', !!sent.place && sent.place.lat === -1.28 && sent.place.lon === 36.82 && sent.place.label === 'Nairobi, Nairobi Area, Kenya' && Math.abs(sent.height - 900000) < 60000 && /Nairobi, Nairobi Area, Kenya · mentioned in this story\./.test(await page.textContent('#mnWorldCaption')), sent);
   /* the frame checks what it is sent: strings, out-of-range and missing numbers move nothing */
   await page.evaluate(() => { const w = document.getElementById('mnWorldFrame').contentWindow; [{ type: 'hu:focus-place', lat: '10', lon: 10 }, { type: 'hu:focus-place', lat: 95, lon: 0 }, { type: 'hu:focus-place', lat: 0, lon: 200 }, { type: 'hu:focus-place', lat: NaN, lon: 0 }, { type: 'hu:focus-place' }].forEach((m) => w.postMessage(m, location.origin)); });
@@ -1774,7 +1792,7 @@ if (runs('news-guest')) {
   const back = await newsState(page);
   check(scope, 'a mission picked on the Earth hides the news and its credit; letting it go brings them back', narrowed.news === 0 && !narrowed.credit && back.news === 20 && back.credit, { narrowed: narrowed.news, back: back.news });
   const pinsBack = await pinsAndCards();
-  check(scope, 'and the pins follow: none while the mission narrows the feed, the stories\' again after', pinsNarrowed.pins === 0 && pinsBack.pins === pinsBack.cards && pinsBack.cards === pinsAll.cards, { pinsNarrowed, pinsBack });
+  check(scope, 'and the story\'s pin follows the feed: gone while the mission narrows it, back after', pinsNarrowed.pins === 0 && pinsBack.pins === 1 && pinsBack.cards === pinsAll.cards, { pinsNarrowed, pinsBack });
   /* Load more pages both streams, each from its own cursor, the news cursor passed back verbatim */
   check(scope, 'Load more shows while either stream has another page', st.more);
   await page.click('#mnMore');
