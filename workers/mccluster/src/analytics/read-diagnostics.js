@@ -9,7 +9,8 @@ export function databaseErrorMetadata(response, body) {
   return {
     db_code: cleanCode(body?.code),
     upstream_status: cleanStatus(response?.status),
-    request_id: cleanRequest(response?.headers?.get?.('x-request-id')) ||
+    request_id: cleanRequest(response?.headers?.get?.('sb-request-id')) ||
+      cleanRequest(response?.headers?.get?.('x-request-id')) ||
       cleanRequest(response?.headers?.get?.('cf-ray'))
   };
 }
@@ -34,4 +35,12 @@ export function successfulReadDiagnostics(elapsedMs, skipped = false) {
     status: skipped ? 'not_applicable' : 'ready',
     elapsed_ms: timeMs(elapsedMs)
   };
+}
+
+// Business aggregate access is also granted to house staff with ops.use.
+// The granular database/operator diagnostics must remain owner-only.
+export function visibleBusinessSnapshot(snapshot, owner) {
+  if (owner === true) return snapshot;
+  const {read_diagnostics, ...aggregate} = snapshot;
+  return aggregate;
 }

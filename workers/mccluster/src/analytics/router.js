@@ -8,7 +8,7 @@ import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
 import { readBoundedRows, measurementContext } from './measurement.js';
 import { loadBusinessEventCounts } from './business-event-counts.js';
-import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics } from './read-diagnostics.js';
+import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
@@ -888,7 +888,7 @@ export function answerBusinessQuestion(question, snapshot) {
   };
 }
 async function handleBusinessSnapshot(request, env, user, url) {
-  await requireHouseOps(env, user);
+  const { membership } = await requireHouseOps(env, user);
   if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
   const rawWindow = url.searchParams.get('window') || '';
   const rawSince = url.searchParams.get('since') || '';
@@ -904,7 +904,9 @@ async function handleBusinessSnapshot(request, env, user, url) {
       since: since.toISOString(), until: until.toISOString(), rolling:false
     };
   }
-  return json({ ok: true, snapshot: await businessSnapshot(env, windowSpec) });
+  return json({ ok: true, snapshot: visibleBusinessSnapshot(
+    await businessSnapshot(env, windowSpec), membership?.role === 'owner'
+  ) });
 }
 
 async function handleBusinessQuestion(request, env, user) {
