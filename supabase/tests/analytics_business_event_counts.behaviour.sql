@@ -10,7 +10,7 @@ create table public.events_lean(
 );
 grant usage on schema public to service_role;
 grant select on public.events_lean to service_role;
-\ir ../pending/analytics_business_event_counts_v1.sql
+\ir ../migrations/20261021205801_analytics_business_event_counts_v1.sql
 
 insert into public.events_lean(name,at,site_id,is_bot) values
   ('page_view','2026-10-20 10:00+00',null,false),

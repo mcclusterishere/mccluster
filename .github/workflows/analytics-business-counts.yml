@@ -2,7 +2,7 @@ name: Analytics business counters (isolated)
 on:
   pull_request:
     paths:
-      - 'supabase/pending/analytics_business_event_counts_v1.sql'
+      - 'supabase/migrations/20261021205801_analytics_business_event_counts_v1.sql'
       - 'supabase/tests/analytics_business_event_counts.behaviour.sql'
       - 'workers/mccluster/src/analytics/business-event-counts.js'
       - 'workers/mccluster/src/analytics/router.js'
