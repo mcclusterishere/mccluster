@@ -38,6 +38,17 @@ const EXEMPT = {
   'sponsor.html': 'redirect stub', 'walls.html': 'redirect stub',
   'insights.html': 'redirect stub to Analytics · Audience',
   '404.html': 'the not-found page GitHub Pages serves for a bad address; it forwards /action/<slug> and links home',
+  'dashboard.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'feed.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'fellowship.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'fellowships.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'lab-landmark.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'lab-props.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'lb-harness.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'profile.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'topics.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'uprise-admin.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
+  'verify.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
 };
 const immersive = (f) => /^equity-uprise-.*-3d\.html$/.test(f);
 

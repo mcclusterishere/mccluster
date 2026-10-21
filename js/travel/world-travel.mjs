@@ -4,6 +4,7 @@ import { journeyStore } from './journey-store.mjs';
 import { fetchRoute } from './route-client.mjs';
 import { navigationProgress } from './navigation-progress.mjs';
 import { rideHandoff } from './ride-handoff.mjs';
+import { attachWhipBooking } from './whip-booking.mjs';
 
 const $ = id => document.getElementById(id), root = document.documentElement;
 const frame = $('mnWorldFrame'), panel = $('wtPlanner');
@@ -17,6 +18,14 @@ const paths = {
   stay:'M3 19V6m0 8h18v5M3 9h7v5m0-5h8a3 3 0 0 1 3 3v2',
   walk:'M14 3h.01M11 8l3 1 3 4M8 13l3-5-1 8-4 5m4-5 5 2 2 4',
   cycle:'M7 8h10l3 10M7 8l-3 9h10L9 5H6M16 5h3M7 18a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm17 0a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
+  globe:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 0c-3 3-3 15 0 18m0-18c3 3 3 15 0 18M3 12h18M5 7.5h14M5 16.5h14',
+  target:'M12 4v3m0 10v3M4 12h3m10 0h3M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Zm0 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z',
+  search:'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm5 11.5L20 20',
+  clock:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v5l3 2',
+  route:'M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12-10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 15V9a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v6',
+  near:'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.7a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6Z',
+  saved:'M6 3h12v18l-6-4-6 4z',
+  luggage:'M8 7V4h8v3M4 7h16v12H4zM9 11v4m6-4v4M8 19v2m8-2v2',
 };
 const icon = name => `<svg class="wt-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name] || paths.drive}"/></svg>`;
 const labels = { flight:'Flights', train:'Trains', drive:'Drive', stay:'Stays', transit:'Transit', walk:'Walk', cycle:'Bike' };
@@ -25,8 +34,12 @@ const isGround = () => groundModes.includes(draft.mode);
 const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coordinates.length === 2 &&
   place.coordinates.every(Number.isFinite) && Math.abs(place.coordinates[0]) <= 180 && Math.abs(place.coordinates[1]) <= 90;
 const freshDraft = () => normalizeJourney({ mode:'drive' });
-let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0;
-let catalogPromise, currentMode = 'travel';
+let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0, tripShape = 'rides';
+let rideSub = 'directions', flightSub = 'commercial';
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): with hu-social-only on <html> (mnet.html) the feed is the only mode,
+   and nothing switches to Travel or Missions until they come back */
+const MODES = document.documentElement.classList.contains('hu-social-only') ? ['posts'] : ['travel', 'missions', 'posts'];
+let catalogPromise, currentMode = MODES[0], hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
 const addressSearch = createAddressSearch();
@@ -38,19 +51,45 @@ let route = null, routeState = 'idle', routeError = '', routeController, routeSe
 let navigating = false, navigationWatch = null, navigationSequence = 0, navigationFollow = true;
 let liveFix = null, progress = null, navigationNotice = '', offRouteFixes = 0, lastRerouteAt = 0;
 let locating = false, autoLocated = false, locationSequence = 0, originRevision = 0;
+// Selecting a place on the existing Cesium globe is optional; GPS, typed
+// addresses and the public routing provider remain separate concerns.
+let mapPick = null, mapPickExpanded = false;
 let originSource = 'manual', ridePickupFix = null, rideLocating = false, rideLocationSequence = 0, rideExpiryTimer;
 const rideFixMaxAge = 30000;
 
 panel.innerHTML = `
-  <header class="wt-planner-head"><h2 id="wtTitle">Where are you going?</h2><span class="wt-status" id="wtDraftStatus">Draft</span></header>
+  <div class="wt-sheet-grab" aria-hidden="true"></div>
+  <header class="wt-planner-head"><h2 id="wtTitle">Where to?</h2><span class="wt-status" id="wtDraftStatus">Draft</span><button type="button" id="wtActivity" class="wt-activity">${icon('clock')}<span>Activity</span><b aria-hidden="true">›</b></button></header>
   <form id="wtForm">
-    <div class="wt-fields wt-fields--main">
-      <div class="wt-field wt-origin-field"><label for="wtFrom">Starting point</label><button type="button" id="wtLocate" class="wt-locate" aria-label="Use my current location" title="Use my location">◎</button><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Use my location or enter an address" aria-describedby="wtLocationStatus"><div id="wtFromResults" class="wt-suggest" hidden></div></div>
-      <div class="wt-field"><label for="wtTo">Destination</label><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Search an address or place" required aria-describedby="wtEndpointHint wtRoutePrivacy"><div id="wtToResults" class="wt-suggest" hidden></div></div>
+    <!-- THE TRIP CARD (owner's reference, 2026-10-19): pickup over destination, joined by a dotted thread. The pickup
+         reads "Use my location" until the member types or pins something else; the globe pins sit inside each row. -->
+    <div class="wt-fields wt-fields--main wt-trip">
+      <div class="wt-field wt-origin-field"><span class="wt-trip-dot wt-trip-dot--from" aria-hidden="true"></span><label for="wtFrom">Pickup</label><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Use my location" aria-describedby="wtLocationStatus"><div class="wt-field-tools"><button type="button" id="wtPickFrom" class="wt-field-tool" data-map-pick="from" aria-pressed="false" aria-label="Pick your starting point on the globe" title="Pick on the globe">${icon('globe')}</button><button type="button" id="wtLocate" class="wt-locate wt-field-tool" aria-label="Use my current location" title="Use my location">${icon('target')}</button></div><div id="wtFromResults" class="wt-suggest" hidden></div></div>
+      <div class="wt-field wt-destination-field"><span class="wt-trip-dot wt-trip-dot--to" aria-hidden="true"></span><label for="wtTo">Destination</label><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Where would you like to go?" required aria-describedby="wtEndpointHint wtRoutePrivacy"><div class="wt-field-tools"><span class="wt-field-glyph" aria-hidden="true">${icon('search')}</span><button type="button" id="wtPickTo" class="wt-field-tool" data-map-pick="to" aria-pressed="false" aria-label="Pick your destination on the globe" title="Pick on the globe">${icon('globe')}</button></div><div id="wtToResults" class="wt-suggest" hidden></div></div>
     </div>
+    <!-- TRIP TYPE (owner, 2026-10-20): two tiles, the icon on top, each split by an on/off switch. Rides is Directions (the
+         street route and a ride) or Rentals (cars to rent); Flights is Commercial (the longer-trip planner) or Private.
+         Door-to-door, the multi-city draft, stays under Plan a trip. -->
+    <div class="wt-kinds" role="group" aria-label="Trip type">
+      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="rides" aria-pressed="true">${icon('drive')}<span>Rides</span></button>
+        <div class="wt-switch" role="group" aria-label="Rides"><button type="button" data-travel-sub="directions" aria-pressed="true">Directions</button><button type="button" data-travel-sub="rentals" aria-pressed="false">Rentals</button></div></div>
+      <div class="wt-kind"><button type="button" class="wt-kind-head" data-travel-chip="flights" aria-pressed="false">${icon('flight')}<span>Flights</span></button>
+        <div class="wt-switch" role="group" aria-label="Flights"><button type="button" data-travel-sub="commercial" aria-pressed="true">Commercial</button><button type="button" data-travel-sub="private" aria-pressed="false">Private</button></div></div>
+    </div>
+    <section id="wtRentals" class="wt-rentals" aria-labelledby="wtRentalsTitle" hidden>
+      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Rent a car</h3><a href="https://matthew.mccluster.org/whip/rentals/" target="_blank" rel="noopener">See all ›</a></div>
+      <p class="wt-rentals-by">From Whip Equipped LLC, a separate company. Booking and payment happen in Whip Equipped's rentals app.</p>
+      <div class="wt-cars" id="wtCars"></div>
+    </section>
+    <section id="wtPrivate" class="wt-private" aria-labelledby="wtPrivateTitle" hidden>
+      <h3 id="wtPrivateTitle" class="wt-section-h">Private flights</h3>
+      <p>Private jets and charters aren't bookable here yet. Commercial flights plan from your destination.</p>
+    </section>
     <p id="wtLocationStatus" class="wt-location-status" role="status" aria-live="polite">Allow location, or enter your starting address.</p>
     <p id="wtEndpointHint" class="wt-location-status" role="status" aria-live="polite"></p>
-    <p id="wtRoutePrivacy" class="wt-route-privacy">Tapping Get directions sends your route endpoints to the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>. Keep this page open during navigation.</p>
+    <p id="wtRoutePrivacy" class="wt-route-privacy">Choose a destination to get directions. Your starting point and destination are shared with the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>.</p>
+    <!-- GO SOMEWHERE: real shortcuts only. Home and Work are not stored anywhere, so they are not offered. -->
+    <section class="wt-go" id="wtGo" aria-labelledby="wtGoTitle"><h3 id="wtGoTitle" class="wt-section-h">Go somewhere</h3><div class="wt-go-row"><button type="button" data-travel-go="near">${icon('near')}<span>Near me</span></button><button type="button" data-travel-go="airports">${icon('flight')}<span>Airports</span></button><button type="button" data-travel-go="hotels">${icon('stay')}<span>Hotels</span></button><button type="button" data-travel-go="globe">${icon('globe')}<span>On the globe</span></button><button type="button" data-travel-go="saved">${icon('saved')}<span>Saved</span></button></div></section>
     <div id="wtGroundOptions" class="wt-ground-options" hidden>
       <nav class="wt-toolbar wt-local-toolbar" aria-label="Directions mode">${groundModes.map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="${m === 'drive'}">${icon(m)}${labels[m]}</button>`).join('')}</nav>
       <button id="wtRide" class="wt-ride-button" type="button" aria-expanded="false" aria-controls="wtRidePanel">Get a ride</button>
@@ -91,9 +130,11 @@ panel.innerHTML = `
       <div id="wtItinerary"></div><div id="wtStaySearch" class="wt-stay-search" hidden></div>
       <div class="wt-actions"><button class="wt-primary" id="wtPlan" type="submit" hidden>Plan journey <span aria-hidden="true">→</span></button></div>
     </details>
+    <!-- PLAN A TRIP: both cards open the planning draft that already exists; nothing is priced or booked here -->
+    <section class="wt-plan" aria-labelledby="wtPlanTitle"><h3 id="wtPlanTitle" class="wt-section-h">Plan a trip</h3><div class="wt-plan-cards"><button type="button" data-travel-plan="flights"><span class="wt-plan-icon">${icon('flight')}</span><span class="wt-plan-text"><strong>Search flights</strong><small>Compare dates and routes</small></span><b aria-hidden="true">›</b></button><button type="button" data-travel-plan="multi"><span class="wt-plan-icon">${icon('luggage')}</span><span class="wt-plan-text"><strong>Door-to-door</strong><small>Rides + flights + rides in one draft</small></span><b aria-hidden="true">›</b></button></div></section>
     <div id="wtSaveRow" class="wt-save-row" hidden><button class="wt-text-button" id="wtSave" type="button">Save journey</button></div>
   </form>
-  <div class="wt-footer"><p id="wtSaveHint">Sign in to save. Explore freely.</p><button class="wt-text-button" type="button" id="wtSaved">Saved journeys</button></div>
+  <div class="wt-footer" id="wtSaveFooter" hidden><p id="wtSaveHint">Your saved journeys are private.</p><button class="wt-text-button" type="button" id="wtSaved">Saved journeys</button></div>
   <p class="wt-attribution">Address search: <a href="https://photon.komoot.io/" target="_blank" rel="noopener noreferrer">Photon</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Fix the map</a> · <a href="mailto:matthew@mccluster.org">Contact</a></p><p class="wt-message" id="wtMessage" role="status" aria-live="polite"></p>`;
 
 const dialog = document.createElement('dialog');
@@ -101,6 +142,15 @@ dialog.className = 'wt-saved'; dialog.id = 'wtSavedDialog';
 dialog.setAttribute('aria-labelledby', 'wtSavedTitle'); dialog.setAttribute('data-private', '');
 dialog.innerHTML = '<header><h2 id="wtSavedTitle">Your journeys</h2><button type="button" id="wtSavedClose" aria-label="Close saved journeys">×</button></header><p id="wtSavedMessage" role="status"></p><div id="wtSavedList"></div><button type="button" id="wtNew">Start a new journey</button>';
 document.body.append(dialog);
+// These overlays live above the same globe iframe, including when the
+// expanded map temporarily hides the scrolling directions panel.
+const pickBanner = document.createElement('div');
+pickBanner.id = 'wtMapPickBanner'; pickBanner.className = 'wt-map-pick-banner'; pickBanner.hidden = true;
+pickBanner.innerHTML = '<span id="wtMapPickPrompt" role="status" aria-live="polite"></span><button id="wtMapPickCancel" type="button">Cancel</button>';
+const mapNav = document.createElement('div');
+mapNav.id = 'wtMapNav'; mapNav.className = 'wt-map-nav'; mapNav.hidden = true;
+mapNav.innerHTML = '<p id="wtMapNavSummary" role="status" aria-live="polite"></p><div class="wt-map-nav-actions"><button id="wtMapNavGo" type="button">Go</button><button id="wtMapNavStop" type="button" hidden>Stop</button><button id="wtMapNavRecenter" type="button" hidden>Recenter</button></div>';
+$('mnWorld').append(pickBanner, mapNav);
 $('wtSavedClose').onclick = () => dialog.close();
 dialog.addEventListener('click', e => {
   if (e.target !== dialog) return;
@@ -117,6 +167,7 @@ async function catalog() {
 }
 function cancelLocate() {
   locationSequence++; originRevision++; locating = false; $('wtLocate').disabled = false;
+  send({ type:'hu:location-state', busy:false });
   if ($('wtLocationStatus').textContent === 'Finding your starting point…') $('wtLocationStatus').textContent = 'Use location, or choose your starting address.';
 }
 function cancelRideRefresh() {
@@ -162,6 +213,7 @@ function renderGlobe(fly = false) {
   const travel = currentMode === 'travel';
   root.classList.toggle('wt-local-map', travel && (!!route || !!liveFix));
   send({ type:'hu:travel-mode', on:travel });
+  send({ type:'hu:map-pick-mode', kind:travel ? mapPick : null });
   send({ type:'hu:journey', points:[draft.from, draft.to].filter(hasCoordinates).map(p => ({ label:p.label.split(',')[0], coordinates:p.coordinates })), connect:draft.mode === 'flight', fly });
   send({ type:'hu:route', route:travel && route ? { geometry:route.geometry, origin:route.origin, destination:route.destination } : null, fly });
   send({ type:'hu:location', coordinates:travel ? liveFix?.coordinates || null : null, accuracy:liveFix?.accuracy, follow:travel && navigating && navigationFollow, fly:fly && !route });
@@ -171,6 +223,18 @@ function renderGlobe(fly = false) {
     title.textContent = draft.to.label.split(',')[0];
     sub.textContent = draft.to.label.split(',').slice(1).join(',').trim() || 'Your destination'; dest.append(title, sub);
   }
+}
+function renderMapNav() {
+  const visible = currentMode === 'travel' && root.classList.contains('wt-expanded') && !!route && !mapPick;
+  mapNav.hidden = !visible;
+  if (!visible) return;
+  $('wtMapNavSummary').textContent = navigating
+    ? progress?.nextStep?.instruction || navigationNotice || 'Following your route…'
+    : `${labels[route.mode] || 'Route'} · ${durationText(route.durationSeconds)} · ${distanceText(route.distanceMeters)}`;
+  $('wtMapNavGo').hidden = navigating;
+  $('wtMapNavGo').disabled = navigating || !route || ['loading','rerouting'].includes(routeState);
+  $('wtMapNavStop').hidden = !navigating;
+  $('wtMapNavRecenter').hidden = !navigating || navigationFollow || !liveFix;
 }
 function distanceText(meters) {
   if (!Number.isFinite(meters)) return '—';
@@ -224,18 +288,20 @@ function renderRide() {
     try { link.href = rideHandoff({ origin:fix?.coordinates || draft.from.coordinates, destination:draft.to.coordinates, originLabel:devicePickup ? 'Current location' : draft.from.label, destinationLabel:draft.to.label }); }
     catch { link.hidden = true; $('wtRideHint').textContent = 'Choose a pickup and destination before continuing in Uber.'; }
   }
-  if (fix && !$('wtRidePanel').hidden && !document.hidden) rideExpiryTimer = setTimeout(renderRide, Math.max(50, fix.timestamp + rideFixMaxAge - Date.now() + 10));
+  if (fix && !$('wtRidePanel').hidden && hostVisible && !document.hidden) rideExpiryTimer = setTimeout(renderRide, Math.max(50, fix.timestamp + rideFixMaxAge - Date.now() + 10));
 }
 function renderDirections() {
+  renderMapNav();
   const destinationReady = hasCoordinates(draft.to), endpointsReady = destinationReady && hasCoordinates(draft.from);
   $('wtEndpointHint').textContent = endpointHint();
-  $('wtGroundOptions').hidden = !destinationReady; $('wtOptions').hidden = !destinationReady;
-  $('wtSaveRow').hidden = !draft.from || !draft.to;
+  $('wtGroundOptions').hidden = !destinationReady; $('wtOptions').hidden = !destinationReady; $('wtGo').hidden = destinationReady;
+  $('wtSaveRow').hidden = !account() || !draft.from || !draft.to;
   $('wtDirections').hidden = !destinationReady || (!isGround() && draft.mode !== 'transit');
   renderRide();
   const button = $('wtNavigate'), loading = ['loading', 'rerouting'].includes(routeState);
   button.disabled = !endpointsReady || loading || !isGround(); button.hidden = navigating;
-  button.textContent = loading ? 'Finding your route…' : route ? 'Start navigation' : routeState === 'error' ? 'Try route again' : 'Get directions';
+  button.textContent = loading ? 'Finding your route…' : route ? 'Go' : routeState === 'error' ? 'Try route again' : 'Get directions';
+  button.setAttribute('aria-label', route ? 'Go — start live navigation' : button.textContent);
   $('wtStopNavigation').hidden = !navigating; $('wtRecenter').hidden = !navigating || navigationFollow || !liveFix;
   $('wtRouteCard').hidden = !route; $('wtSteps').hidden = !route; $('wtRouteAttribution').hidden = !route;
   $('wtRouteMessage').textContent = routeState === 'loading' ? 'Finding a route between your selected places…' : routeState === 'rerouting' ? 'Recalculating from your current location…' : routeError || (draft.mode === 'transit' ? 'Transit directions are not connected here yet. Choose Drive, Walk or Bike.' : '');
@@ -291,18 +357,57 @@ function syncInputs() {
   $('wtReturnField').hidden = !draft.returning; $('wtAddReturn').setAttribute('aria-expanded', String(!!draft.returning));
   $('wtAddReturn').textContent = draft.returning ? 'Remove return' : 'Add return date'; $('wtReturning').min = draft.departure;
   panel.querySelectorAll('[data-travel-kind][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.travelKind === draft.mode)));
+  if (isGround() || draft.mode === 'transit') tripShape = 'rides'; else if (tripShape === 'rides') tripShape = 'flights';
+  panel.querySelectorAll('[data-travel-chip]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.travelChip === (tripShape === 'multi' ? 'flights' : tripShape))));
+  paintSubs();
   renderItinerary(); renderGlobe();
+}
+function setMapPick(kind = null) {
+  if (kind !== null && !['from','to'].includes(kind)) return;
+  if (kind && (currentMode !== 'travel' || !hostVisible || document.hidden)) return;
+  if (kind && !root.classList.contains('wt-expanded')) {
+    root.classList.add('wt-expanded'); mapPickExpanded = true;
+    expanded.setAttribute('aria-label', 'Return to directions');
+  }
+  mapPick = kind;
+  if (!kind && mapPickExpanded) {
+    root.classList.remove('wt-expanded'); mapPickExpanded = false;
+    expanded.setAttribute('aria-label', 'Expand the map');
+  }
+  pickBanner.hidden = !kind;
+  $('wtMapPickPrompt').textContent = kind ? `Tap the globe to set your ${kind === 'from' ? 'starting point' : 'destination'}.` : '';
+  for (const button of panel.querySelectorAll('[data-map-pick]'))
+    button.setAttribute('aria-pressed', String(button.dataset.mapPick === kind));
+  send({ type:'hu:map-pick-mode', kind });
+  renderMapNav();
 }
 function choosePlace(key, row, { source = 'manual' } = {}) {
   draft = read(); draft[key] = ['from', 'to'].includes(key) ? { label:row.label, coordinates:row.coordinates } : row.label;
   if (key === 'from') { originSource = source; ridePickupFix = null; }
   changed({ preserveOriginLookup:key === 'to' }); closeSearches(); syncInputs(); renderGlobe(true);
   if (key === 'from') $('wtLocationStatus').textContent = liveFix ? 'Starting from your selected address. The blue dot shows your last location.' : 'Starting from your selected address.';
+  if (key === 'from' || key === 'to') void requestRoute({ reveal:true });
+  /* A destination with no starting point takes the pickup's "Use my location" at its word (owner, 2026-10-20: "where to
+     still doesn't generate"): the location is asked for now, from this tap, and the route follows. Refused, the pickup
+     field is where the starting address goes. */
+  if (key === 'to' && hasCoordinates(draft.to) && !hasCoordinates(draft.from) && !locating && !draft.from?.label)
+    void locate().then(() => { if (!hasCoordinates(draft.from) && currentMode === 'travel') $('wtFrom').focus({ preventScroll:true }); });
+}
+// Cross-origin music chrome cannot be covered by the iframe's own z-index.
+function announceAddressPicking(){
+  const active=!!panel.querySelector('.wt-suggest:not([hidden])');
+  window.dispatchEvent(new CustomEvent('mcc:travel-autocomplete',{detail:{active}}));
 }
 function autocomplete(id, resultId, key) {
   const input = $(id), results = $(resultId); let seq = 0, timer;
+  const refit = () => fitSuggestions(results, input, { scrolled:true });
+  window.addEventListener('resize', refit, { passive:true }); window.visualViewport?.addEventListener('resize', refit, { passive:true });
+  $('mnWorldFeed').addEventListener('scroll', refit, { passive:true });
+  // announceAddressPicking() fires right after a list is shown: fit it then, so the
+  // measurement happens with the options rendered and the viewport settled.
+  window.addEventListener('mcc:travel-autocomplete', e => { if (e.detail?.active && !results.hidden) fitSuggestions(results, input); });
   input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-controls', resultId); input.setAttribute('aria-expanded', 'false'); results.setAttribute('role', 'listbox');
-  const close = () => { seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); };
+  const close = () => { seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); announceAddressPicking(); };
   searchClosers.push(close);
   input.addEventListener('input', () => {
     close(); addressController?.abort(); addressController = new AbortController(); const signal = addressController.signal;
@@ -317,13 +422,13 @@ function autocomplete(id, resultId, key) {
         results.replaceChildren();
         for (const row of matches) {
           const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'option'); button.textContent = row.label;
-          button.onclick = () => { try { choosePlace(key, row); close(); input.focus(); } catch (error) { status(error.message); } }; results.append(button);
+          button.onclick = e => { try { input.blur(); choosePlace(key, row); close(); if (!e.detail) input.focus({ preventScroll:true }); } catch (error) { status(error.message); } }; results.append(button);
         }
         if (fallback || !matches.length) {
           const note = document.createElement('small'); note.className = 'wt-search-note';
           note.textContent = fallback ? 'Address search is unavailable. These city matches lead to a city center; try again for a precise address.' : 'No matching place yet. Add the street number, city or postal code, then choose a result.'; results.append(note);
         }
-        results.hidden = false; input.setAttribute('aria-expanded', 'true');
+        results.hidden = false; input.setAttribute('aria-expanded', 'true'); announceAddressPicking();
       } catch { if (request === seq && !signal.aborted) status('Address search is unavailable. Try again shortly; directions need a selected location.'); }
       finally { if (request === seq) input.removeAttribute('aria-busy'); }
     }, 650);
@@ -349,26 +454,29 @@ for (const [id, key] of [['wtFrom','from'],['wtTo','to'],['wtDepartureHub','depa
   autocomplete(id, results.id, key);
 }
 
-async function requestRoute({ reroute = false, originOverride = null } = {}) {
-  if (!isGround() || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || currentMode !== 'travel' || document.hidden) { renderDirections(); return; }
+async function requestRoute({ reroute = false, originOverride = null, reveal = false } = {}) {
+  if (!isGround() || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || !hostVisible || currentMode !== 'travel' || document.hidden) { renderDirections(); return; }
   if (routeState === 'loading' && !reroute) return;
   const origin = originOverride || draft.from.coordinates, destination = [...draft.to.coordinates], mode = draft.mode;
   if (!hasCoordinates({ coordinates:origin })) return;
   routeController?.abort(); const controller = new AbortController(); routeController = controller;
   const request = ++routeSequence, version = revision, epoch = tripEpoch;
   routeState = reroute ? 'rerouting' : 'loading'; routeError = ''; retryOrigin = originOverride; renderDirections();
+  if (reveal) $('wtNavigate').scrollIntoView({ block:'nearest', behavior:'auto' });
   try {
     const result = await fetchRoute({ origin:[...origin], destination, mode }, { signal:controller.signal });
     if (controller.signal.aborted || request !== routeSequence || version !== revision || epoch !== tripEpoch || currentMode !== 'travel' || document.hidden) return;
     route = { ...result, origin:[...origin], destination, mode, fromLive:!!originOverride };
     routeState = 'ready'; routeError = ''; retryOrigin = null; progress = null; offRouteFixes = 0;
     renderSteps(); renderDirections(); renderGlobe(!navigating);
+    if (reveal) $('wtRouteCard').scrollIntoView({ block:'start', behavior:'auto' });
     if (navigating && liveFix) applyFix(liveFix, false);
   } catch (error) {
     if (controller.signal.aborted || request !== routeSequence || version !== revision || epoch !== tripEpoch) return;
     stopNavigation('', { resetProgress:true }); route = null; routeState = 'error';
     routeError = error?.message || 'Directions could not be loaded. Try again or choose another starting point.';
     send({ type:'hu:route', route:null }); renderSteps(); renderDirections();
+    if (reveal) $('wtRouteMessage').scrollIntoView({ block:'start', behavior:'auto' });
   } finally { if (request === routeSequence) routeController = null; }
 }
 function locationError(error) {
@@ -380,38 +488,41 @@ function positionFix(position) {
   if (!hasCoordinates({ coordinates }) || !Number.isFinite(accuracy) || accuracy < 0) throw Error('Your location could not be read. Try again or enter your starting address.');
   return { coordinates, accuracy, timestamp:Number.isFinite(position.timestamp) ? position.timestamp : Date.now() };
 }
-async function locate() {
-  if (navigating) {
-    navigationFollow = true;
-    if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:true, fly:true });
-    renderDirections(); return;
-  }
-  if (locating || currentMode !== 'travel') return;
+async function locate({ automatic = false } = {}) {
+  if (locating || !hostVisible || currentMode !== 'travel') return;
   if (!navigator.geolocation) { $('wtLocationStatus').textContent = 'Location is unavailable here. Enter your starting address.'; $('wtFrom').focus(); return; }
-  closeSearches(); invalidateRoute(); renderDirections(); locating = true; autoLocated = true;
+  const wasNavigating = navigating, navigationVersion = navigationSequence;
+  closeSearches(); if (!wasNavigating) invalidateRoute(); renderDirections(); locating = true; autoLocated = true;
   const request = ++locationSequence, fromVersion = originRevision, initialFrom = $('wtFrom').value, epoch = tripEpoch, owner = account();
   $('wtLocate').disabled = true; $('wtLocationStatus').textContent = 'Finding your starting point…';
+  send({ type:'hu:location-state', busy:true });
   try {
-    const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy:true, timeout:12000, maximumAge:60000 }));
+    const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy:true, timeout:12000, maximumAge:automatic ? 60000 : 0 }));
     if (request !== locationSequence) return;
-    if (originRevision !== fromVersion || $('wtFrom').value !== initialFrom || epoch !== tripEpoch || account() !== owner || currentMode !== 'travel' || document.hidden) { cancelLocate(); return; }
+    if (originRevision !== fromVersion || $('wtFrom').value !== initialFrom || epoch !== tripEpoch || account() !== owner || currentMode !== 'travel' || document.hidden || (wasNavigating && (!navigating || navigationSequence !== navigationVersion))) { cancelLocate(); return; }
     const fix = positionFix(position);
+    if (wasNavigating) {
+      navigationFollow = true;
+      if (!liveFix || fix.timestamp > liveFix.timestamp) { liveFix = fix; applyFix(fix); }
+      send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:navigating, fly:true });
+      $('wtLocationStatus').textContent = 'Location updated.'; renderDirections(); return;
+    }
     choosePlace('from', { label:'Current location', coordinates:fix.coordinates }, { source:'device' }); liveFix = fix;
     $('wtLocationStatus').textContent = fix.accuracy > 100 ? 'Using your approximate location. Choose an address for a more precise starting point.' : 'Starting from your current location.';
     root.classList.add('wt-local-map');
     send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, fly:true }); renderDirections();
   } catch (error) {
     if (request === locationSequence) $('wtLocationStatus').textContent = typeof error?.code === 'number' ? locationError(error) : error?.message || locationError(error);
-  } finally { if (request === locationSequence) { locating = false; $('wtLocate').disabled = false; } }
+  } finally { if (request === locationSequence) { locating = false; $('wtLocate').disabled = false; send({ type:'hu:location-state', busy:false }); } }
 }
 function autoLocate() {
-  if (autoLocated || currentMode !== 'travel' || !root.classList.contains('mn-world-on') || draft.from || !window.MCC_PRIVACY?.accepted?.()) return;
+  if (autoLocated || !hostVisible || currentMode !== 'travel' || !root.classList.contains('mn-world-on') || draft.from || !window.MCC_PRIVACY?.accepted?.()) return;
   autoLocated = true;
   try { if (sessionStorage.getItem('wt_location_asked')) return; sessionStorage.setItem('wt_location_asked', '1'); } catch { /* Location remains optional when browser storage is unavailable. */ }
-  void locate();
+  void locate({ automatic:true });
 }
 async function refreshRidePickup() {
-  if (rideLocating || originSource !== 'device' || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || currentMode !== 'travel' || document.hidden) return;
+  if (rideLocating || originSource !== 'device' || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || !hostVisible || currentMode !== 'travel' || document.hidden) return;
   if (!navigator.geolocation) { $('wtRideLocationStatus').textContent = 'Location is unavailable. Choose a starting address for pickup.'; return; }
   rideLocating = true;
   const request = ++rideLocationSequence, version = revision, epoch = tripEpoch, fromVersion = originRevision, owner = account();
@@ -430,7 +541,7 @@ async function refreshRidePickup() {
   finally { if (request === rideLocationSequence) { rideLocating = false; renderRide(); } }
 }
 function applyFix(fix, allowReroute = true) {
-  if (!navigating || !route) return;
+  if (!navigating || !route || !hostVisible) return;
   const next = navigationProgress(route, fix.coordinates, { accuracy:fix.accuracy, previousProgressMeters:progress?.distanceAlongMeters || 0 });
   send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, follow:navigationFollow && next.usable !== false });
   if (next.usable === false) { offRouteFixes = 0; navigationNotice = 'Location accuracy is low. Waiting for a clearer signal…'; renderDirections(); return; }
@@ -444,16 +555,47 @@ function applyFix(fix, allowReroute = true) {
   } else { offRouteFixes = 0; navigationNotice = ''; }
   renderDirections();
 }
+// Keep every suggestion reachable: the list may not run under the fixed app
+// bar, the transport or the keyboard-shrunk viewport. It scrolls inside itself.
+function fitSuggestions(results, input, { scrolled = false } = {}) {
+  if (results.hidden) return;
+  const room = () => {
+    const top = results.getBoundingClientRect().top;
+    const limits = [window.visualViewport?.height ?? innerHeight];
+    // Embedded under the Music continuity shell this document's own app bar is
+    // hidden and the parent's retained bar and transport sit over its bottom
+    // edge. The bridge reserves their height in --mn-bar-clear; honour it.
+    if (document.body.dataset.worldAudioChild === 'ready') {
+      const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0;
+      if (clearance > 0) limits.push((window.visualViewport?.height ?? innerHeight) - clearance);
+    }
+    for (const selector of ['.appbar', '#mccWorldAudioControls']) {
+      const el = document.querySelector(selector);
+      if (el && el.offsetHeight && getComputedStyle(el).visibility !== 'hidden') { const r = el.getBoundingClientRect(); if (r.top > top) limits.push(r.top); }
+    }
+    return Math.floor(Math.min(...limits) - top - 8);
+  };
+  let available = room();
+  // With the keyboard open the field can sit at the bottom of the visible area.
+  // Bring it to the top of the panel once so the list has somewhere to open.
+  if (available < 132 && !scrolled && input) { input.scrollIntoView({ block:'start', behavior:'auto' }); available = room(); }
+  results.style.maxHeight = `${Math.max(132, available)}px`;
+}
 function startNavigation() {
-  if (!route || navigating || currentMode !== 'travel' || document.hidden) return;
-  if (!navigator.geolocation) { navigationNotice = 'Live location is unavailable here. Your step-by-step directions are still available.'; renderDirections(); return; }
-  cancelLocate(); navigating = true; progress = null; offRouteFixes = 0; navigationFollow = true;
+  if (!route || navigating || !hostVisible || currentMode !== 'travel' || document.hidden) return;
+  cancelLocate(); navigating = true; offRouteFixes = 0; navigationFollow = true;
+  // Directions start at the route's first step right away. A live location
+  // fix refines them; a missing or denied location never blocks Go.
+  try { progress = navigationProgress(route, route.origin, { accuracy:0, previousProgressMeters:0 }); } catch { progress = null; }
+  const request = ++navigationSequence; let lastWatchTimestamp = 0, watchId = null;
+  root.classList.add('wt-navigating');
+  const stepsOnly = message => { navigationWatch = null; if (watchId !== null) { try { navigator.geolocation.clearWatch(watchId); } catch {} watchId = null; } navigationNotice = message; renderDirections(); };
+  if (!navigator.geolocation) { stepsOnly('Live location is unavailable here. Follow the steps below from your starting point.'); $('wtNavigation').scrollIntoView({ block:'start', behavior:'auto' }); return; }
   navigationNotice = 'Finding your location. Keep this page open for live directions.';
-  const request = ++navigationSequence; let lastWatchTimestamp = 0;
-  root.classList.add('wt-navigating'); renderDirections();
-  $('wtNavigation').scrollIntoView({ block:'nearest', behavior:'auto' });
+  renderDirections();
+  $('wtNavigation').scrollIntoView({ block:'start', behavior:'auto' });
   try {
-    const watch = navigator.geolocation.watchPosition(position => {
+    watchId = navigator.geolocation.watchPosition(position => {
       if (request !== navigationSequence || !navigating || document.hidden || currentMode !== 'travel') return;
       try {
         const fix = positionFix(position);
@@ -463,11 +605,11 @@ function startNavigation() {
       } catch (error) { stopNavigation(error.message, { resetProgress:true }); renderDirections(); }
     }, error => {
       if (request !== navigationSequence || !navigating) return;
-      stopNavigation(error?.code === 1 ? 'Location access is off. Enable it to use live navigation; your route steps are still available.' : 'Live location was interrupted. Tap Start navigation to retry; your route steps are still available.', { resetProgress:true }); renderDirections();
+      stepsOnly(error?.code === 1 ? 'Location access is off. Follow the steps below; enable location for live guidance.' : 'Live location was interrupted. Follow the steps below, or tap Stop and then Go to retry.');
     }, { enableHighAccuracy:true, timeout:15000, maximumAge:5000 });
-    if (request !== navigationSequence || !navigating) navigator.geolocation.clearWatch(watch);
-    else navigationWatch = watch;
-  } catch { stopNavigation('Live location could not start. Your step-by-step directions are still available.', { resetProgress:true }); renderDirections(); }
+    if (request !== navigationSequence || !navigating) navigator.geolocation.clearWatch(watchId);
+    else navigationWatch = watchId;
+  } catch { stepsOnly('Live location could not start. Follow the steps below from your starting point.'); }
 }
 $('wtLocate').onclick = () => void locate();
 $('wtNavigate').onclick = () => {
@@ -479,7 +621,11 @@ $('wtStopNavigation').onclick = () => {
   stopNavigation(rerouting ? 'Navigation stopped. Recalculate before starting again.' : 'Navigation stopped. Your route steps are still available.', { resetProgress:true });
   if (rerouting) { route = null; send({ type:'hu:route', route:null }); } renderDirections();
 };
-$('wtRecenter').onclick = () => void locate();
+$('wtRecenter').onclick = () => {
+  navigationFollow = true;
+  if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:true, fly:true });
+  renderDirections();
+};
 $('wtRide').onclick = () => { const show = $('wtRidePanel').hidden; $('wtRidePanel').hidden = !show; $('wtRide').setAttribute('aria-expanded', String(show)); if (!show) cancelRideRefresh(); renderRide(); };
 $('wtRideLocate').onclick = () => void refreshRidePickup();
 $('wtUber').onclick = e => {
@@ -496,14 +642,15 @@ $('wtRideDirections').onclick = () => {
 };
 
 function setMode(mode) {
-  if (!['travel', 'missions', 'posts'].includes(mode)) return;
-  if (mode !== currentMode) { invalidateRoute(); closeSearches(); }
+  if (!MODES.includes(mode)) return;
+  if (mode !== currentMode) { setMapPick(null); invalidateRoute(); closeSearches(); }
   currentMode = mode; root.dataset.worldMode = mode;
   if (mode !== 'travel') root.classList.remove('wt-expanded');
-  frame.title = mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Human Uprise globe. Drag to explore; select a mission pin to see its details.';
+  frame.title = mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
   root.classList.remove('hu-search-open'); $('huSearchToggle').setAttribute('aria-expanded', 'false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.worldMode === mode)));
   $('mnWorldFeed').scrollTop = 0; renderDirections(); renderGlobe(); autoLocate();
+  window.dispatchEvent(new CustomEvent('mcc:world-mode', { detail:{ mode } }));
 }
 window.MCC_WORLD_MODE = { set:setMode, get:() => currentMode };
 const modeButtons = [...document.querySelectorAll('.wt-world-modes button')];
@@ -518,18 +665,37 @@ modeButtons.forEach(button => {
   };
 });
 let touchStart = null;
-$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.target.closest('input,select,button,a,summary,.wt-toolbar') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
+$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.touches.length !== 1 || e.target.closest('input,select,button,a,summary,.wt-toolbar,[data-mission-deck]') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
 $('mnWorldFeed').addEventListener('touchend', e => {
   if (!touchStart) return; const dx = e.changedTouches[0].clientX - touchStart.x, dy = e.changedTouches[0].clientY - touchStart.y; touchStart = null;
-  if (Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2) { const modes = ['travel', 'missions', 'posts']; setMode(modes[(modes.indexOf(currentMode) + (dx < 0 ? 1 : 2)) % 3]); }
+  if (MODES.length > 1 && Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2) setMode(MODES[(MODES.indexOf(currentMode) + (dx < 0 ? 1 : MODES.length - 1)) % MODES.length]);
 }, { passive:true });
+$('mnWorldFeed').addEventListener('touchcancel', () => { touchStart = null; }, { passive:true });
 window.addEventListener('message', e => {
   if (e.origin !== location.origin || e.source !== frame.contentWindow) return;
-  if (e.data?.type === 'hu:globe-ready') renderGlobe(!!route || !!liveFix);
-  if (e.data?.type === 'hu:globe-unavailable') status('The interactive map is unavailable here. You can still use route steps and live directions.');
+  if (e.data?.type === 'hu:globe-ready') {
+    for (const button of panel.querySelectorAll('[data-map-pick]')) button.disabled = false;
+    renderGlobe(!!route || !!liveFix);
+  }
+  if (e.data?.type === 'hu:travel-location-selected' && currentMode === 'travel' && mapPick &&
+      e.data.kind === mapPick && hasCoordinates({ coordinates:e.data.coordinates })) {
+    const kind = mapPick, [longitude, latitude] = e.data.coordinates;
+    // A map pin is not a verified street address or ride pickup entrance.
+    const label = `Pinned map location (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`;
+    setMapPick(null);
+    choosePlace(kind, { label, coordinates:[longitude, latitude] }, { source:'manual' });
+  }
+  if (e.data?.type === 'hu:globe-unavailable') {
+    if (mapPick) setMapPick(null);
+    for (const button of panel.querySelectorAll('[data-map-pick]')) {
+      button.disabled = true; button.title = 'The interactive globe is unavailable. Use an address instead.';
+    }
+    renderGlobe(false); status('The interactive map is unavailable here. You can still use route steps and live directions.');
+  }
   if (e.data?.type === 'hu:request-location' && currentMode === 'travel') void locate();
   if (e.data?.type === 'hu:map-interaction' && currentMode === 'travel') { navigationFollow = false; renderDirections(); }
-  if (e.data?.type === 'hu:country' && currentMode === 'travel' && e.data.country?.name) {
+  /* a state picked inside the same country is not a new destination: the one being refined stays */
+  if (e.data?.type === 'hu:country' && currentMode === 'travel' && e.data.country?.name && !e.data.country.stateOnly) {
     try { draft = read(); draft.to = { label:String(e.data.country.name).slice(0, 240), coordinates:null }; changed(); closeSearches(); syncInputs(); status('Country selected. Search for a city or address, then choose a result for directions.'); $('wtTo').focus(); }
     catch (error) { status(error.message); }
   }
@@ -559,7 +725,7 @@ $('wtForm').onsubmit = e => {
   } catch (error) { status(error.message); }
 };
 $('wtSwap').onclick = () => {
-  try { const hadRoute = !!route; draft = read(); [draft.from, draft.to] = [draft.to, draft.from]; [draft.departureHub, draft.arrivalHub] = [draft.arrivalHub, draft.departureHub]; draft.stay = ''; originSource = 'manual'; ridePickupFix = null; changed(); closeSearches(); syncInputs(); $('wtLocationStatus').textContent = 'Starting from your selected address.'; renderGlobe(true); if (hadRoute) void requestRoute(); }
+  try { draft = read(); [draft.from, draft.to] = [draft.to, draft.from]; [draft.departureHub, draft.arrivalHub] = [draft.arrivalHub, draft.departureHub]; draft.stay = ''; originSource = 'manual'; ridePickupFix = null; changed(); closeSearches(); syncInputs(); $('wtLocationStatus').textContent = 'Starting from your selected address.'; renderGlobe(true); void requestRoute({ reveal:true }); }
   catch (error) { status(error.message); }
 };
 $('wtAddReturn').onclick = () => {
@@ -571,24 +737,99 @@ function editField(key) {
   const ids = { from:'wtFrom', departureHub:'wtDepartureHub', arrivalHub:'wtArrivalHub', stay:'wtStay' };
   if (key !== 'from') { $('wtOptions').open = true; $('wtDetails').open = true; } $(ids[key] || 'wtFrom').focus();
 }
+/* RENTALS (owner, 2026-10-20: "it's meant to be a rental travel app"): cars for rent from Whip Equipped LLC, Matthew's
+   separate company. Isabeata is a fictional make and the Isabeata 2024 the cheapest car on the marketplace, at the owner's
+   price of $350 a week. Reserve continues in Whip Equipped's own rentals app, which takes the booking and the payment. */
+const RENTAL_CARS = [{ id:'we-rental-isabeata-2024', name:'Isabeata 2024', kind:'Economy', seats:5, weekly:350, color:'#c9ced4' }];
+const carArt = color => `<svg class="wt-car-svg" viewBox="0 0 120 50" aria-hidden="true"><path d="M8 35c0-5 4-8 12-9l17-10c4-2 9-3 15-3h21c6 0 10 2 14 6l8 7c9 1 15 4 17 8v3c0 2-2 3-4 3H12c-3 0-4-2-4-5z" fill="${color}"/><path d="M41 18l11-3h17v10H35zM72 15h7c3 0 6 2 9 5l3 5H72z" fill="#0f1a24" opacity=".75"/><circle cx="31" cy="39" r="8.5" fill="#0b0d10"/><circle cx="31" cy="39" r="3.6" fill="#b9bec4"/><circle cx="92" cy="39" r="8.5" fill="#0b0d10"/><circle cx="92" cy="39" r="3.6" fill="#b9bec4"/></svg>`;
+function renderCars() {
+  $('wtCars').innerHTML = RENTAL_CARS.map(car => `<article class="wt-car"><div class="wt-car-art">${carArt(car.color)}</div>
+    <h4>${esc(car.name)}</h4><p>${esc(car.kind)} · ${car.seats} seats</p><p class="wt-car-price"><strong>$${car.weekly}</strong><small>/week</small></p>
+    <a class="wt-car-go" href="https://matthew.mccluster.org/whip/rentals/?vehicle=${encodeURIComponent(car.id)}" target="_blank" rel="noopener" aria-label="Reserve the ${esc(car.name)} with Whip Equipped">Reserve</a></article>`).join('');
+}
+renderCars();
+/* the switch under each tile: one side on, the other off. Rentals and Private stand in for the route and the flight draft. */
+function paintSubs() {
+  const sub = tripShape === 'rides' ? rideSub : flightSub;
+  panel.dataset.travelView = sub;
+  panel.querySelectorAll('button[data-travel-sub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.travelSub === (['directions','rentals'].includes(b.dataset.travelSub) ? rideSub : flightSub))));
+  $('wtRentals').hidden = sub !== 'rentals'; $('wtPrivate').hidden = sub !== 'private';
+}
+function chooseSub(sub) {
+  if (sub === 'directions' || sub === 'rentals') { rideSub = sub; if (tripShape !== 'rides') chooseMode(isGround() || draft.mode === 'transit' ? draft.mode : 'drive', { shape:'rides' }); }
+  else { flightSub = sub; if (tripShape === 'rides') chooseMode('flight', { shape:'flights' }); }
+  paintSubs();
+}
+/* Rides, Flights and Multi-city are the three shapes a trip takes here. Rides is the street route (and a ride);
+   Flights and Multi-city are the same longer-trip draft, Multi-city with the airports and stay fields open. */
+function chooseMode(kind, { shape = null, details = false } = {}) {
+  if (shape) tripShape = shape;
+  if (details) { $('wtOptions').open = true; $('wtDetails').open = true; }
+  if (kind === draft.mode) { syncInputs(); return; }
+  draft = read(); draft.mode = kind; $('wtOptions').open = ['flight', 'train'].includes(draft.mode) || details;
+  changed(); closeSearches(); syncInputs(); void requestRoute({ reveal:true });
+}
+function goSomewhere(what) {
+  if (what === 'near') { $('wtLocate').click(); return; }
+  if (what === 'globe') { $('wtPickTo').click(); return; }
+  if (what === 'saved') { $('wtSaved').click(); return; }
+  if (what === 'hotels') {
+    if (!draft.to) { $('wtEndpointHint').textContent = 'Choose a destination, then search places to stay there.'; $('wtTo').focus(); return; }
+    editField('stay'); return;
+  }
+  if (what === 'airports') {
+    const to = $('wtTo'); to.value = 'Airport'; to.focus(); to.dispatchEvent(new Event('input', { bubbles:true }));
+    $('wtEndpointHint').textContent = 'Add the city to find its airport, then choose a result.';
+  }
+}
 panel.addEventListener('click', e => {
-  const mode = e.target.closest('[data-travel-kind]'), edit = e.target.closest('[data-edit]');
+  const mode = e.target.closest('[data-travel-kind]'), edit = e.target.closest('[data-edit]'), sub = e.target.closest('button[data-travel-sub]');
+  const chip = e.target.closest('[data-travel-chip],[data-travel-plan]'), go = e.target.closest('[data-travel-go]');
   try {
+    if (sub) { chooseSub(sub.dataset.travelSub); return; }
     if (mode) {
       if (mode.dataset.travelKind === 'stay') { editField('stay'); return; }
-      if (mode.dataset.travelKind === draft.mode) return;
-      const hadRoute = !!route;
-      draft = read(); draft.mode = mode.dataset.travelKind; $('wtOptions').open = ['flight', 'train'].includes(draft.mode);
-      changed(); closeSearches(); syncInputs(); if (hadRoute) void requestRoute();
+      // a flight picked from the trip's own options is a commercial plan, whatever the Flights switch last said
+      if (mode.dataset.travelKind === 'flight') flightSub = 'commercial';
+      chooseMode(mode.dataset.travelKind); return;
     }
+    if (chip) {
+      const which = chip.dataset.travelChip || chip.dataset.travelPlan;
+      /* Search flights and Door-to-door are commercial planning; the Flights tile keeps whichever side its switch is on */
+      if (chip.dataset.travelPlan) flightSub = 'commercial';
+      chooseMode(which === 'rides' ? (isGround() || draft.mode === 'transit' ? draft.mode : 'drive') : 'flight', { shape: which, details: which === 'multi' });
+      if (which !== 'rides' && !draft.to) { $('wtEndpointHint').textContent = which === 'multi' ? 'Choose a destination to draft a door-to-door trip.' : 'Choose a destination to plan flights.'; $('wtTo').focus(); }
+      return;
+    }
+    if (go) { goSomewhere(go.dataset.travelGo); return; }
     if (edit) editField(edit.dataset.edit);
   } catch (error) { status(error.message); }
 });
+$('wtActivity').onclick = () => $('wtSaved').click();
 const expanded = $('mnWorld').querySelector('.mn__world-expand');
+for (const button of panel.querySelectorAll('[data-map-pick]')) {
+  button.addEventListener('click', () => setMapPick(mapPick === button.dataset.mapPick ? null : button.dataset.mapPick));
+}
+$('wtMapPickCancel').onclick = () => setMapPick(null);
+$('wtMapNavGo').onclick = () => $('wtNavigate').click();
+$('wtMapNavStop').onclick = () => $('wtStopNavigation').click();
+$('wtMapNavRecenter').onclick = () => $('wtRecenter').click();
 expanded.addEventListener('click', e => {
-  if (currentMode !== 'travel') return; e.preventDefault(); const on = root.classList.toggle('wt-expanded'); expanded.setAttribute('aria-label', on ? 'Return to directions' : 'Expand the map');
+  if (currentMode !== 'travel') return;
+  e.preventDefault();
+  if (mapPick) { setMapPick(null); return; }
+  const on = root.classList.toggle('wt-expanded');
+  expanded.setAttribute('aria-label', on ? 'Return to directions' : 'Expand the map');
+  renderMapNav();
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && root.classList.contains('wt-expanded')) { root.classList.remove('wt-expanded'); expanded.setAttribute('aria-label', 'Expand the map'); expanded.focus(); } });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (mapPick) { setMapPick(null); $('wtPickTo').focus(); return; }
+  if (root.classList.contains('wt-expanded')) {
+    root.classList.remove('wt-expanded'); expanded.setAttribute('aria-label', 'Expand the map');
+    renderMapNav(); expanded.focus();
+  }
+});
 
 const account = () => window.MCC_SUPA?.uid?.() || null;
 const signIn = () => { $('mnGuestSignIn').click(); };
@@ -636,25 +877,45 @@ dialog.addEventListener('close', () => { listRequest++; $('wtSavedList').replace
 $('wtNew').onclick = () => { if (dirty && !window.confirm('Start a new journey and discard your unsaved changes?')) return; replaceDraft(freshDraft()); };
 let lastOwner = account();
 function sessionChanged() {
-  const owner = account(); $('wtSaveHint').textContent = owner ? 'Your saved journeys are private.' : 'Sign in to save. Explore freely.';
+  const owner = account(); $('wtSaveFooter').hidden = !owner; $('wtDraftStatus').hidden = !owner;
+  $('wtSaveRow').hidden = !owner || !draft.from || !draft.to;
   if (lastOwner && owner !== lastOwner) { listRequest++; replaceDraft(freshDraft()); } lastOwner = owner;
 }
 function suspendTravel(message) {
+  if (mapPick) setMapPick(null);
   cancelLocate(); cancelRideRefresh(); closeSearches(); routeSequence++; routeController?.abort(); routeController = null;
   if (routeState === 'rerouting') { route = null; send({ type:'hu:route', route:null }); } routeState = route ? 'ready' : 'idle';
   if (navigating) stopNavigation(message, { resetProgress:true }); renderDirections();
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) suspendTravel('Navigation paused. Tap Start navigation when you return.'); else renderRide(); });
-window.addEventListener('pagehide', () => suspendTravel('Navigation paused. Tap Start navigation when you return.'));
+document.addEventListener('visibilitychange', () => { if (document.hidden) suspendTravel('Navigation paused. Tap Go when you return.'); else renderRide(); });
+window.addEventListener('pagehide', () => suspendTravel('Navigation paused. Tap Go when you return.'));
+window.addEventListener('mcc:world-audio-visibility', e => {
+  hostVisible = e.detail?.visible !== false;
+  if (!hostVisible) suspendTravel('Navigation paused. Tap Go when you return.');
+  else renderRide();
+});
 window.addEventListener('storage', sessionChanged);
 for (const event of ['mcc:auth', 'mcc:auth-changed', 'mcc:auth-state']) window.addEventListener(event, sessionChanged);
 new MutationObserver(() => {
   sessionChanged();
-  if (!root.classList.contains('mn-world-on') && (navigating || locating || rideLocating || routeController)) suspendTravel('Navigation paused. Return to Travel to continue.');
+  if (!root.classList.contains('mn-world-on') && (navigating || locating || rideLocating || routeController || mapPick)) suspendTravel('Navigation paused. Return to Travel to continue.');
   autoLocate();
 }).observe(root, { attributes:true, attributeFilter:['class'] });
-window.addEventListener('beforeunload', e => { if (dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if (account() && savedId && dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
+const whipStyle = document.createElement('link');
+whipStyle.rel = 'stylesheet';
+whipStyle.href = new URL('../../css/whip-booking.css?v=__STAMP__', import.meta.url).href;
+document.head.append(whipStyle);
+attachWhipBooking({
+  panel: $('wtRidePanel'),
+  currentTrip: () => hasCoordinates(draft.from) && hasCoordinates(draft.to)
+    ? { origin:[...draft.from.coordinates],destination:[...draft.to.coordinates],
+        pickup_label:draft.from.label,dropoff_label:draft.to.label } : null,
+  accountApi: () => typeof window.MCC?.api === 'function' ? window.MCC.api.bind(window.MCC) : null
+});
 syncInputs(); sessionChanged();
-const query = new URLSearchParams(location.search);
-setMode(query.has('mission') ? 'missions' : query.has('song') ? 'posts' : 'travel');
+const query = new URLSearchParams(location.search), requestedMode = query.get('mode');
+const wanted = query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : requestedMode;
+/* the house owner's World (js/world-owner-modes.js) has all three and opens on the feed, the one everyone else sees */
+setMode(MODES.includes(wanted) ? wanted : document.documentElement.hasAttribute('data-world-owner') ? 'posts' : MODES[0]);
 send({ type:'hu:hello' }); autoLocate();

@@ -198,7 +198,10 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.doesNotMatch(html, /Write a comment/);
   assert.match(js, /data-take-mission/);
   assert.match(js, /Verified action/);
-  assert.match(html, /id="mnRail"/);
+  /* WAYS TO MOVE IS GONE (owner, 2026-10-20: "The ways to move needs to go, like absolutely and totally"): no campaigns
+     and missions rail on the feed, in the page, the code or the styles */
+  assert.doesNotMatch(html, /id="mnRail"|WAYS TO MOVE|Campaigns &(amp;)? missions/);
+  assert.doesNotMatch(js, /function loadRail\(|mnRailTrack|action_campaigns_live/);
 });
 
 test("Action Network profile treats the member website as the identity front page", async()=>{
@@ -212,7 +215,7 @@ test("Action Network profile treats the member website as the identity front pag
 test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
 
 
-test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/id="mnToWorld"[^>]*>← World</);assert.match(html,/placeholder="What’s happening\?"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of Human Uprise/);});
+test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/id="mnToWorld"[^>]*>← World</);assert.match(html,/placeholder="Share a live moment from the world…"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of Human Uprise/);});
 
 
 test('Action Network runtime keeps invite rooms private and makes mission/proof the response path', async()=>{

@@ -1,0 +1,55 @@
+/* The retained listening document owns the one bar. World retains its own
+   account UI and a measured --mn-bar-clear above these audio controls. */
+.world-audio-open { overflow:hidden; }
+#mccWorldAudioShell { position:fixed;inset:0;z-index:2000;background:#090c11; }
+#mccWorldAudioShell[hidden],#mccWorldAudioControls[hidden],.world-audio-status[hidden] { display:none!important; }
+#mccWorldAudioFrame { position:absolute;inset:0;width:100%;height:100%;border:0;background:#090c11; }
+body[data-world-audio-open]>.appbar { z-index:2200!important; }
+body[data-world-audio-open]>:not(.appbar):not(#mccWorldAudioShell):not(#mccWorldAudioControls):not(#mccDestinations):not(script):not(style):not(link) { visibility:hidden!important;pointer-events:none!important; }
+body[data-world-audio-open] #mccDestinations { z-index:2300; }
+body[data-world-audio-child]>.appbar { display:none!important; }
+.world-audio { position:fixed;z-index:2201;left:50%;transform:translateX(-50%);bottom:calc(var(--world-audio-nav-clear,88px) + 8px);width:min(560px,calc(100% - 24px));box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 44px 62px;align-items:center;gap:4px;padding:4px 7px;border:1px solid #ffffff2b;border-radius:16px;color:#f3efec;background:#11171ef5;box-shadow:0 8px 24px #0005;font-family:system-ui,sans-serif; }
+/* A World address popup lives in a lower-z-index cross-origin iframe.
+   Hide only the transport chrome while the popup is selecting a location. */
+.world-audio.world-audio--suggest-open { visibility:hidden;pointer-events:none; }
+.world-audio button { border:0;color:inherit;background:none;min-width:0;min-height:44px;padding:4px 8px;cursor:pointer;font:inherit; }
+.world-audio button:focus-visible,.world-audio-status :is(button,a):focus-visible { outline:2px solid #f1d9dd;outline-offset:2px; }
+.world-audio__title { text-align:left;overflow:hidden; }
+.world-audio__title span { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;line-height:1.35; }
+.world-audio__title small { display:block;color:#b8c1c8;font-size:10px;line-height:1.5; }
+.world-audio .world-audio__play { font-size:19px;border-radius:50%;background:#f2e9e6;color:#19151a; }
+.world-audio .world-audio__mute { font-size:11px; }
+.world-audio-status { position:absolute;z-index:2;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#090c11;color:#efedeb;font:14px/1.5 system-ui,sans-serif;text-align:center; }
+.world-audio-status p { max-width:30rem; }
+/* the World's own colour while it opens, and no words for the first moment (js/world-audio-continuity.js): by day the
+   frame stands white like the World it is opening, not night-dark; the words appear only if the World is slow */
+.world-audio-status.is-quiet > * { visibility:hidden; }
+#mccWorldAudioShell.is-day, #mccWorldAudioShell.is-day #mccWorldAudioFrame, #mccWorldAudioShell.is-day .world-audio-status { background:#ffffff; color:#000000; }
+#mccWorldAudioShell.is-day .world-audio-status :is(button,a) { border-color:#0005; }
+#mccWorldAudioShell.is-day .world-audio-status :is(button,a):focus-visible { outline-color:#000000; }
+.world-audio-status :is(button,a) { display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;padding:10px 16px;border:1px solid #fff5;border-radius:24px;background:none;color:inherit;font:inherit;text-decoration:none;cursor:pointer; }
+@media (min-width:720px) { .world-audio { gap:8px;padding-inline:10px; } .world-audio__title span { font-size:14px; } }
+@media print { #mccWorldAudioShell,#mccWorldAudioControls { display:none!important; } }
+
+
+/* Equity Uprise World has one unobtrusive transport next to the globe tools.
+   The Music page keeps the full title/mute/player UI. One Audio element
+   remains authoritative in both cases; CSS never introduces a second player. */
+html.hu-travel-enabled.mn-world-on .world-audio,
+html.world-audio-open .world-audio {
+  left:auto;right:max(12px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 160px);
+  bottom:auto;transform:none;width:52px;height:52px;
+  display:flex;align-items:center;justify-content:center;gap:0;
+  padding:3px;border-radius:50%;border:1px solid #ffffff5b;
+  background:#151c23ed;box-shadow:0 4px 15px #0008;
+}
+html.hu-travel-enabled.mn-world-on .world-audio :is(.world-audio__title,.world-audio__mute),
+html.world-audio-open .world-audio :is(.world-audio__title,.world-audio__mute) { display:none!important; }
+html.hu-travel-enabled.mn-world-on .world-audio .world-audio__play,
+html.world-audio-open .world-audio .world-audio__play {
+  width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+  display:grid;place-items:center;border-radius:50%;
+  background:transparent;color:#f4f4f2;font-size:21px;line-height:1;
+}
+html.hu-travel-enabled.mn-world-on .world-audio .world-audio__play:focus-visible,
+html.world-audio-open .world-audio .world-audio__play:focus-visible { outline:2px solid #fff;outline-offset:3px; }

@@ -1,4 +1,4 @@
-/* Human Uprise · Clips: paid Equity Uprise distribution campaigns for members.
+/* Equity Uprise · Clips: paid Equity Uprise distribution campaigns for members.
 
    Discover a campaign → claim it → take approved music/action footage and your
    tracking link → post a Reel → paste its link → the server reads the post
@@ -70,7 +70,7 @@
 
   function campaignCard(c) {
     var claim = claimOf(c.mission_id);
-    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : (c.source_kind === 'music' ? '' : 'Human Uprise source'));
+    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : (c.source_kind === 'music' ? '' : 'Equity Uprise source'));
     var terms = usd(c.base_cpm_cents) + ' per 1,000 verified views after ' + n(c.min_views) + ' views' +
       (c.per_clip_cap_cents ? ' · up to ' + usd(c.per_clip_cap_cents) + ' a clip' : "") +
       (c.per_clipper_cap_cents ? ' · up to ' + usd(c.per_clipper_cap_cents) + ' a clipper' : "") +

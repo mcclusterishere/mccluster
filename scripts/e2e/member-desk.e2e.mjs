@@ -3,7 +3,7 @@
 
    Serves this checkout and puts an in-memory fake in front of
    api.mccluster.org and Supabase (no production call). Checks:
-     - the Desk tab is on the bottom app bar and opens the desk OVER the
+     - Your desk lives in the account menu and opens the desk OVER the
        globe; the bar stays visible and tappable; no sideways scroll;
      - a fellow's policy memo desk is inside it (Policy memos), with the
        creator's audience section from the same Worker numbers;
@@ -27,7 +27,7 @@ let chromium;
 try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try { const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
@@ -96,6 +96,7 @@ async function route(ctx, w, { member }) {
     if (u.pathname === '/v1/mnet/public-feed') return json(r, { items: [], next_before: null });
     if (u.pathname.startsWith('/v1/world/layers/')) return json(r, { ok: true, count: 0, aircraft: [], satellites: [], launches: [] });
     if (!/^Bearer \S+/.test(auth)) return json(r, { error: 'Authentication required' }, 401);
+    if (u.pathname === '/v1/status') return json(r, { error: 'Owner access required' }, 403);
     if (u.pathname === '/v1/mnet/bootstrap') return json(r, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id, headline: 'Writing memos for Connecticut' }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') return json(r, { items: [], next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(r, { notifications: [{ id: 'n1', type: 'action_policy_memo_review', body: 'The desk asked for changes on your memo.', created_at: new Date().toISOString(), read_at: null }] });
@@ -111,14 +112,14 @@ const results = [];
 function check(scope, name, ok, detail) { results.push({ scope, name, ok: !!ok }); console.log(`${ok ? 'PASS' : 'FAIL'} [${scope}] ${name}${detail !== undefined ? ' :: ' + JSON.stringify(detail) : ''}`); }
 
 await mkdir(OUT, { recursive: true });
-const browser = await chromium.launch({ args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || process.env.CHROMIUM_PATH || undefined, args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 const DEVICES = [{ name: '390', viewport: { width: 390, height: 844 }, mobile: true }, { name: '1280', viewport: { width: 1280, height: 800 }, mobile: false }];
 
 async function openPage(device, { member, url }) {
   const w = freshWorld();
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile, permissions: ['camera', 'microphone'] });
   await ctx.addInitScript((m) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; const pl = btoa(JSON.stringify({ exp, sub: 'auth-you' })).replace(/=+$/, ''); localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + pl + '.y', refresh_token: 'r', expires_at: exp })); }
   }, member);
   await route(ctx, w, { member });
@@ -133,7 +134,7 @@ async function openPage(device, { member, url }) {
 const geometry = (page) => page.evaluate(() => {
   const r = (el) => el && el.getBoundingClientRect();
   const desk = r(document.getElementById('huDesk')), bar = r(document.querySelector('.appbar')), world = r(document.getElementById('mnWorld'));
-  const tab = document.querySelector('[data-hu-desk]'), tr = r(tab);
+  const tab = document.querySelector('.appbar [data-appnav="world"]') || document.querySelector('.appbar .appbar__tab'), tr = r(tab);
   const hit = tr ? document.elementFromPoint(tr.left + tr.width / 2, tr.top + tr.height / 2) : null;
   const deskShown = !!desk && !document.getElementById('huDesk').hidden;
   return { deskShown, deskBottom: desk && Math.round(desk.bottom), deskTop: desk && Math.round(desk.top), deskLeft: desk && Math.round(desk.left), deskWidth: desk && Math.round(desk.width),
@@ -148,8 +149,10 @@ for (const device of DEVICES) {
   {
     const scope = 'member-' + device.name;
     const { ctx, page, w, errors } = await openPage(device, { member: true, url: '/mnet.html?view=feed' });
-    check(scope, 'the Desk tab is on the bottom app bar', await page.isVisible('.appbar [data-hu-desk]'));
-    await page.click('.appbar [data-hu-desk]');
+    check(scope, 'the desk lives in the account menu, not on the bottom app bar', await page.locator('.appbar [data-hu-desk]').count() === 0 && await page.locator('#mnMenu [data-hu-desk]').count() === 1);
+    await page.click('#mnMe');
+    await page.waitForSelector('#mnMenu:not([hidden]) [data-hu-desk]', { timeout: 10000 });
+    await page.click('#mnMenu [data-hu-desk]');
     await page.waitForSelector('#huDesk:not([hidden]) .hu-desk__tab', { timeout: 10000 });
     await page.waitForFunction(() => /Policy memos/.test(document.getElementById('huDeskTabs').textContent), null, { timeout: 10000 });
     await page.waitForSelector('#huDeskEditGate h3', { timeout: 10000 });
@@ -183,21 +186,47 @@ for (const device of DEVICES) {
     check(scope, 'no page errors', errors.length === 0, errors);
     await ctx.close();
   }
-  /* 2. guest: the old Policy address lands on the World with the desk on Policy */
+  /* 2. guest: legacy desk links leave a useful World without member clutter. */
   {
     const scope = 'policy-redirect-' + device.name;
-    const { ctx, page, errors } = await openPage(device, { member: false, url: '/action-policy.html?region=US-CT' });
-    await page.waitForURL(/mnet\.html\?view=feed&desk=policy/, { timeout: 10000 });
-    await page.waitForSelector('#huDesk:not([hidden]) #bills', { timeout: 10000 });
-    await page.waitForFunction(() => (document.getElementById('region') || {}).value === 'US-CT', null, { timeout: 8000 }).catch(() => {});
-    check(scope, 'action-policy.html opens the World with the desk on Policy', /desk=policy/.test(page.url()) && await page.isVisible('#huDesk #bills'), page.url());
-    check(scope, 'its region filter rides along', await page.$eval('#region', (s) => s.value) === 'US-CT');
-    const tabs = await page.$$eval('#huDeskTabs button', (b) => b.map((x) => x.textContent));
-    check(scope, 'a guest sees the welcome and public policy only', JSON.stringify(tabs) === JSON.stringify(['Your desk', 'Policy']), tabs);
+    const { ctx, page, w, errors } = await openPage(device, { member: false, url: '/action-policy.html?region=US-CT' });
+    await page.waitForURL(/mnet\.html/, { timeout: 10000 });
+    await page.waitForFunction(() => window.HU_DESK && !new URL(location.href).searchParams.has('desk'));
+    check(scope, 'legacy Policy URL lands on World without a guest workspace', /mnet\.html/.test(page.url()) && !/desk=/.test(page.url()) && await page.locator('#huDesk').count() === 0, page.url());
+    check(scope, 'unrelated query parameters survive', new URL(page.url()).searchParams.get('region') === 'US-CT');
+    check(scope, 'no guest Desk control or welcome/policy panel is mounted', await page.locator('[data-hu-desk], #huDesk, #huDeskPolicy').count() === 0);
+    const opened = await page.evaluate(() => window.HU_DESK.open('policy'));
+    check(scope, 'direct guest open is refused without a sign-in interruption', opened === false && await page.locator('#huDesk').count() === 0 && !(await page.isVisible('#mnSignedOut')));
+    await page.evaluate(() => {
+      const stale = document.createElement('button'); stale.setAttribute('data-hu-desk', '');
+      document.querySelector('.appbar').appendChild(stale);
+    });
+    await page.waitForFunction(() => !document.querySelector('[data-hu-desk]'));
+    check(scope, 'a bar redraw cannot restore a guest Desk button', await page.locator('[data-hu-desk]').count() === 0);
+    check(scope, 'no desk capabilities or policy data are fetched for a guest', !w.requests.some(r => /policy_ladder_status|music_creator_state|analytics_sites|creator-billing\/entitlement|action_policy_|action_record/.test(r.p)), w.requests.filter(r => /policy|creator/.test(r.p)));
     const g = await geometry(page);
     check(scope, 'bar visible and no sideways scroll', g.barVisible && g.sw === g.cw, g);
     await page.screenshot({ path: join(OUT, `policy-redirect-guest-${device.name}.png`) });
     check(scope, 'no page errors', errors.length === 0, errors);
+    await ctx.close();
+  }
+  /* Auth can change while capability requests are pending. Late answers must
+     not put member content back on a now-signed-out World. */
+  {
+    const scope = 'desk-signout-' + device.name;
+    const { ctx, page, errors } = await openPage(device, { member: true, url: '/mnet.html?view=feed' });
+    await page.route('**/rest/v1/rpc/music_creator_state', async route => {
+      await new Promise(resolve => setTimeout(resolve, 350));
+      await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ creator: true, handle: 'fixture-you' }) });
+    });
+    await page.evaluate(() => {
+      window.HU_DESK.open('creator');
+      localStorage.removeItem('mccdb_session');
+      window.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: false } }));
+    });
+    await page.waitForTimeout(650);
+    check(scope, 'sign-out removes desk content and invalidates pending loads', await page.locator('#huDesk, [data-hu-desk]').count() === 0 && await page.evaluate(() => !HU_DESK.isOpen() && HU_DESK.state.caps === null && Object.keys(HU_DESK.state.data).length === 0));
+    check(scope, 'sign-out leaves no desk parameter or page errors', !new URL(page.url()).searchParams.has('desk') && errors.length === 0, errors);
     await ctx.close();
   }
   /* 3. an edit request with a live (fake) camera */

@@ -51,7 +51,10 @@
 
   if (!isOwner()) {
     /* Signing in later should not require a reload to get navigation. */
-    root.addEventListener("mcc:auth-changed", function () {
+    root.addEventListener("mcc:auth-changed", function (e) {
+      /* a sign-in carried in from another host is taken in place by the World (js/tabbar.js, js/mnet.js) so the page is
+         never painted twice (owner, 2026-10-20: no screen flashes); the palette mounts on the next page instead */
+      if (e && e.detail && e.detail.carried) return;
       if (isOwner() && !doc.getElementById("cmdkRoot")) location.reload();
     });
     return;

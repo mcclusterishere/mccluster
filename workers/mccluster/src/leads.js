@@ -1,31 +1,7 @@
-/* WORKING THE PIPELINE — lead status changes, through the Worker.
-
-   admin.html used to PATCH public.leads straight from the browser with
-   the publishable key, relying on an RLS policy that reads:
-
-       using ((auth.jwt() ->> 'email') = 'matthew@mccluster.org')
-
-   That works exactly once, for exactly one person. It is the same
-   owner-by-email-string gate that sits in crm.html, and it is a hard
-   blocker on the clone contract: a second tenant's owner cannot be
-   granted it without editing a policy literal, and the check cannot
-   express "owner of THIS workspace" at all.
-
-   So the mutation moves here, where the caller's role is resolved from
-   org membership instead of a string comparison, the transition is
-   validated against the column's own vocabulary, and the change lands in
-   the ledger with what it was before.
-
-   WHAT THIS DOES NOT YET FIX, stated plainly because the next person
-   will look for it: public.leads carries no org_id. It predates tenancy
-   (0001 against 0026) and is still a single-tenant table. The membership
-   check below therefore authorizes the CALLER — it establishes, in a way
-   the server can verify, that whoever is moving this lead owns a
-   workspace — but it cannot yet scope the LEAD, because there is nothing
-   on the row to scope it by. Making leads genuinely multi-tenant needs a
-   column, a backfill and a policy rewrite; that is a schema decision, not
-   something to slip into a route. Until it happens, this surface is
-   honest about being the house's pipeline. */
+/* Tenant-bound lead status changes, using the canonical Worker.
+   Owning a workspace never implies ownership of an arbitrary lead UUID.
+   Historical unassigned leads remain read-only until explicitly reconciled
+   under reviewed migration/ownership authority, not silently inherited. */
 
 import { recordAudit } from './lib/audit.js';
 import { requireMembership } from './workspaces.js';
@@ -90,18 +66,20 @@ export async function setLeadStatus(request, env, user) {
 
   /* Read before write: an audit row that cannot say what changed is a
      timestamp, not a record. */
-  const before = (await db(env, `leads?id=eq.${encodeURIComponent(leadId)}&select=id,status,email,name`))?.[0];
+  const before = (await db(env, `leads?id=eq.${encodeURIComponent(leadId)}&org_id=eq.${encodeURIComponent(membership.org_id)}&select=id,org_id,status,email,name`))?.[0];
   if (!before) throw Object.assign(new Error('No such lead'), { status: 404 });
 
   if (before.status === status) {
     return { lead: before, changed: false, audit: { recorded: false, reason: 'no_change' } };
   }
 
-  const updated = (await db(env, `leads?id=eq.${encodeURIComponent(leadId)}`, {
+  const updated = (await db(env, `leads?id=eq.${encodeURIComponent(leadId)}&org_id=eq.${encodeURIComponent(membership.org_id)}&status=eq.${encodeURIComponent(before.status)}`, {
     method: 'PATCH',
     headers: { prefer: 'return=representation' },
     body: JSON.stringify({ status })
   }))?.[0];
+
+  if (!updated) throw Object.assign(new Error('Lead moved or changed during update'), { status: 409 });
 
   const audit = await recordAudit(env, {
     orgId: membership.org_id,
@@ -114,5 +92,5 @@ export async function setLeadStatus(request, env, user) {
     detail: { from: before.status, to: status, lead_email: before.email }
   });
 
-  return { lead: updated || { ...before, status }, changed: true, audit };
+  return { lead: updated, changed: true, audit };
 }

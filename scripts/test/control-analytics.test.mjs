@@ -70,10 +70,11 @@ test('Control Analytics bounds concurrent reads instead of stampeding PostgREST'
     querySelectorAll:()=>[]
   };
   A.mount(host);
-  await new Promise((resolve)=>setTimeout(resolve,120));
+  const deadline=Date.now()+3000;
+  while(!A.state.loaded&&Date.now()<deadline)await new Promise((resolve)=>setTimeout(resolve,10));
   assert.ok(completed>=12,'expected the full analytics suite to complete');
-  /* four at a time: the suite gained the reads no screen used to show (visitors, journeys, health, missions, country) */
-  assert.ok(peak<=4,'analytics opened '+peak+' concurrent reads');
+  /* Heavy independent RPCs run two at a time; background writes must retain headroom. */
+  assert.ok(peak<=2,'analytics opened '+peak+' concurrent reads');
   assert.ok(paints>4,'completed reads should repaint progressively');
   assert.equal(A.state.loading,false);
 });
@@ -132,7 +133,7 @@ test('all seven Analytics sections render representative successful data',async(
   };
   const expected={
     overview:/Page performance/,
-    audience:/Conversion funnel/,
+    audience:/Stage activity/,
     adaptive:/Decision ledger/,
     content:/Reach vs repeat/,
     identity:/Source → track → account/,
@@ -182,7 +183,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
   assert.match(js,/if\(q!==S\.seq\)return/);
   assert.match(js,/p_since:r\.since,p_until:r\.until/);
   assert.doesNotMatch(js,/daily=\{p_since:r\.querySince/);
-  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.completed=\{\};S\.data=blankData\(\);loadGeoAudience\(\);paint\(\)/,
+  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.quality=\{\};S\.completed=\{\};S\.data=blankData\(\);loadGeoAudience\(\);paint\(\)/,
     'range selection must repaint immediately before the network read completes');
 });
 
@@ -193,7 +194,7 @@ test('Analytics uses distinct visual forms for distinct questions',async()=>{
   }
   assert.match(js,/Traffic trend/);
   assert.match(js,/Geography/);
-  assert.match(js,/Conversion funnel/);
+  assert.match(js,/Stage activity/);
   assert.match(js,/Reach vs repeat/);
   assert.match(js,/Source → track → account/);
 });
@@ -204,7 +205,7 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
     read('css/control-analytics.css'),
     read('supabase/migrations/20261003223831_analytics_hourly_hotpath_v2.sql')
   ]);
-  assert.match(js,/r\.id==="24h"\?retryStatementTimeout\(function\(\)\{return rpc\("analytics_hourly",daily\);\}\)/);
+  assert.match(js,/r\.id==="24h"\?rpc\("analytics_hourly",daily\)/);
   assert.match(js,/r\.id==="24h"\?Promise\.resolve\(\[\]\):rpc\("analytics_daily",daily\)/);
   assert.match(js,/allLabels:true/);
   assert.match(js,/data-cra-chart-point/);
@@ -226,12 +227,15 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
   assert.match(migration,/grant execute on function public\.analytics_hourly.*to authenticated/i);
 });
 
-test('24h analytics retries one transient database statement timeout',async()=>{
+test('all read-only analytics RPCs retry one transient database statement timeout',async()=>{
   const js=await read('js/control-room/analytics.js');
   assert.match(js,/function retryStatementTimeout\(fn\)/);
   assert.match(js,/code!==\"57014\"/);
   assert.match(js,/statement timeout\|canceling statement/i);
-  assert.match(js,/retryStatementTimeout\(function\(\)\{return rpc\(\"analytics_hourly\",daily\);\}\)/);
+  assert.match(js,/function rpc\(name,body\)\{return retryStatementTimeout\(function\(\)\{/);
+  assert.match(js,/r\.id===\"24h\"\?rpc\(\"analytics_hourly\",daily\)/);
+  assert.doesNotMatch(js,/retryStatementTimeout\(function\(\)\{return rpc\(/,
+    'do not nest retries and send more than two attempts');
 });
 
 test('Control Analytics is mobile-first',async()=>{
@@ -293,8 +297,88 @@ test('Audience analytics stays inside the exact selected property and timestamp 
   assert.match(js,/hourly=S\.rangeId==="24h"/);
   assert.match(js,/t\.byHour\|\|\[\]/);
   assert.match(js,/t\.byDay\|\|\[\]/);
-  assert.match(js,/site===null\?rpc\("analytics_funnel"/);
+  assert.match(js,/site===null\?rpc\("analytics_stage_totals",args\)/);
+  assert.match(js,/if\(!missingFn\(error\)\)throw error;return rpc\("analytics_funnel",\{p_since:r\.since,p_until:r\.until\}\)/);
   assert.match(js,/\{name:"business",run:function\(\)\{return site===null\?S\.request/);
   assert.match(js,/Control will not mix another property into this view/);
   assert.doesNotMatch(js,/analytics_engagement_site|analytics_funnel_site/);
+});
+
+
+test('a canceled totals query is retried once and the dashboard retains complete metrics',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console,setTimeout};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  let totalsAttempts=0;
+  A.init({
+    request:()=>Promise.resolve({}),
+    supa:(path)=>{
+      if(String(path).startsWith('analytics_sites?'))return Promise.resolve([]);
+      if(path==='rpc/analytics_totals'){
+        totalsAttempts++;
+        if(totalsAttempts===1){
+          return Promise.reject(Object.assign(new Error('canceling statement due to statement timeout'),{code:'57014'}));
+        }
+        return Promise.resolve([{page_views:7,visitors:3,sessions:4,events:12}]);
+      }
+      return Promise.resolve([]);
+    }
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,300));
+  assert.equal(totalsAttempts,2,'one transient retry, never an unbounded loop');
+  assert.equal(A.state.errors.totals,undefined);
+  assert.equal(A.state.data.traffic.totals.page_views,7);
+  assert.equal(A.state.loading,false);
+  assert.doesNotMatch(A.top(),/Partial data/);
+});
+
+test('a persistent statement timeout reports failure after exactly two attempts',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console,setTimeout};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  let totalsAttempts=0;
+  A.init({
+    request:()=>Promise.resolve({}),
+    supa:(path)=>{
+      if(String(path).startsWith('analytics_sites?'))return Promise.resolve([]);
+      if(path==='rpc/analytics_totals'){
+        totalsAttempts++;
+        return Promise.reject(Object.assign(new Error('canceling statement due to statement timeout'),{code:'57014'}));
+      }
+      return Promise.resolve([]);
+    }
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,300));
+  assert.equal(totalsAttempts,2);
+  assert.ok(A.state.errors.totals,'the persistent failure must not be hidden');
+  assert.match(A.top(),/Not live/);
+});
+
+
+test('a partial business snapshot names failed reads instead of a generic warning',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  A.init({
+    request:(path)=>Promise.resolve(path.startsWith('/v1/analytics/business?')?
+      {snapshot:{partial:true,read_errors:{musicPlaysTotal:'Data read unavailable',commerce:'Verified commerce read unavailable'}}}:{}),
+    supa:()=>Promise.resolve([])
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,0));
+  assert.equal(A.state.loaded,true);
+  assert.match(A.state.errors.business.message,/musicPlaysTotal/);
+  assert.match(A.state.errors.business.message,/commerce/);
+  assert.match(A.top(),/Partial data/);
 });

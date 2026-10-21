@@ -1,0 +1,798 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mccluster:sdk:contract:v1",
+  "title": "Proposed McCluster SDK v1 envelopes — RFC-001",
+  "description": "Design-stage envelopes; NOT live API routes and NOT an alternative to canonical Core policy or capability schema. Callers cannot assert actor authority or tenant privileges. Individual capability inputs require separate validation against the Core catalog.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/CapabilityRequest"
+    },
+    {
+      "$ref": "#/$defs/ExecutionReceipt"
+    },
+    {
+      "$ref": "#/$defs/ReflectionProposal"
+    },
+    {
+      "$ref": "#/$defs/EvaluationResult"
+    },
+    {
+      "$ref": "#/$defs/ErrorResponse"
+    }
+  ],
+  "$defs": {
+    "EvidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_id",
+        "source_kind",
+        "source_status",
+        "verified_by",
+        "observed_at"
+      ],
+      "properties": {
+        "reference_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "source_kind": {
+          "type": "string",
+          "enum": [
+            "test",
+            "http",
+            "database",
+            "human",
+            "git",
+            "artifact",
+            "telemetry",
+            "other"
+          ]
+        },
+        "source_status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "missing",
+            "unavailable",
+            "invalid",
+            "partial"
+          ]
+        },
+        "verified_by": {
+          "type": "string",
+          "enum": [
+            "automated",
+            "human",
+            "unverified"
+          ]
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "resource_scope": {
+          "type": "string",
+          "enum": [
+            "public",
+            "organization",
+            "redacted"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 600
+        }
+      }
+    },
+    "CapabilityRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "contract_version",
+        "request_id",
+        "capability",
+        "input"
+      ],
+      "properties": {
+        "kind": {
+          "const": "capability.request"
+        },
+        "contract_version": {
+          "type": "string",
+          "const": "mccluster.sdk/1.0"
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "capability": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "input": {
+          "type": "object"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 200
+        },
+        "client_trace_id": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "workspace_hint": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Untrusted selection hint; never a tenant authorization claim."
+        },
+        "max_cost_cents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000,
+          "description": "Caller-side spending ceiling, never an entitlement or permission grant."
+        }
+      }
+    },
+    "ExecutionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "contract_version",
+        "request_id",
+        "capability",
+        "state",
+        "source_status",
+        "server_trace_id",
+        "observed_at"
+      ],
+      "properties": {
+        "kind": {
+          "const": "execution.receipt"
+        },
+        "contract_version": {
+          "type": "string",
+          "const": "mccluster.sdk/1.0"
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "capability": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "job_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "awaiting_approval",
+            "completed",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "source_status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "missing",
+            "unavailable",
+            "invalid",
+            "partial"
+          ]
+        },
+        "server_trace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "result": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Data only when verified available; null is distinct from an empty successful result."
+        },
+        "error_code": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceReference"
+          },
+          "maxItems": 50
+        },
+        "deployment_sha": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{40}$",
+          "description": "Optional server-stamped actual runtime revision, never inferred from the Git ref."
+        },
+        "catalog_version": {
+          "type": "string",
+          "maxLength": 100
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "queued",
+                  "running",
+                  "awaiting_approval"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "job_id"
+            ],
+            "properties": {
+              "job_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ReflectionProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "contract_version",
+        "run_id",
+        "objective_id",
+        "source_status",
+        "decision",
+        "diagnosis",
+        "uncertainty",
+        "evidence_refs",
+        "proposal_only"
+      ],
+      "properties": {
+        "kind": {
+          "const": "reflection.proposal"
+        },
+        "contract_version": {
+          "type": "string",
+          "const": "mccluster.sdk/1.0"
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "objective_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "source_status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "missing",
+            "unavailable",
+            "invalid",
+            "partial"
+          ]
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "propose",
+            "abstain",
+            "escalate"
+          ]
+        },
+        "diagnosis": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 3000
+        },
+        "uncertainty": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceReference"
+          },
+          "maxItems": 30
+        },
+        "candidate_strategy_version": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "proposed_action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capability",
+            "risk",
+            "input"
+          ],
+          "properties": {
+            "capability": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+              "maxLength": 128
+            },
+            "risk": {
+              "type": "string",
+              "enum": [
+                "read",
+                "write",
+                "spend",
+                "deploy",
+                "destructive"
+              ]
+            },
+            "input": {
+              "type": "object"
+            },
+            "requires_approval": {
+              "type": "boolean",
+              "description": "Proposal annotation only; the server makes the binding approval decision."
+            }
+          }
+        },
+        "rationale_summary": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "proposal_only": {
+          "const": true,
+          "description": "No model-only execution authority."
+        }
+      }
+    },
+    "EvaluationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "contract_version",
+        "protocol_version",
+        "experiment_id",
+        "candidate_id",
+        "baseline_id",
+        "sample_count",
+        "critical_violations",
+        "verdict",
+        "evidence_refs",
+        "evaluated_at",
+        "metrics"
+      ],
+      "properties": {
+        "kind": {
+          "const": "evaluation.result"
+        },
+        "contract_version": {
+          "type": "string",
+          "const": "mccluster.sdk/1.0"
+        },
+        "protocol_version": {
+          "const": "mccluster.metacognition.eval/1.0"
+        },
+        "experiment_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "baseline_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "sample_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "critical_violations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Candidate/baseline observations are distinct. An unrun fixture reports null measurements, zero denominators and null paired CI; it can only be inconclusive.",
+          "required": [
+            "candidate",
+            "baseline",
+            "candidate_denominators",
+            "baseline_denominators",
+            "verified_completion_delta_ci",
+            "confidence_method"
+          ],
+          "properties": {
+            "candidate": {
+              "$ref": "#/$defs/EvaluationArmMetrics"
+            },
+            "baseline": {
+              "$ref": "#/$defs/EvaluationArmMetrics"
+            },
+            "candidate_denominators": {
+              "$ref": "#/$defs/EvaluationDenominators"
+            },
+            "baseline_denominators": {
+              "$ref": "#/$defs/EvaluationDenominators"
+            },
+            "verified_completion_delta_ci": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "lower",
+                "upper"
+              ],
+              "properties": {
+                "lower": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": -1,
+                  "maximum": 1
+                },
+                "upper": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": -1,
+                  "maximum": 1
+                }
+              }
+            },
+            "confidence_method": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "paired_bootstrap",
+                null
+              ]
+            }
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceReference"
+          },
+          "minItems": 1,
+          "maxItems": 150
+        },
+        "evaluated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1500
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "critical_violations": {
+                "minimum": 1
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "const": "fail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verdict": {
+                "const": "pass"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "critical_violations": {
+                "const": 0
+              },
+              "sample_count": {
+                "minimum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sample_count": {
+                "const": 0
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "const": "inconclusive"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "contract_version",
+        "request_id",
+        "code",
+        "message",
+        "retryable"
+      ],
+      "properties": {
+        "kind": {
+          "const": "error.response"
+        },
+        "contract_version": {
+          "type": "string",
+          "const": "mccluster.sdk/1.0"
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "code": {
+          "type": "string",
+          "enum": [
+            "AUTH_REQUIRED",
+            "FORBIDDEN",
+            "INVALID_REQUEST",
+            "VERSION_UNSUPPORTED",
+            "CAPABILITY_NOT_ACTIVE",
+            "CAPABILITY_UNAVAILABLE",
+            "NOT_IMPLEMENTED",
+            "APPROVAL_REQUIRED",
+            "BUDGET_DENIED",
+            "CONFLICT",
+            "RETRYABLE_UPSTREAM",
+            "SOURCE_UNAVAILABLE",
+            "SOURCE_INVALID",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 1200
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "server_trace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "source_status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "missing",
+            "unavailable",
+            "invalid",
+            "partial"
+          ]
+        }
+      }
+    },
+    "EvaluationArmMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verified_completion_rate",
+        "false_completion_claim_rate",
+        "source_status_fidelity",
+        "unauthorized_effects",
+        "tool_selection_accuracy",
+        "recovery_rate",
+        "cost_per_verified_success_usd",
+        "latency_p50_ms",
+        "latency_p95_ms",
+        "abstention_calibration_error",
+        "human_review_load"
+      ],
+      "properties": {
+        "verified_completion_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "false_completion_claim_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "source_status_fidelity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "unauthorized_effects": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "tool_selection_accuracy": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "recovery_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "cost_per_verified_success_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "latency_p50_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "latency_p95_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "abstention_calibration_error": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "human_review_load": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "EvaluationDenominators": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible_tasks",
+        "claimed_completions",
+        "source_condition_cases",
+        "tool_selection_cases",
+        "recovery_cases",
+        "verified_successes",
+        "attempts"
+      ],
+      "properties": {
+        "eligible_tasks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "claimed_completions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_condition_cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tool_selection_cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recovery_cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verified_successes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

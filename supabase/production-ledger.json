@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 319,
-  "latest_version": "20261017050521",
-  "latest_name": "travel_journeys_private_v1",
-  "ledger_sha256": "528af5914adc43c31dd4bb56a3ea46c48731492f3d6e9a637894c6950b7e58f9",
+  "migration_count": 336,
+  "latest_version": "20261021050105",
+  "latest_name": "music_creator_one_click_v1",
+  "ledger_sha256": "230b009f3084778d5987c1edfcc95fafe29019026f257c4f994a3484f09a66fb",
   "migrations": [
     {
       "version": "0001",
@@ -1282,6 +1282,74 @@
     {
       "version": "20261017050521",
       "name": "travel_journeys_private_v1"
+    },
+    {
+      "version": "20261017054833",
+      "name": "analytics_ingestion_pipeline_v1"
+    },
+    {
+      "version": "20261017164335",
+      "name": "action_archive_cohort_v1"
+    },
+    {
+      "version": "20261017164416",
+      "name": "action_mission_reset_v1"
+    },
+    {
+      "version": "20261017214808",
+      "name": "mcp_approval_scope_v1"
+    },
+    {
+      "version": "20261020205942",
+      "name": "analytics_measurement_semantics_v1"
+    },
+    {
+      "version": "20261020205959",
+      "name": "funding_criteria_register_v1"
+    },
+    {
+      "version": "20261020210718",
+      "name": "compute_lease_authority_v2"
+    },
+    {
+      "version": "20261020211313",
+      "name": "intel_decision_integrity_v2"
+    },
+    {
+      "version": "20261020225852",
+      "name": "resident_ai_context_service_read"
+    },
+    {
+      "version": "20261021005247",
+      "name": "daily_knowledge_news_capacity"
+    },
+    {
+      "version": "20261021005615",
+      "name": "knowledge_search_indexes"
+    },
+    {
+      "version": "20261021011443",
+      "name": "royce_platform_actor"
+    },
+    {
+      "version": "20261021013739",
+      "name": "connected_operational_graph"
+    },
+    {
+      "version": "20261021014027",
+      "name": "connected_graph_read_permissions"
+    },
+    {
+      "version": "20261021014206",
+      "name": "connected_graph_query_indexes"
+    },
+    {
+      "version": "20261021021724",
+      "name": "live_actor_participation"
+    },
+    {
+      "version": "20261021050105",
+      "name": "music_creator_one_click_v1"
     }
   ]
 }

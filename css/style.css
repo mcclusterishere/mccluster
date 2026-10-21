@@ -1596,6 +1596,16 @@ small{font-size:1rem;font-weight:500}
 .cur-gone .cur-ring,.cur-gone .cur-dot{opacity:0}
 .pt-veil{position:fixed;inset:0;z-index:99998;background:var(--ink);transform:translateY(100%);pointer-events:none}
 html.pt-out .pt-veil{transform:translateY(0);transition:transform .48s cubic-bezier(.7,0,.3,1)}
+/* NO SCREEN FLASHES (owner, 2026-10-20: "just a smooth transition from screen to screen"). The veil is the colour of where
+   it goes (js/tabbar.js): the World by day is white, the World by night its own dark, the house its ink. A hop inside one
+   host is a cross-document view transition instead: the browser keeps this page until the next can paint, then fades
+   one into the other, so no blank or half-built page is ever shown between them. */
+html.pt-to-day .pt-veil{background:#ffffff}
+html.pt-to-night .pt-veil{background:#090b0d}
+@view-transition{navigation:auto}
+/* the World inside the Music page's frame (mnet.html, html.mn-music-frame before any script): the Music page keeps the one bar */
+html.mn-music-frame .appbar{display:none!important}
+@media (prefers-reduced-motion:reduce){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
 *{scrollbar-width:thin;scrollbar-color:var(--ruby) transparent}::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-track{background:var(--ink)}::-webkit-scrollbar-thumb{background:linear-gradient(var(--ruby),var(--ruby-hot));border-radius:11px;border:3px solid var(--ink)}::-webkit-scrollbar-thumb:hover{background:var(--ruby-hot)}:focus-visible{outline:2px solid var(--ruby-hot);outline-offset:3px;border-radius:3px}
 @media (orientation:landscape) and (max-height:560px){.command__head{left:auto;right:clamp(1.2rem,4vw,3rem);top:clamp(4.8rem,26vh,6.5rem);max-width:42vw;text-align:right}
 .command__head .kicker{justify-content:flex-end}
@@ -1830,6 +1840,10 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
    them (AGENTS.md, the logos). */
 .appbar__m--creator{border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px rgba(244,239,230,0.3)}
 .appbar__m--initial{display:grid;place-items:center;border-radius:50%;background:rgba(244,239,230,0.14);box-shadow:0 0 0 1px rgba(244,239,230,0.3);font:800 0.82rem/1 var(--ui,system-ui,sans-serif);text-transform:uppercase;color:inherit}
+/* the initial is the coin, not a label: the visually-hidden rule for a tab's label spans (above) left a member without a
+   photo an empty middle tab (owner, 2026-10-20: no broken or blank tab between screens) */
+.appbar__tab>span.appbar__m--initial{position:static;width:1.75rem;height:1.75rem;overflow:visible;clip:auto;clip-path:none;white-space:normal}
+.appbar--admin .appbar__tab>span.appbar__m--initial{width:2.6rem;height:2.6rem}
 /* THE HM RIDES ON ITS HEIGHT, not on a square. The mark is 1.4:1 and the
    bar already carries a wide icon (the EQ glyph is nearly 2:1), so matching
    the other tabs' height and letting the width follow keeps every tab's

@@ -14,7 +14,8 @@ const preflight = (path, origin = 'https://matthew.mccluster.org', extra = {}) =
 test('every route family the World and the studios call from a browser answers its preflight 204 with the allowlisted origin', () => {
   for (const path of ['/v1/mnet/bootstrap?app_key=mccluster-web', '/v1/mnet/feed', '/v1/mnet/notifications', '/v1/mnet/profile', '/v1/mnet/people/someone/follow',
     '/v1/mnet/live/directory', '/v1/mnet/media/upload-url', '/v1/developer/consumers', '/v1/fbi/desk', '/v1/compute/balance', '/v1/ai/route',
-    '/v1/creator-sites/publish', '/v1/creator-billing/entitlement', '/v1/action-connect/status', '/v1/platform/plans', '/v1/mnet']) {
+    '/v1/creator-sites/publish', '/v1/creator-billing/entitlement', '/v1/action-connect/status',
+    '/v1/action-archive/invitation', '/v1/action-archive/claim', '/v1/action-archive/invitations', '/v1/action-archive/provider/ocho-great', '/v1/platform/plans', '/v1/mnet', '/v1/news-briefs', '/v1/news-briefs/request', '/v1/news-briefs/leads']) {
     const res = preflightResponse(preflight(path), env);
     assert.ok(res, path + ' is answered');
     assert.equal(res.status, 204, path);
@@ -47,4 +48,21 @@ test('the platform entry asks before any gated handler, right after health', asy
   }
   assert.ok(at > src.indexOf('humanUpriseResponse(request, env)'), 'the World hosts answer their own requests first');
   assert.deepEqual(PREFLIGHT_FIRST_PREFIXES.filter((p) => ['/v1/collect', '/v1/whip', '/v1/music'].includes(p)), [], 'the routes that answer other origins on purpose are not here');
+});
+
+test('cohort archive browser preflights are answered without user authentication or service credentials', () => {
+  const paths = ['/v1/action-archive/invitation', '/v1/action-archive/claim',
+    '/v1/action-archive/invitations', '/v1/action-archive/provider/ocho-great'];
+  for (const path of paths) {
+    for (const method of ['POST', 'PATCH']) {
+      const request = preflight(path, 'https://matthew.mccluster.org', {
+        'access-control-request-method': method
+      });
+      const res = preflightResponse(request, env);
+      assert.equal(res?.status, 204, path + ' ' + method);
+      assert.equal(res.headers.get('access-control-allow-origin'), 'https://matthew.mccluster.org');
+      assert.match(res.headers.get('access-control-allow-headers'), /authorization/);
+    }
+  }
+  assert.equal(preflightResponse(preflight('/v1/action-archives/claim'), env), null);
 });

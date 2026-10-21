@@ -1,4 +1,4 @@
--- Behaviour tests for supabase/pending/music_creator_one_click_v1.sql, as the
+-- Behaviour tests for supabase/migrations/20261021050105_music_creator_one_click_v1.sql, as the
 -- real API roles with the JWT claims Supabase would set. Runs against a
 -- scratch database (scripts/test-music-creator-db.sh). Every check raises on
 -- failure.
@@ -51,11 +51,11 @@ insert into public.platform_profiles(user_id, mccluster_id, display_name) values
   ('00000000-0000-4000-8000-0000000000d1', null, null),
   ('00000000-0000-4000-8000-0000000000e1', 'zed', 'Zed'),
   ('00000000-0000-4000-8000-0000000000c1', 'kimk', 'Kim');
-insert into public.network_profiles(m_uid, display_name, bio, website_url) values
-  ('10000000-0000-4000-8000-0000000000a1', 'Ana Rivers', 'Songs from the river.', 'https://ana.example'),
-  ('10000000-0000-4000-8000-0000000000d1', '', '', 'http://insecure.example'),
-  ('10000000-0000-4000-8000-0000000000e1', 'Zed Lane', '', ''),
-  ('10000000-0000-4000-8000-0000000000c1', 'Kim K', 'Old bio', '');
+insert into public.network_profiles(m_uid, display_name, bio, website_url, avatar_url) values
+  ('10000000-0000-4000-8000-0000000000a1', 'Ana Rivers', 'Songs from the river.', 'https://ana.example', 'https://cdn.example/ana.jpg'),
+  ('10000000-0000-4000-8000-0000000000d1', '', '', 'http://insecure.example', 'http://insecure.example/dev.jpg'),
+  ('10000000-0000-4000-8000-0000000000e1', 'Zed Lane', '', '', ''),
+  ('10000000-0000-4000-8000-0000000000c1', 'Kim K', 'Old bio', '', '');
 -- Kim is already a creator; her presentation row says music is off
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000c1');
 insert into public.music_creator_profiles(m_uid, handle, artist_name, bio) values
@@ -85,6 +85,7 @@ do $$ declare s jsonb := public.music_creator_state(); begin
   perform pg_temp.check((s->>'ok')::boolean, 'ana: ready');
   perform pg_temp.check(s->'prefill'->>'handle' = 'ana.sings', 'ana: handle is her M handle, lower-cased');
   perform pg_temp.check(s->'prefill'->>'artist_name' = 'Ana Rivers', 'ana: artist name is her public name');
+  perform pg_temp.check(s->'prefill'->>'avatar_url' = 'https://cdn.example/ana.jpg', 'ana: her picture comes along');
 end $$;
 -- the state call writes nothing
 select pg_temp.check(not exists (select 1 from public.music_creator_profiles where m_uid = '10000000-0000-4000-8000-0000000000a1'), 'state wrote nothing');
@@ -101,6 +102,8 @@ do $$ declare s jsonb := public.music_become_creator(null, null, true); begin
 end $$;
 select pg_temp.check((select bio = 'Songs from the river.' and website_url = 'https://ana.example' and terms_version = 'music-creator-v1' and status = 'active'
   from public.music_creator_profiles where m_uid = '10000000-0000-4000-8000-0000000000a1'), 'ana: bio, https site, terms, active');
+select pg_temp.check((select avatar_url = 'https://cdn.example/ana.jpg'
+  from public.music_creator_profiles where m_uid = '10000000-0000-4000-8000-0000000000a1'), 'ana: her profile picture is her artist picture (owner, 2026-10-20)');
 select pg_temp.check((select music_enabled from public.identity_presentations where m_uid = '10000000-0000-4000-8000-0000000000a1'), 'ana: presentation linked');
 -- idempotent: again, and after an edit, nothing is overwritten and the state is the same
 update public.music_creator_profiles set artist_name = 'Ana R.' where m_uid = '10000000-0000-4000-8000-0000000000a1';
@@ -131,6 +134,7 @@ do $$ declare s jsonb := public.music_become_creator('@Dev-Beats', 'Dev Beats', 
   perform pg_temp.check((s->>'created')::boolean and s->'profile'->>'handle' = 'dev-beats', 'dev: created with the handle he typed, got ' || s::text);
 end $$;
 select pg_temp.check((select website_url = '' from public.music_creator_profiles where m_uid = '10000000-0000-4000-8000-0000000000d1'), 'dev: an http site is not copied');
+select pg_temp.check((select avatar_url = '' from public.music_creator_profiles where m_uid = '10000000-0000-4000-8000-0000000000d1'), 'dev: an http picture is not copied');
 
 -- ---------- a taken handle ----------
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000e1');

@@ -57,25 +57,26 @@ test('the bar knows the World\'s own host and keeps today\'s behaviour until the
 test('a creator\'s front page puts the creator in the middle of the bar, with their own picture or initial', async () => {
   const bar = await read('js/tabbar.js');
   assert.match(bar, /var PERSPECTIVE_KEY = "mcc_perspective";/);
-  assert.match(bar, /window\.addEventListener\("mcc:perspective", function \(e\) \{ setPerspective\(e\.detail\); \}\);/);
+  assert.match(bar, /window\.addEventListener\("mcc:perspective",function\(e\) \{ if\(AUTH_STATE\.signed_in\)setPerspective\(e\.detail\); \}\);/, "only authenticated users select another perspective");
   assert.match(bar, /var HANDLE_RE = \/\^\[a-z0-9\]\[a-z0-9\._-\]\{2,39\}\$\/;/, 'a handle is validated before it becomes a link');
   assert.match(bar, /if \(u\.protocol === "https:"\) avatar = u\.href;/, 'only an https picture is painted');
-  assert.match(bar, /var door = HOUSE \+ "music-creator\.html\?handle=" \+ encodeURIComponent\(p\.handle\);/);
+  assert.match(bar, /p\.kind==="artist" \? "music-creator\.html" : "member-front\.html"/, "creators retain artist pages and all members have front pages");
   assert.match(bar, /<img class="appbar__m appbar__m--creator" src="' \+ attrOf\(p\.avatar\) \+ '" alt="">/);
   assert.match(bar, /<span class="appbar__m appbar__m--initial" aria-hidden="true">' \+ textOf\(initialOf\(p\.name\)\) \+ "<\/span>/);
   assert.match(bar, /homeTab\.setAttribute\("data-perspective", p\.handle\);/);
   /* the house is one hold away: the M as supplied, beside Everything */
   assert.match(bar, /mmark: \["assets\/img\/m-mark\.png", "appbar__m"\],/);
-  assert.match(bar, /WINGS\.home\.slots\[0\] = \[HOUSE \+ "index\.html", "mmark", "McCluster",/);
+  assert.match(bar, /WINGS\.home\.slots\[0\] = \[HOUSE \+ "index\.html\?front=house", "mmark", "McCluster",/);
   /* Matthew's front door lets the perspective go */
-  assert.match(bar, /var PERSPECTIVE = AT_HOUSE \? null : readPerspective\(\);\n  if \(AT_HOUSE\) storePerspective\(null\);/);
+  assert.match(bar, /var PERSPECTIVE=readPerspective\(\);/);
+  assert.match(bar, /if\(HOUSE_VISIT && currentSubject\(\)\)/, "founder perspective is explicit and owner-scoped");
   assert.match(bar, /perspective: function \(p\) \{ return arguments\.length \? setPerspective\(p\) : PERSPECTIVE; \},/);
   /* the painted bar is what a held wing comes back to */
   assert.match(bar, /paintPerspective\(\);\n    HOME_BAR = dock\.innerHTML;/);
   assert.match(bar, /paintPerspective\(\);\n    \/\* Exactly three columns/, 'sign-in state repaints the middle cell through the perspective');
 
   const page = await read('js/music-creator-profile.js');
-  assert.match(page, /var perspective = \{ handle: p\.handle, name: p\.artist_name, avatar: avatar \|\| "" \};/);
+  assert.match(page, /var perspective = \{ kind: "artist", handle: p\.handle, name: p\.artist_name, avatar: avatar \|\| "" \};/);
   assert.match(page, /root\.sessionStorage\.setItem\("mcc_perspective", JSON\.stringify\(perspective\)\)/);
   assert.match(page, /root\.dispatchEvent\(new CustomEvent\("mcc:perspective", \{ detail: perspective \}\)\)/);
   const i = page.indexOf('var avatar = PAGE.safeArtwork(p.avatar_url);'), j = page.indexOf('var perspective = {');
@@ -152,7 +153,8 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   /* leaving: the token rides in the fragment, never a query */
   assert.match(bar, /url\.hash = \(url\.hash && url\.hash !== "#" \? url\.hash \+ "&" : "#"\) \+ HANDOFF \+ "=" \+ encodeURIComponent\(token\);/);
   assert.doesNotMatch(bar, /searchParams\.set\("mcc_handoff"/);
-  assert.match(bar, /handoffHref\(dest\)\.then\(function \(h\) \{ location\.href = h; \}, function \(\) \{ location\.href = dest; \}\);/, 'the bar\'s own tabs carry it');
+  assert.match(bar, /handoffHref\(dest\)\.then\(function \(h\) \{ navigateDocument\(h\); \}, function \(\) \{ navigateDocument\(dest\); \}\);/, 'the bar\'s own tabs carry the handed-off destination through document navigation');
+  assert.match(bar, /function navigateDocument\(href\) \{\s*if \(window\.MCC_WORLD_AUDIO && window\.MCC_WORLD_AUDIO\.leaveFrame\(href\)\) return;\s*location\.href = href;\s*\}/, 'document navigation passes the same destination to the retained-frame exit or the current window');
   assert.match(bar, /if \(!a \|\| a\.target === "_blank" \|\| a\.hasAttribute\("download"\) \|\| a\.closest\("\.appbar"\)\) return;/, 'any page link carries it; the bar sails itself');
   /* arriving: scrub first, exchange from this origin, verify, store, reload */
   const scrub = bar.indexOf('history.replaceState(null, "", location.pathname + location.search + rest)');
@@ -173,4 +175,15 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   assert.doesNotMatch(route, /refresh_token/, 'no refresh token ever leaves the route: one session per origin');
   const entry = await read('workers/mccluster/src/entry-platform.js');
   assert.match(entry, /const handoff = await handleAuthHandoff\(request, env\);/);
+});
+
+test('async member bootstrap refreshes wing snapshot and Whip approval is server-owned',async()=>{
+  const bar=await read('js/tabbar.js');
+  const front=await read('js/member-front.js');
+  assert.match(bar,/if\(!PERSPECTIVE&&SELF_PROFILE&&!wingOn\)\s*\{\s*paintPerspective\(\);\s*HOME_BAR=dock\.innerHTML;/);
+  assert.match(bar,/if \(SELF_PROFILE && !PERSPECTIVE\) \{\s*paintPerspective\(\);\s*HOME_BAR = dock\.innerHTML;/);
+  assert.match(front,/\/api\/drivers\/clearance/);
+  assert.match(front,/clearance\?\.can_drive===true/);
+  assert.doesNotMatch(front,/driver\.compliance_verified/);
+  assert.doesNotMatch(front,/driver\.approval_status/);
 });

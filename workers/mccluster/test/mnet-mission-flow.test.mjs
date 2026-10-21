@@ -10,15 +10,20 @@ function harness(){
   const handlers={};
   const nodes=new Map();
   function el(id){
-    if(!nodes.has(id))nodes.set(id,{id,hidden:false,disabled:false,value:'',textContent:'',innerHTML:'',checked:false,open:false,focus(){},showModal(){this.open=true;},close(){this.open=false;},addEventListener(type,fn){handlers[id+':'+type]=fn;},querySelector(){return el('proofSubmit');}});
+    if(!nodes.has(id))nodes.set(id,{id,hidden:false,disabled:false,value:'',textContent:'',innerHTML:'',checked:false,open:false,focus(){},closest(){return null;},showModal(){this.open=true;},close(){this.open=false;},addEventListener(type,fn){handlers[id+':'+type]=fn;},querySelector(){return el('proofSubmit');}});
     return nodes.get(id);
   }
   const calls=[];
+  const state={user:{id:'user-1'},guest:false,boot:{next_step:'ready'},stall:''};
+  const session={access_token:'fixture-mission-session'};
   const missions={all:[],current:null,assignment:null,stats:{},campaign:'',content:'',source:'',attributedMission:'',liveSession:'',liveMission:'',returnHref:'',proofFile:null,proofPreview:''};
   const context={
-    missions,$:el,state:{user:{id:'user-1'}},MISSION_FIELDS:'id,title,status',
+    /* the mission flow is driven with Missions on: the World's social-only switch (MISSIONS_OFF in js/mnet.js) keeps it in the code */
+    missions,$:el,state,MCC:{session(){return session;}},MISSION_FIELDS:'id,title,status',MISSIONS_OFF:false,
     sbRest(path){const d=deferred();calls.push({kind:'rest',path,...d});return d.promise;},
     sbRpc(name,args){const d=deferred();calls.push({kind:'rpc',name,args,...d});return d.promise;},
+    askToSignIn(reason){calls.push({kind:'gate',name:'signin',reason});},
+    askToFinish(reason){calls.push({kind:'gate',name:'profile',reason});return true;},
     clearMissionCapture(){},setStatus(node,message){node.textContent=message;},
     /* the emblem or Fund it: the dialog asks the fund line after the mission loads; not this test's subject */
     fundState(){return Promise.resolve({open:false,note:''});},fundLineHtml(){return '';},
@@ -35,8 +40,17 @@ function harness(){
   const fetchStart=source.indexOf('  function fetchMission(id){');
   const fetchEnd=source.indexOf('  function clearMissionCapture(){',fetchStart);
   assert.ok(fetchStart>0&&fetchEnd>fetchStart);
-  vm.runInNewContext(source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,joinMission,submitMissionProof};',context);
-  return {actions:context.actions,missions,calls,el};
+  const missionDisplayStart=source.indexOf('  function publicMission(m) {');
+  const missionDisplayEnd=source.indexOf('  var MISSION_FIELDS=',missionDisplayStart);
+  assert.ok(missionDisplayStart>0&&missionDisplayEnd>missionDisplayStart,'mission public-title mapper exists');
+  // Exercise the real account predicates; only the UI prompt and transport are doubles.
+  const sessionStart=source.indexOf('  function sessionToken() {');
+  const sessionEnd=source.indexOf('  function storagePath(',sessionStart);
+  const stepStart=source.indexOf('  function needsStep() {');
+  const stepEnd=source.indexOf('  function paintFinishCard(',stepStart);
+  assert.ok(sessionStart>0&&sessionEnd>sessionStart&&stepStart>0&&stepEnd>stepStart);
+  vm.runInNewContext(source.slice(sessionStart,sessionEnd)+source.slice(stepStart,stepEnd)+source.slice(missionDisplayStart,missionDisplayEnd)+source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,joinMission,submitMissionProof};',context);
+  return {actions:context.actions,missions,calls,el,state,session};
 }
 test('rapid mission switches ignore stale detail response',async()=>{
   const h=harness();
@@ -65,12 +79,41 @@ test('older assignment lookup cannot overwrite a newly opened mission',async()=>
 });
 test('duplicate join invocations send one RPC',async()=>{
   const h=harness();
-  h.missions.current={id:'mission-A'};
-  h.actions.joinMission();h.actions.joinMission();
+  const assignmentId='22222222-2222-4222-8222-222222222222';
+  h.missions.current={id:'mission-A',title:'A'};
+  const joining=h.actions.joinMission(),duplicate=h.actions.joinMission();
   assert.equal(h.calls.filter(c=>c.name==='join_action_mission').length,1);
-  h.calls[0].resolve({assignment_id:'assignment-A',status:'in_progress'});
-  await settle();
-  assert.equal(h.missions.assignment.id,'assignment-A');
+  assert.equal((await duplicate).accepted,false);
+  h.calls[0].resolve({assignment_id:assignmentId,status:'in_progress'});
+  assert.equal((await joining).accepted,true);
+  assert.equal(h.missions.assignment.id,assignmentId);
+  assert.equal(h.el('mnMissionJoin').disabled,false);
+});
+test('join prompts for a current session and completed profile before any RPC',async()=>{
+  for(const condition of ['guest','expired','profile','retry']){
+    const h=harness();
+    h.missions.current={id:'mission-A',title:'A'};
+    h.el('mnMissionDialog').open=true;
+    if(condition==='guest')h.state.guest=true;
+    if(condition==='expired')h.session.access_token='';
+    if(condition==='profile')h.state.boot.next_step='profile';
+    if(condition==='retry')h.state.stall='retry';
+    assert.equal((await h.actions.joinMission()).accepted,false,condition);
+    assert.equal(h.calls.filter(c=>c.kind==='rpc').length,0,condition);
+    assert.equal(h.calls[0].name,['guest','expired'].includes(condition)?'signin':'profile',condition);
+    assert.equal(h.el('mnMissionDialog').open,false,condition);
+  }
+});
+test('join requires an active database assignment before reporting acceptance',async()=>{
+  for(const reply of [{}, {assignment_id:'not-a-uuid',status:'in_progress'}, {assignment_id:'22222222-2222-4222-8222-222222222222',status:'withdrawn'}]){
+    const h=harness();
+    h.missions.current={id:'mission-A',title:'A'};
+    const joining=h.actions.joinMission();
+    h.calls[0].resolve(reply);
+    assert.equal((await joining).accepted,false);
+    assert.equal(h.missions.assignment,null);
+    assert.equal(h.el('mnMissionJoin').disabled,false);
+  }
 });
 test('duplicate proof submissions send one RPC',async()=>{
   const h=harness();

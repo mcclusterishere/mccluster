@@ -286,12 +286,13 @@ for the ADMIN analytics view only.
   so the country edge and its state edges are one line
   (`data/geo/admin1/<CC>.json`, `tools/build-admin1-boundaries.mjs`; the
   10m source is simplified once with mapshaper, topology-preserving, 10%,
-  keep-shapes). The 1:110m file stays for the World globe.
+  keep-shapes).
 - **States and provinces for every country** (Natural Earth 1:10m Admin 1,
   239 country files): fetched only when that country is selected, cached,
   and their lines drawn for that country only. Only `control.html` loads
   `js/control-room/analytics-globe.js`; the public and member globes never
-  load a state file or the region read.
+  load these files (names, codes, polygons) or the region read. They draw
+  state LINES only, from their own derived files (C5).
 - **One selection** `{country, state}`: the location menu (all countries;
   the selected country's states listed under it as "US/US-CT"), the rows,
   Clear and a tap on the globe all go through `pickPlace()`, and the globe is
@@ -341,6 +342,119 @@ for the ADMIN analytics view only.
   Natural Earth"); natural-earth-vector v5.1.2. Recorded in each data file and
   in `data/geo/admin1/index.json`.
 
+### C5. The World globe's borders and states (owner, 2026-10-20)
+
+"The map needs to be clearly defined with clearly defined borders, and even
+within the countries clearly defined states within the countries, drawn
+accurately." (The same message: "I saw a post in Russia posted somewhere else
+on the map.")
+
+- **Countries at 1:10m, US point of view.** `data/geo/world-countries-10m.json`
+  (243 countries, Natural Earth `ne_10m_admin_0_countries_usa` simplified to
+  10% with mapshaper, delta-encoded hundredths of a degree;
+  `tools/build-world-countries.mjs`) replaces the World's 1:110m file, which
+  had no shape for 72 countries (Singapore, Hong Kong, Bahrain, Malta, Monaco,
+  Andorra …) and put Geneva in France and Windsor in the United States. The US
+  view matches the gazetteer GDELT's place names come from, so a Crimea story
+  that says "Ukraine" is pinned inside the drawn Ukraine. Drawing a border is
+  not a statement on any dispute.
+- **Land borders drawn once.** `data/geo/world-borders-10m.json`, the lines two
+  countries share; the coastline is the imagery's. They are the map, not
+  decoration: they stay while the camera comes down and give way below 700 km,
+  where the street map or aerial imagery (with its own borders) is the subject.
+  Flags, labels and the US ribbon keep their fade.
+- **States, lines only.** `data/geo/world-states/<A2>.json` +
+  `index.json` (`tools/build-world-states.mjs`): the edges two states of one
+  country share, derived from `data/geo/admin1` (same topology, so a state line
+  meets its neighbours exactly). No names, codes or data travel with them.
+  Where Natural Earth's first level is a finer unit, the well-known level is
+  drawn instead (France's regions, Italy's regions, Spain's communities, the
+  Philippines' regions, the UK's four nations …; `GROUP` in the tool). The globe
+  fetches a country's lines once the camera is below 7,500 km and the country
+  is in view, and always for a selected country. A state goes with the country
+  whose drawn shape its label point falls in, unless that point is within half a
+  degree of its own country (so Crimea is Ukraine's, but San Marino's
+  municipalities stay San Marino's).
+- **A state, by double tap** (owner, 2026-10-21: "once you've selected a
+  country ... select a state thereafter, but only after selecting the country
+  already and double tapping the state").
+  - **Data.** `data/geo/world-state-areas/<A2>.json` (same tool, same
+    countries as the index) carries each state as a shape with its name. A
+    grouped country's state is its group, made of its units' shapes, so the
+    shape tapped is the one the lines draw. The globe fetches a country's file
+    when the country is selected.
+  - **Taps.** With a country selected, a double tap inside it picks the state
+    under it: the state is lit and outlined, and the card names it with its
+    country. A double tap on the picked state, a single tap inside the country,
+    or the card's × goes back to the whole country.
+  - **Unchanged.** A single tap with no state picked lets the country go, as
+    before, once the 350 ms double-tap gap has passed. A double tap on a
+    country not yet selected selects the country only. Taps are timed by their
+    own events (`pointerdown`'s `timeStamp`), so a busy frame cannot split a
+    double tap in two.
+  - **The feed.** The page is told the state with its shape (`hu:country`'s
+    `country.state`). The region label reads "State, Country". Local keeps the
+    stories whose point falls inside the state. Member posts carry only their
+    country, so they stay. A state of the country already loaded does not load
+    the country's feed again.
+- **The news heat map, not pins** (owner, 2026-10-21: "instead of pins on the
+  map ... aggregate each mention of a state or country with a heat map of how
+  many articles or mentions it has ... so people aren't just needlessly
+  searching for tiny pins").
+  - **The counts.** `GET /v1/world/news-heat`
+    (`workers/mccluster/src/world-news-discovery.js`) counts the last 24 hours
+    of stories by the country each one mentions (ISO, from GDELT's FIPS).
+    `?country=XX` gives that country's stories as places on a 0.05° grid
+    instead.
+    - Only counts and rounded places leave the Worker.
+    - It reads a page at a time, up to 15,000 stories (`capped` says when there
+      were more).
+    - It is kept five minutes per data centre.
+    - It answers an empty 200 when the database can't.
+  - **The globe** (`js/world-countries.js`) shades each country by its count.
+    A selected country shows its states instead, counted from those places with
+    the state shapes. The card gives the count, and a legend on the globe says
+    what the colours mean.
+  - **The pins.** There is no pin per story. The one pin left is the story
+    whose place a news card sent ("where is this?").
+- **The place card** (owner, 2026-10-21: "shouldn't be the full width of the
+  top of the screen ... only in the middle ... how many users ... how many
+  news articles ... how many posts from users").
+  - **Where.** In the World the page draws it (`#mnPlaceCard`, `js/mnet.js`
+    `paintPlaceCard`), centred under the bar, at most 300px wide and two rows
+    tall. The globe's own card is hidden there. The corner buttons and the Live
+    badge step down below it together; the headline hides while the card is
+    over it. The × lets the state or the country go.
+  - **The three counts** (`statsFor` in `js/world-countries.js`; a state shows
+    its news only). A dash means not known yet.
+    - **News · 24 h**: the heat map's count for the country, or the state's.
+    - **Posts**: public, top-level member posts placed in the country
+      (`network_posts.country_code`), counted by the same `news-heat` call as
+      `posts`. It is `null`, so a dash, until place scope is on
+      (`supabase/pending/20261019222500_world_place_scope_v1.sql` applied and
+      `WORLD_PLACE_SCOPE_ENABLED=true`). It reads up to 5,000 placed posts; more
+      than that answers `null` too, never a part passed off as the count (an
+      aggregate in the database is the next step at that size). A day with no
+      stories still carries the posts: the globe takes any good answer, and
+      only shading shows the legend.
+    - **Members**: the sum of the country's published member regions
+      (`action_globe_public_regions`: members who chose to share their region,
+      five or more per region). Nothing else is counted: not a profile
+      address, not an IP, not where a post was placed. A country with no
+      published region shows a dash.
+- **One heat scale for the World and Analytics** (`js/heat-scale.js`; owner, of
+  Analytics: "lackluster ... the shading isn't dynamic enough").
+  - **What changed.** The old shading was value ÷ the largest value,
+    square-rooted, so one big country pushed every other one into the bottom
+    fifth.
+  - **The level now.** A value's level is half its rank among the places that
+    have any, and half its size on a log scale. Ties share a level, and the
+    least is faint but never invisible.
+  - **The World's ramp** is semantic heat: crimson through orange to pale
+    gold, rising in lightness at every stop.
+  - **Analytics' ramp** is one hue built from its accent token: land, then
+    accent, then a light tint. Its legend bar is the same three stops in CSS.
+
 ### C3. The owner's five-tab bar (admin first)
 
 For the house owner only (`GET /v1/status`, the Control Room's own owner
@@ -376,16 +490,19 @@ first, as for every core route).
   2. *privacy_acknowledged* (**location consent is the privacy
      acknowledgement**, owner 2026-10-15). The member's own Supabase auth
      record (`user_metadata`) has `privacy_policy_version` equal to the
-     current version (`2026-09-26`: `PRIVACY_VERSION` in `world-cctv.js`,
+     current version (`2026-10-19`: `PRIVACY_VERSION` in `world-cctv.js`,
      `VERSION` in `js/live-content.js`, `MCC_PRIVACY_REQUIRED_VERSION` in
      `js/analytics.js`; a test pins all three) and a parseable
      `privacy_acknowledged_at`. Where it lives: the join flow writes both
      fields at sign-up (`js/action.js`). Production on 2026-10-15: 110 auth
-     users, 33 with the current version on record. The site-entry gate
-     (`js/live-content.js`, `mcc_privacy_ack`) is browser storage the Worker
-     cannot read, so the other members record theirs with one tap on the
-     CCTV lock ("I agree to the Privacy Policy"), which writes the same two
-     fields to their own record with their own session (`PUT
+     users, 33 with the current version on record. The site-entry notice
+     (`js/live-content.js`, `mcc_privacy_ack`) is browser storage and a
+     cookie the Worker does not read, so on its own it does not count here.
+     Agreeing to that notice while signed in also writes the same two fields
+     to the member's record (owner, 2026-10-20: the notice is shown once per
+     version, on any McCluster host); the other members record theirs with
+     one tap on the CCTV lock ("I agree to the Privacy Policy"), which writes
+     the same two fields to their own record with their own session (`PUT
      /auth/v1/user`). `privacy.html` already discloses the automatic
      IP-derived country/region/city and that precise device location is read
      only when the browser permission is granted. The separate

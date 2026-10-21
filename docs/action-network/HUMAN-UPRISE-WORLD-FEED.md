@@ -92,7 +92,7 @@ same two:
   down the frame's left edge (decoration only). No navy remains. The house
   app bar is left to the house stylesheet.
 - **Globe:** a lit NASA Earth (owner's signed-out reference): Blue Marble Next
-  Generation by day, Black Marble city lights by night (lifted so the sea
+  Generation by day, NASA VIIRS City Lights by night (2026-10-20; Black Marble 2016 before) (lifted so the sea
   reads navy), the Visible Earth cloud composite (a still, not today's
   weather), an atmosphere rim, and the sun where it really is when the page
   opens, so the day/night line is the real one. The layers button cycles
@@ -353,19 +353,66 @@ headline with a red period, tall rounded fields with an icon cell and a
 state at the right, one red pill with the arrow in a darker circle, a lock
 note under it):
 
-1. **Make it yours.** Username (checked as it is typed: the pattern here,
+1. **Make your profile.** ("Your username and name. It's how people find
+   you.") Username (checked as it is typed: the pattern here,
    the name at `GET /v1/mnet/people/<handle>`, where a person nobody can find
    is free and gets the green check) and display name; "About you" rides
    along collapsed, optional and private. Saves the public profile
    (`PATCH /v1/mnet/profile`).
-2. **Where to reach you.** Full legal name and mailing address, private,
+2. **Where we can reach you.** Full legal name and mailing address, private,
    written through `js/fan-intake.js` to `fan_profiles` (the only writer of
    that table). This is the `contact` step the bootstrap requires; it used
    to live on the account page and open from the card by a redirect.
-3. **Lock it in.** Phone (normalised to E.164), the account email read-only,
-   and a password (optional, at least 8 characters). "Enter the World"
-   re-reads the bootstrap and lands on the feed with the card gone and the
-   composer back.
+3. **Your phone and sign-in.** Phone (normalised to E.164), the account
+   email read-only, and a password only when the account has none (one made
+   with Google). The last button says where it goes: "Done" (back to
+   `?next`) or "Go to the World", which re-reads the bootstrap and lands on
+   the feed with the card gone and the composer back.
+
+### One sign-up (owner, 2026-10-20)
+
+"Once you make a profile … you should be able to sign up to anything else
+without having to enter any additional information unless your profile's
+not filled out … that 3-panel profile sign up thing. That should be the new
+sign up thing." The three pages are now the site's one sign-up:
+
+- **Every Join and Create account comes here.** The World's Join and the
+  guest card, account.html's Create tab (its own long form is gone: it links
+  to `mnet.html?join=1`), Creator Studio's gate, and the album's unlock (via
+  account.html). The credentials are an email and a password (or Google);
+  the name, the address and the phone are the pages after it. A new account
+  goes straight into page 1, not the World's card.
+- **Back to where the person started.** `?next=` on mnet.html and
+  account.html, this origin only (`MCC.safeNext` in `js/mcc-auth.js`: a
+  scheme, `//host`, a backslash or a control character is refused).
+  Signing in on account.html goes back to `?next`; a profile that is not
+  done goes through the pages first (`mnet.html?finish=1&next=…`). A sign-up
+  that waits on an emailed confirmation keeps its `next` on the device for a
+  week, bound to that account (a SHA-256 of its email, never the address), so
+  its first sign-in after it carries on. Any other account that signs in on
+  that device discards it unused: not its destination, not its `from`.
+- **A returning member still lands on the World** with the step in its
+  card. The card and every "finish your profile" prompt open the pages at
+  the first unfinished one: page 2 when the username and name are set and
+  only the contact step is open.
+- **Nothing is asked twice.** Page 2 is filled from `fan_profiles`, then from
+  the sign-up's own metadata (`shipping_*`, legal first and last name); page 3
+  asks for a password only when there is none; a World profile save keeps the
+  banner (the Worker keeps any field a save leaves out). The artist doors
+  (`data-creator-door`: Listen's "Become a creator", an artist page's "Make
+  your own artist page", the desk's "Become a creator") are one tap for a
+  finished profile (`js/creator-onboarding.js`: name, handle, bio, website and
+  picture from the profile, then Creator Studio); an unfinished profile goes
+  through the pages and back to Creator Studio for the tap. The seat
+  applications, the onboarding brief and the print shop are pre-filled from
+  the account.
+
+Evidence: `scripts/test/one-signup-flow.test.mjs`,
+`workers/mccluster/test/mnet-profile-save.test.mjs`, and the browser walks in
+`scripts/e2e/human-uprise-door.e2e.mjs` (Join → three pages → back to
+`next`; the first unfinished page; the shipping prefill; page 3 without a
+password) and `scripts/e2e/creator-onboarding.e2e.mjs` (the one tap from a
+door; an unfinished profile routed through the pages).
 
 A steps bar (`#mnSteps`, 1 / 3) and "← Back a step" carry the member through;
 "You can update this anytime." sits under the pill. Editing an existing
@@ -405,7 +452,7 @@ signed-in members only** (`js/action-globe.js`, "THE EARTH UP CLOSE"):
   night lights would cover the day side.
 - **Aerial imagery.** From 3,000 km down, Bing Maps Aerial with Labels
   (asset 3) eases in over NASA's day, whole by 1,200 km, while the cloud and
-  the night lights ease out (Black Marble is opaque and Cesium's day and
+  the night lights ease out (the city lights are opaque and Cesium's day and
   night blend does not fade with height, so on the night side it would
   otherwise cover the ground at every height). If an asset fails, the next is
   tried once: Bing Maps Aerial (2), then Sentinel-2 (3954); if all fail,
@@ -920,3 +967,57 @@ should match the World's use before launch. The ion layers are now for
 signed-in members only, which bounds that draw to members; the plan,
 the token's asset scope and usage alerts are still the owner's to set. The creator audience is sampled like the rest of
 `my-creator`; an aggregate in the database would make it exact.
+
+## Owner UI pass (2026-10-20)
+
+- **Where a story is from.** A news card's place chip names the country the
+  story mentions ("Nigeria", "Kenya") instead of saying "On the Earth"; a tap
+  still turns the Earth there (`newsCountry` in `js/mnet.js`).
+- **City lights only at night.** The night layer is NASA's VIIRS City Lights
+  (brighter, crisper lights on a dark Earth than Black Marble 2016). It never
+  shows on the day side, in Travel or anywhere else, and one setting
+  (`NIGHT_LIGHTS` in `js/action-globe.js`) answers Cesium's 30% night shading so
+  lit cities read as lights.
+- **Missions is one screen.** While Missions is up the sheet does not scroll:
+  the globe gives the deck more room, the card's picture shrinks first, the
+  words stop with a fade ("Read full mission" opens every word), Pass and
+  Accept stay on screen, and a card takes the whole touch so a swipe is never a
+  scroll (`css/mission-swipe-deck.css`). A card never shrinks below 220px: on a
+  phone turned on its side the sheet scrolls the last few pixels to Pass and
+  Accept instead.
+- **Where to.** Choosing a destination with no starting point asks for the
+  location from that tap (the pickup reads "Use my location"); refused, the
+  pickup field takes focus. The route and "Go" follow as before.
+- **Rides and Flights.** Two tiles, the icon on top, each split by an on/off
+  switch: Rides is Directions (route, ride) or Rentals; Flights is Commercial
+  (the longer-trip planner) or Private (not bookable yet, said plainly).
+  Door-to-door stays under Plan a trip.
+- **Rentals.** Cars from Whip Equipped LLC, Matthew's separate company, named
+  as such. Isabeata is a fictional make; the Isabeata 2024 is the cheapest car,
+  $350 a week. Reserve opens Whip Equipped's rentals app on that car, which
+  takes it only once the fleet lists a vehicle named "Isabeata 2024" through the
+  operator console; until then its page says "Coming soon" and takes no
+  reservation, and it shows no invented rating or trip count.
+- **Daytime M.** On the white daytime bar the M is the owner's supplied dark
+  artwork (`assets/img/m-mark-dark.png`), as the light theme already uses;
+  nothing is recoloured.
+- **No sign-in flash.** The sign-in form ships hidden (`mnet.html`) and opens
+  only when something asks for it; a member with a stored session gets the
+  World shell at once while that session is checked, so switching to the World
+  never paints the form first.
+- **The World's song is random.** The first tap plays a song drawn at random
+  from every public song in `data/albums.json` (19 today, Heal the 3rd World
+  one of them); another random one follows when it ends
+  (`js/world-audio-continuity.js`). After the privacy acknowledgement, what
+  the listener does is recorded through `MCC_TRACK` with the song, its order in
+  the session, how it was chosen (`pick`: `random`, or `fallback` when the first
+  tap comes before the catalog has loaded, since playback must start inside the
+  tap itself) and the seconds in: `song_start`, `song_pause` (by the corner
+  button, the player, or another song starting), `song_resume`, `song_mute`,
+  `song_unmute`, `song_volume` (from/to), `song_end`, `song_hidden` (tab to the
+  background) and `song_leave`. The song events add no account, place or
+  audio address of their own; they ride the site's existing analytics, so
+  they carry what every event already carries there (the visitor id and the
+  coarse location the collector records, under the privacy notice). A phone's
+  hardware volume buttons are not visible to a web page, so only volume
+  changed on the page is seen.

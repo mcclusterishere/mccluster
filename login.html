@@ -42,7 +42,14 @@
 (async function(){
   const status=document.getElementById('status');
   const button=document.getElementById('googleButton');
-  const authOrigin=new URLSearchParams(location.search).get('auth')||'https://auth.mccluster.org';
+  // The Google credential must never be posted to a URL chosen by a link.
+  const authOrigin='https://auth.mccluster.org';
+  function safeNext(){
+    const raw=new URLSearchParams(location.search).get('next')||'/account.html';
+    if(raw.includes('\\')||/[\u0000-\u001f\u007f]/.test(raw))return '/account.html';
+    try{const target=new URL(raw,location.origin);if(target.origin!==location.origin||!['https:','http:'].includes(target.protocol))return '/account.html';return target.pathname+target.search+target.hash;}
+    catch{return '/account.html';}
+  }
   function say(text,kind=''){status.textContent=text;status.className='status '+kind;}
   try{
     const cfg=await fetch(authOrigin+'/v1/auth/config',{credentials:'include'}).then(r=>{if(!r.ok)throw new Error('Auth service unavailable');return r.json();});
@@ -56,7 +63,7 @@
           const r=await fetch(authOrigin+'/v1/auth/google',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({credential:response.credential})});
           const out=await r.json(); if(!r.ok) throw new Error(out.error||'Sign-in failed');
           say('Signed in. Opening your account…','ok');
-          const next=new URLSearchParams(location.search).get('next')||'account.html';
+          const next=safeNext();
           setTimeout(()=>location.assign(next),350);
         }catch(e){say(e.message,'bad');}
       }

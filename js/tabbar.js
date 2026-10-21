@@ -17,11 +17,32 @@
     return s ? s.replace(/js\/tabbar\.js.*$/, "") : "";
   })();
 
+  // Loaded on the globe's embedded document too: its first trusted touch can
+  // reach the same-origin World soundtrack without an asynchronous message.
+  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null;
+  function loadWorldAudio() {
+    if (window.MCC_WORLD_AUDIO) return Promise.resolve(true);
+    if (worldAudioReady) return worldAudioReady;
+    worldAudioReady = new Promise(function (resolve) {
+      var script = document.createElement("script");
+      script.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
+      script.onload = function () {
+        var ready = !!window.MCC_WORLD_AUDIO;
+        if (!ready) worldAudioReady = null;
+        resolve(ready);
+      };
+      script.onerror = function () { worldAudioReady = null; script.remove(); resolve(false); };
+      document.head.appendChild(script);
+    });
+    return worldAudioReady;
+  }
+  loadWorldAudio();
+
   /* ---------- THREE HOSTS, ONE BAR ----------
      The World is served on a host of its own as well: the company's,
      mccluster.org (owner, 2026-10-15: "we need mccluster.org to actually
      show the World"; workers/mccluster/src/company-site/router.js), and
-     Human Uprise's own door, humanuprise.com, when the owner routes it
+     Equity Uprise's own door, humanuprise.com, when the owner routes it
      (owner, 2026-10-14: "the globe experience as its own solo experience
      ... interconnected with all the systems"; workers/mccluster/src/
      human-uprise/router.js). Standing on either, Music and the M are
@@ -108,7 +129,7 @@
         eqSvg(true) + '<span>Music</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      /* LAST COLUMN: the Globe, Human Uprise's World screen. It replaced the
+      /* LAST COLUMN: the Globe, Equity Uprise's World screen. It replaced the
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
          avatar, and the Globe wing's Account room). */
@@ -131,7 +152,7 @@
      matthew-mccluster.html used to opt out, on the reasoning that a hiring
      manager opening it from a job application should not be handed a bar
      reading "Music · Equity Uprise · HERE · Shakes · Profile". The bar is
-     three columns now and the site is the music, the house and Human Uprise, so
+     three columns now and the site is the music, the house and Equity Uprise, so
      that reasoning no longer holds: the page was simply a dead end with no
      way onward. It carries the bar like everything else. demo.html and
      embed.html still opt out, and should: one is a client's own site
@@ -212,8 +233,8 @@
     world: {
       home: "mnet.html?view=feed",
       slots: [
-        ["mnet.html?view=missions", "folk", "Missions", { title: "Human Uprise missions",
-          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Human Uprise." }],
+        ["mnet.html?view=missions", "folk", "Missions", { title: "Equity Uprise missions",
+          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Uprise." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],
@@ -250,7 +271,7 @@
      THIS ENFORCES IT.
 
      Equity Uprise, Whip Equipped and PRIM3 are put away while the site
-     concentrates on the music and on Human Uprise. Put away, not deleted: every
+     concentrates on the music and on Equity Uprise. Put away, not deleted: every
      page and every route still exists and still answers, and restoring a
      column is adding its tab back to ORDER and its wing back to WINGS.
 
@@ -284,7 +305,7 @@
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
     "create.html": "create",
-    /* the Globe column is the World: Human Uprise and its public shell.
+    /* the Globe column is the World: Equity Uprise and its public shell.
        Account rooms light no coin; they are contextual, not a column. */
     "mnet.html": "world", "action-globe.html": "world", "world-news.html": "world",
     "press.html": "home", "matthew-mccluster.html": "home",
@@ -307,7 +328,7 @@
      It does what every phone app's current tab does: back to the top. */
   dock.addEventListener("click", function (e) {
     var a = e.target && e.target.closest ? e.target.closest("a.appbar__tab.is-here") : null;
-    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var to;
     try { to = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
     /* "/" and "/index.html" are the same page (the HERE tab links the
@@ -334,6 +355,8 @@
      to McCluster's house, the M as supplied, beside Everything. The house
      clears it: standing at Matthew's front door, the M is back. */
   var PERSPECTIVE_KEY = "mcc_perspective";
+  var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";
+  var SELF_PROFILE = null, selfProfileEpoch = 0, lastVerifiedSubject = "";
   var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var HOUSE_ROOM = WINGS.home.slots[0];
   var HOUSE_LABEL = (function () {
@@ -344,30 +367,55 @@
   function attrOf(x) { return textOf(x).replace(/"/g, "&quot;"); }
   function cleanPerspective(p) {
     if (!p || typeof p !== "object") return null;
+    if (p.kind === "house") return { kind:"house" };
     var handle = String(p.handle || "").trim().toLowerCase();
     if (!HANDLE_RE.test(handle)) return null;
     var name = String(p.name || "").replace(/\s+/g, " ").trim().slice(0, 60) || "@" + handle;
-    var avatar = "";
-    try { var u = new URL(String(p.avatar || ""), location.href); if (u.protocol === "https:") avatar = u.href; } catch (e) {}
-    return { handle: handle, name: name, avatar: avatar };
+    var avatar = "", rawAvatar = String(p.avatar || "").trim();
+    /* no picture is no picture: an empty value resolved to this page's own address, which every member without a photo
+       then wore as a broken image in the middle tab; they get the initial of their name instead */
+    if (rawAvatar) try { var u = new URL(rawAvatar, location.href); if (u.protocol === "https:") avatar = u.href; } catch (e) {}
+    return { kind:p.kind === "artist" ? "artist" : "member", handle:handle, name:name, avatar:avatar };
+  }
+  function currentSubject() {
+    var session = readAuthSession(), token = session && session.access_token;
+    return token ? String(jwtPayload(token).sub || "") : "";
   }
   function readPerspective() {
-    try { return cleanPerspective(JSON.parse(sessionStorage.getItem(PERSPECTIVE_KEY) || "null")); } catch (e) { return null; }
+    try {
+      var sub=currentSubject();
+      return sub && sessionStorage.getItem(PERSPECTIVE_SUB_KEY)===sub
+        ? cleanPerspective(JSON.parse(sessionStorage.getItem(PERSPECTIVE_KEY)||"null")) : null;
+    } catch(e) { return null; }
   }
   function storePerspective(p) {
-    try { if (p) sessionStorage.setItem(PERSPECTIVE_KEY, JSON.stringify(p)); else sessionStorage.removeItem(PERSPECTIVE_KEY); } catch (e) {}
+    try {
+      var sub=currentSubject();
+      if(p && sub) {
+        sessionStorage.setItem(PERSPECTIVE_KEY,JSON.stringify(p));
+        sessionStorage.setItem(PERSPECTIVE_SUB_KEY,sub);
+      } else {
+        sessionStorage.removeItem(PERSPECTIVE_KEY);
+        sessionStorage.removeItem(PERSPECTIVE_SUB_KEY);
+      }
+    }catch(e){}
   }
-  var AT_HOUSE = !ON_WORLD_HOST && (function () {
-    try { return samePath(location.pathname) === samePath(new URL(HOUSE + "index.html", location.href).pathname); } catch (e) { return false; }
-  })();
-  var PERSPECTIVE = AT_HOUSE ? null : readPerspective();
-  if (AT_HOUSE) storePerspective(null);
+  /* Visiting the actual founder's profile is an explicit perspective switch.
+     Opening /index.html normally does not replace the signed-in member's home. */
+  var HOUSE_VISIT = !ON_WORLD_HOST && (/matthew-mccluster\\.html$/.test(location.pathname) ||
+    new URLSearchParams(location.search).get("front")==="house");
+  var PERSPECTIVE=readPerspective();
+  if(HOUSE_VISIT && currentSubject()) {
+    PERSPECTIVE={kind:"house"};storePerspective(PERSPECTIVE);
+  }
   function initialOf(name) { var m = String(name).match(/[A-Za-z0-9\u00C0-\u024F]/); return m ? m[0].toUpperCase() : "@"; }
   function shortName(name) { var w = String(name).split(" ")[0]; return w.length > 12 ? w.slice(0, 11) + "\u2026" : w; }
   function paintPerspective() {
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
-    var p = PERSPECTIVE, label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
+    var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null),
+      label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
+    if(p && p.kind==="house") p=null;
     if (!p) {
       /* M is the McCluster platform home for everyone (owner, 2026-10-14);
          the member feed lives in World, not behind the emblem. */
@@ -382,7 +430,8 @@
       WINGS.home.slots[0] = HOUSE_ROOM;
       return;
     }
-    var door = HOUSE + "music-creator.html?handle=" + encodeURIComponent(p.handle);
+    var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
+      "?handle=" + encodeURIComponent(p.handle);
     homeTab.href = door;
     homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
     homeTab.setAttribute("data-perspective", p.handle);
@@ -393,16 +442,16 @@
     }
     if (label) label.textContent = shortName(p.name);
     /* their own front page lights the middle coin, as the house lights the M */
-    var theirs = /music-creator\.html$/.test(location.pathname) &&
+    var theirs = /(?:music-creator|member-front)\.html$/.test(location.pathname) &&
       String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
     homeTab.classList.toggle("is-here", theirs);
     WINGS.home.home = door;
-    WINGS.home.slots[0] = [HOUSE + "index.html", "mmark", "McCluster", { title: "McCluster, the house",
+    WINGS.home.slots[0] = [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
       sub: "Matthew McCluster\u2019s front door: the M, the records and the World from his side." }];
   }
   function setPerspective(raw) {
     var p = cleanPerspective(raw);
-    if (!p) return false;
+    if (!p || !AUTH_STATE.signed_in) return false;
     PERSPECTIVE = p;
     storePerspective(p);
     if (wingOn) revert();
@@ -417,7 +466,29 @@
     paintPerspective();
     HOME_BAR = dock.innerHTML;
   }
-  window.addEventListener("mcc:perspective", function (e) { setPerspective(e.detail); });
+  window.addEventListener("mcc:perspective",function(e) { if(AUTH_STATE.signed_in)setPerspective(e.detail); });
+  window.addEventListener("mcc:perspective-house",function() {
+    if(AUTH_STATE.signed_in)setPerspective({kind:"house"});
+  });
+  function resolveOwnPerspective(subject,user) {
+    var seq=++selfProfileEpoch;
+    if(!subject||!user||!window.MCC||typeof window.MCC.api!=="function")return;
+    window.MCC.api("/v1/mnet/bootstrap?app_key=mccluster-web").then(function(response) {
+      if(!response.ok)throw Error("Profile unavailable");
+      return response.json();
+    }).then(function(data) {
+      if(seq!==selfProfileEpoch||!AUTH_STATE.signed_in||currentSubject()!==subject)return;
+      var id=data&&data.identity||{},profile=data&&data.profile||{};
+      SELF_PROFILE=cleanPerspective({kind:"member",handle:id.mccluster_id,
+        name:profile.display_name||id.mccluster_id,avatar:profile.avatar_url});
+      if(!PERSPECTIVE&&SELF_PROFILE&&!wingOn) {
+        paintPerspective();
+        HOME_BAR=dock.innerHTML;
+      }
+      // An open wing will pick up SELF_PROFILE when revert() restores the
+      // closed bar. Never overwrite the wing's anchor while it is open.
+    }).catch(function(){/* An unfinished account still has the normal platform entrance. */});
+  }
 
   function readAuthSession() {
     try { return JSON.parse(localStorage.getItem("mccdb_session") || "null"); }
@@ -461,7 +532,7 @@
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* the middle cell: the M, or the creator whose perspective this session holds */
+    /* Center tab: visited profile > authenticated owner profile > original guest house. */
     paintPerspective();
     /* Exactly three columns, signed in or not. Record and Analytics were
        member-only columns; they are contextual now (Create in the World
@@ -614,11 +685,19 @@
     var session = readAuthSession();
     if (!session || session.access_token !== adminSession) paintAdmin(false);
     if (!session || !session.access_token) {
+      ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
+      lastVerifiedSubject=""; storePerspective(null);
       paintAuthState(false, null, true);
       paintAdmin(false);
       return Promise.resolve(AUTH_STATE);
     }
     var payload = jwtPayload(session.access_token);
+    var subject = String(payload.sub || "");
+    if (subject !== lastVerifiedSubject) {
+      ++selfProfileEpoch; SELF_PROFILE=null;
+      PERSPECTIVE=readPerspective();
+      lastVerifiedSubject=subject;
+    }
     var exp = Number(payload.exp || 0) * 1000;
     paintAuthState(exp > Date.now(), null, false);
     return loadCanonicalAuth().then(function (mcc) {
@@ -630,10 +709,13 @@
       // the new session instead of accepting an old result or leaving it pending.
       if ((readAuthSession() || {}).access_token !== session.access_token) return refreshAuthState();
       paintAuthState(!!user, user, true);
+      if(user && subject)resolveOwnPerspective(subject,user);
       checkAdmin();
       return AUTH_STATE;
     }).catch(function () {
       if (attempt !== authEpoch) return AUTH_STATE;
+      ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
+      storePerspective(null);
       paintAuthState(false, null, true);
       paintAdmin(false);
       return AUTH_STATE;
@@ -677,6 +759,10 @@
       return url.href;
     });
   }
+  function navigateDocument(href) {
+    if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.leaveFrame(href)) return;
+    location.href = href;
+  }
   function arriveWithHandoff() {
     var hash = location.hash || "";
     var m = /(?:^#|&)mcc_handoff=([^&]*)/.exec(hash);
@@ -701,7 +787,10 @@
         });
         localStorage.setItem("mccdb_session", session);
         try { localStorage.setItem("mcc_sess_keep", session); } catch (e) {}
-        emit("mcc:handoff", { ok: true });
+        /* NO SECOND PAINT (owner, 2026-10-20: no screen flashes). A page that can take the session where it stands says so
+           by cancelling mcc:handoff (js/mnet.js, the World, which waited for it); it then hears the ordinary sign-in event
+           and nothing reloads. Every other page reloads signed in, as before. */
+        if (emit("mcc:handoff", { ok: true }, true)) { emit("mcc:auth-changed", { signed_in: true, carried: true }); return true; }
         location.reload();
         return true;
       })
@@ -726,9 +815,9 @@
     if (houseBound(url)) url = new URL(url.pathname + url.search + url.hash, HOUSE_ORIGIN);
     else if (!crossesHouse(url)) return;
     var stored = readAuthSession();
-    if (!stored || !stored.access_token) { if (url.origin !== location.origin) { e.preventDefault(); location.href = url.href; } return; }
+    if (!stored || !stored.access_token) { if (url.origin !== location.origin) { e.preventDefault(); navigateDocument(url.href); } return; }
     e.preventDefault();
-    handoffHref(url.href).then(function (h) { location.href = h; }, function () { location.href = url.href; });
+    handoffHref(url.href).then(function (h) { navigateDocument(h); }, function () { navigateDocument(url.href); });
   });
 
   arriveWithHandoff().then(function (carried) { if (!carried) refreshAuthState(); });
@@ -785,7 +874,12 @@
     /* the house, when a creator holds the middle cell: the M as supplied */
     mmark: ["assets/img/m-mark.png", "appbar__m"],
   };
-  function emit(n, d) { try { window.dispatchEvent(new CustomEvent(n, { detail: d || {} })); } catch (e) {} }
+  /* true when a listener cancelled a cancelable event */
+  function emit(n, d, cancelable) {
+    var ev = null;
+    try { ev = new CustomEvent(n, { detail: d || {}, cancelable: !!cancelable }); window.dispatchEvent(ev); } catch (e) {}
+    return !!(ev && ev.defaultPrevented);
+  }
 
   /* THE TRANSPORT STATE. SOUND_ON is the single source of truth for whether
      a record is running. The two pages that own a deck announce it on
@@ -840,8 +934,40 @@
   var veil = document.createElement("div");
   veil.className = "pt-veil";
   document.body.appendChild(veil);
-  function veilOn() { document.documentElement.classList.add("pt-out"); }
-  function veilOff() { document.documentElement.classList.remove("pt-out"); }
+  /* THE VEIL IS THE COLOUR OF WHERE YOU ARE GOING (owner, 2026-10-20: "other screens flash up instead of just a smooth
+     transition from screen to screen"). The house is dark and the World follows the Sun (js/daylight.js: white by day),
+     so a dark veil into a day World was a dark screen and then a white one. Going to the World, the veil takes the
+     World's colour for this moment: its own, standing on it, else the time zone's answer the World paints with too. */
+  function worldPhase() {
+    var here = document.documentElement.getAttribute("data-daylight");
+    if (here === "day" || here === "night") return here;
+    try { return window.MCC_DAYLIGHT_CORE ? window.MCC_DAYLIGHT_CORE.estimate(new Date()) : ""; } catch (e) { return ""; }
+  }
+  function worldScreen(url) {
+    if (!url || !/^https?:$/.test(url.protocol)) return false;
+    if (WORLD_HOSTS.indexOf(url.hostname) !== -1) return /^\/(?:index\.html|mnet\.html)?$/.test(url.pathname);
+    return url.origin === location.origin && /\/mnet\.html$/.test(url.pathname);
+  }
+  function veilOn(dest) {
+    var root = document.documentElement, url = null, phase = "";
+    try { url = new URL(dest, location.href); } catch (e) {}
+    if (worldScreen(url)) phase = worldPhase();
+    root.classList.toggle("pt-to-day", phase === "day");
+    root.classList.toggle("pt-to-night", phase === "night");
+    root.classList.add("pt-out");
+  }
+  function veilOff() { document.documentElement.classList.remove("pt-out", "pt-to-day", "pt-to-night"); }
+  /* the arithmetic only, for the veil above: the World's own page has it already, nothing else on this page is touched */
+  if (!window.MCC_DAYLIGHT_CORE && !ON_WORLD_HOST) {
+    var daylightCore = document.createElement("script");
+    daylightCore.src = ROOT + "js/daylight.js?v=__STAMP__";
+    daylightCore.async = true;
+    daylightCore.setAttribute("data-daylight-core", "");
+    document.head.appendChild(daylightCore);
+  }
+  /* a hop inside one host is a cross-document view transition (css/style.css, @view-transition): the browser holds this
+     page and fades it into the next, so a veil drawn now would be caught half-way in the picture */
+  var CROSS_FADE = typeof window.CSSViewTransitionRule !== "undefined";
 
   /* "/" and "/index.html" are the same document. Fold the implicit filename
      away so tapping the M tab while standing at the root reads as a no-op
@@ -867,9 +993,55 @@
     return false;
   }
 
+  function musicWorldDestination(dest) {
+    if (window.parent !== window || !(window.MCC_MUSIC || document.getElementById("deck"))) return false;
+    try {
+      var u = new URL(dest, location.href);
+      return u.protocol === "https:" &&
+        (WORLD_HOSTS.indexOf(u.hostname) !== -1 && /^\/(?:mnet\.html|index\.html)?$/.test(u.pathname) ||
+         u.origin + "/" === HOUSE_ORIGIN && /\/(?:mnet|action-globe)\.html$/.test(u.pathname));
+    } catch (_) { return false; }
+  }
+  function cancelWorldAudio() {
+    worldAudioPending = null;
+    if (worldAudioNotice) worldAudioNotice.remove();
+    worldAudioNotice = null;
+  }
+  function waitForWorldAudio(dest) {
+    if (window.MCC_WORLD_AUDIO || !musicWorldDestination(dest)) return false;
+    cancelWorldAudio(); unpeek(); veilOff(); revert();
+    if (window.MCC_MUSIC) window.MCC_MUSIC.closeNow();
+    var pending = worldAudioPending = {href:dest};
+    var notice = worldAudioNotice = document.createElement("section");
+    notice.id = "mccWorldAudioLoading"; notice.className = "dk-peek";
+    notice.setAttribute("aria-label", "Open World");
+    notice.innerHTML = '<div class="dk-peek__card"><div class="dk-peek__top"><span>' +
+      '<b role="status">Opening World…</b><small>Your music stays available here.</small></span></div>' +
+      '<div class="dk-peek__acts"><button class="dk-peek__go" type="button" data-world-audio-retry hidden>Retry</button>' +
+      '<button class="dk-peek__alt" type="button" data-world-audio-cancel>Stay in Music</button></div></div>';
+    var retry = notice.querySelector("[data-world-audio-retry]");
+    var cancel = notice.querySelector("[data-world-audio-cancel]");
+    retry.style.minHeight = cancel.style.minHeight = "44px";
+    retry.onclick = function () { waitForWorldAudio(pending.href); };
+    cancel.onclick = function () { cancelWorldAudio(); dock.querySelector('[data-appnav="world"]')?.focus(); };
+    document.body.appendChild(notice);
+    loadWorldAudio().then(function (ready) {
+      if (worldAudioPending !== pending) return;
+      // A slow helper must never unload the document that owns live music.
+      // Ready clicks still use the synchronous path in sail() below.
+      if (ready && window.MCC_WORLD_AUDIO.navigate(pending.href)) { cancelWorldAudio(); return; }
+      notice.querySelector('[role="status"]').textContent = "World could not open.";
+      retry.hidden = false;
+    });
+    return true;
+  }
+
   function sail(dest, wait) {
+    cancelWorldAudio();
     if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
     unpeek();
+    if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.navigate(dest)) { veilOff(); revert(); return; }
+    if (waitForWorldAudio(dest)) return;
     var url = null;
     try { url = new URL(dest, location.href); } catch (e) {}
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
@@ -878,11 +1050,23 @@
       else window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    veilOn();
+    /* the departure starts at once (it waited 460ms, so the page sat under a veil before the next one was even asked
+       for); the veil only covers the wait for the next page */
+    if (!(CROSS_FADE && url && url.origin === location.origin)) veilOn(dest);
     setTimeout(function () {
-      handoffHref(dest).then(function (h) { location.href = h; }, function () { location.href = dest; });
-    }, wait);
+      handoffHref(dest).then(function (h) { navigateDocument(h); }, function () { navigateDocument(dest); });
+    }, wait || 0);
   }
+
+  // Also cover ordinary World links before the dynamically loaded helper can
+  // install its click listener. Other destinations cancel an earlier request.
+  document.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+    if (waitForWorldAudio(a.href)) { e.preventDefault(); e.stopPropagation(); }
+    else if (worldAudioPending) cancelWorldAudio();
+  }, true);
 
   /* ---------- THE PEEK: one tap on a slot shows the room's widget ---------- */
   var peekEl = null, peekFor = null;
@@ -897,7 +1081,7 @@
     Object.keys(WINGS).forEach(function (k) {
       WINGS[k].slots.forEach(function (s) { if (s[0] === slotHref) def = s; });
     });
-    if (!def || !def[3]) { sail(slotHref, 460); return; }
+    if (!def || !def[3]) { sail(slotHref, 0); return; }
     var p = def[3];
     var sub = (p.dyn && p.dyn()) || p.sub;
     peekFor = slotHref;
@@ -914,7 +1098,7 @@
     document.body.appendChild(peekEl);
     peekEl.addEventListener("click", function (e) {
       var go = e.target.closest && e.target.closest("[data-peek-go]");
-      if (go) { sail(go.getAttribute("data-peek-go"), 460); return; }
+      if (go) { sail(go.getAttribute("data-peek-go"), 0); return; }
       if (e.target.closest && e.target.closest("[data-peek-no]")) unpeek();
     });
     emit("mcc:bar-peek", { href: slotHref });
@@ -965,7 +1149,11 @@
     wingOn = null;
     dock.classList.remove("appbar--morph");
     dock.innerHTML = HOME_BAR;
-    paintSound(); // the snapshot is from boot, when nothing was playing yet
+    if (SELF_PROFILE && !PERSPECTIVE) {
+      paintPerspective();
+      HOME_BAR = dock.innerHTML;
+    }
+    paintSound(); // restore live audio after refreshing the current profile
   }
 
   /* the hold belongs to the bar, not to the browser. Without this, a long
@@ -1038,7 +1226,7 @@
     if (key === "music" && onPage(dest) &&
         typeof window.MCC_NP_PLAY === "function" &&
         typeof window.MCC_NP_PAUSE === "function") { transport(); return; }
-    sail(dest, 460);
+    sail(dest, 0);
   });
 
   /* tap anywhere off the bar (and off a peek): everything folds home */
@@ -1058,9 +1246,13 @@
     auth: function () { return AUTH_STATE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
+    ownPerspective: function(){return SELF_PROFILE;},
     admin: function () { return ADMIN_ON; },
     verifyAdmin: function () { return checkAdmin(true); },
-    navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); }})
+    navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
+      // The retained Music document uses the existing, origin-bound sign-in
+      // handoff for its real World frame. Credentials never enter its messages.
+      handoff: handoffHref})
   };
   // One shared implementation on every page carrying the bar, including nested rooms.
   var navigationStyle = document.createElement("link");

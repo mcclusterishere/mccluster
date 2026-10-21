@@ -1,7 +1,7 @@
 -- Minimal stand-ins for the tables the music creator platform migration
 -- (supabase/migrations/20260920041011_music_creator_platform_v1.sql), the
 -- identity presentation migration (20261005054044) and the one-click creator
--- onboarding (supabase/pending/music_creator_one_click_v1.sql) touch. Scratch
+-- onboarding (supabase/migrations/20261021050105_music_creator_one_click_v1.sql) touch. Scratch
 -- database only, never a real project. Applied after
 -- supabase_api_roles.stub.sql by scripts/test-music-creator-db.sh.
 --

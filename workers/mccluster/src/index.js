@@ -1,7 +1,7 @@
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
-import whip from './whip/identity-gateway.js';
+import whip from './whip/booking-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
@@ -13,7 +13,7 @@ import { handleIntelRequest } from './intel/router.js';
 import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
-import { handleWorldNews, NEWS_PATH } from './world-news.js';
+import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -153,6 +153,11 @@ export default {
       if (path === NEWS_PATH) {
         const news = await handleWorldNews(request, env);
         if (news) return news;
+      }
+      /* how many stories mention each country, or each place in one country: the World's news heat map */
+      if (path === NEWS_HEAT_PATH) {
+        const heat = await handleWorldNewsHeat(request, env);
+        if (heat) return heat;
       }
 
       /* Optional World layers: release guard above, then provider adapter. */

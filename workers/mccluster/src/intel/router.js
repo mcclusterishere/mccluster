@@ -17,8 +17,10 @@ import { fail, reply } from '../lib/http.js';
 import { recordAudit } from '../lib/audit.js';
 import { IntelError, configured, resolveHouseOrg, rpc, select } from './store.js';
 import { USGS_CONNECTOR, USGS_CONNECTOR_KEY, collectorEnabled, runUsgsCollector } from './usgs-collector.js';
+import { evidenceProjection, sourceHealthProjection, TRUTH_KINDS } from './projection.js';
 
 import { createIndicatorClient, IndicatorError } from './world-indicators.js';
+import { buildNewsContext, newsContextQuery } from './news-context.js';
 const indicatorClient = createIndicatorClient();
 
 const SERVICE = 'mccluster-intel';
@@ -86,10 +88,11 @@ function iso(value, name, fallback = null) {
 /* The owner's own token goes to context-decision, exactly as /v1/ai does. */
 async function contextDecision(request, env, payload, method) {
   const authorization = request.headers.get('authorization') || '';
-  const res = await fetch(`${env.SUPABASE_URL}/functions/v1/context-decision`, {
+  const query = method === 'GET' ? `?${new URLSearchParams(payload)}` : '';
+  const res = await fetch(`${env.SUPABASE_URL}/functions/v1/context-decision${query}`, {
     method,
     headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization, 'content-type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: method === 'GET' ? undefined : JSON.stringify(payload)
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
@@ -150,6 +153,20 @@ export async function handleIntelRequest(request, env, options = {}) {
     if (path === '/v1/intel/geo' && request.method === 'GET') return await geo(request, env, url, options);
 
     const user = await options.requireHouseOwner(request, env);
+    if (path === '/v1/intel/news-context') {
+      if (request.method !== 'GET') {
+        const response = reply(request, env, { ok: false, error: 'Method not allowed', code: 'method_not_allowed' }, 405);
+        response.headers.set('allow', 'GET');
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
+      }
+      const query = newsContextQuery(url.searchParams);
+      const org = await resolveHouseOrg(env);
+      const data = await buildNewsContext(env, org.id, query, options.newsContext || {});
+      const response = reply(request, env, data);
+      response.headers.set('cache-control', 'private, no-store');
+      return response;
+    }
     if (path === '/v1/intel/world-indicators') {
       if (request.method !== 'GET') return fail(request, env, 'Method not allowed', 405);
       if ([...url.searchParams.keys()].some(k => !['economy', 'indicators'].includes(k) || url.searchParams.getAll(k).length !== 1)) throw bad('Unsupported or repeated parameter');
@@ -169,6 +186,21 @@ export async function handleIntelRequest(request, env, options = {}) {
     const org = await resolveHouseOrg(env);
     const actor = user.id;
 
+    if (path === '/v1/intel/connections') {
+      if (request.method !== 'GET') return fail(request, env, 'Method not allowed', 405);
+      const params = url.searchParams;
+      if ([...params.keys()].some(k => !['root','kind','depth','limit'].includes(k) || params.getAll(k).length !== 1)) throw bad('Unsupported or repeated graph parameter');
+      const root = params.get('root') || null, kind = params.get('kind') || 'actor';
+      const depth = Number(params.get('depth') ?? 2), limit = Number(params.get('limit') ?? 80);
+      if ((root && (root.length > 550 || !/^[a-z_]+:[a-zA-Z0-9._:-]+$/.test(root))) || !/^[a-z_]{1,80}$/.test(kind) ||
+          !Number.isInteger(depth) || depth < 0 || depth > 3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw bad('Invalid graph bounds');
+      const graph = await rpc(env, 'ops_connected_graph_service', {p_org:org.id,p_root:root,p_kind:kind,p_depth:depth,p_limit:limit});
+      const response = reply(request, env, {ok:true,...graph});
+      response.headers.set('cache-control','private, no-store');
+      return response;
+    }
+
+
     if ((path === '/v1/intel' || path === '/v1/intel/health') && request.method === 'GET') {
       let health = null;
       let schemaReady = true;
@@ -185,6 +217,7 @@ export async function handleIntelRequest(request, env, options = {}) {
         collector: { key: USGS_CONNECTOR_KEY, enabled: collectorEnabled(env), flag: 'INTEL_USGS_COLLECTOR_ENABLED' },
         // stored totals, the latest run and failures are reported separately on purpose
         ...(health || { connector: null, stored: null, latest_run: null, last_successful_run: null, failures: null }),
+        source_health: sourceHealthProjection(health),
         checked_at: new Date().toISOString()
       });
     }
@@ -204,9 +237,21 @@ export async function handleIntelRequest(request, env, options = {}) {
       const filter = status === 'all' ? '' : `&review_status=eq.${status}`;
       const rows = await select(env,
         `intel_evidence?org_id=eq.${org.id}${filter}` +
-        '&select=id,kind,title,summary,publisher,source_url,license,attribution,retrieved_at,observed_at,content_sha256,measures,lat,lon,geo_source,region_label,review_status,visibility,source_record_id,outcome_id' +
+        '&select=id,kind,title,summary,publisher,source_url,license,attribution,retrieved_at,observed_at,content_sha256,measures,lat,lon,geo_source,region_label,review_status,reviewed_by,reviewed_at,visibility,source_record_id,outcome_id,source_record:ops_ingest_records(source_ref,external_id,connector_id,record_kind)' +
         `&order=retrieved_at.desc&limit=${limit}`);
-      return reply(request, env, { ok: true, service: SERVICE, evidence: Array.isArray(rows) ? rows : [] });
+      return reply(request, env, { ok: true, service: SERVICE, evidence: (Array.isArray(rows) ? rows : []).map(row => {
+        const source=row.source_record, stored=source?.source_ref?.projection;
+        return { ...row, projection: evidenceProjection({ ...row, external_id:source?.external_id }, {
+          orgId:org.id, sourceId:source?.connector_id ?? null,
+          sourceRevision:source?.source_ref?.updated_at ?? null,
+          truthKind:TRUTH_KINDS.includes(stored?.truth_kind) ? stored.truth_kind
+            : (source?.record_kind==='earthquake' && source?.source_ref?.provider==='usgs' ? 'observation' : 'unknown'),
+          coverage:stored?.coverage ?? null, values:stored?.values ?? null,
+          publishedAt:stored?.time?.publisher_published_at ?? null, discoveredAt:stored?.time?.discovered_at ?? null,
+          forecastIssuedAt:stored?.time?.forecast_issued_at ?? null, forecastValidFrom:stored?.time?.forecast_valid_from ?? null,
+          forecastValidUntil:stored?.time?.forecast_valid_until ?? null, derivedGeometry:stored?.derived_geometry ?? null
+        }) };
+      }), completeness: { limit, possibly_truncated: Array.isArray(rows) && rows.length === limit } });
     }
 
     let match = path.match(new RegExp(`^/v1/intel/evidence/(${UUID})/review$`, 'i'));
@@ -290,7 +335,7 @@ export async function handleIntelRequest(request, env, options = {}) {
     if (path === '/v1/intel/decisions' && request.method === 'POST') {
       const input = await body(request);
       const briefingId = uuid(input.briefing_id, 'briefing_id');
-      const proposed = await contextDecision(request, env, {
+      const payload = {
         org_id: org.id,
         title: text(input.title, 'title', { max: 300 }),
         decision: text(input.decision, 'decision', { max: 4000 }),
@@ -299,14 +344,45 @@ export async function handleIntelRequest(request, env, options = {}) {
         status: 'proposed',
         proposed_by: 'intel_briefing',
         metadata: { intel_briefing_id: briefingId, source: SERVICE }
-      }, 'POST');
+      };
+      // Legacy callers get a stable content key; a caller can supply a distinct
+      // explicit key when deliberately proposing the same text again.
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(payload)));
+      const key = input.idempotency_key === undefined
+        ? `intel:${briefingId}:${[...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('')}`
+        : idempotencyKey(input.idempotency_key);
+      const contract = await contextDecision(request, env, { org_id: org.id, contract: 'intel-decision/v2' }, 'GET');
+      if (contract?.contract !== 'intel-decision/v2' || contract.schema_ready !== true) {
+        throw new IntelError('Decision recovery contract is not deployed yet', 503, 'intel_decision_contract_not_ready');
+      }
+      const proposed = await contextDecision(request, env, { ...payload, idempotency_key: key }, 'POST');
       const decision = proposed?.decision || proposed;
       const decisionId = uuid(decision?.id, 'decision id returned by context-decision');
-      const basis = await rpc(env, 'intel_record_decision_basis', {
-        p_org: org.id, p_actor: actor, p_decision: decisionId, p_briefing: briefingId
-      });
-      const auditResult = await audit(env, org.id, user, 'intel.decision.proposed', 'ai_context.decision', decisionId, { briefing_id: briefingId, basis_items: basis?.basis_items });
-      return reply(request, env, { ok: true, decision, basis, audit: auditResult }, 201);
+      try {
+        const basis = await rpc(env, 'intel_record_decision_basis', {
+          p_org: org.id, p_actor: actor, p_decision: decisionId, p_briefing: briefingId
+        });
+        return reply(request, env, { ok: true, decision, basis, idempotency_key: key,
+          recovery: { state: 'complete', required: false }, audit: basis.audit }, proposed.created === false ? 200 : 201);
+      } catch (error) {
+        // The decision already committed remotely. Preserve the key for retry;
+        // never report rollback or permit action before basis and receipt exist.
+        return reply(request, env, { ok: false, code: 'decision_basis_repair_required',
+          error: 'Decision saved; evidence basis and audit receipt need repair', decision,
+          idempotency_key: key, actionable: false, audit: { recorded: null, state: 'unconfirmed', reason: 'basis_receipt_unconfirmed' },
+          recovery: { required: true, state: 'basis_or_receipt_pending', decision_id: decisionId,
+            retry: 'POST /v1/intel/decisions with the same payload and idempotency_key',
+            cause: error instanceof IntelError ? error.code : 'unavailable' } }, 503);
+      }
+    }
+
+    match = path.match(new RegExp(`^/v1/intel/decisions/(${UUID})/readiness$`, 'i'));
+    if (match && request.method === 'GET') {
+      const readiness = await rpc(env, 'intel_decision_readiness', { p_org: org.id, p_decision: uuid(match[1], 'decision id') });
+      if (!readiness) return fail(request, env, 'Decision not found', 404, { code: 'not_found' });
+      const response = reply(request, env, { ok: true, readiness });
+      response.headers.set('cache-control', 'private, no-store');
+      return response;
     }
 
     match = path.match(new RegExp(`^/v1/intel/decisions/(${UUID})/approve$`, 'i'));
@@ -383,7 +459,18 @@ export async function handleIntelRequest(request, env, options = {}) {
 
     return fail(request, env, 'Not found', 404);
   } catch (error) {
+    if (path === '/v1/intel/news-context' && !(error instanceof IntelError) && [401, 403, 503].includes(error?.status)) {
+      const code = error.status === 401 ? 'authentication_required' : error.status === 403 ? 'house_owner_required' : 'authorization_unavailable';
+      const response = reply(request, env, { ok: false, error: error.status === 403 ? 'McCluster house owner access required' : 'Intel authorization is unavailable', code }, error.status);
+      response.headers.set('cache-control', 'private, no-store');
+      return response;
+    }
     if (error instanceof IntelError) {
+      if (path === '/v1/intel/news-context') {
+        const response = reply(request, env, { ok: false, error: error.message, code: error.code }, error.status);
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
+      }
       return fail(request, env, error.message, error.status, { code: error.code, ...(error.detail ? { detail: error.detail } : {}) });
     }
     throw error;

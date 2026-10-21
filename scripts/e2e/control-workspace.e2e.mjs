@@ -52,7 +52,7 @@ async function setup(viewport,{owner=true,loggedIn=true,reduced=false}={}){
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:true,reducedMotion:reduced?'reduce':'no-preference'});
   const auth={owner,loggedIn};const calls=[],errors=[];
   await ctx.addInitScript(({loggedIn})=>{
-    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-09-26',accepted_at:new Date().toISOString()}));
+    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(loggedIn){const exp=Math.floor(Date.now()/1000)+3600;
       localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:'11111111-1111-4111-8111-111111111111',email:'owner@fixture.invalid'})).replace(/=+$/,'')+'.y',refresh_token:'fixture-only',expires_at:exp,user:{id:'11111111-1111-4111-8111-111111111111',email:'owner@fixture.invalid'}}));}
   },{loggedIn});

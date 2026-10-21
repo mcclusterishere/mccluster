@@ -11,28 +11,64 @@
       "implementation": "qwen3.8b.local",
       "backend": "ollama",
       "model": "qwen3:8b",
-      "version": "1",
+      "version": "2",
       "features": {
         "chat": true,
         "json": true,
-        "self_hosted": true
+        "self_hosted": true,
+        "tools": true,
+        "thinking_control": true,
+        "measured_inference": true
       },
       "input_schema": {
         "type": "object",
         "properties": {
-          "prompt": { "type": "string" },
-          "messages": { "type": "array" },
-          "temperature": { "type": "number" },
-          "num_ctx": { "type": "integer" },
-          "json": { "type": "boolean" }
+          "prompt": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "num_ctx": {
+            "type": "integer"
+          },
+          "json": {
+            "type": "boolean"
+          },
+          "think": {
+            "type": "boolean"
+          },
+          "num_predict": {
+            "type": "integer",
+            "minimum": 16,
+            "maximum": 4096
+          },
+          "tools": {
+            "type": "array"
+          }
         }
       },
       "output_schema": {
         "type": "object",
         "properties": {
-          "model": { "type": "string" },
-          "content": { "type": "string" },
-          "usage": { "type": "object" }
+          "model": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object"
+          },
+          "tool_calls": {
+            "type": "array"
+          },
+          "settings": {
+            "type": "object"
+          }
         }
       },
       "max_concurrency": 1,

@@ -14,6 +14,13 @@ PR #443) and the Policy Fellowship ladder (PR #440). The schema is a
 
 ## 1. The desk
 
+**Owner correction, October 17, 2026:** the signed-out World must contain no
+"Your desk", "Get Your Hu Up!" or policy workspace. Guest desk controls and
+panels are not mounted. Old `?desk=` links land on the same World without
+opening the desk; other query parameters remain intact. Signing out removes
+the panel and invalidates pending capability loads. Members retain their
+existing workspace, permissions and profile-edit flow.
+
 A **Desk** tab joins the bottom app bar on the World (`mnet.html`). The bar
 never leaves: the desk opens above it, a bottom sheet at phone width and a side
 panel from 64rem, over the globe. It is not a page; `?desk=1` or
@@ -21,7 +28,7 @@ panel from 64rem, over the globe. It is not a page; `?desk=1` or
 
 | Who | Sections (in order; the phone sees all of them) | Source, under its existing permissions |
 | --- | --- | --- |
-| Guest | Your desk (sign in), Policy (public registry) | `action_policy_bills`, verified officials, funded bounties (anon) |
+| Guest | None; remain in World | No desk capability or policy reads |
 | Signed in | Profile (and locked details), Missions, Alerts, Policy (the ladder) | `MCC_MNET.profile()`, `action_record()`, `GET /v1/mnet/notifications`, `policy_ladder_status()` |
 | Creator | + Audience | `GET /v1/analytics/my-creator`: the same numbers as the creator analytics, aggregate, countries with fewer than 5 views folded away, no listener identities, no IPs; creator state from `music_creator_state()` (#447) or the member's own `music_creator_profiles` row |
 | Business | + Business | `GET /v1/creator-billing/entitlement` (workspace) and the analytics sites the member owns (RLS) |

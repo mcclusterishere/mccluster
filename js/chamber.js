@@ -246,7 +246,10 @@
   /* ---------------- the premiere ---------------- */
   var seen = false;
   try { seen = sessionStorage.getItem("mcc_premiere") === "1"; } catch (e) {}
-  if (CALM || seen || !h1) { setType(); }
+  /* the curtain's ground has been up since the first paint (album.html's head): it gives way to the curtain itself, or
+     to the page when there is no premiere */
+  function groundDown() { root.classList.remove("prem-due"); }
+  if (CALM || seen || !h1) { groundDown(); setType(); }
   else {
     try { sessionStorage.setItem("mcc_premiere", "1"); } catch (e) {}
     var prem = document.createElement("div");
@@ -268,6 +271,7 @@
       '<div class="t">' + premWords(h1.textContent) + "</div>" +
       '<div class="seam"></div></div>';
     document.body.appendChild(prem);
+    groundDown();
     /* Watched, not announced. An event would race: this file is deferred and
        album.html names the record from a fetch callback, so either can land
        first and a listener registered second hears nothing. The h1 is the
