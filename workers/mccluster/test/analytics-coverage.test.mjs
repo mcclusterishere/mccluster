@@ -40,18 +40,44 @@ test('business snapshot retains unrelated measurements when one source fails and
    if(u.pathname.includes('/auth/'))return reply({users:[]});
    if(table==='orgs')return reply([{id:'house'}]);
    if(table==='network_posts')return reply({},503);
-   if(table==='events_lean'){
-     assert.equal(u.searchParams.get('site_id'),'is.null');assert.equal(u.searchParams.get('is_bot'),'not.is.true');
-     if(u.searchParams.get('name')==='eq.album_play')return reply({},503);
-   }
+   // One gated aggregate RPC replaces the former eighteen independent
+   // PostgREST exact counts; a failed read leaves ALL event metrics unknown.
+   if(table==='analytics_business_event_counts')return reply({},503);
+   if(table==='events_lean')throw Error('Unexpected legacy exact count');
    return reply([],200,7);
  };
  try{
    const result=await businessSnapshot(env,{since:'2026-10-16T00:00:00Z',until:'2026-10-17T00:00:00Z'});
    assert.equal(result.partial,true);assert.equal(result.mnet.posts.total,null);
-   assert.equal(result.mnet.follows.total,7);assert.equal(result.music.inline_plays.total,7);
+   assert.equal(result.mnet.follows.total,7);assert.equal(result.music.inline_plays.total,null);
    assert.equal(result.music.plays.total,null);assert.equal(result.music.plays.in_window,null);
-   assert.ok(result.read_errors.postsTotal);assert.ok(peak<=4);
+   assert.ok(result.read_errors.postsTotal);assert.ok(result.read_errors.eventCounts);assert.ok(peak<=4);
+ }finally{globalThis.fetch=original;}
+});
+
+test('business snapshots map exact event totals from a single service-only RPC',async()=>{
+ const original=globalThis.fetch;let rpcCalls=0,legacyCounts=0;
+ const {EVENT_COUNT_FIELDS}=await import('../src/analytics/business-event-counts.js');
+ globalThis.fetch=async raw=>{
+   const u=new URL(raw),table=u.pathname.split('/').pop();
+   if(u.pathname.includes('/auth/'))return reply({users:[]});
+   if(table==='orgs')return reply([{id:'house'}]);
+   if(table==='events_lean')legacyCounts++;
+   if(table==='analytics_business_event_counts'){
+     rpcCalls++;
+     const row=Object.fromEntries(EVENT_COUNT_FIELDS.map(k=>[k,k.endsWith('_window')?3:7]));
+     return reply([row]);
+   }
+   return reply([],200,0);
+ };
+ try{
+   const result=await businessSnapshot(env,{since:'2026-10-16T00:00:00Z',until:'2026-10-17T00:00:00Z'});
+   assert.equal(rpcCalls,1);assert.equal(legacyCounts,0);
+   assert.equal(result.platform.events.total,7);assert.equal(result.platform.events.in_window,3);
+   assert.equal(result.platform.clicks.total,7);assert.equal(result.platform.clicks.in_window,3);
+   assert.equal(result.music.plays.total,14);assert.equal(result.music.plays.in_window,6);
+   assert.equal(result.music.completions.total,7);
+   assert.equal(result.read_errors.eventCounts,undefined);
  }finally{globalThis.fetch=original;}
 });
 
