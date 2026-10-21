@@ -111,7 +111,7 @@ run by `scripts/test-policy-fellowship-db.sh` on a scratch Postgres. Design,
 decisions and the apply checklist: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
 Promote using the steps above after the owner approves it.
 
-Promoted: `20261021050105_music_creator_one_click_v1.sql` makes creator onboarding one click
+Promoted: `supabase/migrations/20261021050105_music_creator_one_click_v1.sql` makes creator onboarding one click
 (owner, 2026-10-15). `music_creator_state()` is the server-truth show-condition
 for Creator Studio (a member with a `music_creator_profiles` row never sees the
 onboarding again); `music_become_creator(p_handle, p_artist_name,
@@ -123,7 +123,7 @@ For older deployments without the RPCs, Creator Studio can build the same answer
 (`js/creator-onboarding.js`). Behaviour tests:
 `supabase/tests/music_creator_one_click.behaviour.sql`, run by
 `scripts/test-music-creator-db.sh` on a scratch Postgres. Rollback is in the
-file header. Promote with the steps above. Since 2026-10-20 (one sign-up:
+file header. Since 2026-10-20 (one sign-up:
 "never re-enter what the profile has") it also copies the member's https
 profile picture (`network_profiles.avatar_url`) into the new creator profile
 and returns it as `prefill.avatar_url`, so every "Become a creator" door on the
