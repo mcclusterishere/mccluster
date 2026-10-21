@@ -31,12 +31,15 @@ test('withdrawal denies owners too; malformed and unknown policy fail closed',as
 test('base globe, missions, news and existing admin analytics are outside optional-layer gate',async()=>{
  for(const path of ['/action-globe.html','/v1/world/access','/v1/world/news','/v1/analytics/cameras','/v1/mnet/missions'])assert.equal(await guardWorldRelease(new Request('https://api.mccluster.org'+path),env,{fetchImpl:()=>{throw Error('not needed')}}),null);
 });
-/* Halo on the admin globe: every new feed and place search is owner-only through the same guard, before dispatch. */
-const HALO=[['/v1/world/layers/military','military'],['/v1/world/layers/quakes','quakes'],['/v1/world/layers/fires','fires'],['/v1/world/layers/perimeters','perimeters'],['/v1/world/layers/cyclones','cyclones'],['/v1/world/layers/vessels','vessels'],['/v1/world/geocode','search']];
+/* Halo on the admin globe: every new feed, place search, Halo operations and water levels are owner-only through the same guard, before dispatch. */
+const HALO=[['/v1/world/layers/military','military'],['/v1/world/layers/quakes','quakes'],['/v1/world/layers/fires','fires'],['/v1/world/layers/perimeters','perimeters'],['/v1/world/layers/cyclones','cyclones'],['/v1/world/layers/vessels','vessels'],['/v1/world/geocode','search'],['/v1/world/halo/missions','halo-ops'],['/v1/world/halo/people','halo-ops'],['/v1/world/layers/tides','tides'],['/v1/world/tides/8518750','tides']];
 test('Halo feeds and place search are features of the release policy',()=>{
  for(const [,feature] of HALO){assert.ok(GLOBE_FEATURES.includes(feature),feature);assert.equal(globeRelease(feature,{}),'admin_preview');}
  for(const [path,feature] of HALO)assert.equal(globeFeatureForPath(path),feature,path);
  assert.equal(globeFeatureForPath('/v1/world/geocodes'),null);
+ for(const p of ['/v1/world/halo','/v1/world/halo/anything'])assert.equal(globeFeatureForPath(p),'halo-ops',p);
+ for(const p of ['/v1/world/tides','/v1/world/tides/x'])assert.equal(globeFeatureForPath(p),'tides',p);
+ for(const p of ['/v1/world/halox','/v1/world/tidesx','/v1/world/haloops'])assert.equal(globeFeatureForPath(p),null,p);
 });
 test('Halo feeds and place search are 403 admin_preview for guests and non-owners, before any provider is asked',async()=>{
  const original=globalThis.fetch;
@@ -53,6 +56,10 @@ test('the house owner passes the guard for every Halo path, and the handlers ans
   assert.equal((await ships.json()).upstream_error,'not_configured');
   const search=await core.fetch(new Request('https://api.mccluster.org/v1/world/geocode?q=a',{headers:{authorization:'Bearer t'}}),env);
   assert.equal(search.status,400);assert.equal((await search.json()).code,'invalid_query');
+  /* Halo operations: dispatched past the guard, the handler re-checks the owner, then reads (db() refuses mission tables: an honest unavailable) */
+  for(const [path,schema] of [['/v1/world/halo/missions','halo-missions/v1'],['/v1/world/halo/people','halo-people/v1']]){const r=await core.fetch(new Request('https://api.mccluster.org'+path,{headers:{authorization:'Bearer t'}}),env);assert.equal(r.status,200,path);assert.equal(r.headers.get('cache-control'),'private, no-store');const b=await r.json();assert.equal(b.schema,schema);assert.equal(b.unavailable,true);}
+  const station=await core.fetch(new Request('https://api.mccluster.org/v1/world/tides/12',{headers:{authorization:'Bearer t'}}),env);
+  assert.equal(station.status,400);assert.equal((await station.json()).code,'invalid_station');
  }finally{globalThis.fetch=original;}
 });
 test('WORLD_GLOBE_WITHDRAWN withdraws each Halo feed and place search, for the owner too',async()=>{

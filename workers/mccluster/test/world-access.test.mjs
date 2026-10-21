@@ -72,8 +72,8 @@ test('routed in index.js', async () => {
   assert.match(src, /path === '\/v1\/world\/access'/);
 });
 
-test('Halo feeds and place search are listed with their labels: locked for everyone but the owner, withdrawable', async () => {
-  const HALO = { military: 'Military flights', quakes: 'Earthquakes', fires: 'Active fires', perimeters: 'Wildfire perimeters', cyclones: 'Tropical cyclones', vessels: 'Ships (AIS)', search: 'Place search' };
+test('Halo feeds, place search, Halo operations and water levels are listed with their labels: locked for everyone but the owner, withdrawable', async () => {
+  const HALO = { military: 'Military flights', quakes: 'Earthquakes', fires: 'Active fires', perimeters: 'Wildfire perimeters', cyclones: 'Tropical cyclones', vessels: 'Ships (AIS)', search: 'Place search', 'halo-ops': 'Missions and people', tides: 'Coastal water levels' };
   for (const [id, label] of Object.entries(HALO)) assert.deepEqual(LAYER_RULES[id], { min: 'fan', label }, id);
   for (const [token, options] of [[null, {}], ['t', {}], ['t', { creator: true }]]) {
     const b = await (await handleWorldAccess(req(token), ENV, { fetchImpl: db(options) })).json();
