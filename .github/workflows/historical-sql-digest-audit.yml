@@ -21,7 +21,7 @@ jobs:
       - name: Compare applied SQL against committed sources
         run: node scripts/audit-production-sql-digests.mjs > production-sql-digest-report.json
       - name: Print summary
-        run: node -e "const r=require('./production-sql-digest-report.json');console.log(JSON.stringify({live_count:r.live_count,ledger_count:r.ledger_count,counts:r.counts,exceptions:r.exceptions.length},null,2))"
+        run: node -e "const r=require('./production-sql-digest-report.json');console.log(JSON.stringify({live_count:r.live_count,ledger_count:r.ledger_count,counts:r.counts,post_cutover_counts:r.post_cutover_counts,exceptions:r.exceptions.length,examples:r.exceptions.slice(0,12).map(x=>({version:x.version,name:x.name,status:x.status,stored_bytes:x.stored_bytes,source_bytes:x.source_bytes}))},null,2))"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: production-sql-digest-report
