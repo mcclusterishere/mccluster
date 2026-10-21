@@ -27,12 +27,14 @@ html[data-daylight="day"], html[data-daylight="day"] body,
 html[data-daylight="day"].mn-world-on, html[data-daylight="day"].mn-world-on body { background:#ffffff; color:#000000; }
 /* the top bar is the one black band: the supplied white mark, the white title scroll, white icons */
 html[data-daylight="day"] .mn__top { background:#000000; border-bottom-color:#ffffff22; color:#ffffff; }
-/* the Travel World paints its header as a fade over the Earth at (0,4,0); the day band must outrank it */
-html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__top, html[data-daylight="day"].hu-travel-enabled.mn-world-on[data-world-mode] .mn__top { background:#000000; }
+/* OVER THE GLOBE THE TOP STAYS TRANSPARENT (owner, 2026-10-20: "for the globe section i want the top of it to be
+   transparent"). The World's header is the fade over the Earth by day as by night (css/world-travel.css, which outranks
+   the band above); only pages without the globe get the black band. Its words and icons stay white over the Earth. */
 html[data-daylight="day"] .mn__top .mn__brand strong, html[data-daylight="day"] .mn__top .mn__brand small, html[data-daylight="day"] .mn__now { color:#ffffff; }
 html[data-daylight="day"] .mn__top :is(.hu-search-toggle,.mn__bell,.mn__avatar-btn) { color:#ffffff; border-color:#ffffff33; background:transparent; }
 html[data-daylight="day"] .mn__guest-bar :is(.mn__guest-in,.mn__guest-join) { color:#ffffff; background:#161616; border:1px solid #ffffff33; }
 html[data-daylight="day"] .mn__menu { background:#ffffff; color:#000000; border:1px solid #00000022; box-shadow:0 12px 32px -12px #0006; }
+html[data-daylight="day"] .mn__alerts { background:#ffffff; color:#000000; border:1px solid #00000022; box-shadow:0 12px 32px -12px #0006; }
 html[data-daylight="day"] .mn__menu :is(button,a) { color:#000000; }
 /* the globe keeps its dark frame; its chrome goes white with black type */
 html[data-daylight="day"] .wt-headline { color:#ffffff; text-shadow:0 1px 10px #000000b0; }
@@ -80,11 +82,24 @@ html[data-daylight="day"] .wt-leg, html[data-daylight="day"] .wt-leg-symbol { bo
 /* the bottom bar is shared chrome; by day it reads black on white */
 html[data-daylight="day"] .appbar { background:#ffffff; border:1px solid #00000022; box-shadow:0 10px 30px -14px #0005; color:#000000; }
 html[data-daylight="day"] .appbar .appbar__tab { color:#000000; }
+/* the M on the white bar is the owner's dark M (assets/img/m-mark-dark.png, supplied artwork, scaled only), as the light
+   theme already does; a member's own picture or initial is never swapped */
+html[data-daylight="day"] .appbar__tab[data-appnav="home"] .appbar__m,
+html[data-daylight="day"] .appbar__tab--slot .appbar__m { content:url("../assets/img/m-mark-dark.png"); }
+html[data-daylight="day"] .appbar__tab[data-appnav="home"] .appbar__m--creator,
+html[data-daylight="day"] .appbar__tab[data-appnav="home"] .appbar__m--initial { content:normal; }
 /* travel sheet (owner's reference, 2026-10-19) */
 html[data-daylight="day"] .wt-sheet-grab { background:#00000030; }
 html[data-daylight="day"] .wt-activity, html[data-daylight="day"] .wt-kinds button, html[data-daylight="day"] .wt-go-row button, html[data-daylight="day"] .wt-plan-cards button { background:#ffffff; border-color:#00000026; color:#000000; }
 html[data-daylight="day"] .wt-activity b, html[data-daylight="day"] .wt-plan-cards b, html[data-daylight="day"] .wt-plan-text small, html[data-daylight="day"] .wt-field-glyph { color:#555555; }
-html[data-daylight="day"] .wt-kinds [aria-pressed="true"] { background:#dc0f2d; border-color:#dc0f2d; color:#ffffff; }
+html[data-daylight="day"] .wt-kind { background:#ffffff; border-color:#00000022; }
+html[data-daylight="day"] .wt-kind-head { color:#000000; }
+html[data-daylight="day"] .wt-kind-head[aria-pressed="true"] { background:#dc0f2d; color:#ffffff; }
+html[data-daylight="day"] .wt-switch { background:#f1f1f1; }
+html[data-daylight="day"] .wt-switch button { color:#555555; }
+html[data-daylight="day"] .wt-switch [aria-pressed="true"] { background:#ffffff; color:#000000; }
+html[data-daylight="day"] .wt-car { background:#ffffff; color:#000000; }
+html[data-daylight="day"] .wt-car-price strong { color:#000000; }
 html[data-daylight="day"] .wt-trip { background:#ffffff; border-color:#00000026; }
 html[data-daylight="day"] .wt-trip::before { border-left-color:#00000055; }
 html[data-daylight="day"] .wt-trip .wt-field { background:transparent; }
@@ -113,3 +128,12 @@ html[data-daylight="day"] .mn-swipe__dots i.is-on { background:#dc0f2d; }
 html[data-daylight="day"] .mn-swipe__filters { background:#ffffff; border-color:#00000026; }
 html[data-daylight="day"] .mn-swipe__filters button { color:#333333; }
 html[data-daylight="day"] .mn-swipe__filters button[aria-selected="true"] { background:#000000; color:#ffffff; border-color:#000000; }
+/* THE ROOMS BY DAY (owner, 2026-10-20: "I see a lot of shit flashing in between moving screens"): the profile's panels, an
+   empty room's card and the shapes a loading room shows take the day colours too. They stayed night-dark on the white
+   page, so every room switch flashed dark blocks, and an empty card faded up through grey to black. */
+html[data-daylight="day"].hu-editorial :is(.mn__panel, .mn__empty) { background:#ffffff; border-color:#00000018; color:#000000; }
+html[data-daylight="day"] .mn__skel { background:#ffffff; box-shadow:inset 0 0 0 1px #00000018; }
+html[data-daylight="day"] .mn__skel i { background:linear-gradient(90deg, #ededed 0%, #f6f6f6 40%, #ededed 80%); background-size:240% 100%; }
+/* a change of phase while the World is already on screen (js/daylight.js) fades across instead of flipping */
+html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:background-color .6s ease, color .6s ease, border-color .6s ease, fill .6s ease, stroke .6s ease !important; }
+@media (prefers-reduced-motion: reduce) { html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:none !important; } }

@@ -70,7 +70,8 @@ test('Control Analytics bounds concurrent reads instead of stampeding PostgREST'
     querySelectorAll:()=>[]
   };
   A.mount(host);
-  await new Promise((resolve)=>setTimeout(resolve,120));
+  const deadline=Date.now()+3000;
+  while(!A.state.loaded&&Date.now()<deadline)await new Promise((resolve)=>setTimeout(resolve,10));
   assert.ok(completed>=12,'expected the full analytics suite to complete');
   /* Heavy independent RPCs run two at a time; background writes must retain headroom. */
   assert.ok(peak<=2,'analytics opened '+peak+' concurrent reads');
@@ -132,7 +133,7 @@ test('all seven Analytics sections render representative successful data',async(
   };
   const expected={
     overview:/Page performance/,
-    audience:/Conversion funnel/,
+    audience:/Stage activity/,
     adaptive:/Decision ledger/,
     content:/Reach vs repeat/,
     identity:/Source → track → account/,
@@ -182,7 +183,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
   assert.match(js,/if\(q!==S\.seq\)return/);
   assert.match(js,/p_since:r\.since,p_until:r\.until/);
   assert.doesNotMatch(js,/daily=\{p_since:r\.querySince/);
-  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.completed=\{\};S\.data=blankData\(\);loadGeoAudience\(\);paint\(\)/,
+  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.quality=\{\};S\.completed=\{\};S\.data=blankData\(\);loadGeoAudience\(\);paint\(\)/,
     'range selection must repaint immediately before the network read completes');
 });
 
@@ -193,7 +194,7 @@ test('Analytics uses distinct visual forms for distinct questions',async()=>{
   }
   assert.match(js,/Traffic trend/);
   assert.match(js,/Geography/);
-  assert.match(js,/Conversion funnel/);
+  assert.match(js,/Stage activity/);
   assert.match(js,/Reach vs repeat/);
   assert.match(js,/Source → track → account/);
 });
@@ -296,7 +297,8 @@ test('Audience analytics stays inside the exact selected property and timestamp 
   assert.match(js,/hourly=S\.rangeId==="24h"/);
   assert.match(js,/t\.byHour\|\|\[\]/);
   assert.match(js,/t\.byDay\|\|\[\]/);
-  assert.match(js,/site===null\?rpc\("analytics_funnel"/);
+  assert.match(js,/site===null\?rpc\("analytics_stage_totals",args\)/);
+  assert.match(js,/if\(!missingFn\(error\)\)throw error;return rpc\("analytics_funnel",\{p_since:r\.since,p_until:r\.until\}\)/);
   assert.match(js,/\{name:"business",run:function\(\)\{return site===null\?S\.request/);
   assert.match(js,/Control will not mix another property into this view/);
   assert.doesNotMatch(js,/analytics_engagement_site|analytics_funnel_site/);

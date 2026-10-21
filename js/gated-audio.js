@@ -140,7 +140,9 @@
     if (!g || g.mode !== "rule") return null;
     var m = g.missions || {}, have = Number(m.have) || 0, need = Number(m.need) || 3;
     var links = g.links || {}, missing = g.missing || [], parts = [], go = [];
-    if (missing.indexOf("sign_in") > -1) go.push({ key: "sign_in", label: "Sign in", href: "account.html" });
+    /* signing in (or making the account) comes back to this record (account.html honours ?next) */
+    var here = window.location && window.location.pathname ? window.location.pathname + (window.location.search || "") : "";
+    if (missing.indexOf("sign_in") > -1) go.push({ key: "sign_in", label: "Sign in", href: "account.html" + (here && !/(^|\/)account\.html$/.test(here) ? "?next=" + encodeURIComponent(here) : "") });
     if (have < need) {
       parts.push(need + " verified missions (you have " + have + ")");
       if (links.missions) go.push({ key: "missions", label: "Missions (" + have + "/" + need + ")", href: links.missions });

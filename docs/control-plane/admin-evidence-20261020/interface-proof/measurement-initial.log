@@ -1,0 +1,56 @@
+PASS dark-390 real globe
+PASS dark-390 no horizontal overflow
+PASS dark-390 respects existing dark theme lock
+PASS dark-390 no runtime errors
+PASS dark-820 real globe
+PASS dark-820 no horizontal overflow
+PASS dark-820 respects existing dark theme lock
+PASS dark-820 no runtime errors
+PASS dark-1280 real globe
+PASS dark-1280 no horizontal overflow
+PASS dark-1280 respects existing dark theme lock
+PASS dark-1280 no runtime errors
+PASS light-390 real globe
+PASS light-390 no horizontal overflow
+PASS light-390 respects existing dark theme lock
+PASS light-390 no runtime errors
+PASS light-820 real globe
+PASS light-820 no horizontal overflow
+PASS light-820 respects existing dark theme lock
+PASS light-820 no runtime errors
+PASS light-1280 real globe
+PASS light-1280 no horizontal overflow
+PASS light-1280 respects existing dark theme lock
+PASS light-1280 no runtime errors
+PASS 390 globe with partial response
+PASS 390 partial response visible
+PASS 390 one globe canvas
+PASS 390 stages use whole-window devices
+PASS 390 card and map share selection
+PASS 390 country selection preserves the globe
+PASS 390 scoped partial view no overflow
+PASS 390 sign-out removes private datasets
+PASS 390 no runtime errors after sign-out
+PASS 820 globe with partial response
+PASS 820 partial response visible
+PASS 820 one globe canvas
+PASS 820 stages use whole-window devices
+PASS 820 card and map share selection
+PASS 820 country selection preserves the globe
+PASS 820 scoped partial view no overflow
+PASS 820 sign-out removes private datasets
+PASS 820 no runtime errors after sign-out
+PASS 1280 globe with partial response
+PASS 1280 partial response visible
+PASS 1280 one globe canvas
+PASS 1280 stages use whole-window devices
+PASS 1280 card and map share selection
+PASS 1280 country selection preserves the globe
+PASS 1280 scoped partial view no overflow
+PASS 1280 sign-out removes private datasets
+PASS 1280 no runtime errors after sign-out
+PASS no-WebGL accessible explanation
+PASS no-WebGL country list and cards remain usable
+Expected no-WebGL diagnostics: 2
+PASS no-WebGL no unexpected runtime errors: []
+PASS 54 assertions

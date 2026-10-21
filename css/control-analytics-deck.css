@@ -155,7 +155,7 @@ body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-su
   .cad-footer{padding:6px 18px;gap:8px;font-size:11px}
 }
 
-.cu-heat-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:#c2bec8;margin:8px 0}.cu-heat-legend i{height:5px;flex:1;border-radius:9px;background:linear-gradient(90deg,#393b40,var(--an-accent,#e23948))}
+.cu-heat-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:#c2bec8;margin:8px 0}.cu-heat-legend i{height:5px;flex:1;border-radius:9px;background:linear-gradient(90deg,color-mix(in srgb,var(--an-accent,#e11d2e) 28%,var(--an-land,#3b3e44)) 0%,var(--an-accent,#e11d2e) 50%,color-mix(in srgb,var(--an-accent,#e11d2e) 38%,#fff) 100%)}
 
 .cad-body .cra-kpi small{color:#b8b4c0}
 

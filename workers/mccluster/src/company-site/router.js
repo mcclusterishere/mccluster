@@ -32,6 +32,7 @@
    campaign links keep landing where they do now. */
 import { PAGES, COMPANY_ORIGIN, PERSONAL_ORIGIN } from './pages.generated.js';
 import { moved, isWorldRoom, isDocument, methodNotAllowed, upstreamOrigin, passThrough, SECURITY } from '../world-host.js';
+import { isNewsPath, newsroomResponse } from './news.js';
 
 const APEX = 'mccluster.org';
 const WWW = 'www.mccluster.org';
@@ -63,7 +64,7 @@ export const WORLD_HEAD = {
 };
 
 function ownsPath(path) {
-  return path === '/' || path === '/mnet.html' || Object.prototype.hasOwnProperty.call(PAGES, path) || isWorldRoom(path);
+  return path === '/' || path === '/mnet.html' || Object.prototype.hasOwnProperty.call(PAGES, path) || isWorldRoom(path) || isNewsPath(path);
 }
 
 export async function companySiteResponse(request, env = {}, fetchImpl = fetch) {
@@ -78,6 +79,8 @@ export async function companySiteResponse(request, env = {}, fetchImpl = fetch) 
   /* the World's document name is the root here, query and all */
   if (path === '/mnet.html') return moved(`${COMPANY_ORIGIN}/${url.search}`);
 
+  /* the company's news: the house owner's posts marked for the newsroom, as articles (./news.js) */
+  if (isNewsPath(path)) return newsroomResponse(request, env, fetchImpl);
   const page = Object.prototype.hasOwnProperty.call(PAGES, path) ? PAGES[path] : null;
   if (page) {
     if (request.method !== 'GET' && request.method !== 'HEAD') return methodNotAllowed();

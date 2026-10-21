@@ -18,7 +18,8 @@ function harness(){
   const session={access_token:'fixture-mission-session'};
   const missions={all:[],current:null,assignment:null,stats:{},campaign:'',content:'',source:'',attributedMission:'',liveSession:'',liveMission:'',returnHref:'',proofFile:null,proofPreview:''};
   const context={
-    missions,$:el,state,MCC:{session(){return session;}},MISSION_FIELDS:'id,title,status',
+    /* the mission flow is driven with Missions on: the World's social-only switch (MISSIONS_OFF in js/mnet.js) keeps it in the code */
+    missions,$:el,state,MCC:{session(){return session;}},MISSION_FIELDS:'id,title,status',MISSIONS_OFF:false,
     sbRest(path){const d=deferred();calls.push({kind:'rest',path,...d});return d.promise;},
     sbRpc(name,args){const d=deferred();calls.push({kind:'rpc',name,args,...d});return d.promise;},
     askToSignIn(reason){calls.push({kind:'gate',name:'signin',reason});},

@@ -19,7 +19,10 @@ const read = (p) => readFile(join(ROOT, p), 'utf8');
 test('a member with an unfinished profile or contact step gets the World, with the step in a card', async () => {
   const js = await read('js/mnet.js'), html = await read('mnet.html'), css = await read('css/mnet.css');
   assert.match(js, /function needsStep\(\) \{\n    var s = state\.boot && state\.boot\.next_step;\n    return s === "profile" \|\| s === "contact" \? s : "";/);
-  assert.match(js, /if \(needsStep\(\)\) \{[\s\S]{0,400}showGate\("app"\);\n        setView\("feed"\);\n        paintSelf\(\);\n        paintFinishCard\(\);/, 'the World, not the form');
+  assert.match(js, /if \(needsStep\(\)\) \{[\s\S]{0,600}showGate\("app"\);\n        setView\("feed"\);\n        paintSelf\(\);\n        paintFinishCard\(\);/, 'the World, not the form');
+  /* ONE SIGN-UP (owner, 2026-10-20): only a new account, or someone sent to finish (?join, ?finish, ?next), gets the pages at once */
+  assert.match(js, /return needsStep\(\) && !FLOW\.on \? adoptPendingJoin\(\)\.then\(function \(\) \{ return boot; \}\) : boot;\n    \}\)\.then\(function \(boot\) \{\n      if \(needsStep\(\)\) \{\n        \/\* a new account, or someone sent here to finish \(FLOW\): the pages at once, not the card \*\/\n        if \(FLOW\.on\) \{ openPages\(\); return; \}/);
+  assert.match(js, /return \{ next: next, from: from, join: join, finish: finish, on: join \|\| finish \|\| !!next \};/, 'a plain sign-in is not the flow: it lands on the World');
   assert.doesNotMatch(js, /location\.replace\("account\.html\?complete=contact"\)/, 'no redirect away from the World at boot');
   assert.doesNotMatch(js, /if \(boot\.next_step === "profile"\) \{\n        fillProfileForm\(false\);\n        showGate\("profile"\);/, 'the old gate is gone');
   assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\) \|\| !!state\.stall;/, 'public posts until the step is done');
@@ -36,9 +39,11 @@ test('a member with an unfinished profile or contact step gets the World, with t
   assert.match(js, /\$\("mnFinishGo"\)\.onclick = function \(\) \{\n      if \(state\.stall === "signin"\) \{ openSignIn\("signin", "Your sign-in ended\. Sign in again\."\); return; \}\n      if \(state\.stall === "retry"\) \{ retryStall\(\); return; \}\n      askToFinish\("act"\);\n    \};/, 'the card\'s one button: sign in again, try again, or finish the step');
   assert.match(js, /setView\(needsStep\(\) \? "feed" : "profile"\)/, 'a finished profile lands back on the feed');
   assert.doesNotMatch(js, /location\.assign\("account\.html\?complete=contact"\)/, 'the contact step is page 2 of the onboarding in the World, not a redirect to the account page');
-  assert.match(js, /\$\("mnFinishTitle"\)\.textContent = contact \? "Complete your details\." : "Finish your profile\.";/);
+  /* the card names the page it opens (owner, 2026-10-20: copy that says what it is) */
+  assert.match(js, /var address = firstUnfinished\(\) === 2;\n    \$\("mnFinishTitle"\)\.textContent = address \? "Add your mailing address\." : "Make your profile\.";/);
+  assert.match(js, /\$\("mnFinishGo"\)\.textContent = address \? "Add your address \\u2192" : "Make your profile \\u2192";/);
   assert.match(html, /<aside class="mn__guest-card mn__finish-card" id="mnFinishCard" hidden>/);
-  assert.match(html, /<button class="mn__world-go" type="button" id="mnFinishGo">Finish your profile \u2192<\/button>/);
+  assert.match(html, /<button class="mn__world-go" type="button" id="mnFinishGo">Make your profile \u2192<\/button>/);
   assert.match(css, /\.mn__finish-card:not\(\[hidden\]\) \{ display: block; \}/);
 });
 
@@ -107,10 +112,15 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
   const html = await read('mnet.html'), js = await read('js/mnet.js'), css = await read('css/mnet.css');
   assert.match(html, /<section class="mn__gate mn__onboard" id="mnProfileGate" hidden>/);
   assert.match(html, /<ol class="mn__steps" id="mnSteps" aria-label="Three steps"><li data-step="1" class="is-current"><\/li><li data-step="2"><\/li><li data-step="3"><\/li><\/ol>/);
-  assert.match(html, /id="mnStep1" data-step="1">\s*<h1 class="mn__onboard-h" id="mnProfileTitle">Make it yours<em>\.<\/em><\/h1>/);
-  assert.match(html, /id="mnStep2" data-step="2" hidden>\s*<h1 class="mn__onboard-h">Where to reach you<em>\.<\/em><\/h1>/);
-  assert.match(html, /id="mnStep3" data-step="3" hidden>\s*<h1 class="mn__onboard-h">Lock it in<em>\.<\/em><\/h1>/);
+  /* the copy names the thing (owner, 2026-10-20: "instead of saying make it yours, it should be like make a profile"), in order:
+     the public profile, where we can reach you (private), phone and sign-in */
+  assert.match(html, /id="mnStep1" data-step="1">\s*<h1 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>\.<\/em><\/h1>\s*<p class="mn__lede" id="mnProfileLede">Your username and name\. It's how people find you\.<\/p>/);
+  assert.match(html, /id="mnStep2" data-step="2" hidden>\s*<h1 class="mn__onboard-h">Where we can reach you<em>\.<\/em><\/h1>\s*<p class="mn__lede">Your legal name and mailing address\. Private, never on your profile\.<\/p>/);
+  assert.match(html, /id="mnStep3" data-step="3" hidden>\s*<h1 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>\.<\/em><\/h1>/);
+  for (const src of [html, js, await read('js/mnet-tour.js')]) assert.doesNotMatch(src, /Make it yours|Lock it in|Your place in the movement/, 'the old copy is gone everywhere');
   assert.match(html, /<details class="mn__about" id="mnAbout">[\s\S]*?<strong>About you<\/strong><small>Optional · Private<\/small>/, 'the demographics ride along, collapsed, optional, private');
+  assert.doesNotMatch(html, /A response is required/, 'the demographics are optional and say so');
+  assert.match(html, /<p class="mn__hint">Optional\. Leave it blank or choose “Prefer not to say\.”<\/p><\/fieldset>/);
   assert.match(html, /<button class="mn__cta" id="mnProfileSave" type="submit"><span id="mnCtaLabel">Save &amp; continue<\/span><i class="mn__cta-arrow"/);
   assert.match(html, /<p class="mn__onboard-note">[\s\S]*?<span>You can update this anytime\.<\/span><\/p>/);
   assert.match(html, /<script src="js\/fan-intake\.js\?v=__STAMP__"><\/script>/, 'the contact step writes through the fan intake, the only writer of fan_profiles');
@@ -125,7 +135,7 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
   assert.match(js, /if \(!\/\^\[1-9\]\[0-9\]\{0,2\}\$\/\.test\(code\)\) return null;/, 'no impossible country codes (00, 011, four digits)');
   assert.match(js, /function splitE164\(phone\)/, 'a stored number comes back as its code and its number');
   assert.match(js, /function enterTheWorld\(\)/); assert.match(js, /return api\("\/v1\/mnet\/bootstrap\?app_key=" \+ encodeURIComponent\(APP\)\)\.then\(function \(boot\) \{\n      state\.boot = boot;/);
-  assert.match(js, /\$\("mnCtaLabel"\)\.textContent = editing \? "Save changes" : n === 3 \? "Enter the World" : "Save & continue";/);
+  assert.match(js, /\$\("mnCtaLabel"\)\.textContent = editing \? "Save changes" : n === 3 \? \(FLOW\.next \? "Done" : "Go to the World"\) : "Save & continue";/);
   assert.doesNotMatch(js, /location\.assign\("account\.html\?complete=contact"\)/, 'the contact step is page 2, not a redirect');
   assert.match(css, /\.mn__onboard-h \{ max-width: 12ch; margin: 0; font-family: var\(--mn-ui\); font-weight: 900;/);
   assert.match(css, /\.mn__cta \{ position: relative; display: flex;[^}]*border-radius: 999px;/);
@@ -138,7 +148,7 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
 
 test('Full world is a full pane: the Earth edge to edge, the World\'s chrome at home, the layer line painted on its own (owner, 2026-10-15)', async () => {
   const html = await read('action-globe.html'), js = await read('js/action-globe.js'), css = await read('css/action-globe.css'), world = await read('mnet.html');
-  assert.match(world, /class="mn__world-expand" href="action-globe\.html\?explore=1" aria-label="Expand the globe">/);
+  assert.match(world, /class="mn__world-expand" href="action-globe\.html\?explore=1&amp;missions=0" aria-label="Expand the globe">/);
   assert.match(html, /<header><a id="worldBack" href="mnet\.html\?view=feed">\u2190 World<\/a>/, 'the way back is the World');
   assert.match(html, /<p class="explore-line" id="exploreLine" aria-live="polite" hidden><\/p>/);
   assert.match(js, /const EXPLORE=!embedded&&new URLSearchParams\(location\.search\)\.has\('explore'\);if\(EXPLORE\)document\.documentElement\.classList\.add\('globe-explore'\);/);

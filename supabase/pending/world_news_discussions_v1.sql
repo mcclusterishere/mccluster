@@ -1,4 +1,8 @@
--- PENDING REVIEW ONLY: do not apply to production or auto-promote.
+-- PENDING: approved by the owner 2026-10-20 ("i need the news articles to be able
+-- to be replied to"); apply to production through the Supabase connector. The
+-- Worker flag WORLD_NEWS_COMMENTS_ENABLED is already "true" and fails closed
+-- (no reply box) until this table exists. Rollback:
+-- world_news_discussions_v1.rollback.sql
 -- News comments are original member contributions, not copied publisher text.
 -- A discussion follows the retained discovery record and is removed when
 -- that source record is pruned. Long-term archives require a separate policy.

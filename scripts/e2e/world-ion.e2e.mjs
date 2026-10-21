@@ -90,7 +90,7 @@ const MEMBER = 'member-e2e-session';
 async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile = true, { statusDelay = 0, geo = { latitude: 40.7484, longitude: -73.9857 }, session = MEMBER, accepted = new Set([MEMBER]) } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, geolocation: geo, permissions: ['geolocation'] });
   await ctx.addInitScript((member) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (member) localStorage.setItem('mccdb_session', JSON.stringify({ access_token: member, refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600 }));
   }, session);
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE }, body: JSON.stringify(body) });

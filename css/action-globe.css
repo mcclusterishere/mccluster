@@ -258,3 +258,6 @@ header strong{display:none}
 .ion-credits .cesium-credit-textContainer:empty{display:none!important}
 .ion-credits img{height:12px!important;width:auto!important;vertical-align:-2px!important}
 .ion-credits .cesium-credit-expand-link{margin-left:4px;color:inherit;text-decoration:underline;cursor:pointer}
+
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): with missions=0 the expanded globe keeps its mission panels shut */
+.globe-no-missions :is(#deck,#worldFeed,#worldDetail,#globeMode,#feedMode,#missionsLayer,#citiesLayer,#worldFilters) { display:none!important; }

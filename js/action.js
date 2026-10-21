@@ -905,7 +905,7 @@
     root.MCC.signUpWithPassword(email, pass, {
       name: check.legal_name, full_name: check.legal_name,
       first_name: check.first_name, last_name: check.last_name,
-      privacy_policy_version: "2026-09-26",
+      privacy_policy_version: "2026-10-19",
       privacy_acknowledged_at: new Date().toISOString(),
       joined_via: "action:" + SLUG
     }).then(function (res) {

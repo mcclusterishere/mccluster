@@ -24,9 +24,14 @@
     var tracks=Array.isArray(d.content)?d.content:[],scope=S.range&&S.range.label||'Selected range';
     var metrics='<div class="cu-metrics cu-overview-metrics" aria-label="Key metrics. Swipe for more.">'+metric('Unique visitors',num(t.visitors),'Distinct devices · '+scope,'audience')+metric('Page views',num(t.page_views),scope+' · all countries','audience')+(house?metric('New accounts',num(b.users&&b.users.created_in_window),scope+' · all countries','identity')+metric('Music plays',num(b.music&&b.music.plays&&b.music.plays.in_window),scope+' · all countries','content')+metric('Verified sales',cash(sales&&sales.net_cents),'Live · net of refunds','action')+metric('Awaiting review',num(sum(d.missions,'submitted')),'Mission assignments · all time','action'):metric('Sessions',num(t.sessions),scope,'audience')+metric('Events',num(t.events),scope,'content'))+'</div>';
 
-    var f=d.funnel,keys=[['arrived','Arrived'],['heard_something','Listened'],['made_an_account','Signed up'],['paid','Paid']];
-    var funnel='<div class="cu-funnel">'+keys.map(function(k){return '<div><small>'+k[1]+'</small><b>'+num(S.errors.funnel||!S.completed||!S.completed.funnel?null:sum(f,k[0]))+'</b></div>';}).join('')+'</div>';
-    var reach=card('Reach & conversion',h.scopeLabel(),h.chart+(house?funnel+'<p class="cu-note">Funnel: first-party, all countries</p>':'')+button(house?'Explore journeys':'Explore audience',house?'identity':'audience'));
+    var f=d.funnel,keys=[['arrived','Arrived'],['heard_something','Listened'],['made_an_account','Signed up'],['paid','Purchase reports']];
+    function stageValue(key){
+      if(!d.stageTotals)return sum(f,key);
+      if(key==='made_an_account')return d.stageTotals.accounts&&d.stageTotals.accounts.made_an_account;
+      var stage={arrived:'view',heard_something:'content',paid:'purchase'}[key],row=(d.stageTotals.stages||[]).find(function(x){return x.stage===stage;});return row?row.value:0;
+    }
+    var funnel='<div class="cu-funnel">'+keys.map(function(k){return '<div><small>'+k[1]+'</small><b>'+num(S.errors.funnel||!S.completed||!S.completed.funnel?null:stageValue(k[0]))+'</b></div>';}).join('')+'</div>';
+    var reach=card('Reach & stage activity',h.scopeLabel(),h.chart+(house?funnel+'<p class="cu-note">Stage totals · first-party, all countries. Arrived, Listened and Purchase reports are '+(d.stageTotals?'distinct devices in this window':'device-days')+'; Signed up is accounts. Not an ordered conversion funnel.</p>':'')+button(house?'Explore journeys':'Explore audience',house?'identity':'audience'));
     var errs=d.errors&&d.errors.totals;
 
     return metrics+'<div class="cad-overview-grid">'+reach+(house?card('Needs attention','First-party · '+scope,rows([['Site errors',num(errs&&errs.site_errors)],['Friction events',num(errs&&errs.friction)],['Proof awaiting review · all time',num(sum(d.missions,'submitted'))]])+button('Inspect site health','forensics')):card('Property activity',scope,rows([['Sessions',num(t.sessions)],['Events',num(t.events)]])+button('Explore audience','audience')))+'</div>';
@@ -40,7 +45,7 @@
     var d=S.data,b=d.business&&d.business.snapshot||{},cm=b.commerce||{},sales=cm.available?(b.window?cm.live_in_window:cm.live):null;
     if(S.site!=='__first_party__')return card('Action & business','McCluster first-party','<p>Select McCluster first-party to see participation and commerce.</p>');
     var community=b.mnet||{},windowCount=function(k){return community[k]&&community[k].created_in_window;};
-    return '<div class="cu-grid">'+card('Human Uprise','Assignment states · all time',rows([['Mission joins',num(sum(d.missions,'joined'))],['In progress',num(sum(d.missions,'in_progress'))],['Awaiting proof review',num(sum(d.missions,'submitted'))],['Verified assignments',num(sum(d.missions,'verified'))]])+link('Open operations','work:operations'))+
+    return '<div class="cu-grid">'+card('Equity Uprise','Assignment states · all time',rows([['Mission joins',num(sum(d.missions,'joined'))],['In progress',num(sum(d.missions,'in_progress'))],['Awaiting proof review',num(sum(d.missions,'submitted'))],['Verified assignments',num(sum(d.missions,'verified'))]])+link('Open operations','work:operations'))+
       card('Sales & delivery',(S.range&&S.range.label||'Selected range')+' · all countries',rows([['Verified net sales',cash(sales&&sales.net_cents)],['Refunded',cash(sales&&sales.refunded_cents)],['Bookings',num(sales&&sales.bookings&&sales.bookings.total)],['Waiting for a time',num(sales&&sales.bookings&&sales.bookings.proposed)]])+link('Open payments','work:payments'))+card('Community activity',(S.range&&S.range.label||'Selected range')+' · first-party',rows([['New profiles',num(windowCount('profiles'))],['Posts',num(windowCount('posts'))],['Reactions',num(windowCount('reactions'))],['Follows',num(windowCount('follows'))]]))+'</div>'+card('Stored datasets','Counts and collection health','<p>Inspect the measured data behind these views.</p>'+button('Open dataset explorer','inventory'))+
       '<section class="cu-card cu-workspace"><h2>Workspaces</h2><nav aria-label="Backend workspaces">'+WORKSPACE.map(function(x){return link(x[0],x[1]);}).join('')+'</nav></section>';
   }
@@ -103,16 +108,16 @@
     ])+'<p class="cu-note">'+(!h.collector?'Collector configuration is unknown.':!h.collector.enabled?'Collection is off. Provider snapshots do not populate the archive.':'Enabled describes configuration. Check the latest attempt and stored datasets to confirm receipt.')+'</p>'+button('Inspect stored datasets','inventory'));
   }
   function intelligence(){
-    var news=window.CR.newsContext?window.CR.newsContext.render():'';
+    var news=(window.CR.connections?window.CR.connections.render():'')+(window.CR.newsContext?window.CR.newsContext.render():'');
     if(H.busy&&!H.sources)return news+card('World intelligence','Halo / GEV source families','<p role="status">Reading source permissions and readiness…</p>');
     var sources=H.sources||[],shown=sources.filter(function(s){return (s.name+' '+s.key+' '+(s.capabilities||[]).join(' ')).toLowerCase().includes(H.query.toLowerCase());}),selected=sources.find(function(s){return s.key===H.source;});
     var ready=H.readiness&&H.readiness.database_schema_ready,warning=H.error?'<p class="cu-warning" role="alert">'+esc(H.error)+'</p>':ready===false?'<p class="cu-warning">Spatial archive is not provisioned. Authorized transient snapshots remain available; saved history is unavailable.</p>':'';
     return news+collectionHealth()+worldContext()+'<section class="cu-card"><div class="cu-heading"><h2>World intelligence</h2>'+button('Camera coverage','cameras')+'<button data-cu-refresh type="button">Refresh status</button></div><p>Transport, space, cameras, environment, infrastructure, economics and public records. Source permissions are enforced by the existing McCluster data plane.</p>'+warning+'<p class="cu-note">Status describes configuration, not a live feed. Halo retains its own provider credentials. These reads use McCluster’s existing broker.</p><label class="cu-search">Find a source<input id="cuSourceSearch" value="'+esc(H.query)+'" placeholder="Cameras, aircraft, weather, grants…" type="search"></label><p class="cu-note">'+sources.length+' registered sources · '+shown.length+' matching</p><div class="cu-source-grid">'+shown.map(function(s){return '<button type="button" data-cu-source="'+esc(s.key)+'" class="cu-source'+(s.key===H.source?' is-on':'')+'"><b>'+esc(s.name)+'</b><span>'+esc((s.capabilities||[]).join(' · '))+'</span><small>'+esc(sourceStatus(s))+' · '+esc(s.persistence)+'</small></button>';}).join('')+'</div></section>'+(selected?'<section class="cu-card"><h2>'+esc(selected.name)+'</h2><p>'+esc(selected.attribution||'Provider attribution applies.')+'</p><div class="cu-actions"><button data-cu-archive type="button"'+(ready===false||H.reading?' disabled':'')+'>Read stored records</button></div><form id="cuSnapshot"><label>Query parameters (JSON)<textarea id="cuParameters" data-source="'+esc(H.source)+'" rows="3" spellcheck="false">'+esc(H.parameters||'{}')+'</textarea></label><p class="cu-note">One requested snapshot. No automatic polling or archiving. Example coordinates are New Haven, Connecticut; change them for your query. Open Cameras for measured catalog coverage and image checks.</p><button type="submit"'+(H.reading||selected.entitlement&&selected.entitlement.allowed===false||selected.credential_required&&!selected.configured?' disabled':'')+'>Read provider snapshot</button></form>'+recordsHtml()+'</section>':'');
   }
   async function load(request,paint){
-    if(H.busy)return;H.busy=true;H.error=null;paint();
+    if(H.busy)return;var seq=++H.seq;H.busy=true;H.error=null;paint();
     var rs=await Promise.allSettled([request('/v1/seek-first/sources?lane=INTERNAL'),request('/v1/seek-first/readiness'),request('/v1/intel/health')]);
-    H.busy=false;H.sources=null;H.readiness=null;H.health=null;H.healthError=null;
+    if(seq!==H.seq)return;H.busy=false;H.sources=null;H.readiness=null;H.health=null;H.healthError=null;
     if(rs[2].status==='fulfilled'&&typeof rs[2].value.schema_ready==='boolean')H.health=rs[2].value;else H.healthError='Collector health could not be read.';
     if(rs[0].status==='fulfilled'&&Array.isArray(rs[0].value.sources))H.sources=rs[0].value.sources;else H.error='Source catalog unavailable: '+(rs[0].reason&&rs[0].reason.message||'Invalid response');
     if(rs[1].status==='fulfilled'&&typeof rs[1].value.database_schema_ready==='boolean')H.readiness=rs[1].value;else H.error=(H.error?H.error+' · ':'')+'Readiness could not be verified.';
@@ -128,6 +133,7 @@
   }
   function bind(root,request,paint){
     if(window.CR.newsContext)window.CR.newsContext.bind(root,request,paint);
+    if(window.CR.connections)window.CR.connections.bind(root,request,paint);
     root.querySelectorAll('[data-cu-panel]').forEach(function(b){b.onclick=function(){H.panel=b.dataset.cuPanel;paint();};});
     root.querySelectorAll('[data-cu-dataset]').forEach(function(b){b.onclick=function(){H.dataset=b.dataset.cuDataset;paint();var host=window.CR.analytics.state.host;var detail=host&&host.querySelector('[data-cu-dataset-detail]');if(detail)detail.scrollIntoView({block:'nearest'});};});
     [['#cuDatasetSearch','datasetQuery'],['#cuDatasetFamily','family'],['#cuDatasetStatus','datasetStatus']].forEach(function(x){var el=root.querySelector(x[0]);if(el)el.onchange=function(){H[x[1]]=el.value;H.dataset='';paint();};});
@@ -142,5 +148,8 @@
     var archive=root.querySelector('[data-cu-archive]');if(archive)archive.onclick=function(){read(request,paint,false);};
     var form=root.querySelector('#cuSnapshot');if(form)form.onsubmit=function(e){e.preventDefault();H.parameters=root.querySelector('#cuParameters').value;try{var p=JSON.parse(H.parameters);if(!p||Array.isArray(p)||typeof p!=='object')throw Error('Use a JSON object.');if(Object.keys(p).some(function(k){return /token|secret|password|api.?key|credential/i.test(k);}))throw Error('Provider credentials stay in server settings.');read(request,paint,true,p);}catch(e){H.recordError=e.message;paint();}};
   }
-  window.CR.analyticsUnified={overview:overview,operations:operations,coverage:coverage,datasetRows:datasetRows,geography:geography,inventory:inventory,loadInventory:loadInventory,intelligence:intelligence,load:load,bind:bind,state:H,worldState:W,worldContext:worldContext,loadWorld:loadWorld,sourceStatus:sourceStatus};
+  function clearPrivate(){
+    ++H.seq;++W.seq;H.health=null;H.healthError=null;H.sources=null;H.readiness=null;H.error=null;H.busy=false;H.source='';H.records=null;H.result=null;H.runs=null;H.recordError=null;H.reading=false;H.inventory=null;H.inventoryError=null;H.inventoryBusy=false;W.data=null;W.error=null;W.busy=false;
+  }
+  window.CR.analyticsUnified={overview:overview,operations:operations,coverage:coverage,datasetRows:datasetRows,geography:geography,inventory:inventory,loadInventory:loadInventory,intelligence:intelligence,load:load,bind:bind,state:H,worldState:W,worldContext:worldContext,loadWorld:loadWorld,sourceStatus:sourceStatus,clearPrivate:clearPrivate};
 })();

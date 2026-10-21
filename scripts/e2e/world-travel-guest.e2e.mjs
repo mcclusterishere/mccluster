@@ -6,6 +6,7 @@
    PLAYWRIGHT_EXECUTABLE_PATH=/path/to/chromium node scripts/e2e/world-travel-guest.e2e.mjs [outDir]
    CESIUM_DIR must contain the pinned 1.131 build used by action-globe.html. */
 import assert from 'node:assert/strict';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { extname, join } from 'node:path';
@@ -36,7 +37,7 @@ const browser = await chromium.launch({ executablePath:process.env.PLAYWRIGHT_EX
 async function open(viewport, { automatic = false, webgl = true, audioParent = false } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor:1, isMobile:viewport.width < 600, hasTouch:viewport.width < 600, reducedMotion:'reduce' });
   await ctx.addInitScript(({ automatic, origin }) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version:'2026-09-26', accepted_at:new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version:'2026-10-19', accepted_at:new Date().toISOString() }));
     if (!automatic) sessionStorage.setItem('wt_location_asked', '1');
     // Keep the separately approved analytics location feature out of this
     // travel interaction test, without changing shipping analytics code.
@@ -67,6 +68,8 @@ async function open(viewport, { automatic = false, webgl = true, audioParent = f
       try {
         const path = url.pathname === '/' ? '/mnet.html' : url.pathname;
         let body = await readFile(join(ROOT, path));
+        /* Travel is switched off in the World as it ships; this suite guards it, so it drives it switched on */
+        if (path === '/mnet.html') body = Buffer.from(withTravelAndMissions(body));
         if (path === '/js/action-globe.js') body = Buffer.from(body.toString().replace('viewer=new Cesium.Viewer(', 'viewer=window.__testViewer=new Cesium.Viewer('));
         return r.fulfill({ status:200, contentType:TYPES[extname(path)] || 'application/octet-stream', body });
       } catch { return r.fulfill({ status:404, body:'Fixture file unavailable' }); }
@@ -138,6 +141,23 @@ async function controls(page) {
   });
 }
 
+/* the layout once the globe has had its turn: it re-places its controls on the animation frame after the page changes (a
+   class, a size), and under a software-rendered globe one frame can take a second (a reading 100 ms after Expand caught
+   Zoom in still under it, clear at 1.3 s). So two of the frame's own animation frames pass before each reading, by the
+   frame's clock rather than a timer, and readings are taken until two in a row agree (up to ten): what is judged is the
+   layout that stays, and a control that settles over another still fails */
+async function settled(page, frame) {
+  const turn = () => frame.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  let last = '', geometry;
+  for (let t = 0; t < 10; t++) {
+    await turn(); geometry = await controls(page);
+    const key = JSON.stringify([geometry.buttons, geometry.frame, geometry.hits]);
+    if (key === last) return geometry;
+    last = key;
+  }
+  return geometry;
+}
+
 try {
   const selectedWidths = process.env.WORLD_TRAVEL_WIDTHS?.split(',').map(Number);
   for (const size of [{ width:320,height:568 }, { width:390,height:844 }, { width:844,height:390 }, { width:1280,height:800 }].filter(size => !selectedWidths || selectedWidths.includes(size.width))) {
@@ -147,7 +167,7 @@ try {
     check(scope, 'no horizontal document overflow', geometry.scrollWidth === geometry.clientWidth, geometry);
     await page.locator('.mn__world-expand').click();
     await page.waitForFunction(() => document.documentElement.classList.contains('wt-expanded'));
-    await page.waitForTimeout(100); geometry = await controls(page);
+    geometry = await settled(page, frame);
     check(scope, 'expanded map controls do not overlap Fullscreen, modes or dock', !geometry.hits.length && geometry.inside, geometry);
     await page.locator('.mn__world-expand').click();
     await page.locator('#wtLocate').click();
@@ -251,8 +271,7 @@ try {
   await picked.page.waitForFunction(() => !document.getElementById('wtMapNav').hidden);
   check('map-pick', 'the expanded Earth retains a usable Go control over the route',
     await exposed(picked.page, 'wtMapNavGo'));
-  await picked.page.waitForTimeout(150);
-  const expandedChrome = await controls(picked.page);
+  const expandedChrome = await settled(picked.page, picked.frame);
   check('map-pick', 'route overlay never covers the map location and zoom controls',
     !expandedChrome.hits.length && expandedChrome.inside, expandedChrome);
   await picked.page.locator('#wtMapNavGo').click();
@@ -277,8 +296,8 @@ try {
   await manual.page.waitForTimeout(100);
   let manualGeometry = await controls(manual.page);
   check('manual', 'without WebGL, location and zoom controls still clear Fullscreen and the listening dock', !manualGeometry.hits.length && manualGeometry.inside, manualGeometry);
-  await manual.page.locator('.mn__world-expand').click(); await manual.page.waitForTimeout(100);
-  manualGeometry = await controls(manual.page);
+  await manual.page.locator('.mn__world-expand').click();
+  manualGeometry = await settled(manual.page, manual.frame);
   check('manual', 'without WebGL, expanded controls still clear Fullscreen and the listening dock', !manualGeometry.hits.length && manualGeometry.inside, manualGeometry);
   await manual.page.locator('.mn__world-expand').click();
   await manual.frame.locator('#ctlLocate').click();
@@ -308,7 +327,7 @@ try {
     let geometry = await controls(page);
     check(scope, 'normal map controls clear the retained parent audio controls', !geometry.hits.length && geometry.inside, geometry);
     await page.locator('.mn__world-expand').click();
-    await page.waitForTimeout(100); geometry = await controls(page);
+    geometry = await settled(page, frame);
     check(scope, 'expanded map controls clear the retained parent audio controls', !geometry.hits.length && geometry.inside, geometry);
     await page.locator('.mn__world-expand').click();
     await page.evaluate(() => { __geo.answer = 'grant'; }); await page.locator('#wtLocate').click();

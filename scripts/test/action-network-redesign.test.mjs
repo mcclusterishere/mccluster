@@ -36,7 +36,11 @@ test('the avatar opens a compact account menu, not a directory',()=>{
 test('every room that left the menu has a contextual home',()=>{
  /* Alerts: the bell, with its count */
  assert.match(page,/id="mnBell"[\s\S]{0,400}id="mnNotifBadge"/);
- assert.match(client,/\$\("mnBell"\)\.onclick = function \(\) \{ setView\("notifications"\); \}/);
+ /* the bell drops the notifications down over the page; they are never a page of their own (owner, 2026-10-20) */
+ assert.match(client,/\$\("mnBell"\)\.onclick = function \(\) \{ if \(\$\("mnAlerts"\)\.hidden\) openAlerts\(\); else closeAlerts\(\); \};/);
+ assert.match(page,/id="mnBell"[^>]*aria-controls="mnAlerts"[\s\S]{0,1200}<div class="mn__alerts" id="mnAlerts" role="dialog" aria-label="Notifications" hidden>/);
+ assert.doesNotMatch(page,/id="mnNotificationsView"/,'no notifications page');
+ assert.match(client,/if \(name === "notifications"\) \{ if \(state\.guest\) \{ askToSignIn\(name\); return; \} openAlerts\(\); return; \}/,'a link to the notifications opens the drop down');
  /* Missions: pins, the mission card, and search */
  const card=page.match(/<article class="mn__mission-card" id="mnWorldFocus"[\s\S]*?<\/article>/)?.[0]||'';
  assert.match(card,/data-mn-view="missions"/,'All missions from the mission card');

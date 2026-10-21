@@ -27,7 +27,9 @@
 
   var S = {
     file: null, kind: "", url: "", dur: 0, start: 0, end: 0, muted: false,
-    upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false, xhr: null, uploadGrantAsset: null, uploadCancelled: false, completed: false, uploadPhase: "idle"
+    upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false, xhr: null, uploadGrantAsset: null, uploadCancelled: false, completed: false, uploadPhase: "idle",
+    /* the cover: { at, chosen, file, preview, asset, up, dropped, sent }; coverWork settles to the newest one */
+    cover: null, coverSeq: 0, coverWork: null, coverPick: null, frameCount: 0
   };
 
   function $(id) { return document.getElementById(id); }
@@ -155,10 +157,13 @@
         S.start = 0; S.end = S.dur;
         paintTrim();
         drawFrames();
+        /* the cover is taken while the video goes up */
+        setCover(null, false);
       };
     } else {
       v.hidden = true; img.hidden = false; img.src = S.url;
     }
+    paintCover();
     go("edit");
     startUpload();
   }
@@ -269,11 +274,14 @@
     $("crUploadCancel").hidden = true; $("crUploadRetry").hidden = true;
     uploadLine("Upload cancelled.", "", 0);
     discardUploadAsset(reserved);
+    /* the cover goes with the video it belongs to */
+    S.coverSeq++; dropCover(false); $("crCover").removeAttribute("aria-busy"); paintCover();
   }
   $("crUploadRetry").addEventListener("click", function () {
     if (!S.file || S.busy) return;
     if (navigator.onLine === false) { uploadLine("Waiting for a connection…", "", 0); return; }
     startUpload();
+    if (S.kind === "video" && !S.cover && S.dur) setCover(S.coverPick && S.coverPick.at, !!(S.coverPick && S.coverPick.chosen));
   });
   $("crUploadCancel").addEventListener("click", cancelUpload);
   window.addEventListener("online", function () {
@@ -310,6 +318,8 @@
     var c = $("crFrames"), box = c.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
     c.width = Math.max(1, Math.round(box.width * dpr)); c.height = Math.max(1, Math.round(box.height * dpr));
     var ctx = c.getContext("2d"), n = Math.max(4, Math.round(box.width / 44)), w = c.width / n, i = 0;
+    S.frameCount = n;
+    paintCover();
     var probe = document.createElement("video");
     probe.muted = true; probe.playsInline = true; probe.preload = "auto"; probe.src = S.url;
     var url = S.url;
@@ -349,6 +359,7 @@
         handle.removeEventListener("pointercancel", up);
         v.currentTime = S.start;
         paintHead();
+        coverAfterTrim();
       }
       handle.addEventListener("pointermove", move);
       handle.addEventListener("pointerup", up);
@@ -362,10 +373,130 @@
       if (which === "l") S.start = Math.max(0, Math.min(S.start + d, S.end - MIN_CLIP));
       else S.end = Math.min(S.dur, Math.max(S.end + d, S.start + MIN_CLIP));
       paintTrim();
+      coverAfterTrim();
     });
   }
   dragHandle($("crHandleL"), "l");
   dragHandle($("crHandleR"), "r");
+
+  /* ---------- the cover: the picture the post shows before it plays ----------
+     Taken for the person from the kept stretch (js/video-poster.js skips a black frame) unless they tap a frame on
+     the strip, or pause on one and tap Cover. It goes up as soon as it is taken, beside the video, through the same
+     upload-url, PUT and finalize; a cover that is replaced, cancelled or never posted is discarded. */
+  function uploadCover(file, meta) {
+    var s = session(), token = s && s.access_token;
+    if (!token) return Promise.reject(new Error("Sign in first."));
+    return api("/v1/mnet/media/upload-url", {
+      method: "POST", body: { file_name: file.name || "cover.jpg", mime_type: "image/jpeg", byte_size: file.size }
+    }).then(function (grant) {
+      var path = grant && grant.upload && grant.upload.path, asset = grant && grant.asset, tok = grant && grant.upload && grant.upload.token;
+      if (!path || !asset) throw new Error("The upload slot was not created.");
+      var url = tok
+        ? SB_URL + "/storage/v1/object/upload/sign/mnet-media/" + storagePath(path) + "?token=" + encodeURIComponent(tok)
+        : SB_URL + "/storage/v1/object/mnet-media/" + storagePath(path);
+      return fetch(url, { method: tok ? "PUT" : "POST", headers: { apikey: SB_KEY, authorization: "Bearer " + token, "content-type": "image/jpeg", "x-upsert": "false" }, body: file })
+        .then(function (res) {
+          if (!res.ok) { discardUploadAsset(asset); throw new Error("Upload rejected (" + res.status + ")"); }
+          return api("/v1/mnet/media/finalize", { method: "POST", body: { asset_id: asset.id, width: meta.width, height: meta.height } });
+        }).then(function (fin) { return (fin && fin.asset) || asset; });
+    });
+  }
+  /* at: the moment the person chose (chosen), or ignored (the kept stretch is searched) */
+  function setCover(at, chosen) {
+    if (S.kind !== "video" || !S.url || !window.MCCVideoPoster) return Promise.resolve(S.cover);
+    var seq = ++S.coverSeq, url = S.url, name = S.file && S.file.name;
+    S.coverPick = { at: chosen ? at : null, chosen: !!chosen };
+    $("crCover").setAttribute("aria-busy", "true");
+    var work = window.MCCVideoPoster.capture(url, chosen ? { at: at, name: name } : { start: S.start, end: S.end, name: name })
+      .then(function (shot) {
+        if (seq !== S.coverSeq || url !== S.url) return S.cover;
+        $("crCover").removeAttribute("aria-busy");
+        if (shot && shot.file) {
+          /* the cover before stays until this one is up: a new picture that fails to go up gives the old one back */
+          var next = { at: shot.at, chosen: !!chosen, file: shot.file, preview: URL.createObjectURL(shot.file), prev: S.cover };
+          next.up = uploadCover(shot.file, { width: shot.width, height: shot.height }).then(function (asset) {
+            next.asset = asset;
+            if (next.dropped) discardUploadAsset(asset);
+            else { retireCover(next.prev, false); next.prev = null; }
+            return asset;
+          }, function () {
+            if (S.cover !== next) return null;
+            var back = next.prev;
+            next.prev = null; next.dropped = true;
+            try { URL.revokeObjectURL(next.preview); } catch (e) {}
+            S.cover = back; paintCover();
+            return back && back.up ? back.up : null;
+          });
+          S.cover = next;
+        }
+        paintCover();
+        return S.cover;
+      });
+    S.coverWork = work;
+    return work;
+  }
+  /* keep: the post went out with it, so it is the post's now */
+  function dropCover(keep) {
+    var c = S.cover;
+    S.cover = null;
+    retireCover(c, keep);
+  }
+  /* a cover, and any it was holding on to until it went up */
+  function retireCover(c, keep) {
+    if (!c) return;
+    c.dropped = true;
+    if (c.preview) try { URL.revokeObjectURL(c.preview); } catch (e) {}
+    if (c.asset && !(keep && c.sent)) discardUploadAsset(c.asset);
+    if (c.prev) { retireCover(c.prev, keep); c.prev = null; }
+  }
+  var coverTimer = 0;
+  function coverAfterTrim() {
+    if (S.kind !== "video" || (S.coverPick && S.coverPick.chosen)) return;
+    clearTimeout(coverTimer);
+    coverTimer = setTimeout(function () { setCover(null, false); }, 500);
+  }
+  function paintCover() {
+    var on = S.kind === "video", c = S.cover, img = $("crCoverImg"), mark = $("crCoverMark");
+    $("crCover").hidden = !on; $("crCoverHint").hidden = !on;
+    if (c && c.preview) { img.src = c.preview; img.hidden = false; } else { img.removeAttribute("src"); img.hidden = true; }
+    mark.hidden = !(on && c && S.dur);
+    if (on && c && S.dur) mark.style.left = Math.min(100, Math.max(0, c.at / S.dur * 100)) + "%";
+    if (!$("crDetails").hidden) paintThumb();
+  }
+  /* a tap on a frame of the strip (not a drag, not a handle) makes that frame the cover */
+  $("crStrip").addEventListener("pointerdown", function (e) {
+    if (e.target.closest && e.target.closest(".cr__handle")) return;
+    var strip = this, x0 = e.clientX, y0 = e.clientY;
+    function off() { strip.removeEventListener("pointerup", up); strip.removeEventListener("pointercancel", off); }
+    function up(ev) {
+      off();
+      if (Math.abs(ev.clientX - x0) > 10 || Math.abs(ev.clientY - y0) > 10 || !S.dur) return;
+      var box = strip.getBoundingClientRect(), n = S.frameCount || Math.max(4, Math.round(box.width / 44));
+      var i = Math.min(n - 1, Math.max(0, Math.floor((ev.clientX - box.left) / box.width * n)));
+      var t = Math.min(Math.max(0, S.dur - 0.05), (i + 0.5) * S.dur / n);
+      pause(); v.currentTime = t; paintHead();
+      setCover(t, true);
+    }
+    strip.addEventListener("pointerup", up);
+    strip.addEventListener("pointercancel", off);
+  });
+  $("crCover").addEventListener("click", function () {
+    if (S.kind !== "video" || !S.dur) return;
+    pause();
+    setCover(v.currentTime || 0, true);
+  });
+  /* the cover goes with the post when it is ready in time; a post never waits long on its picture */
+  function coverForPost() {
+    if (S.kind !== "video" || !S.coverWork) return Promise.resolve(null);
+    var late = new Promise(function (r) { setTimeout(function () { r(null); }, 25000); });
+    return Promise.race([S.coverWork.then(function (c) {
+      return c && c.up ? c.up.then(function (asset) { return { c: c, asset: asset }; }) : null;
+    }), late]).then(function (r) {
+      /* the cover then is the one sent: the newest, or the one before it if the newest did not go up */
+      if (r && r.asset && S.cover && S.cover.asset === r.asset) { S.cover.sent = true; return r.asset; }
+      return null;
+    }, function () { return null; });
+  }
 
   function playToggle() {
     if (v.paused) {
@@ -396,15 +527,21 @@
   $("crEditNext").addEventListener("click", toDetails);
 
   /* ---------- details ---------- */
-  function toDetails() {
+  /* the post's picture beside the caption: the cover once it is taken */
+  function paintThumb() {
     var th = $("crThumb");
     th.innerHTML = "";
     th.hidden = !S.file;
     if (S.file) {
       th.innerHTML = S.kind === "video"
-        ? '<video src="' + esc(S.url) + "#t=" + S.start.toFixed(2) + '" muted playsinline preload="metadata"></video>'
+        ? (S.cover && S.cover.preview
+          ? '<img src="' + esc(S.cover.preview) + '" alt="Cover">'
+          : '<video src="' + esc(S.url) + "#t=" + S.start.toFixed(2) + '" muted playsinline preload="metadata"></video>')
         : '<img src="' + esc(S.url) + '" alt="">';
     }
+  }
+  function toDetails() {
+    paintThumb();
     go("details");
     paintPost();
   }
@@ -503,9 +640,14 @@
     status(S.file && !S.asset ? "Finishing the upload…" : (at ? "Scheduling…" : "Posting…"));
     var ready = S.file ? S.upload : Promise.resolve(null);
     ready.then(function (asset) {
+      return (asset ? coverForPost() : Promise.resolve(null)).then(function (poster) { return { asset: asset, poster: poster }; });
+    }).then(function (up) {
+      var asset = up.asset;
       status(at ? "Scheduling…" : "Posting…");
       var payload = { body: body, visibility: $("crVisibility").value, track: song };
       if (asset) payload.media_asset_ids = [asset.id];
+      /* the cover rides beside the video it belongs to */
+      if (asset && up.poster && S.kind === "video") payload.poster_asset_ids = [up.poster.id];
       if (S.kind === "video" && S.dur) {
         var trimmed = S.start > 0.05 || S.end < S.dur - 0.05;
         if (trimmed || S.muted) {
@@ -569,6 +711,10 @@
     var abandoned = S.completed ? null : (S.uploadGrantAsset || (S.asset && !S.busy ? S.asset : null));
     if (S.xhr) try { S.xhr.abort(); } catch (e) {}
     if (abandoned) discardUploadAsset(abandoned);
+    /* a cover that went out with the post is the post's; any other is discarded */
+    clearTimeout(coverTimer);
+    S.coverSeq++; dropCover(S.completed); S.coverWork = null; S.coverPick = null; S.frameCount = 0;
+    $("crCover").removeAttribute("aria-busy");
     if (S.url) try { URL.revokeObjectURL(S.url); } catch (e) {}
     v.removeAttribute("src"); try { v.load(); } catch (e) {}
     $("crImage").removeAttribute("src");
@@ -590,6 +736,7 @@
     });
     uploadLine("", "", 0); $("crUploadRetry").hidden = true; $("crUploadCancel").hidden = true;
     $("crDraftNotice").hidden = !opts.preserveComposition;
+    paintCover();
     status("");
   }
 

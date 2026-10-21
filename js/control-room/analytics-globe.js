@@ -123,7 +123,7 @@
     var api = { ready: false, failed: null, data: { mode: "countries", points: [], cells: [], states: null }, sel: { country: null, state: null } };
     host.innerHTML = '<div class="crg-canvas" data-crg-canvas></div><div class="crg-credit" hidden data-crg-credit></div>' +
       '<div class="crg-tip" role="status" aria-live="polite" hidden data-crg-tip><small></small><b></b><span></span></div>' +
-      '<p class="crg-msg" data-crg-msg>Loading the globe…</p>';
+      '<p class="crg-msg" role="status" aria-live="polite" data-crg-msg>Loading the globe…</p>';
     var canvasBox = host.querySelector("[data-crg-canvas]"), tip = host.querySelector("[data-crg-tip]"), msg = host.querySelector("[data-crg-msg]");
     var Cs, widget, scene, camera, C = {}, fills = null, instancesByCode = {}, countries = [], polysByCode = {};
     var destroyed = false, active = true, resizeObserver = null, inputHandler = null, hoverFrame = 0;
@@ -143,19 +143,31 @@
       /* the selection outline: the accent, lifted toward white so it reads as an edge over its own fill */
       C.outline = Cs.Color.lerp(C.accent, Cs.Color.WHITE, 0.28, new Cs.Color());
     }
+    /* THE SHADING (owner, 2026-10-21: "lackluster, really lackluster, because the shading isn't dynamic enough"): each
+       value's level is half its rank and half its log size (js/heat-scale.js), on a ramp from the land through the accent
+       to a light tint of it, so the whole ramp is used however lopsided the numbers are. The accent stays the one token. */
+    var levelCache = { src: null, fn: null }, stateLevelCache = { src: null, fn: null };
+    function levelOf(cache, src, values) { if (cache.src !== src) { cache.src = src; cache.fn = window.HuHeat ? window.HuHeat.levels(values()) : null; } return cache.fn; }
+    function rampColor(t) {
+      var H = window.HuHeat;
+      if (!H) return Cs.Color.lerp(C.land, C.accent, 0.22 + 0.68 * t, new Cs.Color()).withAlpha(1);
+      var c = H.at(H.accentRamp([C.land.red, C.land.green, C.land.blue], [C.accent.red, C.accent.green, C.accent.blue], true), t);
+      return new Cs.Color(c[0], c[1], c[2], 1);
+    }
     function valueOf(code) { if (!code) return null; for (var i = 0; i < api.data.points.length; i++) if (api.data.points[i].code === code) return api.data.points[i]; return null; }
     function countryColor(code) {
       var sel = api.sel;
       if (code && code === sel.country) return sel.state ? C["land-context"] : C.accent.withAlpha(0.62);
-      var p=valueOf(code),max=Math.max.apply(null,api.data.points.map(function(p){return Number(p.value)||0;}).concat([1]));
-      if(p&&p.value>0)return Cs.Color.lerp(C.land,C.accent,0.22+0.68*Math.sqrt(p.value/max),new Cs.Color()).withAlpha(1);
-      return C.land;
+      var p = valueOf(code), level = levelOf(levelCache, api.data.points, function () { return api.data.points.map(function (x) { return Number(x.value) || 0; }); });
+      var t = p && level ? level(p.value) : null;
+      return t !== null ? rampColor(t) : C.land;
     }
     function stateColor(k) {
       var sel = api.sel;
       if (!sel.state) {
-        var counts=api.data.states&&api.data.states.byKey||{},row=counts[k],max=Math.max.apply(null,Object.keys(counts).map(function(key){return counts[key].value;}).concat([1]));
-        return row&&row.value>0?Cs.Color.lerp(C.land,C.accent,0.22+0.68*Math.sqrt(row.value/max),new Cs.Color()).withAlpha(1):C.land.withAlpha(0.012);
+        var counts = api.data.states && api.data.states.byKey || {}, row = counts[k];
+        var level = levelOf(stateLevelCache, counts, function () { return Object.keys(counts).map(function (key) { return Number(counts[key].value) || 0; }); }), t = row && level ? level(row.value) : null;
+        return t !== null ? rampColor(t) : C.land.withAlpha(0.012);
       } /* invisible but still tappable over the country's fill */
       if (k === sel.state) return C.accent.withAlpha(0.66);
       return C["land-context"];
@@ -299,11 +311,12 @@
       var d = api.data;
       if (d.mode === "cells") {
         var cells = (d.cells || []).filter(function (x) { return Array.isArray(x.bounds) && x.bounds.length === 4 && x.bounds.every(function (v) { return deg(v) !== null; }); });
-        var cm = Math.max(1, cells.length ? Number(cells[0].value) || 1 : 1);
+        var cellLevel = window.HuHeat ? window.HuHeat.levels(cells.map(function (x) { return Number(x.value) || 0; })) : null;
+        var cellColor = function (x) { var t = cellLevel ? cellLevel(x.value) : null; return t === null ? C.graticule.withAlpha(0.05) : rampColor(t).withAlpha(0.35 + 0.5 * t); };
         if (cells.length) cellLayer = scene.primitives.add(new Cs.Primitive({ asynchronous: false, appearance: new Cs.PerInstanceColorAppearance({ flat: true, translucent: true }),
           geometryInstances: cells.map(function (x) {
             return new Cs.GeometryInstance({ id: "g|" + x.code + "|cell", geometry: new Cs.RectangleGeometry({ rectangle: Cs.Rectangle.fromDegrees(x.bounds[0], x.bounds[1], x.bounds[2], x.bounds[3]), height: 9000, vertexFormat: Cs.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT }),
-              attributes: { color: Cs.ColorGeometryInstanceAttribute.fromColor(x.code === api.sel.country ? C.accent.withAlpha(0.8) : C.graticule.withAlpha(0.05 + 0.14 * Math.sqrt((Number(x.value) || 0) / cm))) } }); }) }));
+              attributes: { color: Cs.ColorGeometryInstanceAttribute.fromColor(x.code === api.sel.country ? C.accent.withAlpha(0.8) : cellColor(x)) } }); }) }));
       }
       recolor(); drawSelection(); placeTip(); scene.requestRender();
     }
@@ -475,7 +488,7 @@
           creditContainer: host.querySelector("[data-crg-credit]"),
           contextOptions: { webgl: { alpha: true, antialias: true, powerPreference: "low-power" } }
         });
-      } catch (e) { api.failed = e; say("This device cannot draw the globe (WebGL is unavailable). Every number is still in the cards below."); if (opts.onReady) opts.onReady(api); return; }
+      } catch (e) { api.failed = e; canvasBox.textContent = ""; say("WebGL unavailable. Use the list or cards."); if (opts.onReady) opts.onReady(api); return; }
       scene = widget.scene; camera = scene.camera;
       tokens();
       /* sharp on a retina phone without paying for 3x: at most two device pixels per CSS pixel */
