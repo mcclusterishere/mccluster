@@ -108,12 +108,18 @@
       <button type="button" data-chip="saved">Saved</button>
     </div>
 
+    <!-- ONE TAP (owner, 2026-10-20): with a finished profile, Become a creator makes the artist page from it, asking
+         nothing, and opens Creator Studio (js/creator-onboarding.js, the door). The tap accepts the Creator Terms, and
+         says so beside the button. -->
     <section class="music-launch" aria-label="Creator Studio">
       <div>
         <span>For artists &amp; creators</span>
         <strong>Put your music in the same ecosystem people are listening in.</strong>
       </div>
-      <a href="creator.html">Open Creator Studio</a>
+      <div class="music-launch__go">
+        <a href="creator.html" data-creator-door>Become a creator</a>
+        <small class="music-launch__terms">One tap with your profile. Tapping accepts the <a href="music-creator-terms.html">Creator Terms</a>. Already a creator? <a href="creator.html">Open Creator Studio</a></small>
+      </div>
     </section>
 
     <!-- THE DECK. Every rail below is one algorithm, and it only exists on
@@ -194,6 +200,7 @@
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/listen-ledger.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>

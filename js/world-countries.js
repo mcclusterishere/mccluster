@@ -23,6 +23,12 @@
    - A tap on a country names it and counts the published missions pinned there, and filters the mission pins to it. The
      count is read from the mission rows themselves: a row's country_code (the country-level regions contract), else its
      region's country_code from action_globe_public_regions. With neither, the honest answer is "No missions here yet".
+   - A STATE (owner, 2026-10-21: "once you've selected a country ... select a state thereafter, but only after selecting
+     the country already and double tapping the state"). With a country selected, a double tap inside it picks the state
+     under it (data/geo/world-state-areas/<A2>.json, fetched when the country is selected): the state is lit, the card
+     names it, and the page is told (onSelect's country.state). A double tap on the picked state, or a single tap inside
+     the country, goes back to the whole country; a single tap with no state picked lets the country go, as before, once
+     the double-tap gap has passed. A double tap on a country not yet selected selects the country only.
 
    The pure parts (decode, fades, preference, point-in-country, counts) are exported for node --test; the browser part
    needs Cesium. */
@@ -35,6 +41,7 @@
   const DATA_URL = 'data/geo/world-countries-10m.json';
   const BORDERS_URL = 'data/geo/world-borders-10m.json';
   const STATES_DIR = 'data/geo/world-states/';
+  const AREAS_DIR = 'data/geo/world-state-areas/';
   const SPRITE_URL = 'assets/flags/flag-sprite-4x3.webp';
   const SPRITE_INDEX = 'assets/flags/flag-sprite-4x3.json';
   const PREF_KEY = 'hu_world_countries';
@@ -47,6 +54,8 @@
   /* the states come in from a continent's height (a whole-Earth view would be a tangle of them) */
   const STATES_FAR = 7.5e6, STATES_NEAR = 5e6;
   const FADE_MS = 220;
+  /* two taps make a double tap within this many milliseconds and CSS pixels of each other */
+  const TAP_GAP = 350, TAP_SLOP = 30;
 
   const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
   function lonSpan(w, e) { let d = e - w; if (d < 0) d += 360; return d; }
@@ -94,9 +103,9 @@
     for (let i = 0; i + 1 < (d ? d.length : 0); i += 2) { x += d[i]; y += d[i + 1]; out.push([x / 100, y / 100]); }
     return out;
   }
-  /* data/geo/world-countries-10m.json → GeoJSON-shaped features, each ring closed again */
+  /* data/geo/world-countries-10m.json (or a data/geo/world-state-areas file) → GeoJSON-shaped features, each ring closed again */
   function decode(data) {
-    return ((data && data.countries) || []).map((c) => {
+    return ((data && (data.countries || data.states)) || []).map((c) => {
       const polys = (c.p || []).map((poly) => poly.map((r) => { const ring = undelta(r); if (ring.length) ring.push(ring[0].slice()); return ring; }).filter((ring) => ring.length >= 4)).filter((poly) => poly.length);
       return { type: 'Feature', properties: c.properties, geometry: polys.length === 1 ? { type: 'Polygon', coordinates: polys[0] } : { type: 'MultiPolygon', coordinates: polys } };
     });
@@ -111,6 +120,8 @@
   function readMode(storage) { try { const v = storage && storage.getItem(PREF_KEY); return MODES.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } }
   function writeMode(storage, mode) { if (!MODES.includes(mode)) return false; try { storage.setItem(PREF_KEY, mode); return true; } catch (e) { return false; } }
   function nextMode(mode) { return MODES[(MODES.indexOf(mode) + 1) % MODES.length] || 'auto'; }
+  /* is tap b ({t, x, y}: milliseconds, CSS pixels) the second of a double tap that began with tap a? */
+  function isDoubleTap(a, b) { return !!a && !!b && b.t - a.t >= 0 && b.t - a.t <= TAP_GAP && Math.hypot(b.x - a.x, b.y - a.y) <= TAP_SLOP; }
 
   function inRing(ring, x, y) {
     let inside = false;
@@ -158,7 +169,7 @@
   function mount(viewer, opts) {
     const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, states: new Map(), selectedStates: null, selectGen: 0 };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null };
     const scratchColor = new C.Color(), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), scratchRect = new C.Rectangle(), view = [0, 0, 0, 0];
     const INK = C.Color.fromCssColorString('#f4f1ea');
     /* the borders are the map: clear enough to read on the day and the night side, in the feed's small globe too */
@@ -168,6 +179,8 @@
     const borderMat = lineMat(BORDER.alpha), stateMat = lineMat(0), selectedStateMat = lineMat(0);
     const button = addButton();
     const card = addCard();
+    /* when each tap went down, by the event's own clock: a busy frame can hold a tap's handling back, not its time */
+    viewer.scene.canvas.addEventListener('pointerdown', (e) => { if (e.isPrimary) st.down = { t: e.timeStamp }; }, true);
     paintButton();
 
     function safeStorage() { try { return window.localStorage; } catch (e) { return null; } }
@@ -196,20 +209,57 @@
       document.body.appendChild(el);
       return el;
     }
-    function paintCard(f) {
+    function paintCard(f, sf) {
       if (!f) { card.hidden = true; card.innerHTML = ''; return; }
       const p = f.properties, counts = missionCounts(o.missions ? o.missions() : [], o.regions ? o.regions() : [], st.features);
-      const n = p.a2 ? counts[p.a2] || 0 : 0;
+      const n = p.a2 ? counts[p.a2] || 0 : 0, idx = st.stateIndex, sp = sf && sf.properties;
+      const text = sp
+        ? '<b>' + escHtml(sp.name) + '</b><small>' + escHtml(p.name) + '</small>'
+        : '<b>' + escHtml(p.name) + '</b><small>' + escHtml(countText(n)) + '</small>' + (p.a2 && idx && idx[p.a2] ? '<small class="country-card__hint">Double-tap a state to choose it</small>' : '');
       card.innerHTML = (p.flag && !quiet ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
-        '<span class="country-card__text"><b>' + escHtml(p.name) + '</b><small>' + escHtml(countText(n)) + '</small></span>' +
-        '<button type="button" class="country-card__close" aria-label="Show every country">×</button>';
-      card.querySelector('button').onclick = () => select(null);
+        '<span class="country-card__text">' + text + '</span>' +
+        '<button type="button" class="country-card__close" aria-label="' + (sp ? 'Show all of ' + escHtml(p.name) : 'Show every country') + '">×</button>';
+      card.querySelector('button').onclick = () => (sp ? selectState(null) : select(null));
       card.hidden = false;
       return n;
+    }
+    /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it).
+       stateOnly marks a state picked or let go inside the same country, so a listener that acts on a new country (Travel's
+       destination) leaves what it has */
+    function told(f, n, sf, stateOnly) {
+      if (!f) return null;
+      const sp = sf && sf.properties;
+      return { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, state: sp ? { key: sp.key, name: sp.name, type: sp.type || null, polygons: polygonsOf(sf) } : null, stateOnly: !!stateOnly };
+    }
+    function dropState() { for (const k of ['stateFill', 'stateOutline']) if (st[k]) { viewer.scene.primitives.remove(st[k]); st[k] = null; } st.selectedState = null; }
+    function selectState(sf) {
+      const f = st.features.find((x) => (x.properties.a2 || x.properties.a3) === st.selected);
+      if (!f) return;
+      dropState();
+      if (sf) {
+        st.selectedState = sf;
+        st.stateFill = viewer.scene.primitives.add(polygonPrimitive(sf, C.Color.WHITE.withAlpha(0.2)));
+        st.stateOutline = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: ringInstances(sf, 'hu-state-selected', BORDER.width, INK.withAlpha(0.95)), appearance: new C.PolylineColorAppearance({ translucent: true }), asynchronous: false }));
+      }
+      const n = paintCard(f, sf);
+      if (o.onSelect) o.onSelect(told(f, n, sf, true));
+      if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
+    }
+    /* the state under a double tap in the selected country; the picked state again goes back to the whole country */
+    function pickState(lon, lat) {
+      const code = st.selected, gen = st.selectGen;
+      if (!code) return;
+      loadAreas(code).then((areas) => {
+        if (!areas || gen !== st.selectGen || st.selected !== code) return;
+        const sf = countryAt(areas, lon, lat);
+        if (!sf) return;
+        selectState(st.selectedState && st.selectedState.properties.key === sf.properties.key ? null : sf);
+      });
     }
     function select(f) {
       const code = f ? f.properties.a2 || f.properties.a3 : null;
       for (const k of ['highlight', 'outline', 'selectedStates']) if (st[k]) { viewer.scene.primitives.remove(st[k]); st[k] = null; }
+      dropState();
       if (!f) st.selectGen++;
       st.selected = f ? code : null;
       const n = paintCard(f);
@@ -220,13 +270,15 @@
         /* only the latest selection draws: a select() made again before the file arrives (refresh() re-applies one) leaves no stray lines */
         const gen = ++st.selectGen;
         if (f.properties.a2) loadStates(f.properties.a2).then((lines) => { if (lines && gen === st.selectGen && st.selected === code && !st.selectedStates) st.selectedStates = viewer.scene.primitives.add(linePrimitive(lines, STATE.width, selectedStateMat)); });
+        /* its states' shapes too, so a double tap answers at once; and the card's hint once the index says it has states */
+        if (f.properties.a2) { loadAreas(f.properties.a2); stateIndexP().then(() => { if (gen === st.selectGen && st.selected === code && !st.selectedState) paintCard(f); }); }
       }
-      if (o.onSelect) o.onSelect(f ? { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0 } : null);
+      if (o.onSelect) o.onSelect(told(f, n, null));
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
     }
     function polygonInstances(f, color) {
       return polygonsOf(f).map((poly, k) => new C.GeometryInstance({
-        id: 'hu-country-fill-' + (f.properties.a3 || '') + '-' + k,
+        id: 'hu-country-fill-' + (f.properties.a3 || f.properties.key || '') + '-' + k,
         geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(poly[0].slice(0, -1).flat()), poly.slice(1).map((h) => new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(h.slice(0, -1).flat())))), height: 3000, vertexFormat: C.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT, arcType: C.ArcType.GEODESIC }),
         attributes: color ? { color: C.ColorGeometryInstanceAttribute.fromColor(color) } : undefined,
       }));
@@ -254,8 +306,14 @@
     /* THE STATES: data/geo/world-states/index.json says which countries have them and where; one file per country, fetched
        once, when the country is in view below STATES_FAR or is selected */
     function stateIndex() {
-      if (!st.stateIndexAsked) { st.stateIndexAsked = true; fetch(STATES_DIR + 'index.json').then((r) => (r.ok ? r.json() : null)).then((d) => { st.stateIndex = d && d.countries ? d.countries : {}; st.camKey = ''; }).catch(() => { st.stateIndex = {}; }); }
+      if (!st.stateIndexAsked) { st.stateIndexAsked = true; st.stateIndexP = fetch(STATES_DIR + 'index.json').then((r) => (r.ok ? r.json() : null)).then((d) => { st.stateIndex = d && d.countries ? d.countries : {}; st.camKey = ''; return st.stateIndex; }).catch(() => (st.stateIndex = {})); }
       return st.stateIndex;
+    }
+    function stateIndexP() { stateIndex(); return st.stateIndexP; }
+    /* a country's states as shapes (data/geo/world-state-areas, the same countries as the index), fetched once */
+    function loadAreas(a2) {
+      if (!st.areas.has(a2)) st.areas.set(a2, stateIndexP().then((idx) => (idx && idx[a2] ? fetch(AREAS_DIR + a2 + '.json').then((r) => (r.ok ? r.json() : null)).then((d) => (d ? decode(d) : null)) : null)).catch(() => null));
+      return st.areas.get(a2);
     }
     function loadStates(a2) {
       const have = st.states.get(a2);
@@ -387,13 +445,36 @@
     /* a tap: true when it landed on a country while the borders show (the caller then stops); other taps pass */
     function click(windowPosition) {
       if (!st.ready || st.mode === 'off') return false;
+      const down = st.down, tap = { t: down ? down.t : performance.now(), x: windowPosition.x, y: windowPosition.y }, first = st.tap;
+      st.down = null;
+      st.tap = null;
+      clearTimeout(st.tapTimer); st.tapTimer = 0;
+      /* the second tap of a double tap: in the country already selected it picks the state; after the tap that selected
+         a country it is that same double tap, and the country stays selected */
+      if (isDoubleTap(first, tap)) { if (first.inSelected) pickState(first.lon, first.lat); return true; }
       const hit = viewer.camera.pickEllipsoid(windowPosition, viewer.scene.globe.ellipsoid, scratchCart3);
       if (!hit) { if (st.selected) { select(null); return true; } return false; }
       C.Cartographic.fromCartesian(hit, viewer.scene.globe.ellipsoid, scratchCarto);
-      const f = countryAt(st.features, C.Math.toDegrees(scratchCarto.longitude), C.Math.toDegrees(scratchCarto.latitude));
+      const lon = C.Math.toDegrees(scratchCarto.longitude), lat = C.Math.toDegrees(scratchCarto.latitude);
+      const f = countryAt(st.features, lon, lat);
       if (!f || st.lineAlpha < 0.15) { if (st.selected) { select(null); return true; } return false; }
       const code = f.properties.a2 || f.properties.a3;
-      select(code === st.selected ? null : f);
+      if (code === st.selected) {
+        /* perhaps the first tap of a double tap on a state: a single tap's answer waits out the gap (a picked state goes
+           back to the whole country; with none picked, the country is let go, as before) */
+        st.tap = Object.assign(tap, { inSelected: true, lon, lat });
+        st.tapTimer = setTimeout(() => {
+          st.tapTimer = 0;
+          /* a second press already down in time is the double tap, held back by a busy frame: its tap decides */
+          if (st.down && st.down.t - tap.t <= TAP_GAP) return;
+          st.tap = null;
+          if (st.selected !== code) return;
+          if (st.selectedState) selectState(null); else { select(null); st.items.forEach((x) => { x.applied = -1; }); }
+        }, TAP_GAP);
+        return true;
+      }
+      select(f);
+      st.tap = tap;
       st.items.forEach((x) => { x.applied = -1; });
       return true;
     }
@@ -412,21 +493,25 @@
       .catch((e) => { st.failed = true; try { console.warn('[world countries] ' + (e && e.message || e)); } catch (_) {} });
     const api = {
       /* the page calls this when the missions arrive: a country picked before then is applied again (card count, pin filter) */
-      refresh: () => { if (st.selected) select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); },
+      refresh: () => { if (!st.selected) return; const keepState = st.selectedState; select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); if (keepState && st.selected) selectState(keepState); },
       click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
       ready: () => st.ready,
       /* Natural Earth's label point for a country, where the globe marks it (the live badges in js/action-globe.js) */
       point: (code) => { const f = st.features.find((x) => x.properties.a2 === code); return f && Array.isArray(f.properties.label) ? f.properties.label.slice(0, 2) : null; },
       /* the country a point falls in on the drawn map: its ISO code (or Natural Earth's own code where it has none), else null */
       at: (lon, lat) => { const f = countryAt(st.features, lon, lat); return f ? f.properties.a2 || f.properties.a3 : null; },
-      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
+      state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, count: st.items.length, borders: st.borderCount, lines: Math.round(st.lineAlpha * 100) / 100, statesAlpha: Math.round(st.stateAlpha * 100) / 100, states: [...st.states.entries()].filter(([, s]) => s.primitive).map(([k]) => k).sort(), selectedStates: !!st.selectedStates, selectedState: st.selectedState ? st.selectedState.properties.key : null, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
     };
     window.__huCountries = api.state;
     window.__huCountryAt = api.at;
     /* hooks for the browser test, like __huGlobeSettled: put the camera somewhere without aiming a gesture, and spin it */
-    window.__huCountriesCam = { view: (lon, lat, h) => viewer.camera.setView({ destination: C.Cartesian3.fromDegrees(lon, lat, h) }), spin: (rad) => viewer.camera.rotate(C.Cartesian3.UNIT_Z, rad) };
+    window.__huCountriesCam = { view: (lon, lat, h) => viewer.camera.setView({ destination: C.Cartesian3.fromDegrees(lon, lat, h) }), spin: (rad) => viewer.camera.rotate(C.Cartesian3.UNIT_Z, rad),
+      /* where a place is on the canvas, in CSS pixels, to tap it */
+      screen: (lon, lat) => { const w = C.SceneTransforms.worldToWindowCoordinates(viewer.scene, C.Cartesian3.fromDegrees(lon, lat, 0)); return w ? { x: w.x, y: w.y } : null; },
+      /* a tap at a canvas point that went down at time t (ms, the events' clock): the globe's own tap, without the input queue */
+      tap: (x, y, t) => { st.down = { t }; return click(new C.Cartesian2(x, y)); } };
     return api;
   }
 
-  return { decode, undelta, fadeTarget, lineTarget, stateTarget, washTarget, stepAlpha, readMode, writeMode, nextMode, countryAt, missionCountry, missionCounts, regionCountryIndex, countText, intersects, PREF_KEY, MODES, STATES_FAR, STATES_NEAR, mount };
+  return { decode, undelta, fadeTarget, lineTarget, stateTarget, washTarget, stepAlpha, readMode, writeMode, nextMode, isDoubleTap, countryAt, missionCountry, missionCounts, regionCountryIndex, countText, intersects, PREF_KEY, MODES, STATES_FAR, STATES_NEAR, TAP_GAP, TAP_SLOP, mount };
 });

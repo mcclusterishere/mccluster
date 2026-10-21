@@ -371,7 +371,32 @@ on the map.")
   drawn instead (France's regions, Italy's regions, Spain's communities, the
   Philippines' regions, the UK's four nations …; `GROUP` in the tool). The globe
   fetches a country's lines once the camera is below 7,500 km and the country
-  is in view, and always for a selected country.
+  is in view, and always for a selected country. A state goes with the country
+  whose drawn shape its label point falls in, unless that point is within half a
+  degree of its own country (so Crimea is Ukraine's, but San Marino's
+  municipalities stay San Marino's).
+- **A state, by double tap** (owner, 2026-10-21: "once you've selected a
+  country ... select a state thereafter, but only after selecting the country
+  already and double tapping the state").
+  - **Data.** `data/geo/world-state-areas/<A2>.json` (same tool, same
+    countries as the index) carries each state as a shape with its name. A
+    grouped country's state is its group, made of its units' shapes, so the
+    shape tapped is the one the lines draw. The globe fetches a country's file
+    when the country is selected.
+  - **Taps.** With a country selected, a double tap inside it picks the state
+    under it: the state is lit and outlined, and the card names it with its
+    country. A double tap on the picked state, a single tap inside the country,
+    or the card's × goes back to the whole country.
+  - **Unchanged.** A single tap with no state picked lets the country go, as
+    before, once the 350 ms double-tap gap has passed. A double tap on a
+    country not yet selected selects the country only. Taps are timed by their
+    own events (`pointerdown`'s `timeStamp`), so a busy frame cannot split a
+    double tap in two.
+  - **The feed.** The page is told the state with its shape (`hu:country`'s
+    `country.state`). The region label reads "State, Country". Local keeps the
+    stories whose point falls inside the state. Member posts carry only their
+    country, so they stay. A state of the country already loaded does not load
+    the country's feed again.
 - **The pins are the cards.** The globe's news pins are the stories the feed
   is showing (`window.MCC_WORLD_NEWS_ITEMS` is the rendered list, re-sent on
   every render), and a news chip's tap marks that story's own pin. A story's

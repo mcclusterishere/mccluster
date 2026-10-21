@@ -185,3 +185,33 @@ test('a story names its country: the ISO code the Worker sends, else the place\'
   const clean = fnSource(js, 'cleanNews');
   assert.match(clean, /country_code: \/\^\[A-Z\]\{2\}\$\/\.test\(country\) \? country : ""/);
 });
+
+/* A STATE (owner, 2026-10-21): a double tap inside the selected country picks a state; Local keeps the stories placed in it */
+test('a picked state keeps the stories placed inside its shape, and checks the shape it is given', async () => {
+  const js = await read('js/mnet.js');
+  const worldState = new Function(fnSource(js, 'worldState') + '\nreturn worldState;')();
+  const newsInState = new Function(fnSource(js, 'newsInState') + '\nreturn newsInState;')();
+  const square = [[-10, -10], [10, -10], [10, 10], [-10, 10], [-10, -10]], hole = [[-2, -2], [2, -2], [2, 2], [-2, 2], [-2, -2]];
+  const s = worldState({ key: 'XX-1', name: ' Somewhere ', type: 'State', polygons: [[square, hole]] });
+  assert.deepEqual([s.key, s.name, s.type], ['XX-1', 'Somewhere', 'State']);
+  assert.equal(newsInState({ lon: 5, lat: 5 }, s), true);
+  assert.equal(newsInState({ lon: 0, lat: 0 }, s), false, 'a hole (an enclave) is not the state');
+  assert.equal(newsInState({ lon: 20, lat: 0 }, s), false);
+  assert.equal(newsInState({ lon: null, lat: null }, s), false, 'a story with no point cannot be placed in a state');
+  assert.equal(worldState(null), null);
+  assert.equal(worldState({ name: 'x', polygons: 'no' }), null);
+  assert.equal(worldState({ name: 'x', polygons: [[[[0, 0], [1, 'a'], [1, 1], [0, 0]]]] }), null, 'a ring with a bad point is dropped');
+  assert.equal(worldState({ name: '', polygons: [[square]] }), null);
+  /* the feed applies it only in Local, after the country */
+  assert.match(fnSource(js, 'paintFeed'), /var pickedState = scope === "local" && state\.world\.country && state\.world\.country\.state;\s*if \(pickedState\) news = news\.filter\(function \(n\) \{ return newsInState\(n, pickedState\); \}\);/);
+  /* the label leads with the state, and a state of the country already read does not read it again */
+  assert.match(js, /\(tappedState \? tappedState\.name \+ ", " : ""\) \+ d\.country\.name\.slice\(0, 80\)/);
+  assert.match(js, /state\.placeScope\.enabled && !\(sameCountry && state\.placeScope\.country === state\.world\.country\.code\)\) loadPlaceFeed\(true\);/);
+});
+
+test('a state picked or let go keeps the member\'s choice to place their post; another country clears it', async () => {
+  const js = await read('js/mnet.js');
+  assert.match(js, /if \(\$\("mnPostPlaceOptIn"\) && !sameCountry\) \$\("mnPostPlaceOptIn"\)\.checked = false;/);
+  const handler = js.slice(js.indexOf('var prevCountry = state.world.country'), js.indexOf('paintFeedScope();', js.indexOf('var prevCountry = state.world.country')));
+  assert.doesNotMatch(handler, /if \(\$\("mnPostPlaceOptIn"\)\) \$\("mnPostPlaceOptIn"\)\.checked = false;/, 'no unconditional reset when the globe speaks');
+});

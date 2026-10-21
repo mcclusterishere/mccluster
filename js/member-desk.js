@@ -194,7 +194,9 @@
         (p.headline ? "<p>" + esc(p.headline) + "</p>" : "") + "</div>" +
         '<div class="hu-desk__row"><button type="button" class="hu-desk__btn" data-hu-desk-view="profile">View profile</button>' +
         '<button type="button" class="hu-desk__btn" data-hu-desk-edit>Edit profile</button>' +
-        (S.caps && !S.caps.creator ? '<a class="hu-desk__btn" href="creator.html">Become a creator</a>' : "") + "</div></section>" +
+        /* the one tap (owner, 2026-10-20): the artist page is made from this profile, nothing asked (js/creator-onboarding.js) */
+        (S.caps && !S.caps.creator ? '<a class="hu-desk__btn" href="creator.html" data-creator-door>Become a creator</a>' : "") + "</div>" +
+        (S.caps && !S.caps.creator ? '<p class="hu-desk__meta">Become a creator is one tap: your artist page is made from this profile, and the tap accepts the <a href="music-creator-terms.html">Creator Terms</a>.</p>' : "") + "</section>" +
         '<section class="hu-desk__card" id="huDeskEditGate" aria-live="polite"><h3>Locked details</h3>' + note("Loading…") + "</section>";
       if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.mount($("huDeskEditGate"));
       else $("huDeskEditGate").innerHTML = "<h3>Locked details</h3>" + note("The profile edit module did not load.", true);

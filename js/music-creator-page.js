@@ -51,11 +51,17 @@
     return String(value == null ? "" : value).replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, " ").trim().slice(0, max);
   }
 
-  /* An image the platform stores, or nothing. */
+  /* An image the platform stores, or nothing: Creator Studio's artwork, or the
+     member's own profile picture (the public, owner-write mnet-avatars bucket),
+     which a creator profile starts with since the one-tap opt-in (owner,
+     2026-10-20: never re-enter what the profile has). Same path shape for both:
+     the owner's id, then one file name. */
+  var PICTURES = SB + "/storage/v1/object/public/mnet-avatars/";
   function safeArtwork(url) {
     var u = String(url || "");
-    if (u.indexOf(ARTWORK) !== 0 || u.length > 600) return "";
-    var rest = u.slice(ARTWORK.length);
+    var base = u.indexOf(ARTWORK) === 0 ? ARTWORK : u.indexOf(PICTURES) === 0 ? PICTURES : "";
+    if (!base || u.length > 600) return "";
+    var rest = u.slice(base.length);
     return /^[0-9a-f-]{36}\/[A-Za-z0-9._-]+$/.test(rest) ? u : "";
   }
 
