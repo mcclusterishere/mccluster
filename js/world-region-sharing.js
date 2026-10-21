@@ -1,5 +1,5 @@
 /* Explicit, revocable coarse World-region sharing for account.html.
-   This is intentionally separate from fan_profiles/contact data and from action_globe_member_regions mission eligibility. */
+   This is intentionally separate from private profile/contact data and from mission-eligibility region records. */
 (function (root) {
   'use strict';
   var opened = false, countries = null;
