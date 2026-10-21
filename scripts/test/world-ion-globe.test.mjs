@@ -66,7 +66,7 @@ test('ion is credited on the imagery line, only while the World draws from it', 
 test('the Worker route, its tests and the browser drive exist', async () => {
   for (const p of ['workers/mccluster/src/world-ion.js', 'workers/mccluster/test/world-ion.test.mjs', 'scripts/e2e/world-ion.e2e.mjs']) await access(new URL('../../' + p, import.meta.url));
   const worker = await read('workers/mccluster/src/world-ion.js');
-  assert.match(worker, /export const ION_ASSETS = Object\.freeze\(\{ terrain: 1, imagery: Object\.freeze\(\[3, 2, 3954\]\), buildings: 96188 \}\);/);
+  assert.match(worker, /export const ION_ASSETS = Object\.freeze\(\{ terrain: 1, imagery: Object\.freeze\(\[3, 2, 3954\]\), buildings: 96188, photoreal: 2275207 \}\);/);
   for (const e2e of ['scripts/e2e/world-screen.e2e.mjs', 'scripts/e2e/human-uprise-door.e2e.mjs', 'scripts/e2e/anti-social.e2e.mjs']) {
     assert.match(await read(e2e), /if \(u\.pathname === '\/v1\/world\/ion'\) return json\(route, \{ ok: true, available: false, binding: null \}\);/, e2e);
   }

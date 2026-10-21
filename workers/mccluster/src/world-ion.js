@@ -46,7 +46,7 @@
    it cannot have. The page itself only asks it for a signed-in member.
 
    OWNER ACTIONS THIS CODE CANNOT DO (not done by this change): restrict the
-   ion token's scope to exactly these five assets in the Cesium ion dashboard;
+   ion token's scope to exactly these six assets in the Cesium ion dashboard;
    turn on ion usage alerts; confirm the ion plan permits this commercial use
    (the free Community plan is for non-commercial use). */
 import { reply, fail, corsHeaders, allowedOrigins } from './lib/http.js';
@@ -56,9 +56,17 @@ export const WORLD_ION_PATH = '/v1/world/ion';
 export const ION_API = 'https://api.cesium.com';
 
 /* terrain: Cesium World Terrain. imagery, tried in order: Bing Maps Aerial
-   with Labels, Bing Maps Aerial, Sentinel-2. buildings: Cesium OSM Buildings. */
-export const ION_ASSETS = Object.freeze({ terrain: 1, imagery: Object.freeze([3, 2, 3954]), buildings: 96188 });
-const SERVED = new Set([ION_ASSETS.terrain, ION_ASSETS.buildings, ...ION_ASSETS.imagery]);
+   with Labels, Bing Maps Aerial, Sentinel-2. buildings: Cesium OSM Buildings.
+   photoreal: Google Photorealistic 3D Tiles through Cesium ion (asset 2275207).
+   Google's Map Tiles API terms ride with it: the Google logo and the data
+   attributions the tileset carries must stay visible on screen whenever its
+   tiles are drawn (never hidden, cropped or covered); tiles may not be cached,
+   stored or copied, so this Worker never fetches, proxies or keeps a tile (it
+   passes on ion's endpoint answer only, and the browser takes tiles straight
+   from Google); and ion's own terms apply on top (the Community plan is for
+   non-commercial use). */
+export const ION_ASSETS = Object.freeze({ terrain: 1, imagery: Object.freeze([3, 2, 3954]), buildings: 96188, photoreal: 2275207 });
+const SERVED = new Set([ION_ASSETS.terrain, ION_ASSETS.buildings, ...ION_ASSETS.imagery, ION_ASSETS.photoreal]);
 
 /* CESIUM_ION_TOKEN is the name the rest of the plane uses (the spatial
    console, Hitman's Halo); the others are read so a token saved under a near
@@ -79,7 +87,7 @@ const TIMEOUT_MS = 10000;
 const BROWSER_MAX_AGE = 300;
 
 /* in-isolate sliding counters: a member may open the World on a few devices and
-   each page asks for at most five assets, then about once an hour per asset */
+   each page asks for at most six assets, then about once an hour per asset */
 export const RATE_LIMITS = Object.freeze({ windowMs: 10 * 60 * 1000, perIp: 120, perMember: 60 });
 const MAX_KEYS = 5000;
 

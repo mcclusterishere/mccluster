@@ -67,7 +67,7 @@ test('the status says whether the World has ion, which binding holds it, and nev
   assert.equal(body.available, true);
   assert.equal(body.members_only, true);
   assert.equal(body.binding, 'CESIUM_ION_TOKEN');
-  assert.deepEqual(body.assets, { terrain: 1, imagery: [3, 2, 3954], buildings: 96188 });
+  assert.deepEqual(body.assets, { terrain: 1, imagery: [3, 2, 3954], buildings: 96188, photoreal: 2275207 });
   assert.equal(JSON.stringify(body).includes(TOKEN), false);
   assert.equal(on.headers.get('access-control-allow-origin'), ORIGIN);
   const off = await (await handleWorldIon(req('/v1/world/ion/', { bearer: null }), { ALLOWED_ORIGINS: ORIGIN })).json();
@@ -87,12 +87,12 @@ test('a token saved under a near name is found; CESIUM_ION_TOKEN wins; blanks do
 
 test('only the assets the World draws are served', async () => {
   const { fetchImpl, calls } = ion();
-  for (const id of [2275207, 4, 0, 999999999]) {
+  for (const id of [2275206, 2275208, 4, 0, 999999999]) {
     const res = await handleWorldIon(req(`/v1/world/ion/v1/assets/${id}/endpoint`), ENV, { fetchImpl, cacheImpl: memoryCache() });
     assert.equal(res.status, 404, `asset ${id}`);
   }
   assert.equal(calls.length, 0);
-  assert.deepEqual([ION_ASSETS.terrain, ...ION_ASSETS.imagery, ION_ASSETS.buildings], [1, 3, 2, 3954, 96188]);
+  assert.deepEqual([ION_ASSETS.terrain, ...ION_ASSETS.imagery, ION_ASSETS.buildings, ION_ASSETS.photoreal], [1, 3, 2, 3954, 96188, 2275207]);
 });
 
 test('only the ecosystem\'s own pages are served', async () => {
@@ -127,7 +127,7 @@ test('ion is asked with the token in a header; the page\'s query never travels; 
 
 test('the account token never appears in any answer', async () => {
   const leaky = ion({ body: { type: 'IMAGERY', url: 'https://assets.ion.cesium.com/3954/', accessToken: 'asset-3954' } });
-  for (const id of [1, 3, 2, 3954, 96188]) {
+  for (const id of [1, 3, 2, 3954, 96188, 2275207]) {
     const res = await handleWorldIon(req(`/v1/world/ion/v1/assets/${id}/endpoint`), ENV, { fetchImpl: leaky.fetchImpl, cacheImpl: memoryCache() });
     assert.equal((await res.text()).includes(TOKEN), false, `asset ${id}`);
   }
@@ -257,7 +257,7 @@ test('a member gets ion\'s answer (200), verified with Supabase first', async ()
 
 test('a member asking for an asset the World does not draw is a 404, before any Supabase or ion call', async () => {
   const { fetchImpl, calls, auth } = ion();
-  const res = await handleWorldIon(req('/v1/world/ion/v1/assets/2275207/endpoint'), ENV, { fetchImpl, cacheImpl: memoryCache() });
+  const res = await handleWorldIon(req('/v1/world/ion/v1/assets/4/endpoint'), ENV, { fetchImpl, cacheImpl: memoryCache() });
   assert.equal(res.status, 404);
   assert.equal(calls.length, 0);
   assert.equal(auth.length, 0);
@@ -320,4 +320,29 @@ test('the source keeps the gate: bearerUser is reused from the data layers, and 
   const ionAt = src.indexOf('await askIon(');
   const cacheAt = src.indexOf('store.match(key)');
   assert.ok(originAt > 0 && memberAt > originAt && ionAt > memberAt && cacheAt > memberAt, 'the member check comes before the cache and before ion');
+});
+
+/* ---------- Google Photorealistic 3D Tiles through ion (asset 2275207) ---------- */
+
+test('Google Photorealistic 3D Tiles (ion asset 2275207) is served to a member like the others: ion\'s endpoint answer only, never a tile', async () => {
+  const GOOGLE = { type: '3DTILES', externalType: 'GOOGLE_3D_TILES', options: { url: 'https://tile.googleapis.com/v1/3dtiles/root.json?key=google-session' }, attributions: [{ html: '<img alt="Google">', collapsible: false }] };
+  const { fetchImpl, calls, auth } = ion({ body: GOOGLE });
+  const res = await handleWorldIon(req('/v1/world/ion/v1/assets/2275207/endpoint'), ENV, { fetchImpl, cacheImpl: memoryCache() });
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), GOOGLE, 'the attributions pass through whole, so the page can keep them visible');
+  assert.equal(auth[0], `Bearer ${MEMBER}`, 'a member, verified with Supabase first');
+  assert.deepEqual(calls.map((c) => c.url), ['https://api.cesium.com/v1/assets/2275207/endpoint'], 'the Worker asks ion for the endpoint and never fetches a Google tile');
+  assert.equal(res.headers.get('cache-control'), 'private, no-store');
+  const anon = await handleWorldIon(req('/v1/world/ion/v1/assets/2275207/endpoint', { bearer: null }), ENV, { fetchImpl, cacheImpl: memoryCache() });
+  assert.equal(anon.status, 401);
+});
+
+test("the source states Google's terms beside the asset: attribution stays visible, tiles are never cached", async () => {
+  const src = await readFile(new URL('../src/world-ion.js', import.meta.url), 'utf8');
+  assert.match(src, /export const ION_ASSETS = Object\.freeze\(\{ terrain: 1, imagery: Object\.freeze\(\[3, 2, 3954\]\), buildings: 96188, photoreal: 2275207 \}\);/);
+  assert.match(src, /const SERVED = new Set\(\[ION_ASSETS\.terrain, ION_ASSETS\.buildings, \.\.\.ION_ASSETS\.imagery, ION_ASSETS\.photoreal\]\);/);
+  assert.match(src, /Google Photorealistic 3D Tiles/);
+  assert.match(src, /must stay visible/);
+  assert.match(src, /tiles may not be cached/);
+  assert.match(src, /Community plan is for\s+non-commercial use/);
 });

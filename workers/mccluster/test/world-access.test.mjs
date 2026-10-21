@@ -71,3 +71,18 @@ test('routed in index.js', async () => {
   const src = await readFile(new URL('../src/index.js', import.meta.url), 'utf8');
   assert.match(src, /path === '\/v1\/world\/access'/);
 });
+
+test('Halo feeds and place search are listed with their labels: locked for everyone but the owner, withdrawable', async () => {
+  const HALO = { military: 'Military flights', quakes: 'Earthquakes', fires: 'Active fires', perimeters: 'Wildfire perimeters', cyclones: 'Tropical cyclones', vessels: 'Ships (AIS)', search: 'Place search' };
+  for (const [id, label] of Object.entries(HALO)) assert.deepEqual(LAYER_RULES[id], { min: 'fan', label }, id);
+  for (const [token, options] of [[null, {}], ['t', {}], ['t', { creator: true }]]) {
+    const b = await (await handleWorldAccess(req(token), ENV, { fetchImpl: db(options) })).json();
+    for (const id of Object.keys(HALO)) assert.deepEqual(b.locked_layers.find((l) => l.id === id), { id, reason: 'admin_preview', next_step: null });
+  }
+  const owner = await (await handleWorldAccess(req('t'), ENV, { fetchImpl: db({ owner: true }) })).json();
+  for (const id of Object.keys(HALO)) assert.ok(owner.unlocked_layers.includes(id), id);
+  const withdrawn = await (await handleWorldAccess(req('t'), { ...ENV, WORLD_GLOBE_WITHDRAWN: 'fires,search' }, { fetchImpl: db({ owner: true }) })).json();
+  assert.equal(withdrawn.locked_layers.find((l) => l.id === 'fires').reason, 'feature_withdrawn');
+  assert.equal(withdrawn.locked_layers.find((l) => l.id === 'search').reason, 'feature_withdrawn');
+  assert.ok(withdrawn.unlocked_layers.includes('military'));
+});
