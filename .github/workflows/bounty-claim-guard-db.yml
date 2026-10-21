@@ -7,6 +7,7 @@ on:
       - 'supabase/pending/action_bounty_claim_existing_row_guard_v1.sql'
       - 'supabase/tests/action_bounty_claim_guard.behaviour.sql'
       - 'supabase/tests/action_bounty_claim_guard.stub.sql'
+      - 'supabase/tests/supabase_api_roles.stub.sql'
       - 'scripts/test-action-bounty-claim-db.sh'
       - '.github/workflows/bounty-claim-guard-db.yml'
   workflow_dispatch:
