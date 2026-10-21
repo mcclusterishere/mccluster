@@ -123,7 +123,12 @@ Until it is applied, Creator Studio builds the same answer in the browser
 (`js/creator-onboarding.js`). Behaviour tests:
 `supabase/tests/music_creator_one_click.behaviour.sql`, run by
 `scripts/test-music-creator-db.sh` on a scratch Postgres. Rollback is in the
-file header. Promote with the steps above.
+file header. Promote with the steps above. Since 2026-10-20 (one sign-up:
+"never re-enter what the profile has") it also copies the member's https
+profile picture (`network_profiles.avatar_url`) into the new creator profile
+and returns it as `prefill.avatar_url`, so every "Become a creator" door on the
+site is one tap; the browser fallback does the same. Still pending: nothing
+here is applied to production by that change.
 
 Promoted: `anon_policy_scope_v1.sql` is
 `supabase/migrations/20261016031123_anon_policy_scope_v1.sql` (applied

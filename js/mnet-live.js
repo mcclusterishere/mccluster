@@ -25,6 +25,7 @@
   };
   var studio = {
     stream: null, pc: null, whipSession: null, session: null,
+    recognition: null, captions: false, captionBusy: false, captionSentAt: 0,
     beat: 0, facing: "user", options: null
   };
 
@@ -211,6 +212,9 @@
     $("mnLiveWatchTitle").textContent = s.title;
     $("mnLiveHost").textContent = personName(s.host) + (s.host && s.host.mccluster_id ? " · @" + s.host.mccluster_id : "");
     $("mnLiveChat").innerHTML = "";
+    var notice=$("mnLiveActorNotice");
+    if(!notice){notice=d.createElement("p");notice.id="mnLiveActorNotice";$("mnLiveChat").before(notice);}
+    notice.textContent=(s.ai_actor_keys||[]).length ? "AI characters may participate in this chat. Host-shared captions may be imperfect." : "This chat may include clearly marked AI characters.";
     paintWatchContext(s);
     $("mnLiveNote").hidden = false;
     $("mnLiveNote").textContent = "Connecting…";
@@ -265,7 +269,7 @@
         if (!post.id || watch.seen[post.id]) return;
         watch.seen[post.id] = true;
         var li = d.createElement("li");
-        li.innerHTML = '<b>' + esc(actor.display_name || actor.mccluster_id || "Someone") + '</b> ' + esc(post.body || "");
+        li.innerHTML = '<b>' + esc(actor.display_name || actor.mccluster_id || "Someone") + '</b> ' + (actor.is_ai ? '<small>AI character</small> ' : '') + esc(post.body || "");
         list.appendChild(li);
       });
       if (atBottom) list.scrollTop = list.scrollHeight;
@@ -448,6 +452,7 @@
     }).then(function () {
       go.hidden = true; $("mnStudioEnd").hidden = false; $("mnStudioTopic").disabled = true;
       say($("mnStudioStatus"), "You're live.", "ok");
+      mountActorControls();
       track("live_start", { room_kind: studio.session.room_kind, category: studio.session.category_key, mission: studio.session.action_mission_id || null, song: studio.session.music_object_id || null });
       studio.beat = setInterval(function () {
         M.api("/v1/mnet/live/" + encodeURIComponent(studio.session.id) + "/heartbeat", { method: "POST", body: {} }).catch(function () {});
@@ -459,11 +464,63 @@
       endBroadcast(true);
     }).then(function () { go.disabled = false; });
   }
+  function stopActorCaptions() {
+    studio.captions=false;
+    if(studio.recognition){studio.recognition.onend=null;studio.recognition.abort();studio.recognition=null;}
+    if($("mnActorCaptions")) $("mnActorCaptions").checked=false;
+  }
+  function actorCue(text, source) {
+    if(!studio.session) return Promise.reject(new Error("The broadcast has ended."));
+    return M.api("/v1/mnet/live/"+studio.session.id+"/cue",{method:"POST",body:{text:text,source:source}});
+  }
+  function mountActorControls() {
+    var box=$("mnActorControls");
+    if(!box){
+      box=d.createElement("fieldset");box.id="mnActorControls";box.className="mn__actor-controls";
+      box.innerHTML='<legend>Characters in your live chat</legend><label><input id="mnActorInvite" type="checkbox"> Invite Royce</label><p>Royce is a fictional AI artist. He reads public room chat and responds occasionally. AI characters do not count as viewers. Turning this off stops pending replies.</p><label for="mnActorCue">Share a topic with the room</label><textarea class="mn__input" id="mnActorCue" maxlength="600" rows="2" style="width:100%;max-width:100%;box-sizing:border-box;font-size:16px"></textarea><button class="mn__quiet" id="mnActorSend" type="button">Share in chat</button><label><input id="mnActorCaptions" type="checkbox"> Share my microphone as public browser captions</label><p id="mnActorCaptionNote">Optional: your browser may send audio to its speech provider. Captions are saved in public chat; errors are possible. McCluster does not save audio through this control. Only enable for speech you have permission to share.</p><p id="mnActorStatus" role="status"></p>';
+      $("mnStudioEnd").after(box);
+      $("mnActorInvite").onchange=function(){
+        var input=this, enabled=input.checked;input.disabled=true;
+        if(!enabled)stopActorCaptions();
+        M.api("/v1/mnet/live/"+studio.session.id+"/actors",{method:"POST",body:{actor_keys:enabled?["royce.r01"]:[]}})
+          .then(function(){say($("mnActorStatus"),enabled?"Royce is invited. Share a topic or let viewers start the conversation.":"Royce is paused.");})
+          .catch(function(e){input.checked=!enabled;say($("mnActorStatus"),e.message,"error");})
+          .then(function(){input.disabled=false;});
+      };
+      $("mnActorSend").onclick=function(){
+        var b=this,text=$("mnActorCue").value.trim();if(!text)return;b.disabled=true;
+        actorCue(text,"typed").then(function(){$("mnActorCue").value="";say($("mnActorStatus"),"Shared in public chat.");})
+          .catch(function(e){say($("mnActorStatus"),e.message,"error");}).then(function(){b.disabled=false;});
+      };
+      $("mnActorCaptions").onchange=function(){
+        if(!this.checked){stopActorCaptions();return;}
+        var Recognition=w.SpeechRecognition||w.webkitSpeechRecognition;
+        if(!Recognition||!$("mnActorInvite").checked){this.checked=false;say($("mnActorStatus"),"Invite Royce first. If speech is unavailable, share a typed topic.");return;}
+        var recognition=new Recognition();studio.recognition=recognition;studio.captions=true;
+        recognition.continuous=true;recognition.interimResults=false;recognition.lang=d.documentElement.lang||"en-US";
+        recognition.onresult=function(event){
+          if(!studio.captions||!studio.session||studio.captionBusy||Date.now()-studio.captionSentAt<15000)return;
+          var text="";for(var i=event.resultIndex;i<event.results.length;i++)if(event.results[i].isFinal)text+=event.results[i][0].transcript+" ";
+          text=text.trim().slice(0,600);if(!text)return;
+          studio.captionBusy=true;studio.captionSentAt=Date.now();
+          actorCue(text,"browser_caption").then(function(){say($("mnActorStatus"),"Caption shared: "+text);}).catch(function(e){stopActorCaptions();say($("mnActorStatus"),e.message,"error");}).then(function(){studio.captionBusy=false;});
+        };
+        recognition.onerror=function(){stopActorCaptions();say($("mnActorStatus"),"Speech stopped. Share a typed topic or enable captions again.");};
+        recognition.onend=function(){stopActorCaptions();};
+        try{recognition.start();}catch(e){stopActorCaptions();say($("mnActorStatus"),"Speech could not start. Share a typed topic.");}
+      };
+    }
+    box.hidden=false;$("mnActorInvite").checked=false;$("mnActorCue").value="";
+    $("mnActorCaptions").disabled=!(w.SpeechRecognition||w.webkitSpeechRecognition);
+    say($("mnActorStatus"),"Invite Royce when you want him to participate.");
+  }
   function endBroadcast(quiet) {
     clearInterval(studio.beat); studio.beat = 0;
     hangUp(studio.pc, studio.whipSession); studio.pc = null; studio.whipSession = null;
     var s = studio.session; studio.session = null;
     $("mnStudioGo").hidden = false; $("mnStudioEnd").hidden = true; $("mnStudioTopic").disabled = false;
+    stopActorCaptions();
+    if($("mnActorControls")) $("mnActorControls").hidden=true;
     if (!s) return Promise.resolve();
     return M.api("/v1/mnet/live/" + encodeURIComponent(s.id) + "/end", { method: "POST", body: {} })
       .then(function () {

@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - 'control.html'
+      - 'js/mnet-live.js'
+      - 'css/mnet.css'
+      - 'scripts/e2e/live-actors.e2e.mjs'
       - 'js/tabbar.js'
       - 'js/site-navigation.js'
       - 'css/site-navigation.css'
@@ -64,6 +67,7 @@ jobs:
           node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
           node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
           node scripts/e2e/connections.e2e.mjs /tmp/control-proof/connections
+          node scripts/e2e/live-actors.e2e.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

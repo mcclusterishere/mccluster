@@ -353,19 +353,66 @@ headline with a red period, tall rounded fields with an icon cell and a
 state at the right, one red pill with the arrow in a darker circle, a lock
 note under it):
 
-1. **Make it yours.** Username (checked as it is typed: the pattern here,
+1. **Make your profile.** ("Your username and name. It's how people find
+   you.") Username (checked as it is typed: the pattern here,
    the name at `GET /v1/mnet/people/<handle>`, where a person nobody can find
    is free and gets the green check) and display name; "About you" rides
    along collapsed, optional and private. Saves the public profile
    (`PATCH /v1/mnet/profile`).
-2. **Where to reach you.** Full legal name and mailing address, private,
+2. **Where we can reach you.** Full legal name and mailing address, private,
    written through `js/fan-intake.js` to `fan_profiles` (the only writer of
    that table). This is the `contact` step the bootstrap requires; it used
    to live on the account page and open from the card by a redirect.
-3. **Lock it in.** Phone (normalised to E.164), the account email read-only,
-   and a password (optional, at least 8 characters). "Enter the World"
-   re-reads the bootstrap and lands on the feed with the card gone and the
-   composer back.
+3. **Your phone and sign-in.** Phone (normalised to E.164), the account
+   email read-only, and a password only when the account has none (one made
+   with Google). The last button says where it goes: "Done" (back to
+   `?next`) or "Go to the World", which re-reads the bootstrap and lands on
+   the feed with the card gone and the composer back.
+
+### One sign-up (owner, 2026-10-20)
+
+"Once you make a profile … you should be able to sign up to anything else
+without having to enter any additional information unless your profile's
+not filled out … that 3-panel profile sign up thing. That should be the new
+sign up thing." The three pages are now the site's one sign-up:
+
+- **Every Join and Create account comes here.** The World's Join and the
+  guest card, account.html's Create tab (its own long form is gone: it links
+  to `mnet.html?join=1`), Creator Studio's gate, and the album's unlock (via
+  account.html). The credentials are an email and a password (or Google);
+  the name, the address and the phone are the pages after it. A new account
+  goes straight into page 1, not the World's card.
+- **Back to where the person started.** `?next=` on mnet.html and
+  account.html, this origin only (`MCC.safeNext` in `js/mcc-auth.js`: a
+  scheme, `//host`, a backslash or a control character is refused).
+  Signing in on account.html goes back to `?next`; a profile that is not
+  done goes through the pages first (`mnet.html?finish=1&next=…`). A sign-up
+  that waits on an emailed confirmation keeps its `next` on the device for a
+  week, bound to that account (a SHA-256 of its email, never the address), so
+  its first sign-in after it carries on. Any other account that signs in on
+  that device discards it unused: not its destination, not its `from`.
+- **A returning member still lands on the World** with the step in its
+  card. The card and every "finish your profile" prompt open the pages at
+  the first unfinished one: page 2 when the username and name are set and
+  only the contact step is open.
+- **Nothing is asked twice.** Page 2 is filled from `fan_profiles`, then from
+  the sign-up's own metadata (`shipping_*`, legal first and last name); page 3
+  asks for a password only when there is none; a World profile save keeps the
+  banner (the Worker keeps any field a save leaves out). The artist doors
+  (`data-creator-door`: Listen's "Become a creator", an artist page's "Make
+  your own artist page", the desk's "Become a creator") are one tap for a
+  finished profile (`js/creator-onboarding.js`: name, handle, bio, website and
+  picture from the profile, then Creator Studio); an unfinished profile goes
+  through the pages and back to Creator Studio for the tap. The seat
+  applications, the onboarding brief and the print shop are pre-filled from
+  the account.
+
+Evidence: `scripts/test/one-signup-flow.test.mjs`,
+`workers/mccluster/test/mnet-profile-save.test.mjs`, and the browser walks in
+`scripts/e2e/human-uprise-door.e2e.mjs` (Join → three pages → back to
+`next`; the first unfinished page; the shipping prefill; page 3 without a
+password) and `scripts/e2e/creator-onboarding.e2e.mjs` (the one tap from a
+door; an unfinished profile routed through the pages).
 
 A steps bar (`#mnSteps`, 1 / 3) and "← Back a step" carry the member through;
 "You can update this anytime." sits under the pill. Editing an existing

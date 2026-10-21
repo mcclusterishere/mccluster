@@ -195,6 +195,32 @@
       '<p class="bs__err" hidden></p>';
   }
 
+  /* DON'T ASK TWICE (owner, 2026-10-20: "once you make a profile … you should
+     be able to sign up to anything else without having to enter any additional
+     information"). A signed-in buyer's name and email were already filled; the
+     shipping lines now come from their account too: the contact row they keep
+     (fan_profiles, when this page carries js/fan-intake.js), then the address
+     their sign-up gave (shipping_* on the account). Nothing typed is replaced. */
+  function fillShipping(box) {
+    if (!box || !buyer()) return;
+    var put = function (n, v) { var i = box.querySelector('[name="' + n + '"]'); if (i && !i.value && v) i.value = v; };
+    var lines = function (r) {
+      if (!r || !r.line1) return;
+      put("addr", r.line1 + (r.line2 ? ", " + r.line2 : ""));
+      put("city", [r.city, [r.region, r.postal].filter(Boolean).join(" ")].filter(Boolean).join(", "));
+    };
+    var meta = {};
+    try { var s = JSON.parse(localStorage.getItem("mccdb_session") || "null"); meta = (s && s.user && s.user.user_metadata) || {}; } catch (e) {}
+    var fromSignup = function () {
+      lines({ line1: meta.shipping_address_line1, line2: meta.shipping_address_line2, city: meta.shipping_city, region: meta.shipping_region, postal: meta.shipping_postal_code });
+    };
+    if (!window.MCC_FAN || !window.MCC_FAN.load) { fromSignup(); return; }
+    window.MCC_FAN.load().then(function (row) {
+      if (row) lines({ line1: row.address_line1, line2: row.address_line2, city: row.city, region: row.region, postal: row.postal_code });
+      fromSignup();
+    }, fromSignup);
+  }
+
   /* open({id, src, title, sub}, via, {onClose}): the shop's curated
      card wins when the id is in the catalog; the wall's own context
      covers everything else, so no sellable frame is ever a dead end. */
@@ -215,6 +241,7 @@
       ON_CLOSE = (opts && opts.onClose) || null;
       var h = host();
       h.querySelector(".bs__in").innerHTML = sheetHTML(p);
+      fillShipping(h.querySelector(".bs__in"));
       h.classList.add("on");
       h.scrollTop = 0;
       PREV_OVERFLOW = document.body.style.overflow;
@@ -263,6 +290,7 @@
           return;
         }
         HOST.querySelector(".bs__in").innerHTML = sheetHTML(OPEN);
+        fillShipping(HOST.querySelector(".bs__in"));
         HOST.scrollTop = 0;
       }).catch(function (ex) {
         jb.disabled = false; jb.textContent = "Make my profile →";
@@ -278,6 +306,7 @@
       MCC_AUTH.signInPassword(se, sw).then(function () {
         track("profile_signin", { via: "counter-" + VIA });
         HOST.querySelector(".bs__in").innerHTML = sheetHTML(OPEN);
+        fillShipping(HOST.querySelector(".bs__in"));
         HOST.scrollTop = 0;
       }).catch(function (ex) {
         sb2.disabled = false; sb2.textContent = "Sign in →";
