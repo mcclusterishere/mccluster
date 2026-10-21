@@ -32,6 +32,8 @@ Owner, 2026-10-21:
   - The World at the end is the house's, so it is off.
 - **Defaults for an account that has typed nothing:** its name as the title, `@handle` under it, and a "Follow me on the
   World" button to its profile.
+- **Its 360 room has its own tags or none.** The house page's tags (the Vaunt cockpit, "Get to the bag", the résumé) never
+  appear on an account's page (`frontConfig(raw, member)` in `js/main.js`; Codex #595).
 - **Media URLs are checked twice.** The engine accepts a film, a 360 or a track only from an account's own folder of the
   `front-media` bucket (`FRONT_MEDIA_RE` in `js/main.js`). The Worker has already checked that the folder is this
   account's.
@@ -88,6 +90,10 @@ type and every control is at least 44px.
   `front-media/<auth uid>/films/<id>/`. Nothing is sent to a server to be processed.
 - **Other media** (the 360 room, the photo, the track) is uploaded as it is, after a type and size check. A 360 must be
   twice as wide as it is tall. A 360 video also gets a poster from its first frame.
+- **What a page no longer uses leaves the folder.** After every save, publish and take-down, the editor removes any file
+  in the account's folder that neither its draft nor its published page uses: a replaced film's frames, a swapped 360,
+  an upload never saved (`sweep` in `js/front-media.js`). A film cut that fails takes its frames back with it. Saving a
+  draft keeps what the published page still plays. Uploads wait for a sweep to finish.
 
 ### The doors
 
@@ -124,6 +130,10 @@ type and every control is at least 44px.
   - 300 MB per file; images, MP4/WebM and audio only.
   - Every account owns one folder, its auth uid. Its policies let an account list, write, replace and remove only that
     folder. Nobody can list everyone's uploads, drafts included.
+  - **Every account has room for one page, not a warehouse** (Codex #595): at most 2,500 files and 1 GiB in its folder
+    (`public.front_media_has_room()`, checked on every write). A full page is four films of up to 320 frames, a 360 of
+    up to 300 MB, a still and a track, with room to replace one before the sweep runs. Past either line the upload is
+    refused and the editor says the storage is full.
 - **Status.** Not applied in production. Until it is, `/v1/fronts` answers 503 (before the Worker is deployed with
   these routes, 404). Either way the editor says front pages are not switched on yet, and a visitor's
   `front.html?u=` says the page cannot be read right now.
@@ -137,7 +147,7 @@ type and every control is at least 44px.
 | `scripts/e2e/member-front.e2e.mjs` | The whole flow in a real browser, against the real Worker routes and check over an in-memory database and bucket (detail below). |
 | `scripts/test/member-front-pages.test.mjs` | Engine and Worker agree on links, media and bounds; the page, editor, doors, Worker wiring and SQL keep their contract. |
 | `workers/mccluster/test/member-fronts.test.mjs` | The routes: own media only, drafts never public, takedown, private profiles, handle required. |
-| `scripts/test-member-fronts-db.sh` | The SQL on a scratch Postgres, as the real API roles: the table is the Worker's alone, and each bucket folder is held to its owner, with no listing. |
+| `scripts/test-member-fronts-db.sh` | The SQL on a scratch Postgres, as the real API roles: the table is the Worker's alone; each bucket folder is held to its owner, with no listing, and to 2,500 files and 1 GiB. |
 
 What the browser test covers, all at 390 and 1280 with no sideways scroll and no JavaScript errors:
 - **Gates:** signed out, and an account with no handle.

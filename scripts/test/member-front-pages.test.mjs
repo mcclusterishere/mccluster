@@ -60,6 +60,19 @@ test('the engine plays only media the Worker would have kept: the account\'s own
   assert.equal(frontConfig({ media: { cabin: { src: PREFIX + 'c.mp4', kind: 'gif' } } }).media.cabin, null);
 });
 
+test('an account\'s 360 room has its own tags or none, never the house\'s (Codex #595)', () => {
+  const { frontConfig } = engine();
+  assert.equal(frontConfig({}).vr.spots.length, 3, 'the house page keeps its three tags');
+  /* (the engine's arrays come from its own context: compared by length) */
+  assert.equal(frontConfig({}, true).vr.spots.length, 0);
+  assert.equal(frontConfig({ vr: { spots: [] } }, true).vr.spots.length, 0);
+  assert.equal(frontConfig({ vr: { spots: [{ label: 'x', href: 'javascript:1' }] } }, true).vr.spots.length, 0);
+  assert.equal(frontConfig({ vr: { spots: [{ label: 'My studio', href: 'studio.html' }] } }, true).vr.spots[0].label, 'My studio');
+  /* both places the engine reads settings say which page it is */
+  assert.match(MAIN, /var FRONT = frontConfig\(MEMBER \? MEMBER\.config : null, !!MEMBER\);/);
+  assert.match(MAIN, /FRONT = frontConfig\(raw, !!MEMBER\);/);
+});
+
 test('the engine and the Worker bound the settings the same way', () => {
   const { frontConfig } = engine();
   const D = frontConfig(null);
@@ -102,6 +115,10 @@ test('the editor: every signed-in account, its own folder, its draft through the
   /* uploads go to the account's folder named by the Worker, with the account's own session */
   assert.match(media, /x\.open\("POST", sb\(\)\.url \+ "\/storage\/v1\/object\/" \+ BUCKET \+ "\/" \+ path\)/);
   assert.match(media, /"authorization", "Bearer " \+ token/);
+  /* what a page no longer uses leaves the account's folder after each save, publish and take-down */
+  assert.match(media, /function sweep\(prefixPath, configs\)/);
+  assert.equal((js.match(/ sweep\(\);/g) || []).length, 2, 'save/publish and take-down both sweep');
+  assert.match(js, /var start = S\.sweeping \|\| Promise\.resolve\(\);/);
   assert.doesNotMatch(media + js, /service_role|SERVICE_ROLE/);
   /* phone first */
   const css = read('css/front-studio.css');
@@ -136,6 +153,13 @@ test('the pending SQL: the table is the Worker\'s alone; the bucket writes only 
   assert.match(sql, /'front-media'/);
   const own = sql.match(/\(storage\.foldername\(name\)\)\[1\] = auth\.uid\(\)::text/g) || [];
   assert.ok(own.length >= 5, 'select, insert, update and delete are each held to the uploader\'s folder');
+  /* one page, not a warehouse: every write is held to the account's room (Codex #595) */
+  assert.match(sql, /create or replace function public\.front_media_has_room\(\)[\s\S]*?security definer[\s\S]*?set search_path = ''[\s\S]*?count\(\*\) < 2500[\s\S]*?< 1073741824/);
+  assert.match(sql, /revoke all on function public\.front_media_has_room\(\) from public, anon;/);
+  for (const op of ['insert', 'update']) {
+    const pol = sql.match(new RegExp(`on storage\\.objects for ${op}[\\s\\S]*?;`));
+    assert.ok(pol && /public\.front_media_has_room\(\)/.test(pol[0]), op + ' is held to the account\'s room');
+  }
   /* public by the bucket's own flag: no policy lists everyone's uploads */
   for (const pol of sql.matchAll(/create policy "[^"]+"\s+on storage\.objects for (\w+)([\s\S]*?);/g))
     assert.match(pol[2], /\(storage\.foldername\(name\)\)\[1\] = auth\.uid\(\)::text/, pol[1] + ' is held to the folder');

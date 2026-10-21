@@ -36,11 +36,65 @@
         x.setRequestHeader("x-upsert", "true");
         x.setRequestHeader("cache-control", "max-age=31536000");
         if (onProgress && x.upload) x.upload.onprogress = function (e) { if (e.lengthComputable) onProgress(e.loaded / e.total); };
-        x.onload = function () { x.status >= 200 && x.status < 300 ? resolve(publicUrl(path)) : reject(new Error("Upload refused (" + x.status + ")")); };
+        x.onload = function () {
+          if (x.status >= 200 && x.status < 300) return resolve(publicUrl(path));
+          /* the bucket's policy refuses a write past the account's room (2,500 files, 1 GiB: member_fronts_v1.sql) */
+          reject(new Error((x.status === 403 || x.status === 400) && /row-level security|violates/i.test(x.responseText || "")
+            ? "Your front page storage is full. Remove a film or your 360, save, and try again."
+            : "Upload refused (" + x.status + ")"));
+        };
         x.onerror = function () { reject(new Error("Upload failed: check the connection")); };
         x.send(blob);
       });
     });
+  }
+  /* the account's own storage calls, with its own session (the bucket's policies hold each to its folder) */
+  function call(method, path, body) {
+    return Promise.resolve(sb().token ? sb().token() : null).then(function (token) {
+      if (!token) throw new Error("Sign in first.");
+      return fetch(sb().url + "/storage/v1/object/" + path, { method: method, headers: { authorization: "Bearer " + token, apikey: sb().key, "content-type": "application/json" }, body: JSON.stringify(body) })
+        .then(function (r) { if (!r.ok) throw new Error("Storage refused (" + r.status + ")"); return r.json().catch(function () { return null; }); });
+    });
+  }
+  /* remove files from the account's folder (paths inside the bucket), in batches */
+  function remove(paths) {
+    paths = (paths || []).filter(Boolean);
+    var batches = [];
+    for (var i = 0; i < paths.length; i += 500) batches.push(paths.slice(i, i + 500));
+    return batches.reduce(function (p, b) { return p.then(function () { return call("DELETE", BUCKET, { prefixes: b }); }); }, Promise.resolve());
+  }
+  function list(prefix) {
+    return call("POST", "list/" + BUCKET, { prefix: prefix, limit: 1000, offset: 0, sortBy: { column: "name", order: "asc" } }).then(function (rows) { return Array.isArray(rows) ? rows : []; });
+  }
+  /* the path inside the bucket of one of the account's public URLs */
+  function pathOf(url) { var p = publicUrl(""); return typeof url === "string" && url.indexOf(p) === 0 ? url.slice(p.length) : ""; }
+  /* WHAT A PAGE USES: its films' folders and its other files, from any number of page settings (a draft, the published) */
+  function uses(configs) {
+    var keep = { dirs: {}, files: {} };
+    (configs || []).forEach(function (c) {
+      var m = c && c.media || {};
+      ["hero", "scene1", "scene2", "night"].forEach(function (k) { var d = m[k] && pathOf(m[k].base); if (d) keep.dirs[d] = true; });
+      [m.cabin && m.cabin.src, m.cabin && m.cabin.poster, m.still && m.still.src, m.sound && m.sound.src].forEach(function (u) { var f = pathOf(u); if (f) keep.files[f] = true; });
+    });
+    return keep;
+  }
+  /* THE SWEEP: everything in the account's folder that none of the given pages uses is removed. A replaced film, a 360
+     swapped for another, an upload never saved, the frames of a cut that failed: none of it should count against the
+     account's room (2,500 files, 1 GiB). Run after a save, when no upload is under way. */
+  function sweep(prefixPath, configs) {
+    var keep = uses(configs), gone = [];
+    return list(prefixPath).then(function (rows) {
+      rows.forEach(function (r) { if (r.id && !keep.files[prefixPath + r.name]) gone.push(prefixPath + r.name); });
+      return list(prefixPath + "films/");
+    }).then(function (dirs) {
+      var stale = dirs.filter(function (r) { return !r.id && !keep.dirs[prefixPath + "films/" + r.name + "/"]; }).map(function (r) { return prefixPath + "films/" + r.name + "/"; });
+      return stale.reduce(function (p, dir) {
+        return p.then(function () { return Promise.all([list(dir), list(dir + "sm/")]); }).then(function (two) {
+          two[0].forEach(function (r) { if (r.id) gone.push(dir + r.name); });
+          two[1].forEach(function (r) { if (r.id) gone.push(dir + "sm/" + r.name); });
+        });
+      }, Promise.resolve());
+    }).then(function () { return remove(gone).then(function () { return gone.length; }); });
   }
   function encode(canvas, type, q) { return new Promise(function (res) { canvas.toBlob(function (b) { res(b); }, type, q); }); }
   function load(file, kind) {
@@ -76,12 +130,12 @@
       var cb = d.createElement("canvas"), cs = d.createElement("canvas");
       cb.width = big[0]; cb.height = big[1]; cs.width = small[0]; cs.height = small[1];
       var xb = cb.getContext("2d"), xs = cs.getContext("2d");
-      var type = "image/webp", ext = "webp", cut = 0, sent = 0, total = n * 2, queue = [], running = 0, failed = null;
+      var type = "image/webp", ext = "webp", cut = 0, sent = 0, total = n * 2, queue = [], running = 0, failed = null, sentPaths = [];
       var report = function () { if (onProgress) onProgress({ cut: cut, of: n, sent: sent, total: total }); };
       var pump = function () {
         while (running < PARALLEL && queue.length && !failed) {
           var job = queue.shift(); running++;
-          put(job.path, job.blob, type).then(function () { sent++; running--; report(); pump(); }, function (e) { failed = e; running--; pump(); });
+          put(job.path, job.blob, type).then(function (u) { sent++; sentPaths.push(pathOf(u)); running--; report(); pump(); }, function (e) { failed = e; running--; pump(); });
         }
       };
       var drained = function () { return new Promise(function (res, rej) { (function wait() { if (failed) return rej(failed); if (!queue.length && !running) return res(); setTimeout(wait, 60); })(); }); };
@@ -111,7 +165,13 @@
       return next().then(drained).then(function () {
         URL.revokeObjectURL(o.url);
         return { base: publicUrl(dir), count: n, ext: ext, sm: true, poster: publicUrl(dir + pad4(1) + "." + ext) };
-      }, function (e) { URL.revokeObjectURL(o.url); throw e; });
+      }, function (e) {
+        URL.revokeObjectURL(o.url);
+        /* a cut that failed or was stopped takes its frames back with it (nothing more is sent once it has failed) */
+        failed = failed || e;
+        var wait = function () { return running ? new Promise(function (r) { setTimeout(r, 60); }).then(wait) : Promise.resolve(); };
+        return wait().then(function () { return remove(sentPaths).catch(function () {}); }).then(function () { throw e; });
+      });
     });
   }
 
@@ -155,5 +215,5 @@
     if (file.size > LIMITS.sound) return Promise.reject(new Error("That track is over 30 MB."));
     return put(prefixPath + "sound-" + stamp() + "." + ext, file, STORED[ext], onProgress).then(function (src) { return { src: src }; });
   }
-  w.MCC_FRONT_MEDIA = { film: film, cabin: cabin, still: still, sound: sound, LIMITS: LIMITS, MAX_FRAMES: MAX_FRAMES };
+  w.MCC_FRONT_MEDIA = { film: film, cabin: cabin, still: still, sound: sound, sweep: sweep, uses: uses, LIMITS: LIMITS, MAX_FRAMES: MAX_FRAMES };
 })(window);

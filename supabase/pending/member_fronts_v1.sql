@@ -16,7 +16,8 @@
 --     in their browser), 360 cabin, posters and soundtrack. Public on
 --     purpose: a front page is a public page, and a film is hundreds of
 --     frame requests a signed URL could not serve. Writing is not public:
---     every account owns one folder, named by its auth uid, and only that.
+--     every account owns one folder, named by its auth uid, and only that,
+--     up to 2,500 files and 1 GiB (public.front_media_has_room).
 --
 -- Who reads and writes member_fronts: the Worker `mccluster`, with the
 -- service role, after it has checked the session (GET/POST /v1/fronts/me) or
@@ -28,6 +29,7 @@
 --   delete from storage.buckets where id = 'front-media';  -- after emptying it
 --   (and the four "front media" policies on storage.objects: listed, written,
 --   replaced and removed by their owner)
+--   drop function if exists public.front_media_has_room();
 --
 -- Promote with supabase/pending/README.md.
 
@@ -84,18 +86,42 @@ create policy "front media is listed to its owner"
   to authenticated
   using (bucket_id = 'front-media' and (storage.foldername(name))[1] = auth.uid()::text);
 
+-- EVERY ACCOUNT HAS ROOM FOR ONE PAGE, NOT A WAREHOUSE (Codex #595). The
+-- bucket's 300 MB is per file; this is per account: at most 2,500 files and
+-- 1 GiB in its folder. A full page is four films (up to 320 frames each, a
+-- few tens of MB), a 360 of up to 300 MB, a still and a track, with room to
+-- replace one before the editor removes what the page no longer uses
+-- (js/front-studio.js). A write that would start past either line is refused.
+create or replace function public.front_media_has_room()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select count(*) < 2500
+     and coalesce(sum(case when o.metadata->>'size' ~ '^[0-9]{1,18}$' then (o.metadata->>'size')::bigint else 0 end), 0) < 1073741824
+  from storage.objects o
+  where o.bucket_id = 'front-media'
+    and o.name like (select auth.uid())::text || '/%'
+$$;
+comment on function public.front_media_has_room() is
+  'Whether the signed-in account''s front-media folder is under 2,500 files and 1 GiB: the storage policies refuse an upload past either.';
+revoke all on function public.front_media_has_room() from public, anon;
+grant execute on function public.front_media_has_room() to authenticated, service_role;
+
 drop policy if exists "front media is written by its owner" on storage.objects;
 create policy "front media is written by its owner"
   on storage.objects for insert
   to authenticated
-  with check (bucket_id = 'front-media' and (storage.foldername(name))[1] = auth.uid()::text);
+  with check (bucket_id = 'front-media' and (storage.foldername(name))[1] = auth.uid()::text and public.front_media_has_room());
 
 drop policy if exists "front media is replaced by its owner" on storage.objects;
 create policy "front media is replaced by its owner"
   on storage.objects for update
   to authenticated
   using (bucket_id = 'front-media' and (storage.foldername(name))[1] = auth.uid()::text)
-  with check (bucket_id = 'front-media' and (storage.foldername(name))[1] = auth.uid()::text);
+  with check (bucket_id = 'front-media' and (storage.foldername(name))[1] = auth.uid()::text and public.front_media_has_room());
 
 drop policy if exists "front media is removed by its owner" on storage.objects;
 create policy "front media is removed by its owner"

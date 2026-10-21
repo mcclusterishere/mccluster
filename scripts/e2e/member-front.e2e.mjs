@@ -100,6 +100,21 @@ async function setup(viewport,account){
         world.objects.set(path,{type:req.headers()['content-type'],body});world.uploads.push(path);
         return route.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify({Key:'front-media/'+path})});
       }
+      /* listing and removing, each held to the caller's own folder (the select and delete policies) */
+      if(p==='/storage/v1/object/list/front-media'&&req.method()==='POST'){
+        const a=who(req.headers().authorization),b=req.postDataJSON()||{};let prefix=String(b.prefix||'');if(prefix&&!prefix.endsWith('/'))prefix+='/';
+        world.lists=(world.lists||0)+1;
+        if(!a)return route.fulfill({status:403,headers:cors,contentType:'application/json',body:'{"message":"unauthorized"}'});
+        const seen=new Map();
+        for(const k of world.objects.keys()){if(!k.startsWith(a.id+'/')||!k.startsWith(prefix))continue;const rest=k.slice(prefix.length),i=rest.indexOf('/');
+          if(i>=0)seen.set(rest.slice(0,i),{name:rest.slice(0,i),id:null});else seen.set(rest,{name:rest,id:'obj-'+rest,metadata:{size:world.objects.get(k).body.length}});}
+        return route.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify([...seen.values()])});
+      }
+      if(p==='/storage/v1/object/front-media'&&req.method()==='DELETE'){
+        const a=who(req.headers().authorization),b=req.postDataJSON()||{},out=[];
+        for(const k of b.prefixes||[]){if(a&&k.startsWith(a.id+'/')&&world.objects.delete(k)){out.push({name:k});world.removed=(world.removed||[]).concat(k);}}
+        return route.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify(out)});
+      }
       const pub=p.match(/^\/storage\/v1\/object\/public\/front-media\/(.+)$/);
       if(pub){const o=world.objects.get(decodeURIComponent(pub[1]));media.push(decodeURIComponent(pub[1]));world.reads.push(decodeURIComponent(pub[1]));return o?route.fulfill({status:200,headers:{...cors,'access-control-allow-origin':'*'},contentType:o.type,body:o.body}):route.fulfill({status:404,body:''});}
       /* the artist page (music-creator.html): Benji's artist profile, and who the signed-in account is */
@@ -223,6 +238,8 @@ try{
     await fr.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:20000}).catch(()=>{});
     const room=await fr.evaluate(()=>({viewer:!!(window.__MCC_VR&&window.__MCC_VR.viewer),src:(document.querySelector('#workVR [data-vr-src]')||{}).getAttribute?.('data-vr-src')||'',held:!!(window.__MCC_VR&&window.__MCC_VR.held)}));
     check(scope,'the preview\'s "360 room" button takes the page into his 360 room',room.viewer,room);
+    const houseTags=await fr.evaluate(()=>({spots:window.MCC_FRONT.config.vr.spots.length,shown:[...document.querySelectorAll('#workVR .vr360-spot')].map(a=>a.textContent.trim())}));
+    check(scope,'with no tags of his own, his room has none: never the house\'s (Codex #595)',houseTags.spots===0&&houseTags.shown.length===0,houseTags);
     await fr.evaluate(()=>{const v=window.__MCC_VR.viewer;v.state.yaw=Math.PI/4;v.state.pitch=-Math.PI/18;});
     await page.click('[data-act="view"]');
     s=await studio(page);
@@ -249,6 +266,23 @@ try{
     s=await studio(page);
     const live=world.fronts.find(r=>r.handle==='benji.chase');
     check(scope,'Publish puts it live at front.html?u=benji.chase, with every setting he made',/front\.html\?u=benji\.chase/.test(s.msg)&&!s.bad&&live.published&&live.published.media.cabin&&live.published.media.sound&&live.published.links[0].href==='https://instagram.com/hitmanbenji'&&live.published.vr.spots.length===1&&live.published.vr.hold===false,{msg:s.msg,pub:live&&live.published});
+    /* he replaces his opening film and publishes again: the old frames leave his folder, nothing else does (Codex #595) */
+    const oldHero=live.published.media.hero.base.split('/front-media/')[1];
+    await page.evaluate(()=>window.scrollTo(0,0));
+    let s2=await uploadInto(page,'hero','film.webm');
+    const newHero=s2.draft.media.hero.base.split('/front-media/')[1];
+    await page.click('#fsTop [data-act="save"]');
+    await page.waitForFunction(()=>/Draft saved/.test(window.__MCC_FRONT_STUDIO.msg),null,{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    const keys=()=>[...world.objects.keys()];
+    check(scope,'saving a draft keeps the published page\'s film: the live page still plays',newHero!==oldHero&&keys().filter(k=>k.startsWith(oldHero)).length===96&&keys().filter(k=>k.startsWith(newHero)).length===96,{old:keys().filter(k=>k.startsWith(oldHero)).length,new:keys().filter(k=>k.startsWith(newHero)).length});
+    await page.click('#fsTop [data-act="publish"]');
+    await page.waitForFunction(()=>/Published/.test(window.__MCC_FRONT_STUDIO.msg),null,{timeout:15000}).catch(()=>{});
+    for(let i=0;i<40&&keys().some(k=>k.startsWith(oldHero));i++)await page.waitForTimeout(100);
+    const after=world.fronts.find(r=>r.handle==='benji.chase').published.media;
+    const stillThere=[after.cabin.src,after.sound.src].map(u=>u.split('/front-media/')[1]).every(k=>world.objects.has(k));
+    check(scope,'publishing again removes the replaced film\'s frames, and only those',!keys().some(k=>k.startsWith(oldHero))&&keys().filter(k=>k.startsWith(newHero)).length===96&&stillThere&&after.hero.base.includes(newHero)&&!keys().some(k=>/\/cabin-[^/]+\.jpg$/.test(k)&&!k.endsWith(after.cabin.src.split('/').pop())),{old:keys().filter(k=>k.startsWith(oldHero)).length,stillThere,all:keys().filter(k=>!k.includes('/films/'))});
+    check(scope,'the refused 360 left nothing behind',!keys().some(k=>k.includes('notround')),keys().filter(k=>!k.includes('/films/')));
     check(scope,'"See it live" and "Take it down" appear once it is live',await page.evaluate(()=>!document.getElementById('fsOpen').hidden&&/front\.html\?u=benji\.chase$/.test(document.getElementById('fsOpen').href)&&!document.getElementById('fsUnpublish').hidden));
     const targets=await page.evaluate(()=>[...document.querySelectorAll('.fs button:not([hidden]),.fs .fs-btn:not([hidden]),.fs input:not([type=file]):not([type=checkbox]),.fs select')].filter(b=>b.offsetParent).map(b=>({h:Math.round(b.getBoundingClientRect().height),t:(b.textContent||b.name||'').trim().slice(0,20)})).filter(x=>x.h<44));
     check(scope,'every button and field is at least 44px tall on the phone',targets.length===0,targets);

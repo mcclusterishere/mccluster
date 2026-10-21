@@ -40,6 +40,14 @@
   }
   /* the folder this account's uploads go to: the Worker names it (its auth uid) */
   function folder() { var p = S.me && S.me.media_prefix || ""; var i = p.indexOf("/front-media/"); return i >= 0 ? p.slice(i + "/front-media/".length) : ""; }
+  /* after the account's page changes on the server: what neither its draft nor its published page uses leaves its
+     folder (js/front-media.js sweep), so a replaced film never counts against its room. Uploads wait for it. */
+  function sweep() {
+    var M = w.MCC_FRONT_MEDIA, dir = folder();
+    if (!M || !M.sweep || !dir || !S.me) return;
+    var pages = [S.me.draft, S.me.published];
+    S.sweeping = (S.sweeping || Promise.resolve()).then(function () { return M.sweep(dir, pages); }).catch(function () { return 0; });
+  }
   function ensure(o, k) { o[k] = o[k] && typeof o[k] === "object" ? o[k] : {}; return o[k]; }
   /* the page the preview gets: the same scene rules the published page uses (js/front-member.js) */
   function page() { return { handle: S.me.handle, name: S.me.name, avatar: S.me.avatar, headline: "", config: clone(S.draft) }; }
@@ -234,7 +242,7 @@
     if (a === "save" || a === "publish") return save(a === "publish");
     if (a === "unpublish") {
       S.saving = true; paint();
-      api("/v1/fronts/me/published", { method: "DELETE" }).then(function () { S.me.published = null; S.me.published_at = null; S.msg = "Taken down. Your draft is kept."; S.bad = false; })
+      api("/v1/fronts/me/published", { method: "DELETE" }).then(function () { S.me.published = null; S.me.published_at = null; S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
         .catch(function (err) { S.msg = "Not taken down: " + err.message; S.bad = true; }).then(function () { S.saving = false; paint(); });
     }
   }
@@ -246,7 +254,7 @@
       if (publish) { S.me.published = b.published; S.me.published_at = b.published_at; }
       var dropped = (b.dropped || []).length ? " Not kept: " + b.dropped.join(", ") + "." : "";
       S.msg = (publish ? "Published. Everyone sees it at front.html?u=" + b.handle + "." : "Draft saved.") + dropped; S.bad = !!dropped;
-      paintForm(); reloadPreview(true);
+      paintForm(); reloadPreview(true); sweep();
     }).catch(function (err) {
       S.msg = (publish ? "Not published: " : "Not saved: ") + (err.status === 403 && err.body && err.body.detail && err.body.detail.code === "removed" ? "McCluster took this page down." : err.message);
       S.bad = true;
@@ -256,9 +264,12 @@
     var M = w.MCC_FRONT_MEDIA, dir = folder();
     if (!M || !dir || !file) return;
     S.busy[key] = true; S.progress[key] = "Starting…"; S.msg = ""; paintForm();
+    var start = S.sweeping || Promise.resolve();
     var pct = function (x) { S.progress[key] = "Uploading " + Math.round(x * 100) + "%"; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; };
-    var job = key === "cabin" ? M.cabin(file, dir, pct) : key === "still" ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
-      : M.film(file, dir, function (p) { S.progress[key] = "Cutting frames " + p.cut + " of " + p.of + " · uploaded " + p.sent + " of " + p.total; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; });
+    var job = start.then(function () {
+      return key === "cabin" ? M.cabin(file, dir, pct) : key === "still" ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
+        : M.film(file, dir, function (p) { S.progress[key] = "Cutting frames " + p.cut + " of " + p.of + " · uploaded " + p.sent + " of " + p.total; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; });
+    });
     job.then(function (res) {
       var m = ensure(S.draft, "media");
       m[key] = key === "hero" || key === "scene1" || key === "scene2" || key === "night" ? { base: res.base, count: res.count, ext: res.ext, sm: res.sm } : res;

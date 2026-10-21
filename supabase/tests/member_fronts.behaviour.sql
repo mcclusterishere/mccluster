@@ -71,12 +71,36 @@ do $$ begin
     raise exception 'an account wrote outside any folder';
   exception when insufficient_privilege then null; end;
 end $$;
+-- ONE PAGE, NOT A WAREHOUSE: 2,500 files and 1 GiB per account (Codex #595).
+-- The Storage API writes one object per request, so each insert here is its own statement.
+do $$ declare i int; begin
+  for i in 1..2498 loop
+    insert into storage.objects(bucket_id,name) values ('front-media','22222222-2222-4222-8222-222222222222/fill/'||i||'.webp');
+  end loop;
+  if (select count(*) from storage.objects where bucket_id='front-media') <> 2500 then raise exception 'the folder did not fill to 2,500'; end if;
+  begin insert into storage.objects(bucket_id,name) values ('front-media','22222222-2222-4222-8222-222222222222/one-too-many.webp');
+    raise exception 'a 2,501st file went in';
+  exception when insufficient_privilege then null; end;
+  -- what the editor does: remove what the page no longer uses, and there is room again
+  delete from storage.objects where bucket_id='front-media' and name like '22222222-2222-4222-8222-222222222222/fill/%';
+  insert into storage.objects(bucket_id,name,metadata) values ('front-media','22222222-2222-4222-8222-222222222222/cabin.mp4','{"size":1073741824}');
+  begin insert into storage.objects(bucket_id,name) values ('front-media','22222222-2222-4222-8222-222222222222/past-a-gib.webp');
+    raise exception 'a file went in past 1 GiB';
+  exception when insufficient_privilege then null; end;
+  begin update storage.objects set metadata='{"size":11}' where bucket_id='front-media' and name='22222222-2222-4222-8222-222222222222/films/a1/0001.webp';
+    raise exception 'a file was replaced past 1 GiB';
+  exception when insufficient_privilege then null; end;
+  delete from storage.objects where bucket_id='front-media' and name='22222222-2222-4222-8222-222222222222/cabin.mp4';
+  insert into storage.objects(bucket_id,name) values ('front-media','22222222-2222-4222-8222-222222222222/room-again.webp');
+end $$;
 reset role;
 set local role authenticated;
 do $$ begin perform set_config('request.jwt.claims','{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}',true); end $$;
 do $$ declare n int; begin
   -- another account lists nothing of his, and cannot touch it
   if (select count(*) from storage.objects where bucket_id='front-media') <> 0 then raise exception 'another account listed his uploads'; end if;
+  -- his files are no measure of anyone else's room
+  if not public.front_media_has_room() then raise exception 'another account was counted against his files'; end if;
   update storage.objects set metadata='{"size":1}' where bucket_id='front-media';
   get diagnostics n = row_count; if n <> 0 then raise exception 'another account replaced his files'; end if;
   delete from storage.objects where bucket_id='front-media';
@@ -93,4 +117,4 @@ do $$ begin
 end $$;
 reset role;
 rollback;
-\echo 'member fronts: table locked to the Worker; bucket folders held to their owner; no listing'
+\echo 'member fronts: table locked to the Worker; bucket folders held to their owner, 2,500 files and 1 GiB each; no listing'

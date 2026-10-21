@@ -83,7 +83,8 @@
       still: m.still && frontMediaUrl(m.still.src) ? { src: m.still.src } : null,
     };
   }
-  function frontConfig(raw) {
+  /* member: an account's page (front.html). Its 360 room has its own tags or none, never the house's (Codex #595). */
+  function frontConfig(raw, member) {
     var r = raw && typeof raw === "object" ? raw : {}, D = FRONT_DEFAULT;
     var sc = r.scenes || {}, sr = r.scroll || {}, v = r.vr || {}, n = r.night || {};
     var band = Array.isArray(v.band) && v.band.length === 2 ? [frontNum(v.band[0], 0.15, 0.85, NaN), frontNum(v.band[1], 0.15, 0.85, NaN)] : null;
@@ -96,7 +97,7 @@
     return {
       scenes: { doors: frontBool(sc.doors, true), vaunt: frontBool(sc.vaunt, true), night: frontBool(sc.night, true), world: frontBool(sc.world, true) },
       scroll: { duration: frontNum(sr.duration, 0.3, 1.8, D.scroll.duration), touchLerp: frontNum(sr.touchLerp, 0.05, 0.4, D.scroll.touchLerp) },
-      vr: { enabled: frontBool(v.enabled, true), hold: frontBool(v.hold, true), band: band, yaw: frontNum(v.yaw, -180, 180, D.vr.yaw), pitch: frontNum(v.pitch, -85, 85, D.vr.pitch), spots: spots && spots.length ? spots : D.vr.spots },
+      vr: { enabled: frontBool(v.enabled, true), hold: frontBool(v.hold, true), band: band, yaw: frontNum(v.yaw, -180, 180, D.vr.yaw), pitch: frontNum(v.pitch, -85, 85, D.vr.pitch), spots: member ? (spots || []) : spots && spots.length ? spots : D.vr.spots },
       night: { arrive: frontNum(n.arrive, 0.5, 0.86, D.night.arrive) },
       media: frontMedia(r.media),
     };
@@ -105,7 +106,7 @@
      its editor's preview, the draft) before this file runs and hands it over here, with the page's words already in
      place. The same engine then runs the account's media. The house page (index.html) has no such hand-over. */
   var MEMBER = window.MCC_FRONT_SOURCE && typeof window.MCC_FRONT_SOURCE === "object" ? window.MCC_FRONT_SOURCE : null;
-  var FRONT = frontConfig(MEMBER ? MEMBER.config : null);
+  var FRONT = frontConfig(MEMBER ? MEMBER.config : null, !!MEMBER);
   window.MCC_FRONT_DEFAULT = frontConfig(null);   // what the page does with no row: the Control Room's starting point
   var frontHooks = [];
   function frontRow() {
@@ -115,7 +116,7 @@
     return null;
   }
   function setFront(raw, source) {
-    FRONT = frontConfig(raw);
+    FRONT = frontConfig(raw, !!MEMBER);
     window.MCC_FRONT = { config: FRONT, source: source || "shipped" };
     document.documentElement.setAttribute("data-front", source || "shipped");
     frontHooks.forEach(function (fn) { try { fn(FRONT); } catch (e) {} });
