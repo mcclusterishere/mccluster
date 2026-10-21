@@ -8,6 +8,7 @@ import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
 import { readBoundedRows, measurementContext } from './measurement.js';
 import { loadBusinessEventCounts } from './business-event-counts.js';
+import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
@@ -35,7 +36,9 @@ async function sb(env, path, init = {}) {
 async function sbJson(env, path, init = {}) {
   const res = await sb(env, path, init);
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw Object.assign(new Error('Analytics database read failed'), { status: 502, detail: body });
+  if (!res.ok) throw Object.assign(new Error('Analytics database read failed'), {
+    status: 502, detail: body, ...databaseErrorMetadata(res, body)
+  });
   return body;
 }
 
@@ -62,7 +65,11 @@ async function sbCountFiltered(env, table, column = 'id', filters = {}, sinceIso
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    throw Object.assign(new Error(`Could not count ${table}`), { status: 502, detail: detail.slice(0, 300) });
+    let body = null;
+    try { body = JSON.parse(detail); } catch {}
+    throw Object.assign(new Error(`Could not count ${table}`), {
+      status: 502, ...databaseErrorMetadata(res, body)
+    });
   }
   return countFromRange(res.headers.get('content-range'));
 }
@@ -546,6 +553,7 @@ export async function businessSnapshot(env, windowSpec = null) {
   const since = windowSpec?.since || null;
   const until = windowSpec?.until || null;
   const readErrors = {};
+  const readDiagnostics = {};
   const [
     postsTotal, followsTotal, reactionsTotal, profilesTotal,
     postsWindow, followsWindow, reactionsWindow, profilesWindow,
@@ -574,8 +582,17 @@ export async function businessSnapshot(env, windowSpec = null) {
     {key: 'entitlementsWindow', run: () => since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since, 'created_at', until) : Promise.resolve(null)},
     {key: 'paidOrderRows', run: () => sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')}
   ].map(task => async () => {
-    try { return await task.run(); }
-    catch { readErrors[task.key] = 'Data read unavailable'; return null; }
+    const started = Date.now();
+    try {
+      const value = await task.run();
+      readDiagnostics[task.key] = successfulReadDiagnostics(Date.now() - started,
+        value === null && (task.key.endsWith('Window') || task.key === 'paidOrderRows') && !since);
+      return value;
+    } catch (error) {
+      readErrors[task.key] = 'Data read unavailable';
+      readDiagnostics[task.key] = readFailureDiagnostics(error, Date.now() - started);
+      return null;
+    }
   }), 3); // Keep owner business reads below the dashboard's concurrent RPC load.
   // A failed aggregate leaves its family unknown; never substitute zero.
   // The readErrors.eventCounts key identifies the single server-side read.
@@ -602,10 +619,20 @@ export async function businessSnapshot(env, windowSpec = null) {
   /* Verified Stripe sales and bookings from the commerce reconciler, live
      only, net of refunds; test-mode money is reported apart (commerce/
      summary.js). A failure here leaves the rest of the snapshot intact. */
+  const commerceStarted = Date.now();
+  let commerceFailure = null;
   const commerce = await loadCommerceSummary((path) => sbRows(env, path), windowSpec)
-    .catch((err) => ({ available: false, reason: String(err?.message || err).slice(0, 200) }));
+    .catch((err) => {
+      commerceFailure = err;
+      return { available: false, reason: 'Verified commerce read unavailable' };
+    });
 
-  if (commerce.available === false) readErrors.commerce = 'Verified commerce read unavailable';
+  if (commerce.available === false) {
+    readErrors.commerce = 'Verified commerce read unavailable';
+    readDiagnostics.commerce = readFailureDiagnostics(commerceFailure, Date.now() - commerceStarted);
+  } else {
+    readDiagnostics.commerce = successfulReadDiagnostics(Date.now() - commerceStarted);
+  }
   const paidRowsInWindow = since
     ? paidOrderRows?.filter((row) => {
         const at = Date.parse(row.created_at || '');
@@ -617,6 +644,7 @@ export async function businessSnapshot(env, windowSpec = null) {
   return {
     generated_at: new Date().toISOString(),
     read_errors: readErrors,
+    read_diagnostics: readDiagnostics,
     partial: Object.keys(readErrors).length > 0,
     timezone: timeZone,
     window: windowSpec,
@@ -860,7 +888,7 @@ export function answerBusinessQuestion(question, snapshot) {
   };
 }
 async function handleBusinessSnapshot(request, env, user, url) {
-  await requireHouseOps(env, user);
+  const { membership } = await requireHouseOps(env, user);
   if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
   const rawWindow = url.searchParams.get('window') || '';
   const rawSince = url.searchParams.get('since') || '';
@@ -876,7 +904,9 @@ async function handleBusinessSnapshot(request, env, user, url) {
       since: since.toISOString(), until: until.toISOString(), rolling:false
     };
   }
-  return json({ ok: true, snapshot: await businessSnapshot(env, windowSpec) });
+  return json({ ok: true, snapshot: visibleBusinessSnapshot(
+    await businessSnapshot(env, windowSpec), membership?.role === 'owner'
+  ) });
 }
 
 async function handleBusinessQuestion(request, env, user) {
