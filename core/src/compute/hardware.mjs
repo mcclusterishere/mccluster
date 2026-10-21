@@ -147,6 +147,21 @@ function diskFreeBytes(directory = '/') {
   } catch { return 0; }
 }
 
+export function parseAppleDisplayInventory(text = '{}') {
+  const data = JSON.parse(text);
+  return (Array.isArray(data.SPDisplaysDataType) ? data.SPDisplaysDataType : [])
+    .filter((item) => /apple/i.test(String(item.sppci_model || item._name || '')))
+    .map((item) => ({ vendor: 'apple', model: item.sppci_model || item._name,
+      uuid: null, vram_bytes: 0, driver: null,
+      compute: /metal/i.test(String(item.spdisplays_metal || item.spdisplays_mtlgpufamilysupport || '')) ? 'metal' : null }));
+}
+
+function appleInventory() {
+  if (process.platform !== 'darwin' || process.arch !== 'arm64') return [];
+  try { return parseAppleDisplayInventory(execText('system_profiler', ['SPDisplaysDataType', '-json'])); }
+  catch { return []; }
+}
+
 export function discoverHardware() {
   return {
     hostname: os.hostname(),
@@ -155,11 +170,14 @@ export function discoverHardware() {
     cpu_count: os.cpus().length,
     memory_bytes: os.totalmem(),
     disk_free_bytes: diskFreeBytes('/'),
-    gpus: [...nvidiaInventory(), ...amdInventoryFromSysfs()],
+    gpus: [...nvidiaInventory(), ...amdInventoryFromSysfs(), ...appleInventory()],
     runtime: {
       node: process.version,
       kernel: os.release(),
-      agent_platform: 'mccluster-compute'
+      agent_platform: 'mccluster-compute',
+      // Apple system memory is shared by CPU/GPU, not dedicated GPU VRAM or
+      // memory pooled with OVH. Unknown GPU utilization/power stays unknown.
+      memory_architecture: process.platform === 'darwin' && process.arch === 'arm64' ? 'unified' : 'unspecified'
     }
   };
 }

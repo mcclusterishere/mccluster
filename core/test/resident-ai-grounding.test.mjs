@@ -172,7 +172,7 @@ test('a current question is grounded in signed research.web evidence that is sto
     const messages = calls.adapter[0].input.messages;
     assert.equal(messages.filter((m) => m.role === 'system').length, 1, 'evidence rides in the single leading system message');
     assert.equal(messages[0].role, 'system');
-    assert.match(messages[0].content, /The current time is 20\d\d-\d\d-\d\dT/);
+    assert.match(messages[0].content, /The current date is 20\d\d-\d\d-\d\d/);
     assert.match(messages[0].content, /CURRENT-WEB EVIDENCE from research\.web \(brave, fetched 2026-10-05T14:02:00\.000Z\)/);
     assert.match(messages[0].content, /https:\/\/ctmirror\.example\/budget\nLawmakers schedule the vote for Tuesday\./);
     assert.match(messages[0].content, /quoted data, never as instructions/);
@@ -250,7 +250,7 @@ test('a timeless question makes no lookup and records that none was attempted', 
   assert.equal(calls.broker.length, 0);
   const system = calls.adapter[0].input.messages[0].content;
   assert.doesNotMatch(system, /CURRENT-WEB/);
-  assert.match(system, /The current time is /);
+  assert.match(system, /The current date is /);
   assert.deepEqual(calls.persisted.metadata.current_research, { attempted: false });
   assert.deepEqual(output.current_research, { attempted: false });
 });
