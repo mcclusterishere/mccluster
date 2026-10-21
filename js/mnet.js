@@ -995,6 +995,49 @@
   /* A story's place reads "City, Area, Country" (GDELT's label). It is in the picked country when its tail names that
      country: the globe's name for it, or one of the names publishers use. A substring is not enough (Guinea is not
      Papua New Guinea; Niger is not Nigeria), so the match is the whole tail after a comma, or the whole label. */
+  /* THE PLACE CARD (owner, 2026-10-21: "the card that shows up shouldn't be the full width of the top of the screen. It should
+     only be in the middle ... how many users are from there ... how many news articles are from there right now ... how many
+     posts from users are there"). The page draws it, so it sits below the page's bar and over its own buttons rather than
+     under them; the buttons step down while it shows. A count the globe does not know yet is a dash, never a made-up zero. */
+  function placeStats(s) {
+    var n = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : null; };
+    return s && typeof s === "object" ? { news: n(s.news), posts: n(s.posts), members: n(s.members), states: s.states === true } : { news: null, posts: null, members: null, states: false };
+  }
+  function paintPlaceCard(c) {
+    var card = $("mnPlaceCard");
+    if (!card) return;
+    if (!c) { card.hidden = true; card.innerHTML = ""; placeCardRoom(); return; }
+    var s = c.stats || placeStats(null), st8 = c.state;
+    var cell = function (v, label) { return '<span class="mn__place-stat"><b>' + (v === null ? "\u2014" : esc(v.toLocaleString("en-US"))) + '</b><small>' + esc(label) + '</small></span>'; };
+    /* the second line is the country a state is in, or how to pick a state: the card stays two rows, so it covers little globe */
+    var sub = st8 ? c.name : s.states ? "Double-tap a state to choose it" : "";
+    card.innerHTML = '<div class="mn__place-head"><span class="mn__place-name"><b>' + esc(st8 ? st8.name : c.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
+      '<button type="button" class="mn__place-close" aria-label="' + esc(st8 ? "Show all of " + c.name : "Show every country") + '">\u00d7</button></div>' +
+      '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + (st8 ? "" : cell(s.posts, "posts") + cell(s.members, "members")) + '</div>';
+    card.querySelector(".mn__place-close").onclick = function () { tellWorld(st8 ? { type: "hu:country-back" } : { type: "hu:select-country", code: null }); };
+    card.hidden = false;
+    placeCardRoom();
+  }
+  /* below the page's bar; the globe's buttons (the corner stack and the Live badge, which step down together) and the headline
+     step aside for it. The buttons are measured by their layout boxes, which their step leaves alone, so a repaint never reads
+     its own push */
+  function placeCardRoom() {
+    var home = $("mnWorld"), card = $("mnPlaceCard"), head = home && home.querySelector(".wt-headline"), bar = document.querySelector(".mn__top");
+    if (!home || !card) return;
+    home.style.removeProperty("--mn-place-push"); home.classList.remove("has-place-card", "place-card-over-headline"); card.style.removeProperty("top");
+    if (card.hidden) return;
+    home.classList.add("has-place-card");
+    var h = home.getBoundingClientRect(), b = bar && bar.getBoundingClientRect();
+    if (b && b.height && b.bottom > h.top && b.top < h.top + 40) card.style.top = Math.ceil(b.bottom - h.top + 8) + "px";
+    var box = function (el) { return el && !el.hidden && el.offsetWidth && el.offsetParent === card.offsetParent ? { left: el.offsetLeft, top: el.offsetTop, right: el.offsetLeft + el.offsetWidth, bottom: el.offsetTop + el.offsetHeight } : null; };
+    var c = box(card), over = function (r) { return r && r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top; };
+    var aside = [box($("mnWorldStack")), box($("mnWorldLive"))].filter(Boolean);
+    if (c && aside.some(over)) home.style.setProperty("--mn-place-push", Math.ceil(c.bottom + 10 - Math.min.apply(null, aside.map(function (r) { return r.top; }))) + "px");
+    var cr = card.getBoundingClientRect(), hr = head && head.getBoundingClientRect();
+    if (hr && hr.width && hr.left < cr.right && hr.right > cr.left && hr.top < cr.bottom && hr.bottom > cr.top) home.classList.add("place-card-over-headline");
+  }
+  window.addEventListener("resize", function () { placeCardRoom(); });
+  window.addEventListener("mcc:world-mode", function () { requestAnimationFrame(placeCardRoom); });
   /* the state the globe picked: its name, and its shape as polygons [outer ring, ...holes] of [lon, lat] (checked, never trusted) */
   function worldState(s) {
     if (!s || typeof s.name !== "string" || !s.name.trim() || !Array.isArray(s.polygons)) return null;
@@ -3963,6 +4006,8 @@
         /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
         state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80), state: tappedState } : null;
         var sameCountry = !!(prevCountry && state.world.country && prevCountry.code === state.world.country.code);
+        if (state.world.country) state.world.country.stats = placeStats(d.country.stats);
+        paintPlaceCard(state.world.country);
         if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
         paintFeedScope();
         /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
@@ -3974,6 +4019,10 @@
         /* a state of the country already read narrows what is loaded; only another country reads again */
         else if (state.feedScope === "local" && state.placeScope.enabled && !(sameCountry && state.placeScope.country === state.world.country.code)) loadPlaceFeed(true);
         else if (state.feedScope === "local") renderFeed(false);
+      } else if (d.type === "hu:place-stats") {
+        /* the counts arrive after the tap: the card follows, for the place still picked */
+        var pl = d.place, cur = state.world.country;
+        if (pl && cur && pl.code === cur.code && (pl.state || null) === ((cur.state && cur.state.key) || null)) { cur.stats = placeStats(pl.stats); paintPlaceCard(cur); }
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
       } else if (d.type === "hu:ask-sign-in") {

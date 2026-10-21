@@ -7,6 +7,8 @@ html.globe-editorial, .globe-editorial body, .globe-editorial #globe {background
 .globe-editorial .globe-ctl.is-locked::after {display:none;}
 .globe-editorial .country-card {background:#13191de8;border:1px solid #ffffff28;box-shadow:none;bottom:auto;top:10px;}
 .globe-editorial .country-card__text b {font-weight:500;}
+/* in the World the page draws the place card itself, over its own bar and buttons (js/mnet.js, #mnPlaceCard) */
+.globe-surface-network .country-card {display:none!important;}
 .globe-editorial .globe-editorial-tools {position:fixed;bottom:calc(var(--hu-credit-h,24px) + var(--hu-bar-h,0px) + 10px);right:10px;z-index:12;}
 .globe-editorial-tools>summary {display:grid;place-items:center;width:44px;height:44px;list-style:none;border:1px solid #ffffff26;border-radius:50%;color:#b8c0c8;background:#10151bd9;cursor:pointer;}
 .globe-editorial-tools>summary::-webkit-details-marker {display:none;}

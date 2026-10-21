@@ -105,3 +105,30 @@ test('with the feed in native-reader-only mode, nothing is counted', async () =>
   assert.deepEqual(body.countries, {});
   assert.equal(d.calls.length, 0);
 });
+
+/* THE COUNTRY CARD (owner, 2026-10-21): the whole-world answer also counts the member posts placed in each country, but only
+   once the place scope (network_posts.country_code) is on; until then posts is null, never a zero */
+test('posts placed in each country ride along once the place scope is on, and are null while it is off', async () => {
+  const stories = [story('US', 1, 1)];
+  const placed = [{ country_code: 'KE' }, { country_code: 'KE' }, { country_code: 'US' }, { country_code: 'ke' }, { country_code: null }];
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    const u = new URL(String(url));
+    calls.push(u);
+    if (u.pathname.endsWith('/network_posts')) return new Response(JSON.stringify(placed), { status: 200 });
+    return db(stories).fetchImpl(url, init);
+  };
+  const off = await (await handleWorldNewsHeat(get(), ENV, { fetchImpl, cacheImpl: memoryCache(), now: () => NOW })).json();
+  assert.equal(off.posts, null);
+  assert.ok(!calls.some((u) => u.pathname.endsWith('/network_posts')), 'the column is never read while the place scope is off');
+  const on = await (await handleWorldNewsHeat(get(), { ...ENV, WORLD_PLACE_SCOPE_ENABLED: 'true' }, { fetchImpl, cacheImpl: memoryCache(), now: () => NOW })).json();
+  assert.deepEqual(on.posts, { KE: 2, US: 1 }, 'only ISO codes count');
+  const q = calls.find((u) => u.pathname.endsWith('/network_posts')).searchParams;
+  for (const [k, v] of [['visibility', 'eq.public'], ['deleted_at', 'is.null'], ['removed_at', 'is.null'], ['reply_to_id', 'is.null'], ['group_id', 'is.null'], ['country_code', 'not.is.null'], ['select', 'country_code']]) assert.equal(q.get(k), v, k);
+  assert.deepEqual(on.countries, { US: 1 }, 'the news counts are unchanged');
+  /* a posts read that fails leaves posts null and the news intact */
+  const broken = async (url, init) => (new URL(String(url)).pathname.endsWith('/network_posts') ? new Response('{}', { status: 500 }) : db(stories).fetchImpl(url, init));
+  const partial = await (await handleWorldNewsHeat(get(), { ...ENV, WORLD_PLACE_SCOPE_ENABLED: 'true' }, { fetchImpl: broken, cacheImpl: memoryCache(), now: () => NOW })).json();
+  assert.equal(partial.posts, null);
+  assert.deepEqual(partial.countries, { US: 1 });
+});

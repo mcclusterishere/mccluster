@@ -1467,3 +1467,23 @@ body.has-appbar { padding-bottom: 0; }
    Other kinds of post retain their original button gutter. */
 .mn-world-on #mnFeed .mn__news-card .mn__post-actions{margin:9px 0 0;max-width:100%;min-width:0;box-sizing:border-box;flex-wrap:wrap}
 .mn-world-on #mnFeed .mn__news-card .mn__action--comment{max-width:100%;box-sizing:border-box}
+
+/* THE PLACE CARD (js/mnet.js paintPlaceCard; owner, 2026-10-21: "only in the middle" of the top, with the place's counts):
+   centred, never the full width; below the page's bar; the globe's buttons step down while it shows (--mn-place-push) */
+.mn__place-card{position:absolute;z-index:4;top:10px;left:0;right:0;margin:0 auto;width:min(300px,calc(100% - 32px));box-sizing:border-box;display:grid;gap:4px;padding:6px 6px 8px 12px;border-radius:14px;background:rgba(13,14,18,.92);color:#eef0f4;font:500 13px/1.35 Inter,system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 10px 26px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:mn-place-in .22s ease-out}
+.mn__place-card[hidden]{display:none}
+.mn__place-head{display:flex;align-items:center;gap:8px;min-width:0}
+.mn__place-name{min-width:0;flex:1;display:flex;flex-direction:column}
+.mn__place-name b{font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.mn__place-name small{color:#c7d0e0;font-size:12px;line-height:1.3}
+.mn__place-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;text-align:center}
+.mn__place-stat{display:grid;gap:1px;min-width:0}
+.mn__place-stat b{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.mn__place-stat small{color:#c7d0e0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn__place-close{flex:none;width:44px;height:44px;margin:-4px -2px -8px 0;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;font:400 22px/1 system-ui,sans-serif;cursor:pointer}
+.mn__place-close:focus-visible{outline:2px solid #fff;outline-offset:-6px}
+#mnWorld :is(#mnWorldStack,#mnWorldLive){translate:0 var(--mn-place-push,0px)}
+.place-card-over-headline .wt-headline{visibility:hidden}
+html[data-world-mode="travel"] .mn__place-card{display:none}
+@keyframes mn-place-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.mn__place-card{animation:none}}
