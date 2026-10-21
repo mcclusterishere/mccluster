@@ -18,6 +18,12 @@
     .ac__lab { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
     .fan__row { display: flex; gap: 0.6rem; }
     .fan__row input { flex: 1; min-width: 0; }
+    .wr__fields { display:grid; gap:.6rem; margin-top:.85rem; }
+    .wr__select { width:100%; min-height:48px; padding:.8rem 1rem; border:0; border-radius:13px;
+      background:rgba(255,255,255,.06); box-shadow:inset 0 0 0 1px var(--edge); color:var(--cream);
+      font-family:var(--body); font-size:16px; }
+    .wr__select:focus { outline:none; box-shadow:inset 0 0 0 1px var(--ruby-hot); }
+    .wr__select:disabled { opacity:.5; }
     .fan__check { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.9rem;
       font-size: 0.86rem; line-height: 1.35; color: var(--cream); cursor: pointer; }
     .fan__check input { width: auto; margin: 0.15rem 0 0; flex: none; }
@@ -277,6 +283,23 @@
       <button class="ac__btn" id="fnSave" type="button">Save</button>
       <p class="ac__note" id="fnMsg"></p>
     </div>
+
+    <section class="ac__card" id="worldRegionCard" aria-labelledby="worldRegionHeading" hidden>
+      <p class="ac__lab">World privacy</p>
+      <h2 id="worldRegionHeading">Share my region</h2>
+      <p class="ac__sub">Optional. Share only a country and, if you choose, a state or region for the World&rsquo;s member counts. Your street address, precise location and IP location are never used for this count.</p>
+      <label class="fan__check fan__ask">
+        <input type="checkbox" id="worldRegionShare">
+        <span><b>Include me in my region&rsquo;s public member count.</b><em>Counts stay hidden until at least five members in the same scope opt in. You can withdraw this at any time.</em></span>
+      </label>
+      <div class="wr__fields" id="worldRegionFields" hidden>
+        <label><span class="ac__lab">Country</span><select class="wr__select" id="worldRegionCountry" aria-label="Country"><option value="">Choose a country</option></select></label>
+        <label><span class="ac__lab">State / region</span><select class="wr__select" id="worldRegionSubdivision" aria-label="State or region"><option value="">Whole country</option></select></label>
+      </div>
+      <button class="ac__btn" id="worldRegionSave" type="button">Save sharing choice</button>
+      <p class="ac__note" id="worldRegionMsg" role="status" aria-live="polite"></p>
+    </section>
+
   <section class="ac__card" id="fanListeningSection" aria-labelledby="fanAnalyticsHeading" hidden><h2 id="fanAnalyticsHeading">My Listening</h2><p>Your private listening activity and music discovery.</p><button type="button" id="selfMusicRefresh">Refresh listening</button><div id="selfMusicAnalytics" data-mode="fan" aria-live="polite"></div></section>
 </main>
   <script src="js/analytics.js?v=__STAMP__"></script>
@@ -285,6 +308,7 @@
        sign-in lands in exactly the same session the email form produces. -->
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/fan-intake.js?v=__STAMP__"></script>
+  <script src="js/world-region-sharing.js?v=__STAMP__"></script>
   <script src="js/name-integrity.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
@@ -562,6 +586,7 @@
     function openFan() {
       el("fanCard").hidden = false;
       window.MCC_FAN.load().then(paintFan).catch(function () { paintFan(null); });
+      if (window.MCC_WORLD_REGION && MCC_WORLD_REGION.open) MCC_WORLD_REGION.open();
       /* Text messaging is off in this project, so the form does not pretend
          a code is coming. It still keeps the number. */
       window.MCC_FAN.phoneEnabled().then(function (on) {

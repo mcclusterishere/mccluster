@@ -175,7 +175,7 @@
   function mount(viewer, opts) {
     const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0 };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, members: null, memberRegions: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0 };
     const scratchColor = new C.Color(), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), scratchRect = new C.Rectangle(), view = [0, 0, 0, 0];
     const INK = C.Color.fromCssColorString('#f4f1ea');
     /* the borders are the map: clear enough to read on the day and the night side, in the feed's small globe too */
@@ -245,14 +245,13 @@
       return n;
     }
     /* the place's three counts, null where not known: the stories that mention it (the heat map's day), the member posts placed
-       there (once the place feed is on) and the members who share their region there (action_globe_public_regions: consented,
-       five or more per region; a country's total is only those published regions, so no smaller group can be worked out) */
+       there (once the place feed is on) and members who explicitly opted into coarse World-region sharing. Every country or
+       subdivision count is suppressed below five members; private contact data and mission eligibility are never counted. */
     function statsFor(f, sf) {
       const a2 = f && f.properties.a2, sp = sf && sf.properties;
       const news = sp ? (st.stateCounts ? Number(st.stateCounts[sp.key]) || 0 : null) : (st.heat && a2 ? Number(st.heat[a2]) || 0 : null);
-      let members = null;
-      if (!sp && a2) for (const r of (o.regions ? o.regions() : []) || []) { const m = Number(r && r.member_count); if (r && r.country_code === a2 && m >= 5) members = (members || 0) + m; }
-      return { news, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members: sp ? null : members, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
+      const members = sp ? (st.memberRegions && Number(st.memberRegions[sp.key]) >= 5 ? Number(st.memberRegions[sp.key]) : null) : (a2 && st.members && Number(st.members[a2]) >= 5 ? Number(st.members[a2]) : null);
+      return { news, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
     }
     /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it).
        stateOnly marks a state picked or let go inside the same country, so a listener that acts on a new country (Travel's
@@ -332,6 +331,8 @@
       st.heat = data && data.countries && typeof data.countries === 'object' ? data.countries : null;
       st.heatTotal = st.heat ? Number(data.total) || 0 : 0;
       st.posts = data && data.posts && typeof data.posts === 'object' ? data.posts : null;
+      st.members = data && data.members && typeof data.members === 'object' ? data.members : null;
+      st.memberRegions = data && data.member_regions && typeof data.member_regions === 'object' ? data.member_regions : null;
       drawHeat();
       if (legend && legend.hidden !== !heatShown()) { legend.hidden = !heatShown(); if (o.onLegend) o.onLegend(); }
       if (st.selected) { drawStateHeat(); restat(); }

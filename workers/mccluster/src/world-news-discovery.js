@@ -521,8 +521,8 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
    now ... how many posts from users are there"): the whole-world answer also carries posts, the public, top-level member posts
    their authors placed in each country (the place scope's opt-in, network_posts.country_code). That column exists only once
    the place scope is switched on (WORLD_PLACE_SCOPE_ENABLED); until then posts is null, never a made-up zero. Members are
-   not counted here: the only consented count is action_globe_public_regions (five or more per region), which the globe
-   already reads. */
+   counted from world_region_sharing only: an explicit, revocable choice separate from mission eligibility and contact data.
+   The public RPC suppresses every country or subdivision below five opted-in members. */
 const HEAT_HOURS = 24, HEAT_PAGE = 1000, HEAT_PAGES = 15, HEAT_CELL = 0.05, POST_PAGES = 5;
 /* public, top-level, standing member posts placed in each country; null while the place scope is off or unreadable */
 async function placedPosts(env, fetchImpl) {
@@ -544,6 +544,21 @@ async function placedPosts(env, fetchImpl) {
       if (got.length < HEAT_PAGE) break;
     }
     return out;
+  } catch { return null; }
+}
+/* Explicit region sharing only. A failed RPC is unknown (null), not zero. */
+async function publicMemberCounts(env, fetchImpl) {
+  try {
+    const rows = await serviceRpc(env, 'world_public_member_counts', {}, fetchImpl);
+    const countries = {}, subdivisions = {};
+    if (!Array.isArray(rows)) return null;
+    for (const r of rows) {
+      const n = Number(r && r.member_count), c = r && r.country_code, s = r && r.subdivision_code;
+      if (!(n >= 5) || !/^[A-Z]{2}$/.test(String(c || ''))) continue;
+      if (s && /^[A-Z]{2}-[A-Z0-9]{1,8}$/.test(String(s))) subdivisions[s] = n;
+      else countries[c] = n;
+    }
+    return { countries, subdivisions };
   } catch { return null; }
 }
 export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cacheImpl = null, now = () => Date.now() } = {}) {
@@ -580,7 +595,8 @@ export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cac
         const countries = {};
         let total = 0;
         for (const r of rows) { const c = isoFromGdelt(r && r.location_country_fips); if (!c) continue; countries[c] = (countries[c] || 0) + 1; total++; }
-        return { countries, total, capped, posts: await placedPosts(env, fetchImpl) };
+        const members = await publicMemberCounts(env, fetchImpl);
+        return { countries, total, capped, posts: await placedPosts(env, fetchImpl), members: members ? members.countries : null, member_regions: members ? members.subdivisions : null };
       }
       const cells = new Map();
       let total = 0;
