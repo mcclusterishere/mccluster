@@ -12,14 +12,15 @@
 
 Production `supabase_migrations.schema_migrations.statements` was hashed for **all 336 applied versions** without exporting SQL or private rows. The snapshot is `production-sql-digests-20261021.json`; `scripts/audit-production-sql-digests.mjs` compares SHA256 to canonical files and uploads a CI report.
 
-Initial CI result against **main's 335-entry ledger**:
+CI hash classification against the **335-entry main ledger** before #581 merged:
 - **89** exact canonical-source hashes.
-- **23** legacy four-digit replay anchors intentionally not exact source SQL.
+- **102** historical named no-op anchors and **23** four-digit replay anchors (intentionally not original SQL).
+- **18** trailing-newline-only differences (normalized SQL matches).
 - **6** multi-statement migrations requiring statement-boundary-aware review.
-- **217** SQL hash mismatches; **94** are after the production SQL cutover. A mismatch is **not automatically production schema drift**: historical source anchors, rewritten SQL, or recorded-statement differences require classification.
-- **1** live migration not yet registered in main's ledger: `20261021050105_music_creator_one_click_v1`; separate #581 has exact applied SQL and corrected ledger.
+- **97** remaining SQL hash mismatches; **79** are after the production SQL cutover. These are unresolved source/provenance differences, not automatically evidence of an unapplied migration.
+- **1** live migration not registered in the original main ledger: `20261021050105_music_creator_one_click_v1`; this is now reconciled by merged **#581** (merge `06d088326dbdea4635a93760179bd96cc801d7f8`). A CI run against the updated base should clear this classification.
 
-**Do not bulk-replay 217 migrations.** The next phase must classify each difference by original migration source, production stored statement boundaries, aliases and effective schema. Hash equality alone does not prove operational health; inequality alone does not prove a failed apply. The CI artifact preserves the full mismatch inventory. Snapshot will become stale when a new migration is applied; refresh it from read-only production before asserting a current state.
+**Do not bulk-replay 97 mismatched migrations.** The next phase must classify each difference by original migration source, production stored statement boundaries, aliases and effective schema. Hash equality alone does not prove operational health; inequality alone does not prove a failed apply. The CI artifact preserves the full mismatch inventory. Snapshot will become stale when a new migration is applied; refresh it from read-only production before asserting a current state.
 
 ## Forward SQL under `supabase/pending/` (25 at pinned main)
 
