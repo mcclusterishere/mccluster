@@ -21,7 +21,7 @@ test('a member with an unfinished profile or contact step gets the World, with t
   assert.match(js, /function needsStep\(\) \{\n    var s = state\.boot && state\.boot\.next_step;\n    return s === "profile" \|\| s === "contact" \? s : "";/);
   assert.match(js, /if \(needsStep\(\)\) \{[\s\S]{0,600}showGate\("app"\);\n        setView\("feed"\);\n        paintSelf\(\);\n        paintFinishCard\(\);/, 'the World, not the form');
   /* ONE SIGN-UP (owner, 2026-10-20): only a new account, or someone sent to finish (?join, ?finish, ?next), gets the pages at once */
-  assert.match(js, /if \(needsStep\(\)\) \{\n        \/\* a new account, or someone sent here to finish \(FLOW\): the pages at once, not the card \*\/\n        if \(!FLOW\.on\) adoptPendingJoin\(\);\n        if \(FLOW\.on\) \{ openPages\(\); return; \}/);
+  assert.match(js, /return needsStep\(\) && !FLOW\.on \? adoptPendingJoin\(\)\.then\(function \(\) \{ return boot; \}\) : boot;\n    \}\)\.then\(function \(boot\) \{\n      if \(needsStep\(\)\) \{\n        \/\* a new account, or someone sent here to finish \(FLOW\): the pages at once, not the card \*\/\n        if \(FLOW\.on\) \{ openPages\(\); return; \}/);
   assert.match(js, /return \{ next: next, from: from, join: join, finish: finish, on: join \|\| finish \|\| !!next \};/, 'a plain sign-in is not the flow: it lands on the World');
   assert.doesNotMatch(js, /location\.replace\("account\.html\?complete=contact"\)/, 'no redirect away from the World at boot');
   assert.doesNotMatch(js, /if \(boot\.next_step === "profile"\) \{\n        fillProfileForm\(false\);\n        showGate\("profile"\);/, 'the old gate is gone');

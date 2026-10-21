@@ -388,7 +388,9 @@ sign up thing." The three pages are now the site's one sign-up:
   Signing in on account.html goes back to `?next`; a profile that is not
   done goes through the pages first (`mnet.html?finish=1&next=…`). A sign-up
   that waits on an emailed confirmation keeps its `next` on the device for a
-  week, so the first sign-in after it carries on.
+  week, bound to that account (a SHA-256 of its email, never the address), so
+  its first sign-in after it carries on. Any other account that signs in on
+  that device discards it unused: not its destination, not its `from`.
 - **A returning member still lands on the World** with the step in its
   card. The card and every "finish your profile" prompt open the pages at
   the first unfinished one: page 2 when the username and name are set and

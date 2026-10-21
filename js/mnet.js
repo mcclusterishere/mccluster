@@ -58,7 +58,23 @@
     return { next: next, from: from, join: join, finish: finish, on: join || finish || !!next };
   })();
   var PENDING_JOIN = "mcc.join.pending";
-  function rememberJoin() { try { localStorage.setItem(PENDING_JOIN, JSON.stringify({ next: FLOW.next, from: FLOW.from, at: Date.now() })); } catch (_) {} }
+  /* the pending sign-up belongs to the account that made it: kept with a SHA-256 of that account's email (never the
+     address itself), and only that account's first sign-in carries it on (adoptPendingJoin). No digest, no record. */
+  function emailKey(email) {
+    var e = String(email || "").trim().toLowerCase();
+    try {
+      if (!e || !window.crypto || !window.crypto.subtle) return Promise.resolve("");
+      return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(e)).then(function (buf) {
+        return Array.prototype.map.call(new Uint8Array(buf), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+      }).catch(function () { return ""; });
+    } catch (_) { return Promise.resolve(""); }
+  }
+  function rememberJoin(email) {
+    return emailKey(email).then(function (who) {
+      if (!who) return;
+      try { localStorage.setItem(PENDING_JOIN, JSON.stringify({ next: FLOW.next, from: FLOW.from, who: who, at: Date.now() })); } catch (_) {}
+    });
+  }
   function forgetJoin() { try { localStorage.removeItem(PENDING_JOIN); } catch (_) {} }
   function pendingJoin() {
     try {
@@ -565,13 +581,17 @@
     openSignIn("signin", line);
   }
 
-  /* a sign-up that waited on its emailed confirmation: the first sign-in after it carries on (FLOW, above) */
+  /* a sign-up that waited on its emailed confirmation: the first sign-in after it carries on (FLOW, above), for that
+     account only. Another account signed in on this device discards it unused: not its destination, not its from. */
   function adoptPendingJoin() {
     var p = pendingJoin();
-    if (!p) return;
-    FLOW.on = true;
-    if (!FLOW.next && window.MCC && MCC.safeNext) FLOW.next = MCC.safeNext(p.next);
-    if (!FLOW.from && /^[a-z0-9-]{1,40}$/.test(p.from || "")) FLOW.from = p.from;
+    if (!p) return Promise.resolve();
+    return emailKey(state.user && state.user.email).then(function (who) {
+      if (!who || p.who !== who) { forgetJoin(); return; }
+      FLOW.on = true;
+      if (!FLOW.next && window.MCC && MCC.safeNext) FLOW.next = MCC.safeNext(p.next);
+      if (!FLOW.from && /^[a-z0-9-]{1,40}$/.test(p.from || "")) FLOW.from = p.from;
+    });
   }
   /* ONE SIGN-UP: the pages, opened by the flow itself at the first unfinished one; the World is one tap away under them */
   function openPages() {
@@ -588,9 +608,11 @@
   function bootstrap() {
     return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
+      /* a sign-up that waited on its confirmation, if it is this account's (adoptPendingJoin) */
+      return needsStep() && !FLOW.on ? adoptPendingJoin().then(function () { return boot; }) : boot;
+    }).then(function (boot) {
       if (needsStep()) {
         /* a new account, or someone sent here to finish (FLOW): the pages at once, not the card */
-        if (!FLOW.on) adoptPendingJoin();
         if (FLOW.on) { openPages(); return; }
         /* the World first (needsStep, above): the public posts, every pin,
            and the step in a card where the composer would be. The private
@@ -2623,7 +2645,7 @@
         track("signup_succeeded", { flow: "password", verification: "pending" });
         state.pendingVerificationEmail = email;
         /* the first sign-in after the confirmation carries on into the pages, and back (FLOW) */
-        rememberJoin();
+        rememberJoin(email);
         setStatus($("mnAuthStatus"), "Check your email to verify your address. After verification, sign in with the password you just created.", "ok");
         $("mnResend").hidden = false;
         return null;

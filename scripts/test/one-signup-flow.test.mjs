@@ -75,8 +75,74 @@ test('the World reads ?next through the same rule and opens the pages only for t
   assert.match(js, /if \(FLOW\.next\) \{ location\.replace\(FLOW\.next\); return; \}/, 'a finished profile sent here goes straight back');
   assert.match(js, /if \(FLOW\.next\) \{ track\("onboarding_done", \{ step: "next" \}\); location\.assign\(FLOW\.next\); return Promise\.resolve\(\); \}/, 'the last page goes back to where the person started');
   assert.match(js, /if \(create\) \{ track\("signup_succeeded", \{ flow: "password", verification: "immediate" \}\); FLOW\.on = true; \}/, 'a new account goes straight into the pages');
-  assert.match(js, /rememberJoin\(\);\n\s*setStatus\(\$\("mnAuthStatus"\), "Check your email/, 'an emailed confirmation keeps the flow for the first sign-in after it');
+  assert.match(js, /rememberJoin\(email\);\n\s*setStatus\(\$\("mnAuthStatus"\), "Check your email/, 'an emailed confirmation keeps the flow, bound to the account, for the first sign-in after it');
   assert.match(js, /if \(FLOW\.join\) \{ openSignIn\("create"\); return; \}/, '?join=1 opens Create account');
+});
+
+/* the World's pending sign-up and its bootstrap, run against a stub page: one browser, two accounts */
+function pendingWorld() {
+  const js = read('js/mnet.js');
+  const region = js.slice(js.indexOf('  var PENDING_JOIN = '), js.indexOf('  function $(id) {'));
+  const store = new Map();
+  const ctx = {
+    localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => { store.set(k, String(v)); }, removeItem: (k) => { store.delete(k); } },
+    crypto: globalThis.crypto, TextEncoder, Uint8Array, JSON, Date, Promise, String, Array, Object, encodeURIComponent,
+    MCC: { safeNext: (v) => (typeof v === 'string' && /^\/[^/\\]/.test(v) ? v : '') },
+    APP: 'mccluster-web', state: { user: null, boot: null }, FLOW: null, opened: 0, world: 0,
+    api: () => Promise.resolve({ next_step: 'contact', identity: { mccluster_id: null }, profile: null }),
+    openPages() { ctx.opened++; }, loadFeed() { ctx.world++; return Promise.resolve(); },
+    fillProfileForm() {}, showGate() {}, setView() {}, paintSelf() {}, paintFinishCard() {}, moveThumb() {}, requestAnimationFrame() {},
+    $: () => ({ hidden: true })
+  };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext([region, lift(js, 'needsStep'), lift(js, 'adoptPendingJoin'), lift(js, 'bootstrap')].join('\n'), ctx);
+  const load = (user, flow) => {   // a fresh page load, signed in as user
+    ctx.FLOW = { next: '', from: '', join: false, finish: false, on: false, ...flow };
+    ctx.state = { user, boot: null };
+    ctx.opened = 0; ctx.world = 0;
+  };
+  return { ctx, store, load, KEY: 'mcc.join.pending' };
+}
+
+test('a pending sign-up carries on only for the account that made it; another account on the device discards it unused', async () => {
+  const { ctx, store, load, KEY } = pendingWorld();
+  /* Ana creates an account from the album; it waits on her emailed confirmation */
+  load(null, { next: '/album.html?from=i-am-here', from: 'i-am-here', join: true, on: true });
+  await ctx.rememberJoin('  Ana@Example.com ');
+  const raw = store.get(KEY);
+  assert.ok(raw, 'the flow is kept on the device');
+  assert.doesNotMatch(raw, /ana|example/i, 'never the address itself');
+
+  /* Ben signs in on the same browser, with an unfinished profile: the World with its card, not Ana's destination */
+  load({ id: 'b', email: 'ben@example.com' });
+  await ctx.bootstrap();
+  assert.equal(ctx.opened, 0, 'Ben is not sent into the pages by Ana\'s sign-up');
+  assert.equal(ctx.world, 1, 'Ben gets the World, with the step in its card');
+  assert.deepEqual([ctx.FLOW.on, ctx.FLOW.next, ctx.FLOW.from], [false, '', ''], 'nor her destination, nor her from');
+  assert.equal(store.has(KEY), false, 'the record is discarded, unused');
+  assert.match(JSON.parse(raw).who, /^[0-9a-f]{64}$/, 'a SHA-256 of the email');
+
+  /* Ana, after her confirmation: the pages at once, then back to the album, with its from */
+  load(null, { next: '/album.html?from=i-am-here', from: 'i-am-here', join: true, on: true });
+  await ctx.rememberJoin('ana@example.com');
+  load({ id: 'a', email: 'ANA@example.com' });
+  await ctx.bootstrap();
+  assert.equal(ctx.opened, 1, 'Ana carries on into the pages');
+  assert.deepEqual([ctx.FLOW.on, ctx.FLOW.next, ctx.FLOW.from], [true, '/album.html?from=i-am-here', 'i-am-here']);
+
+  /* a record bound to nobody is nobody's */
+  store.set(KEY, JSON.stringify({ next: '/creator.html', from: 'i-am-here', at: Date.now() }));
+  load({ id: 'a', email: 'ana@example.com' });
+  await ctx.bootstrap();
+  assert.equal(ctx.opened, 0, 'an unbound record is never adopted');
+  assert.equal(store.has(KEY), false);
+
+  /* no digest to bind it with (no WebCrypto): nothing is kept, and the World's card carries on instead */
+  ctx.crypto = undefined;
+  load(null, { next: '/creator.html', on: true });
+  await ctx.rememberJoin('ana@example.com');
+  assert.equal(store.has(KEY), false);
 });
 
 test('the pages open at the first unfinished one: page 2 when the handle and name are set and the contact step is open', () => {
@@ -197,8 +263,30 @@ test('the seat applications are filled from the profile: only the role\'s own de
   assert.match(page, /M\.api\('\/v1\/mnet\/bootstrap\?app_key=mccluster-web'\)/, 'the member\'s own profile');
   assert.match(page, /put\('email',s\.user&&s\.user\.email\)/);
   assert.match(page, /put\('name',p\.display_name\)/);
-  assert.match(page, /if\(\/\^https:\\\/\\\/\\S\+\$\/i\.test\(p\.website_url\|\|''\)\)put\('handle',p\.website_url\)/, 'the portfolio is their website');
   assert.match(page, /var put=function\(id,v\)\{var el=\$\(id\);if\(el&&!el\.value\.trim\(\)&&v\)el\.value=String\(v\)\};/, 'nothing typed is replaced');
+});
+
+test('the seat application\'s required handle is the website, else the profile\'s @handle: nothing to retype', async () => {
+  const page = read('action-network-clippers.html');
+  const open = '<script src="js/mcc-auth.js"></script><script>';
+  const src = page.slice(page.indexOf(open) + open.length, page.indexOf('</script>', page.indexOf(open) + open.length));
+  const run = async (profile, typed = {}) => {
+    const els = {}, el = (id) => (els[id] = els[id] || { id, value: typed[id] || '', hidden: true, textContent: '', on: {}, addEventListener(t, f) { this.on[t] = f; } });
+    const location = { search: '?seat=beat-producer', href: '' };
+    const boot = { next_step: 'feed', identity: { mccluster_id: 'ana.sings' }, profile };
+    const MCC = { session: () => ({ access_token: 't', user: { email: 'ana@example.com' } }), api: () => Promise.resolve({ ok: true, json: () => Promise.resolve(boot) }) };
+    vm.runInNewContext(src, { window: { MCC }, document: { getElementById: el }, location, URLSearchParams, String, encodeURIComponent });
+    await new Promise((r) => setTimeout(r, 0));
+    for (const [id, v] of [['name', 'Ana Rivers'], ['platform', 'TikTok'], ['details', 'Short-form edits.']]) if (!el(id).value) el(id).value = v;
+    el('applyform').on.submit({ preventDefault() {} });
+    return { handle: el('handle').value, mail: decodeURIComponent(location.href) };
+  };
+  const plain = await run({ display_name: 'Ana Rivers' });
+  assert.equal(plain.handle, '@ana.sings', 'no website: the McCluster handle fills the required field');
+  assert.match(plain.mail, /\nHandle: @ana\.sings\n/);
+  assert.equal((await run({ display_name: 'Ana Rivers', website_url: 'https://ana.example' })).handle, 'https://ana.example', 'the portfolio is their website');
+  assert.equal((await run({ display_name: 'Ana Rivers', website_url: 'http://ana.example' })).handle, '@ana.sings', 'not an https website: the handle');
+  assert.equal((await run({ display_name: 'Ana Rivers' }, { handle: '@ana_clips' })).handle, '@ana_clips', 'nothing typed is replaced');
 });
 
 test('the inline forms do not ask a signed-in member for what the account has', async () => {
