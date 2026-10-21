@@ -32,11 +32,25 @@ test('automatic OVH production pushes verify self-reconciliation without SSH', a
   assert.match(fallback, /Break-glass SSH deploy/);
 });
 
-test('public Core liveness exposes only safe deployment provenance', async () => {
-  const source = await read('core/src/tool-broker.mjs');
+test('public Core liveness exposes only safe startup-bound deployment provenance', async () => {
+  const [source, revision] = await Promise.all([
+    read('core/src/tool-broker.mjs'),
+    read('core/src/runtime-revision.mjs'),
+  ]);
   assert.match(source, /deployment_sha: deployedRevision\(\)/);
-  assert.match(source, /\.mccluster-deploy\.json/);
+  assert.match(source, /import \{ RUNNING_DEPLOYMENT_SHA \} from '\.\/runtime-revision\.mjs'/);
+  assert.match(source, /function deployedRevision\(\)\s*\{\s*return RUNNING_DEPLOYMENT_SHA;/);
+  assert.doesNotMatch(source, /readFileSync/,
+    'the running broker must not re-read mutable deployment provenance');
+  assert.match(revision, /\/opt\/mccluster\/core\/\.mccluster-deploy\.json/);
+  assert.match(revision, /export const RUNNING_DEPLOYMENT_SHA = readRevisionAtStartup\(\)/);
   assert.match(source, /if \(!authenticated\)/);
+  const publicStart = source.indexOf('if (!authenticated)');
+  const publicEnd = source.indexOf('const [listedTools, listedCapabilities]', publicStart);
+  assert.ok(publicStart >= 0 && publicEnd > publicStart);
+  const publicHealth = source.slice(publicStart, publicEnd);
+  assert.doesNotMatch(publicHealth, /upstreams|diagnostics|catalog_version/,
+    'public liveness must not expose private inventory or diagnostics');
 });
 
 
