@@ -29,7 +29,7 @@ function check(scope, name, ok, detail) {
 }
 
 
-const FEATURES=['flights','satellites','launches','intel','music','cctv','audience','transport','ion'];
+const FEATURES=['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search'];
 const BUTTONS=['ctlFlights','ctlSats','ctlLaunch','ctlIntel','ctlMusic','ctlCctv','ctlTransport'];
 const PNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aL1sAAAAASUVORK5CYII=','base64');
 /* HITMAN'S HALO ON THE ADMIN GLOBE (js/halo/*): the owner's console, its layers, vision, HUD, search, follow and share */
