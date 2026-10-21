@@ -961,11 +961,16 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
     /* a tap, as the feed may still be settling under a software-rendered globe */
     await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
     await page.waitForSelector('#mnThumbDialog[open]', { timeout: 5000 });
-    const p2 = patches();
-    await page.setInputFiles('#mnThumbFile', join(ROOT, 'assets/frames/church_0001.jpg'));
+    const p2 = patches(), picture = join(ROOT, 'assets/frames/church_0001.jpg');
+    /* as a person does it: Upload an image opens the file chooser, and the picture is chosen there. The sheet rises in, and a
+       software-rendered page can take a while to let it settle, so the tap waits until the button can take it */
+    await page.click('#mnThumbUpload', { timeout: 30000, trial: true }).catch(() => {});
+    const chooser = await Promise.all([page.waitForEvent('filechooser', { timeout: 30000 }), page.click('#mnThumbUpload', { timeout: 30000 })]).then(([c]) => c).catch(() => null);
+    if (chooser) await chooser.setFiles(picture);
     await saved(p2);
     const imageId = asset(100 + before + 2), patch2 = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1), fin2 = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
-    const said = await page.evaluate(() => ({ open: document.getElementById('mnThumbDialog').open, status: document.getElementById('mnThumbStatus').textContent }));
+    const said = await page.evaluate(() => { const f = document.getElementById('mnThumbFile'); return { open: document.getElementById('mnThumbDialog').open, status: document.getElementById('mnThumbStatus').textContent, disabled: f.disabled, files: f.files.length }; });
+    said.chooser = !!chooser;
     check(scope, 'Upload an image sends that picture, finalized with its own size', JSON.stringify(patch2.body) === JSON.stringify({ poster_by_media: { [VID.mine]: imageId } }) && fin2.body.asset_id === imageId && fin2.body.width > 0, { patch: patch2.body, fin: fin2.body, said, uploads: world.uploadN });
     check(scope, 'no horizontal overflow after the edits', await noSideways(page));
     check(scope, 'no JavaScript errors', errors.length === 0, errors);
