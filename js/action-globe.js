@@ -925,20 +925,25 @@ function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartog
 /* ---------- HITMAN'S HALO ON THE ADMIN GLOBE (owner, 2026-10-21: "put all the capabilities of Hitman Halo into the admin
    experience of the globe section … with the user interface of the current globe we have on our website") ----------
    The house owner only, on the server's word (the release answer above, never a page check): the full-screen globe mounts the
-   Halo console (js/halo/halo.js: layers, visual modes, HUD, place search, photoreal 3D, follow), and the World's frame shows a
-   round Halo button that opens it. Nothing of Halo is fetched for anyone else, and its data comes only from the Worker's
-   owner-gated routes (/v1/world/layers/*, /v1/world/geocode, /v1/world/ion). Losing the owner answer unmounts it. */
-const HALO_OPEN=new URLSearchParams(location.search).has('halo');
+   Halo view (js/halo/halo.js, to the owner's four screens: World, Missions, People, Intelligence; ?halo=<view> opens one), and
+   the World's frame shows a round Halo button that opens it. Nothing of Halo is fetched for anyone else, and its data comes only
+   from the Worker's owner-gated routes (/v1/world/layers/*, /v1/world/halo/*, /v1/world/tides/*, /v1/world/geocode,
+   /v1/world/ion, /v1/intel/*). Losing the owner answer unmounts it. */
+const HALO_OPEN=new URLSearchParams(location.search).get('halo'),HALO_VIEW=['world','missions','people','intel'].includes(HALO_OPEN)?HALO_OPEN:undefined;
 let haloPhotoreal=false,haloLoad=null;
 function isOwner(){const t=sessionToken();return !!(t&&access&&access.release?.version==='globe-admin-preview/v1'&&access.release.admin_preview===true&&accessToken===t)}
 function haloScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+(HU_V?'?v='+encodeURIComponent(HU_V):'');s.onload=res;s.onerror=()=>rej(Error(src));document.head.appendChild(s)})}
-function haloStyle(href){if(document.querySelector('link[data-halo="'+href+'"]'))return;const l=document.createElement('link');l.rel='stylesheet';l.href=href+(HU_V?'?v='+encodeURIComponent(HU_V):'');l.dataset.halo=href;document.head.appendChild(l)}
+function haloStyle(href){return new Promise(res=>{if(document.querySelector('link[data-halo="'+href+'"]'))return res();const l=document.createElement('link');l.rel='stylesheet';l.href=href+(HU_V?'?v='+encodeURIComponent(HU_V):'');l.dataset.halo=href;l.onload=l.onerror=()=>res();document.head.appendChild(l)})}
 function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
  if(!EXPLORE||BARE||!viewer)return;
+ /* the full-screen globe's own door to Halo, beside "← World", for the owner only */
+ let enter=$('haloEnter');const back=$('worldBack');if(!enter&&back){enter=document.createElement('a');enter.id='haloEnter';enter.className='halo-enter';enter.href='action-globe.html?explore=1&halo=1';enter.setAttribute('aria-label',"Open Hitman's Halo");enter.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>Halo</span>';back.after(enter)}
+ if(enter)enter.hidden=!owner||HALO_OPEN!==null;
  if(!owner){if(window.HaloConsole)HaloConsole.unmount();return}
- if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{open:HALO_OPEN});return}
- if(!haloLoad){['css/halo.css','css/halo-hud.css'].forEach(haloStyle);
-  haloLoad=['js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.resolve())
+ if(HALO_OPEN===null)return;
+ if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{view:HALO_VIEW});return}
+ /* the view lays the Earth out by its stylesheet, so the styles land before the view mounts */
+ if(!haloLoad){haloLoad=['js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css'].map(haloStyle)))
    .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
 /* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
 window.HuGlobe=Object.freeze({
@@ -952,6 +957,12 @@ window.HuGlobe=Object.freeze({
   locked:k=>!!lockOf(k)}),
  openAircraft:contact=>openAircraft(contact),openSatellite:sat=>openSatellite(sat),satPosition:sat=>satPos(sat,new Date()),
  ion:()=>ion,
+ /* the base map, the zoom and near-me buttons, and the World's own mission pins and member regions, for Halo's own controls */
+ basemap:Object.freeze({get:()=>layerMode,set:m=>{if(viewer)setLayer(m==='map'?'map':'auto')}}),
+ zoom:inward=>{if(!viewer)return;const h=viewer.camera.positionCartographic.height;inward?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)},
+ locate:()=>{const b=$('nearMe');if(b)b.click()},
+ missions:Object.freeze({shown:()=>showMissions,show:on=>{showMissions=!!on;draw()}}),
+ regions:Object.freeze({shown:()=>showCities,show:on=>{showCities=!!on;draw()}}),
  /* Google's photoreal city replaces OSM Buildings while it is on (the two would stand inside each other) */
  setPhotoreal:on=>{haloPhotoreal=!!on;if(ionBuildings&&haloPhotoreal)ionBuildings.show=false;if(viewer)viewer.scene.requestRender()}
 });

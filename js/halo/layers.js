@@ -1,6 +1,7 @@
 /* HALO LAYERS ON THE ADMIN GLOBE (owner, 2026-10-21: "put all the capabilities of Hitman Halo into the admin experience of
    the globe section"). The live layers Hitman's Halo had that the World's globe did not: military aircraft, ships, earthquakes,
-   active fires, wildfire perimeters and tropical cyclones. Every one comes from the Worker's owner-only routes
+   active fires, wildfire perimeters, tropical cyclones and NOAA's water-level stations (a tap on a station opens its observed
+   level, js/halo/halo.js). Every one comes from the Worker's owner-only routes
    (GET /v1/world/layers/<id>, workers/mccluster/src/world-halo-layers.js); the page never calls a provider itself.
 
    Each layer is one primitive collection, so thousands of points stay cheap; it refreshes on its own clock while it is on and
@@ -16,8 +17,11 @@
     quakes: Object.freeze({ label: 'Earthquakes', rows: 'quakes', every: 60000, color: '#ff7a59' }),
     fires: Object.freeze({ label: 'Active fires', rows: 'fires', every: 600000, color: '#ff5a1f' }),
     perimeters: Object.freeze({ label: 'Wildfire perimeters', rows: 'perimeters', every: 600000, color: '#ff8a3d' }),
-    cyclones: Object.freeze({ label: 'Tropical cyclones', rows: 'cyclones', every: 600000, color: '#9fd6ff' })
+    cyclones: Object.freeze({ label: 'Tropical cyclones', rows: 'cyclones', every: 600000, color: '#9fd6ff' }),
+    tides: Object.freeze({ label: 'Water levels (NOAA)', rows: 'stations', every: 3600000, color: '#45b8f4' })
   });
+  /* what each layer's points are: an observation, a calculation, or reference (docs/design/halo/HALO-VIEW-DESIGN.md) */
+  const PROVENANCE = Object.freeze({ military: 'observed', vessels: 'observed', quakes: 'observed', fires: 'observed', perimeters: 'reported', cyclones: 'observed', tides: 'reference' });
 
   const finite = (v) => typeof v === 'number' && Number.isFinite(v);
   const lonLat = (lon, lat) => finite(lon) && finite(lat) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
@@ -68,7 +72,7 @@
     function changed(id) { listeners.forEach((fn) => { try { fn(id, status(id)); } catch (_) { /* a listener's own fault */ } }); }
     function status(id) {
       const L = state[id];
-      return L ? { on: L.on, state: L.phase, count: L.count, stale: L.stale, reason: L.reason, credit: L.credit } : null;
+      return L ? { on: L.on, state: L.phase, count: L.count, stale: L.stale, reason: L.reason, credit: L.credit, fetched: L.fetched } : null;
     }
     function clear(id) {
       const L = state[id], v = viewer();
@@ -170,6 +174,16 @@
           L.items.push(item);
         });
         v.scene.primitives.add(col); v.scene.primitives.add(labels); L.prims.push(col, labels); L.count = col.length;
+      },
+      tides(id, rows) {
+        const v = viewer(), pts = new C.PointPrimitiveCollection(), L = state[id], color = C.Color.fromCssColorString(SPECS.tides.color);
+        rows.forEach((r) => {
+          if (!Array.isArray(r) || !/^\d{7}$/.test(String(r[0])) || !lonLat(r[2], r[3])) return;
+          const item = { id: String(r[0]), name: text(r[1], 80), lon: r[2], lat: r[3], state: text(r[4], 4) };
+          pts.add({ position: C.Cartesian3.fromDegrees(item.lon, item.lat, 0), pixelSize: 7, color: color.withAlpha(0.9), outlineColor: C.Color.fromCssColorString('#04101d'), outlineWidth: 2, scaleByDistance: new C.NearFarScalar(200000, 1.4, 15000000, 0.7), id: pickId(id, item) });
+          L.items.push(item);
+        });
+        v.scene.primitives.add(pts); L.prims.push(pts); L.count = pts.length;
       }
     };
 
@@ -230,6 +244,7 @@
         case 'quakes': return { title: (finite(it.mag) ? 'M' + it.mag.toFixed(1) + ' · ' : '') + (it.place || 'Earthquake'), rows: [['Magnitude', finite(it.mag) ? it.mag.toFixed(1) : 'Unknown'], ['Depth', fmt(it.depth, 'km')], ['Time', when(it.time)], ['Tsunami flag', it.tsunami ? 'Yes' : 'No'], ['PAGER alert', it.alert || 'None']], link: it.url && /^https:\/\/earthquake\.usgs\.gov\//.test(it.url) ? it.url : '', note: 'USGS, last 24 hours. Magnitude and location are revised as review continues.', credit, position: at(0), range: 400000 };
         case 'fires': return { title: 'Fire detection', rows: [['Radiative power', finite(it.frp) ? it.frp.toFixed(1) + ' MW' : 'Unknown'], ['Confidence', it.confidence || 'Unknown'], ['Detected', when(it.acq)], ['Satellite', it.satellite || 'Unknown'], ['Pass', it.daynight === 'D' ? 'Day' : it.daynight === 'N' ? 'Night' : 'Unknown']], note: 'A satellite thermal hotspot (VIIRS), not a confirmed wildfire. Industry, flares and volcanoes show too.', credit, position: at(0), range: 60000 };
         case 'perimeters': return { title: it.name || 'Wildfire', rows: [['Size', fmt(it.acres, 'acres')], ['Contained', finite(it.contained) ? Math.round(it.contained) + '%' : 'Unknown'], ['Discovered', when(it.discovered)]], note: 'The incident perimeter as reported by U.S. agencies (NIFC). It lags the fire.', credit, position: at(0), range: 120000 };
+        case 'tides': return { title: it.name || 'Water-level station', rows: [['Station', it.id || 'Unknown'], ['State', it.state || 'Unknown']], note: 'A NOAA CO-OPS water-level station. Its reading is the observed level, not a tide prediction.', credit, tide: it.id, position: at(0), range: 60000 };
         case 'cyclones': return { title: it.name || 'Tropical cyclone', rows: [['Class', it.classification || 'Unknown'], ['Wind', fmt(it.intensity, 'kt')], ['Pressure', fmt(it.pressure, 'mb')], ['Moving', finite(it.dir) ? Math.round(it.dir) + '° at ' + fmt(it.speed, 'kt') : 'Unknown']], link: it.url && /^https:\/\/www\.nhc\.noaa\.gov\//.test(it.url) ? it.url : '', note: 'Latest National Hurricane Center position. Follow the official advisory for forecasts and warnings.', credit, position: at(0), range: 1500000 };
         default: return null;
       }
@@ -248,10 +263,13 @@
       on: (id) => !!(state[id] && state[id].on),
       status,
       describe,
+      provenance: (id) => PROVENANCE[id] || 'observed',
+      /* what a layer holds now (copies), for the feed and the timeline */
+      items: (id) => (state[id] ? state[id].items.slice() : []),
       onChange: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
       destroy
     });
   }
 
-  window.HaloLayers = Object.freeze({ SPECS, create });
+  window.HaloLayers = Object.freeze({ SPECS, PROVENANCE, create });
 })();

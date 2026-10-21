@@ -29,78 +29,137 @@ function check(scope, name, ok, detail) {
 }
 
 
-const FEATURES=['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search'];
+const FEATURES=['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search','halo-ops','tides'];
 const BUTTONS=['ctlFlights','ctlSats','ctlLaunch','ctlIntel','ctlMusic','ctlCctv','ctlTransport'];
 const PNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aL1sAAAAASUVORK5CYII=','base64');
-/* HITMAN'S HALO ON THE ADMIN GLOBE (js/halo/*): the owner's console, its layers, vision, HUD, search, follow and share */
+/* HITMAN'S HALO (js/halo/*): the owner's operations view, built to the owner's four screens. Test fixtures only (fictional
+   names, "Fixture" places); nothing here ships. */
+const NOW=Date.now(),iso=(minAgo)=>new Date(NOW-minAgo*60e3).toISOString(),U=(n)=>'00000000-0000-4000-8000-00000000000'+n;
+const HALO_MISSIONS={ok:true,schema:'halo-missions/v1',generated_at:iso(0),total:5,truncated:false,counts:{active:2,planned:1,blocked:1,review:1,completed:1},missions:[
+ {id:'a1b2c3d4-0000-4000-8000-000000000001',title:'Harbor water check',description:'Verify waterfront conditions at the harbor.',domain:'environment',kind:'civic',status:'active',review:true,place:{label:'New Haven, Connecticut',country:'US',lat:41.3083,lon:-72.9279},starts_at:iso(600),ends_at:new Date(NOW+3*3600e3).toISOString(),created_at:iso(2000),updated_at:iso(4),capacity:6,counts:{joined:3,in_progress:2,submitted:2,verified:1,rejected:0,pending_proofs:2},team:[{m_uid:U(1),name:'Ada Fixture',avatar_url:null,status:'submitted',since:iso(8)},{m_uid:U(2),name:'Ben Fixture',avatar_url:null,status:'verified',since:iso(50)},{m_uid:U(3),name:'Cy Fixture',avatar_url:null,status:'joined',since:iso(70)}],evidence:[{id:'e0000000-0000-4000-8000-000000000001',type:'photo',status:'pending',created_at:iso(4),reviewed_at:null,by:'Ada Fixture',m_uid:U(1),statement:'Waterfront photo at the pier'},{id:'e0000000-0000-4000-8000-000000000002',type:'text',status:'pending',created_at:iso(11),reviewed_at:null,by:'Ada Fixture',m_uid:U(1),statement:'Field note'},{id:'e0000000-0000-4000-8000-000000000003',type:'link',status:'verified',created_at:iso(40),reviewed_at:iso(30),by:'Ben Fixture',m_uid:U(2),statement:'NOAA observation link'}],path:'mnet.html?mission=a1b2c3d4-0000-4000-8000-000000000001'},
+ {id:'a1b2c3d4-0000-4000-8000-000000000002',title:'Coastal survey',description:'Map the coastline access points.',domain:'research',kind:'civic',status:'active',review:false,place:{label:'Lisbon, Portugal',country:'PT',lat:38.7223,lon:-9.1393},starts_at:null,ends_at:new Date(NOW+8*3600e3).toISOString(),created_at:iso(3000),updated_at:iso(20),capacity:null,counts:{joined:2,in_progress:2,submitted:0,verified:0,rejected:0,pending_proofs:0},team:[{m_uid:U(4),name:'Dee Fixture',avatar_url:null,status:'in_progress',since:iso(25)}],evidence:[],path:'mnet.html?mission=a1b2c3d4-0000-4000-8000-000000000002'},
+ {id:'a1b2c3d4-0000-4000-8000-000000000003',title:'Network recovery',description:'Restore the community network.',domain:'engineering',kind:'civic',status:'blocked',review:false,place:{label:'Accra, Ghana',country:'GH',lat:5.6037,lon:-0.187},starts_at:null,ends_at:null,created_at:iso(5000),updated_at:iso(300),capacity:4,counts:{joined:1,in_progress:1,submitted:0,verified:0,rejected:0,pending_proofs:0},team:[],evidence:[],path:null},
+ {id:'a1b2c3d4-0000-4000-8000-000000000004',title:'Watershed check',description:'Draft: river sampling plan.',domain:'environment',kind:'civic',status:'planned',review:false,place:{label:'Porto, Portugal',country:'PT',lat:41.1579,lon:-8.6291},starts_at:null,ends_at:null,created_at:iso(100),updated_at:iso(100),capacity:null,counts:{joined:0,in_progress:0,submitted:0,verified:0,rejected:0,pending_proofs:0},team:[],evidence:[],path:null},
+ {id:'a1b2c3d4-0000-4000-8000-000000000005',title:'Food bank sort',description:'Closed.',domain:'service',kind:'civic',status:'completed',review:false,place:null,starts_at:null,ends_at:iso(9000),created_at:iso(20000),updated_at:iso(9000),capacity:10,counts:{joined:10,in_progress:0,submitted:0,verified:10,rejected:0,pending_proofs:0},team:[],evidence:[],path:null}],sources:{}};
+const HALO_PEOPLE={ok:true,schema:'halo-people/v1',generated_at:iso(0),total:4,truncated:false,unresolved:0,counts:{people:4,on_mission:2,available:1,awaiting_review:1},online:null,people:[
+ {m_uid:U(1),name:'Ada Fixture',avatar_url:null,headline:'Field coordinator',role:'participant',skills:['Field documentation','Water sampling'],missions:[{id:'a1b2c3d4-0000-4000-8000-000000000001',title:'Harbor water check',status:'submitted'}],state:'awaiting_review',last_activity_at:iso(4),last_activity:'submitted',location_shared:false},
+ {m_uid:U(2),name:'Ben Fixture',avatar_url:null,headline:null,role:'admin',skills:['Evidence review'],missions:[{id:'a1b2c3d4-0000-4000-8000-000000000001',title:'Harbor water check',status:'verified'}],state:'on_mission',last_activity_at:iso(30),last_activity:'verified',location_shared:false},
+ {m_uid:U(4),name:'Dee Fixture',avatar_url:null,headline:'Survey lead',role:'participant',skills:[],missions:[{id:'a1b2c3d4-0000-4000-8000-000000000002',title:'Coastal survey',status:'in_progress'}],state:'on_mission',last_activity_at:iso(25),last_activity:'started',location_shared:false},
+ {m_uid:U(5),name:'Eve Fixture',avatar_url:null,headline:'Analyst',role:'member',skills:[],missions:[],state:'available',last_activity_at:null,last_activity:null,location_shared:false}],sources:{}};
+const TIDES=Array.from({length:24},(_,i)=>[new Date(NOW-(23-i)*3600e3).toISOString(),+(0.6+0.25*Math.sin(i/3.8)).toFixed(3),'p']);
 const HALO_FIXTURES={
- '/v1/world/layers/quakes':{ok:true,layer:'quakes',fetched_at:new Date().toISOString(),credit:'Earthquakes: USGS',count:3,quakes:[{id:'us1',mag:5.4,place:'10 km S of Fixture, Chile',time:new Date().toISOString(),lon:-71.5,lat:-33.4,depth_km:12,url:'https://earthquake.usgs.gov/earthquakes/eventpage/us1',tsunami:false,alert:'green'},{id:'us2',mag:2.1,place:'Fixture, California',time:new Date().toISOString(),lon:-118.2,lat:34.05,depth_km:8,url:'',tsunami:false,alert:null},{id:'us3',mag:4.6,place:'Fixture, Japan',time:new Date().toISOString(),lon:142.4,lat:38.3,depth_km:110,url:'',tsunami:false,alert:null}]},
- '/v1/world/layers/military':{ok:true,layer:'military',fetched_at:new Date().toISOString(),credit:'Military flights: adsb.lol (ODbL)',count:2,aircraft:[['ae1234','RCH123',-77.0,38.9,9000,220,90,'C17','4521',false],['ae5678','DUKE01',-1.5,51.2,7000,180,270,'K35R','7700',true]]},
- '/v1/world/layers/fires':{ok:true,layer:'fires',fetched_at:null,unavailable:true,upstream_error:'not_configured',count:0,fires:[]}
+ '/v1/world/layers/quakes':{ok:true,layer:'quakes',fetched_at:iso(0),credit:'Earthquakes: USGS',count:3,quakes:[{id:'us1',mag:5.4,place:'10 km S of Fixture, Chile',time:iso(20),lon:-71.5,lat:-33.4,depth_km:12,url:'https://earthquake.usgs.gov/earthquakes/eventpage/us1',tsunami:false,alert:'green'},{id:'us2',mag:2.1,place:'Fixture, California',time:iso(60),lon:-118.2,lat:34.05,depth_km:8,url:'',tsunami:false,alert:null},{id:'us3',mag:4.6,place:'Fixture, Japan',time:iso(90),lon:142.4,lat:38.3,depth_km:110,url:'',tsunami:false,alert:null}]},
+ '/v1/world/layers/military':{ok:true,layer:'military',fetched_at:iso(0),credit:'Military flights: adsb.lol (ODbL)',count:2,aircraft:[['ae1234','RCH123',-77.0,38.9,9000,220,90,'C17','4521',false],['ae5678','DUKE01',-1.5,51.2,7000,180,270,'K35R','7700',true]]},
+ '/v1/world/layers/fires':{ok:true,layer:'fires',fetched_at:null,unavailable:true,upstream_error:'not_configured',count:0,fires:[]},
+ '/v1/world/layers/cyclones':{ok:true,layer:'cyclones',fetched_at:iso(0),credit:'NOAA NHC',count:0,cyclones:[]},
+ '/v1/world/layers/tides':{ok:true,layer:'tides',fetched_at:iso(0),stale:false,credit:'NOAA CO-OPS',stations:[['8465705','New Haven',-72.9083,41.2833,'CT'],['8518750','The Battery',-74.0142,40.7006,'NY']],count:2},
+ '/v1/world/tides/8465705':{ok:true,schema:'halo-water-level/v1',station:{id:'8465705',name:'New Haven',lat:41.2833,lon:-72.9083},product:'observed_water_level',datum:'MLLW',units:'m',fetched_at:iso(0),stale:false,latest:{value:TIDES[23][1],observed_at:TIDES[23][0],quality:'preliminary'},observations:TIDES.map(t=>[t[0],t[1],'preliminary']),note:'Observed water level, not a tide prediction.'},
+ '/v1/world/halo/missions':HALO_MISSIONS,
+ '/v1/world/halo/people':HALO_PEOPLE,
+ '/v1/intel/evidence':{ok:true,evidence:[{id:'ev1',kind:'report',title:'Harbor flooding report',summary:'Local report of high water at the harbor.',publisher:'Fixture News',source_url:'https://example.org/fixture',license:'cc-by',observed_at:iso(15),retrieved_at:iso(10),lat:41.29,lon:-72.93,geo_source:'publisher',region_label:'New Haven, Connecticut',review_status:'unreviewed'}],completeness:{possibly_truncated:false}},
+ '/v1/intel/health':{schema_ready:true,source_health:{transport:'pull',coverage:'partial',last_success_at:iso(5),age_seconds:300,stale:false}},
+ '/v1/mnet/bootstrap':{identity:{m_uid:U(9)},profile:{display_name:'Owner Fixture',avatar_url:null}}
 };
 async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  const state=()=>page.evaluate(()=>window.HaloConsole?HaloConsole.state():null);
+ const shot=(name)=>page.screenshot({path:join(OUT,'halo-'+name+'-'+width+'.png')});
+ const noOverflow=()=>page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth);
+ const smallTargets=()=>page.evaluate(()=>[...document.querySelectorAll('#haloShell button,#haloShell a,#haloShell input,#haloShell select')].filter(e=>{const r=e.getBoundingClientRect(),cs=getComputedStyle(e);if(!r.width||!r.height||cs.visibility==='hidden'||e.closest('[hidden]'))return false;if(e.matches('input[type=checkbox]'))return false;const box=e.closest('.hx-switch,.hx-find,.hx-search')||e;const b=box.getBoundingClientRect();return Math.min(b.height,b.width)<44&&!e.closest('.hx-time__mode')&&!(e.tagName==='A'&&e.closest('.hx-action'))}).map(e=>(e.className&&e.className.baseVal===undefined?e.className:e.tagName)+':'+Math.round(e.getBoundingClientRect().height)));
  await page.waitForFunction(()=>window.HaloConsole&&HaloConsole.state().mounted,null,{timeout:20000}).catch(()=>{});
+ await page.waitForTimeout(600);
  let st=await state();
- check(scope,'the owner gets the Halo console, open from the link, on the Layers tab',!!st&&st.mounted&&st.open&&st.tab==='layers'&&await page.locator('#haloPanel').isVisible(),st);
- const box=await page.locator('#haloPanel').boundingBox(),pill=await page.locator('.halo-pill').boundingBox();
- check(scope,'the console fits the screen and its pill is a full tap target',!!box&&box.x>=0&&box.x+box.width<=width+0.5&&pill.height>=44&&pill.width>=44,{box,pill});
- /* the top of the screen: "← World", "Just the globe", the profile chip, the Halo pill and the console's title never sit on each other */
- const crowd=await page.evaluate(()=>{const els=['#worldBack','#bareEnter','#mccAuthChip','.halo-pill','#haloPanel .halo__head h2'].map(q=>[q,document.querySelector(q)]).filter(([,e])=>e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden'),hits=[];for(let i=0;i<els.length;i++)for(let j=i+1;j<els.length;j++){const a=els[i][1].getBoundingClientRect(),b=els[j][1].getBoundingClientRect();if(a.left<b.right-0.5&&b.left<a.right-0.5&&a.top<b.bottom-0.5&&b.top<a.bottom-0.5)hits.push(els[i][0]+' × '+els[j][0])}return{seen:els.map(([q])=>q),hits}});
- check(scope,'the top controls and the console title do not overlap',crowd.hits.length===0&&crowd.seen.includes('.halo-pill')&&crowd.seen.includes('#worldBack'),crowd);
- const small=await page.evaluate(()=>[...document.querySelectorAll('#haloPanel .halo-row,#haloPanel [role=tab],#haloPanel button,#haloPanel input[type=search]')].filter(e=>e.offsetParent!==null&&e.getBoundingClientRect().height<44).map(e=>e.className||e.tagName));
- check(scope,'every visible Halo row, tab, button and the search field is a full tap target',small.length===0,small);
- /* layers: earthquakes draw, fires say they need a key, military flights draw */
- await page.locator('[data-halo-layer="quakes"] input').click();
- await page.waitForFunction(()=>HaloConsole.state().layers.quakes.state==='on',null,{timeout:8000}).catch(()=>{});
- await page.locator('[data-halo-layer="fires"] input').click();
- await page.locator('[data-halo-layer="military"] input').click();
- await page.waitForFunction(()=>{const l=HaloConsole.state().layers;return l.fires.state==='unavailable'&&l.military.state==='on'},null,{timeout:8000}).catch(()=>{});
+ check(scope,'the owner gets the Halo view on World, with its four tabs, from the link',!!st&&st.mounted&&st.view==='world'&&(await page.locator('.hx-tabs [role=tab]').count())===4&&await page.locator('.hx-top').isVisible(),st&&st.view);
+ check(scope,'the supplied HM mark, scaled, never drawn',await page.evaluate(()=>{const i=document.querySelector('.hx-brand img');return !!i&&/assets\/img\/hm-mark-96\.png$/.test(i.getAttribute('src'))&&!document.querySelector('.hx-brand svg')}));
+ check(scope,'the page chrome steps aside (the way-back header, the deck, the corner controls)',await page.evaluate(()=>['header','#deck','.globe-controls'].every(q=>{const e=document.querySelector(q);return !e||getComputedStyle(e).display==='none'})));
+ await page.waitForFunction(()=>/2/.test(document.querySelector('.hx-stats').textContent),null,{timeout:8000}).catch(()=>{});
+ check(scope,'the counts strip reads the owner\'s missions',/2\s*Active missions/.test(await page.textContent('.hx-stats'))&&/1\s*Awaiting review/.test(await page.textContent('.hx-stats')),await page.textContent('.hx-stats'));
+ const crowd=await page.evaluate(()=>{const q=['.hx-brand','.hx-operator','.hx-tabs','.hx-stats','.hx-clock','.hx-search','.hx-layers-btn','.hx-ctl','.hx-left','.hx-time'],els=q.map(s=>[s,document.querySelector(s)]).filter(([,e])=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'),hits=[];for(let i=0;i<els.length;i++)for(let j=i+1;j<els.length;j++){if(els[i][1].contains(els[j][1])||els[j][1].contains(els[i][1]))continue;const a=els[i][1].getBoundingClientRect(),b=els[j][1].getBoundingClientRect();if(a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1)hits.push(els[i][0]+' × '+els[j][0])}return hits});
+ check(scope,'the frame\'s parts never sit on each other',crowd.length===0,crowd);
+ check(scope,'no document horizontal overflow',await noOverflow());
+ await shot('start');
+ let small=await smallTargets();
+ check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
+ /* World data: a group switch turns its layers on; each says what it holds */
+ if(width<768)await page.locator('.hx-grip').click();
+ await page.locator('[data-group="earth"] .hx-group__row .hx-switch input').click({force:true});
+ await page.waitForFunction(()=>{const l=HaloConsole.state().layers;return l.quakes.state==='on'&&l.fires.state==='unavailable'&&l.tides.state==='on'},null,{timeout:10000}).catch(()=>{});
  st=await state();
- check(scope,'Earthquakes and Military flights draw with their counts; Active fires says it needs a key',st.layers.quakes.on&&st.layers.quakes.text==='3'&&st.layers.military.text==='2'&&st.layers.fires.text==='Needs a key',st.layers);
- check(scope,'the providers are credited in the console',/USGS/.test(await page.textContent('.halo__credits'))&&/adsb\.lol/.test(await page.textContent('.halo__credits')));
- /* a picked quake opens what USGS said, with Follow */
- await page.evaluate(()=>HaloConsole.pick({id:{haloPick:true,layer:'quakes',item:{id:'us1',mag:5.4,place:'10 km S of Fixture, Chile',time:new Date().toISOString(),lon:-71.5,lat:-33.4,depth:12,url:'https://earthquake.usgs.gov/earthquakes/eventpage/us1',tsunami:false,alert:'green'}}}));
- check(scope,'a picked quake opens its USGS facts with an official link and Follow',await page.locator('#cctvSheet').isVisible()&&/M5\.4/.test(await page.textContent('#cctvTitle'))&&await page.locator('#cctvBody a[href^="https://earthquake.usgs.gov/"]').count()===1&&await page.locator('#cctvBody .halo-follow-btn').isVisible());
- await page.locator('#cctvBody .halo-follow-btn').click();
- await page.waitForTimeout(400);
+ check(scope,'Earth & weather turns on Earthquakes (3), NOAA water levels (2); Thermal says it needs a key',st.layers.quakes.text==='3'&&st.layers.tides.text==='2'&&st.layers.fires.text==='Needs a key'&&st.layers.networks.state==='planned',{q:st.layers.quakes,t:st.layers.tides,f:st.layers.fires});
+ check(scope,'Source health says each source\'s state in words',/Earthquakes[\s\S]*Updated/.test(await page.textContent('.hx-health'))&&/Needs a key/.test(await page.textContent('.hx-health')));
+ check(scope,'the World panel counts what is available, context and planned',/\d+ available · 4 context · 5 planned/.test(await page.textContent('.hx-panel__head p')));
+ await shot('world');
+ /* a NOAA station opens its observed water level with a chart */
+ await page.evaluate(()=>HaloConsole.pick({id:{haloPick:true,layer:'tides',item:{id:'8465705',name:'New Haven',lon:-72.9083,lat:41.2833,state:'CT'}}}));
+ await page.waitForSelector('.hx-detail .hx-chart svg',{timeout:8000}).catch(()=>{});
+ check(scope,'a water-level station opens its observed level, its chart and the readings table',await page.locator('.hx-detail .hx-big').isVisible()&&(await page.locator('.hx-detail .hx-chart polyline').count())===1&&(await page.locator('.hx-detail details table').count())===1&&/not a tide prediction/i.test(await page.textContent('.hx-detail')));
+ check(scope,'the station names the mission within 300 km',/Harbor water check/.test(await page.textContent('.hx-detail')));
+ await shot('station');
+ /* Missions */
+ await page.locator('#hxTab-missions').click();
+ await page.waitForFunction(()=>document.querySelectorAll('.hx-left .hx-card').length>=2,null,{timeout:8000}).catch(()=>{});
+ check(scope,'Missions: active missions listed, Review counted, mission places on the Earth',(await page.locator('.hx-left .hx-card').count())===2&&/Review\s*1/.test(await page.textContent('.hx-seg'))&&(await state()).marks===4,{cards:await page.locator('.hx-left .hx-card').count(),marks:(await state()).marks});
+ await page.locator('.hx-left .hx-card').first().click();
+ await page.waitForFunction(()=>/Harbor water check/.test((document.querySelector('.hx-detail h2')||{}).textContent||''),null,{timeout:8000}).catch(()=>{});
  st=await state();
- check(scope,'Follow locks the camera on it and says so',!!st.following&&await page.locator('.halo-follow').isVisible(),st.following);
- await page.keyboard.press('Escape');
- st=await state();
- check(scope,'Escape stops following',!st.following&&await page.locator('.halo-follow').isHidden());
- /* vision and HUD */
- await page.locator('[role=tab][data-tab="vision"]').click();
- await page.locator('[data-halo-style="flir"]').click();
- /* the style fades in from the next animation frame, which software GL at desktop size can hold back past a fixed wait */
+ check(scope,'a mission opens with its progress, team, next steps and evidence',st.selected&&st.selected.kind==='mission'&&await page.locator('.hx-detail h2').isVisible()&&/Harbor water check/.test(await page.textContent('.hx-detail h2'))&&/1 of 3 verified/.test(await page.textContent('.hx-detail'))&&/Review 2 submitted proofs/.test(await page.textContent('.hx-detail'))&&(await page.locator('.hx-detail .hx-team li').count())===3,{sel:st.selected,text:(await page.textContent('.hx-detail')).slice(0,400),team:await page.locator('.hx-detail .hx-team li').count()});
+ check(scope,'Review evidence goes to the Control Room review, Open mission to its page',(await page.getAttribute('.hx-detail__foot .hx-cta','href'))==='control.html#create:action-network'&&/mnet\.html\?mission=/.test(await page.getAttribute('.hx-detail__foot a.hx-btn','href')));
+ check(scope,'the timeline shows the mission\'s evidence as it arrived (close events share one counted dot)',await page.evaluate(()=>{const l=[...document.querySelectorAll('.hx-axis__ev')].map(b=>b.getAttribute('aria-label')).join(' | ');return /received · Harbor water check/.test(l)&&[...document.querySelectorAll('.hx-axis__ev')].reduce((n,b)=>n+(+(/^(\d+) events/.exec(b.getAttribute('aria-label'))||[0,1])[1]),0)>=5}));
+ small=await smallTargets();
+ check(scope,'Missions: every visible control is a full tap target',small.length===0,small);
+ await shot('missions');
+ /* People: no one's location, ever */
+ await page.locator('#hxTab-people').click();
+ await page.waitForFunction(()=>document.querySelectorAll('.hx-left .hx-person').length>=4,null,{timeout:8000}).catch(()=>{});
+ if(width<768&&await page.locator('.hx-right').getAttribute('data-open')==='true')await page.locator('.hx-detail .hx-close').click();
+ check(scope,'People: the team listed with their state',(await page.locator('.hx-left .hx-person').count())===4&&/Awaiting review/.test(await page.textContent('.hx-left')));
+ await page.locator('.hx-left .hx-person').first().click();
+ await page.waitForFunction(()=>/Not shared/.test(document.querySelector('.hx-detail').textContent),null,{timeout:8000}).catch(()=>{});
+ const people=await page.evaluate(()=>({text:document.querySelector('.hx-detail').textContent,marks:HaloConsole.state().marks}));
+ check(scope,'a person opens with their mission and skills, and their location says Not shared',/Ada Fixture/.test(people.text)&&/Not shared/.test(people.text)&&/Field documentation/.test(people.text)&&/Recent submissions/.test(people.text),people.text.slice(0,200));
+ check(scope,'the Earth shows mission places for People, never a person',people.marks===2,people);
+ await shot('people');
+ /* Intelligence: observed, calculated, reported, each labelled */
+ await page.locator('#hxTab-intel').click();
+ await page.waitForFunction(()=>{const t=document.querySelector('.hx-left').textContent;return /M5\.4 earthquake/.test(t)&&/Needs review/.test(t)},null,{timeout:10000}).catch(()=>{});
+ check(scope,'Intelligence: the feed holds the USGS quake (observed) and the evidence that needs review',/M5\.4 earthquake/.test(await page.textContent('.hx-left'))&&/Needs review/.test(await page.textContent('.hx-left'))&&/Observed/.test(await page.textContent('.hx-left')));
+ await page.locator('.hx-left .hx-card',{hasText:'M5.4'}).first().click();
+ await page.waitForFunction(()=>!!document.querySelector('.hx-detail .hx-big'),null,{timeout:8000}).catch(()=>{});
+ check(scope,'an observation opens with its magnitude and the official USGS link',/5\.4/.test(await page.textContent('.hx-detail .hx-big'))&&(await page.locator('.hx-detail__foot a[href^="https://earthquake.usgs.gov/"]').count())===1);
+ if(width<768)await page.locator('.hx-detail .hx-close').click();
+ await page.locator('.hx-left .hx-seg [data-seg="sources"]').click();
+ await page.waitForFunction(()=>/Intelligence connector/.test(document.querySelector('.hx-left').textContent),null,{timeout:8000}).catch(()=>{});
+ check(scope,'Sources lists every source with its health',/Intelligence connector/.test(await page.textContent('.hx-left'))&&/Missions and evidence/.test(await page.textContent('.hx-left')));
+ await page.locator('.hx-left .hx-seg [data-seg="feed"]').click();
+ await shot('intel');
+ /* the Layers menu: base map, vision, HUD (on a phone, the list sheet shrinks to show the Earth first) */
+ if(width<768&&await page.locator('.hx-left').getAttribute('data-expanded')==='true')await page.locator('.hx-grip').click();
+ await page.locator('.hx-layers-btn').click();
+ check(scope,'Layers opens the base map, the visual modes and the tools',await page.locator('.hx-pop').isVisible()&&(await page.locator('.hx-pop [data-style]').count())===7&&(await page.locator('.hx-pop [data-base]').count())===3);
+ await page.locator('.hx-pop [data-style="flir"]').click();
  const stagesOn=()=>{const s=HuGlobe.viewer().scene.postProcessStages;let on=0;for(let i=0;i<s.length;i++)if(s.get(i).enabled)on++;return on};
  await page.waitForFunction(stagesOn,null,{timeout:8000}).catch(()=>{});
- st=await state();
- const fx=await page.evaluate(stagesOn);
- check(scope,'Thermal turns on one post-process stage',st.style==='flir'&&fx>=1,{style:st.style,fx});
+ check(scope,'Thermal turns on one post-process stage',(await state()).style==='flir'&&(await page.evaluate(stagesOn))>=1);
+ await page.locator('.hx-pop [data-tool="hud"]').click();
+ await page.waitForTimeout(400);
+ await page.keyboard.press('Escape');
  await page.keyboard.press('1');
- await page.waitForTimeout(700);
- check(scope,'key 1 goes back to Normal',(await state()).style==='normal');
- await page.locator('[role=tab][data-tab="tools"]').click();
- await page.locator('[data-halo-tool="hud"]').click();
  await page.waitForTimeout(500);
  st=await state();
- /* on a phone the open console covers the HUD's place, so the HUD shows once the console closes */
- let hudSeen;if(width<900){await page.locator('.halo__close').click();hudSeen=await page.locator('.halo-hud-host .halo-hud').isVisible();await page.screenshot({path:join(OUT,'halo-hud-'+width+'.png')});await page.locator('.halo-pill').click()}else hudSeen=await page.locator('.halo-hud-host .halo-hud').isVisible();
- check(scope,'the telemetry HUD shows a place in MGRS and the time in UTC',st.hud&&!!st.readout&&/^\d{1,2}[C-X] [A-Z]{2} \d+ \d+$/.test(String(st.readout.mgrs||''))&&/^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(String(st.readout.utc||''))&&hudSeen,st.readout);
- /* search flies to the place */
- await page.fill('.halo__search input','Paris');
- await page.locator('.halo__search button').click();
- await page.waitForSelector('.halo__results button',{timeout:5000}).catch(()=>{});
- check(scope,'search lists the places the Worker found',(await page.locator('.halo__results button').count())===2);
- await page.locator('.halo__results button').first().click();
+ check(scope,'key 1 goes back to Normal; the telemetry HUD shows MGRS and UTC',st.style==='normal'&&st.hud&&!!st.readout&&/^\d{1,2}[C-X] [A-Z]{2} \d+ \d+$/.test(String(st.readout.mgrs||''))&&/^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(String(st.readout.utc||'')),st.readout);
+ /* search: the owner's own things, then places */
+ await page.fill('.hx-search input','Harbor');
+ await page.locator('.hx-search input').press('Enter');
+ await page.waitForSelector('.hx-results button',{timeout:5000}).catch(()=>{});
+ check(scope,'search finds the owner\'s mission first',/Harbor water check/.test(await page.textContent('.hx-results'))&&/Mission/.test(await page.textContent('.hx-results')));
+ await page.fill('.hx-search input','Paris');
+ await page.locator('.hx-search input').press('Enter');
+ await page.waitForFunction(()=>/Paris, Île-de-France/.test(document.querySelector('.hx-results').textContent),null,{timeout:5000}).catch(()=>{});
+ await page.locator('.hx-results button',{hasText:'Île-de-France'}).click();
  await page.waitForFunction(()=>{const c=HuGlobe.viewer().camera.positionCartographic;return c.height<200000&&Math.abs(c.longitude*180/Math.PI-2.35)<1},null,{timeout:8000}).catch(()=>{});
- check(scope,'picking a result flies the Earth to it',await page.evaluate(()=>{const c=HuGlobe.viewer().camera.positionCartographic;return c.height<200000&&Math.abs(c.longitude*180/Math.PI-2.35)<1}));
- /* share: a link that carries the view */
+ check(scope,'picking a place flies the Earth to it',await page.evaluate(()=>{const c=HuGlobe.viewer().camera.positionCartographic;return c.height<200000&&Math.abs(c.longitude*180/Math.PI-2.35)<1}));
  const link=await page.evaluate(()=>HaloConsole._share.link());
  check(scope,'Copy a link makes an owner-only link with the view in its hash',/action-globe\.html\?explore=1&halo=1#halo=[A-Za-z0-9_-]+$/.test(link||''),link);
- check(scope,'no document horizontal overflow with the console open',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
- await page.screenshot({path:join(OUT,'halo-console-'+width+'.png')});
+ check(scope,'no document horizontal overflow at the end',await noOverflow());
  /* the World's frame shows the owner a door to it */
  const frameHost=await ctx.newPage();await frameHost.goto(BASE+'/__world-release_host');
  const frame=await (async()=>{for(let n=0;n<50;n++){const f=frameHost.frames().find(f=>f.url().includes('action-globe.html'));if(f)return f;await frameHost.waitForTimeout(100)}return null})();
@@ -110,7 +169,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  /* role loss takes it away */
  loseOwner();await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
  await page.waitForFunction(()=>!HaloConsole.state().mounted,null,{timeout:8000}).catch(()=>{});
- check(scope,'losing the owner answer unmounts the console and its layers',!(await state()).mounted&&!(await page.$('#haloPanel'))&&!(await page.$('.halo-pill')));
+ check(scope,'losing the owner answer unmounts the view, its marks and its layers',!(await state()).mounted&&!(await page.$('#haloShell'))&&!(await page.evaluate(()=>document.documentElement.classList.contains('halo-on'))));
 }
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 try {
@@ -129,6 +188,8 @@ for(const width of [390,1280])for(const persona of (process.env.WORLD_QA_PERSONA
    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
    if(url.pathname==='/v1/world/access'){mapReads++;return persona==='failed'?json({},503):json({release:{version:'globe-admin-preview/v1',admin_preview:owner},level:owner?'owner':persona,unlocked_layers:owner?['flights','satellites','launches','music','audience','transport']:[],locked_layers:FEATURES.filter(x=>!owner||['ion','cctv','intel'].includes(x)).map(id=>({id,reason:'admin_preview'})),layers:{}});}
    if(persona==='halo'&&HALO_FIXTURES[url.pathname]){calls++;return json(HALO_FIXTURES[url.pathname]);}
+   if(persona==='halo'&&url.pathname==='/v1/news-briefs')return json({day:url.searchParams.get('day'),briefs:[{country:'US',country_name:'United States',day:url.searchParams.get('day'),status:'ready',editorial_status:'draft',overview:'Fixture overview of the day.',happened:['Fixture event'],may_mean:[],uncertain:[],sources:[{n:1,title:'Fixture source',url:'https://example.org/a',domain:'example.org'}]}]});
+   if(persona==='halo'&&/^\/v1\/mnet\/missions\/proofs\//.test(url.pathname))return json({error:'not_admin'},403);
    if(persona==='halo'&&url.pathname==='/v1/world/geocode')return json({ok:true,query:url.searchParams.get('q'),results:[{name:'Paris, Île-de-France, France',kind:'city',lon:2.3522,lat:48.8566,bbox:[2.22,48.81,2.47,48.90]},{name:'Paris, Texas, United States',kind:'town',lon:-95.5555,lat:33.6609,bbox:null}],attribution:'Photon by Komoot · © OpenStreetMap contributors',license:'ODbL-1.0'});
    if(url.pathname.includes('/v1/world/layers/')){calls++;if(slow)await new Promise(r=>setTimeout(r,250));return json({aircraft:[],count:0});}
    return json({},404);
@@ -144,7 +205,8 @@ for(const width of [390,1280])for(const persona of (process.env.WORLD_QA_PERSONA
  check(scope,'no document horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
  if(!owner){
   await page.waitForTimeout(400);
-  check(scope,'no Halo console, and no Halo code fetched, for anyone but the owner',!(await page.$('.halo-pill'))&&!(await page.evaluate(()=>!!window.HaloConsole))&&haloCode===0,{haloCode});
+  check(scope,'no Halo view, and no Halo code fetched, for anyone but the owner',!(await page.$('#haloShell'))&&!(await page.evaluate(()=>!!window.HaloConsole))&&haloCode===0,{haloCode});
+  check(scope,'no Halo door in the header for anyone but the owner',await page.evaluate(()=>{const d=document.getElementById('haloEnter');return !d||d.hidden}));
   if(persona==='creator')check(scope,"the World frame's Halo door stays hidden",await page.evaluate(()=>{const d=document.getElementById('ctlHalo');return !!d&&d.hidden}));
   check(scope,'optional controls hidden',await page.evaluate(ids=>ids.every(id=>document.getElementById(id).hidden),BUTTONS));
   await page.evaluate(ids=>ids.forEach(id=>document.getElementById(id).click()),BUTTONS);await page.waitForTimeout(100);
@@ -154,6 +216,7 @@ for(const width of [390,1280])for(const persona of (process.env.WORLD_QA_PERSONA
   await haloChecks(scope,page,host,width,ctx,()=>{owner=false},()=>calls);
  }else{
   await page.locator('.globe-editorial-tools > summary').click();
+  check(scope,'the owner sees the Halo door beside ← World, a full tap target',await page.evaluate(()=>{const d=document.getElementById('haloEnter'),b=d&&d.getBoundingClientRect();return !!d&&!d.hidden&&d.getAttribute('href')==='action-globe.html?explore=1&halo=1'&&b.height>=44&&b.width>=44}));
   check(scope,'verified owner has preview control',await page.locator('#ctlFlights').isVisible());
   await page.locator('#ctlFlights').click();await page.waitForFunction(()=>window.__huLayerOn('flights'));
   check(scope,'owner preview works',calls===1);
