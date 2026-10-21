@@ -379,9 +379,11 @@ export async function haloPeople(env, fetchImpl = fetch, now = Date.now()) {
     const houseId = orgs[0] && orgs[0].id;
     return houseId ? service(env, `org_members?org_id=eq.${encodeURIComponent(houseId)}&select=profile_id,role&limit=500`, fetchImpl) : [];
   })();
-  const [house, recent, onlineRaw] = await Promise.all([
+  const [house, recent, reviewed, onlineRaw] = await Promise.all([
     soft(houseRead),
     soft(service(env, `action_mission_assignments?status=neq.withdrawn&or=(joined_at.gte."${since}",submitted_at.gte."${since}",verified_at.gte."${since}")&select=${PEOPLE_ASSIGNMENT_SELECT}&order=joined_at.desc&limit=${L.rowsRead}`, fetchImpl)),
+    /* a rejection is dated by its proof's review, so an assignment whose only recent activity is a review comes in too */
+    soft(service(env, `action_proofs?reviewed_at=gte.${encodeURIComponent(since)}&select=assignment_id&order=reviewed_at.desc&limit=${L.rowsRead}`, fetchImpl)),
     /* wrapped: the RPC answers null under five, which is not a failure */
     soft(rpc(env, 'action_globe_public_online_total', {}, fetchImpl).then((value) => ({ value })))
   ]);
@@ -393,8 +395,11 @@ export async function haloPeople(env, fetchImpl = fetch, now = Date.now()) {
   const members = [];
   for (const r of house || []) { const p = idOf(r && r.profile_id); if (p) members.push({ profile_id: p, role: HOUSE_ROLE[r.role] || 'member' }); }
   const memberRows = members.length ? await soft(byIds(env, 'action_mission_assignments', 'user_id', members.map((m) => m.profile_id), `status=neq.withdrawn&select=${PEOPLE_ASSIGNMENT_SELECT}&order=joined_at.desc&limit=1000`, fetchImpl)) : [];
+  const seen = new Set((recent || []).map((r) => idOf(r && r.id)));
+  const reviewedIds = [...new Set((reviewed || []).map((r) => idOf(r && r.assignment_id)).filter((x) => x && !seen.has(x)))];
+  const reviewedRows = reviewedIds.length ? await soft(byIds(env, 'action_mission_assignments', 'id', reviewedIds, `status=neq.withdrawn&select=${PEOPLE_ASSIGNMENT_SELECT}&limit=${L.rowsRead}`, fetchImpl)) : [];
   const assignments = new Map();
-  for (const r of [...(recent || []), ...(memberRows || [])]) { const a = assignmentOf(r); if (a && !assignments.has(a.id)) assignments.set(a.id, a); }
+  for (const r of [...(recent || []), ...(reviewedRows || []), ...(memberRows || [])]) { const a = assignmentOf(r); if (a && !assignments.has(a.id)) assignments.set(a.id, a); }
 
   const needLinks = [...members.map((m) => m.profile_id), ...[...assignments.values()].filter((a) => !a.m_uid && a.user_id).map((a) => a.user_id)];
   const links = await linksFor(env, needLinks, fetchImpl);
@@ -453,7 +458,7 @@ export async function haloPeople(env, fetchImpl = fetch, now = Date.now()) {
   return {
     ok: true, schema: 'halo-people/v1', generated_at, counts, online, total: out.length,
     truncated: out.length > shown.length || (recent || []).length >= L.rowsRead, unresolved,
-    sources: { house: sourceOf(house), assignments: sourceOf(recent), member_assignments: sourceOf(memberRows), profiles: sourceOf(profiles), skills: sourceOf(skillRows), online: sourceOf(onlineRaw) },
+    sources: { house: sourceOf(house), assignments: sourceOf(recent), reviewed: sourceOf(reviewed), member_assignments: sourceOf(memberRows), profiles: sourceOf(profiles), skills: sourceOf(skillRows), online: sourceOf(onlineRaw) },
     people: shown
   };
 }

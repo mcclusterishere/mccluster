@@ -464,7 +464,8 @@
     if (VIEWS.includes(v.v)) setView(v.v);
     if (vision && typeof v.s === 'string') vision.set(v.s);
     if (hud && typeof v.h === 'boolean') hud.show(v.h);
-    if (Array.isArray(v.l)) for (const it of ALL_ITEMS) if (v.l.includes(it.id) && !isOn(it)) await setItem(it, true);
+    /* the layer list is the exact state: what it names is on, everything else off (a shared view reproduces as shared) */
+    if (Array.isArray(v.l)) for (const it of ALL_ITEMS) { if (it.planned) continue; const want = v.l.includes(it.id); if (want !== isOn(it)) await setItem(it, want); }
     paintTools(); paintVision(); schedulePaint();
   }
 
@@ -1135,11 +1136,11 @@
     expanded = p.expanded && typeof p.expanded === 'object' ? p.expanded : { air: true };
     hours = [1, 6, 24].includes(p.hours) ? p.hours : 24; ui.window.value = String(hours);
     collapsed = !!p.collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false';
-    if (Array.isArray(p.layers) && p.view) missionsOn = p.layers.includes('missions');
     ['missions', 'people', 'profile'].forEach((k) => data.get(k));
     setView((opts && opts.view) || (VIEWS.includes(p.view) ? p.view : 'world'));
     if (shared) apply(shared, false);
-    else apply({ s: typeof p.style === 'string' ? p.style : 'normal', h: !!p.hud, l: Array.isArray(p.layers) ? p.layers : [] }, false);
+    /* a first visit has no saved layers: the globe keeps what it shows by default */
+    else apply({ s: typeof p.style === 'string' ? p.style : 'normal', h: !!p.hud, l: Array.isArray(p.layers) ? p.layers : null }, false);
     paintVision(); paintTools(); paintClock(); onCamera();
     ui.poll = setInterval(() => { if (!document.hidden) schedulePaint(); }, 2000);
     ui.tick = setInterval(paintClock, 15000);

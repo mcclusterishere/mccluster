@@ -50,6 +50,15 @@ test('the view\'s layers are the Worker\'s release features', () => {
   assert.equal(ctx.window.HaloLayers.PROVENANCE.tides, 'reference', 'a station is reference data, not a reading');
 });
 
+test('a share link reproduces the shared layers exactly, and a stale layer reads the provider\'s own age (Codex #588)', () => {
+  const halo = read('js/halo/halo.js');
+  assert.match(halo, /for \(const it of ALL_ITEMS\) \{ if \(it\.planned\) continue; const want = v\.l\.includes\(it\.id\); if \(want !== isOn\(it\)\) await setItem\(it, want\); \}/, 'names on, everything else off');
+  assert.match(halo, /l: Array\.isArray\(p\.layers\) \? p\.layers : null/, 'a first visit keeps the globe\'s defaults');
+  const layers = read('js/halo/layers.js');
+  assert.match(layers, /L\.fetched = Number\.isFinite\(provided\) \? provided : body \? L\.checked : L\.fetched;/, 'freshness from the Worker\'s fetched_at');
+  assert.match(layers, /if \(Date\.now\(\) - L\.checked >= SPECS\[id\]\.every - 500\) load\(id\);/, 'polling on this page\'s own clock');
+});
+
 test('a picked Halo item opens only what its provider said, and links only to the official page', () => {
   const ctx = { window: {}, document: { addEventListener() {}, removeEventListener() {} } };
   vm.runInNewContext(read('js/halo/layers.js'), ctx);

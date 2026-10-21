@@ -330,7 +330,7 @@ test('people: house members and recent participants, with roles, state, skills a
     assert.deepEqual(Object.keys(p), ['m_uid', 'name', 'avatar_url', 'headline', 'role', 'skills', 'missions', 'state', 'last_activity_at', 'last_activity', 'location_shared']);
     assert.equal(p.location_shared, false);
   }
-  assert.deepEqual(b.sources, { house: 'ok', assignments: 'ok', member_assignments: 'ok', profiles: 'ok', skills: 'ok', online: 'ok' });
+  assert.deepEqual(b.sources, { house: 'ok', assignments: 'ok', reviewed: 'ok', member_assignments: 'ok', profiles: 'ok', skills: 'ok', online: 'ok' });
   /* the 90-day window and the service role */
   const recent = calls.find((c) => c.path === '/rest/v1/action_mission_assignments' && c.query.get('or'));
   assert.match(recent.query.get('or'), /^\(joined_at\.gte\."[^",]+",submitted_at\.gte\."[^",]+",verified_at\.gte\."[^",]+"\)$/, 'timestamps quoted: PostgREST reserves : and . in or=()');
@@ -381,6 +381,21 @@ test('people: at most 200; degraded reads are said; both sources down is unavail
 test('avatars are kept only as https URLs without credentials', () => {
   assert.equal(httpsUrl('https://cdn.example/a.png'), 'https://cdn.example/a.png');
   for (const v of ['http://cdn.example/a.png', 'javascript:alert(1)', 'data:image/png;base64,AAA', 'https://u:p@cdn.example/a', 'https://cdn.example:8443/a', '//cdn.example/a', '', null, 42, 'https://' + 'a'.repeat(600)]) assert.equal(httpsUrl(v), null, String(v));
+});
+
+test('a participant whose only recent activity is a reviewed proof is in the People window (Codex #588)', async () => {
+  const OLD = { id: A(40), mission_id: MB, m_uid: P(40), user_id: U(40), status: 'rejected', joined_at: ago(200 * 1440), submitted_at: ago(150 * 1440), verified_at: null, action_missions: { title: 'Give a ride', status: 'open' }, action_proofs: { status: 'rejected', reviewed_at: ago(10 * 1440) } };
+  const calls = [];
+  const b = await haloPeople(ENV, supabase({ ...PEOPLE_DATA, proofs: [{ assignment_id: A(40) }, { assignment_id: A(2) }, { assignment_id: 'nope' }], assignments: [OLD] }, { calls }));
+  const p = b.people.find((x) => x.m_uid === P(40));
+  assert.ok(p, 'the rejected participant is listed');
+  assert.equal(p.last_activity, 'rejected');
+  assert.equal(p.last_activity_at, OLD.action_proofs.reviewed_at, 'dated by the review, inside the window');
+  const byId = calls.filter((c) => c.path === '/rest/v1/action_mission_assignments' && c.query.get('id'));
+  assert.equal(byId.length, 1);
+  assert.equal(byId[0].query.get('id'), 'in.(' + A(40) + ')', 'only the assignments not already read are asked for, by valid id');
+  assert.match(calls.find((c) => c.path === '/rest/v1/action_proofs').query.get('reviewed_at'), /^gte\.\d{4}-/);
+  assert.equal(b.sources.reviewed, 'ok');
 });
 
 /* ---------- NOAA water levels ---------- */

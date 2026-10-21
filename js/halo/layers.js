@@ -66,7 +66,7 @@
     const C = window.Cesium;
     const state = {};
     const listeners = new Set();
-    Object.keys(SPECS).forEach((id) => { state[id] = { on: false, phase: 'off', count: 0, stale: false, reason: '', credit: '', fetched: 0, prims: [], entities: [], timer: 0, seq: 0, items: [] }; });
+    Object.keys(SPECS).forEach((id) => { state[id] = { on: false, phase: 'off', count: 0, stale: false, reason: '', credit: '', fetched: 0, checked: 0, prims: [], entities: [], timer: 0, seq: 0, items: [] }; });
 
     function viewer() { return G.viewer(); }
     function changed(id) { listeners.forEach((fn) => { try { fn(id, status(id)); } catch (_) { /* a listener's own fault */ } }); }
@@ -201,7 +201,11 @@
       } catch (e) { phase = 'error'; reason = 'could not reach the Worker'; }
       if (seq !== L.seq || !L.on) return;
       if (body && body.unavailable) { phase = 'unavailable'; reason = body.upstream_error === 'not_configured' ? 'needs a key' : 'provider unavailable'; }
-      L.fetched = Date.now(); L.reason = reason; L.stale = !!(body && body.stale); L.credit = body ? text(body.credit || body.attribution, 80) : '';
+      /* checked: when this page last asked (the polling clock); fetched: when the provider last answered, as the Worker says,
+         so a stale answer reads its real age, not the time of this request */
+      const provided = body ? Date.parse(body.fetched_at) : NaN;
+      L.checked = Date.now(); L.fetched = Number.isFinite(provided) ? provided : body ? L.checked : L.fetched;
+      L.reason = reason; L.stale = !!(body && body.stale); L.credit = body ? text(body.credit || body.attribution, 80) : '';
       if (body && !body.unavailable) {
         clear(id);
         const rows = Array.isArray(body[SPECS[id].rows]) ? body[SPECS[id].rows] : [];
@@ -215,7 +219,7 @@
     function tick(id) {
       const L = state[id];
       if (!L.on || document.hidden) return;
-      if (Date.now() - L.fetched >= SPECS[id].every - 500) load(id);
+      if (Date.now() - L.checked >= SPECS[id].every - 500) load(id);
     }
 
     function setOn(id, on) {
