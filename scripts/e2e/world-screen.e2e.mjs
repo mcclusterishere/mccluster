@@ -798,6 +798,72 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
   }finally{await ctx.close();}
 }
 
+/* A STATE (owner, 2026-10-21: "once you've selected a country ... select a state thereafter, but only after selecting the
+   country already and double tapping the state"). The World as it ships, on a phone, with real taps on the real globe:
+   Kenya's provinces, where the fixture's Nairobi stories are. */
+if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-state';
+  const {ctx,page,errors} = await open(DEVICES[0],{member:true,social:true});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>window.__huCountries?.().ready,null,{timeout:25000});
+    await page.waitForSelector('#mnFeed [data-news-id]',{timeout:15000}).catch(()=>{});
+    await globe.evaluate(()=>window.__huCountriesCam.view(37.6,-0.4,1.5e6));
+    await globe.waitForFunction(()=>window.__huCountries().lines===1,null,{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    const frame = await page.locator('#mnWorldFrame').boundingBox();
+    /* a place on the page, and what is on top of it there (the frame, or something covering the globe) */
+    const at = async (lon,lat)=>{const s=await globe.evaluate(([lon,lat])=>window.__huCountriesCam.screen(lon,lat),[lon,lat]);const x=frame.x+s.x,y=frame.y+s.y;return {x,y,top:await page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[x,y])};};
+    /* a double tap: two taps on the globe 150 ms apart by their own clock. Playwright's clicks each wait on a software-rendered
+       frame and can land further apart than a person's, so the two go to the globe's tap directly (the single taps below
+       are real clicks) */
+    const twice = (p)=>globe.evaluate(({x,y})=>{const t=performance.now();window.__huCountriesCam.tap(x,y,t);window.__huCountriesCam.tap(x,y,t+150);},{x:p.x-frame.x,y:p.y-frame.y});
+    const gap = ()=>page.waitForTimeout(700);
+    const now = ()=>globe.evaluate(()=>({selected:window.__huCountries().selected,state:window.__huCountries().selectedState,card:window.__huCountries().card}));
+    const eastern = await at(38.0,0.6), nairobi = await at(37.05,-1.25);
+    check(scope,'the taps land on the globe, nothing on the page covers them',eastern.top==='mnWorldFrame'&&nairobi.top==='mnWorldFrame',{eastern,nairobi});
+    /* a double tap on a country not yet selected selects the country, and nothing more */
+    await twice(eastern);
+    await globe.waitForFunction(()=>window.__huCountries().selected==='KE',null,{timeout:5000}).catch(()=>{});
+    await gap();
+    const first = await now();
+    check(scope,'a double tap on a country not yet selected selects the country only',first.selected==='KE'&&!first.state&&await page.textContent('#huRegionLabel')==='Kenya',first);
+    check(scope,'its card says a state can be chosen',/Double-tap a state to choose it/.test(first.card||''),first.card);
+    await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
+    const kenya = await page.locator('#mnFeed [data-news-id]').count();
+    check(scope,'Local shows Kenya\'s stories',kenya>0&&await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true',kenya);
+    /* with Kenya selected, a double tap picks the province under it */
+    await twice(eastern);
+    await globe.waitForFunction(()=>window.__huCountries().selectedState,null,{timeout:8000}).catch(()=>{});
+    const east = await now();
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
+    check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
+    check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No story mentions Eastern, Kenya yet/.test(await page.textContent('#mnFeed')));
+    await page.screenshot({path:join(OUT,scope+'-eastern.png')});
+    await gap();
+    /* another state of the same country: picked the same way, with no second read of the country */
+    await twice(nairobi);
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
+    await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:5000}).catch(()=>{});
+    const nb = await now();
+    check(scope,'a double tap on another state picks it, and its stories come back',/Nairobi/.test(nb.card||'')&&await page.textContent('#huRegionLabel')==='Nairobi, Kenya'&&await page.locator('#mnFeed [data-news-id]').count()===kenya,{nb,count:await page.locator('#mnFeed [data-news-id]').count(),kenya});
+    await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
+    await gap();
+    /* a single tap inside the country goes back to the whole country; another lets the country go, as before */
+    await page.mouse.click(eastern.x,eastern.y);
+    await globe.waitForFunction(()=>!window.__huCountries().selectedState,null,{timeout:5000}).catch(()=>{});
+    await gap();
+    const back = await now();
+    check(scope,'a single tap inside the country goes back to the whole country',back.selected==='KE'&&!back.state&&await page.textContent('#huRegionLabel')==='Kenya',back);
+    await page.mouse.click(eastern.x,eastern.y);
+    await globe.waitForFunction(()=>!window.__huCountries().selected,null,{timeout:5000}).catch(()=>{});
+    await gap();
+    check(scope,'and one more lets the country go, as it always has',!(await now()).selected&&await page.textContent('#huRegionLabel')==='All regions');
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
 /* THE NEWSROOM (owner, 2026-10-20): the house owner, and only the house owner, may also publish a post as an article on
    mccluster.org/news/; the Worker checks again (workers/mccluster/test/newsroom.test.mjs). */
 if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
