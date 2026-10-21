@@ -232,7 +232,9 @@ try{
     await context.route(u=>u.origin===WORLD&&u.pathname==='/js/travel/world-travel.mjs',async r=>{await travelGate;await r.fallback();});
     const requested=page.waitForRequest(u=>u.url().startsWith(WORLD+'/js/world-audio-continuity.js'));
     await page.locator('.appbar [data-appnav="world"]').click();await requested;
-    await page.locator('.world-audio-status button').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
+    /* the frame keeps quiet while the World is alive (no "Back to Music" card to tap): the way back is the bar's Music tab,
+       which stays over the World frame */
+    await page.locator('.appbar [data-appnav="music"]').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     releaseBridge();
     const frame=await (await page.$('#mccWorldAudioFrame')).contentFrame();
     await frame.waitForFunction(()=>document.body.dataset.worldAudioChild==='ready'&&document.body.dataset.worldAudioVisible==='false',null,{polling:50});
