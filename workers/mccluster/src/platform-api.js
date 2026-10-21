@@ -46,13 +46,14 @@ async function networkActors(env,muids=[]){
   const platform=authIds.length?await service(env,`platform_profiles?user_id=in.(${authIds.join(',')})&select=user_id,mccluster_id`):[];
   const handleByUser=new Map((platform||[]).map(x=>[x.user_id,x.mccluster_id||'']));
   const handleByMuid=new Map((links||[]).map(x=>[x.m_uid,handleByUser.get(x.auth_user_id)||'']));
+  const actorIds=new Set();
   const unlinked=ids.filter(id=>!handleByMuid.get(id));
   if(unlinked.length){
     const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle`).catch(()=>[]);
-    for(const actor of actors||[]) handleByMuid.set(actor.m_uid,actor.handle);
+    for(const actor of actors||[]) {handleByMuid.set(actor.m_uid,actor.handle);actorIds.add(actor.m_uid);}
   }
   const out={};
-  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||''};
+  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||'',is_ai:actorIds.has(id)};
   for(const p of profiles||[]) out[p.m_uid]={...out[p.m_uid],...p,mccluster_id:handleByMuid.get(p.m_uid)||''};
   return out;
 }
@@ -1026,7 +1027,7 @@ async function handleMnet(req,env,path,url){
       const only=url.searchParams.get('id');
       if(only!==null&&!uuidLike(only))return fail(req,env,'Invalid live session id',400);
       if(only)filters.push(`id=eq.${only}`);
-      const rows=await service(env,`network_live_sessions?${filters.join('&')}&select=id,host_m_uid,title,status,whep_url,post_id,started_at,last_seen_at,room_id,room_kind,category_key,action_mission_id,music_object_id,cohort_id,seat_limit,support_enabled&order=started_at.desc&limit=50`);
+      const rows=await service(env,`network_live_sessions?${filters.join('&')}&select=id,host_m_uid,title,status,whep_url,post_id,started_at,last_seen_at,room_id,room_kind,category_key,action_mission_id,music_object_id,cohort_id,seat_limit,support_enabled,ai_actor_keys&order=started_at.desc&limit=50`);
       const ids=(rows||[]).map(x=>x.id).filter(uuidLike);
       if(!ids.length)return reply(req,env,{sessions:[],kind:kind||'all',category:category||'all'});
       const missionIds=uniq(rows.map(x=>x.action_mission_id)).filter(uuidLike),musicIds=uniq(rows.map(x=>x.music_object_id)).filter(uuidLike),roomIds=uniq(rows.map(x=>x.room_id)).filter(uuidLike);
@@ -1156,7 +1157,7 @@ async function handleMnet(req,env,path,url){
       return reply(req,env,{id:sess.id,ok:true});
     }
 
-    const one=path.match(/^\/v1\/mnet\/live\/([0-9a-f-]{36})\/(on-air|heartbeat|end|publish)$/i);
+    const one=path.match(/^\/v1\/mnet\/live\/([0-9a-f-]{36})\/(on-air|heartbeat|end|publish|actors|cue)$/i);
     if(one){
       const rows=await service(env,`network_live_sessions?id=eq.${one[1]}&select=*&limit=1`),sess=rows?.[0];
       if(!sess)return fail(req,env,'Broadcast not found',404);
@@ -1169,6 +1170,23 @@ async function handleMnet(req,env,path,url){
       }
       if(!host)return fail(req,env,'Broadcast not found',404);
       if(sess.status==='ended')return fail(req,env,'This broadcast has ended.',410);
+      if(act==='actors'&&req.method==='POST'){
+        const b=await json(req);
+        if(!Array.isArray(b.actor_keys)||b.actor_keys.length>3||b.actor_keys.some(k=>typeof k!=='string'||!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(k)))return fail(req,env,'Choose up to three platform characters',400);
+        if(b.actor_keys.length){
+          const cutoff=encodeURIComponent(new Date(Date.now()-120000).toISOString());
+          const nodes=await service(env,`ops_compute_nodes?display_name=eq.ovh-primary&state=eq.online&last_seen_at=gte.${cutoff}&select=id&limit=1`);
+          if(!nodes?.length)return fail(req,env,'Royce is offline while McCluster Core reconnects. You can keep broadcasting.',503);
+        }
+        return reply(req,env,await service(env,'rpc/ops_live_actor_config',{method:'POST',body:JSON.stringify({p_session:sess.id,p_host:user.id,p_keys:b.actor_keys})}));
+      }
+      if(act==='cue'&&req.method==='POST'){
+        const b=await json(req),text=typeof b.text==='string'?b.text.trim():'';
+        if(sess.status!=='live'||!sess.post_id||!sess.ai_actor_keys?.length)return fail(req,env,'Invite a character to the live room first',409);
+        if(chars(text)<1||chars(text)>600||!['typed','browser_caption'].includes(b.source))return fail(req,env,'Share up to 600 characters',400);
+        const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:sess.host_m_uid,body:text,post_type:'update',visibility:'public',reply_to_id:sess.post_id,metadata:{live_cue:{session_id:sess.id,source:b.source,unverified_transcript:b.source==='browser_caption'}}})});
+        return reply(req,env,{post_id:rows?.[0]?.id},201);
+      }
       const now=new Date().toISOString();
       if(act==='on-air'&&req.method==='POST'){
         let postId=sess.post_id;
@@ -1182,7 +1200,10 @@ async function handleMnet(req,env,path,url){
       }
       if(act==='heartbeat'&&req.method==='POST'){
         await service(env,`network_live_sessions?id=eq.${sess.id}&status=eq.live`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({last_seen_at:now})});
-        return reply(req,env,{id:sess.id,ok:true});
+        // Inference stays in the durable Core queue; an AI failure never ends the stream.
+        let actors=null;
+        if(sess.ai_actor_keys?.length) {try {actors=await service(env,'rpc/ops_live_actor_tick',{method:'POST',body:JSON.stringify({p_session:sess.id})});} catch {actors={queued:false,error:'actor_queue_unavailable'};}}
+        return reply(req,env,{id:sess.id,ok:true,actors});
       }
       if(act==='publish'&&req.method==='GET'){
         const input=await cfStream(env,'GET',`/live_inputs/${sess.cf_input_uid}`);
