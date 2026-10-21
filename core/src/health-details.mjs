@@ -124,7 +124,10 @@ export async function enrichHostHealth(snapshot, {rest, orgId, diagnostics = run
     diagnostics(),
   ]);
   const result = {...snapshot, jobs: {...snapshot.jobs, retry_exhausted_count: failures.retry_exhausted_count,
-    recent_failures: failures.recent_failures, failure_details: failures}, runtime_checks: probes};
+    sampled_retry_exhausted_count: snapshot.jobs?.retry_exhausted_count ?? null,
+    recent_failures: failures.complete || failures.recent_failures?.length ? failures.recent_failures : (snapshot.jobs?.recent_failures || []),
+    recent_failures_scope: failures.complete ? 'complete_24h_query' : failures.recent_failures?.length ? 'partial_24h_query' : 'collector_sample_fallback',
+    failure_details: failures}, runtime_checks: probes};
   result.health_sections = healthSections(result);
   // Preserve the aggregate warning status and all historical failures. Sections
   // explain the scope; they do not turn unconfigured capabilities into successes.
