@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Parse shell scripts
         run: bash -n scripts/mail/verify-mail.sh && bash -n scripts/mail/test-verify-mail.sh
       - name: Test readiness with mocked DNS/network
