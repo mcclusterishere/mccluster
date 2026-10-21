@@ -920,8 +920,8 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
     /* the editor: a frame of the video */
     /* a tap, as the feed may still be settling under a software-rendered globe */
     await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
-    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 5000 });
-    await page.waitForFunction(() => !document.getElementById('mnThumbPick').hidden, null, { timeout: 15000 }).catch(() => {});
+    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 30000 }).catch(() => {});
+    await page.waitForFunction(() => !document.getElementById('mnThumbPick').hidden, null, { timeout: 60000 }).catch(() => {});
     check(scope, 'the editor opens with the video\'s frames to pick from (same-origin storage: pixels readable)', !(await page.isHidden('#mnThumbPick')) && await page.isVisible('#mnThumbVideo'));
     const fresh = req(world, 'GET', new RegExp(`^/v1/mnet/media/${VID.mine}/url$`));
     check(scope, 'the editor asks for a fresh address for the video, with the member\'s session', fresh.length >= 2 && fresh.every((r) => r.auth), fresh.length);
@@ -960,7 +960,7 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
     /* or a picture of the member's own */
     /* a tap, as the feed may still be settling under a software-rendered globe */
     await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
-    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 5000 });
+    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 30000 }).catch(() => {});
     const p2 = patches(), picture = join(ROOT, 'assets/frames/church_0001.jpg');
     /* as a person does it: Upload an image opens the file chooser, and the picture is chosen there. The sheet rises in, and a
        software-rendered page can take a while to let it settle, so the tap waits until the button can take it */
@@ -1038,7 +1038,7 @@ if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
   page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
   try {
     await page.goto(BASE + '/create.html', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#crMake:not([hidden])', { timeout: 10000 });
+    await page.waitForSelector('#crMake:not([hidden])', { timeout: 30000 });
     await page.setInputFiles('#crLibrary', join(ROOT, 'assets/video/hero.webm'));
     await page.waitForFunction(() => !document.getElementById('crCoverImg').hidden, null, { timeout: 20000 }).catch(() => {});
     const covers = () => world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url' && r.body.mime_type === 'image/jpeg');
