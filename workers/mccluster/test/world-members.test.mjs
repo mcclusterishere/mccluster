@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { handleWorldMembers, shapeMemberRows, publicMembers, MEMBERS_PATH, MEMBERS_K } from '../src/world-members.js';
+import { handleWorldMembers, shapeMembers, publicMembers, MEMBERS_PATH, MEMBERS_K } from '../src/world-members.js';
 
 const KEY = 'service-role-SECRET';
 const ENV = { SUPABASE_URL: 'https://sb.test', SUPABASE_SERVICE_ROLE_KEY: KEY, ALLOWED_ORIGINS: 'https://matthew.mccluster.org' };
@@ -13,17 +13,14 @@ const NOW = Date.parse('2026-10-21T12:02:00Z');
 const get = (token = '') => new Request(`https://api.mccluster.org${MEMBERS_PATH}`, { headers: { origin: 'https://matthew.mccluster.org', ...(token ? { authorization: 'Bearer ' + token } : {}) } });
 function memoryCache() { const m = new Map(); return { async match(k) { const v = m.get(k.url); return v ? new Response(v) : undefined; }, async put(k, r) { m.set(k.url, await r.text()); }, raw: m }; }
 
-const ROWS = [
-  { country: 'US', region_code: 'CT', lon: -72.93, lat: 41.31, accounts: 3 },
-  { country: 'US', region_code: 'CA', lon: -118.24, lat: 34.05, accounts: 2 },
-  { country: 'US', region_code: null, lon: null, lat: null, accounts: 1 },
-  { country: 'GB', region_code: 'ENG', lon: -0.12, lat: 51.51, accounts: 4 },
-  { country: 'IT', region_code: '82', lon: 13.36, lat: 38.12, accounts: 1 },
-  { country: 'zz', region_code: 'X', lon: 1, lat: 1, accounts: 9 },
-  { country: 'FR', region_code: 'IDF', lon: 2.35, lat: 48.86, accounts: 0 }
-];
+/* the function's one answer: every account in the countries (the unplaced one in the US too), places for those with coordinates */
+const BODY = {
+  countries: { US: 6, GB: 4, IT: 1, zz: 9, FR: 0 },
+  total: 20,
+  cells: [[-72.93, 41.31, 3, 'US', 'CT'], [-118.24, 34.05, 2, 'US', 'CA'], [-0.12, 51.51, 4, 'GB', 'ENG'], [13.36, 38.12, 1, 'IT', '82'], [1, 1, 9, 'zz', 'X'], [2.35, 48.86, 2, 'FR', 'IDF']]
+};
 /* Supabase as the route sees it: the session check, the house owner's org, and the RPC */
-function supabase(rows = ROWS, { rpcStatus = 200 } = {}) {
+function supabase(body = BODY, { rpcStatus = 200 } = {}) {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     const u = new URL(String(url)), h = new Headers(init.headers || {});
@@ -32,7 +29,7 @@ function supabase(rows = ROWS, { rpcStatus = 200 } = {}) {
     if (u.pathname === '/auth/v1/user') return h.get('authorization') === 'Bearer owner' ? json({ id: OWNER }) : h.get('authorization') === 'Bearer member' ? json({ id: MEMBER }) : json({}, 401);
     if (u.pathname === '/rest/v1/orgs') return json([{ id: HOUSE }]);
     if (u.pathname === '/rest/v1/org_members') return json(u.searchParams.get('profile_id') === 'eq.' + OWNER ? [{ role: 'owner' }] : []);
-    if (u.pathname === '/rest/v1/rpc/world_member_regions') return rpcStatus === 200 ? json(rows) : json({ message: 'down' }, rpcStatus);
+    if (u.pathname === '/rest/v1/rpc/world_member_regions') return rpcStatus === 200 ? json(body) : json({ message: 'down' }, rpcStatus);
     return json({ message: 'unexpected ' + u.pathname }, 404);
   };
   return { fetchImpl, calls };
@@ -47,7 +44,7 @@ test('the house owner gets every country exactly, the total, and the places to c
   const body = await res.json();
   assert.equal(body.exact, true);
   assert.deepEqual(body.countries, { US: 6, GB: 4, IT: 1 }, 'one count per account, every country, the unplaced one too');
-  assert.equal(body.total, 11);
+  assert.equal(body.total, 11, 'the sum of the countries that pass, never the function\'s own claim');
   assert.deepEqual(body.cells, [[-72.93, 41.31, 3, 'US', 'CT'], [-118.24, 34.05, 2, 'US', 'CA'], [-0.12, 51.51, 4, 'GB', 'ENG'], [13.36, 38.12, 1, 'IT', '82']]);
   assert.equal(body.basis, 'accounts_by_latest_signed_in_ip_place');
   const rpc = sb.calls.find((c) => c.path === '/rest/v1/rpc/world_member_regions');
@@ -81,7 +78,7 @@ test('the database is read once per five minutes, whoever asks', async () => {
 });
 
 test('a database that cannot answer is unavailable, never zero, and is not kept', async () => {
-  const sb = supabase(ROWS, { rpcStatus: 404 }), cache = memoryCache();
+  const sb = supabase(BODY, { rpcStatus: 404 }), cache = memoryCache();
   const res = await handleWorldMembers(get(), ENV, { fetchImpl: sb.fetchImpl, cacheImpl: cache, now: () => NOW });
   const body = await res.json();
   assert.equal(body.unavailable, true);
@@ -99,11 +96,15 @@ test('only GET on its own path', async () => {
   assert.equal(post.status, 405);
 });
 
-test('rows are checked: a bad country, a zero, an out-of-range place or a strange region code never pass', () => {
-  const d = shapeMemberRows([{ country: 'US', region_code: 'C;T', lon: 200, lat: 41, accounts: 2 }, { country: 'USA', accounts: 3 }, { country: 'DE', region_code: 'BE', lon: 13.4049, lat: 52.52, accounts: '2' }, null]);
+test('the answer is checked: a bad country, a zero, an out-of-range place, a strange region code or a set of rows never pass', async () => {
+  const d = shapeMembers({ countries: { US: 2, USA: 3, DE: '2', fr: 1 }, total: 999, cells: [[200, 41, 2, 'US', 'CT'], [13.4049, 52.52, 2, 'DE', 'BE'], [-72.9, 41.3, 1, 'US', 'C;T'], [5, 5, 1, 'NL', ''], 'x'] });
   assert.deepEqual(d.countries, { US: 2, DE: 2 });
-  assert.deepEqual(d.cells, [[13.4, 52.52, 2, 'DE', 'BE']]);
+  assert.equal(d.total, 4);
+  assert.deepEqual(d.cells, [[13.4, 52.52, 2, 'DE', 'BE'], [-72.9, 41.3, 1, 'US', '']], 'a place in a country the totals do not show is dropped');
   assert.deepEqual(publicMembers({ countries: { US: 5, GB: 4 } }), { exact: false, k: 5, countries: { US: 5 } });
+  /* the old set-of-rows shape (or anything that is not one object) is unavailable, never zero */
+  const rows = await (await handleWorldMembers(get(), ENV, { fetchImpl: supabase([{ country: 'US', accounts: 9 }]).fetchImpl, cacheImpl: memoryCache(), now: () => NOW })).json();
+  assert.equal(rows.unavailable, true);
 });
 
 test('the route is wired, outside the release guard (the public count is a public feature), and the SQL is service-role only', () => {
@@ -115,6 +116,8 @@ test('the route is wired, outside the release guard (the public count is a publi
   assert.match(sql, /revoke all on function public\.world_member_regions\(integer\) from public, anon, authenticated;/);
   assert.match(sql, /grant execute on function public\.world_member_regions\(integer\) to service_role;/);
   assert.match(sql, /select distinct on \(e\.uid\) e\.uid,/, 'one place per account');
+  assert.match(sql, /returns jsonb/, 'one answer, so no row cap cuts the totals short (Codex #590)');
+  assert.doesNotMatch(sql.slice(sql.indexOf('as $$')), /\blimit\b/i, 'no limit on what is counted');
   assert.match(sql, /join auth\.users u on u\.id = l\.uid/, 'a deleted account no longer counts');
   assert.doesNotMatch(sql.slice(sql.indexOf('as $$')), /e\.ip\b|e\.city|e\.postal|device_id|session_id/, 'no address, city, device or session is read');
 });

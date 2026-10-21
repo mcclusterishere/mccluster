@@ -150,7 +150,7 @@ test('Local reads the picked place\'s own news from the Worker: the stories the 
   assert.ok(paint.indexOf('pn.items.slice()') < paint.indexOf('if (!items.length && !news.length)'), 'before the empty check, so the country feed\'s own empty message never hides the place\'s news');
   assert.doesNotMatch(paint, /news\.filter\(function \(n\) \{ return n\.country_code/, 'no filter over the world\'s first page');
   assert.match(load, /NEWS_API \+ "\?limit=50&country=" \+ encodeURIComponent\(c\.code\) \+ \(box \? "&bbox=" \+ box\.join\(","\) : ""\)/);
-  assert.match(load, /\(!pick \|\| newsInState\(n, pick\)\)/, 'a state keeps the stories inside its own shape');
+  assert.match(load, /\(!pick \|\| newsInState\(onHeatGrid\(n\), pick\)\)/, 'a state keeps the stories inside its own shape, placed as the heat map counts them');
   assert.match(load, /if \(pick && p\.before && p\.items\.length < 20 && \+\+pages < 6\) return step\(p\.before\);/, 'a state reads on past its box\'s corners, a few pages at most');
   assert.match(paint, /"No news from " \+ place \+ " in the last 24 hours\."/, 'a place with none says so');
   assert.match(js, /if \(state\.feedScope === "local"\) \{ loadPlaceNews\(false\); if \(state\.placeScope\.enabled\) loadPlaceFeed\(false\); \}/, 'Load more pages the place');
@@ -203,6 +203,14 @@ test('a picked state keeps the stories placed inside its shape, and checks the s
   assert.equal(newsInState({ lon: 0, lat: 0 }, s), false, 'a hole (an enclave) is not the state');
   assert.equal(newsInState({ lon: 20, lat: 0 }, s), false);
   assert.equal(newsInState({ lon: null, lat: null }, s), false, 'a story with no point cannot be placed in a state');
+  /* a story just inside a border whose grid point (where the heat map counted it) is outside is not the state's (Codex #590) */
+  const onHeatGrid = new Function(fnSource(js, 'onHeatGrid') + '\nreturn onHeatGrid;')();
+  assert.deepEqual(onHeatGrid({ lon: 10.02, lat: 36.83 }), { lon: 10, lat: 36.85 });
+  const edge = worldState({ key: 'XX-2', name: 'Edge', polygons: [[[[-10, -10], [10.04, -10], [10.04, 10], [-10, 10], [-10, -10]]]] });
+  assert.equal(newsInState({ lon: 10.03, lat: 5 }, edge), true);
+  assert.equal(newsInState(onHeatGrid({ lon: 10.03, lat: 5 }), edge), false, 'counted at 10.05, outside');
+  assert.equal(newsInState(onHeatGrid({ lon: 10.01, lat: 5 }), edge), true, 'counted at 10.00, inside');
+  assert.deepEqual(onHeatGrid({ lon: null }), { lon: null, lat: null });
   assert.equal(worldState(null), null);
   assert.equal(worldState({ name: 'x', polygons: 'no' }), null);
   assert.equal(worldState({ name: 'x', polygons: [[[[0, 0], [1, 'a'], [1, 1], [0, 0]]]] }), null, 'a ring with a bad point is dropped');

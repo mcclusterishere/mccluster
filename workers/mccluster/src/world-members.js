@@ -24,17 +24,17 @@ const rc = (v) => (typeof v === 'string' && /^[A-Z0-9]{1,4}$/.test(v) ? v : '');
 const deg = (v, max) => (typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= max ? Math.round(v * 100) / 100 : null);
 const count = (v) => { const n = Number(v); return Number.isInteger(n) && n > 0 ? n : 0; };
 
-/* the RPC's rows, checked and shaped: { countries, total, cells: [[lon, lat, n, country, region], ...] } */
-export function shapeMemberRows(rows) {
+/* the RPC's one answer, checked: { countries, total, cells: [[lon, lat, n, country, region], ...] }. The total is the sum of
+   the countries that pass, so it never claims an account the countries do not show */
+export function shapeMembers(body) {
   const countries = {}, cells = [];
   let total = 0;
-  for (const r of Array.isArray(rows) ? rows : []) {
-    const c = cc(r && r.country), n = count(r && r.accounts);
-    if (!c || !n) continue;
-    countries[c] = (countries[c] || 0) + n;
-    total += n;
-    const lon = deg(r.lon, 180), lat = deg(r.lat, 90);
-    if (lon !== null && lat !== null) cells.push([lon, lat, n, c, rc(r.region_code)]);
+  const raw = body && typeof body === 'object' && body.countries && typeof body.countries === 'object' ? body.countries : {};
+  for (const [k, v] of Object.entries(raw)) { const c = cc(k), n = count(v); if (c && n) { countries[c] = n; total += n; } }
+  for (const r of Array.isArray(body && body.cells) ? body.cells : []) {
+    if (!Array.isArray(r)) continue;
+    const lon = deg(Number(r[0]), 180), lat = deg(Number(r[1]), 90), n = count(r[2]), c = cc(r[3]);
+    if (lon !== null && lat !== null && n && c && countries[c]) cells.push([lon, lat, n, c, rc(r[4])]);
   }
   return { countries, total, cells };
 }
@@ -78,7 +78,8 @@ export async function handleWorldMembers(request, env, { fetchImpl = fetch, cach
         body: JSON.stringify({ p_days: WINDOW_DAYS })
       });
       if (!res.ok) return { unavailable: true };
-      return shapeMemberRows(await res.json());
+      const body = await res.json();
+      return body && typeof body === 'object' && !Array.isArray(body) ? shapeMembers(body) : { unavailable: true };
     } catch { return { unavailable: true }; }
   });
   const base = { ok: true, basis: 'accounts_by_latest_signed_in_ip_place', window_days: WINDOW_DAYS };

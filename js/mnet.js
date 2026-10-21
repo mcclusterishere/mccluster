@@ -1226,6 +1226,12 @@
     return polygons.length ? { key: String(s.key || "").slice(0, 60), name: s.name.trim().slice(0, 80), type: typeof s.type === "string" ? s.type.slice(0, 40) : "", polygons: polygons } : null;
   }
   /* is a story placed inside the picked state? Only a story with a point can be; holes (an enclave) are not the state */
+  /* a story's place as the heat map counts it (the Worker's 0.05° grid, world-news-discovery.js HEAT_CELL), so a state lists
+     exactly the stories its count holds, a border town's included (Codex #590) */
+  function onHeatGrid(n) {
+    var g = function (v) { return typeof v === "number" && isFinite(v) ? Number((Math.round(v / 0.05) * 0.05).toFixed(2)) : null; };
+    return { lon: g(n && n.lon), lat: g(n && n.lat) };
+  }
   function newsInState(n, s) {
     var x = n && n.lon, y = n && n.lat;
     if (typeof x !== "number" || typeof y !== "number") return false;
@@ -1787,7 +1793,7 @@
         if (!d || d.ok !== true || !Array.isArray(d.items) || d.unavailable) { p.error = "The news for this place is not available right now."; return; }
         var have = {};
         p.items.forEach(function (n) { have[n.id] = true; });
-        d.items.map(cleanNews).filter(function (n) { return n && !have[n.id] && (!pick || newsInState(n, pick)); }).forEach(function (n) { have[n.id] = true; p.items.push(n); });
+        d.items.map(cleanNews).filter(function (n) { return n && !have[n.id] && (!pick || newsInState(onHeatGrid(n), pick)); }).forEach(function (n) { have[n.id] = true; p.items.push(n); });
         p.before = typeof d.next_before === "string" && d.next_before ? d.next_before : null;
         /* a state's box takes in its neighbours' corners too: read on until a page of its own shows, or there is no more */
         if (pick && p.before && p.items.length < 20 && ++pages < 6) return step(p.before);

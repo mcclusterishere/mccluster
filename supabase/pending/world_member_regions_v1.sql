@@ -20,10 +20,13 @@
 -- (at most 400 days, the events retention), so the countries add up to the
 -- total. A deleted account no longer counts (the join to auth.users).
 --
--- What leaves the database: country, region code, and the place rounded to
--- hundredths of a degree (the precision of the state shapes the globe uses to
--- find the state), with how many accounts are there. Never a uid, IP, city,
--- postal code, device or session.
+-- What leaves the database: one JSON answer. `countries` counts every account
+-- by country (an account with no coordinates too), `total` is all of them,
+-- and `cells` are [lon, lat, accounts, country, region code] with the place
+-- rounded to hundredths of a degree (the precision of the state shapes the
+-- globe uses to find the state). Never a uid, IP, city, postal code, device or
+-- session. It is a single value rather than rows, so no row cap can cut the
+-- totals short.
 --
 -- Who can call it: service_role only. The Worker route GET /v1/world/members
 -- (workers/mccluster/src/world-members.js) gives the house owner the exact
@@ -36,7 +39,7 @@
 -- then git mv to supabase/migrations/<version>_world_member_regions_v1.sql).
 
 create or replace function public.world_member_regions(p_days integer default 400)
-returns table(country text, region_code text, lon double precision, lat double precision, accounts bigint)
+returns jsonb
 language sql
 stable
 security definer
@@ -57,24 +60,30 @@ as $$
   ),
   placed as (
     select l.cc, l.rc,
-      (l.longitude between -180 and 180 and l.latitude between -90 and 90
-        and not (l.longitude = 0 and l.latitude = 0)) as has_place,
-      l.longitude, l.latitude
+      case when l.longitude between -180 and 180 and l.latitude between -90 and 90
+        and not (l.longitude = 0 and l.latitude = 0) then round(l.longitude::numeric, 2) end as lon,
+      case when l.longitude between -180 and 180 and l.latitude between -90 and 90
+        and not (l.longitude = 0 and l.latitude = 0) then round(l.latitude::numeric, 2) end as lat
     from latest l
     join auth.users u on u.id = l.uid
+  ),
+  by_country as (
+    select p.cc, count(*) as n from placed p group by 1
+  ),
+  by_place as (
+    select p.cc, coalesce(p.rc, '') as rc, p.lon, p.lat, count(*) as n
+    from placed p where p.lon is not null group by 1, 2, 3, 4
   )
-  select p.cc, p.rc,
-    case when p.has_place then round(p.longitude::numeric, 2)::double precision end,
-    case when p.has_place then round(p.latitude::numeric, 2)::double precision end,
-    count(*)::bigint
-  from placed p
-  group by 1, 2, 3, 4
-  order by 5 desc, 1, 2
-  limit 5000;
+  -- ONE ANSWER, NOT A SET: every account is in the totals, and no row cap (PostgREST's max rows included) can cut it short
+  select jsonb_build_object(
+    'countries', coalesce((select jsonb_object_agg(c.cc, c.n) from by_country c), '{}'::jsonb),
+    'total', (select count(*) from placed),
+    'cells', coalesce((select jsonb_agg(jsonb_build_array(b.lon, b.lat, b.n, b.cc, b.rc) order by b.n desc, b.cc, b.rc) from by_place b), '[]'::jsonb)
+  );
 $$;
 
 comment on function public.world_member_regions(integer) is
-  'The World place card: accounts by the IP country, region code and rounded place of their latest signed-in visit (one place per account). Service role only; never a uid, IP, city, postal code or device.';
+  'The World place card: accounts by the IP country, region code and rounded place of their latest signed-in visit (one place per account), as one JSON answer {countries, total, cells}. Service role only; never a uid, IP, city, postal code or device.';
 
 revoke all on function public.world_member_regions(integer) from public, anon, authenticated;
 grant execute on function public.world_member_regions(integer) to service_role;
