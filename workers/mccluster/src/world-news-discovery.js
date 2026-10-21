@@ -46,12 +46,13 @@
    layers in world-layers.js once the World's layer access (#442) lands. */
 import { reply, fail } from './lib/http.js';
 import { fetchNoCrossHostRedirect } from './lib/safe-fetch.js';
-import { isoFromGdelt } from './intel/news-country-codes.js';
+import { isoFromGdelt, gdeltCodesFor } from './intel/news-country-codes.js';
 
 export const GDELT_LASTUPDATE = 'https://data.gdeltproject.org/gdeltv2/lastupdate.txt';
 export const GDELT_HOSTS = Object.freeze(['https://data.gdeltproject.org/gdeltv2/', 'https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/']);
 export const NEWS_ATTRIBUTION = Object.freeze({ name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' });
 export const NEWS_PATH = '/v1/world/news';
+export const NEWS_HEAT_PATH = '/v1/world/news-heat';
 const GDELT_ALLOWED_HOSTS = Object.freeze(['data.gdeltproject.org', 'storage.googleapis.com']);
 
 const PER_FILE = 1000;
@@ -505,4 +506,63 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
     } catch { return { unavailable: true }; }
   });
   return answer(request, env, { ok: true, items: data.items || [], next_before: data.next_before || null, attribution: NEWS_ATTRIBUTION, ...(data.unavailable ? { unavailable: true } : {}) }, 60);
+}
+
+/* ---------- the heat map ----------
+   Owner, 2026-10-21: "instead of pins on the map ... aggregate each mention of a state or country with a heat map of how
+   many articles or mentions it has". GET /v1/world/news-heat counts the stories of the last HEAT_HOURS by the country each
+   one mentions (ISO 3166-1, from GDELT's FIPS, as the feed names it). With ?country=XX it gives that country's stories as
+   places instead, counted on a HEAT_CELL grid, so the globe can count them by state with the state shapes it already has.
+   Only counts and rounded places leave here: no title, link or id. It reads our own table, a page at a time up to
+   HEAT_PAGES (capped says when there were more), is kept five minutes per data centre, and answers 200 with nothing when
+   the database cannot. */
+const HEAT_HOURS = 24, HEAT_PAGE = 1000, HEAT_PAGES = 15, HEAT_CELL = 0.05;
+export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cacheImpl = null, now = () => Date.now() } = {}) {
+  const url = new URL(request.url);
+  if ((url.pathname.replace(/\/+$/, '') || '/') !== NEWS_HEAT_PATH) return null;
+  if (request.method !== 'GET' && request.method !== 'HEAD') return fail(request, env, 'Method not allowed', 405);
+  const raw = url.searchParams.get('country');
+  if (raw !== null && !/^[A-Z]{2}$/.test(raw)) return fail(request, env, 'country must be an ISO 3166-1 alpha-2 code', 400);
+  const country = raw, configured = env && env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY;
+  /* the window moves on with the cache: one key per five minutes */
+  const slot = Math.floor(now() / 300e3);
+  const key = `https://cache.mccluster.internal/world/news-heat?country=${country || ''}&slot=${slot}`;
+  const data = await keptOrFetched(cacheImpl, key, 300e3, async () => {
+    if (!configured) return { unavailable: true };
+    try {
+      const since = new Date(slot * 300e3 - HEAT_HOURS * 3600e3).toISOString();
+      const fips = country ? gdeltCodesFor(country) : [];
+      const params = new URLSearchParams({ select: country ? 'headline_latitude,headline_longitude' : 'location_country_fips', ingestion_provider: 'eq.gdelt_gkg_v2', published_at: 'gte.' + since, order: 'id.asc', limit: String(HEAT_PAGE) });
+      if (country) params.set('location_country_fips', fips.length > 1 ? 'in.(' + fips.join(',') + ')' : 'eq.' + fips[0]);
+      const rows = [];
+      for (let page = 0; page < HEAT_PAGES; page++) {
+        params.set('offset', String(page * HEAT_PAGE));
+        const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/media_news_articles?${params}`, {
+          headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error('news heat ' + res.status);
+        const got = JSON.parse(body || '[]');
+        if (!Array.isArray(got)) throw new Error('news heat: not a list');
+        rows.push(...got);
+        if (got.length < HEAT_PAGE) break;
+      }
+      const capped = rows.length >= HEAT_PAGE * HEAT_PAGES;
+      if (!country) {
+        const countries = {};
+        let total = 0;
+        for (const r of rows) { const c = isoFromGdelt(r && r.location_country_fips); if (!c) continue; countries[c] = (countries[c] || 0) + 1; total++; }
+        return { countries, total, capped };
+      }
+      const cells = new Map();
+      let total = 0;
+      for (const r of rows) {
+        const lat = num(r && r.headline_latitude), lon = num(r && r.headline_longitude);
+        if (lat === null || lon === null || Math.abs(lat) > 90 || Math.abs(lon) > 180 || (lat === 0 && lon === 0)) continue;
+        const x = Math.round(lon / HEAT_CELL) * HEAT_CELL, y = Math.round(lat / HEAT_CELL) * HEAT_CELL, k = x.toFixed(2) + '|' + y.toFixed(2);
+        cells.set(k, (cells.get(k) || 0) + 1); total++;
+      }
+      return { country, cells: [...cells].map(([k, n]) => { const [x, y] = k.split('|').map(Number); return [x, y, n]; }), total, capped };
+    } catch { return { unavailable: true }; }
+  });
+  return answer(request, env, { ok: true, window_hours: HEAT_HOURS, cell_degrees: country ? HEAT_CELL : undefined, ...data, attribution: NEWS_ATTRIBUTION }, 300);
 }

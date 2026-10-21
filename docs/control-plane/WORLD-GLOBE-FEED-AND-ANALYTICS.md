@@ -397,13 +397,38 @@ on the map.")
     stories whose point falls inside the state. Member posts carry only their
     country, so they stay. A state of the country already loaded does not load
     the country's feed again.
-- **The pins are the cards.** The globe's news pins are the stories the feed
-  is showing (`window.MCC_WORLD_NEWS_ITEMS` is the rendered list, re-sent on
-  every render), and a news chip's tap marks that story's own pin. A story's
-  chip names its country from the ISO code the Worker sends
-  (`/v1/world/news` `country`, from GDELT's FIPS through
-  `workers/mccluster/src/intel/news-country-codes.js`, which also reads GDELT's
-  `GZ` Gaza Strip and `RB` Serbia).
+- **The news heat map, not pins** (owner, 2026-10-21: "instead of pins on the
+  map ... aggregate each mention of a state or country with a heat map of how
+  many articles or mentions it has ... so people aren't just needlessly
+  searching for tiny pins").
+  - **The counts.** `GET /v1/world/news-heat`
+    (`workers/mccluster/src/world-news-discovery.js`) counts the last 24 hours
+    of stories by the country each one mentions (ISO, from GDELT's FIPS).
+    `?country=XX` gives that country's stories as places on a 0.05° grid
+    instead.
+    - Only counts and rounded places leave the Worker.
+    - It reads a page at a time, up to 15,000 stories (`capped` says when there
+      were more).
+    - It is kept five minutes per data centre.
+    - It answers an empty 200 when the database can't.
+  - **The globe** (`js/world-countries.js`) shades each country by its count.
+    A selected country shows its states instead, counted from those places with
+    the state shapes. The card gives the count ("8 stories in the last 24
+    hours"), and a legend on the globe says what the colours mean.
+  - **The pins.** There is no pin per story. The one pin left is the story
+    whose place a news card sent ("where is this?").
+- **One heat scale for the World and Analytics** (`js/heat-scale.js`; owner, of
+  Analytics: "lackluster ... the shading isn't dynamic enough").
+  - **What changed.** The old shading was value ÷ the largest value,
+    square-rooted, so one big country pushed every other one into the bottom
+    fifth.
+  - **The level now.** A value's level is half its rank among the places that
+    have any, and half its size on a log scale. Ties share a level, and the
+    least is faint but never invisible.
+  - **The World's ramp** is semantic heat: crimson through orange to pale
+    gold, rising in lightness at every stop.
+  - **Analytics' ramp** is one hue built from its accent token: land, then
+    accent, then a light tint. Its legend bar is the same three stops in CSS.
 
 ### C3. The owner's five-tab bar (admin first)
 

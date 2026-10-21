@@ -165,8 +165,9 @@ test('the pins on the Earth are the stories on the screen (owner, 2026-10-20: "I
   assert.match(wrapper, /new CustomEvent\("mcc:world-news-shown"\)/);
   assert.match(paint, /state\.shownNews = news\.slice\(\);\s*host\.innerHTML =/, 'only the list that is drawn is shown');
   assert.match(bridge, /window\.addEventListener\('mcc:world-news-shown', sync\);/);
-  /* a tapped story's own pin is marked */
-  assert.match(fnSource(globe, 'focusPlace'), /focusedNews=lastPlace\.id;markNewsPin\(\);/);
+  /* no pin per story (the heat map counts them); a tapped story's place is the one pin, marked */
+  assert.match(fnSource(globe, 'focusPlace'), /focusedNews=lastPlace\.id;drawWorldNewsPins\(\);/);
+  assert.match(fnSource(globe, 'drawWorldNewsPins'), /publicNewsItems\.filter\(x=>focusedNews&&x\.id===focusedNews\)/);
   assert.match(fnSource(globe, 'drawWorldNewsPins'), /markNewsPin\(\);/);
 });
 

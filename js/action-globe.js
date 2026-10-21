@@ -168,10 +168,10 @@ function frameObstacles(){
  const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
  return {frame,overlap,obstacles:[dock,...['#mccWorldAudioControls','#mnWorldStack','.mn__world-expand','#mnWorldPlay','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r))};
 }
-/* the lowest free slot for a control of this size, bottom right first, then bottom left; null when there is none */
-function clearSlot(size,base,margin){
+/* the lowest free slot for a control of this size, bottom right first, then bottom left (or the sides given); null when there is none */
+function clearSlot(size,base,margin,sides=['right','left']){
  const {frame,overlap,obstacles}=frameObstacles();
- for(const side of ['right','left']){
+ for(const side of sides){
   const left=side==='right'?frame.right-size.width-margin:frame.left+margin,right=left+size.width;
   const blocking=obstacles.filter(r=>left<r.right&&right>r.left);
   const bottoms=[base,...blocking.map(r=>Math.ceil(frame.bottom-r.top)+10),...blocking.map(r=>Math.floor(frame.bottom-r.bottom-size.height)-10)];
@@ -211,9 +211,19 @@ function liftWorldCorner(){
   if(slot){corner.style.left=slot.side==='left'?'8px':'auto';corner.style.right=slot.side==='right'?'8px':'auto';corner.style.bottom=slot.bottom+'px'}
  }catch(_){}
 }
+/* the news heat map's legend: bottom left above the credit line, clear of the page's tabs and bar; with no room it waits */
+function liftHeatLegend(){
+ const legend=document.getElementById('heatLegend');if(!legend)return;
+ for(const key of ['bottom','visibility'])legend.style.removeProperty(key);
+ if(legend.hidden||!parentFrame||!window.frameElement)return;
+ try{
+  const slot=clearSlot(legend.getBoundingClientRect(),creditHeight()+10,12,['left']);
+  if(slot)legend.style.bottom=slot.bottom+'px';else legend.style.visibility='hidden';
+ }catch(_){}
+}
 function scheduleTravelControls(){
  if(travelControlsQueued)return;travelControlsQueued=true;
- requestAnimationFrame(()=>{travelControlsQueued=false;liftTravelControls();liftWorldCorner()});
+ requestAnimationFrame(()=>{travelControlsQueued=false;liftTravelControls();liftWorldCorner();liftHeatLegend()});
 }
 function wireTravelControlLayout(){
  window.addEventListener('resize',scheduleTravelControls,{passive:true});
@@ -272,13 +282,27 @@ window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:
    Keep this layer separate from live missions, member locations and travel paths. */
 let completedEvents=[],completedPins=[],completedOn=false;
 let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='';
+/* THE NEWS HEAT MAP (owner, 2026-10-21: "instead of pins on the map ... a heat map of how many articles or mentions it has"):
+   with the World's news on, the countries are shaded by the stories that mention them (js/world-countries.js, the counts from
+   GET /v1/world/news-heat, read again every five minutes); no pin per story. The one pin left is the story whose place a
+   news card sent (focusPlace below), so "where is this?" still has an answer. */
+let newsHeatTimer=0,newsHeatAsked=0;
+function loadNewsHeat(){
+ if(!countries||!countries.heat)return;
+ if(!publicNewsOn||travelMode||ANALYTICS){countries.heat(null);clearTimeout(newsHeatTimer);newsHeatTimer=0;return}
+ if(newsHeatTimer&&Date.now()-newsHeatAsked<290e3)return;
+ newsHeatAsked=Date.now();clearTimeout(newsHeatTimer);newsHeatTimer=setTimeout(()=>{newsHeatTimer=0;loadNewsHeat()},300e3);
+ fetch(API+'/v1/world/news-heat',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>{if(publicNewsOn&&!travelMode&&countries)countries.heat(d&&d.ok&&d.countries&&Object.keys(d.countries).length?d:null)}).catch(()=>{});
+}
+/* a selected country's stories as places, counted by state on the globe */
+function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+encodeURIComponent(code),{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>d&&d.ok&&Array.isArray(d.cells)?d.cells:null).catch(()=>null)}
 function setWorldNewsPins(items,on){
  if(!parentFrame||ANALYTICS)return;
  publicNewsOn=on===true;const seen=new Set();
  publicNewsItems=(Array.isArray(items)?items:[]).slice(0,120).flatMap(x=>{
   if(!x||typeof x.id!=='string'||x.id.length>110||seen.has(x.id)||!Number.isFinite(x.lat)||!Number.isFinite(x.lon)||Math.abs(x.lat)>90||Math.abs(x.lon)>180||(x.lat===0&&x.lon===0))return [];
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
- });drawWorldNewsPins();
+ });drawWorldNewsPins();loadNewsHeat();
 }
 /* A calibrated enamel-and-gold pin, not an undifferentiated bright dot.
    Draw once on a small transparent canvas; the Earth still supplies precise
@@ -311,7 +335,8 @@ function worldNewsMarker(){
 function drawWorldNewsPins(){
  if(!viewer)return;clear(publicNewsPins);if(!publicNewsOn||travelMode||ANALYTICS)return;
  const marker=worldNewsMarker();
- publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({
+ /* only the story a news card pointed to, while the feed still shows it */
+ publicNewsItems.filter(x=>focusedNews&&x.id===focusedNews).forEach(x=>publicNewsPins.push(viewer.entities.add({
    position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),
    billboard:{image:marker,width:27,height:27,
      verticalOrigin:Cesium.VerticalOrigin.CENTER,
@@ -575,7 +600,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}})}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}});loadNewsHeat()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
@@ -649,7 +674,7 @@ function markNewsPin(){publicNewsPins.forEach(e=>{const on=!!focusedNews&&e.prop
 window.__huFocusedNewsPin=()=>{const e=publicNewsPins.find(x=>x.billboard&&x.billboard.scale.getValue&&x.billboard.scale.getValue()>1);return e?e.properties.worldNewsId.getValue():''};
 function focusPlace(d){const lat=d.lat,lon=d.lon;if(typeof lat!=='number'||typeof lon!=='number'||!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return false;
  lastPlace={lat,lon,label:typeof d.label==='string'?d.label.slice(0,120):'',id:typeof d.id==='string'?d.id.slice(0,64):''};selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});
- focusedNews=lastPlace.id;markNewsPin();
+ focusedNews=lastPlace.id;drawWorldNewsPins();
  viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(lon,lat,900000),duration:1.4});return true}
 /* the credit line grows when layers are on; the toggles and the controls stay above it, and the page is told how tall it is */
 function creditHeight(){const el=document.querySelector('.osm-credit');return el?Math.ceil(el.getBoundingClientRect().height):0}
@@ -813,7 +838,7 @@ function wireEditorialTools(){
 }
 function wireControls(){const on=(id,f)=>{const b=$(id);if(b){if(id==='ctlZoomIn'||id==='ctlZoomOut')b.disabled=false;b.onclick=f}};
  on('ctlAudience',()=>{if(lockOf('audience'))return;const b=$('ctlAudience'),next=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',next?'true':'false');if(!next)drawAudience([]);tell({type:'hu:audience',on:next})});
- on('ctlWorld',()=>{selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setLayer(layerMode==='map'?'auto':layerMode);viewer.camera.flyTo({destination:homePosition(),duration:1.4});tell({type:'hu:selection-cleared'})});
+ on('ctlWorld',()=>{selectionShown=false;focusedNews='';drawWorldNewsPins();missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setLayer(layerMode==='map'?'auto':layerMode);viewer.camera.flyTo({destination:homePosition(),duration:1.4});tell({type:'hu:selection-cleared'})});
  /* Near me answers in #status; inside the network that line is hidden, so hand the page that one answer */
  on('ctlLocate',()=>{if(travelMode&&parentFrame){tell({type:'hu:request-location'});return}const st=$('status'),mo=new MutationObserver(()=>{tell({type:'hu:status',text:String(st.textContent||'').slice(0,200)});mo.disconnect()});mo.observe(st,{childList:true,characterData:true,subtree:true});$('nearMe').click();setTimeout(()=>mo.disconnect(),15000)});
  const zoom=f=>{const h=viewer.camera.positionCartographic.height;f?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)};on('ctlZoomIn',()=>zoom(true));on('ctlZoomOut',()=>zoom(false));
