@@ -1,5 +1,7 @@
 (function(){'use strict';
 const SB='https://zmnhbrjyhxzhkxmhkexs.supabase.co',KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
+/* this script's own version (?v= in action-globe.html), carried to the scripts it loads later: the deploy stamps only HTML */
+const HU_V=(()=>{try{return new URL(document.currentScript.src).searchParams.get('v')||''}catch(e){return ''}})();
 /* A FRAME ON ITS WAY OUT (the World reloading, a link away) cancels what it was still reading. That is not a failure to
    report or to tell the page about (owner, 2026-10-20: no flashes): nothing is said for reads a leaving frame cut short. */
 let leaving=false;addEventListener('beforeunload',()=>{leaving=true;setTimeout(()=>{leaving=false},3000)});addEventListener('pagehide',()=>{leaving=true});addEventListener('pageshow',()=>{leaving=false});
@@ -712,7 +714,7 @@ function paintAccess(){Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[
  if(!viewer)return;
  Object.keys(DATA_LAYERS).forEach(k=>{if(lockOf(k)&&layerState[k].on){layerState[k].on=false;clearLayer(k);const b=$(DATA_LAYERS[k].id);if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:k,on:false})}});
  if(lockOf('intel')&&intel.on)intelOff();if(lockOf('cctv')&&cctv.on)cctvOff();if(lockOf('audience'))drawAudience([]);
- if(lockOf('ion'))ionOff('release unavailable');paintLayerCredits()}
+ if(lockOf('ion'))ionOff('release unavailable');paintLayerCredits();haloSync()}
 let accessToken='',accessSeq=0;
 async function loadAccess(){const seq=++accessSeq,t=sessionToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),4000);if(accessToken!==t){access=null;accessToken=t;paintAccess()}
  try{const r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('access '+r.status);const d=await r.json();if(seq!==accessSeq||t!==sessionToken())return null;access=d&&d.release?.version==='globe-admin-preview/v1'&&Array.isArray(d.locked_layers)&&Array.isArray(d.unlocked_layers)?d:null}catch(e){if(seq!==accessSeq)return null;access=null}finally{clearTimeout(timeout)}paintAccess();return access}
@@ -829,7 +831,11 @@ function wireEditorialTools(){
     the globe"): in the World, the corner that held the controls menu holds World, one tap back to the whole Earth. The rest of
     the controls (the Earth / street map switch, the data layers) stay on the full-screen globe; Travel keeps its own rail. */
  if(document.documentElement.classList.contains('globe-surface-network')){
-  const corner=document.createElement('div');corner.className='globe-editorial-world';const world=$('ctlWorld');if(world)corner.appendChild(world);document.body.appendChild(corner);
+  const corner=document.createElement('div');corner.className='globe-editorial-world';
+  /* the owner's door to Halo: hidden until the server says owner (haloSync); it opens the full-screen globe with the console */
+  const halo=document.createElement('a');halo.id='ctlHalo';halo.className='globe-ctl';halo.hidden=true;halo.href='action-globe.html?explore=1&halo=1';halo.target='_top';halo.setAttribute('aria-label',"Open Hitman's Halo");
+  halo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';corner.appendChild(halo);
+  const world=$('ctlWorld');if(world)corner.appendChild(world);document.body.appendChild(corner);
   const shelf=document.createElement('div');shelf.className='globe-editorial-shelf';shelf.hidden=true;if(nav)shelf.appendChild(nav);if(row)shelf.appendChild(row);document.body.appendChild(shelf);
   const rail=document.createElement('nav');rail.className='globe-travel-controls';rail.setAttribute('aria-label','Travel globe controls');document.body.appendChild(rail);setTravelMode(travelMode);
   return;
@@ -916,13 +922,46 @@ function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartog
   if(nightLayer){const n=ionImagery.ready&&on?1-a:1;if(nightLayer.nightAlpha!==n)nightLayer.nightAlpha=n}}
  /* OSM Buildings sit on Cesium World Terrain's heights; on the flat fallback they would float or sink, so they wait for the real ground */
  if(!ionBuildingsTried&&ionGround&&auto&&h<BUILD_OFF*2){ionBuildingsTried=true;addIonBuildings()}
- if(ionBuildings){const on=auto&&h<(ionBuildings.show?BUILD_OFF:BUILD_ON);if(ionBuildings.show!==on)ionBuildings.show=on}}
+ if(ionBuildings){const on=auto&&!haloPhotoreal&&h<(ionBuildings.show?BUILD_OFF:BUILD_ON);if(ionBuildings.show!==on)ionBuildings.show=on}}
+/* ---------- HITMAN'S HALO ON THE ADMIN GLOBE (owner, 2026-10-21: "put all the capabilities of Hitman Halo into the admin
+   experience of the globe section … with the user interface of the current globe we have on our website") ----------
+   The house owner only, on the server's word (the release answer above, never a page check): the full-screen globe mounts the
+   Halo console (js/halo/halo.js: layers, visual modes, HUD, place search, photoreal 3D, follow), and the World's frame shows a
+   round Halo button that opens it. Nothing of Halo is fetched for anyone else, and its data comes only from the Worker's
+   owner-gated routes (/v1/world/layers/*, /v1/world/geocode, /v1/world/ion). Losing the owner answer unmounts it. */
+const HALO_OPEN=new URLSearchParams(location.search).has('halo');
+let haloPhotoreal=false,haloLoad=null;
+function isOwner(){const t=sessionToken();return !!(t&&access&&access.release?.version==='globe-admin-preview/v1'&&access.release.admin_preview===true&&accessToken===t)}
+function haloScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+(HU_V?'?v='+encodeURIComponent(HU_V):'');s.onload=res;s.onerror=()=>rej(Error(src));document.head.appendChild(s)})}
+function haloStyle(href){if(document.querySelector('link[data-halo="'+href+'"]'))return;const l=document.createElement('link');l.rel='stylesheet';l.href=href+(HU_V?'?v='+encodeURIComponent(HU_V):'');l.dataset.halo=href;document.head.appendChild(l)}
+function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
+ if(!EXPLORE||BARE||!viewer)return;
+ if(!owner){if(window.HaloConsole)HaloConsole.unmount();return}
+ if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{open:HALO_OPEN});return}
+ if(!haloLoad){['css/halo.css','css/halo-hud.css'].forEach(haloStyle);
+  haloLoad=['js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.resolve())
+   .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
+/* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
+window.HuGlobe=Object.freeze({
+ version:HU_V,api:API,viewer:()=>viewer,token:sessionToken,owner:isOwner,lockOf:id=>lockOf(id),
+ sheet:(title,html)=>sheet(title,html),closeSheet:()=>closeSheet(),esc:escHtml,tell:m=>tell(m),
+ home:()=>{if(viewer)viewer.camera.flyTo({destination:homePosition(),duration:1.4})},
+ layer:Object.freeze({
+  toggle:k=>DATA_LAYERS[k]?toggleLayer(k):k==='intel'?toggleIntel():k==='cctv'?toggleCctv():Promise.resolve(),
+  on:k=>DATA_LAYERS[k]?!!layerState[k].on:k==='intel'?intel.on:k==='cctv'?cctv.on:false,
+  count:k=>DATA_LAYERS[k]?layerState[k].count:k==='intel'?intel.entities.length:k==='cctv'?(cctv.points?cctv.points.length:0):0,
+  locked:k=>!!lockOf(k)}),
+ openAircraft:contact=>openAircraft(contact),openSatellite:sat=>openSatellite(sat),satPosition:sat=>satPos(sat,new Date()),
+ ion:()=>ion,
+ /* Google's photoreal city replaces OSM Buildings while it is on (the two would stand inside each other) */
+ setPhotoreal:on=>{haloPhotoreal=!!on;if(ionBuildings&&haloPhotoreal)ionBuildings.show=false;if(viewer)viewer.scene.requestRender()}
+});
 async function boot(){paintMembersDoor();
  /* the layout, the data toggles and the mission data do not wait on the ion status; only the Earth itself does */
  wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus()),new Promise(r=>setTimeout(()=>r(null),ION_WAIT))]),dataP=Promise.all([NO_MISSIONS?Promise.resolve([]):rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
  ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
- viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();
+ viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();haloSync();
  if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
 viewer.screenSpaceEventHandler.setInputAction(p=>{
  if(travelMode&&mapPickKind&&parentFrame&&!ANALYTICS){
@@ -930,7 +969,7 @@ viewer.screenSpaceEventHandler.setInputAction(p=>{
   if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
   return;
  }
- const e=pickSolid(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+ const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}

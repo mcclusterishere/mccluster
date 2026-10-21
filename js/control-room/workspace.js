@@ -135,12 +135,6 @@
     const place=isIntel?selected:route.label;
     if(get('cwPlace').textContent!==place)get('cwPlace').textContent=place;
     get('cwEyebrow').textContent=isIntel?(scene==='halo'?'PRIVATE HALO SCENE':'PRIVATE INTELLIGENCE'):route.page.toUpperCase()+' · EXISTING CONTROL WORKFLOWS';
-    // Correct the misleading product door in the preview, not the legacy API paths.
-    get('crSurface').querySelectorAll('a[href="auth/seek-first-handoff.html"]').forEach(a=>{
-      a.href=C.HALO_ORIGIN+'/';a.target='_blank';a.rel='noopener noreferrer';a.dataset.cwHaloLink='true';
-      const title=a.querySelector('h2,h3,strong,.cr-app-card__title');if(title)title.textContent='Hitman’s Halo';
-      const description=a.querySelector('small,p,.cr-app-card__sub');if(description)description.textContent='Full Halo product · opens separately';
-    });
     if(isIntel) {
       announce(scene==='black'?'Owner preview · existing data and permissions. No public interface changed.':'Halo uses its own camera and source permissions. Analytics filters remain in this inspector.');
       if(A?.state.globe?.setActive)A.state.globe.setActive(scene==='black'&&!document.hidden&&document.body.dataset.cwLayout!=='details');

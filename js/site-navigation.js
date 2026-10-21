@@ -45,7 +45,7 @@
       {label:'Whip', group:'Products', href:new URL('whip.html', house).href, context:'Mobility'},
       {label:'WE Manufacture', group:'Products', href:new URL('we-manufacture.html', house).href, context:'Manufacturing'},
       {label:'Asset Lab', group:'Studio', href:new URL('asset-lab.html', house).href, context:'Asset tools'},
-      {label:'Spatial Intelligence', group:'Products', href:new URL('auth/seek-first-handoff.html', house).href, context:'Seek First'}
+      {label:'Halo on the globe', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'Owner spatial intelligence'}
     ]);
   }
   function closePanel(focus = false) {

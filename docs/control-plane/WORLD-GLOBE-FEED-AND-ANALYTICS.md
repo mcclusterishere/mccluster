@@ -113,6 +113,9 @@ self-service numbers (above).
 
 ### B2. Layers by level (owner, 2026-10-15, second direction)
 
+> **Since 2026-10-21:** every optional layer is owner-only (the release guard), and the house owner's full-screen globe carries
+> Hitman's Halo: more layers, visual modes, a telemetry HUD, place search, photoreal 3D and follow. See `HALO-ADMIN-GLOBE.md`.
+
 "Logged-out public: the globe and exactly one free layer. All other layers
 and controls stay visible but shaded; clicking a locked one opens the login
 prompt." Access is data-driven per level: public / fan / creator-business /

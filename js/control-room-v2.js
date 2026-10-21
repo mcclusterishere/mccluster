@@ -87,9 +87,11 @@
     assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
-    halo: { title: "Hitman Halo", href: "auth/seek-first-handoff.html", subtitle: "Owner spatial intelligence workspace" },
-    manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" },
-    spatial: { title: "Spatial Intelligence", href: "auth/seek-first-handoff.html", subtitle: "Seek First console, signed in as you" }
+    /* HITMAN'S HALO ON THE GLOBE (owner, 2026-10-21: "fix the fact that the control room points to seek first"): the
+       owner's full-screen globe with the Halo console open. Seek First (the retired console behind
+       auth/seek-first-handoff.html) is no longer a door from here. */
+    halo: { title: "Hitman Halo", href: "action-globe.html?explore=1&halo=1", subtitle: "Owner spatial intelligence on the globe" },
+    manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" }
   };
 
   /* Formatting and source-result primitives live in js/control-room/
@@ -2373,7 +2375,7 @@
 
   function renderApps() {
     var registered = state.apps.map(function (a) { return appCard(a.name || a.app_key, [a.product_family, a.kind].filter(Boolean).join(" · ") || "Registered application", a.public_url || "#", a.app_key || "registered", true); }).join("") || '<div class="cr-panel__body cr-muted">No registered applications were returned.</div>';
-    var specialty = [bridge.whip, bridge.spatial, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
+    var specialty = [bridge.whip, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
     return renderHeader("Apps", "Specialized products stay one launch away without becoming permanent Control Room navigation.") + '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
   }
 

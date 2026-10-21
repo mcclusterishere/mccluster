@@ -1,0 +1,62 @@
+/* HITMAN'S HALO ON THE ADMIN GLOBE (js/halo/halo.js): the console in the current globe's own look (css/globe-editorial.css:
+   dark translucent plates, 44px round targets, Inter). Mobile first: on a phone the Halo pill sits top right across from the
+   way-back pill and the console opens beneath it, full width; from 900px it docks as a column on the left. Details for a
+   picked thing still open in the globe's own sheet (z-index 9), above the console (8). */
+.halo-pill{position:fixed;z-index:8;top:calc(10px + env(safe-area-inset-top,0px));right:12px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 12px;border:1px solid #ffffff26;border-radius:999px;background:rgba(13,14,18,.86);color:#eef0f4;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.halo-pill[aria-expanded="true"]{background:#282027;border-color:#a1455b}
+.halo-pill svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6}
+.halo-pill:focus-visible,.halo :is(button,input,a,summary):focus-visible,.halo-follow button:focus-visible{outline:2px solid #c6d5df;outline-offset:2px}
+
+.halo{position:fixed;z-index:8;top:calc(62px + env(safe-area-inset-top,0px));left:8px;right:8px;max-height:calc(100dvh - 62px - env(safe-area-inset-top,0px) - var(--hu-bar-h,0px) - 16px);display:flex;flex-direction:column;min-width:0;box-sizing:border-box;border:1px solid #ffffff28;border-radius:16px;background:rgba(13,14,18,.95);color:#eef0f4;font:400 14px/1.4 Inter,system-ui,sans-serif;box-shadow:0 18px 40px rgba(0,0,0,.45);overflow:hidden}
+.halo[hidden]{display:none}
+.halo__head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 4px 14px}
+.halo__head h2{margin:0;font-size:15px;font-weight:600;letter-spacing:.02em}
+.halo__close{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:#eef0f4;font:400 24px/1 system-ui,sans-serif;cursor:pointer}
+.halo__search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:0 12px 8px}
+.halo__search input{min-width:0;min-height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #3a4149;border-radius:12px;background:#0d1116;color:#eef0f4;font:400 max(16px,1rem)/1.2 Inter,system-ui,sans-serif}
+.halo__search button{min-height:44px;padding:0 16px;border:1px solid #ffffff26;border-radius:12px;background:#1a2027;color:#eef0f4;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.halo__results{list-style:none;margin:0;padding:0 12px 8px;display:grid;gap:4px}
+.halo__results[hidden]{display:none}
+.halo__results button{display:flex;align-items:baseline;justify-content:space-between;gap:8px;width:100%;min-height:44px;box-sizing:border-box;padding:6px 12px;border:1px solid #ffffff1a;border-radius:10px;background:#141a20;color:#eef0f4;font:400 14px/1.3 Inter,system-ui,sans-serif;text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.halo__results small{flex:none;color:#9ba4ad;font-size:12px}
+.halo__hint{margin:4px 0;color:#9ba4ad;font-size:12px}
+.halo__tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:0 12px 8px}
+.halo__tabs button{min-height:44px;border:1px solid #ffffff1a;border-radius:10px;background:#11161b;color:#c7d0dc;font:600 13px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.halo__tabs button[aria-selected="true"]{background:#282027;border-color:#a1455b;color:#fff}
+.halo__body{min-height:0;overflow:auto;padding:0 12px 10px;overscroll-behavior:contain}
+.halo__body [role="tabpanel"][hidden]{display:none}
+.halo__group h3{margin:10px 0 2px;color:#9ba4ad;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.halo-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-height:44px;padding:0 6px;border-radius:10px;cursor:pointer}
+.halo-row[hidden]{display:none}
+.halo-row:hover{background:#ffffff0a}
+.halo-row input{width:20px;height:20px;margin:0;accent-color:#ff3d5e}
+.halo-row__name{min-width:0;overflow-wrap:anywhere}
+.halo-row__state{color:#9ba4ad;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.halo-row:is([data-state="unavailable"],[data-state="error"],[data-state="locked"]) .halo-row__state{color:#f3b27a}
+.halo-styles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:4px 0 8px}
+.halo-styles button,.halo-tools>button{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:0 12px;border:1px solid #ffffff1a;border-radius:10px;background:#141a20;color:#eef0f4;font:600 13px/1.2 Inter,system-ui,sans-serif;text-align:left;cursor:pointer}
+.halo-styles button[aria-pressed="true"],.halo-tools>button[aria-pressed="true"]{background:#282027;border-color:#a1455b}
+.halo-tools>button[hidden]{display:none}
+.halo-tools>button:disabled{opacity:.5;cursor:not-allowed}
+.halo kbd{color:#9ba4ad;font:500 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+.halo-tools{display:grid;gap:6px}
+.halo__share{margin:4px 0 0;color:#9ba4ad;font-size:12px;min-height:1em}
+.halo__link{width:100%;min-height:44px;box-sizing:border-box;padding:0 10px;border:1px solid #3a4149;border-radius:10px;background:#0d1116;color:#eef0f4;font:400 max(16px,1rem)/1 ui-monospace,monospace}
+.halo__credits{margin:0;padding:8px 12px 10px;border-top:1px solid #ffffff14;color:#9ba4ad;font-size:11px;overflow-wrap:anywhere}
+.halo__credits[hidden]{display:none}
+
+/* following something: one pill, above the credit line, with Stop */
+.halo-follow{position:fixed;z-index:8;left:50%;bottom:calc(var(--hu-bar-h,0px) + var(--hu-sheet-h,0px) + var(--hu-sheet-gap,0px) + var(--hu-credit-h,26px) + 64px);transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);min-height:44px;box-sizing:border-box;padding:0 4px 0 16px;border:1px solid #ffffff28;border-radius:999px;background:rgba(13,14,18,.92);color:#eef0f4;font:400 13px/1.2 Inter,system-ui,sans-serif}
+.halo-follow[hidden]{display:none}
+.halo-follow span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.halo-follow button,.halo-follow-btn{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:#282027;color:#fff;font:600 13px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.cctv-sheet .halo-follow-btn{margin-top:8px;border:1px solid #a1455b}
+
+/* the HUD's place: under the way-back pill on a phone (the console covers it while open), top centre when there is room */
+.halo-hud-host{position:fixed;z-index:7;top:calc(62px + env(safe-area-inset-top,0px));left:8px;max-width:calc(100% - 16px);pointer-events:none}
+
+@media (min-width:900px){
+  .halo{left:12px;right:auto;width:360px}
+  .halo-hud-host{left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px))}
+}
+@media (prefers-reduced-motion:reduce){.halo-pill,.halo{-webkit-backdrop-filter:none;backdrop-filter:none}}

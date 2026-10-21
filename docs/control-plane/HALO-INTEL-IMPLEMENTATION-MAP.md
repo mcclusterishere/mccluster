@@ -142,6 +142,7 @@ reviewed PR.
 - `seek_first_*` stored-data model (entities/observations/events/beliefs, 19 tables): **replaced** by `ops_ingest_*` (snapshots, runs, checkpoint) + `intel_*` (evidence, claims, briefings, decision basis, mission links, outcomes). Do not apply the five spatial replay migrations. If an entity/bitemporal model is needed later, design it against measured demand on top of `ops_ingest_records`.
 - `/v1/seek-first/ingestion-runs` and `/v1/seek-first/stats` (proposed by the audit): replaced by `GET /v1/intel/health`.
 - Control Room tiles pointing at `auth/seek-first-handoff.html`: replaced by Halo links once Halo's owner mode reads the canonical API.
+  **Done 2026-10-21** (owner: "fix the fact that the control room points to seek first"): the "Hitman Halo" tile opens the admin globe's Halo console (`action-globe.html?explore=1&halo=1`), the "Spatial Intelligence" tile is removed, and the site menu's Seek First entry is now "Halo on the globe". See `HALO-ADMIN-GLOBE.md`.
 
 ### 5.3 Retired (later PRs, in this order, each reversible)
 
