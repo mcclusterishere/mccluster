@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - 'control.html'
+      - 'js/mnet-live.js'
+      - 'css/mnet.css'
+      - 'scripts/e2e/live-actors.e2e.mjs'
       - 'js/tabbar.js'
       - 'js/site-navigation.js'
       - 'css/site-navigation.css'
@@ -13,6 +16,9 @@ on:
       - 'js/control-room/news-context.js'
       - 'css/control-news-context.css'
       - 'scripts/e2e/news-context.e2e.mjs'
+      - 'scripts/e2e/connections.e2e.mjs'
+      - 'js/control-room/connections.js'
+      - 'css/control-connections.css'
       - 'css/control-analytics*.css'
       - 'workers/mccluster/src/analytics/**'
       - 'workers/mccluster/test/analytics-camera-measurement.test.mjs'
@@ -60,6 +66,8 @@ jobs:
           node scripts/e2e/control-workspace.e2e.mjs
           node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
           node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
+          node scripts/e2e/connections.e2e.mjs /tmp/control-proof/connections
+          node scripts/e2e/live-actors.e2e.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

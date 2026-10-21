@@ -55,6 +55,12 @@
 
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <!-- THE PREMIERE IS UP FROM THE FIRST PAINT (owner, 2026-10-20: "other screens flash up instead of just a smooth
+       transition"). js/chamber.js raises the once-a-session curtain, but it loads at the end of the page, so the album
+       painted first and the curtain dropped over it almost a second later. The same test it uses (not seen this session,
+       motion allowed) raises the curtain's ground here, before anything is drawn; chamber.js puts the curtain itself in
+       its place and takes this away. -->
+  <script>(function(){try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&sessionStorage.getItem("mcc_premiere")!=="1")document.documentElement.classList.add("prem-due")}catch(e){}})();</script>
   <script src="js/theme.js?v=__STAMP__"></script>
   <script defer src="js/knower.js?v=__STAMP__"></script>
   <style>
@@ -541,6 +547,9 @@
     #prem .seam { width: 0; height: 2px; background: var(--pulse, #e5383b); margin: 1rem auto 0;
       animation: premSeam .6s cubic-bezier(.2,.7,.2,1) 1.35s forwards; }
     #prem.out { animation: premOut .7s ease forwards; }
+    /* the curtain's ground before js/chamber.js has run (the head script above); it lifts on its own if chamber.js never comes */
+    html.prem-due body::after { content: ""; position: fixed; inset: 0; z-index: 400; background: #050403;
+      animation: premOut .7s ease 4s forwards; }
     @keyframes premMark { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
     @keyframes premUp { from { opacity: 0; transform: translateY(.35em); } to { opacity: 1; transform: none; } }
     @keyframes premSeam { to { width: min(46vw, 320px); } }
@@ -552,7 +561,7 @@
       transition: opacity .5s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
     .alb h1.set .ch { opacity: 1; transform: none; }
     @media (prefers-reduced-motion: reduce) {
-      #prem { display: none; }
+      #prem, html.prem-due body::after { display: none; }
       .alb h1 .ch { opacity: 1; transform: none; transition: none; }
     }
 
@@ -777,9 +786,10 @@
       <img class="appbar__m" src="assets/img/m-mark.png" alt="">
       <span>HERE</span>
     </a>
-    <a class="appbar__tab" href="account.html" data-appnav="profile">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
-      <span>Profile</span>
+    <!-- the Globe, written here as js/tabbar.js draws it, so the bar never paints a retired Profile tab first (owner, 2026-10-20) -->
+    <a class="appbar__tab appbar__world" href="https://mccluster.org/?view=feed" data-appnav="world" aria-label="Open the World globe">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg>
+      <span>Globe</span>
     </a>
   </nav>
 
@@ -1158,9 +1168,10 @@
         /* ?from carries the record into the intake so the listener is told
            why they are being asked. It is a marketing segment and nothing
            more: neither value grants any access, so an edited URL is worth
-           nothing. */
+           nothing. ?next brings the listener back to this record after
+           signing in, or after the sign-up's three pages. */
         var from = (row.getAttribute("data-gated-object") || "").split("/")[0];
-        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '"' +
+        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '&amp;next=' + escAttr(encodeURIComponent(location.pathname + location.search)) + '"' +
           ' aria-label="Sign in. The full song needs three verified missions and a verified identity.">' +
           '<b>FULL SONG</b><span>sign in · missions + ID</span></a>';
       } else {

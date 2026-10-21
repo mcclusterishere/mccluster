@@ -85,3 +85,6 @@
   .cme__actions{grid-column:auto;justify-content:flex-end}
 }
 @media (prefers-reduced-motion:reduce){.cob__go{transition:none}.cob__go:hover,.cob__go:active{transform:none}}
+/* The gate's two doors (owner, 2026-10-20: one sign-up): Create account and
+   Sign in, both coming back here. Thumb-sized on a phone. */
+.creator-gate .creator-actions .creator-btn{min-height:44px;padding:12px 18px;font-size:14px}

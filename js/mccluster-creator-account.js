@@ -16,7 +16,8 @@ async function importLegacySession(){
 async function refresh(){status.textContent='Checking account…';try{const {data,error}=await db.auth.getUser();if(error)throw error;status.textContent=data.user?'Signed in as '+(data.user.email||'McCluster member')+'. You can save your profile to your account.':'Not signed in. Sign in to your McCluster account to save your creator profile.'}catch(_){status.textContent='Could not verify account status. Try again or open the account page.'}}
 document.getElementById('refreshAccount').addEventListener('click',refresh);
 db.auth.onAuthStateChange(()=>{setTimeout(refresh,0)});
-importLegacySession().catch(()=>{}).finally(refresh);
+const sessionReady=importLegacySession().catch(()=>{});
+sessionReady.finally(refresh);
 
 // Persist through the existing owner-checked Human Uprise RPC; never write directly to network_profiles.
 const save=document.getElementById('saveAccount');
@@ -31,9 +32,17 @@ if(save)save.addEventListener('click',async()=>{
     if(!name||name.length>120)throw new Error('Creator name must be 1–120 characters.');
     if(bio.length>2000)throw new Error('Bio is too long.');
     if(website){let url;try{url=new URL(website)}catch(_){throw new Error('Portfolio must be a valid HTTPS URL.')}if(url.protocol!=='https:')throw new Error('Portfolio must use HTTPS.');}
+    /* A SAVE CHANGES WHAT THIS EDITOR SHOWS (owner, 2026-10-20). The RPC writes every column it is given and ''
+       for the rest, so this save used to wipe the member's picture and banner, and it wrote the creator role over
+       their headline. The picture, the banner and the headline they already have ride along unchanged; the role
+       stays this editor's (it titles the paid website, below). */
+    const {data:me,error:meError}=await db.rpc('current_m_uid');
+    if(meError||!me)throw new Error('Your McCluster member identity is not ready.');
+    const {data:kept,error:keptError}=await db.from('network_profiles').select('headline,avatar_url,banner_url').eq('m_uid',me).maybeSingle();
+    if(keptError)throw new Error(keptError.message);
     const {error}=await db.rpc('mnet_complete_surface_profile',{
-      p_app_key:'mnet-web',p_display_name:name,p_headline:document.getElementById('role').value,
-      p_bio:bio,p_website_url:website
+      p_app_key:'mnet-web',p_display_name:name,p_headline:kept?.headline||'',
+      p_bio:bio,p_avatar_url:kept?.avatar_url||'',p_banner_url:kept?.banner_url||'',p_website_url:website
     });
     if(error)throw new Error(error.message);
     status.textContent='Account profile saved. Public publishing is a separate step.';
@@ -42,6 +51,15 @@ if(save)save.addEventListener('click',async()=>{
 });
 
 const load=document.getElementById('loadAccount');
+/* NEVER RETYPE WHAT THE PROFILE HAS (owner, 2026-10-20): a signed-in member with no draft on this device opens the
+   editor already filled from their profile; a draft they saved here is theirs and is not replaced. */
+async function fillFromProfile(){
+ let draft=null;try{draft=localStorage.getItem('mccluster.creatorStudio.draft.v1')}catch(_){}
+ if(draft)return;
+ const {data:{user}}=await db.auth.getUser();
+ if(user&&load)load.click();
+}
+sessionReady.then(fillFromProfile).catch(()=>{});
 if(load)load.addEventListener('click',async()=>{
  load.disabled=true;
  try{

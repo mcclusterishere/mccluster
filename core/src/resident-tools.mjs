@@ -10,6 +10,7 @@ import { callCoreCapability, unwrapCapabilityResult } from './game-studio/capabi
 const string = { type: 'string' };
 const tool = (name, description, properties = {}, required = []) => ({ type: 'function', function: { name, description, parameters: { type: 'object', properties, required, additionalProperties: false } } });
 export const RESIDENT_TOOLS = Object.freeze([
+  tool('connections_read', 'Explore source-backed connections between entities, jobs, evidence, claims, briefings, decisions, missions and outcomes. Use root actor:royce.r01 for Royce, or kind evidence to browse evidence. Missing links are unknown, not proof of no relationship. Automated publication reviews are not human approvals.', {root:string,kind:string,depth:{type:'integer',minimum:1,maximum:3}}),
   tool('knowledge_read', 'Read stored news, intelligence evidence, first-party aggregate analytics and daily knowledge memory. Source headlines are unverified; returns bounded excerpts. Optional query filters news and memory, not analytics totals.', { query: string, days: { type: 'integer', minimum: 1, maximum: 30 } }),
   tool('operations_read', 'Read actual deployment, recent jobs, objectives and pending approvals. Use for questions about McCluster system status.'),
   tool('memory_search', 'Search saved conversations and canonical memories across McCluster. Supply a few precise keywords; use OR between alternatives.', { query: string }, ['query']),
@@ -55,6 +56,12 @@ export async function executeResidentTool(name, args, context, dependencies = {}
   const { orgId, turnId, before } = context;
   if (!orgId || !turnId) throw new Error('Trusted organization and turn are required');
   const query = dependencies.rest || rest;
+  if (name === 'connections_read') {
+    const root = text(args.root, 550) || null, kind = text(args.kind, 80) || 'actor';
+    if ((root && !/^[a-z_]+:[a-zA-Z0-9._:-]+$/.test(root)) || !/^[a-z_]{1,80}$/.test(kind)) throw new Error('Invalid graph reference');
+    const {body} = await query('rpc/ops_connected_graph_service', {method:'POST',body:JSON.stringify({p_org:orgId,p_root:root,p_kind:kind,p_depth:Math.min(3,args.depth||2),p_limit:30})});
+    return body;
+  }
   if (name === 'knowledge_read') {
     const { body } = await query('rpc/ops_ai_knowledge_read', { method: 'POST', body: JSON.stringify({ p_org_id: orgId, p_query: text(args.query, 200), p_days: Math.min(30, args.days || 1) }) });
     return body;

@@ -381,7 +381,20 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   /* every frame of the first seconds: did the sign-in form paint on the way into the World? (owner, 2026-10-20) */
   await ctx.addInitScript(() => {
     window.__gateFlash = 0;
-    const tick = () => { const g = document.getElementById('mnSignedOut'); if (g && !g.hidden && g.getClientRects().length) window.__gateFlash++; if (performance.now() < 8000) requestAnimationFrame(tick); };
+    /* and no other screen either (owner, 2026-10-20: "other screens flash up instead of just a smooth transition"): the Live
+       room before the World, a World screen with nothing in it, the bar drawing this page itself as a broken image, the
+       globe frame's own standalone screen (its deck) inside the World */
+    window.__liveFlash = 0; window.__blankWorld = 0; window.__barSelfImg = 0; window.__deckFlash = 0;
+    const shown = (el) => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+    const tick = () => {
+      const g = document.getElementById('mnSignedOut'); if (g && !g.hidden && g.getClientRects().length) window.__gateFlash++;
+      if (shown(document.getElementById('mnLiveView'))) window.__liveFlash++;
+      const app = document.getElementById('mnApp');
+      if (app && !shown(app) && !shown(g) && !shown(document.getElementById('mnProfileGate'))) window.__blankWorld++;
+      for (const img of document.querySelectorAll('.appbar img')) if (img.getAttribute('src') && img.src === location.href) window.__barSelfImg++;
+      if (/action-globe\.html$/.test(location.pathname) && window.parent !== window && shown(document.getElementById('deck'))) window.__deckFlash++;
+      if (performance.now() < 8000) requestAnimationFrame(tick);
+    };
     requestAnimationFrame(tick);
   });
   await ctx.addInitScript((m) => {
@@ -852,6 +865,72 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
   }finally{await ctx.close();}
 }
 
+/* A STATE (owner, 2026-10-21: "once you've selected a country ... select a state thereafter, but only after selecting the
+   country already and double tapping the state"). The World as it ships, on a phone, with real taps on the real globe:
+   Kenya's provinces, where the fixture's Nairobi stories are. */
+if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-state';
+  const {ctx,page,errors} = await open(DEVICES[0],{member:true,social:true});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>window.__huCountries?.().ready,null,{timeout:25000});
+    await page.waitForSelector('#mnFeed [data-news-id]',{timeout:15000}).catch(()=>{});
+    await globe.evaluate(()=>window.__huCountriesCam.view(37.6,-0.4,1.5e6));
+    await globe.waitForFunction(()=>window.__huCountries().lines===1,null,{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    const frame = await page.locator('#mnWorldFrame').boundingBox();
+    /* a place on the page, and what is on top of it there (the frame, or something covering the globe) */
+    const at = async (lon,lat)=>{const s=await globe.evaluate(([lon,lat])=>window.__huCountriesCam.screen(lon,lat),[lon,lat]);const x=frame.x+s.x,y=frame.y+s.y;return {x,y,top:await page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[x,y])};};
+    /* a double tap: two taps on the globe 150 ms apart by their own clock. Playwright's clicks each wait on a software-rendered
+       frame and can land further apart than a person's, so the two go to the globe's tap directly (the single taps below
+       are real clicks) */
+    const twice = (p)=>globe.evaluate(({x,y})=>{const t=performance.now();window.__huCountriesCam.tap(x,y,t);window.__huCountriesCam.tap(x,y,t+150);},{x:p.x-frame.x,y:p.y-frame.y});
+    const gap = ()=>page.waitForTimeout(700);
+    const now = ()=>globe.evaluate(()=>({selected:window.__huCountries().selected,state:window.__huCountries().selectedState,card:window.__huCountries().card}));
+    const eastern = await at(38.0,0.6), nairobi = await at(37.05,-1.25);
+    check(scope,'the taps land on the globe, nothing on the page covers them',eastern.top==='mnWorldFrame'&&nairobi.top==='mnWorldFrame',{eastern,nairobi});
+    /* a double tap on a country not yet selected selects the country, and nothing more */
+    await twice(eastern);
+    await globe.waitForFunction(()=>window.__huCountries().selected==='KE',null,{timeout:5000}).catch(()=>{});
+    await gap();
+    const first = await now();
+    check(scope,'a double tap on a country not yet selected selects the country only',first.selected==='KE'&&!first.state&&await page.textContent('#huRegionLabel')==='Kenya',first);
+    check(scope,'its card says a state can be chosen',/Double-tap a state to choose it/.test(first.card||''),first.card);
+    await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
+    const kenya = await page.locator('#mnFeed [data-news-id]').count();
+    check(scope,'Local shows Kenya\'s stories',kenya>0&&await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true',kenya);
+    /* with Kenya selected, a double tap picks the province under it */
+    await twice(eastern);
+    await globe.waitForFunction(()=>window.__huCountries().selectedState,null,{timeout:8000}).catch(()=>{});
+    const east = await now();
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
+    check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
+    check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No story mentions Eastern, Kenya yet/.test(await page.textContent('#mnFeed')));
+    await page.screenshot({path:join(OUT,scope+'-eastern.png')});
+    await gap();
+    /* another state of the same country: picked the same way, with no second read of the country */
+    await twice(nairobi);
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
+    await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:5000}).catch(()=>{});
+    const nb = await now();
+    check(scope,'a double tap on another state picks it, and its stories come back',/Nairobi/.test(nb.card||'')&&await page.textContent('#huRegionLabel')==='Nairobi, Kenya'&&await page.locator('#mnFeed [data-news-id]').count()===kenya,{nb,count:await page.locator('#mnFeed [data-news-id]').count(),kenya});
+    await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
+    await gap();
+    /* a single tap inside the country goes back to the whole country; another lets the country go, as before */
+    await page.mouse.click(eastern.x,eastern.y);
+    await globe.waitForFunction(()=>!window.__huCountries().selectedState,null,{timeout:5000}).catch(()=>{});
+    await gap();
+    const back = await now();
+    check(scope,'a single tap inside the country goes back to the whole country',back.selected==='KE'&&!back.state&&await page.textContent('#huRegionLabel')==='Kenya',back);
+    await page.mouse.click(eastern.x,eastern.y);
+    await globe.waitForFunction(()=>!window.__huCountries().selected,null,{timeout:5000}).catch(()=>{});
+    await gap();
+    check(scope,'and one more lets the country go, as it always has',!(await now()).selected&&await page.textContent('#huRegionLabel')==='All regions');
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
 /* THE NEWSROOM (owner, 2026-10-20): the house owner, and only the house owner, may also publish a post as an article on
    mccluster.org/news/; the Worker checks again (workers/mccluster/test/newsroom.test.mjs). */
 if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
@@ -1215,6 +1294,17 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
   try {
     const globe = page.frame({url:/action-globe\.html/});
     check(scope,'the sign-in form never flashes on the way into the World',await page.evaluate(()=>window.__gateFlash)===0,await page.evaluate(()=>window.__gateFlash));
+    /* NO SCREEN FLASHES (owner, 2026-10-20), counted on every frame of the first eight seconds */
+    const flashes = await page.evaluate(()=>({live:window.__liveFlash,blank:window.__blankWorld,selfImg:window.__barSelfImg}));
+    check(scope,'no other room shows on the way into the World: never the Live room, never an empty World screen',flashes.live===0&&flashes.blank===0,flashes);
+    check(scope,'the bar never draws this page itself as a broken image',flashes.selfImg===0,flashes);
+    check(scope,'the globe frame never shows its standalone screen (the deck) inside the World',await globe.evaluate(()=>window.__deckFlash)===0,await globe.evaluate(()=>window.__deckFlash));
+    if (member) {
+      /* a member without a photo wears the initial of their name in the middle tab, and it is actually drawn */
+      await page.waitForSelector('.appbar [data-appnav="home"] .appbar__m--initial',{timeout:10000}).catch(()=>{});
+      const coin = await page.evaluate(()=>{const c=document.querySelector('.appbar [data-appnav="home"] .appbar__m--initial'),r=c&&c.getBoundingClientRect();return {coin:!!c,text:c?c.textContent:'',w:r?Math.round(r.width):0,img:!!document.querySelector('.appbar [data-appnav="home"] img.appbar__m--creator')};});
+      check(scope,'a member without a photo gets the initial of their name in the middle tab, drawn at full size, never an image',coin.coin&&coin.text==='F'&&coin.w>=20&&!coin.img,coin);
+    }
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');

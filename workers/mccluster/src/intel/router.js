@@ -186,6 +186,21 @@ export async function handleIntelRequest(request, env, options = {}) {
     const org = await resolveHouseOrg(env);
     const actor = user.id;
 
+    if (path === '/v1/intel/connections') {
+      if (request.method !== 'GET') return fail(request, env, 'Method not allowed', 405);
+      const params = url.searchParams;
+      if ([...params.keys()].some(k => !['root','kind','depth','limit'].includes(k) || params.getAll(k).length !== 1)) throw bad('Unsupported or repeated graph parameter');
+      const root = params.get('root') || null, kind = params.get('kind') || 'actor';
+      const depth = Number(params.get('depth') ?? 2), limit = Number(params.get('limit') ?? 80);
+      if ((root && (root.length > 550 || !/^[a-z_]+:[a-zA-Z0-9._:-]+$/.test(root))) || !/^[a-z_]{1,80}$/.test(kind) ||
+          !Number.isInteger(depth) || depth < 0 || depth > 3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw bad('Invalid graph bounds');
+      const graph = await rpc(env, 'ops_connected_graph_service', {p_org:org.id,p_root:root,p_kind:kind,p_depth:depth,p_limit:limit});
+      const response = reply(request, env, {ok:true,...graph});
+      response.headers.set('cache-control','private, no-store');
+      return response;
+    }
+
+
     if ((path === '/v1/intel' || path === '/v1/intel/health') && request.method === 'GET') {
       let health = null;
       let schemaReady = true;
