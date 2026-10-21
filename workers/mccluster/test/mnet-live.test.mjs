@@ -65,7 +65,9 @@ function fake({
   status = 'starting',
   room = ROOM_ROW,
   directory = null,
-  grantRows = []
+  grantRows = [],
+  actorKeys = [],
+  actorQueueFails = false
 } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
@@ -118,6 +120,8 @@ function fake({
       return ok(room ? [room] : []);
     }
 
+    if(u.includes('/rpc/ops_live_actor_config')) return ok({actor_keys:body.p_keys});
+    if(u.includes('/rpc/ops_live_actor_tick')) return actorQueueFails?ok({message:'unavailable'},503):ok({queued:true});
     if (u.includes('/rpc/network_live_session_metrics')) return ok([{
       session_id: SESSION, unique_viewers: 18, engaged_viewers: 11,
       joined: 6, submitted: 4, verified: 3, score: 0.08,
@@ -131,7 +135,7 @@ function fake({
       return ok(directory == null ? [{ ...SESSION_ROW, status: 'live' }] : directory);
     }
     if (u.includes('/network_live_sessions') && m === 'GET') {
-      return ok([{ ...SESSION_ROW, status }]);
+      return ok([{ ...SESSION_ROW, status,ai_actor_keys:actorKeys,post_id:status==='live'?'post1':null }]);
     }
     if (u.endsWith('/network_live_sessions') && m === 'POST') {
       return ok([{ ...SESSION_ROW, ...(body || {}), id: SESSION, status: 'starting' }], 201);
@@ -385,4 +389,29 @@ test('the cron ends broadcasts with no heartbeat and deletes their Stream inputs
   assert.match(q, /last_seen_at\.lt\./);
   assert.ok(calls.some((c) => c.m === 'DELETE' && c.u.endsWith('/live_inputs/gone1')));
   assert.equal(JSON.parse(calls.find((c) => c.m === 'PATCH').body).end_reason, 'stale');
+});
+
+
+test('only the live host can invite characters or share captions',async()=>{
+ const calls=fake({me:OTHER,status:'live',actorKeys:['royce.r01']});
+ for(const action of ['actors','cue']) assert.equal((await call('/v1/mnet/live/'+SESSION+'/'+action,'POST',{actor_keys:['royce.r01'],text:'Test caption',source:'browser_caption'})).status,404);
+ assert.equal(calls.some(c=>c.u.includes('ops_live_actor_config')),false);
+});
+test('host config forwards authenticated host identity and validates cast',async()=>{
+ const calls=fake({status:'live'});
+ assert.equal((await call('/v1/mnet/live/'+SESSION+'/actors','POST',{actor_keys:['royce.r01'],p_host:OTHER})).status,200);
+ assert.equal(calls.find(c=>c.u.includes('ops_live_actor_config')).body.p_host,HOST);
+ assert.equal((await call('/v1/mnet/live/'+SESSION+'/actors','POST',{actor_keys:['a','b','c','d']})).status,400);
+});
+test('caption sharing requires an invited cast and persists source kind',async()=>{
+ fake({status:'live'});assert.equal((await call('/v1/mnet/live/'+SESSION+'/cue','POST',{text:'Hello room',source:'browser_caption'})).status,409);
+ const calls=fake({status:'live',actorKeys:['royce.r01']});
+ assert.equal((await call('/v1/mnet/live/'+SESSION+'/cue','POST',{text:'Hello room',source:'browser_caption'})).status,201);
+ const post=calls.find(c=>c.u.endsWith('/network_posts')&&c.m==='POST').body;
+ assert.equal(post.author_m_uid,MUID);assert.equal(post.metadata.live_cue.unverified_transcript,true);
+});
+test('AI queue failure does not break the broadcast heartbeat',async()=>{
+ fake({status:'live',actorKeys:['royce.r01'],actorQueueFails:true});
+ const r=await call('/v1/mnet/live/'+SESSION+'/heartbeat','POST',{});assert.equal(r.status,200);
+ assert.equal((await r.json()).actors.error,'actor_queue_unavailable');
 });
