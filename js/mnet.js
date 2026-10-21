@@ -19,6 +19,8 @@
     newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
+    /* the feed's first read has answered (renderFeed draws nothing over the loading shapes before it has) */
+    feedAnswered: false,
     placeScope: { enabled:false, country:null, home:null, posts:[], news:[], lives:[], postBefore:null, newsBefore:null,
       loaded:false, error:'', seq:0, working:false },
     threadPost: null,
@@ -37,6 +39,27 @@
   };
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+
+  /* A SIGN-IN CARRIED IN (owner, 2026-10-20: "I'll see like other screens flash up"). A member arriving from Matthew's site
+     brings their sign-in in #mcc_handoff, and js/tabbar.js trades it for this host's own session. The World used to boot as
+     a guest meanwhile and then reload: the guest's World, then the member's. It waits for the trade now and takes the
+     session in place, with no reload. Read here, before tabbar.js (later in the page) scrubs the fragment, and on the same
+     test tabbar.js uses: a page that already holds a session keeps it and carries nothing. */
+  var handoff = { pending: false, done: false, ok: false, waiters: [] };
+  try { handoff.pending = /(?:^#|&)mcc_handoff=[^&]/.test(location.hash) && !JSON.parse(localStorage.getItem("mccdb_session") || "null"); } catch (e) {}
+  window.addEventListener("mcc:handoff", function (e) {
+    handoff.done = true; handoff.ok = !!(e.detail && e.detail.ok);
+    /* still waiting: the session is taken in place, so tabbar.js leaves the page as it is */
+    if (handoff.ok && handoff.pending && e.cancelable) e.preventDefault();
+    handoff.waiters.splice(0).forEach(function (go) { go(); });
+  });
+  /* A ROOM ASKED FOR BY ADDRESS (?view=profile, the house's Profile chip) opens on that room for a member, never on the
+     World first and then the room once the member's World has loaded */
+  var DEEP_VIEW = "";
+  try {
+    var deepQ = new URLSearchParams(location.search), deepV = deepQ.get("view");
+    if (!deepQ.get("group") && !deepQ.get("mission") && /^(live|clips|discover|groups|messages|profile)$/.test(deepV || "")) DEEP_VIEW = deepV;
+  } catch (e) {}
 
   function $(id) { return document.getElementById(id); }
   function esc(value) {
@@ -358,6 +381,10 @@
     $("mnSignedOut").hidden = which !== "signedout";
     $("mnProfileGate").hidden = which !== "profile";
     $("mnApp").hidden = which !== "app";
+    /* the head of mnet.html held the World back under a ?signin=1 form, or put an addressed room up; a gate is chosen now,
+       so those holds are over */
+    document.documentElement.classList.remove("mn-boot-signin");
+    document.documentElement.removeAttribute("data-boot-view");
     /* the bar's sign-in chip steps aside while a gate is up, as it does on the World */
     document.documentElement.classList.toggle("mn-gate-on", which !== "app");
     sizeWorld();
@@ -510,7 +537,9 @@
       }
       paintFinishCard();
       showGate("app");
-      setView("feed");
+      /* a room asked for by address is already up (boot, below) and is opened properly just after; the World is not
+         put on screen in between */
+      if (!DEEP_VIEW || state.currentView !== DEEP_VIEW) setView("feed");
       paintSelf();
       paintCreatorDoor();
       $("mnBell").hidden = false;
@@ -537,7 +566,15 @@
      (401) is let go: the member is a guest, with one card to sign in again. Anything else (the network, a server
      error, a session that could not be checked) keeps the session and shows the Earth and the public posts, with a
      card to try again or to sign in again. Posting, joining and the member rooms wait on the card. */
+  /* A PAGE ON ITS WAY OUT (a reload, a link) cancels what it was still reading. That is not a failure to show: nothing is
+     painted over a page that is leaving (owner, 2026-10-20: no flashes; the house owner's World reloads once to open with
+     all three modes, js/world-owner-modes.js). A leave that is called off clears itself. */
+  var leaving = false, leavingTimer = 0;
+  window.addEventListener("beforeunload", function () { leaving = true; clearTimeout(leavingTimer); leavingTimer = setTimeout(function () { leaving = false; }, 3000); });
+  window.addEventListener("pagehide", function () { leaving = true; });
+  window.addEventListener("pageshow", function () { leaving = false; });
   function showSignedInLoadError(error) {
+    if (leaving) return Promise.resolve(null);
     try { console.warn("[mnet] signed-in bootstrap failed", error); } catch (e) {}
     if (error && error.status === 401) return letSessionGo();
     state.stall = "retry";
@@ -1338,6 +1375,10 @@
   }
 
   function renderFeed(append) {
+    /* until the feed's own read has answered, what is on screen stays (the shapes of posts, or the last posts, and the
+       globe's pins for them): a globe that is ready first used to draw "Nothing on the feed yet" over a feed that was on
+       its way (owner, 2026-10-20: no flashes) */
+    if (!append && !state.feedAnswered && !(state.feedScope === "local" && state.placeScope.enabled)) return;
     state.shownNews = [];
     try { return paintFeed(append); }
     finally {
@@ -1480,6 +1521,15 @@
   function skeleton(n) {
     var one = '<div class="mn__skel" aria-hidden="true"><i class="mn__skel-av"></i><div><i></i><i></i><i class="is-short"></i></div></div>';
     return new Array(n + 1).join(one);
+  }
+  /* the same, in the shape of the rows and cards a room is about to show (people, conversations, groups) */
+  function skeletonRows(n) {
+    var one = '<div class="mn__skel mn__skel--row" aria-hidden="true"><i class="mn__skel-av"></i><div><i></i><i class="is-short"></i></div><i class="mn__skel-pill"></i></div>';
+    return new Array(n + 1).join(one);
+  }
+  function skeletonCards(n) {
+    var one = '<div class="mn__skel mn__skel--card" aria-hidden="true"><div><i></i><i class="is-short"></i></div></div>';
+    return '<div class="mng__grid">' + new Array(n + 1).join(one) + "</div>";
   }
 
   /* WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like
@@ -1635,6 +1685,7 @@
     if (reset) {
       state.nextBefore = null;
       state.feed = [];
+      state.feedAnswered = false;
       setStatus($("mnFeedStatus"), "");
       if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
@@ -1660,6 +1711,7 @@
         state.nextBefore = data.next_before || null;
       }
       drawn = true;
+      state.feedAnswered = true;
       renderFeed(false);
       openLinkedPost();
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming), loadCollaborationCards(incoming)]).then(function (flags) {
@@ -1669,6 +1721,7 @@
       paintMore();
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
+      state.feedAnswered = true;
       setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
     }).finally(function () { state.loadingFeed = false; });
   }
@@ -2135,9 +2188,12 @@
   }
 
   function loadDiscover() {
-    var q=$("mnDiscoverQuery").value.trim().replace(/^@+/,""); setStatus($("mnDiscoverStatus"),"Searching…");
+    var q=$("mnDiscoverQuery").value.trim().replace(/^@+/,""), host=$("mnDiscoverResults");
+    /* the last people stay on screen while the next answer comes; the first time, rows in their shape */
+    if(!host.children.length||host.querySelector(".mn__skel")){host.innerHTML=skeletonRows(4);setStatus($("mnDiscoverStatus"),"");}
+    else setStatus($("mnDiscoverStatus"),q?"Searching…":"");
     return api("/v1/mnet/discover?q="+encodeURIComponent(q)+"&limit=50").then(function (data) {
-      var rows=data.people||[]; $("mnDiscoverResults").innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
+      var rows=data.people||[]; host.innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
       bindPeople($("mnDiscoverResults")); setStatus($("mnDiscoverStatus"),rows.length?rows.length+" people":"");
     }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not search the network.","error"); });
   }
@@ -2222,7 +2278,10 @@
     return api("/v1/mnet/conversations").then(function (data) { state.conversations=data.conversations||[]; paintMessageBadge(); }).catch(function () {});
   }
   function loadConversations() {
-    setStatus($("mnMessageStatus"),"Loading…");
+    /* the list on screen stays while it refreshes (Messages refreshes itself every 15 seconds); the first time, rows */
+    var list=$("mnConversations");
+    if(list&&!list.children.length)list.innerHTML=skeletonRows(4);
+    setStatus($("mnMessageStatus"),"");
     return api("/v1/mnet/conversations").then(function (data) {
       state.conversations=data.conversations||[];
       paintMessageBadge();
@@ -2233,7 +2292,7 @@
       $("mnConversations").querySelectorAll("[data-conversation]").forEach(function(b){b.onclick=function(){openConversation(b.dataset.conversation);};});
       setStatus($("mnMessageStatus"),"");
       return state.conversations;
-    }).catch(function (e) { setStatus($("mnMessageStatus"),e.message||"Could not load messages.","error"); return []; });
+    }).catch(function (e) { if(list&&list.querySelector(".mn__skel"))list.innerHTML=""; setStatus($("mnMessageStatus"),e.message||"Could not load messages.","error"); return []; });
   }
   function startConversation(target) {
     return api("/v1/mnet/conversations",{method:"POST",body:target||{}}).then(function (x) {
@@ -2329,6 +2388,7 @@
     if (MISSIONS_OFF && name === "missions") name = "feed";
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
+    document.documentElement.removeAttribute("data-boot-view");
     state.currentView = name;
     track("mnet_view", { view:name });
     closeAlerts();
@@ -2348,7 +2408,23 @@
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="profile"){paintSelf();loadDeletion();paintCreatorDoor();}
-    window.scrollTo({top:0,behavior:"smooth"});
+    /* the new room starts at its top at once: a smooth scroll moved the room on screen after it had already changed */
+    window.scrollTo(0,0);
+    sizeWorld();
+  }
+  /* a member's room asked for by address, put on screen while their World loads: only the panel, no reads (they wait for
+     the bootstrap, which opens the room properly), so nothing else is drawn first */
+  function peekView(name) {
+    document.documentElement.removeAttribute("data-boot-view");
+    ["live","clips","feed","missions","discover","groups","messages","profile"].forEach(function (view) {
+      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",profile:"mnProfileView"};
+      var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
+    });
+    if($("mnToWorld"))$("mnToWorld").hidden=name==="feed";
+    if(name==="discover"&&!$("mnDiscoverResults").children.length)$("mnDiscoverResults").innerHTML=skeletonRows(4);
+    if(name==="messages"&&!$("mnConversations").children.length)$("mnConversations").innerHTML=skeletonRows(4);
+    if(name==="groups"&&$("mngCards")&&(!groups||!groups.all.length))$("mngCards").innerHTML=skeletonCards(3);
+    state.currentView = name;
     sizeWorld();
   }
 
@@ -2597,10 +2673,24 @@
 
     /* NO SIGN-IN FLASH (owner, 2026-10-20: "before I hit the global screen, I see flashes of the sign-in screen"). The
        sign-in form ships hidden and opens only when something asks for it. A member's World shell is up at once while
-       the stored session is checked over the network, instead of the form standing there for that wait. */
+       the stored session is checked over the network, instead of the form standing there for that wait. The World ships
+       open on its own room (mnet.html), so that shell is the World, never the Live room; a room asked for by address is
+       put up instead, empty, and filled once the member's World has loaded. */
     var stored = MCC.session && MCC.session();
-    if (stored && stored.access_token) showGate("app");
+    if ((stored && stored.access_token) || handoff.pending) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
+    /* a sign-in being carried in: the World waits for it (above) rather than opening as a guest first; if the trade
+       never answers, the visitor's World opens as it would have, and a late answer reloads the page as before */
+    if (handoff.pending && !handoff.done) {
+      var once = false, go = function () { if (once) return; once = true; handoff.pending = handoff.pending && handoff.done; enterSession(); };
+      handoff.waiters.push(go);
+      setTimeout(go, 8000);
+      return;
+    }
+    enterSession();
+  }
+  function enterSession() {
     MCC.user().then(function (user) {
+      if (leaving) return;
       state.user = user;
       if (!user) {
         var existing = MCC.session && MCC.session();
@@ -2616,6 +2706,7 @@
         });
       });
     }).catch(function (error) {
+      if (leaving) return;
       var existing = MCC.session && MCC.session();
       if (existing && existing.access_token) showSignedInLoadError(error);
       else enterGuestWorld();
@@ -2822,7 +2913,8 @@
   function loadGroups() {
     var host = $("mngCards");
     if (!host) return Promise.resolve();
-    if (!groups.all.length) host.innerHTML = '<p class="mng__empty">Loading rooms…</p>';
+    /* the first time, cards in their shape; after that the rooms on screen stay while they refresh */
+    if (!groups.all.length && !host.querySelector(".mn__skel")) host.innerHTML = skeletonCards(3);
     return api("/v1/mnet/groups").then(function (out) {
       groups.all = (out && out.groups) || [];
       assignSkins(groups.all);
