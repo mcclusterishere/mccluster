@@ -76,6 +76,7 @@ test('the World: no pin per story; the countries are shaded by the counts, and t
   const globe = read('js/action-globe.js'), wc = read('js/world-countries.js');
   assert.match(globe, /fetch\(API\+'\/v1\/world\/news-heat',\{credentials:'omit'\}\)/);
   assert.match(globe, /heatCells:newsHeatCells/);
+  assert.match(globe, /news-heat',\{credentials:'omit'\}\)[^\n]*\.catch\(\(\)=>\{if\(countries\)countries\.heat\(null\)\}\);/, 'a failed refresh clears the old counts');
   assert.match(wc, /if \(st\.heatFill\) st\.heatFill\.show = st\.lineAlpha > 0\.15;/, 'the heat shows while the borders do');
   assert.match(wc, /const hide = code === st\.selected && !!st\.stateHeat;/, 'a selected country steps aside for its states');
 });
