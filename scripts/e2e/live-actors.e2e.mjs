@@ -35,6 +35,7 @@ for(const width of [390,1280]){
  assert.equal(await page.evaluate(()=>window.aborted),true);
  assert.equal(await page.locator('#mnActorCaptions').isChecked(),false);
  const overflow=await page.locator('#mnActorControls').evaluate(el=>({scroll:el.scrollWidth,client:el.clientWidth}));assert.equal(overflow.scroll,overflow.client);
+ const pageWidth=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));assert.equal(pageWidth.scroll,pageWidth.client);
  const inputSize=await page.locator('#mnActorCue').evaluate(el=>parseFloat(getComputedStyle(el).fontSize));assert.ok(inputSize>=16);
  await mkdir('/tmp/live-actors-proof',{recursive:true});await page.screenshot({path:`/tmp/live-actors-proof/live-${width}.png`});
  await page.evaluate(()=>window.testLive.end(true));assert.equal(await page.locator('#mnActorControls').isVisible(),false);
