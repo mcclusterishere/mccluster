@@ -7,6 +7,7 @@ import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
+import { handleHaloLayers, handleWorldGeocode, WORLD_GEOCODE_PATH } from './world-halo-layers.js';
 import { handleWorldCctv } from './world-cctv.js';
 import { handleWorldAccess } from './world-access.js';
 import { handleIntelRequest } from './intel/router.js';
@@ -164,6 +165,15 @@ export default {
       if (path.startsWith('/v1/world/layers/')) {
         const layer = await handleWorldLayers(request, env);
         if (layer) return layer;
+        /* Halo feeds on the admin globe, owner-only by the same guard (./world-halo-layers.js) */
+        const halo = await handleHaloLayers(request, env);
+        if (halo) return halo;
+      }
+
+      /* place search for the admin globe, owner-only by the same guard */
+      if (path === WORLD_GEOCODE_PATH) {
+        const geocode = await handleWorldGeocode(request, env);
+        if (geocode) return geocode;
       }
 
       /* which World layers this viewer may open, by level (./world-access.js) */
