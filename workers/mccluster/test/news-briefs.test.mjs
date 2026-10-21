@@ -3,7 +3,7 @@
    the house owner and a country's region leaders read, ask for or grant briefs. Driven against a fake Supabase. */
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { nyClock, nyDayStart, previousDay, sampleHeadlines, seedMorningBriefs, handleNewsBriefs, briefTask } from '../src/news-briefs.js';
+import { nyClock, nyDayStart, previousDay, sampleHeadlines, seedMorningBriefs, handleNewsBriefs, briefTask, editionJobId, deskConfig } from '../src/news-briefs.js';
 
 const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
@@ -54,11 +54,13 @@ function db({ jobs = [], leadsTable = false, leads = [], owner = true, leadOf = 
       return ok(offset ? [] : articles.filter((a) => !fips || a.location_country_fips === fips));
     }
     if (u.includes('/ops_agent_jobs?') && m === 'GET') {
+      const id = (u.match(/[?&]id=eq\.([^&]+)/) || [])[1];
+      if (id) return ok(jobs.filter((j) => j.id === id));
       const target = (u.match(/target_id=eq\.([^&]+)/) || [])[1];
       if (target) return ok(jobs.filter((j) => j.target_id === target));
       return ok(jobs);
     }
-    if (u.endsWith('/ops_agent_jobs') && m === 'POST') return ok([{ id: 'job-' + calls.length, ...JSON.parse(init.body) }], 201);
+    if (u.includes('/ops_agent_jobs?on_conflict=id') && m === 'POST') { const row = JSON.parse(init.body); if (jobs.some((j) => j.id === row.id)) return ok([]); jobs.push(row); return ok([row], 201); }
     if (u.includes('/network_profiles?')) return ok([{ m_uid: LEAD, display_name: 'Ada' }]);
     /* what ILIKE would return for a pattern: an unescaped underscore would also match "benxj" */
     if (u.includes('/platform_profiles?')) return ok([{ user_id: 'user-2', mccluster_id: 'Ada' }, { user_id: 'user-3', mccluster_id: 'benxj' }]);
@@ -67,13 +69,15 @@ function db({ jobs = [], leadsTable = false, leads = [], owner = true, leadOf = 
   return calls;
 }
 const art = (fips, i, extra = {}) => ({ title: `Headline ${fips} ${i}`, canonical_url: `https://news${i % 3}.example/${fips}/${i}`, published_at: '2026-10-20T12:00:00Z', tone: -1.25, story_key: `${fips}-${i}`, location_country_fips: fips, ...extra });
-const queuedJobs = (calls) => calls.filter((c) => c.u.endsWith('/ops_agent_jobs') && c.m === 'POST').map((c) => c.body);
+const queuedJobs = (calls) => calls.filter((c) => c.u.includes('/ops_agent_jobs?on_conflict=id') && c.m === 'POST' && c.body.status === 'queued').map((c) => c.body);
 
 test('nothing is queued while the flag is off or before yesterday is over in New York', async () => {
   const calls = db();
   assert.deepEqual(await seedMorningBriefs({ ...ENV, NEWS_BRIEFS_ENABLED: 'false' }), { skipped: 'disabled' });
-  assert.deepEqual(await seedMorningBriefs(ENV, { now: Date.parse('2026-10-21T04:10:00Z') }), { skipped: 'too_early' }); // 00:10 New York
   assert.equal(calls.length, 0);
+  const early = await seedMorningBriefs(ENV, { now: Date.parse('2026-10-21T04:10:00Z') });
+  assert.equal(early.receipts[0].state, 'too_early');
+  assert.equal(queuedJobs(calls).length, 0);
 });
 
 test('the night seed queues yesterday: the US first, then region leaders, then the busiest, each once', async () => {
@@ -95,13 +99,19 @@ test('the night seed queues yesterday: the US first, then region leaders, then t
   assert.ok(us.input.evidence.headlines.every((h) => !('url' in h)), 'the model never sees a link');
   assert.ok(us.input.sources.every((s) => /^https:\/\/news\d\.example\//.test(s.url)));
   const window = calls.find((c) => c.u.includes('/media_news_articles?')).u;
-  assert.match(window, /published_at=gte\.2026-10-20T04:00:00\.000Z&published_at=lt\.2026-10-21T04:00:00\.000Z/);
+  assert.match(window, /ingestion_provider=eq\.gdelt_gkg_v2/);
+  assert.equal(us.input.evidence.window.since, '2026-10-20T04:00:00.000Z');
+  assert.equal(us.input.evidence.window.until, '2026-10-21T04:00:00.000Z');
+  assert.ok(out.receipts.some((r) => r.country === 'KE' && r.state === 'no_coverage'));
 });
 
-test('once the US brief for yesterday exists, the seed does nothing more that day', async () => {
-  const calls = db({ jobs: [{ id: 'j', target_id: '2026-10-20:US', status: 'done' }] });
-  assert.deepEqual(await seedMorningBriefs(ENV, { now: Date.parse('2026-10-21T13:00:00Z') }), { skipped: 'already_seeded', day: '2026-10-20' });
-  assert.equal(calls.some((c) => c.u.includes('/media_news_articles?')), false);
+test('an existing US edition does not suppress a missing regional edition', async () => {
+  const id = await editionJobId(ORG, '2026-10-20', 'US', 'America/New_York');
+  const calls = db({ jobs: [{ id, target_id: '2026-10-20:US', status: 'done' }], articles: [art('KE', 1)] });
+  const result = await seedMorningBriefs({ ...ENV, NEWS_BRIEF_COUNTRIES: 'KE' }, { now: Date.parse('2026-10-21T13:00:00Z') });
+  assert.deepEqual(result.queued, ['KE']);
+  assert.equal(result.receipts[0].state, 'existing');
+  assert.deepEqual(queuedJobs(calls).map((j) => j.target_id), ['2026-10-20:KE']);
 });
 
 const call = (path, method = 'GET', body) => handleNewsBriefs(new Request('https://api.test' + path, {
@@ -133,13 +143,22 @@ test('a region leader sees only their countries; anyone else is turned away', as
   assert.equal((await call('/v1/news-briefs')).status, 403, 'with no leaders table, briefs are the owner\'s alone');
 });
 
+test('a queued edition past its deadline is late, never a delivered draft', async () => {
+  db({ jobs: [{ target_id: '2020-01-01:US', status: 'queued', input: { evidence: { window: { deadline: '2020-01-02T12:00:00Z' } } } }] });
+  const data = await (await call('/v1/news-briefs?day=2020-01-01')).json();
+  assert.equal(data.briefs[0].late, true);
+  assert.equal(data.briefs[0].status, 'queued');
+  assert.equal(data.briefs[0].generated_at, null);
+  assert.equal(data.briefs[0].publication_authorized, false);
+});
+
 test('asking for a country queues its brief once, never for a day that is not over', async () => {
-  let calls = db({ articles: [art('KE', 1), art('KE', 2)] });
+  let calls = db({ articles: [art('KE', 1, { published_at: '2026-10-19T12:00:00Z' }), art('KE', 2, { published_at: '2026-10-19T13:00:00Z' })] });
   let res = await call('/v1/news-briefs/request', 'POST', { country: 'KE', day: '2026-10-19' });
   assert.equal(res.status, 202);
   assert.equal(queuedJobs(calls)[0].target_id, '2026-10-19:KE');
   assert.match(calls.find((c) => c.u.includes('/media_news_articles?')).u, /location_country_fips=eq\.KE/);
-  calls = db({ jobs: [{ target_id: '2026-10-19:KE', status: 'queued' }] });
+  calls = db({ jobs: [{ id: await editionJobId(ORG, '2026-10-19', 'KE', deskConfig(ENV, 'KE').timezone), target_id: '2026-10-19:KE', status: 'queued' }] });
   assert.equal((await (await call('/v1/news-briefs/request', 'POST', { country: 'KE', day: '2026-10-19' })).json()).queued, false);
   db();
   assert.equal((await call('/v1/news-briefs/request', 'POST', { country: 'KE', day: '2999-01-01' })).status, 400);

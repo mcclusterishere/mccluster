@@ -25,7 +25,24 @@ export const DATASETS = [
   ['music_orders','Music orders','Content','music_orders','created_at','content',false,'All order states; not revenue'],
   ['decisions','Adaptive decisions','System','experience_decisions','created_at','adaptive',false,'Recorded decisions; outcomes are measured separately'],
   ['observability','System events','System','control_observability_events','created_at','#system:observability',true,'House organization · retained events',24]
-].map(([key,label,family,table,time,section,orgScoped,scope,quietHours])=>({key,label,family,table,time,section,orgScoped,scope,quietHours}));
+].map(([key,label,family,table,time,section,orgScoped,scope,quietHours])=>({key,label,family,table,time,section,orgScoped,scope,quietHours,
+  contract_version:'analytics-coverage-contract/v1',
+  producer:table,
+  unit:'stored_rows',
+  identity_basis:'Stored rows in '+table+'; cross-source/entity identity not inferred',
+  numerator:'Count of rows matching declared scope and half-open time window',denominator:null,
+  permitted_dimensions:['declared_organization_or_first_party_scope','time_window'],
+  deduplication_key:{status:'unverified_domain_contract',note:'Coverage counts rows; it does not independently deduplicate domain entities.'},
+  event_time_basis:time,
+  lateness_policy:'Live database count; late rows change subsequent reads; no outcome maturity claim',
+  retention:{status:'unverified_domain_policy'},
+  privacy_class:'house_owner_aggregate',
+  owner:{technical:'McCluster '+family.toLowerCase(),responsible_person:'unassigned'},
+  reporting_destination:section,
+  health_contract:{provider_health:'not_measured',data_quality:'not_adjudicated',
+    states:['populated','empty','quiet','missing','unavailable'],
+    note:'A row count, recent timestamp or registered connector does not establish current provider coverage.'}
+}));
 
 export async function boundedReads(tasks, limit=3) {
   const out=new Array(tasks.length);let next=0;
@@ -71,6 +88,7 @@ export async function dataCoverage(env,orgId,url,{fetchImpl=fetch,now=new Date()
     const age=total.latest_at?Math.max(0,(now-Date.parse(total.latest_at))/3600000):null;
     const state=total.status!=='measured'?total.status:total.count===0?'empty':d.quietHours&&age!==null&&age>d.quietHours?'quiet':'populated';
     return {key:d.key,label:d.label,family:d.family,section:d.section,scope:d.scope,time_field:d.time,
+      unit:d.unit,owner:d.owner,contract_version:d.contract_version,health_contract:d.health_contract,
       count:total.count,latest_at:total.latest_at,status:total.status,state,
       window_count:recent?.count??null,window_status:recent?.status||(window?'unavailable':'not_requested'),
       quiet_after_hours:d.quietHours||null,
