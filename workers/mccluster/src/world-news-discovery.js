@@ -529,8 +529,10 @@ async function placedPosts(env, fetchImpl) {
   if (!placeScopeEnabled(env)) return null;
   try {
     const params = new URLSearchParams({ select: 'country_code', country_code: 'not.is.null', visibility: 'eq.public', deleted_at: 'is.null', removed_at: 'is.null', reply_to_id: 'is.null', group_id: 'is.null', order: 'id.asc', limit: String(HEAT_PAGE) });
+    /* more placed posts than the pages read is not a count: it answers null (a dash), never a part passed off as a total */
     const out = {};
-    for (let page = 0; page < POST_PAGES; page++) {
+    for (let page = 0; ; page++) {
+      if (page === POST_PAGES) return null;
       params.set('offset', String(page * HEAT_PAGE));
       const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/network_posts?${params}`, {
         headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }

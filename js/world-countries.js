@@ -302,7 +302,7 @@
       st.selected = f ? code : null;
       const n = paintCard(f);
       if (f) {
-        st.highlight = viewer.scene.primitives.add(polygonPrimitive(f, C.Color.WHITE.withAlpha(st.heat ? 0.07 : 0.16)));
+        st.highlight = viewer.scene.primitives.add(polygonPrimitive(f, C.Color.WHITE.withAlpha(heatShown() ? 0.07 : 0.16)));
         /* the chosen country's whole outline, its coast too, and its states whatever the height */
         st.outline = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: ringInstances(f, 'hu-country-selected', BORDER.width + 1, INK.withAlpha(0.95)), appearance: new C.PolylineColorAppearance({ translucent: true }), asynchronous: false }));
         /* only the latest selection draws: a select() made again before the file arrives (refresh() re-applies one) leaves no stray lines */
@@ -325,12 +325,15 @@
       }));
     }
     const heatColor = (t) => { const c = Heat.at(Heat.HEAT, t); return new C.Color(c[0], c[1], c[2], c[3]); };
+    /* a good answer with no stories in the window is still an answer: every country's news is 0, and the posts ride along;
+       only shading there is shows the legend */
+    function heatShown() { return !!(st.heat && Object.keys(st.heat).length); }
     function setHeat(data) {
       st.heat = data && data.countries && typeof data.countries === 'object' ? data.countries : null;
       st.heatTotal = st.heat ? Number(data.total) || 0 : 0;
       st.posts = data && data.posts && typeof data.posts === 'object' ? data.posts : null;
       drawHeat();
-      if (legend && legend.hidden !== !st.heat) { legend.hidden = !st.heat; if (o.onLegend) o.onLegend(); }
+      if (legend && legend.hidden !== !heatShown()) { legend.hidden = !heatShown(); if (o.onLegend) o.onLegend(); }
       if (st.selected) { drawStateHeat(); restat(); }
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
     }
@@ -479,7 +482,7 @@
       });
       st.ready = true;
       /* counts that arrived before the shapes */
-      if (st.heat) { drawHeat(); if (legend) { legend.hidden = false; if (o.onLegend) o.onLegend(); } }
+      if (st.heat) { drawHeat(); if (legend && heatShown()) { legend.hidden = false; if (o.onLegend) o.onLegend(); } }
       viewer.scene.preRender.addEventListener(frame);
       if (o.onReady) o.onReady();
     }
@@ -529,7 +532,7 @@
       /* the heat shows while the borders do: below them the street map or the imagery is the subject */
       if (st.heatFill) st.heatFill.show = st.lineAlpha > 0.15;
       if (st.stateHeat) st.stateHeat.show = st.lineAlpha > 0.15;
-      if (legend) { const hide = !st.heat || st.lineAlpha <= 0.15; if (legend.hidden !== hide) { legend.hidden = hide; if (o.onLegend) o.onLegend(); } }
+      if (legend) { const hide = !heatShown() || st.lineAlpha <= 0.15; if (legend.hidden !== hide) { legend.hidden = hide; if (o.onLegend) o.onLegend(); } }
       const wt = washTarget(st.height, st.mode);
       st.washAlpha = stepAlpha(st.washAlpha, Math.min(wt, usAlpha()), dt, reduced);
       if (st.wash && st.washMat) { const u = st.washMat.uniforms; u.evenColor.alpha = st.washBase[0] * st.washAlpha; u.oddColor.alpha = st.washBase[1] * st.washAlpha; st.wash.show = st.washAlpha > 0.01; }

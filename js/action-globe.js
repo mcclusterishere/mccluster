@@ -293,7 +293,7 @@ function loadNewsHeat(){
  if(newsHeatTimer&&Date.now()-newsHeatAsked<290e3)return;
  newsHeatAsked=Date.now();clearTimeout(newsHeatTimer);newsHeatTimer=setTimeout(()=>{newsHeatTimer=0;loadNewsHeat()},300e3);
  /* a read that fails (offline, a bad answer) clears the shading too: an old day's counts never show as the last 24 hours */
- fetch(API+'/v1/world/news-heat',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>{if(publicNewsOn&&!travelMode&&countries)countries.heat(d&&d.ok&&d.countries&&Object.keys(d.countries).length?d:null)}).catch(()=>{if(countries)countries.heat(null)});
+ fetch(API+'/v1/world/news-heat',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>{if(publicNewsOn&&!travelMode&&countries)countries.heat(d&&d.ok&&d.countries&&typeof d.countries==='object'?d:null)}).catch(()=>{if(countries)countries.heat(null)});
 }
 /* a selected country's stories as places, counted by state on the globe */
 function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+encodeURIComponent(code),{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>d&&d.ok&&Array.isArray(d.cells)?d.cells:null).catch(()=>null)}

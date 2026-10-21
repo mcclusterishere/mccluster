@@ -132,3 +132,19 @@ test('posts placed in each country ride along once the place scope is on, and ar
   assert.equal(partial.posts, null);
   assert.deepEqual(partial.countries, { US: 1 });
 });
+
+test('more placed posts than the pages read answers null, never a part passed off as the count', async () => {
+  const stories = [story('US', 1, 1)];
+  const placedRows = (n) => async (url, init) => {
+    const u = new URL(String(url));
+    if (!u.pathname.endsWith('/network_posts')) return db(stories).fetchImpl(url, init);
+    const offset = Number(u.searchParams.get('offset') || 0), limit = Number(u.searchParams.get('limit'));
+    const rows = Array.from({ length: Math.max(0, Math.min(limit, n - offset)) }, (_, i) => ({ country_code: (offset + i) % 2 ? 'KE' : 'US' }));
+    return new Response(JSON.stringify(rows), { status: 200 });
+  };
+  const env = { ...ENV, WORLD_PLACE_SCOPE_ENABLED: 'true' };
+  const read = async (n) => (await (await handleWorldNewsHeat(get(), env, { fetchImpl: placedRows(n), cacheImpl: memoryCache(), now: () => NOW })).json()).posts;
+  assert.deepEqual(await read(4999), { US: 2500, KE: 2499 }, 'every page read to the end: the whole count');
+  assert.equal(await read(5000), null, 'the last page read is full, so there may be more: no count');
+  assert.equal(await read(12000), null);
+});
