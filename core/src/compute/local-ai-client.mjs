@@ -23,6 +23,9 @@ export async function localAiChat({
   temperature = 0.2,
   numCtx = Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
   json = false,
+  think = false,
+  numPredict = 1024,
+  tools,
   priority = -20,
   timeoutMs = Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000),
   metadata = {},
@@ -45,7 +48,10 @@ export async function localAiChat({
         input: {
           ...(normalizedMessages ? { messages: normalizedMessages } : { prompt: normalizedPrompt }),
           temperature: Number(temperature),
-          num_ctx: Math.min(16384, Math.max(2048, Number(numCtx || 8192))),
+          num_ctx: Math.min(32768, Math.max(2048, Number(numCtx || 16384))),
+          num_predict: numPredict,
+          think: think === true,
+          ...(Array.isArray(tools) && tools.length ? { tools } : {}),
           json: Boolean(json),
         },
         metadata: {
@@ -73,10 +79,21 @@ export async function localAiChat({
   return {
     model: data?.model || MODEL,
     implementation: data?.implementation || null,
-    message: { content },
+    message: { role: 'assistant', content, ...(Array.isArray(data?.tool_calls) && data.tool_calls.length ? { tool_calls: data.tool_calls } : {}) },
+    usage: data?.usage || {},
+    settings: data?.settings || null,
+    done_reason: data?.done_reason || null,
+    thinking_chars: data?.thinking_chars ?? null,
     prompt_eval_count: data?.usage?.prompt_eval_count ?? null,
     eval_count: data?.usage?.eval_count ?? null,
     total_duration: data?.usage?.total_duration_ns ?? null,
     queue_wait_ms: data?.queue_wait_ms ?? null,
   };
+}
+
+export async function localAiDiagnostics({ fetchImpl = globalThis.fetch } = {}) {
+  const response = await fetchImpl(`${ADAPTER}/diagnostics`, { signal: AbortSignal.timeout(15_000) });
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || `AI diagnostics returned ${response.status}`);
+  return body;
 }

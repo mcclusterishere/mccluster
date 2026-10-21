@@ -21,6 +21,9 @@ import { leadRescore } from './executors/lead-rescore.mjs';
 import { meetingDelegateDispatch } from './executors/meeting-delegate-dispatch.mjs';
 import { meetingDelegateCollect } from './executors/meeting-delegate-collect.mjs';
 import { residentAiTurn } from './executors/resident-ai-turn.mjs';
+import { actorLiveComment } from './executors/actor-live-comment.mjs';
+import { actorNewsComment } from './executors/actor-news-comment.mjs';
+import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
 import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
 const executors = new Map([
@@ -46,6 +49,9 @@ const executors = new Map([
   ['meeting_delegate_dispatch', meetingDelegateDispatch],
   ['meeting_delegate_collect', meetingDelegateCollect],
   ['resident_ai_turn', residentAiTurn],
+  ['ai_diagnostics', aiDiagnostics],
+  ['actor_news_comment', actorNewsComment],
+  ['actor_live_comment', actorLiveComment],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));

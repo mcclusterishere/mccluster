@@ -1,6 +1,7 @@
 import { fail, reply } from '../lib/http.js';
 import { recordEvent } from '../lib/observability.js';
 import { queueObjectiveSynthesis } from './objectives.js';
+import { handleBuildCode, ROUTE as BUILD_CODE_ROUTE } from './build-code.js';
 
 const MAX_BODY = 512 * 1024;
 const OWNER_JOB_TYPES = new Set([
@@ -215,8 +216,14 @@ export async function handleAiRequest(request, env, user) {
   }
   if (!user) return fail(request, env, 'Authentication required', 401);
 
-  const orgId = url.searchParams.get('org_id') || (await houseOrgId(env));
+  // House Core is not a tenant service. Resolve the only authorized organization
+  // server-side before checking caller membership or accepting work.
+  const orgId = await houseOrgId(env);
   if (!orgId) return fail(request, env, 'McCluster house organization is not configured', 503);
+  const requestedOrgId = url.searchParams.get('org_id');
+  if (requestedOrgId && requestedOrgId !== orgId) {
+    return fail(request, env, 'McCluster house organization only', 403);
+  }
 
   const membershipsRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id,role&limit=1`,
@@ -224,6 +231,10 @@ export async function handleAiRequest(request, env, user) {
   );
   const memberships = await membershipsRes.json().catch(() => []);
   if (!memberships?.length) return fail(request, env, 'McCluster house owner access required', 403);
+
+  /* Control → Build → Code. Same gate, same org, same job ledger. */
+  const build = await handleBuildCode(request, env, user, orgId, path);
+  if (build) return build;
 
   if (path === '/v1/ai' && request.method === 'GET') {
     return reply(request, env, {
@@ -235,6 +246,7 @@ export async function handleAiRequest(request, env, user) {
       decisions: '/v1/ai/decisions',
       task: '/v1/ai/task',
       jobs: '/v1/ai/jobs',
+      build_code: BUILD_CODE_ROUTE,
       status: '/v1/ai/status',
       system_health: '/v1/ai/system-health',
       objective_synthesis: 'automatic after successful context ingest',

@@ -1,0 +1,100 @@
+/* THE WORLD, SERVED ON A HOST OF ITS OWN.
+
+   One Worker, by host. GitHub Pages holds one custom domain per repository
+   (matthew.mccluster.org), where the World (mnet.html) and every file it
+   loads actually live. A host that is the World's door (mccluster.org
+   today; humanuprise.com when the owner routes it) rides this Worker: its
+   router answers only its own hostnames and passes the World through from
+   the personal origin with that host's own head. Everything the World
+   opens rides the same way, so a member's session (per-origin
+   localStorage) holds from the Earth to the mission dialog, the account
+   and the governed support rail. Everything else is Matthew's property
+   and gets a 301 to the same path on matthew.mccluster.org.
+
+   NOT A MIRROR. Only the host's own documents are indexable; every other
+   proxied page carries x-robots-tag: noindex. Nothing is rewritten beyond
+   the World's head: no base tag, no link rewriting. Relative links resolve
+   on the host and its router decides where each one lands. */
+
+/* The World's own rooms, by exact path... */
+export const WORLD_ROOMS = new Set([
+  '/action-globe.html', // the Earth in the World's frame: same origin, for the postMessage bridge
+  '/action-policy.html', '/world-news.html', '/create.html', '/give.html', '/privacy.html',
+  '/account.html', '/login.html', '/forgot-password.html', '/reset-password.html', '/onboard.html',
+  '/sw.js'
+]);
+/* ...and by prefix: the action rooms, the campaign funnel, the sign-in
+   callback, and the static files every page loads. */
+export const WORLD_PREFIXES = ['/action-network-', '/action/', '/auth/', '/js/', '/css/', '/assets/', '/data/', '/vendor/'];
+
+const NOINDEX_META = /<meta name="robots" content="noindex">/;
+
+/* The World's head on a host of its own. On Matthew's site mnet.html is
+   noindex (the member network is not a search landing there); on its own
+   host it is the front door, so the noindex gives way to that host's
+   canonical, og:url and site name, plus any node the host adds. */
+export function worldHeadFor(html, { origin, siteName, extra = '' }) {
+  const head = [
+    `<link rel="canonical" href="${origin}/">`,
+    `<meta property="og:url" content="${origin}/">`,
+    `<meta property="og:site_name" content="${siteName}">`
+  ].concat(extra ? [extra] : []).join('\n  ');
+  if (NOINDEX_META.test(html)) return html.replace(NOINDEX_META, head);
+  return html.replace('</title>', '</title>\n  ' + head);
+}
+
+export const SECURITY = {
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'strict-transport-security': 'max-age=31536000'
+};
+/* headers the client may send upstream, and headers upstream may send back.
+   content-encoding and content-length never pass: the runtime decodes the
+   upstream body and sizes the one it sends. */
+const UPSTREAM_REQUEST = ['accept', 'accept-language', 'if-none-match', 'if-modified-since', 'range'];
+const UPSTREAM_RESPONSE = ['content-type', 'cache-control', 'etag', 'last-modified', 'vary', 'accept-ranges', 'content-range'];
+
+export function moved(location) {
+  return new Response(null, { status: 301, headers: { location, 'cache-control': 'public, max-age=3600' } });
+}
+export function own(body, type) {
+  return new Response(body, { status: 200, headers: { 'content-type': type, 'cache-control': 'public, max-age=3600', ...SECURITY } });
+}
+export function isWorldRoom(path) {
+  return WORLD_ROOMS.has(path) || WORLD_PREFIXES.some((p) => path.startsWith(p));
+}
+export function isDocument(path) {
+  return path.endsWith('.html') || path.endsWith('/');
+}
+export function methodNotAllowed() {
+  return new Response('Method Not Allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
+}
+
+/* The World's files are fetched from PUBLIC_ORIGIN, the personal origin the
+   Worker already names (wrangler.toml); a test points that at a local
+   server. */
+export function upstreamOrigin(env, fallback) {
+  return String((env && env.PUBLIC_ORIGIN) || fallback).replace(/\/$/, '');
+}
+
+export async function passThrough(request, upstream, fetchImpl, { root, noindex, head }) {
+  const headers = new Headers();
+  for (const h of UPSTREAM_REQUEST) {
+    const v = request.headers.get(h);
+    if (v) headers.set(h, v);
+  }
+  const res = await fetchImpl(new Request(upstream, { method: request.method, headers, redirect: 'follow' }));
+  const out = new Headers(SECURITY);
+  for (const h of UPSTREAM_RESPONSE) {
+    const v = res.headers.get(h);
+    if (v) out.set(h, v);
+  }
+  if (noindex) out.set('x-robots-tag', 'noindex');
+  if (root && res.status === 200) {
+    /* the body changes here, so the upstream validator does not describe it */
+    out.delete('etag');
+    out.set('cache-control', 'public, max-age=300');
+    return new Response(request.method === 'HEAD' ? null : worldHeadFor(await res.text(), head), { status: 200, headers: out });
+  }
+  return new Response(request.method === 'HEAD' ? null : res.body, { status: res.status, headers: out });
+}

@@ -1,6 +1,6 @@
 /* Native Control · Create · Clipping.
 
-   A creator's paid clipping campaigns, run on the Action Network. Everything
+   A creator's paid clipping campaigns, run on Human Uprise. Everything
    here reads or calls the database's clip_* functions with the operator's
    own session, and each function checks that the caller owns the
    campaign's organization. Nothing on this page computes money: spend,
@@ -67,7 +67,7 @@
   function launchForm(){
     if(!C.songs)loadForm();
     var songs=(C.songs||[]).map(function(s){return'<option value="'+e(s.id)+'">'+e(s.album_title+" · "+s.track_title)+'</option>';}).join("");
-    var sources=(C.sources||[]).map(function(s){return'<option value="'+e(s.id)+'">'+e((s.title||"Untitled Action Network post")+" · "+s.status)+'</option>';}).join("");
+    var sources=(C.sources||[]).map(function(s){return'<option value="'+e(s.id)+'">'+e((s.title||"Untitled Human Uprise post")+" · "+s.status)+'</option>';}).join("");
     var files=(C.files||[]).map(function(f){var name=String(f.object_path||"").split("/").pop();
       return'<label class="cro-check"><input type="checkbox" data-clip-file="'+e(f.id)+'" data-kind="'+e(f.media_type)+'"> '+e(f.media_type)+' · '+e(name)+'</label>';}).join("");
     var action=C.sourceType==="action";
@@ -79,7 +79,7 @@
       '<section class="cro-card"><h3>1 · Source</h3><div class="cro-form">'+
       '<label>Campaign title<input id="clTitle" maxlength="160" required placeholder="'+(action?"Amplify this action":"Clip this release")+'"></label>'+
       '<label>Creator / campaign brand<input id="clBrand" maxlength="120" placeholder="Your creator name or brand"></label>'+
-      (action?'<label>Action Network source<select id="clSource"><option value="">Choose approved content…</option>'+sources+'</select></label>'+
+      (action?'<label>Human Uprise source<select id="clSource"><option value="">Choose approved content…</option>'+sources+'</select></label>'+
         '<label class="cro-span-2">Send traffic here<input id="clDestination" type="url" placeholder="https://mccluster.org/action/…"></label>':
         '<label>Song<select id="clSong"><option value="">Choose a song…</option>'+songs+'</select></label>')+
       '</div></section>'+
@@ -100,7 +100,8 @@
       '<label>Max per clipper<input id="clClipperCap" type="number" min="1" step="1" placeholder="No cap"></label>'+
       '<label>Max paid views per clip<input id="clMaxViews" type="number" min="1" step="1000" placeholder="No cap"></label>'+
       '<label>Clips per clipper<input id="clMaxClips" type="number" min="1" max="100" value="10"></label>'+
-      '<label>Approval<select id="clApproval"><option value="creator">Review before payout</option><option value="auto">Auto-release verified clips</option></select></label>'+
+      /* every release needs an admin's review (mission_admin_approval_v1.sql removed clip auto-approval): no auto option */
+      '<label>Approval<select id="clApproval" disabled><option value="creator" selected>Admin review before payout</option></select><small class="cro-meta">Every clip release needs an admin review; there is no auto-release.</small></label>'+
       (!action?'<label>Bonus · new verified fan<input id="clBonusAcct" type="number" min="0" step="0.25" value="0"></label><label>Bonus · full listen<input id="clBonusListen" type="number" min="0" step="0.05" value="0"></label>':'<input id="clBonusAcct" type="hidden" value="0"><input id="clBonusListen" type="hidden" value="0">')+
       '<label>Starts<input id="clStarts" type="date"></label><label>Last day to post<input id="clEnds" type="date"></label>'+
       '<label>Earns for days<input id="clWindow" type="number" min="1" max="365" value="30"></label>'+
@@ -131,7 +132,7 @@
       max_clips_per_clipper:int("clMaxClips"),starts_at:val("clStarts")?new Date(val("clStarts")+"T00:00:00").toISOString():null,
       ends_at:val("clEnds")?new Date(val("clEnds")+"T23:59:59").toISOString():null,earning_window_days:int("clWindow"),
       keep_live_days:int("clKeep"),hold_days:int("clHold"),bonus_account_cents:cents("clBonusAcct")||0,
-      bonus_listen_cents:cents("clBonusListen")||0,approval_mode:val("clApproval")||"creator",assets:assets};
+      bonus_listen_cents:cents("clBonusListen")||0,approval_mode:"creator",assets:assets};
   }
 
   /* ---------- dashboard ---------- */
@@ -240,7 +241,7 @@
       });},"Draft created. Add funding, then go live.");};
     root.querySelectorAll("[data-clip-status]").forEach(function(b){b.onclick=function(){var s=b.getAttribute("data-clip-status");
       if(s==="ended"&&!confirm("End this campaign? Clippers stop submitting; clips already tracked keep settling."))return;
-      run(b,function(){return rpc("clip_campaign_set_status",{p_mission:C.sel,p_status:s});},s==="live"?"Live on the Action Network.":"Campaign "+s+".");};});
+      run(b,function(){return rpc("clip_campaign_set_status",{p_mission:C.sel,p_status:s});},s==="live"?"Live on Human Uprise.":"Campaign "+s+".");};});
     var fund=root.querySelector("[data-clip-fund]");
     if(fund)fund.onclick=function(){var amt=cents("clFundAmt"),prov=val("clFundProvider")||"internal",ref=val("clFundRef")||null;
       if(!amt||amt<=0){C.msg="Enter an amount.";C.bad=true;redraw();return;}

@@ -530,6 +530,20 @@
        word. Reach is three pills, not three more words in the stack. The
        legal line stays at the bottom, where a legal line belongs.
        ============================================================ -->
+
+  <!-- Guest-only, data-free Earth preview. Reusable on other public landing pages. -->
+  <section id="guestWorld" class="guest-world" aria-label="Explore the globe before joining" hidden>
+    <div class="guest-world__frame"><iframe title="Interactive globe preview" data-src="guest-globe.html" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <div class="guest-world__cta"><a href="account.html">Sign in to unlock the world →</a><span>Explore the globe freely. Member activity requires an account.</span></div>
+    </div>
+  </section>
+  <style>
+  .guest-world{position:relative;margin:0 auto 7rem;max-width:1100px;padding:0 16px}.guest-world[hidden]{display:none!important}
+  .guest-world__frame{height:clamp(360px,65vh,690px);position:relative;border:1px solid rgba(255,255,255,.15);border-radius:22px;overflow:hidden;background:#080d17}
+  .guest-world iframe{display:block;width:100%;height:100%;border:0}.guest-world__cta{position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:9px;flex-direction:column;text-align:center;pointer-events:none;width:min(88%,360px)}
+  .guest-world__cta a{pointer-events:auto;background:rgba(7,11,20,.92);color:#fff;border:1px solid rgba(255,255,255,.4);padding:13px 20px;border-radius:999px;text-decoration:none;font:700 14px system-ui}.guest-world__cta span{background:rgba(7,11,20,.68);color:#d8dce6;padding:7px;border-radius:8px;font:12px system-ui}
+  </style>
+  <script defer src="js/guest-world.js?v=__STAMP__"></script>
   <footer class="site-foot site-foot--doors">
     <div class="foot__inner">
       <div class="foot__head">

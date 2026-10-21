@@ -1,4 +1,4 @@
-/* SCHEDULED ACTION NETWORK POSTS, run against a fake Supabase.
+/* SCHEDULED HUMAN UPRISE POSTS, run against a fake Supabase.
    The create page can post now or pick a time. These tests drive the real
    handler and the real cron publisher with fetch replaced, and pin:
      1. a future publish_at holds the post instead of publishing it
@@ -19,7 +19,7 @@ const ROW = '44444444-4444-4444-8444-444444444444';
 const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 
-function fakeDb({ tableMissing = false, assetsReady = true, claimWins = true, stalePublishing = false, existingScheduledPost = false } = {}) {
+function fakeDb({ tableMissing = false, assetsReady = true, claimWins = true, stalePublishing = false, existingScheduledPost = false, bodyAtClaim = 'later' } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), method = init.method || 'GET';
@@ -40,7 +40,8 @@ function fakeDb({ tableMissing = false, assetsReady = true, claimWins = true, st
         if (u.includes('status=eq.publishing')) return ok(stalePublishing ? [{ id: ROW, author_m_uid: MUID, status: 'publishing', payload: { body: 'later', media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }] : []);
         return ok(stalePublishing ? [] : [{ id: ROW, author_m_uid: MUID, status: 'scheduled', payload: { body: 'later', media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }]);
       }
-      if (method === 'PATCH' && (u.includes('status=eq.scheduled') || u.includes('status=eq.publishing'))) return ok(claimWins ? [{ id: ROW }] : []);
+      // return=representation is the current complete row, including any changes since the list read.
+      if (method === 'PATCH' && (u.includes('status=eq.scheduled') || u.includes('status=eq.publishing'))) return ok(claimWins ? [{ id: ROW, author_m_uid: MUID, status: 'publishing', payload: { body: bodyAtClaim, media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }] : []);
       return new Response(null, { status: 204 });
     }
     if (u.includes('/network_posts') && method === 'GET' && u.includes('scheduled_post_id=')) return ok(existingScheduledPost ? [{ id: POST }] : []);
@@ -94,6 +95,13 @@ test('a stale publishing claim is recovered after a Worker dies', async () => {
   assert.deepEqual(await publishDueNetworkPosts(ENV), { published: 1, failed: 0 });
   const insert = calls.find((c) => c.u.endsWith('/network_posts') && c.method === 'POST');
   assert.equal(insert.body.scheduled_post_id, ROW);
+});
+
+test('publishing uses the claimed revision instead of the stale list snapshot', async () => {
+  const calls = fakeDb({ bodyAtClaim: 'Reviewed current text' });
+  assert.deepEqual(await publishDueNetworkPosts(ENV), { published: 1, failed: 0 });
+  const insert = calls.find((c) => c.u.endsWith('/network_posts') && c.method === 'POST');
+  assert.equal(insert.body.body, 'Reviewed current text');
 });
 
 test('a post inserted before a Worker crash is acknowledged, never duplicated', async () => {

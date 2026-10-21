@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080b12"><title>Find Help | Human Uprise World</title>
+<meta name="description" content="Find official resource directories worldwide for yourself or someone you know. No account or proof required.">
+<link rel="stylesheet" href="css/style.css?v=__STAMP__">
+<style>
+:root{color-scheme:dark;--bg:#080b12;--panel:#121927;--line:#3a4253;--ruby:#f13c62;--muted:#b0b8c8}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 85% 0,#281722,transparent 45%),var(--bg);color:#f7f8fa;font:16px/1.5 system-ui,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:22px max(20px,5vw);border-bottom:1px solid var(--line)}
+header a{color:inherit;text-decoration:none}.brand{font-weight:800;letter-spacing:.14em;font-size:12px}.brand strong{display:block;font-size:25px;letter-spacing:-.03em;line-height:1.1}
+main{max-width:1100px;margin:auto;padding:60px 20px 80px}.eyebrow{color:#f97a94;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+h1{font-size:clamp(40px,7vw,75px);letter-spacing:-.05em;line-height:1.05;margin:10px 0 20px}p{color:var(--muted)}.lead{font-size:19px;max-width:790px}
+.controls,.filters{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0}button,select{background:#192232;color:#fff;border:1px solid #596174;border-radius:11px;padding:12px 16px;font:inherit}
+button{cursor:pointer}button.active,#share{background:linear-gradient(125deg,#f13c62,#b71943);border-color:#f87492;font-weight:700}
+button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #fa6987;outline-offset:3px}
+label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:13px;font-weight:700;min-width:225px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:15px}.card{border:1px solid var(--line);border-top-color:#777e8c;border-radius:15px;background:linear-gradient(145deg,#192235,#101723);padding:24px;display:flex;flex-direction:column}
+.card small{color:#ff8fa5;text-transform:uppercase;letter-spacing:.1em}.card h2{font-size:21px;margin:7px 0}.card p{flex:1;margin:0 0 22px}.card a{color:#fff;text-decoration:none;border:1px solid #697487;border-radius:10px;padding:11px 13px;align-self:flex-start}
+.notice{border-left:3px solid var(--ruby);padding:14px 20px;background:#141b28;margin:35px 0}footer{border-top:1px solid var(--line);padding-top:20px;color:#aeb6c4;font-size:13px}
+</style></head><body>
+<header><a class="brand" href="/">HUMAN UPRISE<strong>WORLD</strong></a><a href="/mnet.html?view=missions">← Action Network</a></header>
+<main><div class="eyebrow">Resource navigation / worldwide</div><h1>Find help.<br>Pass it forward.</h1>
+<p class="lead">For yourself or someone you know. Share this page onward. No account, photograph, public story, or proof of need required.</p>
+<div class="controls"><button type="button" class="active" data-for="self" aria-pressed="true">I need help</button><button type="button" data-for="other" aria-pressed="false">Someone I know</button><button type="button" id="share">Share this resource ↗</button></div>
+<p id="context" aria-live="polite">Select a country and support category, then open an official provider directory.</p>
+<div class="filters"><label>Country or region<select id="country"><option value="all">All countries</option><option value="US">United States</option><option value="CA">Canada</option><option value="GB">United Kingdom</option><option value="AU">Australia</option><option value="other">Other countries</option></select></label>
+<label>Type of help<select id="category"><option value="all">All services</option><option value="general">Housing, food, benefits, local services</option><option value="displacement">Refugee and displacement</option><option value="humanitarian">Humanitarian organizations</option><option value="emotional">Emotional support</option></select></label></div>
+<div id="results" class="grid" aria-live="polite"></div>
+<p class="notice">These are independent public directories, not confirmed Human Uprise partners. Services, eligibility, hours and availability vary. If you are in immediate danger, contact local emergency services.</p>
+<footer>No personal information is sent to Human Uprise by this page. No referral rewards or public proof are required.</footer></main>
+<script>
+(function(){'use strict';
+var sources=[
+['United Way 211','US','general','https://www.211.org/','Free confidential connections to local services.'],
+['211 Canada','CA','general','https://211.ca/','Canadian community service navigation.'],
+['Findhelp','US','general','https://www.findhelp.org/','Search social-care programs by area and need.'],
+['Turn2us Find an Adviser','GB','general','https://www.turn2us.org.uk/get-support/using-find-an-adviser','UK benefits, housing, debt and advice directories.'],
+['Ask Izzy','AU','general','https://askizzy.org.au/','Australian housing, food and social services.'],
+['UNHCR Help','global','displacement','https://help.unhcr.org/countries/','Country-specific refugee, asylum and stateless-person support.'],
+['IFRC National Societies','global','humanitarian','https://www.ifrc.org/national-societies-directory/0','Find a national Red Cross or Red Crescent society; services vary.'],
+['Find A Helpline','global','emotional','https://findahelpline.com/','Verified emotional support helplines in many countries.']
+];
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function render(){var c=$('country').value,t=$('category').value;var rows=sources.filter(function(s){return (c==='all'||s[1]==='global'||(c!=='other'&&s[1]===c))&&(t==='all'||s[2]===t);});$('results').innerHTML=rows.length?rows.map(function(s){return '<article class="card"><small>'+esc(s[1]==='global'?'International':s[1])+'</small><h2>'+esc(s[0])+'</h2><p>'+esc(s[4])+'</p><a href="'+esc(s[3])+'" target="_blank" rel="noopener noreferrer">Open official directory ↗</a></article>';}).join(''):'<p>No matching directory listed. Try another category or All countries.</p>';}
+$('country').addEventListener('change',render);$('category').addEventListener('change',render);
+document.querySelectorAll('[data-for]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('[data-for]').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});b.classList.add('active');b.setAttribute('aria-pressed','true');$('context').textContent=b.dataset.for==='other'?'Share the resource with the person, with their permission. Do not send us their personal details.':'Select a country and support category, then open an official provider directory.';});});
+$('share').addEventListener('click',function(){var u=location.href.split('#')[0];if(navigator.share){navigator.share({title:'Find help — Human Uprise World',url:u}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(u).then(function(){$('share').textContent='Link copied ✓';}).catch(function(){window.prompt('Copy this link',u);});}else{window.prompt('Copy this link',u);}});
+render();
+})();
+</script><script src="js/tabbar.js?v=__STAMP__"></script></body></html>

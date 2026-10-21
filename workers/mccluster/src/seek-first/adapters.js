@@ -1,4 +1,6 @@
+import { normalizeAustinCameras } from './camera-catalog.js';
 import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js';
+import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_PROVIDER_ROWS = 2000;
@@ -92,9 +94,10 @@ async function providerFetch(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, {
+    // Workers' fetch rejects redirect: 'error'. The provider may only redirect
+    // to its own host over https; anything else fails as upstream_redirect.
+    const response = await fetchNoCrossHostRedirect(url, {
       ...init,
-      redirect: 'error',
       signal: controller.signal,
       headers: {
         accept: 'application/json',
@@ -114,6 +117,9 @@ async function providerFetch(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
     return response;
   } catch (error) {
     if (error instanceof GeoAdapterError) throw error;
+    if (error instanceof UpstreamError) {
+      throw new GeoAdapterError('Provider redirected outside its own host', 502, error.code, { provider_status: error.providerStatus });
+    }
     if (error?.name === 'AbortError') throw new GeoAdapterError('Provider request timed out', 504, 'provider_timeout');
     throw new GeoAdapterError('Provider request failed', 502, 'provider_network_error');
   } finally {
@@ -886,7 +892,7 @@ async function cctv(input) {
   if (provider !== 'austin') throw new GeoAdapterError('Only the audited Austin CCTV catalog is enabled in this adapter', 400, 'unsupported_provider');
   const url = new URL('https://data.austintexas.gov/api/views/b4k4-adkb/rows.json?accessType=DOWNLOAD');
   const { data } = await jsonFetch(url);
-  return result('cctv', 'catalog', url, [], data, { note: 'Catalog is returned transiently; camera-frame redistribution remains provider-governed.' });
+  return result('cctv', 'catalog', url, normalizeAustinCameras(data, input?.limit), data, { note: 'Catalog metadata only. Stream health has not been checked. Camera-frame redistribution remains provider-governed.' });
 }
 
 async function copernicus(input, env) {

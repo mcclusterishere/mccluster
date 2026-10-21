@@ -21,10 +21,13 @@ test('unsupported queued jobs are quarantined instead of silently living forever
   globalThis.fetch = async (url, init = {}) => {
     const href = String(url);
     calls.push({ href, init });
+    if (href.includes('/rest/v1/orgs?')) {
+      return new Response(JSON.stringify([{ id: '123e4567-e89b-42d3-a456-426614174000', enabled: true }]), { status: 200 });
+    }
     if ((init.method || 'GET') === 'GET') {
       return new Response(JSON.stringify([
-        { id: 'legacy-1', job_type: 'legacy_job', created_at: '2026-09-01T00:00:00Z' },
-        { id: 'known-1', job_type: 'lead_rescore', created_at: '2026-09-01T00:00:00Z' },
+        { id: 'legacy-1', org_id: '123e4567-e89b-42d3-a456-426614174000', job_type: 'legacy_job', created_at: '2026-09-01T00:00:00Z' },
+        { id: 'known-1', org_id: '123e4567-e89b-42d3-a456-426614174000', job_type: 'lead_rescore', created_at: '2026-09-01T00:00:00Z' },
       ]), { status: 200, headers: { 'content-type': 'application/json' } });
     }
     const patch = JSON.parse(init.body);
@@ -43,6 +46,7 @@ test('unsupported queued jobs are quarantined instead of silently living forever
     const patches = calls.filter((call) => (call.init.method || 'GET') === 'PATCH');
     assert.equal(patches.length, 1);
     const body = JSON.parse(patches[0].init.body);
+    assert.equal(new URL(patches[0].href).searchParams.get('org_id'), 'eq.123e4567-e89b-42d3-a456-426614174000');
     assert.equal(body.status, 'failed');
     assert.match(body.last_error, /Unsupported job type quarantined by Core: legacy_job/);
   } finally {

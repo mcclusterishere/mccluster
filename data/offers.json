@@ -112,7 +112,7 @@
       "infrastructure_note": "This is not the fourth service. It is the ground the other three stand on, and it is priced like plumbing rather than like work.",
       "identity": "legitimacy and access",
       "tagline": "Build here, bring your site, or get a first draft.",
-      "lede": "Choose a Creator Platform plan to publish your website. Start from a selected design, bring a compatible existing website for hosting, or order a first custom draft for a one-time $33. Hosting is included with your selected plan. Domain registration and renewal are separate.",
+      "lede": "A selected design, your existing site, or a one-time $33 custom draft. Hosting included with your plan; domains separate.",
       "primary": true,
       "modes": [
         "m"
@@ -199,7 +199,7 @@
           "offering": "domain-hosting-start",
           "domain_search": true,
           "label": "Get the address",
-          "after": "Then {recurring}, and the domain renews at $33/year. No revenue share."
+          "after": "The domain renews at $33/year. No revenue share."
         },
         "year": {
           "offering": "domain-hosting-year",
@@ -220,7 +220,7 @@
       "name": "Anti-Social",
       "full_name": "Anti-Social Management",
       "identity": "management and control",
-      "lede": "Your website and your social presence, run as one service. Website management and social management are not separate products here.",
+      "lede": "Your website and your social, run as one service.",
       "primary": false,
       "modes": [
         "m",
@@ -275,15 +275,15 @@
       "activation": {
         "name": "The first month",
         "free": true,
-        "free_note": "The whole management service, every module, for one month at no charge. Not a trial of a cut-down version: the real thing, running.",
+        "free_note": "The whole service, every module, one month, no charge.",
         "length_weeks": 4,
-        "shape": "One module a week. Each one is switched on, working, and producing something you can look at before the next one starts, so by the end of the month you have watched every part of it earn its place instead of being handed a bundle and a bill.",
+        "shape": "One module a week.",
         "sprints": [
           {
             "week": 1,
             "id": "website",
             "name": "The website goes up",
-            "what": "Build, content, domain pointed, live and indexed. The room everything else sends people to.",
+            "what": "Built, live and indexed.",
             "permanent": true,
             "after": "yours. It does not switch off, whatever you decide at the end of the month."
           },
@@ -291,40 +291,40 @@
             "week": 2,
             "id": "inbound",
             "name": "Inbound turned on",
-            "what": "Automation built into your own backend that works on the traffic coming toward you: search surface, the paths people already take to find somebody doing what you do, and capture at the end of every one of them so an arrival becomes a name and a number.",
+            "what": "Search surface and capture: an arrival becomes a name and a number.",
             "permanent": false,
-            "after": "at the end of the free month unless the service continues, and everything it built stays on the record."
+            "after": "after the free month unless the service continues. What it built stays on the record."
           },
           {
             "week": 3,
             "id": "outbound",
             "name": "Outbound turned on",
-            "what": "The other direction: automated reach-out and follow-up running from the same backend, so the people worth contacting get contacted and nobody goes cold because a week got busy.",
+            "what": "Automated reach-out and follow-up.",
             "permanent": false,
-            "after": "at the end of the free month unless the service continues, and everything it built stays on the record."
+            "after": "after the free month unless the service continues. What it built stays on the record."
           },
           {
             "week": 4,
             "id": "social",
             "name": "Social activated",
-            "what": "Those same tools pointed at your feeds. Scheduling, posting and the parts of being present online that eat an evening, running without you sitting in them.",
+            "what": "Scheduling and posting, run for you.",
             "permanent": false,
-            "after": "at the end of the free month unless the service continues, and everything it built stays on the record."
+            "after": "after the free month unless the service continues. What it built stays on the record."
           }
         ],
         "at_the_end": {
-          "prompt": "At the end of the month you decide, once, with a month of evidence instead of a pitch.",
+          "prompt": "At the end of the month, you decide.",
           "options": [
             {
               "id": "upgrade",
               "name": "Keep it",
-              "what": "Everything stays exactly as it is running. The standard price starts from that month.",
+              "what": "Everything keeps running at the standard price.",
               "price_from": "anti-social"
             },
             {
               "id": "social-equity",
               "name": "Keep social, on Equity",
-              "what": "The social module alone stays running, on Equity Uprise: a lower monthly price against a capped, time-limited share of eligible connected revenue. No ownership is taken, and it needs a program-fit review and a signed agreement, so it is arranged rather than clicked.",
+              "what": "Social alone, on Equity Uprise: a lower monthly price against a capped, time-limited share of eligible connected revenue. No ownership taken. Needs a program-fit review and a signed agreement.",
               "price_from": "social",
               "mode": "equity",
               "requires_agreement": true
@@ -332,11 +332,11 @@
             {
               "id": "cruise",
               "name": "Cruise",
-              "what": "The three automation modules switch off. The website stays live, stays indexed and stays yours, and you are back to the address and the machine that keeps it online.",
+              "what": "Automation switches off. The website stays live, indexed and yours.",
               "price_from": "runway"
             }
           ],
-          "no_trap": "There is no notice period, no cancellation fee, and nothing to phone up and argue about. Cruising is a button, not a negotiation, and the site does not go dark when you press it."
+          "no_trap": "No notice period. No cancellation fee."
         }
       },
       "next_step": {
@@ -431,7 +431,7 @@
           "approved": true,
           "cadence": "project",
           "from": 201,
-          "note": "Priced per project, per day or per event. Nothing here is flattened into one unlimited package. Lines marked priced_by golden-33 sit at exactly 67% of the market median in data/market-rates.json — the ceiling, not a target: a line already under it was left alone rather than raised. scripts/golden-check.mjs re-derives every one of them and fails if the ledger drifts above.",
+          "note": "Priced per project, per day or per event.",
           "rate_lines": [
             {
               "id": "photo-portrait",
@@ -546,7 +546,7 @@
       "name": "Write a Song",
       "full_name": "Write a Song Campaign",
       "identity": "culture and amplification",
-      "lede": "The highest-level cultural campaign. An original song built into a rollout, not a jingle purchase.",
+      "lede": "An original song built into a rollout.",
       "primary": false,
       "modes": [
         "m",
@@ -558,7 +558,7 @@
           "approved": true,
           "cadence": "campaign",
           "from": 525,
-          "note": "Third-party budgets (influencer, paid media, travel, licensing) are always quoted as separate lines. They are never folded into a single total.",
+          "note": "Third-party budgets (influencer, paid media, travel, licensing) are quoted as separate lines.",
           "rate_lines": [
             {
               "id": "scoring",
@@ -646,7 +646,7 @@
   "customer_license": {
     "name": "The customer licence",
     "headline": "Every customer gets the catalogue.",
-    "lede": "The music is not an upsell here. Anybody on a management service can use the McCluster catalogue in their own business, at no charge, for as long as the service is running. Not a stock-library subscription and not a royalty-free clip: the actual records, licensed from the artist who made them.",
+    "lede": "Management customers use the McCluster catalogue in their business, at no charge, while the service runs.",
     "free": true,
     "granted_by": [
       {
@@ -659,31 +659,31 @@
     ],
     "granted_note": "It comes with the management service, in either mode. Equity Uprise customers get exactly the same grant as M Mode customers.",
     "term": "For as long as the service is running.",
-    "ends": "The licence runs with the subscription. Stop the service and the grant stops with it, which is the only honest way to give something away: it is a reason to stay, not a hostage. Anything already published stays published; you simply do not add new uses after that.",
+    "ends": "Stop the service and the grant stops. Anything already published stays published; no new uses after that.",
     "covers": [
       {
         "id": "website",
         "name": "On your website",
         "approved": true,
-        "what": "The catalogue playing on your own site. Background beds, a hero film, a landing page that opens with a record instead of silence."
+        "what": "Background beds, hero film, landing pages."
       },
       {
         "id": "premises",
         "name": "In your store",
         "approved": true,
-        "what": "Played in your place of business. A shop, a studio, a salon, a restaurant floor: the room can run the record all day."
+        "what": "Played in your place of business."
       },
       {
         "id": "social",
         "name": "Under your posts",
         "approved": true,
-        "what": "Your own social content, on your own accounts, scored with the catalogue. The reels the management service is already making for you land pre-cleared."
+        "what": "Your own posts, on your own accounts, pre-cleared."
       },
       {
         "id": "merch",
         "name": "The swag, in your store",
         "approved": false,
-        "public_note": "Stocking and selling McCluster merchandise from your storefront is on the table for customers with a physical location. Which pieces, what the split is and how they are supplied are set with you and written into the agreement."
+        "public_note": "McCluster merchandise for customers with a physical location. Pieces, split and supply set in the agreement."
       }
     ],
     "excludes": [
@@ -691,8 +691,8 @@
       "Broadcast, cinema and paid media placements, which are quoted on their own",
       "Anything that puts the recording in a product you sell as a product"
     ],
-    "delivery": "The files land by email when the service starts: the records themselves, and the written grant naming what you can do with them.",
-    "still_a_desk": "Everybody else licenses the same catalogue the ordinary way, and that desk has not moved."
+    "delivery": "Files and the written grant arrive by email when the service starts.",
+    "still_a_desk": "Everyone else:"
   },
   "journey": [
     "Take off",

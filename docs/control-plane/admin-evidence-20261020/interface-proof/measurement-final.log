@@ -1,0 +1,41 @@
+PASS 390 globe with partial response
+PASS 390 partial response visible
+PASS 390 one globe canvas
+PASS 390 canonical view stage feeds Arrived
+PASS 390 filter opens with keyboard focus
+PASS 390 Escape returns focus to filter trigger
+PASS 390 stages use whole-window devices
+PASS 390 card and map share selection
+PASS 390 country selection preserves the globe
+PASS 390 scoped partial view no overflow
+PASS 390 sign-out removes private datasets
+PASS 390 no runtime errors after sign-out
+PASS 820 globe with partial response
+PASS 820 partial response visible
+PASS 820 one globe canvas
+PASS 820 canonical view stage feeds Arrived
+PASS 820 filter opens with keyboard focus
+PASS 820 Escape returns focus to filter trigger
+PASS 820 stages use whole-window devices
+PASS 820 card and map share selection
+PASS 820 country selection preserves the globe
+PASS 820 scoped partial view no overflow
+PASS 820 sign-out removes private datasets
+PASS 820 no runtime errors after sign-out
+PASS 1280 globe with partial response
+PASS 1280 partial response visible
+PASS 1280 one globe canvas
+PASS 1280 canonical view stage feeds Arrived
+PASS 1280 filter opens with keyboard focus
+PASS 1280 Escape returns focus to filter trigger
+PASS 1280 stages use whole-window devices
+PASS 1280 card and map share selection
+PASS 1280 country selection preserves the globe
+PASS 1280 scoped partial view no overflow
+PASS 1280 sign-out removes private datasets
+PASS 1280 no runtime errors after sign-out
+PASS no-WebGL accessible explanation
+PASS no-WebGL country list and cards remain usable
+Expected no-WebGL diagnostics: 2
+PASS no-WebGL no unexpected runtime errors: []
+PASS 39 assertions

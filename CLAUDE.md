@@ -14,11 +14,12 @@ You are in the McCluster ecosystem.
 
 Two public properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`):
 `https://matthew.mccluster.org` is **Matthew McCluster's** property (GitHub Pages, this repo);
-`https://mccluster.org` is **McCluster Corp's** property (Worker `mccluster`, host-routed once the owner routes the apex). They are not the same site and not the same entity.
+`https://mccluster.org` is **McCluster Corp's** property (Worker `mccluster`, host-routed once the owner routes the apex): its root is the Human Uprise World, the company's platform (owner, 2026-10-15), and the company page is `/company`. They are not the same site and not the same entity.
+`https://humanuprise.com` is Human Uprise's own door to the World, a **McCluster Corp** host (the same entity as `mccluster.org`, never a third one), served by Worker `mccluster` by host (`workers/mccluster/src/human-uprise/router.js`) and inert until the owner routes it (until then the World's door is `mccluster.org`); everything that is not the World 301s to `matthew.mccluster.org`.
 API Worker: `mccluster` on `https://api.mccluster.org`.
 Source: `workers/mccluster`.
 
-10. **Never draw a logo.** The artwork the owner supplies is the only source of truth for any mark, forever. Do not trace it, approximate it, recolour it, or add a plate or tile it does not already contain. Do not crop supplied artwork. Scale the complete supplied artwork proportionally only. Adding a shape is drawing. If the variant you need does not exist, ask. See `AGENTS.md` → "THE LOGOS ARE NOT YOURS TO DRAW".
+10. **Never draw a logo.** The artwork the owner supplies is the only source of truth for any mark, forever. Do not trace it, approximate it, recolour it, or add a plate or tile it does not already contain. Do not crop supplied artwork. Scale the complete supplied artwork proportionally only. Adding a shape is drawing. Where a mark is the control (the Equity Uprise emblem is the join on the World screen), it stands alone: never write the mark out in words beside it or in product copy. If the variant you need does not exist, ask. See `AGENTS.md` → "THE LOGOS ARE NOT YOURS TO DRAW".
 11. **`mcclusterishere/Here` is the old repo and publishes nothing.** Do not write to it. If a task looks like it belongs there, say so in the chat and work in this repo instead.
 
 12. **Mobile first, responsive up.** Anything built from a Mobbin reference, or any reference, is designed at phone width first and then given room on tablet and desktop. Breakpoints only ADD; they never hide what the phone was shown. `min-width` queries only, `minmax(0,1fr)` never a bare `1fr`, form controls at `max(16px,…)`, never `user-scalable=no`. Verify by rendering at 390px and checking `scrollWidth === clientWidth`. Full rule and the reasons: `AGENTS.md` → Hard rules → 13.

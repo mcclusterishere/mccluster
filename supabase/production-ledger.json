@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 288,
-  "latest_version": "20261013201327",
-  "latest_name": "action_network_comments",
-  "ledger_sha256": "df0d899ce951435c5d52fa679ca49b2e5ab3378ee6af6c15e8d2d262c437e8a6",
+  "migration_count": 335,
+  "latest_version": "20261021021724",
+  "latest_name": "live_actor_participation",
+  "ledger_sha256": "ba4ccf1931f8108fdbcb50e75f5541189f47db28c985e3ac42d028af83ebf677",
   "migrations": [
     {
       "version": "0001",
@@ -1104,6 +1104,10 @@
       "name": "experience_evidence_plane_v1"
     },
     {
+      "version": "20261006232625",
+      "name": "music_direct_track_sales_v1"
+    },
+    {
       "version": "20261006233518",
       "name": "here_album_commerce_v1_reconcile"
     },
@@ -1158,6 +1162,190 @@
     {
       "version": "20261013201327",
       "name": "action_network_comments"
+    },
+    {
+      "version": "20261014013557",
+      "name": "action_globe_regions"
+    },
+    {
+      "version": "20261014013601",
+      "name": "action_globe_song_portfolios"
+    },
+    {
+      "version": "20261014013627",
+      "name": "action_globe_public_projection_retired"
+    },
+    {
+      "version": "20261014014033",
+      "name": "action_globe_adm1_boundaries"
+    },
+    {
+      "version": "20261014014547",
+      "name": "action_globe_region_activation"
+    },
+    {
+      "version": "20261014014747",
+      "name": "action_globe_presence"
+    },
+    {
+      "version": "20261014020454",
+      "name": "action_policy_memo_bounties"
+    },
+    {
+      "version": "20261014021057",
+      "name": "civic_global_discovery"
+    },
+    {
+      "version": "20261014021258",
+      "name": "candidate_labs_media_graph"
+    },
+    {
+      "version": "20261014023302",
+      "name": "media_geo_ingestion"
+    },
+    {
+      "version": "20261014023317",
+      "name": "media_ingest_rpc"
+    },
+    {
+      "version": "20261014023548",
+      "name": "media_news_namespace"
+    },
+    {
+      "version": "20261014023813",
+      "name": "gdelt_backoff_cache"
+    },
+    {
+      "version": "20261014184518",
+      "name": "action_globe_join_authorization"
+    },
+    {
+      "version": "20261014185154",
+      "name": "antisocial_get_social_three_levels_draft"
+    },
+    {
+      "version": "20261014185255",
+      "name": "action_resource_sources_link_only"
+    },
+    {
+      "version": "20261014185932",
+      "name": "equity_policy_memo_application_path"
+    },
+    {
+      "version": "20261015000455",
+      "name": "antisocial_get_social_completion_v1"
+    },
+    {
+      "version": "20261015001022",
+      "name": "antisocial_action_record_civic_scope"
+    },
+    {
+      "version": "20261016020407",
+      "name": "action_partner_opportunity_drafts_v1"
+    },
+    {
+      "version": "20261016031123",
+      "name": "anon_policy_scope_v1"
+    },
+    {
+      "version": "20261016151123",
+      "name": "world_gdelt_gkg_news_v1"
+    },
+    {
+      "version": "20261017030551",
+      "name": "analytics_country_v1"
+    },
+    {
+      "version": "20261017030554",
+      "name": "analytics_region_v1"
+    },
+    {
+      "version": "20261017030617",
+      "name": "intel_mission_canon_v1"
+    },
+    {
+      "version": "20261017040826",
+      "name": "analytics_geo_audience_v1"
+    },
+    {
+      "version": "20261017041311",
+      "name": "analytics_geo_audience_hotpath_v2"
+    },
+    {
+      "version": "20261017041532",
+      "name": "analytics_geo_audience_regions_v3"
+    },
+    {
+      "version": "20261017042608",
+      "name": "analytics_geo_audience_region_backfill_v4"
+    },
+    {
+      "version": "20261017050521",
+      "name": "travel_journeys_private_v1"
+    },
+    {
+      "version": "20261017054833",
+      "name": "analytics_ingestion_pipeline_v1"
+    },
+    {
+      "version": "20261017164335",
+      "name": "action_archive_cohort_v1"
+    },
+    {
+      "version": "20261017164416",
+      "name": "action_mission_reset_v1"
+    },
+    {
+      "version": "20261017214808",
+      "name": "mcp_approval_scope_v1"
+    },
+    {
+      "version": "20261020205942",
+      "name": "analytics_measurement_semantics_v1"
+    },
+    {
+      "version": "20261020205959",
+      "name": "funding_criteria_register_v1"
+    },
+    {
+      "version": "20261020210718",
+      "name": "compute_lease_authority_v2"
+    },
+    {
+      "version": "20261020211313",
+      "name": "intel_decision_integrity_v2"
+    },
+    {
+      "version": "20261020225852",
+      "name": "resident_ai_context_service_read"
+    },
+    {
+      "version": "20261021005247",
+      "name": "daily_knowledge_news_capacity"
+    },
+    {
+      "version": "20261021005615",
+      "name": "knowledge_search_indexes"
+    },
+    {
+      "version": "20261021011443",
+      "name": "royce_platform_actor"
+    },
+    {
+      "version": "20261021013739",
+      "name": "connected_operational_graph"
+    },
+    {
+      "version": "20261021014027",
+      "name": "connected_graph_read_permissions"
+    },
+    {
+      "version": "20261021014206",
+      "name": "connected_graph_query_indexes"
+    },
+    {
+      "version": "20261021021724",
+      "name": "live_actor_participation"
     }
   ]
 }

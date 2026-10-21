@@ -1,0 +1,382 @@
+TAP version 13
+# Subtest: legacy daily stages disclose repeat counting and cannot imply paid conversions
+ok 1 - legacy daily stages disclose repeat counting and cannot imply paid conversions
+  ---
+  duration_ms: 47.771848
+  type: 'test'
+  ...
+# Subtest: whole-window stage response replaces daily device sums while accounts retain their authority
+ok 2 - whole-window stage response replaces daily device sums while accounts retain their authority
+  ---
+  duration_ms: 17.900362
+  type: 'test'
+  ...
+# Subtest: missing whole-window RPC falls back explicitly to legacy daily stage totals
+ok 3 - missing whole-window RPC falls back explicitly to legacy daily stage totals
+  ---
+  duration_ms: 5.983122
+  type: 'test'
+  ...
+# Subtest: incomplete successful reads retain values and expose limits instead of looking fully ready
+ok 4 - incomplete successful reads retain values and expose limits instead of looking fully ready
+  ---
+  duration_ms: 18.750229
+  type: 'test'
+  ...
+# Subtest: country selection drives the read and the same projection context given to the globe
+ok 5 - country selection drives the read and the same projection context given to the globe
+  ---
+  duration_ms: 17.046754
+  type: 'test'
+  ...
+# Subtest: late geographic response cannot overwrite a newer selection
+ok 6 - late geographic response cannot overwrite a newer selection
+  ---
+  duration_ms: 8.602509
+  type: 'test'
+  ...
+# Subtest: sign-out clears private memory and late responses cannot restore it or restart reads
+ok 7 - sign-out clears private memory and late responses cannot restore it or restart reads
+  ---
+  duration_ms: 5.087746
+  type: 'test'
+  ...
+# Subtest: sign-out fences an in-flight source catalog and world context
+ok 8 - sign-out fences an in-flight source catalog and world context
+  ---
+  duration_ms: 3.753899
+  type: 'test'
+  ...
+# Subtest: legacy behavioral conversion signals and unmatched signup ratios cannot imply verified outcomes
+ok 9 - legacy behavioral conversion signals and unmatched signup ratios cannot imply verified outcomes
+  ---
+  duration_ms: 5.703585
+  type: 'test'
+  ...
+# Subtest: Adaptive preserves undefined rates and distinguishes client outcomes from verified results
+ok 10 - Adaptive preserves undefined rates and distinguishes client outcomes from verified results
+  ---
+  duration_ms: 4.432591
+  type: 'test'
+  ...
+# Subtest: region rows map onto state shapes by code, then name, then grouping; nothing is guessed
+ok 11 - region rows map onto state shapes by code, then name, then grouping; nothing is guessed
+  ---
+  duration_ms: 32.548314
+  type: 'test'
+  ...
+# Subtest: data: Natural Earth admin-1 for every country, one file each, public domain, with a 1:10m outline
+ok 12 - data: Natural Earth admin-1 for every country, one file each, public domain, with a 1:10m outline
+  ---
+  duration_ms: 55.572798
+  type: 'test'
+  ...
+# Subtest: data: 1:50m countries and large lakes, delta-encoded, small enough for a phone
+ok 13 - data: 1:50m countries and large lakes, delta-encoded, small enough for a phone
+  ---
+  duration_ms: 24.131598
+  type: 'test'
+  ...
+# Subtest: applied region read: admin only (service_role), folds under 5, never finer than a region
+ok 14 - applied region read: admin only (service_role), folds under 5, never finer than a region
+  ---
+  duration_ms: 3.089202
+  type: 'test'
+  ...
+# Subtest: one selection: the dropdown value "US/US-CT" selects the state in its country; Clear returns to the world
+ok 15 - one selection: the dropdown value "US/US-CT" selects the state in its country; Clear returns to the world
+  ---
+  duration_ms: 50.036435
+  type: 'test'
+  ...
+# Subtest: a measured heat map without arcs; state files stay admin-only
+ok 16 - a measured heat map without arcs; state files stay admin-only
+  ---
+  duration_ms: 8.101345
+  type: 'test'
+  ...
+# Subtest: one accent token: --an-accent drives every red on the analytics screen
+ok 17 - one accent token: --an-accent drives every red on the analytics screen
+  ---
+  duration_ms: 2.996404
+  type: 'test'
+  ...
+# Subtest: polish: quiet inner lines, one crisp edge, whole sphere for a country, the Admin chip out of the content
+ok 18 - polish: quiet inner lines, one crisp edge, whole sphere for a country, the Admin chip out of the content
+  ---
+  duration_ms: 1.789446
+  type: 'test'
+  ...
+# Subtest: unified cold state has unknown metrics in overview and content, not invented zero or sample numbers
+ok 19 - unified cold state has unknown metrics in overview and content, not invented zero or sample numbers
+  ---
+  duration_ms: 33.944638
+  type: 'test'
+  ...
+# Subtest: successful empty music and funnel reads render actual zero; failed ones remain unknown
+ok 20 - successful empty music and funnel reads render actual zero; failed ones remain unknown
+  ---
+  duration_ms: 4.746554
+  type: 'test'
+  ...
+# Subtest: only verified live commerce is counted; test payments are never combined
+ok 21 - only verified live commerce is counted; test payments are never combined
+  ---
+  duration_ms: 2.049325
+  type: 'test'
+  ...
+# Subtest: source catalog reports missing archive independently and escapes provider strings
+ok 22 - source catalog reports missing archive independently and escapes provider strings
+  ---
+  duration_ms: 1.376117
+  type: 'test'
+  ...
+# Subtest: geography keeps suppression and unknown visible; no identifying coordinates emitted
+ok 23 - geography keeps suppression and unknown visible; no identifying coordinates emitted
+  ---
+  duration_ms: 1.67631
+  type: 'test'
+  ...
+# Subtest: overview preserves the production business envelope and audience totals in measured details
+ok 24 - overview preserves the production business envelope and audience totals in measured details
+  ---
+  duration_ms: 1.423263
+  type: 'test'
+  ...
+# Subtest: selected geography never falls back to global cards or a global trend
+ok 25 - selected geography never falls back to global cards or a global trend
+  ---
+  duration_ms: 7.718456
+  type: 'test'
+  ...
+# Subtest: field directory searches names and columns and escapes metadata
+ok 26 - field directory searches names and columns and escapes metadata
+  ---
+  duration_ms: 1.323486
+  type: 'test'
+  ...
+# Subtest: snapshot submissions preserve provider defaults and explicit limits while enforcing transient reads
+ok 27 - snapshot submissions preserve provider defaults and explicit limits while enforcing transient reads
+  ---
+  duration_ms: 3.023627
+  type: 'test'
+  ...
+# Subtest: a range refresh clears the previous country series before slow reads return
+ok 28 - a range refresh clears the previous country series before slow reads return
+  ---
+  duration_ms: 21.327475
+  type: 'test'
+  ...
+# Subtest: journeys and adaptive never report empty results while pending or failed
+ok 29 - journeys and adaptive never report empty results while pending or failed
+  ---
+  duration_ms: 4.4601
+  type: 'test'
+  ...
+# Subtest: external properties never present first-party attention or signup metrics as their own
+ok 30 - external properties never present first-party attention or signup metrics as their own
+  ---
+  duration_ms: 2.090215
+  type: 'test'
+  ...
+# Subtest: business and community cards read the production snapshot envelope
+ok 31 - business and community cards read the production snapshot envelope
+  ---
+  duration_ms: 1.88942
+  type: 'test'
+  ...
+# Subtest: connection status distinguishes failed, ready-empty, pending and property-inapplicable reads
+ok 32 - connection status distinguishes failed, ready-empty, pending and property-inapplicable reads
+  ---
+  duration_ms: 6.415615
+  type: 'test'
+  ...
+# Subtest: unique visitor geography is the default, includes small country counts and never sums them into a global unique total
+ok 33 - unique visitor geography is the default, includes small country counts and never sums them into a global unique total
+  ---
+  duration_ms: 3.056516
+  type: 'test'
+  ...
+# Subtest: rapid geographic selection ignores stale reads and clearing selection restores worldwide data
+ok 34 - rapid geographic selection ignores stale reads and clearing selection restores worldwide data
+  ---
+  duration_ms: 5.645638
+  type: 'test'
+  ...
+# Subtest: a department never queries aliases shared by its broader region
+ok 35 - a department never queries aliases shared by its broader region
+  ---
+  duration_ms: 5.179811
+  type: 'test'
+  ...
+# Subtest: dataset explorer filters family and health without treating failed reads as zero
+ok 36 - dataset explorer filters family and health without treating failed reads as zero
+  ---
+  duration_ms: 2.107659
+  type: 'test'
+  ...
+# Subtest: public field directory is published outside the stripped docs tree
+ok 37 - public field directory is published outside the stripped docs tree
+  ---
+  duration_ms: 3.27168
+  type: 'test'
+  ...
+# Subtest: collector state distinguishes configuration from successful ingestion
+ok 38 - collector state distinguishes configuration from successful ingestion
+  ---
+  duration_ms: 1.474812
+  type: 'test'
+  ...
+# Subtest: operations directs owners to on-demand datasets instead of displaying unloaded counts
+ok 39 - operations directs owners to on-demand datasets instead of displaying unloaded counts
+  ---
+  duration_ms: 1.076825
+  type: 'test'
+  ...
+# Subtest: failed-range filters include datasets whose all-time counts succeeded
+ok 40 - failed-range filters include datasets whose all-time counts succeeded
+  ---
+  duration_ms: 1.154301
+  type: 'test'
+  ...
+# Subtest: Control Analytics cold render is safe before the first network load
+ok 41 - Control Analytics cold render is safe before the first network load
+  ---
+  duration_ms: 65.700952
+  type: 'test'
+  ...
+# Subtest: Control Analytics mount paints immediately and fails visibly instead of going blank
+ok 42 - Control Analytics mount paints immediately and fails visibly instead of going blank
+  ---
+  duration_ms: 42.777377
+  type: 'test'
+  ...
+# Subtest: Control Analytics bounds concurrent reads instead of stampeding PostgREST
+ok 43 - Control Analytics bounds concurrent reads instead of stampeding PostgREST
+  ---
+  duration_ms: 113.76423
+  type: 'test'
+  ...
+# Subtest: custom range edits survive progressive Analytics repaints
+ok 44 - custom range edits survive progressive Analytics repaints
+  ---
+  duration_ms: 5.577708
+  type: 'test'
+  ...
+# Subtest: all seven Analytics sections render representative successful data
+ok 45 - all seven Analytics sections render representative successful data
+  ---
+  duration_ms: 29.809968
+  type: 'test'
+  ...
+# Subtest: Control Analytics uses the canonical analytics data plane
+ok 46 - Control Analytics uses the canonical analytics data plane
+  ---
+  duration_ms: 8.267523
+  type: 'test'
+  ...
+# Subtest: one range controls all analytics panels and stale requests cannot repaint
+ok 47 - one range controls all analytics panels and stale requests cannot repaint
+  ---
+  duration_ms: 4.133115
+  type: 'test'
+  ...
+# Subtest: Analytics uses distinct visual forms for distinct questions
+ok 48 - Analytics uses distinct visual forms for distinct questions
+  ---
+  duration_ms: 2.829262
+  type: 'test'
+  ...
+# Subtest: 24h analytics is exactly 24 real hourly buckets with touchable value points
+ok 49 - 24h analytics is exactly 24 real hourly buckets with touchable value points
+  ---
+  duration_ms: 5.324641
+  type: 'test'
+  ...
+# Subtest: all read-only analytics RPCs retry one transient database statement timeout
+ok 50 - all read-only analytics RPCs retry one transient database statement timeout
+  ---
+  duration_ms: 7.14763
+  type: 'test'
+  ...
+# Subtest: Control Analytics is mobile-first
+ok 51 - Control Analytics is mobile-first
+  ---
+  duration_ms: 1.194172
+  type: 'test'
+  ...
+# Subtest: owner identity and forensics endpoints are owner-only and exact-window aware
+ok 52 - owner identity and forensics endpoints are owner-only and exact-window aware
+  ---
+  duration_ms: 0.926176
+  type: 'test'
+  ...
+# Subtest: business snapshot supports explicit selected-window bounds
+ok 53 - business snapshot supports explicit selected-window bounds
+  ---
+  duration_ms: 3.990989
+  type: 'test'
+  ...
+# Subtest: identity bridge reconstruction keeps recent rows and bounds the attribution interval
+ok 54 - identity bridge reconstruction keeps recent rows and bounds the attribution interval
+  ---
+  duration_ms: 0.748131
+  type: 'test'
+  ...
+# Subtest: Audience analytics stays inside the exact selected property and timestamp window
+ok 55 - Audience analytics stays inside the exact selected property and timestamp window
+  ---
+  duration_ms: 1.543471
+  type: 'test'
+  ...
+# Subtest: a canceled totals query is retried once and the dashboard retains complete metrics
+ok 56 - a canceled totals query is retried once and the dashboard retains complete metrics
+  ---
+  duration_ms: 304.895028
+  type: 'test'
+  ...
+# Subtest: a persistent statement timeout reports failure after exactly two attempts
+ok 57 - a persistent statement timeout reports failure after exactly two attempts
+  ---
+  duration_ms: 304.741195
+  type: 'test'
+  ...
+# Subtest: a partial business snapshot names failed reads instead of a generic warning
+ok 58 - a partial business snapshot names failed reads instead of a generic warning
+  ---
+  duration_ms: 32.817904
+  type: 'test'
+  ...
+# Subtest: funding cards distinguish technical fit, eligibility, readiness and incomplete criteria
+ok 59 - funding cards distinguish technical fit, eligibility, readiness and incomplete criteria
+  ---
+  duration_ms: 14.006328
+  type: 'test'
+  ...
+# Subtest: register details preserve unknowns and label proposed targets separately from requirements
+ok 60 - register details preserve unknowns and label proposed targets separately from requirements
+  ---
+  duration_ms: 6.056587
+  type: 'test'
+  ...
+# Subtest: missing register preserves the existing catalog and drafts without implying readiness
+ok 61 - missing register preserves the existing catalog and drafts without implying readiness
+  ---
+  duration_ms: 3.029766
+  type: 'test'
+  ...
+# Subtest: sign-out clears funding records and fences late catalog and detail responses
+ok 62 - sign-out clears funding records and fences late catalog and detail responses
+  ---
+  duration_ms: 2.872291
+  type: 'test'
+  ...
+1..62
+# tests 62
+# suites 0
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1382.483073

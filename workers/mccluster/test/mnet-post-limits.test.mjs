@@ -1,4 +1,4 @@
-/* Spam limits on the Action Network (network_rate_limits_v2). The tables
+/* Spam limits on Human Uprise (network_rate_limits_v2). The tables
    refuse a post over 2,000 characters or a reply over 1,000 (MN413), a member
    going too fast or past a daily cap (MN429), and a repeat (MN409); the Worker
    turns those into a 413, 429 or 409 with the table's own sentence on every
@@ -72,7 +72,7 @@ test('comments are retired before any reply write', async () => {
   const calls = fake();
   const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(1001), reply_to_id: POST });
   assert.equal(res.status, 410);
-  assert.match((await res.json()).error, /Comments are retired on the Action Network/);
+  assert.match((await res.json()).error, /Comments are retired on Human Uprise/);
   assert.equal(inserts(calls).length, 0, 'nothing is written');
 });
 
@@ -127,6 +127,6 @@ test('editing a historical reply is retired before the write', async () => {
   const calls = fake({ existing: { id: POST, author_m_uid: MUID, body: 'old', media: [], reply_to_id: OTHER } });
   const res = await call(`/v1/mnet/posts/${POST}`, 'PATCH', { body: 'b'.repeat(1001) });
   assert.equal(res.status, 410);
-  assert.match((await res.json()).error, /Comments are retired on the Action Network/);
+  assert.match((await res.json()).error, /Comments are retired on Human Uprise/);
   assert.ok(!calls.some((c) => c.m === 'PATCH'), 'nothing is written');
 });

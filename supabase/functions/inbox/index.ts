@@ -1651,14 +1651,15 @@ Deno.serve(async (req) => {
       const id = String(payload.id ?? "");
       if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: "bad approval id" }, 400);
       const approve = !!payload.approve;
-      const [decided] = await db("rpc/mcp_decide", {
+      const [decided] = await db("rpc/mcp_decide_scoped", {
         method: "POST",
-        body: JSON.stringify({ p_id: id, p_approve: approve, p_by: me }),
+        body: JSON.stringify({ p_id: id, p_org_id: org.id, p_approve: approve, p_by: me }),
       }).then((r: unknown) => (Array.isArray(r) ? r : [r])).catch(() => [null]);
 
-      if (!decided?.id) return json({ error: "that request was already answered, or it lapsed" }, 409);
-      if (!approve) return json({ ok: true, state: "denied" });
+      if (!decided?.id) return json({ error: "that request was already answered, belongs elsewhere, or lapsed" }, 409);
+      // Defense in depth: a foreign decision must never be consumed or executed.
       if (decided.org_id !== org.id) return json({ error: "not yours" }, 403);
+      if (!approve) return json({ ok: true, state: "denied" });
 
       const [sv] = await db(`mcp_servers?id=eq.${decided.server_id}&org_id=eq.${org.id}&select=*&limit=1`).catch(() => []);
       const [tl] = await db(`mcp_tools?server_id=eq.${decided.server_id}&name=eq.${encodeURIComponent(decided.tool)}&select=*&limit=1`).catch(() => []);
@@ -1668,7 +1669,7 @@ Deno.serve(async (req) => {
         orgId: org.id, tool: tl, server: sv, args: decided.arguments ?? {},
         convId: decided.conv_id, authority: "approved", approvedBy: me,
       });
-      await db(`mcp_approvals?id=eq.${id}`, {
+      await db(`mcp_approvals?id=eq.${id}&org_id=eq.${org.id}`, {
         method: "PATCH", headers: { Prefer: "return=minimal" },
         body: JSON.stringify({ state: "done" }),
       }).catch(() => {});

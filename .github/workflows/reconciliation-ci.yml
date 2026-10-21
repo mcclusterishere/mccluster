@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - feat/world-as-feed-globe
   workflow_dispatch: {}
 
 permissions:
@@ -93,6 +94,9 @@ jobs:
       - name: Test provider-independent capability resolution
         working-directory: core
         run: npm run test:capabilities
+      - name: Test compute leases and reviewed newsroom output
+        working-directory: core
+        run: node --test test/compute-*.test.mjs test/node-agent-runtime.test.mjs test/news-brief-validation.test.mjs
       - name: Test bounded objective reflection
         working-directory: core
         run: npm run test:reflection
@@ -171,7 +175,8 @@ jobs:
             supabase/functions/_shared/eu-policy-os.ts \
             supabase/functions/eu-publish/index.ts \
             supabase/functions/eu-worker/index.ts \
-            supabase/functions/context-core/index.ts
+            supabase/functions/context-core/index.ts \
+            supabase/functions/context-decision/index.ts
       - name: Assert publication and context safety invariants
         run: |
           grep -F 'form.set("login_passwd", pass)' supabase/functions/eu-worker/index.ts
@@ -186,6 +191,31 @@ jobs:
           grep -F 'where c.org_id = ${orgId}::uuid and c.id = ${conversationId}::uuid' supabase/functions/context-core/index.ts
           grep -F '[functions.context-core]' supabase/config.toml
           grep -A1 '\[functions.context-core\]' supabase/config.toml | grep -F 'verify_jwt = false'
+
+  admin-evidence:
+    name: Admin evidence and pending SQL contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Test measurement, funding and offline research contracts
+        run: |
+          node --test scripts/test/control-analytics*.test.mjs scripts/test/analytics-measurement-ui.test.mjs scripts/test/funding-register-ui.test.mjs scripts/test/news-brief-page.test.mjs scripts/test/evidence-evaluation.test.mjs
+          node scripts/funding/render-register-seed.mjs --check
+      - name: Install pinned disposable PostgreSQL runtime
+        run: npm install --prefix "$RUNNER_TEMP/admin-evidence-tools" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.10
+      - name: Replay pending migrations in isolated databases
+        run: |
+          export PGLITE_ROOT="$RUNNER_TEMP/admin-evidence-tools/node_modules/@electric-sql/pglite"
+          export PGLITE_MODULE_PATH="$PGLITE_ROOT/dist/index.js"
+          export PGLITE_MODULE="$PGLITE_MODULE_PATH"
+          node scripts/test-analytics-measurement-db.mjs
+          node scripts/compute-lease-sql-check.mjs
+          node scripts/test-intel-integrity-db.mjs
+          node scripts/funding/validate-register-db.mjs
 
   database:
     name: Supabase migration reset
@@ -204,6 +234,28 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/analytics_funnel_exact_window.behaviour.sql
+      - name: Verify regional mission authorization against database roles
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_globe_join_authorization.behaviour.sql
+      - name: Exercise withdrawn member rejoin with mission at capacity
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_globe_rejoin_capacity.integration.sql
+      - name: Verify ingestion leases, unknown measurements and private spatial storage
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/analytics_ingestion_pipeline.behaviour.sql
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Verify native PostgreSQL evidence and lease races
+        run: |
+          npm install --prefix "$RUNNER_TEMP/native-admin-tools" --ignore-scripts --no-audit --no-fund --package-lock=false postgres@3.4.5
+          export POSTGRES_MODULE_PATH="$RUNNER_TEMP/native-admin-tools/node_modules/postgres/src/index.js"
+          export NATIVE_TEST_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          # Exercise pending DDL on the complete reset schema as well as the isolated fixtures.
+          # Promoted files have already been applied by the reset and are skipped here.
+          for migration in supabase/pending/*_compute_lease_authority_v2.sql supabase/pending/*_intel_decision_integrity_v2.sql; do
+            [ -f "$migration" ] || continue
+            psql "$NATIVE_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          node scripts/compute-lease-sql-check.mjs
+          node scripts/test-intel-integrity-db.mjs
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

@@ -4,9 +4,16 @@ import { createForensicRoutes } from './forensics.js';
 import { createAudienceScienceRoutes } from './audience-science.js';
 import { createExperienceAnalyticsRoutes } from './experience.js';
 import { loadCommerceSummary } from '../commerce/summary.js';
+import { createCameraRoutes } from './cameras.js';
+import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
+import { readBoundedRows, measurementContext } from './measurement.js';
+import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
+/* A creator sees where their page was read from by country only; a country
+   with fewer views than this is folded into "elsewhere" (never named). */
+const AUDIENCE_MIN_VIEWS = 5;
 const MAX_AUTH_PAGES = 100;
 const AUTH_PAGE_SIZE = 1000;
 
@@ -34,7 +41,7 @@ async function sbJson(env, path, init = {}) {
 function countFromRange(value) {
   const total = String(value || '').split('/').pop();
   const n = Number(total);
-  if (!Number.isFinite(n) || n < 0) throw new Error('Invalid analytics count response');
+  if (!/^\d+$/.test(total) || !Number.isSafeInteger(n) || n < 0) throw new Error('Invalid analytics count response');
   return n;
 }
 
@@ -65,17 +72,9 @@ async function sbRows(env, path) {
 }
 
 async function sbRowsPaged(env, path, maxRows = 100000) {
-  const pageSize = 1000;
-  const out = [];
-  for (let start = 0; start < maxRows; start += pageSize) {
-    const rows = await sbJson(env, path, {
-      headers: { range: `${start}-${start + pageSize - 1}` }
-    });
-    if (!Array.isArray(rows) || !rows.length) break;
-    out.push(...rows);
-    if (rows.length < pageSize) break;
-  }
-  return out.slice(0, maxRows);
+  return readBoundedRows((start, end) => sbJson(env, path, {
+    headers: { range: `${start}-${end}` }
+  }), maxRows);
 }
 
 function finiteDate(value, fallback) {
@@ -142,15 +141,16 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   });
   const userIds = created.map((u) => String(u.id)).filter(Boolean);
   const eventSelect = [
-    'at','name','path','props','uid','device_id','session_id','ip','user_agent','referrer',
+    'id','at','name','path','props','uid','device_id','session_id','ip','user_agent','referrer',
     'country','region','city','postal','latitude','longitude','timezone','asn','asn_org','device','edge'
   ].join(',');
 
   const direct = await sbRowsPaged(env,
     `events?site_id=is.null&name=eq.account_created&at=gte.${encodeURIComponent(since.toISOString())}` +
-    `&at=lt.${encodeURIComponent(until.toISOString())}&select=${eventSelect}&order=at.asc`,
+    `&at=lt.${encodeURIComponent(until.toISOString())}&select=${eventSelect}&order=at.asc,id.asc`,
     25000
   );
+  const readDatasets = { account_creation_events: direct };
 
   /* Historical reconstruction is bounded by the actual accounts in the
      selected window. We never scan the first N global bridge rows: that was
@@ -160,12 +160,14 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   const bridgeUntil = new Date(until.getTime() + 7 * 86400000).toISOString();
   for (const ids of chunks(userIds)) {
     if (!ids.length) continue;
-    bridges.push(...await sbRowsPaged(env,
+    const batch = await sbRowsPaged(env,
       `events?uid=in.(${ids.join(',')})&device_id=not.is.null` +
       `&at=gte.${encodeURIComponent(bridgeSince)}&at=lt.${encodeURIComponent(bridgeUntil)}` +
-      `&select=${eventSelect}&order=at.desc`,
+      `&select=${eventSelect}&order=at.desc,id.desc`,
       100000
-    ));
+    );
+    readDatasets['identity_bridge_' + Object.keys(readDatasets).length] = batch;
+    bridges.push(...batch);
   }
 
   const directByUser = new Map();
@@ -193,13 +195,15 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   const behavior = [];
   for (const ids of chunks([...deviceIds])) {
     if (!ids.length) continue;
-    behavior.push(...await sbRowsPaged(env,
+    const batch = await sbRowsPaged(env,
       `events?site_id=is.null&device_id=in.(${ids.join(',')})` +
       `&at=gte.${encodeURIComponent(behaviorSince)}&at=lt.${encodeURIComponent(until.toISOString())}` +
       '&name=in.(album_play,music_play,music_preview_play,music_full_play,music_complete,song_start,track_start,acquired)' +
-      `&select=${eventSelect}&order=at.asc`,
+      `&select=${eventSelect}&order=at.asc,id.asc`,
       100000
-    ));
+    );
+    readDatasets['behavior_' + Object.keys(readDatasets).length] = batch;
+    behavior.push(...batch);
   }
 
   const tracks = await sbRows(env, 'creator_tracks?select=id,title,artist,slug');
@@ -214,12 +218,13 @@ async function identityAnalytics(env, sinceIso, untilIso) {
     list.push(e); byDevice.set(key, list);
   }
 
+  let contentReadStatus = 'observed_complete';
   const contentRows = await sbJson(env, 'rpc/analytics_content', {
     method: 'POST',
     body: JSON.stringify({
       p_since: since.toISOString(), p_until: until.toISOString(), p_site: null
     })
-  }).catch(() => []);
+  }).catch(() => { contentReadStatus = 'unavailable'; return []; });
   const listenerByTrack = new Map((Array.isArray(contentRows) ? contentRows : []).map((r) => [
     String(r.track || '').trim().toLowerCase(), Number(r.listeners) || 0
   ]));
@@ -278,19 +283,22 @@ async function identityAnalytics(env, sinceIso, untilIso) {
     for (const track of j.assisted_tracks || []) {
       const key = String(track).toLowerCase();
       const cur = stats.get(key) || {
-        track, listeners: listenerByTrack.get(key) || 0,
-        assisted_accounts: 0, last_touch_accounts: 0, total_minutes_to_signup: 0
+        track, listeners: listenerByTrack.get(key) ?? null,
+        assisted_accounts: 0, last_touch_accounts: 0, timed_last_touch_accounts: 0, total_minutes_to_signup: 0
       };
       cur.assisted_accounts++; stats.set(key, cur);
     }
     if (j.last_track) {
       const key = String(j.last_track).toLowerCase();
       const cur = stats.get(key) || {
-        track:j.last_track, listeners:listenerByTrack.get(key) || 0,
-        assisted_accounts:0,last_touch_accounts:0,total_minutes_to_signup:0
+        track:j.last_track, listeners:listenerByTrack.get(key) ?? null,
+        assisted_accounts:0,last_touch_accounts:0,timed_last_touch_accounts:0,total_minutes_to_signup:0
       };
       cur.last_touch_accounts++;
-      if (j.minutes_after_last_track != null) cur.total_minutes_to_signup += j.minutes_after_last_track;
+      if (j.minutes_after_last_track != null) {
+        cur.total_minutes_to_signup += j.minutes_after_last_track;
+        cur.timed_last_touch_accounts++;
+      }
       stats.set(key, cur);
       const edgeKey = `${j.source || 'direct'}\u0000${j.last_track}`;
       sourceEdges.set(edgeKey, (sourceEdges.get(edgeKey) || 0) + 1);
@@ -300,14 +308,23 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   const trackStats = [...stats.values()].map((x) => ({
     track:x.track, listeners:x.listeners, assisted_accounts:x.assisted_accounts,
     last_touch_accounts:x.last_touch_accounts,
-    signup_rate_pct:x.listeners ? Math.round((x.last_touch_accounts / x.listeners) * 1000) / 10 : null,
-    avg_minutes_to_signup:x.last_touch_accounts
-      ? Math.round(x.total_minutes_to_signup / x.last_touch_accounts) : null
+    // Attribution can reach seven days before this listener window and links
+    // accounts rather than devices. These are not compatible rate populations.
+    signup_rate_pct:null,
+    avg_minutes_to_signup:x.timed_last_touch_accounts
+      ? Math.round(x.total_minutes_to_signup / x.timed_last_touch_accounts) : null
   })).sort((a,b) => b.last_touch_accounts-a.last_touch_accounts ||
     b.assisted_accounts-a.assisted_accounts || b.listeners-a.listeners);
 
   return {
     range:{since:since.toISOString(),until:until.toISOString(),attribution_window_days:7},
+    measurement:measurementContext({metricVersion:'identity-attribution/v2',
+      since:since.toISOString(),until:until.toISOString(),datasets:readDatasets,
+      unit:'accounts',identityBasis:'auth.users.id_with_observed_device_attribution'}),
+    methodology:{population:'Accounts created in the window; descriptive attribution may look back seven days.',
+      signup_rate:'unavailable_without_ordered_matching_cohort',
+      listener_read:contentReadStatus,
+      note:'A pre-signup device touch is an association, not proof the content caused registration.'},
     coverage:{
       accounts:created.length,
       bridged_accounts:journeys.filter((j)=>j.device_id).length,
@@ -327,6 +344,49 @@ async function handleIdentityAnalytics(request, env, user, url) {
   await requireHouseOwner(env, user);
   if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
   return json({ok:true,...await identityAnalytics(env,url.searchParams.get('since'),url.searchParams.get('until'))});
+}
+
+/* STATES / PROVINCES inside one country, for the owner's analytics globe
+   (owner, 2026-10-16). House owner only, like identity and forensics. It
+   reads public.analytics_region_totals (supabase/pending/analytics_region_v1.sql,
+   service_role only): country, region code, region name and counts, with any
+   region under 5 page views already folded by the database. Never city,
+   postal code, coordinates or IP. Until that read is applied the route says
+   so (pending: true) and the globe shows "not collected yet". */
+const REGION_MIN_VIEWS = 5;
+async function handleRegionAnalytics(request, env, user, url) {
+  await requireHouseOwner(env, user);
+  if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
+  const country = String(url.searchParams.get('country') || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(country)) return json({ ok: false, error: 'country must be an ISO 3166-1 alpha-2 code' }, 400);
+  const until = finiteDate(url.searchParams.get('until'), new Date());
+  const since = finiteDate(url.searchParams.get('since'), new Date(until.getTime() - 86400000));
+  if (!(since < until)) return json({ ok: false, error: 'Invalid analytics range' }, 400);
+  const siteRaw = String(url.searchParams.get('site') || '').trim();
+  if (siteRaw && !/^[0-9a-f-]{36}$/i.test(siteRaw)) return json({ ok: false, error: 'Invalid site' }, 400);
+  const res = await sb(env, 'rpc/analytics_region_totals', { method: 'POST',
+    body: JSON.stringify({ p_country: country, p_since: since.toISOString(), p_until: until.toISOString(), p_site: siteRaw || null }) });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    const missing = res.status === 404 || /PGRST202|could not find the function|does not exist/i.test(JSON.stringify(body || ''));
+    if (missing) return json({ ok: true, pending: true, country, regions: [], folded: 0, unknown: 0,
+      note: 'Region counts need analytics_region_v1 (written, not applied).' });
+    return json({ ok: false, error: 'Region analytics read failed' }, 502);
+  }
+  const rows = Array.isArray(body) ? body : [];
+  const regions = [];
+  let folded = 0, unknown = 0;
+  for (const r of rows) {
+    const pv = Number(r.page_views) || 0;
+    const code = /^[A-Z0-9]{1,4}$/.test(String(r.region_code || '')) ? String(r.region_code) : null;
+    const name = r.region ? String(r.region).slice(0, 80) : null;
+    if (r.folded) { folded += pv; continue; }
+    if (!code && !name) { unknown += pv; continue; }
+    /* the database folds; this is the second wall */
+    if (pv < REGION_MIN_VIEWS) { folded += pv; continue; }
+    regions.push({ code, name, page_views: pv, visitors: r.visitors == null ? null : Number(r.visitors) || 0 });
+  }
+  return json({ ok: true, pending: false, country, range: { since: since.toISOString(), until: until.toISOString() }, min: REGION_MIN_VIEWS, regions, folded, unknown });
 }
 
 async function handleForensics(request, env, user, url) {
@@ -484,6 +544,7 @@ export async function businessSnapshot(env, windowSpec = null) {
 
   const since = windowSpec?.since || null;
   const until = windowSpec?.until || null;
+  const readErrors = {};
   const [
     postsTotal, followsTotal, reactionsTotal, profilesTotal,
     postsWindow, followsWindow, reactionsWindow, profilesWindow,
@@ -494,53 +555,48 @@ export async function businessSnapshot(env, windowSpec = null) {
     completesTotal, completesWindow, creatorProfilesTotal, creatorProfilesWindow,
     creatorTracksTotal, creatorTracksWindow, publishedTracksTotal, activeOffersTotal,
     paidOrdersTotal, paidOrdersWindow, entitlementsTotal, entitlementsWindow, paidOrderRows
-  ] = await Promise.all([
-    sbCount(env, 'network_posts'),
-    sbCount(env, 'network_follows', 'follower_m_uid'),
-    sbCount(env, 'network_reactions', 'post_id'),
-    sbCount(env, 'network_profiles', 'm_uid'),
-    since ? sbCount(env, 'network_posts', 'id', since, until) : Promise.resolve(null),
-    since ? sbCount(env, 'network_follows', 'follower_m_uid', since, until) : Promise.resolve(null),
-    since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null),
-    since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null),
-
-    /* Event counts read events_lean, the narrow copy kept in step by a
-       trigger (same id, name and at). Twenty exact counts in parallel over
-       the full events rows (props, device and edge blobs, ~1.4 KB each)
-       hit the 8 s statement limit, answered this route with a 502 and
-       loaded the database for every visitor while they ran. */
-    sbCountFiltered(env, 'events_lean', 'id', {}, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', {}, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.page_view' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.click' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.click' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.acquired' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null),
-
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.album_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_preview_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_full_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_complete' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null),
-
-    sbCount(env, 'music_creator_profiles', 'm_uid'),
-    since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null),
-    sbCount(env, 'creator_tracks'),
-    since ? sbCount(env, 'creator_tracks', 'id', since, until) : Promise.resolve(null),
-    sbCountFiltered(env, 'creator_tracks', 'id', { status: 'eq.published' }),
-    sbCountFiltered(env, 'music_license_offers', 'id', { active: 'eq.true', checkout_enabled: 'eq.true' }),
-    sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }),
-    since ? sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }, since, 'created_at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }),
-    since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since, 'created_at', until) : Promise.resolve(null),
-    sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')
-  ]);
+  ] = await boundedReads([
+    {key: 'postsTotal', run: () => sbCount(env, 'network_posts')},
+    {key: 'followsTotal', run: () => sbCount(env, 'network_follows', 'follower_m_uid')},
+    {key: 'reactionsTotal', run: () => sbCount(env, 'network_reactions', 'post_id')},
+    {key: 'profilesTotal', run: () => sbCount(env, 'network_profiles', 'm_uid')},
+    {key: 'postsWindow', run: () => since ? sbCount(env, 'network_posts', 'id', since, until) : Promise.resolve(null)},
+    {key: 'followsWindow', run: () => since ? sbCount(env, 'network_follows', 'follower_m_uid', since, until) : Promise.resolve(null)},
+    {key: 'reactionsWindow', run: () => since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null)},
+    {key: 'profilesWindow', run: () => since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null)},
+    {key: 'eventsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, null, 'at')},
+    {key: 'eventsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'pageViewsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, null, 'at')},
+    {key: 'pageViewsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'clicksTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, null, 'at')},
+    {key: 'clicksWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'acquiredTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, null, 'at')},
+    {key: 'acquiredWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'legacyPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, null, 'at')},
+    {key: 'legacyPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'musicPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, null, 'at')},
+    {key: 'musicPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'previewPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, null, 'at')},
+    {key: 'previewPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'fullPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, null, 'at')},
+    {key: 'fullPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'completesTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, null, 'at')},
+    {key: 'completesWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'creatorProfilesTotal', run: () => sbCount(env, 'music_creator_profiles', 'm_uid')},
+    {key: 'creatorProfilesWindow', run: () => since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null)},
+    {key: 'creatorTracksTotal', run: () => sbCount(env, 'creator_tracks')},
+    {key: 'creatorTracksWindow', run: () => since ? sbCount(env, 'creator_tracks', 'id', since, until) : Promise.resolve(null)},
+    {key: 'publishedTracksTotal', run: () => sbCountFiltered(env, 'creator_tracks', 'id', { status: 'eq.published' })},
+    {key: 'activeOffersTotal', run: () => sbCountFiltered(env, 'music_license_offers', 'id', { active: 'eq.true', checkout_enabled: 'eq.true' })},
+    {key: 'paidOrdersTotal', run: () => sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' })},
+    {key: 'paidOrdersWindow', run: () => since ? sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }, since, 'created_at', until) : Promise.resolve(null)},
+    {key: 'entitlementsTotal', run: () => sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' })},
+    {key: 'entitlementsWindow', run: () => since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since, 'created_at', until) : Promise.resolve(null)},
+    {key: 'paidOrderRows', run: () => sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')}
+  ].map(task => async () => {
+    try { return await task.run(); }
+    catch { readErrors[task.key] = 'Data read unavailable'; return null; }
+  }), 3); // Keep owner business reads below the dashboard's concurrent RPC load.
 
   /* Verified Stripe sales and bookings from the commerce reconciler, live
      only, net of refunds; test-mode money is reported apart (commerce/
@@ -548,16 +604,19 @@ export async function businessSnapshot(env, windowSpec = null) {
   const commerce = await loadCommerceSummary((path) => sbRows(env, path), windowSpec)
     .catch((err) => ({ available: false, reason: String(err?.message || err).slice(0, 200) }));
 
+  if (commerce.available === false) readErrors.commerce = 'Verified commerce read unavailable';
   const paidRowsInWindow = since
-    ? paidOrderRows.filter((row) => {
+    ? paidOrderRows?.filter((row) => {
         const at = Date.parse(row.created_at || '');
         return at >= Date.parse(since) && at < Date.parse(until);
       })
     : paidOrderRows;
-  const sum = (rows, field) => rows.reduce((n, row) => n + Number(row?.[field] || 0), 0);
+  const sum = (rows, field) => rows == null ? null : rows.reduce((n, row) => n + Number(row?.[field] || 0), 0);
 
   return {
     generated_at: new Date().toISOString(),
+    read_errors: readErrors,
+    partial: Object.keys(readErrors).length > 0,
     timezone: timeZone,
     window: windowSpec,
     users: {
@@ -592,8 +651,8 @@ export async function businessSnapshot(env, windowSpec = null) {
       legacy_album_plays: { total: legacyPlaysTotal, in_window: legacyPlaysWindow },
       inline_plays: { total: musicPlaysTotal, in_window: musicPlaysWindow },
       plays: {
-        total: Number(legacyPlaysTotal || 0) + Number(musicPlaysTotal || 0),
-        in_window: windowSpec ? Number(legacyPlaysWindow || 0) + Number(musicPlaysWindow || 0) : null
+        total: legacyPlaysTotal == null || musicPlaysTotal == null ? null : Number(legacyPlaysTotal) + Number(musicPlaysTotal),
+        in_window: windowSpec && legacyPlaysWindow != null && musicPlaysWindow != null ? Number(legacyPlaysWindow) + Number(musicPlaysWindow) : null
       },
       preview_plays: { total: previewPlaysTotal, in_window: previewPlaysWindow },
       full_plays: { total: fullPlaysTotal, in_window: fullPlaysWindow },
@@ -631,6 +690,9 @@ export function answerBusinessQuestion(question, snapshot) {
   const wantsDaily = /\b(by day|daily|each day|per day)\b/.test(lower);
   const wantsPercent = /%|\bpercent(?:age)?\b|\bwhat share\b/.test(lower);
   const windowed = Boolean(snapshot.window);
+  const unavailable = (metric) => ({ understood: true, available: false, metric, value: null,
+    answer: 'That measurement is unavailable because its data read failed. Retry after checking the data connection.',
+    context: { window: snapshot.window } });
   const temporalIntent = /\b(joined|new|created|signed\s*up|recent|today|yesterday|week|month|day|hour)\b/.test(lower);
 
   if (temporalIntent && !windowed) {
@@ -650,11 +712,11 @@ export function answerBusinessQuestion(question, snapshot) {
     if (/\bplatform fee|platform revenue\b/.test(lower)) {
       metric = windowed ? 'music.revenue.platform_fee_cents_in_window' : 'music.revenue.platform_fee_cents';
       value = windowed ? snapshot.music.revenue.platform_fee_cents_in_window : snapshot.music.revenue.platform_fee_cents;
-      label = '$' + (Number(value || 0) / 100).toFixed(2) + ' platform music revenue';
+      label = '$' + (value == null ? 'unavailable' : (Number(value) / 100).toFixed(2)) + ' platform music revenue';
     } else if (/\brevenue\b|\bgross\b/.test(lower)) {
       metric = windowed ? 'music.revenue.gross_cents_in_window' : 'music.revenue.gross_cents';
       value = windowed ? snapshot.music.revenue.gross_cents_in_window : snapshot.music.revenue.gross_cents;
-      label = '$' + (Number(value || 0) / 100).toFixed(2) + ' gross music revenue';
+      label = '$' + (value == null ? 'unavailable' : (Number(value) / 100).toFixed(2)) + ' gross music revenue';
     } else if (/\bpreview/.test(lower)) {
       metric = 'music.preview_plays.' + w;
       value = snapshot.music.preview_plays[w];
@@ -696,6 +758,7 @@ export function answerBusinessQuestion(question, snapshot) {
       label = value + ' music plays';
     }
 
+    if (value == null) return unavailable(metric);
     return {
       understood: true,
       metric,
@@ -712,6 +775,7 @@ export function answerBusinessQuestion(question, snapshot) {
         : /\bacquisitions?\b/.test(lower) ? 'acquisitions'
           : 'events';
     const value = snapshot.platform[bucket][w];
+    if (value == null) return unavailable('platform.' + bucket + '.' + w);
     return {
       understood: true,
       metric: 'platform.' + bucket + '.' + w,
@@ -768,6 +832,7 @@ export function answerBusinessQuestion(question, snapshot) {
     const bucket = snapshot.mnet[subject];
     const value = windowed ? bucket.created_in_window : bucket.total;
     const metric = 'mnet.' + subject + '.' + (windowed ? 'created_in_window' : 'total');
+    if (value == null) return unavailable(metric);
     return {
       understood: true,
       metric,
@@ -839,6 +904,7 @@ async function handleBusinessQuestion(request, env, user) {
 const forensics = createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finiteDate, publicDeviceSummary, requireHouseOwner });
 const audienceScience = createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, requireHouseOwner });
 const experienceAnalytics = createExperienceAnalyticsRoutes({ json, sbRows, sbRowsPaged, finiteDate, requireHouseOwner });
+const cameraAnalytics = createCameraRoutes({ json, requireOwner: requireHouseOwner });
 
 
 /* Bounded owner-only account explorer. Events are matched by authenticated uid
@@ -919,13 +985,24 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
  const counts={};
  const profiles=await sbRows(env,'music_creator_profiles?m_uid=eq.'+encodeURIComponent(mUid)+
    '&select=handle&limit=1');
- const handle=String(profiles[0]?.handle||'');
+ const candidateHandle=String(profiles[0]?.handle||'');
+ const handle=/^[a-z0-9][a-z0-9._-]{2,39}$/.test(candidateHandle)?candidateHandle:'';
+ const pageScope='(props->>creator_handle.eq.'+handle+',props->>url.like.*music-creator.html?*handle='+handle+'*,path.like.music-creator.html?*handle='+handle+'*)';
  const trafficRows=handle?await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
-   '&name=in.(page_view,pageview)&select=at,path,referrer,session_id,props&order=at.desc&limit=1000'):[];
+   '&or='+encodeURIComponent(pageScope)+
+   '&name=in.(page_view,pageview)&select=at,path,referrer,session_id,props,country&order=at.desc&limit=1000'):[];
  const traffic=trafficRows.filter(e=>{
    const raw=String(e.path||'');
-   const query=raw.includes('?')?raw.slice(raw.indexOf('?')+1):'';
-   try{return raw.startsWith('music-creator.html')&&new URLSearchParams(query).get('handle')===handle;}catch{return false;}
+   if(raw==='music-creator.html'&&e.props?.creator_handle===handle)return true;
+   // Older page views retained the creator URL in props while path lost its query.
+   for(const value of [e.props?.url,raw]){
+     try{
+       if(typeof value!=='string')continue;
+       const u=new URL(value,'https://matthew.mccluster.org/');
+       if(u.pathname==='/music-creator.html'&&u.searchParams.get('handle')===handle)return true;
+     }catch{}
+   }
+   return false;
  });
  const daily={};const sources={};const sessions=new Set();
  for(const e of traffic){
@@ -938,13 +1015,27 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
  }
  const pageTraffic={views:traffic.length,approximate_sessions:sessions.size,
    daily,sources,sample_limited:trafficRows.length===1000};
+ // The creator-only audience layer on the World globe: views of this
+ // creator's own page by country. Country only, never region, city, postal
+ // code or coordinates; small countries are folded into "elsewhere".
+ const byCountry={};let unknownViews=0;
+ for(const e of traffic){
+   const c=String(e.country||'').toUpperCase();
+   if(/^[A-Z]{2}$/.test(c)&&c!=='XX'&&c!=='T1')byCountry[c]=(byCountry[c]||0)+1;else unknownViews++;
+ }
+ const countries=[];let elsewhere=0;
+ for(const [country,views] of Object.entries(byCountry)){if(views>=AUDIENCE_MIN_VIEWS)countries.push({country,views});else elsewhere+=views;}
+ countries.sort((a,b)=>b.views-a.views||a.country.localeCompare(b.country));
+ const audience={countries,elsewhere_views:elsewhere,unknown_views:unknownViews,min_views:AUDIENCE_MIN_VIEWS,
+   sample_limited:trafficRows.length===1000};
  const perTrack=new Map(tracks.map(t=>[String(t.id),{id:t.id,title:t.title,status:t.status,
    plays:0,completions:0,shares:0}]));
  if(ids.size){
-   // Catalog-specific event filtering occurs in memory only after a bounded
-   // 30-day query. Do not return individual listener identities to creators.
+   // Scope to owned catalog IDs in the database before limiting the sample.
+   // Keep the in-memory ownership check as well.
    const rows=await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
      '&name=in.(music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
+     '&props->>creator_track_id=in.('+[...ids].map(encodeURIComponent).join(',')+')'+
      '&select=name,props&order=at.desc&limit=1000');
    for(const e of rows){
      const id=String(e.props?.creator_track_id||'');
@@ -955,14 +1046,32 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
      counts[e.name]=(counts[e.name]||0)+1;
    }
  }
- return json({ok:true,creator:true,window_days:30,sample_limited:true,
+ // A creator is someone with a music profile or tracks, not every linked member.
+ return json({ok:true,creator:!!handle||tracks.length>0,window_days:30,sample_limited:true,
    disclaimer:'Observed matching events only; counts may be incomplete due to event sampling.',
-   counts,page_traffic:pageTraffic,tracks:[...perTrack.values()]});
+   counts,page_traffic:pageTraffic,audience,tracks:[...perTrack.values()]});
 }
 
 export async function handleAnalyticsRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
+
+  const cameraResponse = await cameraAnalytics(request, env, user, url, path);
+  if (cameraResponse) return cameraResponse;
+  if (path === '/v1/analytics/measurement-contract') {
+    await requireHouseOwner(env, user);
+    if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
+    return json({ ok:true, version:DICTIONARY_VERSION, source:DICTIONARY_SOURCE,
+      unknown_event_policy:'unclassified', events:EVENT_DICTIONARY,
+      metrics:METRIC_DICTIONARY, datasets:DATASETS });
+  }
+  if (path === '/v1/analytics/coverage') {
+    if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
+    try {
+      const { org } = await requireHouseOwner(env, user);
+      return json(await dataCoverage(env, org.id, url));
+    } catch (error) { return json({ error: error.message }, error.status || 502); }
+  }
 
   if (path === '/v1/analytics/my-listening' || path === '/v1/analytics/my-creator')
     return handleSelfMusicAnalytics(request,env,user,url,path);
@@ -975,6 +1084,9 @@ export async function handleAnalyticsRequest(request, env, user) {
   }
   if (path === '/v1/analytics/identity') {
     return handleIdentityAnalytics(request, env, user, url);
+  }
+  if (path === '/v1/analytics/regions') {
+    return handleRegionAnalytics(request, env, user, url);
   }
   if (path === '/v1/analytics/forensics') {
     return handleForensics(request, env, user, url);

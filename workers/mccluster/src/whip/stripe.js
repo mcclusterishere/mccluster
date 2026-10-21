@@ -36,6 +36,9 @@ export async function stripeRequest(env, path, params = {}, options = {}) {
     'content-type': 'application/x-www-form-urlencoded'
   };
   if (options.account) headers['Stripe-Account'] = options.account;
+  // A retried capture or cancel must not act twice. Callers pass a key bound
+  // to the ride and the action so Stripe replays the first outcome.
+  if (options.idempotencyKey) headers['Idempotency-Key'] = String(options.idempotencyKey);
   const response = await fetch(url, { method, headers, body: method === 'GET' ? undefined : form.toString() });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -132,7 +135,7 @@ export async function createDirectCheckout(env, input = {}) {
     }],
     payment_intent_data: paymentIntentData,
     metadata: { kind: input.kind, tenant_id: input.tenantId, resource_id: input.resourceId }
-  }, { account: input.connectedAccountId });
+  }, { account: input.connectedAccountId, idempotencyKey: input.idempotencyKey });
 }
 
 export async function retrieveCheckoutSession(env, sessionId, connectedAccountId) {
@@ -149,21 +152,25 @@ export async function createManualPaymentIntent(env, input = {}) {
     metadata: { kind: input.kind, tenant_id: input.tenantId, resource_id: input.resourceId }
   };
   if (Number(input.applicationFeeCents || 0) > 0) params.application_fee_amount = Math.round(input.applicationFeeCents);
-  return stripeRequest(env, 'payment_intents', params, { account: input.connectedAccountId });
+  if (!input.resourceId) throw new Error('A canonical ride or rental ID is required for idempotent payment creation');
+  return stripeRequest(env, 'payment_intents', params, {
+    account: input.connectedAccountId,
+    idempotencyKey: 'whip-' + String(input.kind || 'payment') + '-' + String(input.resourceId)
+  });
 }
 
 export async function retrievePaymentIntent(env, paymentIntentId, connectedAccountId) {
   return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}`, {}, { method: 'GET', account: connectedAccountId });
 }
 
-export async function capturePaymentIntent(env, paymentIntentId, connectedAccountId, amountCents) {
+export async function capturePaymentIntent(env, paymentIntentId, connectedAccountId, amountCents, idempotencyKey) {
   return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/capture`, {
     amount_to_capture: amountCents ? Math.round(amountCents) : undefined
-  }, { account: connectedAccountId });
+  }, { account: connectedAccountId, idempotencyKey });
 }
 
-export async function cancelPaymentIntent(env, paymentIntentId, connectedAccountId) {
-  return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/cancel`, {}, { account: connectedAccountId });
+export async function cancelPaymentIntent(env, paymentIntentId, connectedAccountId, idempotencyKey) {
+  return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/cancel`, {}, { account: connectedAccountId, idempotencyKey });
 }
 
 export async function createRefund(env, input = {}) {

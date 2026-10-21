@@ -1,5 +1,5 @@
 /* ============================================================
-   THE ACTION NETWORK — the McCluster social surface (mnet.html).
+   HUMAN UPRISE — the McCluster social surface (mnet.html).
 
    Rebuilt in one piece rather than patched: the old sheet had grown
    three layers of overrides (a six-tab bar on a five-column grid, a
@@ -35,7 +35,7 @@
   width: 100%;
   max-width: 44rem;
   margin: 0 auto;
-  padding: 0 16px calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  padding: 0 16px calc(var(--mn-bar-clear, 96px) + 24px);
   color: var(--mn-ink);
   font-family: var(--mn-ui);
 }
@@ -66,7 +66,6 @@ html, body { background: #0a0807; }
 .mn__bell, .mn__avatar-btn { flex: none; position: relative; width: 42px; height: 42px; display: grid; place-items: center; border: 0; padding: 0; border-radius: 50%; cursor: pointer; background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2); transition: transform 0.2s var(--mn-ease), background 0.2s; }
 .mn__bell:active, .mn__avatar-btn:active { transform: scale(0.92); }
 .mn__bell svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.mn__bell-dot { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 2px var(--mn-raise-2); animation: mn-pulse 2s var(--mn-ease) infinite; }
 .mn__avatar-btn { overflow: hidden; }
 .mn__avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
 .mn__avatar-btn span { font-weight: 800; font-size: 0.82rem; }
@@ -105,6 +104,14 @@ html, body { background: #0a0807; }
 .mn__handle-row { display: flex; align-items: center; gap: 8px; color: var(--mn-dim); font-weight: 800; }
 .mn__handle-row .mn__input { margin: 0; }
 .mn__hint { margin: 6px 0 0; color: var(--mn-faint); font-size: 0.8rem; line-height: 1.5; }
+.mn__hint a { color: var(--mn-dim); text-decoration: underline; text-underline-offset: 3px; }
+.mn__input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--mn-hot); }
+/* the one privacy box on Create account, for someone who only saw the notice: a thumb-sized row */
+.mn__check { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 12px; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.4; cursor: pointer; }
+.mn__check input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--mn-hot); }
+.mn__check input[aria-invalid="true"] { outline: 2px solid var(--mn-hot); outline-offset: 2px; }
+.mn__check span { flex: 1; min-width: 0; }
+.mn__check a { color: var(--mn-ink); text-decoration: underline; text-underline-offset: 3px; }
 .mn__primary, .mn__post {
   min-height: 48px; border: 0; border-radius: 14px; cursor: pointer;
   background: var(--mn-hot); color: var(--mn-hot-ink); font-family: inherit; font-weight: 800; font-size: max(16px, 0.95rem);
@@ -157,37 +164,13 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__tabs > .mn__tabs-thumb { position: absolute; }
 .mn__badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--mn-hot); color: #fff; font-weight: 800; font-size: 0.7rem; }
 
-/* ---------- campaigns rail ---------- */
-.mn__rail { margin: 0 -16px 18px; animation: mn-rise 0.6s var(--mn-ease) both; }
-.mn__rail-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 16px; margin-bottom: 10px; }
-.mn__rail-head h2 { margin: 0; font-family: var(--mn-display); font-weight: 400; font-size: 1.5rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; }
-.mn__rail-head a { color: var(--mn-dim); font-weight: 800; font-size: 0.85rem; text-decoration: none; }
-.mn__rail-track { display: flex; gap: 10px; padding: 2px 16px 6px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.mn__rail-track::-webkit-scrollbar { display: none; }
-.mn__camp {
-  --hue: 10;
-  position: relative; flex: none; display: grid; align-content: start; gap: 6px; width: 74%; max-width: 19rem; min-height: 168px;
-  padding: 16px; border-radius: 22px; overflow: hidden; scroll-snap-align: start; text-decoration: none; color: var(--mn-ink);
-  background:
-    radial-gradient(120% 90% at 100% 0%, hsla(var(--hue), 70%, 45%, 0.35), transparent 60%),
-    linear-gradient(160deg, #1d1715, #120f0d);
-  box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.12), 0 18px 40px -24px rgba(0, 0, 0, 0.9);
-  animation: mn-rise 0.6s var(--mn-ease) both; animation-delay: calc(var(--i, 0) * 70ms + 120ms);
-  transition: transform 0.25s var(--mn-ease);
-}
-.mn__camp:active { transform: scale(0.97); }
-.mn__camp-k { display: inline-flex; align-items: center; gap: 8px; color: rgba(244, 239, 230, 0.75); font-weight: 800; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; }
 .mn__live { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--mn-hot); }
 .mn__live::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--mn-hot); animation: mn-ping 1.8s var(--mn-ease) infinite; }
-.mn__camp > b { font-family: var(--mn-display); font-weight: 400; font-size: 1.7rem; line-height: 0.95; text-transform: uppercase; }
-.mn__camp small { color: var(--mn-dim); font-weight: 600; font-size: 0.85rem; line-height: 1.4; }
-.mn__camp-n { margin-top: auto; padding-top: 8px; color: var(--mn-dim); font-weight: 700; font-size: 0.82rem; }
-.mn__camp-n b { color: var(--mn-ink); font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
 /* ---------- the composer: one line until it is used ---------- */
 .mn__composer { padding: 10px 12px; border-radius: 26px; transition: border-radius 0.35s var(--mn-ease), box-shadow 0.35s var(--mn-ease), padding 0.35s var(--mn-ease); }
 .mn__composer.is-open { border-radius: 22px; padding: 14px; box-shadow: inset 0 0 0 1px rgba(232, 200, 119, 0.35), 0 20px 50px -30px rgba(255, 77, 61, 0.45); }
-.mn__composer-head { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: center; }
+.mn__composer-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
 .mn__composer.is-open .mn__composer-head { align-items: start; }
 .mn__mini-avatar { width: 40px; height: 40px; display: grid; place-items: center; background-size: cover; background-position: center; font-weight: 800; font-size: 0.8rem; }
 .mn__composer textarea { min-height: 40px; padding: 9px 0; background: transparent; box-shadow: none; resize: none; field-sizing: content; max-height: 16rem; font-size: max(16px, 1rem); }
@@ -195,10 +178,14 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__composer.is-open textarea { min-height: 84px; }
 .mn__composer-actions {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  max-height: 0; margin-top: 0; padding-top: 0; overflow: hidden; opacity: 0; border-top: 1px solid transparent;
-  transition: max-height 0.4s var(--mn-ease), opacity 0.3s var(--mn-ease), margin 0.4s var(--mn-ease), padding 0.4s var(--mn-ease), border-color 0.4s;
+  max-height: 0; margin-top: 0; padding-top: 0; overflow: hidden; opacity: 0; border-top: 1px solid transparent; visibility: hidden;
+  transition: max-height 0.4s var(--mn-ease), opacity 0.3s var(--mn-ease), margin 0.4s var(--mn-ease), padding 0.4s var(--mn-ease), border-color 0.4s, visibility 0s linear 0.4s;
 }
-.mn__composer.is-open .mn__composer-actions { max-height: 12rem; margin-top: 12px; padding-top: 12px; opacity: 1; border-top-color: var(--mn-rule); }
+.mn__composer.is-open .mn__composer-actions { max-height: 12rem; margin-top: 12px; padding-top: 12px; opacity: 1; border-top-color: var(--mn-rule); visibility: visible; transition-delay: 0s; }
+/* Create, one tap from the folded composer */
+.mn__create { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2); text-decoration: none; }
+.mn__create svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.mn__composer.is-open .mn__create { display: none; }
 .mn__composer-actions > label { min-width: 0; }
 .mn__attach, .mn__composer select {
   display: inline-flex; align-items: center; min-height: 40px; max-width: 100%; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
@@ -209,11 +196,18 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__composer select { -webkit-appearance: none; appearance: none; }
 .mn__composer .mn__track-pick { max-width: 11rem; }
 .mn__post { margin-left: auto; padding: 0 22px; min-height: 40px; border-radius: 999px; transition: transform 0.2s var(--mn-ease), filter 0.2s; }
+/* the house owner's newsroom tick: under the actions, only while the composer is open */
+.mn__newsroom { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; margin-top: 10px; color: var(--mn-dim); font-size: max(16px, 0.9rem); line-height: 1.4; cursor: pointer; }
+.mn__newsroom input { flex: 0 0 auto; width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--mn-hot); }
+.mn__newsroom[hidden], .mn__composer:not(.is-open) .mn__newsroom { display: none; }
 .mn__post:active { transform: scale(0.95); }
 .mn__media-queue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 0; }
 .mn__media-chip { position: relative; min-height: 76px; overflow: hidden; display: grid; place-items: center; padding: 6px; border-radius: 12px; background: var(--mn-raise-2); color: var(--mn-dim); font-size: 0.72rem; text-align: center; }
 .mn__media-chip img, .mn__media-chip video { width: 100%; height: 100%; max-height: 7rem; object-fit: cover; }
 .mn__media-chip button { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.75); color: #fff; cursor: pointer; }
+/* a video in the composer: its picture and a play mark, never a black box */
+.mn__media-play { position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; display: grid; place-items: center; border-radius: 50%; background: rgba(0, 0, 0, 0.62); color: #fff; pointer-events: none; }
+.mn__media-play svg { width: 16px; height: 16px; margin-left: 2px; fill: currentColor; }
 
 /* ---------- the feed: cards that arrive, hearts that pop ---------- */
 .mn__feed { display: grid; gap: 10px; margin-top: 14px; }
@@ -249,6 +243,9 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__post-media.is-grid .mn__post-media-item img, .mn__post-media.is-grid .mn__post-media-item video { height: 100%; object-fit: cover; }
 .mn__post-media-item audio { display: block; width: 100%; }
 .mn__post-media-loading { min-height: 8rem; display: grid; place-items: center; color: var(--mn-faint); font-size: 0.8rem; }
+/* a video this device cannot play: its picture, and a plain line that says so */
+.mn__post-media-item.is-unplayable { position: relative; min-height: 6rem; }
+.mn__video-note { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 8px 10px; background: rgba(5, 5, 7, 0.8); color: #fff; font-size: 0.78rem; font-weight: 700; line-height: 1.35; text-align: center; }
 .mn__post-actions { display: flex; align-items: center; gap: 2px; margin: 10px -8px -6px; }
 .mn__action {
   display: inline-flex; align-items: center; gap: 6px; min-height: 40px; min-width: 40px; padding: 0 10px; border: 0; border-radius: 999px;
@@ -265,10 +262,26 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__action--like.is-active svg { fill: var(--mn-hot); }
 .mn__action--save.is-active { color: var(--mn-gold); }
 .mn__action--save.is-active svg { fill: var(--mn-gold); }
+/* THE EMBLEM OR FUND IT: the owner's emblem is the join, shown complete and as
+   supplied (no rounding, no crop) on its own white ground, never written out
+   beside it; the pill is the tap target. Fund is a plain pill; the fund line
+   says whether the campaign's support rail is open. */
+.mn__eup { width: 28px; height: 28px; object-fit: contain; flex: none; }
+/* the join is the mark alone on the same material as its neighbours: no white plate (owner, 2026-10-15) */
+.mn__primary--eup, .mn__world-go--eup { display: inline-flex; align-items: center; justify-content: center; gap: 0; min-width: 44px; }
+.mn__fund { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+.mn__fund svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mn__actcard-stats { margin: 6px 0 0; color: var(--mn-dim); font-size: 0.78rem; font-weight: 700; }
+.mn__fund-line { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(244, 239, 230, 0.06); box-shadow: inset 0 0 0 1px var(--mn-rule-2); color: var(--mn-dim); font-size: 0.85rem; line-height: 1.4; }
+.mn__fund-line span { flex: 1 1 14rem; min-width: 0; }
+.mn__fund-line small { flex-basis: 100%; color: var(--mn-faint); font-size: 0.78rem; }
+.mn__fund-go { flex: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font-size: 0.82rem; font-weight: 800; text-decoration: none; }
 .mn__action.is-pop svg { animation: mn-pop 0.5s var(--mn-spring); }
 .mn__danger { color: #ff9a91 !important; }
+.mn__action--thumb { min-width: 44px; min-height: 44px; justify-content: center; padding: 0; }
 .mn__more { display: block; width: 100%; min-height: 48px; margin-top: 12px; border: 0; border-radius: 999px; background: transparent; color: var(--mn-dim); box-shadow: inset 0 0 0 1px var(--mn-rule-2); cursor: pointer; font-family: inherit; font-weight: 800; font-size: max(16px, 0.9rem); }
-.mn__empty { padding: 40px 16px; border-radius: 22px; color: var(--mn-dim); text-align: center; font-size: 0.98rem; line-height: 1.6; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); animation: mn-rise 0.5s var(--mn-ease) both; }
+/* an empty room says so at once, in its final colours: it never fades up through grey (owner, 2026-10-20: no flashes) */
+.mn__empty { padding: 40px 16px; border-radius: 22px; color: var(--mn-dim); text-align: center; font-size: 0.98rem; line-height: 1.6; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
 
 /* loading: shapes of posts that shimmer, not a sentence */
 .mn__skel { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; padding: 16px; border-radius: 22px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
@@ -291,8 +304,25 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 @keyframes mn-ping { 0% { opacity: 0.8; transform: scale(0.6); } 80%, 100% { opacity: 0; transform: scale(1.8); } }
 @keyframes mn-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
 @keyframes mn-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
-.mn__view:not([hidden]) { animation: mn-fade 0.35s var(--mn-ease) both; }
-@keyframes mn-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* NO BLANK FRAMES BETWEEN ROOMS (owner, 2026-10-20: "I see a lot of shit flashing in between moving screens"). The room you
+   open is on screen, whole, in the same frame the last one leaves. It used to fade up from nothing, so every switch showed
+   the bare page first; and the World's own room, which ships open, would have faded in on every arrival. */
+.mn__view:not([hidden]) { animation: none; }
+/* before js/mnet.js has run: ?signin=1 asked for the sign-in form, so the World waits under it rather than showing first
+   (showGate drops the class). (Inside the Music page's World frame the Music page keeps the one bar: css/style.css.) */
+.mn-boot-signin #mnApp { display: none !important; }
+/* a member's room asked for by address (?view=profile, set by the head of mnet.html) is the room painted first, never the
+   World and then the room; js/mnet.js takes it over at once (peekView, setView and showGate drop the attribute).
+   !important: .mn [hidden] (above) is itself important, and these are the few hidden things shown before the script runs */
+html[data-boot-view] #mnFeedView { display: none !important; }
+html[data-boot-view="live"] #mnLiveView, html[data-boot-view="clips"] #mnClipsView, html[data-boot-view="discover"] #mnDiscoverView,
+html[data-boot-view="groups"] #mnGroupsView, html[data-boot-view="messages"] #mnMessagesView, html[data-boot-view="profile"] #mnProfileView { display: block !important; }
+html[data-boot-view] #mnToWorld { display: inline-flex !important; }
+/* loading lists keep the shape of what is coming (skeletons, below), never a sentence that the answer then replaces */
+.mn__skel--row { grid-template-columns: 44px minmax(0, 1fr) 72px; align-items: center; padding: 12px 14px; border-radius: 16px; }
+.mn__skel--row > div i:last-child { margin-bottom: 0; }
+.mn__skel--row .mn__skel-pill { width: 72px; height: 32px; margin: 0; }
+.mn__skel--card { grid-template-columns: minmax(0, 1fr); min-height: 132px; align-content: end; border-radius: 18px; }
 
 /* ---------- section heads, discover, messages, alerts ---------- */
 .mn__section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 8px 0 14px; }
@@ -308,9 +338,37 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__person-sub, .mn__conversation-sub { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-faint); font-size: 0.82rem; }
 .mn__follow { min-height: 36px; padding: 0 14px !important; border-radius: 999px !important; background: var(--mn-ink) !important; color: var(--mn-bg) !important; font-weight: 800 !important; font-size: 0.85rem !important; }
 .mn__follow.is-active { background: transparent !important; color: var(--mn-dim) !important; box-shadow: inset 0 0 0 1px var(--mn-rule-2) !important; }
+/* NOTIFICATIONS DROP DOWN FROM THE BELL (owner, 2026-10-20): a panel under the header, the page left where it was.
+   Phone first: 16px from each edge; wider screens keep it a column at the right. It stops above the bottom bar. */
+.mn__alerts { position: fixed; z-index: 45; top: calc(env(safe-area-inset-top, 0px) + 64px); left: 16px; right: 16px; margin-left: auto; box-sizing: border-box; width: auto; max-width: 26rem; max-height: min(34rem, calc(100dvh - env(safe-area-inset-top, 0px) - 180px)); overflow-y: auto; overscroll-behavior: contain; padding: 12px; border-radius: 18px; background: var(--mn-raise); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 24px 48px -18px rgba(0, 0, 0, 0.9); pointer-events: auto; }
+.mn__alerts[hidden] { display: none; }
+.mn__alerts-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.mn__alerts-head h2 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+.mn__alerts-head .mn__quiet { min-height: 44px; }
+.mn-world-on .mn__alerts { background: #121418; color: #f2f1ed; box-shadow: var(--w-edge, inset 0 0 0 1px rgba(255, 255, 255, 0.12)), 0 24px 48px -18px rgba(0, 0, 0, 0.95); }
+/* alerts on this device: one line of why, one button */
+.mn__push { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--mn-raise-2); }
+.mn__push p { margin: 0; min-width: 0; font-size: 0.88rem; line-height: 1.4; color: var(--mn-dim); }
+.mn__push b { display: block; color: var(--mn-ink); }
+.mn__push button { min-height: 44px; }
+.mn__push[hidden] { display: none; }
 .mn__notification { padding: 14px 16px; }
 .mn__notification strong { display: block; font-size: 0.95rem; }
 .mn__notification-action { display: inline-flex; margin-top: 8px; font-weight: 750; text-decoration: none; }
+/* a connection request is answered where it is read: Accept, Decline, View profile */
+.mn__notification-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Made together: the card under a joint post, and the projects published with me inside Level 3 */
+.mn__actcard--collab .mn__actcard-eyebrow { color: #7fe0a3; }
+.mn__collab-by { margin: 2px 0 8px; font-size: 0.86rem; color: var(--mn-dim, rgba(255, 255, 255, 0.7)); }
+.mn__collab-credit { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 750; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.35); cursor: pointer; }
+.mn__withme { display: grid; gap: 4px; margin: 8px 0 12px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.mn__withme > b { font-size: 1rem; }
+.mn__withme > span, .mn__withme-state { font-size: 0.86rem; color: var(--mn-dim, rgba(255, 255, 255, 0.7)); }
+.mn__withme > a { font-weight: 750; }
+.mn__withme .mn__primary { justify-self: start; margin-top: 6px; }
+button.mn__notification-action { min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--mn-accent, #e5383b); color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+button.mn__notification-action--quiet { background: rgba(255, 255, 255, 0.1); color: inherit; }
+button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__notification p { margin: 4px 0 0; color: var(--mn-faint); font-size: 0.82rem; line-height: 1.45; }
 .mn__notice { padding: 12px 14px; border-radius: 12px; background: var(--mn-raise); color: var(--mn-dim); font-size: 0.85rem; line-height: 1.5; }
 
@@ -351,6 +409,23 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__reply-box textarea { max-height: 8rem; resize: none; }
 .mn__reply-box .mn__post { margin: 0; min-height: 48px; }
 .mn__thread > .mn__status { padding: 0 14px 8px; }
+/* THE THUMBNAIL editor (owner, 2026-10-20): one column at every width, the frame as large as the sheet allows */
+.mn__thumb-dialog { overflow-y: auto; }
+.mn__thumb-dialog .mn__thread-head button { width: 44px; height: 44px; }
+.mn__thumb-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 16px; }
+.mn__thumb-which { display: flex; flex-wrap: wrap; gap: 8px; }
+.mn__thumb-which[hidden], .mn__thumb-pick[hidden] { display: none; }
+.mn__thumb-which button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer; background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2); font-family: inherit; font-weight: 800; font-size: max(16px, 0.88rem); }
+.mn__thumb-which button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--mn-gold); }
+.mn__thumb-stage { display: grid; place-items: center; min-height: 10rem; border-radius: 14px; overflow: hidden; background: #000; }
+.mn__thumb-stage video, .mn__thumb-stage img { display: block; max-width: 100%; max-height: 46vh; width: auto; height: auto; }
+.mn__thumb-stage [hidden] { display: none; }
+.mn__thumb-pick { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.mn__thumb-range { color: var(--mn-dim); font-size: 0.8rem; font-weight: 800; }
+.mn__thumb-pick input[type="range"] { width: 100%; min-width: 0; min-height: 44px; margin: 0; accent-color: var(--mn-hot); }
+.mn__thumb-pick .mn__primary { margin-top: 4px; }
+.mn__thumb-upload { margin: 0; box-sizing: border-box; text-align: center; line-height: 24px; }
+.mn__thumb-upload[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
 .mn__person-sheet { padding: 14px; }
 .mn__person-hero { min-height: 120px; border-radius: 16px; background: linear-gradient(135deg, rgba(255, 77, 61, 0.28), rgba(232, 200, 119, 0.08) 60%, rgba(244, 239, 230, 0.03)); background-size: cover; background-position: center; }
 .mn__person-main { position: relative; padding: 52px 2px 6px; }
@@ -418,9 +493,6 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 @media (min-width: 600px) {
   .mn { padding-left: 24px; padding-right: 24px; }
   .mn__top { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; }
-  .mn__rail { margin-left: -24px; margin-right: -24px; }
-  .mn__rail-head, .mn__rail-track { padding-left: 24px; padding-right: 24px; }
-  .mn__camp { width: 17rem; }
   .mn__gate { padding-top: 64px; }
   .mn__composer { padding: 16px 18px; }
   .mng__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -458,7 +530,7 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   animation:mn-sweep 1.25s ease-in-out infinite;
 }
 
-.mn__badge:not([hidden]), .mn__bell-dot:not([hidden]) { animation: mn-badge-in .45s var(--mn-spring) both; }
+.mn__badge:not([hidden]), .mn__bell-count:not([hidden]) { animation: mn-badge-in .45s var(--mn-spring) both; }
 .mn__count { display:inline-block; transform-origin:center; }
 .mn__action.is-pop .mn__count { animation: mn-count-pop .42s var(--mn-spring); }
 
@@ -466,11 +538,11 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__thread[open]::backdrop { animation: mn-backdrop-in .3s ease both; }
 .mn__thread::backdrop { background: rgba(4,3,3,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 
-.mn__camp, .mn__track, .mn__person, .mng__card {
+.mn__track, .mn__person, .mng__card {
   will-change: transform;
 }
 @media (hover:hover) {
-  .mn__camp:hover, .mn__track:hover, .mn__person:hover, .mng__card:hover {
+  .mn__track:hover, .mn__person:hover, .mng__card:hover {
     transform: translateY(-2px);
   }
   .mn__brand:hover .mn__brand-mark { transform: rotate(-5deg) scale(1.06); }
@@ -513,16 +585,15 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   .mn__composer, .mn__composer:focus-within { transform:none !important; }
 }
 
-/* Action Network identity: action is the product, not generic social posting. */
+/* Human Uprise identity: action is the product, not generic social posting. */
 .mn__manifesto{margin:18px 0 20px;padding:24px 20px 20px;border:1px solid var(--mn-rule-2);border-radius:24px;background:radial-gradient(circle at 92% 0,rgba(255,77,61,.22),transparent 38%),linear-gradient(145deg,#191310,#0b0908 72%);overflow:hidden}
-.mn__manifesto p,.mn__rail-k{margin:0;color:var(--mn-hot);font-size:.64rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+.mn__manifesto p{margin:0;color:var(--mn-hot);font-size:.64rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
 .mn__manifesto h1{max-width:9ch;margin:7px 0 18px;font-family:var(--mn-display);font-size:clamp(2.7rem,12vw,4.8rem);font-weight:400;line-height:.88;text-transform:uppercase}
 .mn__manifesto div{display:flex;gap:7px;overflow:auto;scrollbar-width:none}.mn__manifesto div::-webkit-scrollbar{display:none}.mn__manifesto span{flex:none;padding:8px 11px;border:1px solid var(--mn-rule-2);border-radius:999px;color:var(--mn-dim);font-size:.72rem;font-weight:800}
-.mn__rail-head>div{min-width:0}.mn__rail-k{margin-bottom:3px}
 .mn__post{padding-inline:16px}
 @media(min-width:700px){.mn__manifesto{padding:30px}.mn__manifesto h1{font-size:4.8rem}}
 
-.mn__brand-plate{display:grid;place-items:center;width:38px;height:38px;padding:4px;border-radius:10px;background:#eef3f7}.mn__brand-plate .mn__brand-mark{width:100%;height:100%;object-fit:contain}
+/* the brand mark is the supplied artwork alone (no plate; CLAUDE.md rule 10) */
 .mn__actionboard,.mn__understand{margin:0 0 20px;padding:20px;border:1px solid var(--mn-rule-2);border-radius:22px;background:var(--mn-panel)}
 .mn__actionboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.mn__actionboard-head p,.mn__mission-strip p,.mn__understand p{margin:0;color:var(--mn-hot);font-size:.62rem;font-weight:900;letter-spacing:.18em}.mn__actionboard-head h2,.mn__understand h2{margin:4px 0 0;font-family:var(--mn-display);font-weight:400;text-transform:uppercase}.mn__actionboard-head>strong{font-size:1.15rem;white-space:nowrap}
 .mn__actionboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
@@ -546,6 +617,11 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__record-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .mn__record-head h2 { margin: 2px 0 0; font-family: var(--mn-display); font-weight: 400; font-size: 1.7rem; line-height: 1; text-transform: uppercase; }
 .mn__record-head strong { flex: none; color: var(--mn-gold); font-weight: 800; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+/* the next mission, right under the count: one line and one button */
+.mn__record-next { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; margin: 12px 0 0; padding: 12px; border-radius: 14px; background: var(--mn-raise-2); }
+.mn__record-next .mn__eyebrow { grid-column: 1 / -1; margin: 0; }
+.mn__record-next b { min-width: 0; color: var(--mn-ink); line-height: 1.3; overflow-wrap: anywhere; }
+.mn__record-next .mn__primary { min-height: 44px; }
 .mn__record-unlock { margin: 12px 0 0; padding: 10px 12px; border-radius: 14px; background: var(--mn-raise-2); color: var(--mn-dim); font-size: 0.88rem; line-height: 1.45; }
 .mn__record-unlock b { color: var(--mn-ink); }
 .mn__record-unlock.is-open { background: rgba(232, 200, 119, 0.12); box-shadow: inset 0 0 0 1px rgba(232, 200, 119, 0.4); }
@@ -719,16 +795,13 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__mission-strip a:hover::after,.mn__understand>a:hover::after{transform:scaleX(1)}
 .mn__post-card{transition:transform .28s var(--mn-ease),box-shadow .28s var(--mn-ease),border-color .28s}
 .mn__post-card:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--mn-rule-2),0 22px 54px -38px rgba(0,0,0,.95)}
-.mn__camp::after{content:"";position:absolute;inset:-40% -70%;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.09) 50%,transparent 62%);transform:translateX(-45%) rotate(8deg);transition:transform .8s var(--mn-ease);pointer-events:none}
-.mn__camp:hover::after{transform:translateX(45%) rotate(8deg)}
-.mn__camp:hover{transform:translateY(-3px)}
 .mn__primary,.mn__post,.mn__follow.is-active{box-shadow:0 10px 28px -16px rgba(255,77,61,.72)}
 @media (hover:hover){
   .mn__manifesto:hover::before,.mn__actionboard:hover::before,.mn__understand:hover::before{transform:scale(1.07);opacity:.32}
 }
 @media (prefers-reduced-motion:reduce){
   .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before,
-  .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card,.mn__camp,.mn__camp::after{transition:none!important;animation:none!important}
+  .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card{transition:none!important;animation:none!important}
 }
 
 /* Organization-grade group fronts */
@@ -785,10 +858,694 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   .mn__cliprow:has(select + input + select) { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) minmax(0, 11rem) auto; }
 }
 
-/* Action Network four-tab primary navigation; secondary destinations remain accessible. */
+/* Human Uprise four-tab primary navigation; secondary destinations remain accessible. */
 .mn__tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;overflow:visible}
 .mn__tabs>button{min-width:0;white-space:nowrap}
 .mn__quicklinks{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem 0 1rem}
 .mn__quicklinks button{font:inherit;font-size:.8rem;border:0;background:transparent;color:inherit;opacity:.7;padding:.35rem .5rem;cursor:pointer}
 .mn__quicklinks button:hover,.mn__quicklinks button:focus-visible{opacity:1;text-decoration:underline}
 .mn__action--share{font:inherit;font-size:.85rem;cursor:pointer}
+
+/* ---------- the World screen ----------
+   Owner's contract (docs/action-network/WORLD-SCREEN-UX-HANDOFF-20261014.md):
+   one persistent screen with the globe on top (45-50%), a context strip
+   (~15%) and the real member feed (30-35%) that scrolls on its own, all on
+   screen at first load. js/mnet.js sizes the view to the room between the
+   header and the app bar (--mn-world-h) and adds .mn-world-fit when that
+   room is tall enough; otherwise (a phone on its side) the same pieces
+   stack and the page scrolls. Phone first; wider screens only add room. */
+.mn__world-home { position: relative; height: clamp(240px, 56dvh, 520px); margin: 0 -16px; overflow: hidden; background: #050912; border-block: 1px solid var(--mn-rule); }
+.mn__world-frame { display: block; width: 100%; height: 100%; border: 0; background: #050912; }
+.mn__world-expand { position: absolute; z-index: 2; top: 10px; right: 10px; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border: 1px solid rgba(255, 77, 61, 0.7); border-radius: 999px; background: rgba(10, 8, 7, 0.86); color: var(--mn-ink); font-size: 0.8rem; font-weight: 800; text-decoration: none; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+/* the strip: what the globe is showing and what you can do about it */
+.mn__world-context { display: flex; flex-direction: column; justify-content: center; min-height: 92px; padding: 10px 0; border-bottom: 1px solid var(--mn-rule); }
+.mn__world-idle .mn__eyebrow, .mn__world-focus .mn__eyebrow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__world-caption { margin: 6px 0 0; color: var(--mn-dim); font-size: 0.85rem; line-height: 1.4; }
+.mn__world-focus-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.mn__world-focus h2 { margin: 2px 0 8px; font-size: 1.05rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__world-focus-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mn__world-go, .mn__world-filter, .mn__world-close { min-height: 36px; border-radius: 999px; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; }
+.mn__world-go { padding: 0 16px; border: 0; background: var(--mn-hot); color: var(--mn-hot-ink); }
+.mn__world-filter { padding: 0 14px; border: 1px solid var(--mn-rule-2); background: transparent; color: var(--mn-ink); }
+.mn__world-filter[aria-pressed="true"] { border-color: var(--mn-hot); background: rgba(255, 77, 61, 0.14); }
+.mn__world-close { flex: none; width: 36px; padding: 0; border: 1px solid var(--mn-rule-2); background: transparent; color: var(--mn-dim); }
+.mn__world-feed { padding-top: 12px; }
+/* the post's door back to the map */
+.mn__globe-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin-top: 8px; padding: 0 12px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.mn__globe-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 3px rgba(255, 77, 61, 0.25); }
+
+/* one screen: nothing but the feed scrolls, so dragging the Earth never
+   scrolls the page and reading the feed never turns the Earth */
+html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavior: none; }
+.mn-world-fit .mn { padding-bottom: 0; }
+/* the bar settles into its slim state, as it does once a page scrolls,
+   so the Earth gets the room */
+.mn-world-fit .mn__top { padding-top: calc(8px + env(safe-area-inset-top, 0px)); padding-bottom: 8px; }
+.mn-world-fit .mn__top .mn__brand-mark { transform: scale(0.88); }
+.mn-world-fit .mn__top .mn__brand strong { font-size: 1.3rem; }
+.mn-world-fit #mnFeedView:not([hidden]) { display: flex; flex-direction: column; height: var(--mn-world-h, 70dvh); }
+.mn-world-fit .mn__world-home { flex: 49 1 0; min-height: 0; height: auto; }
+.mn-world-fit .mn__world-context { flex: none; min-height: clamp(92px, 14dvh, 150px); }
+/* the feed runs to the bottom of the screen, under the floating bar; its own padding keeps the last post reachable (owner, 2026-10-15) */
+.mn-world-fit .mn__world-feed { flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--mn-bar-clear, 96px) + 4px); }
+@media (min-width: 600px) {
+  .mn__world-home { margin: 0; border: 1px solid var(--mn-rule); border-radius: 22px; }
+}
+/* desktop: the Earth and its strip on the left, the feed beside it */
+@media (min-width: 1100px) {
+  .mn-world-fit .mn { max-width: 76rem; }
+  .mn-world-fit #mnFeedView:not([hidden]) { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 24px; }
+  .mn-world-fit .mn__world-home { grid-column: 1; grid-row: 1; }
+  .mn-world-fit .mn__world-context { grid-column: 1; grid-row: 2; border-bottom: 0; }
+  .mn-world-fit .mn__world-feed { grid-column: 2; grid-row: 1 / span 2; padding-top: 0; }
+}
+
+/* ---------- the account menu ----------
+   Three destinations in the bar, one small account menu, everything else
+   in context (owner, 2026-10-14): whose account, View profile, Messages,
+   Settings & account, Sign out. Alerts are the bell. */
+.mn__avatar-dot { position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 2px var(--mn-bg); }
+.mn__menu { position: absolute; z-index: 30; top: calc(100% - 4px); right: 12px; display: grid; width: min(17rem, calc(100vw - 24px)); max-height: min(70dvh, 32rem); overflow-y: auto; padding: 6px; border-radius: 18px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 24px 48px -18px rgba(0, 0, 0, 0.9); }
+.mn__menu[hidden] { display: none; }
+.mn__menu button, .mn__menu a { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.95rem); font-weight: 700; text-align: left; text-decoration: none; cursor: pointer; }
+.mn__menu button:hover, .mn__menu a:hover, .mn__menu button:focus-visible, .mn__menu a:focus-visible { background: var(--mn-raise-2); }
+.mn__menu-who { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; padding: 10px 12px 12px; border-bottom: 1px solid var(--mn-rule); }
+.mn__menu-face { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: hsl(var(--hue, 350) 70% 42%) center / cover no-repeat; color: #fff; font-weight: 800; }
+.mn__menu-id { display: grid; min-width: 0; }
+.mn__menu-id strong, .mn__menu-id small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__menu-id small { color: var(--mn-dim); font-size: 0.82rem; }
+.mn__menu-id small:empty { display: none; }
+.mn__menu .mn__menu-out { margin-top: 6px; border-top: 1px solid var(--mn-rule); border-radius: 0 0 12px 12px; color: var(--mn-dim); }
+.mn__bell-count { position: absolute; top: -3px; right: -4px; display: grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--mn-hot); color: #fff; font-size: 0.66rem; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px var(--mn-bg); }
+.mn__bell-count[hidden] { display: none; }
+.mn__to-world { display: inline-flex; align-items: center; min-height: 40px; margin: 4px 0 10px; padding: 0 14px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.9rem; font-weight: 800; cursor: pointer; }
+.mn__to-world[hidden] { display: none; }
+@media (min-width: 600px) {
+  .mn__menu { right: 24px; }
+}
+
+/* On a phone the bar floats over the top of the Earth (starfield, never the
+   planet: the frame centres it lower), so the globe gets the room the
+   header would take. js/mnet.js adds .mn-world-overlay below 600px only;
+   wider screens keep the bar in its own row. */
+.mn-world-overlay .mn__top { position: fixed; top: 0; left: 0; right: 0; margin: 0; background: linear-gradient(180deg, rgba(5, 9, 18, 0.88), rgba(5, 9, 18, 0)); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+.mn-world-overlay .mn__world-expand { top: calc(64px + env(safe-area-inset-top, 0px)); }
+
+/* posts about the mission picked on the Earth */
+.mn__post-card.is-on-globe { box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.65); }
+.mn__post-card[data-post-id] { cursor: default; }
+
+/* ---------- guests on the World ----------
+   Same screen, read-only: public posts, Share works, everything else is a
+   door to sign in. The composer is replaced by a plain invitation. */
+.mn__guest-bar { display: flex; gap: 6px; align-items: center; }
+.mn__guest-bar[hidden] { display: none; }
+/* a guest's way in is in the header from the first paint: the head of mnet.html already knows a guest (html.mn-guest) before
+   js/mnet.js unhides it, so the header does not shift when it does (owner, 2026-10-20: no flashes) */
+html.mn-guest .mn__guest-bar[hidden] { display: flex !important; }
+.mn__guest-in, .mn__guest-join { min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+.mn__guest-in { border: 1px solid var(--mn-rule-2); background: rgba(10, 8, 7, 0.6); color: var(--mn-ink); }
+.mn__guest-join { border: 0; background: var(--mn-hot); color: var(--mn-hot-ink); }
+.mn__guest-card { display: none; padding: 14px 16px; border-radius: 20px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn__guest-card p { margin: 0 0 10px; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.45; }
+.mn__guest-card strong { color: var(--mn-ink); }
+.mn__guest-card-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.mn__finish-card:not([hidden]) { display: block; }
+/* a member whose sign-in ended is a guest with one card: the sign-in-again card, not the guest card beside it */
+.mn-stall-signin #mnGuestCard { display: none; }
+#mnStallSignIn[hidden] { display: none; }
+.mn__finish-card.is-nudged { animation: mn-nudge 0.5s var(--mn-ease); }
+@keyframes mn-nudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@media (prefers-reduced-motion: reduce) { .mn__finish-card.is-nudged { animation: none; } }
+/* THE DATA LAYERS' LINE over the Earth: the counts, and the Vaunt lead with Flights */
+.mn__world-layers { position: absolute; z-index: 4; left: 12px; bottom: 82px; max-width: min(74%, 440px); margin: 0; padding: 8px 10px; border-radius: 12px; background: rgba(5, 5, 7, 0.74); color: #f4efe6; font-size: 0.78rem; font-weight: 600; line-height: 1.35; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.mn__world-layers[hidden] { display: none; }
+.mn__world-layers a.mn__world-lead { color: #ffb347; font-weight: 800; text-decoration: none; }
+.mn__world-layers a.mn__world-lead:hover, .mn__world-layers a.mn__world-lead:focus-visible { text-decoration: underline; }
+.mn-guest .mn__guest-card { display: block; }
+.mn-guest #mnComposer, .mn-guest .mn__post-actions [data-action="delete"] { display: none; }
+.mn__media-locked { display: block; width: 100%; min-height: 72px; margin-top: 10px; border: 1px dashed var(--mn-rule-2); border-radius: 14px; background: var(--mn-raise-2); color: var(--mn-dim); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+
+/* a phone on its side: the Earth on the left, the strip and the feed on the
+   right, one screen (js/mnet.js adds .mn-world-side when the room is short
+   and wide) */
+.mn-world-side .mn { max-width: none; }
+.mn-world-side #mnFeedView:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 16px; }
+.mn-world-side .mn__world-home { grid-column: 1; grid-row: 1 / span 2; }
+.mn-world-side .mn__world-context { grid-column: 2; grid-row: 1; min-height: 0; padding-top: 0; }
+.mn-world-side .mn__world-feed { grid-column: 2; grid-row: 2; padding-top: 8px; }
+
+/* ---------- comments, inside the post they belong to ----------
+   The thread opens in the feed region (js/mnet.js builds it); the globe
+   stays put. Inputs at 16px+ so iOS never zooms the page. */
+.mn__comments { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--mn-rule); }
+.mn__comments-list { display: grid; gap: 6px; margin-bottom: 8px; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.45; overflow-wrap: anywhere; }
+.mn__comments-list p { margin: 0; }
+.mn__comments-list strong { color: var(--mn-ink); }
+.mn__comment-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.mn__comment-form input { min-width: 0; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--mn-raise-2); color: var(--mn-ink); font: inherit; font-size: max(16px, 0.95rem); box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn__comment-form button { min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--mn-ink); color: var(--mn-bg); font: inherit; font-weight: 800; cursor: pointer; }
+.mn__comment-form button:disabled { opacity: 0.55; }
+
+/* the header already says who you are on the World screen, so the
+   house's floating signed-in chip stays off the feed */
+.mn-world-on .mcc-auth-chip, .mn-gate-on .mcc-auth-chip { display: none; }
+
+/* a guest's header: two short pills that never wrap, and a brand that
+   gives way first */
+.mn__brand > span:last-child { min-width: 0; overflow: hidden; }
+.mn__brand strong, .mn__brand small { overflow: hidden; text-overflow: ellipsis; }
+.mn__guest-in, .mn__guest-join { flex: none; white-space: nowrap; padding: 0 12px; }
+.mn__gate-why { display: grid; gap: 8px; margin: 4px 0 18px; }
+.mn__gate-why[hidden] { display: none; }
+.mn__gate-why p { margin: 0; color: var(--mn-gold); font-weight: 700; }
+.mn__gate-why p:empty { display: none; }
+
+/* ================================================================
+   THE WORLD LOOK (owner's mockups, 2026-10-14)
+   Graphite and one red: brushed-steel panels, dark glass pills with a
+   faint red rim, chrome type for the wordmark, the Earth in a bezel from
+   tablet width. Scoped to the World screen (.mn-world-on); every other
+   room keeps the house look. Phone first; wider screens only add room.
+   ================================================================ */
+html.mn-world-on, html.mn-world-on body { background: #050507; }
+.mn-world-on .mn {
+  --mn-bg: #07080a; --mn-raise: #121418; --mn-raise-2: #1b1e24;
+  --mn-ink: #f5f6f8; --mn-dim: #a6abb5; --mn-faint: #6d727c;
+  --mn-rule: rgba(255, 255, 255, 0.08); --mn-rule-2: rgba(255, 255, 255, 0.14);
+  --mn-hot: #ff2a4d; --mn-hot-ink: #ffffff;
+  /* the material: steel panels, dark glass, a red rim and its glow */
+  --w-steel: linear-gradient(180deg, #181b21, #0d0f13);
+  --w-steel-2: linear-gradient(180deg, #1f2329, #121419);
+  --w-glass: rgba(13, 14, 18, 0.8);
+  --w-edge: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --w-rim: 0 0 0 1px rgba(255, 42, 77, 0.3), 0 0 16px -6px rgba(255, 42, 77, 0.55);
+  --w-glow: 0 14px 34px -16px rgba(255, 42, 77, 0.6);
+  --w-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.95);
+}
+.mn-world-on.mn-world-overlay .mn__top { background: linear-gradient(180deg, rgba(5, 5, 7, 0.92), rgba(5, 5, 7, 0)); }
+
+/* header: HUMAN UPRISE, and only that (owner, 2026-10-14), in chrome type
+   with a red rule under it (no drawn mark), the search bar, and round glass
+   buttons. The name is set in type; a mark is the owner's to supply. */
+.mn-world-on .mn__brand-mark, .mn-world-on .mn__brand small { display: none; }
+.mn-world-on .mn__top .mn__brand strong { display: block; font-family: var(--mn-display); font-weight: 400; font-size: 1.45rem; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: linear-gradient(180deg, #ffffff 0%, #dfe2e7 55%, #9ba1ab 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.mn-world-on .mn__top .mn__brand strong::after { content: ""; display: block; width: 34px; height: 3px; margin-top: 5px; border-radius: 2px; background: var(--mn-hot); box-shadow: 0 0 12px rgba(255, 42, 77, 0.85); }
+.mn-world-on .mn__brand { flex: none; margin-right: 0; }
+.mn-world-on .mn__bell, .mn-world-on .mn__avatar-btn { background: var(--w-glass); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--w-rim); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.mn-world-on .mn__avatar-dot, .mn-world-on .mn__bell-count { box-shadow: 0 0 0 2px #0a0b0e, 0 0 10px rgba(255, 42, 77, 0.8); }
+
+/* search: a bar in the header row at every width (owner's iPhone mockup:
+   "a search bar up there on top"), between the wordmark and the bell */
+.mn__search { display: none; }
+.mn-world-on .mn__search { display: flex; flex: 1 1 auto; min-width: 0; }
+.mn__search svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.mn__search { align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 999px; background: var(--w-glass); box-shadow: var(--w-edge), 0 10px 30px -14px rgba(0, 0, 0, 0.9); color: var(--mn-dim); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.mn__search input { flex: 1; min-width: 0; height: 42px; border: 0; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.92rem); outline: none; text-overflow: ellipsis; }
+/* a guest's phone header keeps Sign in; Create account is in the card just below, and Join joins the row from 600px */
+.mn-world-on .mn__guest-join { display: none; }
+.mn-world-on .mn__guest-in { background: var(--w-glass); box-shadow: var(--w-edge); border: 0; }
+.mn__search input::placeholder { color: var(--mn-faint); opacity: 1; }
+.mn__search:focus-within { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), var(--w-rim), 0 10px 30px -14px rgba(0, 0, 0, 0.9); }
+
+/* the Earth: black space, a bezel from tablet width, glass pills over it */
+.mn-world-on .mn__world-home, .mn-world-on .mn__world-frame { background: #050507; }
+.mn-world-on .mn__world-home { border-color: var(--mn-rule); }
+.mn-world-on .mn__world-expand { border: 0; background: var(--w-glass); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--w-rim); }
+/* the corner tag has room from tablet width; on a phone the credit line owns that edge */
+.mn__world-tag { display: none; position: absolute; z-index: 2; left: 12px; bottom: 10px; align-items: center; gap: 7px; margin: 0; color: rgba(255, 255, 255, 0.62); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; pointer-events: none; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9); }
+.mn__world-tag i { width: 6px; height: 6px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 8px rgba(255, 42, 77, 0.9); }
+.mn__world-tag b { color: #fff; }
+.mn__world-tag b:empty { display: none; }
+
+/* the mission card in the context strip: a steel panel with a red rim */
+.mn-world-on .mn__world-context { border-bottom: 0; padding: 6px 0; }
+.mn-world-fit.mn-world-on .mn__world-context { min-height: 0; }
+.mn__mission-card { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 8px 12px; align-items: start; padding: 10px 40px 10px 10px; border-radius: 20px; background: var(--w-steel); box-shadow: var(--w-edge), 0 0 0 1px rgba(255, 42, 77, 0.22), var(--w-glow), var(--w-shadow); }
+.mn__mission-card[hidden] { display: none; }
+.mn__mission-art { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 13px; background: radial-gradient(circle at 50% 50%, rgba(255, 42, 77, 0.38), rgba(255, 42, 77, 0) 62%), repeating-radial-gradient(circle at 50% 50%, rgba(255, 42, 77, 0.16) 0 1px, transparent 1px 9px), #121419; color: #ff6680; box-shadow: inset 0 0 0 1px rgba(255, 42, 77, 0.4); }
+.mn__mission-art svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mn__mission-body { min-width: 0; }
+.mn__mission-meta { display: flex; gap: 10px; margin: 0; overflow: hidden; color: var(--mn-dim); font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.mn__mission-meta > span { flex: none; }
+.mn__mission-meta > span:first-child { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mn__mission-where::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 3px rgba(255, 42, 77, 0.2), 0 0 8px rgba(255, 42, 77, 0.8); vertical-align: 1px; }
+.mn__mission-kind { padding: 1px 8px; border: 1px solid rgba(72, 199, 142, 0.5); border-radius: 999px; color: #8be3b7; text-transform: capitalize; }
+.mn__mission-card h2 { margin: 3px 0 0; color: var(--mn-ink); font-size: 1.02rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__mission-desc { display: none; margin: 4px 0 0; color: var(--mn-dim); font-size: 0.86rem; line-height: 1.45; }
+.mn__mission-desc:empty { display: none !important; }
+.mn__mission-stats { color: var(--mn-faint); }
+.mn__mission-stats[hidden] { display: none; }
+.mn__mission-actions { grid-column: 1 / -1; display: flex; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.mn__world-go svg, .mn__world-locate svg, .mn__world-filter svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mn__world-go { border: 0; background: linear-gradient(180deg, #ff3d5e, #c4102c); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 26px -10px rgba(255, 42, 77, 0.95); }
+.mn__world-go--eup, .mn-world-on .mn__world-go--eup { background: var(--w-glass); color: var(--mn-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--w-rim); }
+.mn__mission-card .mn__fund-line { grid-column: 1 / -1; margin-top: 2px; }
+.mn__world-locate, .mn__mission-card .mn__world-filter { border: 0; background: var(--w-glass); color: var(--mn-ink); box-shadow: var(--w-edge); }
+.mn__mission-card .mn__world-filter[aria-pressed="true"] { background: rgba(255, 42, 77, 0.14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 42, 77, 0.6); }
+.mn__mission-card .mn__world-close { position: absolute; top: 8px; right: 8px; width: 30px; min-height: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--w-glass); box-shadow: var(--w-edge); font-size: 0.8rem; }
+
+/* the feed band starts a breath below the strip (the tab row that used to make that room is gone) */
+.mn-world-on .mn__world-feed { padding-top: 10px; }
+
+
+/* posts on the World: steel cards, picture on the right, heart and counts */
+.mn-world-on #mnFeed .mn__post-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 14px; padding: 14px; border-radius: 18px; background: var(--w-steel); box-shadow: var(--w-edge), var(--w-shadow); }
+.mn-world-on #mnFeed .mn__post-card.is-on-globe { box-shadow: var(--w-edge), 0 0 0 1px rgba(255, 42, 77, 0.55), var(--w-glow), var(--w-shadow); }
+.mn-world-on #mnFeed .mn__post-card > * { grid-column: 1; min-width: 0; }
+.mn-world-on #mnFeed .mn__post-card:has(> .mn__post-media), .mn-world-on #mnFeed .mn__post-card:has(> .mn__media-locked) { grid-template-columns: minmax(0, 1fr) 104px; }
+.mn-world-on #mnFeed .mn__post-card > .mn__post-media, .mn-world-on #mnFeed .mn__post-card > .mn__media-locked { grid-column: 2; grid-row: 1 / span 3; align-self: start; position: relative; margin: 0; }
+.mn-world-on #mnFeed .mn__post-card > .mn__post-media { display: block; cursor: zoom-in; }
+.mn-world-on #mnFeed .mn__post-media > .mn__post-media-item:not(:first-child) { display: none; }
+.mn-world-on #mnFeed .mn__post-media .mn__post-media-item { aspect-ratio: 1; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.mn-world-on #mnFeed .mn__post-media .mn__post-media-item img, .mn-world-on #mnFeed .mn__post-media .mn__post-media-item video { height: 100%; object-fit: cover; }
+.mn-world-on #mnFeed .mn__post-media[data-count]:not([data-count="1"])::after { content: "1/" attr(data-count); position: absolute; top: 6px; right: 6px; padding: 2px 7px; border-radius: 999px; background: rgba(5, 5, 7, 0.8); color: #fff; font-size: 0.68rem; font-weight: 800; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+/* a tap on the picture opens all of them across the card */
+.mn-world-on #mnFeed .mn__post-card.is-media-open { grid-template-columns: minmax(0, 1fr); }
+.mn-world-on #mnFeed .mn__post-card.is-media-open > .mn__post-media { grid-column: 1; grid-row: auto; display: grid; margin-top: 10px; cursor: zoom-out; }
+.mn-world-on #mnFeed .mn__post-card.is-media-open .mn__post-media > .mn__post-media-item:not(:first-child) { display: block; }
+.mn-world-on #mnFeed .mn__post-card.is-media-open .mn__post-media::after { content: none; }
+.mn-world-on #mnFeed .mn__media-locked { min-height: 104px; margin: 0; font-size: 0.72rem; padding: 8px; }
+.mn-world-on #mnFeed .mn__post-head { gap: 10px; }
+.mn-world-on #mnFeed .mn__author-avatar { width: 40px; height: 40px; }
+.mn-world-on #mnFeed .mn__post-body { margin: 8px 0 0; color: #e3e6ec; font-size: 0.95rem; line-height: 1.5; }
+.mn-world-on #mnFeed .mn__post-actions { grid-column: 1 / -1; margin: 8px -6px -4px; }
+.mn-world-on .mn__fund-line { background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn-world-on #mnFeed .mn__actcard .mn__fund { background: var(--w-glass); border: 0; box-shadow: var(--w-edge); }
+.mn-world-on #mnFeed .mn__actcard-stats { color: #f3d7dc; }
+/* MISSION ATTACHED: the red banner inside a post that carries a mission */
+.mn-world-on #mnFeed .mn__actcard { border-radius: 16px; background: linear-gradient(120deg, rgba(196, 16, 44, 0.6), rgba(70, 10, 22, 0.72) 55%, rgba(16, 11, 13, 0.92)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 42, 77, 0.45); }
+.mn-world-on #mnFeed .mn__actcard-eyebrow { color: #ffb3c0; }
+.mn-world-on #mnFeed .mn__actcard-title { font-size: clamp(1.3rem, 5.5vw, 1.7rem); color: #fff; }
+.mn-world-on #mnFeed .mn__actcard-foot { color: #f3d7dc; }
+.mn-world-on #mnFeed .mn__actcard-row .mn__primary { min-height: 40px; border-radius: 999px; background: var(--w-glass); color: var(--mn-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--w-rim); }
+.mn-world-on #mnFeed .mn__actcard-row .mn__primary::after { content: "\203A"; margin-left: 4px; font-size: 1.1em; line-height: 1; }
+  .mn-world-on #mnFeed .mn__actcard-row .mn__primary--eup::after { content: none; } /* the emblem stands alone */
+.mn-world-on #mnFeed .mn__globe-chip { border: 0; background: var(--w-glass); box-shadow: var(--w-edge); }
+.mn-world-on .mn__composer { background: var(--w-glass); box-shadow: var(--w-edge); }
+.mn-world-on .mn__create { background: var(--w-glass); box-shadow: var(--w-edge); }
+.mn-world-on .mn__guest-card { position: relative; overflow: hidden; margin-bottom: 12px; padding: 18px 16px 16px; background: linear-gradient(100deg, rgba(7, 8, 10, 0.94) 30%, rgba(7, 8, 10, 0.55)), url("../assets/img/rally/rally-01.jpg") 70% 40% / cover no-repeat, #0d0f13; box-shadow: var(--w-edge), var(--w-shadow); }
+.mn-world-on .mn__guest-card p { color: #d6d9e0; }
+.mn-world-on .mn__guest-card strong { display: block; margin-bottom: 4px; color: #fff; font-size: 1.12rem; }
+.mn-world-on .mn__empty { background: var(--w-steel); box-shadow: var(--w-edge); }
+.mn-world-on .mn__menu { background: #121418; box-shadow: var(--w-edge), 0 24px 48px -18px rgba(0, 0, 0, 0.95); }
+
+@media (min-width: 600px) {
+  .mn-world-on .mn__search { max-width: 26rem; margin: 0 8px 0 auto; padding: 0 16px; }
+  .mn-world-on .mn__top .mn__brand strong { font-size: 1.9rem; }
+  .mn-world-on .mn__guest-join { display: inline-flex; align-items: center; }
+  /* the Earth in a bezel, with its corner tag */
+  .mn-world-on .mn__world-home { margin: 0; border: 0; border-radius: 22px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 0 1px #000, 0 0 44px -18px rgba(255, 42, 77, 0.55), var(--w-shadow); }
+  .mn__world-tag { display: inline-flex; }
+  .mn__mission-card { grid-template-columns: 92px minmax(0, 1fr) auto; padding: 14px 40px 14px 14px; gap: 6px 14px; }
+  .mn__mission-meta { flex-wrap: wrap; white-space: normal; }
+  .mn__mission-art { width: 92px; height: 100%; min-height: 96px; grid-row: 1; border-radius: 16px; }
+  .mn__mission-art svg { width: 38px; height: 38px; }
+  .mn__mission-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* two lines of title from tablet width; the three action rows beside it set the card's height anyway */
+  .mn__mission-card h2 { font-size: 1.2rem; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .mn__mission-actions { grid-column: 3; grid-row: 1; display: grid; grid-template-columns: repeat(3, minmax(0, auto)); grid-auto-flow: dense; gap: 6px; align-self: center; }
+  .mn__mission-actions > * { min-width: 0; }
+  /* the emblem and the posts filter span the column; Fund, Locate and All missions share a row, so the card stays three rows tall */
+  #mnWorldFocusJoin, #mnWorldFocusFilter { grid-column: 1 / -1; min-width: 9.5rem; }
+  .mn__mission-card .mn__fund-line { grid-column: 1 / -1; grid-row: 2; }
+  .mn-world-on #mnFeed .mn__post-card:has(> .mn__post-media), .mn-world-on #mnFeed .mn__post-card:has(> .mn__media-locked) { grid-template-columns: minmax(0, 1fr) 180px; }
+  .mn-world-on #mnFeed .mn__post-card { padding: 16px 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .mn__mission-card { transition: none; } }
+
+/* a phone on its side: the strip keeps to one tight card so the feed keeps
+   its half of the right column */
+.mn-world-side .mn__mission-card { grid-template-columns: minmax(0, 1fr); padding: 8px 36px 8px 10px; gap: 6px; }
+.mn-world-side .mn__mission-art { display: none; }
+.mn-world-side .mn__mission-card h2 { display: block; white-space: nowrap; font-size: 0.95rem; }
+.mn-world-side .mn__mission-actions .mn__world-filter span { display: none; }
+.mn-world-side .mn__mission-actions { grid-column: 1; grid-row: auto; display: flex; flex-direction: row; align-self: auto; }
+.mn-world-side .mn__mission-actions > *, .mn-world-side #mnWorldFocusJoin, .mn-world-side #mnWorldFocusFilter { min-width: 0; }
+.mn-world-side .mn__mission-desc { display: none; }
+.mn-world-side .mn__mission-meta { flex-wrap: nowrap; white-space: nowrap; }
+
+/* the card's meta on a phone: Latest, the place, the counts; the kind is
+   already the art. Labels: short on a phone, whole from 600px. */
+.mn__mission-flag { flex: none; padding: 1px 7px; border: 1px solid rgba(255, 42, 77, 0.7); border-radius: 999px; background: rgba(255, 42, 77, 0.08); color: #ff5c78; font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.mn__mission-flag[hidden] { display: none; }
+.mn__mission-meta > .mn__mission-where { flex: none; max-width: 50%; overflow: hidden; text-overflow: ellipsis; }
+.mn__mission-meta > .mn__mission-stats { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mn__mission-kind { display: none; }
+.mn__label-long { display: none; }
+.mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { padding: 0 11px; }
+/* on a phone the action row may use the room the ✕ keeps free above it */
+.mn__mission-actions { gap: 6px; margin-right: -30px; }
+@media (min-width: 600px) { .mn__mission-actions { gap: 8px; margin-right: 0; } }
+@media (min-width: 600px) {
+  .mn__mission-kind { display: inline; }
+  .mn__label-long { display: inline; }
+  .mn__label-short { display: none; }
+  .mn__mission-meta > .mn__mission-where { max-width: none; }
+}
+.mn__mission-meta > span.mn__mission-flag { flex: none; overflow: visible; }
+.mn__stats-more { display: none; }
+@media (min-width: 600px) { .mn__stats-more { display: inline; } }
+
+.mn__empty-row { margin: 14px 0 0; }
+
+/* LIVE over the Earth: shown only while something is on air; opens the
+   live rooms. Top left of the globe, clear of "Full world ↗" on the right. */
+.mn__world-live { position: absolute; z-index: 2; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: linear-gradient(180deg, #ff3d5e, #c4102c); color: #fff; font: inherit; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 26px -12px rgba(255, 42, 77, 0.95); }
+.mn__world-live[hidden] { display: none; }
+.mn__world-live i { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: mnLivePulse 1.6s ease-out infinite; }
+.mn__world-live b:empty { display: none; }
+.mn-world-overlay .mn__world-live { top: calc(64px + env(safe-area-inset-top, 0px)); }
+@media (prefers-reduced-motion: reduce) { .mn__world-live i { animation: none; } }
+.mn__attach[hidden] { display: none; }
+/* the Clips door, one quiet line at the top of the feed while campaigns are open (it used to be a card under the Music tab; the tabs are gone) */
+.mn__clipdoor { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 10px; padding: 8px 12px; border-radius: 14px; background: var(--w-glass); box-shadow: var(--w-edge); }
+.mn__clipdoor[hidden] { display: none; }
+.mn__clipdoor p { flex: 1 1 200px; min-width: 0; margin: 0; color: var(--mn-dim); font-size: 0.82rem; line-height: 1.4; }
+.mn__clipdoor b { color: var(--mn-ink); }
+.mn__clipdoor .mn__world-go { flex: none; display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; font-size: 0.78rem; white-space: nowrap; }
+
+/* the search suggestions: under the field, never wider than it, rows a
+   thumb tall, its own scroll so the keyboard never pushes it off screen */
+.mn__search { position: relative; }
+/* on a phone the panel spans the screen under the floating header, not just the field */
+.mn-world-overlay .mn__suggest { position: fixed; left: 12px; right: 12px; top: calc(62px + env(safe-area-inset-top, 0px)); }
+.mn__suggest { position: absolute; z-index: 32; top: calc(100% + 6px); left: 0; right: 0; display: grid; max-height: min(52dvh, 26rem); overflow-y: auto; padding: 6px; border-radius: 18px; background: #121418; box-shadow: var(--w-edge), 0 24px 48px -18px rgba(0, 0, 0, 0.95); }
+.mn__suggest[hidden] { display: none; }
+.mn__suggest-k { margin: 8px 10px 2px; color: var(--mn-faint); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.mn__suggest button { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.92rem); font-weight: 700; text-align: left; cursor: pointer; }
+.mn__suggest button span, .mn__suggest button small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__suggest button small { color: var(--mn-dim); font-size: 0.78rem; font-weight: 600; }
+.mn__suggest button:hover, .mn__suggest button:focus-visible, .mn__suggest button.is-hl { background: var(--mn-raise-2); }
+.mn__suggest-foot { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding: 8px 4px 2px; border-top: 1px solid var(--mn-rule); }
+#mnSuggestRows:empty + .mn__suggest-foot { margin-top: 0; border-top: 0; }
+.mn__suggest-foot button { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--mn-rule-2); font-size: max(16px, 0.84rem); }
+.mng__query { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--mn-ink); font-weight: 700; }
+.mng__query[hidden] { display: none; }
+.mng__query button { min-height: 36px; padding: 0 12px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+
+/* EXPLORE THE WORLD: the idle strip (a guest's first view), compact enough
+   to stay inside the context band on a phone; the chips scroll sideways
+   inside the strip, never the page */
+.mn__world-idle[hidden] { display: none; }
+.mn-world-on .mn__world-idle { min-width: 0; padding: 12px 14px; border-radius: 20px; background: var(--w-steel); box-shadow: var(--w-edge), var(--w-shadow); }
+.mn__world-idle-h { margin: 3px 0 0; color: var(--mn-ink); font-size: 1.02rem; line-height: 1.25; }
+.mn-world-on .mn__world-caption { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; }
+.mn__world-chips { display: flex; gap: 6px; margin: 8px -14px -2px; padding: 0 14px 2px; overflow-x: auto; scrollbar-width: none; }
+.mn__world-chips::-webkit-scrollbar { display: none; }
+.mn__world-chips > * { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--w-glass); box-shadow: var(--w-edge); color: var(--mn-ink); font: inherit; font-size: 0.82rem; font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.mn__world-chips [aria-pressed="true"] { background: rgba(255, 42, 77, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 42, 77, 0.6); }
+.mn__world-chips b { color: var(--mn-dim); font-weight: 800; }
+.mn__world-chips b:empty { display: none; }
+.mn-world-side .mn__world-idle-h, .mn-world-side .mn__world-caption { display: none; }
+@media (min-width: 600px) {
+  .mn-world-on .mn__world-idle { padding: 16px 18px; }
+  .mn__world-idle-h { font-size: 1.2rem; }
+  .mn-world-on .mn__world-caption { white-space: normal; }
+  .mn__world-chips { flex-wrap: wrap; overflow: visible; margin: 10px 0 0; padding: 0; }
+}
+
+/* ============================================================
+   THE ONBOARDING, THREE PAGES (owner, 2026-10-15; the reference: dark
+   brushed steel, one red, big sentence-case headline with a red period,
+   tall rounded fields with an icon cell and a state at the right, one
+   red pill with the arrow in a darker circle, a lock note under it).
+   Mobile first; wider screens centre the column. The mark is the supplied
+   artwork, never a drawn one.
+   ============================================================ */
+.mn__onboard { position: relative; isolation: isolate; padding: 18px 0 calc(var(--mn-bar-clear, 96px) + 16px); }
+/* while a gate is up the page reserves nothing for the bar (the body's padding was the black band the owner saw): the page is a
+   column the gate fills to the bottom edge, and the gate carries the bar's clearance itself */
+.mn-gate-on .mn, .mn-gate-on body { padding-bottom: 0; }
+.mn-gate-on .mn { display: flex; flex-direction: column; min-height: 100dvh; }
+.mn-gate-on .mn__gate:not([hidden]) { flex: 1 0 auto; }
+.mn__onboard::before { content: ""; position: absolute; z-index: -1; inset: -40px -16px 0; pointer-events: none;
+  background:
+    radial-gradient(70% 36% at 88% -4%, rgba(255, 42, 77, 0.42), transparent 65%),
+    radial-gradient(60% 30% at 50% 108%, rgba(196, 16, 44, 0.45), transparent 62%),
+    linear-gradient(165deg, #17181c 0%, #0c0c0f 42%, #09090b 100%);
+  background-color: #0b0b0d; }
+/* the bleed stops at the screen's edge and the slanted line stays inside the box: anything wider than the phone makes mobile Chromium zoom the whole page out (found by the door run) */
+.mn__onboard::after { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 58px; height: 2px; pointer-events: none; transform: rotate(-14deg);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 42, 77, 0.0) 30%, rgba(255, 72, 100, 0.9) 60%, rgba(255, 42, 77, 0.0) 100%); filter: blur(0.6px); }
+.mn__steps-row { display: flex; align-items: center; gap: 14px; margin: 6px 0 26px; }
+.mn__steps { display: flex; flex: 1 1 auto; gap: 10px; max-width: 260px; margin: 0; padding: 0; list-style: none; }
+.mn__steps li { flex: 1 1 0; height: 5px; border-radius: 999px; background: rgba(244, 239, 230, 0.16); transition: background 0.3s var(--mn-ease); }
+.mn__steps li.is-done { background: rgba(255, 42, 77, 0.55); }
+.mn__steps li.is-current { background: var(--mn-hot); box-shadow: 0 0 14px -2px rgba(255, 42, 77, 0.9); }
+.mn__steps-count { margin-left: auto; color: var(--mn-dim); font-weight: 800; font-size: 0.9rem; letter-spacing: 0.04em; }
+.mn__onboard-h { max-width: 12ch; margin: 0; font-family: var(--mn-ui); font-weight: 900; font-size: clamp(2.5rem, 11.5vw, 4.4rem); line-height: 0.98; letter-spacing: -0.035em; text-transform: none; overflow-wrap: anywhere; }
+.mn__onboard-h em { font-style: normal; color: var(--mn-hot); }
+.mn__onboard .mn__lede { margin-top: 10px; font-size: 1.05rem; }
+.mn__onboard .mn__label { margin-top: 22px; letter-spacing: 0.14em; }
+.mn__onboard .mn__label span { color: var(--mn-faint); }
+.mn__field { position: relative; display: flex; align-items: stretch; min-height: 62px; margin-top: 2px; border-radius: 18px; background: rgba(8, 8, 10, 0.82); box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.14), 0 10px 30px -22px rgba(0, 0, 0, 0.9); transition: box-shadow 0.2s var(--mn-ease); }
+.mn__field:focus-within { box-shadow: inset 0 0 0 1.5px rgba(255, 77, 61, 0.85), 0 0 0 4px rgba(255, 42, 77, 0.14); }
+.mn__field .mn__input { min-height: 62px; margin: 0; padding: 0 16px; border-radius: 18px; background: transparent; box-shadow: none; font-weight: 600; font-size: max(16px, 1.1rem); }
+.mn__field .mn__input:focus { box-shadow: none; }
+.mn__field--plain .mn__input { padding: 0 18px; }
+.mn__field .mn__textarea { min-height: 8rem; padding: 14px 16px; }
+/* the phone: the country code in its own cell, then the number (people from anywhere, owner 2026-10-15) */
+.mn__field--phone .mn__dial { flex: none; width: 84px; padding: 0 8px; text-align: center; border-right: 1px solid rgba(244, 239, 230, 0.1); border-radius: 0; }
+.mn__field-ico, .mn__field-at { display: grid; place-items: center; flex: none; width: 56px; color: var(--mn-dim); border-right: 1px solid rgba(244, 239, 230, 0.1); font-weight: 800; font-size: 1.15rem; }
+.mn__field-ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mn__field-state { display: none; place-items: center; flex: none; width: 56px; color: var(--mn-dim); font-weight: 800; font-size: 0.8rem; }
+.mn__field-state.is-ok, .mn__field-state.is-bad, .mn__field-state.is-busy { display: grid; }
+.mn__field-state.is-ok::before { content: ""; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 2px #38d996; background: linear-gradient(135deg, transparent 0, transparent 100%); position: relative; }
+.mn__field-state.is-ok::after { content: ""; position: absolute; width: 11px; height: 6px; border-left: 2.5px solid #38d996; border-bottom: 2.5px solid #38d996; transform: translateY(-2px) rotate(-45deg); }
+.mn__field-state.is-bad { color: var(--mn-hot); }
+.mn__field-state.is-busy::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(244, 239, 230, 0.2); border-top-color: var(--mn-ink); animation: mnspin 0.8s linear infinite; }
+@keyframes mnspin { to { transform: rotate(360deg); } }
+.mn__field.is-locked .mn__input { color: var(--mn-dim); }
+.mn__field.is-bad { box-shadow: inset 0 0 0 1.5px rgba(255, 77, 61, 0.8); }
+.mn__grid2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; }
+.mn__about { margin-top: 22px; border-radius: 18px; background: rgba(8, 8, 10, 0.82); box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.14); }
+.mn__about summary { display: flex; align-items: center; min-height: 64px; cursor: pointer; list-style: none; }
+.mn__about summary::-webkit-details-marker { display: none; }
+.mn__about summary .mn__field-ico { align-self: stretch; }
+.mn__about-t { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; min-width: 0; }
+.mn__about-t strong { font-size: 1.05rem; }
+.mn__about-t small { color: var(--mn-faint); font-weight: 800; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.mn__about-chev { margin-left: auto; margin-right: 20px; width: 10px; height: 10px; border-right: 2px solid var(--mn-dim); border-bottom: 2px solid var(--mn-dim); transform: rotate(-45deg); transition: transform 0.25s var(--mn-ease); }
+.mn__about[open] .mn__about-chev { transform: rotate(45deg); }
+.mn__about .mn__demographics { margin: 0 14px 14px; }
+.mn__onboard-actions { margin-top: 26px; }
+.mn__cta { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 66px; padding: 0 76px 0 20px; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(180deg, #ff3d5e 0%, #c4102c 100%); color: #fff; font-family: inherit; font-weight: 800; font-size: max(16px, 1.15rem);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 18px 44px -16px rgba(255, 42, 77, 0.95), 0 0 0 1px rgba(255, 77, 100, 0.35); }
+.mn__cta:disabled { opacity: 0.6; cursor: progress; }
+.mn__cta-arrow { position: absolute; right: 7px; top: 7px; bottom: 7px; display: grid; place-items: center; width: 52px; border-radius: 50%; background: rgba(0, 0, 0, 0.38); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.mn__cta-arrow svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mn__onboard .mn__text-button { font-weight: 800; }
+.mn__onboard-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 0; color: var(--mn-dim); font-weight: 600; font-size: 0.9rem; }
+.mn__onboard-note svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mn__onboard .mn__profile-security { margin-top: 0; padding: 0; border: 0; }
+.mn__onboard .mn__profile-security h2 { margin-top: 22px; }
+.mn__onboard .mn__secondary { margin-top: 12px; }
+.mn__onboard .mn__hint { margin-top: 8px; }
+@media (min-width: 600px) {
+  .mn__onboard { padding-top: 32px; }
+  .mn__onboard::before { inset: -40px -24px 0; }
+  .mn__onboard-form { max-width: 560px; }
+  .mn__grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .mn__onboard-h { font-size: clamp(3rem, 6vw, 4.6rem); }
+}
+
+/* ============================================================
+   WORLD NEWS IN THE FEED (owner, 2026-10-15): one member post to one
+   news item, ingested from GDELT into the plane. A news card wears the
+   World's card; it carries words only (no pictures, no publisher marks),
+   and its violet dot is the news colour (the gold is
+   the business pins'). Phone first:
+   one column, every line truncates inside the card.
+   ============================================================ */
+.mn__news-credit { margin: 14px 2px 0; color: var(--mn-faint); font-size: 0.78rem; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.mn__news-credit a { color: var(--mn-dim); text-decoration: underline; text-underline-offset: 2px; }
+.mn__news-credit:not([hidden]) + .mn__feed { margin-top: 8px; }
+.mn__news-meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; overflow: hidden; white-space: nowrap; color: var(--mn-faint); font-weight: 600; font-size: 0.82rem; line-height: 1.3; }
+.mn__news-meta::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: #b49cff; box-shadow: 0 0 0 3px rgba(180, 156, 255, 0.18); }
+.mn__news-meta > span { flex: none; }
+.mn__news-meta > .mn__news-domain { flex: 0 0 auto; min-width: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; color: var(--mn-dim); font-weight: 800; }
+/* the publisher keeps its name up to 60% of the row (a longer one truncates there); the place gives way */
+.mn__news-meta > .mn__news-place { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mn__news-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 8px 0 0; color: var(--mn-ink); font-weight: 700; font-size: 1rem; line-height: 1.42; overflow-wrap: anywhere; text-decoration: none; }
+.mn__news-title::after { content: "\00a0\2197"; color: var(--mn-faint); font-weight: 600; }
+.mn__news-title:hover, .mn__news-title:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.mn__news-chip { justify-self: start; max-width: 100%; }
+.mn__news-chip::before { background: #b49cff; box-shadow: 0 0 0 3px rgba(180, 156, 255, 0.22); }
+.mn-world-on #mnFeed .mn__news-title { color: #e9ecf1; font-size: 0.97rem; }
+
+/* ============================================================
+   THE SCREEN IS THE WHOLE SCREEN (owner, 2026-10-15): the bar floats over
+   the page; whatever is last carries the bar's clearance itself. Last in
+   the sheet so nothing above overrides it.
+   ============================================================ */
+body.has-appbar { padding-bottom: 0; }
+.mn-gate-on .mn__gate:not([hidden]) { padding-bottom: calc(var(--mn-bar-clear, 96px) + 16px); }
+@media (min-width: 1100px) {
+  .mn-world-fit.mn-world-on .mn__world-context { padding-bottom: var(--mn-bar-clear, 96px); }
+}
+
+/* ================================================================
+   THE BUTTON SYSTEM ON THE WORLD (owner, 2026-10-15: "These buttons
+   look like shit. There's no animations.")
+   The house grammar from css/style.css (THE BUTTON SYSTEM), applied to
+   the classes js/mnet.js already renders: one press, one hover lift on
+   pointer devices, 44px reach, and fills that carry their labels at AA.
+   Class names stay the contract; nothing here renames markup.
+   ================================================================ */
+/* the World's hot red (#ff2a4d) carries white type at 3.7:1, under AA for
+   a 13-16px label. Filled controls lean to the same red's deeper end so
+   every stop clears 4.5:1; red TEXT keeps --mn-hot, which reads at 5:1 on
+   the night ground. */
+.mn-world-on :is(.mn__primary, .mn__post, .mn__guest-join, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__person-actions .is-primary, .mn__world-go:not(.mn__world-go--eup), .mn__world-live) {
+  background: linear-gradient(180deg, #e01a42, #c4102c); color: #fff;
+}
+
+/* reach: 44px for every pill a thumb is meant to hit. The context strip's
+   chips and mission actions take 40px (WCAG 2.5.8 asks 24): the owner's
+   portrait split gives that strip ~15% of the screen, and 44px rows pushed
+   the globe under its 44% floor on an upright iPad. */
+.mn__world-chips > *, .mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { min-height: 40px; }
+.mn__clipdoor .mn__world-go,
+.mn__guest-in, .mn__guest-join, .mn__world-expand, .mn__world-live, .mn__fund, .mng__join,
+.mn__record-receipt, .mn__record-share, .mn__golive { min-height: 44px; }
+
+/* motion: transform/opacity/shadow only, 120-250ms, ease-out */
+.mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live, .mn__clipdoor .mn__world-go),
+.mn__world-expand, .mn__world-live {
+  touch-action: manipulation;
+  transition: transform 0.2s var(--mn-ease), box-shadow 0.25s var(--mn-ease), background-color 0.2s var(--mn-ease), color 0.2s var(--mn-ease), opacity 0.2s var(--mn-ease);
+}
+.mn :is(.mn__post, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live):active:not(:disabled) {
+  transform: scale(0.96); transition-duration: 0.12s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mn :is(.mn__primary, .mn__post, .mn__guest-join, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__world-go:not(.mn__world-go--eup), .mn__world-live):hover:not(:disabled) {
+    transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 16px 34px -14px rgba(255, 42, 77, 0.85);
+  }
+  .mn :is(.mn__secondary, .mn__ghost, .mn__world-locate, .mn__world-filter, .mn__world-chips > *, .mn__guest-in, .mn__fund, .mn__record-share, .mn__world-expand, .mn__world-go--eup):hover:not(:disabled) {
+    transform: translateY(-1px); background-color: rgba(255, 255, 255, 0.1);
+  }
+  .mn .mn__world-close:hover { color: var(--mn-ink); background-color: rgba(255, 255, 255, 0.1); }
+}
+.mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__guest-join, .mng__join):is(.is-loading, [aria-busy="true"]) {
+  position: relative; color: transparent !important; pointer-events: none;
+}
+.mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__guest-join, .mng__join):is(.is-loading, [aria-busy="true"])::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; animation: mn-spin 0.7s linear infinite;
+}
+@keyframes mn-spin { to { transform: rotate(360deg); } }
+
+/* sheets enter instead of snapping: the account menu and search suggestions */
+.mn__menu:not([hidden]), .mn__suggest:not([hidden]) { animation: mn-sheet-in 0.22s var(--mn-ease) both; transform-origin: top right; }
+.mn__suggest:not([hidden]) { transform-origin: top center; }
+@keyframes mn-sheet-in { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* the mission card arrives when a pin is tapped */
+.mn__mission-card:not([hidden]) { animation: mn-card-in 0.3s var(--mn-ease) both; }
+@keyframes mn-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* the emblem on a mission card is the join: give the artwork room */
+.mn__mission-card .mn__eup, #mnWorldFocusJoin .mn__eup { width: 32px; height: 32px; }
+#mnWorldFocusJoin { min-width: 52px; }
+
+/* ================================================================
+   THE EMBLEM OVER THE EARTH: "do something about it" (owner,
+   2026-10-15, addendum 8). The Equity Uprise artwork IS the control
+   (CLAUDE.md rule 10): the supplied white mark, complete and scaled
+   proportionally only. No plate, no tile, no ring, no caption, no name
+   beside it. The button is invisible; what you see is the owner's
+   artwork, a soft shadow so it reads over a bright Earth, and a slow
+   breath. Its accessible name says what it does. It opens missions.
+   ================================================================ */
+.mn__world-eup {
+  position: absolute; z-index: 3; left: 50%; bottom: 14px;
+  display: grid; place-items: center;
+  width: 100px; height: 100px; margin: 0 0 0 -50px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; color: inherit;
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  animation: mn-eup-arrive 0.6s var(--mn-spring) 0.35s both, mn-eup-breathe 3.4s ease-in-out 1.4s infinite;
+}
+.mn__world-eup img {
+  display: block; width: 92px; height: 92px; object-fit: contain; pointer-events: none;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75));
+  transition: transform 0.25s var(--mn-ease);
+}
+.mn__world-eup:active img { transform: scale(0.92); transition-duration: 0.12s; }
+.mn .mn__world-eup:focus-visible { outline: 2px solid var(--mn-gold); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .mn__world-eup:hover img { transform: scale(1.1); }
+}
+@media (min-width: 600px) {
+  .mn__world-eup { width: 128px; height: 128px; margin-left: -64px; bottom: 22px; }
+  .mn__world-eup img { width: 120px; height: 120px; }
+}
+@keyframes mn-eup-arrive { from { opacity: 0; transform: translateY(14px) scale(0.8); } to { opacity: 1; transform: none; } }
+@keyframes mn-eup-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mn__world-eup, .mn__world-eup img, .mn__menu, .mn__suggest, .mn__mission-card,
+  .mn__world-expand, .mn__world-live { animation: none !important; transition: none !important; }
+  .mn__world-eup:hover img, .mn__world-eup:active img { transform: none !important; }
+  .mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live):is(:hover, :active) { transform: none !important; }
+}
+
+/* Put your Black business on the map: the listing form inside the mission dialog (js/mnet.js businessListingForm) */
+.mn__business-listing { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--mn-rule-2); min-width: 0; }
+.mn__business-listing .mn__primary { margin-top: 14px; }
+.mn__panel [data-focus="business"] { margin-top: 8px; max-width: 100%; white-space: normal; }
+
+/* Unified timeline: replies render inside the same card for posts and news.
+   GDELT remains visibly attributed once, without explanatory banners. */
+.mn-world-on #mnFeed .mn__comments{grid-column:1/-1;min-width:0;margin-top:13px;padding:15px;border-top:1px solid rgba(220,233,245,.13);background:rgba(9,16,25,.44);border-radius:14px}
+.mn__comments[hidden]{display:none!important}
+.mn__comments-list{display:grid;gap:11px;margin-bottom:14px}
+.mn__comment{min-width:0;padding:10px 12px;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:rgba(255,255,255,.025)}
+.mn__comment strong{font-weight:750;color:#f4f1ea;font-size:13px}
+.mn__comment time{margin-left:9px;color:#95a6b7;font-size:11px;font-weight:600}
+.mn__comment p{margin:5px 0 0;white-space:pre-wrap;color:#dbe1e9;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.mn__comments-empty{font-size:14px;color:#a7b3c1}
+.mn__comment-status{font-size:12px;color:#b2c0ce;margin:9px 0 0}
+.mn__comment-status.is-error{color:#ffb1a6}
+.mn__comment-status.is-ok{color:#b7e7cd}
+.mn__action--comment[aria-expanded="true"]{color:#e9c796}
+.mn__news-meta::before{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);background:linear-gradient(135deg,#f6e2bf,#a9895e);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 11px rgba(205,163,105,.18)}
+.mn__news-chip::before{background:#d2b283;box-shadow:0 0 0 2px rgba(210,178,131,.12)}
+@media(prefers-reduced-motion:reduce){.mn__comment,.mn__comments{animation:none!important;transition:none!important}}
+
+/* News cards never let the new comment row push beyond the mobile column.
+   Other kinds of post retain their original button gutter. */
+.mn-world-on #mnFeed .mn__news-card .mn__post-actions{margin:9px 0 0;max-width:100%;min-width:0;box-sizing:border-box;flex-wrap:wrap}
+.mn-world-on #mnFeed .mn__news-card .mn__action--comment{max-width:100%;box-sizing:border-box}
+
+/* Live character controls inherit the host studio's house styling. */
+.mn__actor-controls { min-width:0; margin:18px 0 0; padding:14px; border:1px solid var(--mn-rule); border-radius:12px; display:grid; gap:12px; }
+.mn__actor-controls[hidden] { display:none; }
+.mn__actor-controls legend { padding:0 6px; font-weight:700; font-size:1rem; }
+.mn__actor-controls label { display:flex; align-items:flex-start; gap:10px; font-size:1rem; line-height:1.4; }
+.mn__actor-controls input[type="checkbox"] { flex:0 0 auto; width:20px; height:20px; margin:2px 0; }
+.mn__actor-controls p { margin:0; color:var(--mn-dim); font-size:.85rem; line-height:1.5; overflow-wrap:anywhere; }
+.mn__actor-controls button { justify-self:start; min-height:44px; font-size:16px; }
+.mn__actor-controls textarea { resize:vertical; }
+/* THE PLACE CARD (js/mnet.js paintPlaceCard; owner, 2026-10-21: "only in the middle" of the top, with the place's counts):
+   centred, never the full width; below the page's bar; the globe's buttons step down while it shows (--mn-place-push) */
+.mn__place-card{position:absolute;z-index:4;top:10px;left:0;right:0;margin:0 auto;width:min(300px,calc(100% - 32px));box-sizing:border-box;display:grid;gap:4px;padding:6px 6px 8px 12px;border-radius:14px;background:rgba(13,14,18,.92);color:#eef0f4;font:500 13px/1.35 Inter,system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 10px 26px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:mn-place-in .22s ease-out}
+.mn__place-card[hidden]{display:none}
+.mn__place-head{display:flex;align-items:center;gap:8px;min-width:0}
+.mn__place-name{min-width:0;flex:1;display:flex;flex-direction:column}
+.mn__place-name b{font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.mn__place-name small{color:#c7d0e0;font-size:12px;line-height:1.3}
+.mn__place-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;text-align:center}
+.mn__place-stat{display:grid;gap:1px;min-width:0}
+.mn__place-stat b{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.mn__place-stat small{color:#c7d0e0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn__place-close{flex:none;width:44px;height:44px;margin:-4px -2px -8px 0;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;font:400 22px/1 system-ui,sans-serif;cursor:pointer}
+.mn__place-close:focus-visible{outline:2px solid #fff;outline-offset:-6px}
+#mnWorld :is(#mnWorldStack,#mnWorldLive){translate:0 var(--mn-place-push,0px)}
+.place-card-over-headline .wt-headline{visibility:hidden}
+html[data-world-mode="travel"] .mn__place-card{display:none}
+@keyframes mn-place-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.mn__place-card{animation:none}}

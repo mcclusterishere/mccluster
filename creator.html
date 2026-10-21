@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/music-creator.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/creator-onboarding.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -31,14 +32,52 @@
       <p>Your artist profile, releases, rights, licensing, and audience-facing catalogue live here under one M Account.</p>
     </header>
 
+    <!-- ONE SIGN-UP (owner, 2026-10-20): making the account is the site's one sign-up (an email, then the three
+         profile pages on the World), and it comes back here for the one tap; signing in comes back here too -->
     <section class="creator-gate creator-card wide" id="creatorGate">
       <h2>Sign in to publish.</h2>
-      <p>Your creator profile attaches to the same M Account and Action Network profile you already use across the platform.</p>
-      <a class="creator-btn primary" href="account.html?next=creator.html">Sign in or create M Account</a>
+      <p>Your artist page is made from your profile. New here? Make an account: an email, then three short pages, and you come straight back here.</p>
+      <div class="creator-actions">
+        <a class="creator-btn primary" id="creatorJoin" href="mnet.html?join=1&amp;next=creator.html">Create account</a>
+        <a class="creator-btn quiet" id="creatorSignIn" href="account.html?next=creator.html">Sign in</a>
+      </div>
     </section>
 
-    <div class="creator-grid" id="creatorApp" hidden><section class="creator-card wide" aria-labelledby="artistAnalyticsHeading"><h2 id="artistAnalyticsHeading">Artist Analytics</h2><p>Your catalog performance, based on recorded first-party activity.</p><button type="button" class="creator-btn quiet" id="selfMusicRefresh">Refresh analytics</button><div id="selfMusicAnalytics" data-mode="creator" aria-live="polite"></div></section>
-      <section class="creator-card">
+    <!-- ONE CLICK (owner, 2026-10-15): built from the profile the member
+         already has; only a missing name or handle is asked for, inline.
+         Shown only while the server says this member is not a creator
+         (js/creator-onboarding.js); never again once they are. -->
+    <section class="cob" id="creatorOnboard" hidden aria-labelledby="cobTitle">
+      <div class="cob__id">
+        <span class="cob__avatar" id="cobAvatar" aria-hidden="true"></span>
+        <div class="cob__who"><b id="cobName"></b><span id="cobHandle"></span></div>
+      </div>
+      <h2 class="cob__title" id="cobTitle">Become a creator.</h2>
+      <p class="cob__lede">Your artist page, made from your profile.</p>
+      <form class="cob__form" id="cobForm" novalidate>
+        <div class="cob__field" id="cobNameField" hidden>
+          <label for="cobNameInput">Artist name</label>
+          <input id="cobNameInput" maxlength="160" autocomplete="nickname">
+        </div>
+        <div class="cob__field" id="cobHandleField" hidden>
+          <label for="cobHandleInput">Handle</label>
+          <div class="cob__handle"><span aria-hidden="true">@</span><input id="cobHandleInput" maxlength="41" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="cobHandleHelp"></div>
+          <small id="cobHandleHelp"></small>
+        </div>
+        <button class="cob__go" id="cobGo" type="submit">Become a creator</button>
+        <p class="cob__terms">By continuing you accept the <a href="music-creator-terms.html" target="_blank" rel="noopener">Creator Terms</a>.</p>
+        <p class="cob__status" id="cobStatus" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <div class="creator-grid" id="creatorApp" hidden>
+      <section class="creator-card wide cme" id="creatorSummary" hidden aria-label="Your creator profile">
+        <span class="cob__avatar" id="cmeAvatar" aria-hidden="true"></span>
+        <div class="cob__who"><b id="cmeName"></b><span id="cmeHandle"></span></div>
+        <div class="cme__actions"><a class="creator-btn primary" id="cmePage" href="#">Your page</a><a class="creator-btn quiet" id="cmeEdit" href="creator.html?edit=profile">Edit profile</a></div>
+      </section>
+      <section class="creator-card wide" aria-labelledby="artistAnalyticsHeading"><h2 id="artistAnalyticsHeading">Artist Analytics</h2><p>Your catalog performance, based on recorded first-party activity.</p><button type="button" class="creator-btn quiet" id="selfMusicRefresh">Refresh analytics</button><div id="selfMusicAnalytics" data-mode="creator" aria-live="polite"></div></section>
+      <section class="creator-card" id="creatorIdentity" hidden>
         <h2>Your creator identity</h2>
         <p>This is the public profile listeners see. It is an extension of your M Account, not a separate login.</p>
         <form class="creator-form" id="profileForm">
@@ -170,6 +209,7 @@
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/music-creator-page.js?v=__STAMP__"></script>
+  <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
   <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

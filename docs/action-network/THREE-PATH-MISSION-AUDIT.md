@@ -1,5 +1,14 @@
 # Three-path Action Network mission alignment — audit and implementation
 
+## Review status (2026-10-21)
+
+This proposal remains pending. Its SQL is preserved at
+`supabase/pending/20261013210000_action_three_paths.sql`; it has not been
+applied or recorded in the production migration ledger. The October 13 catalog
+snapshot and proposed mission changes below must be reconciled with the current
+catalog before activation. Repairing the PR's checks does not activate these
+paths or retire a mission.
+
 ## Decision
 Action is a single mission lifecycle with three **participation paths**, not three disconnected products:
 - **Create**: write/record a song, produce a beat, collaborate on a campaign recording. Evidence: credited recording, approved deliverable, rights and split documentation.

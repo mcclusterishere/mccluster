@@ -8,7 +8,7 @@
      II  LISTEN      the record itself; the full player is one tap away
      III DO SOMETHING the network's real count and the lanes,
                      scored by the record's light side
-     IV  ENTER       into the campaign, and Action Network
+     IV  ENTER       into the campaign, and Human Uprise
 
    What differs lives in the page, as data: <script type=
    "application/json" id="gwConfig"> names the songs, the lock-screen
@@ -238,7 +238,7 @@
   function paintFeatured(c) {
     var facts = $("gwFacts");
     facts.textContent = "";
-    (Array.isArray(c.facts) ? c.facts : []).slice(0, 3).forEach(function (f) {
+    (Array.isArray(c.facts) ? c.facts : []).slice(0, Math.min(3, Math.max(1, Number(CFG.facts) || 3))).forEach(function (f) {
       if (!f || !f.text) return;
       var li = el("li");
       li.appendChild(el("p", null, f.text));
