@@ -59,8 +59,11 @@ const SATELLITE_GROUPS = ['stations', 'visual'];
 
 /* Workers' fetch rejects redirect: 'error'; the provider is fetched with
    redirect: 'manual' and may only redirect to its own host over https
-   (lib/safe-fetch.js). Every failure is typed, so "unavailable" says why. */
-async function upstream(url, init = {}, fetchImpl = fetch, as = 'json', timeoutMs = TIMEOUT_MS) {
+   (lib/safe-fetch.js). Every failure is typed, so "unavailable" says why.
+   `as` is 'json', 'text', or a function that reads the Response's body
+   (a large CSV read line by line) inside the same timeout.
+   Exported for the Halo layers (./world-halo-layers.js). */
+export async function upstream(url, init = {}, fetchImpl = fetch, as = 'json', timeoutMs = TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let res;
@@ -73,6 +76,7 @@ async function upstream(url, init = {}, fetchImpl = fetch, as = 'json', timeoutM
       throw new UpstreamError('upstream_network', 'provider fetch failed');
     }
     if (!res.ok) throw new UpstreamError(res.status === 429 ? 'upstream_rate_limited' : 'upstream_http', `provider ${res.status}`, { providerStatus: res.status });
+    if (typeof as === 'function') return await as(res);
     if (as === 'text') return await res.text();
     try { return await res.json(); } catch { throw new UpstreamError('upstream_invalid_json', 'provider returned invalid JSON', { providerStatus: res.status }); }
   } finally {
@@ -280,31 +284,41 @@ export async function fetchLaunches(env, fetchImpl = fetch) {
 const FETCHERS = { flights: fetchFlights, satellites: fetchSatellites, launches: fetchLaunches };
 
 /* ---------- the cache: one provider request per window, the last good answer while a provider is down ---------- */
-function cacheKey(layer) {
-  return new Request(`https://cache.mccluster.internal/world/layers/${layer}`);
+function layerCacheKey(name) {
+  return new Request(`https://cache.mccluster.internal/world/layers/${name}`);
 }
-async function cached(layer, env, fetchImpl, cacheImpl) {
-  const spec = LAYERS[layer];
+/* One provider request per `ttl` window per Cloudflare location; a kept answer
+   up to STALE_GRACE past its window while the provider is down (marked stale,
+   with the reason); with nothing kept, an honest `unavailable` with zero rows
+   under `rows`. A failure is never stored as the answer. `base` is merged into
+   every body (attribution, credit, licence); the fetcher's fields win.
+   Shared with the Halo layers (./world-halo-layers.js). */
+export async function cachedLayer({ layer, key = layer, ttl, base = {}, rows, fetcher }, env, fetchImpl, cacheImpl) {
   const store = cacheImpl || (globalThis.caches && globalThis.caches.default) || null;
-  const key = cacheKey(layer);
+  const cacheKey = layerCacheKey(key);
   let hit = null;
   if (store) {
-    const res = await store.match(key).catch(() => null);
+    const res = await store.match(cacheKey).catch(() => null);
     if (res) hit = await res.json().catch(() => null);
   }
-  const fresh = hit && hit.fetched_at && (Date.now() - Date.parse(hit.fetched_at)) < spec.ttl * 1000;
-  if (fresh) return { body: hit, stale: false };
+  const age = hit && hit.fetched_at ? Date.now() - Date.parse(hit.fetched_at) : NaN;
+  if (!(age >= 0 && age < (ttl + STALE_GRACE) * 1000)) hit = null;
+  if (hit && age < ttl * 1000) return { body: hit, stale: false };
   try {
-    const data = await FETCHERS[layer](env, fetchImpl);
-    const body = { ok: true, layer, fetched_at: new Date().toISOString(), attribution: spec.attribution, ...data };
-    if (store) await store.put(key, new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${spec.ttl + STALE_GRACE}` } })).catch(() => {});
+    const data = await fetcher(env, fetchImpl);
+    const body = { ok: true, layer, fetched_at: new Date().toISOString(), ...base, ...data };
+    if (store) await store.put(cacheKey, new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl + STALE_GRACE}` } })).catch(() => {});
     return { body, stale: false };
   } catch (error) {
     const reason = (error && error.code) || 'upstream_error';
     const providers = error && Array.isArray(error.providers) ? { providers: error.providers } : {};
     if (hit) return { body: { ...hit, upstream_error: reason, ...(providers.providers ? { refresh_providers: providers.providers } : {}) }, stale: true, error };
-    return { body: { ok: true, layer, fetched_at: null, attribution: spec.attribution, unavailable: true, upstream_error: reason, ...providers, count: 0, [layer === 'flights' ? 'aircraft' : layer]: [] }, stale: false, error };
+    return { body: { ok: true, layer, fetched_at: null, ...base, unavailable: true, upstream_error: reason, ...providers, count: 0, [rows]: [] }, stale: false, error };
   }
+}
+function cached(layer, env, fetchImpl, cacheImpl) {
+  const spec = LAYERS[layer];
+  return cachedLayer({ layer, ttl: spec.ttl, base: { attribution: spec.attribution }, rows: layer === 'flights' ? 'aircraft' : layer, fetcher: FETCHERS[layer] }, env, fetchImpl, cacheImpl);
 }
 
 export async function handleWorldLayers(request, env, { fetchImpl = fetch, cacheImpl = null } = {}) {

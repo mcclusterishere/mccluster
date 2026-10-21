@@ -500,7 +500,7 @@ the browser; when the asset token runs out, CesiumJS asks the Worker again.
   (`binding`) and the asset ids. A member's page asks this first and does
   nothing with ion when it is off; a logged-out page does not ask.
 - `GET /v1/world/ion/v1/assets/{id}/endpoint` is **members only**. In order:
-  only the five assets above (any other id is a 404); only the ecosystem's
+  only the six assets the Worker serves (any other id is a 404); only the ecosystem's
   own origins (the CORS allowlist, checked on `Origin`, a 403 otherwise);
   a per-IP brake; then a signed-in member, the bearer checked with Supabase
   exactly as the members' data layers check it (`bearerUser`,
@@ -517,8 +517,9 @@ the browser; when the asset token runs out, CesiumJS asks the Worker again.
   varying on `Origin` and `Authorization`. Anything else is a plain 404,
   403, 401, 429, 503 (no token) or 502 (ion refused), never the token.
 - **Owner actions, not done by this code:** restrict the ion token's scope
-  to exactly these five assets (1, 3, 2, 3954, 96188) in the Cesium ion
-  dashboard, so a leaked token reaches nothing else; turn on ion usage
+  to exactly these six assets (1, 3, 2, 3954, 96188, and 2275207 for
+  Google Photorealistic 3D Tiles on the owner's Halo console,
+  docs/control-plane/HALO-ADMIN-GLOBE.md) in the Cesium ion dashboard, so a leaked token reaches nothing else; turn on ion usage
   alerts; confirm the ion plan permits this use (the free Community plan is
   for personal and non-commercial use).
 - The binding is `CESIUM_ION_TOKEN`, the name the spatial console and

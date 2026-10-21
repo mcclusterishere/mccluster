@@ -1,0 +1,116 @@
+/* HALO HUD — the camera readout for the admin globe (js/halo/hud.js).
+   Mobile first: at 390 px it is a compact two-line monospace plate that
+   wraps rather than overflowing; min-width breakpoints only add room, the
+   MGRS label and the date. The page positions .halo-hud's host; this sheet
+   never sets a width wider than the viewport. It takes no pointer events. */
+
+.halo-hud {
+  --halo-hud-ink: #ecfff4;
+  --halo-hud-dim: rgba(236, 255, 244, 0.74);
+  --halo-hud-plate: rgba(3, 9, 7, 0.66);
+  --halo-hud-edge: rgba(236, 255, 244, 0.18);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 2px;
+  width: max-content;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 5px 6px;
+  overflow: hidden;
+  border: 1px solid var(--halo-hud-edge);
+  border-radius: 6px;
+  background: var(--halo-hud-plate);
+  color: var(--halo-hud-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+  font-size: clamp(10px, 2.7vw, 11px);
+  font-weight: 500;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 1px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  animation: halo-hud-in 0.18s ease-out;
+}
+
+.halo-hud[hidden] {
+  display: none;
+}
+
+.halo-hud__row {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1ch;
+  row-gap: 0;
+  min-width: 0;
+}
+
+.halo-hud__item {
+  display: inline-flex;
+  column-gap: 0.5ch;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.halo-hud__k {
+  color: var(--halo-hud-dim);
+  font-weight: 400;
+}
+
+/* Added at tablet width and up. */
+.halo-hud__more {
+  display: none;
+}
+
+@supports ((-webkit-backdrop-filter: blur(4px)) or (backdrop-filter: blur(4px))) {
+  .halo-hud {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes halo-hud-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halo-hud {
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .halo-hud {
+    --halo-hud-plate: rgba(0, 0, 0, 0.88);
+    --halo-hud-dim: #fff;
+    --halo-hud-edge: rgba(255, 255, 255, 0.5);
+  }
+}
+
+@media (min-width: 600px) {
+  .halo-hud {
+    row-gap: 3px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .halo-hud__row {
+    column-gap: 1.5ch;
+  }
+
+  .halo-hud__more {
+    display: inline;
+  }
+}
+
+@media (min-width: 1024px) {
+  .halo-hud {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
