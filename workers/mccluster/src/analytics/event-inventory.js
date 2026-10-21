@@ -2,6 +2,7 @@
  * Historical mismatch, taxonomy omission and provider absence remain visible.
  * No inferred metrics, cross-site identity, or false provider success. */
 const int=value=>{
+  if(value===null||value===undefined||value==='')return null;
   const n=Number(value);
   return Number.isSafeInteger(n)&&n>=0?n:null;
 };
