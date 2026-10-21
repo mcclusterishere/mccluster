@@ -28,10 +28,11 @@ test('no window preserves unknown window counts rather than inventing zeroes', a
 });
 
 test('failed or truncated RPC responses remain errors, never successful zeroes', async () => {
-  await assert.rejects(() => loadBusinessEventCounts(async () => []),/unavailable/);
-  await assert.rejects(() => loadBusinessEventCounts(async () => [{events_total:1}]),/Invalid event counter/);
-  await assert.rejects(() => loadBusinessEventCounts(async () => [{...row(),clicks_total:'9007199254740993'}]),/Invalid event counter/);
-  await assert.rejects(() => loadBusinessEventCounts(async () => [{...row(),clicks_total:-1}]),/Invalid event counter/);
+  const windowSpec = {since:'2026-10-20T00:00:00Z', until:'2026-10-21T00:00:00Z'};
+  await assert.rejects(() => loadBusinessEventCounts(async () => [], windowSpec),/unavailable/);
+  await assert.rejects(() => loadBusinessEventCounts(async () => [{events_total:1}], windowSpec),/Invalid event counter/);
+  await assert.rejects(() => loadBusinessEventCounts(async () => [{...row(),clicks_total:'9007199254740993'}], windowSpec),/Invalid event counter/);
+  await assert.rejects(() => loadBusinessEventCounts(async () => [{...row(),clicks_total:-1}], windowSpec),/Invalid event counter/);
   await assert.rejects(() => loadBusinessEventCounts(async () => [row()], {since:'2026-10-20'}),/Both window bounds/);
 });
 
