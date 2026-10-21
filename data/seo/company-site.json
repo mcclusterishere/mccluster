@@ -1,6 +1,6 @@
 {
   "schema_version": "mccluster-company-site/v1",
-  "updated_at": "2026-10-03",
+  "updated_at": "2026-10-15",
   "_readme": [
     "THE COMPANY PROPERTY, mccluster.org: McCluster Corp's house.",
     "tools/build-company-site.mjs renders this file plus data/seo/entity-graph.json into",
@@ -13,11 +13,17 @@
   ],
   "origin": "https://mccluster.org",
   "personal_origin": "https://matthew.mccluster.org",
+  "company_path": "/company",
+  "world": {
+    "href": "https://mccluster.org/",
+    "cta": "Open the World",
+    "line": "the Human Uprise World: the Earth, its missions and the member feed, McCluster Corp's platform, served at the company's root (humanuprise.com is its own door later)."
+  },
   "meta": {
     "title": "McCluster Corp · Technology, Education, Civic, Media & Creative Products and Services",
-    "description": "McCluster Corp is the operating organization behind the McCluster Platform, Equity Uprise, the Uprise Action Network, PRIM3, McCluster Sites, and the studio's media, creative and music work. Founded in 2025 by Matthew McCluster; based in Bridgeport, Connecticut.",
+    "description": "McCluster Corp is the operating organization behind the McCluster Platform, Equity Uprise, Human Uprise, PRIM3, McCluster Sites, and the studio's media, creative and music work. Founded in 2025 by Matthew McCluster; based in Bridgeport, Connecticut.",
     "og_title": "McCluster Corp",
-    "og_description": "The operating organization behind a growing ecosystem of technology, education, civic, media and creative products and services: the McCluster Platform, Equity Uprise, the Uprise Action Network, PRIM3 and McCluster Sites.",
+    "og_description": "The operating organization behind a growing ecosystem of technology, education, civic, media and creative products and services: the McCluster Platform, Equity Uprise, Human Uprise, PRIM3 and McCluster Sites.",
     "image": "https://matthew.mccluster.org/assets/img/m-mark.png",
     "image_width": 256,
     "image_height": 256,
@@ -33,7 +39,7 @@
   "product_map": {
     "href": "https://matthew.mccluster.org/mccluster-corp.html",
     "cta": "How the products fit together",
-    "line": "The product map: how the public record, the platform and Control, Equity Uprise, the Action Network, PRIM3 and the studio connect, and the member loop from a campaign to verified action."
+    "line": "The product map: how the public record, the platform and Control, Equity Uprise, Human Uprise, PRIM3 and the studio connect, and the member loop from a campaign to verified action."
   },
   "doors": [
     {
@@ -54,11 +60,11 @@
     },
     {
       "entity": "action_network",
-      "name": "Uprise Action Network",
+      "name": "Human Uprise",
       "kind": "Software product",
       "line": "An action-first campaign network connected to Equity Uprise's action model: a campaign leads to a mission, the mission asks for proof, and a reviewer verifies the action.",
-      "href": "https://matthew.mccluster.org/action/",
-      "cta": "See the live campaigns"
+      "href": "https://mccluster.org/",
+      "cta": "Open the World"
     },
     {
       "entity": "prim3",
@@ -103,7 +109,7 @@
     },
     {
       "title": "Participants",
-      "body": "Campaigns run on the Uprise Action Network: join a campaign, take a mission, submit proof, and a reviewer verifies the action.",
+      "body": "Campaigns run on Human Uprise: join a campaign, take a mission, submit proof, and a reviewer verifies the action.",
       "href": "https://matthew.mccluster.org/action/",
       "cta": "Join a campaign"
     },
@@ -128,14 +134,41 @@
   },
   "facts_heading": "Company information",
   "facts": [
-    { "label": "Founded", "value": "2025, by Matthew McCluster", "href": "https://matthew.mccluster.org/matthew-mccluster.html" },
-    { "label": "Based", "value": "Bridgeport, Connecticut · working across Connecticut and Georgia" },
-    { "label": "ISNI", "value": "0000 0005 2872 7276", "href": "https://isni.org/isni/0000000528727276" },
-    { "label": "ISRC registrant code", "value": "QT6KV" },
-    { "label": "Connecticut public-charity registration certificate", "value": "CHR.0069693, issued October 28, 2025. Current renewal status is not asserted here.", "href": "https://matthew.mccluster.org/assets/credentials/mccluster-corp-public-charity-registration.pdf" },
-    { "label": "Connecticut General Assembly", "value": "Official Citation to McCluster Corp, October 5, 2025", "href": "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf" },
-    { "label": "State of Georgia", "value": "Proclamation signed October 27, 2025, citing McCluster Corp's Equity Uprise Fellowship", "href": "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" }
+    {
+      "label": "Founded",
+      "value": "2025, by Matthew McCluster",
+      "href": "https://matthew.mccluster.org/matthew-mccluster.html"
+    },
+    {
+      "label": "Based",
+      "value": "Bridgeport, Connecticut · working across Connecticut and Georgia"
+    },
+    {
+      "label": "ISNI",
+      "value": "0000 0005 2872 7276",
+      "href": "https://isni.org/isni/0000000528727276"
+    },
+    {
+      "label": "ISRC registrant code",
+      "value": "QT6KV"
+    },
+    {
+      "label": "Connecticut public-charity registration certificate",
+      "value": "CHR.0069693, issued October 28, 2025. Current renewal status is not asserted here.",
+      "href": "https://matthew.mccluster.org/assets/credentials/mccluster-corp-public-charity-registration.pdf"
+    },
+    {
+      "label": "Connecticut General Assembly",
+      "value": "Official Citation to McCluster Corp, October 5, 2025",
+      "href": "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf"
+    },
+    {
+      "label": "State of Georgia",
+      "value": "Proclamation signed October 27, 2025, citing McCluster Corp's Equity Uprise Fellowship",
+      "href": "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+    }
   ],
+  "tagline": "Get Your Hu Up!",
   "separate_note": "Whip Equipped LLC, a connected-mobility company Matthew McCluster founded, is a separate company. It is not part of McCluster Corp.",
   "founder": {
     "heading": "Founder",
@@ -144,9 +177,21 @@
     "cta": "Matthew McCluster"
   },
   "footer_links": [
-    { "label": "Newsroom", "href": "https://matthew.mccluster.org/newsroom.html" },
-    { "label": "Press kit", "href": "https://matthew.mccluster.org/press.html" },
-    { "label": "Privacy", "href": "https://matthew.mccluster.org/privacy.html" },
-    { "label": "matthew@mccluster.org", "href": "mailto:matthew@mccluster.org" }
+    {
+      "label": "Newsroom",
+      "href": "https://matthew.mccluster.org/newsroom.html"
+    },
+    {
+      "label": "Press kit",
+      "href": "https://matthew.mccluster.org/press.html"
+    },
+    {
+      "label": "Privacy",
+      "href": "https://matthew.mccluster.org/privacy.html"
+    },
+    {
+      "label": "matthew@mccluster.org",
+      "href": "mailto:matthew@mccluster.org"
+    }
   ]
 }

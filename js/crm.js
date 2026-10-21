@@ -92,7 +92,7 @@
   /* ---------- SITES: THE TWO DOORS ----------
      The deal switch already owns the behavior. This gives each side its
      canonical house mark without redrawing either emblem: M for standard
-     service, E=up for the Equity Uprise program lane. The guard keeps this
+     service, the Equity Uprise emblem for the program lane. The guard keeps this
      code inert on every other room that loads the front desk. */
   function brandSitesDealModes() {
     var wrap = document.getElementById("dealWrap");

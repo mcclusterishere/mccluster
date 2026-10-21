@@ -1,4 +1,5 @@
 import { fail, reply } from '../lib/http.js';
+import { cesiumIonToken } from '../world-ion.js';
 import { adapterCapabilities, GeoAdapterError } from './adapters.js';
 import { AccessError, accessConfigured, accessRequired, missingAccessBindings, verifyAccess } from './access.js';
 import { assertConsumable, effectiveEntitlement, entitlementCatalog, LANES, normalizeLane, sourceOrThrow } from './entitlements.js';
@@ -382,7 +383,8 @@ async function governedQuery(request, env, options) {
 */
 function viewerConfig(env) {
   const google = Boolean(env.GOOGLE_MAPS_API_KEY);
-  const cesium = Boolean(env.CESIUM_ION_TOKEN);
+  const ion = cesiumIonToken(env);
+  const cesium = Boolean(ion);
   return {
     keyless: !google && !cesium,
     basemap: {
@@ -402,7 +404,7 @@ function viewerConfig(env) {
     },
     cesium_ion: {
       available: cesium,
-      token: cesium ? env.CESIUM_ION_TOKEN : null,
+      token: ion ? ion.token : null,
       required_binding: 'CESIUM_ION_TOKEN',
       note: 'Use a scoped read-only ion token. World Terrain and ion assets need it; the ellipsoid fallback does not.'
     },

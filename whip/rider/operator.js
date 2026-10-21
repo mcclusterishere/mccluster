@@ -1,7 +1,7 @@
 (() => {
   const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
   const q=new URLSearchParams(location.search);
-  const apiBase=(q.get('api')||localStorage.getItem('we-api-base')||'').replace(/\/$/,'');
+  const apiBase='https://api.mccluster.org';
   let mode='login',session=JSON.parse(localStorage.getItem('we-operator-session')||'null'),tenantId=q.get('tenant')||localStorage.getItem('we-operator-tenant')||'',dashboard=null;
   function notice(text,type=''){const n=$('#notice');n.hidden=!text;n.textContent=text||'';n.className='notice '+type}
   async function request(path,init={}){if(!apiBase)throw new Error('Add ?api=https://YOUR-WORKER.workers.dev to the Operator URL first.');const headers={'content-type':'application/json',...(init.headers||{})};if(session?.access_token)headers.authorization=`Bearer ${session.access_token}`;const r=await fetch(apiBase+path,{...init,headers});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||d.msg||d.message||'Request failed');return d}

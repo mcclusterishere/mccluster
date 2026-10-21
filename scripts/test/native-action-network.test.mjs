@@ -112,7 +112,7 @@ test('first-run walkthrough is shared with the web account state', async () => {
   ]);
   assert.match(screen, /tour_done_at/);
   assert.match(screen, /Take the tour/);
-  assert.match(screen, /Welcome to the Action Network/);
+  assert.match(screen, /Welcome to Human Uprise/);
   assert.match(client, /mnet_mark_tour_seen/);
   assert.match(client, /p_app_key: ACTION_APP_KEY/);
 });

@@ -74,7 +74,7 @@
      pocket tile there would be a second record playing over the first.
      Both of those pages read the same banked position and resume it
      themselves; everywhere else, this widget is the player. */
-  var ownsPlayer = /(^|\/)(album|index)\.html$/.test(location.pathname) ||
+  var ownsPlayer = !!window.MCC_MUSIC || /(^|\/)(album|index)\.html$/.test(location.pathname) ||
     /\/$/.test(location.pathname);
 
   function read() {

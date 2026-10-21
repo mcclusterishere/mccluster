@@ -151,7 +151,7 @@
     identityLink.className = "ap-door creator-action-network";
     identityLink.href = "mnet.html?profile=" + encodeURIComponent(p.handle);
     identityLink.textContent = "Put this music into action → @" + p.handle;
-    identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on the Action Network");
+    identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on Human Uprise");
     $("apDoors").appendChild(identityLink);
   }
 
@@ -257,6 +257,12 @@
     $("creatorBio").textContent = p.bio || "Independent artist on McCluster Music.";
     var avatar = PAGE.safeArtwork(p.avatar_url);
     if (avatar) { $("creatorAvatar").src = avatar; $("creatorAvatar").alt = p.artist_name; $("creatorAvatar").hidden = false; }
+    /* The bar takes this creator's perspective for the session (js/tabbar.js):
+       their front page in the middle cell, their own picture or initial.
+       Owner, 2026-10-14: "experience the site from their perspective". */
+    var perspective = { kind: "artist", handle: p.handle, name: p.artist_name, avatar: avatar || "" };
+    try { root.sessionStorage.setItem("mcc_perspective", JSON.stringify(perspective)); } catch (_) {}
+    try { root.dispatchEvent(new CustomEvent("mcc:perspective", { detail: perspective })); } catch (_) {}
 
     /* Every published track goes to the player in page order: the featured
        album, the other albums, then the singles, so Next follows the page. */

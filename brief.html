@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Morning brief · McCluster</title>
+  <meta name="description" content="Yesterday's news by country, and what it may mean today: a draft for the house owner and region leaders to read live and publish.">
+  <link rel="icon" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/news-brief.css?v=__STAMP__">
+</head>
+<body class="nb">
+  <!-- THE MORNING BRIEF (owner, 2026-10-20): yesterday's headlines per country, drafted overnight by McCluster AI
+       (workers/mccluster/src/news-briefs.js), read live at 7am New York time and published by a person. -->
+  <main class="nb__main" aria-live="polite">
+    <header class="nb__head">
+      <p class="nb__eyebrow">MORNING BRIEF</p>
+      <h1 id="nbTitle">Yesterday, and what it may mean today</h1>
+      <div class="nb__pickers">
+        <label class="nb__field">Day<input id="nbDay" type="date"></label>
+        <label class="nb__field">Country<select id="nbCountry"></select></label>
+      </div>
+      <p class="nb__status" id="nbStatus" role="status"></p>
+    </header>
+
+    <article class="nb__brief" id="nbBrief" hidden>
+      <div class="nb__meta" id="nbMeta"></div>
+      <div class="nb__actions">
+        <button class="nb__primary" id="nbLive" type="button">Read it live</button>
+        <button class="nb__button" id="nbPublishOpen" type="button">Publish as my post</button>
+        <button class="nb__button" id="nbAgain" type="button">Write it again</button>
+      </div>
+      <section aria-labelledby="nbOverviewH"><h2 id="nbOverviewH">Yesterday in brief</h2><p id="nbOverview"></p></section>
+      <section aria-labelledby="nbHappenedH"><h2 id="nbHappenedH">What happened</h2><ol id="nbHappened"></ol></section>
+      <section aria-labelledby="nbMayH"><h2 id="nbMayH">What it may mean today</h2><ul id="nbMay"></ul></section>
+      <section aria-labelledby="nbUncertainH"><h2 id="nbUncertainH">Still uncertain</h2><ul id="nbUncertain"></ul></section>
+      <section aria-labelledby="nbSourcesH"><h2 id="nbSourcesH">Sources</h2><ol class="nb__sources" id="nbSources"></ol></section>
+      <p class="nb__fine">Drafted by McCluster AI from news headlines only (GDELT); every point cites its headlines. Read it before you say it or post it. Nothing here is financial advice.</p>
+    </article>
+
+    <!-- the house owner names region leaders; each sees and publishes their own countries' briefs -->
+    <section class="nb__leads" id="nbLeads" hidden aria-labelledby="nbLeadsH">
+      <h2 id="nbLeadsH">Region leaders</h2>
+      <ul id="nbLeadList"></ul>
+      <form class="nb__lead-form" id="nbLeadForm">
+        <label class="nb__field">M handle<input id="nbLeadHandle" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="handle"></label>
+        <label class="nb__field">Country<select id="nbLeadCountry"></select></label>
+        <button class="nb__button" type="submit">Make region leader</button>
+      </form>
+      <p class="nb__status" id="nbLeadStatus" role="status"></p>
+    </section>
+
+    <section class="nb__ask" id="nbAsk" hidden>
+      <p id="nbAskText"></p>
+      <button class="nb__primary" id="nbAskGo" type="button">Write this brief</button>
+    </section>
+  </main>
+
+  <!-- read it live: big words, an even scroll, the screen kept awake -->
+  <div class="nb__prompter" id="nbPrompter" hidden role="dialog" aria-modal="true" aria-label="Read the brief live">
+    <div class="nb__prompter-text" id="nbPrompterText"></div>
+    <div class="nb__prompter-bar">
+      <button type="button" id="nbPlay" aria-pressed="false">Start</button>
+      <button type="button" id="nbSlower" aria-label="Slower">−</button>
+      <span id="nbSpeed" aria-live="polite">Speed 3</span>
+      <button type="button" id="nbFaster" aria-label="Faster">+</button>
+      <button type="button" id="nbDone">Done</button>
+    </div>
+  </div>
+
+  <dialog class="nb__dialog" id="nbPublish" aria-labelledby="nbPublishH">
+    <form method="dialog" id="nbPublishForm">
+      <h2 id="nbPublishH">Publish as my post</h2>
+      <p class="nb__fine">This goes on the World feed under your name. Edit it to sound like you.</p>
+      <label class="nb__field nb__field--wide">Post<textarea id="nbPostText" rows="12" maxlength="2000"></textarea></label>
+      <p class="nb__count" id="nbPostCount"></p>
+      <!-- the house owner's brief can also be an article on mccluster.org/news, with the headlines it cites (docs/action-network/NEWSROOM.md) -->
+      <label class="nb__check" id="nbNewsroomRow" hidden><input type="checkbox" id="nbNewsroom" checked> <span>Also publish to the newsroom, as an article on mccluster.org/news with its sources. The first line is the headline.</span></label>
+      <p class="nb__status" id="nbPublishStatus" role="status"></p>
+      <div class="nb__actions">
+        <button class="nb__button" type="button" id="nbPublishCancel">Cancel</button>
+        <button class="nb__primary" type="submit" id="nbPublishGo">Publish</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/news-brief.js?v=__STAMP__"></script>
+</body>
+</html>

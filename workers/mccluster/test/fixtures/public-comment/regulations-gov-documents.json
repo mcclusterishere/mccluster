@@ -1,0 +1,41 @@
+{
+  "_fixture": "SYNTHETIC. Shaped after the Regulations.gov API v4 GET /v4/documents response (JSON:API data[].attributes; fields from the published OpenAPI document at https://open.gsa.gov/api/regulationsgov/v4/openapi.yaml). Identifiers are invented and do not name real proceedings.",
+  "data": [
+    {
+      "id": "EPA-HQ-OAR-2099-0001-0001",
+      "type": "documents",
+      "attributes": {
+        "agencyId": "EPA",
+        "docketId": "EPA-HQ-OAR-2099-0001",
+        "documentType": "Proposed Rule",
+        "frDocNum": "2099-11111",
+        "title": "Fixture proposed rule on battery recycling standards",
+        "postedDate": "2026-09-30T04:00:00Z",
+        "commentEndDate": "2026-11-30T04:59:59Z",
+        "openForComment": true,
+        "withdrawn": false
+      }
+    },
+    {
+      "id": "DOL-2099-0002-0001",
+      "type": "documents",
+      "attributes": {
+        "agencyId": "DOL",
+        "docketId": "DOL-2099-0002",
+        "documentType": "Proposed Rule",
+        "frDocNum": null,
+        "title": "Fixture proposed rule, closed for comment",
+        "postedDate": "2026-08-01T04:00:00Z",
+        "commentEndDate": "2026-09-01T03:59:59Z",
+        "openForComment": false,
+        "withdrawn": false
+      }
+    },
+    {
+      "id": "bad id with spaces",
+      "type": "documents",
+      "attributes": { "agencyId": "X", "title": "Malformed id is dropped", "openForComment": true }
+    }
+  ],
+  "meta": { "totalElements": 3, "pageNumber": 1, "pageSize": 25 }
+}

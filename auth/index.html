@@ -30,8 +30,12 @@
 
     function nextPath() {
       var raw = new URLSearchParams(location.search).get('next') || '/account.html';
-      if (raw.charAt(0) !== '/' || raw.charAt(1) === '/') return '/account.html';
-      return raw;
+      if (raw.charAt(0) !== '/' || raw.charAt(1) === '/' || raw.includes('\\') || /[\u0000-\u001f\u007f]/.test(raw)) return '/account.html';
+      try {
+        var target = new URL(raw, location.origin);
+        return target.origin === location.origin && (target.protocol === 'https:' || target.protocol === 'http:')
+          ? target.pathname + target.search + target.hash : '/account.html';
+      } catch (_) { return '/account.html'; }
     }
 
     var destination = nextPath();

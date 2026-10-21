@@ -1,5 +1,5 @@
 /* ============================================================
-   UPRISE ACTION NETWORK — the campaign page (/action/?c=<slug>).
+   HUMAN UPRISE — the campaign page (/action/?c=<slug>).
 
    Attention in, organized people out. Someone taps the link under a
    Reel (/action/?c=cobalt&src=ig&reel=0047), reads what is true and
@@ -223,13 +223,13 @@
 
   function paintCampaign() {
     doc.title = (C.headline || C.title) + " · " + C.title;
-    $("anKicker").textContent = C.kicker || "Uprise Action Network";
+    $("anKicker").textContent = C.kicker || "Human Uprise";
     paintHeadline(C.headline || "You saw it. Now do something.");
     $("anTitle").textContent = C.title || "";
     $("anBody").textContent = C.body || "";
     $("anCrumb").textContent = C.title || "Campaign";
     doc.body.classList.add("an-action-first");
-    if ($("anActionCampaign")) $("anActionCampaign").textContent = C.title || "Uprise Action Network";
+    if ($("anActionCampaign")) $("anActionCampaign").textContent = C.title || "Human Uprise";
     if ($("anActionHead")) $("anActionHead").textContent = "Pick an action.";
     if ($("anActionSub")) $("anActionSub").textContent = "Tap one. The system takes you straight to the mission.";
     if (URL_ORIGIN.reel || URL_ORIGIN.src) {
@@ -375,7 +375,7 @@
   function loadMissions() {
     if (!C) return Promise.resolve([]);
     var path = "action_missions?campaign_id=eq." + encodeURIComponent(C.id) +
-      "&status=in.(open,paused)&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,status,skills&order=created_at.asc&limit=50";
+      "&status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,status,skills&order=created_at.asc&limit=50";
     return rest(path).then(function (rows) {
       MISSIONS = Array.isArray(rows) ? rows : [];
       var requested = String(q.get("mission") || "");
@@ -402,18 +402,20 @@
     var chapter = C.chapter && typeof C.chapter === "object" ? C.chapter : {};
     var custom = Array.isArray(chapter.intake_choices) ? chapter.intake_choices.filter(function (x) { return x && x.label; }) : [];
     if (custom.length) {
-      return custom.map(function (x, i) {
+      var filtered = custom.map(function (x, i) {
         var out = Object.assign({}, x);
         out.key = out.key || (out.kind || "action") + "-" + i;
         if (out.mission_id) {
           var m = missionRow(out.mission_id);
+          if (!m) return null; /* never resurrect a retired mission via intake */
           if (m) {
             out.status = m.status;
             if (!out.note) out.note = m.description;
           }
         }
         return out;
-      });
+      }).filter(Boolean);
+      if(filtered.length)return filtered;
     }
     return MISSIONS.map(function (m) {
       return {
@@ -591,7 +593,7 @@
     BOUNTIES = data || { bounties: [] };
     var sec = $("anBounties"), box = $("anBountyList");
     if (!sec || !box) return;
-    var rows = Array.isArray(BOUNTIES.bounties) ? BOUNTIES.bounties : [];
+    var rows = Array.isArray(BOUNTIES.bounties) ? BOUNTIES.bounties.filter(function(b){return b && b.status==="open";}) : [];
     sec.hidden = !rows.length;
     if (!rows.length) return;
     box.textContent = "";
@@ -707,7 +709,7 @@
 
     $("anCta").hidden = true;
     if ($("anMnet")) {
-      $("anMnet").textContent = signedIn() ? "Choose another mission →" : "Enter the Action Network →";
+      $("anMnet").textContent = signedIn() ? "Choose another mission →" : "Enter Human Uprise →";
       $("anMnet").setAttribute("href", signedIn() ? missionHubHref() : "/mnet.html");
     }
 
@@ -727,7 +729,7 @@
         ? "Take action"
         : (mode === "new" ? "Create account & take action" : "Sign in & take action");
     } else {
-      $("anJoinH").textContent = "Join the Action Network.";
+      $("anJoinH").textContent = "Join Human Uprise.";
       $("anJoinSub").textContent = "Choose an action above first.";
       $("anJoin").textContent = signedIn() ? "Join campaign" : (mode === "new" ? "Create account & join" : "Sign in & join");
     }
@@ -903,7 +905,7 @@
     root.MCC.signUpWithPassword(email, pass, {
       name: check.legal_name, full_name: check.legal_name,
       first_name: check.first_name, last_name: check.last_name,
-      privacy_policy_version: "2026-09-26",
+      privacy_policy_version: "2026-10-19",
       privacy_acknowledged_at: new Date().toISOString(),
       joined_via: "action:" + SLUG
     }).then(function (res) {
@@ -1018,7 +1020,7 @@
       g.textBaseline = "alphabetic";
       g.fillStyle = "#ff4d3d";
       g.font = "800 40px Manrope, system-ui, sans-serif";
-      g.fillText("UPRISE ACTION NETWORK", 96, 340);
+      g.fillText("HUMAN UPRISE", 96, 340);
       g.fillStyle = "#b3a89c";
       g.fillText("YOU ARE PARTICIPANT", 96, 620);
       g.fillStyle = "#f4efe6";

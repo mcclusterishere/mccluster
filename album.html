@@ -55,6 +55,12 @@
 
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <!-- THE PREMIERE IS UP FROM THE FIRST PAINT (owner, 2026-10-20: "other screens flash up instead of just a smooth
+       transition"). js/chamber.js raises the once-a-session curtain, but it loads at the end of the page, so the album
+       painted first and the curtain dropped over it almost a second later. The same test it uses (not seen this session,
+       motion allowed) raises the curtain's ground here, before anything is drawn; chamber.js puts the curtain itself in
+       its place and takes this away. -->
+  <script>(function(){try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&sessionStorage.getItem("mcc_premiere")!=="1")document.documentElement.classList.add("prem-due")}catch(e){}})();</script>
   <script src="js/theme.js?v=__STAMP__"></script>
   <script defer src="js/knower.js?v=__STAMP__"></script>
   <style>
@@ -175,7 +181,7 @@
       color: #fff; font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 14px 36px -14px rgba(229,56,59,0.6); }
     .alb__play:active { transform: translateY(1px); }
-    /* Heal the 3 only: the door from the EP to the Action Network gateway */
+    /* Heal the 3 only: the door from the EP to Human Uprise gateway */
     .alb-test { padding: 1.6rem 0 0.4rem; }
     .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
     .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
@@ -250,6 +256,7 @@
       background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
     .tr .reclock .gatechip b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
     .tr .reclock .gatechip span { font-weight: 700; font-size: 0.56rem; color: var(--cream-dim); letter-spacing: 0.02em; }
+    .tr .reclock a.gatechip { text-decoration: none; }
     .tr .reclock .gatechip--on { background: color-mix(in srgb, var(--pulse) 26%, transparent); box-shadow: inset 0 0 0 1px var(--pulse); }
     /* a locked row still says how long the PREVIEW is, so the clock in
        the row is never lying about what this file actually contains */
@@ -540,6 +547,9 @@
     #prem .seam { width: 0; height: 2px; background: var(--pulse, #e5383b); margin: 1rem auto 0;
       animation: premSeam .6s cubic-bezier(.2,.7,.2,1) 1.35s forwards; }
     #prem.out { animation: premOut .7s ease forwards; }
+    /* the curtain's ground before js/chamber.js has run (the head script above); it lifts on its own if chamber.js never comes */
+    html.prem-due body::after { content: ""; position: fixed; inset: 0; z-index: 400; background: #050403;
+      animation: premOut .7s ease 4s forwards; }
     @keyframes premMark { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
     @keyframes premUp { from { opacity: 0; transform: translateY(.35em); } to { opacity: 1; transform: none; } }
     @keyframes premSeam { to { width: min(46vw, 320px); } }
@@ -551,7 +561,7 @@
       transition: opacity .5s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
     .alb h1.set .ch { opacity: 1; transform: none; }
     @media (prefers-reduced-motion: reduce) {
-      #prem { display: none; }
+      #prem, html.prem-due body::after { display: none; }
       .alb h1 .ch { opacity: 1; transform: none; transition: none; }
     }
 
@@ -776,9 +786,10 @@
       <img class="appbar__m" src="assets/img/m-mark.png" alt="">
       <span>HERE</span>
     </a>
-    <a class="appbar__tab" href="account.html" data-appnav="profile">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
-      <span>Profile</span>
+    <!-- the Globe, written here as js/tabbar.js draws it, so the bar never paints a retired Profile tab first (owner, 2026-10-20) -->
+    <a class="appbar__tab appbar__world" href="https://mccluster.org/?view=feed" data-appnav="world" aria-label="Open the World globe">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg>
+      <span>Globe</span>
     </a>
   </nav>
 
@@ -1069,10 +1080,12 @@
          full        → the one play, happening now
          unavailable → our fault, not yours
 
-       The rule is the owner's and the Worker enforces it: the gated record
-       closes its album and plays only after the songs before it are heard
-       all the way through, in album order, with nothing in between. Every
-       play needs a fresh run of the album.
+       The rule is the owner's and the database + Worker enforce it
+       (2026-10-15): the full track plays only for a member with three
+       missions an admin verified AND a verified identity. Everyone else
+       hears the preview, and the row says exactly what is missing (missions
+       x/3, identity verification) and links to it. Preview plays and full
+       plays are counted apart (music_preview_play / music_full_play).
        ============================================================ */
     /* The clock on a row is read off whatever that row actually points at,
        which for a gated track changes under it: locked it is the 12-second
@@ -1117,6 +1130,7 @@
       var slot = row.querySelector("[data-reclock]");
       if (!slot) return;
       row.classList.remove("locked", "unlocked", "gone", "unlocking");
+      row._gateOut = out;
       var pv = row.getAttribute("data-preview-src");
       row.setAttribute("data-gate", out.state);
       var line = window.MCC_GATED && window.MCC_GATED.progress ? window.MCC_GATED.progress(out) : null;
@@ -1138,7 +1152,13 @@
         slot.innerHTML = chip("unlock", line ? line.b : "PLAY ONCE", line ? line.s : "you earned it");
       } else if (out.state === "locked") {
         row.classList.add("locked");
-        slot.innerHTML = chip("gatechip", line ? line.b : "LOCKED", line ? line.s : "finish more songs to unlock");
+        /* the chip is the way to the first missing step, from the server's answer */
+        var why = window.MCC_GATED && window.MCC_GATED.explain ? window.MCC_GATED.explain(out) : null;
+        var step = why && why.links && why.links[0];
+        slot.innerHTML = step
+          ? '<a class="gatechip" href="' + escAttr(step.href) + '" title="' + escAttr(why.text) + '" aria-label="' + escAttr(why.text + " " + step.label) + '">' +
+            '<b>' + esc(line ? line.b : "LOCKED") + '</b><span>' + esc(line ? line.s : step.label) + '</span></a>'
+          : chip("gatechip", line ? line.b : "LOCKED", line ? line.s : "not available yet");
       } else if (out.state === "preview") {
         row.classList.add("locked");
         /* The ask, not the mechanism. Nobody wants "an account" — they came
@@ -1148,10 +1168,12 @@
         /* ?from carries the record into the intake so the listener is told
            why they are being asked. It is a marketing segment and nothing
            more: neither value grants any access, so an edited URL is worth
-           nothing. */
+           nothing. ?next brings the listener back to this record after
+           signing in, or after the sign-up's three pages. */
         var from = (row.getAttribute("data-gated-object") || "").split("/")[0];
-        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '">' +
-          '<b>FULL SONG</b><span>tap here · free</span></a>';
+        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '&amp;next=' + escAttr(encodeURIComponent(location.pathname + location.search)) + '"' +
+          ' aria-label="Sign in. The full song needs three verified missions and a verified identity.">' +
+          '<b>FULL SONG</b><span>sign in · missions + ID</span></a>';
       } else {
         row.classList.add("gone");
         slot.innerHTML = '<span class="gonetxt" title="The full track could not be reached">Unavailable</span>';
@@ -1488,8 +1510,19 @@
         claimThenPlay(target);
         return;
       }
-      if (row && row.hasAttribute("data-gated-bucket") && !row.hasAttribute("data-granted")) previewNotice(row, false);
+      if (row && row.hasAttribute("data-gated-bucket") && !row.hasAttribute("data-granted")) {
+        previewNotice(row, false);
+        gatedPlayEvent(row, false);
+      }
       playNow(i, at);
+    }
+    /* A gated record's preview and its full track are different listens:
+       counted apart, with no more than the analytics model already carries. */
+    function gatedPlayEvent(row, full) {
+      if (!window.MCC_TRACK || !row) return;
+      window.MCC_TRACK(full ? "music_full_play" : "music_preview_play", {
+        track: row.getAttribute("data-title"), album: ALBUM, source: "album", gated: true
+      });
     }
     function playNow(i, at) {
       if (i !== undefined && i !== cur) load(i, at);
@@ -1509,10 +1542,12 @@
       previewTold[key] = true;
       var gate = row.getAttribute("data-gate") || "preview";
       var head = ended ? "That was the preview." : "Playing the preview.";
-      var rest = gate === "earned" ? " Tap the song to play it in full, once."
-        : gate === "locked" ? " Finish more songs to unlock the full track."
+      var why = row._gateOut && window.MCC_GATED && window.MCC_GATED.explain ? window.MCC_GATED.explain(row._gateOut) : null;
+      var rest = gate === "earned" ? " Tap the song to play it in full."
+        : (gate === "locked" || gate === "preview") && why && why.text ? " " + why.text
+        : gate === "locked" ? " The full track needs three verified missions and a verified identity."
         : gate === "gone" || gate === "unavailable" ? " The full track cannot be reached right now."
-        : " The full song is free with an account: tap FULL SONG.";
+        : " The full song needs an account, three verified missions and a verified identity: tap FULL SONG.";
       if (window.MCC_TOAST) window.MCC_TOAST(head + rest);
       var chip = row.querySelector(".unlock");
       if (chip && ended) { chip.classList.remove("unlock--nudge"); void chip.offsetWidth; chip.classList.add("unlock--nudge"); }
@@ -1527,6 +1562,7 @@
           /* not earned after all (another tab spent it, or signed out):
              say where they stand and play the preview */
           paintGate(row, out);
+          gatedPlayEvent(row, false);
           playNow(target);
           return;
         }
@@ -1538,6 +1574,7 @@
         load(target, 0);
         probeDuration(row);
         startDeck(row);
+        gatedPlayEvent(row, true);
         if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: row.getAttribute("data-title"), album: ALBUM });
       });
     }

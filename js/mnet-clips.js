@@ -1,4 +1,4 @@
-/* Action Network · Clips: paid Equity Uprise distribution campaigns for members.
+/* Equity Uprise · Clips: paid Equity Uprise distribution campaigns for members.
 
    Discover a campaign → claim it → take approved music/action footage and your
    tracking link → post a Reel → paste its link → the server reads the post
@@ -48,7 +48,7 @@
 
   function earnings() {
     var t = K.work && K.work.totals; if (!t) return "";
-    return '<div class="mn__panel"><p class="mn__eyebrow">Your clipping pay</p>' +
+    return '<div class="mn__panel"><p class="mn__eyebrow">Your earnings</p>' +
       '<div class="mn__clipstats"><div><b>' + usd(t.held_cents) + '</b><small>held</small></div><div><b>' + usd(t.payable_cents) + '</b><small>payable</small></div><div><b>' + usd(t.paid_cents) + '</b><small>paid</small></div></div>' +
       ((K.work.payouts || []).length ? '<p class="mn__hint">Last payout ' + usd(K.work.payouts[0].amount_cents) + ' on ' + esc(day(K.work.payouts[0].recorded_at)) + '.</p>' : "") +
       '<p class="mn__hint">Held pay becomes payable once the clip has stayed up, the hold period has passed and the artist has approved it.</p></div>';
@@ -61,7 +61,7 @@
         'not verified yet. Put <code>' + esc(a.code) + '</code> in your bio, then <button class="mn__quiet" type="button" data-clip-verify="' + esc(a.account_id) + '">check now</button>') + '</li>';
     }).join("");
     var opts = K.platforms.map(function (p) { return '<option value="' + esc(p.platform) + '"' + (p.enabled ? "" : " disabled") + '>' + esc(p.label + (p.enabled ? "" : " (not yet)")) + '</option>'; }).join("");
-    return '<div class="mn__panel"><p class="mn__eyebrow">Accounts you clip from</p>' + (rows ? '<ul class="mn__cliplist">' + rows + '</ul>' : '<p class="mn__hint">Add the account you post from. Pay only counts posts on accounts you have verified.</p>') +
+    return '<div class="mn__panel"><p class="mn__eyebrow">Your Instagram account</p>' + (rows ? '<ul class="mn__cliplist">' + rows + '</ul>' : '<p class="mn__hint">Add the account you post from. Pay only counts posts on accounts you have verified.</p>') +
       '<div class="mn__cliprow"><select class="mn__input" id="mnClipPlatform" aria-label="Platform">' + opts + '</select>' +
       '<input class="mn__input" id="mnClipHandle" placeholder="@yourhandle" autocomplete="off" aria-label="Handle">' +
       '<button class="mn__primary" type="button" data-clip-add-account>Add</button></div>' +
@@ -70,7 +70,7 @@
 
   function campaignCard(c) {
     var claim = claimOf(c.mission_id);
-    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : (c.source_kind === 'music' ? '' : 'Action Network source'));
+    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : (c.source_kind === 'music' ? '' : 'Equity Uprise source'));
     var terms = usd(c.base_cpm_cents) + ' per 1,000 verified views after ' + n(c.min_views) + ' views' +
       (c.per_clip_cap_cents ? ' · up to ' + usd(c.per_clip_cap_cents) + ' a clip' : "") +
       (c.per_clipper_cap_cents ? ' · up to ' + usd(c.per_clipper_cap_cents) + ' a clipper' : "") +
@@ -85,7 +85,7 @@
       ((c.attribution_handles || []).length ? '<p class="mn__hint"><b>Credit:</b> ' + esc(c.attribution_handles.join(" ")) + '</p>' : "") +
       ((c.collaborator_handles || []).length ? '<p class="mn__hint"><b>Collab:</b> invite ' + esc(c.collaborator_handles.join(" ")) + (c.collaboration_mode === 'required_review' ? ' · acceptance is checked in review' : '') + '</p>' : "") +
       '<p class="mn__hint">Clips must stay up ' + n(c.keep_live_days) + ' days. Pay holds ' + n(c.hold_days) + ' days' + (c.approval_mode === "creator" ? " and the artist approves each clip" : "") + '.</p>';
-    if (!claim) return body + '<button class="mn__primary" type="button" data-clip-claim="' + esc(c.mission_id) + '">Claim this campaign</button></article>';
+    if (!claim) return body + '<button class="mn__primary" type="button" data-clip-claim="' + esc(c.mission_id) + '">Start clipping</button></article>';
     var link = trackingLink(c.destination_url || claim.link || (c.song && c.song.url) || (c.track && c.track.url), claim.ref_code, (c.platforms || [])[0]);
     var assets = K.assets[c.mission_id];
     var files = assets ? (assets.assets || []).map(function (a) {
@@ -94,14 +94,14 @@
     }).join("") : "";
     var moments = (c.moments || []).map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.label) + '</option>'; }).join("");
     var plat = (c.platforms || []).filter(enabled).map(function (p) { return '<option value="' + esc(p) + '">' + esc(label(p)) + '</option>'; }).join("");
-    return body + '<div class="mn__clipclaimed"><p><b>Your link</b> for your bio or comments, so fans you bring are counted:</p>' +
+    return body + '<div class="mn__clipclaimed"><p><b>1 · Your share link</b></p>' +
       '<input class="mn__input" readonly value="' + esc(link) + '" aria-label="Your tracking link" onclick="this.select()">' +
       (assets ? '<ul class="mn__cliplist">' + (files || '<li>No files for this campaign.</li>') + '</ul><p class="mn__hint">These links expire in 15 minutes.</p>' :
-        '<button class="mn__quiet" type="button" data-clip-assets="' + esc(c.mission_id) + '">Get the approved files</button>') +
+        '<button class="mn__quiet" type="button" data-clip-assets="' + esc(c.mission_id) + '">2 · Get footage</button>') +
       '<div class="mn__cliprow"><select class="mn__input" id="mnClipSubPlat-' + esc(c.mission_id) + '" aria-label="Platform">' + plat + '</select>' +
       '<input class="mn__input" id="mnClipUrl-' + esc(c.mission_id) + '" type="url" inputmode="url" placeholder="https://www.instagram.com/reel/…" aria-label="Link to your posted clip">' +
       (moments ? '<select class="mn__input" id="mnClipMoment-' + esc(c.mission_id) + '" aria-label="Song moment"><option value="">Which part of the song?</option>' + moments + '</select>' : "") +
-      '<button class="mn__primary" type="button" data-clip-submit="' + esc(c.mission_id) + '">Submit clip</button></div></div></article>';
+      '<button class="mn__primary" type="button" data-clip-submit="' + esc(c.mission_id) + '">3 · Submit posted clip</button></div></div></article>';
   }
 
   function myClips() {
@@ -122,8 +122,8 @@
 
   function render() {
     var root = $("mnClipsRoot"); if (!root) return;
-    var head = '<div class="mn__section-head"><div><p class="mn__eyebrow">Music · paid clipping</p><h2 id="mnClipsTitle">Clip songs. Get paid on real views.</h2></div></div>' +
-      '<p class="mn__lede">Claim a campaign, post a Reel with the song, paste its link. We read the views from Instagram itself, so screenshots never count.</p>' +
+    var head = '<div class="mn__section-head"><div><p class="mn__eyebrow">Action Network · Clip & Earn</p><h2 id="mnClipsTitle">Pick. Clip. Post. Earn.</h2></div></div>' +
+      '<p class="mn__lede">Choose a campaign. Post an approved clip. Submit its link.</p>' +
       (K.msg ? '<p class="mn__hint' + (K.bad ? ' mn__danger' : '') + '" role="status">' + esc(K.msg) + '</p>' : "") +
       (K.song ? '<p class="mn__hint">Showing campaigns for one song. <button class="mn__quiet" type="button" data-clip-all>See all</button></p>' : "");
     var cards = K.all.length ? K.all.map(campaignCard).join("") : '<div class="mn__empty">No clipping campaigns are open right now.</div>';

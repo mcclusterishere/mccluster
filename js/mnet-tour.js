@@ -1,4 +1,4 @@
-/* THE WALKTHROUGH — a guided tour of Action Network for somebody who just arrived.
+/* THE WALKTHROUGH — a guided tour of Equity Uprise for somebody who just arrived.
 
    Started three ways, all the same tour:
      - mnet.html?tour=1, the link in Matthew's welcome message;
@@ -7,7 +7,7 @@
      - window.MCC_TOUR.start() from anywhere else.
 
    Each step names one thing, rings it, and dims the rest. Steps that live
-   on another Action Network tab switch to it by pressing that tab's own button, so the
+   on another Equity Uprise tab switch to it by pressing that tab's own button, so the
    tour uses the page exactly the way a person does and needs nothing from
    js/mnet.js. A step whose target is not on screen (a signed-out view, an
    empty list) still shows, centred, so the tour never stalls.
@@ -31,29 +31,29 @@
 
   /* The tour leads with doing: missions, proof, the receipt and the
      fellowship come before the social tabs, because that is what the
-     Action Network is for. Wording follows the product contract: no
+     Equity Uprise is for. Wording follows the product contract: no
      points for opinions, no likes-for-rewards, nobody gets labelled. */
   var STEPS = [
-    { title: "Welcome to the Action Network",
+    { title: "Welcome to Equity Uprise",
       body: "The place for doers. Don't just watch. Act. This takes about a minute." },
-    { target: ".mn__tabs", title: "Seven tabs, one map",
-      body: "Action, Missions, People, Groups, Messages, Alerts and Me. Everything on the network lives behind one of these." },
+    { view: "feed", target: "#mnWorld", title: "The world is your feed",
+      body: "The Earth on top, the people under it. Tap a red pin to see a mission and the posts about it. Search finds places, people, groups and missions. Your bell has your alerts; your picture has your profile, messages and settings." },
     { view: "missions", target: "#mnMissionList", title: "Start with a mission",
       body: "A mission is one real thing to do out in the world, like feeding someone who is unhoused or paying off a kid's lunch debt. Join one, then go do it." },
     { view: "missions", target: "#mnMissionList", title: "Show your proof",
       body: "When it's done, add a photo, a link or a short note. A person on the desk checks it. Once it's verified it goes on your Action Record with a receipt you can share." },
     { view: "missions", target: "#mnRecord", title: "Three verified actions",
       body: "After three verified actions you can apply to be a fellow. Fellows help lead missions and can go live on the network." },
-    { view: "feed", target: "#mnPostBody", title: "The Action feed",
+    { view: "feed", target: "#mnPostBody", title: "Your feed",
       body: "Post what you did, what you're listening to, and what's next. Follow the people doing the same missions as you." },
     { view: "messages", target: "#mnConversations", title: "A straight line to Matthew",
       body: "Matthew's welcome is in your messages. Reply any time with questions, ideas or problems. It goes straight to him." },
-    { view: "profile", target: "#mnEditProfile", title: "Make it yours",
-      body: "Add a photo, a headline and a short bio so people know who they're doing this with." },
+    { view: "profile", target: "#mnEditProfile", title: "Your profile",
+      body: "Edit profile is where your photo, headline and short bio go, so people know who they're doing this with." },
     { target: '.appbar [data-appnav="music"]', title: "The music",
-      body: "This tab at the bottom takes you to the music. The middle one is home, and the last one brings you back here." },
+      body: "This tab at the bottom takes you to the music. The middle one is home, and the Globe brings you back here." },
     { title: "Put it into action",
-      body: "You can replay this any time from Me \u2192 Take the tour.",
+      body: "You can replay this any time from your picture \u2192 View profile \u2192 Take the tour.",
       finish: [
         { label: "Look around" },
         { label: "Pick a mission", view: "missions" }
@@ -147,8 +147,8 @@
 
   function openView(name) {
     if (!name) return;
-    var tab = d.querySelector('.mn__tabs [data-mn-view="' + name + '"]');
-    if (tab && !tab.classList.contains("is-active")) tab.click();
+    /* there is no tab row any more: ask the network to switch rooms */
+    if (window.MCC_MNET && typeof window.MCC_MNET.setView === "function") window.MCC_MNET.setView(name);
   }
 
   function show(i) {
@@ -234,7 +234,7 @@
      link may still be on the sign-in or profile screen, so wait for the app
      to appear rather than touring a door. */
   function whenAppReady(cb) {
-    /* No time limit: signing in and finishing the Action Network profile can take
+    /* No time limit: signing in and finishing a Equity Uprise profile can take
        minutes, and the walkthrough should still start the moment the app
        appears. Watches #mnApp's hidden attribute rather than polling. */
     var app = d.getElementById("mnApp");
