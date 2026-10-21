@@ -1,0 +1,54 @@
+/* Every account's front page editor (front-studio.html, js/front-studio.js). Phone first: the preview, then the
+   settings under it; from 1100px they sit side by side and the preview fits the window. */
+.front-studio{background:#0b0908;color:#f5efe6;min-height:100vh}
+.fs{display:grid;gap:14px;max-width:1440px;margin:0 auto;padding:16px 16px 140px;font:15px/1.5 system-ui,sans-serif}
+.fs h1{margin:0;font:400 clamp(1.8rem,7vw,2.6rem)/1.05 "Anton",Impact,sans-serif;letter-spacing:.02em;text-transform:uppercase}
+.fs-gate{display:grid;gap:12px;justify-items:start;max-width:34rem;margin:12vh auto 0}
+.fs-gate p{margin:0;color:#d8cfc3}
+.fs-head{display:grid;gap:12px}
+.fs-k{margin:0 0 4px;color:#e5383b;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.fs-live{margin:4px 0 0;color:#b9ada0;font-size:13px}
+.fs-actions{display:flex;flex-wrap:wrap;gap:8px}
+.fs-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.04);color:#f5efe6;font:700 14px/1.2 system-ui,sans-serif;text-decoration:none;cursor:pointer}
+.fs-btn--primary{background:#f5efe6;border-color:#f5efe6;color:#0b0908}
+.fs-btn--ghost{background:transparent}
+.fs-btn[disabled],.fs-btn.is-disabled{opacity:.45;cursor:not-allowed}
+.fs-btn[hidden]{display:none}
+.fs-btn--file{position:relative;overflow:hidden}
+.fs-btn--file input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:max(16px,1rem)}
+.fs-status p{margin:0 0 6px;padding:10px 12px;border-radius:10px;font-size:14px}
+.fs-dirty{background:rgba(242,180,72,.1);color:#f7cd86}
+.fs-ok{background:rgba(79,223,152,.08);color:#9ef0c4}
+.fs-bad{background:rgba(239,90,99,.1);color:#ffb7bb;font-size:13px;margin:0;padding:8px 10px;border-radius:8px}
+.fs-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
+.fs-stage,.fs-form{min-width:0;padding:12px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#14100e}
+.fs-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.fs-seg{display:flex;flex-wrap:wrap;gap:6px}
+.fs-seg button{min-height:44px;padding:8px 14px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:transparent;color:#d8cfc3;font:700 13px/1 system-ui,sans-serif;cursor:pointer}
+.fs-seg button[aria-pressed="true"]{border-color:#e5383b;background:rgba(229,56,59,.14);color:#fff}
+.fs-viewport{width:100%;min-width:0;overflow:hidden}
+.fs-device{position:relative;width:calc(var(--fs-w,390px) * var(--fs-k,1));height:calc(var(--fs-h,844px) * var(--fs-k,1));max-width:100%;margin:0 auto;border:1px solid rgba(255,255,255,.2);border-radius:18px;overflow:hidden;background:#000}
+.fs-device iframe{position:absolute;left:0;top:0;width:var(--fs-w,390px);height:var(--fs-h,844px);border:0;transform:scale(var(--fs-k,1));transform-origin:0 0}
+.fs-help{margin:8px 0 0;color:#b9ada0;font-size:13px}
+.fs-form{display:grid;gap:12px}
+.fs-group{display:grid;gap:10px;min-width:0;margin:0;padding:12px;border:1px solid rgba(255,255,255,.12);border-radius:12px}
+.fs-group legend{padding:0 6px;font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.fs-sub{margin:4px 0 0;color:#b9ada0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.fs-field{display:grid;gap:5px;min-width:0;color:#d8cfc3;font-size:13px;font-weight:700}
+.fs-field small{color:#8f8478;font-weight:500}
+.fs-field input,.fs-field select{width:100%;min-width:0;min-height:44px;padding:9px 11px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:#0b0908;color:#f5efe6;font:400 max(16px,1rem)/1.3 system-ui,sans-serif}
+.fs-check{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;min-height:44px;font-size:14px}
+.fs-check input{width:22px;height:22px;margin:2px 0 0}
+.fs-check small{display:block;color:#8f8478;font-size:12px}
+.fs-pair{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.fs-link,.fs-tag,.fs-media{display:grid;gap:8px;min-width:0;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px}
+.fs-link.is-bad{border-color:rgba(239,90,99,.5)}
+.fs-media__head b{display:block}
+.fs-media__head small{color:#8f8478;font-size:12px}
+.fs-media p{margin:0;font-size:13px}
+.fs-has{color:#9ef0c4}
+.fs-none{color:#8f8478}
+.fs-progress{color:#f7cd86}
+@media (min-width:560px){.fs-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:768px){.fs{padding:24px 24px 140px}.fs-head{grid-template-columns:minmax(0,1fr) auto;align-items:end}}
+@media (min-width:1100px){.fs-grid{grid-template-columns:minmax(0,1fr) minmax(360px,460px);align-items:start}.fs-form{max-height:calc(100vh - 210px);overflow:auto;overscroll-behavior:contain}}

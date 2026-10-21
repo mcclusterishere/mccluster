@@ -58,6 +58,13 @@ function render(data){
   $('mfNetwork').href='mnet.html?profile='+encodeURIComponent(personId);
   const mine=!!self&&personId===String(self.identity?.mccluster_id||'').toLowerCase();
   $('mfCustomize').hidden=!mine;
+  /* EVERY ACCOUNT'S FRONT PAGE (owner, 2026-10-21: "all the accounts need to be able to recreate with their own media
+     this exact same experience"): the owner of this card builds it in front-studio.html; anyone else is taken into the
+     published one (front.html), unless they asked for the card (&card=1); a signed-in visitor can always go back to
+     their own page (the bar keeps following whoever they look at) */
+  $('mfBuild').hidden=!mine;
+  $('mfBack').hidden=mine||!self;
+  void frontPage(personId,name,mine);
   $('mfOwnerPanel').hidden=!mine;
   $('mfDriverPanel').hidden=true;
   $('mfWhip').hidden=true;
@@ -70,6 +77,25 @@ function render(data){
   });
   if(mine){void driverWorkspace();void operatorWorkspace();}
 }
+
+/* the published front page of this person, if there is one (GET /v1/fronts/:handle is public) */
+async function frontPage(personId,name,mine){
+  $('mfFront').hidden=true;
+  try{
+    const r=await fetch('https://api.mccluster.org/v1/fronts/'+encodeURIComponent(personId),{headers:{accept:'application/json'},credentials:'omit'});
+    const b=r.ok?await r.json().catch(()=>null):null;
+    if(!b||b.ok!==true||!b.config||b.handle!==personId||personId!==handle)return;
+    const url='front.html?u='+encodeURIComponent(personId);
+    $('mfFront').href=url;$('mfFront').textContent=(mine?'My front page':'Enter '+name+'\u2019s front page')+' \u2197';$('mfFront').hidden=false;
+    if(mine)$('mfBuild').textContent='Edit my front page';
+    else if(query.get('card')!=='1')location.replace(url);
+  }catch{/* no front page, or it cannot be read: the card stays */}
+}
+$('mfBack').onclick=()=>{
+  try{window.MCC_BAR?.clearPerspective?.();}catch{}
+  const mine=String(self?.identity?.mccluster_id||'').toLowerCase();
+  location.href=mine&&handleRE.test(mine)?'member-front.html?handle='+encodeURIComponent(mine):'member-front.html';
+};
 
 async function operatorWorkspace(){
   try{
@@ -116,6 +142,8 @@ async function start(){
     $('mfName').textContent='Make this space yours.';
     message('Sign in with an M Account to view public member profiles and create your own page.');
     $('mfNetwork').textContent='Sign in ↗';$('mfNetwork').href='account.html';
+    /* a published front page is public: a signed-out visitor to this card is taken into it all the same */
+    if(handleRE.test(handle))void frontPage(handle,'@'+handle,false);
     return;
   }
   try{
