@@ -180,11 +180,14 @@ fi
 systemctl daemon-reload
 
 # Keep timers enabled; restart only services that already exist on this host.
-for timer in mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
+for timer in mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
   if systemctl list-unit-files "${timer}" --no-legend 2>/dev/null | grep -q "${timer}"; then
     systemctl enable --now "${timer}"
   fi
 done
+
+# Catch up the knowledge export after deployment without blocking inference.
+systemctl start --no-block mccluster-core-knowledge.service
 
 for unit in mccluster-core-tool-broker.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service mccluster-core-runner.service; do
   if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then

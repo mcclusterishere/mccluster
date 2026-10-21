@@ -10,6 +10,7 @@ import { callCoreCapability, unwrapCapabilityResult } from './game-studio/capabi
 const string = { type: 'string' };
 const tool = (name, description, properties = {}, required = []) => ({ type: 'function', function: { name, description, parameters: { type: 'object', properties, required, additionalProperties: false } } });
 export const RESIDENT_TOOLS = Object.freeze([
+  tool('knowledge_read', 'Read stored news, intelligence evidence, first-party aggregate analytics and daily knowledge memory. Source headlines are unverified; returns bounded excerpts. Optional query filters news and memory, not analytics totals.', { query: string, days: { type: 'integer', minimum: 1, maximum: 30 } }),
   tool('operations_read', 'Read actual deployment, recent jobs, objectives and pending approvals. Use for questions about McCluster system status.'),
   tool('memory_search', 'Search saved conversations and canonical memories across McCluster. Supply a few precise keywords; use OR between alternatives.', { query: string }, ['query']),
   tool('repository_search', 'Search tracked source code and documentation in the canonical McCluster repository. Literal search, returns file names and lines.', { query: string }, ['query']),
@@ -54,6 +55,10 @@ export async function executeResidentTool(name, args, context, dependencies = {}
   const { orgId, turnId, before } = context;
   if (!orgId || !turnId) throw new Error('Trusted organization and turn are required');
   const query = dependencies.rest || rest;
+  if (name === 'knowledge_read') {
+    const { body } = await query('rpc/ops_ai_knowledge_read', { method: 'POST', body: JSON.stringify({ p_org_id: orgId, p_query: text(args.query, 200), p_days: Math.min(30, args.days || 1) }) });
+    return body;
+  }
   if (name === 'operations_read') {
     const snapshot = await (dependencies.coreResume || coreResume)({ orgId, sinceHours: 24, limit: 6 });
     const work = snapshot.work || {};
