@@ -939,8 +939,12 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
     /* a software-rendered globe under a blurred backdrop is slow to capture on a desktop runner */
     await page.screenshot({ path: join(OUT, scope + '-editor.png'), timeout: 90000 });
     const before = world.uploadN || 0;
+    /* a save is an upload, a finalize and a PATCH; a loaded runner can take its time, so wait for the PATCH itself */
+    const patches = () => req(world, 'PATCH', /^\/v1\/mnet\/posts\//).length;
+    const saved = async (n) => { for (let t = 0; t < 600 && patches() <= n; t++) await page.waitForTimeout(100); await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {}); };
+    const p1 = patches();
     await page.click('#mnThumbUseFrame');
-    await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {});
+    await saved(p1);
     const frameId = asset(100 + before + 1), patch = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1);
     const up = world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url').at(-1), fin = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
     check(scope, 'Use this frame uploads the frame as a JPEG and finalizes it with its size', world.uploadN === before + 1 && up.body.mime_type === 'image/jpeg' && fin.body.asset_id === frameId && fin.body.width > 0 && fin.body.height > 0 && Math.max(fin.body.width, fin.body.height) <= 1080, { up: up && up.body, fin: fin && fin.body });
@@ -957,10 +961,12 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
     /* a tap, as the feed may still be settling under a software-rendered globe */
     await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
     await page.waitForSelector('#mnThumbDialog[open]', { timeout: 5000 });
+    const p2 = patches();
     await page.setInputFiles('#mnThumbFile', join(ROOT, 'assets/frames/church_0001.jpg'));
-    await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {});
+    await saved(p2);
     const imageId = asset(100 + before + 2), patch2 = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1), fin2 = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
-    check(scope, 'Upload an image sends that picture, finalized with its own size', JSON.stringify(patch2.body) === JSON.stringify({ poster_by_media: { [VID.mine]: imageId } }) && fin2.body.asset_id === imageId && fin2.body.width > 0, { patch: patch2.body, fin: fin2.body });
+    const said = await page.evaluate(() => ({ open: document.getElementById('mnThumbDialog').open, status: document.getElementById('mnThumbStatus').textContent }));
+    check(scope, 'Upload an image sends that picture, finalized with its own size', JSON.stringify(patch2.body) === JSON.stringify({ poster_by_media: { [VID.mine]: imageId } }) && fin2.body.asset_id === imageId && fin2.body.width > 0, { patch: patch2.body, fin: fin2.body, said, uploads: world.uploadN });
     check(scope, 'no horizontal overflow after the edits', await noSideways(page));
     check(scope, 'no JavaScript errors', errors.length === 0, errors);
   } finally { await ctx.close(); }
