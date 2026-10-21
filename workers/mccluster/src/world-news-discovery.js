@@ -47,6 +47,7 @@
 import { reply, fail } from './lib/http.js';
 import { fetchNoCrossHostRedirect } from './lib/safe-fetch.js';
 import { isoFromGdelt, gdeltCodesFor } from './intel/news-country-codes.js';
+import { placeScopeEnabled } from './world-region-feed.js';
 
 export const GDELT_LASTUPDATE = 'https://data.gdeltproject.org/gdeltv2/lastupdate.txt';
 export const GDELT_HOSTS = Object.freeze(['https://data.gdeltproject.org/gdeltv2/', 'https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/']);
@@ -515,8 +516,36 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
    places instead, counted on a HEAT_CELL grid, so the globe can count them by state with the state shapes it already has.
    Only counts and rounded places leave here: no title, link or id. It reads our own table, a page at a time up to
    HEAT_PAGES (capped says when there were more), is kept five minutes per data centre, and answers 200 with nothing when
-   the database cannot. */
-const HEAT_HOURS = 24, HEAT_PAGE = 1000, HEAT_PAGES = 15, HEAT_CELL = 0.05;
+   the database cannot.
+   THE COUNTRY CARD (owner, 2026-10-21: "how many users are from there, and like how many news articles are from there right
+   now ... how many posts from users are there"): the whole-world answer also carries posts, the public, top-level member posts
+   their authors placed in each country (the place scope's opt-in, network_posts.country_code). That column exists only once
+   the place scope is switched on (WORLD_PLACE_SCOPE_ENABLED); until then posts is null, never a made-up zero. Members are
+   not counted here: the only consented count is action_globe_public_regions (five or more per region), which the globe
+   already reads. */
+const HEAT_HOURS = 24, HEAT_PAGE = 1000, HEAT_PAGES = 15, HEAT_CELL = 0.05, POST_PAGES = 5;
+/* public, top-level, standing member posts placed in each country; null while the place scope is off or unreadable */
+async function placedPosts(env, fetchImpl) {
+  if (!placeScopeEnabled(env)) return null;
+  try {
+    const params = new URLSearchParams({ select: 'country_code', country_code: 'not.is.null', visibility: 'eq.public', deleted_at: 'is.null', removed_at: 'is.null', reply_to_id: 'is.null', group_id: 'is.null', order: 'id.asc', limit: String(HEAT_PAGE) });
+    /* more placed posts than the pages read is not a count: it answers null (a dash), never a part passed off as a total */
+    const out = {};
+    for (let page = 0; ; page++) {
+      if (page === POST_PAGES) return null;
+      params.set('offset', String(page * HEAT_PAGE));
+      const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/network_posts?${params}`, {
+        headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
+      });
+      if (!res.ok) return null;
+      const got = JSON.parse(body || '[]');
+      if (!Array.isArray(got)) return null;
+      for (const r of got) { const c = r && typeof r.country_code === 'string' && /^[A-Z]{2}$/.test(r.country_code) ? r.country_code : null; if (c) out[c] = (out[c] || 0) + 1; }
+      if (got.length < HEAT_PAGE) break;
+    }
+    return out;
+  } catch { return null; }
+}
 export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cacheImpl = null, now = () => Date.now() } = {}) {
   const url = new URL(request.url);
   if ((url.pathname.replace(/\/+$/, '') || '/') !== NEWS_HEAT_PATH) return null;
@@ -551,7 +580,7 @@ export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cac
         const countries = {};
         let total = 0;
         for (const r of rows) { const c = isoFromGdelt(r && r.location_country_fips); if (!c) continue; countries[c] = (countries[c] || 0) + 1; total++; }
-        return { countries, total, capped };
+        return { countries, total, capped, posts: await placedPosts(env, fetchImpl) };
       }
       const cells = new Map();
       let total = 0;

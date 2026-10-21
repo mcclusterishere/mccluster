@@ -293,6 +293,8 @@
           <div id="wtDestination" class="wt-destination" hidden></div>
           <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News feed</button></nav>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <!-- the place card (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): drawn by paintPlaceCard in the page script -->
+          <div class="mn__place-card" id="mnPlaceCard" role="status" aria-live="polite" hidden></div>
           <!-- the globe's corner stack (owner, 2026-10-19): the World music play/pause sits with the fullscreen control, same size, same place -->
           <div class="mn__world-stack" id="mnWorldStack">
           <button class="mn__world-play" id="mnWorldPlay" type="button" aria-label="Play music" aria-pressed="false" hidden><span aria-hidden="true">▶</span></button>

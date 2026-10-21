@@ -77,6 +77,11 @@ test('the World: no pin per story; the countries are shaded by the counts, and t
   assert.match(globe, /fetch\(API\+'\/v1\/world\/news-heat',\{credentials:'omit'\}\)/);
   assert.match(globe, /heatCells:newsHeatCells/);
   assert.match(globe, /news-heat',\{credentials:'omit'\}\)[^\n]*\.catch\(\(\)=>\{if\(countries\)countries\.heat\(null\)\}\);/, 'a failed refresh clears the old counts');
+  /* a good answer with no stories in the window still carries the posts: it is passed on, and only shading shows the legend */
+  assert.match(globe, /countries\.heat\(d&&d\.ok&&d\.countries&&typeof d\.countries==='object'\?d:null\)/);
+  assert.doesNotMatch(globe, /Object\.keys\(d\.countries\)\.length\?d:null/);
+  assert.match(wc, /function heatShown\(\) \{ return !!\(st\.heat && Object\.keys\(st\.heat\)\.length\); \}/);
+  assert.match(wc, /legend\.hidden = !heatShown\(\)/);
   assert.match(wc, /if \(st\.heatFill\) st\.heatFill\.show = st\.lineAlpha > 0\.15;/, 'the heat shows while the borders do');
   assert.match(wc, /const hide = code === st\.selected && !!st\.stateHeat;/, 'a selected country steps aside for its states');
 });

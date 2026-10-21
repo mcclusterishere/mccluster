@@ -296,7 +296,7 @@ function loadNewsHeat(){
  if(newsHeatTimer&&Date.now()-newsHeatAsked<290e3)return;
  newsHeatAsked=Date.now();clearTimeout(newsHeatTimer);newsHeatTimer=setTimeout(()=>{newsHeatTimer=0;loadNewsHeat()},300e3);
  /* a read that fails (offline, a bad answer) clears the shading too: an old day's counts never show as the last 24 hours */
- fetch(API+'/v1/world/news-heat',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>{if(publicNewsOn&&!travelMode&&countries)countries.heat(d&&d.ok&&d.countries&&Object.keys(d.countries).length?d:null)}).catch(()=>{if(countries)countries.heat(null)});
+ fetch(API+'/v1/world/news-heat',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>{if(publicNewsOn&&!travelMode&&countries)countries.heat(d&&d.ok&&d.countries&&typeof d.countries==='object'?d:null)}).catch(()=>{if(countries)countries.heat(null)});
 }
 /* a selected country's stories as places, counted by state on the globe */
 function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+encodeURIComponent(code),{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>d&&d.ok&&Array.isArray(d.cells)?d.cells:null).catch(()=>null)}
@@ -444,7 +444,9 @@ if(d.type==='hu:regional'&&viewer){showCities=!!d.on;draw();tell({type:'hu:statu
 if(d.type==='hu:near-me'){const b=$('ctlLocate');if(b)b.click();return}
 if(d.type==='hu:live-places'&&!ANALYTICS){setLivePlaces(d.source,d.places);return}
 /* the page puts a signed-out visitor back in their own region (js/mnet.js); select() tells the page through hu:country */
-if(d.type==='hu:select-country'){if(countries&&typeof d.code==='string'&&/^[A-Z]{2}$/.test(d.code))countries.select(d.code);return}
+if(d.type==='hu:select-country'){if(countries&&(d.code===null||(typeof d.code==='string'&&/^[A-Z]{2}$/.test(d.code))))countries.select(d.code);return}
+/* the page's place card: × on a state goes back to its country (× on a country sends hu:select-country null) */
+if(d.type==='hu:country-back'){if(countries&&countries.backToCountry)countries.backToCountry();return}
 /* a news card's "On the Earth" (js/mnet.js): the place a story MENTIONS. Anything can post a message, so the numbers are checked here too */
 if(d.type==='hu:focus-place'){if(viewer)focusPlace(d);return}
 /* the creator-only audience layer: the page says who may see the switch, and sends the points it fetched with the creator's own session */
@@ -604,7 +606,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}});loadNewsHeat()}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}});loadNewsHeat()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}

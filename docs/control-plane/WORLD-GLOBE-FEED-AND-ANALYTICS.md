@@ -413,10 +413,35 @@ on the map.")
     - It answers an empty 200 when the database can't.
   - **The globe** (`js/world-countries.js`) shades each country by its count.
     A selected country shows its states instead, counted from those places with
-    the state shapes. The card gives the count ("8 stories in the last 24
-    hours"), and a legend on the globe says what the colours mean.
+    the state shapes. The card gives the count, and a legend on the globe says
+    what the colours mean.
   - **The pins.** There is no pin per story. The one pin left is the story
     whose place a news card sent ("where is this?").
+- **The place card** (owner, 2026-10-21: "shouldn't be the full width of the
+  top of the screen ... only in the middle ... how many users ... how many
+  news articles ... how many posts from users").
+  - **Where.** In the World the page draws it (`#mnPlaceCard`, `js/mnet.js`
+    `paintPlaceCard`), centred under the bar, at most 300px wide and two rows
+    tall. The globe's own card is hidden there. The corner buttons and the Live
+    badge step down below it together; the headline hides while the card is
+    over it. The × lets the state or the country go.
+  - **The three counts** (`statsFor` in `js/world-countries.js`; a state shows
+    its news only). A dash means not known yet.
+    - **News · 24 h**: the heat map's count for the country, or the state's.
+    - **Posts**: public, top-level member posts placed in the country
+      (`network_posts.country_code`), counted by the same `news-heat` call as
+      `posts`. It is `null`, so a dash, until place scope is on
+      (`supabase/pending/20261019222500_world_place_scope_v1.sql` applied and
+      `WORLD_PLACE_SCOPE_ENABLED=true`). It reads up to 5,000 placed posts; more
+      than that answers `null` too, never a part passed off as the count (an
+      aggregate in the database is the next step at that size). A day with no
+      stories still carries the posts: the globe takes any good answer, and
+      only shading shows the legend.
+    - **Members**: the sum of the country's published member regions
+      (`action_globe_public_regions`: members who chose to share their region,
+      five or more per region). Nothing else is counted: not a profile
+      address, not an IP, not where a post was placed. A country with no
+      published region shows a dash.
 - **One heat scale for the World and Analytics** (`js/heat-scale.js`; owner, of
   Analytics: "lackluster ... the shading isn't dynamic enough").
   - **What changed.** The old shading was value ÷ the largest value,

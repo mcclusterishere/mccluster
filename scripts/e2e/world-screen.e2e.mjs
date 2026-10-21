@@ -105,6 +105,7 @@ const GDELT = { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' 
 const NEWS_PLACES = [{ place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28, lon: 36.82 }, { place: 'Lima, Lima, Peru', lat: -12.05, lon: -77.04 }, null, { place: 'Jakarta, Jakarta Raya, Indonesia', lat: -6.21, lon: 106.85 }];
 const LONG_DOMAIN = 'a-very-long-publisher-domain-name-that-never-seems-to-end.example.co.uk';
 /* the news heat map's day: a lopsided spread like the real one, from one story to hundreds */
+const PUBLIC_REGIONS = [{ region_key: 'KE-110', region_label: 'Nairobi', country_code: 'KE', latitude: -1.29, longitude: 36.82, member_count: 12, verified_actions: 0 }, { region_key: 'KE-300', region_label: 'Coast', country_code: 'KE', latitude: -3.6, longitude: 39.5, member_count: 7, verified_actions: 0 }];
 const HEAT_COUNTRIES = { US: 420, GB: 160, IN: 140, FR: 70, DE: 55, AU: 40, BR: 30, NG: 18, ZA: 12, KE: 8, PE: 8, ID: 7, EG: 4, AR: 3, JP: 2, MN: 1 };
 function freshNews(now) {
   return Array.from({ length: 30 }, (_, k) => {
@@ -136,6 +137,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     }
     if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
+    /* members who share their region, five or more per region (the only consented member count): two of Kenya's */
+    if (/\/rpc\/action_globe_public_regions$/.test(u)) return json(route, PUBLIC_REGIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
     if (u.includes('/rest/v1/action_missions?id=eq.')) { const m = OPEN_MISSIONS.find((x) => u.includes(x.id)); return json(route, m ? [m] : []); }
@@ -180,7 +183,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     /* the news heat map's counts: the fixture's stories by the country each mentions, and Kenya's as places */
     if (u.pathname === '/v1/world/news-heat') {
       const c = u.searchParams.get('country');
-      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, attribution: GDELT });
+      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, posts: { KE: 3, US: 12 }, attribution: GDELT });
       if (c === 'KE') return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: 'KE', cells: [[36.8, -1.3, 8]], total: 8, capped: false, attribution: GDELT });
       return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: c, cells: [], total: 0, capped: false, attribution: GDELT });
     }
@@ -834,7 +837,7 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     const twice = (p)=>globe.evaluate(({x,y})=>{const t=performance.now();window.__huCountriesCam.tap(x,y,t);window.__huCountriesCam.tap(x,y,t+150);},{x:p.x-frame.x,y:p.y-frame.y});
     const gap = ()=>page.waitForTimeout(700);
     const now = ()=>globe.evaluate(()=>({selected:window.__huCountries().selected,state:window.__huCountries().selectedState,card:window.__huCountries().card}));
-    const eastern = await at(38.0,0.6), nairobi = await at(37.05,-1.25);
+    const eastern = await at(38.1,-1.3), nairobi = await at(37.05,-1.25);
     check(scope,'the taps land on the globe, nothing on the page covers them',eastern.top==='mnWorldFrame'&&nairobi.top==='mnWorldFrame',{eastern,nairobi});
     /* a double tap on a country not yet selected selects the country, and nothing more */
     await twice(eastern);
@@ -845,8 +848,18 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     check(scope,'its card says a state can be chosen',/Double-tap a state to choose it/.test(first.card||''),first.card);
     /* THE NEWS HEAT MAP: the card gives the count, and the country's states are shaded by the stories placed in them */
     await globe.waitForFunction(()=>window.__huCountries().heat?.stateFill,null,{timeout:15000}).catch(()=>{});
-    const kh=await globe.evaluate(()=>window.__huCountries().heat),kcard=(await now()).card;
-    check(scope,'the card counts the stories that mention Kenya, and its states take the heat',/8 stories in the last 24 hours/.test(kcard||'')&&!/missions/.test(kcard||'')&&kh&&kh.states===1&&kh.stateFill,{card:kcard,kh});
+    const kh=await globe.evaluate(()=>window.__huCountries().heat);
+    check(scope,'Kenya\'s states take the heat',kh&&kh.states===1&&kh.stateFill,kh);
+    /* THE PLACE CARD (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): the page draws
+       it, centred and narrow, below the bar, uncovered, with the globe's buttons stepped out from under it */
+    await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/members/.test(c.textContent)&&/\b19\b/.test(c.textContent)},null,{timeout:10000}).catch(()=>{});
+    const pc=await page.evaluate(()=>{const c=document.getElementById('mnPlaceCard'),r=c.getBoundingClientRect(),bar=document.querySelector('.mn__top').getBoundingClientRect(),st=document.getElementById('mnWorldStack').getBoundingClientRect(),t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+      const stats=[...c.querySelectorAll('.mn__place-stat')].map(x=>x.textContent);return{text:c.textContent,stats,left:Math.round(r.left),right:Math.round(innerWidth-r.right),w:Math.round(r.width),vw:innerWidth,top:Math.round(r.top),barBottom:Math.round(bar.bottom),onTop:!!(t&&c.contains(t)),stackClear:!(st.width&&st.left<r.right&&st.right>r.left&&st.top<r.bottom&&st.bottom>r.top),liveClear:(()=>{const l=document.getElementById('mnWorldLive').getBoundingClientRect();return !(l.width&&l.left<r.right&&l.right>r.left&&l.top<r.bottom&&l.bottom>r.top)&&!(l.width&&st.width&&l.left<st.right&&l.right>st.left&&l.top<st.bottom&&l.bottom>st.top)})(),frameCard:getComputedStyle(document.getElementById('mnWorldFrame').contentDocument.getElementById('countryCard')).display}});
+    check(scope,'the place card sits in the middle at the top, not the full width: centred, under the bar, nothing over it, the buttons stepped aside',Math.abs(pc.left-pc.right)<=2&&pc.w<=300&&pc.w<pc.vw-40&&pc.top>=pc.barBottom&&pc.onTop&&pc.stackClear&&pc.liveClear&&pc.frameCard==='none',pc);
+    const under = await Promise.all([eastern,nairobi].map((p)=>page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[p.x,p.y])));
+    check(scope,'with the card up, the places to tap are still the globe\'s',under.every((t)=>t==='mnWorldFrame'),under);
+    check(scope,'it gives Kenya\'s three counts: news today, posts placed there, members who share their region',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
+    await page.screenshot({path:join(OUT,scope+'-place-card.png')});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
     const kenya = await page.locator('#mnFeed [data-news-id]').count();
     check(scope,'Local shows Kenya\'s stories',kenya>0&&await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true',kenya);
@@ -855,7 +868,7 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     await globe.waitForFunction(()=>window.__huCountries().selectedState,null,{timeout:8000}).catch(()=>{});
     const east = await now();
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
-    check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya\s*0 stories in the last 24 hours/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
+    check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya\s*×?\s*0news · 24 h/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
     check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No story mentions Eastern, Kenya yet/.test(await page.textContent('#mnFeed')));
     await page.screenshot({path:join(OUT,scope+'-eastern.png')});
     await gap();
@@ -864,7 +877,7 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:5000}).catch(()=>{});
     const nb = await now();
-    check(scope,'a double tap on another state picks it, and its stories come back',/Nairobi/.test(nb.card||'')&&/8 stories in the last 24 hours/.test(nb.card||'')&&await page.textContent('#huRegionLabel')==='Nairobi, Kenya'&&await page.locator('#mnFeed [data-news-id]').count()===kenya,{nb,count:await page.locator('#mnFeed [data-news-id]').count(),kenya});
+    check(scope,'a double tap on another state picks it, and its stories come back',/Nairobi/.test(nb.card||'')&&/8news · 24 h/.test(nb.card||'')&&await page.textContent('#huRegionLabel')==='Nairobi, Kenya'&&await page.locator('#mnFeed [data-news-id]').count()===kenya,{nb,count:await page.locator('#mnFeed [data-news-id]').count(),kenya});
     await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
     await gap();
     /* a single tap inside the country goes back to the whole country; another lets the country go, as before */
