@@ -22,11 +22,13 @@ test('Analytics partial-source label shows safe per-key diagnostics and does not
   const deadline=Date.now()+3000;
   while(!A.state.loaded&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,10));
   assert.equal(A.state.loaded,true);
-  assert.match(host.innerHTML,/Partial data/);
+  assert.match(A.top(),/Partial data/);
+  assert.match(host.innerHTML,/data source needs attention/);
   assert.match(host.innerHTML,/postsTotal/);
   assert.match(host.innerHTML,/57014/);
   assert.match(host.innerHTML,/HTTP 500/);
   assert.match(host.innerHTML,/8111ms/);
+  assert.match(host.innerHTML,/request req-test/);
   assert.doesNotMatch(host.innerHTML,/WRONG/);
   assert.doesNotMatch(host.innerHTML,/<script>/);
 });

@@ -1029,6 +1029,8 @@
           if(/^(?:[0-9A-Z]{5}|PGRST[0-9]{3}|[A-Z][A-Z0-9_]{0,23})$/.test(code))parts.push(code);
           if(Number.isInteger(d.upstream_http_status)&&d.upstream_http_status>=400&&d.upstream_http_status<=599)parts.push("HTTP "+d.upstream_http_status);
           if(Number.isInteger(d.elapsed_ms)&&d.elapsed_ms>=0&&d.elapsed_ms<=120000)parts.push(d.elapsed_ms+"ms");
+          var req=String(d.request_id||"");
+          if(/^[A-Za-z0-9_-]{4,80}$/.test(req))parts.push("request "+req.slice(0,40));
           return parts.join(" · ");
         }
         S.errors.business=new Error(missing.length
