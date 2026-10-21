@@ -7,6 +7,7 @@ on:
       - 'scripts/audit-production-sql-digests.mjs'
       - 'docs/control-plane/production-sql-digests-20261021.json'
       - 'supabase/production-ledger.json'
+      - 'supabase/migrations/**'
       - '.github/workflows/historical-sql-digest-audit.yml'
   workflow_dispatch:
 jobs:
