@@ -146,6 +146,7 @@
     comment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/></svg>',
     save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.8h11v16.4l-5.5-3.9-5.5 3.9z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>',
+    thumb: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.4" cy="9.8" r="1.7"/><path d="M3.6 17l4.9-4.4 3.9 3.4 3-2.5 5.1 4.2"/></svg>',
     share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l6 6-6 6M20 11H9a5 5 0 0 0-5 5v2"/></svg>'
   };
   /* Every member gets a stable ring colour from their handle: abstract
@@ -990,6 +991,8 @@
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
+          /* the author changes the picture of a video they posted (owner, 2026-10-20) */
+          (mine && postVideos(post).length ? '<button class="mn__action mn__action--thumb" type="button" data-action="thumbnail" data-post="' + esc(id) + '" aria-label="Change the video thumbnail" title="Thumbnail">' + ICON.thumb + '</button>' : '') +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>' + discussionHtml('post', id)) +
     '</article>';
@@ -1552,6 +1555,9 @@
     });
     root.querySelectorAll("[data-action=delete]").forEach(function (b) {
       b.onclick = function () { deletePost(b.dataset.post, b); };
+    });
+    root.querySelectorAll("[data-action=thumbnail]").forEach(function (b) {
+      b.onclick = function () { openThumbnailEditor(b.dataset.post); };
     });
     root.querySelectorAll("[data-person]").forEach(function (b) {
       b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); openPerson(b.dataset.person); };
@@ -2198,8 +2204,13 @@
   function storagePath(path) {
     return String(path || "").split("/").map(encodeURIComponent).join("/");
   }
+  function revokePreviews(x) {
+    [x && x.preview, x && x.poster_preview].forEach(function (u) { if (u) try { URL.revokeObjectURL(u); } catch (e) {} });
+  }
+  /* a video in the composer shows its picture with a play mark, never a black box */
+  var PLAY_MARK = '<span class="mn__media-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span>';
   function clearMediaQueue() {
-    state.mediaAssets.forEach(function (x) { if (x.preview) try { URL.revokeObjectURL(x.preview); } catch (e) {} });
+    state.mediaAssets.forEach(revokePreviews);
     state.mediaAssets = [];
     if ($("mnMediaQueue")) { $("mnMediaQueue").innerHTML = ""; $("mnMediaQueue").hidden = true; }
     if ($("mnMediaInput")) $("mnMediaInput").value = "";
@@ -2211,14 +2222,16 @@
     host.hidden = !state.mediaAssets.length;
     host.innerHTML = state.mediaAssets.map(function (x, i) {
       var visual = x.media_type === "image" && x.preview ? '<img src="' + esc(x.preview) + '" alt="">' :
-        x.media_type === "video" && x.preview ? '<video src="' + esc(x.preview) + '" muted playsinline></video>' :
+        x.media_type === "video" && x.poster_preview ? '<img src="' + esc(x.poster_preview) + '" alt="Video">' + PLAY_MARK :
+        /* no picture could be taken: a tenth of a second in, so the first frame paints */
+        x.media_type === "video" && x.preview ? '<video src="' + esc(x.preview + "#t=0.1") + '" muted playsinline preload="metadata"></video>' + PLAY_MARK :
         '<span>' + esc(x.name || x.media_type) + '</span>';
-      return '<div class="mn__media-chip">' + visual + '<button type="button" data-remove-media="' + i + '" aria-label="Remove attachment">×</button></div>';
+      return '<div class="mn__media-chip' + (x.media_type === "video" ? ' is-video' : '') + '">' + visual + '<button type="button" data-remove-media="' + i + '" aria-label="Remove attachment">×</button></div>';
     }).join("");
     host.querySelectorAll("[data-remove-media]").forEach(function (b) {
       b.onclick = function () {
         var i = Number(b.dataset.removeMedia), item = state.mediaAssets[i];
-        if (item && item.preview) try { URL.revokeObjectURL(item.preview); } catch (e) {}
+        revokePreviews(item);
         if(item){
           [item.id,item.poster_id].filter(Boolean).forEach(function(id){
             api("/v1/mnet/media/discard",{method:"POST",body:{asset_id:id}}).catch(function(){});
@@ -2228,7 +2241,8 @@
       };
     });
   }
-  function uploadOneMedia(file){
+  /* meta ({width,height,duration_ms}, or a promise of it) rides with finalize where it is known */
+  function uploadOneMedia(file,meta){
     var token=sessionToken();
     if(!token)return Promise.reject(new Error("Sign in before uploading media."));
     return api("/v1/mnet/media/upload-url",{method:"POST",body:{file_name:file.name||"upload",mime_type:file.type||"application/octet-stream",byte_size:file.size}})
@@ -2241,44 +2255,38 @@
         return fetch(url,{method:uploadToken?"PUT":"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+token,"content-type":file.type||"application/octet-stream","x-upsert":"false"},body:file})
           .then(function(res){
             if(!res.ok)return res.text().then(function(t){throw new Error("Upload rejected ("+res.status+"): "+(t||"no detail"));});
-            return api("/v1/mnet/media/finalize",{method:"POST",body:{asset_id:asset.id}});
+            return Promise.resolve(meta).catch(function(){return null;}).then(function(m){
+              var body={asset_id:asset.id};
+              if(m)["width","height","duration_ms"].forEach(function(k){if(Number(m[k])>0)body[k]=Math.round(Number(m[k]));});
+              return api("/v1/mnet/media/finalize",{method:"POST",body:body});
+            });
           })
           .then(function(fin){return (fin&&fin.asset)||asset;});
       });
   }
-  function makeVideoPoster(file){
-    if(!file||String(file.type||"").indexOf("video/")!==0)return Promise.resolve(null);
-    return new Promise(function(resolve){
-      var video=document.createElement("video"),src=URL.createObjectURL(file),done=false;
-      function finish(value){if(done)return;done=true;try{URL.revokeObjectURL(src);}catch(_){} resolve(value||null);}
-      video.muted=true;video.playsInline=true;video.preload="metadata";
-      video.onloadedmetadata=function(){
-        try{video.currentTime=Math.min(Math.max(0.12,(Number(video.duration)||1)*0.06),1.0);}catch(_){finish(null);}
-      };
-      video.onseeked=function(){
-        try{
-          var w=video.videoWidth||720,h=video.videoHeight||1280,max=720,scale=Math.min(1,max/Math.max(w,h));
-          var canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
-          var ctx=canvas.getContext("2d");if(!ctx){finish(null);return;}ctx.drawImage(video,0,0,canvas.width,canvas.height);
-          canvas.toBlob(function(blob){
-            if(!blob){finish(null);return;}
-            finish(new File([blob],(file.name||"video").replace(/\.[^.]+$/,"")+"-poster.jpg",{type:"image/jpeg"}));
-          },"image/jpeg",0.82);
-        }catch(_){finish(null);}
-      };
-      video.onerror=function(){finish(null);};
-      setTimeout(function(){finish(null);},4500);
-      video.src=src;
-    });
+  /* THE PICTURE OF A VIDEO: the shared capture (js/video-poster.js). Resolves {file, width, height, video:{...}} or null;
+     no picture never stops the video itself. */
+  function makeVideoPoster(file,opts){
+    if(!file||String(file.type||"").indexOf("video/")!==0||!window.MCCVideoPoster)return Promise.resolve(null);
+    return window.MCCVideoPoster.capture(file,opts).catch(function(){return null;});
   }
+  function discardMedia(id){
+    if(id)api("/v1/mnet/media/discard",{method:"POST",body:{asset_id:id}}).catch(function(){});
+  }
+  /* the picture is taken WHILE the video goes up, not after it; the video's finalize carries its size and length */
   function uploadMediaWithPoster(file){
-    return uploadOneMedia(file).then(function(asset){
-      if(String(file.type||"").indexOf("video/")!==0)return {asset:asset,poster:null};
-      return makeVideoPoster(file).then(function(posterFile){
-        if(!posterFile)return {asset:asset,poster:null};
-        return uploadOneMedia(posterFile).then(function(poster){return {asset:asset,poster:poster};})
-          .catch(function(){return {asset:asset,poster:null};});
-      });
+    if(String(file.type||"").indexOf("video/")!==0)return uploadOneMedia(file).then(function(asset){return {asset:asset,poster:null,posterFile:null};});
+    var metaKnown,meta=new Promise(function(r){metaKnown=r;});
+    var shot=makeVideoPoster(file,{onMeta:metaKnown});
+    shot.then(function(s){metaKnown(s&&s.video||null);});
+    var posterUp=shot.then(function(s){
+      return s&&s.file?uploadOneMedia(s.file,{width:s.width,height:s.height}).catch(function(){return null;}):null;
+    });
+    return uploadOneMedia(file,meta).then(function(asset){
+      return Promise.all([posterUp,shot]).then(function(r){return {asset:asset,poster:r[0]||null,posterFile:r[1]&&r[1].file||null};});
+    },function(e){
+      posterUp.then(function(p){discardMedia(p&&p.id);});
+      throw e;
     });
   }
   function uploadMediaFiles(files) {
@@ -2296,7 +2304,8 @@
             media_type:ready.media_type||(/video\//.test(file.type)?"video":/image\//.test(file.type)?"image":"file"),
             poster_id:out.poster&&out.poster.id||null,
             name:file.name,
-            preview:URL.createObjectURL(file)
+            preview:URL.createObjectURL(file),
+            poster_preview:out.posterFile?URL.createObjectURL(out.posterFile):""
           });
           renderMediaQueue();
         });
@@ -2305,25 +2314,56 @@
     return chain.then(function(){setStatus($("mnMediaStatus"),state.mediaAssets.length+" attachment"+(state.mediaAssets.length===1?"":"s")+" ready.","ok");})
       .catch(function(e){setStatus($("mnMediaStatus"),e.message||"Upload failed.","error");throw e;});
   }
+  /* A signed media address lives an hour (mnet-media view-url, expires_in); one with under five minutes left is asked
+     for again rather than handed to a player that will outlive it. */
+  var MEDIA_URL_MARGIN=5*60*1000;
+  function mediaUrl(assetId,fresh){
+    var cached=state.mediaCache[assetId];
+    if(!fresh&&cached&&cached.data&&cached.exp-Date.now()>MEDIA_URL_MARGIN)return Promise.resolve(cached.data);
+    var asked=Date.now();
+    return api("/v1/mnet/media/"+encodeURIComponent(assetId)+"/url").then(function(x){
+      var life=Number(x&&x.expires_in)>0?Number(x.expires_in):3600;
+      state.mediaCache[assetId]={data:x,exp:asked+life*1000};
+      return x;
+    });
+  }
+  /* A video this device cannot play (an HEVC .mov on a desktop browser, a damaged upload) shows its picture and says
+     so. An address that went stale while the page sat open is asked for once more first. */
+  function watchVideo(node,assetId,posterUrl,frag){
+    var v=node.querySelector("video"),retried=false;
+    if(!v)return;
+    function cantPlay(){
+      node.classList.add("is-unplayable");
+      node.innerHTML=(posterUrl?'<img src="'+esc(posterUrl)+'" alt="">':'')+'<p class="mn__video-note">This video can’t play on this device.</p>';
+    }
+    v.addEventListener("error",function(){
+      if(retried)return cantPlay();
+      retried=true;
+      mediaUrl(assetId,true).then(function(fresh){
+        var u=safeHttpUrl(fresh&&fresh.url);
+        if(!u||!v.isConnected)throw new Error("gone");
+        v.src=u+frag;
+      }).catch(cantPlay);
+    });
+  }
   function resolvePostMedia(root) {
     if(!root)return;
     root.querySelectorAll("[data-mnet-media]").forEach(function(node){
       var id=node.dataset.mnetMedia;
       if(!id||node.dataset.loaded==="1")return;
       node.dataset.loaded="1";
-      function assetUrl(assetId){
-        var cached=state.mediaCache[assetId];
-        return cached?Promise.resolve(cached):api("/v1/mnet/media/"+encodeURIComponent(assetId)+"/url").then(function(x){state.mediaCache[assetId]=x;return x;});
-      }
-      assetUrl(id).then(function(data){
+      mediaUrl(id).then(function(data){
         var type=data.media_type||node.dataset.mediaType||"file",url=safeHttpUrl(data.url);
         if(!url)throw new Error("Media URL unavailable");
         if(type==="image")node.innerHTML='<img src="'+esc(url)+'" alt="'+esc(data.alt_text||"")+'" loading="lazy">';
         else if(type==="video"){
           var posterId=node.dataset.posterAsset;
-          return (posterId?assetUrl(posterId).catch(function(){return null;}):Promise.resolve(null)).then(function(poster){
+          return (posterId?mediaUrl(posterId).catch(function(){return null;}):Promise.resolve(null)).then(function(poster){
             var posterUrl=poster&&safeHttpUrl(poster.url);
-            node.innerHTML='<video src="'+esc(url+(node.dataset.clip||""))+'"'+(posterUrl?' poster="'+esc(posterUrl)+'"':"")+' controls playsinline preload="metadata"'+(node.dataset.muted?" muted":"")+'></video>';
+            /* no picture and no clip: start a tenth of a second in, so WebKit paints the first frame instead of black */
+            var frag=node.dataset.clip||(posterUrl?"":"#t=0.1");
+            node.innerHTML='<video src="'+esc(url+frag)+'"'+(posterUrl?' poster="'+esc(posterUrl)+'"':"")+' controls playsinline preload="metadata"'+(node.dataset.muted?" muted":"")+'></video>';
+            watchVideo(node,id,posterUrl,frag);
           });
         } else if(type==="audio")node.innerHTML='<audio src="'+esc(url)+'" controls preload="metadata"></audio>';
         else node.innerHTML='<a class="mn__profile-link" href="'+esc(url)+'" target="_blank" rel="noopener">Open attachment</a>';
@@ -2340,6 +2380,180 @@
       .catch(function (e) { if(post)post.bookmarked_by_me=saved; paintToggle(button,saved,null); setStatus($("mnFeedStatus"),e.message||"Could not save that post.","error"); })
       .finally(function () { button.disabled=false; });
   }
+  /* THE THUMBNAIL OF A POSTED VIDEO (owner, 2026-10-20: "I want people to be even able to edit the videos they
+     previously posted as a thumbnail"). On their own video post the author scrubs to a frame, or uploads a picture; the
+     Worker swaps it on the post (PATCH /v1/mnet/posts/:id {poster_by_media}) and lets the old picture go. A storage
+     address this page may not read pixels from (no CORS) leaves the upload, never a broken frame picker. */
+  function postVideos(post) {
+    return (Array.isArray(post && post.media) ? post.media : []).filter(function (m) { return m && (m.type || m.media_type) === "video" && (m.asset_id || m.id); });
+  }
+  var thumbEdit = { post: null, media: null, seq: 0, busy: false };
+  var THUMB_TYPES = /^image\/(jpeg|png|webp|avif|gif)$/;
+  function thumbStatus(text, kind) { setStatus($("mnThumbStatus"), text, kind); }
+  function thumbBusy(on) {
+    thumbEdit.busy = on;
+    $("mnThumbUseFrame").disabled = on;
+    $("mnThumbFile").disabled = on;
+    $("mnThumbUpload").setAttribute("aria-disabled", on ? "true" : "false");
+  }
+  function openThumbnailEditor(postId) {
+    var dlg = $("mnThumbDialog");
+    if (!dlg || !postId) return;
+    var item = findPost(postId), known = item && (item.post || item);
+    (known ? Promise.resolve(known) : api("/v1/mnet/posts/" + encodeURIComponent(postId)).then(function (one) { return one && one.post; }))
+      .then(function (post) {
+        var videos = postVideos(post);
+        if (!post || !videos.length) throw new Error("This post has no video.");
+        thumbEdit.post = post;
+        var which = $("mnThumbWhich");
+        which.hidden = videos.length < 2;
+        which.innerHTML = videos.length < 2 ? "" : videos.map(function (m, i) {
+          return '<button type="button" data-thumb-video="' + esc(m.asset_id || m.id) + '" aria-pressed="' + (i ? "false" : "true") + '">Video ' + (i + 1) + '</button>';
+        }).join("");
+        which.querySelectorAll("[data-thumb-video]").forEach(function (b) {
+          b.onclick = function () {
+            if (thumbEdit.busy) return;
+            which.querySelectorAll("[data-thumb-video]").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+            loadThumbVideo(postVideos(thumbEdit.post).filter(function (m) { return (m.asset_id || m.id) === b.dataset.thumbVideo; })[0]);
+          };
+        });
+        if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
+        loadThumbVideo(videos[0]);
+      }).catch(function (e) { setStatus($("mnFeedStatus"), e.message || "Could not open the thumbnail.", "error"); });
+  }
+  function showThumbNow(m) {
+    var img = $("mnThumbNow"), id = m && m.poster_asset_id;
+    $("mnThumbVideo").hidden = true;
+    if (!id) { img.hidden = true; return; }
+    mediaUrl(id).then(function (d) { var u = safeHttpUrl(d && d.url); if (u && thumbEdit.media === m) { img.src = u; img.hidden = false; } }).catch(function () {});
+  }
+  function loadThumbVideo(m) {
+    if (!m) return;
+    var seq = ++thumbEdit.seq, v = $("mnThumbVideo"), range = $("mnThumbRange");
+    thumbEdit.media = m;
+    $("mnThumbPick").hidden = true;
+    $("mnThumbNow").hidden = true;
+    v.hidden = false;
+    thumbStatus("Loading the video…");
+    /* a fresh address: the one the feed holds may be close to running out */
+    mediaUrl(m.asset_id || m.id, true).then(function (data) {
+      var url = safeHttpUrl(data && data.url);
+      if (!url) throw new Error("unavailable");
+      if (seq !== thumbEdit.seq) return;
+      /* before src: a frame may become a picture only if the page may read it */
+      v.crossOrigin = "anonymous"; v.muted = true; v.playsInline = true; v.preload = "auto";
+      v.src = url;
+      return new Promise(function (resolve, reject) {
+        if (v.readyState >= 2) return resolve();
+        function ok() { off(); resolve(); }
+        function bad() { off(); reject(new Error("load")); }
+        function off() { v.removeEventListener("loadeddata", ok); v.removeEventListener("error", bad); }
+        v.addEventListener("loadeddata", ok); v.addEventListener("error", bad);
+        /* WebKit may hold the data until something plays: a muted, inline play() needs no tap */
+        setTimeout(function () { if (seq === thumbEdit.seq && v.readyState < 2 && window.MCCVideoPoster) window.MCCVideoPoster.prime(v); }, 1200);
+      });
+    }).then(function () {
+      if (seq !== thumbEdit.seq) return;
+      var vp = window.MCCVideoPoster, canPick = !!(vp && vp.readable(v));
+      var d = isFinite(v.duration) && v.duration > 0 ? v.duration : 0, start = d ? Math.min(1, d * 0.25) : 0;
+      range.max = String(Math.max(1, Math.round(d * 1000)));
+      range.value = String(Math.round(start * 1000));
+      range.setAttribute("aria-valuetext", clockText(start));
+      /* a picture chosen while the video loaded is saving: its "Saving…" stays until it lands */
+      if (!canPick) {
+        showThumbNow(m);
+        if (!thumbEdit.busy) thumbStatus("Picking a frame isn’t available for this video here. Upload an image instead.");
+        return;
+      }
+      $("mnThumbPick").hidden = false;
+      if (!thumbEdit.busy) thumbStatus("");
+      return (vp.prime ? vp.prime(v) : Promise.resolve()).then(function () { try { v.currentTime = start; } catch (e) {} });
+    }).catch(function () {
+      if (seq !== thumbEdit.seq) return;
+      showThumbNow(m);
+      if (!thumbEdit.busy) thumbStatus("This video can’t be opened here. Upload an image instead.", "error");
+    });
+  }
+  function clockText(sec) {
+    sec = Math.max(0, sec || 0);
+    var mm = Math.floor(sec / 60), ss = Math.floor(sec % 60);
+    return mm + ":" + (ss < 10 ? "0" : "") + ss;
+  }
+  function closeThumbEditor() {
+    var dlg = $("mnThumbDialog"), v = $("mnThumbVideo");
+    thumbEdit.seq++;
+    try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {}
+    if (dlg && dlg.open) { if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); }
+    thumbStatus("");
+  }
+  /* the post's media changed: every card of it on the page draws its media again, nothing else moves */
+  function applyPostMedia(post, media) {
+    [state.feed, state.placeScope.posts || []].forEach(function (list) {
+      list.forEach(function (it) { var p = it && (it.post || it); if (p && p.id === post.id) p.media = media; });
+    });
+    post.media = media;
+    Array.prototype.forEach.call(document.querySelectorAll('article[data-post-id="' + post.id + '"] .mn__post-media'), function (box) {
+      var card = box.closest("article");
+      box.outerHTML = postMediaHtml(post);
+      resolvePostMedia(card);
+    });
+  }
+  function saveThumbnail(file, meta) {
+    var post = thumbEdit.post, m = thumbEdit.media;
+    if (!post || !m) return Promise.reject(new Error("Open the post again."));
+    var videoId = m.asset_id || m.id, old = m.poster_asset_id || null;
+    return uploadOneMedia(file, meta).then(function (asset) {
+      var map = {};
+      map[videoId] = asset.id;
+      return api("/v1/mnet/posts/" + encodeURIComponent(post.id), { method: "PATCH", body: { poster_by_media: map } })
+        .then(function (out) { return { out: out, asset: asset }; }, function (e) { discardMedia(asset.id); throw e; });
+    }).then(function (r) {
+      if (old) delete state.mediaCache[old];
+      var fresh = r.out && r.out.post;
+      applyPostMedia(post, fresh && Array.isArray(fresh.media) ? fresh.media : (post.media || []).map(function (x) {
+        return (x.asset_id || x.id) === videoId ? Object.assign({}, x, { poster_asset_id: r.asset.id }) : x;
+      }));
+      closeThumbEditor();
+      setStatus($("mnFeedStatus"), "Thumbnail updated.", "ok");
+    });
+  }
+  (function wireThumbEditor() {
+    var dlg = $("mnThumbDialog");
+    if (!dlg) return;
+    var v = $("mnThumbVideo"), range = $("mnThumbRange");
+    $("mnThumbClose").addEventListener("click", closeThumbEditor);
+    dlg.addEventListener("close", function () { if (!thumbEdit.busy) closeThumbEditor(); });
+    range.addEventListener("input", function () {
+      var t = Number(range.value) / 1000;
+      try { v.pause(); v.currentTime = t; } catch (e) {}
+      range.setAttribute("aria-valuetext", clockText(t));
+    });
+    $("mnThumbUseFrame").addEventListener("click", function () {
+      if (thumbEdit.busy || !window.MCCVideoPoster) return;
+      try { v.pause(); } catch (e) {}
+      thumbBusy(true); thumbStatus("Saving the thumbnail…");
+      window.MCCVideoPoster.grab(v, { name: "thumbnail" }).then(function (shot) {
+        if (!shot.file) {
+          if (shot.reason === "tainted") { $("mnThumbPick").hidden = true; showThumbNow(thumbEdit.media); }
+          throw new Error(shot.reason === "tainted" ? "Picking a frame isn’t available for this video here. Upload an image instead." : "That frame could not be saved. Try another, or upload an image.");
+        }
+        return saveThumbnail(shot.file, { width: shot.width, height: shot.height });
+      }).catch(function (e) { thumbStatus(e.message || "The thumbnail did not save.", "error"); })
+        .then(function () { thumbBusy(false); });
+    });
+    $("mnThumbFile").addEventListener("change", function () {
+      var f = this.files && this.files[0];
+      this.value = "";
+      if (!f || thumbEdit.busy) return;
+      if (!THUMB_TYPES.test(String(f.type || "").toLowerCase())) { thumbStatus("Use a JPEG, PNG or WebP picture.", "error"); return; }
+      if (f.size > 25 * 1024 * 1024) { thumbStatus("That picture is over 25 MB. Choose a smaller one.", "error"); return; }
+      thumbBusy(true); thumbStatus("Saving the thumbnail…");
+      (window.MCCVideoPoster ? window.MCCVideoPoster.imageSize(f) : Promise.resolve({}))
+        .then(function (meta) { return saveThumbnail(f, meta); })
+        .catch(function (e) { thumbStatus(e.message || "The thumbnail did not save.", "error"); })
+        .then(function () { thumbBusy(false); });
+    });
+  })();
   function deletePost(postId, button) {
     if (!confirm("Delete this post?")) return;
     button.disabled=true;

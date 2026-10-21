@@ -658,6 +658,29 @@
     <p class="mn__status" id="mnStudioStatus" role="status"></p>
   </dialog>
 
+  <!-- THE THUMBNAIL of a video the member posted (owner, 2026-10-20): a frame of the video, or a picture of their own -->
+  <dialog class="mn__thread mn__thumb-dialog" id="mnThumbDialog" aria-labelledby="mnThumbTitle">
+    <div class="mn__thread-head">
+      <strong id="mnThumbTitle">Thumbnail</strong>
+      <button type="button" id="mnThumbClose" aria-label="Close">×</button>
+    </div>
+    <div class="mn__thumb-body">
+      <div class="mn__thumb-which" id="mnThumbWhich" hidden></div>
+      <div class="mn__thumb-stage">
+        <video id="mnThumbVideo" muted playsinline webkit-playsinline preload="auto" crossorigin="anonymous"></video>
+        <img id="mnThumbNow" alt="The current thumbnail" hidden>
+      </div>
+      <div class="mn__thumb-pick" id="mnThumbPick" hidden>
+        <label class="mn__thumb-range" for="mnThumbRange">Pick a frame</label>
+        <input type="range" id="mnThumbRange" min="0" max="1000" step="1" value="0">
+        <button class="mn__primary" id="mnThumbUseFrame" type="button">Use this frame</button>
+      </div>
+      <label class="mn__secondary mn__thumb-upload" id="mnThumbUpload" for="mnThumbFile">Upload an image</label>
+      <input id="mnThumbFile" type="file" accept="image/*" hidden>
+      <p class="mn__status" id="mnThumbStatus" role="status"></p>
+    </div>
+  </dialog>
+
   </main>
 
   <dialog class="mn__thread mn__person-dialog" id="mnPersonDialog">
@@ -697,6 +720,7 @@
   <script src="js/name-integrity.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
+  <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>
   <!-- async: the Travel module (switched off while the World is the social feed) never holds the World's boot, which runs

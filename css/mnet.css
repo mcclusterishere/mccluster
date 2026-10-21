@@ -205,6 +205,9 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__media-chip { position: relative; min-height: 76px; overflow: hidden; display: grid; place-items: center; padding: 6px; border-radius: 12px; background: var(--mn-raise-2); color: var(--mn-dim); font-size: 0.72rem; text-align: center; }
 .mn__media-chip img, .mn__media-chip video { width: 100%; height: 100%; max-height: 7rem; object-fit: cover; }
 .mn__media-chip button { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.75); color: #fff; cursor: pointer; }
+/* a video in the composer: its picture and a play mark, never a black box */
+.mn__media-play { position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; display: grid; place-items: center; border-radius: 50%; background: rgba(0, 0, 0, 0.62); color: #fff; pointer-events: none; }
+.mn__media-play svg { width: 16px; height: 16px; margin-left: 2px; fill: currentColor; }
 
 /* ---------- the feed: cards that arrive, hearts that pop ---------- */
 .mn__feed { display: grid; gap: 10px; margin-top: 14px; }
@@ -240,6 +243,9 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__post-media.is-grid .mn__post-media-item img, .mn__post-media.is-grid .mn__post-media-item video { height: 100%; object-fit: cover; }
 .mn__post-media-item audio { display: block; width: 100%; }
 .mn__post-media-loading { min-height: 8rem; display: grid; place-items: center; color: var(--mn-faint); font-size: 0.8rem; }
+/* a video this device cannot play: its picture, and a plain line that says so */
+.mn__post-media-item.is-unplayable { position: relative; min-height: 6rem; }
+.mn__video-note { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 8px 10px; background: rgba(5, 5, 7, 0.8); color: #fff; font-size: 0.78rem; font-weight: 700; line-height: 1.35; text-align: center; }
 .mn__post-actions { display: flex; align-items: center; gap: 2px; margin: 10px -8px -6px; }
 .mn__action {
   display: inline-flex; align-items: center; gap: 6px; min-height: 40px; min-width: 40px; padding: 0 10px; border: 0; border-radius: 999px;
@@ -272,6 +278,7 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__fund-go { flex: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font-size: 0.82rem; font-weight: 800; text-decoration: none; }
 .mn__action.is-pop svg { animation: mn-pop 0.5s var(--mn-spring); }
 .mn__danger { color: #ff9a91 !important; }
+.mn__action--thumb { min-width: 44px; min-height: 44px; justify-content: center; padding: 0; }
 .mn__more { display: block; width: 100%; min-height: 48px; margin-top: 12px; border: 0; border-radius: 999px; background: transparent; color: var(--mn-dim); box-shadow: inset 0 0 0 1px var(--mn-rule-2); cursor: pointer; font-family: inherit; font-weight: 800; font-size: max(16px, 0.9rem); }
 /* an empty room says so at once, in its final colours: it never fades up through grey (owner, 2026-10-20: no flashes) */
 .mn__empty { padding: 40px 16px; border-radius: 22px; color: var(--mn-dim); text-align: center; font-size: 0.98rem; line-height: 1.6; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
@@ -402,6 +409,23 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__reply-box textarea { max-height: 8rem; resize: none; }
 .mn__reply-box .mn__post { margin: 0; min-height: 48px; }
 .mn__thread > .mn__status { padding: 0 14px 8px; }
+/* THE THUMBNAIL editor (owner, 2026-10-20): one column at every width, the frame as large as the sheet allows */
+.mn__thumb-dialog { overflow-y: auto; }
+.mn__thumb-dialog .mn__thread-head button { width: 44px; height: 44px; }
+.mn__thumb-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 16px; }
+.mn__thumb-which { display: flex; flex-wrap: wrap; gap: 8px; }
+.mn__thumb-which[hidden], .mn__thumb-pick[hidden] { display: none; }
+.mn__thumb-which button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer; background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2); font-family: inherit; font-weight: 800; font-size: max(16px, 0.88rem); }
+.mn__thumb-which button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--mn-gold); }
+.mn__thumb-stage { display: grid; place-items: center; min-height: 10rem; border-radius: 14px; overflow: hidden; background: #000; }
+.mn__thumb-stage video, .mn__thumb-stage img { display: block; max-width: 100%; max-height: 46vh; width: auto; height: auto; }
+.mn__thumb-stage [hidden] { display: none; }
+.mn__thumb-pick { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.mn__thumb-range { color: var(--mn-dim); font-size: 0.8rem; font-weight: 800; }
+.mn__thumb-pick input[type="range"] { width: 100%; min-width: 0; min-height: 44px; margin: 0; accent-color: var(--mn-hot); }
+.mn__thumb-pick .mn__primary { margin-top: 4px; }
+.mn__thumb-upload { margin: 0; box-sizing: border-box; text-align: center; line-height: 24px; }
+.mn__thumb-upload[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
 .mn__person-sheet { padding: 14px; }
 .mn__person-hero { min-height: 120px; border-radius: 16px; background: linear-gradient(135deg, rgba(255, 77, 61, 0.28), rgba(232, 200, 119, 0.08) 60%, rgba(244, 239, 230, 0.03)); background-size: cover; background-position: center; }
 .mn__person-main { position: relative; padding: 52px 2px 6px; }

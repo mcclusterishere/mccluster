@@ -413,6 +413,51 @@ async function insertNetworkPost(env,muid,draft,assets,scheduledPostId=null){
   if(created&&ids.length)await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
   return rows||[];
 }
+/* THE THUMBNAIL OF A POSTED VIDEO (owner, 2026-10-20: "I want people to be even able to edit the videos they previously
+   posted as a thumbnail"). The author sends poster_by_media {<a video asset of this post>: <their image asset>|null},
+   the same shape a scheduled draft keeps. A key must be one of this post's videos; a new poster must be the author's own
+   image, either unattached (ready or staged) or already attached to this same post, and never one of the post's own
+   media. Nothing is written here: the route attaches the new poster (view-url reads a poster through its post_id, so a
+   viewer would get a 404 otherwise), rewrites the post's media, then lets the old poster go. */
+function postMediaId(m){return m&&(m.asset_id||m.id)||null}
+async function preparePosterSwap(env,muid,post,map){
+  if(!map||typeof map!=='object'||Array.isArray(map))return {error:'Name a video in this post to change its thumbnail.',status:400};
+  const entries=Object.entries(map);
+  if(!entries.length||entries.length>10)return {error:'Name a video in this post to change its thumbnail.',status:400};
+  const media=Array.isArray(post.media)?post.media:[],own=new Set(media.map(postMediaId).filter(Boolean).map(String));
+  const wanted={};
+  for(const [key,value] of entries){
+    const target=media.find(m=>String(postMediaId(m))===key);
+    if(!uuidLike(key)||!target||(target.type||target.media_type)!=='video')return {error:'Only this post\'s videos have a thumbnail.',status:400};
+    if(value!==null&&!uuidLike(value))return {error:'A thumbnail must be one of your images.',status:400};
+    if(value!==null&&own.has(String(value)))return {error:'A thumbnail cannot be one of the post\'s own photos or videos.',status:400};
+    wanted[key]=value===null?null:String(value);
+  }
+  const posterIds=uniq(Object.values(wanted).filter(Boolean));
+  let rows=[];
+  if(posterIds.length){
+    rows=await service(env,`network_media_assets?id=in.(${posterIds.join(',')})&owner_m_uid=eq.${muid}&select=id,media_type,mime_type,status,post_id`)||[];
+    if(rows.length!==posterIds.length)return {error:'That thumbnail is not available.',status:400};
+    for(const a of rows){
+      if(a.media_type!=='image'||!/^image\//i.test(String(a.mime_type||'')))return {error:'A thumbnail must be one of your images.',status:400};
+      const free=['ready','staged'].includes(a.status)&&!a.post_id,here=a.post_id===post.id&&a.status==='attached';
+      if(!free&&!here)return {error:'That thumbnail is not available.',status:400};
+    }
+  }
+  const next=media.map(m=>{const id=String(postMediaId(m)||'');return id in wanted?{...m,poster_asset_id:wanted[id]}:m;});
+  const still=new Set(next.map(m=>m&&m.poster_asset_id).filter(Boolean).map(String));
+  const detach=uniq(media.map(m=>m&&m.poster_asset_id).filter(id=>uuidLike(id)&&!still.has(String(id))));
+  const attach=rows.filter(a=>a.post_id!==post.id).map(a=>a.id);
+  return {media:next,attach,detach};
+}
+async function attachPosters(env,muid,postId,ids){
+  if(!ids.length)return;
+  await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}&post_id=is.null`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:postId,status:'attached',updated_at:new Date().toISOString()})});
+}
+async function releasePosters(env,muid,postId,ids){
+  if(!ids.length)return;
+  await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}&post_id=eq.${postId}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:null,status:'ready',updated_at:new Date().toISOString()})});
+}
 /* A time at least two minutes out and at most ninety days out. Anything
    sooner is "post now"; anything later is a calendar, not a schedule. */
 function scheduleTime(value){
@@ -868,6 +913,12 @@ async function handleMnet(req,env,path,url){
     /* a newsroom article keeps its words (company-site/news.js renders the post's text as the article) */
     if(post.metadata?.newsroom===true&&patch.body!==undefined&&!patch.body)return fail(req,env,'A newsroom article needs words. Delete the post to take the article down.',400);
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
+    let swap=null;
+    if(b.poster_by_media!==undefined){
+      swap=await preparePosterSwap(env,muid,post,b.poster_by_media);
+      if(swap.error)return fail(req,env,swap.error,swap.status||400);
+      patch.media=swap.media;
+    }
     if(!String(patch.body===undefined?post.body:patch.body).trim()&&!(post.media||[]).length)return fail(req,env,'Post body or media is required',400);
     if(post.metadata?.newsroom===true){
       const changed=(patch.body!==undefined&&patch.body!==post.body)||(patch.visibility!==undefined&&patch.visibility!==post.visibility);
@@ -881,7 +932,31 @@ async function handleMnet(req,env,path,url){
         patch.metadata={...retained,...review.meta};
       }
     }
-    const out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});
+    if(swap)await attachPosters(env,muid,post.id,swap.attach);
+    let out;
+    try{out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});}
+    catch(e){
+      /* the write can land and only its answer be lost: let a new picture go only if the post, read again, does not name
+         it. Unsure, it stays attached (an unused picture of the author's own, never a broken thumbnail) */
+      if(swap&&swap.attach.length){
+        const again=await service(env,`network_posts?id=eq.${post.id}&select=media&limit=1`).catch(()=>null);
+        if(Array.isArray(again)){
+          const named=new Set((Array.isArray(again[0]?.media)?again[0].media:[]).map(m=>m&&m.poster_asset_id).filter(Boolean).map(String));
+          await releasePosters(env,muid,post.id,swap.attach.filter(id=>!named.has(String(id)))).catch(()=>{});
+        }
+      }
+      throw e;
+    }
+    if(swap&&swap.detach.length){
+      /* the old picture is no longer the post's: free it, then clear it out of storage (best effort). A picture a
+         mission proof also names stays in storage, so the proof keeps its evidence; unsure, nothing is cleared. */
+      await releasePosters(env,muid,post.id,swap.detach).catch(()=>{});
+      const proofs=await service(env,`action_proofs?metadata->>poster_asset_id=in.(${swap.detach.join(',')})&select=metadata&limit=20`).catch(()=>null);
+      if(Array.isArray(proofs)){
+        const keep=new Set(proofs.map(r=>String(r?.metadata?.poster_asset_id||'')));
+        await Promise.all(swap.detach.filter(id=>!keep.has(String(id))).map(id=>callMnetMedia(req,env,{action:'discard',asset_id:id}).catch(()=>null)));
+      }
+    }
     const hydrated=await hydratePostRows(env,out||[],muid);return reply(req,env,hydrated[0]||{post:out?.[0]});
   }
   if(postOne&&req.method==='DELETE'){
