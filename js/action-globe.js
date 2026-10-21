@@ -162,41 +162,61 @@ function wireTravelGestures(){
  canvas.addEventListener('wheel',pauseTravelFollow,{passive:true});
  for(const id of ['ctlZoomIn','ctlZoomOut'])$(id)?.addEventListener('click',pauseTravelFollow,{capture:true});
 }
+/* Parent and iframe controls share one phone canvas: the page's own bar, tabs and buttons that lie over this frame */
+function frameObstacles(){
+ const frame=window.frameElement.getBoundingClientRect(),doc=parentFrame.document;
+ const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?r:null};
+ const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+ const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
+ const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
+ return {frame,overlap,obstacles:[dock,...['#mccWorldAudioControls','#mnWorldStack','.mn__world-expand','#mnWorldPlay','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r))};
+}
+/* the lowest free slot for a control of this size, bottom right first, then bottom left; null when there is none */
+function clearSlot(size,base,margin){
+ const {frame,overlap,obstacles}=frameObstacles();
+ for(const side of ['right','left']){
+  const left=side==='right'?frame.right-size.width-margin:frame.left+margin,right=left+size.width;
+  const blocking=obstacles.filter(r=>left<r.right&&right>r.left);
+  const bottoms=[base,...blocking.map(r=>Math.ceil(frame.bottom-r.top)+10),...blocking.map(r=>Math.floor(frame.bottom-r.bottom-size.height)-10)];
+  for(const bottom of bottoms){
+   const candidate={left,right,top:frame.bottom-bottom-size.height,bottom:frame.bottom-bottom};
+   if(candidate.left<frame.left+8||candidate.right>frame.right-8||candidate.top<frame.top+8||candidate.bottom>frame.bottom-8||blocking.some(r=>overlap(candidate,r)))continue;
+   return {side,bottom};
+  }
+ }
+ return null;
+}
 function liftTravelControls(){
  const rail=document.querySelector('.globe-travel-controls');if(!rail)return;
  for(const key of ['bottom','left','right','flex-direction'])rail.style.removeProperty(key);
  if(!travelMode||!parentFrame||!window.frameElement)return;
  try{
-  // Parent and iframe controls share one phone canvas. Check every obstacle,
-  // including Expand when the dock does not overlap this stacked map.
-  const frame=window.frameElement.getBoundingClientRect(),doc=parentFrame.document;
-  const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?r:null};
-  const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
-  const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
-  const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
-  const obstacles=[dock,...['#mccWorldAudioControls','#mnWorldStack','.mn__world-expand','#mnWorldPlay','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r));
+  // Check every obstacle, including Expand when the dock does not overlap this stacked map.
   const preferred=getComputedStyle(rail).flexDirection;
   for(const direction of [preferred,preferred==='row'?'column':'row']){
-   rail.style.flexDirection=direction;const size=rail.getBoundingClientRect();
-   for(const side of ['right','left']){
-    const left=side==='right'?frame.right-size.width-12:frame.left+12,right=left+size.width;
-    const blocking=obstacles.filter(r=>left<r.right&&right>r.left);
-    const bottoms=[26,...blocking.map(r=>Math.ceil(frame.bottom-r.top)+10),...blocking.map(r=>Math.floor(frame.bottom-r.bottom-size.height)-10)];
-    for(const bottom of bottoms){
-     const candidate={left,right,top:frame.bottom-bottom-size.height,bottom:frame.bottom-bottom};
-     if(candidate.left<frame.left+8||candidate.right>frame.right-8||candidate.top<frame.top+8||candidate.bottom>frame.bottom-8||blocking.some(r=>overlap(candidate,r)))continue;
-     rail.style.left=side==='left'?'12px':'auto';rail.style.right=side==='right'?'12px':'auto';rail.style.bottom=bottom+'px';return;
-    }
-   }
+   rail.style.flexDirection=direction;
+   const slot=clearSlot(rail.getBoundingClientRect(),26,12);
+   if(slot){rail.style.left=slot.side==='left'?'12px':'auto';rail.style.right=slot.side==='right'?'12px':'auto';rail.style.bottom=slot.bottom+'px';return}
   }
   // Extremely short keyboard viewports retain full-size controls. The normal
   // phone and expanded layouts have a free slot above the mode switch.
   rail.style.flexDirection='row';rail.style.bottom='26px';
  }catch(_){/* A standalone or differently hosted frame keeps its own controls. */}
 }
+/* World, in the controls menu's corner, keeps clear of the page's bar and tabs the same way (a phone on its side puts the
+   bar over this frame's bottom corner) */
+function liftWorldCorner(){
+ const corner=document.querySelector('.globe-editorial-world');if(!corner)return;
+ for(const key of ['bottom','left','right'])corner.style.removeProperty(key);
+ if(travelMode||!parentFrame||!window.frameElement)return;
+ try{
+  const slot=clearSlot(corner.getBoundingClientRect(),24,8);
+  if(slot){corner.style.left=slot.side==='left'?'8px':'auto';corner.style.right=slot.side==='right'?'8px':'auto';corner.style.bottom=slot.bottom+'px'}
+ }catch(_){}
+}
 function scheduleTravelControls(){
  if(travelControlsQueued)return;travelControlsQueued=true;
- requestAnimationFrame(()=>{travelControlsQueued=false;liftTravelControls()});
+ requestAnimationFrame(()=>{travelControlsQueued=false;liftTravelControls();liftWorldCorner()});
 }
 function wireTravelControlLayout(){
  window.addEventListener('resize',scheduleTravelControls,{passive:true});
@@ -777,6 +797,15 @@ function wireEditorialTools(){
  const credit=document.querySelector('.osm-credit'),ionCredit=$('ionCredits');
  if(credit){credit.innerHTML='<a href="https://earthdata.nasa.gov/">NASA imagery</a> · <a href="https://www.naturalearthdata.com/">Natural Earth</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ';if(ionCredit)credit.appendChild(ionCredit);credit.classList.add('is-editorial')}
  const row=document.querySelector('.globe-data'),nav=document.querySelector('.globe-controls');
+ /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out from
+    the globe"): in the World, the corner that held the controls menu holds World, one tap back to the whole Earth. The rest of
+    the controls (the Earth / street map switch, the data layers) stay on the full-screen globe; Travel keeps its own rail. */
+ if(document.documentElement.classList.contains('globe-surface-network')){
+  const corner=document.createElement('div');corner.className='globe-editorial-world';const world=$('ctlWorld');if(world)corner.appendChild(world);document.body.appendChild(corner);
+  const shelf=document.createElement('div');shelf.className='globe-editorial-shelf';shelf.hidden=true;if(nav)shelf.appendChild(nav);if(row)shelf.appendChild(row);document.body.appendChild(shelf);
+  const rail=document.createElement('nav');rail.className='globe-travel-controls';rail.setAttribute('aria-label','Travel globe controls');document.body.appendChild(rail);setTravelMode(travelMode);
+  return;
+ }
  const tools=document.createElement('details');tools.className='globe-editorial-tools';
  tools.innerHTML='<summary aria-label="Globe controls"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16M9 3v6M15 9v6M9 15v6"/></svg></summary>';
  const panel=document.createElement('div');panel.className='globe-editorial-tools__panel';
