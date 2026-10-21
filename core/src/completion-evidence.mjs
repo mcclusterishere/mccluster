@@ -77,6 +77,12 @@ function policyEvidence(job, output) {
   const records = [];
 
   switch (type) {
+    case 'ai_diagnostics': {
+      requireValue(job, Boolean(text(output.installed?.ollama_version)) && Boolean(text(output.installed?.digest)), 'AI diagnostics require an installed version and model digest');
+      if (job.input?.benchmark === true) requireValue(job, output.benchmarks?.length === 4 && output.benchmarks.every(sample => sample.exact_match && Number(sample.usage?.total_duration_ns) > 0), 'AI benchmarks require four correct timed results');
+      records.push({ kind: 'runtime_measurement', model: output.installed.model, digest: output.installed.digest, ollama_version: output.installed.ollama_version, benchmark_samples: output.benchmarks?.length || 0 });
+      break;
+    }
     case 'repo_health': {
       requireValue(job, SHA40.test(text(output.head)), 'repo_health must report an exact 40-character HEAD SHA');
       if (output.origin_main) requireValue(job, SHA40.test(text(output.origin_main)), 'origin_main must be an exact 40-character SHA when present');

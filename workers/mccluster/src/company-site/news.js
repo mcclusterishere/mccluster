@@ -17,10 +17,11 @@
 
    The newsroom is the post itself, read through the service role and shown
    only when it is public, live (not deleted, not taken down by the desk), not
-   in a group, not a reply, and the house owner's. A deleted article answers
-   410 Gone, so search engines drop it. Edits to the post are edits to the
-   article (dateModified). Off with NEWSROOM_ENABLED="false": /news/* then 301s
+   in a group, not a reply, the current house owner's, and bound to the exact
+   human-reviewed revision. A withdrawn or edited but unreviewed article answers
+   410 Gone. An explicit owner review restores the current revision. Off with NEWSROOM_ENABLED="false": /news/* then 301s
    to the personal host, as every unknown path here does. */
+import { hasNewsroomApproval } from '../newsroom-review.js';
 import { COMPANY_ORIGIN, PERSONAL_ORIGIN } from './pages.generated.js';
 import { moved, methodNotAllowed, SECURITY } from '../world-host.js';
 
@@ -117,7 +118,9 @@ async function latest(env, owners, limit, fetchImpl) {
     deleted_at: 'is.null', removed_at: 'is.null', group_id: 'is.null', reply_to_id: 'is.null',
     select: COLUMNS, order: 'created_at.desc', limit: String(limit)
   }).toString(), fetchImpl);
-  return (Array.isArray(rows) ? rows : []).filter((r) => isArticle(r, owners) && isLive(r)).map(shapeArticle);
+  const live = (Array.isArray(rows) ? rows : []).filter((r) => isArticle(r, owners) && isLive(r));
+  const approvals = await Promise.all(live.map(hasNewsroomApproval));
+  return live.filter((_, i) => approvals[i]).map(shapeArticle);
 }
 
 /* ---------- the pages ---------- */
@@ -183,7 +186,7 @@ ${extraHead}${graph ? `  <script type="application/ld+json">${ld(graph)}</script
 ${body}
     </main>
     <footer>
-      <a href="${NEWS_ROOT}">All news</a><a href="${COMPANY_ORIGIN}/news/feed.xml">RSS</a><a href="${COMPANY_ORIGIN}/company">About McCluster Corp</a><a href="${COMPANY_ORIGIN}/">Human Uprise</a>
+      <a href="${NEWS_ROOT}">All news</a><a href="${COMPANY_ORIGIN}/news/feed.xml">RSS</a><a href="${COMPANY_ORIGIN}/company">About McCluster Corp</a><a href="${COMPANY_ORIGIN}/">Equity Uprise</a>
       <p>© ${new Date().getUTCFullYear()} ${PUBLICATION}.</p>
     </footer>
   </div>
@@ -298,13 +301,13 @@ const HTML_HEADERS = {
   ...SECURITY,
   'content-security-policy': "default-src 'none'; img-src https://matthew.mccluster.org; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 };
-function answer(request, body, { status = 200, type = 'text/html; charset=utf-8', cache = 'public, max-age=300' } = {}) {
+function answer(request, body, { status = 200, type = 'text/html; charset=utf-8', cache = 'no-store' } = {}) {
   return new Response(request.method === 'HEAD' ? null : body, { status, headers: { 'content-type': type, 'cache-control': cache, ...HTML_HEADERS } });
 }
 function missing(request, status, line) {
   return answer(request, page({ title: `${status === 410 ? 'Removed' : 'Not found'} · ${PUBLICATION}`, description: line, robots: 'noindex',
     body: `      <p class="k">News</p>\n      <h1>${esc(line)}</h1>\n      <p><a class="go" href="${NEWS_ROOT}">All news &#8594;</a></p>` }),
-    { status, cache: status === 503 ? 'no-store' : 'public, max-age=60' });
+    { status, cache: 'no-store' });
 }
 
 export async function newsroomResponse(request, env = {}, fetchImpl = fetch) {
@@ -322,7 +325,7 @@ export async function newsroomResponse(request, env = {}, fetchImpl = fetch) {
       const rows = await rest(env, `network_posts?id=eq.${article[2].toLowerCase()}&select=${COLUMNS}&limit=1`, fetchImpl);
       const row = Array.isArray(rows) ? rows[0] : null;
       if (!isArticle(row, owners)) return missing(request, 404, 'There is no article here.');
-      if (!isLive(row)) return missing(request, 410, 'This article has been removed.');
+      if (!isLive(row) || !await hasNewsroomApproval(row)) return missing(request, 410, 'This article has been removed.');
       const a = shapeArticle(row);
       // one address per article: an old or hand-typed slug goes to the current one
       if (path !== a.path) return moved(a.url);

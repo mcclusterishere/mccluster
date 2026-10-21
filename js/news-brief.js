@@ -42,7 +42,7 @@
     var have = {}; (state.data && state.data.briefs || []).forEach(function (b) { have[b.country] = b; });
     var order = Object.keys(have).concat(mine.filter(function (c) { return !have[c]; }).sort(function (a, b) { return name(a).localeCompare(name(b)); }));
     $("nbCountry").innerHTML = order.map(function (iso) {
-      var b = have[iso], tag = b ? (b.status === "done" ? "" : b.status === "failed" ? " · could not be written" : " · being written") : " · not asked for";
+      var b = have[iso], tag = b ? (b.status === "done" ? "" : b.status === "failed" ? " · needs attention" : b.status === "no_coverage" ? " · no monitored coverage" : " · being written") : " · not asked for";
       return '<option value="' + esc(iso) + '">' + esc(name(iso) + tag) + "</option>";
     }).join("");
     if (!state.country || order.indexOf(state.country) < 0) state.country = order[0] || "";
@@ -55,12 +55,13 @@
     $("nbAsk").hidden = !!state.brief || !state.country;
     if (!state.brief) {
       $("nbAskText").textContent = !b ? "No brief has been written for " + name(state.country) + " on " + state.day + "."
-        : b.status === "failed" ? "The brief for " + name(state.country) + " could not be written." : "The brief for " + name(state.country) + " is being written. Check back in a few minutes.";
-      $("nbAskGo").hidden = !!b && b.status !== "failed";
+        : b.status === "no_coverage" ? "No usable headlines were retained for this edition. This does not mean nothing happened."
+        : b.status === "failed" ? "The brief for " + name(state.country) + " needs review in Control after its bounded attempts." : "The brief for " + name(state.country) + " is being written. Check back in a few minutes.";
+      $("nbAskGo").hidden = !!b;
       $("nbAskGo").textContent = b && b.status === "failed" ? "Try again" : "Write this brief";
       return;
     }
-    $("nbMeta").textContent = name(b.country) + " · " + b.day + " · from " + (b.headline_count || b.sources.length) + " headlines";
+    $("nbMeta").textContent = name(b.country) + " · " + b.day + " · " + (b.timezone || "America/New_York") + " · from " + (b.headline_count || b.sources.length) + " monitored headlines · draft needs human review" + (b.late ? " · completed after deadline" : "") + (b.coverage && b.coverage.truncated ? " · source scan capped" : "");
     $("nbOverview").innerHTML = cited(b.overview, b.sources);
     fillList("nbHappened", b.happened, b.sources); fillList("nbMay", b.may_mean, b.sources); fillList("nbUncertain", b.uncertain, b.sources);
     $("nbSources").innerHTML = b.sources.map(function (s) {
@@ -79,7 +80,7 @@
   function ask(again) {
     var go = again ? $("nbAgain") : $("nbAskGo"); go.disabled = true;
     api("/v1/news-briefs/request", { method: "POST", body: { country: state.country, day: state.day, again: !!again } }).then(function (r) {
-      status(r.queued ? "Writing the brief for " + name(state.country) + " from " + r.headlines + " headlines. It takes a few minutes." : "That brief is already " + (r.status === "done" ? "written." : "being written."));
+      status(r.queued ? "Writing the brief for " + name(state.country) + " from " + r.headlines + " headlines. It takes a few minutes." : r.status === "no_coverage" ? "No monitored headlines were retained for this edition." : "This edition already exists. Its evidence snapshot is retained for review.");
       return load();
     }).catch(function (e) { status(e.message, "error"); }).finally(function () { go.disabled = false; });
   }

@@ -16,7 +16,9 @@
  * These are observations about attention, not diagnoses of motive.
  */
 
-export const AUDIENCE_SCIENCE_VERSION = 'audience-science/v1';
+import { measurementContext } from './measurement.js';
+
+export const AUDIENCE_SCIENCE_VERSION = 'audience-science/v2';
 export const MAX_AUDIENCE_WINDOW_DAYS = 31;
 
 export const START_EVENT_NAMES = new Set([
@@ -33,9 +35,10 @@ export const ACTION_EVENT_NAMES = new Set([
   'mission_join', 'action_act', 'action_claim', 'action_complete',
   'form_submit', 'site_request'
 ]);
-export const CONVERSION_EVENT_NAMES = new Set([
-  'account_created', 'checkout_view', 'checkout_go', 'offer_buy_click'
+export const INTENT_EVENT_NAMES = new Set([
+  'checkout_view', 'checkout_go', 'offer_buy_click'
 ]);
+export const CLIENT_COMPLETION_EVENT_NAMES = new Set(['account_created', 'action_complete']);
 
 export const AUDIENCE_EVENT_NAMES = [
   'page_view', 'page_leave', 'acquired',
@@ -44,7 +47,8 @@ export const AUDIENCE_EVENT_NAMES = [
   ...COMPLETE_EVENT_NAMES,
   ...SHARE_EVENT_NAMES,
   ...ACTION_EVENT_NAMES,
-  ...CONVERSION_EVENT_NAMES
+  ...INTENT_EVENT_NAMES,
+  ...CLIENT_COMPLETION_EVENT_NAMES
 ];
 
 const round = (v, places = 3) => {
@@ -112,7 +116,7 @@ function distributionMetrics(trackCounts) {
     normalized_entropy: round(normalized),
     effective_catalog_size: round(Math.exp(entropy), 2),
     repeat_ratio: round(Math.max(0, (total - k) / total)),
-    track_distribution: sorted.slice(0, 12).map((x) => ({
+    track_distribution: sorted.map((x) => ({
       track: x.track,
       starts: x.starts,
       share: round(x.share)
@@ -129,7 +133,8 @@ function behaviorSignals(profile) {
   if (profile.music_starts >= 2 && profile.completion_rate >= 0.5) out.push('deep_listening');
   if (profile.sessions >= 2 || profile.active_days >= 2) out.push('returning');
   if (profile.action_events > 0) out.push('action_engaged');
-  if (profile.conversion_events > 0) out.push('converted');
+  if (profile.intent_events > 0) out.push('purchase_intent');
+  if (profile.client_completion_events > 0) out.push('client_completion_reported');
   return out;
 }
 
@@ -150,13 +155,20 @@ function modelReadiness(profiles) {
 
 export function summarizeAudienceScience(leanRows = [], identityRows = []) {
   const identityByDevice = new Map();
-  [...identityRows]
-    .filter((r) => r?.device_id && r?.uid)
-    .sort((a, b) => Date.parse(a.at || 0) - Date.parse(b.at || 0))
-    .forEach((r) => identityByDevice.set(String(r.device_id), String(r.uid)));
+  const candidatesByDevice = new Map();
+  for (const row of identityRows) {
+    if (!row?.device_id || !row?.uid) continue;
+    const device = String(row.device_id);
+    const candidates = candidatesByDevice.get(device) || new Set();
+    candidates.add(String(row.uid));
+    candidatesByDevice.set(device, candidates);
+  }
+  for (const [device, candidates] of candidatesByDevice) {
+    // Shared devices are not evidence that all their visitors are one account.
+    if (candidates.size === 1) identityByDevice.set(device, [...candidates][0]);
+  }
 
   const buckets = new Map();
-  const deviceToBucket = new Map();
 
   function getBucket(row) {
     const device = String(row?.device_id || '').trim();
@@ -180,7 +192,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         completions: 0,
         shares: 0,
         action_events: 0,
-        conversion_events: 0,
+        intent_events: 0,
+        client_completion_events: 0,
         engaged_seconds: 0,
         first_seen: null,
         last_seen: null
@@ -188,7 +201,6 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
       buckets.set(key, b);
     }
     b.devices.add(device);
-    deviceToBucket.set(device, key);
     return b;
   }
 
@@ -224,7 +236,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
     if (COMPLETE_EVENT_NAMES.has(name)) b.completions++;
     if (SHARE_EVENT_NAMES.has(name)) b.shares++;
     if (ACTION_EVENT_NAMES.has(name)) b.action_events++;
-    if (CONVERSION_EVENT_NAMES.has(name)) b.conversion_events++;
+    if (INTENT_EVENT_NAMES.has(name)) b.intent_events++;
+    if (CLIENT_COMPLETION_EVENT_NAMES.has(name)) b.client_completion_events++;
   }
 
   const profiles = [...buckets.values()].map((b) => {
@@ -252,7 +265,10 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
       completion_rate: starts ? round(Math.min(1, b.completions / starts)) : 0,
       shares: b.shares,
       action_events: b.action_events,
-      conversion_events: b.conversion_events,
+      intent_events: b.intent_events,
+      client_completion_events: b.client_completion_events,
+      // Compatibility field: null means unmeasured, not zero conversions.
+      conversion_events: null,
       ...dist
     };
     profile.behavior_signals = behaviorSignals(profile);
@@ -302,7 +318,10 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         effective_catalog_size: 'exp(H)',
         repeat_ratio: '(music_starts - distinct_tracks) / music_starts'
       },
-      exposure_warning: 'Observed attention is not the same as preference. The current event schema does not fully record every track a visitor was shown, so exposure-adjusted preference is not claimed.'
+      exposure_warning: 'Observed attention is not the same as preference. The current event schema does not fully record every track a visitor was shown, so exposure-adjusted preference is not claimed.',
+      outcome_policy: 'Checkout events measure intent. account_created and action_complete are client-reported completions. Verified accounts, payments and action outcomes require their canonical backend records and are not measured here.',
+      identity_basis: 'Device IDs, linked only where exactly one account is observed for the device in the queried window; not a count of distinct people.',
+      ambiguous_identity_devices: [...candidatesByDevice.values()].filter((x) => x.size > 1).length
     },
     totals: {
       profiled_visitors: profiles.length,
@@ -315,7 +334,15 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
     signals: [...signalCounts.entries()].map(([signal, visitors]) => ({ signal, visitors }))
       .sort((a, b) => b.visitors - a.visitors || a.signal.localeCompare(b.signal)),
     track_affinity: trackAffinity,
-    profiles,
+    profiles: profiles.map((profile) => ({ ...profile,
+      track_distribution: profile.track_distribution.slice(0, 12),
+      track_distribution_completeness: {
+        status: profile.track_distribution.length > 12 ? 'display_limited' : 'complete',
+        shown: Math.min(12, profile.track_distribution.length),
+        total_tracks: profile.track_distribution.length,
+        note: 'Track affinity and diversity metrics use all observed tracks, not only these display rows.'
+      }
+    })),
     model_readiness: modelReadiness(profiles)
   };
 }
@@ -332,6 +359,7 @@ export function createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, req
       let since = finiteDate(url.searchParams.get('since'), fallbackSince);
       if (!(since < until)) return json({ ok: false, error: 'Invalid analytics range' }, 400);
       const floor = new Date(until.getTime() - MAX_AUDIENCE_WINDOW_DAYS * 86400000);
+      const clamped = since < floor;
       if (since < floor) since = floor;
 
       const names = AUDIENCE_EVENT_NAMES.join(',');
@@ -340,12 +368,12 @@ export function createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, req
         '&at=lt.' + encodeURIComponent(until.toISOString()) +
         '&name=in.(' + names + ')' +
         '&device_id=not.is.null' +
-        '&select=at,name,path,device_id,session_id,track,src,source,referrer,is_bot,listened_seconds,dwell_s,visible_s' +
-        '&order=at.asc';
+        '&select=id,at,name,path,device_id,session_id,track,src,source,referrer,is_bot,listened_seconds,dwell_s,visible_s' +
+        '&order=at.asc,id.asc';
       const identQs = 'site_id=is.null&uid=not.is.null&device_id=not.is.null' +
         '&at=gte.' + encodeURIComponent(since.toISOString()) +
         '&at=lt.' + encodeURIComponent(until.toISOString()) +
-        '&select=at,uid,device_id,session_id&order=at.asc';
+        '&select=id,at,uid,device_id,session_id&order=at.asc,id.asc';
 
       const [lean, identity] = await Promise.all([
         sbRowsPaged(env, 'events_lean?' + qs, 100000),
@@ -354,6 +382,10 @@ export function createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, req
       return json({
         ok: true,
         range: { since: since.toISOString(), until: until.toISOString(), max_days: MAX_AUDIENCE_WINDOW_DAYS },
+        measurement: measurementContext({ metricVersion: AUDIENCE_SCIENCE_VERSION,
+          since: since.toISOString(), until: until.toISOString(), clamped,
+          datasets: { events: lean, identity }, unit: 'observed_profiles',
+          identityBasis: 'device_or_unambiguous_observed_account' }),
         ...summarizeAudienceScience(lean, identity)
       });
     }

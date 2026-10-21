@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { runLease, systemClock } from './lease-runtime.mjs';
+import { requestJson, readBoundedText } from './request-json.mjs';
 import { COMPUTE_PROTOCOL, validateCapabilityManifest } from './protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signature.mjs';
 import { discoverHardware, loadSnapshot } from './hardware.mjs';
@@ -11,7 +13,8 @@ const ORG_ID = process.env.MCCLUSTER_ORG_ID || '';
 const STATE_DIR = process.env.MCCLUSTER_NODE_STATE_DIR || '/var/lib/mccluster-node';
 const MANIFEST_PATH = process.env.MCCLUSTER_NODE_MANIFEST || '/etc/mccluster-node/capabilities.json';
 const IDENTITY_PATH = path.join(STATE_DIR, 'identity.json');
-const AGENT_VERSION = '0.2.0';
+const AGENT_VERSION = '0.3.0';
+const REQUEST_TIMEOUT_MS = Number(process.env.MCCLUSTER_NODE_REQUEST_TIMEOUT_MS || 10_000);
 const POLL_MS = Math.max(1_000, Number(process.env.MCCLUSTER_NODE_POLL_MS || 5_000));
 const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEAT_MS || 30_000));
 const ENGINE_PROBE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_ENGINE_PROBE_MS || 15_000));
@@ -76,48 +79,25 @@ function inventory(hardware, engineHealth = []) {
   return value;
 }
 
-async function rawRequest(pathname, { method = 'POST', body = {}, headers = {} } = {}) {
-  const res = await fetch(`${BASE_URL}${pathname}`, {
-    method,
+async function rawRequest(pathname, { method = 'POST', body = {}, headers = {}, signal } = {}) {
+  return requestJson(`${BASE_URL}${pathname}`, {
+    method, signal, timeoutMs: REQUEST_TIMEOUT_MS,
     headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
     body: method === 'GET' ? undefined : JSON.stringify(body)
   });
-  const text = await res.text();
-  let parsed;
-  try { parsed = text ? JSON.parse(text) : null; } catch { parsed = { raw: text }; }
-  if (!res.ok) {
-    const error = new Error(parsed?.error || `${res.status} ${res.statusText}`);
-    error.status = res.status;
-    error.code = parsed?.code;
-    throw error;
-  }
-  return parsed;
 }
 
-async function signedRequest(identity, pathname, body = {}) {
+async function signedRequest(identity, pathname, body = {}, signal) {
   const bodyBytes = Buffer.from(JSON.stringify(body));
   const headers = signRequest({
     privateKeyPem: identity.privateKeyPem,
-    method: 'POST',
-    path: pathname,
-    nodeId: identity.nodeId,
-    bodyBytes
+    method: 'POST', path: pathname, nodeId: identity.nodeId, bodyBytes
   });
-  const res = await fetch(`${BASE_URL}${pathname}`, {
-    method: 'POST',
+  return requestJson(`${BASE_URL}${pathname}`, {
+    method: 'POST', signal, timeoutMs: REQUEST_TIMEOUT_MS,
     headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
     body: bodyBytes
   });
-  const text = await res.text();
-  let parsed;
-  try { parsed = text ? JSON.parse(text) : null; } catch { parsed = { raw: text }; }
-  if (!res.ok) {
-    const error = new Error(parsed?.error || `${res.status} ${res.statusText}`);
-    error.status = res.status;
-    error.code = parsed?.code;
-    throw error;
-  }
-  return parsed;
 }
 
 async function enroll(identity, manifest, capabilities, hardware, healthSummary) {
@@ -158,18 +138,24 @@ function assertLoopbackExecutor(urlString) {
   return url;
 }
 
-async function executeHttp(executor, task) {
+async function executeHttp(executor, task, signal) {
   const url = assertLoopbackExecutor(executor.url);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), Math.max(30_000, Number(executor.timeout_ms || 3_600_000)));
+  const abort = () => controller.abort(signal?.reason);
+  if (signal?.aborted) abort();
+  else signal?.addEventListener('abort', abort, { once: true });
+  const configuredTimeout = Number(executor.timeout_ms || 600_000);
+  const timeoutMs = Number.isFinite(configuredTimeout) ? Math.max(1000, Math.min(3_600_000, configuredTimeout)) : 600_000;
+  const timeout = setTimeout(() => controller.abort(new Error('Executor deadline passed')), timeoutMs);
   try {
     const res = await fetch(url, {
-      method: 'POST',
+      method: 'POST', redirect: 'error',
       headers: { 'content-type': 'application/json', ...(executor.headers || {}) },
       body: JSON.stringify({ capability: task.capability, implementation: task.implementation, input: task.input, metadata: task.metadata || {}, priority: Number(task.priority || 0) }),
       signal: controller.signal
     });
-    const text = await res.text();
+    // Leave room for the signed gateway completion envelope (2 MiB limit).
+    const text = await readBoundedText(res, 1_500_000);
     let result;
     try { result = text ? JSON.parse(text) : {}; } catch { result = { text }; }
     if (!res.ok) {
@@ -179,12 +165,12 @@ async function executeHttp(executor, task) {
       throw error;
     }
     return result;
-  } finally { clearTimeout(timeout); }
+  } finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
 }
 
-async function executeTask(executor, task) {
+async function executeTask(executor, task, signal) {
   if (!executor) throw permanentError(`No local executor configured for ${task.implementation || task.capability}`);
-  if (executor.type === 'http') return executeHttp(executor, task);
+  if (executor.type === 'http') return executeHttp(executor, task, signal);
   throw permanentError(`Unsupported local executor type: ${executor.type || 'unknown'}`);
 }
 
@@ -216,8 +202,9 @@ async function run() {
   else console.log(JSON.stringify({ event: 'compute_node_existing_identity', node_id: identity.nodeId }));
 
   const active = new Map();
-  process.on('SIGTERM', () => gracefulShutdown(active, 'SIGTERM').then(() => process.exit(active.size ? 1 : 0)));
-  process.on('SIGINT', () => gracefulShutdown(active, 'SIGINT').then(() => process.exit(active.size ? 1 : 0)));
+  const shutdown = new AbortController();
+  process.on('SIGTERM', () => { shutdown.abort(new Error('Node shutdown')); gracefulShutdown(active, 'SIGTERM').then(() => process.exit(active.size ? 1 : 0)); });
+  process.on('SIGINT', () => { shutdown.abort(new Error('Node shutdown')); gracefulShutdown(active, 'SIGINT').then(() => process.exit(active.size ? 1 : 0)); });
 
   let lastHeartbeat = 0;
   let lastProbe = 0;
@@ -248,7 +235,8 @@ async function run() {
       }
 
       if (!stopping && advertised.length && active.size < manifest.maxLeases) {
-        const { lease } = await signedRequest(identity, '/v1/compute/lease', {});
+        const sentAt = systemClock();
+        const { lease } = await signedRequest(identity, '/v1/compute/lease', {}, shutdown.signal);
         if (lease) {
           const { lease_id: leaseId, lease_token: leaseToken, task } = lease;
           const executor = executorFor(task, manifest);
@@ -264,30 +252,14 @@ async function run() {
             continue;
           }
 
-          await signedRequest(identity, `/v1/compute/leases/${leaseId}/start`, { lease_token: leaseToken, extend_seconds: 120 });
-          const leaseHeartbeat = setInterval(() => {
-            signedRequest(identity, `/v1/compute/leases/${leaseId}/heartbeat`, {
-              lease_token: leaseToken,
-              progress: { state: 'running', agent_time: new Date().toISOString() },
-              extend_seconds: 120
-            }).catch((error) => console.error(JSON.stringify({ event: 'lease_heartbeat_failed', lease_id: leaseId, error: error.message })));
-          }, 30_000);
-          leaseHeartbeat.unref();
-
-          const promise = executeTask(executor, task)
-            .then((result) => signedRequest(identity, `/v1/compute/leases/${leaseId}/complete`, { lease_token: leaseToken, result }))
-            .catch(async (error) => {
-              try {
-                await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
-                  lease_token: leaseToken,
-                  error: error.message,
-                  retry: error.retryable !== false
-                });
-              } catch (reportError) {
-                console.error(JSON.stringify({ event: 'lease_failure_report_failed', lease_id: leaseId, task_id: task.id, error: reportError.message }));
-              }
-            })
-            .finally(() => { clearInterval(leaseHeartbeat); active.delete(leaseId); });
+          const promise = runLease({
+            lease, nodeId: identity.nodeId, sentAt, signal: shutdown.signal,
+            request: (pathname, body, signal) => signedRequest(identity, pathname, body, signal),
+            execute: (leasedTask, signal) => executeTask(executor, leasedTask, signal),
+            onEvent: (event, error) => console.error(JSON.stringify({ event, lease_id: leaseId, task_id: task.id, error: error.message }))
+          }).catch((error) => {
+            console.error(JSON.stringify({ event: 'lease_execution_rejected', lease_id: leaseId, task_id: task.id, error: error.message }));
+          }).finally(() => active.delete(leaseId));
           active.set(leaseId, promise);
         }
       }
@@ -295,6 +267,10 @@ async function run() {
     } catch (error) {
       consecutiveErrors += 1;
       console.error(JSON.stringify({ event: 'compute_node_loop_error', node_id: identity.nodeId, error: error.message, code: error.code || null, consecutive_errors: consecutiveErrors }));
+      if ([401, 403].includes(error.status)) {
+        shutdown.abort(error);
+        break;
+      }
     }
 
     const backoff = Math.min(60_000, POLL_MS * (2 ** Math.min(4, consecutiveErrors)));
