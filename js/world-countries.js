@@ -215,7 +215,7 @@
       const el = document.createElement('div');
       el.className = 'heat-legend'; el.id = 'heatLegend'; el.hidden = true;
       el.innerHTML = '<span class="heat-legend__title">News mentions · last 24 h</span><i class="heat-legend__bar"></i><span class="heat-legend__ends"><small>Fewer</small><small>More</small></span>';
-      if (window.HuHeat) el.querySelector('i').style.background = window.HuHeat.gradient();
+      if (window.HuHeat) el.querySelector('i').style.background = window.HuHeat.gradient(null, true);
       document.body.appendChild(el);
       return el;
     }

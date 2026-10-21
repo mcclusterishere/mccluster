@@ -23,6 +23,8 @@
     feedAnswered: false,
     placeScope: { enabled:false, country:null, home:null, posts:[], news:[], lives:[], postBefore:null, newsBefore:null,
       loaded:false, error:'', seq:0, working:false },
+    /* the picked place's stories (loadPlaceNews): which place, what is read, and its cursor */
+    placeNews: { key:'', items:[], before:null, loading:false, loaded:false, error:'', seq:0 },
     threadPost: null,
     currentView: "feed",
     mediaAssets: [],
@@ -1171,9 +1173,6 @@
     var label = $("huRegionLabel") ? String($("huRegionLabel").textContent || "").trim() : "";
     return label && label !== "All regions" ? label : "";
   }
-  /* A story's place reads "City, Area, Country" (GDELT's label). It is in the picked country when its tail names that
-     country: the globe's name for it, or one of the names publishers use. A substring is not enough (Guinea is not
-     Papua New Guinea; Niger is not Nigeria), so the match is the whole tail after a comma, or the whole label. */
   /* THE PLACE CARD (owner, 2026-10-21: "the card that shows up shouldn't be the full width of the top of the screen. It should
      only be in the middle ... how many users are from there ... how many news articles are from there right now ... how many
      posts from users are there"). The page draws it, so it sits below the page's bar and over its own buttons rather than
@@ -1237,26 +1236,6 @@
       return inside;
     };
     return s.polygons.some(function (poly) { return inRing(poly[0]) && !poly.slice(1).some(inRing); });
-  }
-  function placeInCountry(place, country) {
-    var aliases = {
-      "united states of america": ["united states", "usa", "u.s.", "us"], "united kingdom": ["uk", "britain", "great britain", "england", "scotland", "wales", "northern ireland"],
-      "russia": ["russian federation"], "czechia": ["czech republic"], "myanmar": ["burma"], "c\u00f4te d'ivoire": ["ivory coast", "cote d'ivoire"],
-      "eswatini": ["swaziland"], "turkey": ["t\u00fcrkiye", "turkiye"], "laos": ["lao people's democratic republic", "lao pdr"], "vietnam": ["viet nam"],
-      "syria": ["syrian arab republic"], "iran": ["iran, islamic republic of"], "bolivia": ["bolivia, plurinational state of"], "venezuela": ["venezuela, bolivarian republic of"],
-      "tanzania": ["united republic of tanzania"], "moldova": ["republic of moldova"], "brunei": ["brunei darussalam"], "timor-leste": ["east timor"],
-      "bahamas": ["the bahamas", "bahamas, the"], "gambia": ["the gambia", "gambia, the"], "congo": ["republic of the congo", "congo, republic of the", "congo-brazzaville"],
-      "dem. rep. congo": ["democratic republic of the congo", "congo, democratic republic of the", "dr congo", "congo-kinshasa"],
-      "north korea": ["korea, north", "democratic people's republic of korea"], "south korea": ["korea, south", "republic of korea", "korea"],
-      "netherlands": ["the netherlands"], "bosnia and herz.": ["bosnia and herzegovina"], "central african rep.": ["central african republic"],
-      "dominican rep.": ["dominican republic"], "eq. guinea": ["equatorial guinea"], "falkland is.": ["falkland islands"], "s. sudan": ["south sudan"],
-      "solomon is.": ["solomon islands"], "w. sahara": ["western sahara"], "n. cyprus": ["northern cyprus"], "north macedonia": ["macedonia"],
-      "palestine": ["palestinian territory", "west bank", "gaza strip"], "taiwan": ["taiwan, province of china"]
-    };
-    if (!place || !country) return false;
-    var tail = String(place).toLocaleLowerCase().trim(), name = String(country.name || country).toLocaleLowerCase().trim();
-    if (!name) return false;
-    return [name].concat(aliases[name] || []).some(function (n) { return tail === n || tail.slice(-n.length - 2) === ", " + n; });
   }
   /* The feature flag comes from the Worker. Country comes only from its
      coarse Cloudflare edge signal; choosing a different country on the
@@ -1604,7 +1583,12 @@
     var items = regionMode ? state.placeScope.posts : state.feed;
     /* World geography is a country-scoped server read when the feature is enabled. */
     var news = focus && focus.filter ? [] : state.news;
-    if (regionMode && !(focus && focus.filter)) news = state.placeScope.news;
+    /* Local: the picked place's own stories, read for it (loadPlaceNews), never a filter over the world's first page */
+    if (state.feedScope === "local") {
+      var pk = placeNewsKey(), pn = state.placeNews;
+      if (pk && pn.key !== pk) loadPlaceNews(true);
+      news = pk && pn.key === pk && !(focus && focus.filter) ? pn.items.slice() : [];
+    }
     paintNewsCredit(false);
     if (!items.length && !news.length) {
       if (regionMode) {
@@ -1636,18 +1620,14 @@
     }
     var scope = state.feedScope || "global", place = scope === "local" ? localPlace() : "";
     if (scope === "news") items = [];
-    if (scope === "local" && !regionMode) {
-      items = [];
-      var picked = state.world.country || { name: place };
-      news = place ? news.filter(function (n) { return n.country_code && picked.code ? n.country_code === picked.code : placeInCountry(n.place, picked); }) : [];
-    }
-    /* a state picked on the globe: the stories placed inside it (member posts carry only their country, and stay) */
-    var pickedState = scope === "local" && state.world.country && state.world.country.state;
-    if (pickedState) news = news.filter(function (n) { return newsInState(n, pickedState); });
+    /* member posts are not placed on the map, so Local without the country feed shows only the place's news */
+    if (scope === "local" && !regionMode) items = [];
     if (!items.length && !news.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(
         scope === "local" && !place ? "Tap a country on the globe to see the news that mentions it. Member posts are not placed on the map yet." :
-        scope === "local" ? "No story mentions " + place + " yet." :
+        scope === "local" && state.placeNews.loading ? "Loading the news from " + place + "\u2026" :
+        scope === "local" && state.placeNews.error ? state.placeNews.error :
+        scope === "local" ? "No news from " + place + " in the last 24 hours." :
         scope === "news" ? "No world news is loaded yet." :
         query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
@@ -1779,6 +1759,45 @@
       });
     }).catch(function () { return { ok: false, status: 0 }; });
   }
+  /* A PLACE'S NEWS (owner, 2026-10-21: "Lombardia said ... 60 something in the last 24 hours. Where the fuck are the news
+     articles then? ... if you click the state level, it should filter all the news from that state"). A country or a state
+     picked on the globe reads that place's own stories from the Worker (GET /v1/world/news?country=…&bbox=…): the same rows
+     and the same 24 hours the heat map counts, so the count on the card and the list under it are the same stories. A
+     state reads its box and keeps the stories inside its own shape; a place with none says so. */
+  function placeNewsKey() { var c = state.world.country; return c && /^[A-Z]{2}$/.test(c.code || "") ? c.code + "|" + (c.state ? (c.state.key || c.state.name) : "") : ""; }
+  function stateBox(s) {
+    var w = 180, so = 90, e = -180, n = -90;
+    s.polygons.forEach(function (poly) { poly[0].forEach(function (p) { w = Math.min(w, p[0]); e = Math.max(e, p[0]); so = Math.min(so, p[1]); n = Math.max(n, p[1]); }); });
+    /* a shape across the date line has no simple box: the country is read, and the shape keeps its own */
+    if (!(w < e) || e - w > 180 || !(so < n)) return null;
+    return [Math.max(-180, w - 0.05), Math.max(-90, so - 0.05), Math.min(180, e + 0.05), Math.min(90, n + 0.05)].map(function (v) { return Math.round(v * 1e4) / 1e4; });
+  }
+  function loadPlaceNews(reset) {
+    var p = state.placeNews, key = placeNewsKey(), c = state.world.country;
+    if (reset) { p.seq++; p.key = key; p.items = []; p.before = null; p.loaded = false; p.error = ""; }
+    if (!key || (!reset && !p.before)) { p.loading = false; return Promise.resolve(); }
+    var seq = ++p.seq, pick = c.state, box = pick ? stateBox(pick) : null, pages = 0;
+    p.loading = true;
+    var step = function (from) {
+      var url = NEWS_API + "?limit=50&country=" + encodeURIComponent(c.code) + (box ? "&bbox=" + box.join(",") : "") + (from ? "&before=" + encodeURIComponent(from) : "");
+      return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+        if (seq !== p.seq) return;
+        if (!d || d.ok !== true || !Array.isArray(d.items) || d.unavailable) { p.error = "The news for this place is not available right now."; return; }
+        var have = {};
+        p.items.forEach(function (n) { have[n.id] = true; });
+        d.items.map(cleanNews).filter(function (n) { return n && !have[n.id] && (!pick || newsInState(n, pick)); }).forEach(function (n) { have[n.id] = true; p.items.push(n); });
+        p.before = typeof d.next_before === "string" && d.next_before ? d.next_before : null;
+        /* a state's box takes in its neighbours' corners too: read on until a page of its own shows, or there is no more */
+        if (pick && p.before && p.items.length < 20 && ++pages < 6) return step(p.before);
+      });
+    };
+    return step(reset ? null : p.before).catch(function () { if (seq === p.seq) p.error = "The news for this place is not available right now."; }).then(function () {
+      if (seq !== p.seq) return;
+      p.loading = false; p.loaded = true;
+      if (state.feedScope === "local") renderFeed(false);
+      paintMore();
+    });
+  }
   /* Never show news comment inputs before the Worker confirms BOTH that the
      operator enabled the feature and the approved table is actually present.
      No bearer credentials leave the current origin with this public read. */
@@ -1857,8 +1876,8 @@
   function paintMore() {
     var more = $("mnMore"), focus = state.world.focus;
     if (!more) return;
-    if (state.feedScope === "local" && state.placeScope.enabled) {
-      more.hidden = !(state.placeScope.postBefore || state.placeScope.newsBefore);
+    if (state.feedScope === "local") {
+      more.hidden = !(state.placeNews.before || (state.placeScope.enabled && state.placeScope.postBefore));
       return;
     }
     more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
@@ -1868,7 +1887,7 @@
       b.onclick = function (e) {
         e.preventDefault(); e.stopPropagation();
         var id = b.getAttribute("data-news-open"),
-          all = state.feedScope === "local" && state.placeScope.enabled ? state.placeScope.news : state.news,
+          all = state.feedScope === "local" ? state.placeNews.items : state.news,
           story = all.find(function (n) { return n.id === id; });
         if (!story) return;
         if (window.MCC_WORLD_NEWS_READER && window.MCC_WORLD_NEWS_READER.open) window.MCC_WORLD_NEWS_READER.open(story, b);
@@ -3092,7 +3111,7 @@
         .catch(function (e) { setStatus($("mnConversationStatus"),e.message||"Could not accept request.","error"); });
     };
     $("mnMore").onclick = function () {
-      if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(false);
+      if (state.feedScope === "local") { loadPlaceNews(false); if (state.placeScope.enabled) loadPlaceFeed(false); }
       else loadFeed(false);
     };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;

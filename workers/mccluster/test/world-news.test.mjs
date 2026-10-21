@@ -339,3 +339,55 @@ test('the dispatch and the cron hook are wired', async () => {
   assert.doesNotMatch(src, /redirect:\s*'(error|follow)'/, "redirects go through lib/safe-fetch.js");
   assert.match(src, /fetchNoCrossHostRedirect\(/);
 });
+
+/* A PLACE'S NEWS (owner, 2026-10-21: "Lombardia said ... 60 something in the last 24 hours. Where the fuck are the news
+   articles then?"): /v1/world/news?country=XX[&bbox=w,s,e,n] answers the heat map's own rows, so the count and the list agree */
+test('a place\'s news: the heat map\'s rows for that country and box, newest first, with its own cursor', async () => {
+  const seen = [];
+  const id = (n) => '00000000-0000-4000-8000-' + String(n).padStart(12, '0');
+  const rows = [
+    { id: id(1), title: 'Milan story', canonical_url: 'https://corriere.it/a', published_at: '2026-10-21T10:00:00+00:00', headline_location_label: 'Milan, Lombardia, Italy', headline_latitude: 45.46, headline_longitude: 9.19, media_news_sources: { domain: 'corriere.it' } },
+    { id: id(2), title: '', canonical_url: 'https://x.it/b', published_at: '2026-10-21T09:00:00+00:00', headline_latitude: 45.5, headline_longitude: 9.2, media_news_sources: [{ domain: 'x.it' }] }
+  ];
+  const fetchImpl = async (u) => { seen.push(new URL(String(u))); return json(rows); };
+  const now = () => Date.parse('2026-10-21T12:02:00Z');
+  const res = await handleWorldNews(new Request('https://api.mccluster.org/v1/world/news?country=DE&bbox=8.5,45.4,11.4,46.6&limit=2', { headers: { origin: 'https://matthew.mccluster.org' } }), ENV, { fetchImpl, cacheImpl: memoryCache(), now });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  const q = seen[0].searchParams;
+  assert.equal(seen[0].pathname, '/rest/v1/media_news_articles');
+  assert.equal(q.get('location_country_fips'), 'eq.GM', 'Germany is GDELT\'s GM: the same FIPS mapping as the heat map');
+  assert.equal(q.get('ingestion_provider'), 'eq.gdelt_gkg_v2');
+  assert.equal(q.get('published_at'), 'gte.2026-10-20T12:00:00.000Z', 'the heat map\'s 24 h window, on its five-minute slot');
+  assert.deepEqual(q.getAll('headline_longitude'), ['gte.8.5', 'lte.11.4']);
+  assert.deepEqual(q.getAll('headline_latitude'), ['gte.45.4', 'lte.46.6']);
+  assert.equal(q.get('order'), 'published_at.desc,id.desc');
+  assert.match(q.get('select'), /media_news_sources\(domain\)/);
+  assert.deepEqual(body.items, [{ id: id(1), title: 'Milan story', url: 'https://corriere.it/a', domain: 'corriere.it', seen_at: '2026-10-21T10:00:00.000Z', place: 'Milan, Lombardia, Italy', lat: 45.46, lon: 9.19, country: 'DE' }], 'a story without a title is dropped');
+  assert.equal(body.next_before, '2026-10-21T09:00:00.000Z~' + id(2), 'the cursor is the last row read, kept or not');
+  assert.deepEqual(body.scope, { country: 'DE', bbox: [8.5, 45.4, 11.4, 46.6], window_hours: 24 });
+  assert.deepEqual(body.attribution, NEWS_ATTRIBUTION);
+
+  await handleWorldNews(new Request('https://api.mccluster.org/v1/world/news?country=IT&before=' + encodeURIComponent(body.next_before)), ENV, { fetchImpl, cacheImpl: memoryCache(), now });
+  const q2 = seen[1].searchParams;
+  assert.equal(q2.get('location_country_fips'), 'eq.IT');
+  assert.equal(q2.get('or'), '(published_at.lt."2026-10-21T09:00:00.000Z",and(published_at.eq."2026-10-21T09:00:00.000Z",id.lt.' + id(2) + '))');
+  assert.equal(q2.get('headline_latitude'), null, 'no box, no box filter');
+});
+
+test('a place\'s news refuses a bad country or box, and says unavailable rather than failing', async () => {
+  const bad = async (qs) => (await handleWorldNews(new Request('https://api.mccluster.org/v1/world/news?' + qs), ENV, { fetchImpl: async () => json([]), cacheImpl: memoryCache() })).status;
+  assert.equal(await bad('country=it'), 400);
+  assert.equal(await bad('country=ITA'), 400);
+  assert.equal(await bad('bbox=1,2,3,4'), 400, 'a box needs a country');
+  assert.equal(await bad('country=IT&bbox=1,2,3'), 400);
+  assert.equal(await bad('country=IT&bbox=11,45,9,46'), 400, 'west before east');
+  assert.equal(await bad('country=IT&bbox=9,46,11,45'), 400, 'south before north');
+  assert.equal(await bad('country=IT&bbox=-181,45,9,46'), 400);
+  assert.equal(await bad('country=IT&bbox=a,b,c,d'), 400);
+  const down = await handleWorldNews(new Request('https://api.mccluster.org/v1/world/news?country=IT'), ENV, { fetchImpl: async () => json({ message: 'no' }, 500), cacheImpl: memoryCache() });
+  assert.equal(down.status, 200);
+  const b = await down.json();
+  assert.equal(b.unavailable, true);
+  assert.deepEqual(b.items, []);
+});

@@ -109,6 +109,7 @@ function freshWorld() {
 }
 /* WORLD NEWS (owner, 2026-10-15): what the Worker serves from its GDELT ingest. A story's place is where it MENTIONS somewhere. */
 const GDELT = { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' };
+const NEWS_COUNTRY = { Kenya: 'KE', Peru: 'PE', Indonesia: 'ID' };
 const NEWS_PLACES = [{ place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28, lon: 36.82 }, { place: 'Lima, Lima, Peru', lat: -12.05, lon: -77.04 }, null, { place: 'Jakarta, Jakarta Raya, Indonesia', lat: -6.21, lon: 106.85 }];
 const LONG_DOMAIN = 'a-very-long-publisher-domain-name-that-never-seems-to-end.example.co.uk';
 /* the news heat map's day: a lopsided spread like the real one, from one story to hundreds */
@@ -234,7 +235,15 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       const cur = u.searchParams.get('before'), at = cur === null ? 0 : /^cur\|\d+$/.test(cur) ? Number(cur.slice(4)) : -1;
       if (at < 0) return json(route, { error: 'Invalid cursor' }, 400);
       const lim = Math.min(20, Number(u.searchParams.get('limit')) || 20);
-      return json(route, { ok: true, items: world.news.slice(at, at + lim), next_before: at + lim < world.news.length ? 'cur|' + (at + lim) : null, attribution: GDELT });
+      /* a place's news, as the Worker reads it: the stories placed in the country, inside the box when one is given */
+      const c = u.searchParams.get('country'), box = u.searchParams.get('bbox');
+      let list = world.news;
+      if (c !== null) {
+        if (!/^[A-Z]{2}$/.test(c)) return json(route, { error: 'country' }, 400);
+        const b = box === null ? null : box.split(',').map(Number);
+        list = list.filter((n) => n.place && NEWS_COUNTRY[n.place.split(', ').pop()] === c && (!b || (n.lon >= b[0] && n.lat >= b[1] && n.lon <= b[2] && n.lat <= b[3]))).map((n) => ({ ...n, country: c }));
+      }
+      return json(route, { ok: true, items: list.slice(at, at + lim), next_before: at + lim < list.length ? 'cur|' + (at + lim) : null, ...(c !== null ? { scope: { country: c, bbox: box, window_hours: 24 } } : {}), attribution: GDELT });
     }
     /* Mimic the only circumstance in which the UI may expose news comments:
        the reviewed backend explicitly advertises that its table is available. */
@@ -882,7 +891,7 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
    Kenya's provinces, where the fixture's Nairobi stories are. */
 if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
   const scope = 'editorial-state';
-  const {ctx,page,errors} = await open(DEVICES[0],{member:true,social:true});
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,social:true});
   try {
     const globe = page.frame({url:/action-globe\.html/});
     await globe.waitForFunction(()=>window.__huCountries?.().ready,null,{timeout:25000});
@@ -929,14 +938,14 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     await page.screenshot({path:join(OUT,scope+'-place-card.png')});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
     const kenya = await page.locator('#mnFeed [data-news-id]').count();
-    check(scope,'Local shows Kenya\'s stories',kenya>0&&await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true',kenya);
+    check(scope,'Local shows Kenya\'s stories, as many as the card counts, read for Kenya',kenya===8&&await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true'&&world.requests.some(r=>r.path==='/v1/world/news'&&/[?&]country=KE(&|$)/.test(r.search)),kenya);
     /* with Kenya selected, a double tap picks the province under it */
     await twice(eastern);
     await globe.waitForFunction(()=>window.__huCountries().selectedState,null,{timeout:8000}).catch(()=>{});
     const east = await now();
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
     check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya\s*×?\s*0news · 24 h/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
-    check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No story mentions Eastern, Kenya yet/.test(await page.textContent('#mnFeed')));
+    check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No news from Eastern, Kenya in the last 24 hours/.test(await page.textContent('#mnFeed')));
     await page.screenshot({path:join(OUT,scope+'-eastern.png')});
     await gap();
     /* another state of the same country: picked the same way, with no second read of the country */

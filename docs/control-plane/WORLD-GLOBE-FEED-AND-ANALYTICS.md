@@ -396,10 +396,21 @@ on the map.")
     own events (`pointerdown`'s `timeStamp`), so a busy frame cannot split a
     double tap in two.
   - **The feed.** The page is told the state with its shape (`hu:country`'s
-    `country.state`). The region label reads "State, Country". Local keeps the
-    stories whose point falls inside the state. Member posts carry only their
-    country, so they stay. A state of the country already loaded does not load
-    the country's feed again.
+    `country.state`). The region label reads "State, Country". Member posts
+    carry only their country, so they stay. A state of the country already
+    loaded does not load the country's feed again.
+  - **A place's own news** (owner, 2026-10-21: "Lombardia said ... 60 something
+    in the last 24 hours. Where the fuck are the news articles then? ... if you
+    click the state level, it should filter all the news from that state").
+    - Local no longer filters the world's first page of news.
+    - A picked country reads its own stories from `GET /v1/world/news?country=XX`.
+      A picked state reads them with `&bbox=west,south,east,north` around its
+      shape, and keeps those whose point falls inside the shape.
+    - These are the heat map's own rows and window (the last 24 hours, by the
+      country each story is placed in). So the count on the card and the list
+      under it are the same stories.
+    - Load more pages the place.
+    - A place with none says "No news from … in the last 24 hours".
 - **The news heat map, not pins** (owner, 2026-10-21: "instead of pins on the
   map ... aggregate each mention of a state or country with a heat map of how
   many articles or mentions it has ... so people aren't just needlessly
@@ -452,11 +463,20 @@ on the map.")
     fifth.
   - **The level now.** A value's level is half its rank among the places that
     have any, and half its size on a log scale. Ties share a level, and the
-    least is faint but never invisible.
+    least is faint but never invisible. A place with none has no level and is
+    never filled.
   - **The World's ramp** is semantic heat: crimson through orange to pale
-    gold, rising in lightness at every stop.
-  - **Analytics' ramp** is one hue built from its accent token: land, then
-    accent, then a light tint. Its legend bar is the same three stops in CSS.
+    gold, rising in lightness at every stop. It also runs from nearly clear to
+    solid (owner, 2026-10-21: "If there's no news about a region, it should be
+    no color ... It should be going no color to color").
+    - The least news is a breath of red.
+    - The most is unmistakable.
+    - The legend bar shows the same see-through ramp.
+  - **Analytics' ramp** runs from the land's own grey straight to the accent's
+    full red, with no paler tint past it (owner, 2026-10-21: "things that are
+    not doing well should be gray, the same color as a globe, and things that
+    are having more shit going on should be red"). Its legend bar is the same
+    two stops in CSS.
 
 ### C3. The owner's five-tab bar (admin first)
 
