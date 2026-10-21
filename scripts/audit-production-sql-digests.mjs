@@ -25,7 +25,7 @@ for(const entry of ledger.migrations){
  else if(/Historical production-ledger anchor/i.test(sql)&&/Intentionally no-op/i.test(sql)) status='historical_anchor_not_exact';
  else if(stored.statement_count!==1) status='multi_statement_review';
  else if(hash===stored.stored_sha256) status='exact';
- else if(createHash('sha256').update(sql.replace(/[\\r\\n]+$/g,'')).digest('hex')===stored.trimmed_sha256) status='trailing_newline_only';
+ else if(createHash('sha256').update(sql.replace(/[\r\n]+$/g,'')).digest('hex')===stored.trimmed_sha256) status='trailing_newline_only';
  else status='sql_hash_mismatch';
  results.push({version:entry.version,name:entry.name,status,...(status==='sql_hash_mismatch'?{stored_sha256:stored.stored_sha256,source_sha256:hash,stored_bytes:stored.stored_bytes,source_bytes:Buffer.byteLength(sql,'utf8')}: {})});
 }
