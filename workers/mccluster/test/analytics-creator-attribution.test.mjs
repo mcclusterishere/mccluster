@@ -6,6 +6,9 @@ import { handleAnalyticsRequest } from '../src/analytics/router.js';
 
 const source = readFileSync(new URL('../../../js/analytics.js', import.meta.url), 'utf8');
 function tracker(search, pathname = '/music-creator.html') {
+  const factoryStart = source.indexOf('/* EVENT_OUTBOX_FACTORY_BEGIN */');
+  const factoryEnd = source.indexOf('/* EVENT_OUTBOX_FACTORY_END */',factoryStart);
+  assert.ok(factoryStart>=0 && factoryEnd>factoryStart);
   const start = source.indexOf('window.MCC_TRACK = (function () {');
   const end = source.indexOf('\n})();', start) + 6;
   const listeners = {}, sent = [];
@@ -14,10 +17,12 @@ function tracker(search, pathname = '/music-creator.html') {
     location: { pathname, search, hostname: 'matthew.mccluster.org' },
     document: { referrer: '', addEventListener() {} },
     navigator: {}, localStorage: storage, sessionStorage: storage,
-    URL, URLSearchParams, setTimeout: () => 1, clearTimeout() {},
+    URL, URLSearchParams, setTimeout: () => 1, setInterval: () => 1, clearTimeout() {},
+    mccPrivacyAcknowledged: () => true, mccControlPreview: () => false,
     fetch: async (_, init) => { sent.push(JSON.parse(init.body)); return { ok: true }; },
   };
   context.window = { navigator: context.navigator, addEventListener(n, fn) { listeners[n] = fn; } };
+  vm.runInNewContext(source.slice(factoryStart, factoryEnd), context);
   vm.runInNewContext(source.slice(start, end), context);
   return { async emit() { context.window.MCC_TRACK('page_view', {}); listeners.pagehide(); await Promise.resolve(); return sent[0].events[0]; } };
 }
