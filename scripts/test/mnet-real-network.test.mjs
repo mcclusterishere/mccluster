@@ -64,10 +64,11 @@ test('Mnet Worker exposes a real social graph and safety API', async()=>{
   assert.match(api,/bookmarked_by_me/);
 });
 
-test('Action Network retires conventional reactions/comments and enforces group membership', async()=>{
+test('Action Network supports access-checked likes/comments and enforces group membership', async()=>{
   const api=await read('workers/mccluster/src/platform-api.js');
-  assert.match(api,/Comments are retired on the Action Network/);
-  assert.match(api,/Reactions are retired on the Action Network/);
+  assert.match(api,/Comments are retired on Human Uprise/);
+  assert.match(api,/network_reactions/);
+  assert.match(api,/network_post_comments/);
   assert.match(api,/if\(post\.group_id\)/);
   assert.match(api,/network_group_members\?group_id=eq\.\$\{post\.group_id\}.*state=eq\.joined/);
   assert.match(api,/const posts=joined/);
@@ -155,11 +156,11 @@ test('Edit Profile exposes secure M Account password changes without creating a 
   const html=await read('mnet.html');
   const js=await read('js/mnet.js');
   const auth=await read('js/mcc-auth.js');
-  assert.match(html,/id="mnProfileSecurity"[^>]*hidden/);
+  assert.match(html,/id="mnProfileSecurity"/);
   assert.match(html,/id="mnNewPassword"[^>]*autocomplete="new-password"/);
   assert.match(html,/id="mnNewPassword2"[^>]*autocomplete="new-password"/);
   assert.match(html,/id="mnPasswordChange"/);
-  assert.match(js,/\$\("mnProfileSecurity"\)\.hidden = !editing/);
+  assert.match(js,/\$\("mnPasswordChange"\)\.hidden = !editing/);
   assert.match(js,/MCC\.updatePassword\(password\)/);
   assert.match(js,/e\.preventDefault\(\); changePassword\(\)/);
   assert.match(auth,/body: \{ password: password \}/);
@@ -184,17 +185,23 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.match(js, /first\.classList\.add\("is-just-posted"\)/);
   assert.match(css, /\.mn__tabs-thumb \{/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.doesNotMatch(css, /@media[^{]*max-width/, 'breakpoints only add room');
+  assert.match(css, /\.mn-world-fit \.mn__world-home \{ flex: 49 1 0;/, 'World screen keeps the globe on top of the phone screen');
+  assert.doesNotMatch(css, /@media\s*\(max-width/, 'breakpoints only add room (AGENTS.md hard rule 14)');
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
   /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */
   assert.doesNotMatch(js, /function toggleLike\(/);
-  assert.doesNotMatch(js, /data-action="like"/);
-  assert.doesNotMatch(js, /data-action="comments"/);
+  /* THE EMBLEM OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction; a mission post offers the emblem and Fund */
+  assert.match(js, /mn__primary--eup/);
+  assert.match(js, /data-fund-mission=/);
+  assert.doesNotMatch(js, /data-action="like"|data-action="comments"|data-action="uprise"/);
   assert.doesNotMatch(html, /id="mnThread"/);
   assert.doesNotMatch(html, /Write a comment/);
   assert.match(js, /data-take-mission/);
   assert.match(js, /Verified action/);
-  assert.match(html, /id="mnRail"/);
+  /* WAYS TO MOVE IS GONE (owner, 2026-10-20: "The ways to move needs to go, like absolutely and totally"): no campaigns
+     and missions rail on the feed, in the page, the code or the styles */
+  assert.doesNotMatch(html, /id="mnRail"|WAYS TO MOVE|Campaigns &(amp;)? missions/);
+  assert.doesNotMatch(js, /function loadRail\(|mnRailTrack|action_campaigns_live/);
 });
 
 test("Action Network profile treats the member website as the identity front page", async()=>{
@@ -208,7 +215,7 @@ test("Action Network profile treats the member website as the identity front pag
 test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
 
 
-test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/Put it into action/);assert.match(html,/What are you putting into action/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
+test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/id="mnToWorld"[^>]*>← World</);assert.match(html,/placeholder="Share a live moment from the world…"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of Human Uprise/);});
 
 
 test('Action Network runtime keeps invite rooms private and makes mission/proof the response path', async()=>{
@@ -245,6 +252,14 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     }]);
     if(u.includes('/network_profiles?m_uid=in.'))return ok([{m_uid:MUID,display_name:'Doer',avatar_url:'',verification_state:'unverified'}]);
     if(u.includes('/network_bookmarks?'))return ok([]);
+    if(u.includes('/network_reactions?'))return ok([]);
+    if(u.includes('/network_post_comments?'))return ok([]);
+    if(u.endsWith('/network_post_comments')&&method==='POST')return ok([{id:'66666666-6666-4666-8666-666666666666',...body}],201);
+    if(u.endsWith('/network_reactions')&&method==='POST')return ok(null,201);
+    /* an uprise counts only from a member who has completed a mission: this one has */
+    if(u.includes('/action_mission_assignments?m_uid=eq.')&&u.includes('status=eq.verified'))return ok([{mission_id:'77777777-7777-4777-8777-777777777777'}]);
+    if(u.includes('/action_missions?id=in.('))return ok([{id:'77777777-7777-4777-8777-777777777777'}]);
+    if(u.includes('/network_posts?id=eq.'))return ok([{id:POST,author_m_uid:MUID,visibility:'network',group_id:GROUP,deleted_at:null}]);
     if(u.endsWith('/network_posts')&&method==='POST')return ok([{id:POST,author_m_uid:MUID,...body}],201);
     return ok([]);
   };
@@ -289,9 +304,13 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     res=await req('/v1/mnet/posts?app_key=mnet-web',{method:'POST',body:{body:'old comment',reply_to_id:POST}});
     assert.equal(res.status,410);
     res=await req('/v1/mnet/posts/'+POST+'/replies');
-    assert.equal(res.status,410);
+    assert.equal(res.status,200);
     res=await req('/v1/mnet/posts/'+POST+'/reactions',{method:'POST',body:{reaction:'like'}});
-    assert.equal(res.status,410);
+    assert.equal(res.status,200);
+    res=await req('/v1/mnet/posts/'+POST+'/replies',{method:'POST',body:{body:'Useful update'}});
+    assert.equal(res.status,201);
+    res=await req('/v1/mnet/posts/'+POST+'/replies',{method:'POST',body:{body:' '}});
+    assert.equal(res.status,400);
   } finally {
     globalThis.fetch=realFetch;
   }

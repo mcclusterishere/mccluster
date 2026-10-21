@@ -73,13 +73,23 @@ test('Every current catalogue song is a first-class live discovery object', asyn
   assert.match(sql, /canonical_url text not null check\(canonical_url~'\^https:\/\/'\)/i);
 });
 
-test('Action Network is live-first without pretending multi-seat video is active', async () => {
+test('Action Network is world-first while live remains accessible and multi-seat stays disabled', async () => {
   const [html, js, live, worker] = await Promise.all([
     read('mnet.html'), read('js/mnet.js'), read('js/mnet-live.js'), read('workers/mccluster/src/platform-api.js')
   ]);
-  assert.match(js, /currentView:\s*"live"/);
-  assert.match(html, /class="is-active" data-mn-view="live">Live</);
-  assert.match(html, /id="mnFeedView" hidden/);
+  assert.match(js, /currentView:\s*"feed"/);
+  /* World is the surface; Live is a layer of it: a badge over the globe
+     while something is on air, and Go live in the composer for hosts */
+  assert.match(html, /id="mnWorldLive"[^>]*data-mn-view="live"[^>]*hidden/);
+  assert.match(html, /id="mnComposerLive"[^>]*hidden/);
+  assert.match(live, /function paintWorldSignal\(\)/);
+  assert.match(live, /live\.world = \(out && out\.sessions\) \|\| \[\]/, 'the badge and the feed hero count the whole directory, never a filtered list');
+  assert.match(live, /list = live\.world \|\| \[\]/, 'the World signal paints from its own unfiltered copy');
+  assert.match(live, /go\.hidden = !\(live\.can && live\.enabled\)/, 'Go live shows only when it would work');
+  /* the World's own room ships open and Live ships shut, so a member never sees the Live room before the World
+     (owner, 2026-10-20: no screen flashes) */
+  assert.match(html, /<section class="mn__view" id="mnFeedView">/);
+  assert.match(html, /<section class="mn__view" id="mnLiveView" hidden>/);
   assert.match(html, /data-live-kind="mission"/);
   assert.match(html, /data-live-kind="home"/);
   for (const key of ['music','build','learn','field','forum']) assert.match(html, new RegExp('data-live-category="' + key + '"'));

@@ -84,7 +84,9 @@
   // in the URL too; surface it instead of failing silently, so a broken link
   // says what's wrong instead of looking like nothing happened.
   (function catchMagicLink() {
-    var raw = location.hash.slice(1) + "&" + location.search.slice(1);
+    // Only the dedicated URL fragment may convey a legacy implicit-flow token.
+    // Query strings are shareable, logged and attacker-controlled navigation data.
+    var raw = location.hash.slice(1);
     if (raw.indexOf("access_token=") === -1 && raw.indexOf("error") === -1) return;
     var q = {};
     raw.split("&").forEach(function (kv) {

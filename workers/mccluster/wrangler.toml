@@ -18,21 +18,92 @@ enabled = true
 head_sampling_rate = 0.01
 
 [vars]
-ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,https://esmer.mccluster.org,https://mcclusterishere.github.io,https://www.esmermusic.com,https://esmermusic.com,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8099,http://127.0.0.1:8099"
+ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,https://humanuprise.com,https://www.humanuprise.com,https://esmer.mccluster.org,https://mcclusterishere.github.io,https://www.esmermusic.com,https://esmermusic.com,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8099,http://127.0.0.1:8099"
 MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
 PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
+# The World's GDELT news ingest (src/world-news.js) on the five-minute cron. Its SQL is applied in
+# production (supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql); "false" stops every fetch.
+WORLD_NEWS_INGEST_ENABLED = "true"
+# The company's news on mccluster.org/news/ (src/company-site/news.js): the house owner's posts marked "Publish to the
+# newsroom", as articles with an RSS feed and a Google News sitemap. "false" sends /news/* to the personal host again.
+NEWSROOM_ENABLED = "true"
+# Audio-only rooms through Cloudflare Realtime SFU. Do not enable until
+# pending SQL 20261019235000_network_sfu_audio_rooms.sql is applied,
+# secrets AUDIO_SFU_APP_ID and AUDIO_SFU_APP_SECRET are configured,
+# privacy, moderation and multi-browser tests have passed.
+AUDIO_SFU_ROOMS_ENABLED = "false"
+# Signed-out visitors listening to a room in their own connection country (owner, 2026-10-20).
+# Needs AUDIO_SFU_ROOMS_ENABLED and the Worker secret AUDIO_ROOM_PASS_KEY (32+ random characters),
+# which signs the visitor's listening pass. Other regions, hands and speaking always need sign-in.
+AUDIO_ROOMS_VISITOR_LISTEN_ENABLED = "false"
+# Country-scoped public regional feeds and explicit author-assigned post countries.
+# Production SQL pending: supabase/pending/20261019222500_world_place_scope_v1.sql
+# Do not turn on until the migration is applied and public-only feed QA passes.
+WORLD_PLACE_SCOPE_ENABLED = "false"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
+# Owner-authorized internal collection; evidence canon and spatial archive migrations must be applied first.
+INTEL_USGS_COLLECTOR_ENABLED = "true"
+INTEL_USGS_SPATIAL_ARCHIVE_ENABLED = "true"
+# Identity verification levels: the Persona government-ID check stays OFF until the
+# owner approves the consent text, counsel review and Persona's terms. Secrets by name
+# only (wrangler secret put): PERSONA_API_KEY, PERSONA_TEMPLATE_ID, PERSONA_WEBHOOK_SECRET.
+PERSONA_ENABLED = "false"
+# Owner's choice: keep the ID's name and birth YEAR for side-by-side review (default off).
+PERSONA_STORE_VERIFIED_NAME = "false"
+# File a public comment (src/public-comment.js): read-only listing of open federal comment periods.
+# Off until the owner turns it on. The Regulations.gov half also needs the secret REGULATIONS_GOV_API_KEY (api.data.gov).
+PUBLIC_COMMENT_LISTING_ENABLED = "false"
 # Core remote MCP bridge origin (the Cloudflare Tunnel hostname). Not a secret:
 # Core refuses any request lacking CORE_BROKER_TOKEN plus a valid
 # CORE_EDGE_SIGNING_KEY signature, so the hostname alone grants nothing.
 # Those two are `wrangler secret put` only. /v1/core/mcp fails closed (503)
 # until both secrets exist, so deploying this ahead of the tunnel is safe.
 CORE_BROKER_URL = "https://core.mccluster.org"
+# Live missions (docs/control-plane/LIVE-MISSIONS.md): every /v1/live route
+# answers 503 until this is "true". Turning it on also needs the pending SQL
+# (supabase/pending/live_missions_v1.sql) and these secrets, by name only:
+# CF_ACCOUNT_ID, CF_STREAM_TOKEN (already used by the live rooms),
+# CF_LIVE_NOTIFICATION_SECRET (Notifications webhook cf-webhook-auth) and,
+# optionally, CF_STREAM_WEBHOOK_SECRET (Stream video webhook HMAC).
+LIVE_MISSIONS_ENABLED = "false"
+
+# Replies under World news stories (owner, 2026-10-20: "i need the news articles to
+# be able to be replied to"). On, but closed by itself: the capability check
+# answers available:false, and the page shows no reply box, until the table in
+# supabase/pending/world_news_discussions_v1.sql exists.
+WORLD_NEWS_COMMENTS_ENABLED = "true"
+
+# The morning brief (src/news-briefs.js): each night after 00:20 New York time the
+# cron queues one Core local_analysis job per country for yesterday's headlines
+# (US first, then NEWS_BRIEF_COUNTRIES, region leaders' countries, and up to
+# NEWS_BRIEF_AUTO_MAX of the busiest others with at least NEWS_BRIEF_MIN_HEADLINES).
+# Off until this is "true". Reading and asking for a brief (brief.html) works for
+# the house owner either way.
+NEWS_BRIEFS_ENABLED = "true"
+NEWS_BRIEF_COUNTRIES = ""
+NEWS_BRIEF_AUTO_MAX = "10"
+NEWS_BRIEF_MIN_HEADLINES = "15"
+
+# Alerts on members' devices (src/web-push.js). Off until this is "true", the
+# pending SQL (supabase/pending/20261020150000_network_web_push.sql) is applied,
+# and these secrets are set, by name only: WEB_PUSH_VAPID_PUBLIC_KEY,
+# WEB_PUSH_VAPID_PRIVATE_KEY (a P-256 key pair, base64url) and, optionally,
+# WEB_PUSH_CONTACT (a mailto: or https: address the push services can reach).
+WEB_PUSH_ENABLED = "false"
+
+# Free noncommercial directions pilot only: no paid routing or supplier
+# commissions. Global single-flight quota: <=1 request/sec, <=1000/day.
+# Replace BEFORE commercial/high-volume travel. Independent McCluster key:
+# TRAVEL_ROUTING_PROVIDER="tomtom" + secret TRAVEL_TOMTOM_API_KEY.
+# Halo's TOMTOM_API_KEY is never read or copied by Travel.
+TRAVEL_ROUTING_PROVIDER = "fossgis-pilot"
+TRAVEL_ROUTING_PILOT = "noncommercial"
+TRAVEL_OSRM_BASE = "https://routing.openstreetmap.de/"
 
 # MCP_EDGE service binding is intentionally absent.
 # Activate only after workers/mccluster-mcp exists in the Cloudflare account

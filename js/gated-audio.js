@@ -8,14 +8,16 @@
    this repository. It lives in a PRIVATE Supabase bucket. What ships
    publicly is a short preview cut, and that is supposed to be public.
 
-   THE RULE (the owner's, enforced by the API Worker, not by this file)
-     signed out           → the preview, and an invitation to an account
-     signed in, locked    → the preview, and how many songs are left:
-                            five DIFFERENT other songs heard all the way
-                            through before the first play
-     earned               → ONE play. The Worker spends it and signs one
-                            short-lived URL for that play alone
-     after a play         → locked again until one more full song
+   THE RULE (the owner's, 2026-10-15; enforced by the database and the
+   API Worker, not by this file; the numbers are the action_unlock_rules
+   row the Worker names)
+     signed out           → the preview, and what the full track takes
+     signed in, locked    → the preview, and exactly what is missing:
+                            verified missions x/3 and/or identity
+                            verification, each with a link
+     entitled             → three admin-verified missions AND a verified
+                            identity: each play asks the Worker, which
+                            hands back a short-lived token for that play
      storage/API down     → told exactly that
 
    A browser can no longer sign its own URL for the master (the bucket
@@ -42,12 +44,14 @@
   /* The server knows a gated record by the folder its master lives in. */
   function keyOf(gated) { return String((gated && gated.object) || "").split("/")[0]; }
 
+  /* A signed-out GET is allowed: the gate answers what the full track
+     takes before anyone has an account. A play always needs a session. */
   function ask(path, method) {
     var token = sessionToken();
-    if (!token) return Promise.resolve({ status: 401, data: null });
+    if (!token && method === "POST") return Promise.resolve({ status: 401, data: null });
     return fetch(API + path, {
       method: method || "GET",
-      headers: { authorization: "Bearer " + token },
+      headers: token ? { authorization: "Bearer " + token } : {},
       cache: "no-store"
     }).then(function (r) {
       return r.json().catch(function () { return null; }).then(function (d) { return { status: r.status, data: d }; });
@@ -67,12 +71,13 @@
   function resolve(gated) {
     var key = keyOf(gated);
     if (!key) return Promise.resolve({ state: "unavailable", reason: "unconfigured" });
-    if (!sessionToken()) return Promise.resolve({ state: "preview", reason: "account" });
+    var signedIn = !!sessionToken();
     var hit = cache[key];
     if (hit && hit.inflight) return hit.inflight;
     if (hit && Date.now() - hit.at < STATE_MS) return Promise.resolve(hit.out);
     var p = ask("/v1/music/gates/" + encodeURIComponent(key)).then(function (r) {
-      var out = r.status === 200 ? fromGate(r.data && r.data.gate)
+      var out = r.status === 200
+          ? (signedIn ? fromGate(r.data && r.data.gate) : { state: "preview", reason: "account", gate: r.data && r.data.gate })
         : r.status === 401 ? { state: "preview", reason: "account" }
         : { state: "unavailable", reason: r.status ? "http-" + r.status : "network" };
       cache[key] = { at: Date.now(), out: out };
@@ -101,8 +106,18 @@
   function progress(out) {
     var g = out && out.gate;
     if (!out) return null;
-    if (out.state === "earned") return out.operator ? { b: "PLAY", s: "owner" } : { b: "PLAY ONCE", s: "you earned it" };
+    if (out.state === "earned") {
+      if (out.operator) return { b: "PLAY", s: "owner" };
+      return g && g.mode === "rule" ? { b: "PLAY", s: "full track" } : { b: "PLAY ONCE", s: "you earned it" };
+    }
     if (out.state !== "locked" || !g) return null;
+    /* Three admin-verified missions and a verified identity. */
+    if (g.mode === "rule") {
+      var m = g.missions || {}, have = Number(m.have) || 0, needM = Number(m.need) || 3;
+      if (have < needM) return { b: have + "/" + needM + " MISSIONS", s: g.identity_verified ? "verified missions unlock it" : "+ identity verification" };
+      if (!g.identity_verified) return { b: "VERIFY ID", s: have + "/" + needM + " missions done" };
+      return { b: "LOCKED", s: "not available yet" };
+    }
     /* Album order: the record closes its album and plays only after the
        songs before it, in order, each heard through. */
     if (g.mode === "sequence") {
@@ -118,6 +133,30 @@
     return { b: "LOCKED", s: "finish " + (Number(g.need_each) || 1) + " more song to play it again" };
   }
 
+  /* The whole sentence and the links, for a toast or a panel. Only names
+     what is actually missing, from the server's own answer. */
+  function explain(out) {
+    var g = out && out.gate;
+    if (!g || g.mode !== "rule") return null;
+    var m = g.missions || {}, have = Number(m.have) || 0, need = Number(m.need) || 3;
+    var links = g.links || {}, missing = g.missing || [], parts = [], go = [];
+    /* signing in (or making the account) comes back to this record (account.html honours ?next) */
+    var here = window.location && window.location.pathname ? window.location.pathname + (window.location.search || "") : "";
+    if (missing.indexOf("sign_in") > -1) go.push({ key: "sign_in", label: "Sign in", href: "account.html" + (here && !/(^|\/)account\.html$/.test(here) ? "?next=" + encodeURIComponent(here) : "") });
+    if (have < need) {
+      parts.push(need + " verified missions (you have " + have + ")");
+      if (links.missions) go.push({ key: "missions", label: "Missions (" + have + "/" + need + ")", href: links.missions });
+    }
+    if (!g.identity_verified) {
+      parts.push("a verified identity");
+      if (links.identity) go.push({ key: "identity", label: "Verify your identity", href: links.identity });
+    }
+    if (g.allowed) return { text: "", links: [] };
+    var text = parts.length ? "The full track needs " + parts.join(" and ") + "." : "The full track is not available yet.";
+    if (missing.indexOf("sign_in") > -1) text += " Sign in first.";
+    return { text: text, links: go };
+  }
+
   /* Sign-in, sign-out and a counted song all have to repaint every gated
      row, and none of them reloads the page. Callers register here. */
   var watchers = [];
@@ -128,6 +167,7 @@
     resolve: resolve,
     claim: claim,
     progress: progress,
+    explain: explain,
     keyOf: keyOf,
     forget: forget,
     onChange: onChange,

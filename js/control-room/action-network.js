@@ -1,6 +1,6 @@
-/* Native Control · Create · Action Network.
+/* Native Control · Create · Human Uprise.
 
-   The owner's side of the Uprise Action Network (/action/?c=<slug>).
+   The owner's side of Human Uprise (/action/?c=<slug>).
    A campaign is a row in public.action_campaigns, so the next one is
    launched here, not in a deploy: write it as a draft, check it, then
    set it live. Row-level security lets only the owner write.
@@ -18,8 +18,9 @@
   "use strict";
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
-    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,
-    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{},liveGrants:[]};
+    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,antiLevels:[],antiBusy:false,antiLoaded:false,
+    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{},liveGrants:[],
+    memos:null,memoBusy:false,memoErr:null,memoOpen:null,memoHist:{}};
   var STATUSES=["draft","live","paused","closed"];
   var LEDGER_KINDS=["received","committed","disbursed","expense"];
   var HAVE={give:"$5",time:"Time",skills:"Skills",reach:"Reach",resources:"Resources",learn:"Wants to learn"};
@@ -104,11 +105,36 @@
       .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.msg="Proof queue could not load: "+(err.message||err);})
       .then(function(){A.proofBusy=false;redraw();});
   }
+  function loadAntiLevels(){
+    A.antiBusy=true;redraw();
+    return A.supa("action_antisocial_levels?status=eq.pending&select=assignment_id,level,user_id,proof_url,media_asset_id,statement,post_id,collaborator_m_uid,created_at&order=created_at.asc&limit=100")
+      .then(function(rows){A.antiLevels=rows||[];A.antiLoaded=true;})
+      .catch(function(err){A.msg="Anti-Social review queue unavailable: "+(err.message||err);A.antiLoaded=true;})
+      .then(function(){A.antiBusy=false;redraw();});
+  }
+  function antisocialReviews(){
+    if(!A.antiLoaded&&!A.antiBusy)loadAntiLevels();
+    if(A.antiBusy)return note("Loading Anti-Social levels…");
+    if(!A.antiLevels.length)return note("No pending Anti-Social levels.");
+    return '<div class="cro-list">'+A.antiLevels.map(function(x){
+      return '<article class="cro-card"><p class="cro-meta">ANTI-SOCIAL · LEVEL '+e(x.level)+'/3 · '+e(new Date(x.created_at).toLocaleString())+'</p>'+
+        '<h2>'+e(["High Five","Five High Fives","Make Something Together"][x.level-1])+'</h2>'+
+        '<p class="cro-meta">Assignment '+e(x.assignment_id)+'</p>'+
+        '<blockquote>'+e(x.statement||"No recap")+'</blockquote>'+
+        (x.proof_url?'<p><a href="'+e(x.proof_url)+'" target="_blank" rel="noopener noreferrer">Review linked proof ↗</a></p>':"")+
+        (x.media_asset_id?'<div data-anti-upload="'+e(x.assignment_id)+'" data-anti-level="'+e(x.level)+'"><div class="cro-note">Loading consent-safe clip for reviewer…</div></div>':"")+
+        (x.post_id?'<p class="cro-meta">Shared work post: '+e(x.post_id)+' · partner '+e(x.collaborator_m_uid)+'</p>':"")+
+        '<label>Review note<textarea data-anti-note="'+e(x.assignment_id)+'-'+e(x.level)+'"></textarea></label>'+
+        '<div class="cro-actions"><button class="cr-btn cr-btn--primary" data-anti-review="'+e(x.assignment_id)+'" data-level="'+e(x.level)+'" data-decision="verified">Verify level</button>'+
+        '<button class="cr-btn" data-anti-review="'+e(x.assignment_id)+'" data-level="'+e(x.level)+'" data-decision="rejected">Reject</button></div></article>';
+    }).join("")+'</div>';
+  }
   function reviews(){
     if(!A.proofs.length&&!A.proofBusy)loadProofs();
-    if(A.proofBusy)return note("Loading proof queue…");
-    if(!A.proofs.length)return note("Review queue clear. No pending mission proof.");
-    return '<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
+    var anti=antisocialReviews();
+    if(A.proofBusy)return anti+note("Loading proof queue…");
+    if(!A.proofs.length)return anti+note("Review queue clear. No pending standard mission proof.");
+    return anti+'<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
   }
 
   function controls(c){
@@ -280,16 +306,79 @@
         '</article>';
     }).join("")+'</div>';
   }
+
+  /* POLICY MEMOS. The desk's side of the Policy Fellowship ladder
+     (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md). Fellows submit memos
+     up the line; the desk starts a review and then approves, passes
+     (declines), asks for changes, or edits the text itself with a note the
+     fellow sees. Every action is one server call, review_policy_memo(),
+     which refuses an illegal transition; the buttons offered here come from
+     the same transition table (js/policy-fellowship-ladder.js). Versions and
+     the review log are immutable on the server. */
+  var MEMO_COLS="id,status,draft_title,region_key,cohort_id,submitted_at,updated_at,decided_at,current_version_id";
+  var MEMO_ACTION_LABEL={start_review:"Start review",approve:"Approve",request_changes:"Ask for changes",decline:"Pass",owner_edit:"Save my edit"};
+  function memoOwnerActions(status){
+    var L=window.MCC_POLICY_LADDER;if(!L)return [];
+    return L.TRANSITIONS.filter(function(t){return t[0]===status&&t[2]==="owner";}).map(function(t){return t[1];});
+  }
+  function loadMemos(){
+    A.memoBusy=true;A.memoErr=null;redraw();
+    return A.supa("action_policy_memos?select="+MEMO_COLS+"&status=in.(submitted,in_review,owner_edited,changes_requested,approved,declined)&order=updated_at.desc&limit=100")
+      .then(function(rows){A.memos=rows||[];})
+      .catch(function(err){A.memos=[];A.memoErr=String(err&&err.message||err);})
+      .then(function(){A.memoBusy=false;redraw();});
+  }
+  function loadMemoHistory(id){
+    return A.supa("rpc/policy_memo_history",{method:"POST",body:{p_memo_id:id}})
+      .then(function(h){A.memoHist[id]=h||null;}).catch(function(err){A.memoHist[id]={error:String(err&&err.message||err)};})
+      .then(redraw);
+  }
+  function diffHtml(d){
+    if(!d)return"";
+    if(d.too_large)return'<p class="cro-meta">The change is too large to show line by line ('+e(d.old_lines)+' → '+e(d.new_lines)+' lines).</p>';
+    return'<p class="cro-meta">+'+e(d.added)+' / −'+e(d.removed)+' lines against the previous version</p><div style="font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid currentColor;border-radius:10px;padding:10px;max-height:50vh;overflow:auto">'+
+      (d.ops||[]).map(function(o){var mark=o.op==="+"?"+ ":o.op==="-"?"− ":"  ";var style=o.op==="+"?' style="background:rgba(60,170,90,.18)"':o.op==="-"?' style="background:rgba(200,60,60,.18);text-decoration:line-through"':"";return'<div'+style+'>'+e(mark+o.t)+'</div>';}).join("")+'</div>';
+  }
+  function memoDetail(m){
+    var h=A.memoHist[m.id];
+    if(h===undefined){loadMemoHistory(m.id);return note("Loading the memo…");}
+    if(!h||h.error)return note("The memo could not be read: "+(h&&h.error||"unknown"),true);
+    var versions=h.versions||[],cur=versions[versions.length-1]||null,actions=memoOwnerActions(m.status);
+    var log=(h.reviews||[]).map(function(r){return'<li>'+e(new Date(r.created_at).toLocaleString())+' · '+e(r.actor_role)+' · '+e(r.action)+' ('+e(r.from_status)+' → '+e(r.to_status)+')'+(r.note?' · '+e(r.note):'')+'</li>';}).join("");
+    var research=(h.research||[]).map(function(x){var link=/^https:\/\//i.test(x.url||"")?'<a href="'+e(x.url)+'" target="_blank" rel="noopener noreferrer">'+e(x.title)+'</a>':e(x.title);
+      return'<li>'+link+' · '+e(x.provider)+(x.publisher?' · '+e(x.publisher):'')+' · <span class="cro-pill">unverified lead</span>'+(x.note?'<br><span class="cro-meta">'+e(x.note)+'</span>':'')+'</li>';}).join("");
+    var form=actions.length?'<label>Note to the fellow (required to pass, ask for changes, or edit)<textarea data-memo-note="'+e(m.id)+'" rows="3"></textarea></label>'+
+      (actions.indexOf("owner_edit")>=0?'<details><summary>Edit the memo myself</summary><label>Title<input data-memo-edit-title="'+e(m.id)+'" value="'+e(cur?cur.title:m.draft_title)+'"></label><label>Text<textarea data-memo-edit-body="'+e(m.id)+'" rows="14">'+e(cur?cur.body:"")+'</textarea></label></details>':'')+
+      '<div class="cro-actions">'+actions.map(function(a){return'<button class="cr-btn'+(a==="approve"||a==="start_review"?" cr-btn--primary":"")+'" type="button" data-memo-act="'+e(m.id)+'" data-action="'+e(a)+'">'+e(MEMO_ACTION_LABEL[a]||a)+'</button>';}).join("")+'</div>'
+      :'<p class="cro-meta">No desk action is open in this state.</p>';
+    return (cur?'<p class="cro-meta">Version '+e(cur.version_no)+' by the '+e(cur.author_role)+' · sha256 '+e(String(cur.body_sha256).slice(0,12))+'…'+(cur.note?' · '+e(cur.note):'')+'</p>'+
+        '<div style="white-space:pre-wrap;overflow-wrap:anywhere;border-left:3px solid currentColor;padding:8px 12px;margin:8px 0">'+e(cur.body)+'</div>'+diffHtml(cur.diff_from_parent):note("No submitted version yet."))+
+      (research?'<h4>Research leads</h4><ul>'+research+'</ul>':'')+
+      (log?'<h4>Review log</h4><ul>'+log+'</ul>':'')+form;
+  }
+  function memoDesk(){
+    if(A.memos===null&&!A.memoBusy)loadMemos();
+    if(A.memoBusy&&A.memos===null)return note("Loading policy memos…");
+    if(A.memoErr)return note(/action_policy_memos|does not exist|404|PGRST/i.test(A.memoErr)?"Policy memos are not switched on yet: supabase/pending/policy_fellowship_ladder_v1.sql has not been applied.":"Policy memos could not load: "+A.memoErr,true);
+    if(!window.MCC_POLICY_LADDER)return note("The policy ladder rules did not load (js/policy-fellowship-ladder.js).",true);
+    if(!A.memos.length)return note("No policy memos have been submitted yet. Fellows with a seat in a state Policy Fellowship cohort write them.");
+    return'<div class="cro-list">'+A.memos.map(function(m){
+      var open=A.memoOpen===m.id;
+      return'<article class="cro-card" style="margin-bottom:12px"><div class="cro-item__head"><div><p class="cro-meta">POLICY MEMO · '+e(m.region_key||"no state")+(m.submitted_at?' · submitted '+e(new Date(m.submitted_at).toLocaleString()):'')+'</p><b>'+e(m.draft_title)+'</b></div><span class="cro-pill">'+e(m.status)+'</span></div>'+
+        '<div class="cro-actions"><button class="cr-btn" type="button" data-memo-open="'+e(m.id)+'">'+(open?"Close":"Open")+'</button></div>'+
+        (open?memoDetail(m):'')+'</article>';
+    }).join("")+'</div>';
+  }
   function render(){
     if(!A.loaded&&!A.loading)load();
     var c=current(),d=c&&A.detail[c.id];
     var chips='<div class="cro-chips">'+A.campaigns.map(function(x){return'<button class="cro-chip'+(x.id===A.sel&&A.tab!=="new"?" is-on":"")+'" type="button" data-crn-pick="'+e(x.id)+'">'+e(x.title)+' · '+e(x.status)+'</button>';}).join("")+'<button class="cro-chip'+(A.tab==="new"?" is-on":"")+'" type="button" data-crn-tab="new">+ New campaign</button></div>';
-    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, the Action Network migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
+    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
-    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
+    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["memos","Policy memos"],["identity","Identity"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
     var body=!d?note("Loading "+c.title+"…"):(d.errors.length?note("Some reads failed: "+d.errors.join("; "),true):"")+
-      (A.tab==="reviews"?reviews():A.tab==="missions"?missionDesk(c):A.tab==="fellows"?fellowDesk():A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
+      (A.tab==="reviews"?reviews():A.tab==="missions"?missionDesk(c):A.tab==="fellows"?fellowDesk():A.tab==="memos"?memoDesk():A.tab==="identity"?(window.CR.identityReview?window.CR.identityReview.render():note("The identity review module did not load (js/control-room/identity-review.js).",true)):A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
     return'<div class="cro">'+chips+head+tabs+body+'</div>';
   }
 
@@ -312,6 +401,15 @@
   }
   function loadUploads(root){
     if(!A.request)return;
+    root.querySelectorAll("[data-anti-upload]").forEach(function(box){
+      if(box.getAttribute("data-loaded"))return;box.setAttribute("data-loaded","1");
+      A.request("/v1/mnet/missions/antisocial/"+encodeURIComponent(box.getAttribute("data-anti-upload"))+"/"+encodeURIComponent(box.getAttribute("data-anti-level"))+"/media")
+        .then(function(m){var u=e(m&&m.url||"");if(!u)throw new Error("no url");
+          box.innerHTML=m.media_type==="video"
+            ?'<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>'
+            :'<img alt="Submitted Anti-Social proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+        }).catch(function(){box.innerHTML='<div class="cro-note">The level clip could not be opened.</div>';});
+    });
     root.querySelectorAll("[data-proof-upload]").forEach(function(box){
       if(box.getAttribute("data-loaded"))return; box.setAttribute("data-loaded","1");
       A.request("/v1/mnet/missions/proofs/"+encodeURIComponent(box.getAttribute("data-proof-upload"))+"/media").then(function(m){
@@ -323,6 +421,7 @@
     });
   }
   function bind(root){
+    if(window.CR.identityReview&&A.tab==="identity")window.CR.identityReview.bind(root);
     if(!root)return;
     loadUploads(root);
     root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
@@ -348,6 +447,23 @@
       A.supa("action_missions?id=eq."+encodeURIComponent(id),{method:"PATCH",prefer:"return=minimal",body:{status:to,updated_at:new Date().toISOString()}})
         .then(function(){A.msg="Mission is now "+to+".";return loadMissions();})
         .catch(function(err){b.disabled=false;alert(err.message||"That did not save.");});
+    };});
+    root.querySelectorAll("[data-memo-open]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-memo-open");A.memoOpen=A.memoOpen===id?null:id;if(A.memoOpen)delete A.memoHist[id];redraw();
+    };});
+    root.querySelectorAll("[data-memo-act]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-memo-act"),action=b.getAttribute("data-action"),L=window.MCC_POLICY_LADDER;
+      var m=(A.memos||[]).find(function(x){return x.id===id;}),h=A.memoHist[id]||{},vs=h.versions||[],cur=vs[vs.length-1]||{};
+      var noteEl=root.querySelector('[data-memo-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
+      var titleEl=root.querySelector('[data-memo-edit-title="'+id+'"]'),bodyEl=root.querySelector('[data-memo-edit-body="'+id+'"]');
+      var body=action==="owner_edit"&&bodyEl?bodyEl.value:null,title=action==="owner_edit"&&titleEl?titleEl.value.trim():null;
+      var check=L&&m?L.checkAction({from:m.status,action:action,actor:"owner",note:reviewNote,body:body,currentBody:cur.body}):{ok:true};
+      if(!check.ok){alert(check.error);return;}
+      if(action!=="start_review"&&!confirm((MEMO_ACTION_LABEL[action]||action)+": the fellow is notified"+(reviewNote?" with your note":"")+". Continue?"))return;
+      b.disabled=true;
+      A.supa("rpc/review_policy_memo",{method:"POST",body:{p_memo_id:id,p_action:action,p_note:reviewNote||null,p_title:title||null,p_body:body}})
+        .then(function(r){A.msg="Memo is now "+(r&&r.status||"updated")+".";delete A.memoHist[id];return loadMemos();})
+        .catch(function(err){b.disabled=false;alert(err.message||"The review did not save.");});
     };});
     root.querySelectorAll("[data-app-review]").forEach(function(b){b.onclick=function(){
       var id=b.getAttribute("data-app-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-app-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
@@ -385,6 +501,16 @@
       A.request("/v1/mnet/live/admin/grants/"+encodeURIComponent(id),{method:"DELETE"})
         .then(function(){A.msg="Live access revoked.";return loadApps();})
         .catch(function(err){b.disabled=false;alert(err.message||"Live access was not revoked.");});
+    };});
+    root.querySelectorAll("[data-anti-review]").forEach(function(b){b.onclick=function(){
+      var assignment=b.getAttribute("data-anti-review"),level=Number(b.getAttribute("data-level")),decision=b.getAttribute("data-decision");
+      var el=root.querySelector('[data-anti-note="'+assignment+'-'+level+'"]'),reviewNote=el?el.value.trim():"";
+      if(decision==="rejected"&&!reviewNote){alert("Explain the rejection.");return;}
+      if(!confirm("Review Anti-Social level "+level+" as "+decision+"?"))return;
+      b.disabled=true;
+      A.supa("rpc/review_antisocial_level",{method:"POST",body:{p_assignment_id:assignment,p_level:level,p_decision:decision,p_note:reviewNote||null}})
+        .then(function(){A.msg="Anti-Social level "+level+" "+decision+".";return Promise.all([loadAntiLevels(),loadMissions()]);})
+        .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
     };});
     root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
       if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}
@@ -434,5 +560,5 @@
       if(!title){alert("A title, please.");return;}
       run(cr,function(){return A.supa("action_campaigns",{method:"POST",body:{id:id,slug:slug,title:title,status:"draft"}}).then(function(){A.sel=id;A.tab="content";});},"Draft created. Write its content, facts and sources, then set it live.");};
   }
-  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;},render:render,bind:bind,load:load,state:A};
+  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;if(window.CR.identityReview)window.CR.identityReview.init(opts);},render:render,bind:bind,load:load,state:A};
 })();

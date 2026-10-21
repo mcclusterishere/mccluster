@@ -1,4 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
+import { performStreetRoute } from './travel-routing-provider.js';
+import { reserveRoutingQuota, releaseRoutingQuota } from './travel-routing-quota.js';
 
 const AIS_ENDPOINT = 'https://stream.aisstream.io/v0/stream';
 const AIS_DEFAULT_BOXES = [[[-90, -180], [90, 180]]];
@@ -104,6 +106,26 @@ export class HereTenantAgent extends DurableObject {
       )
     `);
     this.ctx.storage.sql.exec(`CREATE INDEX IF NOT EXISTS ais_vessels_updated_idx ON ais_vessels(updated_at DESC)`);
+  }
+
+  // The public routing service permits one request per second and one
+  // concurrent scripted connection. A dedicated instance of the EXISTING
+  // class coordinates that provider quota across all Worker locations.
+  async routeTravel(input) {
+    const read = this.ctx.storage.sql.exec("SELECT v FROM tenant_meta WHERE k = 'travel_routing_quota'").toArray();
+    const previous = parseJson(read[0]?.v, {}), reservation = reserveRoutingQuota(previous);
+    if (!reservation.allowed) return { status: 429, retryAfter: reservation.retryAfter,
+      error: reservation.daily ? 'The free routing pilot has reached its daily limit. Please try again tomorrow.' : 'Street directions are busy. Please wait a moment and try again.' };
+    const token = crypto.randomUUID(), state = { ...reservation.state, token };
+    const save = value => this.ctx.storage.sql.exec("INSERT INTO tenant_meta (k, v) VALUES ('travel_routing_quota', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", JSON.stringify(value));
+    save(state); // Synchronous SQL before any await: no concurrent reservation.
+    let retryAfter = 0;
+    try { return { status: 200, route: await performStreetRoute(input, this.env) }; }
+    catch (error) { retryAfter = error.retryAfter || 0; return { status: error.status || 503, error: error.message || 'Street directions are unavailable.', retryAfter }; }
+    finally {
+      const current = parseJson(this.ctx.storage.sql.exec("SELECT v FROM tenant_meta WHERE k = 'travel_routing_quota'").toArray()[0]?.v, {});
+      if (current.token === token) save(releaseRoutingQuota(state, Date.now(), retryAfter));
+    }
   }
 
   /*

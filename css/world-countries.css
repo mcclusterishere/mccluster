@@ -1,0 +1,27 @@
+/* THE WORLD'S COUNTRIES (js/world-countries.js): the "Countries" control and the card a tapped country opens.
+   Phone first; the breakpoint only gives the card a width. */
+.globe-ctl--countries .globe-ctl__badge{position:absolute;right:3px;bottom:3px;width:7px;height:7px;border-radius:50%;background:linear-gradient(180deg,#b22234 0 33%,#fff 33% 66%,#3c3b6e 66%);box-shadow:0 0 0 1px rgba(0,0,0,.6);opacity:.95}
+.globe-ctl--countries[data-mode="off"] .globe-ctl__badge{opacity:0}
+.globe-ctl--countries[data-mode="always"] .globe-ctl__badge{box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px rgba(0,0,0,.6)}
+.country-card{position:fixed;z-index:8;left:0;right:0;margin:0 auto;top:calc(56px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 32px));box-sizing:border-box;display:grid;gap:8px;padding:8px 8px 10px 12px;border-radius:14px;background:rgba(13,14,18,.92);color:#eef0f4;font:500 13px/1.35 Inter,system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 10px 26px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:country-card-in .22s ease-out}
+.country-card[hidden]{display:none}
+.country-card__head{display:flex;align-items:center;gap:10px;min-width:0}
+.country-card__flag{flex:none;width:32px;height:24px;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.18)}
+.country-card__text{min-width:0;flex:1;display:flex;flex-direction:column}
+.country-card__text b{font-size:15px;overflow-wrap:anywhere}
+.country-card__text small{color:#c7d0e0;font-size:12px}
+.country-card__stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;text-align:center}
+.country-card__stat{display:grid;gap:1px;min-width:0}
+.country-card__stat b{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.country-card__stat small{color:#c7d0e0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.country-card__hint{color:#9aa6b8;font-size:12px;text-align:center}
+.country-card__close{flex:none;width:44px;height:44px;margin:-6px -4px -6px 0;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;font:400 22px/1 system-ui,sans-serif;cursor:pointer}
+.country-card__close:focus-visible{outline:2px solid #fff;outline-offset:-6px}
+@keyframes country-card-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.country-card{animation:none}}
+/* THE NEWS HEAT MAP's legend (js/world-countries.js): bottom left, above the credit line, out of the World button's corner */
+.heat-legend{position:fixed;z-index:7;left:12px;bottom:calc(var(--hu-credit-h,16px) + 10px);width:min(176px,calc(100vw - 96px));display:grid;gap:4px;padding:7px 9px 6px;border-radius:10px;background:rgba(13,14,18,.72);color:#eef0f4;font:500 11px/1.25 Inter,system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.1);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none}
+.heat-legend[hidden]{display:none}
+.heat-legend__bar{display:block;height:6px;border-radius:999px}
+.heat-legend__ends{display:flex;justify-content:space-between;color:#c7d0e0}
+.heat-legend__ends small{font-size:11px}

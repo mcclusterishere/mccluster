@@ -1,0 +1,123 @@
+/* THE MEMBER DESK over the World globe (js/member-desk.js).
+   Phone first: a bottom sheet that sits ABOVE the app bar (the bar never
+   leaves, and stays tappable); from 64rem the same sheet becomes a side
+   panel on the right, still clear of the bar. min-width queries only;
+   inputs at max(16px, 1rem); every grid track is minmax(0, 1fr). The World
+   is dark-locked (mnet.html data-theme-lock="dark"), so the desk is too. */
+.hu-desk {
+  --hd-bg: rgba(16, 13, 11, 0.94);
+  --hd-raise: #1c1816;
+  --hd-ink: #f4efe6;
+  --hd-dim: #ada296;
+  --hd-rule: rgba(244, 239, 230, 0.14);
+  --hd-hot: #ff4d3d;
+  --hd-gold: #e8c877;
+  position: fixed;
+  z-index: 190; /* under the app bar (200), over the globe and the feed */
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--mn-bar-clear, 96px) + 4px);
+  max-height: calc(100dvh - var(--mn-bar-clear, 96px) - 64px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  border: 1px solid var(--hd-rule);
+  border-radius: 22px;
+  background: var(--hd-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 -18px 50px -20px rgba(0, 0, 0, 0.9);
+  color: var(--hd-ink);
+  font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow: hidden;
+  animation: huDeskUp 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hu-desk[hidden] { display: none; }
+@keyframes huDeskUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hu-desk { animation: none; } }
+.hu-desk *, .hu-desk *::before, .hu-desk *::after { box-sizing: border-box; }
+.hu-desk__grip { width: 40px; height: 4px; border-radius: 4px; background: var(--hd-rule); margin: 8px auto 0; flex: none; }
+.hu-desk__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 8px 16px 4px; flex: none; }
+.hu-desk__head h2 { margin: 0; font-size: 1.3rem; letter-spacing: 0.01em; }
+.hu-desk__k { margin: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hd-gold); }
+.hu-desk__close { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--hd-rule); background: transparent; color: var(--hd-ink); font-size: 1rem; cursor: pointer; }
+.hu-desk__tabs { display: flex; gap: 6px; padding: 6px 16px 8px; overflow-x: auto; overscroll-behavior-x: contain; flex: none; scrollbar-width: none; }
+.hu-desk__tabs::-webkit-scrollbar { display: none; }
+.hu-desk__tab { flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--hd-rule); background: transparent; color: var(--hd-dim); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.hu-desk__tab.is-on { background: var(--hd-ink); color: #0a0807; border-color: var(--hd-ink); }
+.hu-desk__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 4px 16px 16px; }
+.hu-desk__card { min-width: 0; margin: 0 0 12px; padding: 14px; border: 1px solid var(--hd-rule); border-radius: 16px; background: var(--hd-raise); overflow-wrap: anywhere; }
+.hu-desk__card h3 { margin: 0 0 6px; font-size: 1.02rem; }
+.hu-desk__card h4 { margin: 14px 0 6px; font-size: 0.92rem; }
+.hu-desk__card p { margin: 6px 0; line-height: 1.5; color: var(--hd-dim); }
+.hu-desk__meta { font-size: 0.82rem; color: var(--hd-dim); }
+.hu-desk__note { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: rgba(244, 239, 230, 0.06); color: var(--hd-ink) !important; }
+.hu-desk__note.is-bad { background: rgba(255, 77, 61, 0.14); }
+.hu-desk__who { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.hu-desk__who .hu-desk__row { grid-column: 1 / -1; }
+.hu-desk__face { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--hd-hot); color: #1a0503; font-weight: 800; font-size: 1.3rem; }
+.hu-desk__row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.hu-desk__btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--hd-rule); background: transparent; color: var(--hd-ink); font: inherit; font-size: 0.95rem; text-decoration: none; cursor: pointer; }
+.hu-desk__btn--primary { background: var(--hd-hot); border-color: var(--hd-hot); color: #1a0503; font-weight: 700; }
+.hu-desk__btn[disabled] { opacity: 0.55; cursor: default; }
+.hu-desk__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hu-desk__stat { min-width: 0; padding: 10px; border-radius: 12px; background: rgba(244, 239, 230, 0.05); }
+.hu-desk__stat strong { display: block; font-size: 1.35rem; }
+.hu-desk__stat span { font-size: 0.78rem; color: var(--hd-dim); }
+.hu-desk__list { list-style: none; margin: 6px 0; padding: 0; }
+.hu-desk__list li { padding: 8px 0; border-top: 1px solid var(--hd-rule); overflow-wrap: anywhere; }
+.hu-desk__list li:first-child { border-top: 0; }
+.hu-desk__list li.is-unread { color: var(--hd-ink); font-weight: 600; }
+.hu-desk__list a { color: var(--hd-ink); }
+.hu-desk__list small { color: var(--hd-dim); }
+.hu-desk label { display: block; margin: 10px 0; font-size: 0.9rem; color: var(--hd-dim); }
+.hu-desk input, .hu-desk select, .hu-desk textarea {
+  display: block; width: 100%; max-width: 100%; margin-top: 4px; padding: 11px 12px;
+  border-radius: 12px; border: 1px solid var(--hd-rule); background: #0f0c0b; color: var(--hd-ink);
+  font: inherit; font-size: max(16px, 1rem);
+}
+.hu-desk input[type="checkbox"] { display: inline-block; width: auto; margin: 0 8px 0 0; }
+.hu-desk__check { display: flex !important; align-items: center; color: var(--hd-ink) !important; }
+.hu-desk__filters label { flex: 1 1 10rem; min-width: 0; margin: 4px 0; }
+.hu-desk__consent { margin: 10px 0; padding: 10px 12px; border: 1px solid var(--hd-rule); border-radius: 12px; max-height: 40vh; overflow-y: auto; }
+.hu-desk__consent summary { cursor: pointer; color: var(--hd-ink); }
+.hu-desk__stage { position: relative; margin: 8px 0; min-width: 0; }
+.hu-desk__video { display: block; width: 100%; max-height: 44vh; border-radius: 14px; background: #000; object-fit: cover; }
+.hu-desk__video[hidden] { display: none; }
+.hu-desk__challenge { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(0, 0, 0, 0.6); display: grid; gap: 4px; }
+.hu-desk__line { font-weight: 600; }
+.hu-desk__code { color: var(--hd-gold); font-size: 1.25rem; letter-spacing: 0.04em; }
+.hu-desk__rec { color: var(--hd-hot); font-weight: 700; }
+/* the policy room's own pieces, now inside the desk */
+.hu-desk .card { margin: 8px 0; padding: 12px; border: 1px solid var(--hd-rule); border-radius: 12px; overflow-wrap: anywhere; }
+.hu-desk .tag { font-size: 0.74rem; color: #f4aeb8; text-transform: uppercase; letter-spacing: 0.08em; }
+.hu-desk #ladder h2 { margin: 0 0 6px; font-size: 1.02rem; }
+.hu-desk #ladder button, .hu-desk .toolbar button { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--hd-rule); background: transparent; color: var(--hd-ink); font: inherit; cursor: pointer; margin: 4px 4px 0 0; }
+.hu-desk .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.hu-desk .ladder-steps { list-style: none; padding: 0; margin: 0; }
+.hu-desk .ladder-diff { font: 14px/1.5 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--hd-rule); border-radius: 10px; padding: 10px; }
+.hu-desk .ladder-diff .da { background: rgba(60, 170, 90, 0.2); }
+.hu-desk .ladder-diff .dr { background: rgba(200, 60, 60, 0.2); text-decoration: line-through; }
+.hu-desk a { color: #ffc5c5; }
+/* the Desk tab on the bar */
+.appbar__desk { border: 0; background: transparent; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.appbar__desk svg { width: 24px; height: 24px; }
+.appbar__desk.is-active { background: rgba(244, 239, 230, 0.14); }
+/* a locked field on the World's profile form */
+.mn__field.is-locked { opacity: 0.75; }
+.hu-lock-hint { display: inline-block; margin: 4px 0 8px; padding: 0; border: 0; background: transparent; color: #e8c877; font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
+
+@media (min-width: 40rem) {
+  .hu-desk { left: auto; right: 16px; width: min(34rem, calc(100vw - 32px)); }
+  .hu-desk__stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* the side panel: the globe keeps the rest of the screen */
+@media (min-width: 64rem) {
+  .hu-desk { top: 16px; right: 16px; width: min(28rem, 36vw); max-height: none; border-radius: 22px; animation-name: huDeskIn; }
+  .hu-desk__grip { display: none; }
+  @keyframes huDeskIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+/* the desk's door in the account menu */
+.mn__menu-desk svg { width:18px;height:18px;margin-right:8px;vertical-align:-4px; }
+.mn__menu-desk.is-active { color:var(--mn-hot); }

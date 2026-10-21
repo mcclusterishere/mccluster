@@ -131,3 +131,25 @@ html[data-theme="light"] .chips button:not(.on),
 html[data-theme="light"] .tr .hrt {
   background: linear-gradient(180deg, rgba(26,20,13,0.075), rgba(26,20,13,0.035));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.65); color: var(--cream); }
+
+/* ARTISTS: the house first, then every creator, round pictures, one swipe
+   (js/music-community.js). McCluster opens the house; an artist opens their
+   front page and the bar takes their perspective. The M is the supplied
+   mark, scaled, on no plate; a creator's circle is their own photo or their
+   initial. Phone first: a horizontal rail that never widens the page. */
+.artists__row { display: flex; gap: 0.9rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
+  padding: 0.2rem 0 0.6rem; scrollbar-width: none; }
+.artists__row::-webkit-scrollbar { display: none; }
+.artist { flex: none; width: 4.6rem; min-width: 0; display: grid; justify-items: center; gap: 0.35rem; text-decoration: none; color: var(--cream);
+  scroll-snap-align: start; text-align: center; }
+.artist__pic { width: 3.5rem; height: 3.5rem; border-radius: 50%; object-fit: cover; background: rgba(244, 239, 230, 0.08);
+  box-shadow: 0 0 0 1px rgba(244, 239, 230, 0.18); }
+.artist__pic--house { border-radius: 0; background: none; box-shadow: none; object-fit: contain; }
+.artist__pic--initial { display: grid; place-items: center; font: 800 1.1rem/1 var(--ui); color: var(--cream); }
+.artist > b { font-family: var(--ui); font-weight: 800; font-size: 0.72rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artist > small { font-family: var(--ui); font-weight: 600; font-size: 0.6rem; color: var(--cream-dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artist:hover > b, .artist:focus-visible > b { color: var(--ruby-hot, #e5383b); }
+.artist:focus-visible { outline: none; }
+.artist:focus-visible .artist__pic { box-shadow: 0 0 0 2px var(--ruby-hot, #e5383b); }
+html[data-theme="light"] .artist__pic--house { content: url("../assets/img/m-mark-dark.png"); }
+@media (min-width: 600px) { .artists__row { gap: 1.1rem; } .artist { width: 5.2rem; } .artist__pic { width: 4rem; height: 4rem; } }

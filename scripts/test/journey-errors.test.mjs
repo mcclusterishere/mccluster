@@ -91,13 +91,17 @@ test('the album says what happened: failed plays, gated previews, no dead tip do
   assert.match(album, /replace\(\/\[-_\]\+\/g, " "\)/, 'play counts match the normalized track key');
 });
 
+/* the one sign-up (owner, 2026-10-20) is the World's form now; the account page's refusal behaviour went with it */
 test('sign-up refusals take the visitor to the field and count the reason only', async () => {
-  const account = await read('account.html');
-  const fail = slice(account, 'function createFail(msg, fieldId, reason)', '["acCreateFirst"');
+  const mnet = await read('js/mnet.js');
+  const fail = slice(mnet, 'function authFail(msg, fieldId, reason)', 'function submitPasswordAuth()');
   assert.match(fail, /setAttribute\("role", "alert"\)/);
   assert.match(fail, /setAttribute\("aria-invalid", "true"\)/);
   assert.match(fail, /\.focus\(/);
-  assert.match(fail, /MCC_TRACK\("signup_blocked", \{ reason: reason \}\)/, 'never what was typed');
+  assert.match(fail, /track\("signup_blocked", \{ reason: reason \}\)/, 'never what was typed');
+  const submit = slice(mnet, 'function submitPasswordAuth()', 'function boot()');
+  for (const reason of ['missing_email', 'missing_password', 'password_short', 'password_mismatch']) assert.ok(submit.includes('"' + reason + '"'), reason);
+  assert.doesNotMatch(await read('account.html'), /function createFail\(/, 'no second sign-up form to refuse from');
 });
 
 test('the current app-bar tab scrolls to the top, home included', async () => {
@@ -115,11 +119,14 @@ test('locked pages do not offer a theme they cannot change', async () => {
 test('database fixes wait in supabase/pending for the owner, bounded by a lock timeout', async () => {
   const pending = await readdir('supabase/pending');
   const migrations = await readdir('supabase/migrations');
-  for (const f of ['anon_policy_scope_v1.sql', 'public_music_reads_lean_v1.sql', 'listener_state_v1.sql']) {
+  for (const f of ['public_music_reads_lean_v1.sql', 'listener_state_v1.sql']) {
     assert.ok(pending.includes(f), f);
     assert.ok(!migrations.some((m) => m.endsWith(f.replace(/\.sql$/, '') + '.sql')), `${f} is not recorded as applied`);
     assert.match(await read('supabase/pending/' + f), /set local lock_timeout = '5s';/);
   }
+  // anon_policy_scope_v1 is applied (20261016031123) and promoted out of pending.
+  assert.ok(!pending.includes('anon_policy_scope_v1.sql'));
+  assert.ok(migrations.includes('20261016031123_anon_policy_scope_v1.sql'));
   const listener = await read('supabase/pending/listener_state_v1.sql');
   assert.match(listener, /force row level security/);
   assert.match(listener, /using \(profile_id = \(select auth\.uid\(\)\)\)/);

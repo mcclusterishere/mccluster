@@ -1,0 +1,898 @@
+{
+  "schema_version": 1,
+  "project": {
+    "slug": "docket-516r-2025",
+    "title": "Docket 516R",
+    "campaign_id": "equity-uprise-003",
+    "organization_slug": "equity-uprise",
+    "program_name": "Equity Rise",
+    "year": 2025,
+    "date_precision": "year",
+    "status": "completed",
+    "summary": "Songs about the changes our communities need, created by the Equity Rise 2025 cohort and brought together for a live capstone showcase.",
+    "mission_title": "Write the Change",
+    "canonical_url": "https://matthew.mccluster.org/docket-516.html",
+    "album_slug": "equity-uprise",
+    "album_url": "https://matthew.mccluster.org/album.html?album=equity-uprise",
+    "image_url": "https://matthew.mccluster.org/assets/img/rally/rally-01.jpg",
+    "track_order": null
+  },
+  "participants": [
+    {
+      "slug": "ocho-great",
+      "display_name": "Ocho Great",
+      "project_roles": [
+        "Artist"
+      ],
+      "roles": [
+        "Artist"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "mccluster",
+      "display_name": "McCluster",
+      "project_roles": [
+        "Artist",
+        "Producer",
+        "Organizer"
+      ],
+      "roles": [
+        "Artist",
+        "Producer",
+        "Organizer"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed",
+      "is_organizer": true
+    },
+    {
+      "slug": "angel-castro",
+      "display_name": "Angel Castro",
+      "project_roles": [
+        "Artist"
+      ],
+      "roles": [
+        "Artist"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "los-fidel",
+      "display_name": "Los Fidel",
+      "project_roles": [
+        "Artist"
+      ],
+      "roles": [
+        "Artist"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "paxton-cobb",
+      "display_name": "Paxton Cobb",
+      "project_roles": [
+        "Artist",
+        "Producer"
+      ],
+      "roles": [
+        "Artist",
+        "Producer"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "a-sean-voyage",
+      "display_name": "A Sean Voyage",
+      "project_roles": [
+        "Artist"
+      ],
+      "roles": [
+        "Artist"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "stay-true",
+      "display_name": "Stay True",
+      "project_roles": [
+        "Cohort contributor"
+      ],
+      "roles": [
+        "Cohort contributor"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "mojo-beats",
+      "display_name": "Mojo Beats",
+      "project_roles": [
+        "Engineer"
+      ],
+      "roles": [
+        "Engineer"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "zakir-elheji",
+      "display_name": "Zakir Elheji",
+      "project_roles": [
+        "Engineer",
+        "Producer"
+      ],
+      "roles": [
+        "Engineer",
+        "Producer"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    },
+    {
+      "slug": "old-j",
+      "display_name": "Old J",
+      "project_roles": [
+        "Artist"
+      ],
+      "roles": [
+        "Artist"
+      ],
+      "cohort_verification": "owner_attested",
+      "provenance": "organizer_attested",
+      "existing_profile_id": null,
+      "page_status": "unclaimed"
+    }
+  ],
+  "works": [
+    {
+      "id": "docket-516r-environmental-injustice",
+      "slug": "docket-516r-environmental-injustice",
+      "title": "Environmental Injustice",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:environmental-injustice",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "equity-uprise:environmental-injustice",
+          "media_id": "equity-uprise:environmental-injustice",
+          "slug": "environmental-injustice",
+          "title": "Environmental Injustice",
+          "kind": "audio",
+          "version_label": "Released version",
+          "url": "https://matthew.mccluster.org/assets/audio/environmental-injustice.mp3",
+          "provider": "site",
+          "playback": "direct",
+          "catalogue_key": "equity-uprise:environmental-injustice",
+          "album_slug": "equity-uprise",
+          "isrc": "QT6KV2600008",
+          "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Environmental%20Injustice",
+          "archive_version": {
+            "title": "2025 approved archive version",
+            "url": "https://drive.google.com/file/d/1gwoA4Xn9FenE_4FQCaBodT60sS8J5P3r/view?usp=drivesdk",
+            "provider": "google_drive",
+            "playback": "external"
+          }
+        },
+        {
+          "id": "equity-uprise:environmental-injustice-brave-mix",
+          "media_id": "equity-uprise:environmental-injustice-brave-mix",
+          "slug": "environmental-injustice-brave",
+          "title": "Environmental Injustice (Brave mix)",
+          "kind": "audio",
+          "version_label": "Brave mix · GA edition",
+          "url": "https://matthew.mccluster.org/assets/audio/environmental-injustice-brave.mp3",
+          "provider": "site",
+          "playback": "direct",
+          "catalogue_key": "equity-uprise:environmental-injustice-brave-mix",
+          "album_slug": "equity-uprise",
+          "isrc": "QT6KV2600009",
+          "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Environmental%20Injustice%20%28Brave%20mix%29",
+          "archive_version": {
+            "title": "2025 approved archive version",
+            "url": "https://drive.google.com/file/d/1EsUJiZBQFf12GLPzncgz1_edfYBKKm2l/view?usp=drivesdk",
+            "provider": "google_drive",
+            "playback": "external"
+          }
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "McCluster",
+          "role": "Performer",
+          "participant_slug": "mccluster"
+        },
+        {
+          "display_name": "Angel Kastro",
+          "role": "Featured performer"
+        },
+        {
+          "display_name": "Ocho",
+          "role": "Featured performer",
+          "participant_slug": "ocho-great"
+        }
+      ],
+      "assets": [
+        {
+          "id": "assets/video/uprise.mp4",
+          "media_id": "assets/video/uprise.mp4",
+          "title": "Environmental Injustice — release visual",
+          "kind": "release_visual",
+          "url": "https://matthew.mccluster.org/assets/video/uprise.mp4",
+          "provider": "site",
+          "playback": "direct",
+          "poster_url": "https://matthew.mccluster.org/assets/frames/uprise_0001.jpg"
+        }
+      ]
+    },
+    {
+      "id": "docket-516r-please-set-me-free",
+      "slug": "docket-516r-please-set-me-free",
+      "title": "Please Set Me Free",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:please-set-me-free",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "equity-uprise:please-set-me-free",
+          "media_id": "equity-uprise:please-set-me-free",
+          "slug": "please-set-me-free",
+          "title": "Please Set Me Free",
+          "kind": "audio",
+          "version_label": "Released version",
+          "url": "https://matthew.mccluster.org/assets/audio/please-set-me-free.mp3",
+          "provider": "site",
+          "playback": "direct",
+          "catalogue_key": "equity-uprise:please-set-me-free",
+          "album_slug": "equity-uprise",
+          "isrc": "QT6KV2600010",
+          "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Please%20Set%20Me%20Free",
+          "archive_version": {
+            "title": "2025 approved archive version",
+            "url": "https://drive.google.com/file/d/1LAcgdUEDzzhm1vzuSqzXNUMxqrOIzmfT/view?usp=drivesdk",
+            "provider": "google_drive",
+            "playback": "external"
+          }
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "Los Fidel",
+          "role": "Performer",
+          "participant_slug": "los-fidel"
+        },
+        {
+          "display_name": "McCluster",
+          "role": "Producer",
+          "participant_slug": "mccluster"
+        }
+      ],
+      "assets": [
+        {
+          "id": "assets/video/church.mp4",
+          "media_id": "assets/video/church.mp4",
+          "title": "Please Set Me Free — release visual",
+          "kind": "release_visual",
+          "url": "https://matthew.mccluster.org/assets/video/church.mp4",
+          "provider": "site",
+          "playback": "direct",
+          "poster_url": "https://matthew.mccluster.org/assets/frames/church_0001.jpg"
+        }
+      ]
+    },
+    {
+      "id": "docket-516r-sjw",
+      "slug": "docket-516r-sjw",
+      "title": "SJW",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:sjw",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "docket-516r-2025:sjw:archive",
+          "media_id": "docket-516r-2025:sjw:archive",
+          "slug": "sjw",
+          "title": "SJW",
+          "kind": "audio",
+          "version_label": "Approved archive recording",
+          "url": "https://drive.google.com/file/d/15wD6eX3l2OlhBtSHTSqGooPAcg7uQ1wo/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "Ashton Voyage",
+          "role": "Performer"
+        },
+        {
+          "display_name": "McCluster",
+          "role": "Producer",
+          "participant_slug": "mccluster"
+        }
+      ],
+      "assets": []
+    },
+    {
+      "id": "docket-516r-scar-stories",
+      "slug": "docket-516r-scar-stories",
+      "title": "Scar Stories",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:scar-stories",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "docket-516r-2025:scar-stories:archive",
+          "media_id": "docket-516r-2025:scar-stories:archive",
+          "slug": "scar-stories",
+          "title": "Scar Stories",
+          "kind": "audio",
+          "version_label": "Approved archive recording",
+          "url": "https://drive.google.com/file/d/1IAw1kQA5jYxWyFKoIXPXdwAKeOe9qpdU/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "Angel",
+          "role": "Performer"
+        },
+        {
+          "display_name": "PAX",
+          "role": "Featured performer",
+          "participant_slug": "paxton-cobb"
+        },
+        {
+          "display_name": "McCluster",
+          "role": "Featured performer",
+          "participant_slug": "mccluster"
+        },
+        {
+          "display_name": "Ocho",
+          "role": "Featured performer",
+          "participant_slug": "ocho-great"
+        },
+        {
+          "display_name": "PAX",
+          "role": "Producer",
+          "participant_slug": "paxton-cobb"
+        }
+      ],
+      "assets": []
+    },
+    {
+      "id": "docket-516r-save-the-land",
+      "slug": "docket-516r-save-the-land",
+      "title": "Save the Land",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:save-the-land",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "docket-516r-2025:save-the-land:archive",
+          "media_id": "docket-516r-2025:save-the-land:archive",
+          "slug": "save-the-land",
+          "title": "Save the Land",
+          "kind": "audio",
+          "version_label": "Approved archive recording",
+          "url": "https://drive.google.com/file/d/1jqiM4Dv_8ocsKMIFTzdgMz7xLXzxlt5r/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "Angel",
+          "role": "Performer"
+        }
+      ],
+      "assets": []
+    },
+    {
+      "id": "docket-516r-not-for-sale",
+      "slug": "docket-516r-not-for-sale",
+      "title": "Not for Sale",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:not-for-sale",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "docket-516r-2025:not-for-sale:archive",
+          "media_id": "docket-516r-2025:not-for-sale:archive",
+          "slug": "not-for-sale",
+          "title": "Not for Sale",
+          "kind": "audio",
+          "version_label": "Approved archive recording",
+          "url": "https://drive.google.com/file/d/1S2g___76_aM5pVZh6DkT8yuBpa3UMsCn/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "McCluster",
+          "role": "Performer",
+          "participant_slug": "mccluster"
+        },
+        {
+          "display_name": "Ocho",
+          "role": "Featured performer",
+          "participant_slug": "ocho-great"
+        },
+        {
+          "display_name": "Chidi",
+          "role": "Featured contributor"
+        },
+        {
+          "display_name": "David Wise",
+          "role": "Featured contributor"
+        }
+      ],
+      "assets": []
+    },
+    {
+      "id": "docket-516r-money-or-the-power",
+      "slug": "docket-516r-money-or-the-power",
+      "title": "Money or the Power",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:money-or-the-power",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "equity-uprise:money-or-the-power",
+          "media_id": "equity-uprise:money-or-the-power",
+          "slug": "money-or-the-power",
+          "title": "Money or the Power",
+          "kind": "audio",
+          "version_label": "Released version",
+          "url": "https://matthew.mccluster.org/assets/audio/money-or-the-power.mp3",
+          "provider": "site",
+          "playback": "direct",
+          "catalogue_key": "equity-uprise:money-or-the-power",
+          "album_slug": "equity-uprise",
+          "isrc": "QT6KV2600011",
+          "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Money%20or%20the%20Power",
+          "archive_version": {
+            "title": "2025 approved archive version",
+            "url": "https://drive.google.com/file/d/1m6UIf5oQMUxP74o4QKRw2zk-8akzh2jz/view?usp=drivesdk",
+            "provider": "google_drive",
+            "playback": "external"
+          }
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "Old Jay",
+          "role": "Performer",
+          "participant_slug": "old-j"
+        },
+        {
+          "display_name": "Ocho",
+          "role": "Featured performer",
+          "participant_slug": "ocho-great"
+        },
+        {
+          "display_name": "McCluster",
+          "role": "Featured performer",
+          "participant_slug": "mccluster"
+        },
+        {
+          "display_name": "PAX",
+          "role": "Producer",
+          "participant_slug": "paxton-cobb"
+        }
+      ],
+      "assets": [
+        {
+          "id": "assets/video/moneyglitch.mp4",
+          "media_id": "assets/video/moneyglitch.mp4",
+          "title": "Money or the Power — release visual",
+          "kind": "release_visual",
+          "url": "https://matthew.mccluster.org/assets/video/moneyglitch.mp4",
+          "provider": "site",
+          "playback": "direct",
+          "poster_url": "https://matthew.mccluster.org/assets/frames/moneyglitch_0001.jpg"
+        },
+        {
+          "id": "docket-516r-2025:money-or-the-power:video-draft-2",
+          "media_id": "docket-516r-2025:money-or-the-power:video-draft-2",
+          "title": "Money or the Power — video draft 2",
+          "kind": "music_video_draft",
+          "url": "https://drive.google.com/file/d/1NwxUgkgpl4CRSZMyleI0qUX3NOsQXmlV/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        },
+        {
+          "id": "docket-516r-2025:money-or-the-power:video-draft",
+          "media_id": "docket-516r-2025:money-or-the-power:video-draft",
+          "title": "Money or the Power — video draft",
+          "kind": "music_video_draft",
+          "url": "https://drive.google.com/file/d/1cE2aRG-F9pgb5yBVoawvUe2mTepmMVmo/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        }
+      ]
+    },
+    {
+      "id": "docket-516r-do-right-by-we",
+      "slug": "docket-516r-do-right-by-we",
+      "title": "Do Right by We",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:do-right-by-we",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "docket-516r-2025:do-right-by-we:archive",
+          "media_id": "docket-516r-2025:do-right-by-we:archive",
+          "slug": "do-right-by-we",
+          "title": "Do Right by We",
+          "kind": "audio",
+          "version_label": "Approved archive recording",
+          "url": "https://drive.google.com/file/d/1Ewlz1jWymlGikuomFzXnITGSrAgUdfyg/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "Angel",
+          "role": "Performer"
+        },
+        {
+          "display_name": "McCluster",
+          "role": "Performer",
+          "participant_slug": "mccluster"
+        },
+        {
+          "display_name": "McCluster",
+          "role": "Producer",
+          "participant_slug": "mccluster"
+        },
+        {
+          "display_name": "Kevin",
+          "role": "Performer"
+        }
+      ],
+      "assets": []
+    },
+    {
+      "id": "docket-516r-we-aint-goin-nowhere",
+      "slug": "docket-516r-we-aint-goin-nowhere",
+      "title": "We Ain’t Goin Nowhere",
+      "status": "completed",
+      "mission_title": "Write the Change",
+      "mission_type": "write-the-change",
+      "category": "create",
+      "date_precision": "year",
+      "year": 2025,
+      "completed_at": null,
+      "track_order": null,
+      "composition_key": "docket-516r-2025:we-aint-goin-nowhere",
+      "completion_count": 1,
+      "recordings": [
+        {
+          "id": "docket-516r-2025:we-aint-goin-nowhere:archive",
+          "media_id": "docket-516r-2025:we-aint-goin-nowhere:archive",
+          "slug": "we-aint-goin-nowhere",
+          "title": "We Ain’t Goin Nowhere",
+          "kind": "audio",
+          "version_label": "Rough mix · Shiloh",
+          "url": "https://drive.google.com/file/d/1uL6Ly4A7E60UCtCC0rw0qQEa5y4nR2Gs/view?usp=drivesdk",
+          "provider": "google_drive",
+          "playback": "external"
+        }
+      ],
+      "credits": [
+        {
+          "display_name": "Angel",
+          "role": "Performer"
+        },
+        {
+          "display_name": "McCluster",
+          "role": "Performer",
+          "participant_slug": "mccluster"
+        },
+        {
+          "display_name": "Kevin",
+          "role": "Performer"
+        }
+      ],
+      "assets": []
+    }
+  ],
+  "event": {
+    "slug": "docket-516r-2025-capstone",
+    "title": "Equity Rise Graduation & Showcase",
+    "public_title": "Rally for Environmental Justice and Religious Freedom",
+    "event_type": "capstone",
+    "status": "completed",
+    "starts_at": "2025-10-05T14:00:00-04:00",
+    "ends_at": null,
+    "date_precision": "day",
+    "timezone": "America/New_York",
+    "venue": "Shiloh Baptist Church",
+    "address": "477 Broad Street, Bridgeport, CT 06604",
+    "city": "Bridgeport",
+    "region": "CT",
+    "country": "US",
+    "latitude": 41.169913500774,
+    "longitude": -73.187838263174,
+    "coordinate_precision": "address_interpolated",
+    "coordinate_source": "U.S. Census Geocoder",
+    "coordinate_source_url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=477+Broad+Street%2C+Bridgeport%2C+CT+06604&benchmark=Public_AR_Current&format=json",
+    "venue_url": "https://www.shilohchurchbpt.org/contact-us/",
+    "recording_url": "https://drive.google.com/file/d/1G8xdkjUmJDB1OWHUMJD4HHlzXomWACZj/view?usp=drivesdk",
+    "recording_media_id": "docket-516r-2025:capstone-recording",
+    "recording_label": "Watch the archived restream",
+    "image_url": "https://matthew.mccluster.org/assets/img/rally/rally-01.jpg",
+    "work_ids": [
+      "docket-516r-environmental-injustice",
+      "docket-516r-please-set-me-free",
+      "docket-516r-sjw",
+      "docket-516r-scar-stories",
+      "docket-516r-save-the-land",
+      "docket-516r-not-for-sale",
+      "docket-516r-money-or-the-power",
+      "docket-516r-do-right-by-we",
+      "docket-516r-we-aint-goin-nowhere"
+    ]
+  },
+  "media": [
+    {
+      "id": "equity-uprise:environmental-injustice",
+      "slug": "environmental-injustice",
+      "title": "Environmental Injustice",
+      "kind": "audio",
+      "version_label": "Released version",
+      "url": "https://matthew.mccluster.org/assets/audio/environmental-injustice.mp3",
+      "provider": "site",
+      "playback": "direct",
+      "catalogue_key": "equity-uprise:environmental-injustice",
+      "album_slug": "equity-uprise",
+      "isrc": "QT6KV2600008",
+      "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Environmental%20Injustice"
+    },
+    {
+      "id": "equity-uprise:environmental-injustice-brave-mix",
+      "slug": "environmental-injustice-brave",
+      "title": "Environmental Injustice (Brave mix)",
+      "kind": "audio",
+      "version_label": "Brave mix · GA edition",
+      "url": "https://matthew.mccluster.org/assets/audio/environmental-injustice-brave.mp3",
+      "provider": "site",
+      "playback": "direct",
+      "catalogue_key": "equity-uprise:environmental-injustice-brave-mix",
+      "album_slug": "equity-uprise",
+      "isrc": "QT6KV2600009",
+      "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Environmental%20Injustice%20%28Brave%20mix%29"
+    },
+    {
+      "id": "equity-uprise:please-set-me-free",
+      "slug": "please-set-me-free",
+      "title": "Please Set Me Free",
+      "kind": "audio",
+      "version_label": "Released version",
+      "url": "https://matthew.mccluster.org/assets/audio/please-set-me-free.mp3",
+      "provider": "site",
+      "playback": "direct",
+      "catalogue_key": "equity-uprise:please-set-me-free",
+      "album_slug": "equity-uprise",
+      "isrc": "QT6KV2600010",
+      "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Please%20Set%20Me%20Free"
+    },
+    {
+      "id": "docket-516r-2025:sjw:archive",
+      "slug": "sjw",
+      "title": "SJW",
+      "kind": "audio",
+      "version_label": "Approved archive recording",
+      "url": "https://drive.google.com/file/d/15wD6eX3l2OlhBtSHTSqGooPAcg7uQ1wo/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "docket-516r-2025:scar-stories:archive",
+      "slug": "scar-stories",
+      "title": "Scar Stories",
+      "kind": "audio",
+      "version_label": "Approved archive recording",
+      "url": "https://drive.google.com/file/d/1IAw1kQA5jYxWyFKoIXPXdwAKeOe9qpdU/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "docket-516r-2025:save-the-land:archive",
+      "slug": "save-the-land",
+      "title": "Save the Land",
+      "kind": "audio",
+      "version_label": "Approved archive recording",
+      "url": "https://drive.google.com/file/d/1jqiM4Dv_8ocsKMIFTzdgMz7xLXzxlt5r/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "docket-516r-2025:not-for-sale:archive",
+      "slug": "not-for-sale",
+      "title": "Not for Sale",
+      "kind": "audio",
+      "version_label": "Approved archive recording",
+      "url": "https://drive.google.com/file/d/1S2g___76_aM5pVZh6DkT8yuBpa3UMsCn/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "equity-uprise:money-or-the-power",
+      "slug": "money-or-the-power",
+      "title": "Money or the Power",
+      "kind": "audio",
+      "version_label": "Released version",
+      "url": "https://matthew.mccluster.org/assets/audio/money-or-the-power.mp3",
+      "provider": "site",
+      "playback": "direct",
+      "catalogue_key": "equity-uprise:money-or-the-power",
+      "album_slug": "equity-uprise",
+      "isrc": "QT6KV2600011",
+      "release_url": "https://matthew.mccluster.org/album.html?album=equity-uprise&t=Money%20or%20the%20Power"
+    },
+    {
+      "id": "docket-516r-2025:do-right-by-we:archive",
+      "slug": "do-right-by-we",
+      "title": "Do Right by We",
+      "kind": "audio",
+      "version_label": "Approved archive recording",
+      "url": "https://drive.google.com/file/d/1Ewlz1jWymlGikuomFzXnITGSrAgUdfyg/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "docket-516r-2025:we-aint-goin-nowhere:archive",
+      "slug": "we-aint-goin-nowhere",
+      "title": "We Ain’t Goin Nowhere",
+      "kind": "audio",
+      "version_label": "Rough mix · Shiloh",
+      "url": "https://drive.google.com/file/d/1uL6Ly4A7E60UCtCC0rw0qQEa5y4nR2Gs/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "assets/video/uprise.mp4",
+      "title": "Environmental Injustice — release visual",
+      "kind": "release_visual",
+      "url": "https://matthew.mccluster.org/assets/video/uprise.mp4",
+      "provider": "site",
+      "playback": "direct",
+      "poster_url": "https://matthew.mccluster.org/assets/frames/uprise_0001.jpg"
+    },
+    {
+      "id": "assets/video/church.mp4",
+      "title": "Please Set Me Free — release visual",
+      "kind": "release_visual",
+      "url": "https://matthew.mccluster.org/assets/video/church.mp4",
+      "provider": "site",
+      "playback": "direct",
+      "poster_url": "https://matthew.mccluster.org/assets/frames/church_0001.jpg"
+    },
+    {
+      "id": "assets/video/moneyglitch.mp4",
+      "title": "Money or the Power — release visual",
+      "kind": "release_visual",
+      "url": "https://matthew.mccluster.org/assets/video/moneyglitch.mp4",
+      "provider": "site",
+      "playback": "direct",
+      "poster_url": "https://matthew.mccluster.org/assets/frames/moneyglitch_0001.jpg"
+    },
+    {
+      "id": "docket-516r-2025:money-or-the-power:video-draft-2",
+      "title": "Money or the Power — video draft 2",
+      "kind": "music_video_draft",
+      "url": "https://drive.google.com/file/d/1NwxUgkgpl4CRSZMyleI0qUX3NOsQXmlV/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "docket-516r-2025:money-or-the-power:video-draft",
+      "title": "Money or the Power — video draft",
+      "kind": "music_video_draft",
+      "url": "https://drive.google.com/file/d/1cE2aRG-F9pgb5yBVoawvUe2mTepmMVmo/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "docket-516r-2025:cohort-video",
+      "title": "Equity Rise 2025 Cohort",
+      "kind": "cohort_video",
+      "url": "https://drive.google.com/file/d/1pUgMFYMrn5m1oXU0qbq0R9dgWnM6BHea/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    },
+    {
+      "id": "docket-516r-2025:capstone-recording",
+      "title": "You and I vs UI — October 5, 2025 restream",
+      "kind": "event_recording",
+      "url": "https://drive.google.com/file/d/1G8xdkjUmJDB1OWHUMJD4HHlzXomWACZj/view?usp=drivesdk",
+      "provider": "google_drive",
+      "playback": "external"
+    }
+  ]
+}

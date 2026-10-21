@@ -12,6 +12,17 @@ on:
       - 'supabase/tests/compute_cogs_regression.sql'
       - 'supabase/pending/**'
       - 'supabase/tests/action_clipping_regression.sql'
+      - 'supabase/tests/action_bounty_claim_guard*'
+      - 'scripts/test-action-bounty-claim-db.sh'
+      - 'supabase/tests/action_archive*'
+      - 'supabase/tests/action_mission_reset*'
+      - 'scripts/test-action-archive-db.sh'
+      - 'scripts/test/action-archive-db.mjs'
+      - 'scripts/test/mission-swipe-deck.test.mjs'
+      - 'scripts/test/completed-mission-globe.test.mjs'
+      - 'js/mission-swipe-deck.js'
+      - 'js/action-globe.js'
+      - 'workers/mccluster/src/action-archive.js'
       - 'supabase/tests/commerce_stripe_*'
       - 'supabase/functions/stripe-webhook/commerce.ts'
       - 'scripts/stripe-test/**'
@@ -31,6 +42,17 @@ on:
       - 'supabase/tests/compute_cogs_regression.sql'
       - 'supabase/pending/**'
       - 'supabase/tests/action_clipping_regression.sql'
+      - 'supabase/tests/action_bounty_claim_guard*'
+      - 'scripts/test-action-bounty-claim-db.sh'
+      - 'supabase/tests/action_archive*'
+      - 'supabase/tests/action_mission_reset*'
+      - 'scripts/test-action-archive-db.sh'
+      - 'scripts/test/action-archive-db.mjs'
+      - 'scripts/test/mission-swipe-deck.test.mjs'
+      - 'scripts/test/completed-mission-globe.test.mjs'
+      - 'js/mission-swipe-deck.js'
+      - 'js/action-globe.js'
+      - 'workers/mccluster/src/action-archive.js'
       - 'supabase/tests/commerce_stripe_*'
       - 'supabase/functions/stripe-webhook/commerce.ts'
       - 'scripts/stripe-test/**'
@@ -60,6 +82,8 @@ jobs:
           node-version: '22'
       - name: Run compute/provider security tests
         run: node --test workers/mccluster/test/compute-security.test.mjs
+      - name: Check cohort API and mission interaction boundaries
+        run: node --test workers/mccluster/test/action-archive.test.mjs scripts/test/mission-swipe-deck.test.mjs scripts/test/completed-mission-globe.test.mjs
       - name: Assert rate limiter precedes API handlers
         run: |
           grep -F "enforceApiRateLimit" workers/mccluster/src/entry-platform.js
@@ -127,6 +151,20 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_clipping_regression.sql
+      - name: Prove bounty first-claim and reclaim behavior in a separate scratch database
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '54322'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: bash scripts/test-action-bounty-claim-db.sh
+      - name: Prove cohort ownership and mission reset behavior in separate scratch databases
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '54322'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: bash scripts/test-action-archive-db.sh
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

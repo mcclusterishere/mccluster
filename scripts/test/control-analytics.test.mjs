@@ -15,7 +15,9 @@ test('Control Analytics cold render is safe before the first network load',async
     supa:()=>Promise.resolve([])
   });
   assert.doesNotThrow(()=>context.window.CR.analytics.render());
-  assert.match(context.window.CR.analytics.render(),/>Analytics</);
+  /* the header (title, Live, property, range) is painted around the globe; the panel opens on the Reach cards */
+  assert.match(context.window.CR.analytics.top(),/>Analytics </);
+  assert.match(context.window.CR.analytics.render(),/>Reach</);
 });
 
 test('Control Analytics mount paints immediately and fails visibly instead of going blank',async()=>{
@@ -34,7 +36,7 @@ test('Control Analytics mount paints immediately and fails visibly instead of go
     querySelectorAll:()=>[]
   };
   assert.doesNotThrow(()=>A.mount(host));
-  assert.match(host.innerHTML,/>Analytics</);
+  assert.match(host.innerHTML,/>Reach</);
   await new Promise((resolve)=>setTimeout(resolve,0));
   assert.match(host.innerHTML,/Analytics load failed/);
   assert.match(host.innerHTML,/did not load/);
@@ -68,9 +70,11 @@ test('Control Analytics bounds concurrent reads instead of stampeding PostgREST'
     querySelectorAll:()=>[]
   };
   A.mount(host);
-  await new Promise((resolve)=>setTimeout(resolve,120));
+  const deadline=Date.now()+3000;
+  while(!A.state.loaded&&Date.now()<deadline)await new Promise((resolve)=>setTimeout(resolve,10));
   assert.ok(completed>=12,'expected the full analytics suite to complete');
-  assert.ok(peak<=3,'analytics opened '+peak+' concurrent reads');
+  /* Heavy independent RPCs run two at a time; background writes must retain headroom. */
+  assert.ok(peak<=2,'analytics opened '+peak+' concurrent reads');
   assert.ok(paints>4,'completed reads should repaint progressively');
   assert.equal(A.state.loading,false);
 });
@@ -90,15 +94,15 @@ test('custom range edits survive progressive Analytics repaints',async()=>{
   };
   A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
   A.mount(host);
-  A.state.rangeId='custom';
+  A.state.rangeId='custom';A.state.ui.more=true;
   from.value='2026-09-01';through.value='2026-09-27';
   assert.equal(typeof from.oninput,'function');
   assert.equal(typeof through.oninput,'function');
   from.oninput();through.oninput();
   assert.equal(A.state.from,'2026-09-01');
   assert.equal(A.state.through,'2026-09-27');
-  assert.match(A.render(),/value="2026-09-01"/);
-  assert.match(A.render(),/value="2026-09-27"/);
+  assert.match(A.top(),/value="2026-09-01"/);
+  assert.match(A.top(),/value="2026-09-27"/);
   from.value='';from.oninput();
   assert.equal(A.state.from,'');
   assert.equal(typeof apply.onclick,'function');
@@ -116,6 +120,7 @@ test('all seven Analytics sections render representative successful data',async(
   A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
   A.state.range={label:'7 days',since:'2026-09-20T00:00:00Z',until:'2026-09-27T00:00:00Z'};
   A.state.loaded=true;
+  A.state.completed={identity:true,experience:true};
   A.state.data={
     traffic:{byDay:[{day:'2026-09-27',page_views:10,visitors:4,sessions:5}],totals:{page_views:10,visitors:4,sessions:5,plays:3,events:20},pages:[{path:'index.html',views:10,prior_views:8,view_change_pct:25,visitors:4,sessions:5,median_visible_s:22,p75_visible_s:48,avg_depth:61,engaged_30_pct:40,action_events:2,return_pct:20,short_exit_pct:10,quality_score:67.2,confidence:.28,overall_score:55.4}],sources:[{source:'direct',count:5}],countries:[{country:'US',count:4}],networks:[{network:'wifi',count:4}]},
     funnel:[{arrived:10,heard_something:8,engaged:6,searched:3,asked_for_something:2,made_an_account:1,confirmed_the_email:1,reached_checkout:1,paid:0}],
@@ -128,7 +133,7 @@ test('all seven Analytics sections render representative successful data',async(
   };
   const expected={
     overview:/Page performance/,
-    audience:/Conversion funnel/,
+    audience:/Stage activity/,
     adaptive:/Decision ledger/,
     content:/Reach vs repeat/,
     identity:/Source → track → account/,
@@ -158,7 +163,16 @@ test('Control Analytics uses the canonical analytics data plane',async()=>{
   const forensics=await read('js/control-room/forensics.js');
   assert.match(forensics,/"\/v1\/analytics\/" \+ \(F\.mode === "visitors" \? "visitors" : "sessions"\)/);
   assert.match(forensics,/"\/v1\/analytics\/sessions\/" \+ encodeURIComponent\(t\.id\)/);
-  assert.doesNotMatch(js,/<iframe|analytics\.html\?control_embed/);
+  /* no second analytics page in a frame, and no frame at all: the charcoal globe is drawn in this page by one Cesium
+     widget (js/control-room/analytics-globe.js), mounted once into a host the panel never repaints */
+  assert.doesNotMatch(js,/analytics\.html\?control_embed/);
+  assert.doesNotMatch(js,/<iframe/);
+  assert.match(js,/S\.globe=window\.CR\.analyticsGlobe\.mount\(gh,/);
+  /* the reads no screen used to show, now visualized */
+  for(const route of ['/v1/analytics/visitors?since=','/v1/analytics/flows?since=','/v1/analytics/errors?since=']) assert.ok(js.includes(route),route);
+  assert.match(js,/rpc\("action_mission_stats",\{p_campaign:null\}\)/);
+  assert.match(js,/rpc\("analytics_country_totals",args\)/);
+  assert.match(js,/rpc\("analytics_country_series",/);
 });
 
 test('one range controls all analytics panels and stale requests cannot repaint',async()=>{
@@ -169,7 +183,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
   assert.match(js,/if\(q!==S\.seq\)return/);
   assert.match(js,/p_since:r\.since,p_until:r\.until/);
   assert.doesNotMatch(js,/daily=\{p_since:r\.querySince/);
-  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.data=blankData\(\);paint\(\)/,
+  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.quality=\{\};S\.completed=\{\};S\.data=blankData\(\);loadGeoAudience\(\);paint\(\)/,
     'range selection must repaint immediately before the network read completes');
 });
 
@@ -180,7 +194,7 @@ test('Analytics uses distinct visual forms for distinct questions',async()=>{
   }
   assert.match(js,/Traffic trend/);
   assert.match(js,/Geography/);
-  assert.match(js,/Conversion funnel/);
+  assert.match(js,/Stage activity/);
   assert.match(js,/Reach vs repeat/);
   assert.match(js,/Source → track → account/);
 });
@@ -191,7 +205,7 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
     read('css/control-analytics.css'),
     read('supabase/migrations/20261003223831_analytics_hourly_hotpath_v2.sql')
   ]);
-  assert.match(js,/r\.id==="24h"\?retryStatementTimeout\(function\(\)\{return rpc\("analytics_hourly",daily\);\}\)/);
+  assert.match(js,/r\.id==="24h"\?rpc\("analytics_hourly",daily\)/);
   assert.match(js,/r\.id==="24h"\?Promise\.resolve\(\[\]\):rpc\("analytics_daily",daily\)/);
   assert.match(js,/allLabels:true/);
   assert.match(js,/data-cra-chart-point/);
@@ -213,18 +227,26 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
   assert.match(migration,/grant execute on function public\.analytics_hourly.*to authenticated/i);
 });
 
-test('24h analytics retries one transient database statement timeout',async()=>{
+test('all read-only analytics RPCs retry one transient database statement timeout',async()=>{
   const js=await read('js/control-room/analytics.js');
   assert.match(js,/function retryStatementTimeout\(fn\)/);
   assert.match(js,/code!==\"57014\"/);
   assert.match(js,/statement timeout\|canceling statement/i);
-  assert.match(js,/retryStatementTimeout\(function\(\)\{return rpc\(\"analytics_hourly\",daily\);\}\)/);
+  assert.match(js,/function rpc\(name,body\)\{return retryStatementTimeout\(function\(\)\{/);
+  assert.match(js,/r\.id===\"24h\"\?rpc\(\"analytics_hourly\",daily\)/);
+  assert.doesNotMatch(js,/retryStatementTimeout\(function\(\)\{return rpc\(/,
+    'do not nest retries and send more than two attempts');
 });
 
 test('Control Analytics is mobile-first',async()=>{
   const css=await read('css/control-analytics.css');
-  assert.match(css,/@media \(min-width:36rem\)/);
-  assert.match(css,/@media \(min-width:54rem\)/);
+  /* the panel sits beside the globe (60/40), so its columns follow the panel's own width: container queries, min-width only */
+  assert.match(css,/@container cra \(min-width:36rem\)/);
+  assert.match(css,/@container cra \(min-width:54rem\)/);
+  assert.match(css,/@media \(min-width:64rem\)\{\s*\.cra-split\{grid-template-columns:minmax\(0,3fr\) minmax\(0,2fr\)/);
+  /* the one exception is the Control Room's own 760px line, restated as min-width: from 761px the rail is the navigation */
+  assert.doesNotMatch(css.replace(/@media \(min-width:761px\)/g,''),/@media \(min-width:7\d\dpx\)/);
+  assert.doesNotMatch(css,/@container[^{]*max-width/);
   assert.doesNotMatch(css,/@media\s*\(max-width:/);
   assert.match(css,/font-size:max\(16px,1rem\)/);
   assert.match(css,/grid-template-columns:minmax\(0,1fr\)/);
@@ -275,8 +297,88 @@ test('Audience analytics stays inside the exact selected property and timestamp 
   assert.match(js,/hourly=S\.rangeId==="24h"/);
   assert.match(js,/t\.byHour\|\|\[\]/);
   assert.match(js,/t\.byDay\|\|\[\]/);
-  assert.match(js,/site===null\?rpc\("analytics_funnel"/);
+  assert.match(js,/site===null\?rpc\("analytics_stage_totals",args\)/);
+  assert.match(js,/if\(!missingFn\(error\)\)throw error;return rpc\("analytics_funnel",\{p_since:r\.since,p_until:r\.until\}\)/);
   assert.match(js,/\{name:"business",run:function\(\)\{return site===null\?S\.request/);
   assert.match(js,/Control will not mix another property into this view/);
   assert.doesNotMatch(js,/analytics_engagement_site|analytics_funnel_site/);
+});
+
+
+test('a canceled totals query is retried once and the dashboard retains complete metrics',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console,setTimeout};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  let totalsAttempts=0;
+  A.init({
+    request:()=>Promise.resolve({}),
+    supa:(path)=>{
+      if(String(path).startsWith('analytics_sites?'))return Promise.resolve([]);
+      if(path==='rpc/analytics_totals'){
+        totalsAttempts++;
+        if(totalsAttempts===1){
+          return Promise.reject(Object.assign(new Error('canceling statement due to statement timeout'),{code:'57014'}));
+        }
+        return Promise.resolve([{page_views:7,visitors:3,sessions:4,events:12}]);
+      }
+      return Promise.resolve([]);
+    }
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,300));
+  assert.equal(totalsAttempts,2,'one transient retry, never an unbounded loop');
+  assert.equal(A.state.errors.totals,undefined);
+  assert.equal(A.state.data.traffic.totals.page_views,7);
+  assert.equal(A.state.loading,false);
+  assert.doesNotMatch(A.top(),/Partial data/);
+});
+
+test('a persistent statement timeout reports failure after exactly two attempts',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console,setTimeout};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  let totalsAttempts=0;
+  A.init({
+    request:()=>Promise.resolve({}),
+    supa:(path)=>{
+      if(String(path).startsWith('analytics_sites?'))return Promise.resolve([]);
+      if(path==='rpc/analytics_totals'){
+        totalsAttempts++;
+        return Promise.reject(Object.assign(new Error('canceling statement due to statement timeout'),{code:'57014'}));
+      }
+      return Promise.resolve([]);
+    }
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,300));
+  assert.equal(totalsAttempts,2);
+  assert.ok(A.state.errors.totals,'the persistent failure must not be hidden');
+  assert.match(A.top(),/Not live/);
+});
+
+
+test('a partial business snapshot names failed reads instead of a generic warning',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  A.init({
+    request:(path)=>Promise.resolve(path.startsWith('/v1/analytics/business?')?
+      {snapshot:{partial:true,read_errors:{musicPlaysTotal:'Data read unavailable',commerce:'Verified commerce read unavailable'}}}:{}),
+    supa:()=>Promise.resolve([])
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,0));
+  assert.equal(A.state.loaded,true);
+  assert.match(A.state.errors.business.message,/musicPlaysTotal/);
+  assert.match(A.state.errors.business.message,/commerce/);
+  assert.match(A.top(),/Partial data/);
 });

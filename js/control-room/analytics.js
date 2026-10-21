@@ -3,10 +3,10 @@
   "use strict";
   window.CR=window.CR||{};
   var FIRST="__first_party__", palette=["#e5383b","#3f93d2","#d9a441","#75b798","#9c7ae8","#e27d60"];
-  var S={host:null,request:null,supa:null,section:"overview",rangeId:"7d",from:"",through:"",range:null,sites:[],site:FIRST,loading:false,loaded:false,error:null,errors:{},data:{},seq:0};
+  var S={host:null,request:null,supa:null,section:"overview",rangeId:"24h",from:"",through:"",range:null,sites:[],site:FIRST,loading:false,loaded:false,error:null,errors:{},data:{},seq:0,revoked:false,quality:{}};
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-  function n(v){v=Number(v);return Number.isFinite(v)?v.toLocaleString():"—";}
-  function money(v){v=Number(v);return Number.isFinite(v)?"$"+(v/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
+  function n(v){if(v==null||v==="")return"—";v=Number(v);return Number.isFinite(v)?v.toLocaleString():"—";}
+  function money(v){if(v==null||v==="")return"—";v=Number(v);return Number.isFinite(v)?"$"+(v/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
   function tz(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";}catch(_){return"UTC";}}
   function day(v){var d=new Date(v);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
   function inputDate(d){d=new Date(d.getTime()-d.getTimezoneOffset()*60000);return d.toISOString().slice(0,10);}
@@ -25,9 +25,15 @@
   }
   function sid(){return S.site===FIRST?null:S.site;}
   function settled(name,p){return p.then(function(v){return{name:name,ok:true,value:v};}).catch(function(err){return{name:name,ok:false,error:err};});}
-  function rpc(name,body){return S.supa("rpc/"+name,{method:"POST",body:body});}
+  /* Every RPC used by Control Analytics is read-only. A transient PostgREST
+     statement cancellation must not permanently blank a whole data family. */
+  function rpc(name,body){return retryStatementTimeout(function(){return S.supa("rpc/"+name,{method:"POST",body:body});});}
   function retryStatementTimeout(fn){
-    return Promise.resolve().then(fn).catch(function(error){
+    /* Dispatch the initial RPC synchronously. Globe selections rely on
+       starting the first request before the selection changes again. */
+    var first;
+    try { first=fn(); } catch(error) { first=Promise.reject(error); }
+    return Promise.resolve(first).catch(function(error){
       var code=String(error&&error.code||""),msg=String(error&&error.message||error||"");
       if(code!=="57014"&&!/statement timeout|canceling statement/i.test(msg))throw error;
       return new Promise(function(resolve){setTimeout(resolve,180);}).then(fn);
@@ -123,8 +129,19 @@
     return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-confidence pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
   }
   function funnel(rows){
-    if(!rows||!rows.length)return'<p>No funnel rows in this range.</p>';var keys=[["arrived","Arrived"],["heard_something","Heard"],["engaged","Engaged"],["searched","Searched"],["asked_for_something","Asked"],["made_an_account","Account"],["confirmed_the_email","Confirmed"],["reached_checkout","Checkout"],["paid","Paid"]],tot={};keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});var topv=tot.arrived||1;
-    return'<div class="cra-funnel">'+keys.map(function(k){var v=tot[k[0]]||0,p=v/topv*100;return'<button type="button" class="cra-funnel__row" aria-label="'+e(k[1]+" "+n(v)+" "+p.toFixed(1)+" percent")+'"><span>'+e(k[1])+'</span><span class="cra-funnel__track"><i class="cra-funnel__fill" style="--pct:'+Math.max(.5,p).toFixed(1)+'%"></i></span><b>'+n(v)+' · '+p.toFixed(1)+'%</b></button>';}).join("")+'</div>';
+    if(S.data.stageTotals){
+      var d=S.data.stageTotals,stages=d.stages||[],labels={view:"Arrived",arrival:"Arrived",content:"Heard",engage:"Engaged",search:"Searched",lead:"Asked",checkout:"Checkout intent",purchase:"Purchase reports",unclassified:"Unclassified"};
+      var values=stages.map(function(x){return{label:labels[x.stage]||x.stage,count:x.value};});
+      var accounts=d.accounts;
+      return rank(values,"label","count")+'<p>Distinct devices across the whole selected window, per stage. Stages overlap. Purchase reports are client telemetry; verified payments are measured separately.</p>'+(accounts?'<div class="cra-kpis">'+kpi("Accounts created",n(accounts.made_an_account),"auth account records")+kpi("Email confirmed",n(accounts.confirmed_the_email),"auth account records")+'</div>':"");
+    }
+    if(!rows||!rows.length)return'<p>No stage activity in this range.</p>';
+    /* Legacy rows count distinct devices PER DAY and auth accounts. These
+       overlapping populations do not establish an ordered conversion cohort. */
+    var keys=[["arrived","Arrived","device-days"],["heard_something","Heard","device-days"],["engaged","Engaged","device-days"],["searched","Searched","device-days"],["asked_for_something","Asked","device-days"],["made_an_account","Account","accounts"],["confirmed_the_email","Confirmed","accounts"],["reached_checkout","Checkout intent","device-days"],["paid","Purchase reports","device-days"]],tot={};
+    keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});
+    var max=Math.max.apply(null,keys.map(function(k){return tot[k[0]];}).concat([1]));
+    return'<div class="cra-funnel">'+keys.map(function(k){var v=tot[k[0]]||0,p=v/max*100;return'<button type="button" class="cra-funnel__row" aria-label="'+e(k[1]+" "+n(v)+" "+k[2])+'"><span>'+e(k[1])+'</span><span class="cra-funnel__track" aria-hidden="true"><i class="cra-funnel__fill" style="--pct:'+Math.max(v?0.5:0,p).toFixed(1)+'%"></i></span><b>'+n(v)+' · '+k[2]+'</b></button>';}).join("")+'</div><p>Device-days add each day’s distinct devices; a returning device can count again. Stages overlap and have different populations. Purchase reports are browser events; verified sales are in Action &amp; business.</p>';
   }
   /* REACH VS REPEAT. Right is how many different people started a track;
      up is how many times each of them started it (1x = once each). The
@@ -233,7 +250,403 @@
     }).join("")+'</div>';
   }
   function mins(v){v=Number(v);if(!isFinite(v))return"—";if(v<1)return"under a minute";if(v<60)return v+" min";if(v<1440)return Math.round(v/60)+" h";return Math.round(v/1440)+" days";}
-  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
+  /* ---------- THE 60/40 GLOBE (owner, 2026-10-15: "the Halo globe inside the analytics dashboard") ----------
+     About 60% globe, 40% this panel on a wide screen; on a phone the globe comes first and the panel stacks under it and
+     folds away. Only the layout changed: every metric above keeps its query, its meaning and its card. What the globe
+     adds is drawn from data this panel already reads with the owner's own session, aggregated to COUNTRY (IP
+     geolocation is approximate; nothing finer is drawn), with any country under GEO_MIN folded into "under 5", and the
+     located / unknown split always on screen. A country never gets a made-up position: no label point, no dot.
+     docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md is the inventory behind every choice here. */
+  var GEO_MIN=5,BAD_CC={XX:1,T1:1,EU:1,AP:1};
+  var GEO_LAYERS=[
+    {id:"visitors",label:"Unique visitors by country",status:"live",source:"Distinct devices per IP country in the selected window"},
+    {id:"pageviews",label:"Page views by country",status:"live",source:"analytics_top(country): the same page views as the totals, by the country Cloudflare reports for the visitor's IP"},
+    {id:"signups",label:"Sign-ups by country",status:"live",source:"/v1/analytics/identity: accounts created in the range, by the country seen at sign-up (IP-derived)"},
+    /* INTEL EVENTS, by contract (docs/control-plane/INTEL-TO-MISSION-CANON.md §5, PR #438):
+         GET /v1/intel/geo?since=&until=&cell=10&bucket=day  ->  schema mccluster-intel-geo/v1,
+         {totals:{records,located,unknown_location,suppressed_records,suppressed_buckets}, buckets:[{cell,cell_center,cell_bounds,count}], layer:{attribution}}
+       The endpoint ships flagged off (503 intel_schema_not_ready until its migration is applied): then this layer says so
+       and draws nothing. Cells are drawn as cells, never as points; the window is clamped to the API's 92 days. */
+    {id:"intel",label:"Intel events (10° cells)",status:"live",source:"/v1/intel/geo: accepted evidence records aggregated to 10° grid cells by the intel plane"}
+  ];
+  S.geo={layer:"visitors",region:null,state:null,source:"",eventType:"",places:null,adm:{},rg:{},shown:null};
+  S.ui={reach:"visitors",aud:"visitors",filters:false,more:false};S.car={};S.gid=0;S.country=null;S.geoAudience=null;
+  /* a degree is a real number or nothing (Number(null) is 0, isFinite(null) is true: a missing centre would sit on the equator) */
+  function deg(v){if(v===null||v===undefined||v===""||typeof v==="boolean"||Array.isArray(v))return null;var x=Number(v);return isFinite(x)?x:null;}
+  function placeOf(code){var p=S.geo.places&&S.geo.places[code];return p&&deg(p[0])!==null&&deg(p[1])!==null&&!(p[0]===0&&p[1]===0)?p:null;}
+  function geoCountry(v){var c=String(v||"").trim().toUpperCase();return/^[A-Z]{2}$/.test(c)&&!BAD_CC[c]?c:null;}
+  function journeys(){
+    var js=(S.data.identity&&S.data.identity.journeys)||[],src=S.geo.source,reg=S.geo.region;
+    return js.filter(function(j){return(!src||String(j.source||"direct")===src)&&(!reg||geoCountry(j.country)===reg);});
+  }
+  /* the layer's aggregate: what is drawn, what is folded, what has no place */
+  function geoAggregate(){
+    var layer=S.geo.layer,counts={},recorded=0,total=null,noCountry=0;
+    if(layer==="visitors"){
+      var ct=S.data.countryTotals;if(!ct||!ct.ok)return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true,unavailable:S.errors.countryTotals?"Visitor geography unavailable":"Loading visitor geography…"};
+      ct.rows.forEach(function(r){var c=geoCountry(r.country),v=Number(r.visitors)||0;if(c)counts[c]=v;});
+      total=(S.data.traffic||{}).totals&&S.data.traffic.totals.visitors;
+    }else if(layer==="pageviews"){
+      (S.data.geo||[]).forEach(function(r){var c=geoCountry(r.key),v=Number(r.n)||0;recorded+=v;if(c)counts[c]=(counts[c]||0)+v;else noCountry+=v;});
+      var tv=S.data.traffic&&S.data.traffic.totals&&S.data.traffic.totals.page_views;total=tv==null?null:Number(tv);
+    }else if(layer==="signups"){
+      var src=S.geo.source,js=((S.data.identity&&S.data.identity.journeys)||[]).filter(function(j){return!src||String(j.source||"direct")===src;});
+      total=js.length;js.forEach(function(j){var c=geoCountry(j.country);if(c){counts[c]=(counts[c]||0)+1;recorded++;}else noCountry++;});
+    }else if(layer==="intel"){
+      var ig=S.data.intel;
+      if(!ig||!ig.ok)return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true,unavailable:S.errors.intel?(S.errors.intel.status===503?"The intel plane is not switched on yet (its migration is not applied).":"Intel events did not load: "+(S.errors.intel.message||S.errors.intel)):"Loading intel events…"};
+      var cells={},it=ig.totals||{},isup=Number(it.suppressed_records)||0,ilocated=0;
+      (ig.buckets||[]).forEach(function(b){var c=String(b.cell||""),ctr=b.cell_center||{},bd=Array.isArray(b.cell_bounds)?b.cell_bounds:null;var la=deg(ctr.lat),lo=deg(ctr.lon);if(!/^g\d+:-?\d+:-?\d+$/.test(c)||la===null||lo===null||Math.abs(la)>90||Math.abs(lo)>180)return;var x=cells[c]||(cells[c]={code:c,name:Math.abs(la)+(la<0?"°S ":"°N ")+Math.abs(lo)+(lo<0?"°W":"°E"),lat:la,lon:lo,bounds:bd,value:0});x.value+=Number(b.count)||0;});
+      var ipts=[];Object.keys(cells).forEach(function(k){var x=cells[k];if(x.value<GEO_MIN){isup+=x.value;return;}ilocated+=x.value;ipts.push(x);});
+      ipts.sort(function(a,b){return b.value-a.value||a.code.localeCompare(b.code);});
+      return{points:ipts,located:ilocated,suppressed:isup,unknown:Number(it.unknown_location)||0,total:it.records==null?null:Number(it.records),attribution:(ig.layer&&ig.layer.attribution)||[]};
+    }else return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true};
+    var points=[],located=0,suppressed=0,unplaced=0;
+    Object.keys(counts).forEach(function(c){var v=counts[c],p=placeOf(c);if(v<(layer==="visitors"?1:GEO_MIN)){suppressed+=v;return;}if(!p){unplaced+=v;return;}located+=v;points.push({code:c,name:p[2]||c,lon:p[0],lat:p[1],value:v});});
+    points.sort(function(a,b){return b.value-a.value||a.code.localeCompare(b.code);});
+    /* page views: anything the totals counted that the country list did not carry has no country (or sits past the top 100) */
+    var unknown=layer==="visitors"?null:layer==="pageviews"?(total==null?null:Math.max(0,total-recorded)+noCountry+unplaced):noCountry+unplaced;
+    return{points:points,located:located,suppressed:suppressed,unknown:unknown,total:total,capped:layer==="pageviews"&&(S.data.geo||[]).length>=100};
+  }
+  /* ---------- THE CHARCOAL GLOBE (owner, 2026-10-15: "this is what analytics should aspire to look like") ----------
+     One Cesium globe drawn in this page (js/control-room/analytics-globe.js), never repainted: the panel repaints around it.
+     It is handed the layer's aggregate above (country level, under 5 folded, no place without a Natural Earth label point)
+     and, for the ONE selected country only, its states' page views from GET /v1/analytics/regions (house owner only; the
+     database folds any region under 5). No arcs, no dots, no decoration (owner, 2026-10-16: "just modern selection").
+
+     ONE SELECTION (owner, 2026-10-16: "when it's selected either from the console or the globe itself"):
+     S.geo.region (an ISO country, or an intel cell) and S.geo.state (an ISO 3166-2 key inside that country, or null).
+     The dropdown, the rows, Clear and a tap on the globe all go through pickPlace(); the globe is told with
+     select({country, state}, fly) and flies to fit the shape. Clear returns to the world. */
+  function countryName(code){
+    if(!code)return"";var p=S.geo.places&&S.geo.places[code];
+    try{if(/^[A-Z]{2}$/.test(code)&&typeof Intl!=="undefined"&&Intl.DisplayNames){var dn=new Intl.DisplayNames(["en"],{type:"region"}).of(code);if(dn&&dn!==code)return dn;}}catch(_){}
+    return p&&p[2]||code;
+  }
+  function layerUnit(id,v){var one=Number(v)===1;return id==="visitors"?(one?"unique visitor":"unique visitors"):id==="signups"?(one?"sign-up":"sign-ups"):id==="intel"?(one?"record":"records"):(one?"page view":"page views");}
+  function layerOf(){return GEO_LAYERS.filter(function(x){return x.id===S.geo.layer;})[0]||GEO_LAYERS[0];}
+  function geoPayload(){
+    var a=geoAggregate();
+    return{mode:S.geo.layer==="intel"?"cells":"countries",
+      points:a.points.map(function(p){return{code:p.code,name:p.code&&/^[A-Z]{2}$/.test(p.code)?countryName(p.code):p.name,lon:p.lon,lat:p.lat,value:p.value};}),
+      cells:S.geo.layer==="intel"?a.points.map(function(p){return{code:p.code,bounds:p.bounds,value:p.value};}):[],
+      selected:S.geo.region,state:S.geo.state,states:stateData(),context:projectionContext()};
+  }
+  /* ---------- STATES AND PROVINCES of the selected country (admin analytics only) ---------- */
+  function selCountry(){return S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;}
+  function admFile(cc){var f=cc&&S.geo.adm[cc];return f&&f.states?f:null;}
+  function stateOf(k){var cc=String(k||"").slice(0,2),f=admFile(cc);if(!f)return null;for(var i=0;i<f.states.length;i++)if(f.states[i].k===k)return f.states[i];return null;}
+  function rgKey(cc){var r=S.range;return r?cc+"|"+r.since+"|"+r.until+"|"+S.site:null;}
+  function regionRead(cc){var k=cc&&rgKey(cc);return k?S.geo.rg[k]||null:null;}
+  /* the matched page views per state for the selected country; null when there is nothing to colour */
+  function stateData(){
+    var cc=selCountry(),f=admFile(cc),rr=regionRead(cc);
+    if(!cc||!f||["visitors","pageviews"].indexOf(S.geo.layer)<0||!rr||!rr.ok||rr.pending||!window.CR.analyticsGlobe)return null;
+    var m=window.CR.analyticsGlobe.matchRegions(f.states,rr.regions||[],S.geo.layer==="visitors"?"visitors":"page_views");
+    return{country:cc,byKey:m.byKey,unmatched:m.unmatched};
+  }
+  function stateStatus(){
+    var cc=selCountry(),rr=regionRead(cc);
+    if(!cc)return null;
+    if(["visitors","pageviews"].indexOf(S.geo.layer)<0)return{kind:"layer",text:"State counts: page views only"};
+    if(!rr||rr.loading)return{kind:"loading",text:"Reading state counts…"};
+    if(rr.pending)return{kind:"pending",text:"State counts not collected yet"};
+    if(!rr.ok)return{kind:"error",text:"State counts did not load"};
+    return{kind:"ok"};
+  }
+  function loadStates(){
+    var cc=selCountry();if(!cc||!window.CR.analyticsGlobe)return;
+    if(!S.geo.adm[cc])window.CR.analyticsGlobe.loadAdmin1(cc).then(function(f){S.geo.adm[cc]=f||{states:[]};if(selCountry()===cc){loadGeoAudience();paint();syncGlobe(false);}},function(){});
+    var k=rgKey(cc);if(!k||S.geo.rg[k]||!S.request)return;
+    var r=S.range,epoch=S.seq;S.geo.rg[k]={loading:true};
+    S.request("/v1/analytics/regions?country="+cc+"&since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+(sid()?"&site="+encodeURIComponent(sid()):""))
+      .then(function(x){if(epoch===S.seq&&!S.revoked)S.geo.rg[k]=x&&x.ok?x:{ok:false};},function(x){if(epoch===S.seq&&!S.revoked)S.geo.rg[k]={ok:false,error:x};})
+      .then(function(){if(epoch===S.seq&&!S.revoked&&selCountry()===cc){paint();syncGlobe(false);}});
+  }
+  function tooltipFor(sel){
+    var code=typeof sel==="string"?sel:sel&&sel.country,k=sel&&typeof sel==="object"?sel.state:null;
+    var a=geoAggregate(),p=a.points.filter(function(x){return x.code===code;})[0],L=layerOf();
+    var title=/^[A-Z]{2}$/.test(code||"")?countryName(code):(p&&p.name)||code;
+    if(k){
+      var s=stateOf(k),sd=stateData(),v=sd&&sd.byKey[k],ss=stateStatus();
+      return{title:s?s.n:k,context:title,line:v?(v.area?v.area+": ":"")+n(v.value)+" "+layerUnit(S.geo.layer,v.value):ss&&ss.kind!=="ok"?ss.text:"Under "+GEO_MIN+" or none in this range"};
+    }
+    if(L.id==="visitors"){var cr=countryRow(code);return{title:title,line:a.awaiting?(a.unavailable||"Reading unique visitors…"):n(cr&&cr.visitors)+" unique visitors"};}
+    return{title:title,line:p?n(p.value)+" "+layerUnit(L.id,p.value):"Under "+GEO_MIN+" or none in this range"};
+  }
+  function filterCount(){return(S.geo.region?1:0)+(S.geo.source?1:0)+(S.geo.eventType?1:0)+(S.geo.layer!=="visitors"?1:0);}
+  /* every country (the Natural Earth label points), and, under the selected one, its states: one control, both levels */
+  function pillHtml(){
+    var a=geoAggregate(),seen={},list=[];
+    Object.keys(S.geo.places||{}).concat(a.points.map(function(p){return p.code;})).concat(selCountry()?[selCountry()]:[]).forEach(function(c){if(/^[A-Z]{2}$/.test(c)&&!seen[c]&&!BAD_CC[c]){seen[c]=1;list.push({code:c});}});
+    list.sort(function(x,y){return countryName(x.code).localeCompare(countryName(y.code));});
+    var c=filterCount(),cc=selCountry(),f=admFile(cc),sts=f?f.states.slice().sort(function(x,y){return String(x.n).localeCompare(String(y.n));}):[];
+    var opt=function(v,label,on){return'<option value="'+e(v)+'"'+(on?" selected":"")+'>'+e(label)+'</option>';};
+    var states=cc&&sts.length?'<optgroup label="'+e(countryName(cc))+' and its states">'+opt(cc,countryName(cc),!S.geo.state)+sts.map(function(s){return opt(cc+"/"+s.k,s.n,S.geo.state===s.k);}).join("")+'</optgroup>':"";
+    return'<button type="button" class="cra-pill__filters" data-cra-filters aria-expanded="'+(S.ui.filters?"true":"false")+'" aria-controls="craFilterSheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Filters</span>'+(c?'<i class="cra-pill__n">'+c+'</i>':"")+'</button>'+
+      '<label class="cra-pill__country"><span class="sr-only">Country</span><select id="craCountry" class="cra-pill__select" aria-label="Country">'+
+      '<option value=""'+(S.geo.region?"":" selected")+'>All countries</option>'+states+(states?'<optgroup label="Countries">':"")+list.map(function(p){return states&&p.code===cc?"":opt(p.code,countryName(p.code),p.code===S.geo.region&&!states);}).join("")+(states?'</optgroup>':"")+'</select></label>';
+  }
+  function summaryHtml(){
+    var L=layerOf(),bits=[S.range&&S.range.label||"",L.id==="visitors"?"Visitors":L.id==="signups"?"Sign-ups":L.id==="intel"?"Intel events":"Page views",S.geo.source||""];
+    if(S.geo.eventType)bits.push(S.geo.eventType);
+    return e(bits.filter(Boolean).join(" · "))+(filterCount()?' <button type="button" class="cra-clear" data-cra-clear>Clear</button>':"");
+  }
+  function syncGlobe(fly){
+    var a=geoAggregate(),L=layerOf(),g=S.globe;
+    if(g&&g.ready){g.setData(geoPayload());var k=(S.geo.region||"")+"/"+(S.geo.state||"");if(fly||k!==S.geo.shown){S.geo.shown=k;g.select({country:S.geo.region,state:S.geo.state},!!fly);}}
+    var q=function(sel){return S.host&&S.host.querySelector&&S.host.querySelector(sel);};
+    var cap=q("[data-cra-globe-caption]");
+    var ss=stateStatus(),rr=regionRead(selCountry()),sd=stateData();
+    if(cap)cap.textContent=a.awaiting?L.label+": "+(a.unavailable||"nothing to draw"):ss&&ss.kind==="ok"&&rr?countryName(selCountry())+" by state: "+n(rr.regions.length)+" with "+GEO_MIN+"+ · under "+GEO_MIN+" folded "+n(rr.folded)+" · no region "+n(rr.unknown)+(sd&&sd.unmatched?" · unmatched "+n(sd.unmatched):""):ss&&ss.kind==="pending"?"State counts not collected yet: analytics_region_v1 is written, not applied. State shapes are still selectable.":"On the globe "+n(a.located)+(a.suppressed?" · under "+GEO_MIN+" folded "+n(a.suppressed):"")+" · no country "+(a.unknown==null?"—":n(a.unknown));
+    var geoSummary=q("[data-cu-geography]");if(geoSummary&&window.CR.analyticsUnified){geoSummary.innerHTML=window.CR.analyticsUnified.geography(a,S,{countryName:countryName});geoSummary.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){pickRegion(b.getAttribute("data-cra-region"));};});}
+    var pl=q("[data-cra-pill]");if(pl)pl.innerHTML=pillHtml();
+    var sm=q("[data-cra-summary]");if(sm)sm.innerHTML=summaryHtml();
+    var fs=q("[data-cra-filter-sheet]");if(fs){fs.hidden=!S.ui.filters;if(S.ui.filters)fs.innerHTML='<div class="cra-sheet__head"><b>Filters</b><button type="button" class="cra-sheet__x" data-cra-filters aria-label="Close filters">×</button></div>'+filters();}
+    var top=q("[data-cra-top]");if(top)top.innerHTML=topHtml();
+    if(S.host&&S.host.querySelector){bindStage(S.host.querySelector("[data-cra-stage]"));bindTop(top||S.host);}
+  }
+  function regionKey(c){return geoCountry(c)||(/^g\d+:-?\d+:-?\d+$/.test(String(c||""))?String(c):null);}
+  /* the one way to select: {country, state}; a state belongs to the country it names */
+  function pickPlace(sel,fly){
+    if(S.revoked)return;sel=sel||{};var c=sel.country?regionKey(sel.country):null,k=c&&/^[A-Z]{2}$/.test(c)&&/^[A-Z]{2}-[A-Z0-9~]{1,5}$/.test(String(sel.state||""))&&String(sel.state).slice(0,2)===c?String(sel.state):null;
+    S.geo.region=c;S.geo.state=k;loadCountry();loadStates();loadGeoAudience();paint();syncGlobe(fly!==false);
+  }
+  function pickRegion(code,fly){var v=String(code||""),i=v.indexOf("/");pickPlace(i>0?{country:v.slice(0,i),state:v.slice(i+1)}:{country:v||null,state:null},fly);}
+  /* ---------- the header: wordmark line, title, Live, property, range ---------- */
+  function liveState(){
+    if(S.loading)return{cls:"is-loading",label:"Updating"};
+    if(S.error)return{cls:"is-error",label:"Not live"};
+    if(S.loaded&&(Object.keys(S.errors).length||Object.keys(S.quality||{}).length))return{cls:"is-error",label:"Partial data"};
+    if(S.loaded&&S.rangeId!=="custom")return{cls:"is-live",label:"Updated"};
+    return{cls:"",label:S.loaded?"Updated":"Ready"};
+  }
+  function topHtml(){
+    var lv=liveState(),quick=[["24h","24h"],["7d","7 days"],["30d","30 days"]],more=["90d","all","custom"].indexOf(S.rangeId)>=0;
+    return'<div class="cra-top__row"><div class="cra-top__titles"><p class="cra-top__eyebrow">McCluster</p><h1 class="cra-top__title">Analytics <span class="cra-live '+lv.cls+'" role="status"><i aria-hidden="true"></i>'+e(lv.label)+'</span></h1></div>'+
+      '<button type="button" class="cra-top__me" data-cra-me aria-label="Account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c1.2-3.4 4-5 7-5s5.8 1.6 7 5"/></svg></button></div>'+
+      (function(){var all=[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]),cur=all.filter(function(x){return String(x.id)===String(S.site);})[0]||all[0],full=String(cur.name||cur.id),short=cur.id===FIRST?"First-party":full;
+        /* the face shows the property; the native select over it (16px, invisible) is what is tapped, so iOS never zooms.
+           A phone shows the short name ("McCluster" is the line above); from 30rem the full one */
+        return'<div class="cra-top__controls"><label class="cra-top__prop"><span class="cra-prop__face" aria-hidden="true"><span class="cra-prop__short">'+e(short)+'</span><span class="cra-prop__full">'+e(full)+'</span></span><select class="cra-property" id="craProperty" aria-label="Property: '+e(full)+'">'+all.map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></label>';})()+
+      '<div class="cra-seg cra-seg--range" role="group" aria-label="Range">'+quick.map(function(x){return'<button type="button" class="cra-seg__b'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'" aria-pressed="'+(S.rangeId===x[0])+'">'+x[1]+'</button>';}).join("")+'</div>'+
+      '<button type="button" class="cra-cal'+(more?" is-on":"")+'" data-cra-more aria-expanded="'+(S.ui.more?"true":"false")+'" aria-label="More ranges and custom dates"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></button></div>'+
+      (S.ui.more?'<div class="cra-more">'+ranges()+'</div>':"");
+  }
+  function bindTop(root){
+    if(!root)return;
+    var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;S.country=null;load();};
+    root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));syncGlobe(false);}else{if(S.rangeId!=="custom")S.ui.more=false;load();}};});
+    var m=root.querySelector("[data-cra-more]");if(m)m.onclick=function(){S.ui.more=!S.ui.more;syncGlobe(false);};
+    var me=root.querySelector("[data-cra-me]");if(me)me.onclick=function(ev){ev.stopPropagation();var a=document.getElementById("crAccount");if(a)a.click();};
+    var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
+    if(from)from.oninput=function(){S.from=from.value||"";};
+    if(through)through.oninput=function(){S.through=through.value||"";};
+    var ap=root.querySelector("[data-cra-apply]");if(ap)ap.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
+  }
+  function bindStage(root){
+    if(!root)return;
+    var c=root.querySelector("#craCountry");if(c)c.onchange=function(){pickRegion(c.value);};
+    root.querySelectorAll("[data-cra-filters]").forEach(function(b){b.onclick=function(){S.ui.filters=!S.ui.filters;syncGlobe(false);var target=root.querySelector(S.ui.filters?"[data-cra-filter-sheet] [data-cra-filters]":"[data-cra-pill] [data-cra-filters]");if(target)target.focus({preventScroll:true});};});
+    root.querySelectorAll("[data-cra-clear]").forEach(function(b){b.onclick=function(){S.geo.region=null;S.geo.state=null;S.geo.source="";S.geo.eventType="";S.geo.layer="visitors";S.idFilter=null;S.geoAudience=null;loadCountry();paint();syncGlobe(true);};});
+    var sheet=root.querySelector("[data-cra-filter-sheet]");if(sheet&&!sheet.hidden){
+      sheet.onkeydown=function(ev){if(ev.key!=="Escape")return;ev.preventDefault();S.ui.filters=false;syncGlobe(false);var target=root.querySelector("[data-cra-pill] [data-cra-filters]");if(target)target.focus({preventScroll:true});};
+      var gl=sheet.querySelector("#craLayer");if(gl)gl.onchange=function(){S.geo.layer=gl.value;paint();syncGlobe(false);};
+      var gr=sheet.querySelector("#craRegion");if(gr)gr.onchange=function(){pickRegion(gr.value);};
+      var gs=sheet.querySelector("#craSource");if(gs)gs.onchange=function(){S.geo.source=gs.value;paint();syncGlobe(false);};
+      var ge=sheet.querySelector("#craEvent");if(ge)ge.onchange=function(){S.geo.eventType=ge.value;paint();syncGlobe(false);};
+    }
+  }
+  function shell(){
+    return'<div class="cra-app cra-split cad-app"><div class="cra-lead-col"><header class="cra-top" data-cra-top></header>'+
+      '<div class="cu-geography"><section class="cra-globe cra-stage" data-cra-stage aria-label="Analytics globe: country aggregates. Drag to turn the Earth, pinch to zoom, tap a country to select it.">'+
+      '<div class="cra-globe__host" id="craGlobe" data-cra-globe></div>'+
+      '<div class="cra-pill" data-cra-pill></div>'+
+      '<p class="cra-summary" data-cra-summary></p>'+
+      '<p class="cra-globe__caption" data-cra-globe-caption aria-live="polite">Loading the globe…</p>'+
+      '<div class="cra-sheet" id="craFilterSheet" data-cra-filter-sheet hidden></div></section><aside class="cu-geo-summary" data-cu-geography></aside></div></div>'+
+      '<div class="cra-side"><div class="cra-side__body" id="craPanel" data-cra-panel></div></div></div>';
+  }
+  /* ---------- the swipeable cards ---------- */
+  function seg(name,opts,val){return'<div class="cra-seg" role="group" aria-label="'+e(name)+'">'+opts.map(function(o){return'<button type="button" class="cra-seg__b'+(val===o[0]?" is-on":"")+'" data-cra-seg="'+e(name)+'" data-v="'+e(o[0])+'" aria-pressed="'+(val===o[0])+'">'+e(o[1])+'</button>';}).join("")+'</div>';}
+  /* an area chart sized for the phone first: user units ~ pixels at 340 wide */
+  function area(rows,key,labelFor,aria){
+    rows=(rows||[]).filter(function(r){return r&&r[key]!=null;});
+    if(rows.length<2)return'<p class="cra-c__empty">No series in this range.</p>';
+    var W=340,H=132,P={l:4,r:4,t:10,b:22},mx=1;rows.forEach(function(r){mx=Math.max(mx,Number(r[key])||0);});
+    function X(i){return P.l+i/(rows.length-1)*(W-P.l-P.r);}function Y(v){return H-P.b-(Number(v)||0)/mx*(H-P.t-P.b);}
+    var pts=rows.map(function(r,i){return X(i).toFixed(1)+","+Y(r[key]).toFixed(1);}).join(" ");
+    var ticks=[0,Math.round((rows.length-1)/3),Math.round(2*(rows.length-1)/3),rows.length-1];
+    var gid="craG"+(++S.gid);
+    return'<svg class="cra-area-chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(aria)+'"><defs><linearGradient id="'+gid+'" x1="0" x2="0" y1="0" y2="1"><stop class="cra-ac__s0" offset="0"/><stop class="cra-ac__s1" offset="1"/></linearGradient></defs>'+
+      [0.5,1].map(function(q){var y=Y(mx*q).toFixed(1);return'<line class="cra-ac__grid" x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'"/>';}).join("")+
+      '<polygon fill="url(#'+gid+')" points="'+P.l+','+(H-P.b)+' '+pts+' '+(W-P.r)+','+(H-P.b)+'"/><polyline class="cra-ac__line" points="'+pts+'"/>'+
+      rows.map(function(r,i){var label=labelFor(r)+' · '+aria+': '+n(r[key]);return '<circle class="cra-ac__point" cx="'+X(i).toFixed(1)+'" cy="'+Y(r[key]).toFixed(1)+'" r="4" tabindex="0" role="img" aria-label="'+e(label)+'"><title>'+e(label)+'</title></circle>';}).join('')+
+      ticks.filter(function(t,i,a){return a.indexOf(t)===i;}).map(function(t,i){return'<text class="cra-ac__x" x="'+X(t).toFixed(1)+'" y="'+(H-5)+'" text-anchor="'+(i===0?"start":t===rows.length-1?"end":"middle")+'">'+e(labelFor(rows[t]))+'</text>';}).join("")+'</svg>';
+  }
+  function bars(rows,labelKey,valueKey,max){
+    rows=(rows||[]).slice(0,max||5);if(!rows.length)return'<p class="cra-c__empty">Nothing in this range.</p>';
+    var mx=Math.max.apply(null,rows.map(function(r){return Number(r[valueKey])||0;}).concat([1]));
+    return'<div class="cra-hbars">'+rows.map(function(r){var raw=r[valueKey],v=Number(raw)||0;return'<div class="cra-hbar"><span class="cra-hbar__l">'+e(r[labelKey])+'</span><b>'+nn(raw)+'</b><i style="--pct:'+Math.max(2,v/mx*100).toFixed(1)+'%"></i></div>';}).join("")+'</div>';
+  }
+  function split(aLabel,a,bLabel,b){
+    if(a==null||b==null)return'<p class="cra-c__empty">Not available for this property.</p>';
+    var t=Math.max(1,a+b);
+    return'<div class="cra-split2"><div class="cra-split2__bar" role="img" aria-label="'+e(aLabel+" "+a+", "+bLabel+" "+b)+'"><i style="--pct:'+(a/t*100).toFixed(1)+'%"></i><i></i></div><div class="cra-split2__k"><span>'+e(aLabel)+'<b>'+n(a)+'</b></span><span>'+e(bLabel)+'<b>'+n(b)+'</b></span></div></div>';
+  }
+  /* nothing is a dash, never a zero (Number(null) is 0) */
+  function nn(v){return v===null||v===undefined||v===""?"—":n(v);}
+  function slide(title,body,id){return'<article class="cra-slide" data-cra-slide="'+e(id||title)+'" aria-label="'+e(title)+'">'+body+'</article>';}
+  function big(v,label,scope,sub){return'<div class="cra-big"><strong>'+(v==null?"—":n(v))+'</strong><span class="cra-big__l">'+e(label)+'</span>'+(scope?'<span class="cra-big__s">'+e(scope)+'</span>':"")+(sub?'<span class="cra-big__s">'+e(sub)+'</span>':"")+'</div>';}
+  function carousel(id,heading,slides){
+    var i=Math.min(slides.length-1,S.car[id]||0);
+    return'<section class="cra-carsec" aria-labelledby="craH-'+id+'"><h2 class="cra-h" id="craH-'+id+'">'+e(heading)+'</h2><div class="cra-car" data-cra-car="'+id+'"><div class="cra-car__track" tabindex="0" aria-label="'+e(heading)+' cards, swipe for more">'+slides.join("")+'</div>'+
+      (slides.length>1?'<button type="button" class="cra-car__next" data-cra-next="'+id+'" aria-label="Next '+e(heading)+' card"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>':"")+'</div>'+
+      (slides.length>1?'<div class="cra-dots" role="tablist" aria-label="'+e(heading)+' cards">'+slides.map(function(_,k){return'<button type="button" class="cra-dot'+(k===i?" is-on":"")+'" data-cra-dot="'+id+'" data-i="'+k+'" aria-label="Card '+(k+1)+' of '+slides.length+'" aria-selected="'+(k===i)+'" role="tab"></button>';}).join("")+'</div>':"")+'</section>';
+  }
+  function scopeLabel(){var cc=selCountry(),s=S.geo.state&&stateOf(S.geo.state);return(cc?(s?s.n:countryName(cc)):"Worldwide")+" · "+(S.range&&S.range.label||"");}
+  function pvRows(){var t=S.data.traffic||{};return S.rangeId==="24h"?(t.byHour||[]):(t.byDay||[]);}
+  function pvLabel(r){if(r.hour){var d=new Date(r.hour);return String(d.getHours()).padStart(2,"0")+":00";}if(r.bucket){var b=new Date(r.bucket);return S.rangeId==="24h"?String(b.getHours()).padStart(2,"0")+":00":(b.getMonth()+1)+"/"+b.getDate();}return String(r.day||"").slice(5);}
+  function countryRow(code){var ct=S.data.countryTotals;if(!ct||!ct.ok)return null;return ct.rows.filter(function(r){return String(r.country||"").toUpperCase()===code;})[0]||null;}
+  function geoValue(code){var v=0;(S.data.geo||[]).forEach(function(r){if(geoCountry(r.key)===code)v+=Number(r.n)||0;});return v;}
+  function pendingNote(){var ct=S.data.countryTotals;return ct&&ct.missing?"Visitors by country need analytics_country_v1 (written, not applied).":"";}
+  function reachSlide(){
+    var t=(S.data.traffic||{}).totals||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,mode=S.ui.reach,body="";
+    if(mode==="visitors"){
+      var cr=sel?countryRow(sel):t,rows=sel?(S.country&&S.country.code===sel&&S.country.rows||[]):pvRows();
+      body=big(cr?cr.visitors:null,"Unique visitors",scopeLabel(),"Distinct devices in this window")+area(rows,"visitors",pvLabel,"Unique visitors over time");
+    }else if(mode==="sources"){
+      var src=(S.data.traffic||{}).sources||[];
+      body=big(src.length,"Sources","All countries · "+(S.range&&S.range.label||""),"referrers and tagged links (x.com, t.co, …)")+bars(src,"source","count",5);
+    }else if(mode==="returning"){
+      var vc=S.data.visitors&&S.data.visitors.counts,all=vc?Number(vc.all)||0:null,ret=vc?Number(vc.returning)||0:null;
+      body=big(ret,"Returning visitors","Worldwide · "+(S.range&&S.range.label||""),all==null?(sid()===null?"":"first-party only"):"of "+n(all)+" visitors came back for another session")+split("New",all==null?null:Math.max(0,all-ret),"Returning",ret);
+    }else{
+      var total=t.page_views==null?null:Number(t.page_views),v=sel?geoValue(sel):total,cs=S.country&&S.country.code===sel&&S.country.rows;
+      if(sel&&S.geo.state){var sd=stateData(),sv=sd&&sd.byKey[S.geo.state],ss=stateStatus();
+        return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["visitors","Visitors"],["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div><div class="cra-reach-main">'+
+          big(sv?sv.value:null,"Page views",scopeLabel(),(sv?(sv.area?"counted for "+sv.area+" · ":""):ss&&ss.kind!=="ok"?ss.text+" · ":"under "+GEO_MIN+" or none · ")+countryName(sel)+": "+n(v))+
+          '<div class="cra-reach-chart">'+area(cs||pvRows(),"page_views",pvLabel,"Page views over time, "+(cs?countryName(sel):"worldwide"))+'<small class="cra-c__note">Trend: '+e(cs?countryName(sel):"worldwide")+'</small></div></div>',"reach");}
+      var rows=sel&&cs?cs:pvRows();
+      body='<div class="cra-reach-main">'+big(v,"Page views",scopeLabel(),sel?(total==null?"":n(total)+" worldwide"):"")+
+        '<div class="cra-reach-chart">'+area(rows,"page_views",pvLabel,"Page views over time"+(sel&&!cs?" (worldwide)":""))+(sel&&!cs?'<small class="cra-c__note">Trend: worldwide'+(pendingNote()?"; "+pendingNote():"")+'</small>':"")+'</div></div>';
+    }
+    return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["visitors","Visitors"],["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div>'+body,"reach");
+  }
+  function signupSlide(){
+    var b=S.data.business&&S.data.business.snapshot,u=b&&b.users||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;
+    var js=(S.data.identity&&S.data.identity.journeys)||[],inCountry=sel?js.filter(function(j){return geoCountry(j.country)===sel;}).length:null;
+    var rows=(u.created_by_day||[]).map(function(r){return{day:r.day,page_views:r.count};});
+    return slide("Sign-ups",'<div class="cra-reach-main">'+big(sel?inCountry:(b?u.created_in_window:null),"Accounts created",scopeLabel(),b?nn(u.confirmed_in_window)+" confirmed · "+nn(u.active_in_window)+" signed in":"")+
+      '<div class="cra-reach-chart">'+area(rows,"page_views",function(r){return String(r.day||"").slice(5);},"Accounts created per day")+'</div></div>',"signups");
+  }
+  function musicSlide(){
+    var m=S.data.business&&S.data.business.snapshot&&S.data.business.snapshot.music,w=function(x){return x?x.in_window:null;};
+    var pv=m?w(m.preview_plays):null,fl=m?w(m.full_plays):null,cp=m?w(m.completions):null;
+    return slide("Music",big(m?w(m.plays):null,"Music plays","Worldwide · "+(S.range&&S.range.label||""),"previews counted apart from full listens")+
+      split("Previews",pv==null?null:Number(pv),"Full listens",fl==null?null:Number(fl))+
+      '<p class="cra-c__note">'+nn(cp)+' listened to the end · '+nn(m&&m.paid_orders?m.paid_orders.in_window:null)+' paid orders</p>',"music");
+  }
+  function audienceSlide(){
+    var t=(S.data.traffic||{}).totals||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,mode=S.ui.aud,body="";
+    if(mode==="locations"){
+      var a=geoAggregate(),list=a.points.filter(function(p){return/^[A-Z]{2}$/.test(p.code);}).map(function(p){return{label:countryName(p.code),v:p.value};});
+      body=big(S.geo.layer==="intel"?null:list.length,"Countries on the globe","with "+GEO_MIN+"+ "+layerUnit(S.geo.layer,2),"located "+n(a.located)+" · under "+GEO_MIN+" "+n(a.suppressed)+" · no country "+(a.unknown==null?"—":n(a.unknown)))+bars(list,"label","v",5);
+    }else if(mode==="networks"){
+      var nw=(S.data.traffic||{}).networks||[];
+      body=big(nw.length,"Network types","All countries · "+(S.range&&S.range.label||""),"connection type or network operator")+bars(nw,"network","count",5);
+    }else{
+      var vc=S.data.visitors&&S.data.visitors.counts,all=vc?Number(vc.all)||0:null,ret=vc?Number(vc.returning)||0:null,cr=sel?countryRow(sel):null;
+      body='<div class="cra-reach-main">'+big(sel?(cr?cr.visitors:null):(t.visitors==null?null:Number(t.visitors)),"Visitors",scopeLabel(),sel&&!cr?pendingNote():"")+
+        '<div class="cra-reach-chart">'+split("New",all==null?null:Math.max(0,all-ret),"Returning",ret)+(sel?'<small class="cra-c__note">New vs returning: worldwide</small>':"")+'</div></div>';
+    }
+    return slide("Audience",'<div class="cra-slide__head">'+seg("aud",[["visitors","Visitors"],["locations","Locations"],["networks","Networks"]],mode)+'</div>'+body,"audience");
+  }
+  function flowsSlide(){
+    var f=S.data.flows&&S.data.flows.flows;
+    if(!f)return slide("Journeys",big(null,"Sessions with a journey","",S.errors.flows?"did not load: "+(S.errors.flows.message||S.errors.flows):sid()===null?"loading…":"first-party only"),"flows");
+    var pps=f.pages_per_session||{},rows=Object.keys(pps).map(function(k){return{label:k+(k==="1"?" page":" pages"),v:pps[k]};});
+    return slide("Journeys",big(f.sessions,"Sessions","Worldwide · "+(S.range&&S.range.label||""),f.bounce_rate+"% left after one page")+bars(rows,"label","v",5)+
+      (f.entries&&f.entries[0]?'<p class="cra-c__note">Top way in: '+e(f.entries[0].path)+' ('+n(f.entries[0].sessions)+')</p>':""),"flows");
+  }
+  function healthSlide(){
+    var h=S.data.errors;
+    if(!h||!h.totals)return slide("Site health",big(null,"Errors","",S.errors.errors?"did not load: "+(S.errors.errors.message||S.errors.errors):sid()===null?"loading…":"first-party only"),"health");
+    var t=h.totals,rows=[{label:"Script errors on our pages",v:t.site_errors},{label:"Injected (extensions)",v:t.injected_errors},{label:"Dead or rage clicks",v:t.friction},{label:"Blocked journeys",v:t.journey}];
+    return slide("Site health",big(t.sessions_affected,"Sessions affected","Worldwide · "+(S.range&&S.range.label||""),n(t.errors)+" errors · "+n(t.friction)+" friction")+bars(rows,"label","v",4)+
+      (h.journey&&h.journey[0]?'<p class="cra-c__note">Most blocked: '+e(h.journey[0].kind)+' · '+e(h.journey[0].detail||"")+'</p>':""),"health");
+  }
+  function missionsSlide(){
+    var ms=S.data.missions;
+    if(!Array.isArray(ms))return slide("Missions",big(null,"Mission joins","",S.errors.missions?"did not load: "+(S.errors.missions.message||S.errors.missions):"loading…"),"missions");
+    var sum=function(k){return ms.reduce(function(a,x){return a+(Number(x[k])||0);},0);};
+    return slide("Missions",big(sum("joined"),"Mission joins","All missions · all time","admin verification decides what counts")+
+      bars([{label:"In progress",v:sum("in_progress")},{label:"Proof submitted",v:sum("submitted")},{label:"Verified by an admin",v:sum("verified")},{label:"Rejected",v:sum("rejected")}],"label","v",4),"missions");
+  }
+  function communitySlide(){
+    var m=S.data.business&&S.data.business.snapshot&&S.data.business.snapshot.mnet,w=function(k){return m&&m[k]?m[k].created_in_window:null;};
+    return slide("Community",big(w("posts"),"Posts","Equity Uprise · "+(S.range&&S.range.label||""),m&&m.profiles?nn(m.profiles.total)+" member profiles in all":"")+
+      bars([{label:"Posts",v:w("posts")},{label:"Reactions",v:w("reactions")},{label:"Follows",v:w("follows")},{label:"New profiles",v:w("profiles")}],"label","v",4),"community");
+  }
+  function carousels(){
+    var house=sid()===null;
+    return carousel("reach","Reach",[reachSlide(),signupSlide(),musicSlide()].filter(function(_,i){return house||i===0;}))+
+      carousel("audience","Audience",[audienceSlide()].concat(house?[flowsSlide(),healthSlide()]:[]))+
+      (house?carousel("action","Action",[missionsSlide(),communitySlide()]):"");
+  }
+  function bindCarousels(root){
+    root.querySelectorAll("[data-cra-seg]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-seg");S.ui[k]=b.getAttribute("data-v");paint();};});
+    root.querySelectorAll("[data-cra-car]").forEach(function(car){
+      var id=car.getAttribute("data-cra-car"),track=car.querySelector(".cra-car__track"),dots=root.querySelectorAll('[data-cra-dot="'+id+'"]');
+      if(!track||!track.children.length)return;
+      /* a card's place is its own offset (two cards show at once on a tablet), not a multiple of the track's width */
+      var at=function(i){var c=track.children[Math.max(0,Math.min(track.children.length-1,i))];return c.offsetLeft-track.children[0].offsetLeft;};
+      var nearest=function(){var best=0,d=Infinity;for(var k=0;k<track.children.length;k++){var x=Math.abs(at(k)-track.scrollLeft);if(x<d){d=x;best=k;}}return best;};
+      var mark=function(i){S.car[id]=i;dots.forEach(function(d,k){d.classList.toggle("is-on",k===i);d.setAttribute("aria-selected",k===i?"true":"false");});};
+      if(S.car[id])track.scrollLeft=at(S.car[id]);
+      var tm=0,steering=0;track.addEventListener("scrollend",function(){steering=0;});track.addEventListener("scroll",function(){if(tm||steering)return;tm=requestAnimationFrame(function(){tm=0;var i=nearest();if(i!==S.car[id])mark(i);});},{passive:true});
+      var go=function(i){var smooth=!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);mark(i);steering=1;clearTimeout(track._craT);track._craT=setTimeout(function(){steering=0;},smooth?1600:50);track.scrollTo({left:Math.min(at(i),track.scrollWidth-track.clientWidth),behavior:smooth?"smooth":"auto"});};
+      dots.forEach(function(d){d.onclick=function(){go(Number(d.getAttribute("data-i")));};});
+      var nx=car.querySelector("[data-cra-next]");if(nx)nx.onclick=function(){go((nearest()+1)%track.children.length);};
+    });
+  }
+  /* a country's own trend, from the pending read when it exists (supabase/pending/analytics_country_v1.sql) */
+  function missingFn(x){return!!x&&(x.status===404||/PGRST202|Could not find the function/i.test(String(x.message||"")+String(x.detail&&x.detail.code||"")));}
+  function loadCountry(){
+    var code=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,r=S.range;
+    if(!code||!r||(S.data.countryTotals&&S.data.countryTotals.missing)){return;}
+    var key=code+"|"+r.since+"|"+r.until+"|"+S.site+"|"+tz(),seq=S.seq;if(S.country&&S.country.key===key)return;
+    S.country={key:key,code:code,rows:null};
+    rpc("analytics_country_series",{p_country:code,p_since:r.since,p_until:r.until,p_site:sid(),p_tz:tz()}).then(function(rows){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.rows=rows||[];paint();},function(x){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.error=x;if(missingFn(x)&&S.data.countryTotals)S.data.countryTotals.missing=true;});
+  }
+  function filters(){
+    var t=S.data.traffic||{},sources=(t.sources||[]).map(function(x){return x.source;}).filter(Boolean),agg=geoAggregate();
+    var events=(S.data.contentEvents||[]).map(function(x){return x.event_name;}).filter(Boolean);
+    function opt(v,label,on,dis){return'<option value="'+e(v)+'"'+(on?" selected":"")+(dis?" disabled":"")+'>'+e(label)+'</option>';}
+    var regions=agg.points.slice();if(S.geo.region&&!regions.some(function(p){return p.code===S.geo.region;}))regions.unshift({code:S.geo.region,name:S.geo.region});
+    return'<div class="cra-filters" role="group" aria-label="Filters shared by the globe and the panel">'+
+      '<label>Layer<select class="cra-filter-select" id="craLayer">'+GEO_LAYERS.map(function(L){return opt(L.id,L.label,S.geo.layer===L.id,L.status!=="live");}).join("")+'</select></label>'+
+      '<label>Region<select class="cra-filter-select" id="craRegion">'+opt("","Everywhere",!S.geo.region)+regions.map(function(p){return opt(p.code,p.name+" ("+p.code+")",S.geo.region===p.code);}).join("")+'</select></label>'+
+      '<label>Source<select class="cra-filter-select" id="craSource">'+opt("","All sources",!S.geo.source)+sources.map(function(s){return opt(s,s,S.geo.source===s);}).join("")+'</select></label>'+
+      '<label>Event type<select class="cra-filter-select" id="craEvent">'+opt("","All events",!S.geo.eventType)+events.map(function(s){return opt(s,s,S.geo.eventType===s);}).join("")+'</select></label>'+
+      '<label>Program / mission<select class="cra-filter-select" disabled>'+opt("","Not in the current reads",true)+'</select></label>'+
+      '<p class="cra-filters__note">Applies to: range, everything · layer, the globe · region, the globe, the geography list and the identity accounts and paths · source, the identity accounts and paths and the sign-up layer · event type, the content event readout. Page views cannot be split by source or region beyond country with the current reads.</p></div>';
+  }
+  function geoCard(){
+    var a=geoAggregate(),L=GEO_LAYERS.filter(function(x){return x.id===S.geo.layer;})[0]||GEO_LAYERS[0];
+    if(a.awaiting)return card("On the globe",L.source,'<p>'+e(a.unavailable||"Nothing to draw.")+' Nothing is drawn until it answers.</p>',true);
+    var sel=S.geo.region,selRow=sel&&a.points.filter(function(p){return p.code===sel;})[0];
+    var kp='<div class="cra-kpis">'+kpi("On the globe",n(a.located),(L.id==="intel"?"in cells":"in countries")+" with "+GEO_MIN+"+")+kpi("Under "+GEO_MIN,n(a.suppressed),"folded, not drawn")+kpi("No country",a.unknown==null?"—":n(a.unknown),a.capped?"or past the top 100":"unknown location")+kpi("Total",a.total==null?"—":n(a.total),L.id==="pageviews"?"page views":L.id==="intel"?"records":"accounts")+'</div>'+(a.attribution&&a.attribution.length?'<p>Sources: '+e(a.attribution.join(" · "))+'</p>':"");
+    var detail=sel?'<div class="cra-filter"><span>'+(selRow?e(selRow.name)+' · '+n(selRow.value)+(a.located?' · '+Math.round(selRow.value/a.located*100)+'% of located':''):e(sel)+' · under '+GEO_MIN+' or not in this layer')+'</span><button type="button" class="cra-filter__x" data-cra-region="">Everywhere</button></div>':"";
+    var mx=Math.max.apply(null,a.points.map(function(p){return p.value;}).concat([1]));
+    var list=a.points.length?'<div class="cra-rank">'+a.points.slice(0,24).map(function(p){return'<button type="button" class="cra-rank__row'+(p.code===sel?" is-on":"")+'" data-cra-region="'+e(p.code)+'" aria-pressed="'+(p.code===sel)+'" aria-label="'+e(p.name+" "+n(p.value))+'"><i class="cra-rank__fill" style="--pct:'+Math.max(1,p.value/mx*100).toFixed(1)+'%"></i><span class="cra-rank__label">'+e(p.name)+'</span><b class="cra-rank__value">'+n(p.value)+'</b></button>';}).join("")+'</div>':'<p>No country reaches '+GEO_MIN+' in this range, so the globe draws nothing.</p>';
+    return card("On the globe",L.source+". Country level only; IP location is approximate. Tap a country here or on the globe to select it.",kp+detail+list,true);
+  }
+  function eventReadout(){
+    var k=S.geo.eventType;if(!k)return"";var r=(S.data.contentEvents||[]).filter(function(x){return x.event_name===k;})[0];
+    return'<div class="cra-filter"><span>'+e(k)+': '+(r?n(r.events)+' events · '+n(r.people)+' people · '+n(r.sessions)+' sessions':'none in this range')+'</span><button type="button" class="cra-filter__x" data-cra-event="">All events</button></div>';
+  }
+  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["intelligence","World intelligence"],["inventory","Data coverage"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
     var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null;
@@ -248,6 +661,7 @@
     var musicPlays=music.plays&&(b.window?music.plays.in_window:music.plays.total);
     var gross=music.revenue&&(b.window?music.revenue.gross_cents_in_window:music.revenue.gross_cents);
     var accounts=b.window?users.created_in_window:users.total;
+    var contentKnown=!!(S.completed&&S.completed.content&&!S.errors.content);
     var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0);
     var topSong=rows.slice().sort(function(a,z){return Number(z.starts||0)-Number(a.starts||0);})[0];
     var cards='';
@@ -255,7 +669,7 @@
       cards+=section("Audience & accounts","Membership, returning listeners and signup attribution.",
         '<div class="cra-kpis">'+metric("Accounts",S.data.business?accounts:null,b.window?"created in range":"all time")+metric("Music listeners",science.version?audience.music_listeners:null,"distinct in measured audience")+metric("Returning listeners",science.version?audience.returning_listeners:null,"measured")+metric("Song → signup",S.data.identity?coverage.attributed_accounts:null,"attributed accounts")+'</div>',"identity","Explore conversion");
       cards+=section("Music & content","Track engagement and recorded music revenue.",
-        '<div class="cra-kpis">'+metric("Music plays",S.data.business?musicPlays:null,"recorded")+metric("Track starts",S.errors.content?null:starts,"first-party events")+metric("Active tracks",S.errors.content?null:rows.length,"with recorded activity")+metric("Music gross",S.data.business?gross:null,"recorded sales",money)+'</div>'+(topSong?'<p><b>Top track:</b> '+e(topSong.track||"Unknown")+' · '+n(topSong.starts)+' starts</p>':""),"content","Explore music");
+        '<div class="cra-kpis">'+metric("Music plays",S.data.business?musicPlays:null,"recorded")+metric("Track starts",contentKnown?starts:null,"first-party events")+metric("Active tracks",contentKnown?rows.length:null,"with recorded activity")+metric("Music gross",S.data.business?gross:null,"recorded sales",money)+'</div>'+(topSong?'<p><b>Top track:</b> '+e(topSong.track||"Unknown")+' · '+n(topSong.starts)+' starts</p>':""),"content","Explore music");
       cards+=section("Campaigns & acquisition","How people arrive and move toward an action.",
         '<div class="cra-kpis">'+metric("Sources",S.errors.sources?null:(t.sources||[]).length,"observed")+metric("Acquisition rows",S.errors.acquisition?null:acq.length,"measured")+metric("Journey paths",S.errors.paths?null:paths.length,"tracked")+metric("Funnel stages",S.errors.funnel?null:funnel.length,"reported")+'</div><p>Campaign outcomes require verified mission or conversion events; source counts are not campaign results.</p>',"identity","Explore journeys");
       /* Stripe sales the reconciler verified, net of refunds, live only.
@@ -283,10 +697,13 @@
       card("Page performance","Attention, depth and friction.",pagePerformance(t.pages),true)+
       card("Networks","Observed network breakdown.",rank(t.networks,"network","count"))+
       card("Music leaderboard","Track starts in the selected range.",rank(rows,"track","starts"))+
-      card("Content event mix","Observed media player events.",donut(S.data.contentEvents||[],"event_name","events"))+
+      card("Content event mix","Observed media player events.",eventReadout()+donut(S.data.contentEvents||[],"event_name","events"))+
       '</div>'+["business","content","contentEvents","identity","audienceScience","acquisition","paths","funnel","pages","sources","countries","networks","totals",S.rangeId==="24h"?"hourly":"daily"].map(err).join("");
   }
   function scienceSignalLabel(v){
+    if(v==="converted")return "Unverified legacy action signal";
+    if(v==="purchase_intent")return "Purchase intent";
+    if(v==="client_completion_reported")return "Client completion report";
     return String(v||"").split("_").map(function(x){return x?x.charAt(0).toUpperCase()+x.slice(1):x;}).join(" ");
   }
   function audienceScience(){
@@ -322,27 +739,66 @@
       '<div><dt>Effective catalog</dt><dd><code>'+e(formulas.effective_catalog_size||"")+'</code></dd></div>'+
       '<div><dt>Repeat</dt><dd><code>'+e(formulas.repeat_ratio||"")+'</code></dd></div></dl>'+
       (d.model_readiness?'<p><b>Model stage:</b> '+e(d.model_readiness.stage||"measurement")+'. '+e(d.model_readiness.reason||"")+'</p>':"");
-    return card("Audience science","Transparent behavioral features for first-party visitors. No ideological or personality labels.",summary,true)+
+    return card("Audience science","Transparent behavioral features for first-party visitors. No ideological or personality labels.",summary+measurementNote(d),true)+
       card("Observed behavior signals","Signals can overlap. They describe what happened, not why.",rank(signalRows,"label","count"))+
       card("Track affinity","Which songs dominate each listener’s observed attention.",affinity,true)+
-      card("Listener feature ledger","Distribution and return features behind every signal.",ledger,true)+
+      card("Listener feature ledger","Distribution and return features behind every signal. Purchase intent and client completion reports do not establish verified outcomes.",ledger,true)+
       card("Method","The formulas and inference limits stay visible next to the result.",method,true);
   }
+  function geographicStateFilters(state){
+    var states=(admFile(selCountry())||{}).states||[],others=states.filter(function(s){return s.k!==state.k;});
+    function norm(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+    var codes=(state.codes||[]).filter(function(code){return !others.some(function(s){return(s.codes||[]).indexOf(code)>=0;});}).map(function(v){return String(v).toUpperCase();});
+    var names=[state.n].concat(state.names||[]).filter(Boolean).filter(function(name){var n=norm(name);return !others.some(function(s){return[s.n,s.g,s.u].concat(s.names||[]).some(function(v){return v&&norm(v)===n;});});}).map(function(v){return String(v).trim().toLowerCase();});
+    return{codes:codes,names:names};
+  }
+  function loadGeoAudience(){
+    var cc=selCountry(),r=S.range;if(!cc||!r){S.geoAudience=null;return;}
+    var state=S.geo.state&&stateOf(S.geo.state);
+    if(S.geo.state&&!state){S.geoAudience=null;return;}
+    var key=[cc,S.geo.state||"",r.since,r.until,S.site,tz()].join("|");
+    if(S.geoAudience&&S.geoAudience.key===key)return;
+    var read=S.geoAudience={key:key,data:null,error:null};
+    var filters=state?geographicStateFilters(state):null,codes=filters?filters.codes:null,names=filters?filters.names:null;
+    rpc("analytics_geo_audience",{p_country:cc,p_since:r.since,p_until:r.until,p_site:sid(),p_region_codes:codes,p_region_names:names,p_tz:tz()}).then(function(d){
+      if(S.revoked||S.geoAudience!==read)return;if(!d||d.schema!=="analytics-geo-audience/v1")throw Error("Invalid geographic audience response");read.data=d;paint();
+    }).catch(function(error){if(S.revoked||S.geoAudience!==read)return;read.error=error;paint();});
+  }
+  function geographicAudience(){
+    var read=S.geoAudience,d=read&&read.data,scope=scopeLabel();
+    if(read&&read.error)return card("Audience · "+scope,"",'<p role="alert">'+e(read.error.message||"Geographic audience unavailable")+'</p><button type="button" data-cra-geo-retry>Retry geographic data</button>',true);
+    if(!d)return card("Audience · "+scope,"",'<p role="status">Reading this location…</p>',true);
+    if(d.suppressed)return card("Audience · "+scope,"",'<p>This state has fewer than five page views in this window. Its metrics are folded to protect small groups.</p>',true);
+    var t=d.totals||{};
+    return card("Audience at a glance",scope,'<div class="cra-kpis">'+kpi("Unique visitors",n(t.visitors),"distinct devices")+kpi("Sessions",n(t.sessions))+kpi("Returning visitors",n(t.returning),"2+ sessions here in this window")+kpi("Single-page sessions",t.bounce_rate==null?"—":n(t.bounce_rate)+"%")+kpi("Music plays",n(t.plays))+kpi("Page views",n(t.page_views))+'</div>',true)+
+      '<div class="cra-grid">'+card("Audience trend",scope+" · unique visitors per bucket; do not add buckets for the total",line(d.series,"visitors","sessions","Unique visitors","Sessions",{xKey:"bucket",hourly:true,labelFor:function(r){return String(r.bucket_label||r.bucket||"").replace("T"," ").slice(5,16);}}),true)+
+      card("Acquisition",scope+" · unique visitors by recorded source",donut(d.sources||[],"source","people"))+
+      card("Paths",scope+" · page transitions within this location",rank((d.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+
+      card("Pages",scope+" · unique visitors per page",rank(d.pages||[],"path","visitors"))+
+      card("Engagement stages",scope+" · distinct devices with each event stage; stages may overlap",rank(d.stages||[],"stage","visitors"))+'</div>';
+  }
   function audience(){
+    if(selCountry())return geographicAudience();
     var house=sid()===null;
-    var scopedGap=house?"":'<div class="cra-error">The conversion funnel is hidden for this external property because the deployed backend does not expose a site-scoped funnel. Control will not mix another property into this view.</div>';
-    var funnelCard=house?card("Conversion funnel","People reaching each stage.",funnel(S.data.funnel||[]),true):"";
+    var scopedGap=house?"":'<div class="cra-error">Stage activity is hidden for this external property because the deployed backend does not expose site-scoped stage totals. Control will not mix another property into this view.</div>';
+    var funnelCard=house?card("Stage activity",S.data.stageTotals?"Whole-window distinct devices and separate account records.":"Daily distinct-device totals and account records; no ordered conversion rate.",funnel(S.data.funnel||[]),true):"";
     var trend=trafficTrend(S.data.traffic||{});
-    return (house?'<div class="cra-grid">'+audienceScience()+'</div>':"")+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
+    var totals=(S.data.traffic||{}).totals||{},vis=S.data.visitors&&S.data.visitors.counts,flows=S.data.flows&&S.data.flows.flows;
+    var summary=card("Audience at a glance","Selected property · all countries · "+(S.range&&S.range.label||""),'<div class="cra-kpis">'+kpi("Unique visitors",n(totals.visitors),"distinct devices")+kpi("Sessions",n(totals.sessions))+kpi("Returning visitors",n(vis&&vis.returning),house?"more than one session":"first-party only")+kpi("Single-page sessions",flows?n(flows.bounce_rate)+"%":"—",house?"recorded sessions":"first-party only")+'</div>',true);
+    return summary+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"visitors","sessions","Unique visitors","Sessions",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("")+'<div class="cra-grid">'+card("Page performance","Attention, depth and friction · selected property.",pagePerformance((S.data.traffic||{}).pages),true)+'</div>'+(house?'<details class="cu-detail"><summary>Listening behavior & measurement method</summary><div class="cra-grid">'+audienceScience()+'</div></details>':"");
   }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
+    var contentKnown=!!(S.completed&&S.completed.content&&!S.errors.content);
     var table=rows.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Track</th><th>Album</th><th class="n">Starts</th><th class="n">Listeners</th><th class="n">Repeat</th><th class="n">Starts/listener</th><th class="n">Full</th><th class="n">Complete</th><th class="n">Shares</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td><b>'+e(r.track||"—")+'</b></td><td>'+e(r.album||"—")+'</td><td class="n">'+n(r.starts)+'</td><td class="n">'+n(r.listeners)+'</td><td class="n">'+n(r.repeat_listeners)+'</td><td class="n">'+e(r.plays_per_listener==null?"—":r.plays_per_listener)+'</td><td class="n">'+n(r.full_plays)+'</td><td class="n">'+n(r.completions)+'</td><td class="n">'+n(r.shares)+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No content rows.</p>';
     var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0),listeners=rows.reduce(function(sum,r){return sum+Number(r.listeners||0);},0);
-    var musicSummary=card("Music · quick view","The essentials, from recorded first-party track activity.",'<div class="cra-kpis">'+kpi("Track starts",n(starts),"selected range")+kpi("Track listeners",n(listeners),"summed across tracks")+kpi("Tracked songs",n(rows.length),"with activity")+'</div>'+(rows.length?'<p><b>Most played:</b> '+e(rows.slice().sort(function(a,b){return Number(b.starts||0)-Number(a.starts||0);})[0].track||"—")+'</p>':'<p>No recorded music activity in this range.</p>'));
+    var musicSummary=card("Music · quick view","The essentials, from recorded first-party track activity.",'<div class="cra-kpis">'+kpi("Track starts",n(contentKnown?starts:null),"selected range")+kpi("Track listeners",n(contentKnown?listeners:null),"summed across tracks")+kpi("Tracked songs",n(contentKnown?rows.length:null),"with activity")+'</div>'+(rows.length?'<p><b>Most played:</b> '+e(rows.slice().sort(function(a,b){return Number(b.starts||0)-Number(a.starts||0);})[0].track||"—")+'</p>':contentKnown?'<p>No recorded music activity in this range.</p>':'<p>Music activity is not available yet.</p>'));
     return'<div class="cra-grid">'+musicSummary+card("Reach vs repeat","Each dot is one track. Further right: more different people started it. Higher: each of them started it more times (1\u00d7 = once each). Tap a dot or a row to line up its numbers. Sign-ups counts accounts whose last song before joining was this one.",'<div class="cra-reach" data-cra-reach></div>',true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
   }
   function identity(){
+    if(sid()!==null)return card("Signup journeys","First-party only","<p>Select McCluster first-party to see account attribution.</p>",true);
+    if(S.errors.identity)return err("identity");
+    if(!S.completed||!S.completed.identity)return '<p class="cra-loading" role="status">Reading signup journeys…</p>';
     var d=S.data.identity||{},c=d.coverage||{},js=d.journeys||[],t=d.tracks||[];
     var accounts=Number(c.accounts)||js.length,linked=Number(c.bridged_accounts)||0,heard=Number(c.attributed_accounts)||0;
     var sourced=js.filter(function(j){return j.source&&j.source!=="direct";}).length;
@@ -356,10 +812,11 @@
     var steps=[["Accounts created",accounts,"Everyone who signed up in this range."],["Linked to a device",linked,"We could match the account to the browser it signed up on."],["Heard a song first",heard,"That device played a song in the 7 days before signup."],["Came from a known source",sourced,"Arrived through a tagged link, not typed in or unknown."]];
     var funnel='<div class="cra-steps2">'+steps.map(function(x,i){var p=accounts?x[1]/accounts*100:0;return'<div class="cra-step2"><span class="cra-step2__n">'+(i+1)+'</span><div class="cra-step2__body"><div class="cra-step2__top"><b>'+e(x[0])+'</b><strong>'+n(x[1])+'</strong></div><div class="cra-step2__bar"><i style="--pct:'+Math.max(x[1]?2:0,p).toFixed(1)+'%"></i></div><small>'+(i?Math.round(p)+'% of accounts · ':"")+e(x[2])+'</small></div></div>';}).join("")+'</div>';
     /* songs, as a table you can read across */
-    var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Heard on the way</th><th class="n">Signup rate</th><th class="n">Typical time</th></tr></thead><tbody>'+
-      t.slice(0,20).map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+(x.signup_rate_pct!=null?e(x.signup_rate_pct)+"%":"—")+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
+    var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Heard on the way</th><th class="n">Signup rate (cohort needed)</th><th class="n">Typical time</th></tr></thead><tbody>'+
+      t.slice(0,20).map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+"—"+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
     /* the accounts themselves, filtered by the path you tapped */
-    var f=S.idFilter&&S.idFilter.path,list=f?js.filter(function(j){return pathKey(j.source,j.last_track)===f;}):js;
+    /* the shared region and source filters narrow the paths and the accounts (the counts above stay the whole range) */
+    var fj=journeys(),f=S.idFilter&&S.idFilter.path,list=f?fj.filter(function(j){return pathKey(j.source,j.last_track)===f;}):fj;
     var cards=list.length?'<div class="cra-accts">'+list.slice(0,60).map(function(j){
       var name=[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"Account",assisted=(j.assisted_tracks||[]).filter(function(x){return x!==j.last_track;});
       return'<article class="cra-acct"><div class="cra-acct__top"><b>'+e(name)+'</b><small>'+e(j.created_at?new Date(j.created_at).toLocaleString():"")+'</small></div>'+
@@ -371,9 +828,9 @@
     }).join("")+'</div>':'<p>No accounts match.</p>';
     var filterNote=f?'<div class="cra-filter"><span>Showing '+e(f.split(PATH_SEP)[0])+' → '+e(f.split(PATH_SEP)[1])+'</span><button type="button" class="cra-filter__x" data-cra-path="">Show everyone</button></div>':"";
     return lead+'<div class="cra-grid">'+card("How signups happened","Each step as a share of accounts created. Song attribution looks back 7 days on the same device; it shows what happened before, not what caused it.",funnel,true)+
-      card("Source → track → account","Every route someone took to an account. Tap one to see those people.",flow(d),true)+
+      card("Source → track → account","Every route someone took to an account. Tap one to see those people."+(S.geo.region||S.geo.source?" Narrowed by "+[S.geo.region,S.geo.source].filter(Boolean).join(" · ")+".":""),flow({journeys:fj}),true)+
       card("Songs","Last song before signup is the song they heard right before joining. Heard on the way counts every song they played in the 7 days before.",songs,true)+
-      card("Accounts","Newest first."+(list.length>60?" Showing 60 of "+n(list.length)+".":""),filterNote+cards,true)+'</div>'+err("identity");
+      card("Accounts","Newest first."+(list.length>60?" Showing 60 of "+n(list.length)+".":""),filterNote+cards,true)+'</div>'+measurementNote(d)+err("identity");
   }
   function pct(a,b){return b?Math.round(a/b*100)+"%":"0%";}
   /* FORENSICS is its own module (js/control-room/forensics.js): sessions you
@@ -390,11 +847,11 @@
      the pixel on another website, and lets the owner add one. */
   function ago(t){var sec=(Date.now()-new Date(t).getTime())/1000;if(!isFinite(sec))return"—";if(sec<90)return"just now";if(sec<5400)return Math.round(sec/60)+" min ago";if(sec<129600)return Math.round(sec/3600)+" h ago";return Math.round(sec/86400)+" days ago";}
   function loadPulse(){
-    if(S.pulseLoading)return;S.pulseLoading=true;var site=S.site;
+    if(S.revoked||S.pulseLoading)return;S.pulseLoading=true;var site=S.site,q=S.seq;
     /* The lean copy answers this from an index; the wide events table does not. */
     S.supa("events_lean?select=at,name,path,is_bot&"+(site===FIRST?"site_id=is.null":"site_id=eq."+encodeURIComponent(site))+"&order=at.desc&limit=8")
-      .then(function(x){S.pulse={site:site,row:x&&x[0]||null,rows:x||[],checked:Date.now()};},function(x){S.pulse={site:site,error:x,checked:Date.now()};})
-      .then(function(){S.pulseLoading=false;if(S.section==="setup")paint();});
+      .then(function(x){if(q===S.seq&&!S.revoked)S.pulse={site:site,row:x&&x[0]||null,rows:x||[],checked:Date.now()};},function(x){if(q===S.seq&&!S.revoked)S.pulse={site:site,error:x,checked:Date.now()};})
+      .then(function(){if(q===S.seq&&!S.revoked){S.pulseLoading=false;if(S.section==="setup")paint();}});
   }
   function hostname(v){v=String(v||"").trim().toLowerCase().replace(/^[a-z]+:\/\//,"").replace(/[\/?#].*$/,"").replace(/:\d+$/,"");return/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(v)&&v.indexOf(".")>0?v:"";}
   function pixel(site){return'<script async src="https://api.mccluster.org/a.js?site='+site.public_key+'&consent='+(site.consent_mode==="cookieless"?"cookieless":"required")+'"><\/script>';}
@@ -464,13 +921,15 @@
   function adaptive(){
     if(sid()!==null)return'<div class="cra-grid">'+card("Adaptive Experience","The research and decision ledger is first-party only.","<p>Select McCluster first-party to inspect production policies, experiments and decision evidence.</p>",true)+'</div>';
     if(S.errors.experience)return err("experience");
+    if(!S.completed||!S.completed.experience)return '<p class="cra-loading" role="status">Reading adaptive decisions…</p>';
     var d=S.data.experience||{},t=d.totals||{},reg=d.registry||{},experiments=reg.experiments||[],policies=reg.policies||[],projects=reg.research_projects||[],recent=d.recent||[];
+    function rateNote(value,basis){return value==null||!Number.isFinite(Number(value))?"Rate unavailable":Number(value).toFixed(1)+"% "+basis;}
     var k='<div class="cra-kpis">'+
-      kpi("Decisions",n(t.decisions||0))+
-      kpi("Impressions",n(t.impressions||0),(Number(t.impression_rate_pct||0)).toFixed(1)+"% of decisions")+
-      kpi("Visible",n(t.visible||0))+
-      kpi("Interactions",n(t.interactions||0),(Number(t.interaction_rate_pct||0)).toFixed(1)+"%")+
-      kpi("Outcomes",n(t.outcomes||0),(Number(t.outcome_rate_pct||0)).toFixed(1)+"% of impressions")+
+      kpi("Decisions",n(t.decisions))+
+      kpi("Impressions",n(t.impressions),rateNote(t.impression_rate_pct,"of decisions"))+
+      kpi("Visible",n(t.visible))+
+      kpi("Interactions",n(t.interactions),rateNote(t.interaction_rate_pct,"of visible decisions"))+
+      kpi("Client outcome reports",n(t.outcomes),rateNote(t.outcome_rate_pct,"of impressions"))+
       '</div>';
     var ex=experiments.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Experiment</th><th>Status</th><th>Intent</th><th>Review</th><th class="n">Traffic</th><th>Primary metric</th><th>Publishable</th></tr></thead><tbody>'+
       experiments.map(function(x){return'<tr><td><b>'+e(x.key)+'</b><small style="display:block;opacity:.65">'+e(x.hypothesis||"")+'</small></td><td>'+e(x.status||"—")+'</td><td>'+e(x.intent||"—")+'</td><td>'+e(x.research_review||"—")+'</td><td class="n">'+e((Number(x.allocation||0)*100).toFixed(1)+"%")+'</td><td>'+e(x.primary_metric||"—")+'</td><td>'+e(x.publication_eligible?"yes":"no")+'</td></tr>';}).join("")+
@@ -482,35 +941,60 @@
     var dec=recent.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Decision</th><th>Surface</th><th>Policy</th><th>Experiment</th><th class="n">Eligible</th><th>Selected</th><th>Evidence</th></tr></thead><tbody>'+
       recent.slice(0,50).map(function(x){return'<tr><td><b>'+e(String(x.id||"").slice(0,8))+'</b><small style="display:block;opacity:.65">'+e(x.created_at||"")+'</small></td><td>'+e(x.surface||"—")+'</td><td>'+e(x.policy||"—")+'</td><td>'+e(x.experiment?(x.experiment+" · "+(x.arm||"")):"control")+'</td><td class="n">'+n(x.eligible_count)+'</td><td>'+e((x.selected||[]).map(function(y){return y.id;}).join(", ")||"—")+'</td><td>'+e((x.events||[]).map(function(y){return y.name.replace("experience_","");}).join(" → ")||"decision only")+'</td></tr>';}).join("")+
       '</tbody></table></div>':'<p>No experience decisions in the selected range yet.</p>';
-    return k+'<div class="cra-grid">'+
+    return k+measurementNote(d)+'<div class="cra-grid">'+
       card("Production + research policies","Only promoted production policies are supposed to control the default experience. Research policies must earn promotion.",pol,true)+
       card("Experiment registry","Hypothesis, assignment, research review and publication state stay attached to the experiment.",ex,true)+
       card("Research program","Citable projects and governance state.",proj,true)+
       card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
       '</div>';
   }
-  function body(){return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+  function body(){if(S.section==="cameras"&&window.CR.analyticsCameras)return window.CR.analyticsCameras.render();if(S.section==="action"&&window.CR.analyticsUnified)return window.CR.analyticsUnified.operations(S);if(window.CR.analyticsUnified&&S.section==="intelligence")return window.CR.analyticsUnified.intelligence();if(window.CR.analyticsUnified&&S.section==="inventory")return window.CR.analyticsUnified.inventory();return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
-    var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Live · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
-    return'<div class="cra"><div class="cra-head"><div class="cra-head__copy"><h1>Analytics</h1><p>Traffic, audience, adaptive experience, experiments, content, identity, commerce and diagnostics. One range controls the whole panel.</p></div><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></div>'+ranges()+'<div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div>'+tabs()+body()+'</div>';
+    if(S.revoked)return'<p class="cra-error" role="alert">Owner access changed. Reload Control to verify your current session.</p>';
+    var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Updated · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
+    var unified=window.CR.analyticsUnified;
+    var country=selCountry(),countrySeries=country&&S.country&&S.country.code===country&&S.country.rows;
+    var trendScope=(countrySeries?countryName(country):"Worldwide")+" · "+(S.range&&S.range.label||"")+(country&&!countrySeries?" · country trend unavailable":"");
+    var summary=unified?unified.overview(S,{scopeLabel:function(){return trendScope;},chart:area(countrySeries||pvRows(),"visitors",pvLabel,"Unique visitors over time, "+trendScope),bars:bars}):carousels();
+    var detail=S.section==="overview"?summary+'<details class="cu-detail"><summary>All measured metrics & geographic coverage</summary>'+geoCard()+overview()+'</details>':body();
+    if(country&&S.section==="overview")detail=geographicAudience();
+    if(S.geo.region&&S.section!=="audience"&&S.section!=="overview")detail='<p class="cad-scope"><b>Globe: '+e(S.geo.state&&stateOf(S.geo.state)?stateOf(S.geo.state).n:country?countryName(country):S.geo.region)+'</b><span>Audience and Overview follow this location. Other views show their labeled scope.</span></p>'+detail;
+    var quality=Object.keys(S.quality||{});
+    if(quality.length)detail='<details class="cad-read-warning"><summary>Some measurements are incomplete</summary><p>'+quality.map(function(k){return e(k)+": "+e(S.quality[k]);}).join("<br>")+'</p><button type="button" data-cra-sec="inventory">Inspect data connections</button></details>'+detail;
+    var failed=Object.keys(S.errors||{});
+    if(failed.length&&!S.error&&S.section!=="inventory")detail='<details class="cad-read-warning"><summary>'+failed.length+' data '+(failed.length===1?'source needs':'sources need')+' attention</summary><p>'+failed.map(function(k){return e(k)+': '+e(S.errors[k].message||S.errors[k]);}).join('<br>')+'</p><button type="button" data-cra-sec="inventory">Inspect data connections</button></details>'+detail;
+    if(S.error)detail='<p class="cra-error" role="alert">Analytics load failed. '+e(S.error.message||S.error)+' · Refresh to retry.</p>'+detail;
+    return window.CR.analyticsDeck?window.CR.analyticsDeck.render(S,detail):'<div class="cra"><p>'+e(st)+'</p>'+tabs()+detail+'</div>';
   }
+  function selectSection(section){S.section=section;paint();}
   function paint(){
-    if(!S.host)return;S.host.innerHTML=render();bind(S.host);drawReach();
+    if(!S.host)return;
+    if(S.revoked){S.host.innerHTML=render();return;}
+    var panel=S.host.querySelector&&S.host.querySelector("[data-cra-panel]");
+    var root=panel||S.host,deck=window.CR.analyticsDeck,saved=deck?deck.before(root):null;
+    root.innerHTML=render();if(root.setAttribute)root.setAttribute("data-cra-projection",projectionContext().selection_key);bind(root);if(root.querySelectorAll)bindCarousels(root);drawReach();syncGlobe(false);
+    if(deck){deck.bind(root,S,selectSection,function(){loadSites().then(load);},saved);deck.fit(S.host);}
+    if(window.CR.analyticsUnified){window.CR.analyticsUnified.bind(root,S.request,paint);if(S.section==="inventory"){loadCoverage();if(window.CR.analyticsUnified.state.panel==="fields")window.CR.analyticsUnified.loadInventory(paint);}if(S.section==="intelligence"&&!window.CR.analyticsUnified.state.sources&&!window.CR.analyticsUnified.state.error&&!window.CR.analyticsUnified.state.busy)window.CR.analyticsUnified.load(S.request,paint);}
+    if(S.section==="cameras"&&window.CR.analyticsCameras)window.CR.analyticsCameras.bind(root,S.request,paint);
     if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
     if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
   }
-  function loadSites(){return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){S.sites=x||[];}).catch(function(x){S.errors.sites=x;S.sites=[];});}
+  function loadSites(){if(S.revoked)return Promise.resolve();var epoch=S.seq;return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){if(epoch===S.seq&&!S.revoked)S.sites=x||[];}).catch(function(x){if(epoch===S.seq&&!S.revoked){S.errors.sites=x;S.sites=[];}});}
   function blankData(){
     return {
       traffic:{byHour:[],byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
-      funnel:[],acquisition:[],paths:[],content:[],contentEvents:[],
-      identity:{},audienceScience:null,experience:null,business:null
+      funnel:[],stageTotals:null,acquisition:[],paths:[],content:[],contentEvents:[],
+      identity:{},audienceScience:null,experience:null,business:null,geo:[],intel:null,
+      countryTotals:null,visitors:null,flows:null,errors:null,missions:null
     };
   }
   function applyResult(x){
     if(!x)return;
-    if(!x.ok){S.errors[x.name]=x.error;return;}
+    S.completed=S.completed||{};S.completed[x.name]=true;
+    if(!x.ok){S.errors[x.name]=x.error;if(x.name==="countryTotals")S.data.countryTotals={ok:false,missing:missingFn(x.error),rows:[]};return;}
     var v=x.value,t=S.data.traffic;
+    var completeness=v&&v.measurement&&v.measurement.completeness;
+    if(completeness&&completeness.status!=="observed_complete"&&completeness.status!=="complete")S.quality[x.name]=completeness.status==="partial"?"Read limit or missing data; values describe the observed subset.":"Completeness has not been established.";
     if(x.name==="hourly")t.byHour=v||[];
     else if(x.name==="daily")t.byDay=v||[];
     else if(x.name==="totals")t.totals=v&&v[0]||{};
@@ -518,7 +1002,17 @@
     else if(x.name==="sources")t.sources=top(v,"source");
     else if(x.name==="countries")t.countries=top(v,"country");
     else if(x.name==="networks")t.networks=top(v,"network");
-    else if(x.name==="funnel")S.data.funnel=v||[];
+    else if(x.name==="geo")S.data.geo=v||[];
+    else if(x.name==="intel")S.data.intel=v||null;
+    else if(x.name==="countryTotals")S.data.countryTotals=v;
+    else if(x.name==="visitors")S.data.visitors=v||null;
+    else if(x.name==="flows")S.data.flows=v||null;
+    else if(x.name==="errors")S.data.errors=v||null;
+    else if(x.name==="missions")S.data.missions=Array.isArray(v)?v:null;
+    else if(x.name==="funnel"){
+      if(v&&v.version==="analytics-stage-totals/v1"){S.data.stageTotals=v;S.data.funnel=[];}
+      else S.data.funnel=Array.isArray(v)?v:[];
+    }
     else if(x.name==="acquisition")S.data.acquisition=v||[];
     else if(x.name==="paths")S.data.paths=v||[];
     else if(x.name==="content")S.data.content=v||[];
@@ -526,7 +1020,16 @@
     else if(x.name==="identity")S.data.identity=v||{};
     else if(x.name==="audienceScience")S.data.audienceScience=v||null;
     else if(x.name==="experience")S.data.experience=v||null;
-    else if(x.name==="business")S.data.business=v||null;
+    else if(x.name==="business"){
+      S.data.business=v||null;
+      if(v&&v.snapshot&&v.snapshot.partial){
+        var missing=Object.keys(v.snapshot.read_errors||{});
+        S.errors.business=new Error(missing.length
+          ?"Partial business measurements: "+missing.slice(0,8).join(", ")+(missing.length>8?" (+"+(missing.length-8)+" more)":"")+"; available values are retained."
+          :"Some business measurements are unavailable; available values are retained.");
+      }
+    }
+    else if(x.name==="coverage")S.data.coverage=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
     limit=Math.max(1,Number(limit)||1);
@@ -552,9 +1055,15 @@
       pump();
     });
   }
+  function loadCoverage(force){
+    if(S.revoked||sid()!==null||!S.range||S.coverageLoading===S.seq||!force&&S.completed&&S.completed.coverage)return;
+    var q=S.seq,r=S.range;S.coverageLoading=q;delete S.errors.coverage;paint();
+    return S.request('/v1/analytics/coverage?since='+encodeURIComponent(r.since)+'&until='+encodeURIComponent(r.until)).then(function(v){if(q===S.seq)applyResult({name:'coverage',ok:true,value:v});},function(error){if(q===S.seq)applyResult({name:'coverage',ok:false,error:error});}).finally(function(){if(q===S.seq){S.coverageLoading=null;paint();}});
+  }
   function load(){
+    if(S.revoked)return Promise.resolve();
     var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}
-    S.range=r;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.data=blankData();paint();
+    S.range=r;S.country=null;S.geoAudience=null;S.pulse=null;S.pulseLoading=false;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.quality={};S.completed={};S.data=blankData();loadGeoAudience();paint();
     var site=sid(),args={p_since:r.since,p_until:r.until,p_site:site},daily={p_since:r.since,p_until:r.until,p_site:site,p_tz:tz()};
     /* One Control open used to throw every analytics primitive at PostgREST at
        once. On production data that turned one dashboard view into a dozen
@@ -562,31 +1071,45 @@
        result could paint. Keep the full suite, but bound fan-out and paint
        each completed read immediately. */
     var tasks=[
-      {name:"hourly",run:function(){return r.id==="24h"?retryStatementTimeout(function(){return rpc("analytics_hourly",daily);}):Promise.resolve([]);}},
+      {name:"hourly",run:function(){return r.id==="24h"?rpc("analytics_hourly",daily):Promise.resolve([]);}},
       {name:"daily",run:function(){return r.id==="24h"?Promise.resolve([]):rpc("analytics_daily",daily);}},
       {name:"totals",run:function(){return rpc("analytics_totals",args);}},
       {name:"business",run:function(){return site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
       {name:"pages",run:function(){return rpc("analytics_page_performance",{p_since:r.since,p_until:r.until,p_site:site,p_limit:25});}},
       {name:"sources",run:function(){return rpc("analytics_top",{p_dim:"source",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
       {name:"countries",run:function(){return rpc("analytics_top",{p_dim:"country",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      /* the globe: the same country dimension, up to its 100-row ceiling, so the located / unknown split is honest */
+      {name:"geo",run:function(){return rpc("analytics_top",{p_dim:"country",p_since:r.since,p_until:r.until,p_site:site,p_limit:100});}},
+      /* intel events for the globe (owner audience, exact): the window clamped to the API's 92 days */
+      {name:"intel",run:function(){if(site!==null)return Promise.resolve(null);var u=new Date(r.until),f=new Date(Math.max(new Date(r.since).getTime(),u.getTime()-92*86400000));return S.request("/v1/intel/geo?since="+encodeURIComponent(f.toISOString())+"&until="+encodeURIComponent(u.toISOString())+"&cell=10&bucket=day");}},
       {name:"networks",run:function(){return rpc("analytics_top",{p_dim:"network",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
       {name:"contentEvents",run:function(){return rpc("analytics_content_events",args);}},
       {name:"content",run:function(){return rpc("analytics_content",args);}},
       {name:"acquisition",run:function(){return rpc("analytics_acquisition",args);}},
       {name:"paths",run:function(){return rpc("analytics_paths",Object.assign({p_limit:40},args));}},
-      {name:"funnel",run:function(){return site===null?rpc("analytics_funnel",{p_since:r.since,p_until:r.until}):Promise.resolve([]);}},
+      {name:"funnel",run:function(){return site===null?rpc("analytics_stage_totals",args).catch(function(error){if(!missingFn(error))throw error;return rpc("analytics_funnel",{p_since:r.since,p_until:r.until});}):Promise.resolve([]);}},
       {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}},
       {name:"audienceScience",run:function(){return site===null?S.request("/v1/analytics/audience-science?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
-      {name:"experience",run:function(){return site===null?S.request("/v1/analytics/experience?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}}
+      {name:"experience",run:function(){return site===null?S.request("/v1/analytics/experience?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      /* reads the backend already had and no screen showed (owner, 2026-10-15: "repair backend capabilities that aren't seen
+         and get them visualized"): returning visitors, journeys, site health, missions; and, pending, visitors by country */
+      {name:"countryTotals",run:function(){return rpc("analytics_country_totals",args).then(function(rows){return{ok:true,missing:false,rows:rows||[]};});}},
+      {name:"visitors",run:function(){return site===null?S.request("/v1/analytics/visitors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=1"):Promise.resolve(null);}},
+      {name:"flows",run:function(){return site===null?S.request("/v1/analytics/flows?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"errors",run:function(){return site===null?S.request("/v1/analytics/errors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"missions",run:function(){return site===null?rpc("action_mission_stats",{p_campaign:null}):Promise.resolve(null);}}
     ];
-    return runLimited(tasks,3,function(x){
+    /* Production PostgREST reports an 8-second authenticated statement limit.
+       Two independent dashboard reads at once leave capacity for ingestion and
+       the owner-only business summary; each completed family still paints. */
+    return runLimited(tasks,2,function(x){
       if(q!==S.seq)return;
       applyResult(x);
       S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;
       paint();
     },function(){return q===S.seq;}).then(function(){
       if(q!==S.seq)return;
-      S.loading=false;S.loaded=true;S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;paint();
+      S.loading=false;S.loaded=true;S.updatedAt=new Date().toISOString();S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;S.country=null;loadCountry();loadStates();paint();
     });
   }
   function selectText(el){try{var r=document.createRange();r.selectNodeContents(el);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}catch(_){}}
@@ -617,14 +1140,21 @@
   function bind(root){
     bindChartPoints(root);
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
+    var gl=root.querySelector("#craLayer");if(gl)gl.onchange=function(){S.geo.layer=gl.value;paint();};
+    var gr=root.querySelector("#craRegion");if(gr)gr.onchange=function(){pickRegion(gr.value);};
+    var gs=root.querySelector("#craSource");if(gs)gs.onchange=function(){S.geo.source=gs.value;paint();};
+    var ge=root.querySelector("#craEvent");if(ge)ge.onchange=function(){S.geo.eventType=ge.value;paint();};
+    root.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){var c=b.getAttribute("data-cra-region");pickRegion(c&&c===S.geo.region?"":c);};});
+    root.querySelectorAll("[data-cra-event]").forEach(function(b){b.onclick=function(){S.geo.eventType=b.getAttribute("data-cra-event")||"";paint();};});
     root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
-    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
+    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){selectSection(b.getAttribute("data-cra-sec"));};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
     if(from)from.oninput=function(){S.from=from.value||"";};
     if(through)through.oninput=function(){S.through=through.value||"";};
     var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
     root.querySelectorAll("[data-cra-site]").forEach(function(b){b.onclick=function(){S.site=b.getAttribute("data-cra-site");load();};});
+    var retryGeo=root.querySelector("[data-cra-geo-retry]");if(retryGeo)retryGeo.onclick=function(){S.geoAudience=null;loadGeoAudience();paint();};
     root.querySelectorAll("[data-cra-verify]").forEach(function(b){b.onclick=function(){S.request("/v1/analytics/domains/"+encodeURIComponent(b.getAttribute("data-cra-verify"))+"/verify",{method:"POST"}).then(loadSites).then(load).catch(function(x){S.error=x;paint();});};});
     root.querySelectorAll("[data-cra-pulse]").forEach(function(b){b.onclick=function(){loadPulse();paint();};});
     var cp=root.querySelector("[data-cra-copy]"),px=root.querySelector("#craPixel");
@@ -645,15 +1175,59 @@
         .catch(function(x){say(x&&x.message||"Could not add the website.");});
     };
   }
+  /* Derived from the existing place/time selection. Unknown database watermarks
+     stay unknown; an HTTP response is not a frozen database snapshot. */
+  function projectionContext(){
+    var r=S.range||{},layer=S.geo.layer,geo={kind:layer==="intel"?"evidence_geometry":"audience_network_country",country:selCountry(),state:S.geo.state||null,cell:layer==="intel"?S.geo.region:null,precision:S.geo.state?"region":layer==="intel"?"10_degree_cell":"country"};
+    var read=geo.country&&S.geoAudience,loaded=read&&read.data,aggregate=geoAggregate();
+    return{schema:"mccluster-admin-projection/v1",metric_version:"analytics-display/2026-10-20",metric:layer,unit:layer==="visitors"?"distinct_devices":layer==="signups"?"accounts":layer==="intel"?"evidence_records":"page_views",
+      scope:{site_id:sid(),first_party:sid()===null},geography:geo,window:{since:r.since||null,until:r.until||null,bounds:"[since,until)",timezone:tz()},
+      selection_key:[S.site,r.since||"",r.until||"",tz(),layer,S.geo.region||"",S.geo.state||"",S.geo.source||"",S.geo.eventType||""].join("|"),
+      snapshot:{kind:"independent_live_reads",watermark:null,refreshed_at:S.updatedAt||null},freshness:{status:"unknown",projection_watermark:null},numerator:null,denominator:null,
+      completeness:aggregate.capped?"limit_reached":aggregate.awaiting?"unavailable":Object.keys(S.quality||{}).length?"partial":"unknown",
+      suppression:loaded&&loaded.suppressed?"suppressed":S.geo.state&&!loaded?"unknown":"not_reported",
+      filters:{source:S.geo.source||null,event_type:S.geo.eventType||null},measured_contexts:{audience:S.data.audienceScience&&S.data.audienceScience.measurement||null,experience:S.data.experience&&S.data.experience.measurement||null}};
+  }
+  function measurementNote(d){
+    var m=d&&d.measurement;if(!m)return'<p class="cu-note">Completeness and snapshot watermark were not provided by this response.</p>';
+    var c=m.completeness||{},datasets=c.datasets||{},window=m.window||{};
+    return'<details class="cu-detail"><summary>Measurement context</summary><p>'+e(m.metric_version||m.version||"Unknown version")+' · '+e(window.since||"Unknown start")+' → '+e(window.until||"Unknown end")+' · '+e(window.timezone||"UTC")+' · end excluded.</p><p>Completeness: '+e(c.status||"unknown")+'. '+Object.keys(datasets).map(function(k){var x=datasets[k]||{};return e(k)+": "+e(x.status||"unknown")+(x.rows==null?"":" · "+n(x.rows)+" rows")+(x.limit==null?"":" / "+n(x.limit)+" read limit");}).join("; ")+'</p><p>Snapshot watermark: '+e(m.snapshot&&m.snapshot.watermark||"not available; these reads are not a frozen database snapshot")+'.</p></details>';
+  }
+  function clearPrivate(){
+    ++S.seq;S.revoked=true;S.loading=false;S.loaded=false;S.autoRefresh=false;S.data=blankData();S.errors={};S.quality={};S.completed={};S.sites=[];S.country=null;S.geoAudience=null;S.geo.rg={};S.geo.region=null;S.geo.state=null;S.geo.source="";S.geo.eventType="";S.updatedAt=null;S.pulse=null;S.pulseLoading=false;S.coverageLoading=null;
+    if(window.CR.analyticsUnified&&window.CR.analyticsUnified.clearPrivate)window.CR.analyticsUnified.clearPrivate();
+    if(S.globe&&S.globe.destroy)S.globe.destroy();S.globe=null;
+    if(S.host)S.host.innerHTML='<p class="cra-error" role="alert">Owner access changed. Reload Control to verify your current session.</p>';
+  }
+  if(window.addEventListener){
+    window.addEventListener("mcc:auth-changed",function(ev){if(ev.detail&&ev.detail.signed_in===false)clearPrivate();});
+    window.addEventListener("mcc:appbar-admin",function(ev){if(ev.detail&&ev.detail.admin===false&&(S.loaded||S.loading))clearPrivate();});
+    window.addEventListener("storage",function(ev){if(ev.key==="mccdb_session"&&ev.oldValue!==ev.newValue&&(S.loaded||S.loading))clearPrivate();});
+  }
   window.CR.analytics={
     init:function(opts){S.request=opts.request;S.supa=opts.supa;},
-    mount:function(host){S.host=host;
+    mount:function(host){S.host=host;if(S.revoked){paint();return;}
+      if(typeof document!=="undefined"&&host.querySelector&&!host.querySelector("[data-cra-panel]")){
+        host.innerHTML=shell();
+        var gh=host.querySelector("[data-cra-globe]");
+        if(gh&&window.CR.analyticsGlobe)S.globe=window.CR.analyticsGlobe.mount(gh,{
+          onSelect:function(sel){pickPlace(sel,true);},
+          labelPoint:function(cc){var p=placeOf(cc);return p?[p[0],p[1]]:null;},
+          tooltipFor:tooltipFor,
+          onReady:function(){syncGlobe(false);}
+        });
+      }
+      if(!S.geo.places&&typeof fetch==="function")fetch("data/geo/country-label-points.json").then(function(r){return r.ok?r.json():null;}).then(function(j){S.geo.places=j&&j.points||{};paint();}).catch(function(){S.geo.places={};});
       /* The reach chart is drawn at the card's pixel width; redraw it when
          that width changes (rotation, window resize). */
-      if(!S.onResize){S.onResize=function(){clearTimeout(S.resizeTimer);S.resizeTimer=setTimeout(function(){var b=S.host&&S.host.querySelector("[data-cra-reach]");if(b&&Number(b.getAttribute("data-w"))!==Math.max(260,Math.floor(b.clientWidth||320)))drawReach();},120);};if(window.addEventListener)window.addEventListener("resize",S.onResize);}
+      if(!S.onResize){S.onResize=function(){clearTimeout(S.resizeTimer);S.resizeTimer=setTimeout(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);var b=S.host&&S.host.querySelector("[data-cra-reach]");if(b&&Number(b.getAttribute("data-w"))!==Math.max(260,Math.floor(b.clientWidth||320)))drawReach();},120);};if(window.addEventListener)window.addEventListener("resize",S.onResize);}
+if(window.ResizeObserver&&!S.deckObserver){S.deckObserver=new ResizeObserver(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);});var shellNode=document.querySelector(".cr-shell");if(shellNode)S.deckObserver.observe(shellNode);}
 if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites().then(load);},
-    refresh:function(){return loadSites().then(load);},
-    render:render,
+    loadCoverage:loadCoverage,refresh:function(){return loadSites().then(load);},
+    render:render,projection:projectionContext,clearPrivate:clearPrivate,
+    top:topHtml,
+    filters:filters,
+    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,select:pickPlace,states:stateData,stateFilters:geographicStateFilters,filterCount:filterCount},
     state:S
   };
 })();

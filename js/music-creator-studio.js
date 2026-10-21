@@ -611,6 +611,24 @@ $("trackForm").addEventListener("submit", async (e) => {
       throw new Error("Describe the underlying work and your derivative/parody rights basis.");
     }
 
+    // Validate metadata, rights and all file sizes before transferring any bytes.
+    const title = $("trackTitle").value.trim();
+    const artist = $("trackArtist").value.trim() || profile.artist_name;
+    if (!title) throw new Error("Add a song title.");
+    if (!artist) throw new Error("Add an artist name.");
+    for (const [bucket, file] of [["creator-masters", master], ["creator-previews", preview], ["creator-artwork", art]]) {
+      if (!file) continue;
+      const limit = BUCKET_MAX_BYTES[bucket];
+      if (limit && file.size > limit) {
+        throw new Error(`${file.name} is ${describeSize(file.size, true)}. Maximum: ${describeSize(limit)}.`);
+      }
+      if (!file.size) throw new Error(`${file.name} is empty. Choose a valid file.`);
+    }
+    if (!$("ownsMaster").checked) throw new Error("Confirm your rights to the master recording.");
+    if (!$("collaboratorsCleared").checked) throw new Error("Confirm collaborator permissions before submitting.");
+    const dur = await durationMs(master);
+    if (!Number.isFinite(dur) || dur <= 0) throw new Error("The master audio could not be read. Try a supported audio file.");
+
     submit.disabled = true;
     status("trackStatus", "Uploading private master…");
     const masterPath = await uploadGrant("creator-masters", master);
@@ -629,9 +647,6 @@ $("trackForm").addEventListener("submit", async (e) => {
       posterUrl = publicUrl("creator-artwork", artPath);
     }
 
-    const title = $("trackTitle").value.trim();
-    const artist = $("trackArtist").value.trim() || profile.artist_name;
-    const dur = await durationMs(master);
     const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 7);
     const rights = {
       owns_master: $("ownsMaster").checked,
@@ -764,14 +779,160 @@ $("trackForm").addEventListener("submit", async (e) => {
   }
 });
 
+/* ---------- onboarding: one click, shown only until the server says creator ---------- */
+
+const ONBOARD = window.MCC_CREATOR_ONBOARD;
+let onboardState = null;
+
+/* The two calls live in js/creator-onboarding.js (ONBOARD.client), shared with every
+   "Become a creator" door on the site: the server functions, or while they are not
+   applied the same answer built from the member's own rows, with the same two writes
+   (the picture from the member's profile included). */
+function onboardClient() {
+  return ONBOARD.client({ token: session.access_token, mUid, userId: session?.user?.id || "" });
+}
+async function creatorState() {
+  return onboardClient().state();
+}
+async function becomeCreator(input) {
+  return onboardClient().become(input);
+}
+
+function paintAvatar(el, url, name) {
+  el.replaceChildren();
+  const safe = PAGE.safeArtwork(url);
+  const initial = () => { el.textContent = (String(name || "").trim().charAt(0) || "♪").toUpperCase(); };
+  if (safe) {
+    const img = document.createElement("img");
+    img.src = safe; img.alt = ""; img.decoding = "async";
+    /* a picture that will not load (removed from storage) shows the initial, never a broken image */
+    img.onerror = () => { if (img.parentNode === el) { el.replaceChildren(); initial(); } };
+    el.append(img);
+  } else {
+    initial();
+  }
+}
+function paintOnboard(state) {
+  onboardState = state;
+  const pre = state.prefill || {};
+  const ask = ONBOARD.askFor(state);
+  const name = pre.artist_name || "";
+  const handle = pre.handle || "";
+  /* the member's own picture, the one their artist page starts with */
+  paintAvatar($("cobAvatar"), pre.avatar_url || "", name || handle);
+  $("cobName").textContent = name || "Your artist page";
+  $("cobHandle").textContent = handle ? "@" + handle : "";
+  const nameField = $("cobNameField");
+  nameField.hidden = ask.indexOf("artist_name") < 0;
+  const handleField = $("cobHandleField");
+  handleField.hidden = ask.indexOf("handle") < 0;
+  if (!handleField.hidden) {
+    const problem = state.problems && state.problems.handle;
+    if (problem) handleField.dataset.problem = problem; else delete handleField.dataset.problem;
+    if (!$("cobHandleInput").value || problem === "taken") $("cobHandleInput").value = pre.handle_suggestion || "";
+    $("cobHandleHelp").textContent = ONBOARD.handleHelp(state);
+    if (!handle && $("cobHandleInput").value) $("cobHandle").textContent = "@" + ONBOARD.normalizeHandle($("cobHandleInput").value);
+  }
+}
+function paintSummary() {
+  const box = $("creatorSummary");
+  if (!profile) { box.hidden = true; return; }
+  box.hidden = false;
+  paintAvatar($("cmeAvatar"), profile.avatar_url, profile.artist_name);
+  $("cmeName").textContent = profile.artist_name || "";
+  $("cmeHandle").textContent = "@" + (profile.handle || "") + (profile.status && profile.status !== "active" ? " · " + profile.status : "");
+  $("cmePage").href = "music-creator.html?handle=" + encodeURIComponent(profile.handle || "");
+  $("cmeEdit").href = ONBOARD.EDIT_URL;
+}
+async function showStudio(editing) {
+  $("creatorOnboard").hidden = true;
+  $("creatorApp").hidden = false;
+  /* the profile form is the EDIT screen now: shown only when asked for */
+  $("creatorIdentity").hidden = !editing;
+  await loadProfile();
+  paintSummary();
+  if (editing) {
+    $("creatorSummary").hidden = true;
+    $("creatorIdentity").scrollIntoView({ block: "start" });
+  }
+  await loadTracks();
+}
+
+$("cobForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const go = $("cobGo");
+  const say = (msg, tone) => { $("cobStatus").textContent = msg || ""; if (tone) $("cobStatus").dataset.tone = tone; else delete $("cobStatus").dataset.tone; };
+  const ask = ONBOARD.askFor(onboardState);
+  const input = {};
+  if (ask.indexOf("artist_name") >= 0) {
+    input.artist_name = $("cobNameInput").value.trim();
+    if (!input.artist_name) { say("Add your artist name.", "bad"); $("cobNameInput").focus(); return; }
+  }
+  if (ask.indexOf("handle") >= 0) {
+    input.handle = ONBOARD.normalizeHandle($("cobHandleInput").value);
+    if (!ONBOARD.validHandle(input.handle)) {
+      $("cobHandleField").dataset.problem = "invalid";
+      $("cobHandleHelp").textContent = ONBOARD.handleHelp({ problems: { handle: "invalid" } });
+      $("cobHandleInput").focus(); return;
+    }
+  }
+  go.disabled = true;
+  say("Making your page…");
+  try {
+    const state = await becomeCreator(input);
+    if (state && state.creator) {
+      if (window.MCC_TRACK) window.MCC_TRACK("creator_onboarded", { created: !!state.created });
+      say("");
+      await showStudio(false);
+      /* the analytics card asked before this member was a creator */
+      if ($("selfMusicRefresh")) $("selfMusicRefresh").click();
+      return;
+    }
+    paintOnboard(Object.assign({}, state, {
+      prefill: Object.assign({}, onboardState.prefill, state.prefill, input.artist_name ? { artist_name: input.artist_name } : {})
+    }));
+    say(state && state.problems && state.problems.handle === "taken" ? "That handle is taken. Pick another." : "Add what's missing, then try again.", "bad");
+  } catch (err) {
+    say(err.message || "Could not make your page. Try again.", "bad");
+  } finally {
+    go.disabled = false;
+  }
+});
+
+/* the card is a live preview: what they type is what their page will say */
+$("cobNameInput").addEventListener("input", () => {
+  const v = $("cobNameInput").value.trim();
+  $("cobName").textContent = v || onboardState?.prefill?.artist_name || "Your artist page";
+  paintAvatar($("cobAvatar"), onboardState?.prefill?.avatar_url || "", v);
+});
+$("cobHandleInput").addEventListener("input", () => {
+  /* the @ is drawn in the field; a typed one is dropped */
+  if ($("cobHandleInput").value.charAt(0) === "@") $("cobHandleInput").value = $("cobHandleInput").value.replace(/^@+/, "");
+  const v = ONBOARD.normalizeHandle($("cobHandleInput").value);
+  $("cobHandle").textContent = v ? "@" + v : "";
+  delete $("cobHandleField").dataset.problem;
+  $("cobHandleHelp").textContent = ONBOARD.handleHelp({});
+});
+
 (async function boot() {
   try {
     const ok = await authed();
-    if (!ok) return;
+    const state = ok ? await creatorState() : null;
+    const v = ONBOARD.view({ signedIn: ok, state, editing: ONBOARD.wantsEdit(location.search) });
+    if (v === "signin") return;
+    if (v === "onboard") {
+      /* ONE SIGN-UP (owner, 2026-10-20): a profile that is not done goes through the three pages on the World,
+         which come back here for the one tap; nothing is asked twice on this page */
+      const done = await ONBOARD.profileDone({ token: session.access_token });
+      if (done === false) { location.replace(ONBOARD.FINISH_URL); return; }
+    }
     $("creatorGate").hidden = true;
-    $("creatorApp").hidden = false;
-    await loadProfile();
-    await loadTracks();
+    if (v === "onboard") {
+      paintOnboard(state);
+      $("creatorOnboard").hidden = false;
+      return;
+    }
+    await showStudio(v === "edit");
   } catch (err) {
     $("creatorGate").hidden = false;
     $("creatorGate").querySelector("p").textContent = err.message || "Could not open Creator Studio.";
