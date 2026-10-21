@@ -26,6 +26,7 @@ import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
 import { handleRegionScope } from './world-region-feed.js';
+import { handleMemberFronts } from './member-fronts.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -100,6 +101,9 @@ export default {
 
       const archive = await handleActionArchive(request, env);
       if (archive) return archive;
+      /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
+      const fronts = await handleMemberFronts(request, env);
+      if (fronts) return fronts;
 
       const creatorSiteView = await handleCreatorSiteView(request, env);
       if (creatorSiteView) return creatorSiteView;

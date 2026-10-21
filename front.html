@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- AN ACCOUNT'S FRONT PAGE (owner, 2026-10-21: "all the accounts need to be able to recreate with their own media this
+       exact same experience ... my front page with a VR, with the scroll dependent video, all this").
+       The house's front page (index.html) as a template: the same scenes, the same ids, the same scroll engine
+       (js/main.js), the same 360 cabin (js/vr360.js), with the account's own words and media. js/front-member.js reads
+       the account's published page (GET /v1/fronts/:handle on the Worker mccluster) and hands it to the engine; in the
+       account's editor (front-studio.html) it takes the draft instead. Not indexed: the words are the account's. -->
+  <title>Front page · McCluster</title>
+  <meta name="description" content="A front page on McCluster: scroll films and a 360 room, made by its owner.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="icon" href="assets/img/m-mark.png">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    .preloader{display:none!important;opacity:0;visibility:hidden;pointer-events:none;animation:none}
+    .hero__poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
+    .hero__poster:not([src]),.hero__poster[src=""]{display:none}
+    .hero__line--accent{color:var(--ruby-hot,#e5383b)}
+    .hero__door[hidden],.front-links[hidden],.hero__line[hidden]{display:none!important}
+    html[data-front-state="loading"] main{visibility:hidden}
+    .front-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:22px auto 0;max-width:34rem;padding:0 16px}
+    .front-links a{display:inline-flex;align-items:center;min-height:48px;padding:12px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.32);background:rgba(11,9,8,.72);color:#f5efe6;font:700 15px/1.2 system-ui,sans-serif;text-decoration:none}
+    .front-links a:first-child{background:#f5efe6;color:#0b0908;border-color:#f5efe6}
+    .front-empty{display:grid;place-items:center;min-height:100vh;padding:24px 16px 120px;text-align:center;color:#f5efe6;font:16px/1.5 system-ui,sans-serif}
+    .front-empty[hidden]{display:none}
+    .front-empty h1{margin:0 0 10px;font:400 clamp(2.2rem,9vw,4rem)/1 "Anton",Impact,sans-serif;letter-spacing:.02em;text-transform:uppercase}
+    .front-empty p{margin:0 auto 18px;max-width:30rem;color:#d8cfc3}
+    .front-foot{padding:40px 16px 140px;text-align:center;color:#d8cfc3;font:14px/1.5 system-ui,sans-serif}
+    .front-foot .front-links{margin-bottom:18px}
+    .front-foot small a{color:#f5efe6}
+  </style>
+  <script src="js/live-content.js?v=__STAMP__"></script>
+</head>
+<body>
+  <div class="preloader is-done" id="preloader" hidden aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"><span id="scrollProgressBar"></span></div>
+  <div class="sound-dock">
+    <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false" hidden>
+      <span class="sound-toggle__dot"></span> Sound
+      <span class="sound-toggle__tip" aria-hidden="true">Tap for sound</span>
+    </button>
+  </div>
+
+  <!-- no page here yet (or it cannot be read): said plainly, with the way to make one -->
+  <section class="front-empty" id="frontEmpty" hidden>
+    <div>
+      <h1 id="frontEmptyTitle">No front page yet</h1>
+      <p id="frontEmptyText">This account has not published a front page.</p>
+      <div class="front-links" id="frontEmptyLinks"></div>
+    </div>
+  </section>
+
+  <main id="top">
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="hero">
+      <div class="hero__sticky">
+        <img class="hero__poster" id="frontStill" alt="" decoding="async" aria-hidden="true">
+        <canvas id="orbitCanvas" aria-label="The page's opening film"></canvas>
+        <div class="hero__vignette" aria-hidden="true"></div>
+        <div class="hero__content" data-drift style="--drift:14">
+          <p class="hero__eyebrow reveal-line"><span data-fw="eyebrow"></span></p>
+          <h1 class="hero__title" id="heroTitle">
+            <span class="hero__line" data-fw-word="title1"></span>
+            <span class="hero__line hero__line--accent" data-fw-word="title2"></span>
+          </h1>
+          <p class="hero__sub reveal-line"><span><em class="bracket">[</em> <span data-fw="sub"></span> <em class="bracket">]</em></span></p>
+          <p class="hero__doors">
+            <a class="hero__door hero__door--lead" data-fw-door="door1" href="#"><span data-fw-door-label></span> <span aria-hidden="true">&#8594;</span></a>
+            <a class="hero__door" data-fw-door="door2" href="#"><span data-fw-door-label></span> <span aria-hidden="true">&#8594;</span></a>
+          </p>
+        </div>
+        <div class="hero__hud" aria-hidden="true">
+          <div class="hud__item hud__scroll">Scroll slow <span class="hud__arrow">↓</span></div>
+          <div class="hud__item hud__reel hud__deg" id="hudDeg">000°</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ THE FILMS AND THE 360 CABIN BETWEEN THEM ============ -->
+    <section class="command" id="work">
+      <div class="command__sticky">
+        <canvas class="bg-canvas command__canvas" id="cmdCanvas5" aria-label="The page's first scroll film"></canvas>
+        <canvas class="bg-canvas command__canvas" id="cmdCanvas4" aria-label="The page's second scroll film"></canvas>
+        <div class="scrim scrim--deep" aria-hidden="true"></div>
+        <div class="workvr" id="workVR" aria-label="A 360 room. The page is held here: drag in any direction to look around, and use Land or Back to the card to leave">
+          <canvas class="workvr__canvas" id="workVRCanvas"></canvas>
+          <div class="vrbrief vrbrief--gate" id="workVRCompass" role="dialog" aria-modal="true" aria-labelledby="vrGateTitle">
+            <div class="vrbrief__card">
+              <p class="vrbrief__k" data-fw="gateKicker"></p>
+              <h3 class="vrbrief__title" id="vrGateTitle"><span data-fw="gateTitle"></span></h3>
+              <p class="vrbrief__lede" data-fw="gateLede"></p>
+              <div class="vrgate__acts" id="vrGateActs">
+                <button class="vrgate__btn vrgate__allow" id="vrGateAllow" type="button">Allow to see</button>
+                <button class="vrgate__btn vrgate__deny" id="vrGateDeny" type="button">Cancel</button>
+              </div>
+              <p class="vrgate__note" id="vrGateNote">Allow and the room is yours &mdash; drag anywhere to look around, <b>Land</b> is the way out. Cancel and you scroll straight on.</p>
+              <div class="vrgate__after" id="vrGateAfter" hidden>
+                <p class="vrgate__afterh">Cancelled &middot; the room stays blurred</p>
+                <p class="vrgate__afterp"><b>Reload the page</b> and press Allow if you want to see inside &mdash; or <b>scroll on</b> to continue.</p>
+              </div>
+            </div>
+          </div>
+          <p class="vrsign" id="workVRSign" aria-hidden="true"><b>You are now free to<br>look around</b></p>
+          <div class="workvr__side">
+            <button class="workvr__btn workvr__btn--top" id="workVRTop" type="button">
+              <svg class="workvr__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg>
+              <span>Back to the card</span>
+            </button>
+            <button class="workvr__btn workvr__btn--land" id="workVRSkip" type="button">
+              <svg class="workvr__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13"/><path d="M6 12l6 6 6-6"/></svg>
+              <span>Land</span>
+            </button>
+          </div>
+          <p class="workvr__tag" data-fw="cabinTag"></p>
+        </div>
+        <div class="work__slowhint" id="workSlowHint" aria-hidden="true">
+          <p class="work__slowhint-big">Scroll<br>Slow</p>
+          <svg class="work__slowhint-phone" viewBox="0 0 48 84">
+            <rect x="7" y="4" width="34" height="76" rx="8"/>
+            <g class="work__slowhint-swipe"><path d="M24 30v24"/><path d="M19 35l5-5 5 5"/><path d="M19 49l5 5 5-5"/></g>
+          </svg>
+        </div>
+        <div class="command__panels">
+          <article class="command__panel" data-scene="0"></article>
+          <article class="command__panel" data-scene="1"></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ THE NIGHT DESCENT, AND THE CLOSE ============ -->
+    <section class="services" id="pillars">
+      <div class="command__sticky">
+        <canvas class="bg-canvas" id="pillarsCanvas" aria-label="The page's closing scroll film"></canvas>
+        <div class="scrim scrim--deep" aria-hidden="true"></div>
+        <div class="nightroom" id="nightRoom">
+          <p class="kicker kicker--center" data-fw="nightKicker"></p>
+          <h2 class="nightroom__title" id="finaleTitle">
+            <span class="hero__line" data-fw-word="nightTitle1"></span>
+            <span class="hero__line hero__line--accent" data-fw-word="nightTitle2"></span>
+          </h2>
+          <div class="front-links" data-fw-links></div>
+        </div>
+      </div>
+      <a id="book" class="anchor-arrival" aria-hidden="true" tabindex="-1"></a>
+    </section>
+  </main>
+
+  <!-- the close again, for a page without a night film, and the way to make one's own -->
+  <footer class="front-foot" id="frontFoot">
+    <div class="front-links" data-fw-links data-fw-foot hidden></div>
+    <small><a id="frontProfile" href="mnet.html?view=feed">Profile on the World</a> &middot; <a href="front-studio.html">Make your own front page</a></small>
+  </footer>
+
+  <div class="soundask" id="soundAsk" hidden>
+    <p class="soundask__big">Turn the<br><mark>sound on</mark></p>
+    <p class="soundask__sub">This page has a soundtrack &middot; tap anywhere</p>
+    <button class="soundask__no" id="soundAskNo" type="button">Keep it silent</button>
+  </div>
+  <button class="float-pause" id="floatPause" type="button" aria-label="Pause the music" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4.5" width="4.2" height="15" rx="1.2"></rect><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2"></rect></svg>
+    <span class="float-pause__label">Pause</span>
+  </button>
+
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music"><span>Music</span></a>
+    <a class="appbar__tab" href="index.html" data-appnav="home"><img class="appbar__m" src="assets/img/m-mark.png" alt=""><span>HERE</span></a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile"><span>Profile</span></a>
+  </nav>
+
+  <!-- the page's soundtrack: the account's own, or none (js/front-member.js) -->
+  <audio id="track-whodidtheshoot" preload="none" loop></audio>
+
+  <script defer src="js/analytics.js?v=__STAMP__"></script>
+  <script defer src="js/vr360.js?v=__STAMP__"></script>
+  <script defer src="js/gyro.js?v=__STAMP__"></script>
+  <script defer src="vendor/lenis.min.js?v=__STAMP__"></script>
+  <script defer src="vendor/gsap.min.js?v=__STAMP__"></script>
+  <script defer src="vendor/ScrollTrigger.min.js?v=__STAMP__"></script>
+  <script defer src="js/parallax.js?v=__STAMP__"></script>
+  <!-- reads the account's page, fills the words in, then starts js/main.js with its media -->
+  <script defer src="js/front-member.js?v=__STAMP__"></script>
+  <script defer src="js/backend.js?v=__STAMP__"></script>
+  <script defer src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

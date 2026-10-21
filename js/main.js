@@ -62,6 +62,27 @@
     if (/^https:\/\/[^\s"'<>]+$/i.test(h)) return h;
     return /^(?![a-z][a-z0-9+.-]*:)(?!\/\/)[a-z0-9_./?#=&%-]+$/i.test(h) ? h : null;
   }
+  /* AN ACCOUNT'S MEDIA (owner, 2026-10-21: "all the accounts need to be able to recreate with their own media this exact
+     same experience"): only files in an account's own folder of the public front-media bucket (packages/front-config
+     checks the folder is the account's before anything is stored). A film is its frames, cut in the account's browser:
+     base + 0001.webp … (and sm/ for phones). */
+  var FRONT_MEDIA_RE = /^https:\/\/zmnhbrjyhxzhkxmhkexs\.supabase\.co\/storage\/v1\/object\/public\/front-media\/[0-9a-f-]{36}\/[A-Za-z0-9._\/-]+$/;
+  function frontMediaUrl(v) { return typeof v === "string" && v.length <= 400 && v.indexOf("..") < 0 && FRONT_MEDIA_RE.test(v) ? v : null; }
+  function frontFilm(x) {
+    if (!x || typeof x !== "object") return null;
+    var base = frontMediaUrl(x.base), n = x.count;
+    return base && /\/$/.test(base) && n === (n | 0) && n >= 8 && n <= 240 && (x.ext === "webp" || x.ext === "jpg") ? { base: base, count: n, ext: x.ext, sm: x.sm === true } : null;
+  }
+  function frontMedia(m) {
+    m = m && typeof m === "object" ? m : {};
+    var c = m.cabin && typeof m.cabin === "object" ? m.cabin : null, cs = c && frontMediaUrl(c.src);
+    return {
+      hero: frontFilm(m.hero), scene1: frontFilm(m.scene1), scene2: frontFilm(m.scene2), night: frontFilm(m.night),
+      cabin: cs && (c.kind === "video" || c.kind === "image") ? { src: cs, kind: c.kind, poster: frontMediaUrl(c.poster) } : null,
+      sound: m.sound && frontMediaUrl(m.sound.src) ? { src: m.sound.src } : null,
+      still: m.still && frontMediaUrl(m.still.src) ? { src: m.still.src } : null,
+    };
+  }
   function frontConfig(raw) {
     var r = raw && typeof raw === "object" ? raw : {}, D = FRONT_DEFAULT;
     var sc = r.scenes || {}, sr = r.scroll || {}, v = r.vr || {}, n = r.night || {};
@@ -77,9 +98,14 @@
       scroll: { duration: frontNum(sr.duration, 0.3, 1.8, D.scroll.duration), touchLerp: frontNum(sr.touchLerp, 0.05, 0.4, D.scroll.touchLerp) },
       vr: { enabled: frontBool(v.enabled, true), hold: frontBool(v.hold, true), band: band, yaw: frontNum(v.yaw, -180, 180, D.vr.yaw), pitch: frontNum(v.pitch, -85, 85, D.vr.pitch), spots: spots && spots.length ? spots : D.vr.spots },
       night: { arrive: frontNum(n.arrive, 0.5, 0.86, D.night.arrive) },
+      media: frontMedia(r.media),
     };
   }
-  var FRONT = frontConfig(null);
+  /* AN ACCOUNT'S OWN FRONT PAGE (front.html?u=<handle>): js/front-member.js reads the account's published page (or, in
+     its editor's preview, the draft) before this file runs and hands it over here, with the page's words already in
+     place. The same engine then runs the account's media. The house page (index.html) has no such hand-over. */
+  var MEMBER = window.MCC_FRONT_SOURCE && typeof window.MCC_FRONT_SOURCE === "object" ? window.MCC_FRONT_SOURCE : null;
+  var FRONT = frontConfig(MEMBER ? MEMBER.config : null);
   window.MCC_FRONT_DEFAULT = frontConfig(null);   // what the page does with no row: the Control Room's starting point
   var frontHooks = [];
   function frontRow() {
@@ -94,10 +120,11 @@
     document.documentElement.setAttribute("data-front", source || "shipped");
     frontHooks.forEach(function (fn) { try { fn(FRONT); } catch (e) {} });
   }
-  window.MCC_FRONT = { config: FRONT, source: "shipped" };
-  /* the Control Room's preview: a draft from the frame's parent on this origin, never from anywhere else */
+  window.MCC_FRONT = { config: FRONT, source: MEMBER ? "member" : "shipped" };
+  /* the editors' preview: a draft from the frame's parent on this origin (the house's Control Room, or an account's own
+     editor, front-studio.html), never from anywhere else */
   var framedByControl = false;
-  try { framedByControl = window.parent !== window && window.parent.location.origin === location.origin && /control\.html$/.test(window.parent.location.pathname); } catch (e) {}
+  try { framedByControl = window.parent !== window && window.parent.location.origin === location.origin && /(?:control|front-studio)\.html$/.test(window.parent.location.pathname); } catch (e) {}
 
   /* ---------------- Lenis smooth scroll ----------------
      Tuned for CONTROL: the page must feel held, not driven. A shorter
@@ -288,6 +315,22 @@
     return name === "hero" ? 1 : 2;
   }
 
+  /* which of an account's films plays in which of the page's canvases */
+  var FILM_KEYS = { hero: "hero", vauntlive: "scene1", vaunt: "scene2", nightscroll: "night" };
+  /* only on an account's page: the house page's films are its own, whatever a settings row carries */
+  function memberFilm(name) { var k = FILM_KEYS[name]; return (MEMBER && k && FRONT.media && FRONT.media[k]) || null; }
+  function frameUrl(name, i) {
+    var f = memberFilm(name);
+    if (f) return f.base + (f.sm && FRAME_DIR ? "sm/" : "") + pad4(i) + "." + f.ext;
+    return "assets/frames/" + FRAME_DIR + name + "_" + pad4(i) + ".webp";
+  }
+  /* an account's page has no manifest file: its films are its settings */
+  function memberManifest() {
+    var m = {};
+    Object.keys(FILM_KEYS).forEach(function (name) { var f = memberFilm(name); if (f) m[name] = { count: f.count }; });
+    return m;
+  }
+
   function loadSequence(seq, name, count, onProgress) {
     seq.count = count;
     var FRAME_STEP = stepFor(name);              /* shadows the global, per film */
@@ -307,7 +350,7 @@
           var img = new Image();
           /* the scroll sequences ship as webp: same frames, roughly half the
              bytes, and every engine since 2020 decodes them */
-          img.src = "assets/frames/" + FRAME_DIR + name + "_" + pad4(i) + ".webp";
+          img.src = frameUrl(name, i);
           img.onload = img.onerror = function () {
             loaded++;
             flags[i - 1] = true;
@@ -418,8 +461,8 @@
     }, "-=0.7");
   }
 
-  fetch("assets/frames/manifest.json", { cache: "no-cache" })
-    .then(function (r) { if (!r.ok) throw new Error("no manifest"); return r.json(); })
+  (MEMBER ? Promise.resolve(memberManifest()) : fetch("assets/frames/manifest.json", { cache: "no-cache" })
+    .then(function (r) { if (!r.ok) throw new Error("no manifest"); return r.json(); }))
     .then(function (m) {
       // Open on a LEAD BATCH, not the whole orbit. The hero section is 520vh
       // tall, so the viewer physically cannot scrub past the first frames
@@ -428,14 +471,16 @@
       // ticker's loadedMax clamp holds the newest decoded frame until each one
       // arrives, so the scrub never shows black. This drops the blocking load
       // from ~161 frames (~7.4 MB) to ~48 (~1.4 MB) without a half-loaded feel.
-      var full = m.hero.count;
+      var full = m.hero ? m.hero.count : 0;
       var heroGate = Math.min(48, full);
       var opened = false;
       window.__MCC_ENTER = function () {
         if (!opened) { opened = true; openSite(); }
       };
       if (enterAsked) window.__MCC_ENTER(); // a tap that landed early is honored now
-      loadSequence(sequences.hero, "hero", full, function () {
+      /* an account's page with no hero film opens on its still at once */
+      if (!full) { if (sequences.hero) sequences.hero.fallback(); opened = true; openSite(); }
+      else loadSequence(sequences.hero, "hero", full, function () {
         var ready = sequences.hero.loadedMax + 1; // contiguous frames from 0
         var gp = Math.min(1, ready / heroGate);
         var pct = gp * 100;
@@ -452,7 +497,7 @@
           var s = sequences[key];
           if (!s || !m[name]) return;
           var img = new Image();
-          img.src = "assets/frames/" + name + "_0001.jpg";
+          img.src = memberFilm(name) ? frameUrl(name, 1) : "assets/frames/" + name + "_0001.jpg";
           img.onload = function () {
             if (s.ready) return;
             var cw = s.canvas.width, ch = s.canvas.height;
@@ -884,7 +929,7 @@
   }
   frontHooks.push(function (f) {
     workVR.band = f.vr.band.slice();
-    if (!f.vr.enabled || !f.scenes.vaunt) leaveCabinQuietly();
+    if (!cabinOn()) leaveCabinQuietly();
     /* the hold turned off while someone is inside: the cabin stays on screen, the page is handed back (Codex #591) */
     else if (!f.vr.hold && holding) lockPageScroll(false);
     /* a mounted cabin takes new tags at once (its layer is cleared first: setSpots adds, it does not replace) */
@@ -902,10 +947,12 @@
     if (workVR.viewer) workVR.viewer.pause();
     lockPageScroll(false);
   }
+  /* the cabin plays when it is on, its scene is on, and (on an account's page) the account has a 360 to put in it */
+  function cabinOn() { return FRONT.vr.enabled && FRONT.scenes.vaunt && (!MEMBER || !!FRONT.media.cabin); }
   function workVRSet(p) {
     if (!workVR.el || !window.VR360) return;
     /* the owner turned the cabin off: the band is just more of the runway */
-    if (!FRONT.vr.enabled || !FRONT.scenes.vaunt) { workVR.lastP = p; return; }
+    if (!cabinOn()) { workVR.lastP = p; return; }
     /* WHO DECIDES THE CABIN IS OVER.
 
        Not the scroll: the scroll is frozen the moment you arrive. The old
@@ -940,9 +987,12 @@
     // mount well before the band so the poster is up and the film is
     // buffered by the time the look-around takes the screen
     if (!workVR.viewer && p >= 0.12) {
+      /* the house's jet, or (on an account's page only) the account's own 360, a film or a still */
+      var room = MEMBER ? FRONT.media.cabin : null;
       workVR.viewer = VR360.mount(document.getElementById("workVRCanvas"), {
-        src: "assets/video/vaunt-360.mp4", video: true, autoplay: false,
-        poster: "assets/img/vaunt-360-poster.jpg",
+        src: room ? room.src : "assets/video/vaunt-360.mp4",
+        video: room ? room.kind === "video" : true, autoplay: false,
+        poster: room ? (room.poster || undefined) : "assets/img/vaunt-360-poster.jpg",
         // open facing McCluster in his seat (measured off the equirect frame), unless the owner set another view
         yaw: FRONT.vr.yaw, pitch: FRONT.vr.pitch, touchAction: "none",
         // three tags, not five. The camera and the six-string were scenery
@@ -1770,9 +1820,11 @@
   }
   frontHooks.push(applyScenes);
   /* the saved settings: read now if live-content already has them, and again whenever it applies */
-  var saved = frontRow();
+  var saved = MEMBER ? null : frontRow();
   if (saved) setFront(saved, "saved");
+  else if (MEMBER) applyScenes(FRONT);
   window.addEventListener("mcc:content-applied", function () {
+    if (MEMBER) return;   // an account's page is its own settings, never the house's site_content rows
     if (window.MCC_FRONT && window.MCC_FRONT.source === "preview") return;   // a draft on screen outranks what is saved
     var row = frontRow();
     setFront(row, row ? "saved" : "shipped");
