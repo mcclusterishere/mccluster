@@ -34,7 +34,7 @@ export function parseBusinessEventCounts(rows, {windowed = true} = {}) {
       continue;
     }
     const value = source[field];
-    const n = typeof value === 'number' ? value : typeof value === 'string' && /^\\d+$/.test(value) ? Number(value) : NaN;
+    const n = typeof value === 'number' ? value : typeof value === 'string' && /^[0-9]+$/.test(value) ? Number(value) : NaN;
     if (!Number.isSafeInteger(n) || n < 0) throw new Error('Invalid event counter: ' + field);
     result[field] = n;
   }
