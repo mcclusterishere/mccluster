@@ -885,6 +885,8 @@
   frontHooks.push(function (f) {
     workVR.band = f.vr.band.slice();
     if (!f.vr.enabled || !f.scenes.vaunt) leaveCabinQuietly();
+    /* the hold turned off while someone is inside: the cabin stays on screen, the page is handed back (Codex #591) */
+    else if (!f.vr.hold && holding) lockPageScroll(false);
     /* a mounted cabin takes new tags at once (its layer is cleared first: setSpots adds, it does not replace) */
     if (workVR.viewer && workVR.viewer.setSpots) {
       var layer = document.querySelector("#workVR .vr360-spots");
@@ -1798,7 +1800,8 @@
     lenis.scrollTo(y, { immediate: true, force: true });
     try { ScrollTrigger.update(); } catch (e) {}
   }
-  window.__MCC_FRONT_GOTO = frontGoto; // verification handle
+  window.__MCC_FRONT_GOTO = frontGoto; // verification handles
+  window.__MCC_FRONT_HOLDING = function () { return holding; };
   } catch (err) {
     /* The whole scroll engine sits inside that try. That is the right call —
        one bad selector must not leave the page under a black gate — but a

@@ -168,6 +168,22 @@ try{
     await page.click('[data-cfp="view"]');
     await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="vr.yaw"]').value==='30',null,{timeout:8000}).catch(()=>{});
     check(scope,'"Use the preview\'s view" takes the cabin\'s current view as its opening view',await page.inputValue('[data-cfp-form] [name="vr.yaw"]')==='30'&&await page.inputValue('[data-cfp-form] [name="vr.pitch"]')==='-10');
+    /* the cabin holds the preview; turning the hold off hands the page back at once (Codex #591) */
+    await fr.waitForFunction(()=>window.__MCC_FRONT_HOLDING&&window.__MCC_FRONT_HOLDING(),null,{timeout:8000}).catch(()=>{});
+    const heldBefore=await fr.evaluate(()=>window.__MCC_FRONT_HOLDING());
+    await page.click('[data-cfp-form] [name="vr.hold"]');
+    await fr.waitForFunction(()=>!window.__MCC_FRONT_HOLDING(),null,{timeout:8000}).catch(()=>{});
+    check(scope,'turning the hold off while inside the cabin lets the page go at once',heldBefore===true&&await fr.evaluate(()=>!window.__MCC_FRONT_HOLDING()&&window.MCC_FRONT.config.vr.hold===false),{heldBefore});
+    await page.click('[data-cfp-form] [name="vr.hold"]');
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.vr.hold===true,null,{timeout:8000}).catch(()=>{});
+    /* the World at the end is a guests' scene: the preview shows it as a guest would, and its button goes there */
+    await fr.waitForFunction(()=>!document.getElementById('guestWorld').hidden,null,{timeout:8000}).catch(()=>{});
+    await page.click('[data-cfp-go="world"]');
+    await page.waitForTimeout(600);
+    const world=await fr.evaluate(()=>{const g=document.getElementById('guestWorld');return {hidden:g.hidden,h:g.offsetHeight,top:Math.round(g.getBoundingClientRect().top)};});
+    check(scope,'the preview shows the guests\' World, and the World button goes to it',!world.hidden&&world.h>0&&Math.abs(world.top)<=4,world);
+    await page.click('[data-cfp-go="cabin"]');
+    await fr.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
     await page.fill('[data-cfp-form] [name="spot.0.href"]','javascript:alert(1)');
     await page.dispatchEvent('[data-cfp-form] [name="spot.0.href"]','change');
     await page.waitForFunction(()=>document.querySelector('.cfp-spot.is-bad'),null,{timeout:8000}).catch(()=>{});

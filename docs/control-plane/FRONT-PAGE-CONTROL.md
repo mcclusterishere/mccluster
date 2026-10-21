@@ -34,6 +34,8 @@ The view lives at `control.html#create:front-page`, in `js/control-room/front-pa
 - It is a frame holding `index.html` on this origin, laid out at a phone's width (390) or a desktop's (1280) and scaled
   to fit.
 - Its buttons go to the top, the Vaunt scene, the middle of the 360 cabin, the night descent and the World.
+- The frame shares the owner's session. The World at the end is a guests' scene, so `js/guest-world.js` shows it inside
+  the preview as a guest would see it.
 - On a phone the settings sit under the preview. From 1100px they are beside it, the whole stage fits the window, and
   the settings scroll in a column of the same height.
 
@@ -70,7 +72,7 @@ The view lives at `control.html#create:front-page`, in `js/control-room/front-pa
 **Applying them.**
 - **Scroll feel** applies at once: Lenis reads its options live.
 - **The night room** applies at once.
-- **The cabin's band** applies at once.
+- **The cabin's band** applies at once. Turning the hold off while someone is inside hands the page back at once.
 - **The cabin's tags** apply at once, even in a cabin that is already open. The opening view applies the next time the
   cabin opens.
 - **A scene turned off** is taken out with `data-front-off`, an attribute only this code sets. The World's own `hidden`
