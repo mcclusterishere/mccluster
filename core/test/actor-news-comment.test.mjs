@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {actorNewsComment,validateActorComment} from '../src/executors/actor-news-comment.mjs';
+import {actorNewsComment,validateActorComment,isNewsCandidate} from '../src/executors/actor-news-comment.mjs';
 import {buildCompletionEvidence} from '../src/completion-evidence.mjs';
 const job={id:'00000000-0000-4000-8000-000000000001',org_id:'house',job_type:'actor_news_comment',target_id:'royce.r01'};
 const article={id:'00000000-0000-4000-8000-000000000002',title:'City opens new public recording studio',canonical_url:'https://news.example/studio',published_at:'2026-10-21T12:00:00Z'};
@@ -38,4 +38,14 @@ test('wrong organization and rejected reviews cannot publish',async()=>{
 });
 test('malformed, threatening, and misattributed model outputs are rejected',()=>{
  for(const data of [{comment:'Something interesting',source_article_id:'other'},{comment:'I will kill you for that',source_article_id:article.id},{comment:'Go to https://example.test now',source_article_id:article.id}])assert.throws(()=>validateActorComment(data,article.id));
+});
+
+test('profile and directory pages cannot become news reactions',()=>{
+ assert.equal(isNewsCandidate(article),true);
+ for(const candidate of [
+  {...article,title:'Derek Clarkston',canonical_url:'https://www.kmxt.org/people/derek-clarkston'},
+  {...article,canonical_url:'https://example.org/author/a-person-with-a-long-name'},
+  {...article,canonical_url:'https://example.org/marketplace/listing/purchase-clerk'},
+  {...article,canonical_url:'not a URL'},
+ ]) assert.equal(isNewsCandidate(candidate),false);
 });
