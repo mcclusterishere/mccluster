@@ -95,9 +95,11 @@ function mccCreateEventOutbox(area, clock, allowed) {
       return true;
     } catch (_) {return false;}
   }
-  function pending(limit) {
+  function pending(limit,minAgeMs) {
     if (!permitted()) {purge();return [];}
-    return live().slice(0,Math.max(1,Math.min(12,Number(limit)||12))).map(function(row){return row.event;});
+    var floor = Math.max(0,Number(minAgeMs)||0),time=clock();
+    return live().filter(function(row){return time-row.at>=floor;})
+      .slice(0,Math.max(1,Math.min(12,Number(limit)||12))).map(function(row){return row.event;});
   }
   function acknowledged(batch) {
     if (!Array.isArray(batch)) return;
@@ -425,7 +427,9 @@ window.MCC_TRACK = (function () {
   function send(batch, keepalive, replay) {
     if (!batch.length || !consentNow()) return Promise.resolve(null);
     var headers = { "Content-Type": "application/json", apikey: SB_KEY };
-    var auth = bearer();
+    // A recovered event may predate a sign-out or account switch. Never
+    // attach the current member's token to old, minimally persisted evidence.
+    var auth = replay ? null : bearer();
     if (auth) headers.Authorization = auth;
     var opts = {
       method: "POST",
@@ -476,7 +480,9 @@ window.MCC_TRACK = (function () {
   function retryOutbox() {
     if (retryingStored || !consentNow() || privacySignal() ||
         Date.now() - lastStoredRetry < 3000) return Promise.resolve(null);
-    var pending = eventOutbox.pending(BATCH);
+    // Other tabs may be in the normal 2.5s batching/transport interval.
+    // Do not preempt their full payload with this minimal recovery copy.
+    var pending = eventOutbox.pending(BATCH,15000);
     if (!pending.length) return Promise.resolve(null);
     retryingStored = true; lastStoredRetry = Date.now();
     return send(pending,false,true).finally(function(){retryingStored=false;});
