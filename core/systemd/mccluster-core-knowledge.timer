@@ -1,0 +1,9 @@
+[Unit]
+Description=Consolidate completed UTC days into McCluster private knowledge
+[Timer]
+OnCalendar=*-*-* 00:20:00 UTC
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-knowledge.service
+[Install]
+WantedBy=timers.target
