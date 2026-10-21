@@ -180,7 +180,7 @@ fi
 systemctl daemon-reload
 
 # Keep timers enabled; restart only services that already exist on this host.
-for timer in mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
+for timer in mccluster-core-actors.timer mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
   if systemctl list-unit-files "${timer}" --no-legend 2>/dev/null | grep -q "${timer}"; then
     systemctl enable --now "${timer}"
   fi

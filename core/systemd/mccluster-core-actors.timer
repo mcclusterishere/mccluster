@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule bounded McCluster platform actors
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=6h
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-actors.service
+[Install]
+WantedBy=timers.target
