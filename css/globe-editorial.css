@@ -19,6 +19,14 @@ html.globe-editorial, .globe-editorial body, .globe-editorial #globe {background
 .globe-editorial #deck,.globe-editorial .world-story,.globe-editorial #worldMembers,.globe-editorial .cctv-sheet {background:#11171c;border-color:#ffffff28;box-shadow:none;border-radius:8px;}
 .globe-editorial header a {background:#11171c;border:1px solid #ffffff28;box-shadow:none;}
 .globe-editorial.globe-surface-network .globe-editorial-tools {bottom:24px;right:8px;}
+/* the World's globe: World (back to the whole Earth) where the controls menu was, the same 44px round button in the same place
+   (a wider label would run under the page's mode tabs over the globe's bottom edge); its name is its aria-label */
+.globe-editorial .globe-editorial-world {position:fixed;bottom:24px;right:8px;z-index:12;}
+.globe-editorial .globe-editorial-world .globe-ctl {position:static;display:grid;place-items:center;width:44px;height:44px;margin:0;padding:0;border:1px solid #ffffff26;border-radius:50%;color:#e6eaee;background:#10151bd9;cursor:pointer;}
+.globe-editorial .globe-editorial-world .globe-ctl span {display:none;}
+.globe-editorial .globe-editorial-world svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4;}
+.globe-editorial .globe-editorial-world .globe-ctl:focus-visible {outline:2px solid #fff;outline-offset:2px;}
+.globe-editorial.globe-bare .globe-editorial-world,.globe-travel .globe-editorial-world {display:none;}
 .globe-editorial.globe-bare .globe-editorial-tools {display:none;}
 
 .globe-editorial.globe-surface-network #globe::before {display:none;}

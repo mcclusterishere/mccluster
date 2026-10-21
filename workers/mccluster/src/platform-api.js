@@ -46,6 +46,11 @@ async function networkActors(env,muids=[]){
   const platform=authIds.length?await service(env,`platform_profiles?user_id=in.(${authIds.join(',')})&select=user_id,mccluster_id`):[];
   const handleByUser=new Map((platform||[]).map(x=>[x.user_id,x.mccluster_id||'']));
   const handleByMuid=new Map((links||[]).map(x=>[x.m_uid,handleByUser.get(x.auth_user_id)||'']));
+  const unlinked=ids.filter(id=>!handleByMuid.get(id));
+  if(unlinked.length){
+    const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle`).catch(()=>[]);
+    for(const actor of actors||[]) handleByMuid.set(actor.m_uid,actor.handle);
+  }
   const out={};
   for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||''};
   for(const p of profiles||[]) out[p.m_uid]={...out[p.m_uid],...p,mccluster_id:handleByMuid.get(p.m_uid)||''};
@@ -88,19 +93,27 @@ async function networkBlocked(env,a,b){
   ]);
   return !!(ab?.length||ba?.length);
 }
+async function resolvePlatformActor(env,id){
+  const filter=uuidLike(id)?'m_uid=eq.'+id:'handle=eq.'+encodeURIComponent(id);
+  const actors=await service(env,'ops_platform_actors?'+filter+'&select=m_uid,handle&limit=1');
+  const actor=actors?.[0]; if(!actor)return null;
+  const profiles=await service(env,'network_profiles?m_uid=eq.'+actor.m_uid+'&select=*&limit=1');
+  const profile=profiles?.[0]; if(!profile)return null;
+  return {m_uid:actor.m_uid,profile,identity:{user_id:null,mccluster_id:actor.handle,display_name:profile.display_name,avatar_url:profile.avatar_url,actor_kind:'fictional_ai'}};
+}
 async function resolveMnetPerson(env,id){
   /* A person is named by their handle, or by their m_uid (live sessions
      and feed items carry the m_uid). */
   if(uuidLike(id)){
     const l=await service(env,`m_auth_user_links?m_uid=eq.${id}&order=is_primary.desc&select=auth_user_id&limit=1`);
-    if(!l?.length)return null;
+    if(!l?.length)return resolvePlatformActor(env,id);
     const byUser=await service(env,`platform_profiles?user_id=eq.${l[0].auth_user_id}&select=user_id,display_name,avatar_url,mccluster_id&limit=1`);
     if(!byUser?.length)return null;
     const np=await service(env,`network_profiles?m_uid=eq.${id}&select=*&limit=1`);
     return {identity:byUser[0],m_uid:id,profile:np?.[0]||null};
   }
   const p=await service(env,`platform_profiles?mccluster_id=ilike.${encodeURIComponent(id)}&select=user_id,display_name,avatar_url,mccluster_id&limit=1`);
-  if(!p?.length)return null;
+  if(!p?.length)return resolvePlatformActor(env,id);
   const links=await service(env,`m_auth_user_links?auth_user_id=eq.${p[0].user_id}&is_primary=eq.true&select=m_uid&limit=1`);
   const m_uid=links?.[0]?.m_uid;
   if(!m_uid)return null;
