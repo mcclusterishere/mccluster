@@ -27,6 +27,7 @@ test('Analytics partial-source label shows safe per-key diagnostics and does not
   assert.match(host.innerHTML,/postsTotal/);
   assert.match(host.innerHTML,/57014/);
   assert.match(host.innerHTML,/HTTP 500/);
+  assert.match(host.innerHTML,/timeout/);
   assert.match(host.innerHTML,/8111ms/);
   assert.match(host.innerHTML,/request req-test/);
   assert.doesNotMatch(host.innerHTML,/WRONG/);
