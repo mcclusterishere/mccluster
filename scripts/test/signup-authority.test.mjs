@@ -155,7 +155,8 @@ test('social sign-in follows Supabase and is never hardcoded on', async () => {
   assert.match(html, /el\("acSocialRow"\)\.hidden = !any;/,
     'the whole row hides when nothing is live');
   assert.match(html, /js\/mcc-auth\.js/, 'the page must load the client that owns the PKCE exchange');
-  assert.match(html, /location\.origin \+ "\/auth\/\?next=\/account\.html"/,
+  /* back to this page, carrying where the person started (?next, owner 2026-10-20) */
+  assert.match(html, /var back = "\/account\.html" \+ \(NEXT \? "\?next=" \+ encodeURIComponent\(NEXT\) : ""\);\n\s*MCC\.signInWithProvider\(key, location\.origin \+ "\/auth\/\?next=" \+ encodeURIComponent\(back\)\)/,
     'sign-in must return through the callback page that completes the exchange');
 });
 

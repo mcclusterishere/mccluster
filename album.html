@@ -1168,9 +1168,10 @@
         /* ?from carries the record into the intake so the listener is told
            why they are being asked. It is a marketing segment and nothing
            more: neither value grants any access, so an edited URL is worth
-           nothing. */
+           nothing. ?next brings the listener back to this record after
+           signing in, or after the sign-up's three pages. */
         var from = (row.getAttribute("data-gated-object") || "").split("/")[0];
-        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '"' +
+        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '&amp;next=' + escAttr(encodeURIComponent(location.pathname + location.search)) + '"' +
           ' aria-label="Sign in. The full song needs three verified missions and a verified identity.">' +
           '<b>FULL SONG</b><span>sign in · missions + ID</span></a>';
       } else {

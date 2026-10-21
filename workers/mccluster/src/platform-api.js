@@ -30,6 +30,14 @@ async function userRpc(req, env, name, body={}) {
   if(!res.ok) throw Object.assign(new Error(data?.message||data?.error||'RPC failed'),{status:limitStatus(data,res.status),detail:data}); return data;
 }
 async function currentMuid(env,userId){const r=await service(env,`m_auth_user_links?auth_user_id=eq.${encodeURIComponent(userId)}&is_primary=eq.true&select=m_uid&limit=1`);return r?.[0]?.m_uid||null}
+/* the member's own public profile row, read only when a profile save leaves a field out (PATCH /v1/mnet/profile) */
+const SURFACE_PROFILE_FIELDS=['display_name','headline','bio','avatar_url','banner_url','website_url'];
+async function storedSurfaceProfile(env,userId,body){
+  if(SURFACE_PROFILE_FIELDS.every((k)=>body[k]!==undefined&&body[k]!==null))return {};
+  const muid=await currentMuid(env,userId); if(!muid)return {};
+  const rows=await service(env,`network_profiles?m_uid=eq.${encodeURIComponent(muid)}&select=${SURFACE_PROFILE_FIELDS.join(',')}&limit=1`);
+  return rows?.[0]||{};
+}
 /* Characters as the database counts them (char_length counts code points),
    not UTF-16 units: an emoji is one character, not two. */
 function chars(value){return [...String(value||'')].length}
@@ -614,7 +622,13 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/profile'&&req.method==='PATCH'){
     if(external)return fail(req,env,'Profile mutation requires a McCluster user session',403); const b=await json(req);
     if(b.mccluster_id!==undefined)await userRpc(req,env,'set_mccluster_id',{p_mccluster_id:String(b.mccluster_id||'').trim()});
-    const data=await userRpc(req,env,'mnet_complete_surface_profile',{p_app_key:appKey,p_display_name:b.display_name||'',p_headline:b.headline||'',p_bio:b.bio||'',p_avatar_url:b.avatar_url||'',p_banner_url:b.banner_url||'',p_website_url:b.website_url||''}); return reply(req,env,data);
+    /* A SAVE CHANGES WHAT IT NAMES (owner, 2026-10-20). mnet_complete_surface_profile writes every column it is
+       given, '' included, and this route used to send '' for any field the client left out: the World's profile form
+       has no banner, so every save there erased the banner set from the member's front page. A field the body does
+       not carry now keeps the member's stored value; a field it carries, even '', is the member's choice. */
+    const stored=await storedSurfaceProfile(env,user.id,b);
+    const field=(k)=>b[k]!==undefined&&b[k]!==null?String(b[k]):String(stored[k]??'');
+    const data=await userRpc(req,env,'mnet_complete_surface_profile',{p_app_key:appKey,p_display_name:field('display_name'),p_headline:field('headline'),p_bio:field('bio'),p_avatar_url:field('avatar_url'),p_banner_url:field('banner_url'),p_website_url:field('website_url')}); return reply(req,env,data);
   }
   if(path==='/v1/mnet/posts'&&req.method==='POST'){
     if(external)return fail(req,env,'Post creation currently requires a McCluster user session',403);
