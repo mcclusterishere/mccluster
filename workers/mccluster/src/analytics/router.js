@@ -7,6 +7,7 @@ import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
 import { readBoundedRows, measurementContext } from './measurement.js';
+import { loadBusinessEventCounts } from './business-event-counts.js';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
@@ -548,11 +549,7 @@ export async function businessSnapshot(env, windowSpec = null) {
   const [
     postsTotal, followsTotal, reactionsTotal, profilesTotal,
     postsWindow, followsWindow, reactionsWindow, profilesWindow,
-    eventsTotal, eventsWindow, pageViewsTotal, pageViewsWindow,
-    clicksTotal, clicksWindow, acquiredTotal, acquiredWindow,
-    legacyPlaysTotal, legacyPlaysWindow, musicPlaysTotal, musicPlaysWindow,
-    previewPlaysTotal, previewPlaysWindow, fullPlaysTotal, fullPlaysWindow,
-    completesTotal, completesWindow, creatorProfilesTotal, creatorProfilesWindow,
+    eventCounts, creatorProfilesTotal, creatorProfilesWindow,
     creatorTracksTotal, creatorTracksWindow, publishedTracksTotal, activeOffersTotal,
     paidOrdersTotal, paidOrdersWindow, entitlementsTotal, entitlementsWindow, paidOrderRows
   ] = await boundedReads([
@@ -564,24 +561,7 @@ export async function businessSnapshot(env, windowSpec = null) {
     {key: 'followsWindow', run: () => since ? sbCount(env, 'network_follows', 'follower_m_uid', since, until) : Promise.resolve(null)},
     {key: 'reactionsWindow', run: () => since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null)},
     {key: 'profilesWindow', run: () => since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null)},
-    {key: 'eventsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, null, 'at')},
-    {key: 'eventsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'pageViewsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, null, 'at')},
-    {key: 'pageViewsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'clicksTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, null, 'at')},
-    {key: 'clicksWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'acquiredTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, null, 'at')},
-    {key: 'acquiredWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'legacyPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, null, 'at')},
-    {key: 'legacyPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'musicPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, null, 'at')},
-    {key: 'musicPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'previewPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, null, 'at')},
-    {key: 'previewPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'fullPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, null, 'at')},
-    {key: 'fullPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'completesTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, null, 'at')},
-    {key: 'completesWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'eventCounts', run: () => loadBusinessEventCounts((path, init) => sbJson(env, path, init), {since, until})},
     {key: 'creatorProfilesTotal', run: () => sbCount(env, 'music_creator_profiles', 'm_uid')},
     {key: 'creatorProfilesWindow', run: () => since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null)},
     {key: 'creatorTracksTotal', run: () => sbCount(env, 'creator_tracks')},
@@ -597,6 +577,27 @@ export async function businessSnapshot(env, windowSpec = null) {
     try { return await task.run(); }
     catch { readErrors[task.key] = 'Data read unavailable'; return null; }
   }), 3); // Keep owner business reads below the dashboard's concurrent RPC load.
+  // A failed aggregate leaves its family unknown; never substitute zero.
+  // The readErrors.eventCounts key identifies the single server-side read.
+  const eventCount = key => eventCounts == null ? null : eventCounts[key];
+  const eventsTotal = eventCount('events_total');
+  const eventsWindow = eventCount('events_window');
+  const pageViewsTotal = eventCount('page_views_total');
+  const pageViewsWindow = eventCount('page_views_window');
+  const clicksTotal = eventCount('clicks_total');
+  const clicksWindow = eventCount('clicks_window');
+  const acquiredTotal = eventCount('acquired_total');
+  const acquiredWindow = eventCount('acquired_window');
+  const legacyPlaysTotal = eventCount('legacy_plays_total');
+  const legacyPlaysWindow = eventCount('legacy_plays_window');
+  const musicPlaysTotal = eventCount('music_plays_total');
+  const musicPlaysWindow = eventCount('music_plays_window');
+  const previewPlaysTotal = eventCount('preview_plays_total');
+  const previewPlaysWindow = eventCount('preview_plays_window');
+  const fullPlaysTotal = eventCount('full_plays_total');
+  const fullPlaysWindow = eventCount('full_plays_window');
+  const completesTotal = eventCount('completes_total');
+  const completesWindow = eventCount('completes_window');
 
   /* Verified Stripe sales and bookings from the commerce reconciler, live
      only, net of refunds; test-mode money is reported apart (commerce/
