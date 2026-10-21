@@ -41,6 +41,18 @@ test('independent tabs cannot overwrite a shared JSON array and repeated ACKs ar
   assert.deepEqual([...a.pending(12)].map(e=>e.id),[e2.id]);
   a.acknowledged([e2]);assert.equal(a.pending(12).length,0);
 });
+test('recovery waits for the originating tab before replaying a minimal copy',()=>{
+  const storage=new FakeStorage(),time={value:100000},consent={value:true};
+  const a=unit(storage,time,consent),b=unit(storage,time,consent),e=event();
+  assert.equal(a.put(e),true);
+  assert.equal(b.pending(12,15000).length,0);
+  time.value+=16000;
+  assert.deepEqual([...b.pending(12,15000)].map(x=>x.id),[e.id]);
+});
+test('replay requests never reuse a newer member bearer token',()=>{
+  assert.match(script,/var auth = replay \? null : bearer\(\);/);
+  assert.match(script,/var pending = eventOutbox\.pending\(BATCH,15000\);/);
+});
 test('revoked consent clears all persisted events and blocks future storage',()=>{
   const storage=new FakeStorage(),time={value:100000},consent={value:true},box=unit(storage,time,consent);
   assert.equal(box.put(event()),true);
