@@ -995,6 +995,27 @@
   /* A story's place reads "City, Area, Country" (GDELT's label). It is in the picked country when its tail names that
      country: the globe's name for it, or one of the names publishers use. A substring is not enough (Guinea is not
      Papua New Guinea; Niger is not Nigeria), so the match is the whole tail after a comma, or the whole label. */
+  /* the state the globe picked: its name, and its shape as polygons [outer ring, ...holes] of [lon, lat] (checked, never trusted) */
+  function worldState(s) {
+    if (!s || typeof s.name !== "string" || !s.name.trim() || !Array.isArray(s.polygons)) return null;
+    var ok = function (ring) { return Array.isArray(ring) && ring.length >= 4 && ring.every(function (p) { return Array.isArray(p) && isFinite(p[0]) && isFinite(p[1]); }); };
+    var polygons = s.polygons.filter(function (poly) { return Array.isArray(poly) && poly.length && poly.every(ok); });
+    return polygons.length ? { key: String(s.key || "").slice(0, 60), name: s.name.trim().slice(0, 80), type: typeof s.type === "string" ? s.type.slice(0, 40) : "", polygons: polygons } : null;
+  }
+  /* is a story placed inside the picked state? Only a story with a point can be; holes (an enclave) are not the state */
+  function newsInState(n, s) {
+    var x = n && n.lon, y = n && n.lat;
+    if (typeof x !== "number" || typeof y !== "number") return false;
+    var inRing = function (ring) {
+      var inside = false;
+      for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        var xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+        if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    };
+    return s.polygons.some(function (poly) { return inRing(poly[0]) && !poly.slice(1).some(inRing); });
+  }
   function placeInCountry(place, country) {
     var aliases = {
       "united states of america": ["united states", "usa", "u.s.", "us"], "united kingdom": ["uk", "britain", "great britain", "england", "scotland", "wales", "northern ireland"],
@@ -1391,6 +1412,9 @@
       var picked = state.world.country || { name: place };
       news = place ? news.filter(function (n) { return n.country_code && picked.code ? n.country_code === picked.code : placeInCountry(n.place, picked); }) : [];
     }
+    /* a state picked on the globe: the stories placed inside it (member posts carry only their country, and stay) */
+    var pickedState = scope === "local" && state.world.country && state.world.country.state;
+    if (pickedState) news = news.filter(function (n) { return newsInState(n, pickedState); });
     if (!items.length && !news.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(
         scope === "local" && !place ? "Tap a country on the globe to see the news that mentions it. Member posts are not placed on the map yet." :
@@ -3932,9 +3956,13 @@
           tellWorld({ type: "hu:select-country", code: home });
           return;
         }
-        $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
+        /* A STATE (owner, 2026-10-21): a double tap inside the selected country picks a state; its name leads the label and
+           Local keeps the stories placed inside its shape */
+        var prevCountry = state.world.country, tappedState = worldState(d.country && d.country.state);
+        $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? (tappedState ? tappedState.name + ", " : "") + d.country.name.slice(0, 80) : "All regions";
         /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
-        state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80) } : null;
+        state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80), state: tappedState } : null;
+        var sameCountry = !!(prevCountry && state.world.country && prevCountry.code === state.world.country.code);
         if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
         paintFeedScope();
         /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
@@ -3943,7 +3971,8 @@
         var travelTap = !!(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel");
         if (state.world.country && !travelTap && state.feedScope !== "local") { state.world.scopeFromTap = true; setFeedScope("local"); }
         else if (!state.world.country && state.world.scopeFromTap) { state.world.scopeFromTap = false; setFeedScope("global"); }
-        else if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
+        /* a state of the country already read narrows what is loaded; only another country reads again */
+        else if (state.feedScope === "local" && state.placeScope.enabled && !(sameCountry && state.placeScope.country === state.world.country.code)) loadPlaceFeed(true);
         else if (state.feedScope === "local") renderFeed(false);
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);

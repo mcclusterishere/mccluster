@@ -13,7 +13,10 @@
 
    Which country a state belongs to is where its label point falls on data/geo/world-countries-10m.json, the borders the
    globe draws, so the states agree with them (Natural Earth's states file files Crimea under Russia; on the US-view
-   countries it is in Ukraine, so its line with Kherson is drawn as a line inside Ukraine).
+   countries it is in Ukraine, so its line with Kherson is drawn as a line inside Ukraine). A label point within NEAR of
+   its own country's drawn shape stays with that country: at this simplification San Marino's municipalities, Monaco,
+   Liechtenstein's and a few border villages' points sit a few hundred metres across a line, and are not Italy's, France's
+   or Switzerland's states.
 
    The level drawn is the one people call the country's states. Natural Earth's first level is that almost everywhere
    (US states, Canadian provinces, Indian states, Russian subjects …). Where it is a finer unit grouped into the
@@ -22,7 +25,14 @@
 
    Writes data/geo/world-states/<A2>.json ({c, lines}) and data/geo/world-states/index.json (each country's box, so the
    globe fetches only the countries in view). A line is whole hundredths of a degree, [x0, y0, dx1, dy1, ...], like
-   data/geo/world-borders-10m.json. */
+   data/geo/world-borders-10m.json.
+
+   And data/geo/world-state-areas/<A2>.json, for the same countries: each state as a shape with its name (owner,
+   2026-10-21: "once you've selected a country ... select a state thereafter ... double tapping the state"). The globe
+   fetches one when its country is selected, to know which state a double tap landed in. A grouped country's state is
+   its group (France's regions, England, Scotland …), made of its units' shapes, so the shape tapped is the one the lines
+   draw. Rings as in data/geo/world-countries-10m.json: open, in hundredths of a degree, each point a step from the one
+   before. */
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
@@ -31,25 +41,36 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'data/geo/admin1');
 const OUT = path.join(ROOT, 'data/geo/world-states');
+const AREAS = path.join(ROOT, 'data/geo/world-state-areas');
 /* France's departments → its regions, Italy's provinces → its regions, Spain's provinces → its autonomous communities,
    the Philippines' provinces → its regions, the United Kingdom's councils → England, Scotland, Wales, Northern Ireland … */
+/* where Natural Earth's name would read as another state: its District of Columbia is "Washington" */
+const NAMES = { 'US-DC': 'Washington, D.C.' };
 export const GROUP = { FR: 'g', IT: 'g', ES: 'g', PH: 'g', GB: 'u', SI: 'g', LV: 'g', UG: 'g', MK: 'g', AZ: 'g', MT: 'g', BF: 'g', GN: 'g', XK: 'g', MW: 'g', LK: 'g' };
 
 const C = createRequire(import.meta.url)(path.join(ROOT, 'js/world-countries.js'));
 const countries = C.decode(JSON.parse(readFileSync(path.join(ROOT, 'data/geo/world-countries-10m.json'), 'utf8')));
 const index = JSON.parse(readFileSync(path.join(SRC, 'index.json'), 'utf8'));
 
+/* degrees from a point to a country's drawn shape (its nearest edge) */
+const NEAR = 0.5;
+function segDist(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0, x = ax + t * dx - px, y = ay + t * dy - py; return Math.sqrt(x * x + y * y); }
+function distTo(f, x, y) { let m = Infinity; const g = f.geometry, polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates; for (const poly of polys) for (const r of poly) for (let i = 0; i + 1 < r.length; i++) m = Math.min(m, segDist(x, y, r[i][0], r[i][1], r[i + 1][0], r[i + 1][1])); return m; }
 const pts = (ring) => { const out = []; for (let i = 0; i + 1 < ring.length; i += 2) out.push(Math.round(ring[i] * 100) * 100000 + Math.round(ring[i + 1] * 100)); return out; };
 const X = (k) => Math.round(k / 100000), Y = (k) => k - Math.round(k / 100000) * 100000;
 const owners = [];           /* state number → { cc, group } */
+const units = new Map();     /* group → { cc, key, name, type, polys: [[ring of point keys, ...holes], ...] } */
 const edges = new Map();     /* "a|b" (a < b) → [state numbers] */
 for (const file of Object.keys(index.countries).sort()) {
-  const d = JSON.parse(readFileSync(path.join(SRC, file + '.json'), 'utf8'));
+  const d = JSON.parse(readFileSync(path.join(SRC, file + '.json'), 'utf8')), own = countries.find((f) => f.properties.a2 === d.c);
   for (const s of d.states) {
-    const here = Array.isArray(s.l) ? C.countryAt(countries, s.l[0], s.l[1]) : null;
-    const cc = (here && here.properties.a2) || d.c;
+    const here = Array.isArray(s.l) ? C.countryAt(countries, s.l[0], s.l[1]) : null, other = here && here.properties.a2;
+    const cc = other && other !== d.c && !(own && distTo(own, s.l[0], s.l[1]) < NEAR) ? other : d.c;
     const field = GROUP[cc];
     const n = owners.push({ cc, group: cc + ':' + ((field && s[field]) || s.k) }) - 1;
+    /* the state's shape, under the name the lines draw it by */
+    const unit = owners[n].group, a = units.get(unit) || units.set(unit, { cc, key: field && s[field] ? unit : s.k, name: (field && s[field]) || NAMES[s.k] || s.n || s.k, type: field && s[field] ? null : s.t || null, polys: [] }).get(unit);
+    for (const poly of s.p || []) { const rings = poly.map(pts).map((r) => (r.length > 1 && r[0] === r[r.length - 1] ? r.slice(0, -1) : r)).filter((r) => r.length >= 3); if (rings.length) a.polys.push(rings); }
     for (const poly of s.p || []) for (const ring of poly) {
       const p = pts(ring);
       for (let i = 0; i < p.length; i++) {
@@ -122,4 +143,19 @@ writeFileSync(path.join(OUT, 'index.json'), JSON.stringify({
   total_bytes: total,
   countries: out,
 }) + '\n');
-console.log(`${Object.keys(out).length} countries with state lines, ${total} bytes`);
+
+/* the states as shapes, for the countries whose lines are drawn */
+if (existsSync(AREAS)) for (const f of readdirSync(AREAS)) rmSync(path.join(AREAS, f));
+mkdirSync(AREAS, { recursive: true });
+let areaBytes = 0, areaCount = 0;
+for (const cc of Object.keys(out)) {
+  const states = [...units.values()].filter((u) => u.cc === cc && u.polys.length).sort((a, b) => a.key.localeCompare(b.key)).map((u) => {
+    let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
+    for (const poly of u.polys) for (const k of poly[0]) { const x = X(k) / 100, y = Y(k) / 100; if (x < w) w = x; if (x > e) e = x; if (y < s) s = y; if (y > n) n = y; }
+    return { properties: { key: u.key, name: u.name, type: u.type, bbox: [w, s, e, n].map((v) => Math.round(v * 100) / 100) }, p: u.polys.map((poly) => poly.map(delta)) };
+  });
+  const body = JSON.stringify({ c: cc, format: 'states: each state\'s properties (key, name, type, bbox) and p, its polygons [outer ring, ...holes]; a ring is open, in hundredths of a degree, [x0, y0, dx1, dy1, ...] (HuCountries.decode in js/world-countries.js)', states }) + '\n';
+  writeFileSync(path.join(AREAS, cc + '.json'), body);
+  areaBytes += Buffer.byteLength(body); areaCount += states.length;
+}
+console.log(`${Object.keys(out).length} countries with state lines, ${total} bytes; ${areaCount} state shapes, ${areaBytes} bytes`);

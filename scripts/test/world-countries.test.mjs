@@ -3,7 +3,7 @@
    node --test scripts/test/world-countries.test.mjs */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
@@ -216,7 +216,7 @@ test('a mission with no country code or region row is counted where its own pin 
 });
 
 test('a country picked before the missions load is applied again when they arrive', () => {
-  assert.match(read('js/world-countries.js'), /refresh: \(\) => \{ if \(st\.selected\) select\(/);
+  assert.match(read('js/world-countries.js'), /refresh: \(\) => \{ if \(!st\.selected\) return; const keepState = st\.selectedState; select\([^;]*\); if \(keepState && st\.selected\) selectState\(keepState\); \}/, 'and a state picked in it stays picked');
   /* and selecting it again before its states arrive draws them once: only the latest selection's file is drawn */
   assert.match(read('js/world-countries.js'), /const gen = \+\+st\.selectGen;[\s\S]{0,200}gen === st\.selectGen && st\.selected === code && !st\.selectedStates/);
   assert.match(read('js/action-globe.js'), /renderFeed\(\);if\(countries&&countries\.refresh\)countries\.refresh\(\);/);
@@ -230,4 +230,73 @@ test('the page hook stays small and the module mounts only off the analytics sur
   const css = read('css/world-countries.css');
   assert.doesNotMatch(css, /max-width\s*:\s*\d|@media[^{]*max-width/);
   assert.match(css, /prefers-reduced-motion:reduce/);
+});
+
+/* A STATE (owner, 2026-10-21: "once you've selected a country ... select a state thereafter, but only after selecting the
+   country already and double tapping the state"). */
+const areas = (a2) => C.decode(JSON.parse(read('data/geo/world-state-areas/' + a2 + '.json')));
+const stateAt = (a2, lon, lat) => { const f = C.countryAt(areas(a2), lon, lat); return f && f.properties; };
+
+test('every country whose state lines are drawn has its states as shapes, and nothing else does', () => {
+  const have = readdirSync(ROOT + 'data/geo/world-state-areas').filter((f) => f.endsWith('.json')).map((f) => f.slice(0, 2)).sort();
+  assert.deepEqual(have, Object.keys(states.countries).sort());
+  let total = 0;
+  for (const a2 of have) { total += statSync(ROOT + 'data/geo/world-state-areas/' + a2 + '.json').size; const d = JSON.parse(read('data/geo/world-state-areas/' + a2 + '.json')); assert.equal(d.c, a2); assert.ok(d.states.length >= 2, a2); for (const s of d.states) { assert.ok(s.properties.key && s.properties.name, a2); assert.equal(s.properties.bbox.length, 4); } }
+  assert.ok(total < 1.6e6, 'all of them, ' + total + ' bytes; one is fetched only when its country is selected');
+  assert.ok(statSync(ROOT + 'data/geo/world-state-areas/US.json').size < 60e3);
+});
+
+test('a point names the state it is in, the way the lines draw them', () => {
+  assert.equal(areas('US').length, 51, 'fifty states and the District of Columbia');
+  assert.equal(stateAt('US', -119.4, 37.2).key, 'US-CA');
+  assert.equal(stateAt('US', -119.4, 37.2).name, 'California');
+  assert.equal(stateAt('US', -119.4, 37.2).type, 'State');
+  assert.equal(stateAt('US', -99.3, 31.4).name, 'Texas');
+  assert.equal(stateAt('US', -77.03, 38.9).name, 'Washington, D.C.', 'not "Washington", which is a state');
+  assert.equal(stateAt('US', -120.5, 47.4).name, 'Washington');
+  assert.equal(stateAt('US', -150, 64).name, 'Alaska');
+  assert.equal(stateAt('CA', -85, 50).name, 'Ontario');
+  assert.equal(stateAt('CA', -85, 50).type, 'Province');
+  /* a grouped country: the state is the group the lines draw (France's regions, England, Scotland …) */
+  assert.equal(stateAt('FR', 2.35, 48.85).name, 'Île-de-France');
+  assert.equal(stateAt('GB', -1.5, 52.5).name, 'England');
+  assert.equal(stateAt('GB', -4.2, 56.8).name, 'Scotland');
+  assert.equal(areas('GB').length, 4);
+  assert.equal(stateAt('DE', 11.5, 48.8).name, 'Bavaria');
+  /* where the stories are placed: Crimea is in Ukraine on the US-view map, and its state is Ukraine's */
+  assert.equal(stateAt('UA', 34.1, 45.3).name, 'Autonomous Republic of Crimea');
+  assert.equal(stateAt('US', 0, 0), null);
+});
+
+test('a small country\'s units stay its own: Italy has twenty regions and no San Marino, France no Monaco', () => {
+  const it = areas('IT').map((f) => f.properties.name);
+  assert.equal(it.length, 20, it.join(', '));
+  for (const sm of ['Domagnano', 'Faetano', 'Fiorentino', 'Montegiardino', 'Serravalle']) assert.ok(!it.includes(sm), sm);
+  assert.ok(!areas('FR').some((f) => f.properties.name === 'Monaco'));
+  assert.ok(!areas('CH').some((f) => ['Balzers', 'Triesen'].includes(f.properties.name)));
+  assert.ok(areas('SM').length >= 2, 'San Marino keeps its municipalities');
+});
+
+test('a double tap is two taps within the gap and a thumb\'s width', () => {
+  const a = { t: 1000, x: 100, y: 100 };
+  assert.equal(C.isDoubleTap(a, { t: 1000 + C.TAP_GAP, x: 110, y: 95 }), true);
+  assert.equal(C.isDoubleTap(a, { t: 1001 + C.TAP_GAP, x: 100, y: 100 }), false, 'too slow');
+  assert.equal(C.isDoubleTap(a, { t: 1100, x: 100 + C.TAP_SLOP + 1, y: 100 }), false, 'too far apart');
+  assert.equal(C.isDoubleTap(null, a), false);
+  assert.equal(C.isDoubleTap(a, { t: 900, x: 100, y: 100 }), false);
+});
+
+test('only a double tap in the country already selected picks a state', () => {
+  const js = read('js/world-countries.js');
+  assert.match(js, /if \(isDoubleTap\(first, tap\)\) \{ if \(first\.inSelected\) pickState\(first\.lon, first\.lat\); return true; \}/, 'the tap that selected a country never arms a state');
+  assert.match(js, /if \(code === st\.selected\) \{[\s\S]{0,400}st\.tap = Object\.assign\(tap, \{ inSelected: true, lon, lat \}\);/);
+  assert.match(js, /select\(f\);\n\s*st\.tap = tap;/, 'a tap that selects a country is remembered unarmed');
+  /* a single tap inside the country still answers, once the gap has passed */
+  assert.match(js, /setTimeout\(\(\) => \{[\s\S]{0,400}if \(st\.selectedState\) selectState\(null\); else \{ select\(null\);/);
+  /* taps are timed by their own events, so a busy frame cannot split a double tap in two */
+  assert.match(js, /addEventListener\('pointerdown', \(e\) => \{ if \(e\.isPrimary\) st\.down = \{ t: e\.timeStamp \}; \}, true\)/);
+  assert.match(js, /if \(st\.down && st\.down\.t - tap\.t <= TAP_GAP\) return;/);
+  assert.match(js, /selectState\(st\.selectedState && st\.selectedState\.properties\.key === sf\.properties\.key \? null : sf\)/, 'the picked state again goes back to the country');
+  /* the page is told the state with its shape */
+  assert.match(js, /state: sp \? \{ key: sp\.key, name: sp\.name, type: sp\.type \|\| null, polygons: polygonsOf\(sf\) \} : null/);
 });
