@@ -1,4 +1,4 @@
--- Behaviour tests for supabase/pending/music_creator_one_click_v1.sql, as the
+-- Behaviour tests for supabase/migrations/20261021050105_music_creator_one_click_v1.sql, as the
 -- real API roles with the JWT claims Supabase would set. Runs against a
 -- scratch database (scripts/test-music-creator-db.sh). Every check raises on
 -- failure.

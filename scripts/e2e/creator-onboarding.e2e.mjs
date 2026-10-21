@@ -2,7 +2,7 @@
    ============================================================
    Creator Studio (creator.html) at 390px and 1280px against a faked
    Supabase whose two onboarding RPCs follow the same rules as
-   supabase/pending/music_creator_one_click_v1.sql (built here from
+   supabase/migrations/20261021050105_music_creator_one_click_v1.sql (built here from
    js/creator-onboarding.js, which the SQL behaviour test pins to the same
    answers). Nothing touches production.
 

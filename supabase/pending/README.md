@@ -111,7 +111,7 @@ run by `scripts/test-policy-fellowship-db.sh` on a scratch Postgres. Design,
 decisions and the apply checklist: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
 Promote using the steps above after the owner approves it.
 
-Pending: `music_creator_one_click_v1.sql` makes creator onboarding one click
+Promoted: `supabase/migrations/20261021050105_music_creator_one_click_v1.sql` makes creator onboarding one click
 (owner, 2026-10-15). `music_creator_state()` is the server-truth show-condition
 for Creator Studio (a member with a `music_creator_profiles` row never sees the
 onboarding again); `music_become_creator(p_handle, p_artist_name,
@@ -119,16 +119,15 @@ p_accept_terms)` builds the profile from data the member already gave (public
 name, M handle, bio, https site), asks only for a missing name or handle, and
 inserts the profile and links `identity_presentations.music_enabled` in one
 transaction. Idempotent; overwrites nothing. Signed-in members only (not anon).
-Until it is applied, Creator Studio builds the same answer in the browser
+For older deployments without the RPCs, Creator Studio can build the same answer in the browser
 (`js/creator-onboarding.js`). Behaviour tests:
 `supabase/tests/music_creator_one_click.behaviour.sql`, run by
 `scripts/test-music-creator-db.sh` on a scratch Postgres. Rollback is in the
-file header. Promote with the steps above. Since 2026-10-20 (one sign-up:
+file header. Since 2026-10-20 (one sign-up:
 "never re-enter what the profile has") it also copies the member's https
 profile picture (`network_profiles.avatar_url`) into the new creator profile
 and returns it as `prefill.avatar_url`, so every "Become a creator" door on the
-site is one tap; the browser fallback does the same. Still pending: nothing
-here is applied to production by that change.
+site is one tap; the browser fallback does the same. Applied in production as `20261021050105_music_creator_one_click_v1` on 2026-10-21; stored SQL matches the source exactly.
 
 Promoted: `anon_policy_scope_v1.sql` is
 `supabase/migrations/20261016031123_anon_policy_scope_v1.sql` (applied
