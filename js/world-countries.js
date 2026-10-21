@@ -243,11 +243,13 @@
       card.hidden = false;
       return n;
     }
-    /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it) */
-    function told(f, n, sf) {
+    /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it).
+       stateOnly marks a state picked or let go inside the same country, so a listener that acts on a new country (Travel's
+       destination) leaves what it has */
+    function told(f, n, sf, stateOnly) {
       if (!f) return null;
       const sp = sf && sf.properties;
-      return { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, state: sp ? { key: sp.key, name: sp.name, type: sp.type || null, polygons: polygonsOf(sf) } : null };
+      return { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, state: sp ? { key: sp.key, name: sp.name, type: sp.type || null, polygons: polygonsOf(sf) } : null, stateOnly: !!stateOnly };
     }
     function dropState() { for (const k of ['stateFill', 'stateOutline']) if (st[k]) { viewer.scene.primitives.remove(st[k]); st[k] = null; } st.selectedState = null; }
     function selectState(sf) {
@@ -260,7 +262,7 @@
         st.stateOutline = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: ringInstances(sf, 'hu-state-selected', BORDER.width, INK.withAlpha(0.95)), appearance: new C.PolylineColorAppearance({ translucent: true }), asynchronous: false }));
       }
       const n = paintCard(f, sf);
-      if (o.onSelect) o.onSelect(told(f, n, sf));
+      if (o.onSelect) o.onSelect(told(f, n, sf, true));
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
     }
     /* the state under a double tap in the selected country; the picked state again goes back to the whole country */

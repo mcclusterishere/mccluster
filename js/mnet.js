@@ -3963,7 +3963,8 @@
         /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
         state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80), state: tappedState } : null;
         var sameCountry = !!(prevCountry && state.world.country && prevCountry.code === state.world.country.code);
-        if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
+        /* a post stays placed in the country, so a state picked or let go there keeps the member's choice */
+        if ($("mnPostPlaceOptIn") && !sameCountry) $("mnPostPlaceOptIn").checked = false;
         paintFeedScope();
         /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
            that country with no extra press; letting the country go returns the feed to Global, unless the member chose
