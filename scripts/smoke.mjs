@@ -178,7 +178,8 @@ try {
     ["mnet.html", async (p) => {
       check("mnet: social shell exists", await p.locator("#mnFeed").count() === 1 &&
         await p.locator("#mnProfileGate").count() === 1 &&
-        await p.locator("#mnNotificationsView").count() === 1);
+        /* notifications drop down from the bell (owner, 2026-10-20), not a page */
+        await p.locator("#mnAlerts").count() === 1 && await p.locator("#mnNotificationsView").count() === 0);
       check("mnet: signed-out door is password auth", await p.locator("#mnPassword").count() === 1 &&
         await p.locator("#mnAuthGo").count() === 1 && await p.locator("#mnCreateTab").count() === 1);
       check("mnet: forgot-password recovery is present", await p.locator("#mnForgot").count() === 1 &&

@@ -77,6 +77,34 @@ function policyEvidence(job, output) {
   const records = [];
 
   switch (type) {
+    case 'actor_live_comment': {
+      requireValue(job, output.actor_key === job.target_id, 'live actor must match job');
+      if (output.published === true) {
+        requireValue(job, Boolean(text(output.publication_id)) && Boolean(text(output.comment_id)), 'live publication requires durable receipt');
+        records.push({kind:'live_actor_comment',publication_id:output.publication_id,comment_id:output.comment_id});
+      } else {
+        requireValue(job, output.published === false && ['inactive_or_stale','review_withheld'].includes(output.reason), 'live actor skip needs reason');
+        records.push({kind:'bounded_noop',reason:output.reason});
+      }
+      break;
+    }
+    case 'actor_news_comment': {
+      requireValue(job, text(output.actor_key) === text(job.target_id), 'actor receipt must match job');
+      if (output.published === true) {
+        requireValue(job, Boolean(text(output.publication_id)) && Boolean(text(output.comment_id)), 'published actor work requires durable publication and comment receipts');
+        records.push({ kind: 'platform_comment', publication_id: output.publication_id, comment_id: output.comment_id, article_id: output.article_id, actor_key: output.actor_key });
+      } else {
+        requireValue(job, output.published === false && ['actor_paused','daily_limit','no_recent_article','already_commented'].includes(output.reason), 'actor skip must have a bounded reason');
+        records.push({kind:'bounded_noop',reason:output.reason,actor_key:output.actor_key});
+      }
+      break;
+    }
+    case 'ai_diagnostics': {
+      requireValue(job, Boolean(text(output.installed?.ollama_version)) && Boolean(text(output.installed?.digest)), 'AI diagnostics require an installed version and model digest');
+      if (job.input?.benchmark === true) requireValue(job, output.benchmarks?.length === 4 && output.benchmarks.every(sample => sample.exact_match && Number(sample.usage?.total_duration_ns) > 0), 'AI benchmarks require four correct timed results');
+      records.push({ kind: 'runtime_measurement', model: output.installed.model, digest: output.installed.digest, ollama_version: output.installed.ollama_version, benchmark_samples: output.benchmarks?.length || 0 });
+      break;
+    }
     case 'repo_health': {
       requireValue(job, SHA40.test(text(output.head)), 'repo_health must report an exact 40-character HEAD SHA');
       if (output.origin_main) requireValue(job, SHA40.test(text(output.origin_main)), 'origin_main must be an exact 40-character SHA when present');

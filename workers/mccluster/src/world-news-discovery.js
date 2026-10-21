@@ -46,33 +46,38 @@
    layers in world-layers.js once the World's layer access (#442) lands. */
 import { reply, fail } from './lib/http.js';
 import { fetchNoCrossHostRedirect } from './lib/safe-fetch.js';
+import { isoFromGdelt, gdeltCodesFor } from './intel/news-country-codes.js';
+import { placeScopeEnabled } from './world-region-feed.js';
 
 export const GDELT_LASTUPDATE = 'https://data.gdeltproject.org/gdeltv2/lastupdate.txt';
 export const GDELT_HOSTS = Object.freeze(['https://data.gdeltproject.org/gdeltv2/', 'https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/']);
 export const NEWS_ATTRIBUTION = Object.freeze({ name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' });
 export const NEWS_PATH = '/v1/world/news';
+export const NEWS_HEAT_PATH = '/v1/world/news-heat';
 const GDELT_ALLOWED_HOSTS = Object.freeze(['data.gdeltproject.org', 'storage.googleapis.com']);
 
-const PER_FILE = 100;
+const PER_FILE = 1000;
 const PER_DOMAIN = 3;
 const BACKFILL_SLOTS = 4;
 const FILES_PER_TICK = 2;
 const FETCH_TIMEOUT_MS = 25000;
 const MAX_ZIP_BYTES = 24 * 1024 * 1024;
 const MAX_AGE_HOURS = 72;
-const KEEP_DAYS = 7;
+const KEEP_DAYS = 30;
 const FILE_RE = /^[0-9]{14}\.gkg\.csv\.zip$/;
 const NCOLS = 27;
 const COL = Object.freeze({ ID: 0, DATE: 1, COLLECTION: 2, DOMAIN: 3, URL: 4, THEMES: 7, LOCATIONS: 10, TONE: 15, IMAGE: 18, TRANSLATION: 25, EXTRAS: 26 });
 const RECORD_START = /^[0-9]{14}-T?[0-9]+\t/;
 
 /* ---------- the screens ---------- */
-/* press-release wires, wire-copy mirrors, automated stock-ticker mills and digests, seen in GDELT's own files */
+/* press-release wires, wire-copy mirrors, automated stock-ticker mills and digests, seen in GDELT's own files; and our own hosts */
 export const BLOCKED_DOMAINS = Object.freeze(new Set([
   'prnewswire.com', 'globenewswire.com', 'businesswire.com', 'einpresswire.com', 'accessnewswire.com', 'accesswire.com',
   'newswiretoday.com', 'massachusettsnewswire.com', 'standardnewswire.com', 'newsfilecorp.com', 'openpr.com', 'prweb.com',
   'prlog.org', 'odwyerpr.com', 'finanznachrichten.de', 'tickerreport.com', 'themarketsdaily.com', 'dailypolitical.com',
-  'marketbeat.com', 'americanbankingnews.com', 'etfdailynews.com', 'miragenews.com', 'homelandsecuritynewswire.com', 'naslovi.net'
+  'marketbeat.com', 'americanbankingnews.com', 'etfdailynews.com', 'miragenews.com', 'homelandsecuritynewswire.com', 'naslovi.net',
+  /* our own hosts: an article from the newsroom (company-site/news.js) is already a post in the World, never outside news */
+  'mccluster.org', 'humanuprise.com'
 ]));
 const TICKER_TITLE = [/\((NASDAQ|NYSE|NYSEARCA|NYSEAMERICAN|NYSEMKT|OTCMKTS|OTC|TSE|TSX|TSXV|LON|LSE|ASX|NSE|BOM|ETR|FRA|CVE):[A-Z0-9.\-]+\)/, /\$[A-Z]{1,5} Stock/, /Shares (Sold|Bought|Acquired) by/i, /Stock Position (Raised|Lowered|Increased|Decreased)/i];
 /* always out, whatever the title says */
@@ -377,6 +382,21 @@ export async function serviceRpc(env, name, args, fetchImpl = fetch) {
   if (!res.ok) throw Object.assign(new Error((data && data.message) || `${name} ${res.status}`), { status: res.status, code: data && data.code });
   return data;
 }
+/* Each story's country, as ISO 3166-1, from GDELT's FIPS code (media_world_news predates the column, so this is the same
+   service read the country feed makes). The page names the country on the story's chip and matches it when a country is
+   picked; FIPS never leaves the Worker ("RS" is Russia in FIPS and Serbia in ISO). A failure leaves the stories without it. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function storyCountries(env, ids, fetchImpl) {
+  const want = ids.filter((id) => UUID_RE.test(id));
+  if (!want.length) return new Map();
+  try {
+    const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/media_news_articles?select=id,location_country_fips&id=in.(${want.join(',')})`, {
+      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
+    });
+    const rows = res.ok ? JSON.parse(body || '[]') : [];
+    return new Map((Array.isArray(rows) ? rows : []).map((r) => [String(r.id), isoFromGdelt(r.location_country_fips)]));
+  } catch { return new Map(); }
+}
 const notProvisioned = (e) => e && (e.status === 404 || e.code === 'PGRST202' || e.code === '42883');
 
 /* ---------- the cron ---------- */
@@ -476,13 +496,102 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
     if (!configured) return { unavailable: true };
     try {
       const rows = await serviceRpc(env, 'media_world_news', { p_before_at: cursor ? cursor.at : null, p_before_id: cursor ? cursor.id : null, p_limit: limit }, fetchImpl);
-      const items = (Array.isArray(rows) ? rows : []).map((r) => ({
+      const list = Array.isArray(rows) ? rows : [];
+      const countries = await storyCountries(env, list.map((r) => String(r.id)), fetchImpl);
+      const items = list.map((r) => ({
         id: String(r.id), title: String(r.title || ''), url: String(r.url || ''), domain: String(r.domain || ''), seen_at: iso(r.seen_at),
-        place: r.place ? String(r.place) : null, lat: num(r.lat), lon: num(r.lon)
+        place: r.place ? String(r.place) : null, lat: num(r.lat), lon: num(r.lon), country: countries.get(String(r.id)) || null
       })).filter((n) => n.title && /^https?:\/\//.test(n.url) && n.seen_at);
       const last = items[items.length - 1];
       return { items, next_before: items.length === limit && last ? `${last.seen_at}~${last.id}` : null };
     } catch { return { unavailable: true }; }
   });
   return answer(request, env, { ok: true, items: data.items || [], next_before: data.next_before || null, attribution: NEWS_ATTRIBUTION, ...(data.unavailable ? { unavailable: true } : {}) }, 60);
+}
+
+/* ---------- the heat map ----------
+   Owner, 2026-10-21: "instead of pins on the map ... aggregate each mention of a state or country with a heat map of how
+   many articles or mentions it has". GET /v1/world/news-heat counts the stories of the last HEAT_HOURS by the country each
+   one mentions (ISO 3166-1, from GDELT's FIPS, as the feed names it). With ?country=XX it gives that country's stories as
+   places instead, counted on a HEAT_CELL grid, so the globe can count them by state with the state shapes it already has.
+   Only counts and rounded places leave here: no title, link or id. It reads our own table, a page at a time up to
+   HEAT_PAGES (capped says when there were more), is kept five minutes per data centre, and answers 200 with nothing when
+   the database cannot.
+   THE COUNTRY CARD (owner, 2026-10-21: "how many users are from there, and like how many news articles are from there right
+   now ... how many posts from users are there"): the whole-world answer also carries posts, the public, top-level member posts
+   their authors placed in each country (the place scope's opt-in, network_posts.country_code). That column exists only once
+   the place scope is switched on (WORLD_PLACE_SCOPE_ENABLED); until then posts is null, never a made-up zero. Members are
+   not counted here: the only consented count is action_globe_public_regions (five or more per region), which the globe
+   already reads. */
+const HEAT_HOURS = 24, HEAT_PAGE = 1000, HEAT_PAGES = 15, HEAT_CELL = 0.05, POST_PAGES = 5;
+/* public, top-level, standing member posts placed in each country; null while the place scope is off or unreadable */
+async function placedPosts(env, fetchImpl) {
+  if (!placeScopeEnabled(env)) return null;
+  try {
+    const params = new URLSearchParams({ select: 'country_code', country_code: 'not.is.null', visibility: 'eq.public', deleted_at: 'is.null', removed_at: 'is.null', reply_to_id: 'is.null', group_id: 'is.null', order: 'id.asc', limit: String(HEAT_PAGE) });
+    /* more placed posts than the pages read is not a count: it answers null (a dash), never a part passed off as a total */
+    const out = {};
+    for (let page = 0; ; page++) {
+      if (page === POST_PAGES) return null;
+      params.set('offset', String(page * HEAT_PAGE));
+      const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/network_posts?${params}`, {
+        headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
+      });
+      if (!res.ok) return null;
+      const got = JSON.parse(body || '[]');
+      if (!Array.isArray(got)) return null;
+      for (const r of got) { const c = r && typeof r.country_code === 'string' && /^[A-Z]{2}$/.test(r.country_code) ? r.country_code : null; if (c) out[c] = (out[c] || 0) + 1; }
+      if (got.length < HEAT_PAGE) break;
+    }
+    return out;
+  } catch { return null; }
+}
+export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cacheImpl = null, now = () => Date.now() } = {}) {
+  const url = new URL(request.url);
+  if ((url.pathname.replace(/\/+$/, '') || '/') !== NEWS_HEAT_PATH) return null;
+  if (request.method !== 'GET' && request.method !== 'HEAD') return fail(request, env, 'Method not allowed', 405);
+  const raw = url.searchParams.get('country');
+  if (raw !== null && !/^[A-Z]{2}$/.test(raw)) return fail(request, env, 'country must be an ISO 3166-1 alpha-2 code', 400);
+  const country = raw, configured = env && env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY;
+  /* the window moves on with the cache: one key per five minutes */
+  const slot = Math.floor(now() / 300e3);
+  const key = `https://cache.mccluster.internal/world/news-heat?country=${country || ''}&slot=${slot}`;
+  const data = await keptOrFetched(cacheImpl, key, 300e3, async () => {
+    if (!configured) return { unavailable: true };
+    try {
+      const since = new Date(slot * 300e3 - HEAT_HOURS * 3600e3).toISOString();
+      const fips = country ? gdeltCodesFor(country) : [];
+      const params = new URLSearchParams({ select: country ? 'headline_latitude,headline_longitude' : 'location_country_fips', ingestion_provider: 'eq.gdelt_gkg_v2', published_at: 'gte.' + since, order: 'id.asc', limit: String(HEAT_PAGE) });
+      if (country) params.set('location_country_fips', fips.length > 1 ? 'in.(' + fips.join(',') + ')' : 'eq.' + fips[0]);
+      const rows = [];
+      for (let page = 0; page < HEAT_PAGES; page++) {
+        params.set('offset', String(page * HEAT_PAGE));
+        const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/media_news_articles?${params}`, {
+          headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error('news heat ' + res.status);
+        const got = JSON.parse(body || '[]');
+        if (!Array.isArray(got)) throw new Error('news heat: not a list');
+        rows.push(...got);
+        if (got.length < HEAT_PAGE) break;
+      }
+      const capped = rows.length >= HEAT_PAGE * HEAT_PAGES;
+      if (!country) {
+        const countries = {};
+        let total = 0;
+        for (const r of rows) { const c = isoFromGdelt(r && r.location_country_fips); if (!c) continue; countries[c] = (countries[c] || 0) + 1; total++; }
+        return { countries, total, capped, posts: await placedPosts(env, fetchImpl) };
+      }
+      const cells = new Map();
+      let total = 0;
+      for (const r of rows) {
+        const lat = num(r && r.headline_latitude), lon = num(r && r.headline_longitude);
+        if (lat === null || lon === null || Math.abs(lat) > 90 || Math.abs(lon) > 180 || (lat === 0 && lon === 0)) continue;
+        const x = Math.round(lon / HEAT_CELL) * HEAT_CELL, y = Math.round(lat / HEAT_CELL) * HEAT_CELL, k = x.toFixed(2) + '|' + y.toFixed(2);
+        cells.set(k, (cells.get(k) || 0) + 1); total++;
+      }
+      return { country, cells: [...cells].map(([k, n]) => { const [x, y] = k.split('|').map(Number); return [x, y, n]; }), total, capped };
+    } catch { return { unavailable: true }; }
+  });
+  return answer(request, env, { ok: true, window_hours: HEAT_HOURS, cell_degrees: country ? HEAT_CELL : undefined, ...data, attribution: NEWS_ATTRIBUTION }, 300);
 }

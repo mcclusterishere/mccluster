@@ -1,8 +1,17 @@
 /* Privacy gate enforcement: no McCluster analytics, device/session IDs,
    service-worker registration or location reads begin until the current site-entry
-   notice has been acknowledged. The policy page itself can still be read. */
+   notice has been AGREED to. Having only seen it ("Not now") is not enough.
+   The policy page itself can still be read.
+   js/live-content.js owns the notice, its version and every record of the
+   answer (browser storage, the cookie McCluster's own hosts share, a member's
+   account record), so this asks it whenever the page loads it. The fallback
+   below is for the few pages that load this file alone; the version here must
+   stay equal to live-content.js's (workers/mccluster/test/world-cctv.test.mjs). */
 var MCC_PRIVACY_REQUIRED_VERSION = "2026-10-19";
 function mccPrivacyAcknowledged() {
+  try {
+    if (window.MCC_PRIVACY && typeof window.MCC_PRIVACY.accepted === "function") return !!window.MCC_PRIVACY.accepted();
+  } catch (_) {}
   try {
     var v = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
     if (v && v.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
@@ -11,9 +20,11 @@ function mccPrivacyAcknowledged() {
     var s = JSON.parse(sessionStorage.getItem("mcc_privacy_ack") || "null");
     if (s && s.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
   } catch (_) {}
-  return document.cookie.split(";").some(function (part) {
-    return part.trim() === "mcc_privacy_ack=" + MCC_PRIVACY_REQUIRED_VERSION;
-  });
+  try {
+    return String(document.cookie || "").split(";").some(function (part) {
+      return part.trim() === "mcc_privacy_ack=" + MCC_PRIVACY_REQUIRED_VERSION;
+    });
+  } catch (_) { return false; }
 }
 if (mccPrivacyAcknowledged()) {
 /* ============================================================
@@ -66,6 +77,15 @@ if ("serviceWorker" in navigator) {
   })();
   window.addEventListener("load", function () {
     navigator.serviceWorker.register(swRoot + "sw.js").catch(function () {});
+  });
+  /* SIGNING OUT TAKES THE DEVICE ALERTS WITH IT (owner, 2026-10-20; workers/mccluster/src/web-push.js). On a shared
+     browser the next person must never see the last member's alerts: the subscription is dropped here, and the
+     server forgets it the next time its push service answers that it is gone. */
+  window.addEventListener("mcc:auth-changed", function (e) {
+    if (!e.detail || e.detail.signed_in !== false) return;
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      return reg && reg.pushManager ? reg.pushManager.getSubscription() : null;
+    }).then(function (sub) { if (sub) return sub.unsubscribe(); }).catch(function () {});
   });
 }
 

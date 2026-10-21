@@ -1,4 +1,7 @@
 import { fail, reply } from './lib/http.js';
+import { approveNewsroomRevision, hasNewsroomApproval, newsroomPostId } from './newsroom-review.js';
+import { isCountry } from './intel/news-country-codes.js';
+import { pushEnabled, validSubscription, runPushCycle } from './web-push.js';
 
 const encoder = new TextEncoder();
 
@@ -27,6 +30,14 @@ async function userRpc(req, env, name, body={}) {
   if(!res.ok) throw Object.assign(new Error(data?.message||data?.error||'RPC failed'),{status:limitStatus(data,res.status),detail:data}); return data;
 }
 async function currentMuid(env,userId){const r=await service(env,`m_auth_user_links?auth_user_id=eq.${encodeURIComponent(userId)}&is_primary=eq.true&select=m_uid&limit=1`);return r?.[0]?.m_uid||null}
+/* the member's own public profile row, read only when a profile save leaves a field out (PATCH /v1/mnet/profile) */
+const SURFACE_PROFILE_FIELDS=['display_name','headline','bio','avatar_url','banner_url','website_url'];
+async function storedSurfaceProfile(env,userId,body){
+  if(SURFACE_PROFILE_FIELDS.every((k)=>body[k]!==undefined&&body[k]!==null))return {};
+  const muid=await currentMuid(env,userId); if(!muid)return {};
+  const rows=await service(env,`network_profiles?m_uid=eq.${encodeURIComponent(muid)}&select=${SURFACE_PROFILE_FIELDS.join(',')}&limit=1`);
+  return rows?.[0]||{};
+}
 /* Characters as the database counts them (char_length counts code points),
    not UTF-16 units: an emoji is one character, not two. */
 function chars(value){return [...String(value||'')].length}
@@ -43,10 +54,45 @@ async function networkActors(env,muids=[]){
   const platform=authIds.length?await service(env,`platform_profiles?user_id=in.(${authIds.join(',')})&select=user_id,mccluster_id`):[];
   const handleByUser=new Map((platform||[]).map(x=>[x.user_id,x.mccluster_id||'']));
   const handleByMuid=new Map((links||[]).map(x=>[x.m_uid,handleByUser.get(x.auth_user_id)||'']));
+  const actorIds=new Set();
+  const unlinked=ids.filter(id=>!handleByMuid.get(id));
+  if(unlinked.length){
+    const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle`).catch(()=>[]);
+    for(const actor of actors||[]) {handleByMuid.set(actor.m_uid,actor.handle);actorIds.add(actor.m_uid);}
+  }
   const out={};
-  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||''};
+  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||'',is_ai:actorIds.has(id)};
   for(const p of profiles||[]) out[p.m_uid]={...out[p.m_uid],...p,mccluster_id:handleByMuid.get(p.m_uid)||''};
   return out;
+}
+/* A COMMENT IS HEARD (owner, 2026-10-20: people come back when someone answers them). A new comment tells the post's
+   author (a news story has none) and anyone who commented in the same discussion in the last fortnight: never the
+   commenter, never across a block either way, never someone who muted the commenter, and at most 20 people for one
+   comment. A failure here never fails the comment. */
+async function notifyDiscussion(env,muid,{owner=null,earlier,type,objectType,objectId,ownerBody,otherBody,metadata}){
+  const since=new Date(Date.now()-14*864e5).toISOString();
+  const before=await service(env,`${earlier}&created_at=gte.${encodeURIComponent(since)}&select=author_m_uid&order=created_at.desc&limit=100`);
+  const ids=[...new Set([owner,...(before||[]).map(c=>c.author_m_uid)])].filter(id=>/^[0-9a-f-]{36}$/i.test(String(id||''))&&id!==muid).slice(0,20);
+  if(!ids.length)return 0;
+  const list=ids.join(','),now=new Date().toISOString().replace(/\.\d{3}Z$/,'Z');
+  const [blocks,mutes]=await Promise.all([
+    service(env,`network_blocks?or=(and(blocker_m_uid.eq.${muid},blocked_m_uid.in.(${list})),and(blocked_m_uid.eq.${muid},blocker_m_uid.in.(${list})))&select=blocker_m_uid,blocked_m_uid&limit=100`),
+    service(env,`network_mutes?muted_m_uid=eq.${muid}&muter_m_uid=in.(${list})&or=(expires_at.is.null,expires_at.gt.${now})&select=muter_m_uid&limit=100`)
+  ]);
+  const quiet=new Set([...(blocks||[]).map(b=>b.blocker_m_uid===muid?b.blocked_m_uid:b.blocker_m_uid),...(mutes||[]).map(m=>m.muter_m_uid)]);
+  const rows=ids.filter(id=>!quiet.has(id)).map(id=>({recipient_m_uid:id,actor_m_uid:muid,type,object_type:objectType,object_id:objectId,
+    body:id===owner?ownerBody:otherBody,metadata}));
+  if(rows.length)await service(env,'network_notifications',{method:'POST',headers:{prefer:'return=minimal'},body:JSON.stringify(rows)});
+  return rows.length;
+}
+function notifyComment(env,muid,post,comment){
+  return notifyDiscussion(env,muid,{owner:post.author_m_uid,earlier:`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null`,type:'comment',objectType:'post',objectId:post.id,
+    ownerBody:'commented on your post',otherBody:'also commented on a post you commented on',metadata:{post_id:post.id,comment_id:comment.id}});
+}
+/* a reply under a news story reaches the people already talking about it */
+function notifyNewsComment(env,muid,articleId,comment){
+  return notifyDiscussion(env,muid,{earlier:`media_news_comments?article_id=eq.${articleId}&deleted_at=is.null&state=eq.visible`,type:'news_comment',objectType:'news',objectId:articleId,
+    otherBody:'also replied to a story you replied to',metadata:{article_id:articleId,comment_id:comment.id}});
 }
 async function networkBlocked(env,a,b){
   if(!a||!b||a===b)return false;
@@ -56,19 +102,27 @@ async function networkBlocked(env,a,b){
   ]);
   return !!(ab?.length||ba?.length);
 }
+async function resolvePlatformActor(env,id){
+  const filter=uuidLike(id)?'m_uid=eq.'+id:'handle=eq.'+encodeURIComponent(id);
+  const actors=await service(env,'ops_platform_actors?'+filter+'&select=m_uid,handle&limit=1');
+  const actor=actors?.[0]; if(!actor)return null;
+  const profiles=await service(env,'network_profiles?m_uid=eq.'+actor.m_uid+'&select=*&limit=1');
+  const profile=profiles?.[0]; if(!profile)return null;
+  return {m_uid:actor.m_uid,profile,identity:{user_id:null,mccluster_id:actor.handle,display_name:profile.display_name,avatar_url:profile.avatar_url,actor_kind:'fictional_ai'}};
+}
 async function resolveMnetPerson(env,id){
   /* A person is named by their handle, or by their m_uid (live sessions
      and feed items carry the m_uid). */
   if(uuidLike(id)){
     const l=await service(env,`m_auth_user_links?m_uid=eq.${id}&order=is_primary.desc&select=auth_user_id&limit=1`);
-    if(!l?.length)return null;
+    if(!l?.length)return resolvePlatformActor(env,id);
     const byUser=await service(env,`platform_profiles?user_id=eq.${l[0].auth_user_id}&select=user_id,display_name,avatar_url,mccluster_id&limit=1`);
     if(!byUser?.length)return null;
     const np=await service(env,`network_profiles?m_uid=eq.${id}&select=*&limit=1`);
     return {identity:byUser[0],m_uid:id,profile:np?.[0]||null};
   }
   const p=await service(env,`platform_profiles?mccluster_id=ilike.${encodeURIComponent(id)}&select=user_id,display_name,avatar_url,mccluster_id&limit=1`);
-  if(!p?.length)return null;
+  if(!p?.length)return resolvePlatformActor(env,id);
   const links=await service(env,`m_auth_user_links?auth_user_id=eq.${p[0].user_id}&is_primary=eq.true&select=m_uid&limit=1`);
   const m_uid=links?.[0]?.m_uid;
   if(!m_uid)return null;
@@ -182,6 +236,8 @@ function postClip(c){
 function postMetadata(b){
   const meta=(b.metadata&&typeof b.metadata==='object'&&!Array.isArray(b.metadata))?{...b.metadata}:{};
   delete meta.track; delete meta.clip;
+  /* the newsroom's keys are set only by prepareNetworkPost, after it has checked the author is the house owner */
+  NEWSROOM_KEYS.forEach(k=>delete meta[k]);
   const track=postTrack(b.track||(b.metadata&&b.metadata.track));
   if(track)meta.track=track;
   const clip=postClip(b.clip||(b.metadata&&b.metadata.clip));
@@ -245,7 +301,36 @@ async function handleDeveloper(req,env,path,url){
 /* ONE PATH FOR EVERY POST. The live composer and the scheduler both come
    through here, so a post published by the cron at 9pm has passed exactly
    the checks it would have passed if it had been sent by hand. */
-async function prepareNetworkPost(env,muid,b,appKey){
+/* THE NEWSROOM (owner, 2026-10-20: "getting my admin's posts as their own news worth posts"). A post the house owner
+   marks for it is also an article on mccluster.org/news/ (company-site/news.js). Public only, owner only; the sources a
+   morning brief cites ride with it, https links only. */
+const NEWSROOM_KEYS=['newsroom','newsroom_note','newsroom_sources','newsroom_review'];
+async function houseOwnerMuids(env){
+  const rows=await service(env,'rpc/mnet_admin_m_uids',{method:'POST',body:'{}'});
+  return (Array.isArray(rows)?rows:[]).map(r=>typeof r==='string'?r:r?.mnet_admin_m_uids).filter(uuidLike);
+}
+function newsroomSources(list){
+  return (Array.isArray(list)?list:[]).slice(0,12).map(s=>{
+    let u;try{u=new URL(String(s?.url||''))}catch{return null}
+    return u.protocol==='https:'&&u.toString().length<=600?{url:u.toString(),title:String(s?.title||'').trim().slice(0,200),domain:u.hostname.replace(/^www\./,'').slice(0,120)}:null;
+  }).filter(Boolean);
+}
+async function newsroomMetadata(env,muid,b,draft,{scheduled=false}={}){
+  const asked=b.metadata&&typeof b.metadata==='object'&&!Array.isArray(b.metadata)?b.metadata:{};
+  if(b.newsroom!==true&&asked.newsroom!==true)return {};
+  if(draft.visibility!=='public'||draft.group_id)return {error:'A newsroom article is public. Choose Public to publish it.',status:400};
+  if(!draft.body)return {error:'A newsroom article needs words.',status:400};
+  if(!(await houseOwnerMuids(env)).includes(muid))return {error:'Only the house owner publishes to the newsroom.',status:403};
+  const note=b.newsroom_note!==undefined?b.newsroom_note:asked.newsroom_note,sources=newsroomSources(b.newsroom_sources!==undefined?b.newsroom_sources:asked.newsroom_sources);
+  const meta={newsroom:true,...(note==='morning_brief'?{newsroom_note:'morning_brief'}:{}),...(sources.length?{newsroom_sources:sources}:{})};
+  const reviewed={...draft,author_m_uid:muid,metadata:meta};
+  if(scheduled){
+    meta.newsroom_review=asked.newsroom_review;
+    if(!await hasNewsroomApproval(reviewed))return {error:'The scheduled newsroom revision needs a new human review.',status:409};
+  }else meta.newsroom_review=await approveNewsroomRevision(reviewed,muid);
+  return {meta};
+}
+async function prepareNetworkPost(env,muid,b,appKey,options={}){
   /* A long post is refused, never cut short: the member would lose what
      they wrote without knowing. Comments are retired; every new row here is
      a top-level post, ideally carrying or reporting an action. */
@@ -291,15 +376,87 @@ async function prepareNetworkPost(env,muid,b,appKey){
     groupId=gid;
     visibility='network';
   }
-  return {assets:assets||[],posterAssets:posterAssets||[],draft:{body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
+  /* Region placement is a deliberate, public author action — NEVER IP inferred.
+     OFF until the pending SQL and regional feed have been verified. */
+  const requestedCountry=b.country_code;
+  let countryCode=null;
+  if(requestedCountry!==undefined && requestedCountry!==null && requestedCountry!==''){
+    if(String(env.WORLD_PLACE_SCOPE_ENABLED||'').toLowerCase()!=='true')
+      return {error:'Country placement is not switched on yet.',status:503};
+    if(typeof requestedCountry!=='string'||!isCountry(requestedCountry))
+      return {error:'Choose a valid country on the globe.',status:400};
+    if(visibility!=='public'||groupId)
+      return {error:'Only public posts can be associated with a regional feed.',status:400};
+    countryCode=requestedCountry;
+  }
+  const draft={body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null,...(countryCode?{country_code:countryCode}:{})};
+  /* checked again when a scheduled post goes out: its payload is this draft, newsroom keys and all */
+  const news=await newsroomMetadata(env,muid,b,draft,options);
+  if(news.error)return news;
+  if(news.meta)Object.assign(draft.metadata,news.meta);
+  return {assets:assets||[],posterAssets:posterAssets||[],draft};
 }
 async function insertNetworkPost(env,muid,draft,assets,scheduledPostId=null){
   const posters=draft.poster_by_media||{};
   const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||'',poster_asset_id:posters[a.id]||null}));
-  const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId})});
+  const publicationId=!scheduledPostId&&draft.metadata?.newsroom===true?await newsroomPostId(muid,draft.metadata.newsroom_review.revision_sha256):null;
+  let rows;
+  try{rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({...(publicationId?{id:publicationId}:{}),author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId,...(draft.country_code ? {country_code:draft.country_code} : {})})});}
+  catch(e){
+    if(!publicationId||e?.detail?.code!=='23505')throw e;
+    rows=await service(env,`network_posts?id=eq.${publicationId}&author_m_uid=eq.${muid}&select=*&limit=1`);
+    const prior=rows?.[0];
+    if(!prior||prior.deleted_at||prior.removed_at||prior.metadata?.newsroom_review?.revision_sha256!==draft.metadata.newsroom_review.revision_sha256||!await hasNewsroomApproval(prior))
+      throw Object.assign(new Error('This publication was changed or withdrawn. Review the existing article.'),{status:409});
+  }
   const created=rows?.[0],ids=uniq([...(draft.media_asset_ids||[]),...Object.values(posters).filter(uuidLike)]);
   if(created&&ids.length)await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
   return rows||[];
+}
+/* THE THUMBNAIL OF A POSTED VIDEO (owner, 2026-10-20: "I want people to be even able to edit the videos they previously
+   posted as a thumbnail"). The author sends poster_by_media {<a video asset of this post>: <their image asset>|null},
+   the same shape a scheduled draft keeps. A key must be one of this post's videos; a new poster must be the author's own
+   image, either unattached (ready or staged) or already attached to this same post, and never one of the post's own
+   media. Nothing is written here: the route attaches the new poster (view-url reads a poster through its post_id, so a
+   viewer would get a 404 otherwise), rewrites the post's media, then lets the old poster go. */
+function postMediaId(m){return m&&(m.asset_id||m.id)||null}
+async function preparePosterSwap(env,muid,post,map){
+  if(!map||typeof map!=='object'||Array.isArray(map))return {error:'Name a video in this post to change its thumbnail.',status:400};
+  const entries=Object.entries(map);
+  if(!entries.length||entries.length>10)return {error:'Name a video in this post to change its thumbnail.',status:400};
+  const media=Array.isArray(post.media)?post.media:[],own=new Set(media.map(postMediaId).filter(Boolean).map(String));
+  const wanted={};
+  for(const [key,value] of entries){
+    const target=media.find(m=>String(postMediaId(m))===key);
+    if(!uuidLike(key)||!target||(target.type||target.media_type)!=='video')return {error:'Only this post\'s videos have a thumbnail.',status:400};
+    if(value!==null&&!uuidLike(value))return {error:'A thumbnail must be one of your images.',status:400};
+    if(value!==null&&own.has(String(value)))return {error:'A thumbnail cannot be one of the post\'s own photos or videos.',status:400};
+    wanted[key]=value===null?null:String(value);
+  }
+  const posterIds=uniq(Object.values(wanted).filter(Boolean));
+  let rows=[];
+  if(posterIds.length){
+    rows=await service(env,`network_media_assets?id=in.(${posterIds.join(',')})&owner_m_uid=eq.${muid}&select=id,media_type,mime_type,status,post_id`)||[];
+    if(rows.length!==posterIds.length)return {error:'That thumbnail is not available.',status:400};
+    for(const a of rows){
+      if(a.media_type!=='image'||!/^image\//i.test(String(a.mime_type||'')))return {error:'A thumbnail must be one of your images.',status:400};
+      const free=['ready','staged'].includes(a.status)&&!a.post_id,here=a.post_id===post.id&&a.status==='attached';
+      if(!free&&!here)return {error:'That thumbnail is not available.',status:400};
+    }
+  }
+  const next=media.map(m=>{const id=String(postMediaId(m)||'');return id in wanted?{...m,poster_asset_id:wanted[id]}:m;});
+  const still=new Set(next.map(m=>m&&m.poster_asset_id).filter(Boolean).map(String));
+  const detach=uniq(media.map(m=>m&&m.poster_asset_id).filter(id=>uuidLike(id)&&!still.has(String(id))));
+  const attach=rows.filter(a=>a.post_id!==post.id).map(a=>a.id);
+  return {media:next,attach,detach};
+}
+async function attachPosters(env,muid,postId,ids){
+  if(!ids.length)return;
+  await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}&post_id=is.null`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:postId,status:'attached',updated_at:new Date().toISOString()})});
+}
+async function releasePosters(env,muid,postId,ids){
+  if(!ids.length)return;
+  await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}&post_id=eq.${postId}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:null,status:'ready',updated_at:new Date().toISOString()})});
 }
 /* A time at least two minutes out and at most ninety days out. Anything
    sooner is "post now"; anything later is a calendar, not a schedule. */
@@ -343,11 +500,11 @@ export async function publishDueNetworkPosts(env,{limit=20}={}){
     const claimed=await service(env,`network_scheduled_posts?id=eq.${row.id}&status=eq.${expected}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'publishing',updated_at:stamp})});
     if(!claimed?.length)continue;
     try{
-      const p=row.payload||{};
-      const prepared=await prepareNetworkPost(env,row.author_m_uid,{...p,reply_to_id:null},p.app_key||'mnet-web');
+      const current=claimed[0],p=current.payload||{};
+      const prepared=await prepareNetworkPost(env,current.author_m_uid,{...p,reply_to_id:null},p.app_key||'mnet-web',{scheduled:true});
       if(prepared.error)throw new Error(prepared.error);
       let rows;
-      try{rows=await insertNetworkPost(env,row.author_m_uid,prepared.draft,prepared.assets,row.id);}
+      try{rows=await insertNetworkPost(env,current.author_m_uid,prepared.draft,prepared.assets,row.id);}
       catch(e){
         /* The unique scheduled_post_id constraint is the final idempotency
            fence if two recovery attempts race. */
@@ -393,6 +550,7 @@ export async function reapStaleLiveSessions(env,{limit=20}={}){
 }
 /* The limits only ever look back 24 hours, so anything older than two days
    in their ledger is dead weight. */
+export async function runNetworkPushCycle(env,options){ return runPushCycle(env,service,options); }
 export async function pruneNetworkRateEvents(env){
   const cutoff=new Date(Date.now()-2*24*60*60*1000).toISOString();
   await service(env,`network_rate_events?at=lt.${cutoff}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
@@ -509,7 +667,13 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/profile'&&req.method==='PATCH'){
     if(external)return fail(req,env,'Profile mutation requires a McCluster user session',403); const b=await json(req);
     if(b.mccluster_id!==undefined)await userRpc(req,env,'set_mccluster_id',{p_mccluster_id:String(b.mccluster_id||'').trim()});
-    const data=await userRpc(req,env,'mnet_complete_surface_profile',{p_app_key:appKey,p_display_name:b.display_name||'',p_headline:b.headline||'',p_bio:b.bio||'',p_avatar_url:b.avatar_url||'',p_banner_url:b.banner_url||'',p_website_url:b.website_url||''}); return reply(req,env,data);
+    /* A SAVE CHANGES WHAT IT NAMES (owner, 2026-10-20). mnet_complete_surface_profile writes every column it is
+       given, '' included, and this route used to send '' for any field the client left out: the World's profile form
+       has no banner, so every save there erased the banner set from the member's front page. A field the body does
+       not carry now keeps the member's stored value; a field it carries, even '', is the member's choice. */
+    const stored=await storedSurfaceProfile(env,user.id,b);
+    const field=(k)=>b[k]!==undefined&&b[k]!==null?String(b[k]):String(stored[k]??'');
+    const data=await userRpc(req,env,'mnet_complete_surface_profile',{p_app_key:appKey,p_display_name:field('display_name'),p_headline:field('headline'),p_bio:field('bio'),p_avatar_url:field('avatar_url'),p_banner_url:field('banner_url'),p_website_url:field('website_url')}); return reply(req,env,data);
   }
   if(path==='/v1/mnet/posts'&&req.method==='POST'){
     if(external)return fail(req,env,'Post creation currently requires a McCluster user session',403);
@@ -525,10 +689,16 @@ async function handleMnet(req,env,path,url){
       const when=scheduleTime(b.publish_at);
       if(when.error)return fail(req,env,when.error,400);
       if(prepared.draft.reply_to_id)return fail(req,env,'A reply goes out when you send it',400);
+      const scheduledId=prepared.draft.metadata?.newsroom===true?await newsroomPostId(muid,`${prepared.draft.metadata.newsroom_review.revision_sha256}:${when.at}`):null;
       try{
-        const rows=await service(env,'network_scheduled_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,publish_at:when.at,payload:{...prepared.draft,app_key:appKey}})});
+        const rows=await service(env,'network_scheduled_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({...(scheduledId?{id:scheduledId}:{}),author_m_uid:muid,publish_at:when.at,payload:{...prepared.draft,app_key:appKey}})});
         return reply(req,env,{scheduled:scheduledView(rows?.[0])},201);
       }catch(e){
+        if(scheduledId&&e?.detail?.code==='23505'){
+          const prior=await service(env,`network_scheduled_posts?id=eq.${scheduledId}&author_m_uid=eq.${muid}&select=*&limit=1`);
+          if(!prior?.[0]||prior[0].status==='cancelled')return fail(req,env,'This newsroom schedule was cancelled. Choose a new time after review.',409);
+          return reply(req,env,{scheduled:scheduledView(prior[0]),duplicate:true});
+        }
         if(e?.detail?.code==='PGRST205'||e?.status===404)return fail(req,env,'Scheduling is not switched on yet. Post now, or try again later.',503);
         throw e;
       }
@@ -620,7 +790,9 @@ async function handleMnet(req,env,path,url){
       const input=await json(req),body=String(input.body||'').trim();
       if(!body||body.length>1000)return fail(req,env,'Comment must contain 1–1000 characters',400);
       const created=await service(env,'network_post_comments',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({post_id:post.id,author_m_uid:muid,body})});
-      return reply(req,env,{comment:created?.[0]||null},201);
+      const comment=created?.[0]||null;
+      if(comment)await notifyComment(env,muid,post,comment).catch(()=>0);
+      return reply(req,env,{comment},201);
     }
     const comments=await service(env,`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null&select=id,post_id,author_m_uid,body,created_at&order=created_at.asc&limit=100`);
     const allowed=[];
@@ -658,6 +830,33 @@ async function handleMnet(req,env,path,url){
     if(await networkBlocked(env,muid,target))return fail(req,env,'Person not found',404);
     if(req.method==='POST'){await service(env,'network_follows',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({follower_m_uid:muid,followed_m_uid:target,status:'following'})});return reply(req,env,{following:true});}
     await service(env,`network_follows?follower_m_uid=eq.${muid}&followed_m_uid=eq.${target}`,{method:'DELETE',headers:{prefer:'return=minimal'}}); return reply(req,env,{following:false});
+  }
+  /* ALERTS ON THIS DEVICE (web-push.js): the key to subscribe with, then one subscription per browser, owned by the
+     member who last turned it on there. Ten devices at most; a push service URL only. */
+  if(path==='/v1/mnet/push'&&req.method==='GET'){
+    if(external)return fail(req,env,'Alerts require a McCluster user session',403);
+    if(!pushEnabled(env))return reply(req,env,{enabled:false});
+    // whether this browser's subscription belongs to this member (a shared browser can hold someone else's)
+    const endpoint=String(url.searchParams.get('endpoint')||'').slice(0,1000),muid=endpoint?await currentMuid(env,user.id):null;
+    const mine=muid?await service(env,`network_push_subscriptions?m_uid=eq.${muid}&endpoint=eq.${encodeURIComponent(endpoint)}&select=id&limit=1`):[];
+    return reply(req,env,{enabled:true,key:env.WEB_PUSH_VAPID_PUBLIC_KEY,subscribed:!!mine?.length});
+  }
+  if(path==='/v1/mnet/push/subscriptions'&&['POST','DELETE'].includes(req.method)){
+    if(external)return fail(req,env,'Alerts require a McCluster user session',403);
+    if(!pushEnabled(env))return fail(req,env,'Alerts on devices are not on yet',404);
+    const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'Sign in to turn on alerts',401);
+    const input=await json(req);
+    if(req.method==='DELETE'){
+      const endpoint=String(input.endpoint||'').slice(0,1000); if(!endpoint)return fail(req,env,'Which device?',400);
+      await service(env,`network_push_subscriptions?m_uid=eq.${muid}&endpoint=eq.${encodeURIComponent(endpoint)}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
+      return reply(req,env,{subscribed:false});
+    }
+    const sub=validSubscription(input); if(!sub)return fail(req,env,'That is not a browser push subscription',400);
+    const mine=await service(env,`network_push_subscriptions?m_uid=eq.${muid}&select=endpoint&limit=11`)||[];
+    if(mine.length>=10&&!mine.some(r=>r.endpoint===sub.endpoint))return fail(req,env,'Alerts are on for ten devices already. Turn one off first.',409);
+    await service(env,'network_push_subscriptions?on_conflict=endpoint',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({m_uid:muid,endpoint:sub.endpoint,p256dh:sub.p256dh,auth:sub.auth,user_agent:String(req.headers.get('user-agent')||'').slice(0,300),failures:0})});
+    return reply(req,env,{subscribed:true},201);
   }
   if(path==='/v1/mnet/notifications/read'&&req.method==='POST'){
     if(external)return fail(req,env,'Notifications require a McCluster user session',403); const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
@@ -711,9 +910,53 @@ async function handleMnet(req,env,path,url){
     if(post.reply_to_id)return fail(req,env,'Comments are retired on Human Uprise. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
+    /* a newsroom article keeps its words (company-site/news.js renders the post's text as the article) */
+    if(post.metadata?.newsroom===true&&patch.body!==undefined&&!patch.body)return fail(req,env,'A newsroom article needs words. Delete the post to take the article down.',400);
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
+    let swap=null;
+    if(b.poster_by_media!==undefined){
+      swap=await preparePosterSwap(env,muid,post,b.poster_by_media);
+      if(swap.error)return fail(req,env,swap.error,swap.status||400);
+      patch.media=swap.media;
+    }
     if(!String(patch.body===undefined?post.body:patch.body).trim()&&!(post.media||[]).length)return fail(req,env,'Post body or media is required',400);
-    const out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});
+    if(post.metadata?.newsroom===true){
+      const changed=(patch.body!==undefined&&patch.body!==post.body)||(patch.visibility!==undefined&&patch.visibility!==post.visibility);
+      if(changed)patch.metadata={...post.metadata,newsroom_review:{schema:'newsroom-review/1',state:'needs_review',previous_revision_sha256:post.metadata.newsroom_review?.revision_sha256||null}};
+      if(b.newsroom===true){
+        const next={...post,...patch};
+        const review=await newsroomMetadata(env,muid,{...b,newsroom:true,metadata:{...next.metadata,...(b.metadata||{})}},next);
+        if(review.error)return fail(req,env,review.error,review.status);
+        const retained={...next.metadata};
+        for(const key of NEWSROOM_KEYS)delete retained[key];
+        patch.metadata={...retained,...review.meta};
+      }
+    }
+    if(swap)await attachPosters(env,muid,post.id,swap.attach);
+    let out;
+    try{out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});}
+    catch(e){
+      /* the write can land and only its answer be lost: let a new picture go only if the post, read again, does not name
+         it. Unsure, it stays attached (an unused picture of the author's own, never a broken thumbnail) */
+      if(swap&&swap.attach.length){
+        const again=await service(env,`network_posts?id=eq.${post.id}&select=media&limit=1`).catch(()=>null);
+        if(Array.isArray(again)){
+          const named=new Set((Array.isArray(again[0]?.media)?again[0].media:[]).map(m=>m&&m.poster_asset_id).filter(Boolean).map(String));
+          await releasePosters(env,muid,post.id,swap.attach.filter(id=>!named.has(String(id)))).catch(()=>{});
+        }
+      }
+      throw e;
+    }
+    if(swap&&swap.detach.length){
+      /* the old picture is no longer the post's: free it, then clear it out of storage (best effort). A picture a
+         mission proof also names stays in storage, so the proof keeps its evidence; unsure, nothing is cleared. */
+      await releasePosters(env,muid,post.id,swap.detach).catch(()=>{});
+      const proofs=await service(env,`action_proofs?metadata->>poster_asset_id=in.(${swap.detach.join(',')})&select=metadata&limit=20`).catch(()=>null);
+      if(Array.isArray(proofs)){
+        const keep=new Set(proofs.map(r=>String(r?.metadata?.poster_asset_id||'')));
+        await Promise.all(swap.detach.filter(id=>!keep.has(String(id))).map(id=>callMnetMedia(req,env,{action:'discard',asset_id:id}).catch(()=>null)));
+      }
+    }
     const hydrated=await hydratePostRows(env,out||[],muid);return reply(req,env,hydrated[0]||{post:out?.[0]});
   }
   if(postOne&&req.method==='DELETE'){
@@ -869,7 +1112,11 @@ async function handleMnet(req,env,path,url){
       const filters=[`status=eq.live`,`last_seen_at=gt.${encodeURIComponent(cutoff)}`];
       if(kind)filters.push(`room_kind=eq.${encodeURIComponent(kind)}`);
       if(category)filters.push(`category_key=eq.${encodeURIComponent(category)}`);
-      const rows=await service(env,`network_live_sessions?${filters.join('&')}&select=id,host_m_uid,title,status,whep_url,post_id,started_at,last_seen_at,room_id,room_kind,category_key,action_mission_id,music_object_id,cohort_id,seat_limit,support_enabled&order=started_at.desc&limit=50`);
+      /* one broadcast by its id: a country feed's live card opens it even when it is past the newest fifty */
+      const only=url.searchParams.get('id');
+      if(only!==null&&!uuidLike(only))return fail(req,env,'Invalid live session id',400);
+      if(only)filters.push(`id=eq.${only}`);
+      const rows=await service(env,`network_live_sessions?${filters.join('&')}&select=id,host_m_uid,title,status,whep_url,post_id,started_at,last_seen_at,room_id,room_kind,category_key,action_mission_id,music_object_id,cohort_id,seat_limit,support_enabled,ai_actor_keys&order=started_at.desc&limit=50`);
       const ids=(rows||[]).map(x=>x.id).filter(uuidLike);
       if(!ids.length)return reply(req,env,{sessions:[],kind:kind||'all',category:category||'all'});
       const missionIds=uniq(rows.map(x=>x.action_mission_id)).filter(uuidLike),musicIds=uniq(rows.map(x=>x.music_object_id)).filter(uuidLike),roomIds=uniq(rows.map(x=>x.room_id)).filter(uuidLike);
@@ -930,6 +1177,13 @@ async function handleMnet(req,env,path,url){
       if(!liveEnabled(env))return fail(req,env,'Live video is not switched on yet.',503);
       const b=await json(req),title=String(b.title||'').trim().slice(0,120);
       if(!title)return fail(req,env,'Give this broadcast a title.',400);
+      /* A broadcast shows in a country's feed only when the host places it there; never inferred from IP. */
+      let liveCountry=null;
+      if(b.country_code!==undefined&&b.country_code!==null&&b.country_code!==''){
+        if(String(env.WORLD_PLACE_SCOPE_ENABLED||'').toLowerCase()!=='true')return fail(req,env,'Country placement is not switched on yet.',503);
+        if(typeof b.country_code!=='string'||!isCountry(b.country_code))return fail(req,env,'Choose a valid country on the globe.',400);
+        liveCountry=b.country_code;
+      }
       const muid=await currentMuid(env,user.id);if(!muid)return fail(req,env,'Your Action identity is not ready yet',409);
       const allowed=new Set(Array.isArray(eligibility.allowed_categories)?eligibility.allowed_categories:[]);
       let room=null;
@@ -976,7 +1230,7 @@ async function handleMnet(req,env,path,url){
       const input=await cfStream(env,'POST','/live_inputs',{meta:{name:`action-network-live ${room.slug} ${muid}`},recording:{mode:'off'}});
       const whip=input?.webRTC?.url,whep=input?.webRTCPlayback?.url;
       if(!input?.uid||!whip||!whep){if(input?.uid)await cfStream(env,'DELETE',`/live_inputs/${input.uid}`).catch(()=>{});return fail(req,env,'Cloudflare did not return a live input.',502);}
-      const rows=await service(env,'network_live_sessions',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({host_m_uid:muid,host_user_id:user.id,title,status:'starting',cf_input_uid:input.uid,whep_url:whep,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,cohort_id:room.cohort_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit,support_enabled:false})});
+      const rows=await service(env,'network_live_sessions',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({host_m_uid:muid,host_user_id:user.id,title,status:'starting',cf_input_uid:input.uid,whep_url:whep,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,cohort_id:room.cohort_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit,support_enabled:false,...(liveCountry?{country_code:liveCountry}:{})})});
       const sess=rows?.[0];
       return reply(req,env,{session:{id:sess.id,title:sess.title,whep_url:whep,status:sess.status,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit},room,whip_url:whip,stage:{transport:'single_host_stream',multi_seat_ready:false}},201);
     }
@@ -992,7 +1246,7 @@ async function handleMnet(req,env,path,url){
       return reply(req,env,{id:sess.id,ok:true});
     }
 
-    const one=path.match(/^\/v1\/mnet\/live\/([0-9a-f-]{36})\/(on-air|heartbeat|end|publish)$/i);
+    const one=path.match(/^\/v1\/mnet\/live\/([0-9a-f-]{36})\/(on-air|heartbeat|end|publish|actors|cue)$/i);
     if(one){
       const rows=await service(env,`network_live_sessions?id=eq.${one[1]}&select=*&limit=1`),sess=rows?.[0];
       if(!sess)return fail(req,env,'Broadcast not found',404);
@@ -1005,6 +1259,23 @@ async function handleMnet(req,env,path,url){
       }
       if(!host)return fail(req,env,'Broadcast not found',404);
       if(sess.status==='ended')return fail(req,env,'This broadcast has ended.',410);
+      if(act==='actors'&&req.method==='POST'){
+        const b=await json(req);
+        if(!Array.isArray(b.actor_keys)||b.actor_keys.length>3||b.actor_keys.some(k=>typeof k!=='string'||!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(k)))return fail(req,env,'Choose up to three platform characters',400);
+        if(b.actor_keys.length){
+          const cutoff=encodeURIComponent(new Date(Date.now()-120000).toISOString());
+          const nodes=await service(env,`ops_compute_nodes?display_name=eq.ovh-primary&state=eq.online&last_seen_at=gte.${cutoff}&select=id&limit=1`);
+          if(!nodes?.length)return fail(req,env,'Royce is offline while McCluster Core reconnects. You can keep broadcasting.',503);
+        }
+        return reply(req,env,await service(env,'rpc/ops_live_actor_config',{method:'POST',body:JSON.stringify({p_session:sess.id,p_host:user.id,p_keys:b.actor_keys})}));
+      }
+      if(act==='cue'&&req.method==='POST'){
+        const b=await json(req),text=typeof b.text==='string'?b.text.trim():'';
+        if(sess.status!=='live'||!sess.post_id||!sess.ai_actor_keys?.length)return fail(req,env,'Invite a character to the live room first',409);
+        if(chars(text)<1||chars(text)>600||!['typed','browser_caption'].includes(b.source))return fail(req,env,'Share up to 600 characters',400);
+        const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:sess.host_m_uid,body:text,post_type:'update',visibility:'public',reply_to_id:sess.post_id,metadata:{live_cue:{session_id:sess.id,source:b.source,unverified_transcript:b.source==='browser_caption'}}})});
+        return reply(req,env,{post_id:rows?.[0]?.id},201);
+      }
       const now=new Date().toISOString();
       if(act==='on-air'&&req.method==='POST'){
         let postId=sess.post_id;
@@ -1018,7 +1289,10 @@ async function handleMnet(req,env,path,url){
       }
       if(act==='heartbeat'&&req.method==='POST'){
         await service(env,`network_live_sessions?id=eq.${sess.id}&status=eq.live`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({last_seen_at:now})});
-        return reply(req,env,{id:sess.id,ok:true});
+        // Inference stays in the durable Core queue; an AI failure never ends the stream.
+        let actors=null;
+        if(sess.ai_actor_keys?.length) {try {actors=await service(env,'rpc/ops_live_actor_tick',{method:'POST',body:JSON.stringify({p_session:sess.id})});} catch {actors={queued:false,error:'actor_queue_unavailable'};}}
+        return reply(req,env,{id:sess.id,ok:true,actors});
       }
       if(act==='publish'&&req.method==='GET'){
         const input=await cfStream(env,'GET',`/live_inputs/${sess.cf_input_uid}`);
@@ -1269,7 +1543,9 @@ async function handleWorldNewsDiscussion(req,env,path){
       method:'POST',headers:{prefer:'return=representation'},
       body:JSON.stringify({article_id:articleId,author_m_uid:muid,body})
     });
-    return reply(req,env,{comment:created?.[0]||null},201);
+    const comment=created?.[0]||null;
+    if(comment)await notifyNewsComment(env,muid,articleId,comment).catch(()=>0);
+    return reply(req,env,{comment},201);
   }
   const rows=await service(env,'media_news_comments?article_id=eq.'+articleId+
     '&deleted_at=is.null&state=eq.visible&select=id,article_id,author_m_uid,body,created_at&order=created_at.asc&limit=100');

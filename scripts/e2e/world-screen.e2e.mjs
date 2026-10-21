@@ -29,6 +29,7 @@
    resolvable from here) and network access to the Cesium CDN and
    OpenStreetMap tiles. Exits non-zero on any failed check. */
 import { createServer } from 'node:http';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -42,12 +43,21 @@ try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
 /* ---------- a static server for this checkout ---------- */
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.webm': 'video/webm' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try {
-    const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
-    res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body);
+    let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
+    const type = TYPES[extname(path)] || 'application/octet-stream';
+    /* the World as it ships is the social feed; the suites that guard Travel and Missions get them switched back on */
+    if (/^[/\\]mnet\.html$/.test(path) && !/(?:^|; )world=social(?:;|$)/.test(req.headers.cookie || '')) body = Buffer.from(withTravelAndMissions(body));
+    /* a video is read in ranges, the way storage serves it, so a player can seek */
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+    if (range && (range[1] || range[2])) {
+      const start = range[1] ? Number(range[1]) : Math.max(0, body.length - Number(range[2])), end = range[1] && range[2] ? Math.min(Number(range[2]), body.length - 1) : body.length - 1;
+      res.writeHead(206, { 'content-type': type, 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${body.length}`, 'content-length': end - start + 1 }); res.end(body.subarray(start, end + 1)); return;
+    }
+    res.writeHead(200, { 'content-type': type, 'accept-ranges': 'bytes' }); res.end(body);
   } catch { res.writeHead(404); res.end('not found'); }
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -101,6 +111,9 @@ function freshWorld() {
 const GDELT = { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' };
 const NEWS_PLACES = [{ place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28, lon: 36.82 }, { place: 'Lima, Lima, Peru', lat: -12.05, lon: -77.04 }, null, { place: 'Jakarta, Jakarta Raya, Indonesia', lat: -6.21, lon: 106.85 }];
 const LONG_DOMAIN = 'a-very-long-publisher-domain-name-that-never-seems-to-end.example.co.uk';
+/* the news heat map's day: a lopsided spread like the real one, from one story to hundreds */
+const PUBLIC_REGIONS = [{ region_key: 'KE-110', region_label: 'Nairobi', country_code: 'KE', latitude: -1.29, longitude: 36.82, member_count: 12, verified_actions: 0 }, { region_key: 'KE-300', region_label: 'Coast', country_code: 'KE', latitude: -3.6, longitude: 39.5, member_count: 7, verified_actions: 0 }];
+const HEAT_COUNTRIES = { US: 420, GB: 160, IN: 140, FR: 70, DE: 55, AU: 40, BR: 30, NG: 18, ZA: 12, KE: 8, PE: 8, ID: 7, EG: 4, AR: 3, JP: 2, MN: 1 };
 function freshNews(now) {
   return Array.from({ length: 30 }, (_, k) => {
     const pl = NEWS_PLACES[k % 4];
@@ -111,6 +124,26 @@ function freshNews(now) {
   });
 }
 const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid, media: p.media || [] } });
+/* VIDEO POSTS (owner, 2026-10-20: "there's no thumbnail, just a black video"): the member's own clip with its picture,
+   a peer's clip that has none, and a peer's clip this browser cannot decode. The clip is the repository's own WebM
+   (Playwright's Chromium plays no MP4); the pictures are the owner's frames. */
+const VID = { mine: asset(20), poster: asset(21), bare: asset(22), broken: asset(23), brokenPoster: asset(24) };
+const VIDEO_MEDIA = {
+  [VID.mine]: { path: 'assets/video/hero.webm', media_type: 'video' }, [VID.poster]: { path: 'assets/frames/affix_0001.jpg', media_type: 'image' },
+  [VID.bare]: { path: 'assets/video/hero.webm', media_type: 'video' }, [VID.broken]: { path: 'assets/frames/church_0001.jpg', media_type: 'video' },
+  [VID.brokenPoster]: { path: 'assets/frames/bussalick_0001.jpg', media_type: 'image' },
+};
+function addVideoPosts(world) {
+  const now = Date.now(), at = (h) => new Date(now - h * 600e3).toISOString();
+  world.videoPosts = {
+    mine: { id: world.id(), author: ME, body: 'My clip from the river cleanup.', visibility: 'public', like_count: 0, liked_by_me: false, comments: [], created_at: at(1), media: [{ asset_id: VID.mine, type: 'video', mime_type: 'video/webm', poster_asset_id: VID.poster }] },
+    bare: { id: world.id(), author: PEERS[0], body: 'A clip with no picture of its own.', visibility: 'public', like_count: 0, liked_by_me: false, comments: [], created_at: at(2), media: [{ asset_id: VID.bare, type: 'video', mime_type: 'video/webm' }] },
+    broken: { id: world.id(), author: PEERS[1], body: 'A clip this browser cannot play.', visibility: 'public', like_count: 0, liked_by_me: false, comments: [], created_at: at(3), media: [{ asset_id: VID.broken, type: 'video', mime_type: 'video/quicktime', poster_asset_id: VID.brokenPoster }] },
+  };
+  world.posts.unshift(world.videoPosts.mine, world.videoPosts.bare, world.videoPosts.broken);
+}
+/* what the member uploaded, kept in this file's memory and served back from the fixture's storage */
+const STORAGE = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object';
 const TRAVEL_ROUTES = JSON.parse(await readFile(join(ROOT, 'scripts/e2e/fixtures/travel-new-haven-routes.json'), 'utf8')).routes;
 const TRAVEL_ORIGIN = TRAVEL_ROUTES[0].origin, TRAVEL_DESTINATION = TRAVEL_ROUTES[0].destination;
 
@@ -118,6 +151,18 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
+    /* STORAGE: a signed upload is kept; a signed read gives it back, open to any origin as storage is */
+    if (u.startsWith(STORAGE + '/')) {
+      const request = route.request(), method = request.method(), path = decodeURIComponent(new URL(u).pathname.replace(/^\/storage\/v1\/object\/(upload\/)?sign\/mnet-media\//, ''));
+      if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,PUT,POST', 'access-control-allow-headers': 'apikey,authorization,content-type,x-upsert' } });
+      if (method === 'PUT' || method === 'POST') {
+        (world.blobs ||= {})[path] = { body: request.postDataBuffer(), type: request.headers()['content-type'] || 'application/octet-stream' };
+        world.requests.push({ m: method, path: '/storage/' + path, auth: !!request.headers().authorization, bytes: world.blobs[path].body?.length || 0, type: world.blobs[path].type });
+        return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ Key: 'mnet-media/' + path }) });
+      }
+      const blob = world.blobs && world.blobs[path];
+      return blob ? route.fulfill({ status: 200, contentType: blob.type, headers: { 'access-control-allow-origin': '*' }, body: blob.body }) : route.fulfill({ status: 404, body: 'not found' });
+    }
     if (u.includes('/rest/v1/travel_journeys')) {
       const request=route.request(),method=request.method();world.journeys ||= [];
       world.requests.push({m:method,path:'/travel_journeys',auth:!!request.headers().authorization,body:request.postDataJSON()});
@@ -131,6 +176,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     }
     if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
+    /* members who share their region, five or more per region (the only consented member count): two of Kenya's */
+    if (/\/rpc\/action_globe_public_regions$/.test(u)) return json(route, PUBLIC_REGIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
     if (u.includes('/rest/v1/action_missions?id=eq.')) { const m = OPEN_MISSIONS.find((x) => u.includes(x.id)); return json(route, m ? [m] : []); }
@@ -140,6 +187,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (/\/rpc\/action_bounty_public$/.test(u)) return json(route, { support_open: true, support_note: 'Allocations are verified by the desk.', bounties: [] });
     if (u.includes('/rest/v1/music_creator_profiles?')) return json(route, member && creator ? [{ handle: 'fixture-you' }] : []);
     /* the Action Record: whether this member has completed a mission decides whether Uprise is theirs yet */
+    /* the house owner, as the database says (mnet_is_admin): only they are offered the newsroom */
+    if (/\/rpc\/mnet_is_admin$/.test(u)) return json(route, !!(member && world.admin));
     if (/\/rpc\/action_record$/.test(u)) return json(route, { verified_actions: verified ? 1 : 0, points: 0, in_progress: 0, missions: [], skills: [], cohorts: [] });
     if (u.includes('action_offer_cards')) {
       const linked = world.posts.filter((p) => p.content_id === CONTENT);
@@ -151,7 +200,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     const req = route.request(), u = new URL(req.url()), m = req.method(), auth = req.headers().authorization || '';
     const body = req.postData() ? JSON.parse(req.postData()) : null;
     world.requests.push({ m, path: u.pathname, search: u.search, auth: !!auth, body });
-    if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,PATCH,DELETE' } });
     if (u.pathname === '/v1/travel/route') {
       if (auth || m !== 'POST' || u.search || !body || Object.keys(body).sort().join(',') !== 'destination,mode,origin') return json(route, { error:'Invalid public route request' }, 400);
       const fixture = TRAVEL_ROUTES.find(r => r.mode === body.mode && JSON.stringify(r.origin) === JSON.stringify(body.origin) && JSON.stringify(r.destination) === JSON.stringify(body.destination));
@@ -161,9 +210,22 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       return respond();
     }
     // These personas are ordinary members, not operators. A catch-all 200 must not grant admin navigation.
-    if (u.pathname === '/v1/status') return json(route, { error: 'Forbidden' }, 403);
+    if (u.pathname === '/v1/status') return world.owner && auth ? json(route, { ok: true }) : json(route, { error: 'Forbidden' }, 403);
     if (u.pathname === '/v1/action-archive/docket-516r-2025') return json(route, COHORT_ARCHIVE);
+    /* THE COUNTRY FEED: off unless a scenario names the connection country the Worker would read from request.cf */
+    if (u.pathname === '/v1/world/place-scope') return json(route, { ok: true, enabled: !!world.placeHome, country: world.placeHome || null, source: 'cloudflare_country' });
+    if (u.pathname === '/v1/world/live-places') return json(route, { ok: true, places: world.placeHome ? [{ code: 'GB', count: 2 }] : [] });
+    /* the Worker's rule (world-region-feed.js): without a member's session, the connection's country only */
+    if (u.pathname === '/v1/world/region-feed' && !auth && u.searchParams.get('country') !== world.placeHome) return json(route, { error: 'Sign in to read another country\'s feed', detail: { sign_in: true, home: world.placeHome } }, 403);
+    if (u.pathname === '/v1/world/region-feed') { const c = u.searchParams.get('country'); return json(route, { ok: true, available: true, country: c, posts: c === world.placeHome ? world.posts.slice(0, 3).filter((p) => p.visibility === 'public').map((p) => { const x = item(p); x.post.media_locked = x.post.media.length; delete x.post.media; delete x.post.author_m_uid; return x; }) : [], news: [], lives: c === world.placeHome ? [{ id: LIVE[0].id, title: LIVE[0].title, room_kind: 'mission', category_key: 'field', started_at: LIVE[0].started_at, country_code: c, host: { display_name: 'Fixture Ana', avatar_url: '' } }] : [], next_post_before: null, next_news_before: null }); }
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
+    /* the news heat map's counts: the fixture's stories by the country each mentions, and Kenya's as places */
+    if (u.pathname === '/v1/world/news-heat') {
+      const c = u.searchParams.get('country');
+      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, posts: { KE: 3, US: 12 }, attribution: GDELT });
+      if (c === 'KE') return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: 'KE', cells: [[36.8, -1.3, 8]], total: 8, capped: false, attribution: GDELT });
+      return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: c, cells: [], total: 0, capped: false, attribution: GDELT });
+    }
     if (u.pathname === '/v1/world/news') {
       if (world.newsFail === 'abort') return route.abort('failed');
       if (world.newsFail === 'unavailable') return json(route, { ok: true, items: [], next_before: null, unavailable: true, attribution: GDELT });
@@ -225,22 +287,56 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.pathname === '/v1/mnet/bootstrap' && world.bootFail && world.bootFail.length) { const st = world.bootFail.shift(); return json(route, { error: st === 401 ? 'sign in first' : 'upstream failed' }, st); }
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') { const pg = pageOf(asOf(world.posts)); return json(route, { items: pg.list.map(item), next_before: pg.next }); }
-    if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null }] });
+    if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null },
+      { id: 'n2', type: 'comment', body: 'commented on your post', metadata: { post_id: CONTENT, comment_id: M2 }, created_at: new Date().toISOString(), read_at: null },
+      { id: 'n3', type: 'news_comment', body: 'also replied to a story you replied to', metadata: { article_id: M1, comment_id: M2 }, created_at: new Date().toISOString(), read_at: null }] });
+    /* alerts on devices are off on this fixture server */
+    if (u.pathname === '/v1/mnet/push') return json(route, { enabled: false });
     if (u.pathname === '/v1/mnet/notifications/read') { world.alertsRead = true; return json(route, {}); }
     if (u.pathname === '/v1/mnet/discover') { const q = (u.searchParams.get('q') || '').toLowerCase(); return json(route, { people: PEERS.filter((p) => (p.display_name + ' ' + p.mccluster_id).toLowerCase().includes(q)).map((p) => ({ ...p, following: false })) }); }
     if (u.pathname === '/v1/mnet/conversations') return json(route, { conversations: [{ conversation: { id: 'c1' }, my: { member_state: 'requested' }, members: [], last_message: null }] });
     if (u.pathname === '/v1/mnet/groups') return json(route, { groups: GROUPS });
     if (u.pathname === '/v1/mnet/groups/river-keepers') return json(route, { group: GROUPS[0], organization: null, campaigns: [], items: [] });
+    /* one post, for a member: what a country feed's "Show these photos" loads */
+    const onePost = m === 'GET' && u.pathname.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})$/);
+    if (onePost) { const p = world.posts.find((x) => x.id === onePost[1]); return !auth || !p ? json(route, { error: 'Post not found' }, 404) : json(route, item(p)); }
     if (u.pathname === '/v1/mnet/live/directory') return json(route, { sessions: LIVE });
     if (u.pathname === '/v1/mnet/live/eligibility') return json(route, { can_host: false, enabled: false });
     if (u.pathname === '/v1/analytics/my-creator') return json(route, { ok: true, creator: creator, audience: creator ? { countries: [{ country: 'US', views: 42 }, { country: 'GB', views: 7 }], elsewhere_views: 3, unknown_views: 1, min_views: 5 } : { countries: [] } });
+    /* MEDIA, as mnet-media answers it: a signed upload slot, finalize, discard, and an hour-long read address */
+    /* a cover upload the storage turns away, when a scenario asks for one */
+    if (u.pathname === '/v1/mnet/media/upload-url' && m === 'POST' && world.failCover && /^image\//.test(String(body?.mime_type || ''))) { world.failCover--; return json(route, { error: 'Storage is busy.' }, 503); }
+    if (u.pathname === '/v1/mnet/media/upload-url' && m === 'POST') {
+      const id = asset(100 + (world.uploadN = (world.uploadN || 0) + 1)), mime = String(body?.mime_type || ''), kind = /^video\//.test(mime) ? 'video' : /^image\//.test(mime) ? 'image' : 'file';
+      const path = `auth-you/${id}-${String(body?.file_name || 'file').replace(/[^a-zA-Z0-9._-]+/g, '-')}`;
+      (world.uploads ||= {})[id] = { path, mime, media_type: kind };
+      return json(route, { ok: true, asset: { id, object_path: path, media_type: kind, mime_type: mime, status: 'staged' }, upload: { path, token: 'tok-' + world.uploadN, signed_url: null } });
+    }
+    if (u.pathname === '/v1/mnet/media/finalize' && m === 'POST') { const up = world.uploads?.[body?.asset_id]; return up ? json(route, { ok: true, asset: { id: body.asset_id, media_type: up.media_type, mime_type: up.mime, width: body.width ?? null, height: body.height ?? null, duration_ms: body.duration_ms ?? null, status: 'ready' } }) : json(route, { error: 'asset not found' }, 404); }
+    if (u.pathname === '/v1/mnet/media/discard' && m === 'POST') return json(route, { ok: true, discarded: true });
+    const upMedia = u.pathname.match(/^\/v1\/mnet\/media\/([0-9a-f-]{36})\/url$/), uploaded = upMedia && world.uploads?.[upMedia[1]], fixed = upMedia && VIDEO_MEDIA[upMedia[1]];
+    if (uploaded) return json(route, { ok: true, asset_id: upMedia[1], url: `${STORAGE}/sign/mnet-media/${uploaded.path}?token=view`, expires_in: 3600, media_type: uploaded.media_type, mime_type: uploaded.mime });
+    if (fixed) return json(route, { ok: true, asset_id: upMedia[1], url: `${BASE}/${fixed.path}`, expires_in: 3600, media_type: fixed.media_type });
     const media = u.pathname.match(/^\/v1\/mnet\/media\/eeeeeeee-eeee-4eee-8eee-0*(\d+)\/url$/);
     if (media) return json(route, { url: `${BASE}/${PHOTOS[(Number(media[1]) - 1) % PHOTOS.length]}`, media_type: 'image' });
     if (u.pathname === '/v1/mnet/posts' && m === 'POST') {
       if (!body || !String(body.body || '').trim()) return json(route, { error: 'empty' }, 400);
-      const p = { id: world.id(), author: ME, body: body.body, visibility: body.visibility, like_count: 0, liked_by_me: false, comments: [], created_at: new Date().toISOString() };
+      const media = (body.media_asset_ids || []).map((id, i) => ({ asset_id: id, type: world.uploads?.[id]?.media_type || 'image', poster_asset_id: (body.poster_asset_ids || [])[i] || null }));
+      const p = { id: world.id(), author: ME, body: body.body, visibility: body.visibility, like_count: 0, liked_by_me: false, comments: [], created_at: new Date().toISOString(), ...(media.length ? { media } : {}) };
       world.posts.unshift(p);
       return json(route, { post: item(p).post }, 201);
+    }
+    /* THE THUMBNAIL of the member's own video post (the Worker's rules: workers/mccluster/test/mnet-post-thumbnail.test.mjs) */
+    const patchPost = m === 'PATCH' && u.pathname.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})$/);
+    if (patchPost) {
+      const p = world.posts.find((x) => x.id === patchPost[1]);
+      if (!p || p.author.m_uid !== ME.m_uid) return json(route, { error: 'Post not found' }, 404);
+      for (const [video, picture] of Object.entries(body?.poster_by_media || {})) {
+        const target = (p.media || []).find((x) => x.asset_id === video && x.type === 'video');
+        if (!target || (picture !== null && world.uploads?.[picture]?.media_type !== 'image')) return json(route, { error: 'A thumbnail must be one of your images.' }, 400);
+        target.poster_asset_id = picture;
+      }
+      return json(route, item(p));
     }
     const react = u.pathname.match(/^\/v1\/mnet\/posts\/([^/]+)\/reactions$/);
     if (react) {
@@ -285,10 +381,34 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html' }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, social = false, owner = false, videoPosts = false }) {
   const world = freshWorld();
-  world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
+  world.owner = owner;
+  if (videoPosts) addVideoPosts(world);
+  world.placeHome = placeHome;
+  world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage; world.admin = admin;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  /* social: the World exactly as it ships (scripts/e2e/world-switch.mjs) */
+  if (social) await ctx.addCookies([{ name: 'world', value: 'social', url: BASE }]);
+  /* every frame of the first seconds: did the sign-in form paint on the way into the World? (owner, 2026-10-20) */
+  await ctx.addInitScript(() => {
+    window.__gateFlash = 0;
+    /* and no other screen either (owner, 2026-10-20: "other screens flash up instead of just a smooth transition"): the Live
+       room before the World, a World screen with nothing in it, the bar drawing this page itself as a broken image, the
+       globe frame's own standalone screen (its deck) inside the World */
+    window.__liveFlash = 0; window.__blankWorld = 0; window.__barSelfImg = 0; window.__deckFlash = 0;
+    const shown = (el) => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+    const tick = () => {
+      const g = document.getElementById('mnSignedOut'); if (g && !g.hidden && g.getClientRects().length) window.__gateFlash++;
+      if (shown(document.getElementById('mnLiveView'))) window.__liveFlash++;
+      const app = document.getElementById('mnApp');
+      if (app && !shown(app) && !shown(g) && !shown(document.getElementById('mnProfileGate'))) window.__blankWorld++;
+      for (const img of document.querySelectorAll('.appbar img')) if (img.getAttribute('src') && img.src === location.href) window.__barSelfImg++;
+      if (/action-globe\.html$/.test(location.pathname) && window.parent !== window && shown(document.getElementById('deck'))) window.__deckFlash++;
+      if (performance.now() < 8000) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
@@ -464,6 +584,23 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       &&(await page.locator('#wtGo button').allTextContents()).map(t=>t.trim()).join('|')==='Near me|Airports|Hotels|On the globe|Saved'
       &&await page.isVisible('[data-travel-plan=flights]')&&await page.isVisible('[data-travel-plan=multi]')&&await page.isHidden('[data-travel-kind=flight]')
       &&await page.evaluate(()=>{const f=document.getElementById('wtFrom').getBoundingClientRect(),t=document.getElementById('wtTo').getBoundingClientRect(),p=document.getElementById('wtPickTo').getBoundingClientRect(),l=document.getElementById('wtLocate').getBoundingClientRect();return f.bottom<=t.top+1&&p.width>=44&&p.height>=44&&l.width>=44&&l.height>=44&&p.top>=t.top-12&&p.bottom<=t.bottom+12;}));
+    /* the two tiles and their switches (owner, 2026-10-20): Rides is Directions or Rentals, Flights is Commercial or Private */
+    const tiles=await page.evaluate(()=>({kinds:document.querySelectorAll('.wt-kind').length,subs:[...document.querySelectorAll('[data-travel-sub]')].map(b=>b.textContent.trim()).join('|'),
+      directions:document.querySelector('[data-travel-sub=directions]')?.getAttribute('aria-pressed'),multi:document.querySelectorAll('[data-travel-chip=multi]').length}));
+    check(scope,'Rides and Flights are two tiles, each split by an on/off switch',tiles.kinds===2&&tiles.subs==='Directions|Rentals|Commercial|Private'&&tiles.directions==='true'&&tiles.multi===0,tiles);
+    await page.click('[data-travel-sub=rentals]');
+    check(scope,'Rentals shows the Isabeata 2024 at $350 a week from Whip Equipped; the route tools step aside',await page.isVisible('#wtRentals')
+      &&/Isabeata 2024/.test(await page.textContent('#wtCars'))&&/\$350\/week/.test((await page.textContent('#wtCars')).replace(/\s+/g,''))
+      &&/Whip Equipped LLC, a separate company/.test(await page.textContent('#wtRentals'))&&await page.isHidden('#wtGo')
+      &&await page.getAttribute('#wtCars a','href')==='https://matthew.mccluster.org/whip/rentals/?vehicle=we-rental-isabeata-2024'
+      &&await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    await page.screenshot({path:join(OUT,scope+'-rentals.png')});
+    await page.click('[data-travel-sub=private]');
+    const priv=await page.evaluate(()=>({shown:!document.getElementById('wtPrivate').hidden&&!!document.getElementById('wtPrivate').offsetHeight,rentals:!document.getElementById('wtRentals').offsetHeight,
+      flights:document.querySelector('[data-travel-chip=flights]')?.getAttribute('aria-pressed'),sub:document.querySelector('[data-travel-sub=private]')?.getAttribute('aria-pressed')}));
+    check(scope,'Private flights says it is not bookable yet, under the Flights tile',priv.shown&&priv.rentals&&priv.flights==='true'&&priv.sub==='true',priv);
+    await page.click('[data-travel-sub=directions]');
+    check(scope,'Directions brings the route tools back',await page.isVisible('#wtGo')&&await page.isHidden('#wtPrivate')&&await page.getAttribute('[data-travel-chip=rides]','aria-pressed')==='true');
     const [dock,expand,modes,credit,...controls]=await Promise.all([
       page.locator('.appbar').boundingBox(),page.locator('.mn__world-expand').boundingBox(),page.locator('.wt-world-modes').boundingBox(),
       globe.locator('.osm-credit a[href="https://www.openstreetmap.org/copyright"]').boundingBox(),
@@ -478,6 +615,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     check(scope,'location is requested once, denial keeps manual entry, no navigation watch starts',await page.evaluate(()=>window.__travelGeoRequests===1&&window.__travelWatchStarts===0)&&await page.isEnabled('#wtFrom')&&/Location access is off/.test(await page.textContent('#wtLocationStatus')));
     await chooseTravelPlace(page,'wtTo','350 Fifth Avenue');
     check(scope,'selected address reveals ground options and waits for a selected starting point',/Empire State Building/.test(await page.inputValue('#wtTo'))&&await page.isVisible('#wtGroundOptions')&&await page.isDisabled('#wtNavigate')&&await page.isHidden('[data-travel-kind=flight]')&&req(world,'POST',/^\/v1\/travel\/route$/).length===0);
+    check(scope,'a destination with no pickup asks for the location from that tap, then points at the pickup',await page.waitForFunction(()=>window.__travelGeoRequests===2&&document.activeElement&&document.activeElement.id==='wtFrom',null,{timeout:5000}).then(()=>true,()=>false));
     await chooseTravelPlace(page,'wtTo','Union Station');await chooseTravelPlace(page,'wtFrom','New Haven');
     await showTravelRoute(page);
     check(scope,'selecting both endpoints automatically presents directions and Go',req(world,'POST',/^\/v1\/travel\/route$/).length===1&&await page.textContent('#wtNavigate')==='Go');
@@ -677,6 +815,508 @@ if(runs('mission-archive')) {
   }finally{await ctx.close();}
 }
 
+/* A SIGNED-OUT VISITOR STAYS IN THEIR REGION (owner, 2026-10-20). With the country feed on, the feed opens on the
+   connection country; another country tapped outside Travel asks for sign-in and the globe goes back home. */
+if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-visitor-region';
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:false,placeHome:'US'});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await page.waitForFunction(()=>/United States/.test(document.getElementById('huRegionLabel').textContent),null,{timeout:10000}).catch(()=>{});
+    check(scope,'a visitor opens on the country of their connection',/United States/.test(await page.textContent('#huRegionLabel')) && await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true');
+    check(scope,'and reads that country\'s feed',world.requests.some(r=>r.path==='/v1/world/region-feed'&&/country=US/.test(r.search)));
+    check(scope,'the country\'s lives lead its feed',await page.locator('#mnFeed .mn__place-lives .mn__place-live').count()===1 && /Live in United States/.test(await page.textContent('#mnFeed .mn__place-lives')));
+    const row=await page.evaluate(()=>{const r=document.querySelector('.mn__place-lives-row');return r?[r.scrollWidth>0,document.documentElement.scrollWidth===document.documentElement.clientWidth]:[false,false];});
+    check(scope,'the lives row scrolls inside itself, never the page',row[0]&&row[1],row);
+    await globe.waitForFunction(()=>window.__huLivePlaces?.().GB===2,null,{timeout:15000}).catch(()=>{});
+    check(scope,'the globe marks a country where a broadcast is on air',await globe.evaluate(()=>window.__huLivePlaces?.().GB)===2);
+    await page.screenshot({path:join(OUT,scope+'-home.png')});
+    await globe.waitForFunction(()=>window.__huCountries?.().ready);
+    await globe.evaluate(()=>parent.postMessage({type:'hu:country',country:{code:'FR',name:'France'}},location.origin));
+    await page.waitForFunction(()=>/other regions/.test((document.getElementById('mnGuestWhy')||{}).textContent||''),null,{timeout:5000}).catch(()=>{});
+    check(scope,'another country asks the visitor to sign in',await page.textContent('#mnGuestWhy')==='Sign in to explore posts, news and conversations in other regions.');
+    await globe.waitForFunction(()=>window.__huCountries?.().selected==='US',null,{timeout:5000}).catch(()=>{});
+    check(scope,'the globe goes back to the visitor\'s country',await globe.evaluate(()=>window.__huCountries().selected)==='US');
+    check(scope,'the feed never leaves it',/United States/.test(await page.textContent('#huRegionLabel')) && !world.requests.some(r=>r.path==='/v1/world/region-feed'&&/country=FR/.test(r.search)));
+    await page.evaluate(()=>{const g=document.getElementById('mnGuestWhy');if(g)g.textContent='';});
+    await page.evaluate(()=>document.querySelector('#mnFeed .mn__place-live').click());
+    check(scope,'watching a placed live asks a visitor to sign in, as Live does',await page.textContent('#mnGuestWhy')==='Sign in to watch live rooms.');
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* A MEMBER MAY TRAVEL (owner, 2026-10-20: "they can't region hop unless they're logged in"): their session rides with
+   the country feed, so the Worker lets them read any country. */
+if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-member-region';
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,placeHome:'US'});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>window.__huCountries?.().ready,null,{timeout:25000});
+    await globe.evaluate(()=>parent.postMessage({type:'hu:country',country:{code:'FR',name:'France'}},location.origin));
+    await page.waitForFunction(()=>/France/.test(document.getElementById('huRegionLabel').textContent),null,{timeout:5000}).catch(()=>{});
+    await page.waitForTimeout(300);
+    const fr=world.requests.filter(r=>r.path==='/v1/world/region-feed'&&/country=FR/.test(r.search));
+    check(scope,'a member reads another country, with their session',/France/.test(await page.textContent('#huRegionLabel'))&&fr.length>0&&fr.every(r=>r.auth),fr);
+    check(scope,'and is never asked to sign in for it',!/Sign in to read another country/.test(await page.textContent('#mnFeed')));
+    /* back home: a country feed carries no media ids, so a member loads the post itself to see its photos */
+    await globe.evaluate(()=>parent.postMessage({type:'hu:country',country:{code:'US',name:'United States'}},location.origin));
+    const locked=page.locator('#mnFeed [data-unlock-media]').first();
+    await locked.waitFor({timeout:8000}).catch(()=>{});
+    check(scope,'a member is offered the photos, not asked to sign in',await locked.count()===1&&/^Show these photos and videos$/.test(await locked.textContent())&&await page.locator('#mnFeed [data-guest-ask=media]').count()===0);
+    const postId=await locked.getAttribute('data-unlock-media');
+    await locked.click();
+    await page.waitForSelector('#mnFeed article [data-mnet-media]',{timeout:8000}).catch(()=>{});
+    check(scope,'and Show loads the post with their session and draws its photos',world.requests.some(r=>r.path==='/v1/mnet/posts/'+postId&&r.auth)&&await page.locator('#mnFeed [data-mnet-media]').count()===3&&await page.locator('#mnFeed [data-unlock-media]').count()===1);
+    await page.evaluate(()=>{window.__copied=null;Object.defineProperty(navigator,'share',{value:undefined,configurable:true});navigator.clipboard.writeText=t=>{window.__copied=t;return Promise.resolve();};});
+    await page.locator('#mnFeed [data-action=share][data-post="'+postId+'"]').click();
+    await page.waitForFunction(()=>window.__copied,null,{timeout:3000}).catch(()=>{});
+    check(scope,'a country feed\'s public post can be shared',String(await page.evaluate(()=>window.__copied)).includes('post='+postId)&&!/Only public posts can be shared/.test(await page.textContent('#mnFeedStatus')));
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* A STATE (owner, 2026-10-21: "once you've selected a country ... select a state thereafter, but only after selecting the
+   country already and double tapping the state"). The World as it ships, on a phone, with real taps on the real globe:
+   Kenya's provinces, where the fixture's Nairobi stories are. */
+if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-state';
+  const {ctx,page,errors} = await open(DEVICES[0],{member:true,social:true});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>window.__huCountries?.().ready,null,{timeout:25000});
+    await page.waitForSelector('#mnFeed [data-news-id]',{timeout:15000}).catch(()=>{});
+    /* the news heat map from afar: the countries the day's stories mention, shaded by how many */
+    await globe.waitForFunction(()=>window.__huCountries().heat?.countries===16,null,{timeout:20000}).catch(()=>{});
+    for(const [name,lon,lat] of [['americas',-75,20],['eurafrica',20,20]]){await globe.evaluate(([lon,lat])=>window.__huCountriesCam.view(lon,lat,1.4e7),[lon,lat]);await page.waitForTimeout(2500);await page.screenshot({path:join(OUT,scope+'-heat-'+name+'.png')});}
+    const legendBox=await page.evaluate(()=>{const f=document.getElementById('mnWorldFrame').getBoundingClientRect(),l=document.getElementById('mnWorldFrame').contentDocument.getElementById('heatLegend').getBoundingClientRect(),x=f.left+l.left+l.width/2,y=f.top+l.top+l.height/2,t=document.elementFromPoint(x,y);return{top:t&&t.id,w:Math.round(l.width),bottom:Math.round(f.height-l.bottom)}});
+    check(scope,'the heat map\'s legend sits on the globe where nothing on the page covers it',legendBox.top==='mnWorldFrame'&&legendBox.w>=120,legendBox);
+    await globe.evaluate(()=>window.__huCountriesCam.view(37.6,-0.4,1.5e6));
+    await globe.waitForFunction(()=>window.__huCountries().lines===1,null,{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    const frame = await page.locator('#mnWorldFrame').boundingBox();
+    /* a place on the page, and what is on top of it there (the frame, or something covering the globe) */
+    const at = async (lon,lat)=>{const s=await globe.evaluate(([lon,lat])=>window.__huCountriesCam.screen(lon,lat),[lon,lat]);const x=frame.x+s.x,y=frame.y+s.y;return {x,y,top:await page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[x,y])};};
+    /* a double tap: two taps on the globe 150 ms apart by their own clock. Playwright's clicks each wait on a software-rendered
+       frame and can land further apart than a person's, so the two go to the globe's tap directly (the single taps below
+       are real clicks) */
+    const twice = (p)=>globe.evaluate(({x,y})=>{const t=performance.now();window.__huCountriesCam.tap(x,y,t);window.__huCountriesCam.tap(x,y,t+150);},{x:p.x-frame.x,y:p.y-frame.y});
+    const gap = ()=>page.waitForTimeout(700);
+    const now = ()=>globe.evaluate(()=>({selected:window.__huCountries().selected,state:window.__huCountries().selectedState,card:window.__huCountries().card}));
+    const eastern = await at(38.1,-1.3), nairobi = await at(37.05,-1.25);
+    check(scope,'the taps land on the globe, nothing on the page covers them',eastern.top==='mnWorldFrame'&&nairobi.top==='mnWorldFrame',{eastern,nairobi});
+    /* a double tap on a country not yet selected selects the country, and nothing more */
+    await twice(eastern);
+    await globe.waitForFunction(()=>window.__huCountries().selected==='KE',null,{timeout:5000}).catch(()=>{});
+    await gap();
+    const first = await now();
+    check(scope,'a double tap on a country not yet selected selects the country only',first.selected==='KE'&&!first.state&&await page.textContent('#huRegionLabel')==='Kenya',first);
+    check(scope,'its card says a state can be chosen',/Double-tap a state to choose it/.test(first.card||''),first.card);
+    /* THE NEWS HEAT MAP: the card gives the count, and the country's states are shaded by the stories placed in them */
+    await globe.waitForFunction(()=>window.__huCountries().heat?.stateFill,null,{timeout:15000}).catch(()=>{});
+    const kh=await globe.evaluate(()=>window.__huCountries().heat);
+    check(scope,'Kenya\'s states take the heat',kh&&kh.states===1&&kh.stateFill,kh);
+    /* THE PLACE CARD (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): the page draws
+       it, centred and narrow, below the bar, uncovered, with the globe's buttons stepped out from under it */
+    await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/members/.test(c.textContent)&&/\b19\b/.test(c.textContent)},null,{timeout:10000}).catch(()=>{});
+    const pc=await page.evaluate(()=>{const c=document.getElementById('mnPlaceCard'),r=c.getBoundingClientRect(),bar=document.querySelector('.mn__top').getBoundingClientRect(),st=document.getElementById('mnWorldStack').getBoundingClientRect(),t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+      const stats=[...c.querySelectorAll('.mn__place-stat')].map(x=>x.textContent);return{text:c.textContent,stats,left:Math.round(r.left),right:Math.round(innerWidth-r.right),w:Math.round(r.width),vw:innerWidth,top:Math.round(r.top),barBottom:Math.round(bar.bottom),onTop:!!(t&&c.contains(t)),stackClear:!(st.width&&st.left<r.right&&st.right>r.left&&st.top<r.bottom&&st.bottom>r.top),liveClear:(()=>{const l=document.getElementById('mnWorldLive').getBoundingClientRect();return !(l.width&&l.left<r.right&&l.right>r.left&&l.top<r.bottom&&l.bottom>r.top)&&!(l.width&&st.width&&l.left<st.right&&l.right>st.left&&l.top<st.bottom&&l.bottom>st.top)})(),frameCard:getComputedStyle(document.getElementById('mnWorldFrame').contentDocument.getElementById('countryCard')).display}});
+    check(scope,'the place card sits in the middle at the top, not the full width: centred, under the bar, nothing over it, the buttons stepped aside',Math.abs(pc.left-pc.right)<=2&&pc.w<=300&&pc.w<pc.vw-40&&pc.top>=pc.barBottom&&pc.onTop&&pc.stackClear&&pc.liveClear&&pc.frameCard==='none',pc);
+    const under = await Promise.all([eastern,nairobi].map((p)=>page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[p.x,p.y])));
+    check(scope,'with the card up, the places to tap are still the globe\'s',under.every((t)=>t==='mnWorldFrame'),under);
+    check(scope,'it gives Kenya\'s three counts: news today, posts placed there, members who share their region',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
+    await page.screenshot({path:join(OUT,scope+'-place-card.png')});
+    await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
+    const kenya = await page.locator('#mnFeed [data-news-id]').count();
+    check(scope,'Local shows Kenya\'s stories',kenya>0&&await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true',kenya);
+    /* with Kenya selected, a double tap picks the province under it */
+    await twice(eastern);
+    await globe.waitForFunction(()=>window.__huCountries().selectedState,null,{timeout:8000}).catch(()=>{});
+    const east = await now();
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
+    check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya\s*×?\s*0news · 24 h/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
+    check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No story mentions Eastern, Kenya yet/.test(await page.textContent('#mnFeed')));
+    await page.screenshot({path:join(OUT,scope+'-eastern.png')});
+    await gap();
+    /* another state of the same country: picked the same way, with no second read of the country */
+    await twice(nairobi);
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
+    await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:5000}).catch(()=>{});
+    const nb = await now();
+    check(scope,'a double tap on another state picks it, and its stories come back',/Nairobi/.test(nb.card||'')&&/8news · 24 h/.test(nb.card||'')&&await page.textContent('#huRegionLabel')==='Nairobi, Kenya'&&await page.locator('#mnFeed [data-news-id]').count()===kenya,{nb,count:await page.locator('#mnFeed [data-news-id]').count(),kenya});
+    await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
+    await gap();
+    /* a single tap inside the country goes back to the whole country; another lets the country go, as before */
+    await page.mouse.click(eastern.x,eastern.y);
+    await globe.waitForFunction(()=>!window.__huCountries().selectedState,null,{timeout:5000}).catch(()=>{});
+    await gap();
+    const back = await now();
+    check(scope,'a single tap inside the country goes back to the whole country',back.selected==='KE'&&!back.state&&await page.textContent('#huRegionLabel')==='Kenya',back);
+    await page.mouse.click(eastern.x,eastern.y);
+    await globe.waitForFunction(()=>!window.__huCountries().selected,null,{timeout:5000}).catch(()=>{});
+    await gap();
+    check(scope,'and one more lets the country go, as it always has',!(await now()).selected&&await page.textContent('#huRegionLabel')==='All regions');
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* THE NEWSROOM (owner, 2026-10-20): the house owner, and only the house owner, may also publish a post as an article on
+   mccluster.org/news/; the Worker checks again (workers/mccluster/test/newsroom.test.mjs). */
+if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
+  const scope = admin ? 'editorial-newsroom-owner' : 'editorial-newsroom-member';
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,admin});
+  try {
+    await page.waitForSelector('#mnPostBody');
+    await page.focus('#mnPostBody');
+    await page.waitForFunction(()=>document.getElementById('mnComposer').classList.contains('is-open'),null,{timeout:5000}).catch(()=>{});
+    await page.waitForTimeout(400);
+    const row=await page.evaluate(()=>{const r=document.getElementById('mnNewsroomRow');const b=r&&r.getBoundingClientRect();return {shown:!!r&&!r.hidden&&getComputedStyle(r).display!=='none',h:b?Math.round(b.height):0,box:document.querySelector('#mnNewsroom')?.getBoundingClientRect().width||0};});
+    if (!admin) {
+      check(scope,'a member is never offered the newsroom',!row.shown,row);
+    } else {
+      check(scope,'the house owner is offered the newsroom while writing, as a full-height tap target',row.shown&&row.h>=44,row);
+      await page.fill('#mnPostBody','Morning brief: what moved yesterday\n\nThe story, in my words.');
+      await page.check('#mnNewsroom');
+      await page.selectOption('#mnVisibility','network');
+      await page.click('#mnPost');
+      check(scope,'a newsroom article must be public, and nothing is sent until it is',/is public/.test(await page.textContent('#mnPostStatus'))&&!req(world,'POST',/^\/v1\/mnet\/posts$/).length);
+      await page.selectOption('#mnVisibility','public');
+      await page.click('#mnPost');
+      await page.waitForFunction(()=>/newsroom/.test(document.getElementById('mnPostStatus').textContent),null,{timeout:8000}).catch(()=>{});
+      const sent=req(world,'POST',/^\/v1\/mnet\/posts$/).at(-1);
+      check(scope,'Post sends the newsroom mark with the owner\'s session',!!sent&&sent.auth&&sent.body.newsroom===true&&sent.body.visibility==='public',sent&&sent.body);
+      const link=await page.getAttribute('#mnPostStatus a','href');
+      check(scope,'and links the article on McCluster Corp\'s site',/^https:\/\/mccluster\.org\/news\/[0-9a-f-]{36}$/.test(link||''),link);
+      check(scope,'the tick clears for the next post',!(await page.isChecked('#mnNewsroom')));
+    }
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* NO BLACK VIDEOS (owner, 2026-10-20: "when people upload videos, there's no thumbnail, just a black video ... I want
+   people to be even able to edit the videos they previously posted as a thumbnail"). A video post shows its picture; a
+   video with none starts a tenth of a second in so a first frame paints; one this device cannot play shows its picture
+   and says so; and the author changes the picture of their own video, by a frame or an image of their own. */
+const noSideways = (page) => page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth);
+const thumbOf = (page, id) => page.locator(`#mnFeed article[data-post-id="${id}"] [data-mnet-media]`).first();
+if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone-portrait', 'desktop'].includes(d.name) && (!process.env.EDITORIAL_DEVICE || d.name === process.env.EDITORIAL_DEVICE))) {
+  const scope = `editorial-video-poster-${device.name}`;
+  const { ctx, page, world, errors } = await open(device, { member: true, videoPosts: true });
+  try {
+    const { mine, bare, broken } = world.videoPosts;
+    await page.waitForSelector(`#mnFeed article[data-post-id="${mine.id}"] video[poster]`, { timeout: 15000 }).catch(() => {});
+    const read = (id) => thumbOf(page, id).evaluate((n) => { const v = n.querySelector('video'); return v ? { poster: v.getAttribute('poster'), preload: v.getAttribute('preload'), src: v.getAttribute('src'), playsinline: v.hasAttribute('playsinline') } : { html: n.innerHTML.slice(0, 200) }; });
+    const own = await read(mine.id);
+    check(scope, 'a video post shows its picture: video[poster], preload=metadata, inline', /assets\/frames\/affix_0001\.jpg$/.test(own.poster || '') && own.preload === 'metadata' && own.playsinline && /hero\.webm$/.test(own.src || ''), own);
+    await page.waitForSelector(`#mnFeed article[data-post-id="${bare.id}"] video`, { timeout: 10000 }).catch(() => {});
+    const none = await read(bare.id);
+    check(scope, 'a video with no picture starts a tenth of a second in (#t=0.1) so a first frame paints', !none.poster && /hero\.webm#t=0\.1$/.test(none.src || '') && none.preload === 'metadata', none);
+    await page.waitForSelector(`#mnFeed article[data-post-id="${broken.id}"] .mn__video-note`, { timeout: 10000 }).catch(() => {});
+    const bad = await thumbOf(page, broken.id).evaluate((n) => ({ note: (n.querySelector('.mn__video-note') || {}).textContent || '', img: (n.querySelector('img') || {}).src || '', video: !!n.querySelector('video') }));
+    check(scope, 'a video this device cannot play shows its picture and says so', /can.t play on this device/.test(bad.note) && /bussalick_0001\.jpg$/.test(bad.img) && !bad.video, bad);
+    check(scope, 'Thumbnail is offered on the member\'s own video post only, as a 44px tap target',
+      await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).count() === 1 &&
+      await page.locator(`#mnFeed article[data-post-id="${bare.id}"] [data-action=thumbnail], #mnFeed article[data-post-id="${broken.id}"] [data-action=thumbnail]`).count() === 0 &&
+      await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => { const r = b.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; }));
+    check(scope, 'no horizontal overflow with video posts in the feed', await noSideways(page));
+    const center = (id) => page.locator(`#mnFeed article[data-post-id="${id}"]`).evaluate((a) => a.scrollIntoView({ block: 'center' }));
+    await center(mine.id);
+    await page.waitForTimeout(400);
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"]`).screenshot({ path: join(OUT, scope + '-card.png') });
+
+    /* the editor: a frame of the video */
+    /* a tap, as the feed may still be settling under a software-rendered globe */
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
+    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 30000 }).catch(() => {});
+    await page.waitForFunction(() => !document.getElementById('mnThumbPick').hidden, null, { timeout: 60000 }).catch(() => {});
+    check(scope, 'the editor opens with the video\'s frames to pick from (same-origin storage: pixels readable)', !(await page.isHidden('#mnThumbPick')) && await page.isVisible('#mnThumbVideo'));
+    const fresh = req(world, 'GET', new RegExp(`^/v1/mnet/media/${VID.mine}/url$`));
+    check(scope, 'the editor asks for a fresh address for the video, with the member\'s session', fresh.length >= 2 && fresh.every((r) => r.auth), fresh.length);
+    check(scope, 'the video is read with CORS, so a frame may become a picture', await page.getAttribute('#mnThumbVideo', 'crossorigin') === 'anonymous');
+    await page.$eval('#mnThumbRange', (r) => { r.value = String(Math.round(Number(r.max) * 0.6)); r.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.waitForFunction(() => { const v = document.getElementById('mnThumbVideo'); return v.readyState >= 2 && !v.seeking && v.currentTime > 1; }, null, { timeout: 8000 }).catch(() => {});
+    const fit = await page.evaluate(() => {
+      const d = document.getElementById('mnThumbDialog').getBoundingClientRect(), tall = (id) => document.getElementById(id).offsetHeight; /* layout size: the sheet's entrance scale does not count */
+      return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, left: Math.round(d.left), right: Math.round(d.right), iw: innerWidth,
+        inner: document.getElementById('mnThumbDialog').scrollWidth <= document.getElementById('mnThumbDialog').clientWidth,
+        use: tall('mnThumbUseFrame'), upload: tall('mnThumbUpload'), range: tall('mnThumbRange'), close: tall('mnThumbClose') };
+    });
+    check(scope, 'the editor fits the screen: no horizontal scroll, nothing sideways inside it', fit.sw === fit.cw && fit.left >= 0 && fit.right <= fit.iw && fit.inner, fit);
+    check(scope, 'the editor\'s controls are full tap targets (44px)', fit.use >= 44 && fit.upload >= 44 && fit.range >= 44 && fit.close >= 44, fit);
+    /* a software-rendered globe under a blurred backdrop is slow to capture on a desktop runner */
+    await page.screenshot({ path: join(OUT, scope + '-editor.png'), timeout: 90000 });
+    const before = world.uploadN || 0;
+    /* a save is an upload, a finalize and a PATCH; a loaded runner can take its time, so wait for the PATCH itself */
+    const patches = () => req(world, 'PATCH', /^\/v1\/mnet\/posts\//).length;
+    const saved = async (n, s = 60) => { for (let t = 0; t < s * 10 && patches() <= n; t++) await page.waitForTimeout(100); await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {}); };
+    const p1 = patches();
+    await page.click('#mnThumbUseFrame');
+    await saved(p1);
+    const frameId = asset(100 + before + 1), patch = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1);
+    const up = world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url').at(-1), fin = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
+    check(scope, 'Use this frame uploads the frame as a JPEG and finalizes it with its size', world.uploadN === before + 1 && up.body.mime_type === 'image/jpeg' && fin.body.asset_id === frameId && fin.body.width > 0 && fin.body.height > 0 && Math.max(fin.body.width, fin.body.height) <= 1080, { up: up && up.body, fin: fin && fin.body });
+    check(scope, 'and sends poster_by_media {video: new picture} for that post, with the member\'s session', !!patch && patch.auth && patch.path === '/v1/mnet/posts/' + mine.id && JSON.stringify(patch.body) === JSON.stringify({ poster_by_media: { [VID.mine]: frameId } }), patch && patch.body);
+    await page.waitForFunction((id) => { const n = document.querySelector(`#mnFeed article[data-post-id="${id}"] video[poster]`); return n && /token=view$/.test(n.getAttribute('poster')); }, mine.id, { timeout: 8000 }).catch(() => {});
+    const after = await read(mine.id);
+    check(scope, 'the card draws its new picture at once, from the new asset', (after.poster || '').endsWith(`${frameId}-thumbnail-poster.jpg?token=view`) && await thumbOf(page, mine.id).getAttribute('data-poster-asset') === frameId, after);
+    check(scope, 'the feed says so', /Thumbnail updated/.test(await page.textContent('#mnFeedStatus')));
+    await center(mine.id);
+    await page.waitForTimeout(600);
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"]`).screenshot({ path: join(OUT, scope + '-card-after.png') });
+
+    /* or a picture of the member's own */
+    /* a tap, as the feed may still be settling under a software-rendered globe */
+    await page.locator(`#mnFeed article[data-post-id="${mine.id}"] [data-action=thumbnail]`).evaluate((b) => b.click());
+    await page.waitForSelector('#mnThumbDialog[open]', { timeout: 30000 }).catch(() => {});
+    const p2 = patches(), picture = join(ROOT, 'assets/frames/church_0001.jpg');
+    /* as a person does it: Upload an image opens the file chooser, and the picture is chosen there. The sheet rises in, and a
+       software-rendered page can take a while to let it settle, so the tap waits until the button can take it */
+    /* CI's software-rendered page (globe, feed videos and the editor's own video at once) can take minutes here: the editor
+       is let finish loading its video, the tap and the save get the time that takes, and a miss says where it stopped */
+    await page.waitForFunction(() => !/Loading the video/.test(document.getElementById('mnThumbStatus').textContent), null, { timeout: 120000 }).catch(() => {});
+    let tapped = null;
+    await page.click('#mnThumbUpload', { timeout: 60000, trial: true }).catch((e) => { tapped = 'trial: ' + String(e.message || e).split('\n')[0]; });
+    const chooser = await Promise.all([page.waitForEvent('filechooser', { timeout: 60000 }), page.click('#mnThumbUpload', { timeout: 60000 })]).then(([c]) => c).catch((e) => { tapped = (tapped ? tapped + ' / ' : '') + String(e.message || e).split('\n')[0]; return null; });
+    if (chooser) await chooser.setFiles(picture);
+    await saved(p2, 180);
+    const imageId = asset(100 + before + 2), patch2 = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1), fin2 = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
+    const said = await page.evaluate(() => { const f = document.getElementById('mnThumbFile'); return { open: document.getElementById('mnThumbDialog').open, status: document.getElementById('mnThumbStatus').textContent, disabled: f.disabled, files: f.files.length }; });
+    said.chooser = !!chooser; said.tapped = tapped;
+    if (said.open) await page.screenshot({ path: join(OUT, scope + '-upload-stuck.png') }).catch(() => {});
+    check(scope, 'Upload an image sends that picture, finalized with its own size', JSON.stringify(patch2.body) === JSON.stringify({ poster_by_media: { [VID.mine]: imageId } }) && fin2.body.asset_id === imageId && fin2.body.width > 0, { patch: patch2.body, fin: fin2.body, said, uploads: world.uploadN });
+    check(scope, 'no horizontal overflow after the edits', await noSideways(page));
+    check(scope, 'no JavaScript errors', errors.length === 0, errors);
+  } finally { await ctx.close(); }
+}
+
+/* the composer: the picture is taken while the clip uploads, shown on the chip, and posted beside the video */
+if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-video-composer';
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
+  try {
+    await page.waitForSelector('#mnPostBody');
+    await page.focus('#mnPostBody');
+    await page.waitForFunction(() => document.getElementById('mnComposer').classList.contains('is-open'), null, { timeout: 5000 }).catch(() => {});
+    await page.setInputFiles('#mnMediaInput', join(ROOT, 'assets/video/hero.webm'));
+    await page.waitForSelector('#mnMediaQueue .mn__media-chip.is-video', { timeout: 20000 }).catch(() => {});
+    const chip = await page.evaluate(() => { const c = document.querySelector('#mnMediaQueue .mn__media-chip.is-video'); const img = c && c.querySelector('img'); return c ? { img: img ? img.src.slice(0, 5) : '', w: img ? img.naturalWidth : 0, play: !!c.querySelector('.mn__media-play'), video: !!c.querySelector('video') } : null; });
+    check(scope, 'the chip shows the clip\'s picture with a play mark, not a black video', !!chip && chip.img === 'blob:' && chip.w > 0 && chip.play && !chip.video, chip);
+    const ups = world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url'), fins = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize');
+    const vUp = ups.find((r) => r.body.mime_type === 'video/webm'), pUp = ups.find((r) => r.body.mime_type === 'image/jpeg');
+    const vId = vUp && asset(100 + ups.indexOf(vUp) + 1), pId = pUp && asset(100 + ups.indexOf(pUp) + 1);
+    const vFin = fins.find((r) => r.body.asset_id === vId), pFin = fins.find((r) => r.body.asset_id === pId);
+    check(scope, 'the clip and its picture both go up; the clip is finalized with its size and length', !!vFin && vFin.body.width === 1280 && vFin.body.height === 720 && Math.abs(vFin.body.duration_ms - 8042) < 100, vFin && vFin.body);
+    check(scope, 'the picture is a JPEG no longer than 1080px, finalized with its size', !!pFin && pFin.body.width === 1080 && pFin.body.height === 608, pFin && pFin.body);
+    const stored = world.blobs && Object.entries(world.blobs).find(([k]) => k.includes(pId || 'none'));
+    check(scope, 'the picture uploaded is a real JPEG, not an empty frame', !!stored && stored[1].type === 'image/jpeg' && stored[1].body.length > 5000 && stored[1].body[0] === 0xff && stored[1].body[1] === 0xd8, stored && stored[1].body.length);
+    check(scope, 'no horizontal overflow with the chip', await noSideways(page));
+    await page.locator('#mnComposer').screenshot({ path: join(OUT, scope + '-chip.png') });
+    await page.fill('#mnPostBody', 'Fresh clip from the river.');
+    await page.click('#mnPost');
+    await page.waitForFunction(() => /Posted/.test(document.getElementById('mnPostStatus').textContent), null, { timeout: 8000 }).catch(() => {});
+    const sent = req(world, 'POST', /^\/v1\/mnet\/posts$/).at(-1);
+    check(scope, 'Post sends the clip with its picture beside it', !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([vId]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([pId]), sent && sent.body);
+    const posted = world.posts[0];
+    await page.waitForSelector(`#mnFeed article[data-post-id="${posted.id}"] video[poster]`, { timeout: 10000 }).catch(() => {});
+    const card = await thumbOf(page, posted.id).evaluate((n) => { const v = n.querySelector('video'); return v ? { poster: v.getAttribute('poster'), preload: v.getAttribute('preload') } : null; }).catch(() => null);
+    check(scope, 'the new post in the feed shows the picture that was taken, not black', !!card && (card.poster || '').startsWith(`https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/sign/mnet-media/auth-you/${pId}-`) && card.preload === 'metadata', card);
+    await page.waitForFunction((id) => { const v = document.querySelector(`#mnFeed article[data-post-id="${id}"] video`); return v && v.readyState >= 1; }, posted.id, { timeout: 8000 }).catch(() => {});
+    await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).evaluate((a) => a.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(600);
+    await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).screenshot({ path: join(OUT, scope + '-feed-card.png') });
+    check(scope, 'no JavaScript errors', errors.length === 0, errors);
+  } finally { await ctx.close(); }
+}
+
+/* Create: a cover is taken while the clip uploads; a tap on a frame of the strip chooses another; Post sends it */
+if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-video-create-cover';
+  const world = freshWorld();
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: DEVICES[0].viewport, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await ctx.addInitScript(() => {
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
+    const exp = Math.floor(Date.now() / 1000) + 3600;
+    localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp }));
+  });
+  await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, (r) => r.abort());
+  await routeBackends(ctx, world, { member: true });
+  const page = await ctx.newPage(), errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
+  try {
+    await page.goto(BASE + '/create.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#crMake:not([hidden])', { timeout: 30000 });
+    await page.setInputFiles('#crLibrary', join(ROOT, 'assets/video/hero.webm'));
+    await page.waitForFunction(() => !document.getElementById('crCoverImg').hidden, null, { timeout: 20000 }).catch(() => {});
+    const covers = () => world.requests.filter((r) => r.path === '/v1/mnet/media/upload-url' && r.body.mime_type === 'image/jpeg');
+    const idOf = (r) => r && asset(100 + world.requests.filter((x) => x.path === '/v1/mnet/media/upload-url').indexOf(r) + 1);
+    /* the cover's upload request follows its picture by a tick (the session is checked first) */
+    const until = async (fn, ms = 15000) => { const t0 = Date.now(); while (!fn() && Date.now() - t0 < ms) await page.waitForTimeout(100); return fn(); };
+    await until(() => covers().length >= 1);
+    check(scope, 'a cover is taken for the clip and shown on the Cover chip, with its mark on the strip', !(await page.isHidden('#crCoverImg')) && !(await page.isHidden('#crCoverMark')) && covers().length === 1, covers().length);
+    await page.waitForFunction(() => /Uploaded/.test(document.getElementById('crUploadT').textContent), null, { timeout: 15000 }).catch(() => {});
+    check(scope, 'the edit step fits a phone: no horizontal scroll', await noSideways(page));
+    check(scope, 'Cover is a full tap target', await page.locator('#crCover').evaluate((b) => b.getBoundingClientRect().height >= 44));
+    const first = covers()[0], firstId = idOf(first);
+    const mark0 = await page.$eval('#crCoverMark', (m) => m.style.left);
+    /* the last frame of the strip */
+    const strip = await page.locator('#crStrip').boundingBox();
+    await page.mouse.click(strip.x + strip.width - 30, strip.y + strip.height / 2);
+    await page.waitForFunction((n) => document.getElementById('crCover').getAttribute('aria-busy') !== 'true' && document.getElementById('crCoverMark').style.left !== n, mark0, { timeout: 15000 }).catch(() => {});
+    await until(() => covers().length >= 2 && world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === firstId));
+    const mark1 = await page.$eval('#crCoverMark', (m) => parseFloat(m.style.left));
+    check(scope, 'a tap on a frame of the strip makes it the cover, and the old cover is discarded', covers().length === 2 && mark1 > 80 && !!firstId && world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === firstId), { covers: covers().length, mark1 });
+    await page.screenshot({ path: join(OUT, scope + '-edit.png') });
+    /* a new cover that fails to go up gives the one before it back, and that one is still the post's */
+    world.failCover = 1;
+    const tried = covers().length;
+    await page.mouse.click(strip.x + 30, strip.y + strip.height / 2);
+    await until(() => covers().length > tried);
+    await page.waitForFunction(() => document.getElementById('crCover').getAttribute('aria-busy') !== 'true' && parseFloat(document.getElementById('crCoverMark').style.left) > 80, null, { timeout: 15000 }).catch(() => {});
+    const kept = await page.evaluate(() => ({ mark: parseFloat(document.getElementById('crCoverMark').style.left), shown: !document.getElementById('crCoverImg').hidden }));
+    check(scope, 'a new cover that fails to go up gives back the one before it, and nothing is discarded', covers().length === tried + 1 && kept.mark > 80 && kept.shown && !world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === idOf(covers()[1])), { kept, covers: covers().length });
+    /* the account chip sits over Next at the top right of Create on a phone (as on main; reported, not changed here) */
+    await page.$eval('#crEditNext', (b) => b.click());
+    await page.waitForSelector('#crDetails:not([hidden])');
+    check(scope, 'the details step shows the cover beside the caption', await page.locator('#crThumb img[alt="Cover"]').count() === 1);
+    await page.fill('#crCaption', 'River cleanup, the cut.');
+    await page.click('#crPost');
+    await page.waitForSelector('#crDone:not([hidden])', { timeout: 15000 }).catch(() => {});
+    const sent = req(world, 'POST', /^\/v1\/mnet\/posts$/).at(-1), video = world.requests.find((r) => r.path === '/v1/mnet/media/upload-url' && r.body.mime_type === 'video/webm');
+    const coverId = idOf(covers()[1]);
+    check(scope, 'Post sends the clip and its chosen cover side by side', !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([idOf(video)]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([coverId]), sent && sent.body);
+    check(scope, 'the cover sent is never discarded', !world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === coverId));
+    check(scope, 'no JavaScript errors', errors.length === 0, errors);
+  } finally { await ctx.close(); }
+}
+
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the social
+   feature will be the only feature with no tab selecting between the other two"; "open missions belong in missions not inside
+   the newsfeed"; "Notification should be a drop down menu not open a whole new page"). The page exactly as it ships. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&['iphone-portrait','desktop'].includes(d.name))||d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
+  const scope = `editorial-social-${device.name}-${member ? 'member' : 'guest'}`;
+  const {ctx,page,world,errors} = await open(device,{member,social:true});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
+    const shell = await page.evaluate(()=>{const h=document.documentElement,visible=el=>!!el&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
+      return {social:h.classList.contains('hu-social-only'),mode:h.dataset.worldMode,tabs:[...document.querySelectorAll('.wt-world-modes,.wt-world-modes button')].some(visible),
+        feed:!document.getElementById('mnFeedView').hidden,posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
+        planner:visible(document.getElementById('wtPlanner')),frame:document.getElementById('mnWorldFrame').getAttribute('src'),
+        expand:document.querySelector('.mn__world-expand').getAttribute('href')};});
+    check(scope,'the World is the social feed: no Travel or Missions tab, the feed is what it shows',shell.social&&shell.mode==='posts'&&!shell.tabs&&shell.feed&&shell.posts>0&&!shell.planner,shell);
+    check(scope,'the globe, and the expanded globe, are told to leave missions out',/[?&]missions=0(&|$)/.test(shell.frame)&&/[?&]missions=0(&|$)/.test(shell.expand),shell);
+    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&document.documentElement.classList.contains('globe-no-missions'),null,{timeout:25000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    check(scope,'the Earth carries no mission pins',await globe.evaluate(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()===0&&document.documentElement.classList.contains('globe-no-missions')));
+    /* the World as it ships has the same World button where the controls menu was, and nothing on the page covers it */
+    const worldBtn=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),w:r&&Math.round(r.width),cx:r&&r.left+r.width/2,cy:r&&r.top+r.height/2,label:w&&w.getAttribute('aria-label')}});
+    const worldAt=await page.evaluate(({cx,cy})=>{const f=document.getElementById('mnWorldFrame').getBoundingClientRect(),t=document.elementFromPoint(f.left+cx,f.top+cy);return t&&t.id},worldBtn);
+    check(scope,'World, back to the whole Earth, is the button where the controls menu was, and nothing covers it',worldBtn.inCorner&&!worldBtn.menu&&worldBtn.w===44&&/whole world/i.test(worldBtn.label)&&worldAt==='mnWorldFrame',{worldBtn,worldAt});
+    const missionBits = await page.evaluate(()=>[...document.querySelectorAll('[data-take-mission],.mn__actcard:not(.mn__actcard--collab),#mnFeedMissions,#mnClipDoor,.hu-mission-preview,[data-mn-view="missions"],#mnProfileRecord,.mn-swipe__card')].filter(el=>el.getClientRects().length>0).map(el=>el.id||el.className));
+    check(scope,'no mission card, list or rail in the feed, and no door into Missions',missionBits.length===0,missionBits);
+    const promoted = await page.evaluate(()=>{const t=document.body.innerText;return {rail:!!document.getElementById('mnRail'),words:/WAYS TO MOVE|Campaigns & missions|See campaigns/i.test(t)};});
+    check(scope,'Ways to move is gone: no campaigns or missions promoted on the feed',!promoted.rail&&!promoted.words,promoted);
+    /* swiping the feed sideways used to change tabs; there is nothing to change to */
+    await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',300);fire('touchend',60);}catch(_){}});
+    check(scope,'a sideways swipe stays on the feed',await page.evaluate(()=>document.documentElement.dataset.worldMode)==='posts');
+    if (member) {
+      /* a search finds people and groups, never missions */
+      /* on a phone the field opens from the search button */
+      if (await page.isVisible('#huSearchToggle')) await page.click('#huSearchToggle');
+      await page.fill('#mnSearchInput','Mill River');
+      await page.waitForSelector('#mnSuggest:not([hidden])',{timeout:5000}).catch(()=>{});
+      check(scope,'search lists no missions',await page.evaluate(()=>![...document.querySelectorAll('#mnSuggest [data-suggest="mission"],#mnSuggest [data-suggest="globe"]')].some(b=>b.getClientRects().length)));
+      await page.fill('#mnSearchInput','');await page.keyboard.press('Escape');
+      if (await page.getAttribute('#huSearchToggle','aria-expanded')==='true') await page.click('#huSearchToggle');
+      /* a link into Missions lands on the feed */
+      await page.evaluate(()=>window.MCC_MNET.setView('missions'));
+      check(scope,'asking for Missions shows the feed',await page.evaluate(()=>!document.getElementById('mnFeedView').hidden&&document.getElementById('mnMissionsView').hidden));
+      /* NOTIFICATIONS DROP DOWN FROM THE BELL */
+      const before = await page.evaluate(()=>({feed:!document.getElementById('mnFeedView').hidden,scroll:document.getElementById('mnWorldFeed').scrollTop}));
+      await page.click('#mnBell');
+      await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.waitForFunction(()=>/Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent),null,{timeout:10000}).catch(()=>{});
+      const pop = await page.evaluate(()=>{const a=document.getElementById('mnAlerts').getBoundingClientRect(),b=document.getElementById('mnBell').getBoundingClientRect(),bar=document.querySelector('.appbar')?.getBoundingClientRect();
+        return {open:!document.getElementById('mnAlerts').hidden,expanded:document.getElementById('mnBell').getAttribute('aria-expanded'),feed:!document.getElementById('mnFeedView').hidden,
+          left:Math.round(a.left),right:Math.round(a.right),top:Math.round(a.top),bottom:Math.round(a.bottom),bellBottom:Math.round(b.bottom),iw:innerWidth,barTop:bar?Math.round(bar.top):null,
+          text:/Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
+      check(scope,'the bell drops the notifications down over the page, which stays the feed',pop.open&&pop.expanded==='true'&&pop.feed&&pop.text&&before.feed,pop);
+      check(scope,'the drop down sits under the bell, inside the screen and above the bottom bar',pop.top>=pop.bellBottom-2&&pop.left>=16&&pop.right<=pop.iw-16&&(pop.barTop===null||pop.bottom<=pop.barTop)&&pop.sw===pop.cw,pop);
+      await page.screenshot({path:join(OUT,scope+'-alerts.png')});
+      await page.keyboard.press('Escape');
+      check(scope,'Escape closes it, and the feed is where it was',await page.evaluate(b=>document.getElementById('mnAlerts').hidden&&document.getElementById('mnBell').getAttribute('aria-expanded')==='false'&&!document.getElementById('mnFeedView').hidden&&document.getElementById('mnWorldFeed').scrollTop===b.scroll,before));
+      await page.click('#mnBell');
+      await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.locator('.wt-headline').dispatchEvent('click');
+      check(scope,'a tap outside closes it',await page.isHidden('#mnAlerts'));
+      /* a tap on the globe happens inside its frame */
+      await page.click('#mnBell'); await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.evaluate(()=>document.getElementById('mnWorldFrame').focus());
+      await page.waitForFunction(()=>document.getElementById('mnAlerts').hidden,null,{timeout:3000}).catch(()=>{});
+      check(scope,'a tap on the globe closes it too',await page.isHidden('#mnAlerts'));
+      await page.click('#mnBell'); await page.waitForSelector('#mnAlerts:not([hidden])',{timeout:5000}).catch(()=>{});
+      await page.click('#mnBell');
+      check(scope,'the bell closes it again',await page.isHidden('#mnAlerts'));
+    }
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    await page.screenshot({path:join(OUT,scope+'.png')});
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+
+/* ALL THREE FOR THE HOUSE OWNER (owner, 2026-10-20: "keep the social feed on and then develop those other projects in the
+   back end. Probably keep all three on admin"). The page as it ships; the server says this member is the house owner. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&d.name==='iphone-portrait')||d.name===process.env.EDITORIAL_DEVICE)) {
+  const scope = `editorial-owner-${device.name}`;
+  const {ctx,page,world,errors} = await open(device,{member:true,social:true,owner:true});
+  try {
+    /* the first time on this browser, the owner's answer opens the World again, once, with all three */
+    await page.waitForFunction(()=>!document.documentElement.classList.contains('hu-social-only')&&document.documentElement.hasAttribute('data-world-owner'),null,{timeout:20000}).catch(()=>{});
+    await page.waitForSelector('.wt-world-modes button',{state:'visible',timeout:15000}).catch(()=>{});
+    const shell=await page.evaluate(()=>({modes:[...document.querySelectorAll('.wt-world-modes button')].filter(b=>b.getClientRects().length).map(b=>b.dataset.worldMode),
+      mode:document.documentElement.dataset.worldMode,memo:JSON.parse(localStorage.getItem('mcc_world_owner')||'null'),reloaded:performance.getEntriesByType('navigation')[0].type,
+      expand:document.querySelector('.mn__world-expand').getAttribute('href')}));
+    check(scope,'the owner\'s World has Travel, Missions and Feed, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts'])&&shell.mode==='posts',shell);
+    check(scope,'the server\'s yes is remembered for this account; the World opened again once to show it',!!shell.memo&&/^aaaaaaaa/.test(shell.memo.sub)&&shell.reloaded==='reload',shell);
+    check(scope,'the expanded globe shows the missions too',!/missions=0/.test(shell.expand),shell.expand);
+    const globe=page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
+    check(scope,'the Earth carries the mission pins again for the owner',await globe.evaluate(()=>window.__huMissionPins()>0&&!document.documentElement.classList.contains('globe-no-missions')));
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.waitForSelector('.mn-swipe__card',{timeout:15000}).catch(()=>{});
+    check(scope,'Missions opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='missions'&&!!document.querySelector('.mn-swipe__card')));
+    await page.click('.wt-world-modes [data-world-mode=travel]');
+    check(scope,'Travel opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='travel'));
+    /* the next World opens with all three straight away: no second opening */
+    await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
+    const early=await page.evaluate(()=>({social:document.documentElement.classList.contains('hu-social-only'),type:performance.getEntriesByType('navigation')[0].type}));
+    await page.waitForTimeout(2500);
+    const after=await page.evaluate(()=>performance.getEntriesByType('navigation')[0].type);
+    check(scope,'the next visit opens with all three from the first paint, without opening again',!early.social&&early.type==='navigate'&&after==='navigate',{early,after});
+    /* signed out, the World is the social feed again */
+    await page.evaluate(()=>localStorage.removeItem('mccdb_session'));
+    await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
+    check(scope,'signed out, the World is the social feed and the remembered answer is gone',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')));
+    /* this scope opens the World three times; a fetch the globe had out when it did (its borders) is cut off, not broken */
+    const real=errors.filter(e=>!/Failed to fetch/.test(e));
+    check(scope,'no JavaScript errors',real.length===0,real);
+  } finally { await ctx.close(); }
+}
+/* and a member who is not the owner keeps the social feed, with nothing remembered */
+if (runs('editorial')) {
+  const {ctx,page,errors} = await open(DEVICES.find(d=>d.name==='iphone-portrait'),{member:true,social:true});
+  try {
+    await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(2500);
+    check('editorial-not-owner','a member the server does not call the owner keeps the social feed, nothing remembered, no second opening',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')&&performance.getEntriesByType('navigation')[0].type==='navigate'));
+    check('editorial-not-owner','no JavaScript errors',errors.length===0,errors);
+  } finally { await ctx.close(); }
+}
+
 /* The 2026-10-16 approved reference, including its explicit real-navigation exception.
    E2E_ONLY=editorial isolates this suite for CI; actual Cesium is never stubbed. */
 if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE || d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
@@ -684,9 +1324,63 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
   const {ctx,page,world,errors} = await open(device,{member});
   try {
     const globe = page.frame({url:/action-globe\.html/});
+    check(scope,'the sign-in form never flashes on the way into the World',await page.evaluate(()=>window.__gateFlash)===0,await page.evaluate(()=>window.__gateFlash));
+    /* NO SCREEN FLASHES (owner, 2026-10-20), counted on every frame of the first eight seconds */
+    const flashes = await page.evaluate(()=>({live:window.__liveFlash,blank:window.__blankWorld,selfImg:window.__barSelfImg}));
+    check(scope,'no other room shows on the way into the World: never the Live room, never an empty World screen',flashes.live===0&&flashes.blank===0,flashes);
+    check(scope,'the bar never draws this page itself as a broken image',flashes.selfImg===0,flashes);
+    check(scope,'the globe frame never shows its standalone screen (the deck) inside the World',await globe.evaluate(()=>window.__deckFlash)===0,await globe.evaluate(()=>window.__deckFlash));
+    if (member) {
+      /* a member without a photo wears the initial of their name in the middle tab, and it is actually drawn */
+      await page.waitForSelector('.appbar [data-appnav="home"] .appbar__m--initial',{timeout:10000}).catch(()=>{});
+      const coin = await page.evaluate(()=>{const c=document.querySelector('.appbar [data-appnav="home"] .appbar__m--initial'),r=c&&c.getBoundingClientRect();return {coin:!!c,text:c?c.textContent:'',w:r?Math.round(r.width):0,img:!!document.querySelector('.appbar [data-appnav="home"] img.appbar__m--creator')};});
+      check(scope,'a member without a photo gets the initial of their name in the middle tab, drawn at full size, never an image',coin.coin&&coin.text==='F'&&coin.w>=20&&!coin.img,coin);
+    }
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out"):
+       World sits where the controls menu was, nothing on the page covers it, and one tap takes the camera back to the whole Earth */
+    const corner=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),visible:!!(w&&w.getClientRects().length),w:r&&Math.round(r.width),h:r&&Math.round(r.height),cx:r&&r.left+r.width/2,cy:r&&r.top+r.height/2,label:w&&w.getAttribute('aria-label'),right:r&&Math.round(innerWidth-r.right),bottom:r&&Math.round(innerHeight-r.bottom)}});
+    const at=await page.evaluate(({cx,cy})=>{const f=document.getElementById('mnWorldFrame').getBoundingClientRect(),x=f.left+cx,y=f.top+cy,top=document.elementFromPoint(x,y);return{x,y,top:top&&(top.id||top.className)}},corner);
+    check(scope,'the World\'s globe: World, back to the whole Earth, is where the controls menu was, the same 44px round button, and nothing on the page covers it',corner.inCorner&&!corner.menu&&corner.visible&&corner.w===44&&corner.h===44&&corner.right<=16&&/whole world/i.test(corner.label)&&at.top==='mnWorldFrame',{corner,at});
+    /* a camera flight is time-based and the software renderer is slow: settled is the same height for two seconds running */
+    const settled=async()=>{let last=null,same=0;for(let n=0;n<60;n++){await page.waitForTimeout(500);const h=Math.round(await globe.evaluate(()=>window.__huIon().height));if(last!==null&&Math.abs(h-last)<50){if(++same>=4)return h}else same=0;last=h}return last};
+    await page.mouse.click(at.x,at.y);const whole=await settled();
+    await globe.evaluate(()=>window.__huCountriesCam&&window.__huCountriesCam.view(-73,41,2e6));
+    const down=await globe.evaluate(()=>window.__huIon().height);
+    const again=await page.evaluate(({x,y})=>{const t=document.elementFromPoint(x,y);return t&&(t.id||t.className)},at);
+    const inFrame=await globe.evaluate(({cx,cy})=>{const t=document.elementFromPoint(cx,cy),b=t&&t.closest('button');return b?b.id:t&&t.tagName},corner);
+    await page.screenshot({path:join(OUT,scope+'-world-button.png')});
+    /* a loaded software renderer can go seconds between frames: wait for the flight to arrive, then for it to settle */
+    await page.mouse.click(at.x,at.y);
+    const back=await globe.waitForFunction(w=>window.__huIon().height>w*.98,whole,{timeout:45000}).then(settled,()=>globe.evaluate(()=>window.__huIon().height));
+    check(scope,'one tap on World flies all the way back out to the whole Earth',whole>8e6&&down<2.5e6&&Math.abs(back-whole)<whole*0.02,{whole,down,back,again,inFrame});
+    /* MISSIONS IS ONE SCREEN (owner, 2026-10-20): nothing scrolls, Pass and Accept clear the bar, a card takes the whole touch */
+    const fit=await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed'),a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),c=document.querySelector('.mn-swipe__card');
+      const overlap=a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;return{scroll:f.scrollHeight-f.clientHeight,bottom:Math.round(a.bottom),inner:innerHeight,overlap,touch:getComputedStyle(c).touchAction,card:Math.round(c.getBoundingClientRect().height)};});
+    if(fit.inner>=560)check(scope,'Missions is one screen: nothing scrolls, Pass and Accept stay on screen clear of the bar, and a swipe is never a scroll',fit.scroll<=1&&fit.bottom<=fit.inner&&!fit.overlap&&fit.touch==='none'&&fit.card>=150,fit);
+    /* a phone on its side is too short for that: the card keeps its full size and the sheet scrolls to Pass and Accept */
+    else check(scope,'on a short screen the card keeps its full size, a swipe is never a scroll, and the sheet reaches Pass and Accept',fit.card>=220&&fit.touch==='none'
+      &&await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');f.scrollTop=f.scrollHeight;const a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),r=a.bottom<=innerHeight&&!(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top);f.scrollTop=0;return r;}),fit);
+    await page.screenshot({path:join(OUT,scope+'-missions.png')});
+    if(!member){
+      const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});
+      check(scope,'on the white daytime bar the M is the owner\'s supplied dark M',/m-mark-dark\.png/.test(dayM),dayM);
+    }
+    /* OVER THE GLOBE THE TOP STAYS TRANSPARENT (owner, 2026-10-20): by day as by night the header is a fade over the Earth,
+       never a solid band, and its words stay white; every World mode */
+    for(const mode of ['missions','travel','posts']){
+      await page.click('.wt-world-modes [data-world-mode='+mode+']');
+      const top=await page.evaluate(async()=>{const h=document.documentElement,was=h.getAttribute('data-daylight'),t=document.querySelector('.mn__top');
+        const read=()=>{const c=getComputedStyle(t);return {color:c.backgroundColor,image:c.backgroundImage,brand:getComputedStyle(t.querySelector('.mn__brand small')||t).color};};
+        h.setAttribute('data-daylight','day');await new Promise(r=>requestAnimationFrame(r));const day=read();
+        h.setAttribute('data-daylight','night');await new Promise(r=>requestAnimationFrame(r));const night=read();
+        if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return {day,night};});
+      check(scope,'by day the top over the globe is the same transparent fade as by night ('+mode+')',
+        top.day.color==='rgba(0, 0, 0, 0)'&&/linear-gradient/.test(top.day.image)&&top.day.image===top.night.image&&top.day.brand==='rgb(255, 255, 255)',top);
+    }
+    await page.click('.wt-world-modes [data-world-mode=missions]');
     check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
@@ -698,7 +1392,9 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
     check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);
     check(scope,'globe and feed have no old raised-card decoration',await page.locator('#mnWorld').evaluate(e=>getComputedStyle(e).boxShadow==='none'));
-    check(scope,'approved travel headline is visible above the globe',await page.locator('.wt-headline').isVisible() && await page.textContent('.wt-headline')==='The world is your feed.');
+    /* the World's song is random (owner, 2026-10-20) and a song with timed lyrics takes the headline while it plays */
+    check(scope,'approved travel headline is visible above the globe, or the playing song\'s lyric in its place',await page.locator('.wt-headline').isVisible()
+      && (await page.textContent('.wt-headline')==='The world is your feed.' || /\bis-lyric\b/.test(await page.getAttribute('.wt-headline','class')||'')));
     check(scope,'feed scrolls while globe and page remain stationary',await page.evaluate(()=>{
       const feed=document.getElementById('mnWorldFeed'),globe=document.getElementById('mnWorld'),before=globe.getBoundingClientRect().toJSON(),pageY=scrollY;
       feed.scrollTop=120;
@@ -745,6 +1441,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await canvas.click({position:{x:tap.x,y:tap.y}});
     await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
     check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
+    check(scope,'tapping a country narrows the one feed to it (Local) with no extra press',await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true');
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.locator('.mn-swipe__card[data-mission="'+M1+'"] .mn-swipe__details').click();
     await page.waitForSelector('#mnMissionDialog[open]');
@@ -752,6 +1449,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.click('#mnMissionClose');
     await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:5000}).catch(()=>{});
     check(scope,'a mission card outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
+    check(scope,'letting the tapped country go returns the feed to Global',await page.getAttribute('[data-feed-scope=global]','aria-pressed')==='true');
     check(scope,'mission card selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
     await page.click('.wt-world-modes [data-world-mode=posts]');
@@ -793,6 +1491,16 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       await page.waitForFunction(()=>document.documentElement.classList.contains('mn-world-on'));
       await page.click('.wt-world-modes [data-world-mode=posts]');
       check(scope,'returning to World restores the scrolling feed',await page.locator('#mnWorldFeed').evaluate(e=>getComputedStyle(e).overflowY==='auto' && e.scrollHeight>e.clientHeight));
+      /* alerts (owner, 2026-10-20): a comment alert opens its post with the discussion; the device-alerts row stays out
+         of sight while the server has push off */
+      await page.evaluate(()=>window.MCC_MNET.setView('notifications'));
+      await page.waitForFunction(()=>!!document.querySelector('#mnNotifications a.mn__notification-action'),null,{timeout:10000}).catch(()=>{});
+      check(scope,'a comment alert links to its post with the discussion open',await page.getAttribute('#mnNotifications a.mn__notification-action','href')===`mnet.html?view=feed&post=${CONTENT}&comments=1`);
+      check(scope,'a news reply alert links to the story with its replies open',(await page.locator('#mnNotifications a.mn__notification-action').nth(1).getAttribute('href'))===`mnet.html?view=feed&news=${M1}&comments=1`);
+      /* the page asks the server only after looking up this browser's own subscription */
+      for(let i=0;i<50&&!req(world,'GET',/^\/v1\/mnet\/push$/).length;i++)await page.waitForTimeout(100);
+      check(scope,'the device-alerts row stays hidden while the server has push off',req(world,'GET',/^\/v1\/mnet\/push$/).length>=1&&await page.isHidden('#mnPush'));
+      await page.evaluate(()=>window.MCC_MNET.setView('feed'));
     }
     check(scope,'no JavaScript errors',errors.length===0,errors);
   } finally {await ctx.close();}
@@ -951,13 +1659,14 @@ if (runs('member-interactions')) {
   check(scope, 'Create: the folded composer has a visible Record or create button', (await page.isVisible('#mnComposer .mn__create')) && (await page.getAttribute('#mnComposer .mn__create', 'href')) === 'create.html');
 
   // Alerts: the bell carries the count and opens them
-  check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '1');
+  check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '3');
   await page.click('#mnBell');
-  await page.waitForSelector('#mnNotificationsView:not([hidden])');
+  await page.waitForSelector('#mnAlerts:not([hidden])');
   /* the list and the read receipt are two round trips; wait for both rather than a fixed beat */
   await page.waitForFunction(() => /Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent) && document.getElementById('mnNotifBadge').hidden, null, { timeout: 10000 }).catch(() => {});
   check(scope, 'Alerts: the bell opens them and clears the count', /Fixture Ana liked your post/.test(await page.textContent('#mnNotifications')) && await page.isHidden('#mnNotifBadge'));
-  await page.click('#mnToWorld');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#mnAlerts', { state: 'hidden' });
   await page.waitForSelector('#mnFeedView:not([hidden])');
 
   // Groups from search: a matching group opens directly
@@ -1307,6 +2016,7 @@ if (runs('news-guest')) {
    await modal.getByRole('button', { name: 'Close' }).click();
   const meta = await page.$eval('#mnFeed [data-news-id]', (c) => c.querySelector('.mn__news-meta').textContent);
   check(scope, 'a card reads publisher · time ago · the place it mentions', /^news0\.example\s*·\s*\d+[mh]\s*·\s*Nairobi, Nairobi Area, Kenya$/.test(meta.trim()), meta);
+  check(scope, 'a story\'s chip says where it is from (Kenya), not "On the Earth"', (await page.textContent('#mnFeed [data-news-id] [data-news-place]')).trim() === 'Kenya');
   check(scope, 'a card without a place has no "On the Earth"', (await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((c) => !!c.querySelector('[data-news-place]')))).every((has, k) => has === (k % 4 !== 2)));
   check(scope, 'nothing scrolls sideways at 390 with the news in; the long headline and publisher are cut inside their card, a short publisher is whole', st.sw === st.cw && st.cardsFit && st.domains[0] === true && st.domains[1] === false, { sw: st.sw, cw: st.cw, fit: st.cardsFit, domains: st.domains });
   /* the evidence: the feed with the news in it */
@@ -1325,6 +2035,14 @@ if (runs('news-guest')) {
   await page.fill('#mnSearchInput', ''); await page.waitForTimeout(400);
   check(scope, 'search matches news headlines and publishers', byTitle.news === 19 && byTitle.posts === 0 && byDomain.news === world.news.slice(0, 20).filter((n) => n.domain === 'news2.example').length && byDomain.posts === 0, { byTitle: byTitle.news, byDomain: byDomain.news });
   const globe = page.frame({ url: /action-globe\.html/ });
+  /* THE NEWS HEAT MAP (owner, 2026-10-21: "instead of pins on the map ... a heat map of how many articles or mentions it
+     has ... so people aren't just needlessly searching for tiny pins"): no pin per story; the countries carry the counts */
+  const pinsAndCards = async () => { await page.waitForTimeout(500); return { pins: (await globe.evaluate(() => window.__huWorldNewsPins())).pins, cards: await page.$$eval('#mnFeed [data-news-id] [data-news-place]', (a) => a.length) }; };
+  const pinsAll = await pinsAndCards();
+  check(scope, 'no pin per story: the Earth carries no news pins, however many stories the feed shows', pinsAll.pins === 0 && pinsAll.cards > 0, pinsAll);
+  await globe.waitForFunction(() => window.__huCountries?.().heat?.countries === 16, null, { timeout: 15000 }).catch(() => {});
+  const heat = await globe.evaluate(() => ({ heat: window.__huCountries().heat, legend: !document.getElementById('heatLegend').hidden, text: document.getElementById('heatLegend').textContent, bar: getComputedStyle(document.querySelector('.heat-legend__bar')).backgroundImage }));
+  check(scope, 'the countries the stories mention are shaded by how many, with a legend that says what the colours mean', heat.heat && heat.heat.countries === 16 && heat.heat.total === 978 && heat.legend && /News mentions · last 24 h/.test(heat.text) && /Fewer/.test(heat.text) && /More/.test(heat.text) && /linear-gradient/.test(heat.bar), heat);
   /* a story's place on the Earth, from its card */
   await page.click('#mnFeed [data-news-id] [data-news-place]');
   await globe.waitForFunction(() => window.__huFocusPlace && window.__huFocusPlace(), null, { timeout: 5000 }).catch(() => {});
@@ -1333,6 +2051,8 @@ if (runs('news-guest')) {
      below still requires the final altitude; only the sampling moment moves. */
   await globe.waitForFunction(() => Math.abs(window.__huIon().height - 900000) < 60000, null, { timeout: 12000 }).catch(() => {});
   const sent = await globe.evaluate(() => ({ place: window.__huFocusPlace(), height: window.__huIon().height }));
+  const firstPlaced = await page.$eval('#mnFeed [data-news-id] [data-news-place]', (b) => b.closest('[data-news-id]').getAttribute('data-news-id'));
+  check(scope, 'a tapped story\'s place gets the one pin on the Earth, that story\'s', (await globe.evaluate(() => window.__huFocusedNewsPin())) === firstPlaced && (await globe.evaluate(() => window.__huWorldNewsPins())).pins === 1 && sent.place && sent.place.id === firstPlaced, { marked: await globe.evaluate(() => window.__huFocusedNewsPin()), pins: await globe.evaluate(() => window.__huWorldNewsPins()), firstPlaced });
   check(scope, '"On the Earth" sends the story\'s place to the globe (hu:focus-place), which flies there', !!sent.place && sent.place.lat === -1.28 && sent.place.lon === 36.82 && sent.place.label === 'Nairobi, Nairobi Area, Kenya' && Math.abs(sent.height - 900000) < 60000 && /Nairobi, Nairobi Area, Kenya · mentioned in this story\./.test(await page.textContent('#mnWorldCaption')), sent);
   /* the frame checks what it is sent: strings, out-of-range and missing numbers move nothing */
   await page.evaluate(() => { const w = document.getElementById('mnWorldFrame').contentWindow; [{ type: 'hu:focus-place', lat: '10', lon: 10 }, { type: 'hu:focus-place', lat: 95, lon: 0 }, { type: 'hu:focus-place', lat: 0, lon: 200 }, { type: 'hu:focus-place', lat: NaN, lon: 0 }, { type: 'hu:focus-place' }].forEach((m) => w.postMessage(m, location.origin)); });
@@ -1343,10 +2063,13 @@ if (runs('news-guest')) {
   await globe.evaluate((id) => window.parent.postMessage({ type: 'hu:mission-selected', mission: { mission_id: id, title: 'Clean up the Mill River', region_label: 'Connecticut', action_path: 'show_up' } }, location.origin), M1);
   await page.waitForSelector('#mnWorldFocus:not([hidden])');
   const narrowed = await newsState(page);
+  const pinsNarrowed = await pinsAndCards();
   await page.click('#mnWorldFocusClear');
   await page.waitForTimeout(300);
   const back = await newsState(page);
   check(scope, 'a mission picked on the Earth hides the news and its credit; letting it go brings them back', narrowed.news === 0 && !narrowed.credit && back.news === 20 && back.credit, { narrowed: narrowed.news, back: back.news });
+  const pinsBack = await pinsAndCards();
+  check(scope, 'and the story\'s pin follows the feed: gone while the mission narrows it, back after', pinsNarrowed.pins === 0 && pinsBack.pins === 1 && pinsBack.cards === pinsAll.cards, { pinsNarrowed, pinsBack });
   /* Load more pages both streams, each from its own cursor, the news cursor passed back verbatim */
   check(scope, 'Load more shows while either stream has another page', st.more);
   await page.click('#mnMore');

@@ -495,6 +495,24 @@
       return ids.some(function (i) { return i && i.provider === 'email'; });
     },
 
+    /* WHERE THE PERSON STARTED (?next=). One rule for every page that sends
+       somebody back after signing in or signing up: a path on THIS origin,
+       never another site. A scheme (https:, javascript:, data:), a
+       protocol-relative //host, a backslash or a control character is
+       refused outright; anything else is resolved against this page and
+       kept only when it lands on this origin over http(s). The answer is
+       the path, query and fragment, or "" for no usable destination. */
+    safeNext: function (raw) {
+      raw = String(raw == null ? '' : raw).trim();
+      if (!raw || raw.length > 2000) return '';
+      if (/[\u0000-\u001f\u007f\\]/.test(raw) || /^\/\//.test(raw) || /^[a-z][a-z0-9+.-]*:/i.test(raw)) return '';
+      try {
+        var target = new URL(raw, root.location.href);
+        if (target.origin !== root.location.origin || !/^https?:$/.test(target.protocol)) return '';
+        return target.pathname + target.search + target.hash;
+      } catch (_) { return ''; }
+    },
+
     /* Passwordless email login was removed from the product UI after real
        users were stranded by one-time links. Keep this method as an explicit
        hard stop so an old page cannot silently revive that flow. */

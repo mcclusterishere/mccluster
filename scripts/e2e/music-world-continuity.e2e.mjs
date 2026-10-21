@@ -2,6 +2,7 @@
    Music/World documents. No production API, account or audio request escapes
    the route fixtures. The globe renderer itself is covered by World suites. */
 import {createRequire} from 'node:module';
+import { withTravelAndMissions } from './world-switch.mjs';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {resolve, join, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -26,25 +27,27 @@ function wav(seconds=24){
 const AUDIO=wav();
 const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
 function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
-async function setup(width=390,member=false,{parentScript}={}){
+async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html',worldMember=false}={}){
+  const worldToken=token(WORLD);
   const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const requests=[],messages=[],errors=[];
-  await context.addInitScript(({HOUSE,member,token})=>{
-    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
+  await context.addInitScript(({HOUSE,WORLD,member,token,privacy,worldMember,worldToken})=>{
+    if(privacy)localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(member&&location.origin===HOUSE&&!localStorage.getItem('mccdb_session'))localStorage.setItem('mccdb_session',JSON.stringify({access_token:token,refresh_token:'fixture-house-refresh',expires_at:Math.floor(Date.now()/1000)+3600}));
+    if(worldMember&&location.origin===WORLD&&!localStorage.getItem('mccdb_session'))localStorage.setItem('mccdb_session',JSON.stringify({access_token:worldToken,refresh_token:'fixture-world-refresh',expires_at:Math.floor(Date.now()/1000)+3600}));
     const NativeAudio=window.Audio;
     window.__audioObjects=[];window.__audioEvents=[];window.__unloads=0;window.__bridgeMessages=[];
     window.Audio=function(...args){const a=new NativeAudio(...args);window.__audioObjects.push(a);for(const type of ['play','pause','emptied','seeking'])a.addEventListener(type,()=>window.__audioEvents.push({type,src:a.currentSrc||a.src,time:a.currentTime}));return a;};
     window.Audio.prototype=NativeAudio.prototype;
     addEventListener('beforeunload',()=>window.__unloads++);
     addEventListener('message',e=>{if(e.data?.channel==='mcc-world-audio-v1')window.__bridgeMessages.push(e.data);});
-  },{HOUSE,member,token:token(HOUSE)});
+  },{HOUSE,WORLD,member,token:token(HOUSE),privacy,worldMember,worldToken});
   const json=(r,body,status=200)=>r.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
   await context.route('**/*',async r=>{
     const req=r.request(),u=new URL(req.url()),p=u.pathname;requests.push({url:u.href,method:req.method(),authorization:req.headers().authorization});
     if(req.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
     if(u.hostname==='api.mccluster.org'){
-      if(p==='/v1/auth/handoff')return json(r,{token_hash:'fixture-one-use-hash'});
+      if(p==='/v1/auth/handoff')return json(r,{error:'cross_origin_reauthentication_required'},410);
       if(p==='/v1/status')return json(r,{ok:false},403);
       if(p==='/v1/mnet/bootstrap')return json(r,{ok:true,profile:{display_name:'Fixture member',onboarding_complete:true},identity:{mccluster_id:'fixture-member'},needs_onboarding:false,stats:{}});
       return json(r,{ok:true,threads:[],posts:[],events:[],missions:[],layers:[],features:[],sources:[],locations:[],rights:{}});
@@ -63,7 +66,8 @@ async function setup(width=390,member=false,{parentScript}={}){
       }
       const path=resolve(ROOT,'.'+(p==='/'?'/mnet.html':decodeURIComponent(p)));
       if(path.startsWith(resolve(ROOT)+sep)){
-        try{return r.fulfill({body:await readFile(path),contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
+        /* Exercise Travel input gesture exclusions with Travel switched on. */
+        try{let body=await readFile(path);if(path===resolve(ROOT,'mnet.html'))body=Buffer.from(withTravelAndMissions(body));return r.fulfill({body,contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
       }
       if(/\.(?:png|jpe?g|webp|gif)$/.test(p))return r.fulfill({contentType:'image/gif',body:IMAGE});
       return r.fulfill({status:404,body:'Fixture: file absent'});
@@ -71,9 +75,9 @@ async function setup(width=390,member=false,{parentScript}={}){
     return r.abort();
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(HOUSE+'/listen.html',{waitUntil:parentScript?'domcontentloaded':'load'});
-  await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
-  return {context,page,requests,messages,errors};
+  await page.goto(HOUSE+start,{waitUntil:parentScript?'domcontentloaded':'load'});
+  if(start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
+  return {context,page,requests,messages,errors,worldToken};
 }
 async function play(page,album='here',title='Who Did The Shoot'){
   const selector=`[data-music-play][data-album=${JSON.stringify(album)}][data-track=${JSON.stringify(title)}]`;
@@ -143,8 +147,19 @@ try{
   for(const width of [390,1280]){
     const {context,page,errors}=await setup(width);
     await play(page);
-    await page.evaluate(()=>{window.__originalAudio=MCC_MUSIC.audio;window.__retentionEvents=__audioEvents.length;});
+    await page.evaluate(()=>{window.__originalAudio=MCC_MUSIC.audio;window.__retentionEvents=__audioEvents.length;
+      /* NO WORDS AND NO WRONG COLOUR WHILE THE WORLD OPENS (owner, 2026-10-20: "other screens flash up"): every frame from the
+         moment the World frame shows, whether the "Opening World…" copy was on screen and which colour the frame stood in */
+      window.__openFrames=[];let opened=0;const tick=()=>{const shell=document.getElementById('mccWorldAudioShell');
+        if(shell&&!shell.hidden){opened=opened||performance.now();const st=shell.querySelector('.world-audio-status'),p=st&&st.querySelector('p');
+          __openFrames.push({at:Math.round(performance.now()-opened),copy:!!p&&!st.hidden&&getComputedStyle(p).visibility!=='hidden'&&p.getClientRects().length>0,day:shell.classList.contains('is-day')});}
+        if(!opened||performance.now()-opened<2500)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
     const before=await audioState(page),frame=await world(page);
+    await page.waitForTimeout(400);
+    const opening=await page.evaluate(()=>({early:__openFrames.filter(f=>f.at<1400&&f.copy).length,frames:__openFrames.length,day:__openFrames.length?__openFrames[0].day:null,
+      want:window.MCC_DAYLIGHT_CORE?MCC_DAYLIGHT_CORE.estimate(new Date())==='day':null}));
+    check(`${width}: the World frame says nothing for its first moment (no "Opening World…" before 1.4s)`,opening.frames>0&&opening.early===0,opening);
+    check(`${width}: the World frame opens in the World's own colour (white by day, dark by night)`,opening.want!==null&&opening.day===opening.want,opening);
     await page.waitForTimeout(650);const after=await audioState(page);
     check(`${width}: Music document and exact Audio element survive Globe`,after.unloads===0&&await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio));
     check(`${width}: audio keeps advancing with the same source`,after.src===before.src&&after.time>before.time+.4&&!after.paused,{before,after});
@@ -190,13 +205,27 @@ try{
   {
     const {context,page,requests}=await setup(390,true);
     await play(page);const frame=await world(page);
+    await frame.waitForFunction(()=>document.documentElement.classList.contains('mn-guest'));
+    const destination=await frame.evaluate(()=>({session:localStorage.getItem('mccdb_session'),guest:document.documentElement.classList.contains('mn-guest'),chip:document.getElementById('mccAuthChip')?.textContent}));
+    check('a Music session does not silently create a World session',
+      !destination.session&&destination.guest&&(await frame.locator('#mnGuestSignIn').isVisible()||await frame.locator('#mccAuthChip').isVisible()),destination);
+    check('cross-origin Music entry neither forwards a bearer nor calls the retired handoff',
+      !frame.url().includes('mcc_handoff')&&!requests.some(r=>/\/v1\/auth\/handoff|\/auth\/v1\/verify/.test(new URL(r.url).pathname)));
+    check('destination reauthentication leaves the original music playing',await page.evaluate(()=>__unloads===0&&!MCC_MUSIC.audio.paused));
+    await context.close();
+  }
+  {
+    const {context,page,requests,worldToken}=await setup(390,true,{worldMember:true});
+    await play(page);const frame=await world(page);
     await frame.waitForFunction(()=>!!localStorage.getItem('mccdb_session'));
     const identity=await frame.evaluate(()=>JSON.parse(localStorage.getItem('mccdb_session')));
-    check('signed-in World uses the existing handoff and its own refreshed session',requests.some(r=>new URL(r.url).pathname==='/v1/auth/handoff')&&identity.refresh_token==='fixture-world-refresh');
-    check('handoff fragment is scrubbed before World is ready',!frame.url().includes('mcc_handoff'));
+    check('signed-in World keeps its independent destination session',!requests.some(r=>/\/v1\/auth\/handoff|\/auth\/v1\/verify/.test(new URL(r.url).pathname))&&identity.refresh_token==='fixture-world-refresh'&&identity.access_token===worldToken);
+    check('no handoff bearer is added to the World URL',!frame.url().includes('mcc_handoff'));
+    check('the existing World sign-in does not reload its document',await frame.evaluate(()=>(performance.getEntriesByType('navigation')[0]||{}).type)!=='reload'&&await frame.evaluate(()=>!document.documentElement.classList.contains('mn-guest')),
+      await frame.evaluate(()=>({nav:(performance.getEntriesByType('navigation')[0]||{}).type,guest:document.documentElement.classList.contains('mn-guest')})));
     const wire=await page.evaluate(()=>JSON.stringify(__bridgeMessages));
     check('generic bridge contains no tokens, audio sources or user data',!/(?:access_token|refresh_token|mcc_handoff|fixture-house-refresh|fixture-world-refresh|audio-fixture|assets\/audio)/.test(wire));
-    check('handoff reload never reloads or interrupts the parent player',await page.evaluate(()=>__unloads===0&&!MCC_MUSIC.audio.paused));
+    check('independent destination sign-in never reloads or interrupts the parent player',await page.evaluate(()=>__unloads===0&&!MCC_MUSIC.audio.paused));
     await context.close();
   }
   {
@@ -216,7 +245,9 @@ try{
     await context.route(u=>u.origin===WORLD&&u.pathname==='/js/travel/world-travel.mjs',async r=>{await travelGate;await r.fallback();});
     const requested=page.waitForRequest(u=>u.url().startsWith(WORLD+'/js/world-audio-continuity.js'));
     await page.locator('.appbar [data-appnav="world"]').click();await requested;
-    await page.locator('.world-audio-status button').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
+    /* the frame keeps quiet while the World is alive (no "Back to Music" card to tap): the way back is the bar's Music tab,
+       which stays over the World frame */
+    await page.locator('.appbar [data-appnav="music"]').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     releaseBridge();
     const frame=await (await page.$('#mccWorldAudioFrame')).contentFrame();
     await frame.waitForFunction(()=>document.body.dataset.worldAudioChild==='ready'&&document.body.dataset.worldAudioVisible==='false',null,{polling:50});
@@ -279,38 +310,68 @@ try{
     await context.close();
   }
   {
-    const {context,page}=await setup();await world(page);
-    await page.waitForFunction(()=>__audioObjects.some(a=>/heal-the-3rd-world/.test(a.src)&&!a.paused));
-    check('World tap with no selected music starts the prepared Heal theme',await page.locator('#mccWorldAudioTitle').textContent()==='Heal the 3rd World');
+    const {context,page}=await setup();
+    /* the theme is drawn at random from every public song in data/albums.json, Heal the 3rd World among them */
+    const catalog=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    await page.waitForFunction(()=>window.MCC_WORLD_AUDIO?.song()?.pool>1);
+    await world(page);
+    await page.waitForFunction(()=>{const s=MCC_WORLD_AUDIO.song();return s&&__audioObjects.some(a=>a.src.includes('/assets/audio/'+s.slug+'.')&&!a.paused);});
+    const picked=await page.evaluate(()=>MCC_WORLD_AUDIO.song());
+    check('World tap with no selected music starts a song drawn from the whole public catalog',picked.pool===catalog.length&&catalog.some(t=>t.title===picked.title)&&await page.locator('#mccWorldAudioTitle').textContent()===picked.title,{picked,pool:catalog.length});
     await page.locator('.appbar [data-appnav="music"]').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     await play(page,'here','Runway Walk');
     check('choosing music silences the theme before a second player can overlap',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1&&MCC_MUSIC.current().title==='Runway Walk'));
     await context.close();
   }
   {
+    /* the catalog's draw can land on the song the theme already holds (1 in 19): it is still the catalog's pick, and its
+       events say so (pick random, the whole pool), never a fallback of one */
+    const {context,page}=await setup();
+    await page.addInitScript(()=>{Math.random=()=>12.5/19;}); // index 12 of the 19 public songs: Heal the 3rd World
+    await page.goto(WORLD+'/?view=feed');
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool);
+    await page.waitForTimeout(200);
+    const same=await page.evaluate(()=>MCC_WORLD_AUDIO.song());
+    check('a catalog draw of the song already loaded is still the catalog\'s pick',same.slug==='heal-the-3rd-world'&&same.pick==='random'&&same.pool>1,same);
+    await context.close();
+  }
+  {
     const {context,page}=await setup();
     /* timed lyrics are looked up by the audio file's slug; the theme has none in the repo, so the fixture supplies two lines */
-    await context.route('**/data/lyrics/heal-the-3rd-world.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Heal the 3rd World',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
+    await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Fixture song',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
     await page.goto(WORLD+'/?view=feed');
-    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&document.getElementById('mnWorldPlay'));
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool&&document.getElementById('mnWorldPlay'));
+    const theme=await page.evaluate(()=>MCC_WORLD_AUDIO.song());
+    await page.evaluate(()=>{window.__songEvents=[];window.MCC_TRACK=(name,params)=>{if(/^song_/.test(name))__songEvents.push({name,...params});};});
     check('standalone World prepares the theme without autoplay',await page.evaluate(()=>__audioObjects.every(a=>a.paused)));
     check('the corner play button sits in the globe stack with the fullscreen control and the floating transport stays out of the World',
       await page.locator('#mnWorldStack #mnWorldPlay').isVisible()&&await page.locator('#mnWorldStack .mn__world-expand').isVisible()&&await page.locator('#mccWorldAudioControls').isHidden()
       &&await page.evaluate(()=>{const p=document.getElementById('mnWorldPlay').getBoundingClientRect(),x=document.querySelector('.mn__world-expand').getBoundingClientRect();return p.width>=44&&p.height>=44&&((Math.abs(p.right-x.right)<2&&p.bottom<=x.top+1)||(Math.abs(p.top-x.top)<2&&p.right<=x.left+1));}));
-    check('before the first touch the title is named but still, and the headline is the headline',(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&(await page.locator('.wt-headline').textContent())==='The world is your feed.');
+    check('before the first touch the title is named but still, and the headline is the headline',(await page.locator('#mnNowPlayingText').textContent())===theme.title&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&(await page.locator('.wt-headline').textContent())==='The world is your feed.');
     await page.locator('#wtTo').click();
+    await page.locator('#wtTo').press('Space');
+    check('typing or tapping a travel field never starts background music',await page.evaluate(()=>__audioObjects.every(a=>a.paused)));
+    await page.locator('#mnNowPlaying').click();
     await page.waitForFunction(()=>__audioObjects.some(a=>!a.paused));
     check('standalone World first touch starts its own theme directly',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1));
     await page.waitForFunction(()=>document.getElementById('mnNowPlaying').classList.contains('is-playing'));
-    check('the song title scrolls in the top bar while the theme plays',await page.locator('#mnNowPlaying').isVisible()&&(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'
+    /* paused flips at once; the media element's play event, which records the start, is queued after it */
+    await page.waitForFunction(()=>__songEvents.some(e=>e.name==='song_start'),null,{timeout:5000}).catch(()=>{});
+    check('the first touch is recorded once as the start of that song, the event adding no account or place of its own',
+      await page.evaluate(s=>__songEvents.length===1&&__songEvents[0].name==='song_start'&&__songEvents[0].trigger==='first_tap'&&__songEvents[0].song===s.slug&&__songEvents[0].pool===s.pool&&__songEvents[0].pick==='random'&&!Object.keys(__songEvents[0]).some(k=>/user|email|lat|lng|country/i.test(k)),theme),await page.evaluate(()=>__songEvents));
+    check('the song title scrolls in the top bar while the theme plays',await page.locator('#mnNowPlaying').isVisible()&&(await page.locator('#mnNowPlayingText').textContent())===theme.title
       &&await page.evaluate(()=>{/* the title sits between the mark and whatever the header shows next (the bell for members, the sign-in controls for guests) */const now=document.getElementById('mnNowPlaying'),b=now.getBoundingClientRect(),m=document.querySelector('.mn__brand').getBoundingClientRect();let next=now.nextElementSibling;while(next&&!(next.offsetWidth||next.offsetHeight))next=next.nextElementSibling;const edge=next?next.getBoundingClientRect().left:document.querySelector('.mn__top').getBoundingClientRect().right-16;return b.width>=100&&b.left>=m.right-1&&b.right<=edge+1&&getComputedStyle(document.getElementById('mnNowPlayingText')).color==='rgb(255, 255, 255)';}));
-    await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='Fixture line one',null,{timeout:8000});
+    await page.waitForFunction(()=>document.querySelector('.wt-headline__lyric')?.textContent==='Fixture line one',null,{timeout:8000});
     check('timed lyrics take the headline line by line',await page.locator('.wt-headline').getAttribute('class')==='wt-headline is-lyric'&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Pause music');
+    check('lyrics leave the accessible page heading intact',await page.getByRole('heading',{level:1,name:'The world is your feed.',exact:true}).count()===1&&await page.locator('.wt-headline__lyric').getAttribute('aria-hidden')==='true');
     await page.locator('#mnWorldPlay').click();
     await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='The world is your feed.');
+    /* the headline follows at once; the media element's pause event, which records the pause, is queued after it */
+    await page.waitForFunction(()=>__songEvents.some(e=>e.name==='song_pause'),null,{timeout:5000}).catch(()=>{});
+    check('pausing from the corner is recorded as the listener pausing that song',await page.evaluate(s=>__songEvents.some(e=>e.name==='song_pause'&&e.by==='button'&&e.song===s.slug),theme),await page.evaluate(()=>__songEvents));
     check('pausing from the corner restores the headline and keeps the title static',await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&await page.locator('#mnNowPlaying').isVisible());
     await page.reload();
-    await page.waitForSelector('#mnWorldPlay');await page.locator('#wtTo').click();
+    await page.waitForSelector('#mnWorldPlay');await page.locator('#mnNowPlaying').click();
     check('World remembers an explicit pause on later visits',
       await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Play music');
     await context.close();
@@ -328,9 +389,77 @@ try{
     await context.route(WORLD+'/**',r=>r.fulfill({status:503,contentType:'text/html',body:'Fixture: World unavailable'}));
     await page.locator('.appbar [data-appnav="world"]').click();
     await page.waitForFunction(()=>MCC_WORLD_AUDIO.active());
+    /* the recovery words and controls appear once the World is genuinely slow, after the frame's quiet first moment */
+    await page.locator('.world-audio-status button').waitFor({state:'visible',timeout:6000}).catch(()=>{});
     check('World load failure keeps audio and visible recovery controls',await page.evaluate(()=>!MCC_MUSIC.audio.paused&&__unloads===0)&&await page.locator('.world-audio-status button').isVisible()&&await page.locator('.world-audio-status a').isVisible());
     await page.locator('.world-audio-status button').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     check('failed World can return to the same playing Music document',await page.evaluate(()=>!MCC_MUSIC.audio.paused&&__unloads===0));
+    await context.close();
+  }
+  /* THE PRIVACY NOTICE IS SHOWN ONCE (owner, 2026-10-20): nothing seeded here. The first page shows it; once it is
+     answered no other page, neither McCluster host, nor the World that Music opens in a frame shows it again. */
+  const notice=f=>f.evaluate(()=>({wall:!!document.getElementById('mccPrivacyGate'),pending:document.documentElement.getAttribute('data-privacy-gate'),banner:!!document.getElementById('mccPrivacyNotice')}));
+  const none=n=>!n.wall&&!n.pending&&!n.banner;
+  const privacyErrors=errors=>errors.filter(e=>/privacy|cookie/i.test(e));
+  const musicReady=page=>page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'));
+  {
+    const {context,page,errors}=await setup(390,false,{privacy:false});
+    const first=await notice(page);
+    check('privacy: a first visit sees the notice',first.wall&&first.pending==='pending',first);
+    check('privacy: the notice fits a phone',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth&&document.getElementById('mccPrivacyAgree').getBoundingClientRect().height>=44));
+    await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.locator('#mccPrivacyAgree').click()]);
+    check('privacy: I agree enters the page',none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()));
+    const agreed=(await context.cookies(HOUSE)).find(c=>c.name==='mcc_privacy_ack');
+    check('privacy: the agreement is one cookie every mccluster.org host reads',agreed?.domain==='.mccluster.org'&&agreed.value==='2026-10-19'&&agreed.secure&&agreed.sameSite==='Lax'&&agreed.path==='/',agreed);
+    for(const url of [HOUSE+'/press.html',HOUSE+'/account.html',WORLD+'/',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after I agree, ${u.host}${u.pathname} does not show it again`,none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()));
+    }
+    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
+    await play(page);const frame=await world(page);
+    check('privacy: after I agree, the World that Music opens does not show it again',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>MCC_PRIVACY.accepted()));
+    check('privacy: no notice errors after I agree',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
+  {
+    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
+    const first=await notice(page);
+    check('privacy: a first visit to a document page sees the banner, not the wall',first.banner&&!first.wall&&!first.pending,first);
+    await page.locator('#mccPrivacyNoticeLater').click();
+    check('privacy: Not now closes the banner',none(await notice(page)));
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: Not now is kept for every mccluster.org host, as seen and never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack'),jar);
+    for(const url of [HOUSE+'/newsroom.html',HOUSE+'/account.html',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after Not now, ${u.host}${u.pathname} shows neither banner nor wall, and nothing counts as agreed`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
+    }
+    check('privacy: after Not now, analytics on the World still records nothing',await page.evaluate(()=>window.MCC_TRACK('privacy_fixture')===false));
+    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
+    check('privacy: after Not now, Music shows no wall',none(await notice(page)));
+    await play(page);const frame=await world(page);
+    check('privacy: after Not now, the World that Music opens does not show it either',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
+    check('privacy: no notice errors after Not now',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
+  {
+    /* owner, 2026-10-20: "they see the privacy policy, and then they never see it again". The banner is seen once shown. */
+    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
+    const first=await notice(page);
+    check('privacy: an ignored banner is shown on the first document page',first.banner&&!first.wall&&!first.pending,first);
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: the banner counts as seen with no tap, for every mccluster.org host, and never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>MCC_PRIVACY.seen()&&!MCC_PRIVACY.accepted()),jar);
+    for(const url of [HOUSE+'/newsroom.html',HOUSE+'/account.html',WORLD+'/',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after an ignored banner, ${u.host}${u.pathname} shows neither banner nor wall, and nothing counts as agreed`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
+    }
+    await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await musicReady(page);
+    check('privacy: after an ignored banner, Music shows no wall',none(await notice(page)));
+    await play(page);const frame=await world(page);
+    check('privacy: after an ignored banner, the World that Music opens shows no notice',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()));
+    check('privacy: no notice errors after an ignored banner',privacyErrors(errors).length===0,errors);
     await context.close();
   }
 }finally{

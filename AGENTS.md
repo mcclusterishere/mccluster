@@ -120,9 +120,21 @@ inherits them. Keep local filters, chapter tabs and editor tools within their
 destination. Embedded frames retain host-owned navigation. See
 `docs/control-plane/SHARED-NAVIGATION.md` for the implementation and release scope.
 
-### Public World: travel first
+### Public World: the social feed (travel and missions kept, switched off)
 
-Owner correction, 2026-10-17: the logged-out World homepage is **travel first**.
+Owner, 2026-10-20: "Until I refine the other features the transport and the
+missions feature will be taken off and the social feature will be the only
+feature with no tab selecting between the other two." "Keep the social feed on
+and then develop those other projects in the back end. Probably keep all three
+on admin." The World (`mnet.html`) opens on the **feed only** for everyone:
+`hu-social-only` on `<html>` is the switch, and `missions=0` tells the globe.
+Travel and Missions are **preserved, not deleted**: their code and suites stay
+(`scripts/e2e/world-switch.mjs` drives them with the switch removed), and the
+**house owner** keeps all three tabs (`js/world-owner-modes.js`, the server's
+owner check). Turning them back on for everyone is removing the switch. This
+supersedes the travel-first entry below until the owner turns them back on.
+
+Owner correction, 2026-10-17 (superseded for now by 2026-10-20 above): the logged-out World homepage is **travel first**.
 Before changing its presentation or default content, read
 `docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md` and its preserved approved
 reference. The guest starts in **Travel**, beside **Missions** and **Posts**, with

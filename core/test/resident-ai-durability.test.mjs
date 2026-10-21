@@ -40,7 +40,7 @@ test('runner owns resident turns and executor is retry-safe', () => {
   assert.match(runner, /\['resident_ai_turn', residentAiTurn\]/);
   assert.match(executor, /const existingAssistant = await messageById/);
   assert.match(executor, /if \(existingAssistant\)/);
-  assert.match(executor, /await localAiChat\(/);
+  assert.match(executor, /await runResidentAgent\(/);
   assert.match(executor, /ops_ai_messages\?on_conflict=id/);
   assert.match(executor, /resolution=ignore-duplicates/);
   assert.match(executor, /task_status: 'done'/);

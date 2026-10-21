@@ -133,8 +133,9 @@ test('a measured heat map without arcs; state files stay admin-only', async () =
   const globe = await read('js/control-room/analytics-globe.js');
   assert.doesNotMatch(globe, /arcPositions|glowImage|bucket\(/);
   assert.equal((globe.match(/new Cs\.BillboardCollection/g) || []).length, 1, 'the one white dot at the selected place');
-  assert.match(globe, /Cs\.Color\.lerp\(C\.land,C\.accent/);
-  assert.match(globe, /return C\.land;/);
+  /* the shading is the shared dynamic scale on the accent (js/heat-scale.js; owner, 2026-10-21: "the shading isn't dynamic
+     enough"); a country with nothing measured stays land */
+  assert.match(globe, /return t !== null \? rampColor\(t\) : C\.land;/);
   const js = await read('js/control-room/analytics.js');
   assert.doesNotMatch(js, /data-cra-legend|ORIGIN/);
   for (const f of ['js/action-globe.js', 'js/mnet.js', 'js/world-globe.js']) {

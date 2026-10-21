@@ -61,15 +61,20 @@ test('provider inventory, readiness and viewer config all require house-owner au
   }
 });
 
-test('authorized source catalog reports binding names but never credential values', async () => {
+test('authorized source catalog reports binding names but never credential values', async (t) => {
+  let attempts = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    attempts++;
+    throw new Error('Fixture database unavailable');
+  });
   const response = await seekFirst.fetch(
     new Request('https://api.mccluster.org/v1/seek-first/sources'),
     { CENSUS_API_KEY: FAKE_SECRET, SUPABASE_URL: 'https://db.invalid', SUPABASE_SERVICE_ROLE_KEY: 'service-role' },
     { requireHouseOwner: async () => ({ id: 'owner-1' }) }
   );
-  // resolveHouseOrg reaches a database that does not exist in this test, so the
-  // assertion here is the security one: the failure carries no secret.
+  // Simulate unavailable storage without making any real network request.
   const body = await response.text();
+  assert.equal(attempts, 1);
   assert.doesNotMatch(body, new RegExp(FAKE_SECRET));
 });
 

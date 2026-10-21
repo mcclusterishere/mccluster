@@ -33,11 +33,39 @@
      central meridian is about -offset/4 degrees. Within ±15° of the truth. */
   function estimateLongitude(tzOffsetMinutes) { return Math.max(-180, Math.min(180, -tzOffsetMinutes / 4)); }
   function resolve(date, lat, lon, previous) { return phase(solarElevation(date, lat, lon), previous); }
-  var core = {solarElevation:solarElevation, phase:phase, estimateLongitude:estimateLongitude, resolve:resolve};
+  /* The time zone's answer alone, as the World paints it for a visitor it knows nothing about. For pages that are not the
+     World: js/tabbar.js colours the departure veil to the World it is opening, and js/world-audio-continuity.js colours
+     the frame the World opens in, so neither shows night on the way into a day World (or the reverse). */
+  function estimate(date) {
+    var d = date instanceof Date ? date : new Date();
+    return resolve(d, 35, estimateLongitude(d.getTimezoneOffset()), "");
+  }
+  var core = {solarElevation:solarElevation, phase:phase, estimateLongitude:estimateLongitude, resolve:resolve, estimate:estimate};
   if (typeof module !== "undefined" && module.exports) { module.exports = core; return; }
   root.MCC_DAYLIGHT_CORE = core;
   if (!root.document) return;
-  var doc = root.document, html = doc.documentElement, KEY = "mcc_daylight", where = null;
+  var doc = root.document, html = doc.documentElement, KEY = "mcc_daylight", PLACE = "mcc_daylight_place", where = null;
+  /* loaded by another page for the arithmetic only (data-daylight-core): that page's own look is never touched */
+  if (doc.currentScript && doc.currentScript.hasAttribute("data-daylight-core")) return;
+  /* THE LAST PLACE (owner, 2026-10-20: "I'll see like other screens flash up"). With location granted, every visit used to
+     paint from the time zone and then correct itself from the device's answer half a second later, so near dusk and dawn a
+     night World turned day (or day turned night) after it was already on screen. The last answer is kept on this device,
+     coarse (a tenth of a degree, about 11 km: plenty for the Sun), and used before the first paint; the device's fresh
+     answer still corrects it, with a fade. Never sent anywhere, and forgotten once location is no longer granted. */
+  function remembered() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PLACE) || "null");
+      return p && isFinite(p.lat) && isFinite(p.lon) && Math.abs(p.lat) <= 90 && Math.abs(p.lon) <= 180 ? {lat:Number(p.lat), lon:Number(p.lon), exact:true} : null;
+    } catch (_) { return null; }
+  }
+  function remember(lat, lon) {
+    try {
+      if (lat === null) localStorage.removeItem(PLACE);
+      else localStorage.setItem(PLACE, JSON.stringify({lat:Math.round(lat * 10) / 10, lon:Math.round(lon * 10) / 10}));
+    } catch (_) {}
+  }
+  where = remembered();
+  var shiftTimer = 0;
   function override() {
     try {
       var q = new URLSearchParams(location.search).get("daylight");
@@ -53,6 +81,12 @@
     var next = forced || phase(el, prev);
     html.dataset.daylightSource = forced ? "override" : at.exact ? "location" : "timezone";
     if (next !== prev) {
+      /* a change while the page is on screen fades across (css/daylight.css); the first answer is simply the look */
+      if (prev && doc.body) {
+        html.classList.add("daylight-shift");
+        clearTimeout(shiftTimer);
+        shiftTimer = setTimeout(function () { html.classList.remove("daylight-shift"); }, 800);
+      }
       html.dataset.daylight = next;
       root.dispatchEvent(new CustomEvent("mcc:daylight", {detail:{phase:next, elevation:el, exact:at.exact}}));
     }
@@ -61,9 +95,12 @@
     var nav = root.navigator;
     if (!nav || !nav.geolocation || !nav.permissions || !nav.permissions.query) return;
     nav.permissions.query({name:"geolocation"}).then(function (p) {
-      if (p.state !== "granted") return;
+      if (p.state !== "granted") {
+        if (where) { where = null; remember(null); apply(); }
+        return;
+      }
       nav.geolocation.getCurrentPosition(function (pos) {
-        where = {lat:pos.coords.latitude, lon:pos.coords.longitude, exact:true}; apply();
+        where = {lat:pos.coords.latitude, lon:pos.coords.longitude, exact:true}; remember(where.lat, where.lon); apply();
       }, function () {}, {maximumAge:3600000, timeout:8000});
     }).catch(function () {});
   }

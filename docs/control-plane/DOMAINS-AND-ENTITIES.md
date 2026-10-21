@@ -175,6 +175,22 @@ and is about the Organization (the same stable `@id`). The company page,
 `humanuprise.com` stays built and inert until the owner routes it; nothing
 below changes.
 
+## The company's news: `mccluster.org/news/` (owner, 2026-10-20)
+
+"Getting my admin's posts as their own news worth posts and getting them
+published on GDELT." A post the house owner marks "Publish to the newsroom"
+is also an article at `https://mccluster.org/news/<headline-slug>-<post id>`,
+server-rendered by `workers/mccluster/src/company-site/news.js` (crawlers such
+as GDELT read the HTML; they do not run scripts). It is company-first like the
+rest of the host: `og:site_name` McCluster Corp, a `NewsArticle` whose
+publisher is the Organization by its stable `@id` and whose author is Matthew
+McCluster by his, belonging to `https://mccluster.org/#website`. The index is
+`/news/`, the RSS feed `/news/feed.xml`, and `/news/sitemap.xml` carries
+Google News' tags for the last two days (robots.txt lists it). The evidence
+newsroom on Matthew's property (`/newsroom.html`, built from the evidence
+ledger) is a different thing and stays where it is. How it gets into Google
+News and GDELT: `docs/action-network/NEWSROOM.md`.
+
 ## Human Uprise's host: `humanuprise.com`
 
 Three hosts, still two entities. Human Uprise is McCluster Corp's platform

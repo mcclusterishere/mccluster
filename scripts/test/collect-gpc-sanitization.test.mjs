@@ -80,3 +80,20 @@ test('each recorded event has a valid UUID, while opt-out still discards all ide
   const invalid = await collect({body:{events:[{id:'not-a-uuid',name:'page_view',path:'/'}]}});
   assert.match(invalid.rows[0].id,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i);
 });
+
+test('first-party origin retains hostname without changing shared analytics scope', async () => {
+  const { rows } = await collect({ headers: { origin: 'https://matthew.mccluster.org' } });
+  assert.equal(rows[0].source_host, 'matthew.mccluster.org');
+  assert.equal(rows[0].site_id, null);
+});
+test('unknown origins cannot claim a first-party host through the body', async () => {
+  const { rows } = await collect({ headers: { origin: 'https://unowned.example' }, body: { source_host: 'mccluster.org', events: [{name:'page_view'}] } });
+  assert.equal(rows[0].source_host, null);
+});
+test('referrer host fallback and GPC preserve only coarse first-party attribution', async () => {
+  const { rows } = await collect({ headers: { referer: 'https://humanuprise.com/private?token=secret', 'sec-gpc': '1' } });
+  assert.equal(rows[0].source_host, 'humanuprise.com');
+  assert.equal(rows[0].referrer, null);
+  assert.equal(rows[0].uid, null);
+  assert.equal(rows[0].path, '/');
+});
