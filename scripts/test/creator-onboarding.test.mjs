@@ -1,6 +1,6 @@
 /* Creator onboarding, one click: the show-condition, the browser-built
    fallback answer, and the contract between Creator Studio and the server
-   functions in supabase/pending/music_creator_one_click_v1.sql.
+   functions in supabase/migrations/20261021050105_music_creator_one_click_v1.sql.
    Behaviour of the SQL itself: scripts/test-music-creator-db.sh. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -120,7 +120,7 @@ test('Creator Studio decides from the server and calls the one-click function', 
 });
 
 test('the server functions: definer, signed-in only, idempotent insert, same rules as the browser', () => {
-  const sql = read('supabase/pending/music_creator_one_click_v1.sql');
+  const sql = read('supabase/migrations/20261021050105_music_creator_one_click_v1.sql');
   assert.match(sql, /create or replace function public\.music_creator_state\(\) returns jsonb\s+language sql security definer/);
   assert.match(sql, /create or replace function public\.music_become_creator\(\s*p_handle text default null, p_artist_name text default null, p_accept_terms boolean default false/);
   assert.match(sql, /on conflict \(m_uid\) do nothing/);
