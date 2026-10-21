@@ -58,7 +58,7 @@ test('before any script asks the network, the head of mnet.html already knows a 
   const boot = (o) => { let at = null; const r = runWith(o, (h) => { at = h; }); return { classes: r, view: at }; };
   assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=profile' }), { classes: [], view: 'profile' });
   assert.deepEqual(boot({ search: '?view=profile' }), { classes: ['mn-guest'], view: null });
-  assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=groups&group=equity-uprise' }), { classes: [], view: null });
+  assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=groups&group=fixture-group' }), { classes: [], view: null });
   assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=feed' }), { classes: [], view: null });
   const css = read('css/mnet.css');
   assert.match(css, /html\[data-boot-view\] #mnFeedView \{ display: none !important; \}/);
