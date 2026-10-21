@@ -300,3 +300,11 @@ test('only a double tap in the country already selected picks a state', () => {
   /* the page is told the state with its shape */
   assert.match(js, /state: sp \? \{ key: sp\.key, name: sp\.name, type: sp\.type \|\| null, polygons: polygonsOf\(sf\) \} : null/);
 });
+
+test('a state picked or let go is told as the same country, and Travel keeps the destination it has', () => {
+  const js = read('js/world-countries.js'), travel = read('js/travel/world-travel.mjs');
+  assert.match(js, /stateOnly: !!stateOnly/);
+  assert.match(js, /function selectState\(sf\) \{[\s\S]{0,900}o\.onSelect\(told\(f, n, sf, true\)\)/, 'a state change says so');
+  assert.match(js, /function select\(f\) \{[\s\S]*?o\.onSelect\(told\(f, n, null\)\)/, 'a country change does not');
+  assert.match(travel, /e\.data\?\.type === 'hu:country' && currentMode === 'travel' && e\.data\.country\?\.name && !e\.data\.country\.stateOnly/);
+});

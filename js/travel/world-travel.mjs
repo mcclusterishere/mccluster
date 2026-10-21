@@ -694,7 +694,8 @@ window.addEventListener('message', e => {
   }
   if (e.data?.type === 'hu:request-location' && currentMode === 'travel') void locate();
   if (e.data?.type === 'hu:map-interaction' && currentMode === 'travel') { navigationFollow = false; renderDirections(); }
-  if (e.data?.type === 'hu:country' && currentMode === 'travel' && e.data.country?.name) {
+  /* a state picked inside the same country is not a new destination: the one being refined stays */
+  if (e.data?.type === 'hu:country' && currentMode === 'travel' && e.data.country?.name && !e.data.country.stateOnly) {
     try { draft = read(); draft.to = { label:String(e.data.country.name).slice(0, 240), coordinates:null }; changed(); closeSearches(); syncInputs(); status('Country selected. Search for a city or address, then choose a result for directions.'); $('wtTo').focus(); }
     catch (error) { status(error.message); }
   }

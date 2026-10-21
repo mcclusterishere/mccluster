@@ -208,3 +208,10 @@ test('a picked state keeps the stories placed inside its shape, and checks the s
   assert.match(js, /\(tappedState \? tappedState\.name \+ ", " : ""\) \+ d\.country\.name\.slice\(0, 80\)/);
   assert.match(js, /state\.placeScope\.enabled && !\(sameCountry && state\.placeScope\.country === state\.world\.country\.code\)\) loadPlaceFeed\(true\);/);
 });
+
+test('a state picked or let go keeps the member\'s choice to place their post; another country clears it', async () => {
+  const js = await read('js/mnet.js');
+  assert.match(js, /if \(\$\("mnPostPlaceOptIn"\) && !sameCountry\) \$\("mnPostPlaceOptIn"\)\.checked = false;/);
+  const handler = js.slice(js.indexOf('var prevCountry = state.world.country'), js.indexOf('paintFeedScope();', js.indexOf('var prevCountry = state.world.country')));
+  assert.doesNotMatch(handler, /if \(\$\("mnPostPlaceOptIn"\)\) \$\("mnPostPlaceOptIn"\)\.checked = false;/, 'no unconditional reset when the globe speaks');
+});
