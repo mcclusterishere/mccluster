@@ -33,7 +33,7 @@ test('the Worker routes are signed-in only and region leaders are the owner\'s t
   const src = await read('workers/mccluster/src/news-briefs.js');
   assert.match(src, /if \(!who\) return fail\(req, env, 'Sign in to read the briefs', 401\)/);
   assert.match(src, /Only the house owner grants region leaders/);
-  assert.match(src, /headlines: sample\.map\(\(\{ n, title, domain, tone \}\) =>/, 'the model sees no link');
+  assert.match(src, /headlines: sample\.map\(\(\{ url, \.\.\.headline \}\) => headline\)/, 'the model sees no link');
 });
 
 test('the house owner can also publish the brief to the newsroom, with the headlines it cites, and sees it ticked', async () => {

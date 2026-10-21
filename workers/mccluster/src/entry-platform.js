@@ -140,9 +140,10 @@ export default {
     ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
-    /* yesterday's briefs are queued once New York's day is over (./news-briefs.js); off until NEWS_BRIEFS_ENABLED */
+    /* Desk-local yesterday; receipts distinguish missing, queued and no-coverage editions. */
     if (briefsEnabled(env)) ctx.waitUntil(seedMorningBriefs(env).then((report) => {
-      if (report?.queued?.length) console.log(JSON.stringify({ event: 'news_briefs_seeded', ...report }));
+      if (report?.queued?.length || report?.complete === false || report?.receipts?.some((r) => r.state === 'no_coverage'))
+        console.log(JSON.stringify({ event: 'news_briefs_seeded', ...report }));
     }).catch((error) => {
       console.error(JSON.stringify({ event: 'news_briefs_seed_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
