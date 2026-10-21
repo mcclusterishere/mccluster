@@ -402,7 +402,7 @@
   }
   /* Visiting the actual founder's profile is an explicit perspective switch.
      Opening /index.html normally does not replace the signed-in member's home. */
-  var HOUSE_VISIT = !ON_WORLD_HOST && (/matthew-mccluster\\.html$/.test(location.pathname) ||
+  var HOUSE_VISIT = !ON_WORLD_HOST && (/matthew-mccluster\.html$/.test(location.pathname) ||
     new URLSearchParams(location.search).get("front")==="house");
   var PERSPECTIVE=readPerspective();
   if(HOUSE_VISIT && currentSubject()) {
@@ -416,6 +416,10 @@
     var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null),
       label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
     if(p && p.kind==="house") p=null;
+    /* THE OWNER'S M IS HIS FRONT PAGE (owner, 2026-10-21: "My front page as the admin is not my actual site's front
+       page ... it should represent as my actual front page"). With the owner's bar on, the M is index.html, the page
+       Control → Create → Front page shows and controls, never a member card. */
+    if (ADMIN_ON) p = null;
     if (!p) {
       /* M is the McCluster platform home for everyone (owner, 2026-10-14);
          the member feed lives in World, not behind the emblem. */

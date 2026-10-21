@@ -26,7 +26,13 @@ function mccPrivacyAcknowledged() {
     });
   } catch (_) { return false; }
 }
-if (mccPrivacyAcknowledged()) {
+/* The owner's own look at the front page from Control → Create → Front page (js/control-room/front-page.js) frames the
+   real page on this origin; that is not a visit, so nothing is recorded inside it. */
+function mccControlPreview() {
+  try { return window.parent !== window && window.parent.location.origin === location.origin && /control\.html$/.test(window.parent.location.pathname); }
+  catch (_) { return false; }
+}
+if (mccPrivacyAcknowledged() && !mccControlPreview()) {
 /* ============================================================
    THE HOUSE'S OWN EYES.
 
