@@ -1,5 +1,5 @@
 /* THE WORLD'S NEWS FROM GDELT (owner, 2026-10-15: "GDELT news as the feed ... we gotta ingest it so it's still from
-   us", then "ingest the GDELT immediately"): GDELT's 15-minute GKG file is read once, screened, and ~100 articles with
+   us", then "ingest the GDELT immediately"): GDELT's 15-minute GKG file is read once, screened, and up to 1,000 articles with
    one place each go to our tables; the World reads them only from us, with GDELT credited. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -90,7 +90,7 @@ test('one place: the most mentioned, narrowed to the city it mentions most insid
   assert.equal(bestPlace(''), null);
 });
 
-test('about 100 a file: one copy of a syndicated story, three per publisher, cities first', () => {
+test('up to 1,000 a file: one copy of a syndicated story, three per publisher, cities first', () => {
   const recs = [];
   for (let i = 0; i < 6; i++) recs.push({ ...parseRecord(gkg({ domain: 'iheart.com', url: `https://kiss${i}.iheart.com/s`, title: `Same syndicated story about the storm - KISS ${i}` })).rec });
   for (let i = 0; i < 5; i++) recs.push({ ...parseRecord(gkg({ domain: 'news4jax.com', url: `https://www.news4jax.com/${i}`, title: `Jacksonville story number ${i} for the evening news` })).rec });
@@ -100,8 +100,8 @@ test('about 100 a file: one copy of a syndicated story, three per publisher, cit
   assert.equal(out.filter((r) => r.domain === 'news4jax.com').length, 3, 'three per publisher');
   assert.equal(out[out.length - 1].domain, 'country.example', 'a country-only story ranks after cities');
   assert.equal(storyKey('Storm hits coast | WSB'), storyKey('Storm hits coast - KISS 95'));
-  const many = Array.from({ length: 300 }, (_, i) => ({ ...parseRecord(gkg({ domain: `d${i}.com`, url: `https://d${i}.com/x`, title: `Distinct headline number ${i} about the day` })).rec }));
-  assert.equal(selectArticles(many).length, 100);
+  const many = Array.from({ length: 1200 }, (_, i) => ({ ...parseRecord(gkg({ domain: `d${i}.com`, url: `https://d${i}.com/x`, title: `Distinct headline number ${i} about the day` })).rec }));
+  assert.equal(selectArticles(many).length, 1000);
 });
 
 test('titles: entities, tags and a site tail; storyKey ignores punctuation and tails', () => {
@@ -121,7 +121,7 @@ test('a hard crime theme with a graphic headline is out', () => {
   assert.ok(parseRecord(gkg({ themes: 'SOC_GENERALCRIME', title: 'Council votes to fund more crossing guards near schools' })).rec);
 });
 
-test('the file: a GDELT zip inflates as a stream, records with a raw newline are joined, and ~100 survive', async () => {
+test('the file: a GDELT zip inflates as a stream, records with a raw newline are joined, and up to 1,000 survive', async () => {
   const lines = [gkg(), gkg({ id: '20261015220000-2', url: 'https://www.standardmedia.co.ke/a2', title: 'Second headline with a\nbroken line inside it', domain: 'standardmedia.co.ke' }), gkg({ id: '20261015220000-3', coll: '2' })];
   const text = lines.join('\n') + '\n';
   for (const dd of [false, true]) {
@@ -194,11 +194,11 @@ test('the cron reads the newest file and one before it, claims each, and sends t
   assert.deepEqual(ingest.args.p_articles.map((a) => a.place), ['Nairobi, Nairobi Area, Kenya', 'Jacksonville, Florida, United States']);
 });
 
-test('a file already read is skipped; the hour before fills in; the hourly tick prunes a week', async () => {
+test('a file already read is skipped; the hour before fills in; the hourly tick prunes after 30 days', async () => {
   const w = world({ claim: (f) => f !== '20261015220000.gkg.csv.zip' });
   const report = await ingestGdeltNews(ENV, { fetchImpl: w.fetchImpl, scheduledTime: Date.UTC(2026, 9, 15, 23, 2) });
   assert.equal(report.pruned, 3);
-  assert.deepEqual(w.rpc.find((r) => r.name === 'media_news_prune').args, { p_keep_days: 7 });
+  assert.deepEqual(w.rpc.find((r) => r.name === 'media_news_prune').args, { p_keep_days: 30 });
   assert.deepEqual(report.files.map((f) => f.name), ['20261015214500.gkg.csv.zip', '20261015213000.gkg.csv.zip']);
 });
 
