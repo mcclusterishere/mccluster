@@ -69,38 +69,41 @@
 
   var S = { open: false, section: null, caps: null, data: {}, loading: false, policyLoaded: false, seq: 0, openSeq: 0, authDenied: false };
 
-  /* ---------- the Desk tab on the bar ---------- */
+  /* ---------- the desk's door: the account menu (owner, 2026-10-19: it does not belong on the World tab's bar) ---------- */
   var DESK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5h18"/><path d="M5 9.5V19M19 9.5V19"/><path d="M8.5 9.5V6.8a1.3 1.3 0 0 1 1.3-1.3h4.4a1.3 1.3 0 0 1 1.3 1.3v2.7"/><path d="M5 14h6"/></svg>';
   function ensureTab() {
-    var dock = document.querySelector(".appbar");
-    if (!dock) return null;
-    var tab = dock.querySelector("[data-hu-desk]");
-    if (!signedIn() || dock.classList.contains("appbar--admin")) {
-      if (tab) tab.remove();
-      return null;
+    var dock = document.querySelector(".appbar"), stale = dock && dock.querySelector("[data-hu-desk]");
+    if (stale) stale.remove();
+    var menu = $("mnMenu");
+    if (!menu) return null;
+    var entry = menu.querySelector("[data-hu-desk]");
+    if (!signedIn()) { if (entry) entry.remove(); return null; }
+    if (!entry) {
+      entry = document.createElement("button");
+      entry.type = "button";
+      entry.className = "mn__menu-desk";
+      entry.setAttribute("data-hu-desk", "");
+      entry.setAttribute("aria-controls", "huDesk");
+      entry.innerHTML = DESK_SVG + "<span>Your desk</span>";
+      var profile = menu.querySelector('[data-mn-view="profile"]');
+      if (profile && profile.parentNode === menu) menu.insertBefore(entry, profile.nextSibling); else menu.appendChild(entry);
     }
-    if (!tab) {
-      tab = document.createElement("button");
-      tab.type = "button";
-      tab.className = "appbar__tab appbar__desk";
-      tab.setAttribute("data-hu-desk", "");
-      tab.setAttribute("aria-controls", "huDesk");
-      tab.innerHTML = DESK_SVG + "<span>Desk</span>";
-      var world = dock.querySelector('[data-appnav="world"]');
-      if (world && world.nextSibling) dock.insertBefore(tab, world.nextSibling); else dock.appendChild(tab);
-    }
-    tab.setAttribute("aria-expanded", S.open ? "true" : "false");
-    tab.setAttribute("aria-label", S.open ? "Close your desk" : "Open your desk");
-    tab.classList.toggle("is-active", S.open);
-    return tab;
+    entry.setAttribute("aria-expanded", S.open ? "true" : "false");
+    entry.setAttribute("aria-label", S.open ? "Close your desk" : "Open your desk");
+    entry.classList.toggle("is-active", S.open);
+    return entry;
   }
-  /* the bar redraws itself (a held tab opens a wing, then folds back from a
-     snapshot), so the tab is put back whenever it goes missing */
+  /* the account menu is static markup, but the bar redraws itself and a stale
+     Desk tab from an older document must never come back */
   function watchBar() {
     var dock = document.querySelector(".appbar");
     if (!dock || typeof MutationObserver !== "function") return;
     new MutationObserver(function () { if (!signedIn() || !dock.classList.contains("appbar--morph")) ensureTab(); })
       .observe(dock, { childList: true });
+  }
+  function closeAccountMenu() {
+    var me = $("mnMe"), menu = $("mnMenu");
+    if (me && menu && !menu.hidden && me.getAttribute("aria-expanded") === "true") me.click();
   }
 
   /* ---------- the sheet ---------- */
@@ -191,7 +194,9 @@
         (p.headline ? "<p>" + esc(p.headline) + "</p>" : "") + "</div>" +
         '<div class="hu-desk__row"><button type="button" class="hu-desk__btn" data-hu-desk-view="profile">View profile</button>' +
         '<button type="button" class="hu-desk__btn" data-hu-desk-edit>Edit profile</button>' +
-        (S.caps && !S.caps.creator ? '<a class="hu-desk__btn" href="creator.html">Become a creator</a>' : "") + "</div></section>" +
+        /* the one tap (owner, 2026-10-20): the artist page is made from this profile, nothing asked (js/creator-onboarding.js) */
+        (S.caps && !S.caps.creator ? '<a class="hu-desk__btn" href="creator.html" data-creator-door>Become a creator</a>' : "") + "</div>" +
+        (S.caps && !S.caps.creator ? '<p class="hu-desk__meta">Become a creator is one tap: your artist page is made from this profile, and the tap accepts the <a href="music-creator-terms.html">Creator Terms</a>.</p>' : "") + "</section>" +
         '<section class="hu-desk__card" id="huDeskEditGate" aria-live="polite"><h3>Locked details</h3>' + note("Loading…") + "</section>";
       if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.mount($("huDeskEditGate"));
       else $("huDeskEditGate").innerHTML = "<h3>Locked details</h3>" + note("The profile edit module did not load.", true);
@@ -320,8 +325,8 @@
     document.documentElement.classList.remove("hu-desk-on");
     ensureTab();
     setParam(null);
-    var tab = document.querySelector("[data-hu-desk]");
-    if (tab) try { tab.focus({ preventScroll: true }); } catch (e) { /* focus is a courtesy */ }
+    var tab = document.querySelector("[data-hu-desk]"), back = tab && tab.offsetParent ? tab : $("mnMe");
+    if (back) try { back.focus({ preventScroll: true }); } catch (e) { /* focus is a courtesy */ }
   }
   function clearDesk() {
     close();
@@ -341,7 +346,7 @@
     var t = e.target && e.target.closest ? e.target : null;
     if (!t) return;
     var tab = t.closest("[data-hu-desk]");
-    if (tab) { e.preventDefault(); if (S.open) close(); else open(); return; }
+    if (tab) { e.preventDefault(); closeAccountMenu(); if (S.open) close(); else open(); return; }
     var opener = t.closest("[data-hu-desk-open]");
     if (opener) { e.preventDefault(); open(opener.getAttribute("data-hu-desk-open") || null); return; }
     if (!S.open || !t.closest("#huDesk")) return;

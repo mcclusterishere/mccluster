@@ -15,10 +15,11 @@ const P_GROUP = '44444444-4444-4444-8444-444444444444';
 const P_CLOSED = '55555555-5555-4555-8555-555555555555';
 const P_NET = '66666666-6666-4666-8666-666666666666';
 const ASSET = '77777777-7777-4777-8777-777777777777';
+const POSTER = '88888888-8888-4888-8888-888888888888';
 const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 
-function fake() {
+function fake({ media = [{ asset_id: ASSET, type: 'image' }] } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = decodeURIComponent(String(url)), m = init.method || 'GET';
@@ -31,7 +32,7 @@ function fake() {
       { item_type: 'post', post_id: P_NET, actor_m_uid: OPEN, visibility: 'public', occurred_at: '2026-10-14T02:00:00Z' },
     ]);
     if (u.includes('/network_posts?id=in.')) return ok([
-      { id: P_OK, author_m_uid: OPEN, body: 'Bagged the north bank.', post_type: 'share', visibility: 'public', media: [{ asset_id: ASSET, type: 'image' }], metadata: { action: { assignment_id: 'secret' }, track: { title: 'Docket 516R', art: 'https://evil.example/x.png' }, internal: 'nope' }, content_id: null, reply_to_id: null, group_id: null, created_at: '2026-10-14T05:00:00Z', source_app_id: 'app-internal', source_org_id: 'org-internal' },
+      { id: P_OK, author_m_uid: OPEN, body: 'Bagged the north bank.', post_type: 'share', visibility: 'public', media, metadata: { action: { assignment_id: 'secret' }, track: { title: 'Docket 516R', art: 'https://evil.example/x.png' }, internal: 'nope' }, content_id: null, reply_to_id: null, group_id: null, created_at: '2026-10-14T05:00:00Z', source_app_id: 'app-internal', source_org_id: 'org-internal' },
       { id: P_GROUP, author_m_uid: OPEN, body: 'group only', post_type: 'post', visibility: 'public', media: [], metadata: {}, group_id: 'g1', reply_to_id: null, created_at: '2026-10-14T04:00:00Z' },
       { id: P_CLOSED, author_m_uid: CLOSED, body: 'closed profile', post_type: 'post', visibility: 'public', media: [], metadata: {}, group_id: null, reply_to_id: null, created_at: '2026-10-14T03:00:00Z' },
       { id: P_NET, author_m_uid: OPEN, body: 'network only', post_type: 'post', visibility: 'network', media: [], metadata: {}, group_id: null, reply_to_id: null, created_at: '2026-10-14T02:00:00Z' },
@@ -76,6 +77,14 @@ test('the guest projection carries no internal ids, viewer state or media addres
     assert.ok(!text.includes(secret), `${secret} must not reach a guest`);
   }
   assert.deepEqual(item.post.metadata, { track: { title: 'Docket 516R' }, action: true });
+});
+
+test('a video\'s thumbnail never reaches a guest either: no poster id, no address', async () => {
+  fake({ media: [{ asset_id: ASSET, type: 'video', mime_type: 'video/mp4', poster_asset_id: POSTER }] });
+  const [item] = (await (await get('/v1/mnet/public-feed')).json()).items;
+  assert.equal(item.post.media_locked, 1);
+  const text = JSON.stringify(item);
+  assert.ok(!text.includes(POSTER) && !/poster/i.test(text), 'the guest learns there is a video, not its picture\'s id');
 });
 
 test('a malformed cursor is refused before any read', async () => {

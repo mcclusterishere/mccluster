@@ -7,7 +7,7 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, mkdir } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = process.argv[2] || join(ROOT, 'e2e-out');
@@ -33,7 +33,7 @@ function check(scope, name, ok, detail) {
 }
 
 /* ---------- FIXTURES (test data only; shaped like the real reads) ---------- */
-const now = Date.now();
+const now = process.env.ANALYTICS_FIXED_TIME ? Date.parse(process.env.ANALYTICS_FIXED_TIME) : Date.now();
 const HOURS = [...Array(24)].map((_, i) => { const at = new Date(now - (23 - i) * 3600000); at.setMinutes(0, 0, 0); return { hour: at.toISOString(), hour_label: '', page_views: [2, 3, 2, 4, 5, 4, 6, 5, 3, 4, 6, 5, 7, 6, 9, 8, 8, 9, 7, 6, 7, 5, 4, 4][i], visitors: 2, sessions: 3, plays: 1, events: 9 }; });
 const FIX = {
   totals: [{ page_views: 133, visits: 40, visitors: 40, sessions: 52, plays: 30, events: 900 }],
@@ -64,14 +64,16 @@ const json = (route, body, status = 200) => route.fulfill({ status, contentType:
 
 const browser = await chromium.launch({ executablePath:process.env.CHROMIUM_PATH||undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 
-async function context(viewport, { owner = true, reduced = false, pendingRpc = true } = {}) {
+async function context(viewport, { owner = true, reduced = false, pendingRpc = true, theme, fixedTime, deviceScaleFactor = 2 } = {}) {
   const mobile = viewport.width < 600;
-  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, reducedMotion: reduced ? 'reduce' : 'no-preference' });
-  await ctx.addInitScript(() => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor, timezoneId:'UTC', isMobile: mobile, hasTouch: mobile, reducedMotion: reduced ? 'reduce' : 'no-preference' });
+  await ctx.addInitScript(({fixedTime,theme}) => {
+    if(fixedTime){const NativeDate=Date,ms=Date.parse(fixedTime);window.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[ms]));}static now(){return ms;}};}
+    if(theme)localStorage.setItem('mcc_theme',theme);
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     const exp = Math.floor(Date.now() / 1000) + 3600;
     localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: '11111111-1111-4111-8111-111111111111', email: 'owner@test' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp, user: { id: '11111111-1111-4111-8111-111111111111', email: 'owner@test' } }));
-  });
+  },{fixedTime,theme});
   const calls = [];
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const req = route.request(), p = new URL(req.url()).pathname;
@@ -130,6 +132,9 @@ const settle = (page) => page.waitForFunction(() => window.__craGlobe && window.
 const widths = (page) => page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
 
 
+export { context, settle, widths, browser, server, BASE, OUT, json };
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,height:1000},{width:390,height:844,workspace:true},{width:1180,height:820,workspace:true}]){
  const {ctx,page,errors,calls}=await context(size);
  await page.goto(BASE+'/control.html'+(size.workspace?'?workspace=1':'')+'#analytics',{waitUntil:'domcontentloaded'});
@@ -214,3 +219,5 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  await ctx.close();
 }
 await browser.close();server.close();if(failed)process.exitCode=1;
+
+}

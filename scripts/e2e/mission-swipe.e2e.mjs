@@ -2,6 +2,7 @@
    Exercises the World Missions deck with auth, rejected joins, pending joins,
    pointer gestures, competing touch navigation, and a missing WebGL globe. */
 import assert from 'node:assert/strict';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
@@ -25,7 +26,8 @@ catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/n
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://local').pathname)).replace(/^([.][.][/\\])+/, '');
-  try { const data = await readFile(join(ROOT, path)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(data); }
+  /* Missions is switched off in the World as it ships; this suite guards it, so it drives it switched on */
+  try { let data = await readFile(join(ROOT, path)); if (/^[/\\]mnet\.html$/.test(path)) data = Buffer.from(withTravelAndMissions(data)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(data); }
   catch { res.writeHead(404); res.end(); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -41,7 +43,7 @@ async function scenario({ member = false, viewport = { width: 390, height: 844 }
   const world = { assignments: new Map(), joins: [], proofWrites: 0, deny: false, malformed: false, deferJoin: null, pending: null };
   const ctx = await browser.newContext({ viewport, isMobile: viewport.width < 600, hasTouch: true, serviceWorkers: 'block', reducedMotion: 'reduce' });
   await ctx.addInitScript(({ member, token }) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     localStorage.setItem('mnet_tour_seen', '1');
     if (member) localStorage.setItem('mccdb_session', JSON.stringify({ access_token: token, refresh_token: 'fixture', expires_at: Math.floor(Date.now() / 1000) + 3600 }));
   }, { member, token: token() });
@@ -191,9 +193,15 @@ try {
     await s.page.locator('.mn-swipe__card').focus(); await s.page.keyboard.press('ArrowLeft');
     assert.equal(await s.current(), ids[2]);
     await s.page.locator('.mn-swipe__undo').click(); assert.equal(await s.current(), ids[1]);
-    await s.page.locator('[data-category="earn"]').click();
+    await s.page.locator('[data-status="completed"]').click();
+    await s.page.locator('#mnCompletedSeries .dc-series').waitFor();
     assert.equal(await s.page.locator('.mn-swipe__card').count(), 0);
-    await s.page.locator('[data-category="all"]').click();
+    await s.page.locator('.dc-series__summary').click();
+    assert.match(await s.page.locator('.dc-series__name').textContent(), /Docket 516R.*Write a Song/);
+    assert.match(await s.page.locator('.dc-series__position').textContent(), /1 \/ 9/);
+    await s.page.locator('.dc-series__next').click();
+    assert.match(await s.page.locator('.dc-series__position').textContent(), /2 \/ 9/);
+    await s.page.locator('[data-status="open"]').click();
     assert.equal(await s.current(), ids[1]);
     const sizes = await fit(s.page);
     await s.page.locator('.mn-swipe__actions').evaluate(n => n.scrollIntoView({ block: 'end', behavior: 'auto' }));

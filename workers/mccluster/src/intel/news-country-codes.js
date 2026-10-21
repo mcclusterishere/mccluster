@@ -260,5 +260,18 @@ export const FIPS_TO_ISO = Object.freeze({
   "ZI": "ZW"
 });
 export const ISO_TO_FIPS = Object.freeze(Object.fromEntries(Object.entries(FIPS_TO_ISO).map(([fips, iso]) => [iso, fips])));
-export function isoFromGdelt(code) { return typeof code === 'string' && Object.hasOwn(FIPS_TO_ISO, code) ? FIPS_TO_ISO[code] : null; }
+/* Codes GDELT still emits that GeoNames' current table does not carry: the Gaza Strip (GZ, which GeoNames files with the
+ * West Bank under Palestine, WE) and Serbia's code from before 2006 (RB). Aliases on the way in only; ISO_TO_FIPS stays
+ * the GeoNames table. */
+export const GDELT_EXTRA_FIPS = Object.freeze({ GZ: 'PS', RB: 'RS' });
+export function isoFromGdelt(code) {
+  if (typeof code !== 'string') return null;
+  if (Object.hasOwn(FIPS_TO_ISO, code)) return FIPS_TO_ISO[code];
+  return Object.hasOwn(GDELT_EXTRA_FIPS, code) ? GDELT_EXTRA_FIPS[code] : null;
+}
+/* every code GDELT may file a country's stories under: its GeoNames FIPS code, then any alias */
+export function gdeltCodesFor(iso) {
+  if (!isCountry(iso)) return [];
+  return [ISO_TO_FIPS[iso], ...Object.keys(GDELT_EXTRA_FIPS).filter((fips) => GDELT_EXTRA_FIPS[fips] === iso)];
+}
 export function isCountry(code) { return typeof code === 'string' && Object.hasOwn(ISO_TO_FIPS, code); }

@@ -5,7 +5,9 @@ import { createAudienceScienceRoutes } from './audience-science.js';
 import { createExperienceAnalyticsRoutes } from './experience.js';
 import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
-import { dataCoverage, boundedReads } from './coverage.js';
+import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
+import { readBoundedRows, measurementContext } from './measurement.js';
+import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -70,17 +72,9 @@ async function sbRows(env, path) {
 }
 
 async function sbRowsPaged(env, path, maxRows = 100000) {
-  const pageSize = 1000;
-  const out = [];
-  for (let start = 0; start < maxRows; start += pageSize) {
-    const rows = await sbJson(env, path, {
-      headers: { range: `${start}-${start + pageSize - 1}` }
-    });
-    if (!Array.isArray(rows) || !rows.length) break;
-    out.push(...rows);
-    if (rows.length < pageSize) break;
-  }
-  return out.slice(0, maxRows);
+  return readBoundedRows((start, end) => sbJson(env, path, {
+    headers: { range: `${start}-${end}` }
+  }), maxRows);
 }
 
 function finiteDate(value, fallback) {
@@ -147,15 +141,16 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   });
   const userIds = created.map((u) => String(u.id)).filter(Boolean);
   const eventSelect = [
-    'at','name','path','props','uid','device_id','session_id','ip','user_agent','referrer',
+    'id','at','name','path','props','uid','device_id','session_id','ip','user_agent','referrer',
     'country','region','city','postal','latitude','longitude','timezone','asn','asn_org','device','edge'
   ].join(',');
 
   const direct = await sbRowsPaged(env,
     `events?site_id=is.null&name=eq.account_created&at=gte.${encodeURIComponent(since.toISOString())}` +
-    `&at=lt.${encodeURIComponent(until.toISOString())}&select=${eventSelect}&order=at.asc`,
+    `&at=lt.${encodeURIComponent(until.toISOString())}&select=${eventSelect}&order=at.asc,id.asc`,
     25000
   );
+  const readDatasets = { account_creation_events: direct };
 
   /* Historical reconstruction is bounded by the actual accounts in the
      selected window. We never scan the first N global bridge rows: that was
@@ -165,12 +160,14 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   const bridgeUntil = new Date(until.getTime() + 7 * 86400000).toISOString();
   for (const ids of chunks(userIds)) {
     if (!ids.length) continue;
-    bridges.push(...await sbRowsPaged(env,
+    const batch = await sbRowsPaged(env,
       `events?uid=in.(${ids.join(',')})&device_id=not.is.null` +
       `&at=gte.${encodeURIComponent(bridgeSince)}&at=lt.${encodeURIComponent(bridgeUntil)}` +
-      `&select=${eventSelect}&order=at.desc`,
+      `&select=${eventSelect}&order=at.desc,id.desc`,
       100000
-    ));
+    );
+    readDatasets['identity_bridge_' + Object.keys(readDatasets).length] = batch;
+    bridges.push(...batch);
   }
 
   const directByUser = new Map();
@@ -198,13 +195,15 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   const behavior = [];
   for (const ids of chunks([...deviceIds])) {
     if (!ids.length) continue;
-    behavior.push(...await sbRowsPaged(env,
+    const batch = await sbRowsPaged(env,
       `events?site_id=is.null&device_id=in.(${ids.join(',')})` +
       `&at=gte.${encodeURIComponent(behaviorSince)}&at=lt.${encodeURIComponent(until.toISOString())}` +
       '&name=in.(album_play,music_play,music_preview_play,music_full_play,music_complete,song_start,track_start,acquired)' +
-      `&select=${eventSelect}&order=at.asc`,
+      `&select=${eventSelect}&order=at.asc,id.asc`,
       100000
-    ));
+    );
+    readDatasets['behavior_' + Object.keys(readDatasets).length] = batch;
+    behavior.push(...batch);
   }
 
   const tracks = await sbRows(env, 'creator_tracks?select=id,title,artist,slug');
@@ -219,12 +218,13 @@ async function identityAnalytics(env, sinceIso, untilIso) {
     list.push(e); byDevice.set(key, list);
   }
 
+  let contentReadStatus = 'observed_complete';
   const contentRows = await sbJson(env, 'rpc/analytics_content', {
     method: 'POST',
     body: JSON.stringify({
       p_since: since.toISOString(), p_until: until.toISOString(), p_site: null
     })
-  }).catch(() => []);
+  }).catch(() => { contentReadStatus = 'unavailable'; return []; });
   const listenerByTrack = new Map((Array.isArray(contentRows) ? contentRows : []).map((r) => [
     String(r.track || '').trim().toLowerCase(), Number(r.listeners) || 0
   ]));
@@ -283,19 +283,22 @@ async function identityAnalytics(env, sinceIso, untilIso) {
     for (const track of j.assisted_tracks || []) {
       const key = String(track).toLowerCase();
       const cur = stats.get(key) || {
-        track, listeners: listenerByTrack.get(key) || 0,
-        assisted_accounts: 0, last_touch_accounts: 0, total_minutes_to_signup: 0
+        track, listeners: listenerByTrack.get(key) ?? null,
+        assisted_accounts: 0, last_touch_accounts: 0, timed_last_touch_accounts: 0, total_minutes_to_signup: 0
       };
       cur.assisted_accounts++; stats.set(key, cur);
     }
     if (j.last_track) {
       const key = String(j.last_track).toLowerCase();
       const cur = stats.get(key) || {
-        track:j.last_track, listeners:listenerByTrack.get(key) || 0,
-        assisted_accounts:0,last_touch_accounts:0,total_minutes_to_signup:0
+        track:j.last_track, listeners:listenerByTrack.get(key) ?? null,
+        assisted_accounts:0,last_touch_accounts:0,timed_last_touch_accounts:0,total_minutes_to_signup:0
       };
       cur.last_touch_accounts++;
-      if (j.minutes_after_last_track != null) cur.total_minutes_to_signup += j.minutes_after_last_track;
+      if (j.minutes_after_last_track != null) {
+        cur.total_minutes_to_signup += j.minutes_after_last_track;
+        cur.timed_last_touch_accounts++;
+      }
       stats.set(key, cur);
       const edgeKey = `${j.source || 'direct'}\u0000${j.last_track}`;
       sourceEdges.set(edgeKey, (sourceEdges.get(edgeKey) || 0) + 1);
@@ -305,14 +308,23 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   const trackStats = [...stats.values()].map((x) => ({
     track:x.track, listeners:x.listeners, assisted_accounts:x.assisted_accounts,
     last_touch_accounts:x.last_touch_accounts,
-    signup_rate_pct:x.listeners ? Math.round((x.last_touch_accounts / x.listeners) * 1000) / 10 : null,
-    avg_minutes_to_signup:x.last_touch_accounts
-      ? Math.round(x.total_minutes_to_signup / x.last_touch_accounts) : null
+    // Attribution can reach seven days before this listener window and links
+    // accounts rather than devices. These are not compatible rate populations.
+    signup_rate_pct:null,
+    avg_minutes_to_signup:x.timed_last_touch_accounts
+      ? Math.round(x.total_minutes_to_signup / x.timed_last_touch_accounts) : null
   })).sort((a,b) => b.last_touch_accounts-a.last_touch_accounts ||
     b.assisted_accounts-a.assisted_accounts || b.listeners-a.listeners);
 
   return {
     range:{since:since.toISOString(),until:until.toISOString(),attribution_window_days:7},
+    measurement:measurementContext({metricVersion:'identity-attribution/v2',
+      since:since.toISOString(),until:until.toISOString(),datasets:readDatasets,
+      unit:'accounts',identityBasis:'auth.users.id_with_observed_device_attribution'}),
+    methodology:{population:'Accounts created in the window; descriptive attribution may look back seven days.',
+      signup_rate:'unavailable_without_ordered_matching_cohort',
+      listener_read:contentReadStatus,
+      note:'A pre-signup device touch is an association, not proof the content caused registration.'},
     coverage:{
       accounts:created.length,
       bridged_accounts:journeys.filter((j)=>j.device_id).length,
@@ -584,7 +596,7 @@ export async function businessSnapshot(env, windowSpec = null) {
   ].map(task => async () => {
     try { return await task.run(); }
     catch { readErrors[task.key] = 'Data read unavailable'; return null; }
-  }), 4);
+  }), 3); // Keep owner business reads below the dashboard's concurrent RPC load.
 
   /* Verified Stripe sales and bookings from the commerce reconciler, live
      only, net of refunds; test-mode money is reported apart (commerce/
@@ -1046,6 +1058,13 @@ export async function handleAnalyticsRequest(request, env, user) {
 
   const cameraResponse = await cameraAnalytics(request, env, user, url, path);
   if (cameraResponse) return cameraResponse;
+  if (path === '/v1/analytics/measurement-contract') {
+    await requireHouseOwner(env, user);
+    if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
+    return json({ ok:true, version:DICTIONARY_VERSION, source:DICTIONARY_SOURCE,
+      unknown_event_policy:'unclassified', events:EVENT_DICTIONARY,
+      metrics:METRIC_DICTIONARY, datasets:DATASETS });
+  }
   if (path === '/v1/analytics/coverage') {
     if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
     try {

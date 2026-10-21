@@ -3,6 +3,10 @@
   "use strict";
 
   var APP = "mccluster-web";
+  /* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "open missions belong in missions not inside the newsfeed"; "the
+     transport and the missions feature will be taken off"). While hu-social-only is on <html> (mnet.html) the feed carries
+     no mission card, list or rail, search finds no missions, and every way into Missions lands on the feed. */
+  var MISSIONS_OFF = document.documentElement.classList.contains("hu-social-only");
   var state = {
     user: null,
     boot: null,
@@ -15,6 +19,10 @@
     newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
+    /* the feed's first read has answered (renderFeed draws nothing over the loading shapes before it has) */
+    feedAnswered: false,
+    placeScope: { enabled:false, country:null, home:null, posts:[], news:[], lives:[], postBefore:null, newsBefore:null,
+      loaded:false, error:'', seq:0, working:false },
     threadPost: null,
     currentView: "feed",
     mediaAssets: [],
@@ -31,6 +39,74 @@
   };
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+  /* ONE SIGN-UP (owner, 2026-10-20: "once you make a profile … you should be able to sign up to anything else without
+     having to enter any additional information unless your profile's not filled out … that 3-panel profile sign up
+     thing … should be the new sign up thing"). Every Join and Create account on the site lands here: the credentials
+     (email and a password, or Google), then the three pages at once, then back to where the person started.
+       ?next=<path>  where they started; this origin only (MCC.safeNext), never this page
+       ?join=1       open the account form on Create account
+       ?finish=1     a signed-in member whose profile is not done gets the pages at once
+       ?from=<slug>  the marketing segment the album's unlock carries into the contact row (it grants nothing)
+     A sign-up that waits on an emailed confirmation keeps its next on this device for a week, so the first sign-in
+     after it carries on into the pages and back. A returning member who just signs in still lands on the World, with
+     the step in its card (the World first, 2026-10-15). */
+  var FLOW = (function () {
+    var q = null; try { q = new URLSearchParams(location.search); } catch (_) {}
+    var get = function (k) { return q ? q.get(k) || "" : ""; };
+    var next = window.MCC && MCC.safeNext ? MCC.safeNext(get("next")) : "";
+    if (next && next.split(/[?#]/)[0] === location.pathname) next = "";
+    var from = /^[a-z0-9-]{1,40}$/i.test(get("from")) ? get("from").toLowerCase() : "";
+    var join = get("join") === "1", finish = get("finish") === "1";
+    return { next: next, from: from, join: join, finish: finish, on: join || finish || !!next };
+  })();
+  var PENDING_JOIN = "mcc.join.pending";
+  /* the pending sign-up belongs to the account that made it: kept with a SHA-256 of that account's email (never the
+     address itself), and only that account's first sign-in carries it on (adoptPendingJoin). No digest, no record. */
+  function emailKey(email) {
+    var e = String(email || "").trim().toLowerCase();
+    try {
+      if (!e || !window.crypto || !window.crypto.subtle) return Promise.resolve("");
+      return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(e)).then(function (buf) {
+        return Array.prototype.map.call(new Uint8Array(buf), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+      }).catch(function () { return ""; });
+    } catch (_) { return Promise.resolve(""); }
+  }
+  function rememberJoin(email) {
+    return emailKey(email).then(function (who) {
+      if (!who) return;
+      try { localStorage.setItem(PENDING_JOIN, JSON.stringify({ next: FLOW.next, from: FLOW.from, who: who, at: Date.now() })); } catch (_) {}
+    });
+  }
+  function forgetJoin() { try { localStorage.removeItem(PENDING_JOIN); } catch (_) {} }
+  function pendingJoin() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PENDING_JOIN) || "null");
+      if (p && p.at && Date.now() - p.at < 7 * 864e5) return p;
+    } catch (_) {}
+    forgetJoin();
+    return null;
+  }
+
+  /* A SIGN-IN CARRIED IN (owner, 2026-10-20: "I'll see like other screens flash up"). A member arriving from Matthew's site
+     brings their sign-in in #mcc_handoff, and js/tabbar.js trades it for this host's own session. The World used to boot as
+     a guest meanwhile and then reload: the guest's World, then the member's. It waits for the trade now and takes the
+     session in place, with no reload. Read here, before tabbar.js (later in the page) scrubs the fragment, and on the same
+     test tabbar.js uses: a page that already holds a session keeps it and carries nothing. */
+  var handoff = { pending: false, done: false, ok: false, waiters: [] };
+  try { handoff.pending = /(?:^#|&)mcc_handoff=[^&]/.test(location.hash) && !JSON.parse(localStorage.getItem("mccdb_session") || "null"); } catch (e) {}
+  window.addEventListener("mcc:handoff", function (e) {
+    handoff.done = true; handoff.ok = !!(e.detail && e.detail.ok);
+    /* still waiting: the session is taken in place, so tabbar.js leaves the page as it is */
+    if (handoff.ok && handoff.pending && e.cancelable) e.preventDefault();
+    handoff.waiters.splice(0).forEach(function (go) { go(); });
+  });
+  /* A ROOM ASKED FOR BY ADDRESS (?view=profile, the house's Profile chip) opens on that room for a member, never on the
+     World first and then the room once the member's World has loaded */
+  var DEEP_VIEW = "";
+  try {
+    var deepQ = new URLSearchParams(location.search), deepV = deepQ.get("view");
+    if (!deepQ.get("group") && !deepQ.get("mission") && /^(live|clips|discover|groups|messages|profile)$/.test(deepV || "")) DEEP_VIEW = deepV;
+  } catch (e) {}
 
   function $(id) { return document.getElementById(id); }
   function esc(value) {
@@ -44,7 +120,7 @@
     node.classList.toggle("is-error", kind === "error");
     node.classList.toggle("is-ok", kind === "ok");
   }
-  /* One telemetry seam for the whole Human Uprise. Product writes remain
+  /* One telemetry seam for the whole Equity Uprise. Product writes remain
      authoritative in the database; these events describe the journey around
      them so Control can answer which surfaces actually move people to act. */
   function track(name, data) {
@@ -70,6 +146,7 @@
     comment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/></svg>',
     save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.8h11v16.4l-5.5-3.9-5.5 3.9z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>',
+    thumb: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.4" cy="9.8" r="1.7"/><path d="M3.6 17l4.9-4.4 3.9 3.4 3-2.5 5.1 4.2"/></svg>',
     share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l6 6-6 6M20 11H9a5 5 0 0 0-5 5v2"/></svg>'
   };
   /* Every member gets a stable ring colour from their handle: abstract
@@ -129,7 +206,23 @@
     if (frame.getAttribute("src") !== site) frame.src = site;
   }
 
+  /* THE NEWSROOM: only the house owner (mnet_is_admin, the database's own definition) is offered it; the Worker checks
+     again on every post (platform-api.js), so this only decides what is shown. It belongs to the account signed in now:
+     another account, or none, hides it and asks again. */
+  var newsroomFor = null;
+  function paintNewsroom() {
+    var row = $("mnNewsroomRow");
+    if (!row) return;
+    var who = !state.guest && state.user && state.user.id || null;
+    if (who === newsroomFor) return;
+    newsroomFor = who;
+    row.hidden = true;
+    if ($("mnNewsroom")) $("mnNewsroom").checked = false;
+    if (!who) return;
+    sbRpc("mnet_is_admin").then(function (yes) { if (newsroomFor === who) row.hidden = yes !== true; }).catch(function () {});
+  }
   function paintSelf() {
+    paintNewsroom();
     var p = profile(), id = identity(), name = p.display_name || (state.user && (state.user.user_metadata && (state.user.user_metadata.name || state.user.user_metadata.full_name))) || state.user && state.user.email || "M";
     $("mnMe").hidden = false;
     setAvatar($("mnAvatar"), $("mnAvatarFallback"), p.avatar_url, name);
@@ -185,12 +278,25 @@
   }
 
   /* THE ONBOARDING, THREE PAGES (owner, 2026-10-15: "three pages that look
-     all sexy … you put in this, that, that, boom, it all verifies").
-     One form, three steps, each saved on its own: 1 the handle (checked
-     live) and the name, the public profile; 2 the legal name and mailing
-     address, private (fan_profiles, the contact step); 3 phone, email and
-     password. Editing an existing profile is the same form on one page. */
+     all sexy … you put in this, that, that, boom, it all verifies"), and the
+     site's one sign-up since 2026-10-20 (FLOW, above). One form, three steps,
+     each saved on its own, in this order: 1 the public profile (the handle,
+     checked live, and the name); 2 where we can reach you, private (legal
+     name and mailing address: fan_profiles, the contact step); 3 phone and
+     sign-in (the phone, the account email, and a password only when the
+     account has none). It opens at the first page not yet done. Editing an
+     existing profile is the same form on one page. */
   var onboard = { step: 1, editing: false, contact: null, handleTimer: 0, handleOk: "", dialAuto: "" };
+  /* the first page with something missing: page 1 without a handle or a name, page 2 while the contact step is open */
+  function firstUnfinished() {
+    var id = identity(), p = profile();
+    if (!id.mccluster_id || !String(p.display_name || "").trim()) return 1;
+    return needsStep() === "contact" ? 2 : 1;
+  }
+  /* a password once is enough: page 3 asks for one only when the account has none (made with Google) */
+  function hasPassword() {
+    return !!(state.user && window.MCC && MCC.hasPassword && MCC.hasPassword(state.user));
+  }
   function fillProfileForm(editing) {
     var p = profile(), id = identity();
     onboard.editing = !!editing;
@@ -206,11 +312,16 @@
     setStatus($("mnPasswordChangeStatus"), "");
     setStatus($("mnProfileStatus"), "");
     paintHandleState(id.mccluster_id ? "ok" : "");
-    $("mnProfileTitle").innerHTML = editing ? "Edit your profile<em>.</em>" : "Make it yours<em>.</em>";
-    $("mnProfileLede").textContent = editing ? "Your public profile, and the password for your M Account." : "Your name. Your place in the movement.";
+    $("mnProfileTitle").innerHTML = editing ? "Edit your profile<em>.</em>" : "Make your profile<em>.</em>";
+    $("mnProfileLede").textContent = editing ? "Your public profile, and the password for your M Account." : "Your username and name. It's how people find you.";
     $("mnProfileBack").hidden = !editing;
     $("mnPasswordChange").hidden = !editing;
-    showStep(editing ? 0 : 1);
+    var asked = editing || !hasPassword();
+    $("mnProfileSecurity").hidden = !asked;
+    $("mnStep3Lede").textContent = asked
+      ? "Your phone is optional and private. Add a password to sign in with your email too."
+      : "Your phone is optional and private. You sign in with this email and your password.";
+    showStep(editing ? 0 : firstUnfinished());
     prefillContact();
     /* locked details (the profile edit gate, js/profile-edit-gate.js) read as locked; the database refuses the write anyway */
     if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.lockForm();
@@ -225,7 +336,8 @@
     $("mnStepEdit").hidden = !editing;
     $("mnStepsRow").hidden = editing;
     $("mnStepBack").hidden = editing || n <= 1;
-    $("mnCtaLabel").textContent = editing ? "Save changes" : n === 3 ? "Enter the World" : "Save & continue";
+    /* the last page says where it goes: back to where the person started, or the World */
+    $("mnCtaLabel").textContent = editing ? "Save changes" : n === 3 ? (FLOW.next ? "Done" : "Go to the World") : "Save & continue";
     Array.prototype.forEach.call(document.querySelectorAll("#mnSteps li"), function (li) {
       var k = Number(li.getAttribute("data-step"));
       li.classList.toggle("is-done", !editing && k < n);
@@ -236,18 +348,32 @@
     if (n === 3) fillDial();
     if (!editing) { try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { window.scrollTo(0, 0); } }
   }
+  /* DON'T ASK TWICE. Page 2 and page 3 arrive filled with what the member already gave: the stored contact row
+     (fan_profiles) first, then what their sign-up carried in the account's own metadata (the old account form kept
+     the mailing address there as shipping_*; a campaign sign-up kept the legal first and last name; Google brings a
+     name). Nothing the member has typed is overwritten. */
+  function contactFromSignup() {
+    var m = state.user && state.user.user_metadata || {};
+    var legal = m.first_name && m.last_name ? m.first_name + " " + m.last_name : (m.full_name || "");
+    return { legal_name: legal, address_line1: m.shipping_address_line1, address_line2: m.shipping_address_line2, city: m.shipping_city,
+      region: m.shipping_region, postal_code: m.shipping_postal_code, country: m.shipping_country };
+  }
   function prefillContact() {
-    if (!window.MCC_FAN || typeof MCC_FAN.load !== "function") return;
+    var signup = contactFromSignup();
+    var fill = function (row) {
+      var put = function (id, key) { var el = $(id), v = (row && row[key]) || signup[key] || ""; if (el && !el.value && v) el.value = String(v); };
+      put("mnLegalName", "legal_name"); put("mnAddr1", "address_line1"); put("mnAddr2", "address_line2");
+      put("mnCity", "city"); put("mnRegion", "region"); put("mnPostal", "postal_code");
+      var country = (row && row.country) || signup.country;
+      if (country) $("mnCountry").value = country;
+      if (row && row.phone_e164 && !$("mnPhone").value) { var parts = splitE164(row.phone_e164); $("mnDial").value = parts[0]; $("mnPhone").value = parts[1]; onboard.dialAuto = ""; }
+      else if (onboard.editing || onboard.step === 3) fillDial();
+    };
+    if (!window.MCC_FAN || typeof MCC_FAN.load !== "function") { fill(null); return; }
     MCC_FAN.load().then(function (row) {
       onboard.contact = row || null;
-      if (!row) { if (onboard.editing) fillDial(); return; }
-      var put = function (id, v) { var el = $(id); if (el && !el.value) el.value = v || ""; };
-      put("mnLegalName", row.legal_name); put("mnAddr1", row.address_line1); put("mnAddr2", row.address_line2);
-      put("mnCity", row.city); put("mnRegion", row.region); put("mnPostal", row.postal_code);
-      if (row.country) $("mnCountry").value = row.country;
-      if (row.phone_e164 && !$("mnPhone").value) { var parts = splitE164(row.phone_e164); $("mnDial").value = parts[0]; $("mnPhone").value = parts[1]; onboard.dialAuto = ""; }
-      else if (onboard.editing) fillDial();
-    }).catch(function () {});
+      fill(row);
+    }).catch(function () { fill(null); });
   }
   /* the handle, checked as it is typed: the pattern here, the name at the API (a person nobody can find is free) */
   var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/i;
@@ -257,7 +383,7 @@
     st.className = "mn__field-state" + (kind ? " is-" + kind : "");
     st.textContent = kind === "bad" ? "taken" : "";
     if (field) field.classList.toggle("is-bad", kind === "bad");
-    if (hint) hint.textContent = text || "Your handle across Human Uprise.";
+    if (hint) hint.textContent = text || "Your handle across Equity Uprise.";
   }
   function checkHandle() {
     var v = $("mnHandle").value.trim();
@@ -336,6 +462,10 @@
     $("mnSignedOut").hidden = which !== "signedout";
     $("mnProfileGate").hidden = which !== "profile";
     $("mnApp").hidden = which !== "app";
+    /* the head of mnet.html held the World back under a ?signin=1 form, or put an addressed room up; a gate is chosen now,
+       so those holds are over */
+    document.documentElement.classList.remove("mn-boot-signin");
+    document.documentElement.removeAttribute("data-boot-view");
     /* the bar's sign-in chip steps aside while a gate is up, as it does on the World */
     document.documentElement.classList.toggle("mn-gate-on", which !== "app");
     sizeWorld();
@@ -358,7 +488,10 @@
         b.textContent = providerLabel(key);
         b.onclick = function () {
           b.disabled = true;
-          var next=location.pathname+location.search+location.hash;
+          /* back to this page; from Create account, back into the pages (?join=1, FLOW) */
+          var back = new URL(location.href);
+          if ($("mnSignedOut").getAttribute("data-auth-mode") === "create") back.searchParams.set("join", "1");
+          var next=back.pathname+back.search+back.hash;
           MCC.signInWithProvider(key, location.origin + "/auth/?next=" + encodeURIComponent(next)).catch(function (e) {
             b.disabled = false;
             setStatus($("mnAuthStatus"), e.message, "error");
@@ -377,10 +510,14 @@
      opens sign-in instead, and the server refuses it anyway. */
   function enterGuestWorld() {
     state.guest = true;
+    paintNewsroom();
     document.documentElement.classList.add("mn-guest");
     $("mnGuestBar").hidden = false;
     var q = null; try { q = new URLSearchParams(location.search); } catch (_) {}
     if (q && q.get("signin") === "1") { openSignIn("signin"); return; }
+    /* sent here to make an account, or to sign in and go back (FLOW): the form, at once */
+    if (FLOW.join) { openSignIn("create"); return; }
+    if (FLOW.on) { openSignIn("signin", "Sign in, or create an account, to carry on."); return; }
     showGate("app");
     setView("feed");
     loadFeed(true);
@@ -414,12 +551,15 @@
     card.hidden = !step;
     if ($("mnComposer")) $("mnComposer").hidden = !!step;
     if (!step) return;
-    var contact = step === "contact";
-    $("mnFinishTitle").textContent = contact ? "Complete your details." : "Finish your profile.";
-    $("mnFinishWhy").textContent = contact
-      ? "Three quick pages: your name, where to reach you, and how you get back in. Your address is private, never on your profile."
-      : "Pick a username so people can find and mention you. Then post, connect and join missions.";
-    $("mnFinishGo").textContent = contact ? "Complete your details \u2192" : "Finish your profile \u2192";
+    /* the card names the page it opens: the profile while there is no username or name, else the address */
+    var address = firstUnfinished() === 2;
+    $("mnFinishTitle").textContent = address ? "Add your mailing address." : "Make your profile.";
+    $("mnFinishWhy").textContent = address
+      ? "Your legal name and mailing address, then you can post, connect and join missions. Private, never on your profile."
+      : step === "contact"
+        ? "Three short pages: your profile, where we can reach you, and your phone. Then post, connect and join missions."
+        : "A username and a name, so people can find and mention you. Then post, connect and join missions.";
+    $("mnFinishGo").textContent = address ? "Add your address \u2192" : "Make your profile \u2192";
   }
   function askToFinish(why) {
     /* while the member's own World has not loaded, what needs it waits on the card that says so */
@@ -462,15 +602,46 @@
     var line = { save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
       groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views.",
-      layers:"Sign in to see satellites and space missions on the Earth." }[why] || "Sign in to do that.";
+      layers:"Sign in to see satellites and space missions on the Earth.",
+      rooms:"Sign in to join conversations anywhere in the world, raise your hand and speak.",
+      regions:"Sign in to explore posts, news and conversations in other regions." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
+  }
+
+  /* a sign-up that waited on its emailed confirmation: the first sign-in after it carries on (FLOW, above), for that
+     account only. Another account signed in on this device discards it unused: not its destination, not its from. */
+  function adoptPendingJoin() {
+    var p = pendingJoin();
+    if (!p) return Promise.resolve();
+    return emailKey(state.user && state.user.email).then(function (who) {
+      if (!who || p.who !== who) { forgetJoin(); return; }
+      FLOW.on = true;
+      if (!FLOW.next && window.MCC && MCC.safeNext) FLOW.next = MCC.safeNext(p.next);
+      if (!FLOW.from && /^[a-z0-9-]{1,40}$/.test(p.from || "")) FLOW.from = p.from;
+    });
+  }
+  /* ONE SIGN-UP: the pages, opened by the flow itself at the first unfinished one; the World is one tap away under them */
+  function openPages() {
+    $("mnBell").hidden = false;
+    paintSelf();
+    paintFinishCard();
+    fillProfileForm(false);
+    var back = $("mnProfileBack"); if (back) { back.hidden = false; back.textContent = "← Back to the World"; }
+    showGate("profile");
+    try { window.scrollTo(0, 0); } catch (_) {}
+    track("signup_pages_open", { step: String(onboard.step), next: FLOW.next ? "1" : "0" });
   }
 
   function bootstrap() {
     return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
+      /* a sign-up that waited on its confirmation, if it is this account's (adoptPendingJoin) */
+      return needsStep() && !FLOW.on ? adoptPendingJoin().then(function () { return boot; }) : boot;
+    }).then(function (boot) {
       if (needsStep()) {
+        /* a new account, or someone sent here to finish (FLOW): the pages at once, not the card */
+        if (FLOW.on) { openPages(); return; }
         /* the World first (needsStep, above): the public posts, every pin,
            and the step in a card where the composer would be. The private
            mailing address lives in fan_profiles, never network_profiles. */
@@ -480,17 +651,20 @@
         paintSelf();
         paintFinishCard();
         $("mnBell").hidden = false;
-        loadRail();
         requestAnimationFrame(function () { moveThumb(false); });
         return loadFeed(true);
       }
+      forgetJoin();
+      /* a finished profile sent here to sign in goes straight back to where it started */
+      if (FLOW.next) { location.replace(FLOW.next); return; }
       paintFinishCard();
       showGate("app");
-      setView("feed");
+      /* a room asked for by address is already up (boot, below) and is opened properly just after; the World is not
+         put on screen in between */
+      if (!DEEP_VIEW || state.currentView !== DEEP_VIEW) setView("feed");
       paintSelf();
       paintCreatorDoor();
       $("mnBell").hidden = false;
-      loadRail();
       loadActionRecord();
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
@@ -514,7 +688,15 @@
      (401) is let go: the member is a guest, with one card to sign in again. Anything else (the network, a server
      error, a session that could not be checked) keeps the session and shows the Earth and the public posts, with a
      card to try again or to sign in again. Posting, joining and the member rooms wait on the card. */
+  /* A PAGE ON ITS WAY OUT (a reload, a link) cancels what it was still reading. That is not a failure to show: nothing is
+     painted over a page that is leaving (owner, 2026-10-20: no flashes; the house owner's World reloads once to open with
+     all three modes, js/world-owner-modes.js). A leave that is called off clears itself. */
+  var leaving = false, leavingTimer = 0;
+  window.addEventListener("beforeunload", function () { leaving = true; clearTimeout(leavingTimer); leavingTimer = setTimeout(function () { leaving = false; }, 3000); });
+  window.addEventListener("pagehide", function () { leaving = true; });
+  window.addEventListener("pageshow", function () { leaving = false; });
   function showSignedInLoadError(error) {
+    if (leaving) return Promise.resolve(null);
     try { console.warn("[mnet] signed-in bootstrap failed", error); } catch (e) {}
     if (error && error.status === 401) return letSessionGo();
     state.stall = "retry";
@@ -610,18 +792,23 @@
     return Promise.resolve();
   }
 
+  /* NO SAVE WIPES WHAT THIS FORM DOES NOT SHOW. The banner is set from a member's front page, not here, and the Worker
+     used to write '' for every field a save left out: each World profile save erased the banner. The banner the member
+     already has rides along, and the Worker now keeps any field a save does not name (workers/mccluster/src/platform-api.js).
+     The answer of the save is not the bootstrap, so the bootstrap is read again for what the World paints. */
   function savePublicProfile() {
-    return saveDemographics().then(function () { return api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), {
-      method: "PATCH",
-      body: {
-        mccluster_id: $("mnHandle").value.trim(),
-        display_name: $("mnDisplay").value.trim(),
-        headline: $("mnHeadline").value.trim(),
-        bio: $("mnBio").value.trim(),
-        avatar_url: $("mnAvatarUrl").value.trim(),
-        website_url: $("mnWebsite").value.trim()
-      }
-    }); }).then(function (boot) { state.boot = boot; paintSelf(); return boot; });
+    var p = profile(), body = {
+      mccluster_id: $("mnHandle").value.trim(),
+      display_name: $("mnDisplay").value.trim(),
+      headline: $("mnHeadline").value.trim(),
+      bio: $("mnBio").value.trim(),
+      avatar_url: $("mnAvatarUrl").value.trim(),
+      website_url: $("mnWebsite").value.trim()
+    };
+    if (typeof p.banner_url === "string") body.banner_url = p.banner_url;
+    return saveDemographics().then(function () { return api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), { method: "PATCH", body: body }); })
+      .then(function () { return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)); })
+      .then(function (boot) { state.boot = boot; paintSelf(); return boot; });
   }
   function saveContact() {
     var v = function (id) { return $(id).value.trim(); };
@@ -629,6 +816,14 @@
     var missing = ["mnLegalName", "mnAddr1", "mnCity", "mnRegion", "mnPostal", "mnCountry"].filter(function (id) { return !v(id); });
     Array.prototype.forEach.call(document.querySelectorAll("#mnStep2 .mn__field"), function (f) { var i = f.querySelector("input"); f.classList.toggle("is-bad", !!(i && missing.indexOf(i.id) !== -1)); });
     if (missing.length) { $(missing[0]).focus(); return Promise.reject(new Error("Fill in your legal name and the whole address.")); }
+    /* the account form's rule, kept now that this page is the only place a new account gives its legal name: obvious
+       placeholder names are refused (js/name-integrity.js; a plausibility screen, not ID verification) */
+    if (window.MCC_NAME_INTEGRITY) {
+      var parts = values.legal_name.split(/\s+/).filter(Boolean), named = MCC_NAME_INTEGRITY.validate(parts.shift() || "", parts.join(" "));
+      if (!named.ok) { $("mnLegalName").closest(".mn__field").classList.add("is-bad"); $("mnLegalName").focus(); return Promise.reject(new Error(named.reason)); }
+      values.legal_name = named.legal_name;
+    }
+    if (FLOW.from) values.source = FLOW.from;
     if (!window.MCC_FAN) return Promise.reject(new Error("Could not save your details right now."));
     if (onboard.contact) { values.marketing_consent = !!onboard.contact.marketing_consent; values.share_consent = !!onboard.contact.share_consent; if (onboard.contact.phone_e164) values.phone_e164 = onboard.contact.phone_e164; }
     return MCC_FAN.save(values).then(function (row) { onboard.contact = row || onboard.contact; return row; });
@@ -650,13 +845,18 @@
     return steps;
   }
   function enterTheWorld() {
+    forgetJoin();
+    /* the last page done: back to where the person started (FLOW), or the World */
+    if (FLOW.next) { track("onboarding_done", { step: "next" }); location.assign(FLOW.next); return Promise.resolve(); }
+    FLOW.on = false;
+    try { if (/[?&](join|finish)=/.test(location.search)) history.replaceState(null, "", location.pathname + location.search.replace(/([?&])(join|finish)=1(&|$)/g, "$1").replace(/[?&]$/, "") + location.hash); } catch (_) {}
     return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
       paintFinishCard();
       var back = $("mnProfileBack"); if (back) back.hidden = true;
       showGate("app");
       paintSelf();
-      var missionDeepLink=/[?&](mission=|view=missions(?:&|$))/.test(location.search);
+      var missionDeepLink=!MISSIONS_OFF&&/[?&](mission=|view=missions(?:&|$))/.test(location.search);
       if(missionDeepLink){
         setView("missions");
         openDeepLinkedMission();
@@ -765,8 +965,13 @@
     var id = post.id || item.post_id, mine = !!(identity().m_uid && post.author_m_uid === identity().m_uid);
     var pinned = !!(item && item.payload && item.payload.pinned);
     var onGlobe = !!(state.world.focus && postMissionId(item) === state.world.focus.mission_id);
-    return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + (onGlobe ? ' is-on-globe' : '') + '" data-post-id="' + esc(id || "") + '">' +
+    /* media first (owner's reference, 2026-10-19): a post with a picture or clip leads with it, the words beside; a post
+       without one is the words alone. The same markup serves both; the layout is the card's class. */
+    var media = postMediaHtml(post);
+    return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + (onGlobe ? ' is-on-globe' : '') + (media ? ' has-media' : '') + '" data-post-id="' + esc(id || "") + '">' +
       (pinned ? '<span class="mn__pin">Pinned</span>' : '') +
+      (media ? '<div class="mn__post-thumb">' + media + '</div>' : '') +
+      '<div class="mn__post-main">' +
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
       (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
@@ -774,8 +979,11 @@
       actionCardHtml(id) +
       collaborationCardHtml(id) +
       trackCardHtml(item, post) +
-      postMediaHtml(post) +
-      (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
+      '</div>' +
+      /* the country feed is public and carries no media ids: a guest is asked to sign in; a member loads the post itself */
+      (post.media_locked ? (state.guest
+        ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>'
+        : '<button class="mn__media-locked" type="button" data-unlock-media="' + esc(id) + '">Show ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>') : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
           /* A post keeps the familiar Comment, Share and Save actions; mission participation and funding still use their separate controlled routes. */
@@ -783,6 +991,8 @@
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
+          /* the author changes the picture of a video they posted (owner, 2026-10-20) */
+          (mine && postVideos(post).length ? '<button class="mn__action mn__action--thumb" type="button" data-action="thumbnail" data-post="' + esc(id) + '" aria-label="Change the video thumbnail" title="Thumbnail">' + ICON.thumb + '</button>' : '') +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>' + discussionHtml('post', id)) +
     '</article>';
@@ -859,6 +1069,7 @@
       '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionOfferCards(items) {
+    if (MISSIONS_OFF) return Promise.resolve(false);
     var ids = (items || []).map(function (it) {
       var p = it.post;
       return p && p.content_id ? p.id : null;
@@ -880,7 +1091,7 @@
     return '<div class="mn__actcard">' +
       '<p class="mn__actcard-eyebrow">Verified action</p>' +
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
-      '<p class="mn__actcard-foot">Human Uprise · Don\u2019t just watch. Act.</p>' +
+      '<p class="mn__actcard-foot">Equity Uprise · Don\u2019t just watch. Act.</p>' +
       '<div class="mn__actcard-row">' +
         (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
@@ -904,8 +1115,8 @@
       '<p class="mn__collab-by">' + esc(c.kind || "work") + ' · by ' + credits.join(' <span aria-hidden="true">&amp;</span> ') + '</p>' +
       '<div class="mn__actcard-row">' +
         (c.link ? '<a class="mn__quiet" href="' + esc(c.link) + '" target="_blank" rel="noopener noreferrer">Open the work ↗</a>' : '') +
-        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
-      '</div>' + missionStatsHtml(c.mission_id) + '</div>';
+        (c.mission_open && !MISSIONS_OFF ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
+      '</div>' + (MISSIONS_OFF ? '' : missionStatsHtml(c.mission_id)) + '</div>';
   }
   function loadCollaborationCards(items) {
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.metadata && p.metadata.collaboration ? p.id : null; })
@@ -919,6 +1130,7 @@
     }).catch(function () { return false; });
   }
   function loadActionCards(items) {
+    if (MISSIONS_OFF) return Promise.resolve(false);
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
       .filter(function (id) { return id && !(state.actionCards && id in state.actionCards); });
     if (!ids.length) return Promise.resolve(false);
@@ -952,6 +1164,228 @@
     });
   }
   /* what a post actually carries, for the feed tabs; no invented topics */
+  /* THE FEED'S SCOPE (owner's reference, 2026-10-19). Local is the place the Earth is on (the country picked on the globe):
+     stories that mention it. Member posts are not placed on the map, so Local shows the place's news and says so. News is the
+     publishers only; Global is the one interleaved stream. Live and People are views, not scopes. */
+  function localPlace() {
+    var label = $("huRegionLabel") ? String($("huRegionLabel").textContent || "").trim() : "";
+    return label && label !== "All regions" ? label : "";
+  }
+  /* A story's place reads "City, Area, Country" (GDELT's label). It is in the picked country when its tail names that
+     country: the globe's name for it, or one of the names publishers use. A substring is not enough (Guinea is not
+     Papua New Guinea; Niger is not Nigeria), so the match is the whole tail after a comma, or the whole label. */
+  /* THE PLACE CARD (owner, 2026-10-21: "the card that shows up shouldn't be the full width of the top of the screen. It should
+     only be in the middle ... how many users are from there ... how many news articles are from there right now ... how many
+     posts from users are there"). The page draws it, so it sits below the page's bar and over its own buttons rather than
+     under them; the buttons step down while it shows. A count the globe does not know yet is a dash, never a made-up zero. */
+  function placeStats(s) {
+    var n = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : null; };
+    return s && typeof s === "object" ? { news: n(s.news), posts: n(s.posts), members: n(s.members), states: s.states === true } : { news: null, posts: null, members: null, states: false };
+  }
+  function paintPlaceCard(c) {
+    var card = $("mnPlaceCard");
+    if (!card) return;
+    if (!c) { card.hidden = true; card.innerHTML = ""; placeCardRoom(); return; }
+    var s = c.stats || placeStats(null), st8 = c.state;
+    var cell = function (v, label) { return '<span class="mn__place-stat"><b>' + (v === null ? "\u2014" : esc(v.toLocaleString("en-US"))) + '</b><small>' + esc(label) + '</small></span>'; };
+    /* the second line is the country a state is in, or how to pick a state: the card stays two rows, so it covers little globe */
+    var sub = st8 ? c.name : s.states ? "Double-tap a state to choose it" : "";
+    card.innerHTML = '<div class="mn__place-head"><span class="mn__place-name"><b>' + esc(st8 ? st8.name : c.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
+      '<button type="button" class="mn__place-close" aria-label="' + esc(st8 ? "Show all of " + c.name : "Show every country") + '">\u00d7</button></div>' +
+      '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + (st8 ? "" : cell(s.posts, "posts") + cell(s.members, "members")) + '</div>';
+    card.querySelector(".mn__place-close").onclick = function () { tellWorld(st8 ? { type: "hu:country-back" } : { type: "hu:select-country", code: null }); };
+    card.hidden = false;
+    placeCardRoom();
+  }
+  /* below the page's bar; the globe's buttons (the corner stack and the Live badge, which step down together) and the headline
+     step aside for it. The buttons are measured by their layout boxes, which their step leaves alone, so a repaint never reads
+     its own push */
+  function placeCardRoom() {
+    var home = $("mnWorld"), card = $("mnPlaceCard"), head = home && home.querySelector(".wt-headline"), bar = document.querySelector(".mn__top");
+    if (!home || !card) return;
+    home.style.removeProperty("--mn-place-push"); home.classList.remove("has-place-card", "place-card-over-headline"); card.style.removeProperty("top");
+    if (card.hidden) return;
+    home.classList.add("has-place-card");
+    var h = home.getBoundingClientRect(), b = bar && bar.getBoundingClientRect();
+    if (b && b.height && b.bottom > h.top && b.top < h.top + 40) card.style.top = Math.ceil(b.bottom - h.top + 8) + "px";
+    var box = function (el) { return el && !el.hidden && el.offsetWidth && el.offsetParent === card.offsetParent ? { left: el.offsetLeft, top: el.offsetTop, right: el.offsetLeft + el.offsetWidth, bottom: el.offsetTop + el.offsetHeight } : null; };
+    var c = box(card), over = function (r) { return r && r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top; };
+    var aside = [box($("mnWorldStack")), box($("mnWorldLive"))].filter(Boolean);
+    if (c && aside.some(over)) home.style.setProperty("--mn-place-push", Math.ceil(c.bottom + 10 - Math.min.apply(null, aside.map(function (r) { return r.top; }))) + "px");
+    var cr = card.getBoundingClientRect(), hr = head && head.getBoundingClientRect();
+    if (hr && hr.width && hr.left < cr.right && hr.right > cr.left && hr.top < cr.bottom && hr.bottom > cr.top) home.classList.add("place-card-over-headline");
+  }
+  window.addEventListener("resize", function () { placeCardRoom(); });
+  window.addEventListener("mcc:world-mode", function () { requestAnimationFrame(placeCardRoom); });
+  /* the state the globe picked: its name, and its shape as polygons [outer ring, ...holes] of [lon, lat] (checked, never trusted) */
+  function worldState(s) {
+    if (!s || typeof s.name !== "string" || !s.name.trim() || !Array.isArray(s.polygons)) return null;
+    var ok = function (ring) { return Array.isArray(ring) && ring.length >= 4 && ring.every(function (p) { return Array.isArray(p) && isFinite(p[0]) && isFinite(p[1]); }); };
+    var polygons = s.polygons.filter(function (poly) { return Array.isArray(poly) && poly.length && poly.every(ok); });
+    return polygons.length ? { key: String(s.key || "").slice(0, 60), name: s.name.trim().slice(0, 80), type: typeof s.type === "string" ? s.type.slice(0, 40) : "", polygons: polygons } : null;
+  }
+  /* is a story placed inside the picked state? Only a story with a point can be; holes (an enclave) are not the state */
+  function newsInState(n, s) {
+    var x = n && n.lon, y = n && n.lat;
+    if (typeof x !== "number" || typeof y !== "number") return false;
+    var inRing = function (ring) {
+      var inside = false;
+      for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        var xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+        if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    };
+    return s.polygons.some(function (poly) { return inRing(poly[0]) && !poly.slice(1).some(inRing); });
+  }
+  function placeInCountry(place, country) {
+    var aliases = {
+      "united states of america": ["united states", "usa", "u.s.", "us"], "united kingdom": ["uk", "britain", "great britain", "england", "scotland", "wales", "northern ireland"],
+      "russia": ["russian federation"], "czechia": ["czech republic"], "myanmar": ["burma"], "c\u00f4te d'ivoire": ["ivory coast", "cote d'ivoire"],
+      "eswatini": ["swaziland"], "turkey": ["t\u00fcrkiye", "turkiye"], "laos": ["lao people's democratic republic", "lao pdr"], "vietnam": ["viet nam"],
+      "syria": ["syrian arab republic"], "iran": ["iran, islamic republic of"], "bolivia": ["bolivia, plurinational state of"], "venezuela": ["venezuela, bolivarian republic of"],
+      "tanzania": ["united republic of tanzania"], "moldova": ["republic of moldova"], "brunei": ["brunei darussalam"], "timor-leste": ["east timor"],
+      "bahamas": ["the bahamas", "bahamas, the"], "gambia": ["the gambia", "gambia, the"], "congo": ["republic of the congo", "congo, republic of the", "congo-brazzaville"],
+      "dem. rep. congo": ["democratic republic of the congo", "congo, democratic republic of the", "dr congo", "congo-kinshasa"],
+      "north korea": ["korea, north", "democratic people's republic of korea"], "south korea": ["korea, south", "republic of korea", "korea"],
+      "netherlands": ["the netherlands"], "bosnia and herz.": ["bosnia and herzegovina"], "central african rep.": ["central african republic"],
+      "dominican rep.": ["dominican republic"], "eq. guinea": ["equatorial guinea"], "falkland is.": ["falkland islands"], "s. sudan": ["south sudan"],
+      "solomon is.": ["solomon islands"], "w. sahara": ["western sahara"], "n. cyprus": ["northern cyprus"], "north macedonia": ["macedonia"],
+      "palestine": ["palestinian territory", "west bank", "gaza strip"], "taiwan": ["taiwan, province of china"]
+    };
+    if (!place || !country) return false;
+    var tail = String(place).toLocaleLowerCase().trim(), name = String(country.name || country).toLocaleLowerCase().trim();
+    if (!name) return false;
+    return [name].concat(aliases[name] || []).some(function (n) { return tail === n || tail.slice(-n.length - 2) === ", " + n; });
+  }
+  /* The feature flag comes from the Worker. Country comes only from its
+     coarse Cloudflare edge signal; choosing a different country on the
+     globe overrides that default. Never auto-tag a member's posts. */
+  function placeName(code) {
+    try { return new Intl.DisplayNames([navigator.language || "en"],{type:"region"}).of(code) || code; }
+    catch (e) { return code; }
+  }
+  function paintPlaceOptIn() {
+    var widget = $("mnPostPlaceLabel"), check = $("mnPostPlaceOptIn"), country = state.world.country;
+    if (!widget) return;
+    var available = !!(state.placeScope.enabled && country && /^[A-Z]{2}$/.test(country.code||"") &&
+      $("mnVisibility") && $("mnVisibility").value === "public");
+    widget.hidden = !available;
+    var target = widget.querySelector("span");
+    if (target) target.textContent = available ? "Add this public post to " + (country.name || placeName(country.code)) + "'s local feed" : "";
+    if (!available && check) check.checked = false;
+  }
+  function ensurePlaceOptIn() {
+    if ($("mnPostPlaceLabel") || !$("mnComposer")) return;
+    var actions = $("mnComposer").querySelector(".mn__composer-actions");
+    if (!actions) return;
+    var label = document.createElement("label"), check = document.createElement("input"), txt = document.createElement("span");
+    label.id = "mnPostPlaceLabel"; label.className = "mn__place-optin"; label.hidden = true;
+    check.id = "mnPostPlaceOptIn"; check.type = "checkbox";
+    label.append(check,txt);
+    actions.parentNode.insertBefore(label,actions);
+    if ($("mnVisibility")) $("mnVisibility").addEventListener("change",paintPlaceOptIn);
+    paintPlaceOptIn();
+  }
+  function loadPlaceStatus() {
+    fetch("https://api.mccluster.org/v1/world/place-scope", { credentials:"omit", cache:"no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (status) {
+        if (!status || status.enabled !== true) return;
+        state.placeScope.enabled = true;
+        /* the country Cloudflare read from this connection: a signed-out visitor's region (owner, 2026-10-20) */
+        state.placeScope.home = typeof status.country === "string" && /^[A-Z]{2}$/.test(status.country) ? status.country : null;
+        ensurePlaceOptIn();
+        if (!state.world.country && typeof status.country === "string" && /^[A-Z]{2}$/.test(status.country)) {
+          var name = placeName(status.country);
+          state.world.country = { code:status.country, name:name };
+          if ($("huRegionLabel")) $("huRegionLabel").textContent = name;
+          setFeedScope("local"); // Country only; no GPS and no user-post location write.
+        } else if (state.feedScope === "local") loadPlaceFeed(true);
+        paintPlaceOptIn();
+        loadLivePlaces();
+        setInterval(function () { if (!document.hidden) loadLivePlaces(); }, 60000);
+      }).catch(function () { /* remain on the working Global feed */ });
+  }
+  /* broadcasts their hosts placed in a country mark it on the globe (js/action-globe.js), beside the audio conversations */
+  function loadLivePlaces() {
+    fetch("https://api.mccluster.org/v1/world/live-places", { credentials:"omit", cache:"no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (out) {
+        if (!out || !Array.isArray(out.places)) return;
+        state.placeScope.livePlaces = out.places;
+        tellWorld({ type: "hu:live-places", source: "video", places: out.places });
+      }).catch(function () {});
+  }
+  var GUEST_REGION_ASK = "Sign in to read another country's feed.";
+  function loadPlaceFeed(reset) {
+    var p = state.placeScope, c = state.world.country;
+    /* Clear prior country's contents synchronously; even a delayed old
+       response cannot reveal one country's feed beneath another heading. */
+    if (reset) {
+      p.seq++; p.country=c && c.code || null;
+      p.postBefore=null; p.newsBefore=null; p.posts=[]; p.news=[]; p.lives=[]; p.loaded=false; p.error="";
+    }
+    if (!p.enabled || !c || !/^[A-Z]{2}$/.test(c.code||"")) {
+      if (state.feedScope === "local") renderFeed(false);
+      return Promise.resolve();
+    }
+    if (!reset && !p.postBefore && !p.newsBefore) return Promise.resolve();
+    var seq = ++p.seq, url="https://api.mccluster.org/v1/world/region-feed?country=" +
+      encodeURIComponent(c.code) + "&limit=20";
+    if (!reset && p.postBefore) url += "&post_before=" + encodeURIComponent(p.postBefore);
+    else if (!reset) url += "&posts=0";
+    if (!reset && p.newsBefore) url += "&news_before=" + encodeURIComponent(p.newsBefore);
+    else if (!reset) url += "&news=0";
+    /* a signed-out visitor reads their own region only; the Worker holds the same rule (world-region-feed.js) */
+    if (state.guest && c.code !== p.home) {
+      p.working=false; p.loaded=true; p.error=GUEST_REGION_ASK;
+      if (state.feedScope === "local") renderFeed(false);
+      return Promise.resolve();
+    }
+    p.working=true; p.error="";
+    if (state.feedScope === "local") renderFeed(false);
+    /* a member's session rides along, so the Worker can tell a member who may travel from a visitor who may not */
+    var token = state.guest ? "" : sessionToken();
+    return fetch(url,{credentials:"omit",cache:"no-store",headers:token ? { authorization:"Bearer " + token } : {}}).then(function (r) {
+      if (r.status === 403) { var refused = new Error(GUEST_REGION_ASK); refused.signIn = true; throw refused; }
+      if (!r.ok) throw new Error("The country's feed is not available yet.");
+      return r.json();
+    }).then(function (data) {
+      if (seq !== p.seq || p.country !== c.code ||
+          !data || data.ok !== true || data.country !== c.code || data.available !== true)
+        return;
+      p.posts = reset ? (data.posts||[]) : p.posts.concat(data.posts||[]);
+      if (reset) p.lives = (data.lives||[]).filter(function (l) { return l && WORLD_ID.test(String(l.id||"")) && l.title; }).slice(0,6);
+      var incoming = (data.news||[]).map(cleanNews).filter(Boolean);
+      p.news = reset ? incoming : p.news.concat(incoming);
+      p.postBefore = data.next_post_before || null;
+      p.newsBefore = data.next_news_before || null;
+      p.loaded=true; p.error="";
+      if (state.feedScope === "local") renderFeed(false);
+      paintMore();
+    }).catch(function (error) {
+      if (seq !== p.seq) return;
+      p.error=error && error.signIn ? GUEST_REGION_ASK : "This country's feed is temporarily unavailable.";
+      p.loaded=true;
+      if (state.feedScope === "local") renderFeed(false);
+    }).finally(function () { if (seq === p.seq) p.working=false; });
+  }
+  function paintFeedScope() {
+    var scope = state.feedScope || "global";
+    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.feedScope === scope)); });
+    var body = $("mnPostBody"), place = localPlace();
+    if (body) body.placeholder = "Share a live moment from " + (place || "the world") + "\u2026";
+    paintPlaceOptIn();
+  }
+  function setFeedScope(scope) {
+    state.feedScope = ["local", "global", "news"].indexOf(scope) >= 0 ? scope : "global";
+    paintFeedScope();
+    if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
+    else renderFeed(false);
+    paintMore();
+    track("feed_scope", { scope: state.feedScope });
+  }
   function feedMatches(item, query) {
     /* a news card answers to its headline, its publisher and the place it mentions */
     if (item && item.news) return [item.title, item.domain, item.place].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
@@ -1078,6 +1512,19 @@
       bindPostTaps(root);
       return;
     }
+    /* a Local post's media comes through the same authorized single-post read every post uses */
+    root.querySelectorAll("[data-unlock-media]").forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute("data-unlock-media"); b.disabled = true;
+        api("/v1/mnet/posts/" + encodeURIComponent(id)).then(function (one) {
+          if (!one || !one.post) throw new Error("This post is not available.");
+          var list = state.placeScope.posts || [];
+          for (var i = 0; i < list.length; i++) if ((list[i].post && list[i].post.id) === id || list[i].post_id === id)
+            list[i] = { item_type:"post", post_id:one.post.id, occurred_at:list[i].occurred_at || one.post.created_at, post:one.post, actor:one.actor || list[i].actor };
+          renderFeed(false);
+        }).catch(function (e) { b.disabled = false; setStatus($("mnFeedStatus"), e.message || "Could not open that post.", "error"); });
+      };
+    });
     root.querySelectorAll("[data-take-mission]").forEach(function (a) {
       a.onclick = function (e) {
         e.preventDefault();
@@ -1109,6 +1556,9 @@
     root.querySelectorAll("[data-action=delete]").forEach(function (b) {
       b.onclick = function () { deletePost(b.dataset.post, b); };
     });
+    root.querySelectorAll("[data-action=thumbnail]").forEach(function (b) {
+      b.onclick = function () { openThumbnailEditor(b.dataset.post); };
+    });
     root.querySelectorAll("[data-person]").forEach(function (b) {
       b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); openPerson(b.dataset.person); };
     });
@@ -1127,27 +1577,48 @@
     url.searchParams.set("post", b.dataset.post);
     var link = url.toString();
     if (navigator.share) {
-      navigator.share({ title:"Human Uprise", url:link }).catch(function () {});
+      navigator.share({ title:"Equity Uprise", url:link }).catch(function () {});
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
     } else window.prompt("Copy post link",link);
   }
 
   function renderFeed(append) {
+    /* until the feed's own read has answered, what is on screen stays (the shapes of posts, or the last posts, and the
+       globe's pins for them): a globe that is ready first used to draw "Nothing on the feed yet" over a feed that was on
+       its way (owner, 2026-10-20: no flashes) */
+    if (!append && !state.feedAnswered && !(state.feedScope === "local" && state.placeScope.enabled)) return;
+    state.shownNews = [];
+    try { return paintFeed(append); }
+    finally {
+      var ids = state.shownNews.map(function (n) { return n.id; }).join("|");
+      if (ids !== state.shownNewsKey) { state.shownNewsKey = ids; window.dispatchEvent(new CustomEvent("mcc:world-news-shown")); }
+    }
+  }
+  function paintFeed(append) {
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     paintMore();
     var focus = state.world.focus, query = state.world.query;
-    /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
+    var regionMode = state.feedScope === "local" && state.placeScope.enabled;
+    var items = regionMode ? state.placeScope.posts : state.feed;
+    /* World geography is a country-scoped server read when the feature is enabled. */
     var news = focus && focus.filter ? [] : state.news;
+    if (regionMode && !(focus && focus.filter)) news = state.placeScope.news;
     paintNewsCredit(false);
-    if (!state.feed.length && !news.length) {
+    if (!items.length && !news.length) {
+      if (regionMode) {
+        host.innerHTML=placeLivesHtml() + '<div class="mn__empty">' + esc(
+          state.placeScope.error || (!state.world.country ? "Tap a country on the globe." :
+          !state.placeScope.loaded ? "Loading local posts and news…" :
+          "No public post or news item is associated with this country yet.")) + '</div>';
+        bindPlaceLives(host); paintMore(); return;
+      }
       host.innerHTML = state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
-    var items = state.feed;
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
@@ -1163,12 +1634,27 @@
       items = items.filter(function (item) { return feedMatches(item, query); });
       news = news.filter(function (n) { return feedMatches(n, query); });
     }
+    var scope = state.feedScope || "global", place = scope === "local" ? localPlace() : "";
+    if (scope === "news") items = [];
+    if (scope === "local" && !regionMode) {
+      items = [];
+      var picked = state.world.country || { name: place };
+      news = place ? news.filter(function (n) { return n.country_code && picked.code ? n.country_code === picked.code : placeInCountry(n.place, picked); }) : [];
+    }
+    /* a state picked on the globe: the stories placed inside it (member posts carry only their country, and stay) */
+    var pickedState = scope === "local" && state.world.country && state.world.country.state;
+    if (pickedState) news = news.filter(function (n) { return newsInState(n, pickedState); });
     if (!items.length && !news.length) {
-      host.innerHTML = '<div class="mn__empty">' + esc(query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
+      host.innerHTML = '<div class="mn__empty">' + esc(
+        scope === "local" && !place ? "Tap a country on the globe to see the news that mentions it. Member posts are not placed on the map yet." :
+        scope === "local" ? "No story mentions " + place + " yet." :
+        scope === "news" ? "No world news is loaded yet." :
+        query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
-    host.innerHTML = interleaveFeed(items, news).map(function (item) {
+    state.shownNews = news.slice();
+    host.innerHTML = (regionMode ? placeLivesHtml() : "") + interleaveFeed(items, news).map(function (item) {
       if (item.news) {
         var card = newsCard(item), nkey = "news:" + item.id;
         if (!seen[nkey]) {
@@ -1194,6 +1680,36 @@
     bindFeedActions(host);
     bindNewsActions(host);
     bindDiscussions(host);
+    bindPlaceLives(host);
+  }
+  /* LIVES OF THE PLACE (owner, 2026-10-19: "the news plus the posts and lives of that area"): broadcasts their host
+     placed in this country lead its feed. Watching a broadcast is for members, as everywhere else on Live. */
+  function placeLivesHtml() {
+    var list = state.placeScope.lives || [], c = state.world.country;
+    if (!list.length || !c) return "";
+    var where = c.name || placeName(c.code);
+    return '<section class="mn__place-lives" aria-label="Live in ' + esc(where) + '"><p class="mn__eyebrow">Live in ' + esc(where) + '</p>' +
+      '<div class="mn__place-lives-row">' + list.map(function (l) {
+        return '<button class="mn__place-live" type="button" data-place-live="' + esc(l.id) + '"><span class="mn__livehero-badge"><i aria-hidden="true"></i>Live</span>' +
+          '<b>' + esc(l.title) + '</b><span>' + esc((l.host && l.host.display_name) || "Host") + ' · ' + esc(timeAgo(l.started_at)) + '</span></button>';
+      }).join("") + '</div></section>';
+  }
+  function bindPlaceLives(host) {
+    host.querySelectorAll("[data-place-live]").forEach(function (b) {
+      b.onclick = function () {
+        if (state.guest) { askToSignIn("live"); return; }
+        if (!(window.MCC_LIVE && window.MCC_LIVE.openPlaced)) return;
+        Promise.resolve(window.MCC_LIVE.openPlaced(b.getAttribute("data-place-live"))).then(function (how) {
+          if (how === "open") return;
+          /* never a tap that silently does nothing */
+          var note = b.querySelector("[data-place-live-note]") || document.createElement("span");
+          note.setAttribute("data-place-live-note", ""); note.className = "mn__place-live-note";
+          note.textContent = how === "ended" ? "This broadcast has ended." : "This broadcast could not be opened. Try again.";
+          if (!note.parentNode) b.appendChild(note);
+          if (how === "ended") b.disabled = true;
+        });
+      };
+    });
   }
 
   /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
@@ -1201,7 +1717,7 @@
   function paintFeedMissions() {
     var host = $("mnFeedMissions");
     if (!host) return;
-    if (state.feed.length >= 8) { host.hidden = true; return; }
+    if (MISSIONS_OFF || state.feed.length >= 8) { host.hidden = true; return; }
     sbRest("action_missions?status=eq.open&select=id,title,description,domain&order=created_at.desc&limit=3").then(function (rows) {
       rows = rows || [];
       host.hidden = !rows.length;
@@ -1218,6 +1734,15 @@
     var one = '<div class="mn__skel" aria-hidden="true"><i class="mn__skel-av"></i><div><i></i><i></i><i class="is-short"></i></div></div>';
     return new Array(n + 1).join(one);
   }
+  /* the same, in the shape of the rows and cards a room is about to show (people, conversations, groups) */
+  function skeletonRows(n) {
+    var one = '<div class="mn__skel mn__skel--row" aria-hidden="true"><i class="mn__skel-av"></i><div><i></i><i class="is-short"></i></div><i class="mn__skel-pill"></i></div>';
+    return new Array(n + 1).join(one);
+  }
+  function skeletonCards(n) {
+    var one = '<div class="mn__skel mn__skel--card" aria-hidden="true"><div><i></i><i class="is-short"></i></div></div>';
+    return '<div class="mng__grid">' + new Array(n + 1).join(one) + "</div>";
+  }
 
   /* WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like
      one … from them. But like, we gotta ingest it so it's still from us."). The Worker ingests
@@ -1233,9 +1758,15 @@
     var lat = Number(n.lat), lon = Number(n.lon), located = typeof n.lat === "number" && typeof n.lon === "number" && isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
     var domain = String(n.domain || "").trim();
     if (!domain) try { domain = new URL(url).hostname.replace(/^www\./, ""); } catch (e) {}
-    return { news: true, id: id, title: title, url: url, domain: domain.slice(0, 120), seen_at: String(n.seen_at || ""), place: n.place ? String(n.place).slice(0, 120) : "", lat: located ? lat : null, lon: located ? lon : null };
+    /* the country GDELT files the story under, as ISO 3166-1 (the Worker maps GDELT's FIPS codes; the browser never sees FIPS) */
+    var country = String(n.country || n.country_code || "").toUpperCase();
+    return { news: true, id: id, title: title, url: url, domain: domain.slice(0, 120), seen_at: String(n.seen_at || ""), place: n.place ? String(n.place).slice(0, 120) : "", lat: located ? lat : null, lon: located ? lon : null, country_code: /^[A-Z]{2}$/.test(country) ? country : "" };
   }
-  window.MCC_WORLD_NEWS_ITEMS = function () { return state.news.slice(); };
+  /* THE PINS ARE THE CARDS (owner, 2026-10-20: "not all pins are accurate to the map. I saw a post in Russia posted
+     somewhere else on the map"). The globe's news pins are the stories the feed is showing right now (a country's
+     stories when a country is picked, the search's when searching, none while a mission narrows the feed), never the
+     whole stream behind them; js/world-news-globe.js sends them on every render. */
+  window.MCC_WORLD_NEWS_ITEMS = function () { return (state.shownNews || []).slice(); };
   /* never rejects, nor throws (even building the address): { ok, items, next } for a page, { ok: false, status } for anything else */
   function fetchNews(before) {
     return Promise.resolve().then(function () {
@@ -1260,7 +1791,7 @@
       .then(function (data) {
         if (data && data.available === true) {
           state.newsCommentsAvailable = true;
-          if ($('mnFeed')) renderFeed(false);
+          if ($('mnFeed')) { renderFeed(false); openLinkedPost(); }
         }
       }).catch(function () { /* disabled or unreachable: no unusable UI */ });
   }
@@ -1290,16 +1821,31 @@
   /* a news card wears the World's card, keyed data-news-id (data-post-id is a member's post): the publisher, when it was
      seen and the place it mentions, the headline in an in-app discovery reader, and the place on the Earth. No pictures and no
      publisher marks: the words only. */
+  /* WHERE A STORY IS FROM (owner, 2026-10-20: "they need to say where they're from, like Nigeria"): the chip names the
+     country of the place it mentions instead of saying "On the Earth"; a tap still turns the Earth there. */
+  function newsCountry(n) {
+    var code = String(n.country_code || "").toUpperCase();
+    if (/^[A-Z]{2}$/.test(code)) {
+      try { var name = new Intl.DisplayNames([navigator.language || "en"], { type: "region" }).of(code); if (name && name !== code) return name; } catch (e) {}
+    }
+    /* GDELT's label: "City, Area, Country", with the gazetteer's own forms ("Bahamas, The", "Vietnam, Republic Of",
+       "Serbia (General)", "Pacific Ocean, Oceans"); the chip names the country, not "The" */
+    var parts = String(n.place || "").split(",").map(function (s) { return s.replace(/\s*\(general\)\s*$/i, "").trim(); }).filter(Boolean);
+    var tail = parts.pop() || "";
+    if (/^oceans?$/i.test(tail)) tail = parts[0] || "";
+    else if (/^(the|republic of|islamic republic of|federal republic of|people's republic of|democratic republic of)$/i.test(tail) && parts.length) tail = parts.pop();
+    return tail.slice(0, 60);
+  }
   function newsCard(n) {
-    var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>';
+    var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>', from = newsCountry(n);
     return '<article class="mn__post-card mn__news-card" data-news-id="' + esc(n.id) + '">' +
-      '<p class="mn__news-meta"><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
+      '<p class="mn__news-meta"><span class="mn__news-avatar" aria-hidden="true" data-initials="' + esc(String(n.domain || "news").replace(/^www\./, "").slice(0, 2).toUpperCase()) + '"></span><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
         (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
         (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
       '<button type="button" class="mn__news-title" data-news-open="' + esc(n.id) + '">' + esc(n.title) +
         '<span class="sr-only"> (open story)</span></button>' +
       (n.lat !== null && n.lon !== null
-        ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="On the Earth: ' + esc(n.place || "the place this story mentions") + '">On the Earth</button>'
+        ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="Show ' + esc(n.place || from || "the place this story mentions") + ' on the Earth">' + esc(from || "On the Earth") + '</button>'
         : '') +
       (state.newsCommentsAvailable
         ? '<div class="mn__post-actions"><button type="button" class="mn__action mn__action--comment" data-discussion-toggle aria-expanded="false" aria-label="Comment on news">' + ICON.comment + '<span class="mn__action-label">Comment</span></button></div>' + discussionHtml('news', n.id)
@@ -1310,13 +1856,20 @@
   /* Load more while either stream has another page (the news only counts while it is shown) */
   function paintMore() {
     var more = $("mnMore"), focus = state.world.focus;
-    if (more) more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
+    if (!more) return;
+    if (state.feedScope === "local" && state.placeScope.enabled) {
+      more.hidden = !(state.placeScope.postBefore || state.placeScope.newsBefore);
+      return;
+    }
+    more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
   }
   function bindNewsActions(root) {
     root.querySelectorAll("[data-news-open]").forEach(function (b) {
       b.onclick = function (e) {
         e.preventDefault(); e.stopPropagation();
-        var id = b.getAttribute("data-news-open"), story = state.news.find(function (n) { return n.id === id; });
+        var id = b.getAttribute("data-news-open"),
+          all = state.feedScope === "local" && state.placeScope.enabled ? state.placeScope.news : state.news,
+          story = all.find(function (n) { return n.id === id; });
         if (!story) return;
         if (window.MCC_WORLD_NEWS_READER && window.MCC_WORLD_NEWS_READER.open) window.MCC_WORLD_NEWS_READER.open(story, b);
         else setStatus($("mnFeedStatus"), "The in-app news reader is temporarily unavailable.", "error");
@@ -1331,7 +1884,8 @@
         if (state.world.focus) setWorldFocus(null);
         var caption = $("mnWorldCaption");
         if (caption) caption.textContent = label ? label + " \u00b7 mentioned in this story." : "A place this story mentions.";
-        tellWorld({ type: "hu:focus-place", lat: lat, lon: lon, label: label });
+        var card = b.closest("[data-news-id]");
+        tellWorld({ type: "hu:focus-place", lat: lat, lon: lon, label: label, id: card ? card.getAttribute("data-news-id") : "" });
         track("world_news_place", {});
       };
     });
@@ -1343,6 +1897,7 @@
     if (reset) {
       state.nextBefore = null;
       state.feed = [];
+      state.feedAnswered = false;
       setStatus($("mnFeedStatus"), "");
       if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
@@ -1368,14 +1923,9 @@
         state.nextBefore = data.next_before || null;
       }
       drawn = true;
+      state.feedAnswered = true;
       renderFeed(false);
-      try {
-        var linkedPost = new URLSearchParams(location.search).get("post");
-        if (linkedPost && /^[0-9a-f-]{36}$/i.test(linkedPost)) {
-          var target = Array.prototype.find.call($("mnFeed").querySelectorAll("[data-post-id]"), function (node) { return node.getAttribute("data-post-id") === linkedPost; });
-          if (target) { target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true }); }
-        }
-      } catch (_) {}
+      openLinkedPost();
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming), loadCollaborationCards(incoming)]).then(function (flags) {
         if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
@@ -1383,8 +1933,36 @@
       paintMore();
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
+      state.feedAnswered = true;
       setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
     }).finally(function () { state.loadingFeed = false; });
+  }
+
+  /* ?post= puts that post in view (a shared link, an alert). A post older than the first page is fetched on its own and
+     shown first; arriving from a comment alert (?comments=1), its discussion is open already. */
+  var linkedFetched = false, linkedOpened = false;
+  function openLinkedPost() {
+    var q, id, news;
+    try { q = new URLSearchParams(location.search); news = !!q.get("news"); id = q.get(news ? "news" : "post"); } catch (_) { return; }
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id) || linkedOpened) return;
+    var attr = news ? "data-news-id" : "data-post-id";
+    function find() { return Array.prototype.find.call($("mnFeed").querySelectorAll("[" + attr + "]"), function (node) { return node.getAttribute(attr) === id; }); }
+    var target = find();
+    if (!target) {
+      // a story is shown only while it is in the World's news window; a post can be fetched on its own
+      if (news || state.guest || linkedFetched) return;
+      linkedFetched = true;
+      api("/v1/mnet/posts/" + encodeURIComponent(id)).then(function (one) {
+        if (!one || !one.post || findPost(id)) return;
+        state.feed = [{ item_type:"post", post_id:one.post.id, occurred_at:one.post.created_at, post:one.post, actor:one.actor }].concat(state.feed);
+        renderFeed(false); openLinkedPost();
+      }).catch(function () {});
+      return;
+    }
+    target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true });
+    var talk = q.get("comments") === "1" && target.querySelector("[data-discussion-toggle][aria-expanded=\"false\"]");
+    // a story's reply box appears once the server confirms replies are on; this runs again when it does
+    if (talk) { linkedOpened = true; talk.click(); track("alert_open", { type:news ? "news_comment" : "comment" }); }
   }
 
   /* THE CATALOGUE, LOADED ONCE. data/albums.json is the same file the
@@ -1430,19 +2008,39 @@
     var body = $("mnPostBody").value.trim();
     var selectedTrack = pickedTrack();
     if (!body && !state.mediaAssets.length && !selectedTrack) { setStatus($("mnPostStatus"), "Write something, attach media, or pick a track first.", "error"); return; }
+    var news = !!($("mnNewsroom") && $("mnNewsroom").checked && !$("mnNewsroomRow").hidden);
+    if (news && $("mnVisibility").value !== "public") { setStatus($("mnPostStatus"), "A newsroom article is public. Choose Public to publish it.", "error"); return; }
+    if (news && !body) { setStatus($("mnPostStatus"), "A newsroom article needs words. Write the headline on the first line.", "error"); return; }
     var button = $("mnPost");
     button.disabled = true;
     setStatus($("mnPostStatus"), "Posting…");
+    var draft = { body:body, visibility:$("mnVisibility").value, track:selectedTrack,
+             media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }),
+             poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }),
+             /* Opt-in, never inferred from visitor IP or automatic globe scope. */
+             country_code:state.placeScope.enabled && $("mnPostPlaceOptIn") &&
+               $("mnPostPlaceOptIn").checked && $("mnVisibility").value === "public" &&
+               state.world.country ? state.world.country.code : undefined };
+    if (news) draft.newsroom = true;
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
-      body:{ body:body, visibility:$("mnVisibility").value, track:selectedTrack,
-             media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }),
-             poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }) }
-    }).then(function () {
+      body:draft
+    }).then(function (out) {
       $("mnPostBody").value = "";
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
+      if ($("mnNewsroom")) $("mnNewsroom").checked = false;
       clearMediaQueue();
-      setStatus($("mnPostStatus"), "Posted.", "ok");
+      if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
+      if (state.placeScope.enabled && state.feedScope === "local") loadPlaceFeed(true);
+      var id = out && out.post && out.post.id;
+      if (news && id && /^[0-9a-f-]{36}$/i.test(id)) {
+        /* the article's own address; the newsroom sends it on to the headline's slug */
+        var st = $("mnPostStatus");
+        st.textContent = "Posted, and in the newsroom: ";
+        var link = document.createElement("a");
+        link.href = "https://mccluster.org/news/" + id; link.target = "_blank"; link.rel = "noopener"; link.textContent = "read the article";
+        st.appendChild(link); st.classList.remove("is-error"); st.classList.add("is-ok");
+      } else setStatus($("mnPostStatus"), "Posted.", "ok");
       track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!selectedTrack, visibility:$("mnVisibility").value });
       /* a fresh post must be seen landing, so let go of any mission the
          feed was narrowed to on the globe */
@@ -1458,9 +2056,11 @@
     }).finally(function () { button.disabled = false; });
   }
 
+  // a post can be on the main feed or on a country's Local feed: share, save and mission taps look in both
   function findPost(postId) {
-    for (var i=0; i<state.feed.length; i++) {
-      var item = state.feed[i];
+    var lists = [state.feed, state.placeScope.posts || []];
+    for (var l=0; l<lists.length; l++) for (var i=0; i<lists[l].length; i++) {
+      var item = lists[l][i];
       if ((item.post && item.post.id) === postId || item.post_id === postId) return item;
     }
     return null;
@@ -1500,6 +2100,13 @@
       if(n.type==="collaboration_published"&&/^[0-9a-f-]{36}$/i.test(String(meta.mission_id||""))){
         action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(meta.mission_id)+'">Confirm as my Level 3 →</a>';
       }
+      /* a comment opens the post, or the story, with its discussion */
+      if(n.type==="comment"&&/^[0-9a-f-]{36}$/i.test(String(meta.post_id||""))){
+        action='<a class="mn__notification-action" href="mnet.html?view=feed&amp;post='+encodeURIComponent(meta.post_id)+'&amp;comments=1">See the comment →</a>';
+      }
+      if(n.type==="news_comment"&&/^[0-9a-f-]{36}$/i.test(String(meta.article_id||""))){
+        action='<a class="mn__notification-action" href="mnet.html?view=feed&amp;news='+encodeURIComponent(meta.article_id)+'&amp;comments=1">See the reply →</a>';
+      }
       if(n.type==="connection_accepted"&&meta.handle){
         action='<button class="mn__notification-action" type="button" data-person="'+esc(meta.handle)+'">View profile →</button>';
       }
@@ -1515,9 +2122,50 @@
         }).catch(function(e){card.querySelectorAll("button").forEach(function(x){x.disabled=false;});setStatus($("mnNotificationStatus"),e.message||"That did not go through.","error");});
       });
     });
-    host.querySelectorAll("[data-person]").forEach(function(b){b.addEventListener("click",function(){openPerson(b.getAttribute("data-person"));});});
+    host.querySelectorAll("[data-person]").forEach(function(b){b.addEventListener("click",function(){closeAlerts();openPerson(b.getAttribute("data-person"));});});
   }
 
+  /* ALERTS ON THIS DEVICE (owner, 2026-10-20; workers/mccluster/src/web-push.js). Never asked for on its own: the
+     browser's permission prompt appears only after the member taps Turn on. Hidden where the browser cannot take
+     push (an iPhone needs the site added to the Home Screen first) or while the server has it off. */
+  var push = { key:"", busy:false, mine:false };
+  function pushSupported() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+  function pushKeyBytes(key) {
+    var s = atob(key.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((key.length + 3) % 4)), out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  /* "on" means this browser's subscription belongs to the member signed in now (a shared browser may still hold
+     someone else's until they sign out), so the server is asked, not just the browser */
+  function paintPush() {
+    var box = $("mnPush"); if (!box || state.guest || !pushSupported()) return;
+    navigator.serviceWorker.getRegistration().then(function (reg) { return reg ? reg.pushManager.getSubscription() : null; }).then(function (sub) {
+      return api("/v1/mnet/push" + (sub ? "?endpoint=" + encodeURIComponent(sub.endpoint) : "")).then(function (cfg) {
+        if (!cfg || !cfg.enabled || !cfg.key) { box.hidden = true; return; }
+        push.key = cfg.key; push.mine = !!(sub && cfg.subscribed); box.hidden = false;
+        var on = push.mine && Notification.permission === "granted", b = $("mnPushToggle");
+        b.textContent = on ? "Turn off" : "Turn on"; b.setAttribute("aria-pressed", String(on));
+        b.disabled = Notification.permission === "denied";
+        if (Notification.permission === "denied") $("mnPushNote").textContent = "Alerts are blocked for this site in your browser settings.";
+      });
+    }).catch(function () { box.hidden = true; });
+  }
+  function togglePush() {
+    if (push.busy || !push.key) return; push.busy = true;
+    var b = $("mnPushToggle"); b.disabled = true;
+    navigator.serviceWorker.ready.then(function (reg) {
+      return reg.pushManager.getSubscription().then(function (sub) {
+        if (sub && push.mine) return api("/v1/mnet/push/subscriptions", { method:"DELETE", body:{ endpoint:sub.endpoint } }).then(function () { return sub.unsubscribe(); }).then(function () { track("push_off", {}); });
+        // this browser already has a subscription from someone else: it becomes this member's
+        if (sub) return api("/v1/mnet/push/subscriptions", { method:"POST", body:sub.toJSON() }).then(function () { track("push_on", {}); });
+        return reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:pushKeyBytes(push.key) }).then(function (fresh) {
+          return api("/v1/mnet/push/subscriptions", { method:"POST", body:fresh.toJSON() }).then(function () { track("push_on", {}); });
+        });
+      });
+    }).catch(function (e) {
+      setStatus($("mnNotificationStatus"), Notification.permission === "denied" ? "Alerts are blocked for this site in your browser settings." : (e.message || "Alerts could not be changed."), "error");
+    }).finally(function () { push.busy = false; b.disabled = false; paintPush(); });
+  }
   function loadNotificationsSilently() {
     return api("/v1/mnet/notifications").then(function (data) {
       var rows = data.notifications || [];
@@ -1531,6 +2179,18 @@
     }).catch(function () { return []; });
   }
 
+  /* NOTIFICATIONS DROP DOWN FROM THE BELL (owner, 2026-10-20) */
+  function openAlerts() {
+    var pop = $("mnAlerts"); if (!pop) return;
+    closeMenu();
+    pop.hidden = false; $("mnBell").setAttribute("aria-expanded", "true");
+    loadNotificationsSilently().then(markNotificationsRead); paintPush();
+    track("mnet_alerts_open", {});
+  }
+  function closeAlerts() {
+    var pop = $("mnAlerts"); if (!pop || pop.hidden) return;
+    pop.hidden = true; $("mnBell").setAttribute("aria-expanded", "false");
+  }
   function markNotificationsRead() {
     return api("/v1/mnet/notifications/read", { method:"POST", body:{} }).then(function () {
       $("mnNotifBadge").hidden = true;
@@ -1544,8 +2204,13 @@
   function storagePath(path) {
     return String(path || "").split("/").map(encodeURIComponent).join("/");
   }
+  function revokePreviews(x) {
+    [x && x.preview, x && x.poster_preview].forEach(function (u) { if (u) try { URL.revokeObjectURL(u); } catch (e) {} });
+  }
+  /* a video in the composer shows its picture with a play mark, never a black box */
+  var PLAY_MARK = '<span class="mn__media-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg></span>';
   function clearMediaQueue() {
-    state.mediaAssets.forEach(function (x) { if (x.preview) try { URL.revokeObjectURL(x.preview); } catch (e) {} });
+    state.mediaAssets.forEach(revokePreviews);
     state.mediaAssets = [];
     if ($("mnMediaQueue")) { $("mnMediaQueue").innerHTML = ""; $("mnMediaQueue").hidden = true; }
     if ($("mnMediaInput")) $("mnMediaInput").value = "";
@@ -1557,14 +2222,16 @@
     host.hidden = !state.mediaAssets.length;
     host.innerHTML = state.mediaAssets.map(function (x, i) {
       var visual = x.media_type === "image" && x.preview ? '<img src="' + esc(x.preview) + '" alt="">' :
-        x.media_type === "video" && x.preview ? '<video src="' + esc(x.preview) + '" muted playsinline></video>' :
+        x.media_type === "video" && x.poster_preview ? '<img src="' + esc(x.poster_preview) + '" alt="Video">' + PLAY_MARK :
+        /* no picture could be taken: a tenth of a second in, so the first frame paints */
+        x.media_type === "video" && x.preview ? '<video src="' + esc(x.preview + "#t=0.1") + '" muted playsinline preload="metadata"></video>' + PLAY_MARK :
         '<span>' + esc(x.name || x.media_type) + '</span>';
-      return '<div class="mn__media-chip">' + visual + '<button type="button" data-remove-media="' + i + '" aria-label="Remove attachment">×</button></div>';
+      return '<div class="mn__media-chip' + (x.media_type === "video" ? ' is-video' : '') + '">' + visual + '<button type="button" data-remove-media="' + i + '" aria-label="Remove attachment">×</button></div>';
     }).join("");
     host.querySelectorAll("[data-remove-media]").forEach(function (b) {
       b.onclick = function () {
         var i = Number(b.dataset.removeMedia), item = state.mediaAssets[i];
-        if (item && item.preview) try { URL.revokeObjectURL(item.preview); } catch (e) {}
+        revokePreviews(item);
         if(item){
           [item.id,item.poster_id].filter(Boolean).forEach(function(id){
             api("/v1/mnet/media/discard",{method:"POST",body:{asset_id:id}}).catch(function(){});
@@ -1574,7 +2241,8 @@
       };
     });
   }
-  function uploadOneMedia(file){
+  /* meta ({width,height,duration_ms}, or a promise of it) rides with finalize where it is known */
+  function uploadOneMedia(file,meta){
     var token=sessionToken();
     if(!token)return Promise.reject(new Error("Sign in before uploading media."));
     return api("/v1/mnet/media/upload-url",{method:"POST",body:{file_name:file.name||"upload",mime_type:file.type||"application/octet-stream",byte_size:file.size}})
@@ -1587,44 +2255,38 @@
         return fetch(url,{method:uploadToken?"PUT":"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+token,"content-type":file.type||"application/octet-stream","x-upsert":"false"},body:file})
           .then(function(res){
             if(!res.ok)return res.text().then(function(t){throw new Error("Upload rejected ("+res.status+"): "+(t||"no detail"));});
-            return api("/v1/mnet/media/finalize",{method:"POST",body:{asset_id:asset.id}});
+            return Promise.resolve(meta).catch(function(){return null;}).then(function(m){
+              var body={asset_id:asset.id};
+              if(m)["width","height","duration_ms"].forEach(function(k){if(Number(m[k])>0)body[k]=Math.round(Number(m[k]));});
+              return api("/v1/mnet/media/finalize",{method:"POST",body:body});
+            });
           })
           .then(function(fin){return (fin&&fin.asset)||asset;});
       });
   }
-  function makeVideoPoster(file){
-    if(!file||String(file.type||"").indexOf("video/")!==0)return Promise.resolve(null);
-    return new Promise(function(resolve){
-      var video=document.createElement("video"),src=URL.createObjectURL(file),done=false;
-      function finish(value){if(done)return;done=true;try{URL.revokeObjectURL(src);}catch(_){} resolve(value||null);}
-      video.muted=true;video.playsInline=true;video.preload="metadata";
-      video.onloadedmetadata=function(){
-        try{video.currentTime=Math.min(Math.max(0.12,(Number(video.duration)||1)*0.06),1.0);}catch(_){finish(null);}
-      };
-      video.onseeked=function(){
-        try{
-          var w=video.videoWidth||720,h=video.videoHeight||1280,max=720,scale=Math.min(1,max/Math.max(w,h));
-          var canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
-          var ctx=canvas.getContext("2d");if(!ctx){finish(null);return;}ctx.drawImage(video,0,0,canvas.width,canvas.height);
-          canvas.toBlob(function(blob){
-            if(!blob){finish(null);return;}
-            finish(new File([blob],(file.name||"video").replace(/\.[^.]+$/,"")+"-poster.jpg",{type:"image/jpeg"}));
-          },"image/jpeg",0.82);
-        }catch(_){finish(null);}
-      };
-      video.onerror=function(){finish(null);};
-      setTimeout(function(){finish(null);},4500);
-      video.src=src;
-    });
+  /* THE PICTURE OF A VIDEO: the shared capture (js/video-poster.js). Resolves {file, width, height, video:{...}} or null;
+     no picture never stops the video itself. */
+  function makeVideoPoster(file,opts){
+    if(!file||String(file.type||"").indexOf("video/")!==0||!window.MCCVideoPoster)return Promise.resolve(null);
+    return window.MCCVideoPoster.capture(file,opts).catch(function(){return null;});
   }
+  function discardMedia(id){
+    if(id)api("/v1/mnet/media/discard",{method:"POST",body:{asset_id:id}}).catch(function(){});
+  }
+  /* the picture is taken WHILE the video goes up, not after it; the video's finalize carries its size and length */
   function uploadMediaWithPoster(file){
-    return uploadOneMedia(file).then(function(asset){
-      if(String(file.type||"").indexOf("video/")!==0)return {asset:asset,poster:null};
-      return makeVideoPoster(file).then(function(posterFile){
-        if(!posterFile)return {asset:asset,poster:null};
-        return uploadOneMedia(posterFile).then(function(poster){return {asset:asset,poster:poster};})
-          .catch(function(){return {asset:asset,poster:null};});
-      });
+    if(String(file.type||"").indexOf("video/")!==0)return uploadOneMedia(file).then(function(asset){return {asset:asset,poster:null,posterFile:null};});
+    var metaKnown,meta=new Promise(function(r){metaKnown=r;});
+    var shot=makeVideoPoster(file,{onMeta:metaKnown});
+    shot.then(function(s){metaKnown(s&&s.video||null);});
+    var posterUp=shot.then(function(s){
+      return s&&s.file?uploadOneMedia(s.file,{width:s.width,height:s.height}).catch(function(){return null;}):null;
+    });
+    return uploadOneMedia(file,meta).then(function(asset){
+      return Promise.all([posterUp,shot]).then(function(r){return {asset:asset,poster:r[0]||null,posterFile:r[1]&&r[1].file||null};});
+    },function(e){
+      posterUp.then(function(p){discardMedia(p&&p.id);});
+      throw e;
     });
   }
   function uploadMediaFiles(files) {
@@ -1642,7 +2304,8 @@
             media_type:ready.media_type||(/video\//.test(file.type)?"video":/image\//.test(file.type)?"image":"file"),
             poster_id:out.poster&&out.poster.id||null,
             name:file.name,
-            preview:URL.createObjectURL(file)
+            preview:URL.createObjectURL(file),
+            poster_preview:out.posterFile?URL.createObjectURL(out.posterFile):""
           });
           renderMediaQueue();
         });
@@ -1651,25 +2314,56 @@
     return chain.then(function(){setStatus($("mnMediaStatus"),state.mediaAssets.length+" attachment"+(state.mediaAssets.length===1?"":"s")+" ready.","ok");})
       .catch(function(e){setStatus($("mnMediaStatus"),e.message||"Upload failed.","error");throw e;});
   }
+  /* A signed media address lives an hour (mnet-media view-url, expires_in); one with under five minutes left is asked
+     for again rather than handed to a player that will outlive it. */
+  var MEDIA_URL_MARGIN=5*60*1000;
+  function mediaUrl(assetId,fresh){
+    var cached=state.mediaCache[assetId];
+    if(!fresh&&cached&&cached.data&&cached.exp-Date.now()>MEDIA_URL_MARGIN)return Promise.resolve(cached.data);
+    var asked=Date.now();
+    return api("/v1/mnet/media/"+encodeURIComponent(assetId)+"/url").then(function(x){
+      var life=Number(x&&x.expires_in)>0?Number(x.expires_in):3600;
+      state.mediaCache[assetId]={data:x,exp:asked+life*1000};
+      return x;
+    });
+  }
+  /* A video this device cannot play (an HEVC .mov on a desktop browser, a damaged upload) shows its picture and says
+     so. An address that went stale while the page sat open is asked for once more first. */
+  function watchVideo(node,assetId,posterUrl,frag){
+    var v=node.querySelector("video"),retried=false;
+    if(!v)return;
+    function cantPlay(){
+      node.classList.add("is-unplayable");
+      node.innerHTML=(posterUrl?'<img src="'+esc(posterUrl)+'" alt="">':'')+'<p class="mn__video-note">This video can’t play on this device.</p>';
+    }
+    v.addEventListener("error",function(){
+      if(retried)return cantPlay();
+      retried=true;
+      mediaUrl(assetId,true).then(function(fresh){
+        var u=safeHttpUrl(fresh&&fresh.url);
+        if(!u||!v.isConnected)throw new Error("gone");
+        v.src=u+frag;
+      }).catch(cantPlay);
+    });
+  }
   function resolvePostMedia(root) {
     if(!root)return;
     root.querySelectorAll("[data-mnet-media]").forEach(function(node){
       var id=node.dataset.mnetMedia;
       if(!id||node.dataset.loaded==="1")return;
       node.dataset.loaded="1";
-      function assetUrl(assetId){
-        var cached=state.mediaCache[assetId];
-        return cached?Promise.resolve(cached):api("/v1/mnet/media/"+encodeURIComponent(assetId)+"/url").then(function(x){state.mediaCache[assetId]=x;return x;});
-      }
-      assetUrl(id).then(function(data){
+      mediaUrl(id).then(function(data){
         var type=data.media_type||node.dataset.mediaType||"file",url=safeHttpUrl(data.url);
         if(!url)throw new Error("Media URL unavailable");
         if(type==="image")node.innerHTML='<img src="'+esc(url)+'" alt="'+esc(data.alt_text||"")+'" loading="lazy">';
         else if(type==="video"){
           var posterId=node.dataset.posterAsset;
-          return (posterId?assetUrl(posterId).catch(function(){return null;}):Promise.resolve(null)).then(function(poster){
+          return (posterId?mediaUrl(posterId).catch(function(){return null;}):Promise.resolve(null)).then(function(poster){
             var posterUrl=poster&&safeHttpUrl(poster.url);
-            node.innerHTML='<video src="'+esc(url+(node.dataset.clip||""))+'"'+(posterUrl?' poster="'+esc(posterUrl)+'"':"")+' controls playsinline preload="metadata"'+(node.dataset.muted?" muted":"")+'></video>';
+            /* no picture and no clip: start a tenth of a second in, so WebKit paints the first frame instead of black */
+            var frag=node.dataset.clip||(posterUrl?"":"#t=0.1");
+            node.innerHTML='<video src="'+esc(url+frag)+'"'+(posterUrl?' poster="'+esc(posterUrl)+'"':"")+' controls playsinline preload="metadata"'+(node.dataset.muted?" muted":"")+'></video>';
+            watchVideo(node,id,posterUrl,frag);
           });
         } else if(type==="audio")node.innerHTML='<audio src="'+esc(url)+'" controls preload="metadata"></audio>';
         else node.innerHTML='<a class="mn__profile-link" href="'+esc(url)+'" target="_blank" rel="noopener">Open attachment</a>';
@@ -1686,6 +2380,180 @@
       .catch(function (e) { if(post)post.bookmarked_by_me=saved; paintToggle(button,saved,null); setStatus($("mnFeedStatus"),e.message||"Could not save that post.","error"); })
       .finally(function () { button.disabled=false; });
   }
+  /* THE THUMBNAIL OF A POSTED VIDEO (owner, 2026-10-20: "I want people to be even able to edit the videos they
+     previously posted as a thumbnail"). On their own video post the author scrubs to a frame, or uploads a picture; the
+     Worker swaps it on the post (PATCH /v1/mnet/posts/:id {poster_by_media}) and lets the old picture go. A storage
+     address this page may not read pixels from (no CORS) leaves the upload, never a broken frame picker. */
+  function postVideos(post) {
+    return (Array.isArray(post && post.media) ? post.media : []).filter(function (m) { return m && (m.type || m.media_type) === "video" && (m.asset_id || m.id); });
+  }
+  var thumbEdit = { post: null, media: null, seq: 0, busy: false };
+  var THUMB_TYPES = /^image\/(jpeg|png|webp|avif|gif)$/;
+  function thumbStatus(text, kind) { setStatus($("mnThumbStatus"), text, kind); }
+  function thumbBusy(on) {
+    thumbEdit.busy = on;
+    $("mnThumbUseFrame").disabled = on;
+    $("mnThumbFile").disabled = on;
+    $("mnThumbUpload").setAttribute("aria-disabled", on ? "true" : "false");
+  }
+  function openThumbnailEditor(postId) {
+    var dlg = $("mnThumbDialog");
+    if (!dlg || !postId) return;
+    var item = findPost(postId), known = item && (item.post || item);
+    (known ? Promise.resolve(known) : api("/v1/mnet/posts/" + encodeURIComponent(postId)).then(function (one) { return one && one.post; }))
+      .then(function (post) {
+        var videos = postVideos(post);
+        if (!post || !videos.length) throw new Error("This post has no video.");
+        thumbEdit.post = post;
+        var which = $("mnThumbWhich");
+        which.hidden = videos.length < 2;
+        which.innerHTML = videos.length < 2 ? "" : videos.map(function (m, i) {
+          return '<button type="button" data-thumb-video="' + esc(m.asset_id || m.id) + '" aria-pressed="' + (i ? "false" : "true") + '">Video ' + (i + 1) + '</button>';
+        }).join("");
+        which.querySelectorAll("[data-thumb-video]").forEach(function (b) {
+          b.onclick = function () {
+            if (thumbEdit.busy) return;
+            which.querySelectorAll("[data-thumb-video]").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+            loadThumbVideo(postVideos(thumbEdit.post).filter(function (m) { return (m.asset_id || m.id) === b.dataset.thumbVideo; })[0]);
+          };
+        });
+        if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
+        loadThumbVideo(videos[0]);
+      }).catch(function (e) { setStatus($("mnFeedStatus"), e.message || "Could not open the thumbnail.", "error"); });
+  }
+  function showThumbNow(m) {
+    var img = $("mnThumbNow"), id = m && m.poster_asset_id;
+    $("mnThumbVideo").hidden = true;
+    if (!id) { img.hidden = true; return; }
+    mediaUrl(id).then(function (d) { var u = safeHttpUrl(d && d.url); if (u && thumbEdit.media === m) { img.src = u; img.hidden = false; } }).catch(function () {});
+  }
+  function loadThumbVideo(m) {
+    if (!m) return;
+    var seq = ++thumbEdit.seq, v = $("mnThumbVideo"), range = $("mnThumbRange");
+    thumbEdit.media = m;
+    $("mnThumbPick").hidden = true;
+    $("mnThumbNow").hidden = true;
+    v.hidden = false;
+    thumbStatus("Loading the video…");
+    /* a fresh address: the one the feed holds may be close to running out */
+    mediaUrl(m.asset_id || m.id, true).then(function (data) {
+      var url = safeHttpUrl(data && data.url);
+      if (!url) throw new Error("unavailable");
+      if (seq !== thumbEdit.seq) return;
+      /* before src: a frame may become a picture only if the page may read it */
+      v.crossOrigin = "anonymous"; v.muted = true; v.playsInline = true; v.preload = "auto";
+      v.src = url;
+      return new Promise(function (resolve, reject) {
+        if (v.readyState >= 2) return resolve();
+        function ok() { off(); resolve(); }
+        function bad() { off(); reject(new Error("load")); }
+        function off() { v.removeEventListener("loadeddata", ok); v.removeEventListener("error", bad); }
+        v.addEventListener("loadeddata", ok); v.addEventListener("error", bad);
+        /* WebKit may hold the data until something plays: a muted, inline play() needs no tap */
+        setTimeout(function () { if (seq === thumbEdit.seq && v.readyState < 2 && window.MCCVideoPoster) window.MCCVideoPoster.prime(v); }, 1200);
+      });
+    }).then(function () {
+      if (seq !== thumbEdit.seq) return;
+      var vp = window.MCCVideoPoster, canPick = !!(vp && vp.readable(v));
+      var d = isFinite(v.duration) && v.duration > 0 ? v.duration : 0, start = d ? Math.min(1, d * 0.25) : 0;
+      range.max = String(Math.max(1, Math.round(d * 1000)));
+      range.value = String(Math.round(start * 1000));
+      range.setAttribute("aria-valuetext", clockText(start));
+      /* a picture chosen while the video loaded is saving: its "Saving…" stays until it lands */
+      if (!canPick) {
+        showThumbNow(m);
+        if (!thumbEdit.busy) thumbStatus("Picking a frame isn’t available for this video here. Upload an image instead.");
+        return;
+      }
+      $("mnThumbPick").hidden = false;
+      if (!thumbEdit.busy) thumbStatus("");
+      return (vp.prime ? vp.prime(v) : Promise.resolve()).then(function () { try { v.currentTime = start; } catch (e) {} });
+    }).catch(function () {
+      if (seq !== thumbEdit.seq) return;
+      showThumbNow(m);
+      if (!thumbEdit.busy) thumbStatus("This video can’t be opened here. Upload an image instead.", "error");
+    });
+  }
+  function clockText(sec) {
+    sec = Math.max(0, sec || 0);
+    var mm = Math.floor(sec / 60), ss = Math.floor(sec % 60);
+    return mm + ":" + (ss < 10 ? "0" : "") + ss;
+  }
+  function closeThumbEditor() {
+    var dlg = $("mnThumbDialog"), v = $("mnThumbVideo");
+    thumbEdit.seq++;
+    try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {}
+    if (dlg && dlg.open) { if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); }
+    thumbStatus("");
+  }
+  /* the post's media changed: every card of it on the page draws its media again, nothing else moves */
+  function applyPostMedia(post, media) {
+    [state.feed, state.placeScope.posts || []].forEach(function (list) {
+      list.forEach(function (it) { var p = it && (it.post || it); if (p && p.id === post.id) p.media = media; });
+    });
+    post.media = media;
+    Array.prototype.forEach.call(document.querySelectorAll('article[data-post-id="' + post.id + '"] .mn__post-media'), function (box) {
+      var card = box.closest("article");
+      box.outerHTML = postMediaHtml(post);
+      resolvePostMedia(card);
+    });
+  }
+  function saveThumbnail(file, meta) {
+    var post = thumbEdit.post, m = thumbEdit.media;
+    if (!post || !m) return Promise.reject(new Error("Open the post again."));
+    var videoId = m.asset_id || m.id, old = m.poster_asset_id || null;
+    return uploadOneMedia(file, meta).then(function (asset) {
+      var map = {};
+      map[videoId] = asset.id;
+      return api("/v1/mnet/posts/" + encodeURIComponent(post.id), { method: "PATCH", body: { poster_by_media: map } })
+        .then(function (out) { return { out: out, asset: asset }; }, function (e) { discardMedia(asset.id); throw e; });
+    }).then(function (r) {
+      if (old) delete state.mediaCache[old];
+      var fresh = r.out && r.out.post;
+      applyPostMedia(post, fresh && Array.isArray(fresh.media) ? fresh.media : (post.media || []).map(function (x) {
+        return (x.asset_id || x.id) === videoId ? Object.assign({}, x, { poster_asset_id: r.asset.id }) : x;
+      }));
+      closeThumbEditor();
+      setStatus($("mnFeedStatus"), "Thumbnail updated.", "ok");
+    });
+  }
+  (function wireThumbEditor() {
+    var dlg = $("mnThumbDialog");
+    if (!dlg) return;
+    var v = $("mnThumbVideo"), range = $("mnThumbRange");
+    $("mnThumbClose").addEventListener("click", closeThumbEditor);
+    dlg.addEventListener("close", function () { if (!thumbEdit.busy) closeThumbEditor(); });
+    range.addEventListener("input", function () {
+      var t = Number(range.value) / 1000;
+      try { v.pause(); v.currentTime = t; } catch (e) {}
+      range.setAttribute("aria-valuetext", clockText(t));
+    });
+    $("mnThumbUseFrame").addEventListener("click", function () {
+      if (thumbEdit.busy || !window.MCCVideoPoster) return;
+      try { v.pause(); } catch (e) {}
+      thumbBusy(true); thumbStatus("Saving the thumbnail…");
+      window.MCCVideoPoster.grab(v, { name: "thumbnail" }).then(function (shot) {
+        if (!shot.file) {
+          if (shot.reason === "tainted") { $("mnThumbPick").hidden = true; showThumbNow(thumbEdit.media); }
+          throw new Error(shot.reason === "tainted" ? "Picking a frame isn’t available for this video here. Upload an image instead." : "That frame could not be saved. Try another, or upload an image.");
+        }
+        return saveThumbnail(shot.file, { width: shot.width, height: shot.height });
+      }).catch(function (e) { thumbStatus(e.message || "The thumbnail did not save.", "error"); })
+        .then(function () { thumbBusy(false); });
+    });
+    $("mnThumbFile").addEventListener("change", function () {
+      var f = this.files && this.files[0];
+      this.value = "";
+      if (!f || thumbEdit.busy) return;
+      if (!THUMB_TYPES.test(String(f.type || "").toLowerCase())) { thumbStatus("Use a JPEG, PNG or WebP picture.", "error"); return; }
+      if (f.size > 25 * 1024 * 1024) { thumbStatus("That picture is over 25 MB. Choose a smaller one.", "error"); return; }
+      thumbBusy(true); thumbStatus("Saving the thumbnail…");
+      (window.MCCVideoPoster ? window.MCCVideoPoster.imageSize(f) : Promise.resolve({}))
+        .then(function (meta) { return saveThumbnail(f, meta); })
+        .catch(function (e) { thumbStatus(e.message || "The thumbnail did not save.", "error"); })
+        .then(function () { thumbBusy(false); });
+    });
+  })();
   function deletePost(postId, button) {
     if (!confirm("Delete this post?")) return;
     button.disabled=true;
@@ -1740,9 +2608,12 @@
   }
 
   function loadDiscover() {
-    var q=$("mnDiscoverQuery").value.trim().replace(/^@+/,""); setStatus($("mnDiscoverStatus"),"Searching…");
+    var q=$("mnDiscoverQuery").value.trim().replace(/^@+/,""), host=$("mnDiscoverResults");
+    /* the last people stay on screen while the next answer comes; the first time, rows in their shape */
+    if(!host.children.length||host.querySelector(".mn__skel")){host.innerHTML=skeletonRows(4);setStatus($("mnDiscoverStatus"),"");}
+    else setStatus($("mnDiscoverStatus"),q?"Searching…":"");
     return api("/v1/mnet/discover?q="+encodeURIComponent(q)+"&limit=50").then(function (data) {
-      var rows=data.people||[]; $("mnDiscoverResults").innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
+      var rows=data.people||[]; host.innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
       bindPeople($("mnDiscoverResults")); setStatus($("mnDiscoverStatus"),rows.length?rows.length+" people":"");
     }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not search the network.","error"); });
   }
@@ -1811,7 +2682,7 @@
       bindConnectButton($("mnPersonBody"), data.connection, p.m_uid||id.m_uid||data.m_uid, function(){openPerson(handle);});
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
-      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Human Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
+      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Equity Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
       $("mnPersonReport").onclick=function(){var details=prompt("What should the moderators know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
     }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
@@ -1827,7 +2698,10 @@
     return api("/v1/mnet/conversations").then(function (data) { state.conversations=data.conversations||[]; paintMessageBadge(); }).catch(function () {});
   }
   function loadConversations() {
-    setStatus($("mnMessageStatus"),"Loading…");
+    /* the list on screen stays while it refreshes (Messages refreshes itself every 15 seconds); the first time, rows */
+    var list=$("mnConversations");
+    if(list&&!list.children.length)list.innerHTML=skeletonRows(4);
+    setStatus($("mnMessageStatus"),"");
     return api("/v1/mnet/conversations").then(function (data) {
       state.conversations=data.conversations||[];
       paintMessageBadge();
@@ -1838,7 +2712,7 @@
       $("mnConversations").querySelectorAll("[data-conversation]").forEach(function(b){b.onclick=function(){openConversation(b.dataset.conversation);};});
       setStatus($("mnMessageStatus"),"");
       return state.conversations;
-    }).catch(function (e) { setStatus($("mnMessageStatus"),e.message||"Could not load messages.","error"); return []; });
+    }).catch(function (e) { if(list&&list.querySelector(".mn__skel"))list.innerHTML=""; setStatus($("mnMessageStatus"),e.message||"Could not load messages.","error"); return []; });
   }
   function startConversation(target) {
     return api("/v1/mnet/conversations",{method:"POST",body:target||{}}).then(function (x) {
@@ -1929,12 +2803,17 @@
   }
 
   function setView(name) {
+    /* notifications are the bell's drop down, never a page of their own (owner, 2026-10-20) */
+    if (name === "notifications") { if (state.guest) { askToSignIn(name); return; } openAlerts(); return; }
+    if (MISSIONS_OFF && name === "missions") name = "feed";
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
+    document.documentElement.removeAttribute("data-boot-view");
     state.currentView = name;
     track("mnet_view", { view:name });
-    ["live","clips","feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
-      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
+    closeAlerts();
+    ["live","clips","feed","missions","discover","groups","messages","profile"].forEach(function (view) {
+      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",profile:"mnProfileView"};
       var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
       var tab=document.querySelector('[data-mn-view="' + view + '"]');
       if(tab)tab.classList.toggle("is-active",view===name);
@@ -1948,9 +2827,24 @@
     if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
-    if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
     if(name==="profile"){paintSelf();loadDeletion();paintCreatorDoor();}
-    window.scrollTo({top:0,behavior:"smooth"});
+    /* the new room starts at its top at once: a smooth scroll moved the room on screen after it had already changed */
+    window.scrollTo(0,0);
+    sizeWorld();
+  }
+  /* a member's room asked for by address, put on screen while their World loads: only the panel, no reads (they wait for
+     the bootstrap, which opens the room properly), so nothing else is drawn first */
+  function peekView(name) {
+    document.documentElement.removeAttribute("data-boot-view");
+    ["live","clips","feed","missions","discover","groups","messages","profile"].forEach(function (view) {
+      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",profile:"mnProfileView"};
+      var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
+    });
+    if($("mnToWorld"))$("mnToWorld").hidden=name==="feed";
+    if(name==="discover"&&!$("mnDiscoverResults").children.length)$("mnDiscoverResults").innerHTML=skeletonRows(4);
+    if(name==="messages"&&!$("mnConversations").children.length)$("mnConversations").innerHTML=skeletonRows(4);
+    if(name==="groups"&&$("mngCards")&&(!groups||!groups.all.length))$("mngCards").innerHTML=skeletonCards(3);
+    state.currentView = name;
     sizeWorld();
   }
 
@@ -1963,30 +2857,6 @@
     thumb.style.transform = "translateX(" + tab.offsetLeft + "px)";
     thumb.classList.add("is-on");
     if (scroll && tab.scrollIntoView) tab.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
-  }
-
-  /* THE CAMPAIGNS RAIL. The same public list the gateways read; a card is
-     the door into its campaign. Hidden, not empty, when nothing is live. */
-  function loadRail() {
-    var track = $("mnRailTrack");
-    if (!track) return;
-    fetch("https://zmnhbrjyhxzhkxmhkexs.supabase.co/rest/v1/rpc/action_campaigns_live", {
-      method: "POST",
-      headers: { apikey: "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4", "content-type": "application/json" },
-      body: "{}"
-    }).then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
-      list = Array.isArray(list) ? list : [];
-      if (!list.length) return;
-      track.innerHTML = list.map(function (c, i) {
-        var ch = c.chapter || {}, n = Number(c.people || 0);
-        return '<a class="mn__camp" style="--i:' + i + ';--hue:' + hueOf(c.slug) + '" href="action/?c=' + encodeURIComponent(c.slug) + '">' +
-          '<span class="mn__camp-k"><i class="mn__live"></i>' + esc([ch.region, ch.title].filter(Boolean).join(" · ") || "Live") + '</span>' +
-          '<b>' + esc(c.title) + '</b>' +
-          (ch.line ? '<small>' + esc(ch.line) + '</small>' : '') +
-          '<span class="mn__camp-n"><b>' + n.toLocaleString("en-US") + '</b> ' + (n === 1 ? "person" : "people") + ' in</span></a>';
-      }).join("");
-      $("mnRail").hidden = false;
-    }).catch(function () {});
   }
 
   function editProfile() {
@@ -2023,8 +2893,13 @@
 
   function setAuthMode(mode) {
     var create = mode === "create";
-    $("mnCreateNameWrap").hidden = !create;
+    /* the account is the email and a password; the name, the address and the phone are the three pages after it */
     $("mnConfirmWrap").hidden = !create;
+    $("mnCreateNote").hidden = !create;
+    /* agreed on the way in: a line says so; only seen: one box to tick (seen is not agreed, js/live-content.js) */
+    var agreed = privacyAgreed();
+    $("mnCreatePrivacy").hidden = !create || !agreed;
+    $("mnCreateAgree").hidden = !create || agreed;
     $("mnSignInTab").classList.toggle("is-active", !create);
     $("mnCreateTab").classList.toggle("is-active", create);
     $("mnSignInTab").setAttribute("aria-selected", create ? "false" : "true");
@@ -2069,39 +2944,78 @@
     });
   }
 
+  /* A REFUSAL HAS TO BE SEEN (carried over from the account page's own form, which this replaces): the reason is
+     announced, the field that needs the person is focused, and the reason alone, never what was typed, is counted */
+  function authFail(msg, fieldId, reason) {
+    var st = $("mnAuthStatus");
+    setStatus(st, msg, "error");
+    st.setAttribute("role", "alert");
+    var f = fieldId ? $(fieldId) : null;
+    if (f) {
+      f.setAttribute("aria-invalid", "true");
+      try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); }
+      try { f.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+    }
+    if (reason) track("signup_blocked", { reason: reason });
+  }
+  function privacyAgreed() {
+    try { return !!(window.MCC_PRIVACY && MCC_PRIVACY.accepted && MCC_PRIVACY.accepted()); } catch (e) { return false; }
+  }
   function submitPasswordAuth() {
     var create = $("mnSignedOut").getAttribute("data-auth-mode") === "create";
     var email = $("mnEmail").value.trim(), password = $("mnPassword").value;
     var button = $("mnAuthGo");
-    if (!email || !password) { setStatus($("mnAuthStatus"), "Enter your email and password.", "error"); return; }
-    if (create && password.length < 8) { setStatus($("mnAuthStatus"), "Use at least 8 characters.", "error"); return; }
-    if (create && password !== $("mnPassword2").value) { setStatus($("mnAuthStatus"), "Those passwords do not match.", "error"); return; }
+    if (!email || !password) {
+      if (create) authFail("Enter your email and a password.", email ? "mnPassword" : "mnEmail", email ? "missing_password" : "missing_email");
+      else setStatus($("mnAuthStatus"), "Enter your email and password.", "error");
+      return;
+    }
+    if (create && password.length < 8) { authFail("Use at least 8 characters.", "mnPassword", "password_short"); return; }
+    if (create && password !== $("mnPassword2").value) { authFail("Those passwords do not match.", "mnPassword2", "password_mismatch"); return; }
+    if (create && !privacyAgreed()) {
+      if (!$("mnCreateAgreeBox").checked) { authFail("Tick the box to agree to the Privacy Policy.", "mnCreateAgreeBox", "privacy_unchecked"); return; }
+      try { MCC_PRIVACY.acknowledge(); } catch (e) {}
+    }
 
     button.disabled = true;
     button.textContent = create ? "Creating…" : "Signing in…";
     setStatus($("mnAuthStatus"), "");
+    $("mnAuthStatus").setAttribute("role", "status");
 
-    var name = $("mnCreateName").value.trim() || email.split("@")[0];
+    /* nothing is guessed for the name: page 1 asks for it. The privacy agreement (on the way in, or the box above) is
+       recorded with the account, as the account page's form did; a notice only seen is never recorded as agreed. */
+    var ack = create && privacyAgreed() ? { privacy_policy_version: MCC_PRIVACY.version, privacy_acknowledged_at: new Date().toISOString() } : {};
+    if (create) track("signup_started", { flow: "password" });
     var action = create
-      ? MCC.signUpWithPassword(email, password, { name:name, full_name:name })
+      ? MCC.signUpWithPassword(email, password, ack)
       : MCC.signInWithPassword(email, password);
 
     Promise.resolve(action).then(function (result) {
       if (create && result && result.existing) {
+        track("signup_existing_account", { flow: "password" });
         setAuthMode("signin");
         $("mnEmail").value = email;
         setStatus($("mnAuthStatus"), "An account already exists for that email. Sign in, or use Forgot password.", "error");
         return null;
       }
       if (create && result && result.confirm) {
+        track("signup_succeeded", { flow: "password", verification: "pending" });
         state.pendingVerificationEmail = email;
+        /* the first sign-in after the confirmation carries on into the pages, and back (FLOW) */
+        rememberJoin(email);
         setStatus($("mnAuthStatus"), "Check your email to verify your address. After verification, sign in with the password you just created.", "ok");
         $("mnResend").hidden = false;
         return null;
       }
+      /* a new account goes straight into the three pages */
+      if (create) { track("signup_succeeded", { flow: "password", verification: "immediate" }); FLOW.on = true; }
       return enterAfterAuth();
     }).catch(function (e) {
-      setStatus($("mnAuthStatus"), e.message || (create ? "Could not create that account." : "Could not sign in."), "error");
+      if (!create) { setStatus($("mnAuthStatus"), e.message || "Could not sign in.", "error"); return; }
+      var rateLimited = /429/.test(String(e && (e.code || e.status) || "")) || /rate.limit|too many requests/i.test(String(e && e.message || ""));
+      track("signup_failed", { flow: "password", reason: rateLimited ? "rate_limited" : "server_error" });
+      authFail(rateLimited ? "Too many sign-ups right now. Wait a minute before trying again, or sign in if you already have an account." : (e.message || "Could not create that account."),
+        null, "server_" + String(e && (e.code || e.status) || "error").slice(0, 40));
     }).finally(function () {
       button.disabled = false;
       button.textContent = create ? "Create account" : "Sign in";
@@ -2138,6 +3052,7 @@
       if (e.key === "Enter" && $("mnSignedOut").getAttribute("data-auth-mode") !== "create") submitPasswordAuth();
     });
     $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
+    ["mnEmail", "mnPassword", "mnPassword2", "mnCreateAgreeBox"].forEach(function (id) { $(id).addEventListener(id === "mnCreateAgreeBox" ? "change" : "input", function () { $(id).removeAttribute("aria-invalid"); }); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
     $("mnPasswordChange").onclick = changePassword;
     $("mnNewPassword2").addEventListener("keydown", function (e) {
@@ -2145,7 +3060,12 @@
     });
     wireAvatarPicker();
     wireTrackPicker();
-    $("mnProfileBack").onclick = function () { showGate("app"); setView(needsStep() ? "feed" : "profile"); };
+    $("mnProfileBack").onclick = function () {
+      /* leaving the pages: the World, with the step waiting in its card; the feed loads if the flow opened the pages first */
+      FLOW.on = false;
+      showGate("app"); setView(needsStep() ? "feed" : "profile");
+      if (!state.feed.length) { paintFinishCard(); requestAnimationFrame(function () { moveThumb(false); }); loadFeed(true); }
+    };
     $("mnFinishGo").onclick = function () {
       if (state.stall === "signin") { openSignIn("signin", "Your sign-in ended. Sign in again."); return; }
       if (state.stall === "retry") { retryStall(); return; }
@@ -2171,8 +3091,12 @@
         .then(function () { $("mnAcceptConversation").hidden=true; $("mnMessageForm").hidden=false; setStatus($("mnConversationStatus"),"Accepted.","ok"); return loadConversations(); })
         .catch(function (e) { setStatus($("mnConversationStatus"),e.message||"Could not accept request.","error"); });
     };
-    $("mnMore").onclick = function () { loadFeed(false); };
+    $("mnMore").onclick = function () {
+      if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(false);
+      else loadFeed(false);
+    };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
+    $("mnPushToggle").onclick = togglePush;
     wireMenu();
     $("mnGuestSignIn").onclick = function () { openSignIn("signin"); };
     $("mnGuestJoin").onclick = function () { openSignIn("create"); };
@@ -2180,7 +3104,19 @@
     $("mnSignedOutBack").onclick = function () { showGate("app"); setView("feed"); if (!state.feed.length) loadFeed(true); };
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
-    $("mnBell").onclick = function () { setView("notifications"); };
+    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { state.world.scopeFromTap = false; setFeedScope(b.dataset.feedScope); }; });
+    paintFeedScope();
+    loadPlaceStatus();
+    $("mnBell").onclick = function () { if ($("mnAlerts").hidden) openAlerts(); else closeAlerts(); };
+    /* a tap anywhere else, or Escape, closes the drop down; the page under it never moved */
+    document.addEventListener("click", function (e) {
+      var pop = $("mnAlerts");
+      if (!pop || pop.hidden || pop.contains(e.target) || $("mnBell").contains(e.target)) return;
+      closeAlerts();
+    }, true);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("mnAlerts").hidden) { closeAlerts(); $("mnBell").focus(); } });
+    /* a tap on the globe lands in its frame, never on this page: the page only sees its window lose focus to the frame */
+    window.addEventListener("blur", function () { setTimeout(function () { var f = document.activeElement; if (f && f.tagName === "IFRAME") closeAlerts(); }, 0); });
     $("mnComposerLive").onclick = function () { if (window.MCC_LIVE && MCC_LIVE.studio) MCC_LIVE.studio(); };
     $("mnProfileBlocked").onclick = function () { setView("discover"); loadBlocked(); };
     window.addEventListener("resize", function () { moveThumb(false); });
@@ -2205,7 +3141,26 @@
       });
     }
 
+    /* NO SIGN-IN FLASH (owner, 2026-10-20: "before I hit the global screen, I see flashes of the sign-in screen"). The
+       sign-in form ships hidden and opens only when something asks for it. A member's World shell is up at once while
+       the stored session is checked over the network, instead of the form standing there for that wait. The World ships
+       open on its own room (mnet.html), so that shell is the World, never the Live room; a room asked for by address is
+       put up instead, empty, and filled once the member's World has loaded. */
+    var stored = MCC.session && MCC.session();
+    if ((stored && stored.access_token) || handoff.pending) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
+    /* a sign-in being carried in: the World waits for it (above) rather than opening as a guest first; if the trade
+       never answers, the visitor's World opens as it would have, and a late answer reloads the page as before */
+    if (handoff.pending && !handoff.done) {
+      var once = false, go = function () { if (once) return; once = true; handoff.pending = handoff.pending && handoff.done; enterSession(); };
+      handoff.waiters.push(go);
+      setTimeout(go, 8000);
+      return;
+    }
+    enterSession();
+  }
+  function enterSession() {
     MCC.user().then(function (user) {
+      if (leaving) return;
       state.user = user;
       if (!user) {
         var existing = MCC.session && MCC.session();
@@ -2221,6 +3176,7 @@
         });
       });
     }).catch(function (error) {
+      if (leaving) return;
       var existing = MCC.session && MCC.session();
       if (existing && existing.access_token) showSignedInLoadError(error);
       else enterGuestWorld();
@@ -2427,7 +3383,8 @@
   function loadGroups() {
     var host = $("mngCards");
     if (!host) return Promise.resolve();
-    if (!groups.all.length) host.innerHTML = '<p class="mng__empty">Loading rooms…</p>';
+    /* the first time, cards in their shape; after that the rooms on screen stay while they refresh */
+    if (!groups.all.length && !host.querySelector(".mn__skel")) host.innerHTML = skeletonCards(3);
     return api("/v1/mnet/groups").then(function (out) {
       groups.all = (out && out.groups) || [];
       assignSkins(groups.all);
@@ -2594,6 +3551,10 @@
   window.MCC_MNET = {
     markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
     api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
+    /* the live studio (js/mnet-live.js) offers to place a broadcast in the country on the globe, when the country feed is on */
+    placeForLive: function () { var c = state.world.country; return state.placeScope.enabled && c && /^[A-Z]{2}$/.test(c.code || "") ? { code: c.code, name: c.name || placeName(c.code) } : null; },
+    /* the audio rooms (js/mnet-audio.js) send a signed-out visitor here to go past their own region */
+    signIn: function (why) { askToSignIn(why); },
     identity: function () { return identity(); },
     /* the member desk (js/member-desk.js) reads the profile and opens the editor */
     profile: function () { return profile(); },
@@ -2681,6 +3642,10 @@
     var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
+  /* Public display name; stable mission IDs and the published historical source remain unchanged. */
+  function publicMission(m) {
+    return m && m.title === "Write the Change" ? Object.assign({}, m, { title: "Write a Song" }) : m;
+  }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   var missionListVersion=0;
   function loadMissions(){
@@ -2698,13 +3663,14 @@
       if(version!==missionListVersion)return;
       missions.extras={};(Array.isArray(out[2])?out[2]:[]).forEach(function(x){if(x&&x.mission_id)missions.extras[x.mission_id]=x;});
       /* clip campaigns are paid work and live in the Clips tab */
-      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
+      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";}).map(publicMission);missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       if(worldMissionDeck)worldMissionDeck.update(missions.all);
       worldMissionDeckLoaded=true;
+      paintActionRecord();
       setStatus($("mnMissionStatus"),"");
       return true;
     }).catch(function(e){if(version===missionListVersion){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");if(worldMissionDeck)worldMissionDeck.fail(e.message||"Missions could not load.");}return false;});
@@ -2735,7 +3701,7 @@
      server counts them, so the form only appears when it will be accepted. */
   function fellowshipBlock(verified){
     var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=f.eligible?0:Math.max(0,need-verified);
-    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Human Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
+    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Equity Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
     if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
     if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
     var declined=app&&app.status==="declined";
@@ -2760,6 +3726,24 @@
       .then(function(){if(window.MCC_TRACK)window.MCC_TRACK("fellowship_apply",{});return loadActionRecord();})
       .catch(function(e){setStatus($("mnFellowStatus"),e.message||"Your application could not be sent.","error");b.disabled=false;});
   }
+  /* WHAT'S NEXT (owner, 2026-10-20: a finished mission should lead somewhere). Once something is verified, the record
+     names one open mission the member has not taken: one sharing a skill or a field with what they finished, else the
+     one most people have joined. Nothing shows when there is nothing new to take. */
+  function nextMission(r){
+    var taken={}, ref={};
+    (r.missions||[]).forEach(function(m){taken[m.mission_id]=m;});
+    var done=(r.missions||[]).filter(function(m){return m.status==="verified";});
+    var open=(missions.all||[]).filter(function(m){return !taken[m.id];});
+    if(!done.length||!open.length)return null;
+    // the record carries each finished mission's skills and field, even once that mission has closed
+    done.forEach(function(d){
+      var m=d.skills||d.domain?d:(missions.all||[]).find(function(x){return x.id===d.mission_id;});
+      if(m){(m.skills||[]).forEach(function(k){ref["s:"+k]=1;});if(m.domain)ref["d:"+m.domain]=1;}
+    });
+    function near(m){var n=m.domain&&ref["d:"+m.domain]?1:0;(m.skills||[]).forEach(function(k){if(ref["s:"+k])n+=2;});return n;}
+    function joined(m){return Number((missions.stats[m.id]||{}).joined)||0;}
+    return open.slice().sort(function(a,b){return near(b)-near(a)||joined(b)-joined(a);})[0];
+  }
   function paintActionRecord(){
     var r=missions.record; if(!r)return;
     var verified=Number(r.verified_actions)||0, points=Number(r.points)||0, cohorts=r.cohorts||[];
@@ -2781,7 +3765,9 @@
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
     }).join("");
     host.hidden=false;
+    var next=nextMission(r);
     host.innerHTML='<div class="mn__record-head"><div><p class="mn__eyebrow">Your Action Record</p><h2>'+verified+' verified '+(verified===1?"action":"actions")+'</h2></div><strong>'+points.toLocaleString()+' pts</strong></div>'+
+      (next?'<div class="mn__record-next"><p class="mn__eyebrow">Next for you</p><b>'+esc(next.title)+'</b><button class="mn__primary" type="button" data-open-mission="'+esc(next.id)+'">View mission</button></div>':"")+
       fellowship+
       (skills?'<ul class="mn__record-skills">'+skills+'</ul>':"")+
       (cohorts.length?'<ul class="mn__record-cohorts">'+cohorts.map(function(c){return '<li><b>'+esc(c.name)+'</b><span>'+esc(c.members)+' members · '+esc(Number(c.points).toLocaleString())+(c.goal_points?" of "+esc(Number(c.goal_points).toLocaleString()):"")+' pts</span></li>';}).join("")+'</ul>':"")+
@@ -2791,7 +3777,7 @@
   function fetchMission(id){
     var hit=missions.all.find(function(x){return x.id===id;});
     if(hit)return Promise.resolve(hit);
-    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]||null;});
+    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]?publicMission(rows[0]):null;});
   }
   function clearMissionCapture(){
     if(missions.proofPreview){try{URL.revokeObjectURL(missions.proofPreview);}catch(_){} missions.proofPreview="";}
@@ -2953,6 +3939,7 @@
     return f;
   }
   function openMission(id){
+    if(MISSIONS_OFF)return;
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
       if(version!==missionOpenVersion)return;
@@ -3073,7 +4060,7 @@
   }
   /* A shared mission link opens that mission, not the feed. */
   function openDeepLinkedMission(){
-    if(missions.deepLinked)return;
+    if(MISSIONS_OFF||missions.deepLinked)return;
     var id=null; try{id=new URLSearchParams(location.search).get("mission");}catch(_){}
     if(!id||!/^[0-9a-f-]{36}$/i.test(id))return;
     missions.deepLinked=true; setView("missions"); openMission(id);
@@ -3188,6 +4175,10 @@
     if(!window.MCC_MISSION_DECK||!$("huMissionList"))return null;
     worldMissionDeck=window.MCC_MISSION_DECK.mount($("huMissionList"),{
       onAccept:acceptWorldMission,onOpen:openWorldMission,
+      onCompleted:function(host) {
+        if (!window.DocketCohortShowcase || !window.DocketCohortShowcase.mountSeries) throw Error("Completed mission series is unavailable.");
+        return window.DocketCohortShowcase.mountSeries(host);
+      },
       onRefresh:function(){worldMissionDeckLoaded=false;return loadWorldMissionDeck();}
     });
     if(worldMissionDeckLoaded)worldMissionDeck.update(missions.all);
@@ -3204,7 +4195,13 @@
   window.addEventListener("mcc:world-mode",function(e){
     if(e.detail&&e.detail.mode==="missions"){
       loadWorldMissionDeck();
-      if(window.DocketCohortShowcase&&$("mnCompletedMissions"))window.DocketCohortShowcase.mount($("mnCompletedMissions"));
+      /* The confirmed cohort capstone remains mapped independently of whether
+         someone has opened the Completed tab yet. */
+      if(window.DocketCohortShowcase&&window.DocketCohortShowcase.ensureMap)window.DocketCohortShowcase.ensureMap();
+      if(new URLSearchParams(location.search).has("completed")){
+        var completedTab=document.querySelector('.mn-swipe__filters [data-status="completed"]');
+        if(completedTab&&completedTab.getAttribute("aria-selected")!=="true")completedTab.click();
+      }
     }
   });
   function paintMissionPreview() {
@@ -3302,10 +4299,11 @@
     suggest.n = 0;
     if (q) {
       var hits = function (fields) { return fields.join(" ").toLocaleLowerCase().indexOf(q) !== -1; };
-      var pinned = Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; })
+      var pinned = MISSIONS_OFF ? [] : Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; })
         .filter(function (m) { return hits([m.title, m.description, m.region_label, m.action_path]); }).slice(0, 4);
       if (pinned.length) html += suggestHead("On the globe") + pinned.map(function (m) { return suggestRow("globe", m.mission_id, m.title, m.region_label); }).join("");
       if (!state.guest) {
+        if (!suggest.missions && MISSIONS_OFF) suggest.missions = [];
         if (!suggest.missions) {
           suggest.missions = [];
           sbRest("action_missions?status=eq.open&select=id,title,description,domain,kind&order=created_at.desc&limit=200").then(function (rows) {
@@ -3404,7 +4402,8 @@
      terms from the campaigns are shown; hidden while none are open */
   function paintClipDoor() {
     var door = $("mnClipDoor");
-    if (!door) return;
+    /* no campaigns are promoted on the feed while the World is the social feed (owner, 2026-10-20) */
+    if (!door || MISSIONS_OFF) return;
     if (!state.clipOpen) {
       state.clipOpen = [];
       sbRpc("clip_campaigns_open", { p_song: null }).then(function (rows) {
@@ -3448,6 +4447,7 @@
       if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
       var d = ev.data || {}, caption = $("mnWorldCaption");
       if (d.type === "hu:globe-ready") {
+        if (state.placeScope.livePlaces) tellWorld({ type: "hu:live-places", source: "video", places: state.placeScope.livePlaces });
         state.world.pins = {}; state.world.missions = {}; state.world.latest = null;
         (Array.isArray(d.missionIds) ? d.missionIds : []).forEach(function (id) { if (WORLD_ID.test(String(id))) state.world.pins[id] = true; });
         (Array.isArray(d.missions) ? d.missions : []).forEach(function (m) {
@@ -3484,7 +4484,41 @@
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
       } else if (d.type === "hu:country") {
-        $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
+        /* A SIGNED-OUT VISITOR STAYS IN THEIR REGION (owner, 2026-10-20: "if they're logged out and their IP address
+           says somewhere, that's where they're gonna go … they can't region hop unless they're logged in"). Outside
+           Travel, another country asks them to sign in and the globe goes back home; letting go also goes home. */
+        var home = state.guest && state.placeScope.enabled ? state.placeScope.home : null,
+            tapped = d.country && typeof d.country.code === "string" ? d.country.code.toUpperCase() : null;
+        if (home && tapped !== home && !(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel")) {
+          if (tapped) askToSignIn("regions");
+          tellWorld({ type: "hu:select-country", code: home });
+          return;
+        }
+        /* A STATE (owner, 2026-10-21): a double tap inside the selected country picks a state; its name leads the label and
+           Local keeps the stories placed inside its shape */
+        var prevCountry = state.world.country, tappedState = worldState(d.country && d.country.state);
+        $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? (tappedState ? tappedState.name + ", " : "") + d.country.name.slice(0, 80) : "All regions";
+        /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
+        state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80), state: tappedState } : null;
+        var sameCountry = !!(prevCountry && state.world.country && prevCountry.code === state.world.country.code);
+        if (state.world.country) state.world.country.stats = placeStats(d.country.stats);
+        paintPlaceCard(state.world.country);
+        /* a post stays placed in the country, so a state picked or let go there keeps the member's choice */
+        if ($("mnPostPlaceOptIn") && !sameCountry) $("mnPostPlaceOptIn").checked = false;
+        paintFeedScope();
+        /* CLICK THE PLANET, FILTER THE FEED (owner, 2026-10-19). A country tapped outside Travel narrows the one feed to
+           that country with no extra press; letting the country go returns the feed to Global, unless the member chose
+           Local themselves. In Travel a tap picks a destination and leaves the feed alone. */
+        var travelTap = !!(window.MCC_WORLD_MODE && window.MCC_WORLD_MODE.get && window.MCC_WORLD_MODE.get() === "travel");
+        if (state.world.country && !travelTap && state.feedScope !== "local") { state.world.scopeFromTap = true; setFeedScope("local"); }
+        else if (!state.world.country && state.world.scopeFromTap) { state.world.scopeFromTap = false; setFeedScope("global"); }
+        /* a state of the country already read narrows what is loaded; only another country reads again */
+        else if (state.feedScope === "local" && state.placeScope.enabled && !(sameCountry && state.placeScope.country === state.world.country.code)) loadPlaceFeed(true);
+        else if (state.feedScope === "local") renderFeed(false);
+      } else if (d.type === "hu:place-stats") {
+        /* the counts arrive after the tap: the card follows, for the place still picked */
+        var pl = d.place, cur = state.world.country;
+        if (pl && cur && pl.code === cur.code && (pl.state || null) === ((cur.state && cur.state.key) || null)) { cur.stats = placeStats(pl.stats); paintPlaceCard(cur); }
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
       } else if (d.type === "hu:ask-sign-in") {

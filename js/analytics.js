@@ -1,8 +1,17 @@
 /* Privacy gate enforcement: no McCluster analytics, device/session IDs,
    service-worker registration or location reads begin until the current site-entry
-   notice has been acknowledged. The policy page itself can still be read. */
-var MCC_PRIVACY_REQUIRED_VERSION = "2026-09-26";
+   notice has been AGREED to. Having only seen it ("Not now") is not enough.
+   The policy page itself can still be read.
+   js/live-content.js owns the notice, its version and every record of the
+   answer (browser storage, the cookie McCluster's own hosts share, a member's
+   account record), so this asks it whenever the page loads it. The fallback
+   below is for the few pages that load this file alone; the version here must
+   stay equal to live-content.js's (workers/mccluster/test/world-cctv.test.mjs). */
+var MCC_PRIVACY_REQUIRED_VERSION = "2026-10-19";
 function mccPrivacyAcknowledged() {
+  try {
+    if (window.MCC_PRIVACY && typeof window.MCC_PRIVACY.accepted === "function") return !!window.MCC_PRIVACY.accepted();
+  } catch (_) {}
   try {
     var v = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
     if (v && v.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
@@ -11,9 +20,11 @@ function mccPrivacyAcknowledged() {
     var s = JSON.parse(sessionStorage.getItem("mcc_privacy_ack") || "null");
     if (s && s.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
   } catch (_) {}
-  return document.cookie.split(";").some(function (part) {
-    return part.trim() === "mcc_privacy_ack=" + MCC_PRIVACY_REQUIRED_VERSION;
-  });
+  try {
+    return String(document.cookie || "").split(";").some(function (part) {
+      return part.trim() === "mcc_privacy_ack=" + MCC_PRIVACY_REQUIRED_VERSION;
+    });
+  } catch (_) { return false; }
 }
 if (mccPrivacyAcknowledged()) {
 /* ============================================================
@@ -67,6 +78,15 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register(swRoot + "sw.js").catch(function () {});
   });
+  /* SIGNING OUT TAKES THE DEVICE ALERTS WITH IT (owner, 2026-10-20; workers/mccluster/src/web-push.js). On a shared
+     browser the next person must never see the last member's alerts: the subscription is dropped here, and the
+     server forgets it the next time its push service answers that it is gone. */
+  window.addEventListener("mcc:auth-changed", function (e) {
+    if (!e.detail || e.detail.signed_in !== false) return;
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      return reg && reg.pushManager ? reg.pushManager.getSubscription() : null;
+    }).then(function (sub) { if (sub) return sub.unsubscribe(); }).catch(function () {});
+  });
 }
 
 window.MCC_TRACK = (function () {
@@ -97,16 +117,19 @@ window.MCC_TRACK = (function () {
   }
 
   function uuid() {
+    var b = new Uint8Array(16);
     try {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-      var b = new Uint8Array(16);
+      if (!window.crypto || !crypto.getRandomValues) throw new Error("No secure random available");
       crypto.getRandomValues(b);
-      b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
-      var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
-      return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
     } catch (e) {
-      return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      /* UUIDs are dedupe keys, never credentials. Even a legacy browser
+         without Web Crypto must mint a *valid stable UUIDv4* per event. */
+      for (var i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
     }
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+    return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
   }
 
   /* ---- the device ----
@@ -299,7 +322,7 @@ window.MCC_TRACK = (function () {
   var timer = null;
 
   function send(batch, keepalive) {
-    if (!batch.length) return;
+    if (!batch.length) return Promise.resolve(null);
     var headers = { "Content-Type": "application/json", apikey: SB_KEY };
     var auth = bearer();
     if (auth) headers.Authorization = auth;
@@ -317,18 +340,30 @@ window.MCC_TRACK = (function () {
        page is gone. It is the difference between recording the last
        thing somebody did and recording everything except that. */
     if (keepalive) opts.keepalive = true;
-    try {
-      return fetch(COLLECT, opts).then(function (r) {
-        /* A blocked or unreachable first-party route is worth one retry at
-           the writer directly. Not a loop: two attempts, then the batch is
-           gone, because nobody's page should stall over a statistic. */
-        if (!r || r.ok) return r;
-        return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; });
-      }).catch(function () {
-        try { return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; }); }
-        catch (e2) { return null; }
+    /* Both attempts carry the SAME minted event IDs. The writer's unique
+       primary key makes an ambiguous timeout followed by a successful
+       fallback safe: a retry can no longer create duplicate analytics. */
+    function attempt(endpoint) {
+      return fetch(endpoint, opts).then(function (r) {
+        if (!r || !r.ok) return null;
+        return r.clone().json().then(function (ack) {
+          return ack && ack.ok === true ? r : null;
+        }).catch(function () { return null; });
+      }).catch(function () { return null; });
+    }
+    function route() {
+      return attempt(COLLECT).then(function (r) { return r || attempt(COLLECT_FALLBACK); });
+    }
+    return route().then(function (r) {
+      if (r || keepalive || privacySignal() || !mccPrivacyAcknowledged()) return r;
+      /* A normal page can retry transient failures once more; a page being
+         torn down cannot rely on delayed work, so it uses keepalive instead.
+         This is bounded best-effort delivery, not a durable offline queue. */
+      return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(function () {
+        if (!mccPrivacyAcknowledged() || privacySignal()) return null;
+        return route();
       });
-    } catch (e) { return Promise.resolve(null); }
+    });
   }
 
   function flush(keepalive) {
@@ -356,6 +391,7 @@ window.MCC_TRACK = (function () {
       if (/^[a-z0-9][a-z0-9._-]{2,39}$/.test(creatorHandle)) props.creator_handle = creatorHandle;
     }
     queue.push({
+      id: uuid(), // per-event, never reused for a different action
       name: String(name || "").slice(0, 120),
       path: location.pathname.split("/").pop() || "index.html",
       props: props,

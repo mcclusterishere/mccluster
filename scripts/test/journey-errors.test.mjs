@@ -91,13 +91,17 @@ test('the album says what happened: failed plays, gated previews, no dead tip do
   assert.match(album, /replace\(\/\[-_\]\+\/g, " "\)/, 'play counts match the normalized track key');
 });
 
+/* the one sign-up (owner, 2026-10-20) is the World's form now; the account page's refusal behaviour went with it */
 test('sign-up refusals take the visitor to the field and count the reason only', async () => {
-  const account = await read('account.html');
-  const fail = slice(account, 'function createFail(msg, fieldId, reason)', '["acCreateFirst"');
+  const mnet = await read('js/mnet.js');
+  const fail = slice(mnet, 'function authFail(msg, fieldId, reason)', 'function submitPasswordAuth()');
   assert.match(fail, /setAttribute\("role", "alert"\)/);
   assert.match(fail, /setAttribute\("aria-invalid", "true"\)/);
   assert.match(fail, /\.focus\(/);
-  assert.match(fail, /MCC_TRACK\("signup_blocked", \{ reason: reason \}\)/, 'never what was typed');
+  assert.match(fail, /track\("signup_blocked", \{ reason: reason \}\)/, 'never what was typed');
+  const submit = slice(mnet, 'function submitPasswordAuth()', 'function boot()');
+  for (const reason of ['missing_email', 'missing_password', 'password_short', 'password_mismatch']) assert.ok(submit.includes('"' + reason + '"'), reason);
+  assert.doesNotMatch(await read('account.html'), /function createFail\(/, 'no second sign-up form to refuse from');
 });
 
 test('the current app-bar tab scrolls to the top, home included', async () => {

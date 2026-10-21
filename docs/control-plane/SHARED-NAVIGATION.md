@@ -13,7 +13,7 @@ Operations, Studio, System and Products filters and text search. This avoids
 shrinking dozens of buttons into one row. Its groups swipe horizontally and its
 destination list scrolls independently; the page and bar stay in place.
 
-All 34 native Control routes are read from `js/control-room/workspace-core.js`,
+All 35 native Control routes are read from `js/control-room/workspace-core.js`,
 the same inventory used by the owner workspace. Existing contract tests compare
 that inventory to the actual router's work/create/system views. Eight existing
 product/workspace doors are included: World, Your desk, Hitman's Halo, PRIM3,

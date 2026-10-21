@@ -112,6 +112,38 @@
   .hu-travel-enabled .mn__world-feed { margin:15px 20px 0 0;padding:22px 22px calc(var(--mn-bar-clear,96px) + 20px);border:1px solid #ffffff22;border-radius:18px 18px 0 0;background:#0e1113; }
   .wt-headline { top:24px; }
 }
+/* Travel: pick exact endpoints on the existing Earth, without new map chrome. */
+/* Autocomplete options must stack above the new picker row, not behind it. */
+.wt-fields--main { position:relative;z-index:2; }
+.wt-map-pick-actions { position:relative;z-index:1; }
+.wt-map-pick-actions { display:flex;gap:8px;margin:8px 0 2px; }
+.wt-map-pick-actions button { flex:1;min-width:0;min-height:44px;padding:8px 10px;border:1px solid #ffffff33;border-radius:12px;background:#171d23;color:#e7ecf0;font:400 12px/1.3 var(--mn-ui);cursor:pointer; }
+.wt-map-pick-actions button[aria-pressed="true"] { border-color:#ec4667;background:#4a1826;color:#fff; }
+.wt-map-pick-banner,.wt-map-nav { position:absolute;left:50%;transform:translateX(-50%);z-index:17;width:min(420px,calc(100% - 24px));box-sizing:border-box;background:#111820f0;color:#f2f4f5;border:1px solid #ffffff55;border-radius:16px;box-shadow:0 6px 28px #0009;pointer-events:auto; }
+.wt-map-pick-banner[hidden],.wt-map-nav[hidden] { display:none!important; }
+.wt-map-pick-banner { top:clamp(96px,28%,205px);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px; }
+.wt-map-pick-banner span { flex:1;min-width:0;font:500 14px/1.4 var(--mn-ui); }
+.wt-map-pick-banner button { flex:none;min-height:44px;border:1px solid #ffffff55;border-radius:22px;padding:8px 14px;background:#27313b;color:#fff;font:500 13px var(--mn-ui);cursor:pointer; }
+/* The right-hand globe zoom/location rail has priority on narrow screens. */
+.wt-map-nav { bottom:88px;padding:12px;left:12px;transform:none;width:calc(100% - 88px);max-width:none; }
+.wt-map-nav-actions button { padding:8px;font-size:13px; }
+@media(min-width:601px) {
+ .wt-map-nav { left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 24px)); }
+ .wt-map-nav-actions button { padding:9px 12px;font-size:15px; }
+}
+.wt-map-nav p { margin:0 0 9px;color:#f3f4f1;font:500 15px/1.4 var(--mn-ui);overflow-wrap:anywhere; }
+.wt-map-nav-actions { display:flex;gap:8px; }
+.wt-map-nav-actions button { min-height:48px;flex:1;padding:9px 12px;border-radius:26px;border:1px solid #ffffff44;background:#222d37;color:#f3f4f5;font:500 15px var(--mn-ui);cursor:pointer; }
+.wt-map-nav-actions #wtMapNavGo { background:#bf0028;border-color:#f12b51; }
+.wt-map-nav-actions button:disabled { opacity:.5;cursor:wait; }
+.wt-map-nav-actions button[hidden] { display:none!important; }
+@media(max-height:450px) {
+ .wt-map-pick-banner { top:70px;padding:5px 10px; }
+ .wt-map-nav { bottom:77px;padding:7px 10px; }
+ .wt-map-nav p { font-size:13px;margin-bottom:5px; }
+ .wt-map-nav-actions button { min-height:44px; }
+}
+
 @media (min-width:1400px) {
   .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) { grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); }
   .wt-fields--main { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
@@ -138,6 +170,8 @@
   margin:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.43fr) minmax(0,.57fr);
 }
 .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.35fr) minmax(0,.65fr); }
+/* Missions is one screen (css/mission-swipe-deck.css): the globe gives the deck the room, as it does for navigation */
+.hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.34fr) minmax(0,.66fr); }
 .hu-travel-enabled.mn-world-on .mn__world-home { margin:0;grid-row:1;grid-column:1; }
 .hu-travel-enabled.mn-world-on .mn__world-frame { inset:0;width:100%;height:100%; }
 .hu-travel-enabled.mn-world-on .wt-headline { top:70px;left:16px;font-size:24px;z-index:9; }
@@ -146,10 +180,13 @@
   height:44px;margin:0;padding:0 12px;gap:9px;border-radius:24px;background:#10151cc7;z-index:12;
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
 }
-.hu-travel-enabled.mn-world-on .mn__world-expand { top:157px;right:12px;bottom:auto; }
-.wt-world-modes { width:232px;bottom:28px;padding:0;border:0;background:none;height:44px; }
+/* the corner stack rides beside the headline, play then fullscreen in one row, so the globe's own travel rail keeps its
+   bottom-right slot at every phone size and never has to jump when the Earth expands (the rail re-places a frame later,
+   which a slow renderer can miss) */
+.hu-travel-enabled.mn-world-on .mn__world-stack { top:111px;right:12px;bottom:auto;flex-direction:row;align-items:center;gap:8px; }
+.wt-world-modes { width:240px;bottom:28px;padding:0;border:0;background:none;height:44px; }
 .wt-world-modes::before { content:'';position:absolute;inset:6px 0;border:1px solid #ffffff2b;border-radius:24px;background:#10151cde;pointer-events:none; }
-.wt-world-modes button { position:relative;min-height:44px;font-size:12px;padding:0 10px;border:0;background:transparent;box-shadow:none;isolation:isolate; }
+.wt-world-modes button { position:relative;min-height:44px;font-size:12px;padding:0 8px;border:0;background:transparent;box-shadow:none;isolation:isolate;white-space:nowrap; }
 .wt-world-modes [aria-pressed="true"] { border:0;background:transparent;box-shadow:none; }
 .wt-world-modes [aria-pressed="true"]::before { content:'';position:absolute;inset:6px 2px;border-radius:24px;background:#8c0b27;border:1px solid #e12549;z-index:-1; }
 .hu-travel-enabled.mn-world-on .mn__world-feed {
@@ -208,6 +245,7 @@
 @media (min-width:1000px), (min-width:600px) and (orientation:landscape) {
   .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
+  .hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on .mn__world-feed { grid-row:1;grid-column:2;margin:72px 16px 0 0;padding-top:20px;border:1px solid #ffffff20;border-radius:22px 22px 0 0; }
   .hu-travel-enabled.mn-world-on .wt-world-modes { bottom:calc(var(--mn-bar-clear,96px) + 28px); }
   .hu-travel-enabled.mn-world-on .wt-destination,.hu-travel-enabled.mn-world-on .hu-world-filters { bottom:calc(var(--mn-bar-clear,96px) + 58px); }
@@ -308,3 +346,88 @@ body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
   pointer-events:none;
   opacity:.18;
 }
+
+/* THE TRAVEL SHEET (owner's reference, 2026-10-19): a grabber, "Where to?" with Activity, one trip card (pickup over
+   destination on a dotted thread, the globe pins inside each row), three trip types, real shortcuts and two planning
+   doors. Nothing here prices or books; the ride and flight rails below stay what they were. Mobile first. */
+.wt-sheet-grab { width:56px;height:5px;margin:-2px auto 12px;border-radius:3px;background:#ffffff38; }
+.wt-planner-head { display:flex;align-items:center;gap:10px;margin-bottom:12px; }
+.wt-planner-head #wtTitle { flex:1 1 auto;min-width:0;font-size:clamp(28px,8vw,36px); }
+.wt-planner-head .wt-status { flex:none; }
+.wt-activity { flex:none;display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 12px 0 14px;border:1px solid #ffffff2e;border-radius:24px;background:#11161bcf;color:#e9edf0;font:400 14px var(--mn-ui);cursor:pointer; }
+.wt-activity .wt-icon { width:18px;height:18px; }
+.wt-activity b { margin-left:2px;color:#9aa3ab;font-weight:400; }
+.wt-trip { position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:0;border:1px solid #ffffff26;border-radius:18px;background:#13181d; }
+.wt-trip::before { content:'';position:absolute;z-index:1;left:23px;top:44px;bottom:44px;border-left:2px dotted #ffffff55;pointer-events:none; }
+.wt-trip .wt-field { min-height:66px;margin:0;padding:10px 96px 10px 46px;border:0;border-radius:0;background:transparent;justify-content:center; }
+.wt-trip .wt-field + .wt-field { border-top:1px solid #ffffff1c; }
+.wt-trip .wt-field.wt-origin-field { padding-right:96px; }
+.wt-trip .wt-field.wt-destination-field { padding-right:96px; }
+.wt-trip .wt-field:focus-within { background:#171d23; }
+.wt-trip-dot { position:absolute;z-index:2;left:18px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#2f6fff;box-shadow:0 0 0 3px #2f6fff33; }
+.wt-trip-dot--to { background:#e6002d;box-shadow:0 0 0 3px #e6002d33; }
+.wt-field-tools { position:absolute;z-index:2;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:2px; }
+.wt-field-tools .wt-field-tool,.wt-origin-field .wt-field-tools .wt-locate { position:static;top:auto;right:auto;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:#dfe8ed;font-size:0;cursor:pointer; }
+.wt-field-tool .wt-icon { width:22px;height:22px; }
+.wt-field-tool[aria-pressed="true"] { background:#4a1826;color:#fff;box-shadow:inset 0 0 0 1px #ec4667; }
+.wt-field-tool:disabled { opacity:.5;cursor:progress; }
+.wt-field-glyph { display:grid;place-items:center;width:44px;height:44px;color:#9aa6b0; }
+.wt-field-glyph .wt-icon { width:22px;height:22px; }
+.wt-trip .wt-suggest,.wt-trip .wt-field:nth-child(2) .wt-suggest { left:12px;right:12px;max-width:none; }
+/* two tiles, the icon on top, each split by an on/off switch (owner, 2026-10-20) */
+.wt-kinds { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 10px; }
+.wt-kind { display:grid;gap:6px;min-width:0;padding:5px;border:1px solid #ffffff2a;border-radius:18px;background:#12171c; }
+.wt-kind:has(.wt-kind-head[aria-pressed="true"]) { border-color:#f0284d;box-shadow:0 10px 26px -16px #ff1744; }
+.wt-kind-head { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;padding:6px 4px;border:0;border-radius:13px;background:transparent;color:#e6eaee;font:500 15px var(--mn-ui);cursor:pointer; }
+.wt-kind-head .wt-icon { width:26px;height:26px; }
+.wt-kind-head[aria-pressed="true"] { background:#c00028;color:#fff; }
+.wt-switch { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:2px;border-radius:13px;background:#0b0f13; }
+/* the light sits over the word, so Directions and Commercial stay whole at phone width */
+.wt-switch button { position:relative;min-height:44px;min-width:0;padding:14px 2px 5px;border:0;border-radius:10px;background:transparent;color:#9aa5af;font:500 clamp(10.5px,3.1vw,13px)/1.1 var(--mn-ui);letter-spacing:-.02em;white-space:nowrap;cursor:pointer; }
+/* the light: off is a dim bar, on glows */
+.wt-switch button::before { content:'';position:absolute;left:50%;top:7px;width:16px;height:4px;margin-left:-8px;border-radius:2px;background:#3a434c; }
+.wt-switch [aria-pressed="true"] { background:#1d252d;color:#ffffff; }
+.wt-switch [aria-pressed="true"]::before { background:#ff2d55;box-shadow:0 0 0 3px #ff2d5533,0 0 10px 2px #ff2d55; }
+.wt-kind:not(:has(.wt-kind-head[aria-pressed="true"])) .wt-switch [aria-pressed="true"]::before { background:#7d2638;box-shadow:none; }
+#wtPlanner[data-travel-view="rentals"] #wtGo,#wtPlanner[data-travel-view="rentals"] #wtGroundOptions,#wtPlanner[data-travel-view="rentals"] #wtDirections,
+#wtPlanner[data-travel-view="rentals"] #wtRidePanel,#wtPlanner[data-travel-view="rentals"] #wtOptions,
+#wtPlanner[data-travel-view="private"] #wtOptions,#wtPlanner[data-travel-view="private"] #wtDirections { display:none!important; }
+.wt-rentals,.wt-private { margin:8px 0 6px; }
+.wt-rentals[hidden],.wt-private[hidden] { display:none; }
+.wt-rentals-head { display:flex;align-items:center;justify-content:space-between;gap:10px; }
+.wt-rentals-head a { display:inline-flex;align-items:center;min-height:44px;color:#9fc3ff;font:400 13px var(--mn-ui);text-decoration:none; }
+.wt-rentals-by,.wt-private p { margin:2px 0 10px;color:#9ea8b1;font:400 12px/1.45 var(--mn-ui); }
+.wt-cars { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));gap:8px; }
+.wt-car { display:grid;gap:4px;min-width:0;padding:12px;border:1px solid #f0284d;border-radius:16px;background:#12171c;color:#eef1f3; }
+.wt-car-art { display:grid;place-items:center;height:64px; }
+.wt-car-svg { width:100%;max-width:150px;height:auto; }
+.wt-car h4 { margin:2px 0 0;font:600 16px/1.2 var(--mn-ui); }
+.wt-car p { margin:0;color:#a3adb6;font:400 12px var(--mn-ui); }
+.wt-car-price strong { color:#ffffff;font:600 20px var(--mn-ui); }
+.wt-car-price small { color:#a3adb6;font-size:12px;margin-left:2px; }
+.wt-car-go { display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:6px;border-radius:22px;background:#e0102f;color:#fff;font:600 14px var(--mn-ui);text-decoration:none; }
+.wt-section-h { margin:0;color:#f1efea;font:500 15px/1.3 var(--mn-ui); }
+.wt-go { margin:8px 0 4px; }
+.wt-go[hidden] { display:none; }
+.wt-go-row { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px; }
+.wt-go-row button { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:72px;min-width:0;padding:8px 2px;border:1px solid #ffffff22;border-radius:16px;background:#12171c;color:#dfe5ea;font:400 11px/1.2 var(--mn-ui);text-align:center;cursor:pointer; }
+.wt-go-row button span { max-width:100%;overflow-wrap:anywhere; }
+.wt-go-row .wt-icon { width:22px;height:22px; }
+.wt-plan { margin:14px 0 6px; }
+.wt-plan-cards { display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-top:10px; }
+.wt-plan-cards button { display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:72px;padding:10px 14px;border:1px solid #ffffff22;border-radius:16px;background:#12171c;color:#eef1f3;font:400 14px var(--mn-ui);text-align:left;cursor:pointer; }
+.wt-plan-icon { display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#1b2229;color:#f2f4f6; }
+.wt-plan-icon .wt-icon { width:22px;height:22px; }
+.wt-plan-text { min-width:0; }
+.wt-plan-text strong { display:block;font:500 15px/1.3 var(--mn-ui); }
+.wt-plan-text small { display:block;margin-top:2px;color:#9ea8b1;font-size:12px;line-height:1.35; }
+.wt-plan-cards b { color:#9aa3ab;font-weight:400; }
+.wt-footer { margin-top:12px; }
+@media (min-width:600px) {
+  .wt-plan-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .wt-go-row button { font-size:12px; }
+}
+
+/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): Travel and Missions are off (hu-social-only on <html>, mnet.html), so
+   there is no tab to choose between them and no door into Missions: not in search, not on the profile, not on Live */
+.hu-social-only :is(.wt-world-modes,[data-mn-view="missions"],#mnProfileRecord,#mnClipDoor,#mnFeedMissions,.mn__actionboard,.mn__understand) { display:none!important; }

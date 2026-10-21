@@ -3,7 +3,7 @@
 
    Serves this checkout and puts an in-memory fake in front of
    api.mccluster.org and Supabase (no production call). Checks:
-     - the Desk tab is on the bottom app bar and opens the desk OVER the
+     - Your desk lives in the account menu and opens the desk OVER the
        globe; the bar stays visible and tappable; no sideways scroll;
      - a fellow's policy memo desk is inside it (Policy memos), with the
        creator's audience section from the same Worker numbers;
@@ -119,7 +119,7 @@ async function openPage(device, { member, url }) {
   const w = freshWorld();
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile, permissions: ['camera', 'microphone'] });
   await ctx.addInitScript((m) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; const pl = btoa(JSON.stringify({ exp, sub: 'auth-you' })).replace(/=+$/, ''); localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + pl + '.y', refresh_token: 'r', expires_at: exp })); }
   }, member);
   await route(ctx, w, { member });
@@ -134,7 +134,7 @@ async function openPage(device, { member, url }) {
 const geometry = (page) => page.evaluate(() => {
   const r = (el) => el && el.getBoundingClientRect();
   const desk = r(document.getElementById('huDesk')), bar = r(document.querySelector('.appbar')), world = r(document.getElementById('mnWorld'));
-  const tab = document.querySelector('[data-hu-desk]'), tr = r(tab);
+  const tab = document.querySelector('.appbar [data-appnav="world"]') || document.querySelector('.appbar .appbar__tab'), tr = r(tab);
   const hit = tr ? document.elementFromPoint(tr.left + tr.width / 2, tr.top + tr.height / 2) : null;
   const deskShown = !!desk && !document.getElementById('huDesk').hidden;
   return { deskShown, deskBottom: desk && Math.round(desk.bottom), deskTop: desk && Math.round(desk.top), deskLeft: desk && Math.round(desk.left), deskWidth: desk && Math.round(desk.width),
@@ -149,8 +149,10 @@ for (const device of DEVICES) {
   {
     const scope = 'member-' + device.name;
     const { ctx, page, w, errors } = await openPage(device, { member: true, url: '/mnet.html?view=feed' });
-    check(scope, 'the Desk tab is on the bottom app bar', await page.isVisible('.appbar [data-hu-desk]'));
-    await page.click('.appbar [data-hu-desk]');
+    check(scope, 'the desk lives in the account menu, not on the bottom app bar', await page.locator('.appbar [data-hu-desk]').count() === 0 && await page.locator('#mnMenu [data-hu-desk]').count() === 1);
+    await page.click('#mnMe');
+    await page.waitForSelector('#mnMenu:not([hidden]) [data-hu-desk]', { timeout: 10000 });
+    await page.click('#mnMenu [data-hu-desk]');
     await page.waitForSelector('#huDesk:not([hidden]) .hu-desk__tab', { timeout: 10000 });
     await page.waitForFunction(() => /Policy memos/.test(document.getElementById('huDeskTabs').textContent), null, { timeout: 10000 });
     await page.waitForSelector('#huDeskEditGate h3', { timeout: 10000 });

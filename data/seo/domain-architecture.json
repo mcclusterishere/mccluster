@@ -20,7 +20,8 @@
         "researcher or media: company -> projects -> public evidence -> press / contact"
       ],
       "root": "the Human Uprise World (mnet.html) passed through from the personal property with this host's head (owner, 2026-10-15); workers/mccluster/src/world-host.js",
-      "company_page": "/company"
+      "company_page": "/company",
+      "news": "/news/ (owner, 2026-10-20): the house owner's posts marked 'Publish to the newsroom', server-rendered as NewsArticle pages by workers/mccluster/src/company-site/news.js, with /news/feed.xml (RSS) and /news/sitemap.xml (Google News tags for the last two days, listed in robots.txt). Publisher: the Organization by its @id; author: Matthew McCluster by his @id. Distinct from the evidence newsroom on the personal property (/newsroom.html), which stays where it is."
     },
     "personal": {
       "host": "matthew.mccluster.org",

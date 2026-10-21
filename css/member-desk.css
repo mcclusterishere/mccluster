@@ -118,3 +118,6 @@
   .hu-desk__grip { display: none; }
   @keyframes huDeskIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 }
+/* the desk's door in the account menu */
+.mn__menu-desk svg { width:18px;height:18px;margin-right:8px;vertical-align:-4px; }
+.mn__menu-desk.is-active { color:var(--mn-hot); }

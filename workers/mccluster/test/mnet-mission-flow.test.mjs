@@ -18,7 +18,8 @@ function harness(){
   const session={access_token:'fixture-mission-session'};
   const missions={all:[],current:null,assignment:null,stats:{},campaign:'',content:'',source:'',attributedMission:'',liveSession:'',liveMission:'',returnHref:'',proofFile:null,proofPreview:''};
   const context={
-    missions,$:el,state,MCC:{session(){return session;}},MISSION_FIELDS:'id,title,status',
+    /* the mission flow is driven with Missions on: the World's social-only switch (MISSIONS_OFF in js/mnet.js) keeps it in the code */
+    missions,$:el,state,MCC:{session(){return session;}},MISSION_FIELDS:'id,title,status',MISSIONS_OFF:false,
     sbRest(path){const d=deferred();calls.push({kind:'rest',path,...d});return d.promise;},
     sbRpc(name,args){const d=deferred();calls.push({kind:'rpc',name,args,...d});return d.promise;},
     askToSignIn(reason){calls.push({kind:'gate',name:'signin',reason});},
@@ -39,13 +40,16 @@ function harness(){
   const fetchStart=source.indexOf('  function fetchMission(id){');
   const fetchEnd=source.indexOf('  function clearMissionCapture(){',fetchStart);
   assert.ok(fetchStart>0&&fetchEnd>fetchStart);
+  const missionDisplayStart=source.indexOf('  function publicMission(m) {');
+  const missionDisplayEnd=source.indexOf('  var MISSION_FIELDS=',missionDisplayStart);
+  assert.ok(missionDisplayStart>0&&missionDisplayEnd>missionDisplayStart,'mission public-title mapper exists');
   // Exercise the real account predicates; only the UI prompt and transport are doubles.
   const sessionStart=source.indexOf('  function sessionToken() {');
   const sessionEnd=source.indexOf('  function storagePath(',sessionStart);
   const stepStart=source.indexOf('  function needsStep() {');
   const stepEnd=source.indexOf('  function paintFinishCard(',stepStart);
   assert.ok(sessionStart>0&&sessionEnd>sessionStart&&stepStart>0&&stepEnd>stepStart);
-  vm.runInNewContext(source.slice(sessionStart,sessionEnd)+source.slice(stepStart,stepEnd)+source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,joinMission,submitMissionProof};',context);
+  vm.runInNewContext(source.slice(sessionStart,sessionEnd)+source.slice(stepStart,stepEnd)+source.slice(missionDisplayStart,missionDisplayEnd)+source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,joinMission,submitMissionProof};',context);
   return {actions:context.actions,missions,calls,el,state,session};
 }
 test('rapid mission switches ignore stale detail response',async()=>{

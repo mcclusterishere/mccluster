@@ -84,7 +84,7 @@ function harness({ usgs = () => json(USGS_FIXTURE), schemaReady = true } = {}) {
     intel_collector_begin: () => ({ started: true, run_id: RUN, connector_id: 'conn-1', cursor: {} }),
     intel_collector_fail: (a) => { state.runs.push({ id: a.p_run, status: 'failed', error: a.p_error }); return { run_id: a.p_run, status: 'failed' }; },
     intel_collector_commit: (a) => {
-      a.p_records.forEach((r, i) => state.evidence.push({ id: i === 0 ? EVIDENCE_LOCATED : (i === 1 ? EVIDENCE_UNKNOWN : `e-${i}`), title: r.title, lat: r.lat ?? null, lon: r.lon ?? null, review_status: 'unreviewed' }));
+      a.p_records.forEach((r, i) => state.evidence.push({ id: i === 0 ? EVIDENCE_LOCATED : (i === 1 ? EVIDENCE_UNKNOWN : `e-${i}`), title: r.title, lat: r.lat ?? null, lon: r.lon ?? null, geo_source:r.lat == null ? 'none' : 'source_published', review_status: 'unreviewed' }));
       state.runs.push({ id: a.p_run, status: 'succeeded', written: a.p_records.length, cursor: a.p_cursor });
       return { run_id: a.p_run, status: 'succeeded', records_seen: a.p_records.length, records_written: a.p_records.length, records_rejected: 0, deduplicated: 0, cursor: a.p_cursor };
     },
@@ -95,7 +95,11 @@ function harness({ usgs = () => json(USGS_FIXTURE), schemaReady = true } = {}) {
     },
     intel_create_claim: (a) => { state.claim = { id: CLAIM, statement: a.p_statement, links: a.p_links, status: 'under_review' }; return { claim_id: CLAIM, status: 'under_review', evidence_links: a.p_links.length }; },
     intel_create_briefing: (a) => { state.briefing = { id: BRIEFING, citations: a.p_citations }; return { briefing_id: BRIEFING, citations: a.p_citations.length }; },
-    intel_record_decision_basis: (a) => { assert.equal(a.p_decision, DECISION); assert.equal(a.p_briefing, BRIEFING); return { decision_id: DECISION, basis_items: 3 }; },
+    intel_record_decision_basis: (a) => {
+      assert.equal(a.p_decision, DECISION); assert.equal(a.p_briefing, BRIEFING);
+      state.audit.push({ event:'intel.decision.proposed', resource_id:DECISION, actor_user_id:OWNER });
+      return { decision_id: DECISION, basis_items: 3, audit:{recorded:true,id:state.audit.length} };
+    },
     intel_create_mission_from_decision: (a) => {
       if (state.decision?.status !== 'approved') return { __error: { code: '42501', message: 'decision is proposed, not approved' } };
       state.mission = { id: MISSION, decision_id: a.p_decision, ...a.p_mission };
@@ -144,8 +148,9 @@ function harness({ usgs = () => json(USGS_FIXTURE), schemaReady = true } = {}) {
     if (url.startsWith(`${SB}/rest/v1/org_members?`)) return json(url.includes(`profile_id=eq.${OWNER}`) ? [{ org_id: ORG, role: 'owner' }] : []);
     if (url === `${SB}/rest/v1/control_audit`) { state.audit.push(body); return json([{ id: state.audit.length, at: '2026-10-16T00:00:00Z' }], 201); }
     if (url === `${SB}/rest/v1/control_observability_events`) return json(null, 201);
-    if (url === `${SB}/functions/v1/context-decision`) {
+    if (url.startsWith(`${SB}/functions/v1/context-decision`)) {
       assert.equal(headers.get('authorization'), 'Bearer owner-token', 'the owner token, never the service key, reaches context-decision');
+      if (method === 'GET') return json({contract:'intel-decision/v2',schema_ready:true});
       if (method === 'POST') {
         state.decision = { id: DECISION, status: 'proposed', title: body.title, metadata: body.metadata };
         return json({ decision: { id: DECISION, org_id: ORG, status: 'proposed', title: body.title } }, 201);

@@ -1,6 +1,7 @@
 /* Real archive data, real page/auth scripts, fixture APIs only. No claims,
    invitations, edits or media requests reach production. */
 import assert from 'node:assert/strict';
+import { withTravelAndMissions } from './world-switch.mjs';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
@@ -15,7 +16,8 @@ try { ({chromium}=require('playwright')); }
 catch { ({chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules','x'))('playwright')); }
 const archive=JSON.parse(await readFile(join(ROOT,'data/action/docket-516r-archive.json'),'utf8'));
 const TYPES={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};
-async function file(path){const p=normalize(decodeURIComponent(path)).replace(/^([.][.][/\\])+/,'');return {body:await readFile(join(ROOT,p)),contentType:TYPES[extname(p)]||'application/octet-stream'};}
+/* Missions is switched off in the World as it ships; this suite guards the completed missions, so it drives them switched on */
+async function file(path){const p=normalize(decodeURIComponent(path)).replace(/^([.][.][/\\])+/,'');let body=await readFile(join(ROOT,p));if(/^[/\\]mnet\.html$/.test(p))body=Buffer.from(withTravelAndMissions(body));return {body,contentType:TYPES[extname(p)]||'application/octet-stream'};}
 const server=createServer(async(req,res)=>{try{const f=await file(new URL(req.url,'http://local').pathname);res.writeHead(200,{'content-type':f.contentType});res.end(f.body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const BASE=`http://127.0.0.1:${server.address().port}`,results=[];
@@ -28,7 +30,7 @@ async function scenario({member=false,owner='ocho-great',fallback=false,apiStatu
  if(missingEvent)data.event=null;
  const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block',reducedMotion:'reduce'});
  await ctx.addInitScript(({member,user})=>{
-  localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-09-26',accepted_at:new Date().toISOString()}));localStorage.setItem('mnet_tour_seen','1');
+  localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mnet_tour_seen','1');
   if(member){const t='x.'+btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600,sub:user.id}))+'.y';localStorage.setItem('mccdb_session',JSON.stringify({access_token:t,refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600}));}
  },{member,user});
  if(bodyReadFailure)await ctx.addInitScript(({name,path})=>{
@@ -101,10 +103,12 @@ try{
   const s=await make();await archivePage(s);
   check('successful public archive loads directly without static substitution',s.world.archiveReads===1&&s.world.staticReads===0);
   check('project has exactly nine song panels and ten people',await s.page.locator('.dc-work').count()===9&&await s.page.locator('.dc-person').count()===10);
-  check('two Environmental Injustice recordings stay in one mission',await s.page.locator('#docket-516r-environmental-injustice audio').count()===2);
+  check('two Environmental Injustice versions keep independent Music links',await s.page.locator('#docket-516r-environmental-injustice a').filter({hasText:'Play in Music'}).count()===2);
   const players=await s.page.locator('audio,video').evaluateAll(nodes=>nodes.map(n=>({tag:n.tagName,src:n.src})));
-  check('direct media use native players; no Drive URL is passed to a player',players.filter(p=>p.tag==='AUDIO').length===4&&players.filter(p=>p.tag==='VIDEO').length===3&&players.every(p=>!p.src.includes('drive.google.com')),players);
-  check('Drive song recordings use external links',await s.page.locator('.dc-work a').filter({hasText:'Listen in the archive'}).count()===6);
+  check('published audio delegates playback to Music; direct video previews remain local',players.filter(p=>p.tag==='AUDIO').length===0&&players.filter(p=>p.tag==='VIDEO').length===3&&players.every(p=>!p.src.includes('drive.google.com')),players);
+  const workLinks=await s.page.locator('.dc-work a').evaluateAll(nodes=>nodes.map(n=>({text:n.textContent.trim(),href:n.getAttribute('href')})));
+  check('published songs point at canonical Music routes',workLinks.filter(l=>/Play in Music/.test(l.text)).length===4,workLinks);
+  check('unpublished archives retain labelled archive links',workLinks.filter(l=>/Listen in the archive/.test(l.text)).length===6,workLinks);
   check('cohort video is included',await s.page.locator(`a[href="${archive.media.find(m=>m.kind==='cohort_video').url}"]`).count()===1);
   check('primary link text contrasts with its light background',await s.page.locator('a.dc-button--primary').evaluateAll(nodes=>nodes.every(n=>{const c=getComputedStyle(n);return c.color==='rgb(20, 23, 25)'&&c.backgroundColor==='rgb(244, 241, 234)';})));
   await fit(s.page,'project page fits 390px');await s.page.screenshot({path:join(OUT,'project-390.png')});
@@ -166,31 +170,34 @@ try{
  {
   const s=await make();await s.page.goto(BASE+'/mnet.html?view=feed');await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&document.documentElement.classList.contains('mn-world-on'));
   check('World still defaults to Travel',await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='travel');
-  await s.page.click('.wt-world-modes [data-world-mode="missions"]');await s.page.waitForSelector('#mnCompletedMissions .dc-preview__event');
+  await s.page.click('.wt-world-modes [data-world-mode="missions"]');
+  await s.page.click('.mn-swipe__filters [data-status="completed"]');
+  await s.page.waitForSelector('#mnCompletedSeries .dc-series');
   await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:completed-missions'&&m.events.length===1));
   const marker=(await globeMessages(s.page)).filter(m=>m.type==='hu:completed-missions').at(-1);
   check('Missions sends the one confirmed capstone place',marker.on===true&&marker.events.length===1&&marker.events[0].id===archive.event.slug&&marker.events[0].latitude===archive.event.latitude&&marker.events[0].longitude===archive.event.longitude&&marker.events[0].date==='2025-10-05',marker);
-  await s.page.getByRole('button',{name:'Show on the globe',exact:true}).click();
+  await s.page.locator('#mnCompletedSeries .dc-series__summary').click();
+  await s.page.getByRole('button',{name:'Show on globe',exact:true}).click();
   await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
   const focus=(await globeMessages(s.page)).filter(m=>m.type==='hu:focus-place').at(-1);check('capstone button focuses its public venue',focus?.lat===archive.event.latitude&&focus?.lon===archive.event.longitude);
-  await s.page.evaluate(()=>{const n=document.querySelector('#dcPreviewCapstone');window.__archiveScrolls=0;n.scrollIntoView=()=>window.__archiveScrolls++;window.postMessage({type:'hu:completed-selected',eventId:'docket-516r-2025-capstone'},location.origin);});
+  await s.page.evaluate(()=>{const n=document.querySelector('#mnCompletedSeries');window.__archiveScrolls=0;n.scrollIntoView=()=>window.__archiveScrolls++;window.postMessage({type:'hu:completed-selected',eventId:'docket-516r-2025-capstone'},location.origin);});
   await s.page.waitForTimeout(30);check('parent ignores spoofed marker selection from the page',await s.page.evaluate(()=>window.__archiveScrolls)===0);
   const frame=s.page.frames().find(f=>f.url().includes('/action-globe.html'));await frame.evaluate(id=>parent.postMessage({type:'hu:completed-selected',eventId:id},location.origin),archive.event.slug);
   await s.page.waitForFunction(()=>window.__archiveScrolls===1);check('real globe marker selection opens the capstone context',true);
   for(const mode of ['posts','travel']){await s.page.click(`.wt-world-modes [data-world-mode="${mode}"]`);await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.filter(m=>m.type==='hu:completed-missions').at(-1)?.on===false);const last=(await globeMessages(s.page)).filter(m=>m.type==='hu:completed-missions').at(-1);check(mode+' hides completed markers',last.on===false&&last.events.length===0);}
-  await s.page.click('.wt-world-modes [data-world-mode="missions"]');check('returning to Missions does not duplicate the showcase',await s.page.locator('#mnCompletedMissions .dc-stats').count()===1);await fit(s.page,'World showcase fits 390px');
-  await s.page.locator('#mnCompletedMissions').screenshot({path:join(OUT,'world-showcase-390.png')});
+  await s.page.click('.wt-world-modes [data-world-mode="missions"]');check('returning to Missions does not duplicate the showcase',await s.page.locator('#mnCompletedSeries .dc-series').count()===1);await fit(s.page,'World showcase fits 390px');
+  await s.page.locator('#mnCompletedSeries').screenshot({path:join(OUT,'world-showcase-390.png')});
   await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&document.documentElement.classList.contains('mn-world-on'));
   check('archive map deep link opens Missions',await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='missions');
   if(await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='missions'){
-   await s.page.waitForSelector('#mnCompletedMissions .dc-preview__event');await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
+   await s.page.waitForSelector('#mnCompletedSeries .dc-series');await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
    const f=(await globeMessages(s.page)).filter(m=>m.type==='hu:focus-place').at(-1);check('archive map deep link focuses the selected capstone',f?.lat===archive.event.latitude&&f?.lon===archive.event.longitude);
   }
   check('World integration has no script errors',s.errors.length===0,s.errors);await close(s);
  }
  for(const deferred of ['globe','archive']){
   const s=await make({manualGlobeReady:deferred==='globe',archiveDelay:deferred==='archive'?400:0});
-  await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForSelector('#mnCompletedMissions .dc-preview__event');
+  await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForSelector('#mnCompletedSeries .dc-series');
   if(deferred==='globe'){
    check('deep link waits until the globe is ready',!(await globeMessages(s.page)).some(m=>m.type==='hu:focus-place'));
    const frame=s.page.frames().find(f=>f.url().includes('/action-globe.html'));await frame.evaluate(()=>window.__releaseReady());

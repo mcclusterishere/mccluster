@@ -348,8 +348,8 @@ test('precise location is permission-gated and privacy signals win', async () =>
     'an explicitly granted location should use the device location service rather than IP inference');
   assert.match(js, /function privacyQuiet\(\)/,
     'client-side privacy signals must short-circuit precise location');
-  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
-    'the server must reject precise-location rows under GPC/DNT even if a client forges them');
+  assert.match(ts, /if \(minimized && name === "precise_location"\) continue;/,
+    'the server must reject precise-location rows under GPC/DNT or cookieless consent even if a client forges them');
 });
 
 test('the client prefers the first-party domain and can still fall back', async () => {
@@ -418,20 +418,22 @@ test('the privacy signal is honoured, not merely written down', async () => {
     'both names must count');
   assert.match(ts, /const quiet = optedOut\(h\);/,
     'the decision must be made once, before any row is built');
-  for (const field of ['ip', 'sessionId']) {
-    assert.match(ts, new RegExp(`const ${field} = quiet \\?`),
-      `${field} follows a person between sittings and must not survive the signal`);
-  }
-  assert.match(ts, /const persistentAllowed = !quiet && \(site\.legacy \|\| consentState === "granted"\);/,
-    'persistent customer identity must require both no privacy opt-out and explicit consent');
+  assert.match(ts, /const minimized = quiet \|\| cookieless;/,
+    'visitor data minimization must activate under both opt-out and cookieless mode');
+  assert.match(ts, /const ip = minimized \? null : validIp\(callerIp\(h\)\);/,
+    'IP must be suppressed whenever either privacy restriction applies');
+  assert.match(ts, /const sessionId = persistentAllowed \? str\(body\.session_id, 64\) : null;/,
+    'a session identifier must require the complete privacy and consent gate');
+  assert.match(ts, /const persistentAllowed = !minimized && \(site\.legacy \|\| consentState === "granted"\);/,
+    'persistent customer identity requires both no privacy opt-out/cookieless mode and explicit consent');
   assert.match(ts, /const deviceId = persistentAllowed \?/,
     'deviceId must be downstream of the privacy-and-consent gate');
-  assert.match(ts, /city: quiet \? null : g\.city/,
-    'the city must go; the country may stay, because a count is not a person');
+  assert.match(ts, /city: minimized \? null : g\.city/,
+    'the city must go under GPC/DNT and cookieless collection; country counts may stay');
   assert.match(ts, /country: g\.country,/,
     'the visit must still be counted, or the signal becomes under-reporting');
-  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
-    'a privacy signal must also suppress consent-gated precise location rows');
+  assert.match(ts, /if \(minimized && name === "precise_location"\) continue;/,
+    'privacy opt-out and cookieless property both suppress precise location');
 });
 
 test('the signal survives the Worker hop', async () => {

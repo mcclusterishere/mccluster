@@ -30,8 +30,44 @@ test('the editor trims by reference and the feed plays only the kept stretch', a
   assert.match(js, /payload\.clip = \{ muted: S\.muted \};/);
   assert.match(js, /payload\.clip\.start_ms = Math\.round\(S\.start \* 1000\)/);
   assert.match(mnet, /frag = "#t=" \+/);
-  assert.match(mnet, /esc\(url\s*\+\s*\(node\.dataset\.clip\s*\|\|\s*""\)\)/);
+  /* the clip's own fragment, or, with no clip and no picture, a tenth of a second in so a first frame paints */
+  assert.match(mnet, /var frag=node\.dataset\.clip\|\|\(posterUrl\?"":"#t=0\.1"\);/);
+  assert.match(mnet, /esc\(url\s*\+\s*frag\)/);
   assert.match(api, /function postClip\(c\)/);
+});
+
+/* THE COVER (owner, 2026-10-20: "when people upload videos, there's no thumbnail, just a black video") */
+test('a video post from Create carries a cover, chosen on the filmstrip', async () => {
+  const [html, js, css] = await Promise.all([read('create.html'), read('js/create.js'), read('css/create.css')]);
+  assert.match(html, /<script src="js\/video-poster\.js\?v=__STAMP__"><\/script>\s*<script src="js\/create\.js\?v=__STAMP__"><\/script>/);
+  assert.match(html, /<button class="cr__chip cr__cover" id="crCover" type="button" aria-label="Cover: use the frame on screen"/);
+  assert.match(html, /id="crCoverHint">Tap a frame on the strip to make it the cover\./);
+  assert.match(html, /id="crCoverMark"/);
+  /* the default is taken as soon as the video's length is known, beside the upload */
+  assert.match(js, /drawFrames\(\);\s*\/\*[^*]*\*\/\s*setCover\(null, false\);/);
+  assert.match(js, /window\.MCCVideoPoster\.capture\(url, chosen \? \{ at: at, name: name \} : \{ start: S\.start, end: S\.end, name: name \}\)/);
+  /* a tap on a frame of the strip (not a handle, not a drag) chooses that frame */
+  assert.match(js, /\$\("crStrip"\)\.addEventListener\("pointerdown"/);
+  assert.match(js, /e\.target\.closest\("\.cr__handle"\)/);
+  assert.match(js, /var t = Math\.min\(Math\.max\(0, S\.dur - 0\.05\), \(i \+ 0\.5\) \* S\.dur \/ n\);/);
+  assert.match(js, /setCover\(t, true\)/);
+  /* through the same upload-url, PUT and finalize, with the picture's size */
+  const up = js.slice(js.indexOf('function uploadCover'), js.indexOf('function setCover'));
+  assert.match(up, /\/v1\/mnet\/media\/upload-url/);
+  assert.match(up, /method: tok \? "PUT" : "POST"/);
+  assert.match(up, /\/v1\/mnet\/media\/finalize", \{ method: "POST", body: \{ asset_id: asset\.id, width: meta\.width, height: meta\.height \} \}/);
+  /* sent beside the video it belongs to */
+  assert.match(js, /if \(asset && up\.poster && S\.kind === "video"\) payload\.poster_asset_ids = \[up\.poster\.id\];/);
+  assert.match(js, /payload\.media_asset_ids = \[asset\.id\]/);
+  /* replaced, cancelled or never posted: discarded; posted: kept */
+  assert.match(js, /if \(c\.asset && !\(keep && c\.sent\)\) discardUploadAsset\(c\.asset\);/);
+  assert.match(js, /S\.coverSeq\+\+; dropCover\(S\.completed\);/);
+  assert.match(js, /S\.coverSeq\+\+; dropCover\(false\); \$\("crCover"\)\.removeAttribute\("aria-busy"\); paintCover\(\);/);
+  assert.match(js, /if \(next\.dropped\) discardUploadAsset\(asset\);/);
+  /* the details step shows the cover beside the caption */
+  assert.match(js, /S\.cover && S\.cover\.preview\s*\? '<img src="' \+ esc\(S\.cover\.preview\) \+ '" alt="Cover">'/);
+  assert.match(css, /\.cr__cover-pic \{ width: 32px; height: 32px;/);
+  assert.match(css, /\.cr__cover-mark \{ position: absolute;/);
 });
 
 test('the upload starts as soon as the file is chosen and posting waits for it', async () => {

@@ -7,7 +7,7 @@
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --import ./test/support/offline-network.mjs --test test/*.test.mjs"
   },
   "dependencies": {
     "@fal-ai/client": "1.10.1"

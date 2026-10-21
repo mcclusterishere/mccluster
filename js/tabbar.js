@@ -42,7 +42,7 @@
      The World is served on a host of its own as well: the company's,
      mccluster.org (owner, 2026-10-15: "we need mccluster.org to actually
      show the World"; workers/mccluster/src/company-site/router.js), and
-     Human Uprise's own door, humanuprise.com, when the owner routes it
+     Equity Uprise's own door, humanuprise.com, when the owner routes it
      (owner, 2026-10-14: "the globe experience as its own solo experience
      ... interconnected with all the systems"; workers/mccluster/src/
      human-uprise/router.js). Standing on either, Music and the M are
@@ -129,7 +129,7 @@
         eqSvg(true) + '<span>Music</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      /* LAST COLUMN: the Globe, Human Uprise's World screen. It replaced the
+      /* LAST COLUMN: the Globe, Equity Uprise's World screen. It replaced the
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
          avatar, and the Globe wing's Account room). */
@@ -152,7 +152,7 @@
      matthew-mccluster.html used to opt out, on the reasoning that a hiring
      manager opening it from a job application should not be handed a bar
      reading "Music · Equity Uprise · HERE · Shakes · Profile". The bar is
-     three columns now and the site is the music, the house and Human Uprise, so
+     three columns now and the site is the music, the house and Equity Uprise, so
      that reasoning no longer holds: the page was simply a dead end with no
      way onward. It carries the bar like everything else. demo.html and
      embed.html still opt out, and should: one is a client's own site
@@ -233,8 +233,8 @@
     world: {
       home: "mnet.html?view=feed",
       slots: [
-        ["mnet.html?view=missions", "folk", "Missions", { title: "Human Uprise missions",
-          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Human Uprise." }],
+        ["mnet.html?view=missions", "folk", "Missions", { title: "Equity Uprise missions",
+          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Uprise." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],
@@ -271,7 +271,7 @@
      THIS ENFORCES IT.
 
      Equity Uprise, Whip Equipped and PRIM3 are put away while the site
-     concentrates on the music and on Human Uprise. Put away, not deleted: every
+     concentrates on the music and on Equity Uprise. Put away, not deleted: every
      page and every route still exists and still answers, and restoring a
      column is adding its tab back to ORDER and its wing back to WINGS.
 
@@ -305,7 +305,7 @@
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
     "create.html": "create",
-    /* the Globe column is the World: Human Uprise and its public shell.
+    /* the Globe column is the World: Equity Uprise and its public shell.
        Account rooms light no coin; they are contextual, not a column. */
     "mnet.html": "world", "action-globe.html": "world", "world-news.html": "world",
     "press.html": "home", "matthew-mccluster.html": "home",
@@ -371,8 +371,10 @@
     var handle = String(p.handle || "").trim().toLowerCase();
     if (!HANDLE_RE.test(handle)) return null;
     var name = String(p.name || "").replace(/\s+/g, " ").trim().slice(0, 60) || "@" + handle;
-    var avatar = "";
-    try { var u = new URL(String(p.avatar || ""), location.href); if (u.protocol === "https:") avatar = u.href; } catch (e) {}
+    var avatar = "", rawAvatar = String(p.avatar || "").trim();
+    /* no picture is no picture: an empty value resolved to this page's own address, which every member without a photo
+       then wore as a broken image in the middle tab; they get the initial of their name instead */
+    if (rawAvatar) try { var u = new URL(rawAvatar, location.href); if (u.protocol === "https:") avatar = u.href; } catch (e) {}
     return { kind:p.kind === "artist" ? "artist" : "member", handle:handle, name:name, avatar:avatar };
   }
   function currentSubject() {
@@ -785,7 +787,10 @@
         });
         localStorage.setItem("mccdb_session", session);
         try { localStorage.setItem("mcc_sess_keep", session); } catch (e) {}
-        emit("mcc:handoff", { ok: true });
+        /* NO SECOND PAINT (owner, 2026-10-20: no screen flashes). A page that can take the session where it stands says so
+           by cancelling mcc:handoff (js/mnet.js, the World, which waited for it); it then hears the ordinary sign-in event
+           and nothing reloads. Every other page reloads signed in, as before. */
+        if (emit("mcc:handoff", { ok: true }, true)) { emit("mcc:auth-changed", { signed_in: true, carried: true }); return true; }
         location.reload();
         return true;
       })
@@ -869,7 +874,12 @@
     /* the house, when a creator holds the middle cell: the M as supplied */
     mmark: ["assets/img/m-mark.png", "appbar__m"],
   };
-  function emit(n, d) { try { window.dispatchEvent(new CustomEvent(n, { detail: d || {} })); } catch (e) {} }
+  /* true when a listener cancelled a cancelable event */
+  function emit(n, d, cancelable) {
+    var ev = null;
+    try { ev = new CustomEvent(n, { detail: d || {}, cancelable: !!cancelable }); window.dispatchEvent(ev); } catch (e) {}
+    return !!(ev && ev.defaultPrevented);
+  }
 
   /* THE TRANSPORT STATE. SOUND_ON is the single source of truth for whether
      a record is running. The two pages that own a deck announce it on
@@ -924,8 +934,40 @@
   var veil = document.createElement("div");
   veil.className = "pt-veil";
   document.body.appendChild(veil);
-  function veilOn() { document.documentElement.classList.add("pt-out"); }
-  function veilOff() { document.documentElement.classList.remove("pt-out"); }
+  /* THE VEIL IS THE COLOUR OF WHERE YOU ARE GOING (owner, 2026-10-20: "other screens flash up instead of just a smooth
+     transition from screen to screen"). The house is dark and the World follows the Sun (js/daylight.js: white by day),
+     so a dark veil into a day World was a dark screen and then a white one. Going to the World, the veil takes the
+     World's colour for this moment: its own, standing on it, else the time zone's answer the World paints with too. */
+  function worldPhase() {
+    var here = document.documentElement.getAttribute("data-daylight");
+    if (here === "day" || here === "night") return here;
+    try { return window.MCC_DAYLIGHT_CORE ? window.MCC_DAYLIGHT_CORE.estimate(new Date()) : ""; } catch (e) { return ""; }
+  }
+  function worldScreen(url) {
+    if (!url || !/^https?:$/.test(url.protocol)) return false;
+    if (WORLD_HOSTS.indexOf(url.hostname) !== -1) return /^\/(?:index\.html|mnet\.html)?$/.test(url.pathname);
+    return url.origin === location.origin && /\/mnet\.html$/.test(url.pathname);
+  }
+  function veilOn(dest) {
+    var root = document.documentElement, url = null, phase = "";
+    try { url = new URL(dest, location.href); } catch (e) {}
+    if (worldScreen(url)) phase = worldPhase();
+    root.classList.toggle("pt-to-day", phase === "day");
+    root.classList.toggle("pt-to-night", phase === "night");
+    root.classList.add("pt-out");
+  }
+  function veilOff() { document.documentElement.classList.remove("pt-out", "pt-to-day", "pt-to-night"); }
+  /* the arithmetic only, for the veil above: the World's own page has it already, nothing else on this page is touched */
+  if (!window.MCC_DAYLIGHT_CORE && !ON_WORLD_HOST) {
+    var daylightCore = document.createElement("script");
+    daylightCore.src = ROOT + "js/daylight.js?v=__STAMP__";
+    daylightCore.async = true;
+    daylightCore.setAttribute("data-daylight-core", "");
+    document.head.appendChild(daylightCore);
+  }
+  /* a hop inside one host is a cross-document view transition (css/style.css, @view-transition): the browser holds this
+     page and fades it into the next, so a veil drawn now would be caught half-way in the picture */
+  var CROSS_FADE = typeof window.CSSViewTransitionRule !== "undefined";
 
   /* "/" and "/index.html" are the same document. Fold the implicit filename
      away so tapping the M tab while standing at the root reads as a no-op
@@ -1008,10 +1050,12 @@
       else window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    veilOn();
+    /* the departure starts at once (it waited 460ms, so the page sat under a veil before the next one was even asked
+       for); the veil only covers the wait for the next page */
+    if (!(CROSS_FADE && url && url.origin === location.origin)) veilOn(dest);
     setTimeout(function () {
       handoffHref(dest).then(function (h) { navigateDocument(h); }, function () { navigateDocument(dest); });
-    }, wait);
+    }, wait || 0);
   }
 
   // Also cover ordinary World links before the dynamically loaded helper can
@@ -1037,7 +1081,7 @@
     Object.keys(WINGS).forEach(function (k) {
       WINGS[k].slots.forEach(function (s) { if (s[0] === slotHref) def = s; });
     });
-    if (!def || !def[3]) { sail(slotHref, 460); return; }
+    if (!def || !def[3]) { sail(slotHref, 0); return; }
     var p = def[3];
     var sub = (p.dyn && p.dyn()) || p.sub;
     peekFor = slotHref;
@@ -1054,7 +1098,7 @@
     document.body.appendChild(peekEl);
     peekEl.addEventListener("click", function (e) {
       var go = e.target.closest && e.target.closest("[data-peek-go]");
-      if (go) { sail(go.getAttribute("data-peek-go"), 460); return; }
+      if (go) { sail(go.getAttribute("data-peek-go"), 0); return; }
       if (e.target.closest && e.target.closest("[data-peek-no]")) unpeek();
     });
     emit("mcc:bar-peek", { href: slotHref });
@@ -1182,7 +1226,7 @@
     if (key === "music" && onPage(dest) &&
         typeof window.MCC_NP_PLAY === "function" &&
         typeof window.MCC_NP_PAUSE === "function") { transport(); return; }
-    sail(dest, 460);
+    sail(dest, 0);
   });
 
   /* tap anywhere off the bar (and off a peek): everything folds home */

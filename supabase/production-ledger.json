@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 323,
-  "latest_version": "20261017214808",
-  "latest_name": "mcp_approval_scope_v1",
-  "ledger_sha256": "07b9c016ee02f3a6e848992711df7715e3a5e4daa5d2c6834aab1df4fd6f5061",
+  "migration_count": 335,
+  "latest_version": "20261021021724",
+  "latest_name": "live_actor_participation",
+  "ledger_sha256": "ba4ccf1931f8108fdbcb50e75f5541189f47db28c985e3ac42d028af83ebf677",
   "migrations": [
     {
       "version": "0001",
@@ -1298,6 +1298,54 @@
     {
       "version": "20261017214808",
       "name": "mcp_approval_scope_v1"
+    },
+    {
+      "version": "20261020205942",
+      "name": "analytics_measurement_semantics_v1"
+    },
+    {
+      "version": "20261020205959",
+      "name": "funding_criteria_register_v1"
+    },
+    {
+      "version": "20261020210718",
+      "name": "compute_lease_authority_v2"
+    },
+    {
+      "version": "20261020211313",
+      "name": "intel_decision_integrity_v2"
+    },
+    {
+      "version": "20261020225852",
+      "name": "resident_ai_context_service_read"
+    },
+    {
+      "version": "20261021005247",
+      "name": "daily_knowledge_news_capacity"
+    },
+    {
+      "version": "20261021005615",
+      "name": "knowledge_search_indexes"
+    },
+    {
+      "version": "20261021011443",
+      "name": "royce_platform_actor"
+    },
+    {
+      "version": "20261021013739",
+      "name": "connected_operational_graph"
+    },
+    {
+      "version": "20261021014027",
+      "name": "connected_graph_read_permissions"
+    },
+    {
+      "version": "20261021014206",
+      "name": "connected_graph_query_indexes"
+    },
+    {
+      "version": "20261021021724",
+      "name": "live_actor_participation"
     }
   ]
 }

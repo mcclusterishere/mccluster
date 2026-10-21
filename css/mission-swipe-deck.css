@@ -50,3 +50,101 @@
 @media (prefers-reduced-motion:reduce) {
   .mn-swipe__card { transition:none; }
 }
+
+
+/* Equity Uprise: one compact status switch, not discovery-category chrome. */
+.mn-swipe { padding:0 0 8px; }
+.mn-swipe__top { display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0 0 2px; }
+.mn-swipe__filters { display:inline-flex;flex:none;gap:2px;overflow:visible;padding:3px;border:1px solid #ffffff22;border-radius:24px;background:#11161bcf; }
+.mn-swipe__filters button { padding:7px 12px;min-height:35px;border-radius:20px;font-size:12px;line-height:1.1;color:#d0cdd0; }
+.mn-swipe__filters button[aria-selected="true"] { color:#141619;background:#f1eee6;border-color:#f1eee6; }
+.mn-swipe__filters button[aria-selected="false"] { background:transparent;border-color:transparent; }
+.mn-swipe__undo { flex:none;display:grid;place-items:center;min-width:38px;min-height:38px;padding:0 4px;border:1px solid #ffffff3b;border-radius:50%;background:#181c21;font:500 23px/1 system-ui,sans-serif!important;text-decoration:none;color:#f6f0e9; }
+.mn-swipe__count { margin:3px 2px 4px;color:#a9a7a2;font-size:11px; }
+.mn-swipe__stage { padding:4px 1px 12px; }
+.mn-swipe__card { padding:15px 15px 13px;border-radius:18px;box-shadow:none; }
+.mn-swipe__category { margin:0 0 5px;font-size:10px; }
+.mn-swipe__card h3 { font-size:clamp(21px,5vw,29px); }
+.mn-swipe__description { margin:8px 0 0;font-size:13px;line-height:1.45; }
+.mn-swipe__review { margin:1px 0;font-size:11px; }
+.mn-swipe__tools { margin:0; }
+.mn-swipe__details { padding:5px 0;font-size:12px!important; }
+.mn-swipe__actions { margin:5px 0 0;gap:8px; }
+.mn-swipe__actions button { min-height:44px;padding:8px 10px;font-size:13px; }
+.mn-swipe__status { margin:0 4px;min-height:0; }
+.mn-swipe__status:empty { display:none; }
+.mn-swipe__completed { min-width:0;padding:2px 0 12px; }
+@media(min-width:600px){ .mn-swipe__card { padding:19px; }.mn-swipe__description { font-size:14px; } }
+
+/* THE DECK (owner's reference, 2026-10-19): art on top, the next cards peeking behind, chips for the row's facts,
+   X and heart under the card, dots for what is left. Mobile first; the stage stays inside the World's sheet. */
+.mn-swipe__stage { overflow:visible;padding:6px 4px 0; }
+.mn-swipe__deck { position:relative;z-index:0;margin:0 0 14px;padding:0 14px 16px 0; }
+.mn-swipe__peek { position:absolute;z-index:0;inset:0 14px 16px 0;border:1px solid #ffffff1f;border-radius:22px;background:#1b1f24;transform:translate(calc(var(--peek) * 9px),calc(var(--peek) * 7px)) rotate(calc(var(--peek) * 1.6deg));transform-origin:bottom left;opacity:calc(1 - var(--peek) * .25); }
+.mn-swipe__peek[data-category="help"] { background:linear-gradient(150deg,#2a3a37,#1c2122); }
+.mn-swipe__peek[data-category="create"] { background:linear-gradient(150deg,#3a2a2b,#1b1a20); }
+.mn-swipe__peek[data-category="explore"] { background:linear-gradient(150deg,#28363f,#1a1d24); }
+.mn-swipe__peek[data-category="earn"] { background:linear-gradient(150deg,#3d3527,#252019); }
+.mn-swipe__card { position:relative;z-index:1;padding:0;overflow:hidden;border-radius:22px;border-color:#ffffff2a;box-shadow:0 18px 40px -24px #000; }
+.mn-swipe__art { position:relative;display:grid;place-items:center;min-height:150px;background:linear-gradient(160deg,#2b2320,#15181b 70%); }
+.mn-swipe__card[data-category="help"] .mn-swipe__art { background:radial-gradient(120% 90% at 20% 0%,#3b5a52,#1c2122 70%); }
+.mn-swipe__card[data-category="create"] .mn-swipe__art { background:radial-gradient(120% 90% at 20% 0%,#5a3538,#1b1a20 70%); }
+.mn-swipe__card[data-category="explore"] .mn-swipe__art { background:radial-gradient(120% 90% at 20% 0%,#34506a,#1a1d24 70%); }
+.mn-swipe__card[data-category="earn"] .mn-swipe__art { background:radial-gradient(120% 90% at 20% 0%,#5c4c2e,#252019 70%); }
+.mn-swipe__art>svg { width:72px;height:72px;fill:none;stroke:#f3e7d2;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round;opacity:.42; }
+.mn-swipe__art .mn-swipe__category { position:absolute;top:12px;left:12px;margin:0;padding:8px 12px;border:1px solid #f1d27a80;border-radius:20px;background:#1d1a12d9;color:#f3d98a;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase; }
+.mn-swipe__body { padding:14px 16px 12px; }
+.mn-swipe__card h3 { font-size:clamp(24px,6.4vw,32px); }
+.mn-swipe__description { margin:8px 0 0;color:#e1ddd5;font-size:14px;line-height:1.5; }
+.mn-swipe__tags { display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0; }
+.mn-swipe__tag { display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border:1px solid #ffffff2a;border-radius:20px;background:#ffffff0d;color:#e6e3dc;font-size:12px;line-height:1.2; }
+.mn-swipe__tag--xp { border-color:#e6002d88;background:#3a0d18;color:#ff93a6;font-weight:600; }
+.mn-swipe__tag.mn-swipe__review { margin:0;font-size:12px;color:#e6e3dc; }
+.mn-swipe__tools { margin:2px 0 0; }
+.mn-swipe__actions { display:grid;grid-template-columns:64px minmax(0,1fr) 64px;align-items:center;gap:10px;margin:4px 0 0; }
+.mn-swipe__actions .mn-swipe__pass,.mn-swipe__actions .mn-swipe__accept { display:grid;place-items:center;width:64px;height:64px;min-height:64px;padding:0;border-radius:50%;font-size:0; }
+.mn-swipe__actions .mn-swipe__pass { background:#1d2126;border:1px solid #ffffff38;color:#dfe3e8; }
+.mn-swipe__actions .mn-swipe__accept { background:#d8002a;border:1px solid #ff3b5c;color:#fff;box-shadow:0 12px 28px -12px #ff1744cc; }
+.mn-swipe__actions svg { width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+.mn-swipe__actions .mn-swipe__accept svg { fill:currentColor;stroke-width:1.2; }
+.mn-swipe__browse { min-width:0;text-align:center;color:#b9b7b2;font-size:12px;line-height:1.3; }
+.mn-swipe__dots { display:flex;justify-content:center;gap:6px;margin:0 0 7px; }
+.mn-swipe__dots i { width:7px;height:7px;border-radius:50%;background:#ffffff33; }
+.mn-swipe__dots i.is-on { background:#e6002d; }
+.mn-swipe__hint { display:block;margin:0; }
+.mn-swipe__arrows { display:block;margin-top:3px;color:#8f949a;letter-spacing:.5em; }
+.sr-only { position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0; }
+@media (min-width:600px) {
+  .mn-swipe__art { min-height:190px; }
+  .mn-swipe__body { padding:18px 20px 14px; }
+  .mn-swipe__description { font-size:15px; }
+}
+
+/* MISSIONS IS ONE SCREEN (owner, 2026-10-20: "I don't like the fact that I have to scroll down at all … it needs to be a
+   solid screen"). While Missions is up, the World's sheet does not scroll: the globe gives the deck more room, the card
+   takes what is left, its picture shrinks first, the words stop with a fade ("Read full mission" opens every word), and
+   Pass and Accept always sit on screen. A card takes the whole touch, so a swipe is never a scroll. A card never goes
+   below 220px: on a screen too short for that (a phone on its side) the sheet scrolls to Pass and Accept instead. */
+.mn-world-on[data-world-mode="missions"] #mnWorldFeed { overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column; }
+.mn-world-on[data-world-mode="missions"] #wtSocial,
+.mn-world-on[data-world-mode="missions"] #wtSocial>.hu-mission-preview,
+.mn-world-on[data-world-mode="missions"] #huMissionList,
+.mn-world-on[data-world-mode="missions"] .mn-swipe__stage { flex:1 1 auto;min-height:0;display:flex;flex-direction:column; }
+.mn-world-on[data-world-mode="missions"] #wtSocial>:not(.hu-mission-preview),
+.mn-world-on[data-world-mode="missions"] .hu-mission-preview>.hu-section-head,
+.mn-world-on[data-world-mode="missions"] .mn-swipe__top,
+.mn-world-on[data-world-mode="missions"] .mn-swipe__actions { flex:none; }
+.mn-world-on[data-world-mode="missions"] #huMissionList { position:relative;padding-bottom:0; }
+/* the count rides in the switch row instead of taking its own line */
+.mn-world-on[data-world-mode="missions"] .mn-swipe__top { padding-right:0; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__count { position:absolute;top:0;right:48px;height:38px;display:flex;align-items:center;margin:0;white-space:nowrap; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__stage { padding:4px 1px 2px; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__deck { flex:1 1 auto;min-height:0;display:flex;margin:0 0 6px; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__card { flex:1 1 auto;min-height:220px;overflow:hidden;touch-action:none; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__art { flex:1 1 0;min-height:52px; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__body { flex:0 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__description { min-height:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__tags { flex-wrap:nowrap;overflow:hidden;margin-top:8px; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__tags>* { flex:none; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__status:empty { display:none; }
+.mn-world-on[data-world-mode="missions"] .mn-swipe__status { flex:none;margin:2px 4px 0; }

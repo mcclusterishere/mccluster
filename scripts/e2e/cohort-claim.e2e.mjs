@@ -37,7 +37,7 @@ async function scenario({ member = false, expired = false, errorCode = null, mal
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', reducedMotion: 'reduce' });
   active.add(ctx);
   await ctx.addInitScript(({ member, authSession }) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (member) localStorage.setItem('mccdb_session', JSON.stringify(authSession));
   }, { member, authSession: session() });
   await ctx.route('**/*', async route => {

@@ -1,5 +1,7 @@
 /* World news belongs to the same stream as community posts. This module owns
    only the in-app story view and geographic marker bridge, never a second feed.
+   The globe is sent the stories the feed is showing (window.MCC_WORLD_NEWS_ITEMS, js/mnet.js); it draws no pin per
+   story (the news heat map counts them, js/action-globe.js), only the one whose place a card pointed to.
    GDELT mention/permission caveats are retained in internal data and docs. */
 (function () {
   'use strict';
@@ -86,6 +88,8 @@
   };
   window.MCC_WORLD_NEWS_READER = {open:openStory};
   window.addEventListener('mcc:world-news-loaded', sync);
+  /* the feed rendered a different set of stories (a country picked, a search, a scope, a mission): the pins follow */
+  window.addEventListener('mcc:world-news-shown', sync);
   window.addEventListener('mcc:world-mode', sync);
   window.addEventListener('message', e => {
     if (e.source !== frame.contentWindow || e.origin !== location.origin) return;

@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { inferenceSettings, inferenceUsage } from './inference-settings.mjs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_PORT || 4790);
@@ -26,7 +27,12 @@ function send(res, status, body) {
 
 async function readJson(req) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > 1024 * 1024) throw Object.assign(new Error('request too large'), { status: 413 });
+    chunks.push(chunk);
+  }
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
@@ -50,6 +56,7 @@ async function execute(body, queuedAt, callerSignal) {
   }
 
   const input = body.input || {};
+  const settings = inferenceSettings(input);
   const messages = Array.isArray(input.messages)
     ? input.messages
     : [{ role: 'user', content: String(input.prompt || '') }];
@@ -65,10 +72,14 @@ async function execute(body, queuedAt, callerSignal) {
       model: MODEL,
       stream: false,
       messages,
+      think: settings.think,
+      keep_alive: settings.keep_alive,
+      tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
       format: input.json === true ? 'json' : undefined,
       options: {
-        temperature: Number(input.temperature ?? 0.2),
-        num_ctx: Math.min(16384, Math.max(2048, Number(input.num_ctx || 8192))),
+        temperature: settings.temperature,
+        num_ctx: settings.num_ctx,
+        num_predict: settings.num_predict,
       },
     }),
     signal: callerSignal
@@ -91,12 +102,12 @@ async function execute(body, queuedAt, callerSignal) {
     model: MODEL,
     implementation: body.implementation || null,
     content: String(data?.message?.content || ''),
+    tool_calls: Array.isArray(data?.message?.tool_calls) ? data.message.tool_calls : [],
+    done_reason: data?.done_reason || null,
+    settings,
+    thinking_chars: String(data?.message?.thinking || '').length,
     queue_wait_ms: queueWaitMs,
-    usage: {
-      prompt_eval_count: data?.prompt_eval_count ?? null,
-      eval_count: data?.eval_count ?? null,
-      total_duration_ns: data?.total_duration ?? null,
-    },
+    usage: inferenceUsage(data),
   };
 }
 
@@ -172,6 +183,30 @@ function enqueueInference(body, signal) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    if (req.method === 'GET' && req.url === '/diagnostics') {
+      const read = async (path, body) => {
+        const response = await fetch(`${OLLAMA}/api/${path}`, {
+          ...(body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {}),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
+        return response.json();
+      };
+      const [version, tags, show, running] = await Promise.all([
+        read('version'), read('tags'), read('show', { model: MODEL }), read('ps'),
+      ]);
+      const installed = tags.models?.find(item => item.name === MODEL || item.model === MODEL);
+      return send(res, 200, {
+        observed_at: new Date().toISOString(), ollama_version: version.version, model: MODEL,
+        digest: installed?.digest || null, size_bytes: installed?.size || null,
+        details: show.details || installed?.details || null, capabilities: show.capabilities || [],
+        model_info: show.model_info || {}, model_parameters: show.parameters || null,
+        thinking_support: show.thinking || null,
+        running: (running.models || []).filter(item => item.name === MODEL || item.model === MODEL),
+        defaults: inferenceSettings(), busy: Boolean(active), queue_depth: pending.length,
+        max_concurrency: 1,
+      });
+    }
     if (req.method === 'GET' && req.url === '/health') {
       const check = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(3000) });
       return send(res, check.ok ? 200 : 503, {

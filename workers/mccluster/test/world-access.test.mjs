@@ -13,7 +13,7 @@ const req = (token) => new Request('https://api.mccluster.org/v1/world/access', 
 function db({ creator = false, owner = false, privacy = false, mission = false } = {}) {
   return async (url, init = {}) => {
     const u = String(url), h = new Headers(init.headers || {});
-    if (u === 'https://sb.test/auth/v1/user') return h.get('authorization') === 'Bearer t' ? json({ id: UID, user_metadata: privacy ? { privacy_policy_version: '2026-09-26', privacy_acknowledged_at: '2026-10-01T00:00:00Z' } : {} }) : json({}, 401);
+    if (u === 'https://sb.test/auth/v1/user') return h.get('authorization') === 'Bearer t' ? json({ id: UID, user_metadata: privacy ? { privacy_policy_version: '2026-10-19', privacy_acknowledged_at: '2026-10-01T00:00:00Z' } : {} }) : json({}, 401);
     if (u.includes('/m_auth_user_links')) return json([{ m_uid: MUID }]);
     if (u.includes('/music_creator_profiles')) return json(creator ? [{ handle: 'x' }] : []);
     if (u.includes('/orgs?')) return json([{ id: 'house' }]);
