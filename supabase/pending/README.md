@@ -1,5 +1,8 @@
 # Pending migrations
 
+Promoted 2026-10-21: `listener_state_v1.sql` is applied in production as `20261021125121_listener_state_v1.sql`. The Pocket cross-device state table now exists, with authenticated ownership RLS, forced RLS, a 4 KiB JSON cap, and no anon read. Exact stored production SQL matches the reviewed pending source. Test: `bash scripts/test-listener-state-db.sh`. Do not replay the pending file.
+
+
 Promoted on 2026-10-17: `action_archive_cohort_v1.sql` is
 `supabase/migrations/20261017164335_action_archive_cohort_v1.sql`, and
 `action_mission_reset_v1.sql` is

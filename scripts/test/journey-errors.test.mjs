@@ -116,19 +116,23 @@ test('locked pages do not offer a theme they cannot change', async () => {
   assert.match(theme, /dual: !LOCK/);
 });
 
-test('database fixes wait in supabase/pending for the owner, bounded by a lock timeout', async () => {
+test('pending database fixes stay gated; applied listener state is recorded in the production ledger', async () => {
   const pending = await readdir('supabase/pending');
   const migrations = await readdir('supabase/migrations');
-  for (const f of ['public_music_reads_lean_v1.sql', 'listener_state_v1.sql']) {
-    assert.ok(pending.includes(f), f);
-    assert.ok(!migrations.some((m) => m.endsWith(f.replace(/\.sql$/, '') + '.sql')), `${f} is not recorded as applied`);
-    assert.match(await read('supabase/pending/' + f), /set local lock_timeout = '5s';/);
-  }
-  // anon_policy_scope_v1 is applied (20261016031123) and promoted out of pending.
-  assert.ok(!pending.includes('anon_policy_scope_v1.sql'));
-  assert.ok(migrations.includes('20261016031123_anon_policy_scope_v1.sql'));
-  const listener = await read('supabase/pending/listener_state_v1.sql');
+  const stillPending = 'public_music_reads_lean_v1.sql';
+  assert.ok(pending.includes(stillPending));
+  assert.ok(!migrations.some((m) => m.endsWith(stillPending)));
+  assert.match(await read('supabase/pending/' + stillPending), /set local lock_timeout = '5s';/);
+
+  // Applied after the isolated RLS and cross-device upsert contract passed.
+  assert.ok(!pending.includes('listener_state_v1.sql'));
+  assert.ok(migrations.includes('20261021125121_listener_state_v1.sql'));
+  const listener = await read('supabase/migrations/20261021125121_listener_state_v1.sql');
+  assert.match(listener, /set local lock_timeout = '5s';/);
   assert.match(listener, /force row level security/);
   assert.match(listener, /using \(profile_id = \(select auth\.uid\(\)\)\)/);
-  assert.doesNotMatch(listener, /to anon/);
+  assert.doesNotMatch(listener, /grant .* to anon/i);
+
+  assert.ok(!pending.includes('anon_policy_scope_v1.sql'));
+  assert.ok(migrations.includes('20261016031123_anon_policy_scope_v1.sql'));
 });

@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'supabase/pending/listener_state_v1.sql'
+      - 'supabase/migrations/*_listener_state_v1.sql'
       - 'supabase/tests/listener_state.behaviour.sql'
       - 'supabase/tests/supabase_api_roles.stub.sql'
       - 'scripts/test-listener-state-db.sh'
