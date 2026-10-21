@@ -55,7 +55,7 @@ insert into public.social_metric_snapshots(id,org_id,post_id,source) values
  ('00000000-0000-4000-8000-000000000104','00000000-0000-4000-8000-000000000090','00000000-0000-4000-8000-000000000102','reported'),
  ('00000000-0000-4000-8000-000000000105','00000000-0000-4000-8000-000000000090','00000000-0000-4000-8000-000000000102','platform_api'),
  ('00000000-0000-4000-8000-000000000106','00000000-0000-4000-8000-000000000090','00000000-0000-4000-8000-000000000103','platform_api');
-do $
+do $$
 declare r record;
 begin
  select * into strict r from public.analytics_instagram_source_status_v1('00000000-0000-4000-8000-000000000090');
@@ -64,9 +64,9 @@ begin
  if has_function_privilege('anon','public.analytics_instagram_source_status_v1(uuid)','execute')
     or has_function_privilege('authenticated','public.analytics_instagram_source_status_v1(uuid)','execute')
  then raise exception 'Provider source RPC grant leak';end if;
-end $;
+end $$;
 
-do $
+do $$
 declare r record;u record;
 begin
  select * into strict r from public.analytics_event_inventory_v1() where event_name='music_play';
