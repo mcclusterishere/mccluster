@@ -2200,18 +2200,19 @@
       range.max = String(Math.max(1, Math.round(d * 1000)));
       range.value = String(Math.round(start * 1000));
       range.setAttribute("aria-valuetext", clockText(start));
+      /* a picture chosen while the video loaded is saving: its "Saving…" stays until it lands */
       if (!canPick) {
         showThumbNow(m);
-        thumbStatus("Picking a frame isn’t available for this video here. Upload an image instead.");
+        if (!thumbEdit.busy) thumbStatus("Picking a frame isn’t available for this video here. Upload an image instead.");
         return;
       }
       $("mnThumbPick").hidden = false;
-      thumbStatus("");
+      if (!thumbEdit.busy) thumbStatus("");
       return (vp.prime ? vp.prime(v) : Promise.resolve()).then(function () { try { v.currentTime = start; } catch (e) {} });
     }).catch(function () {
       if (seq !== thumbEdit.seq) return;
       showThumbNow(m);
-      thumbStatus("This video can’t be opened here. Upload an image instead.", "error");
+      if (!thumbEdit.busy) thumbStatus("This video can’t be opened here. Upload an image instead.", "error");
     });
   }
   function clockText(sec) {

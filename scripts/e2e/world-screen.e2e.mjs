@@ -941,7 +941,7 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
     const before = world.uploadN || 0;
     /* a save is an upload, a finalize and a PATCH; a loaded runner can take its time, so wait for the PATCH itself */
     const patches = () => req(world, 'PATCH', /^\/v1\/mnet\/posts\//).length;
-    const saved = async (n) => { for (let t = 0; t < 600 && patches() <= n; t++) await page.waitForTimeout(100); await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {}); };
+    const saved = async (n, s = 60) => { for (let t = 0; t < s * 10 && patches() <= n; t++) await page.waitForTimeout(100); await page.waitForFunction(() => !document.getElementById('mnThumbDialog').open, null, { timeout: 15000 }).catch(() => {}); };
     const p1 = patches();
     await page.click('#mnThumbUseFrame');
     await saved(p1);
@@ -964,13 +964,18 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
     const p2 = patches(), picture = join(ROOT, 'assets/frames/church_0001.jpg');
     /* as a person does it: Upload an image opens the file chooser, and the picture is chosen there. The sheet rises in, and a
        software-rendered page can take a while to let it settle, so the tap waits until the button can take it */
-    await page.click('#mnThumbUpload', { timeout: 30000, trial: true }).catch(() => {});
-    const chooser = await Promise.all([page.waitForEvent('filechooser', { timeout: 30000 }), page.click('#mnThumbUpload', { timeout: 30000 })]).then(([c]) => c).catch(() => null);
+    /* CI's software-rendered page (globe, feed videos and the editor's own video at once) can take minutes here: the editor
+       is let finish loading its video, the tap and the save get the time that takes, and a miss says where it stopped */
+    await page.waitForFunction(() => !/Loading the video/.test(document.getElementById('mnThumbStatus').textContent), null, { timeout: 120000 }).catch(() => {});
+    let tapped = null;
+    await page.click('#mnThumbUpload', { timeout: 60000, trial: true }).catch((e) => { tapped = 'trial: ' + String(e.message || e).split('\n')[0]; });
+    const chooser = await Promise.all([page.waitForEvent('filechooser', { timeout: 60000 }), page.click('#mnThumbUpload', { timeout: 60000 })]).then(([c]) => c).catch((e) => { tapped = (tapped ? tapped + ' / ' : '') + String(e.message || e).split('\n')[0]; return null; });
     if (chooser) await chooser.setFiles(picture);
-    await saved(p2);
+    await saved(p2, 180);
     const imageId = asset(100 + before + 2), patch2 = req(world, 'PATCH', /^\/v1\/mnet\/posts\//).at(-1), fin2 = world.requests.filter((r) => r.path === '/v1/mnet/media/finalize').at(-1);
     const said = await page.evaluate(() => { const f = document.getElementById('mnThumbFile'); return { open: document.getElementById('mnThumbDialog').open, status: document.getElementById('mnThumbStatus').textContent, disabled: f.disabled, files: f.files.length }; });
-    said.chooser = !!chooser;
+    said.chooser = !!chooser; said.tapped = tapped;
+    if (said.open) await page.screenshot({ path: join(OUT, scope + '-upload-stuck.png') }).catch(() => {});
     check(scope, 'Upload an image sends that picture, finalized with its own size', JSON.stringify(patch2.body) === JSON.stringify({ poster_by_media: { [VID.mine]: imageId } }) && fin2.body.asset_id === imageId && fin2.body.width > 0, { patch: patch2.body, fin: fin2.body, said, uploads: world.uploadN });
     check(scope, 'no horizontal overflow after the edits', await noSideways(page));
     check(scope, 'no JavaScript errors', errors.length === 0, errors);
