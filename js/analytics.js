@@ -33,6 +33,88 @@ function mccControlPreview() {
   try { return window.parent !== window && window.parent.location.origin === location.origin && /(?:control|front-studio)\.html$/.test(window.parent.location.pathname); }
   catch (_) { return false; }
 }
+
+/* EVENT_OUTBOX_FACTORY_BEGIN */
+/* Consent-gated, minimal durable retry envelopes. One per-event key avoids
+   competing tabs overwriting a shared JSON queue; server UUID PK suppresses
+   duplicate deliveries when tabs retry concurrently. No arbitrary props,
+   referrer, account token, URL query, IP or session identifier is persisted.
+   Durable availability is best-effort (storage may be unavailable/denied). */
+function mccCreateEventOutbox(area, clock, allowed) {
+  var PREFIX = "mcc_event_outbox_v1:";
+  var TTL = 6 * 3600000, LIMIT = 72;
+  var lost = 0;
+  function keys() {
+    var found = [];
+    try {
+      for (var i = 0; i < area.length; i++) {
+        var key = area.key(i);
+        if (typeof key === "string" && key.indexOf(PREFIX) === 0) found.push(key);
+      }
+    } catch (_) {}
+    return found;
+  }
+  function purge() {
+    keys().forEach(function(key){try{area.removeItem(key);}catch(_){}});
+  }
+  function live() {
+    var time = clock(), rows = [];
+    keys().forEach(function(key) {
+      try {
+        var data = JSON.parse(area.getItem(key) || "null");
+        if (!data || data.v !== 1 || typeof data.id !== "string" ||
+            key !== PREFIX + data.id ||
+            !/^[0-9a-f-]{36}$/i.test(data.id) ||
+            !Number.isFinite(data.at) || data.at > time + 60000 ||
+            time - data.at > TTL || !data.event || data.event.id !== data.id) {
+          area.removeItem(key); return;
+        }
+        rows.push(data);
+      } catch (_) {try{area.removeItem(key);}catch(_){}}
+    });
+    return rows.sort(function(a,b){return a.at - b.at || a.id.localeCompare(b.id);});
+  }
+  function permitted() {
+    try { return !!allowed(); } catch (_) { return false; }
+  }
+  function put(event) {
+    if (!permitted()) {purge(); return false;}
+    var id = String(event && event.id || "").toLowerCase();
+    var name = String(event && event.name || "");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id) ||
+        !/^[a-z][a-z0-9_]{0,119}$/.test(name)) return false;
+    var path = String(event.path || "");
+    if (!/^[a-zA-Z0-9._-]{1,120}$/.test(path)) path = "index.html";
+    try {
+      if (live().length >= LIMIT) {lost++; return false;}
+      var entry = {v:1,id:id,at:clock(),
+        event:{id:id,name:name,path:path,props:{},referrer:null}};
+      var json = JSON.stringify(entry);
+      if (json.length > 640) return false;
+      area.setItem(PREFIX + id,json);
+      return true;
+    } catch (_) {return false;}
+  }
+  function pending(limit,minAgeMs) {
+    if (!permitted()) {purge();return [];}
+    var floor = Math.max(0,Number(minAgeMs)||0),time=clock();
+    return live().filter(function(row){return time-row.at>=floor;})
+      .slice(0,Math.max(1,Math.min(12,Number(limit)||12))).map(function(row){return row.event;});
+  }
+  function acknowledged(batch) {
+    if (!Array.isArray(batch)) return;
+    batch.forEach(function(row){
+      var id = String(row && row.id || "").toLowerCase();
+      if (/^[0-9a-f-]{36}$/.test(id)) {
+        try{area.removeItem(PREFIX + id);}catch(_){}
+      }
+    });
+  }
+  return {put:put,pending:pending,acknowledged:acknowledged,purge:purge,
+    status:function(){return {queued:live().length,dropped_due_to_capacity:lost,ttl_hours:6,max_entries:LIMIT};}};
+}
+/* EVENT_OUTBOX_FACTORY_END */
+
 if (mccPrivacyAcknowledged() && !mccControlPreview()) {
 /* ============================================================
    THE HOUSE'S OWN EYES.
@@ -327,19 +409,37 @@ window.MCC_TRACK = (function () {
   var LINGER_MS = 2500;
   var queue = [];
   var timer = null;
+  var retryingStored = false, lastStoredRetry = 0;
+  var eventOutbox = mccCreateEventOutbox(
+    (function(){try{return localStorage;}catch(_){return null;}})(),
+    function(){return Date.now();},
+    function(){return mccPrivacyAcknowledged() && !mccControlPreview() && !privacySignal();}
+  );
+  function consentNow() {
+    var allowed = mccPrivacyAcknowledged() && !mccControlPreview();
+    if (!allowed || privacySignal()) eventOutbox.purge();
+    if (!allowed) { queue = []; return false; }
+    return true;
+  }
+  // Existing GPC/DNT events remain minimized server-side; never persist them.
+  if (privacySignal()) eventOutbox.purge();
 
-  function send(batch, keepalive) {
-    if (!batch.length) return Promise.resolve(null);
+  function send(batch, keepalive, replay) {
+    if (!batch.length || !consentNow()) return Promise.resolve(null);
     var headers = { "Content-Type": "application/json", apikey: SB_KEY };
-    var auth = bearer();
+    // A recovered event may predate a sign-out or account switch. Never
+    // attach the current member's token to old, minimally persisted evidence.
+    var auth = replay ? null : bearer();
     if (auth) headers.Authorization = auth;
     var opts = {
       method: "POST",
       headers: headers,
       body: JSON.stringify({
-        device_id: deviceId,
-        session_id: sessionId(),
-        device: deviceFacts(),
+        // Recovered events have only minimal name/path evidence. Do not
+        // attribute their historical action to a newly minted session.
+        device_id: replay ? null : deviceId,
+        session_id: replay ? null : sessionId(),
+        device: replay ? {} : deviceFacts(),
         events: batch,
       }),
     };
@@ -362,23 +462,52 @@ window.MCC_TRACK = (function () {
       return attempt(COLLECT).then(function (r) { return r || attempt(COLLECT_FALLBACK); });
     }
     return route().then(function (r) {
+      if (r && consentNow()) eventOutbox.acknowledged(batch);
       if (r || keepalive || privacySignal() || !mccPrivacyAcknowledged()) return r;
       /* A normal page can retry transient failures once more; a page being
          torn down cannot rely on delayed work, so it uses keepalive instead.
          This is bounded best-effort delivery, not a durable offline queue. */
       return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(function () {
         if (!mccPrivacyAcknowledged() || privacySignal()) return null;
-        return route();
+        return route().then(function(response){
+          if (response && consentNow()) eventOutbox.acknowledged(batch);
+          return response;
+        });
       });
     });
   }
 
+  function retryOutbox() {
+    if (retryingStored || !consentNow() || privacySignal() ||
+        Date.now() - lastStoredRetry < 3000) return Promise.resolve(null);
+    // Other tabs may be in the normal 2.5s batching/transport interval.
+    // Do not preempt their full payload with this minimal recovery copy.
+    var pending = eventOutbox.pending(BATCH,15000);
+    if (!pending.length) return Promise.resolve(null);
+    retryingStored = true; lastStoredRetry = Date.now();
+    return send(pending,false,true).finally(function(){retryingStored=false;});
+  }
+  // A tab can retry another tab's unanswered event without a shared
+  // queue overwrite. The server's stable UUID and ON CONFLICT guarantee
+  // correctness if concurrent tabs submit the same recovered ID.
+  window.addEventListener("online",function(){retryOutbox();});
+  window.addEventListener("focus",function(){retryOutbox();});
+  window.addEventListener("storage",function(ev){
+    if (ev.key === "mcc_privacy_ack" && !ev.newValue) {
+      eventOutbox.purge();queue=[];
+    } else if (ev.key && ev.key.indexOf("mcc_event_outbox_v1:")===0 && ev.newValue) {
+      if (document.visibilityState !== "hidden") retryOutbox();
+    }
+  });
+  setInterval(function(){if(document.visibilityState !== "hidden")retryOutbox();},60000);
+  setTimeout(retryOutbox,4000);
+
   function flush(keepalive) {
     if (timer) { clearTimeout(timer); timer = null; }
-    if (!queue.length) return Promise.resolve(null);
+    if (!consentNow() || !queue.length) return Promise.resolve(null);
     var batch = queue;
     queue = [];
-    return send(batch, keepalive);
+    return send(batch, keepalive, false);
   }
 
   /* HIDDEN IS THE ONLY RELIABLE GOODBYE ON A PHONE. pagehide covers an
@@ -397,13 +526,19 @@ window.MCC_TRACK = (function () {
       var creatorHandle = new URLSearchParams(location.search).get("handle") || "";
       if (/^[a-z0-9][a-z0-9._-]{2,39}$/.test(creatorHandle)) props.creator_handle = creatorHandle;
     }
-    queue.push({
+    if (!consentNow()) return;
+    var event = {
       id: uuid(), // per-event, never reused for a different action
       name: String(name || "").slice(0, 120),
       path: location.pathname.split("/").pop() || "index.html",
       props: props,
       referrer: document.referrer || null,
-    });
+    };
+    // Storage is deliberately minimal: raw client-supplied properties and
+    // referrers never land in the retry shelf. First attempt keeps the full
+    // in-memory event; later retries retain its identity but omit those fields.
+    eventOutbox.put(event);
+    queue.push(event);
     if (queue.length >= BATCH) flush(false);
     else if (!timer) timer = setTimeout(function () { flush(false); }, LINGER_MS);
   }
@@ -1376,6 +1511,11 @@ window.MCC_MODEL = (function () {
   root.MCC_SENSE = { visitor: visitor, machine: machine, attention: attention, vitals: function () { return vitals; } };
 })(window);
 
-} else {
+ } else {
+  // Consent withdrawn or never given: do not retain offline tracking
+  // evidence from a previous session or policy version.
+  try {
+    mccCreateEventOutbox(localStorage,function(){return Date.now();},function(){return false;}).purge();
+  } catch (_) {}
   window.MCC_TRACK = function () { return false; };
 }
