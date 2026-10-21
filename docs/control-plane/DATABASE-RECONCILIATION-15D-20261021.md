@@ -5,20 +5,20 @@
 ## Scope and evidence
 - GitHub PRs created 2026-10-06 04:45Z through audit: **189**; **148 merged**, **38 open**, **3 closed unmerged**. PR authorship is not attributable to Claude solely from these counts. Includes both application-only and DB-changing PRs.
 - Repository recursive tree: **5,550 blobs**, **352 files under `supabase/migrations/`** (including non-SQL if present), **34 pending SQL files**: **25 forward** and **9 rollback**. Also includes legacy/replay SQL, `platform/sql/` (not assumed to be Supabase), tests and historical documentation. Do not treat every .sql file as an unapplied production migration.
-- Supabase production: **336** applied ledger entries, latest `20261021050105_music_creator_one_click_v1`. Exact source equality verified for the new 10,368-character migration; public RPC permissions and absence of anon EXECUTE checked. Canonical repo ledger reconciliation is in draft **#581**, not yet merged. No new schema applied in this audit.
+- Supabase production: **336** applied ledger entries, latest `20261021050105_music_creator_one_click_v1`. Exact source equality verified for the new 10,368-character migration; public RPC permissions and absence of anon EXECUTE checked. Canonical repo ledger reconciliation is merged as **#581**; production and canonical ledger both contain 336 migrations. No new schema applied in this audit.
 - Last 12 released migrations from Oct 20–21 exist in the production ledger and their main objects were checked in the preceding audit. **Full byte-for-byte source comparison of all 336 historical migrations has not been completed.**
 
 ## Historical SQL digest comparison (new read-only evidence)
 
 Production `supabase_migrations.schema_migrations.statements` was hashed for **all 336 applied versions** without exporting SQL or private rows. The snapshot is `production-sql-digests-20261021.json`; `scripts/audit-production-sql-digests.mjs` compares SHA256 to canonical files and uploads a CI report.
 
-CI hash classification against the **335-entry main ledger** before #581 merged:
-- **89** exact canonical-source hashes.
-- **102** historical named no-op anchors and **23** four-digit replay anchors (intentionally not original SQL).
-- **18** trailing-newline-only differences (normalized SQL matches).
+Latest **GitHub Actions verification against merged #581 and the 336-entry canonical ledger**:
+- **90** exact canonical-source SQL hashes.
+- **102** historical named no-op anchors and **23** four-digit replay anchors; these are intentional source substitutions, not missing database migrations.
+- **18** trailing-newline-only differences; normalized hashes match.
 - **6** multi-statement migrations requiring statement-boundary-aware review.
-- **97** remaining SQL hash mismatches; **79** are after the production SQL cutover. These are unresolved source/provenance differences, not automatically evidence of an unapplied migration.
-- **1** live migration not registered in the original main ledger: `20261021050105_music_creator_one_click_v1`; this is now reconciled by merged **#581** (merge `06d088326dbdea4635a93760179bd96cc801d7f8`). A CI run against the updated base should clear this classification.
+- **97** remaining source-hash mismatches; **79** are after the production SQL cutover. These are unresolved source/provenance differences, not automatically evidence of unapplied SQL.
+- **0** unregistered production versions: live and canonical ledger both contain 336 entries, including `20261021050105_music_creator_one_click_v1` reconciled by merged **#581** (`06d088326dbdea4635a93760179bd96cc801d7f8`).
 
 **Do not bulk-replay 97 mismatched migrations.** The next phase must classify each difference by original migration source, production stored statement boundaries, aliases and effective schema. Hash equality alone does not prove operational health; inequality alone does not prove a failed apply. The CI artifact preserves the full mismatch inventory. Snapshot will become stale when a new migration is applied; refresh it from read-only production before asserting a current state.
 
