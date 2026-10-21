@@ -219,6 +219,13 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     /* the Worker's rule (world-region-feed.js): without a member's session, the connection's country only */
     if (u.pathname === '/v1/world/region-feed' && !auth && u.searchParams.get('country') !== world.placeHome) return json(route, { error: 'Sign in to read another country\'s feed', detail: { sign_in: true, home: world.placeHome } }, 403);
     if (u.pathname === '/v1/world/region-feed') { const c = u.searchParams.get('country'); return json(route, { ok: true, available: true, country: c, posts: c === world.placeHome ? world.posts.slice(0, 3).filter((p) => p.visibility === 'public').map((p) => { const x = item(p); x.post.media_locked = x.post.media.length; delete x.post.media; delete x.post.author_m_uid; return x; }) : [], news: [], lives: c === world.placeHome ? [{ id: LIVE[0].id, title: LIVE[0].title, room_kind: 'mission', category_key: 'field', started_at: LIVE[0].started_at, country_code: c, host: { display_name: 'Fixture Ana', avatar_url: '' } }] : [], next_post_before: null, next_news_before: null }); }
+    /* THE PLACE CARD'S MEMBERS (workers/mccluster/src/world-members.js): the house owner's session gets every country exactly and
+       the places to count states by (Nairobi 15, Eastern 4, Coast 4; Nairobi's region code is a county's, so the shape decides);
+       anyone else gets the countries of five or more */
+    if (u.pathname === '/v1/world/members') {
+      if (world.owner && auth) return json(route, { ok: true, basis: 'accounts_by_latest_signed_in_ip_place', window_days: 400, exact: true, countries: { KE: 23, US: 13, GB: 4 }, total: 40, cells: [[36.82, -1.29, 15, 'KE', '30'], [38.0, -1.2, 4, 'KE', '13'], [39.66, -4.05, 4, 'KE', '28'], [-72.93, 41.31, 13, 'US', 'CT'], [-0.12, 51.51, 4, 'GB', 'ENG']] });
+      return json(route, { ok: true, basis: 'accounts_by_latest_signed_in_ip_place', window_days: 400, exact: false, k: 5, countries: { KE: 19, US: 13 } });
+    }
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     /* the news heat map's counts: the fixture's stories by the country each mentions, and Kenya's as places */
     if (u.pathname === '/v1/world/news-heat') {
@@ -934,7 +941,7 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     check(scope,'the place card sits in the middle at the top, not the full width: centred, under the bar, nothing over it, the buttons stepped aside',Math.abs(pc.left-pc.right)<=2&&pc.w<=300&&pc.w<pc.vw-40&&pc.top>=pc.barBottom&&pc.onTop&&pc.stackClear&&pc.liveClear&&pc.frameCard==='none',pc);
     const under = await Promise.all([eastern,nairobi].map((p)=>page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[p.x,p.y])));
     check(scope,'with the card up, the places to tap are still the globe\'s',under.every((t)=>t==='mnWorldFrame'),under);
-    check(scope,'it gives Kenya\'s three counts: news today, posts placed there, members who share their region',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
+    check(scope,'it gives Kenya\'s three counts: news today, posts placed there, accounts from there (five or more, so shown)',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
     await page.screenshot({path:join(OUT,scope+'-place-card.png')});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
     const kenya = await page.locator('#mnFeed [data-news-id]').count();
@@ -966,6 +973,49 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     await globe.waitForFunction(()=>!window.__huCountries().selected,null,{timeout:5000}).catch(()=>{});
     await gap();
     check(scope,'and one more lets the country go, as it always has',!(await now()).selected&&await page.textContent('#huRegionLabel')==='All regions');
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* THE PLACE CARD'S MEMBERS FOR THE HOUSE OWNER (owner, 2026-10-21: "count how many people have logged in with an account from
+   that IP region. Make it exact down to the state. So you can filter state versus country"): the owner's card gives the
+   country's exact count, and each state's once a state is picked; Britain's four read 4 for the owner, where anyone else
+   reads <5. */
+if (runs('editorial-members') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
+  const scope = 'editorial-members-owner';
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,social:true,owner:true});
+  try {
+    await page.waitForFunction(()=>document.documentElement.hasAttribute('data-world-owner'),null,{timeout:20000}).catch(()=>{});
+    await page.waitForFunction(()=>!!document.getElementById('mnWorldFrame')?.contentWindow?.__huCountries?.().ready,null,{timeout:25000});
+    const globe = page.frame({url:/action-globe\.html/});
+    await globe.waitForFunction(()=>window.__huCountries().heat?.countries===16,null,{timeout:20000}).catch(()=>{});
+    await globe.evaluate(()=>window.__huCountriesCam.view(37.6,-0.4,1.5e6));
+    await globe.waitForFunction(()=>window.__huCountries().lines===1,null,{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    const frame = await page.locator('#mnWorldFrame').boundingBox();
+    const at = async (lon,lat)=>{const s=await globe.evaluate(([lon,lat])=>window.__huCountriesCam.screen(lon,lat),[lon,lat]);return {x:frame.x+s.x,y:frame.y+s.y};};
+    const twice = (p)=>globe.evaluate(({x,y})=>{const t=performance.now();window.__huCountriesCam.tap(x,y,t);window.__huCountriesCam.tap(x,y,t+150);},{x:p.x-frame.x,y:p.y-frame.y});
+    const stats = ()=>page.evaluate(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden?[...c.querySelectorAll('.mn__place-stat')].map(x=>x.textContent):null});
+    const eastern = await at(38.1,-1.3), nairobi = await at(37.05,-1.25);
+    check(scope,'the owner\'s globe asked for the members with the session',world.requests.some(r=>r.path==='/v1/world/members'&&r.auth));
+    await twice(eastern);
+    await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/\b23\b/.test(c.textContent)},null,{timeout:10000}).catch(()=>{});
+    const ke = await stats();
+    check(scope,'Kenya\'s card gives the exact count of accounts from there',JSON.stringify(ke)===JSON.stringify(['8news · 24 h','3posts','23members']),ke);
+    await page.waitForTimeout(700);
+    await twice(eastern);
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:8000}).catch(()=>{});
+    await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/members/.test(c.textContent)},null,{timeout:8000}).catch(()=>{});
+    const east = await stats();
+    check(scope,'a state picked gives that state\'s accounts: 4 in Eastern',JSON.stringify(east)===JSON.stringify(['0news · 24 h','4members']),east);
+    await page.waitForTimeout(700);
+    await twice(nairobi);
+    await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
+    await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/\b15\b/.test(c.textContent)},null,{timeout:8000}).catch(()=>{});
+    const nb = await stats();
+    check(scope,'and Nairobi\'s 15, found by its shape (its region code is a county\'s, not the state\'s)',JSON.stringify(nb)===JSON.stringify(['8news · 24 h','15members']),nb);
+    await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
     check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
     check(scope,'no JavaScript errors',errors.length===0,errors);
   }finally{await ctx.close();}

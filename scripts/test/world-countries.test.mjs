@@ -308,3 +308,35 @@ test('a state picked or let go is told as the same country, and Travel keeps the
   assert.match(js, /function select\(f\) \{[\s\S]*?o\.onSelect\(told\(f, n, null\)\)/, 'a country change does not');
   assert.match(travel, /e\.data\?\.type === 'hu:country' && currentMode === 'travel' && e\.data\.country\?\.name && !e\.data\.country\.stateOnly/);
 });
+
+/* THE PLACE CARD'S MEMBERS (owner, 2026-10-21: "count how many people have logged in with an account from that IP region. Make it
+   exact down to the state"): the owner's places count in the state their region code names, or else the state they fall in */
+test('members by state: a region code that names a state counts there; any other place counts in the state it falls in', () => {
+  const areas = (a2) => C.decode(JSON.parse(read('data/geo/world-state-areas/' + a2 + '.json')));
+  const us = areas('US');
+  assert.deepEqual(C.memberStates([[-72.93, 41.31, 3, 'US', 'CT'], [-118.24, 34.05, 2, 'US', 'CA'], [-73.94, 40.67, 1, 'US', ''], [2.35, 48.86, 9, 'FR', 'IDF']], us, 'US'), { 'US-CT': 3, 'US-CA': 2, 'US-NY': 1 }, 'codes first; a place with no code by its shape; another country\'s never');
+  /* the code wins over a place near a border: Cloudflare's region is the answer, the coordinates only its city */
+  assert.deepEqual(C.memberStates([[-71.8, 41.9, 1, 'US', 'CT']], us, 'US'), { 'US-CT': 1 });
+  /* Kenya's states are its old provinces; Cloudflare names counties ("30" is Nairobi City), so the shape decides */
+  assert.deepEqual(C.memberStates([[36.82, -1.29, 15, 'KE', '30'], [38.0, -1.2, 4, 'KE', '13'], [39.66, -4.05, 4, 'KE', '28']], areas('KE'), 'KE'), { 'KE-110': 15, 'KE-400': 4, 'KE-300': 4 });
+  /* grouped countries: Italy's regions and Britain's nations have keys of their own */
+  assert.deepEqual(C.memberStates([[13.36, 38.12, 1, 'IT', '82'], [9.19, 45.46, 2, 'IT', '25']], areas('IT'), 'IT'), { 'IT:Sicily': 1, 'IT:Lombardia': 2 });
+  assert.deepEqual(C.memberStates([[-0.12, 51.51, 4, 'GB', 'ENG'], [-3.19, 55.95, 1, 'GB', 'SCT']], areas('GB'), 'GB'), { 'GB:England': 4, 'GB:Scotland': 1 });
+  assert.deepEqual(C.memberStates([[-30, 30, 2, 'US', ''], [0, 0, 0, 'US', 'CT'], 'x', null], us, 'US'), {}, 'a place in no state, a zero and junk count nowhere');
+});
+
+test('the card reads the Worker\'s members: exact for the owner (states too), five or more for anyone else, "<5" below', () => {
+  const src = read('js/world-countries.js');
+  assert.match(src, /if \(sp\) \{ if \(m\.exact && st\.stateMembers && st\.stateMembers\.code === a2\) members = Number\(st\.stateMembers\.counts\[sp\.key\]\) \|\| 0; \}/);
+  assert.match(src, /else if \(m\.exact\) members = Number\(m\.countries\[a2\]\) \|\| 0;/);
+  assert.match(src, /else if \(Number\(m\.countries\[a2\]\) >= \(Number\(m\.k\) \|\| 5\)\) members = Number\(m\.countries\[a2\]\);\s*else membersUnder = Number\(m\.k\) \|\| 5;/);
+  assert.doesNotMatch(src.slice(src.indexOf('function statsFor'), src.indexOf('function told')), /o\.regions/, 'the empty member-regions table is no longer the count');
+  assert.match(src, /heat: setHeat, members: setMembers,/);
+  const globe = read('js/action-globe.js');
+  assert.match(globe, /fetch\(API\+'\/v1\/world\/members',\{headers:t\?\{authorization:'Bearer '\+t,accept:'application\/json'\}:\{accept:'application\/json'\},credentials:'omit',cache:'no-store'\}\)/, 'the session goes in the header, so the Worker can tell the owner');
+  assert.match(globe, /function paintAccess\(\)\{loadMembers\(\);/, 'a new session reads them again');
+  assert.match(globe, /loadNewsHeat\(\);loadMembers\(\)\}/);
+  const mnet = read('js/mnet.js');
+  assert.match(mnet, /var members = s\.membersUnder \? '<span class="mn__place-stat"><b>&lt;' \+ esc\(s\.membersUnder\) \+ '<\/b><small>members<\/small><\/span>' : cell\(s\.members, "members"\);/);
+  assert.match(mnet, /\(st8 \? \(s\.members === null \? "" : cell\(s\.members, "members"\)\) : cell\(s\.posts, "posts"\) \+ members\)/, 'a state shows members only when the count is exact');
+});

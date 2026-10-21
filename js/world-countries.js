@@ -148,6 +148,23 @@
     }
     return null;
   }
+  /* the owner's exact members by state, from the Worker's places ([lon, lat, accounts, country, region code]). A place whose
+     region code names one of the country's states ("US" and "CT" is US-CT) counts there; any other counts in the state its
+     place falls in, which covers the countries whose states are groups with keys of their own (Italy's regions, England,
+     Scotland …). A place in neither counts in no state, never a guessed one. */
+  function memberStates(cells, areas, a2) {
+    const out = {}, keys = new Set((areas || []).map((sf) => sf && sf.properties && sf.properties.key));
+    for (const c of Array.isArray(cells) ? cells : []) {
+      if (!Array.isArray(c) || c[3] !== a2) continue;
+      const n = Number(c[2]) || 0;
+      if (n <= 0) continue;
+      const byCode = c[4] && keys.has(a2 + '-' + c[4]) ? a2 + '-' + c[4] : null;
+      const sf = byCode ? null : countryAt(areas || [], Number(c[0]), Number(c[1]));
+      const k = byCode || (sf && sf.properties.key);
+      if (k) out[k] = (out[k] || 0) + n;
+    }
+    return out;
+  }
   const A2 = /^[A-Z]{2}$/;
   /* a mission row's country: its own country_code, else its region's, else the country its own published pin sits in;
      never guessed from a region key's spelling. The pin matters in production: the public regions read is k>=5 suppressed
@@ -175,7 +192,7 @@
   function mount(viewer, opts) {
     const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0 };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0, members: null, stateMembers: null, membersGen: 0 };
     const scratchColor = new C.Color(), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), scratchRect = new C.Rectangle(), view = [0, 0, 0, 0];
     const INK = C.Color.fromCssColorString('#f4f1ea');
     /* the borders are the map: clear enough to read on the day and the night side, in the feed's small globe too */
@@ -238,21 +255,28 @@
       card.innerHTML = '<div class="country-card__head">' + (p.flag && !quiet ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
         '<span class="country-card__text"><b>' + escHtml(sp ? sp.name : p.name) + '</b>' + (sp ? '<small>' + escHtml(p.name) + '</small>' : missions) + '</span>' +
         '<button type="button" class="country-card__close" aria-label="' + (sp ? 'Show all of ' + escHtml(p.name) : 'Show every country') + '">×</button></div>' +
-        '<div class="country-card__stats">' + cell(stats.news, 'news · 24 h') + (sp ? '' : cell(stats.posts, 'posts') + cell(stats.members, 'members')) + '</div>' +
+        '<div class="country-card__stats">' + cell(stats.news, 'news · 24 h') + (sp ? (stats.members === null ? '' : cell(stats.members, 'members')) : cell(stats.posts, 'posts') + (stats.membersUnder ? '<span class="country-card__stat"><b>&lt;' + stats.membersUnder + '</b><small>members</small></span>' : cell(stats.members, 'members'))) + '</div>' +
         (!sp && stats.states ? '<small class="country-card__hint">Double-tap a state to choose it</small>' : '');
       card.querySelector('button').onclick = () => (sp ? selectState(null) : select(null));
       card.hidden = false;
       return n;
     }
     /* the place's three counts, null where not known: the stories that mention it (the heat map's day), the member posts placed
-       there (once the place feed is on) and the members who share their region there (action_globe_public_regions: consented,
-       five or more per region; a country's total is only those published regions, so no smaller group can be worked out) */
+       there (once the place feed is on), and the accounts whose latest signed-in visit came from an IP there (GET
+       /v1/world/members; owner, 2026-10-21: "count how many people have logged in with an account from that IP region. Make
+       it exact down to the state"). The house owner's answer is exact, for a country and for each state; anyone else's names
+       only the countries with five or more, so a smaller country reads "<5" and a state has no members count at all. */
     function statsFor(f, sf) {
-      const a2 = f && f.properties.a2, sp = sf && sf.properties;
+      const a2 = f && f.properties.a2, sp = sf && sf.properties, m = st.members;
       const news = sp ? (st.stateCounts ? Number(st.stateCounts[sp.key]) || 0 : null) : (st.heat && a2 ? Number(st.heat[a2]) || 0 : null);
-      let members = null;
-      if (!sp && a2) for (const r of (o.regions ? o.regions() : []) || []) { const m = Number(r && r.member_count); if (r && r.country_code === a2 && m >= 5) members = (members || 0) + m; }
-      return { news, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members: sp ? null : members, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
+      let members = null, membersUnder = 0;
+      if (m && a2) {
+        if (sp) { if (m.exact && st.stateMembers && st.stateMembers.code === a2) members = Number(st.stateMembers.counts[sp.key]) || 0; }
+        else if (m.exact) members = Number(m.countries[a2]) || 0;
+        else if (Number(m.countries[a2]) >= (Number(m.k) || 5)) members = Number(m.countries[a2]);
+        else membersUnder = Number(m.k) || 5;
+      }
+      return { news, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members, membersUnder, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
     }
     /* what the page is told: the country, and the state picked in it, with its shape (the feed keeps the stories placed in it).
        stateOnly marks a state picked or let go inside the same country, so a listener that acts on a new country (Travel's
@@ -312,6 +336,7 @@
         if (f.properties.a2) { loadAreas(f.properties.a2); stateIndexP().then(() => { if (gen === st.selectGen && st.selected === code && !st.selectedState) restat(); }); }
       }
       drawStateHeat();
+      countStateMembers();
       if (o.onSelect) o.onSelect(told(f, n, null));
       if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
     }
@@ -368,6 +393,23 @@
         if (instances.length) { st.stateHeat = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: instances, appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }), asynchronous: true })); showCountryHeat(); }
         restat();
         if (viewer.scene.requestRenderMode) viewer.scene.requestRender();
+      });
+    }
+    /* THE MEMBERS: the Worker's answer for this viewer (null until it comes, or when it cannot); the selected country's states
+       are counted from the owner's places once its state shapes are here */
+    function setMembers(data) {
+      st.members = data && data.countries && typeof data.countries === 'object' ? data : null;
+      countStateMembers();
+      restat();
+    }
+    function countStateMembers() {
+      const code = st.selected, m = st.members, gen = ++st.membersGen;
+      st.stateMembers = null;
+      if (!m || !m.exact || !Array.isArray(m.cells) || !code || !/^[A-Z]{2}$/.test(code)) return;
+      loadAreas(code).then((areas) => {
+        if (gen !== st.membersGen || st.selected !== code || st.members !== m || !areas) return;
+        st.stateMembers = { code, counts: memberStates(m.cells, areas, code) };
+        restat();
       });
     }
     /* a country's own fill shows unless its states are drawn in its place */
@@ -601,7 +643,7 @@
     const api = {
       /* the page calls this when the missions arrive: a country picked before then is applied again (card count, pin filter) */
       refresh: () => { if (!st.selected) return; const keepState = st.selectedState; select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); if (keepState && st.selected) selectState(keepState); },
-      heat: setHeat, backToCountry: () => { if (st.selectedState) selectState(null); }, click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
+      heat: setHeat, members: setMembers, backToCountry: () => { if (st.selectedState) selectState(null); }, click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
       ready: () => st.ready,
       /* Natural Earth's label point for a country, where the globe marks it (the live badges in js/action-globe.js) */
       point: (code) => { const f = st.features.find((x) => x.properties.a2 === code); return f && Array.isArray(f.properties.label) ? f.properties.label.slice(0, 2) : null; },
@@ -620,5 +662,5 @@
     return api;
   }
 
-  return { decode, undelta, fadeTarget, lineTarget, stateTarget, washTarget, stepAlpha, readMode, writeMode, nextMode, isDoubleTap, countryAt, missionCountry, missionCounts, regionCountryIndex, countText, intersects, PREF_KEY, MODES, STATES_FAR, STATES_NEAR, TAP_GAP, TAP_SLOP, mount };
+  return { decode, undelta, fadeTarget, lineTarget, stateTarget, washTarget, stepAlpha, readMode, writeMode, nextMode, isDoubleTap, countryAt, memberStates, missionCountry, missionCounts, regionCountryIndex, countText, intersects, PREF_KEY, MODES, STATES_FAR, STATES_NEAR, TAP_GAP, TAP_SLOP, mount };
 });

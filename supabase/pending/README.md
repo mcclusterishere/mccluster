@@ -14,6 +14,8 @@ The exact production SQL and ledger are recorded. Regression gate:
 `bash scripts/test-action-archive-db.sh`; public source and release notes:
 `docs/control-plane/MISSION-RESET-DOCKET-516R.md`.
 
+Pending: `world_member_regions_v1.sql` adds `public.world_member_regions()`, the World place card's members: accounts by the IP country, region code and rounded place of their latest signed-in visit, read from `public.events` (nothing new collected; service role only). Until it is applied, `GET /v1/world/members` answers `unavailable` and the card shows a dash. Test: `node --test workers/mccluster/test/world-members.test.mjs`. Rollback: `drop function if exists public.world_member_regions(integer);`. Promote it using the steps below.
+
 A migration is committed under `supabase/migrations/` only with the exact
 version production recorded for it (see `supabase/production-ledger.json` and
 `docs/control-plane/DRIFT-CONTRACT.md`). A migration that is written, reviewed

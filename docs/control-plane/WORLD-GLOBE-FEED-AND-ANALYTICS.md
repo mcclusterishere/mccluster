@@ -440,7 +440,7 @@ on the map.")
     badge step down below it together; the headline hides while the card is
     over it. The × lets the state or the country go.
   - **The three counts** (`statsFor` in `js/world-countries.js`; a state shows
-    its news only). A dash means not known yet.
+    its news, and its members for the house owner). A dash means not known yet.
     - **News · 24 h**: the heat map's count for the country, or the state's.
     - **Posts**: public, top-level member posts placed in the country
       (`network_posts.country_code`), counted by the same `news-heat` call as
@@ -451,11 +451,36 @@ on the map.")
       aggregate in the database is the next step at that size). A day with no
       stories still carries the posts: the globe takes any good answer, and
       only shading shows the legend.
-    - **Members**: the sum of the country's published member regions
-      (`action_globe_public_regions`: members who chose to share their region,
-      five or more per region). Nothing else is counted: not a profile
-      address, not an IP, not where a post was placed. A country with no
-      published region shows a dash.
+    - **Members** (owner, 2026-10-21: "It should just count how many people
+      have logged in with an account from that IP region. Make it exact down to
+      the state. So you can filter state versus country in that way of how many
+      user accounts"). `GET /v1/world/members`
+      (`workers/mccluster/src/world-members.js`) counts accounts by the IP place
+      of their latest signed-in visit, once each, over the last 400 days.
+      - **Source.** `public.world_member_regions()`
+        (`supabase/pending/world_member_regions_v1.sql`, service role only)
+        reads what `public.events` already holds: Cloudflare's country, region
+        code and coordinates for the visit. Nothing new is collected. A Global
+        Privacy Control or Do Not Track visit has no account and no
+        coordinates, so it is never counted. Bots and deleted accounts are not
+        counted.
+      - **The house owner** (the session checked with Supabase and
+        `org_members`) gets every country's exact count, the total, and the
+        places rounded to hundredths of a degree with their region code. The
+        globe counts each state from those: a region code that names a state
+        (US + CT is US-CT) counts there, and any other place counts in the
+        state shape it falls in (Italy's regions, England, Kenya's provinces).
+        A picked state shows its members on the card.
+      - **Everyone else** gets the countries with five or more and nothing
+        finer. A smaller country reads `<5`; a state shows no members count.
+        This keeps the floor the public count has always had.
+      - **Before the function is applied** the route answers `unavailable` and
+        the card shows a dash. The old count
+        (`action_globe_public_regions`, built from
+        `action_globe_member_regions`, which nothing writes to) is no longer
+        read for the card. It still places mission pins.
+      - **Coverage.** Location capture started on 2026-09-27. An account last
+        seen before then is counted on its next visit.
 - **One heat scale for the World and Analytics** (`js/heat-scale.js`; owner, of
   Analytics: "lackluster ... the shading isn't dynamic enough").
   - **What changed.** The old shading was value ÷ the largest value,

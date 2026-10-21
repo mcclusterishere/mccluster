@@ -300,6 +300,19 @@ function loadNewsHeat(){
  /* a read that fails (offline, a bad answer) clears the shading too: an old day's counts never show as the last 24 hours */
  fetch(API+'/v1/world/news-heat',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>{if(publicNewsOn&&!travelMode&&countries)countries.heat(d&&d.ok&&d.countries&&typeof d.countries==='object'?d:null)}).catch(()=>{if(countries)countries.heat(null)});
 }
+/* THE PLACE CARD'S MEMBERS (owner, 2026-10-21: "count how many people have logged in with an account from that IP region.
+   Make it exact down to the state"): accounts by the IP place of their latest signed-in visit, from GET /v1/world/members
+   with the session when there is one. The Worker decides what this viewer sees: exact counts and places for the house
+   owner, countries of five or more for everyone else (workers/mccluster/src/world-members.js). Read again every five
+   minutes, and again when the session changes. */
+let membersTimer=0,membersFor=null;
+function loadMembers(){
+ if(!countries||!countries.members||ANALYTICS)return;
+ const t=sessionToken();
+ if(membersFor===t&&membersTimer)return;
+ membersFor=t;clearTimeout(membersTimer);membersTimer=setTimeout(()=>{membersTimer=0;loadMembers()},300e3);
+ fetch(API+'/v1/world/members',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},credentials:'omit',cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(countries&&membersFor===t)countries.members(d&&d.ok&&d.countries&&typeof d.countries==='object'&&!d.unavailable?d:null)}).catch(()=>{if(countries&&membersFor===t)countries.members(null)});
+}
 /* a selected country's stories as places, counted by state on the globe */
 function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+encodeURIComponent(code),{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>d&&d.ok&&Array.isArray(d.cells)?d.cells:null).catch(()=>null)}
 function setWorldNewsPins(items,on){
@@ -608,7 +621,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}});loadNewsHeat()}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}});loadNewsHeat();loadMembers()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
@@ -709,7 +722,7 @@ function lockOf(id){
  if(!sessionToken()||!access||access.release?.version!=='globe-admin-preview/v1'||access.release.admin_preview!==true||accessToken!==sessionToken())return{id,reason:'admin_preview'};
  if(!access.unlocked_layers.includes(id))return(access.locked_layers||[]).find(x=>x.id===id)||{id,reason:'feature_withdrawn'};
  return null}
-function paintAccess(){Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});
+function paintAccess(){loadMembers();Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});
  const a=$('ctlAudience');if(a&&lockOf('audience'))a.hidden=true;
  if(!viewer)return;
  Object.keys(DATA_LAYERS).forEach(k=>{if(lockOf(k)&&layerState[k].on){layerState[k].on=false;clearLayer(k);const b=$(DATA_LAYERS[k].id);if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:k,on:false})}});

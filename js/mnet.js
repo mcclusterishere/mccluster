@@ -1179,7 +1179,7 @@
      under them; the buttons step down while it shows. A count the globe does not know yet is a dash, never a made-up zero. */
   function placeStats(s) {
     var n = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : null; };
-    return s && typeof s === "object" ? { news: n(s.news), posts: n(s.posts), members: n(s.members), states: s.states === true } : { news: null, posts: null, members: null, states: false };
+    return s && typeof s === "object" ? { news: n(s.news), posts: n(s.posts), members: n(s.members), membersUnder: n(s.membersUnder) || 0, states: s.states === true } : { news: null, posts: null, members: null, membersUnder: 0, states: false };
   }
   function paintPlaceCard(c) {
     var card = $("mnPlaceCard");
@@ -1187,11 +1187,13 @@
     if (!c) { card.hidden = true; card.innerHTML = ""; placeCardRoom(); return; }
     var s = c.stats || placeStats(null), st8 = c.state;
     var cell = function (v, label) { return '<span class="mn__place-stat"><b>' + (v === null ? "\u2014" : esc(v.toLocaleString("en-US"))) + '</b><small>' + esc(label) + '</small></span>'; };
+    /* members: the house owner's count is exact, for a state too; anyone else sees a country's count from five up, "<5" below */
+    var members = s.membersUnder ? '<span class="mn__place-stat"><b>&lt;' + esc(s.membersUnder) + '</b><small>members</small></span>' : cell(s.members, "members");
     /* the second line is the country a state is in, or how to pick a state: the card stays two rows, so it covers little globe */
     var sub = st8 ? c.name : s.states ? "Double-tap a state to choose it" : "";
     card.innerHTML = '<div class="mn__place-head"><span class="mn__place-name"><b>' + esc(st8 ? st8.name : c.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
       '<button type="button" class="mn__place-close" aria-label="' + esc(st8 ? "Show all of " + c.name : "Show every country") + '">\u00d7</button></div>' +
-      '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + (st8 ? "" : cell(s.posts, "posts") + cell(s.members, "members")) + '</div>';
+      '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>';
     card.querySelector(".mn__place-close").onclick = function () { tellWorld(st8 ? { type: "hu:country-back" } : { type: "hu:select-country", code: null }); };
     card.hidden = false;
     placeCardRoom();

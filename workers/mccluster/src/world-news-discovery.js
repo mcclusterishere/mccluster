@@ -581,8 +581,7 @@ async function placeNews(request, env, { country, bbox, limit, before, cursor, f
    now ... how many posts from users are there"): the whole-world answer also carries posts, the public, top-level member posts
    their authors placed in each country (the place scope's opt-in, network_posts.country_code). That column exists only once
    the place scope is switched on (WORLD_PLACE_SCOPE_ENABLED); until then posts is null, never a made-up zero. Members are
-   not counted here: the only consented count is action_globe_public_regions (five or more per region), which the globe
-   already reads. */
+   not counted here: GET /v1/world/members counts them (./world-members.js). */
 const HEAT_HOURS = 24, HEAT_PAGE = 1000, HEAT_PAGES = 15, HEAT_CELL = 0.05, POST_PAGES = 5;
 /* public, top-level, standing member posts placed in each country; null while the place scope is off or unreadable */
 async function placedPosts(env, fetchImpl) {
