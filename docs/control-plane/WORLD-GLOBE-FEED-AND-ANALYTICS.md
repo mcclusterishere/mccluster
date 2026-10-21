@@ -396,10 +396,21 @@ on the map.")
     own events (`pointerdown`'s `timeStamp`), so a busy frame cannot split a
     double tap in two.
   - **The feed.** The page is told the state with its shape (`hu:country`'s
-    `country.state`). The region label reads "State, Country". Local keeps the
-    stories whose point falls inside the state. Member posts carry only their
-    country, so they stay. A state of the country already loaded does not load
-    the country's feed again.
+    `country.state`). The region label reads "State, Country". Member posts
+    carry only their country, so they stay. A state of the country already
+    loaded does not load the country's feed again.
+  - **A place's own news** (owner, 2026-10-21: "Lombardia said ... 60 something
+    in the last 24 hours. Where the fuck are the news articles then? ... if you
+    click the state level, it should filter all the news from that state").
+    - Local no longer filters the world's first page of news.
+    - A picked country reads its own stories from `GET /v1/world/news?country=XX`.
+      A picked state reads them with `&bbox=west,south,east,north` around its
+      shape, and keeps those whose point falls inside the shape.
+    - These are the heat map's own rows and window (the last 24 hours, by the
+      country each story is placed in). So the count on the card and the list
+      under it are the same stories.
+    - Load more pages the place.
+    - A place with none says "No news from … in the last 24 hours".
 - **The news heat map, not pins** (owner, 2026-10-21: "instead of pins on the
   map ... aggregate each mention of a state or country with a heat map of how
   many articles or mentions it has ... so people aren't just needlessly
@@ -429,7 +440,7 @@ on the map.")
     badge step down below it together; the headline hides while the card is
     over it. The × lets the state or the country go.
   - **The three counts** (`statsFor` in `js/world-countries.js`; a state shows
-    its news only). A dash means not known yet.
+    its news, and its members for the house owner). A dash means not known yet.
     - **News · 24 h**: the heat map's count for the country, or the state's.
     - **Posts**: public, top-level member posts placed in the country
       (`network_posts.country_code`), counted by the same `news-heat` call as
@@ -440,11 +451,36 @@ on the map.")
       aggregate in the database is the next step at that size). A day with no
       stories still carries the posts: the globe takes any good answer, and
       only shading shows the legend.
-    - **Members**: the sum of the country's published member regions
-      (`action_globe_public_regions`: members who chose to share their region,
-      five or more per region). Nothing else is counted: not a profile
-      address, not an IP, not where a post was placed. A country with no
-      published region shows a dash.
+    - **Members** (owner, 2026-10-21: "It should just count how many people
+      have logged in with an account from that IP region. Make it exact down to
+      the state. So you can filter state versus country in that way of how many
+      user accounts"). `GET /v1/world/members`
+      (`workers/mccluster/src/world-members.js`) counts accounts by the IP place
+      of their latest signed-in visit, once each, over the last 400 days.
+      - **Source.** `public.world_member_regions()`
+        (`supabase/pending/world_member_regions_v1.sql`, service role only)
+        reads what `public.events` already holds: Cloudflare's country, region
+        code and coordinates for the visit. Nothing new is collected. A Global
+        Privacy Control or Do Not Track visit has no account and no
+        coordinates, so it is never counted. Bots and deleted accounts are not
+        counted.
+      - **The house owner** (the session checked with Supabase and
+        `org_members`) gets every country's exact count, the total, and the
+        places rounded to hundredths of a degree with their region code. The
+        globe counts each state from those: a region code that names a state
+        (US + CT is US-CT) counts there, and any other place counts in the
+        state shape it falls in (Italy's regions, England, Kenya's provinces).
+        A picked state shows its members on the card.
+      - **Everyone else** gets the countries with five or more and nothing
+        finer. A smaller country reads `<5`; a state shows no members count.
+        This keeps the floor the public count has always had.
+      - **Before the function is applied** the route answers `unavailable` and
+        the card shows a dash. The old count
+        (`action_globe_public_regions`, built from
+        `action_globe_member_regions`, which nothing writes to) is no longer
+        read for the card. It still places mission pins.
+      - **Coverage.** Location capture started on 2026-09-27. An account last
+        seen before then is counted on its next visit.
 - **One heat scale for the World and Analytics** (`js/heat-scale.js`; owner, of
   Analytics: "lackluster ... the shading isn't dynamic enough").
   - **What changed.** The old shading was value ÷ the largest value,
@@ -452,11 +488,20 @@ on the map.")
     fifth.
   - **The level now.** A value's level is half its rank among the places that
     have any, and half its size on a log scale. Ties share a level, and the
-    least is faint but never invisible.
+    least is faint but never invisible. A place with none has no level and is
+    never filled.
   - **The World's ramp** is semantic heat: crimson through orange to pale
-    gold, rising in lightness at every stop.
-  - **Analytics' ramp** is one hue built from its accent token: land, then
-    accent, then a light tint. Its legend bar is the same three stops in CSS.
+    gold, rising in lightness at every stop. It also runs from nearly clear to
+    solid (owner, 2026-10-21: "If there's no news about a region, it should be
+    no color ... It should be going no color to color").
+    - The least news is a breath of red.
+    - The most is unmistakable.
+    - The legend bar shows the same see-through ramp.
+  - **Analytics' ramp** runs from the land's own grey straight to the accent's
+    full red, with no paler tint past it (owner, 2026-10-21: "things that are
+    not doing well should be gray, the same color as a globe, and things that
+    are having more shit going on should be red"). Its legend bar is the same
+    two stops in CSS.
 
 ### C3. The owner's five-tab bar (admin first)
 

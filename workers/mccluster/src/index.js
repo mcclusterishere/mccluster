@@ -9,6 +9,7 @@ import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo
 import { handleWorldLayers } from './world-layers.js';
 import { handleHaloLayers, handleWorldGeocode, WORLD_GEOCODE_PATH } from './world-halo-layers.js';
 import { handleHaloOps } from './world-halo-ops.js';
+import { handleWorldMembers, MEMBERS_PATH } from './world-members.js';
 import { handleWorldCctv } from './world-cctv.js';
 import { handleWorldAccess } from './world-access.js';
 import { handleIntelRequest } from './intel/router.js';
@@ -160,6 +161,12 @@ export default {
       if (path === NEWS_HEAT_PATH) {
         const heat = await handleWorldNewsHeat(request, env);
         if (heat) return heat;
+      }
+      /* accounts by the IP place of their latest signed-in visit: exact for the house owner, countries of five or more for
+         everyone else (./world-members.js) */
+      if (path === MEMBERS_PATH) {
+        const members = await handleWorldMembers(request, env);
+        if (members) return members;
       }
 
       /* Optional World layers: release guard above, then provider adapter. */

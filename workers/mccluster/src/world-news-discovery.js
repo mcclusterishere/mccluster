@@ -41,6 +41,16 @@
    centre, and answers 200 with nothing when the database cannot, never an
    error the feed would have to explain. GDELT's terms ask for a citation and
    a link on every use; the answer carries it, and the page shows it.
+
+   A PLACE'S NEWS (owner, 2026-10-21: "Lombardia said ... 60 something in the
+   last 24 hours. Where the fuck are the news articles then? ... if you click
+   the state level, it should filter all the news from that state"). With
+   ?country=XX (and, for a state, ?bbox=west,south,east,north around its
+   shape) the same route answers that place's stories from the heat map's own
+   window and rows: the last HEAT_HOURS, by the country each story is placed
+   in, inside the box; newest first, with the same cursor. So the count on
+   the map and the list under it are the same stories; the page keeps those
+   inside the state's own shape.
    Headlines link out to the publisher; no article text, and no publisher
    image, is shown. The globe's News layer is not here: it joins the other
    layers in world-layers.js once the World's layer access (#442) lands. */
@@ -472,7 +482,7 @@ function answer(request, env, body, maxAge) {
   return res;
 }
 
-export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheImpl = null } = {}) {
+export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheImpl = null, now = null } = {}) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
   if (path !== NEWS_PATH) return null;
@@ -491,6 +501,16 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
     if (!m || !Number.isFinite(t) || t < 0 || new Date(t).toISOString().slice(0, 19) !== m[1].slice(0, 19)) return fail(request, env, 'bad cursor', 400);
     cursor = { at: m[1], id: m[2] };
   }
+  const country = url.searchParams.get('country');
+  if (country !== null && !/^[A-Z]{2}$/.test(country)) return fail(request, env, 'country must be an ISO 3166-1 alpha-2 code', 400);
+  const bboxRaw = url.searchParams.get('bbox');
+  let bbox = null;
+  if (bboxRaw !== null) {
+    const b = bboxRaw.split(',').map(Number);
+    if (country === null || b.length !== 4 || !b.every(Number.isFinite) || b[0] < -180 || b[2] > 180 || b[1] < -90 || b[3] > 90 || !(b[0] < b[2]) || !(b[1] < b[3])) return fail(request, env, 'bbox must be west,south,east,north with a country', 400);
+    bbox = b.map((v) => Math.round(v * 1e4) / 1e4);
+  }
+  if (country !== null) return placeNews(request, env, { country, bbox, limit, before, cursor, fetchImpl, cacheImpl, now: now || (() => Date.now()) });
   const key = `https://cache.mccluster.internal/world/news?limit=${limit}&before=${encodeURIComponent(before || '')}`;
   const data = await keptOrFetched(cacheImpl, key, 60e3, async () => {
     if (!configured) return { unavailable: true };
@@ -509,6 +529,46 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
   return answer(request, env, { ok: true, items: data.items || [], next_before: data.next_before || null, attribution: NEWS_ATTRIBUTION, ...(data.unavailable ? { unavailable: true } : {}) }, 60);
 }
 
+/* one place's stories: the heat map's rows (the last HEAT_HOURS, placed in the country, inside the box), newest first */
+async function placeNews(request, env, { country, bbox, limit, before, cursor, fetchImpl, cacheImpl, now }) {
+  const configured = env && env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY;
+  /* the heat map's own window, moving on with its cache: one slot per five minutes */
+  const slot = Math.floor(now() / 300e3);
+  const key = `https://cache.mccluster.internal/world/news?country=${country}&bbox=${bbox ? bbox.join(',') : ''}&limit=${limit}&before=${encodeURIComponent(before || '')}&slot=${slot}`;
+  const data = await keptOrFetched(cacheImpl, key, 60e3, async () => {
+    if (!configured) return { unavailable: true };
+    try {
+      const fips = gdeltCodesFor(country);
+      if (!fips.length) return { items: [], next_before: null };
+      const since = new Date(slot * 300e3 - HEAT_HOURS * 3600e3).toISOString();
+      const q = [
+        'select=' + encodeURIComponent('id,title,canonical_url,published_at,headline_location_label,headline_latitude,headline_longitude,media_news_sources(domain)'),
+        'ingestion_provider=eq.gdelt_gkg_v2',
+        'published_at=gte.' + encodeURIComponent(since),
+        'location_country_fips=' + (fips.length > 1 ? 'in.(' + fips.join(',') + ')' : 'eq.' + fips[0])
+      ];
+      if (bbox) q.push('headline_longitude=gte.' + bbox[0], 'headline_latitude=gte.' + bbox[1], 'headline_longitude=lte.' + bbox[2], 'headline_latitude=lte.' + bbox[3]);
+      if (cursor) q.push('or=' + encodeURIComponent(`(published_at.lt."${cursor.at}",and(published_at.eq."${cursor.at}",id.lt.${cursor.id}))`));
+      q.push('order=published_at.desc,id.desc', 'limit=' + limit);
+      const { res, body } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/media_news_articles?${q.join('&')}`, {
+        headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }
+      });
+      if (!res.ok) throw new Error('place news ' + res.status);
+      const rows = JSON.parse(body || '[]');
+      const list = Array.isArray(rows) ? rows : [];
+      const items = list.map((r) => {
+        const src = Array.isArray(r.media_news_sources) ? r.media_news_sources[0] : r.media_news_sources;
+        return { id: String(r.id), title: String(r.title || ''), url: String(r.canonical_url || ''), domain: String((src && src.domain) || ''), seen_at: iso(r.published_at),
+          place: r.headline_location_label ? String(r.headline_location_label) : null, lat: num(r.headline_latitude), lon: num(r.headline_longitude), country };
+      }).filter((n) => n.title && /^https?:\/\//.test(n.url) && n.seen_at && UUID_RE.test(n.id));
+      /* the cursor is the last row read, kept or not, so a dropped row never ends the list early */
+      const tail = list.length === limit ? list[list.length - 1] : null, tailAt = tail && iso(tail.published_at);
+      return { items, next_before: tailAt && UUID_RE.test(String(tail.id)) ? `${tailAt}~${tail.id}` : null };
+    } catch { return { unavailable: true }; }
+  });
+  return answer(request, env, { ok: true, items: data.items || [], next_before: data.next_before || null, scope: { country, bbox, window_hours: HEAT_HOURS }, attribution: NEWS_ATTRIBUTION, ...(data.unavailable ? { unavailable: true } : {}) }, 60);
+}
+
 /* ---------- the heat map ----------
    Owner, 2026-10-21: "instead of pins on the map ... aggregate each mention of a state or country with a heat map of how
    many articles or mentions it has". GET /v1/world/news-heat counts the stories of the last HEAT_HOURS by the country each
@@ -521,8 +581,7 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
    now ... how many posts from users are there"): the whole-world answer also carries posts, the public, top-level member posts
    their authors placed in each country (the place scope's opt-in, network_posts.country_code). That column exists only once
    the place scope is switched on (WORLD_PLACE_SCOPE_ENABLED); until then posts is null, never a made-up zero. Members are
-   not counted here: the only consented count is action_globe_public_regions (five or more per region), which the globe
-   already reads. */
+   not counted here: GET /v1/world/members counts them (./world-members.js). */
 const HEAT_HOURS = 24, HEAT_PAGE = 1000, HEAT_PAGES = 15, HEAT_CELL = 0.05, POST_PAGES = 5;
 /* public, top-level, standing member posts placed in each country; null while the place scope is off or unreadable */
 async function placedPosts(env, fetchImpl) {
