@@ -141,6 +141,15 @@ async function controls(page) {
   });
 }
 
+/* the globe moves its controls once the grown map settles: a frame or two on a phone, and up to about a second on a slow
+   page (a run on CI caught the Zoom in button still under Expand 100 ms after the tap, clear by 1.7 s), so the expanded
+   layout is read once it settles, for up to 3 s, and judged as it is then */
+async function settled(page) {
+  let geometry = await controls(page);
+  for (let t = 0; t < 30 && (geometry.hits.length || !geometry.inside); t++) { await page.waitForTimeout(100); geometry = await controls(page); }
+  return geometry;
+}
+
 try {
   const selectedWidths = process.env.WORLD_TRAVEL_WIDTHS?.split(',').map(Number);
   for (const size of [{ width:320,height:568 }, { width:390,height:844 }, { width:844,height:390 }, { width:1280,height:800 }].filter(size => !selectedWidths || selectedWidths.includes(size.width))) {
@@ -150,7 +159,7 @@ try {
     check(scope, 'no horizontal document overflow', geometry.scrollWidth === geometry.clientWidth, geometry);
     await page.locator('.mn__world-expand').click();
     await page.waitForFunction(() => document.documentElement.classList.contains('wt-expanded'));
-    await page.waitForTimeout(100); geometry = await controls(page);
+    geometry = await settled(page);
     check(scope, 'expanded map controls do not overlap Fullscreen, modes or dock', !geometry.hits.length && geometry.inside, geometry);
     await page.locator('.mn__world-expand').click();
     await page.locator('#wtLocate').click();
@@ -311,7 +320,7 @@ try {
     let geometry = await controls(page);
     check(scope, 'normal map controls clear the retained parent audio controls', !geometry.hits.length && geometry.inside, geometry);
     await page.locator('.mn__world-expand').click();
-    await page.waitForTimeout(100); geometry = await controls(page);
+    geometry = await settled(page);
     check(scope, 'expanded map controls clear the retained parent audio controls', !geometry.hits.length && geometry.inside, geometry);
     await page.locator('.mn__world-expand').click();
     await page.evaluate(() => { __geo.answer = 'grant'; }); await page.locator('#wtLocate').click();
