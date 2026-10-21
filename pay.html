@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pay · McCluster</title>
   <meta name="robots" content="noindex">
   <meta name="description" content="Pay securely by Apple Pay, Google Pay, or card. Powered by McCluster.">
@@ -56,6 +56,12 @@
     @keyframes pwspin { to { transform: rotate(360deg); } }
     .pw__done { font-size: 1.05rem; line-height: 1.6; }
     .pw__done .pw__check { font-size: 2.6rem; color: #7ec96b; display: block; margin-bottom: 0.4rem; }
+    .pw__test { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border-radius: 12px; border: 1px solid rgba(240,180,77,0.55);
+      background: rgba(240,180,77,0.1); color: #f6d38f; font-size: 0.85rem; line-height: 1.5; text-align: left; }
+    .pw__test b { color: #ffe2a8; letter-spacing: 0.08em; }
+    .pw__next { margin-top: 1.2rem; padding: 1rem 1.05rem; border-radius: 14px; background: rgba(255,255,255,0.05);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); text-align: left; font-size: 0.95rem; line-height: 1.6; overflow-wrap: anywhere; }
+    .pw__next small { display: block; color: var(--cream-dim, #b8b0a2); font-size: 0.8rem; margin-top: 0.35rem; }
   </style>
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
@@ -90,8 +96,10 @@
 
     <div class="pw__done" id="pwDone" hidden>
       <span class="pw__check"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <p>Payment received. Thank you. A receipt is on its way to your email.</p>
-      <p class="pw__note"><a href="index.html">HERE →</a></p>
+      <p class="pw__test" id="pwTest" hidden><b>TEST PAYMENT</b> · Stripe test mode. No money moved, and nothing was booked or shipped.</p>
+      <p id="pwDoneLead">Payment received. Thank you. A receipt is on its way to your email.</p>
+      <div class="pw__next" id="pwNext" role="status" aria-live="polite" hidden></div>
+      <p class="pw__note">Questions? <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a> · <a href="index.html">HERE →</a></p>
     </div>
   </main>
 
@@ -123,7 +131,54 @@
     if (q.get("done") === "1") {
       el("pwLive").hidden = true; el("pwDone").hidden = false;
       track("checkout_done", { offer: offer });
+      confirmSale(q.get("s") || "");
       return;
+    }
+
+    /* CONFIRMATION. Stripe sends the buyer back with its Checkout Session
+       id; the API answers once the webhook has recorded the sale, with what
+       was bought and what happens next (no personal details travel). A test
+       session says so first. Until the record lands, the page says Stripe
+       has the payment and the record is on its way. */
+    function confirmSale(sid) {
+      var box = el("pwNext");
+      var test = /^cs_test_/.test(sid);
+      if (test) el("pwTest").hidden = false;
+      if (!/^cs_(test|live)_[A-Za-z0-9]{8,200}$/.test(sid)) return;
+      var NEXT = {
+        schedule: "Next: a time. You'll get an email from matthew@mccluster.org to agree the date.",
+        ship: "Next: shipping. It goes to the address you gave at checkout.",
+        deliver: "Next: your file. It is sent to the email you gave at checkout.",
+        follow_up: "Next: the work starts. You'll hear from matthew@mccluster.org.",
+        refunded: "This payment has been refunded."
+      };
+      var tries = 0;
+      function say(html) { box.innerHTML = html; box.hidden = false; }
+      function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+      function ask() {
+        tries++;
+        fetch("https://api.mccluster.org/v1/commerce/receipt?session=" + encodeURIComponent(sid), { cache: "no-store" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !j.recorded) {
+              if (tries < 8) { setTimeout(ask, 2500); return; }
+              say("Stripe has your payment. Its record is still being written; this page can be refreshed in a minute.");
+              track("checkout_confirmed", { offer: offer, test: test, recorded: false });
+              return;
+            }
+            if (j.test) el("pwTest").hidden = false;
+            var renews = j.next === "renews"
+              ? "It renews every " + (j.billing_interval === "year" ? "year" : "month") + " on the card you used. To change or cancel it, email matthew@mccluster.org."
+              : NEXT[j.next] || NEXT.follow_up;
+            var when = j.booking && j.booking.starts_at ? "<small>Booked for " + esc(new Date(j.booking.starts_at).toLocaleString()) + ".</small>" : "";
+            var refund = j.refunded_cents > 0 && j.next !== "refunded" ? "<small>" + esc(money(j.refunded_cents / 100)) + " of it refunded.</small>" : "";
+            say("<b>" + esc(j.item) + "</b> · " + esc(money(j.amount_cents / 100)) + "<br>" + esc(renews) + when + refund);
+            track("checkout_confirmed", { offer: offer, test: !!j.test, recorded: true, next: j.next });
+          })
+          .catch(function () { if (tries < 8) setTimeout(ask, 2500); });
+      }
+      say("Confirming your payment…");
+      ask();
     }
 
     function retire() {

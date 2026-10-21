@@ -24,6 +24,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # BEFORE the stamp step: stamping rewrites every page, after which each
+      # file's last commit would be the stamp commit and every lastmod would
+      # read "today". Here the dates are still each page's real last commit.
+      # Non-fatal: if it cannot run, the committed map ships as it is.
+      - name: Date the sitemap from each page's last commit
+        continue-on-error: true
+        run: node tools/build-sitemap.mjs
+
       - name: Stamp asset versions so every deploy busts browser caches
         run: |
           find . -path ./node_modules -prune -o -path ./apps -prune -o \

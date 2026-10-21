@@ -4,6 +4,7 @@ import { classifyDependencyRows, dependencyEvidenceFromRows, dependencyIdsFromJo
 function ownedRunningParams(job) {
   return new URLSearchParams({
     id: `eq.${job.id}`,
+    org_id: `eq.${job.org_id}`,
     status: 'eq.running',
     locked_by: `eq.${workerId}`,
   }).toString();
@@ -57,7 +58,7 @@ export async function enqueueJobWithId({
   });
   if (rows.length) return rows[0];
 
-  const params = new URLSearchParams({ id: `eq.${jobId}`, select: '*', limit: '1' });
+  const params = new URLSearchParams({ id: `eq.${jobId}`, org_id: `eq.${orgId}`, select: '*', limit: '1' });
   const { body: existing = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
   if (existing.length) return existing[0];
   throw new Error(`Failed to enqueue ${jobType} with deterministic id ${jobId}`);
@@ -68,11 +69,15 @@ async function dependencyState(job) {
   if (!ids.length) return { state: 'ready', dependency_ids: [], rows: [] };
 
   const params = new URLSearchParams({
+    org_id: `eq.${job.org_id}`,
     id: `in.(${ids.join(',')})`,
-    select: 'id,job_type,target_type,target_id,status,output,last_error,updated_at',
+    select: 'id,org_id,job_type,target_type,target_id,status,output,last_error,updated_at',
     limit: String(ids.length),
   });
-  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  const { body: queried = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  // The service-role query must not turn a foreign organization's job into
+  // plan evidence, even if a mock or a future query accidentally widens it.
+  const rows = (Array.isArray(queried) ? queried : []).filter((row) => row.org_id === job.org_id);
   return { ...classifyDependencyRows(ids, rows), rows };
 }
 

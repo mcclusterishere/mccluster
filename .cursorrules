@@ -4,7 +4,9 @@ Always read AGENTS.md before editing.
 
 - Control repo: mcclusterishere/mccluster
 - Cloudflare Worker: mccluster (api.mccluster.org)
-- Public edge: matthew.mccluster.org
+- Personal property: matthew.mccluster.org (Matthew McCluster)
+- Company property: mccluster.org (McCluster Corp; Worker `mccluster` by host once routed)
+- Never collapse the two public properties or entities
 - Data: Supabase zmnhbrjyhxzhkxmhkexs
 - There is no Worker named mccluster-core. Do not create one.
 - Satellites render product UI. They do not own auth, social, billing, or admin.

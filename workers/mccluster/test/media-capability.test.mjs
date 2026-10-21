@@ -112,12 +112,144 @@ test('a permitted role passes the grant check and proceeds to the model lookup',
   });
 });
 
+
+test('prompt-only generation refuses models that require structured media input before reservation or provider spend', async () => {
+  const seen = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    seen.push(href);
+    if (href.includes('/rest/v1/org_members?')) {
+      return jsonResponse([{ org_id: ORG_ID, role: 'owner' }]);
+    }
+    if (href.includes('/rest/v1/control_role_capabilities?')) {
+      return jsonResponse(MATRIX);
+    }
+    if (href.includes('/rest/v1/media_models?')) {
+      return jsonResponse([{
+        id: 'model-1',
+        provider: 'fal',
+        provider_model_id: 'fal-ai/kling-video/v3/standard/image-to-video',
+        display_name: 'Kling 3.0 Standard I2V',
+        capability: 'image-to-video',
+        parameter_schema: {},
+        cost_hint: {},
+        enabled: true
+      }]);
+    }
+    throw new Error('Unexpected fetch: ' + href);
+  };
+  __resetCapabilityCache();
+
+  try {
+    await assert.rejects(
+      () => createGeneration(generationRequest(), env, { id: 'user-1' }),
+      (error) => error.status === 422 && /structured media input/.test(error.message)
+    );
+    assert.equal(seen.some((href) => href.includes('/rest/v1/rpc/media_create_budgeted_job')), false);
+    assert.equal(seen.some((href) => href.includes('fal.run')), false);
+  } finally {
+    globalThis.fetch = original;
+    __resetCapabilityCache();
+  }
+});
+
+test('prompt nested inside input does not count as structured media input', async () => {
+  const seen = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    seen.push(href);
+    if (href.includes('/rest/v1/org_members?')) return jsonResponse([{ org_id: ORG_ID, role: 'owner' }]);
+    if (href.includes('/rest/v1/control_role_capabilities?')) return jsonResponse(MATRIX);
+    if (href.includes('/rest/v1/media_models?')) {
+      return jsonResponse([{
+        id: 'model-1',
+        provider: 'fal',
+        provider_model_id: 'fal-ai/example/image-to-video',
+        display_name: 'I2V',
+        capability: 'image-to-video',
+        parameter_schema: {},
+        cost_hint: {},
+        enabled: true
+      }]);
+    }
+    throw new Error('Unexpected fetch: ' + href);
+  };
+  __resetCapabilityCache();
+
+  try {
+    const req = generationRequest({ input: { prompt: 'still only a prompt' }, prompt: null });
+    await assert.rejects(
+      () => createGeneration(req, env, { id: 'user-1' }),
+      (error) => error.status === 422 && /structured media input/.test(error.message)
+    );
+    assert.equal(seen.some((href) => href.includes('/rest/v1/rpc/media_create_budgeted_job')), false);
+  } finally {
+    globalThis.fetch = original;
+    __resetCapabilityCache();
+  }
+});
+
+test('catalog-declared required media fields fail before reservation or provider spend', async () => {
+  const seen = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    seen.push(href);
+    if (href.includes('/rest/v1/org_members?')) return jsonResponse([{ org_id: ORG_ID, role: 'owner' }]);
+    if (href.includes('/rest/v1/control_role_capabilities?')) return jsonResponse(MATRIX);
+    if (href.includes('/rest/v1/media_models?')) {
+      return jsonResponse([{
+        id: 'model-1',
+        provider: 'fal',
+        provider_model_id: 'fal-ai/example',
+        display_name: 'Schema model',
+        capability: 'text-to-video',
+        parameter_schema: { type: 'object', required: ['prompt', 'duration'] },
+        cost_hint: {},
+        enabled: true
+      }]);
+    }
+    throw new Error('Unexpected fetch: ' + href);
+  };
+  __resetCapabilityCache();
+
+  try {
+    await assert.rejects(
+      () => createGeneration(generationRequest(), env, { id: 'user-1' }),
+      (error) => error.status === 422 &&
+        Array.isArray(error.detail?.missing_fields) &&
+        error.detail.missing_fields.includes('duration')
+    );
+    assert.equal(seen.some((href) => href.includes('/rest/v1/rpc/media_create_budgeted_job')), false);
+  } finally {
+    globalThis.fetch = original;
+    __resetCapabilityCache();
+  }
+});
+
 test('non-numeric metrics score as zero instead of NaN', () => {
   const scored = scoreMetrics({ views: 'n/a', likes: 12, reach: undefined, retention_3s: 'x' });
   assert.equal(Number.isFinite(scored.score), true);
   for (const [name, value] of Object.entries(scored.components)) {
     assert.equal(Number.isFinite(value), true, `component ${name} is not finite`);
   }
+});
+
+
+test('verified actions outrank vanity engagement in social scoring', () => {
+  const vanity = scoreMetrics({ views: 1000, reach: 1000, likes: 300, comments: 40, shares: 5, saves: 5, retention_3s: .6 });
+  const action = scoreMetrics({ views: 1000, reach: 1000, likes: 5, comments: 1, mission_joins: 10, proof_submissions: 5, verified_actions: 3, retention_3s: .4 });
+  assert.ok(action.score > vanity.score, `action score ${action.score} should beat vanity score ${vanity.score}`);
+  assert.ok(action.components.action > vanity.components.action);
+});
+
+test('tiny samples are confidence weighted instead of winning on one lucky action', () => {
+  const tiny = scoreMetrics({ views: 1, reach: 1, verified_actions: 1, retention_3s: 1 });
+  const established = scoreMetrics({ views: 500, reach: 500, mission_joins: 20, verified_actions: 8, retention_3s: .5 });
+  assert.ok(tiny.components.confidence < .02);
+  assert.ok(established.score > tiny.score);
 });
 
 test('negative metrics floor at zero', () => {

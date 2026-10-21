@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,follow">
+<title>Page moved · McCluster</title>
+<link rel="canonical" href="https://matthew.mccluster.org/world-news.html">
+<meta http-equiv="refresh" content="0; url=/world-news.html">
+<script>
+(function () {
+  // Legacy navigation only. Do not treat old query values as auth controls.
+  var target = new URL("/world-news.html", location.origin);
+  var denied = /^(?:access_token|refresh_token|id_token|token|auth|api|next|redirect|code)$/i;
+  new URLSearchParams(location.search).forEach(function (value, key) {
+    if (!denied.test(key) && !target.searchParams.has(key)) target.searchParams.append(key, value);
+  });
+  if (location.hash) target.hash = location.hash;
+  location.replace(target.pathname + target.search + target.hash);
+})();
+</script>
+<style>
+:root{color-scheme:dark}body{margin:0;min-height:100dvh;display:grid;place-items:center;
+background:#0b0b0c;color:#f4efe6;font:16px/1.5 system-ui,-apple-system,sans-serif;padding:24px}
+main{max-width:32rem}a{color:#ffd27b;font-weight:700}
+</style>
+</head>
+<body>
+<main><h1>That page moved.</h1><p>You'll be taken to the current McCluster page.</p>
+<p><a href="/world-news.html">Continue to the current page</a></p></main>
+</body>
+</html>

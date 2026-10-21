@@ -1,4 +1,4 @@
-import { scoreMetrics } from './router.js';
+import { recordEvent } from '../lib/observability.js';
 import { credentialRefForConfiguredChannel, parseSocialCredentialRef } from './security.js';
 
 function headers(env) {
@@ -43,9 +43,10 @@ function graphVersion(env) {
   return env.META_GRAPH_API_VERSION || 'v26.0';
 }
 
-async function graphGet(env, path, token) {
+export async function graphGet(env, path, token) {
   const res = await fetch(`https://graph.facebook.com/${graphVersion(env)}/${path}`, {
-    headers: { authorization: `Bearer ${token}` }
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(15000)
   });
   const text = await res.text();
   let data = null;
@@ -71,7 +72,7 @@ async function graphPost(env, path, token, params) {
   return data;
 }
 
-async function tokenFor(env, account) {
+export async function tokenFor(env, account) {
   if (!account?.org_id || String(account.platform || '').toLowerCase() !== 'instagram') return null;
   const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(account.org_id)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
   const channel = rows?.[0] || null;
@@ -92,8 +93,26 @@ async function tokenFor(env, account) {
   return null;
 }
 
+/* A video uploaded in Control sits in the private social-outbox bucket.
+   Meta fetches it from a link signed for a day, long enough for Meta's own
+   processing and retries, and the file itself never becomes public. */
+export const OUTBOX_BUCKET = 'social-outbox';
+async function signOutboxUrl(env, storagePath) {
+  const objectPath = String(storagePath).split('/').map(encodeURIComponent).join('/');
+  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${OUTBOX_BUCKET}/${objectPath}`, {
+    method: 'POST',
+    headers: headers(env),
+    body: JSON.stringify({ expiresIn: 86400 })
+  });
+  const data = await res.json().catch(() => ({}));
+  const signed = data?.signedURL || data?.signedUrl;
+  if (!res.ok || !signed) throw new Error('Could not sign the uploaded video for Instagram');
+  return String(signed).startsWith('http') ? signed : `${env.SUPABASE_URL}/storage/v1${signed}`;
+}
+
 async function resolveVideoUrl(env, job) {
   if (job.payload?.video_url) return job.payload.video_url;
+  if (job.payload?.storage_path) return signOutboxUrl(env, job.payload.storage_path);
   if (!job.payload?.video_asset_id) return null;
   const rows = await db(env, `media_assets?id=eq.${encodeURIComponent(job.payload.video_asset_id)}&org_id=eq.${encodeURIComponent(job.org_id)}&select=url&limit=1`);
   return rows?.[0]?.url || null;
@@ -167,6 +186,7 @@ async function finishInstagramPublish(env, job, account, token) {
     campaign_id: job.campaign_id || null,
     variant_id: job.variant_id || null,
     publish_job_id: job.id,
+    content_id: job.content_id || null,
     external_media_id: published.id,
     publish_mode: job.publish_mode,
     caption: job.payload?.caption || '',
@@ -174,7 +194,10 @@ async function finishInstagramPublish(env, job, account, token) {
     metadata: { meta_creation_id: job.external_creation_id }
   });
 
-  return { state: 'published', media_id: published.id, post_id: post?.id || null };
+  if (job.content_id) {
+    await patch(env, 'social_content_items', job.content_id, { status: 'published' }).catch(() => {});
+  }
+  return { state: 'published', media_id: published.id, post_id: post?.id || null, content_id: job.content_id || null };
 }
 
 async function processPublishJob(env, job) {
@@ -213,11 +236,26 @@ export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
   const jobs = await claimPublishJobs(env, safeLimit);
   const results = [];
   for (const job of jobs) {
+    const started = Date.now();
     try {
-      results.push({ id: job.id, ...(await processPublishJob(env, job)) });
+      const outcome = await processPublishJob(env, job);
+      results.push({ id: job.id, ...outcome });
+      recordEvent({
+        orgId: job.org_id, name: `social.publish.${outcome?.state || 'processed'}`, kind: 'job',
+        resourceType: 'social_publish_job', resourceId: job.id, durationMs: Date.now() - started,
+        message: `Instagram publish job → ${outcome?.state || 'processed'}`,
+        detail: { content_id: job.content_id || null, attempts: Number(job.attempts || 0) }
+      });
     } catch (error) {
       const attempts = Number(job.attempts || 0) + 1;
       const terminal = attempts >= 5;
+      recordEvent({
+        orgId: job.org_id, name: terminal ? 'social.publish.failed' : 'social.publish.retry', kind: 'job',
+        level: terminal ? 'error' : 'warn', outcome: terminal ? 'error' : 'retry',
+        resourceType: 'social_publish_job', resourceId: job.id, durationMs: Date.now() - started,
+        message: `Instagram publish ${terminal ? 'failed permanently' : 'will retry'}: ${(error instanceof Error ? error.message : String(error)).slice(0, 300)}`,
+        detail: { content_id: job.content_id || null, attempts }
+      });
       await patch(env, 'social_publish_jobs', job.id, {
         state: terminal ? 'failed' : job.state,
         attempts,
@@ -225,15 +263,89 @@ export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
         lease_owner: null,
         lease_expires_at: null
       });
-      results.push({ id: job.id, state: terminal ? 'failed' : job.state, error: error instanceof Error ? error.message : String(error) });
+      if (terminal && job.content_id) {
+        await patch(env, 'social_content_items', job.content_id, { status: 'failed' }).catch(() => {});
+      }
+      results.push({ id: job.id, state: terminal ? 'failed' : job.state, content_id: job.content_id || null, error: error instanceof Error ? error.message : String(error) });
     }
   }
   return { checked: jobs.length, results };
 }
 
+
+async function patchInstagramChannel(env, orgId, values) {
+  await db(env, `org_channels?org_id=eq.${encodeURIComponent(orgId)}&channel=eq.instagram&enabled=eq.true`, {
+    method: 'PATCH',
+    headers: { prefer: 'return=minimal' },
+    body: JSON.stringify({ ...values, updated_at: new Date().toISOString() })
+  });
+}
+
+export async function checkInstagramConnectionHealth(env, { limit = 10, maxAgeMinutes = 55 } = {}) {
+  const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
+  const maxAgeMs = Math.max(5, Number(maxAgeMinutes) || 55) * 60 * 1000;
+  const staleBefore = Date.now() - maxAgeMs;
+  const channels = await db(env, `org_channels?channel=eq.instagram&enabled=eq.true&select=org_id,account_id,last_ok_at,last_error_at&limit=${safeLimit * 4}`);
+  const due = (channels || []).filter((channel) => {
+    const lastAttempt = [channel.last_ok_at, channel.last_error_at]
+      .map((value) => Date.parse(value || ''))
+      .filter(Number.isFinite)
+      .sort((a, b) => b - a)[0];
+    return !Number.isFinite(lastAttempt) || lastAttempt < staleBefore;
+  }).slice(0, safeLimit);
+  const results = [];
+
+  for (const channel of due) {
+    const orgId = channel.org_id;
+    const accountFilter = channel.account_id
+      ? `&external_account_id=eq.${encodeURIComponent(channel.account_id)}`
+      : '';
+    const accounts = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(orgId)}&platform=eq.instagram&status=eq.connected${accountFilter}&select=id,org_id,platform,external_account_id&limit=1`);
+    const account = accounts?.[0] || null;
+    const checkedAt = new Date().toISOString();
+
+    if (!account) {
+      const message = 'connected_instagram_account_missing';
+      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
+      results.push({ org_id: orgId, connected: false, reason: message });
+      continue;
+    }
+
+    const token = await tokenFor(env, account);
+    if (!token) {
+      const message = 'credential_secret_not_configured';
+      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
+      results.push({ org_id: orgId, account_id: account.id, connected: false, reason: message });
+      continue;
+    }
+
+    try {
+      const me = await graphGet(env, `${encodeURIComponent(account.external_account_id)}?fields=username,followers_count,media_count`, token);
+      await Promise.all([
+        patchInstagramChannel(env, orgId, { last_ok_at: checkedAt, last_error: null, last_error_at: null }),
+        patch(env, 'social_accounts', account.id, { last_synced_at: checkedAt, provider_metrics: { recorded_at: checkedAt, followers: me?.followers_count ?? null, media_count: me?.media_count ?? null } })
+      ]);
+      results.push({
+        org_id: orgId,
+        account_id: account.id,
+        connected: true,
+        username: me?.username || null,
+        followers: me?.followers_count ?? null,
+        media_count: me?.media_count ?? null
+      });
+    } catch (error) {
+      const message = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
+      results.push({ org_id: orgId, account_id: account.id, connected: false, reason: 'meta_refused', error: message });
+    }
+  }
+
+  return { checked: due.length, results };
+}
+
 function metricValue(payload) {
   const value = payload?.data?.[0]?.values?.[0]?.value;
-  return typeof value === 'number' ? value : Number(value || 0);
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
 async function safeInsight(env, mediaId, metric, token) {
@@ -280,29 +392,27 @@ async function syncPostInsights(env, post) {
   ]);
 
   const metrics = {
-    views: views ?? 0,
-    reach: reach ?? 0,
-    likes: Number(fields.like_count || 0),
-    comments: Number(fields.comments_count || 0),
-    shares: shares ?? 0,
-    saves: saved ?? 0,
-    follows: 0,
-    profile_visits: 0,
-    dms: 0,
-    leads: 0,
-    watch_time_seconds: 0,
-    avg_watch_time_seconds: 0,
+    views, reach,
+    likes: typeof fields.like_count === 'number' ? fields.like_count : null,
+    comments: typeof fields.comments_count === 'number' ? fields.comments_count : null,
+    shares, saves: saved,
+    follows: null,
+    profile_visits: null,
+    dms: null,
+    leads: null,
+    watch_time_seconds: null,
+    avg_watch_time_seconds: null,
     retention_3s: null
   };
-  const scored = scoreMetrics(metrics);
+  if (Object.values(metrics).every(value => value === null)) throw new Error('instagram_measurements_unavailable');
   const snapshot = await insert(env, 'social_metric_snapshots', {
     org_id: post.org_id,
     post_id: post.id,
     ...metrics,
-    score: scored.score,
-    raw: { graph_fields: fields, synced_metrics: ['views', 'reach', 'saved', 'shares'] }
+    score: null,
+    source: 'platform_api',
+    raw: { graph_fields: fields, measured_metrics: Object.keys(metrics).filter(key => metrics[key] !== null), unavailable_metrics: Object.keys(metrics).filter(key => metrics[key] === null) }
   });
-  if (post.variant_id) await patch(env, 'social_variants', post.variant_id, { score: scored.score, score_components: scored.components });
 
   const syncedAt = new Date();
   await patch(env, 'social_posts', post.id, {
@@ -310,7 +420,7 @@ async function syncPostInsights(env, post) {
     last_insights_synced_at: syncedAt.toISOString(),
     next_insights_sync_at: nextInsightsAt(post.published_at, syncedAt)
   });
-  return { post_id: post.id, snapshot_id: snapshot?.id || null, score: scored.score };
+  return { post_id: post.id, snapshot_id: snapshot?.id || null, score: null };
 }
 
 async function claimInsightPosts(env, limit) {
@@ -327,15 +437,64 @@ export async function syncInstagramInsights(env, { limit = 25 } = {}) {
   const results = [];
   for (const post of posts) {
     try {
-      results.push(await syncPostInsights(env, post));
+      const result = await syncPostInsights(env, post);
+      results.push(result);
+      recordEvent({ orgId: post.org_id, name: 'social.insights.sync', kind: 'job', resourceType: 'social_post', resourceId: post.id, outcome: result.deferred ? 'retry' : 'ok', detail: { snapshot_id: result.snapshot_id || null, reason: result.reason || null } });
     } catch (error) {
       try {
         await patch(env, 'social_posts', post.id, {
           next_insights_sync_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
         });
       } catch {}
+      recordEvent({ orgId: post.org_id, name: 'social.insights.failed', kind: 'job', level: 'warn', outcome: 'retry', resourceType: 'social_post', resourceId: post.id, message: 'Provider measurements unavailable; retry scheduled' });
       results.push({ post_id: post.id, error: error instanceof Error ? error.message : String(error) });
     }
   }
   return { checked: posts.length, results };
+}
+
+
+// One bounded page per account/tick. Ignore duplicate posts so discovery cannot
+// overwrite campaign, variant or publishing links. Never follow provider next URLs.
+export async function discoverInstagramMedia(env, { limit = 5 } = {}) {
+  const accounts = await db(env, 'rpc/claim_instagram_discovery_accounts', {
+    method: 'POST', body: JSON.stringify({ p_limit: Math.min(10, Math.max(1, Number(limit) || 5)) })
+  });
+  const results = [];
+  for (const account of accounts || []) {
+    try {
+      const token = await tokenFor(env, account);
+      if (!token) throw new Error('credential_secret_not_configured');
+      const query = new URLSearchParams({ fields: 'id,caption,media_type,media_product_type,permalink,timestamp', limit: '50' });
+      if (account.media_discovery_cursor) query.set('after', account.media_discovery_cursor);
+      const page = await graphGet(env, `${encodeURIComponent(account.external_account_id)}/media?${query}`, token);
+      if (!Array.isArray(page?.data)) throw new Error('instagram_media_invalid_payload');
+      const rows = page.data.map(media => {
+        if (!media.id || !Number.isFinite(Date.parse(media.timestamp))) throw new Error('instagram_media_invalid_record');
+        return { org_id: account.org_id, account_id: account.id, external_media_id: String(media.id),
+          permalink: media.permalink || null, caption: media.caption || null, publish_mode: 'imported',
+          published_at: new Date(media.timestamp).toISOString(), metadata: { source: 'meta_graph', media_type: media.media_type, media_product_type: media.media_product_type } };
+      });
+      const inserted = rows.length ? await db(env, 'social_posts?on_conflict=account_id,external_media_id', {
+        method: 'POST', headers: { prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify(rows)
+      }) : [];
+      const cursor = page.paging?.next ? page.paging?.cursors?.after : null;
+      if (page.paging?.next && (!cursor || cursor === account.media_discovery_cursor)) throw new Error('instagram_media_cursor_stalled');
+      await patch(env, 'social_accounts', account.id, {
+        media_discovery_cursor: cursor || null, last_media_discovery_at: new Date().toISOString(), media_discovery_error: null,
+        next_media_discovery_at: new Date(Date.now() + (cursor ? 5 : 60) * 60000).toISOString()
+      });
+      recordEvent({ orgId: account.org_id, name: 'social.media.discovered', kind: 'job', resourceType: 'social_account', resourceId: account.id, detail: { seen: rows.length, imported: inserted?.length || 0 } });
+      results.push({ account_id: account.id, seen: rows.length, imported: inserted?.length || 0, has_more: Boolean(cursor) });
+    } catch (error) {
+      // Only codes are persisted; provider errors can include request details.
+      const code = error?.detail?.error?.code;
+      const reason = code ? `meta_error_${code}` : 'instagram_media_discovery_failed';
+      await patch(env, 'social_accounts', account.id, { media_discovery_error: reason,
+        next_media_discovery_at: new Date(Date.now() + 60 * 60000).toISOString() });
+      recordEvent({ orgId: account.org_id, name: 'social.media.discovery_failed', kind: 'job', level: 'warn', outcome: 'retry', resourceType: 'social_account', resourceId: account.id, message: reason });
+      results.push({ account_id: account.id, error: reason });
+    }
+  }
+  return { checked: accounts?.length || 0, results };
 }

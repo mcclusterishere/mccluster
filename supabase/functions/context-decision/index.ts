@@ -1,4 +1,4 @@
-// CONTEXT-DECISION — record and read owner/admin decisions in the private AI
+// CONTEXT-DECISION — record, read, and resolve owner/admin decisions in the private AI
 // context plane. The function verifies the human with Supabase Auth, checks org
 // membership, and reads/writes the canonical ai_context.decisions table directly.
 // It does not create a second memory or job store and never treats the service
@@ -11,6 +11,7 @@
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import postgres from 'npm:postgres@3.4.5'
+import { persistProposal } from './proposals.mjs'
 
 const SB = Deno.env.get('SUPABASE_URL') ?? ''
 const SRV = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -78,6 +79,13 @@ async function listDecisions(url: URL, userId: string) {
 
   await requireOwnerAdmin(orgId, userId)
 
+  if (url.searchParams.get('contract') === 'intel-decision/v2') {
+    // Handshake prevents a newer Worker from sending retryable writes to an
+    // older function that does not yet honor idempotency keys.
+    const [schema] = await sql`select to_regprocedure('public.intel_decision_readiness(uuid,uuid)') is not null as ready`
+    return { contract: 'intel-decision/v2', schema_ready: schema?.ready === true }
+  }
+
   /* Every filter is a bound parameter — no fragment is built from input. The
      cursor is (created_at, id) so decisions sharing a timestamp still page. */
   const rows = await sql`
@@ -106,8 +114,45 @@ async function listDecisions(url: URL, userId: string) {
   }
 }
 
+async function resolveDecision(body: any, userId: string) {
+  const orgId = String(body?.org_id ?? '').trim()
+  const decisionId = String(body?.decision_id ?? '').trim()
+  const status = String(body?.status ?? '').trim().toLowerCase()
+  const note = String(body?.note ?? '').trim().slice(0, 2000)
+
+  if (!orgId || !decisionId) throw Object.assign(new Error('org_id and decision_id are required'), { status: 400 })
+  if (!['approved', 'rejected'].includes(status)) {
+    throw Object.assign(new Error('status must be approved or rejected'), { status: 400 })
+  }
+
+  await requireOwnerAdmin(orgId, userId)
+
+  const resolutionMeta = {
+    resolution_source: 'context-decision',
+    resolution_note: note || null,
+  }
+  const rows = await sql`
+    update ai_context.decisions
+    set status = ${status},
+        approved_by = ${userId}::uuid,
+        approved_at = now(),
+        updated_at = now(),
+        metadata = coalesce(metadata, '{}'::jsonb) || ${sql.json(resolutionMeta)}
+    where id = ${decisionId}::uuid
+      and org_id = ${orgId}::uuid
+      and status = 'proposed'
+    returning id, org_id, title, decision, rationale_summary, risk_class, status,
+              proposed_by, approved_by, approved_at, source_conversation_id,
+              supersedes_id, metadata, created_at, updated_at
+  `
+  if (!rows.length) {
+    throw Object.assign(new Error('decision is no longer proposed or does not belong to this organization'), { status: 409 })
+  }
+  return { decision: rows[0] }
+}
+
 Deno.serve(async (req) => {
-  if (req.method !== 'POST' && req.method !== 'GET') return json({ error: 'GET or POST required' }, 405)
+  if (!['POST', 'GET', 'PATCH'].includes(req.method)) return json({ error: 'GET, POST, or PATCH required' }, 405)
   if (!SB || !SRV || !DB) return json({ error: 'not configured' }, 503)
 
   let user
@@ -118,7 +163,7 @@ Deno.serve(async (req) => {
     try {
       return json(await listDecisions(new URL(req.url), String(user.id)))
     } catch (error) {
-      const status = Number((error as any)?.status) || 500
+      const status = Number((error as any)?.status) || (['42501', '23514', 'P0001'].includes((error as any)?.code) ? 409 : 500)
       if (status === 500) console.error(error)
       return json({ error: error instanceof Error ? error.message : 'decision read failed' }, status)
     }
@@ -126,6 +171,17 @@ Deno.serve(async (req) => {
 
   const body: any = await req.json().catch(() => null)
   const orgId = String(body?.org_id ?? '').trim()
+
+  if (req.method === 'PATCH') {
+    try {
+      return json(await resolveDecision(body, String(user.id)))
+    } catch (error) {
+      const status = Number((error as any)?.status) || (['42501', '23514', 'P0001'].includes((error as any)?.code) ? 409 : 500)
+      if (status === 500) console.error(error)
+      return json({ error: error instanceof Error ? error.message : 'decision transition failed' }, status)
+    }
+  }
+
   const title = String(body?.title ?? '').trim()
   const decision = String(body?.decision ?? body?.rationale ?? '').trim()
   const riskClass = String(body?.risk_class ?? 'low').trim().toLowerCase()
@@ -139,29 +195,11 @@ Deno.serve(async (req) => {
     try { await requireOwnerAdmin(orgId, String(user.id)) }
     catch { return json({ error: 'owner/admin required' }, 403) }
 
-    const [row] = await sql`
-      insert into ai_context.decisions (
-        org_id, title, decision, rationale_summary, risk_class, status,
-        proposed_by, source_conversation_id, source_message_ids, supersedes_id, metadata
-      ) values (
-        ${orgId}::uuid,
-        ${title},
-        ${decision},
-        ${body.rationale_summary ?? body.rationale ?? null},
-        ${riskClass},
-        ${status},
-        ${String(user.id)},
-        ${body.source_conversation_id ?? null}::uuid,
-        ${Array.isArray(body.source_message_ids) ? body.source_message_ids : []}::uuid[],
-        ${body.supersedes_id ?? null}::uuid,
-        ${sql.json({ ...(body.metadata && typeof body.metadata === 'object' ? body.metadata : {}), ingress: 'context-decision' })}
-      )
-      returning id, org_id, title, decision, rationale_summary, risk_class, status, proposed_by, created_at
-    `
-
-    return json({ decision: row }, 201)
+    const result = await persistProposal(sql, orgId, String(user.id), { ...body, title, decision, risk_class: riskClass, status })
+    return json(result, result.created ? 201 : 200)
   } catch (error) {
     console.error(error)
-    return json({ error: 'decision write failed', detail: error instanceof Error ? error.message : String(error) }, 500)
+    const code = Number((error as any)?.status) || 500
+    return json({ error: code < 500 && error instanceof Error ? error.message : 'decision write failed' }, code)
   }
 })

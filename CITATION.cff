@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use the McCluster adaptive-experience research software or methods, please cite this repository and the archived release DOI when available."
+title: "McCluster Adaptive Experience Research Platform"
+type: software
+authors:
+  - family-names: "McCluster"
+    given-names: "Matthew"
+    orcid: "https://orcid.org/0009-0000-8988-8955"
+abstract: >-
+  A first-party research and production platform for adaptive digital
+  experiences, music and creator discovery, recommender-system experimentation,
+  Action Network participation, audience science, and commercial outcome
+  measurement. The repository separates validated production policies from
+  research policies and records opportunity sets, decisions, exposure,
+  propensity, interaction and downstream outcomes for reproducible analysis.
+repository-code: "https://github.com/mcclusterishere/mccluster"
+url: "https://matthew.mccluster.org/research.html"
+keywords:
+  - recommender systems
+  - adaptive user interfaces
+  - human-computer interaction
+  - audience analytics
+  - music recommendation
+  - contextual bandits
+  - online experimentation
+  - generative interfaces
+  - creator economy
+  - civic technology

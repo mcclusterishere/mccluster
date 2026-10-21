@@ -44,6 +44,8 @@
     clearTimeout(toastT);
     toastT = setTimeout(function () { toastEl.classList.remove("on"); }, 3400);
   }
+  /* the album's deck speaks through the same toast when a play cannot start */
+  window.MCC_TOAST = toast;
 
   var sheetEl = null;
   function sheet(html) {
@@ -182,11 +184,22 @@
     if (keeping || !canVault) return;
     keeping = true;
     track("masters_keep", { album: ALBUM });
+    /* answer the tap now: the first visible progress used to wait for the
+       first whole file to arrive, seconds on a phone, and it read as dead */
+    var label0 = mastersBtn.textContent;
+    mastersBtn.textContent = "Starting…";
+    mastersBtn.setAttribute("aria-busy", "true");
     if (navigator.storage && navigator.storage.persist) {
       navigator.storage.persist().catch(function () {});
     }
     vaultState().then(function (st) {
-      if (!st) { keeping = false; return; }
+      if (!st) {
+        keeping = false;
+        mastersBtn.textContent = label0;
+        mastersBtn.removeAttribute("aria-busy");
+        toast("Nothing on this page to keep yet.");
+        return;
+      }
       var c;
       return caches.open(VAULT).then(function (cc) { c = cc; })
         .then(function () {
@@ -209,6 +222,7 @@
           }
           return one(0).then(function () {
             keeping = false;
+            mastersBtn.removeAttribute("aria-busy");
             if (misses) {
               toast("The signal dropped mid-download — tap again to finish. What's kept stays kept.");
               return vaultState().then(paintMasters);
@@ -217,7 +231,12 @@
             return vaultState().then(paintMasters);
           });
         });
-    }).catch(function () { keeping = false; });
+    }).catch(function () {
+      keeping = false;
+      mastersBtn.removeAttribute("aria-busy");
+      toast("Could not save the album on this device. Try again on a steadier connection.");
+      vaultState().then(paintMasters).catch(function () {});
+    });
   });
 
   /* rows arrive after the data loads; arm the button when they land */
@@ -280,13 +299,22 @@
         (ALBUM !== "here" ? "?album=" + ALBUM : ""));
       var payload = { title: title + " — Matthew McCluster", text: "Hear it on McCluster Sound.", url: url };
       track("track_share", { track: title });
+      /* Some in-app browsers expose navigator.share and then refuse it; that
+         rejection was swallowed and the button did nothing. A cancel
+         (AbortError) is the person's choice; anything else falls back to
+         copying the link. */
+      function copyLink() {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(function () {
+            toast("Link secured — paste it anywhere.");
+          }).catch(function () { toast(url); });
+        } else { toast(url); }
+      }
       if (navigator.share) {
-        navigator.share(payload).catch(function () {});
-      } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(function () {
-          toast("Link secured — paste it anywhere.");
-        }).catch(function () { toast(url); });
-      } else { toast(url); }
+        navigator.share(payload).catch(function (e) {
+          if (!e || e.name !== "AbortError") copyLink();
+        });
+      } else { copyLink(); }
     });
   }
 

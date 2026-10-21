@@ -98,15 +98,35 @@ test('the gated registry and the publisher agree on where the master lives', asy
   }
 });
 
-test('the bucket is private and only signed-in listeners may read it', async () => {
+test('the bucket is private and only the API signs a play of the master', async () => {
   const sql = await read('supabase/replay_migrations/20260918230000_gated_audio.sql');
   assert.match(sql, /'mcc-gated-audio',\s*'mcc-gated-audio',\s*false/,
     'the bucket must be created private');
-  assert.match(sql, /for select\s+to authenticated/,
-    'the read policy must be scoped to authenticated, never public: anon ' +
-    'holds the publishable key too');
   assert.doesNotMatch(sql, /for (insert|update|delete)/,
     'no browser-side write policy belongs on a bucket of masters');
+  /* A browser that can sign its own URL can pick its own lifetime and
+     replay forever, so no play count could hold. Only the Worker signs,
+     one short-lived URL per play it granted. */
+  const client = await read('js/gated-audio.js');
+  assert.doesNotMatch(client, /storage\/v1\/object\/sign/, 'the browser must not sign the master itself');
+  assert.match(client, /\/v1\/music\/gates\//);
+  const worker = await read('workers/mccluster/src/music/router.js');
+  assert.match(worker, /storage\/v1\/object\/sign/);
+  assert.match(worker, /music_gate_claim/);
+  const gate = await read('supabase/migrations/20260928012324_music_listen_gate.sql');
+  assert.match(gate, /drop policy if exists "gated audio is readable by signed-in listeners" on storage\.objects/,
+    'the bucket must stop being readable by every signed-in account');
+  assert.match(gate, /revoke all on function public\.music_gate_claim[^;]*from public, anon, authenticated/);
+  /* the play is a Worker-served stream against a one-play token, and a
+     listen counts on beats while playing, not on start-to-end time */
+  const hard = await read('supabase/migrations/20260930222516_music_listen_gate_hardening.sql');
+  assert.match(hard, /create function public\.music_stream_open/);
+  assert.match(hard, /least\(extract\(epoch from now\(\) - last_beat_at\), 20\)/);
+  assert.match(hard, /create unique index music_listens_one_open_idx/);
+  const listenerPlay = worker.split('const token = newToken();')[1].split('async function streamPlay')[0];
+  assert.ok(listenerPlay.length > 100, 'could not find the listener branch of gatePlay');
+  assert.doesNotMatch(listenerPlay, /signObject/, 'a listener play must not return a storage URL');
+  assert.match(listenerPlay, /\/v1\/music\/stream\//);
 });
 
 test('an album billed to another name says so everywhere it credits', async () => {

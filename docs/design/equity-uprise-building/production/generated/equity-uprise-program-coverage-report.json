@@ -292,9 +292,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/eu-workspace/index.ts"
     },
     {
-      "name": "capability source exists: evidence-room -> _unfinished/equity-uprise/docket-516.html",
+      "name": "capability source exists: evidence-room -> docket-516.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/docket-516.html"
+      "detail": "/home/runner/work/mccluster/mccluster/docket-516.html"
     },
     {
       "name": "capability source exists: evidence-room -> data/docket-516-files.json",

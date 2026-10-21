@@ -3,6 +3,7 @@
 // eu_communications and drive stakeholder stages/events automatically.
 import { cors, db, emitEvent, json, orgBySlug, safeEmail, safeText } from "../_shared/eu-policy-os.ts";
 
+import { secretMatches } from "../_shared/secret-match.ts";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
 const INTERNAL_SECRET = Deno.env.get("EU_GOOGLE_WORKSPACE_SECRET") ?? "";
@@ -198,7 +199,7 @@ Deno.serve(async (req) => {
       if (req.method !== "POST") return json({ error: "POST required" }, 405);
       return await push(req, await req.json());
     }
-    if (!INTERNAL_SECRET || req.headers.get("x-eu-google-secret") !== INTERNAL_SECRET) return json({ error: "unauthorized" }, 401);
+    if (!(await secretMatches(req.headers.get("x-eu-google-secret"), INTERNAL_SECRET))) return json({ error: "unauthorized" }, 401);
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const org = await orgBySlug("mccluster");
     const action = safeText(body.action, 60);

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Verify it’s you · Human Uprise</title>
+<meta name="description" content="A short live video introduction, reviewed by a person, to confirm a Human Uprise member is who they say they are.">
+<link rel="stylesheet" href="css/style.css">
+<style>
+:root{--idv-bg:#08090c;--idv-ink:#f8f4f3;--idv-muted:#c9c0c5;--idv-line:#51464c;--idv-field:#242127;--idv-accent:#f3cbd1;--idv-bad:#ffb4b4;--idv-rec:#ff5a5a}
+*{box-sizing:border-box}
+html{background:var(--idv-bg)}
+body{background:var(--idv-bg);color:var(--idv-ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0}
+main{width:100%;max-width:760px;margin:0 auto;padding:16px 16px 120px}
+a{color:#ffc5c5}
+h1{font-size:clamp(2rem,9vw,3.4rem);line-height:1.05;margin:20px 0 8px;overflow-wrap:anywhere}
+h2{font-size:1.15rem;margin:0 0 10px}
+p{margin:0 0 12px;overflow-wrap:anywhere}
+.idv-lede{color:var(--idv-muted)}
+.idv-small{display:block;font-size:.85rem;color:var(--idv-muted)}
+.idv-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}
+.idv-tab{font:inherit;font-size:.95rem;min-height:48px;padding:10px 12px;border-radius:12px;border:1px solid var(--idv-line);background:transparent;color:var(--idv-ink);overflow-wrap:anywhere}
+.idv-tab.is-on{background:var(--idv-accent);color:#1b1416;border-color:var(--idv-accent);font-weight:700}
+.idv-card{border:1px solid var(--idv-line);border-radius:16px;padding:16px;margin:12px 0}
+.idv-card--quiet{opacity:.92}
+.idv-consent{max-height:46vh;overflow:auto;border:1px solid var(--idv-line);border-radius:12px;padding:12px;background:rgba(255,255,255,.03)}
+.idv-consent p{color:var(--idv-ink)}
+label{display:block;margin:12px 0}
+input,select,textarea{font:inherit;font-size:max(16px,1rem);width:100%;max-width:100%;padding:12px;background:var(--idv-field);color:var(--idv-ink);border:1px solid #65575c;border-radius:10px;margin-top:6px}
+.idv-check{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
+.idv-check input{width:24px;height:24px;margin:2px 0 0;padding:0}
+.idv-stage{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;min-height:120px}
+.idv-video{display:block;width:100%;aspect-ratio:3/4;max-height:62vh;object-fit:cover;background:#000}
+.idv-video[hidden]{display:none}
+/* phone: the words sit under the picture so they never cover the face; wider screens overlay them */
+.idv-challenge{display:grid;gap:4px;padding:12px;background:#15121a;color:#fff}
+.idv-line{font-size:1rem;line-height:1.35;overflow-wrap:anywhere}
+.idv-code{font-size:clamp(1.5rem,7vw,2.2rem);letter-spacing:.04em;color:#ffe9a8}
+.idv-rec{color:var(--idv-rec);font-weight:700;font-variant-numeric:tabular-nums}
+.idv-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px}
+.idv-btn{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-weight:600;min-height:48px;padding:12px 16px;border-radius:12px;border:1px solid var(--idv-line);background:transparent;color:var(--idv-ink);text-decoration:none;text-align:center}
+.idv-btn--primary{background:var(--idv-accent);color:#1b1416;border-color:var(--idv-accent)}
+.idv-btn[disabled]{opacity:.5}
+.idv-note{border-left:3px solid var(--idv-accent);padding:8px 12px;background:rgba(243,203,209,.08);border-radius:0 10px 10px 0}
+.idv-note--idv-bad{border-left-color:var(--idv-bad);background:rgba(255,120,120,.1)}
+@media (min-width:720px){
+  main{padding:24px 24px 120px}
+  .idv-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .idv-card{padding:22px}
+  .idv-video{aspect-ratio:16/9}
+  .idv-challenge{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.86) 30%)}
+}
+</style>
+</head>
+<body>
+<main>
+  <a href="mnet.html">← World</a>
+  <section id="idv" aria-live="polite"><p>Loading…</p></section>
+</main>
+<script src="js/backend.js"></script>
+<script src="js/identity-capture-core.js"></script>
+<script src="js/identity-verify.js"></script>
+<script src="js/tabbar.js"></script>
+</body>
+</html>

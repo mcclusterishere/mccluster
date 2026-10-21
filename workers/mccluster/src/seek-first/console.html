@@ -120,35 +120,11 @@
 
 <div id="signin">
   <div class="card">
-    <h1>McCluster sign-in</h1>
-    <p class="sub">House-owner access is required. This console holds no data of its own.</p>
-    <form id="signinform">
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username" required>
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-      <div class="err" id="signinerr"></div>
-      <div style="margin-top:14px; display:flex; gap:8px;">
-        <button class="btn primary" type="submit">Sign in</button>
-        <button class="btn" type="button" id="usetoken">Use an access token</button>
-      </div>
-    </form>
-    <form id="tokenform" style="display:none">
-      <label for="token">Supabase access token</label>
-      <input id="token" type="text" autocomplete="off" spellcheck="false" class="mono">
-      <div style="margin-top:14px; display:flex; gap:8px;">
-        <button class="btn primary" type="submit">Use token</button>
-        <button class="btn" type="button" id="usepassword">Back to sign-in</button>
-      </div>
-    </form>
-    <!--
-      Most McCluster house-owner accounts are Google-only — no password was
-      ever set. This sends the browser to matthew.mccluster.org, where the
-      shared identity's own sign-in already lives, and back with a session;
-      see auth/seek-first-start.html and auth/seek-first-handoff.html.
-    -->
-    <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line); text-align:center;">
-      <a class="btn" style="display:inline-block; text-decoration:none;" href="https://matthew.mccluster.org/auth/seek-first-start.html">Continue with Google</a>
+    <h1>Not signed in</h1>
+    <p class="sub">This console uses your McCluster sign-in. Sign in on matthew.mccluster.org and you come straight back.</p>
+    <div class="err" id="signinerr"></div>
+    <div style="margin-top:16px; text-align:center;">
+      <a class="btn primary" style="display:inline-block; text-decoration:none;" href="https://matthew.mccluster.org/auth/seek-first-start.html">Sign in to McCluster</a>
     </div>
   </div>
 </div>
@@ -196,8 +172,6 @@
 (function () {
   'use strict';
 
-  var SUPABASE_URL = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
-  var SUPABASE_PUBLISHABLE = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
   var SESSION_KEY = 'mcc.seek-first.session';
   var BOOT_DEADLINE_MS = 25000;
   var STEP_TIMEOUT_MS = 12000;
@@ -324,57 +298,37 @@
 
   /* ------------------------------------------------------------------- auth */
 
+  /*
+    NO SECOND SIGN-IN. The owner is already signed in on matthew.mccluster.org;
+    this console lives on api.mccluster.org, which cannot read that session.
+    So when there is no usable token here, the console goes and gets it:
+    auth/seek-first-handoff.html refreshes the real session there and comes
+    straight back with the token in the fragment. The owner never sees a
+    form. Only if that round trip already happened moments ago and still
+    produced nothing (so the browser really is signed out) does the page stop
+    and offer the ordinary McCluster sign-in, instead of bouncing forever.
+  */
+  var HANDOFF_URL = 'https://matthew.mccluster.org/auth/seek-first-handoff.html';
+  var HANDOFF_AT = 'mcc.seek-first.handoff_at';
+
+  function tokenExpired(token) {
+    try {
+      var payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return !payload.exp || payload.exp * 1000 < Date.now() + 30000;
+    } catch (e) { return true; }
+  }
+
   function showSignIn(message) {
+    var last = 0;
+    try { last = Number(sessionStorage.getItem(HANDOFF_AT)) || 0; } catch (e) { last = 0; }
+    if (Date.now() - last > 30000) {
+      try { sessionStorage.setItem(HANDOFF_AT, String(Date.now())); } catch (e) { /* ignore */ }
+      location.replace(HANDOFF_URL);
+      return;
+    }
     el('cover').style.display = 'none';
     el('signin').style.display = 'flex';
     el('signinerr').textContent = message || '';
-  }
-
-  function signInWithPassword(email, password) {
-    return fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', apikey: SUPABASE_PUBLISHABLE },
-      body: JSON.stringify({ email: email, password: password })
-    }).then(function (response) {
-      return response.json().then(function (data) {
-        if (!response.ok || !data || !data.access_token) {
-          throw new Error((data && (data.error_description || data.msg || data.message)) || 'Sign-in failed');
-        }
-        return data.access_token;
-      });
-    });
-  }
-
-  function wireSignIn() {
-    el('signinform').addEventListener('submit', function (event) {
-      event.preventDefault();
-      el('signinerr').textContent = 'Signing in...';
-      signInWithPassword(el('email').value.trim(), el('password').value)
-        .then(function (token) {
-          session(token);
-          el('signin').style.display = 'none';
-          el('cover').style.display = 'flex';
-          boot();
-        })
-        .catch(function (error) { el('signinerr').textContent = error.message; });
-    });
-    el('tokenform').addEventListener('submit', function (event) {
-      event.preventDefault();
-      var token = el('token').value.trim();
-      if (!token) return;
-      session(token);
-      el('signin').style.display = 'none';
-      el('cover').style.display = 'flex';
-      boot();
-    });
-    el('usetoken').addEventListener('click', function () {
-      el('signinform').style.display = 'none';
-      el('tokenform').style.display = 'block';
-    });
-    el('usepassword').addEventListener('click', function () {
-      el('tokenform').style.display = 'none';
-      el('signinform').style.display = 'block';
-    });
   }
 
   /* ------------------------------------------------------------------ layers */
@@ -801,8 +755,10 @@
     mark(cesiumStep, 'ok', Cesium.VERSION || 'loaded');
 
     var authStep = step('auth', 'House-owner session');
-    if (!session()) {
-      mark(authStep, 'warn', 'sign-in required');
+    var held = session();
+    if (held && tokenExpired(held)) { session(null); held = null; }
+    if (!held) {
+      mark(authStep, 'warn', 'fetching your McCluster session');
       clearTimeout(deadline);
       showSignIn('');
       return;
@@ -881,7 +837,6 @@
     uncover();
   });
 
-  wireSignIn();
   captureHandoffToken();
   boot();
 })();

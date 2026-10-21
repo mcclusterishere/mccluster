@@ -12,7 +12,75 @@ would unblock a view already present in the locked navigation.
 Last reconciled against `origin/main` at `b3e21de`, Worker source
 `workers/mccluster/src`.
 
+
+> **Items 1–9 — RESOLVED in code and/or production (2026-10-05).**
+> `workers/mccluster/src/work.js` adds the canonical Work routes
+> (`GET|POST /v1/work/{companies|tasks|orders|bookings}`,
+> `PATCH /v1/work/{kind}/{id}`, `POST /v1/work/leads`,
+> `PATCH /v1/work/leads/{id}` to link a company). Each is membership-checked
+> (staff may run tasks; leads, companies, orders and bookings are owner work),
+> pinned to the caller's `org_id`, and written to `control_audit`. The tables
+> come from `supabase/migrations/20261005044012_control_work_records_v1.sql`
+> (`leads.company_id`, `work_tasks`, `work_orders`, `work_bookings`; RLS on,
+> no browser mutation grants for the Work stores). **Companies are the existing `out_companies`** — the
+> table the intake and outreach functions already write with service-role authority — so there is one
+> company universe; the migration removes direct browser company mutations so the owner-only Worker gate is authoritative; leads, orders and bookings link to it, and Control's
+> company records share the same canonical universe. Control's "+ New" opens the
+> native form in `js/control-room/work-records.js`; the legacy CRM creator is
+> no longer the way in. Production also has
+> `20261005044112_control_work_fk_indexes_v1` covering order/booking foreign keys.
+> A `503 work_not_provisioned` response now indicates deployment/schema drift, not an expected pending state.
+> Product fulfilment tables (`print_orders`, `shake_orders`, `music_orders`,
+> `l3_orders`, `rental_bookings`) stay authoritative for their products; a
+> Work order may point at one via `source_table`/`source_id`.
+
 ---
+
+> Sections 1–9 below are retained as the historical gap definition that the current implementation closed. The status blocks are authoritative.
+
+> **Decision resolution (items 7–8):** PR #353 added owner-only approve/reject transitions through `POST /v1/ai/decisions/{id}/status`, with the private `context-decision` function re-checking membership and fencing transitions to `proposed`. Production migration `20261005063813_canonical_ai_context_decisions_v1` captures the live private decision schema, including `approved_by`, `approved_at`, and `updated_at`.
+>
+> **Post-sale business graph — RESOLVED in code and production (2026-10-05).**
+> Production migrations `20261005075808_control_post_sale_work_v1` (+ `_rls_v1`,
+> `_grants_v1`, `_indexes_v1`, and `20261005075956_control_work_task_related_types_v2`)
+> add `work_relationships`, `work_projects`, `work_deliverables`,
+> `work_renewals` and `work_payments`: forced RLS, no browser grants,
+> service-role only. They are written through the same audited
+> `/v1/work/{kind}` routes and link to the canonical records instead of
+> copying them: companies are `out_companies`, people are `leads` and
+> `out_contacts` (read-only via `GET /v1/work/contacts`), orders are
+> `work_orders`. `GET /v1/work/history?company_id|relationship_id|lead_id|project_id`
+> assembles one client's linked records and audit trail as a timeline with
+> billed / paid / provider-verified totals. Control · Work has Relationships,
+> Projects, Deliverables, Payments and Renewals views with create, inline
+> state, deliverable approval (stamped with who and when) and History.
+>
+> Still staged, and labelled so in Control:
+> - **Payment verification.** `work_payments.verification` is
+>   `owner_recorded` unless a Stripe/Square reconciler sets
+>   `provider_verified`; no request can set it. The reconciler is not built.
+>   `public.payments` is Whip's tenant ledger and is not used.
+> - **Client-facing approval.** Deliverable approval is the owner's; a client
+>   portal that lets the client approve is not built.
+> - **Entitlement linkage.** `music_entitlements` / `l3_entitlements` stay
+>   product-scoped; renewals can point at `site_accounts`,
+>   `api_subscriptions` or `offerings` via `source_table` / `source_id`.
+> - **Client-owned social connections** already live per tenant org in
+>   `social_accounts` / `org_channels` and show in Create · Channels for the
+>   active workspace.
+
+> **Workspace scoping — RESOLVED (2026-10-05).** Control used to open only
+> the default (house) workspace and several reads ignored the workspace. It
+> now has a workspace switcher (topbar, hidden with one workspace; choice in
+> `?org=` with a per-viewer localStorage fallback, honoured only for the
+> caller's own enabled memberships; switching reloads so no module carries
+> another tenant's cached rows). Leads, media assets and jobs, Core jobs,
+> AI decisions (list and approve/reject) and social accounts are read in the
+> active workspace; the house workspace also includes pre-tenancy null-org
+> leads. Create · Channels previously called `/v1/social/accounts` without
+> `org_id`, which the route refuses, so its account list never loaded.
+
+> **Aggregate media allowance (item 5):** production migration `20261005063836_control_media_monthly_budget_v1` added `org_media_budgets` and extended the existing table-boundary media spend guard. Control System → Resources now reads and updates the owner-only allowance through `/v1/media/budget`; enabling a cap requires a concrete monthly limit and mutations are written to `control_audit`.
 
 ## 1. Companies — no domain model
 
@@ -77,27 +145,45 @@ amount to a lead as an order record.
 
 ---
 
-## 4. Logs and traces — no pipeline
+## 4. Logs and traces — RESOLVED
 
-**Blocked view:** System · Observability
+**Status:** resolved by the retained Control observability pipeline.
 
-**Current behaviour:** the view shows the failure ledger the canonical tables
-already hold — failed `ops_agent_jobs` (with `last_error`, input, result and
-run time), failed `media_jobs`, failed `social_publish_jobs` — plus any source
-this console could not read. It states plainly that McCluster has no log or
-trace pipeline.
-
-**What is missing:** no log store, no trace ids, no request/span correlation.
-Cloudflare Workers Logs and Logpush are not wired to anything the Worker
-exposes, so the browser has nothing to read.
-
-**Smallest contract that would unblock it**
-
-- A bounded, owner-gated tail: `GET /v1/observability/events?since&limit`
-  over a retained events table, returning `{ events, has_more }`.
-
-This is deliberately *not* "expose raw Cloudflare logs to the browser": the
-narrow contract is a retained, org-scoped event list.
+- Production migration `20261005071308_control_observability_events_v1`
+  provides the durable org-scoped event store with trace/request IDs, route,
+  method, status, duration, actor and bounded detail.
+- Browser roles have no direct access; the table has forced RLS and is mediated
+  by the Worker.
+- Control sends its current workspace as `x-mccluster-org-id`, but the trace
+  writer independently resolves the bearer token and verifies membership
+  before retaining an event. A spoofed workspace header cannot write into
+  another organization's stream.
+- API responses expose `x-mccluster-trace-id` and
+  `x-mccluster-request-id` for correlation.
+- `GET /v1/observability/events?org_id&since&limit&trace_id&level` is
+  owner-gated and bounded to 200 rows plus a lookahead row.
+- System · Observability auto-loads the retained 24-hour tail and keeps the
+  canonical failure/audit ledger underneath as supporting context.
+- Request bodies, authorization material and raw credentials are not retained.
+- Production migration `20261005074135_control_observability_events_v2` makes
+  the store the one canonical event contract: event names, span ids,
+  `occurred_at`, outcome and provenance (`source`), bounded detail, request /
+  resource / name / retention indexes, and uniqueness for request rows only so
+  domain and Core events can share a request's trace.
+- Domain events (`recordEvent`) run under the request trace: every audited
+  mutation (which also stamps its trace into `control_audit.detail.trace`),
+  paid media reservation / submission / provider webhook (rejoined through
+  `media_jobs.routing.trace_id`), AI decision and approval transitions, and the
+  scheduled publish queue.
+- Core writes the same contract (`core/src/observability.mjs`): job outcomes,
+  resident-AI research lookups and inference, broker capability dispatch.
+- The read route adds cursor pagination and `request_id`, `resource_type` +
+  `resource_id`, `event_kind`, `source`, `event_name` filters. Retention is
+  14 days (info) / 90 days (warn, error), pruned hourly by the Worker cron.
+- Control lists every event kind, opens any trace or record as a timeline, and
+  links failed jobs, media jobs, publish jobs and ledger entries into it.
+- Full contract, including the OTel / Logpush mapping:
+  `docs/control-plane/OBSERVABILITY.md`.
 
 ---
 
@@ -118,14 +204,11 @@ figure (settled actuals plus unreleased reservations) — the number that answer
 computes no figure of its own. System · Resources shows it, labelled settled
 versus in flight.
 
-**Still missing:** a *cap*. This is visibility, not enforcement — there is no
-org-level or monthly media budget that refuses the next job. Spend is now
-observable but still not bounded in aggregate.
-
-**Smallest contract that would add enforcement**
-
-- An org media allowance checked inside `enforce_media_job_spend_guard()`
-  against the rollup, refusing at the table boundary like the per-job rules do.
+**Status:** resolved. `public.org_media_budgets` stores the owner-configured
+monthly allowance, and `enforce_media_job_spend_guard()` now locks the budget
+row and refuses a paid FAL job whose estimated cost would push current-month
+committed spend over the enabled cap. Browser roles have no direct table
+access; Control uses the owner-gated Worker route `GET|PATCH /v1/media/budget`.
 
 ---
 
@@ -159,18 +242,11 @@ them, proposed ones surface on Home (high and critical risk called out
 individually), and the inspector shows the record. A proposed decision cannot
 be approved or rejected from the console, and the inspector says so.
 
-**What is missing:** `ai_context.decisions` stores a `status`, but the only
-write path is `POST /v1/ai/decisions`, which records a *new* decision. There is
-no transition route, so the only supported way to change a position is to
-record a superseding decision via `supersedes_id`.
-
-**Smallest contract that would unblock it**
-
-- `POST /v1/ai/decisions/{id}/status` `{ status, note }`, restricted to the
-  same house-owner gate, writing `status`, `approved_by` and `approved_at`.
-
-Deliberately a status transition rather than a general update: the decision
-text itself is a record of what was proposed and should not be editable.
+**Status:** resolved by PR #353. `POST /v1/ai/decisions/{id}/status`
+accepts only `approved` or `rejected`, is house-owner gated at the Worker,
+is re-authorized by the private context function, and only transitions rows
+still in `proposed`. It records the actor/time and preserves decision text as
+immutable history.
 
 ---
 
@@ -189,27 +265,30 @@ The only `ai_context` migration that exists in git is on the branch
 `approved_at`, `executed_at` and `provenance`, and its status CHECK does not
 allow `superseded`. It would not create the table the platform actually uses.
 
-**What is needed:** capture the live `ai_context` schema from the database and
-commit it, rather than applying the draft. This is the same class of drift
-already recorded for the `ops_*` tables.
+**Status:** resolved. Production migration
+`20261005063813_canonical_ai_context_decisions_v1` is the exact recorded
+production statement set and is reconciled into the canonical migration
+directory and production ledger. It defines the live columns and preserves the
+private access posture (RLS enabled; no direct anon/authenticated/service-role
+table grants).
 
 ---
 
-## 9. Publish jobs cannot be retried or cancelled
+## 9. Publish recovery — RESOLVED
 
-**Blocked view:** Create · Schedule
+**Status:** resolved. Create · Schedule exposes owner-safe recovery over the
+canonical `social_publish_jobs` state machine.
 
-**Current behaviour:** queuing a publish is real — `POST /v1/social/publish`
-is wired from a ready variant and creates a `social_publish_jobs` row. A job
-that has since failed can be read but not retried or cancelled.
-
-**What is missing:** `social_publish_jobs` has no owner-facing transition
-route. The runtime claims and advances jobs itself.
-
-**Smallest contract that would unblock it**
-
-- `POST /v1/social/publish/{id}/retry` (re-queue a failed job)
-- `POST /v1/social/publish/{id}/cancel` (only from `queued`)
+- `POST /v1/social/publish/{id}/retry` only accepts failed, unpublished jobs.
+- A usable existing Meta creation container resumes in `processing`; an
+  explicitly expired/errored container is cleared and restarted from `queued`.
+- Retry resets the attempt budget, clears stale lease/error state, restores the
+  linked content item to `publishing`, and writes `social_publish.retried`
+  to `control_audit`.
+- Existing `POST /v1/social/publish/{id}/cancel` stays fenced to
+  draft/queued jobs before Meta has a creation container.
+- Control only renders Retry/Cancel when those transitions are actually safe,
+  and surfaces failed transition responses instead of pretending they worked.
 
 ---
 

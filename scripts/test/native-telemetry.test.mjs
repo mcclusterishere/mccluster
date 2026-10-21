@@ -25,7 +25,7 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 const MIGRATION = 'supabase/migrations/20260919093553_native_telemetry_columns.sql';
-const LOCKDOWN  = 'supabase/pending_migrations/20260919999000_native_telemetry_lockdown.sql';
+const LOCKDOWN  = 'supabase/migrations/20261005054031_native_telemetry_lockdown_v1.sql';
 const ANALYTICS_PLATFORM = 'supabase/migrations/20260919133905_analytics_platform_multitenant_v1.sql';
 
 /* An assertion that something is ABSENT has to read the code and not the
@@ -171,19 +171,23 @@ test('the telemetry table is under migration control and the browser cannot writ
   }
 });
 
-test('the live analytics migration closes browser writes and the pending file is remainder-only', async () => {
+test('the live analytics and applied lockdown migrations close browser writes', async () => {
   const live = await read(ANALYTICS_PLATFORM);
   assert.match(live, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
-    'the production migration must withdraw the legacy open insert policy');
+    'the production analytics migration must withdraw the legacy open insert policy');
   assert.match(live, /revoke insert on public\.events from anon, authenticated;/,
-    'the production migration must revoke direct browser writes');
-  const pending = await read(LOCKDOWN);
-  assert.match(pending, /REMAINDER ONLY/,
-    'the old lockdown file must no longer pretend browser-write closure is pending');
-  assert.match(pending, /alter table public\.events force row level security;/,
-    'force RLS remains an explicit owner hardening decision');
-  assert.doesNotMatch(sqlCode(pending), /drop policy if exists "anyone writes the exhaust"|revoke insert on (?:table )?public\.events/,
-    'already-applied write closure must not be duplicated in the pending remainder');
+    'the production analytics migration must revoke direct browser inserts');
+  const lockdown = await read(LOCKDOWN);
+  assert.match(lockdown, /hardening applied to production on 2026-10-05/i,
+    'the lockdown migration must be recorded as applied, not pending');
+  assert.match(lockdown, /alter table public\.events force row level security;/,
+    'the applied lockdown must force RLS');
+  assert.match(sqlCode(lockdown), /revoke all on table public\.events from anon/,
+    'anonymous direct table access must be removed');
+  assert.match(sqlCode(lockdown), /revoke insert, update, delete, truncate, references, trigger\s+on table public\.events from authenticated/,
+    'authenticated browser roles must not retain mutation grants');
+  assert.match(sqlCode(lockdown), /grant select on table public\.events to authenticated/,
+    'authenticated analytics readers retain RLS-scoped select');
   const cols = await read(MIGRATION);
   assert.doesNotMatch(sqlCode(cols), /revoke insert|force row level security/,
     'the original additive telemetry migration remains additive');
@@ -344,8 +348,8 @@ test('precise location is permission-gated and privacy signals win', async () =>
     'an explicitly granted location should use the device location service rather than IP inference');
   assert.match(js, /function privacyQuiet\(\)/,
     'client-side privacy signals must short-circuit precise location');
-  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
-    'the server must reject precise-location rows under GPC/DNT even if a client forges them');
+  assert.match(ts, /if \(minimized && name === "precise_location"\) continue;/,
+    'the server must reject precise-location rows under GPC/DNT or cookieless consent even if a client forges them');
 });
 
 test('the client prefers the first-party domain and can still fall back', async () => {
@@ -414,20 +418,22 @@ test('the privacy signal is honoured, not merely written down', async () => {
     'both names must count');
   assert.match(ts, /const quiet = optedOut\(h\);/,
     'the decision must be made once, before any row is built');
-  for (const field of ['ip', 'sessionId']) {
-    assert.match(ts, new RegExp(`const ${field} = quiet \\?`),
-      `${field} follows a person between sittings and must not survive the signal`);
-  }
-  assert.match(ts, /const persistentAllowed = !quiet && \(site\.legacy \|\| consentState === "granted"\);/,
-    'persistent customer identity must require both no privacy opt-out and explicit consent');
+  assert.match(ts, /const minimized = quiet \|\| cookieless;/,
+    'visitor data minimization must activate under both opt-out and cookieless mode');
+  assert.match(ts, /const ip = minimized \? null : validIp\(callerIp\(h\)\);/,
+    'IP must be suppressed whenever either privacy restriction applies');
+  assert.match(ts, /const sessionId = persistentAllowed \? str\(body\.session_id, 64\) : null;/,
+    'a session identifier must require the complete privacy and consent gate');
+  assert.match(ts, /const persistentAllowed = !minimized && \(site\.legacy \|\| consentState === "granted"\);/,
+    'persistent customer identity requires both no privacy opt-out/cookieless mode and explicit consent');
   assert.match(ts, /const deviceId = persistentAllowed \?/,
     'deviceId must be downstream of the privacy-and-consent gate');
-  assert.match(ts, /city: quiet \? null : g\.city/,
-    'the city must go; the country may stay, because a count is not a person');
+  assert.match(ts, /city: minimized \? null : g\.city/,
+    'the city must go under GPC/DNT and cookieless collection; country counts may stay');
   assert.match(ts, /country: g\.country,/,
     'the visit must still be counted, or the signal becomes under-reporting');
-  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
-    'a privacy signal must also suppress consent-gated precise location rows');
+  assert.match(ts, /if \(minimized && name === "precise_location"\) continue;/,
+    'privacy opt-out and cookieless property both suppress precise location');
 });
 
 test('the signal survives the Worker hop', async () => {
@@ -472,4 +478,13 @@ test('the link to the notice is visible as a link', async () => {
     'the form that collects the data must link the notice about it');
   assert.match(html, /\.fan__fine a \{[^}]*text-decoration: underline/,
     'and the link must look like one');
+});
+
+test('private journey controls never expose text or outbound route URLs to click telemetry', async () => {
+  const js=await read('js/analytics.js'),start=js.indexOf('  function describe(el)'),end=js.indexOf('\n  /* ===',start);
+  const describe=new Function(js.slice(start,end)+'; return describe;')();
+  const privateLink={tagName:'A',id:'',className:'wt-route',closest:()=>({}),get textContent(){throw Error('Private text was read');},getAttribute(){throw Error('Private URL was read');}};
+  assert.deepEqual(describe(privateLink),{tag:'a',sel:'a.wt-route',text:null,href:null,cta:null});
+  const publicLink={tagName:'A',id:'about',className:'',closest:()=>null,textContent:'About',getAttribute:key=>key==='href'?'/about':null};
+  assert.equal(describe(publicLink).href,'/about');assert.equal(describe(publicLink).text,'About');
 });

@@ -1,0 +1,175 @@
+/* Analytics is a bounded workspace: the globe and navigation remain visible;
+   only the selected chapter owns vertical overflow. Mobile is the base layout. */
+body.cr[data-cr-surface="analytics"]{padding-bottom:0!important}
+body.cr[data-cr-surface="analytics"] .cr-shell{min-height:0!important}
+body.cr[data-cr-surface="analytics"] .cr-main{padding-bottom:0!important;min-height:0!important}
+body.cr[data-cr-surface="analytics"][data-control-workspace] #crMain{padding:0!important;min-height:0!important;height:auto!important}
+body.cr[data-cr-surface="analytics"] .cr-surface{margin-bottom:0}
+.cra-app.cad-app,.cr[data-control-workspace] .cra-app.cad-app{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);height:var(--cad-height,calc(100dvh - 100px));min-height:0;max-width:none;overflow:hidden;background:#0b0b0d;gap:0}
+.cad-app .cra-lead-col,.cr[data-control-workspace] .cad-app .cra-lead-col{display:flex;flex-direction:column;min-height:0;padding:0;border:0}
+.cad-app .cra-top,.cr[data-control-workspace] .cad-app .cra-top{padding:12px 14px 8px;flex:none}
+.cad-app .cra-top__title{font:400 28px/1.1 var(--k-serif);letter-spacing:-.025em}
+.cad-app .cra-top__eyebrow{font-size:10px;letter-spacing:.14em;margin:0 0 4px;text-transform:uppercase}
+.cad-app .cra-top__controls{margin-top:9px;gap:6px}
+.cad-app .cu-geography{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);margin:0 12px 10px;border:1px solid #29292e;border-radius:14px;min-height:0;background:#0b0b0d;overflow:hidden}
+.cad-app .cra-stage,.cr[data-control-workspace] .cad-app .cra-stage{height:clamp(176px,23dvh,230px);min-height:0;flex:none;background:#08080a}
+.cad-app .cra-globe__host,.cr[data-control-workspace] .cad-app .cra-globe__host{inset:0 0 62px}
+.cad-app .cra-pill,.cr[data-control-workspace] .cad-app .cra-pill{bottom:28px;width:calc(100% - 12px);max-width:none;border-radius:8px}
+.cad-app .cra-pill__filters{min-height:36px;padding:0 7px;font-size:11px}
+.cad-app .cra-pill__select{min-height:36px;width:100%;max-width:100%}
+.cad-app .cra-summary,.cr[data-control-workspace] .cad-app .cra-summary{bottom:7px;left:8px;right:8px;font-size:9px;line-height:1.25;margin:0;max-height:20px;overflow:auto}
+.cad-app .cra-globe__caption,.cr[data-control-workspace] .cad-app .cra-globe__caption{position:static;font-size:10px;margin:0;padding:5px 8px}
+/* Detailed coverage is also available through the globe's filter sheet. */
+.cad-app .cra-globe__caption{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);padding:0!important}
+.cad-app .cu-geo-summary{padding:10px;overflow:auto;max-height:clamp(176px,23dvh,230px);align-self:stretch}
+.cad-app .cu-geo-summary h2{font:500 13px/1.2 var(--ui,system-ui)}
+.cad-app .cu-geo-summary .cu-note{font-size:10px;margin:6px 0}
+.cad-app .cu-georows{gap:3px;margin:8px 0}
+.cad-app .cu-georows button{font-size:11px;min-height:25px;padding:3px 0 5px}
+.cad-app .cu-geo-summary>small{font-size:9px}
+.cad-app .cra-side,.cr[data-control-workspace] .cad-app .cra-side{display:block;min-height:0;overflow:hidden;padding:0;border-top:1px solid #2a2a30;height:100%;background:#0e0e11}
+.cad-app .cra-side__body{height:100%;min-height:0;container-type:normal}
+.cad-deck{height:100%;min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;color:#eeeef1}
+.cad-tabs{display:flex;gap:2px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:5px 10px 0;border-bottom:1px solid #29292f;min-width:0}
+.cad-tabs button{flex:none;min-height:43px;padding:8px 13px;border:0;border-bottom:2px solid transparent;background:none;color:#a3a3ad;font:500 12px/1.2 var(--ui,system-ui);white-space:nowrap;cursor:pointer}
+.cad-tabs button[aria-selected="true"]{border-bottom-color:#e65b67;color:#fff;background:#20161b}
+.cad-chapter{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px}
+.cad-chapter>div:first-child{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 9px;align-items:baseline;min-width:0}
+.cad-chapter small{font:500 10px/1.5 var(--ui,system-ui);font-variant-numeric:tabular-nums;color:#c07b85}
+.cad-chapter h2{font:500 19px/1.2 var(--ui,system-ui);letter-spacing:-.025em;margin:0}
+.cad-chapter p{grid-column:2;font-size:11px;color:#91919c;margin:0}
+.cad-arrows{display:flex;gap:5px}
+.cad-arrows button{width:40px;min-height:40px;border:1px solid #34343c;border-radius:8px;background:#18181d;color:#efeff5;font-size:18px;cursor:pointer}
+.cad-arrows button:disabled{opacity:.25;cursor:default}
+.cad-body{min-height:0;min-width:0;overflow:auto;overscroll-behavior-y:contain;padding:0 14px 16px;scrollbar-width:thin;scrollbar-color:#4d424b transparent;touch-action:auto;outline-offset:-3px}
+.cad-chapter{touch-action:pan-y pinch-zoom}
+.cad-body .cu-card,.cad-body .cra-card{background:#141418;border:1px solid #2a2a31;border-radius:12px;padding:14px;box-shadow:none;margin-bottom:10px}
+.cad-body .cu-card h2,.cad-body .cra-card h2{font:500 18px/1.25 var(--ui,system-ui);letter-spacing:-.02em}
+.cad-body .cu-metrics{gap:8px;display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(130px,46%);overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:4px}
+.cad-body .cu-metrics>.cu-fact{scroll-snap-align:start}
+.cad-body .cu-metrics>.cu-fact{background:#18181e;border:1px solid #313039;border-radius:10px;padding:10px}
+.cad-body .cu-fact>strong{font:400 28px/1.1 var(--ui,system-ui);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.cad-body .cu-fact>span{font-size:11px;color:#c8c6d1}
+.cad-body .cu-fact>small{font-size:10px;color:#92909c}
+.cad-body .cu-small-metrics strong{font-size:23px}
+.cad-body .cu-card .cra-area-chart{height:110px;width:100%}
+.cad-body .cu-card button,.cad-body .cu-card a{min-height:40px}
+.cad-body input,.cad-body select,.cad-body textarea{font-size:16px!important}
+.cad-overview-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:0 10px}
+.cad-footer{display:flex;gap:8px;align-items:center;min-width:0;padding:6px 14px;border-top:1px solid #29292f;background:#101014;color:#9997a3;font:400 10px/1.2 var(--ui,system-ui)}
+.cad-footer>span:first-child{margin-right:auto;font-variant-numeric:tabular-nums}
+.cad-footer button{min-height:36px;border:1px solid #33323b;border-radius:7px;background:#19191e;color:#d7d5e1;font:500 11px/1.2 var(--ui,system-ui);padding:7px 9px;cursor:pointer}
+.cad-footer [aria-pressed="true"]{color:#ffdce2;border-color:#8e4e5c}
+.cad-swipe-hint{display:none}
+.cad-app button:focus-visible,.cad-app a:focus-visible,.cad-body:focus-visible{outline:2px solid #f69cab;outline-offset:2px}
+.cad-camera-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.cad-camera-table{width:100%;border-collapse:collapse;text-align:left;font-size:12px}
+.cad-camera-table td,.cad-camera-table th{padding:9px 7px;border-bottom:1px solid #303039;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cad-camera-table th:first-child{text-align:left}
+.cad-camera-table small{display:block;font-size:10px;color:#9995a3;margin-top:4px}
+.cad-camera-preview{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.cad-camera-preview img{width:100%;max-height:220px;object-fit:contain;background:#080809;border-radius:8px}
+.cad-body progress{width:100%;height:6px;accent-color:#e66278}
+.cad-app .cra-sheet{z-index:80}
+.cr[data-control-workspace][data-cw-layout="details"] .cra-app.cad-app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.cr[data-control-workspace][data-cw-layout="details"] .cad-app .cra-lead-col{display:none}
+/* The owner shell has its own title and navigation. Keep its context controls
+   on one reachable rail so they do not consume the phone's data viewport. */
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cw-header{padding:8px 12px;gap:6px}
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cw-tools{flex-wrap:nowrap;padding:8px 12px;overflow-x:auto;scrollbar-width:thin;gap:12px}
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cw-location{flex:none}
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cw-location strong{font-size:18px}
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cw-eyebrow{font-size:8px}
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cw-tools__choices,body.cr[data-cr-surface="analytics"][data-control-workspace] .cw-intelligence-tools{flex-wrap:nowrap;flex:none;max-width:none}
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cra-stage{height:176px}
+body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-summary{max-height:176px}
+@media(min-width:40rem){
+  body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cra-stage{height:240px}
+  body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-summary{max-height:240px}
+  .cad-app .cra-top{padding:14px 20px 10px}.cad-app .cra-top__title{font-size:32px}
+  .cad-app .cu-geography{margin:0 18px 12px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  .cad-app .cra-stage,.cr[data-control-workspace] .cad-app .cra-stage{height:clamp(210px,25dvh,290px)}
+  .cad-app .cu-geo-summary{padding:18px;max-height:290px}.cad-app .cu-geo-summary h2{font-size:17px}.cad-app .cu-georows button{font-size:13px;min-height:31px}.cad-app .cu-geo-summary>small{font-size:11px}
+  .cad-body{padding:0 18px 18px}.cad-chapter{padding:12px 18px}.cad-chapter h2{font-size:22px}.cad-chapter p{font-size:12px}
+  .cad-body .cu-metrics{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:row;grid-auto-columns:auto;overflow:visible}.cad-body .cu-fact>strong{font-size:30px}
+  .cad-overview-grid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+  .cad-swipe-hint{display:inline}.cad-camera-preview{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
+@media(min-width:64rem){
+  body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cra-stage{height:auto}
+  .cra-app.cad-app,.cr[data-control-workspace] .cra-app.cad-app{grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr);grid-template-rows:minmax(0,1fr)}
+  .cad-app .cra-lead-col{border-right:1px solid #2a2a30}
+  .cad-app .cu-geography{flex:1;display:flex;flex-direction:column;margin:4px 16px 14px}
+  .cad-app .cra-stage,.cr[data-control-workspace] .cad-app .cra-stage{height:auto;min-height:190px;flex:1}
+  .cad-app .cra-globe__host,.cr[data-control-workspace] .cad-app .cra-globe__host{inset:0 0 82px}
+  .cad-app .cra-pill,.cr[data-control-workspace] .cad-app .cra-pill{bottom:37px;max-width:340px;width:calc(100% - 32px)}
+  .cad-app .cra-summary,.cr[data-control-workspace] .cad-app .cra-summary{bottom:12px;font-size:11px}
+  .cad-app .cu-geo-summary{border-top:1px solid #26262c;padding:16px 20px;max-height:220px;flex:none}
+  .cad-app .cu-georows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}
+  .cad-app .cra-side,.cr[data-control-workspace] .cad-app .cra-side{border-top:0;border-left:0}
+  .cad-tabs{padding-top:10px}.cad-tabs button{font-size:13px;padding:10px 14px}
+  .cad-chapter{padding-top:18px;padding-bottom:18px}
+  .cad-body .cu-card .cra-area-chart{height:135px}
+  .cad-body .cu-fact>strong{font-size:28px}.cad-body .cu-metrics>.cu-fact{padding:12px}
+}
+@media(prefers-reduced-motion:reduce){.cad-app *{scroll-behavior:auto!important}}
+
+/* Legible, touch-sized controls; detail stays inside the active chapter. */
+.cad-app .cu-georows button{min-height:44px;align-items:center;font-size:12px;padding:7px 0}
+.cad-app .cu-geo-summary .cu-note,.cad-app .cu-geo-summary>small{font-size:11px;line-height:1.4}
+.cad-app .cu-geo-summary{scrollbar-width:thin}
+.cad-app .cra-pill__filters,.cad-app .cra-pill__select{min-height:44px}
+.cad-app .cra-summary{font-size:10px}
+.cad-arrows button{min-height:44px;width:44px;border-radius:12px}
+.cad-footer button{min-height:44px}
+.cad-footer{gap:5px;padding:5px 10px}
+.cad-footer>span:first-child{min-width:0;line-height:1.4}
+.cad-footer .cad-swipe-hint{display:none}
+.cad-body .cu-overview-metrics{margin-bottom:14px}
+.cu-metric-link{position:relative;text-align:left;color:inherit;cursor:pointer;min-height:108px}
+.cu-metric-link i{position:absolute;right:10px;top:8px;font:14px/1 system-ui;color:#bc8f9c}
+.cad-body .cu-metric-link>span{padding-right:13px}
+.cad-body .cu-metric-link:hover{background:#24212a;border-color:#755160}
+.cad-body .cu-fact>small{font-size:11px;line-height:1.4;color:#b2acbb}
+.cad-body .cu-fact>span{font-size:12px}
+.cad-body .cu-card p,.cad-body .cu-note{color:#b6b2bf}
+.cad-body .cu-card h2,.cad-body .cra-card h2{font-weight:500;letter-spacing:-.03em}
+.cad-body .cra-ac__line{stroke:#e5869a}
+.cad-body .cra-ac__s0{stop-color:#c75c77;stop-opacity:.36}
+.cad-body .cra-ac__s1{stop-color:#c75c77;stop-opacity:.02}
+.cra-ac__point{fill:transparent;stroke:transparent;outline:none}
+.cra-ac__point:hover,.cra-ac__point:focus{fill:#fff;stroke:#e5869a;stroke-width:3}
+.cad-scope,.cad-read-warning{margin:0 0 12px;padding:11px 12px;border:1px solid #51404a;border-radius:10px;background:#211a21;font:12px/1.5 var(--ui,system-ui);color:#ddcbd4}
+.cad-scope b,.cad-scope span{display:block}.cad-scope span{color:#b9b2bd;margin-top:3px}
+.cad-read-warning summary{cursor:pointer;min-height:24px}.cad-read-warning p{overflow-wrap:anywhere}
+.cad-read-warning button{min-height:44px;padding:8px 12px;border:1px solid #6c4b5a;border-radius:8px;background:#30222c;color:#f9e0ea;font:inherit}
+.cad-health ul{list-style:none;padding:0;margin:0}
+.cad-health li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #2c2831}
+.cad-health li>div{min-width:0}.cad-health li b{font:500 13px/1.4 var(--ui,system-ui)}
+.cad-health li small{display:block;font-size:12px;line-height:1.5;color:#ada6b5;overflow-wrap:anywhere}
+.cad-health li button{flex:none}
+.cad-body .cu-detail>summary{min-height:44px;padding:12px 4px;font-size:13px;cursor:pointer;color:#cdbfcf}
+.cad-body .cra-loading{padding:24px 12px;color:#b9b2c2;font-size:14px}
+@media(min-width:40rem){
+  .cad-body .cu-overview-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cad-footer{padding:6px 18px;gap:8px;font-size:11px}
+}
+
+.cu-heat-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:#c2bec8;margin:8px 0}.cu-heat-legend i{height:5px;flex:1;border-radius:9px;background:linear-gradient(90deg,color-mix(in srgb,var(--an-accent,#e11d2e) 28%,var(--an-land,#3b3e44)) 0%,var(--an-accent,#e11d2e) 50%,color-mix(in srgb,var(--an-accent,#e11d2e) 38%,#fff) 100%)}
+
+.cad-body .cra-kpi small{color:#b8b4c0}
+
+.cu-inventory-tabs{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding:2px 0;scrollbar-width:thin}
+.cu-inventory-tabs button{flex:none;min-height:44px;padding:9px 14px;border:1px solid #38323d;border-radius:8px;background:#17151c;color:#c9c3cf;font:inherit;font-size:13px}
+.cu-inventory-tabs button[aria-pressed="true"]{background:#30202a;border-color:#925468;color:#fff}
+.cu-dataset-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.cu-dataset-filters label{display:grid;gap:6px;min-width:0;font-size:12px;color:#bcb5c4}
+.cu-dataset-filters label:first-child{grid-column:1/-1}
+.cu-dataset-filters input,.cu-dataset-filters select{min-width:0;width:100%;min-height:44px;padding:8px;background:#0e0d12;color:#eee;border:1px solid #3c3542;border-radius:7px}
+.cu-dataset-list{display:grid;gap:0}
+.cad-body .cu-dataset-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(54px,.3fr) minmax(54px,.3fr);gap:8px;align-items:center;width:100%;padding:13px 2px;text-align:left;border:0;border-top:1px solid #302a36;border-radius:0;background:none;color:#eee;font:inherit}
+.cu-dataset-row>span{min-width:0}.cu-dataset-row>span:not(:first-child){text-align:right}
+.cu-dataset-row b{display:block;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cu-dataset-row small{display:block;color:#aaa0b3;font-size:11px;line-height:1.5;margin-top:4px}
+.cad-body .cu-dataset-row[aria-pressed="true"]{background:#261b24;box-shadow:inset 2px 0 #e5869a;padding-left:8px}
+@media(min-width:40rem){.cu-dataset-filters{grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(0,1fr))}.cu-dataset-filters label:first-child{grid-column:auto}}

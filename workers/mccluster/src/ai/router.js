@@ -1,5 +1,7 @@
 import { fail, reply } from '../lib/http.js';
+import { recordEvent } from '../lib/observability.js';
 import { queueObjectiveSynthesis } from './objectives.js';
+import { handleBuildCode, ROUTE as BUILD_CODE_ROUTE } from './build-code.js';
 
 const MAX_BODY = 512 * 1024;
 const OWNER_JOB_TYPES = new Set([
@@ -65,10 +67,10 @@ async function readContextFunction(request, env, name, params) {
   return { status: res.status, data };
 }
 
-async function callContextFunction(request, env, name, body) {
+async function callContextFunction(request, env, name, body, method = 'POST') {
   const authorization = request.headers.get('authorization') || '';
   const res = await fetch(`${env.SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
+    method,
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
       authorization,
@@ -214,8 +216,14 @@ export async function handleAiRequest(request, env, user) {
   }
   if (!user) return fail(request, env, 'Authentication required', 401);
 
-  const orgId = url.searchParams.get('org_id') || (await houseOrgId(env));
+  // House Core is not a tenant service. Resolve the only authorized organization
+  // server-side before checking caller membership or accepting work.
+  const orgId = await houseOrgId(env);
   if (!orgId) return fail(request, env, 'McCluster house organization is not configured', 503);
+  const requestedOrgId = url.searchParams.get('org_id');
+  if (requestedOrgId && requestedOrgId !== orgId) {
+    return fail(request, env, 'McCluster house organization only', 403);
+  }
 
   const membershipsRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id,role&limit=1`,
@@ -223,6 +231,10 @@ export async function handleAiRequest(request, env, user) {
   );
   const memberships = await membershipsRes.json().catch(() => []);
   if (!memberships?.length) return fail(request, env, 'McCluster house owner access required', 403);
+
+  /* Control → Build → Code. Same gate, same org, same job ledger. */
+  const build = await handleBuildCode(request, env, user, orgId, path);
+  if (build) return build;
 
   if (path === '/v1/ai' && request.method === 'GET') {
     return reply(request, env, {
@@ -234,6 +246,7 @@ export async function handleAiRequest(request, env, user) {
       decisions: '/v1/ai/decisions',
       task: '/v1/ai/task',
       jobs: '/v1/ai/jobs',
+      build_code: BUILD_CODE_ROUTE,
       status: '/v1/ai/status',
       system_health: '/v1/ai/system-health',
       objective_synthesis: 'automatic after successful context ingest',
@@ -387,11 +400,58 @@ export async function handleAiRequest(request, env, user) {
   if (approvalMatch && request.method === 'POST') {
     const body = await readJson(request);
     const decision = String(body.decision || '').trim().toLowerCase();
+    const started = Date.now();
+    const observe = (outcome, level, detail) => recordEvent({
+      orgId, name: 'ai.approval.decided', level, outcome,
+      actorUserId: user.id, resourceType: 'owner_approval', resourceId: approvalMatch[1],
+      durationMs: Date.now() - started,
+      message: `Owner approval ${decision || 'decision'} · ${outcome}`,
+      detail: { decision, ...detail }
+    });
     try {
       const approval = await decideOwnerApproval(env, orgId, approvalMatch[1], user.id, decision);
+      observe('ok', 'info', {});
       return reply(request, env, { approval }, 200);
     } catch (error) {
+      const code = Number(error.status) || 500;
+      observe(code >= 500 ? 'error' : 'refused', code >= 500 ? 'error' : 'warn', { status: code, error: String(error.message || error).slice(0, 300) });
       return fail(request, env, error.message || 'approval decision failed', error.status || 500, error.detail);
+    }
+  }
+
+  const decisionStatusMatch = path.match(/^\/v1\/ai\/decisions\/([0-9a-f-]{36})\/status$/i);
+  if (decisionStatusMatch && request.method === 'POST') {
+    const body = await readJson(request);
+    const status = String(body.status || '').trim().toLowerCase();
+    if (!['approved', 'rejected'].includes(status)) return fail(request, env, 'status must be approved or rejected', 400);
+    const payload = {
+      org_id: orgId,
+      decision_id: decisionStatusMatch[1],
+      status,
+      note: String(body.note || '').trim().slice(0, 2000)
+    };
+    /* A consequential AI decision changes state here; the trace records who
+       moved it, to what, and whether the private function accepted it. */
+    const started = Date.now();
+    const observe = (code, extra = {}) => recordEvent({
+      orgId,
+      name: `ai.decision.${status}`,
+      level: code >= 500 ? 'error' : (code >= 400 ? 'warn' : 'info'),
+      outcome: code >= 500 ? 'error' : (code >= 400 ? 'refused' : 'ok'),
+      actorUserId: user.id,
+      resourceType: 'ai_context.decision',
+      resourceId: decisionStatusMatch[1],
+      durationMs: Date.now() - started,
+      message: `Decision → ${status} (${code})`,
+      detail: { requested_status: status, response_status: code, ...extra }
+    });
+    try {
+      const { status: responseStatus, data } = await callContextFunction(request, env, 'context-decision', payload, 'PATCH');
+      observe(Number(responseStatus) || 200);
+      return reply(request, env, data, responseStatus);
+    } catch (error) {
+      observe(Number(error.status) || 502, { error: String(error.message || error).slice(0, 300) });
+      return fail(request, env, error.message || 'decision transition failed', error.status || 502, error.detail);
     }
   }
 

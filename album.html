@@ -40,12 +40,12 @@
           "@type": "ItemList",
           "numberOfItems": 6,
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "item": { "@type": "MusicRecording", "name": "Who Did The Shoot", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 2, "item": { "@type": "MusicRecording", "name": "Runway Walk", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 3, "item": { "@type": "MusicRecording", "name": "Write a Song", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 4, "item": { "@type": "MusicRecording", "name": "Here", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 5, "item": { "@type": "MusicRecording", "name": "Antisocial", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 6, "item": { "@type": "MusicRecording", "name": "Lightroom", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } }
+            { "@type": "ListItem", "position": 1, "item": { "@type": "MusicRecording", "name": "Who Did The Shoot", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 2, "item": { "@type": "MusicRecording", "name": "Runway Walk", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 3, "item": { "@type": "MusicRecording", "name": "Write a Song", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 4, "item": { "@type": "MusicRecording", "name": "Here", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 5, "item": { "@type": "MusicRecording", "name": "Antisocial", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 6, "item": { "@type": "MusicRecording", "name": "Lightroom", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } }
           ]
         }
       }
@@ -55,6 +55,12 @@
 
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <!-- THE PREMIERE IS UP FROM THE FIRST PAINT (owner, 2026-10-20: "other screens flash up instead of just a smooth
+       transition"). js/chamber.js raises the once-a-session curtain, but it loads at the end of the page, so the album
+       painted first and the curtain dropped over it almost a second later. The same test it uses (not seen this session,
+       motion allowed) raises the curtain's ground here, before anything is drawn; chamber.js puts the curtain itself in
+       its place and takes this away. -->
+  <script>(function(){try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&sessionStorage.getItem("mcc_premiere")!=="1")document.documentElement.classList.add("prem-due")}catch(e){}})();</script>
   <script src="js/theme.js?v=__STAMP__"></script>
   <script defer src="js/knower.js?v=__STAMP__"></script>
   <style>
@@ -66,8 +72,19 @@
       src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
     @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
       src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
-    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
-    html, body { background: #0a0807; }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif;
+      --player-bg:#0a0807; --player-fg:#f4efe6; --player-surface:#17110f; }
+    html, body { background: var(--player-bg); color:var(--player-fg); }
+    .now { background: color-mix(in srgb, var(--player-bg) 94%, #000); color:var(--player-fg); }
+    .now__art { background:var(--player-surface); }
+    .now__service { display:inline-flex; align-items:center; justify-content:center; margin:.7rem auto 0; padding:.72rem 1rem;
+      border-radius:999px; background:var(--pulse); color:#fff; font:800 .78rem/1 var(--ui); letter-spacing:.04em;
+      text-decoration:none; box-shadow:0 12px 34px -16px color-mix(in srgb,var(--pulse) 80%,transparent); }
+    .now__service[hidden]{display:none}
+    .lyric-service-cta { color:#fff; text-decoration-color:var(--pulse); text-decoration-thickness:3px;
+      text-underline-offset:.16em; background:linear-gradient(180deg,transparent 62%,color-mix(in srgb,var(--pulse) 58%,transparent) 62%);
+      border-radius:.15em; padding:0 .04em; position:relative; z-index:8; pointer-events:auto; }
+    .lyric-service-cta:focus-visible { outline:2px solid #fff; outline-offset:3px; }
     /* the wash: a warm pulse-tinted gradient behind the shelf, so the page
        has depth even before a record fills the room */
     body.songpage { background:
@@ -93,7 +110,7 @@
        left the last line 13px under the deck. */
     [data-comments] { margin-bottom: 6rem; }
 
-    /* THE ROOM: the record's film behind everything */
+    /* THE ROOM: the record's music video behind everything */
     .room { position: fixed; inset: 0; z-index: 0; opacity: 0; transition: opacity 1.2s ease; }
     .room.is-on { opacity: 1; }
     .room video { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover;
@@ -104,7 +121,7 @@
 
        The scrim was ink at up to 0.96 and the film was dimmed to 0.6
        brightness to sit under it — correct on the dark coat, where pressing
-       play takes the house lights down and the record's film glows behind
+       play takes the house lights down and the record's music video glows behind
        the page. On bone that same wash dropped near-opaque ink over the
        whole page, so the moment a track started, light mode turned into
        dark mode: "I AM HERE" went near-black on near-black and the page
@@ -164,6 +181,12 @@
       color: #fff; font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 14px 36px -14px rgba(229,56,59,0.6); }
     .alb__play:active { transform: translateY(1px); }
+    /* Heal the 3 only: the door from the EP to Human Uprise gateway */
+    .alb-test { padding: 1.6rem 0 0.4rem; }
+    .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
+    .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
+      border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
+      text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
 
     /* the record: soft app rows with the art up front; the playing row
        becomes a glowing card in the career's color, the way the streaming
@@ -215,41 +238,30 @@
       0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pulse) 72%, transparent); filter: none; }
       50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--pulse) 0%, transparent); filter: brightness(1.22); }
     }
+    .alb__by .alb__artist { color: inherit; text-decoration: underline; text-underline-offset: 0.18em; }
+    /* a preview just ended: the way to the rest of the song says so once */
+    .tr .reclock .unlock.unlock--nudge { animation: unlockNudge 0.45s ease-in-out 3; }
+    @keyframes unlockNudge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
     @media (prefers-reduced-motion: reduce) {
       .tr .reclock .unlock { animation: none; }
+      .tr .reclock .unlock.unlock--nudge { animation: none; }
     }
     .tr .reclock .gonetxt { font-family: var(--ui); font-weight: 700; font-size: 0.66rem;
       color: var(--cream-dim); white-space: nowrap; opacity: 0.75; }
-    .tr .reclock .dl { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
-      touch-action: manipulation; width: 34px; height: 34px; border-radius: 50%; padding: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.035));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
-      display: grid; place-items: center; color: rgba(244,239,230,0.55); }
-    .tr .reclock .dl svg { width: 15px; height: 15px; display: block; fill: none;
-      stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .tr .reclock .dl:hover { color: var(--cream); }
-    .tr .reclock .dl[disabled] { opacity: 0.45; cursor: default; }
+    /* where a signed-in listener stands: calm, because it is information,
+       not the call to action. The earned play uses .unlock and flashes. */
+    .tr .reclock .gatechip { font-family: var(--ui); white-space: nowrap;
+      display: grid; gap: 0.05rem; text-align: center; line-height: 1.05;
+      color: var(--cream); padding: 0.34rem 0.7rem; border-radius: 999px;
+      background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+    .tr .reclock .gatechip b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+    .tr .reclock .gatechip span { font-weight: 700; font-size: 0.56rem; color: var(--cream-dim); letter-spacing: 0.02em; }
+    .tr .reclock a.gatechip { text-decoration: none; }
+    .tr .reclock .gatechip--on { background: color-mix(in srgb, var(--pulse) 26%, transparent); box-shadow: inset 0 0 0 1px var(--pulse); }
     /* a locked row still says how long the PREVIEW is, so the clock in
        the row is never lying about what this file actually contains */
     .tr li.locked .t small::after { content: " · preview"; color: var(--cream-dim); }
 
-    /* the format picker: a strip inside the row, never a modal */
-    .tr li.picking { flex-wrap: wrap; }
-    .tr .fmts { flex: 0 0 100%; display: flex; gap: 0.4rem; margin: 0.55rem 0 0.15rem; }
-    .tr .fmts button { flex: 1; -webkit-appearance: none; appearance: none; border: 0;
-      cursor: pointer; touch-action: manipulation; font-family: var(--ui);
-      display: grid; gap: 0.06rem; padding: 0.42rem 0.3rem; border-radius: 12px;
-      color: var(--cream); text-align: center;
-      background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.04));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); }
-    .tr .fmts button b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.02em; }
-    .tr .fmts button span { font-weight: 600; font-size: 0.56rem; color: var(--cream-dim); }
-    .tr .fmts button.is-busy { opacity: 0.5; }
-    /* one missing format does not make the record unavailable, so it says so
-       on its own line and the others still work */
-    .tr .fmts button.is-gone { opacity: 0.45; }
-    .tr .fmts button.is-gone b { text-decoration: line-through; }
-    .tr .fmts button.is-gone span::after { content: " · not up yet"; }
     @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
 
     /* the deck: the mini player riding above the bar */
@@ -378,7 +390,7 @@
       color: var(--cream); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
     .now__down svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
     .now__from { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cream-dim); font-weight: 800; }
-    /* the art window: the record's film with the words inside its frame */
+    /* the art window: the record's music video with the words inside its frame */
     .now__art { position: relative; width: min(88vw, 24rem); flex: 1; min-height: 0; max-height: 52vh;
       margin: 0.9rem auto 0; border-radius: 24px; overflow: hidden; background: #14100c;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 26px 74px -20px rgba(0,0,0,0.95),
@@ -535,6 +547,9 @@
     #prem .seam { width: 0; height: 2px; background: var(--pulse, #e5383b); margin: 1rem auto 0;
       animation: premSeam .6s cubic-bezier(.2,.7,.2,1) 1.35s forwards; }
     #prem.out { animation: premOut .7s ease forwards; }
+    /* the curtain's ground before js/chamber.js has run (the head script above); it lifts on its own if chamber.js never comes */
+    html.prem-due body::after { content: ""; position: fixed; inset: 0; z-index: 400; background: #050403;
+      animation: premOut .7s ease 4s forwards; }
     @keyframes premMark { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
     @keyframes premUp { from { opacity: 0; transform: translateY(.35em); } to { opacity: 1; transform: none; } }
     @keyframes premSeam { to { width: min(46vw, 320px); } }
@@ -546,7 +561,7 @@
       transition: opacity .5s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
     .alb h1.set .ch { opacity: 1; transform: none; }
     @media (prefers-reduced-motion: reduce) {
-      #prem { display: none; }
+      #prem, html.prem-due body::after { display: none; }
       .alb h1 .ch { opacity: 1; transform: none; transition: none; }
     }
 
@@ -604,6 +619,7 @@
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/song-test.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage music-room music-room--album music-v2">
@@ -659,6 +675,7 @@
              only appears when there is a tagline to separate. -->
         <p class="alb__by">by <b id="albArtist">Matthew McCluster</b><span id="albBySep"> · </span><span id="albBy">Have no fear.</span></p>
         <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
+        <a class="alb__gate" id="albGate" href="heal-the-3rd-world.html" hidden>Enter Heal the 3rd World &#8594;</a>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
         <div class="lrail" id="labelRail" aria-label="The label"></div>
       </div>
@@ -678,6 +695,16 @@
       <audio id="deck" preload="metadata" crossorigin="anonymous"></audio>
     </section>
 
+    <!-- THE TEST: a record that is also a test (CIA Mind Control) asks one
+         question per song once the server has counted it heard all the way
+         through. js/song-test.js paints the cards; the rules are the
+         database's. -->
+    <section class="alb-test" id="albTest" aria-labelledby="albTestH" hidden>
+      <p class="lib__k" id="albTestH">The test</p>
+      <p class="alb-test__sub">Hear each song all the way through, then answer: was it racist, and why? Your reasons go to the artist; after you answer, you see how everyone voted.</p>
+      <div id="albTestCards"></div>
+    </section>
+
     <!-- THE PLAYLISTS: app rows: tap the chip for a taste, tap the row to enter -->
     <section class="lib" id="plWrap" aria-label="The playlists">
       <p class="lib__k">The playlists</p>
@@ -686,7 +713,7 @@
 
     <footer class="hr__foot">
       Every track written &amp; performed by Matthew McCluster · QT6KV catalogue.<br>
-      <a href="index.html">The film</a> ·
+      <a href="music-videos.html">Music videos</a> ·
       <a href="hire.html">Hire the agency</a> ·
       <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a><br>
       © 2026 Matthew McCluster · McCluster Corp.
@@ -709,6 +736,7 @@
     <div class="now__meta">
       <div class="now__title" id="nowTitle">·</div>
       <p class="now__by" id="nowBy">Matthew McCluster</p>
+      <a class="now__service" id="nowService" href="hire.html" hidden>Take the next step</a>
     </div>
     <div class="now__deck">
       <button class="now__seek" id="nowSeek" type="button" aria-label="Seek"><i><b id="nowSeekFill"></b></i></button>
@@ -726,7 +754,6 @@
         <div class="now__doors">
           <a href="license.html" id="ecoLic" data-license="who-did-the-shoot">License this track</a>
           <a href="catalogue.html" id="ecoReg">On the record</a>
-          <a href="pay.html" id="ecoOwn">Tip the artist</a>
           <a href="hire.html" id="ecoHire">Book the studio</a>
         </div>
       </div>
@@ -734,6 +761,7 @@
   </div>
 
   <!-- the deck: the mini player that rides above the bar -->
+  <div id="seekStatus" role="status" aria-live="polite" style="text-align:center;font-size:.85rem;padding:.3rem .8rem;color:#f0c8a0" hidden></div>
   <div class="deckbar" id="deckbar" data-off="1">
     <button class="deckbar__seek" id="seek" type="button" aria-label="Seek"><i><b id="seekFill"></b></i></button>
     <div class="deckbar__row">
@@ -758,9 +786,10 @@
       <img class="appbar__m" src="assets/img/m-mark.png" alt="">
       <span>HERE</span>
     </a>
-    <a class="appbar__tab" href="account.html" data-appnav="profile">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
-      <span>Profile</span>
+    <!-- the Globe, written here as js/tabbar.js draws it, so the bar never paints a retired Profile tab first (owner, 2026-10-20) -->
+    <a class="appbar__tab appbar__world" href="https://mccluster.org/?view=feed" data-appnav="world" aria-label="Open the World globe">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg>
+      <span>Globe</span>
     </a>
   </nav>
 
@@ -770,6 +799,7 @@
   <script src="js/payments.js?v=__STAMP__"></script>
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/lyric-commerce.js?v=__STAMP__"></script>
   <script>
   /* ============================================================
      THE I AM HERE PLAYER: the album's own Spotify.
@@ -850,7 +880,9 @@
           by: "The songs you hearted.", art: "assets/img/m-mark.png", queue: q2 } : null;
       }
       var pl = null;
-      (pls && pls.playlists || []).forEach(function (p) { if (p.slug === slug) pl = p; });
+      (pls && pls.playlists || []).forEach(function (p) {
+        if (p.slug === slug || (Array.isArray(p.legacy_slugs) && p.legacy_slugs.indexOf(slug) >= 0)) pl = p;
+      });
       if (!pl) return null;
       var q3 = (pl.tracks || []).map(function (r) { return findTrack(data, r); }).filter(Boolean);
       return q3.length ? { slug: pl.slug, name: pl.name, tag: pl.tag || (q3.length + " tracks"), by: pl.by || "", art: pl.art, queue: q3 } : null;
@@ -865,15 +897,22 @@
       "Antisocial": "antisocial", "Lightroom": "lightroom",
     };
 
+    /* The name the listen ledger knows a song by: its file name without
+       the extension, or a gated record's bucket folder. Same rule as
+       js/listen-ledger.js and scripts/music-track-lengths.mjs. */
+    function listenKey(t) {
+      if (t.gated && t.gated.object) return String(t.gated.object).split("/")[0];
+      return String(t.src || "").split(/[?#]/)[0].split("/").pop().replace(/\.[a-z0-9]+$/i, "").toLowerCase();
+    }
     function trackRow(t, i) {
       var g = t.gated || null;
       return '<li data-src="' + t.src + '"' +
+        ' data-key="' + escAttr(listenKey(t)) + '"' +
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
-             ' data-gated-name="' + escAttr(g.download_as || t.title) + '"' +
-             ' data-gated-formats="' + escAttr(JSON.stringify(g.formats || [])) + '"' +
              ' data-preview-src="' + escAttr(t.src) + '"' : "") +
-        (t.video ? ' data-video="' + t.video + '"' : "") +
+        ((t.music_video || t.video) ? ' data-music-video="' + escAttr(t.music_video || t.video) + '"' : "") +
+        (t.experience ? ' data-experience="' + escAttr(JSON.stringify(t.experience)) + '"' : "") +
         (t.poster ? ' data-poster="' + t.poster + '"' : "") +
         (t.lyrics ? ' data-lyrics="' + t.lyrics + '"' : "") +
         (t.reel ? ' data-reel="' + t.reel + '"' : "") +
@@ -893,11 +932,23 @@
         /* The row used to carry an arrow out to a per-track page. Those
            pages are gone: their one real job was a licensing link that
            license.html already served, and the film they showed is the
-           lyric reel on films.html. The row plays the record, which is what
+           music-video surface on music-videos.html. The row plays the record, which is what
            a shelf is for. */
         "</li>";
     }
 
+    /* THE TEST. Only records listed here carry it; the questions, and who
+       may answer them, come from the database (song_tests). */
+    var TESTED = { "cia-mind-control": true };
+    var songTest = null;
+    function mountTest() {
+      var box = document.getElementById("albTest");
+      if (!box || !TESTED[ALBUM] || songTest) { if (box && !TESTED[ALBUM]) box.hidden = true; return; }
+      /* the card script is deferred and may land after the shelf paints */
+      if (!window.MCC_SONGTEST) { if ((mountTest.tries = (mountTest.tries || 0) + 1) < 50) setTimeout(mountTest, 200); return; }
+      box.hidden = false;
+      songTest = window.MCC_SONGTEST.mount(document.getElementById("albTestCards"), ALBUM, { signin: "account.html" });
+    }
     function boot(data, pls, ct) {
       var head = null, queue = null;
       if (ct) {
@@ -906,8 +957,9 @@
         head = { name: ct.title, tag: "A creator cut · the cutting room", by: ct.artist || "",
           art: ct.poster_url || "assets/img/m-mark.png" };
         queue = [{ title: ct.title, sub: ct.artist || "", src: ct.audio_url,
-          poster: ct.poster_url || "", lyrics: ct.lyrics ? "@inline" : "", reel: ct.reel ? "@inline" : "",
-          albSlug: ALBUM, albName: ct.artist || "", art: ct.poster_url || "" }];
+          poster: ct.poster_url || "", music_video: ct.music_video_url || ct.video_url || "",
+          lyrics: ct.lyrics ? "@inline" : (ct.lyrics_url || ""), reel: ct.reel ? "@inline" : "",
+          experience: ct.experience || {}, albSlug: ALBUM, albName: ct.artist || "", art: ct.poster_url || "" }];
       }
       if (!queue && PL) {
         var got = resolvePlaylist(data, pls, PL);
@@ -920,7 +972,12 @@
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
         head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "" };
-        queue = alb.tracks.map(function (t) { return Object.assign({}, t, { albSlug: alb.slug, albName: "", art: alb.art }); });
+        queue = alb.tracks.map(function (t) {
+          return Object.assign({}, t, {
+            albSlug: alb.slug, albName: "", art: alb.art,
+            experience: Object.assign({}, alb.experience || {}, t.experience || {})
+          });
+        });
       }
       document.getElementById("albArt").src = head.art;
       if (window.MCC_ENV && !PL) window.MCC_ENV.mount(document.getElementById("albArt"), ALBUM);
@@ -929,9 +986,30 @@
       document.getElementById("albBy").textContent = head.by || "";
       /* an album may be billed to someone other than the house */
       ARTIST = head.artist || HOUSE;
+      /* the artist's name was plain bold text and got tapped like a link;
+         the house artist now opens his own page, other billings stay text */
       document.getElementById("albArtist").textContent = ARTIST;
+      if (ARTIST === HOUSE) {
+        var artistEl = document.getElementById("albArtist");
+        var artistLink = document.createElement("a");
+        artistLink.href = "matthew-mccluster.html";
+        artistLink.className = "alb__artist";
+        artistLink.setAttribute("data-cta", "album-artist");
+        artistLink.textContent = ARTIST;
+        artistEl.textContent = "";
+        artistEl.appendChild(artistLink);
+      }
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;
+      /* a record that opens onto a cause gets a door to its gateway */
+      var GATEWAYS = {
+        "heal-the-3": ["heal-the-3rd-world.html", "Enter Heal the 3rd World"],
+        "cia-mind-control": ["end-racism.html", "End Racism · listen, answer, take action"]
+      };
+      var gate = document.getElementById("albGate"), gw = GATEWAYS[ALBUM];
+      gate.hidden = !gw;
+      if (gw) { gate.href = gw[0]; gate.textContent = gw[1] + " \u2192"; }
+      mountTest();
       document.getElementById("nowFrom").textContent = "Playing from " + head.name;
       document.querySelector(".deckbar__art").src = head.art;
       document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");
@@ -991,18 +1069,23 @@
     /* ============================================================
        THE GATE ON A RECORD. Some tracks ship a short preview here and
        keep the master in a private Supabase bucket. js/gated-audio.js
-       does the asking; this only paints the answer and repoints the row.
+       asks the API where this listener stands; this only paints the
+       answer and, when they press play on an earned record, spends it.
 
-       Three states, three different sentences, because they are three
+       Five states, five different sentences, because they are five
        different situations and a listener can act on only one of them:
-         locked      → make an account, the record is waiting
-         unlocked    → play it, and here is the file to keep
+         preview     → signed out: make an account, the record is waiting
+         locked      → signed in: here is how many songs are left
+         earned      → press play: ONE play, no rewinds, no file to keep
+         full        → the one play, happening now
          unavailable → our fault, not yours
 
-       The swap is live. Sign in in another tab while a preview is
-       playing and the master takes over at the same second, because
-       the preview is the head of the same master and the clock lines
-       up. Nothing restarts.
+       The rule is the owner's and the database + Worker enforce it
+       (2026-10-15): the full track plays only for a member with three
+       missions an admin verified AND a verified identity. Everyone else
+       hears the preview, and the row says exactly what is missing (missions
+       x/3, identity verification) and links to it. Preview plays and full
+       plays are counted apart (music_preview_play / music_full_play).
        ============================================================ */
     /* The clock on a row is read off whatever that row actually points at,
        which for a gated track changes under it: locked it is the 12-second
@@ -1022,32 +1105,6 @@
         probe.src = "";
       });
     }
-    function rowFormats(row) {
-      try { return JSON.parse(row.getAttribute("data-gated-formats") || "[]"); }
-      catch (e) { return []; }
-    }
-    function closeFormats(row) {
-      var sheet = row.querySelector("[data-fmts]");
-      if (sheet) sheet.remove();
-      row.classList.remove("picking");
-    }
-    /* The picker is a strip inside the row, not a modal. A modal over a
-       track list steals the whole screen to answer "which file", and on a
-       phone that is the difference between one tap and three. */
-    function toggleFormats(row, formats) {
-      if (row.querySelector("[data-fmts]")) { closeFormats(row); return; }
-      rows.forEach(closeFormats);
-      var sheet = document.createElement("div");
-      sheet.className = "fmts";
-      sheet.setAttribute("data-fmts", "");
-      sheet.innerHTML = formats.map(function (f, i) {
-        return '<button type="button" data-fmt="' + i + '">' +
-          "<b>" + esc(f.label || f.ext.toUpperCase()) + "</b>" +
-          (f.note ? "<span>" + esc(f.note) + "</span>" : "") + "</button>";
-      }).join("");
-      row.appendChild(sheet);
-      row.classList.add("picking");
-    }
     function gatedRows() {
       return rows.filter(function (r) { return r.getAttribute("data-gated-bucket"); });
     }
@@ -1060,34 +1117,48 @@
     function swapCurrent(row) {
       /* "is this the row the deck is on" comes off the DOM, not off init()'s
          cursor: the deck and its index live inside init(), and reaching into
-         that scope from out here is how this threw a ReferenceError and took
-         the download button down with it. paintRows() owns the "on" class. */
-      if (!row.classList.contains("on")) return;
-      var at = deck.currentTime, wasPlaying = !deck.paused;
+         that scope from out here is how this threw a ReferenceError once.
+         paintRows() owns the "on" class. Only ever swaps back to the
+         preview; the master is loaded by the play that earned it. */
+      if (!row.classList.contains("on") || !deck.paused) return;
       deck.src = row.getAttribute("data-src");
-      deck.addEventListener("loadedmetadata", function once() {
-        deck.removeEventListener("loadedmetadata", once);
-        if (at && at < deck.duration) { try { deck.currentTime = at; } catch (e) {} }
-        if (wasPlaying) deck.play().catch(function () {});
-      });
+    }
+    function chip(cls, b, sub) {
+      return '<span class="' + cls + '"><b>' + esc(b) + '</b><span>' + esc(sub) + '</span></span>';
     }
     function paintGate(row, out) {
       var slot = row.querySelector("[data-reclock]");
       if (!slot) return;
       row.classList.remove("locked", "unlocked", "gone", "unlocking");
-      /* the slot is painted before the source is swapped, so a swap that
-         ever fails cannot also cost the listener the button */
+      row._gateOut = out;
+      var pv = row.getAttribute("data-preview-src");
+      row.setAttribute("data-gate", out.state);
+      var line = window.MCC_GATED && window.MCC_GATED.progress ? window.MCC_GATED.progress(out) : null;
       if (out.state === "full") {
         row.classList.add("unlocked");
-        slot.innerHTML = '<button class="dl" type="button" data-dl ' +
-          'aria-label="Download ' + escAttr(row.getAttribute("data-title")) + '">' +
-          '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-          '<path d="M12 3v11m0 0l-4-4m4 4l4-4M4 19h16"/></svg></button>';
-        if (row.getAttribute("data-src") !== out.url) {
-          row.setAttribute("data-src", out.url);
-          swapCurrent(row);
-          probeDuration(row);
-        }
+        slot.innerHTML = chip("gatechip gatechip--on", "ONE PLAY", "no rewinds");
+        return;
+      }
+      /* every state below plays the public preview, never a master */
+      if (pv && row.getAttribute("data-src") !== pv) {
+        row.setAttribute("data-src", pv);
+        swapCurrent(row);
+        probeDuration(row);
+      }
+      if (out.state === "earned") {
+        row.classList.add("unlocked");
+        /* The one thing on the row worth interrupting for, so it flashes
+           like the account ask does. */
+        slot.innerHTML = chip("unlock", line ? line.b : "PLAY ONCE", line ? line.s : "you earned it");
+      } else if (out.state === "locked") {
+        row.classList.add("locked");
+        /* the chip is the way to the first missing step, from the server's answer */
+        var why = window.MCC_GATED && window.MCC_GATED.explain ? window.MCC_GATED.explain(out) : null;
+        var step = why && why.links && why.links[0];
+        slot.innerHTML = step
+          ? '<a class="gatechip" href="' + escAttr(step.href) + '" title="' + escAttr(why.text) + '" aria-label="' + escAttr(why.text + " " + step.label) + '">' +
+            '<b>' + esc(line ? line.b : "LOCKED") + '</b><span>' + esc(line ? line.s : step.label) + '</span></a>'
+          : chip("gatechip", line ? line.b : "LOCKED", line ? line.s : "not available yet");
       } else if (out.state === "preview") {
         row.classList.add("locked");
         /* The ask, not the mechanism. Nobody wants "an account" — they came
@@ -1096,18 +1167,13 @@
            and it stops flashing for anyone who asked the OS for less motion. */
         /* ?from carries the record into the intake so the listener is told
            why they are being asked. It is a marketing segment and nothing
-           more: the database derives the tier from it, and neither value
-           grants any access, so an edited URL is worth nothing. */
+           more: neither value grants any access, so an edited URL is worth
+           nothing. ?next brings the listener back to this record after
+           signing in, or after the sign-up's three pages. */
         var from = (row.getAttribute("data-gated-object") || "").split("/")[0];
-        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '">' +
-          '<b>FULL SONG</b><span>tap here · free</span></a>';
-        /* back to the preview if a sign-out invalidated a signed URL */
-        var pv = row.getAttribute("data-preview-src");
-        if (pv && row.getAttribute("data-src") !== pv) {
-          row.setAttribute("data-src", pv);
-          swapCurrent(row);
-          probeDuration(row);
-        }
+        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '&amp;next=' + escAttr(encodeURIComponent(location.pathname + location.search)) + '"' +
+          ' aria-label="Sign in. The full song needs three verified missions and a verified identity.">' +
+          '<b>FULL SONG</b><span>sign in · missions + ID</span></a>';
       } else {
         row.classList.add("gone");
         slot.innerHTML = '<span class="gonetxt" title="The full track could not be reached">Unavailable</span>';
@@ -1125,19 +1191,13 @@
       var slot = row.querySelector("[data-reclock]");
       row.classList.remove("locked", "unlocked", "gone");
       row.classList.add("unlocking");
-      if (slot) slot.innerHTML = '<span class="gonetxt">Opening full track&hellip;</span>';
-      /* A signed-in listener must never race the public preview while the
-         private URL is being minted. An empty source is deliberate here:
-         the row becomes playable the moment resolve() returns the master. */
-      row.setAttribute("data-src", "");
+      if (slot) slot.innerHTML = '<span class="gonetxt">Checking&hellip;</span>';
     }
     function paintGates() {
-      var list = gatedRows();
+      /* a row in the middle of its one play keeps it */
+      var list = gatedRows().filter(function (r) { return !r.hasAttribute("data-granted"); });
       if (!list.length) return;
 
-      /* Preview is a signed-OUT state, not a second edition of the song.
-         If a session already exists, never paint or arm the preview even for
-         the few milliseconds before the signer module finishes loading. */
       var signed = window.MCC_GATED
         ? window.MCC_GATED.signedIn()
         : hasStoredSession();
@@ -1156,52 +1216,13 @@
       watchGate();
       list.forEach(function (row) {
         window.MCC_GATED.resolve(gateSpec(row)).then(function (out) {
-          paintGate(row, out);
+          if (!row.hasAttribute("data-granted")) paintGate(row, out);
         });
       });
     }
-    document.getElementById("tracks").addEventListener("click", function (e) {
-      var pick = e.target.closest ? e.target.closest("[data-fmt]") : null;
-      if (pick) {
-        e.stopPropagation(); e.preventDefault();
-        var prow = pick.closest("li");
-        var fmts = rowFormats(prow);
-        var chosen = fmts[Number(pick.getAttribute("data-fmt"))];
-        if (!chosen) return;
-        pick.classList.add("is-busy");
-        window.MCC_GATED.download(
-          { bucket: prow.getAttribute("data-gated-bucket"), object: chosen.object },
-          prow.getAttribute("data-gated-name") + "." + chosen.ext
-        ).then(function (out) {
-          pick.classList.remove("is-busy");
-          /* A format that is not uploaded yet must say so on ITS OWN line.
-             Repainting the whole row would claim the record is unavailable
-             when only the ringtone is missing. */
-          if (out && out.state !== "saved") pick.classList.add("is-gone");
-          else closeFormats(prow);
-        });
-        return;
-      }
-      var b = e.target.closest ? e.target.closest("[data-dl]") : null;
-      if (!b) return;
-      e.stopPropagation(); e.preventDefault();
-      var row = b.closest("li");
-      var formats = rowFormats(row);
-      if (formats.length > 1) { toggleFormats(row, formats); return; }
-      b.disabled = true;
-      var only = formats[0];
-      var spec = only
-        ? { bucket: row.getAttribute("data-gated-bucket"), object: only.object }
-        : gateSpec(row);
-      var name = row.getAttribute("data-gated-name") + (only ? "." + only.ext : ".mp3");
-      window.MCC_GATED.download(spec, name).then(function (out) {
-        b.disabled = false;
-        if (out && out.state !== "saved") paintGate(row, out);
-      });
-    }, true);
-    /* registered once the signer exists, not at parse time: this inline
-       script runs before the deferred module, so an early call here would
-       have silently dropped every sign-out repaint */
+    /* registered once the gate module exists, not at parse time: this
+       inline script runs before the deferred module, so an early call here
+       would have silently dropped every sign-out repaint */
     var gateWatching = false;
     function watchGate() {
       if (gateWatching || !window.MCC_GATED) return;
@@ -1218,18 +1239,27 @@
     function fmtPlays(n) { return (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "K" : n) + (n === 1 ? " play" : " plays"); }
     function paintPlays(list) {
       var byTitle = {};
-      list.forEach(function (r) { if (r.track) byTitle[r.track.toLowerCase()] = r.plays; });
+      /* play_counts keys are normalized the way events_lean stores them
+         (lower case, dashes and underscores as spaces); match on the same
+         normal form so either spelling of a title finds its count */
+      var norm = function (s) { return String(s || "").toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim(); };
+      list.forEach(function (r) { if (r.track) byTitle[norm(r.track)] = (byTitle[norm(r.track)] || 0) + Number(r.plays || 0); });
       rows.forEach(function (row) {
-        var n = byTitle[(row.getAttribute("data-title") || "").toLowerCase()];
+        var n = byTitle[norm(row.getAttribute("data-title"))];
         var s = row.querySelector("[data-plays]");
         if (s && n != null) s.textContent = (row.querySelector("small").textContent ? " · " : "") + fmtPlays(+n);
       });
     }
     function fetchPlays() {
+      var fresh = false;
       try {
         var c = JSON.parse(localStorage.getItem("mcc_plays_cache") || "null");
-        if (c && c.rows) paintPlays(c.rows);
+        if (c && c.rows) {
+          paintPlays(c.rows);
+          fresh = !!c.at && Date.now() - c.at < 15 * 60 * 1000;
+        }
       } catch (e) {}
+      if (fresh) return;
       fetch(SB_URL + "/rest/v1/rpc/play_counts", {
         method: "POST",
         headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
@@ -1316,6 +1346,9 @@
     var bar = document.getElementById("deckbar");
     var KEY = "mcc_here_radio";
     var cur = -1;
+    /* the listen being timed for the ledger, and how far the one earned
+       play of a gated record has got (it cannot be rewound past that) */
+    var listen = null, grantMax = 0;
 
     var fmt = function (s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     var el = function (id) { return document.getElementById(id); };
@@ -1334,7 +1367,7 @@
     }
 
     /* THE POCKET HANDOFF. Everything the corner player on every other page
-       needs to rebuild this exact moment: the file, the film, the lyric
+       needs to rebuild this exact moment: the file, the music video, the lyric
        sheet, the title, the second, and whether it was still running when
        they walked. js/pip.js reads it; the album never shows the pocket
        itself, because the real player is right here. */
@@ -1350,7 +1383,8 @@
          when the listener comes back to it. */
       window.MCC_POCKET.save({
         src: row.getAttribute("data-preview-src") || row.getAttribute("data-src") || "",
-        video: row.getAttribute("data-video") || "",
+        music_video: row.getAttribute("data-music-video") || "",
+        video: row.getAttribute("data-music-video") || "", /* legacy pocket reader */
         poster: row.getAttribute("data-poster") || "",
         lyrics: row.getAttribute("data-lyrics") || "",
         title: row.getAttribute("data-title") || "",
@@ -1385,11 +1419,29 @@
       });
     }
     function load(i, at) {
-      cur = (i + rows.length) % rows.length;
+      var to = (i + rows.length) % rows.length;
+      /* leaving a record mid-play spends it: the play was the grant */
+      if (cur > -1 && cur !== to) spend(rows[cur]);
+      if (cur !== to && listen) { if (window.MCC_LISTENS) window.MCC_LISTENS.release(listen.handle); listen = null; }
+      cur = to;
       deck.src = rows[cur].getAttribute("data-src");
       /* the track's own grade: chamber silk, glows and filament all follow */
-      document.documentElement.style.setProperty("--pulse",
-        rows[cur].getAttribute("data-pulse") || "#e5383b");
+      var exp = {};
+      try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {}
+      var theme = exp && exp.theme && typeof exp.theme === "object" ? exp.theme : {};
+      document.documentElement.style.setProperty("--pulse", theme.accent || rows[cur].getAttribute("data-pulse") || "#e5383b");
+      document.documentElement.style.setProperty("--player-bg", theme.background || "#0a0807");
+      document.documentElement.style.setProperty("--player-fg", theme.foreground || "#f4efe6");
+      document.documentElement.style.setProperty("--player-surface", theme.surface || "#17110f");
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.background || "#0a0807");
+      if (window.MCC_LYRIC_COMMERCE) window.MCC_LYRIC_COMMERCE.bindPrimary(
+        document.getElementById("nowService"), exp,
+        { track: rows[cur].getAttribute("data-title"), album: ALBUM, surface: "album" }
+      );
+      if (window.MCC_TRACK) window.MCC_TRACK("player_theme_applied", {
+        track: rows[cur].getAttribute("data-title"), album: ALBUM,
+        accent: theme.accent || rows[cur].getAttribute("data-pulse") || "#e5383b"
+      });
       /* the license desk takes this record's name — one door, right here */
       var licEl = document.getElementById("ecoLic");
       if (licEl) {
@@ -1403,18 +1455,154 @@
       if (at) deck.currentTime = at;
       var art = rows[cur].getAttribute("data-art");
       if (art) document.querySelector(".deckbar__art").src = art;
-      /* the room takes the record: film, scenes, and words load with
+      /* the room takes the record: music video, scenes, and words load with
          the track; the whole page becomes the song's world */
       loadReel(rows[cur].getAttribute("data-reel") || "");
-      setRoom(rows[cur].getAttribute("data-video") || "", rows[cur].getAttribute("data-poster") || "");
+      setRoom(rows[cur].getAttribute("data-music-video") || "", rows[cur].getAttribute("data-poster") || "");
       loadLyrics(rows[cur].getAttribute("data-lyrics") || "");
       media(); paintRows(); paintDeck();
     }
+    /* A PLAY THAT DOES NOT START MUST SAY SO. deck.play() rejections were
+       swallowed, so a track that could not load, or a browser that refused
+       to start the sound, left the button on "Play" with nothing else
+       happening, and people pressed it again and again. A newer load
+       aborting an older one (AbortError) is not a failure. */
+    function playFailed(err, row) {
+      var name = (err && err.name) || "Error";
+      if (name === "AbortError") return;
+      var msg = name === "NotAllowedError" ? "Tap play once more to start the sound."
+        : name === "NotSupportedError" ? "This track could not load here. Try again, or open the page in Safari or Chrome."
+        : "This track would not start. Tap play to try again.";
+      if (window.MCC_TOAST) window.MCC_TOAST(msg);
+      if (window.MCC_TRACK) window.MCC_TRACK("play_failed", {
+        track: row ? row.getAttribute("data-title") : null, album: ALBUM, error: name,
+        gated: !!(row && row.hasAttribute("data-gated-bucket")), gate: row ? row.getAttribute("data-gate") : null
+      });
+    }
+    function startDeck(row) {
+      var p = deck.play();
+      if (p && typeof p.catch === "function") p.catch(function (e) { playFailed(e, row); });
+    }
+    /* THE TAP HAS TO OUTLIVE THE ROUND TRIP. An earned play asks the API for
+       the master and only then starts the deck; on iPhones and in the
+       Instagram browser a play() that late is no longer "from the tap" and
+       is refused. Starting the element (muted) inside the tap itself keeps
+       its permission for the real play that follows. */
+    var priming = false;
+    function primeDeck() {
+      if (!deck.paused) return;
+      try {
+        priming = true;
+        var wasMuted = deck.muted;
+        deck.muted = true;
+        var p = deck.play();
+        var done = function () { try { deck.pause(); } catch (e) {} deck.muted = wasMuted; priming = false; };
+        if (p && typeof p.then === "function") p.then(done, done); else done();
+      } catch (e) { priming = false; }
+    }
     function play(i, at) {
+      var target = i !== undefined ? (i + rows.length) % rows.length : (cur < 0 ? 0 : cur);
+      var row = rows[target];
+      /* An earned record is spent the moment it is played, not before:
+         ask the API for this one play, then load what it signs. */
+      if (row && row.getAttribute("data-gate") === "earned" && !row.hasAttribute("data-granted") && window.MCC_GATED) {
+        primeDeck();
+        claimThenPlay(target);
+        return;
+      }
+      if (row && row.hasAttribute("data-gated-bucket") && !row.hasAttribute("data-granted")) {
+        previewNotice(row, false);
+        gatedPlayEvent(row, false);
+      }
+      playNow(i, at);
+    }
+    /* A gated record's preview and its full track are different listens:
+       counted apart, with no more than the analytics model already carries. */
+    function gatedPlayEvent(row, full) {
+      if (!window.MCC_TRACK || !row) return;
+      window.MCC_TRACK(full ? "music_full_play" : "music_preview_play", {
+        track: row.getAttribute("data-title"), album: ALBUM, source: "album", gated: true
+      });
+    }
+    function playNow(i, at) {
       if (i !== undefined && i !== cur) load(i, at);
       else if (cur < 0) load(0, at);
-      deck.play().catch(function () {});
+      startDeck(rows[cur]);
       if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: rows[cur].getAttribute("data-title"), album: ALBUM });
+    }
+    /* A GATED SONG'S PREVIEW IS SECONDS LONG, AND SAID SO NOWHERE. Listeners
+       who came for that song heard a few seconds, then the deck moved on (or
+       stopped), and they pressed play over and over. The first preview play
+       says what it is; the end of it says how to hear the rest, and the deck
+       waits there instead of jumping to another song. */
+    var previewTold = {};
+    function previewNotice(row, ended) {
+      var key = row.getAttribute("data-key") || row.getAttribute("data-title");
+      if (!ended && previewTold[key]) return;
+      previewTold[key] = true;
+      var gate = row.getAttribute("data-gate") || "preview";
+      var head = ended ? "That was the preview." : "Playing the preview.";
+      var why = row._gateOut && window.MCC_GATED && window.MCC_GATED.explain ? window.MCC_GATED.explain(row._gateOut) : null;
+      var rest = gate === "earned" ? " Tap the song to play it in full."
+        : (gate === "locked" || gate === "preview") && why && why.text ? " " + why.text
+        : gate === "locked" ? " The full track needs three verified missions and a verified identity."
+        : gate === "gone" || gate === "unavailable" ? " The full track cannot be reached right now."
+        : " The full song needs an account, three verified missions and a verified identity: tap FULL SONG.";
+      if (window.MCC_TOAST) window.MCC_TOAST(head + rest);
+      var chip = row.querySelector(".unlock");
+      if (chip && ended) { chip.classList.remove("unlock--nudge"); void chip.offsetWidth; chip.classList.add("unlock--nudge"); }
+      if (ended && window.MCC_TRACK) window.MCC_TRACK("gated_preview_end", { track: row.getAttribute("data-title"), album: ALBUM, gate: gate });
+    }
+    function claimThenPlay(target) {
+      var row = rows[target];
+      var slot = row.querySelector("[data-reclock]");
+      if (slot) slot.innerHTML = '<span class="gonetxt">Opening&hellip;</span>';
+      window.MCC_GATED.claim(gateSpec(row)).then(function (out) {
+        if (out.state !== "full") {
+          /* not earned after all (another tab spent it, or signed out):
+             say where they stand and play the preview */
+          paintGate(row, out);
+          gatedPlayEvent(row, false);
+          playNow(target);
+          return;
+        }
+        row.setAttribute("data-granted", "");
+        row.setAttribute("data-src", out.url);
+        paintGate(row, out);
+        grantMax = 0;
+        if (cur === target) cur = -1;   /* force a fresh load of the master */
+        load(target, 0);
+        probeDuration(row);
+        startDeck(row);
+        gatedPlayEvent(row, true);
+        if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: row.getAttribute("data-title"), album: ALBUM });
+      });
+    }
+    /* The one play is over (it ended, or they moved on): the row goes back
+       to the preview and asks the API where the listener stands now. */
+    function spend(row) {
+      if (!row || !row.hasAttribute("data-granted")) return;
+      row.removeAttribute("data-granted");
+      row.setAttribute("data-src", row.getAttribute("data-preview-src") || "");
+      if (window.MCC_GATED) window.MCC_GATED.forget();
+      /* a spent play opens the earned record's question */
+      if (songTest) songTest.refresh().then(function () { songTest.focus(row.getAttribute("data-key")); });
+    }
+    function granted() { return cur > -1 && rows[cur].hasAttribute("data-granted"); }
+    /* A song heard from the top starts a listen; a song picked up partway
+       (a reload, or back from another page) adopts the listen already
+       running for it. The API counts only time the deck was playing. The
+       gated record never counts. */
+    function deckPlaying() { return !deck.paused; }
+    function countStart() {
+      var row = rows[cur];
+      if (!row || row.hasAttribute("data-gated-bucket") || !window.MCC_LISTENS) return;
+      if (listen && listen.row === row) return;
+      var key = row.getAttribute("data-key");
+      var h = deck.currentTime > 3
+        ? window.MCC_LISTENS.adopt(key, deckPlaying)
+        : window.MCC_LISTENS.start(key, deckPlaying);
+      listen = h ? { row: row, handle: h } : null;
     }
     function next() { play(cur + 1); }
     function prev() { if (deck.currentTime > 4) { deck.currentTime = 0; return; } play(cur - 1); }
@@ -1432,21 +1620,82 @@
     el("tpPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
     el("tpNext").addEventListener("click", next);
     el("tpPrev").addEventListener("click", prev);
-    el("seek").addEventListener("click", function (e) {
-      if (!deck.duration) return;
-      var r = this.getBoundingClientRect();
-      deck.currentTime = ((e.clientX - r.left) / r.width) * deck.duration;
+    function seekFeedback(message) {
+      var status = el("seekStatus");
+      if (status) { status.textContent = message; status.hidden = !message; }
+    }
+    function seekDeck(control, fraction) {
+      if (!Number.isFinite(deck.duration) || deck.duration <= 0 || deck.readyState < 1) {
+        seekFeedback("Start a track before seeking.");
+        return;
+      }
+      var target = Math.max(0, Math.min(1, fraction)) * deck.duration;
+      /* One-pass earned tracks cannot rewind. Keep the existing media guard,
+         but explain why a backward tap is not permitted. */
+      if (typeof granted === "function" && granted() && target < grantMax - 0.75) {
+        seekFeedback("This one-pass track cannot be rewound.");
+        return;
+      }
+      try { deck.currentTime = target; seekFeedback(""); }
+      catch (error) { seekFeedback("Seeking is not available for this track."); }
+    }
+    ["seek", "nowSeek"].forEach(function (id) {
+      var control = el(id);
+      if (!control) return;
+      control.addEventListener("click", function (e) {
+        var r = control.getBoundingClientRect();
+        if (r.width) seekDeck(control, (e.clientX - r.left) / r.width);
+      });
+      control.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+        e.preventDefault();
+        var fraction = e.key === "Home" ? 0 : e.key === "End" ? 1 :
+          ((deck.currentTime || 0) + (e.key === "ArrowLeft" ? -5 : 5)) / (deck.duration || 1);
+        seekDeck(control, fraction);
+      });
     });
 
     var ICO_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
     var ICO_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
-    deck.addEventListener("play", function () { paintRows(); paintDeck(); announce(true); save();
+    deck.addEventListener("play", function () { if (priming) return; countStart(); paintRows(); paintDeck(); announce(true); save();
       el("playAll").innerHTML = ICO_PAUSE + "Pause"; roomPlay(true); });
-    deck.addEventListener("pause", function () { paintRows(); paintDeck(); announce(false); save();
+    deck.addEventListener("pause", function () { if (priming) return; paintRows(); paintDeck(); announce(false); save();
       el("playAll").innerHTML = ICO_PLAY + "Play"; roomPlay(false); });
     var tick = 0;
-    deck.addEventListener("timeupdate", function () { paintDeck(); roomTick(); if (++tick % 8 === 0) save(); });
-    deck.addEventListener("ended", function () { next(); }); // the record keeps spinning, wraps at the end
+    deck.addEventListener("timeupdate", function () {
+      if (granted()) grantMax = Math.max(grantMax, deck.currentTime);
+      paintDeck(); roomTick(); if (++tick % 8 === 0) save();
+    });
+    /* one play means one pass: the earned record cannot be rewound */
+    deck.addEventListener("seeking", function () {
+      if (granted() && deck.currentTime < grantMax - 0.75) deck.currentTime = grantMax;
+    });
+    deck.addEventListener("ended", function () {
+      var finished = Promise.resolve(null);
+      if (listen && listen.row === rows[cur] && window.MCC_LISTENS) {
+        var heardKey = rows[cur].getAttribute("data-key");
+        finished = window.MCC_LISTENS.finish(listen.handle);
+        finished.then(function (d) {
+          /* the song just counted: its question is open now */
+          if (d && d.counted && songTest) songTest.refresh().then(function () { songTest.focus(heardKey); });
+        });
+      }
+      listen = null;
+      /* read before spend(), which takes data-granted off a full play */
+      var wasPreview = !!(rows[cur] && rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted"));
+      spend(rows[cur]);
+      if (wasPreview) { previewNotice(rows[cur], true); return; }
+      /* Played straight through, the album arrives at its closer having just
+         earned it. Wait for the song that just ended to be counted, then ask
+         for the play: earned, it plays in full; not, it says where the
+         listener stands and plays the preview. */
+      var upNext = (cur + 1) % rows.length;
+      if (rows[upNext] && rows[upNext].hasAttribute("data-gated-bucket") && window.MCC_GATED && window.MCC_GATED.signedIn()) {
+        finished.then(function () { claimThenPlay(upNext); }, function () { claimThenPlay(upNext); });
+        return;
+      }
+      next(); // the record keeps spinning, wraps at the end
+    });
 
     /* ============================================================
        BANKING THE SECOND SOMEBODY ACTUALLY LEFT ON.
@@ -1573,7 +1822,7 @@
       veil.classList.add("is-fading");
     }
 
-    /* ---------- THE ROOM: the page inside the record's film ---------- */
+    /* ---------- THE ROOM: the page inside the record's music video ---------- */
     var room = document.querySelector(".room"), roomFilm = el("roomFilm"), roomSrc = "";
     function setRoom(src, poster) {
       if (!roomFilm) return;
@@ -1794,14 +2043,25 @@
       if (!timed && j && j.lines && j.lines.length && j.lines[0].t != null) {
         timed = j.lines.map(function (l) { return { begin: l.t, content: l.text || l.line || "" }; });
       }
+      var exp = {};
+      if (cur > -1) { try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {} }
+      var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album", track_view:false };
+      nowLyr.textContent = "";
+      function addLine(text) {
+        var p = document.createElement("p");
+        if (window.MCC_LYRIC_COMMERCE) window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context);
+        else p.textContent = text;
+        nowLyr.appendChild(p);
+      }
       if (timed) {
         lyrTimed = timed;
-        nowLyr.innerHTML = timed.map(function (l) { return "<p>" + l.content + "</p>"; }).join("");
+        timed.forEach(function (l) { addLine(l.content || ""); });
       } else if (j && j.plain) {
         lyrPlain = true;
-        nowLyr.innerHTML = j.plain.split("\n").map(function (l) { return "<p>" + l + "</p>"; }).join("");
+        j.plain.split("\n").forEach(addLine);
       } else {
-        nowLyr.innerHTML = "<p class='now__none'>The words land here soon.</p>";
+        var none = document.createElement("p"); none.className = "now__none";
+        none.textContent = "The words land here soon."; nowLyr.appendChild(none);
       }
       lyrLines = Array.prototype.slice.call(nowLyr.querySelectorAll("p"));
       nowLyr.scrollTop = 0;
@@ -1821,6 +2081,14 @@
         lyrLines.forEach(function (p, i2) { p.classList.toggle("is-live", i2 === live); });
         if (live > -1) {
           var target = lyrLines[live];
+          var cta = target && target.querySelector && target.querySelector(".lyric-service-cta");
+          if (cta && !target.dataset.ctaViewed) {
+            target.dataset.ctaViewed = "1";
+            if (window.MCC_TRACK) window.MCC_TRACK("lyric_service_cta_view", {
+              track: rows[cur].getAttribute("data-title"), album:ALBUM,
+              offer:cta.dataset.offer||null, phrase:cta.dataset.phrase||null, surface:"album"
+            });
+          }
           nowLyr.scrollTo({ top: target.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
         }
       } else if (lyrPlain && deck.duration && lyrLines.length) {
@@ -1828,7 +2096,17 @@
         var live2 = Math.min(lyrLines.length - 1, Math.floor(prog * lyrLines.length));
         lyrLines.forEach(function (p, i3) { p.classList.toggle("is-live", i3 === live2); });
         var target2 = lyrLines[live2];
-        if (target2) nowLyr.scrollTo({ top: target2.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
+        if (target2) {
+          var cta2 = target2.querySelector && target2.querySelector(".lyric-service-cta");
+          if (cta2 && !target2.dataset.ctaViewed) {
+            target2.dataset.ctaViewed = "1";
+            if (window.MCC_TRACK) window.MCC_TRACK("lyric_service_cta_view", {
+              track:rows[cur].getAttribute("data-title"),album:ALBUM,
+              offer:cta2.dataset.offer||null,phrase:cta2.dataset.phrase||null,surface:"album"
+            });
+          }
+          nowLyr.scrollTo({ top: target2.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
+        }
       }
     }
     /* tap the PLAYING row again: instead of pausing, the record opens up
@@ -1844,11 +2122,7 @@
     el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
     el("nowNext").addEventListener("click", function () { next(); setTimeout(openSheet, 60); });
     el("nowPrev").addEventListener("click", function () { prev(); setTimeout(openSheet, 60); });
-    el("nowSeek").addEventListener("click", function (e) {
-      if (!deck.duration) return;
-      var r = this.getBoundingClientRect();
-      deck.currentTime = ((e.clientX - r.left) / r.width) * deck.duration;
-    });
+
     deck.addEventListener("timeupdate", paintSheet);
     deck.addEventListener("play", paintSheet);
     deck.addEventListener("pause", paintSheet);
@@ -1877,7 +2151,9 @@
        for a URL to the master. Both load after the shelf paints, because a
        locked row is the correct first frame and never a spinner. -->
   <script defer src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script defer src="js/listen-ledger.js?v=__STAMP__"></script>
   <script defer src="js/gated-audio.js?v=__STAMP__"></script>
+  <script defer src="js/song-test.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

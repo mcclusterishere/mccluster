@@ -604,7 +604,7 @@
       ],
       "visibility": "public",
       "sources": [
-        "_unfinished/equity-uprise/docket-516.html",
+        "docket-516.html",
         "data/docket-516-files.json",
         "assets/landmarks/shiloh-docket-516/",
         "data/archive.json"

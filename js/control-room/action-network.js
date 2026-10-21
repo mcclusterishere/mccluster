@@ -1,0 +1,564 @@
+/* Native Control · Create · Human Uprise.
+
+   The owner's side of Human Uprise (/action/?c=<slug>).
+   A campaign is a row in public.action_campaigns, so the next one is
+   launched here, not in a deploy: write it as a draft, check it, then
+   set it live. Row-level security lets only the owner write.
+
+   What this view shows is read, never guessed: the funnel is
+   action_funnel(campaign) (page views and visitors from the site's own
+   events, joins/acted/referred from participants, per Reel and source),
+   and the counts are rows.
+
+   MONEY. A campaign's money stays off until the owner turns it on, and
+   the switch asks first, because turning it on puts a Give lane and a
+   dollar meter on a public page. Ledger entries are private until
+   published; the public page shows only published ones. */
+(function(){
+  "use strict";
+  window.CR=window.CR||{};
+  var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
+    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,antiLevels:[],antiBusy:false,antiLoaded:false,
+    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{},liveGrants:[],
+    memos:null,memoBusy:false,memoErr:null,memoOpen:null,memoHist:{}};
+  var STATUSES=["draft","live","paused","closed"];
+  var LEDGER_KINDS=["received","committed","disbursed","expense"];
+  var HAVE={give:"$5",time:"Time",skills:"Skills",reach:"Reach",resources:"Resources",learn:"Wants to learn"};
+  var SKILLS={research:"Research",engineering:"Engineering / Technology",media:"Media",organizing:"Organizing",education:"Education",design:"Design",legal_policy:"Legal / Policy",fundraising:"Fundraising",field:"Field work",unsure:"Doesn't know yet"};
+  function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function n(v){return Number(v||0).toLocaleString("en-US");}
+  function usd(c){return"$"+(Number(c||0)/100).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:2});}
+  function note(t,bad){return'<div class="cro-note'+(bad?" cro-note--bad":"")+'">'+e(t)+'</div>';}
+  function pct(a,b){return b?Math.round(a/b*1000)/10+"%":"—";}
+  function current(){return A.campaigns.find(function(c){return c.id===A.sel;})||null;}
+  function redraw(){if(A.rerender)A.rerender();}
+
+  function load(){
+    if(A.loading)return Promise.resolve();
+    A.loading=true;A.error=null;redraw();
+    return A.supa("action_campaigns?select=*&order=sort.asc,created_at.asc").then(function(rows){
+      A.campaigns=rows||[];
+      if(!A.sel||!current())A.sel=A.campaigns.length?A.campaigns[0].id:null;
+      return A.sel?loadDetail(A.sel):null;
+    }).catch(function(err){A.error=err;}).then(function(){A.loading=false;A.loaded=true;redraw();});
+  }
+  function loadDetail(id){
+    var q=encodeURIComponent(id);
+    return Promise.allSettled([
+      A.supa("rpc/action_funnel",{method:"POST",body:{p_campaign:id}}),
+      A.supa("rpc/action_origin_stats",{method:"POST",body:{p_campaign:id}}),
+      A.supa("action_participants?campaign_id=eq."+q+"&select=participant_no,joined_at,origin,contributions,skills,referral_code,referred_by&order=participant_no.desc&limit=1000"),
+      A.supa("action_events?campaign_id=eq."+q+"&select=kind,at&order=at.desc&limit=5000"),
+      A.supa("action_ledger?campaign_id=eq."+q+"&select=*&order=occurred_on.desc,created_at.desc")
+    ]).then(function(out){
+      var d={funnel:[],origins:[],people:[],events:[],ledger:[],errors:[]};
+      ["funnel","origins","people","events","ledger"].forEach(function(k,i){
+        if(out[i].status==="fulfilled")d[k]=out[i].value||[];else d.errors.push(k+": "+((out[i].reason&&out[i].reason.message)||"failed"));
+      });
+      A.detail[id]=d;
+    });
+  }
+
+  /* ---------- views ---------- */
+  function tally(list,key){var t={};list.forEach(function(r){(r[key]||[]).forEach(function(k){t[k]=(t[k]||0)+1;});});return t;}
+  function bars(t,labels,total){
+    var keys=Object.keys(t).sort(function(a,b){return t[b]-t[a];});
+    if(!keys.length)return note("Nobody yet.");
+    return'<div class="cro-list">'+keys.map(function(k){return'<div class="cro-heat"><span>'+e(labels[k]||k)+'</span><span class="cro-heat__bar"><i style="--pct:'+(total?Math.round(t[k]/total*100):0)+'%"></i></span><b>'+n(t[k])+'</b></div>';}).join("")+'</div>';
+  }
+  function overview(c,d){
+    var people=d.people.length,recruited=0;
+    d.people.forEach(function(p){if(p.referred_by)recruited++;});
+    var kinds={};d.events.forEach(function(ev){kinds[ev.kind]=(kinds[ev.kind]||0)+1;});
+    var views=d.funnel.reduce(function(s,r){return s+Number(r.visitors||0);},0);
+    var stats='<div class="cro-statgrid"><div class="cro-stat"><b>'+n(people)+'</b><span>participants'+(c.people_goal?" of "+n(c.people_goal):"")+'</span></div>'+
+      '<div class="cro-stat"><b>'+n(views)+'</b><span>visitors (acknowledged)</span></div>'+
+      '<div class="cro-stat"><b>'+n(d.events.length)+'</b><span>actions</span></div>'+
+      '<div class="cro-stat"><b>'+n(recruited)+'</b><span>joined by referral</span></div></div>';
+    var funnel=d.funnel.length?'<div class="cro-tablewrap"><table class="cro-table"><thead><tr><th>Reel</th><th>Source</th><th class="n">Views</th><th class="n">Visitors</th><th class="n">Joins</th><th class="n">Join rate</th><th class="n">Acted</th><th class="n">Referred</th></tr></thead><tbody>'+
+      d.funnel.map(function(r){return'<tr><td>'+e(r.reel)+'</td><td>'+e(r.src)+'</td><td class="n">'+n(r.views)+'</td><td class="n">'+n(r.visitors)+'</td><td class="n">'+n(r.joins)+'</td><td class="n">'+pct(Number(r.joins),Number(r.visitors))+'</td><td class="n">'+n(r.acted)+'</td><td class="n">'+n(r.referred)+'</td></tr>';}).join("")+
+      '</tbody></table></div><p class="cro-meta">Views and visitors come from the site\'s own events and only count people who accepted the privacy notice; joins come from participants. Tag each Reel\'s link: /action/?c='+e(c.slug)+'&amp;src=ig&amp;reel=0047.</p>':note("No visits or joins yet. Tag each Reel's link: /action/?c="+c.slug+"&src=ig&reel=0047");
+    var origins=d.origins&&d.origins.length?'<div class="cro-tablewrap"><table class="cro-table"><thead><tr><th>Source</th><th>Reel</th><th>Action</th><th class="n">Joined</th><th class="n">Submitted</th><th class="n">Verified</th><th class="n">Rejected</th><th class="n">Verify rate</th></tr></thead><tbody>'+
+      d.origins.map(function(r){var src=r.source_channel||"direct",reel=r.source_reel?"Reel "+r.source_reel:"—",action=r.source_actionable||"mission",submitted=Number(r.submitted)||0,verified=Number(r.verified)||0;return'<tr><td>'+e(src)+'</td><td>'+e(reel)+'</td><td>'+e(action)+'</td><td class="n">'+n(r.joined)+'</td><td class="n">'+n(submitted)+'</td><td class="n">'+n(verified)+'</td><td class="n">'+n(r.rejected)+'</td><td class="n">'+pct(verified,submitted)+'</td></tr>';}).join("")+
+      '</tbody></table></div><p class="cro-meta">This table comes from durable mission assignments. Reel and action choice survive proof review and verified completion.</p>':note("No attributed mission joins yet.");
+    var recent=d.people.slice(0,25);
+    var joins=recent.length?'<div class="cro-list">'+recent.map(function(p){var o=p.origin||{};return'<div class="cro-row"><div class="cro-row__top"><b>#'+n(p.participant_no)+'</b><span class="cro-meta">'+e(new Date(p.joined_at).toLocaleString())+'</span></div><div class="cro-meta">'+e([o.reel?"Reel "+o.reel:"",o.src||"",p.referred_by?"via "+p.referred_by:""].filter(Boolean).join(" · ")||"direct")+(p.skills&&p.skills.length?" · "+e(p.skills.map(function(k){return SKILLS[k]||k;}).join(", ")):"")+'</div></div>';}).join("")+'</div>':note("No participants yet.");
+    return stats+
+      '<section class="cro-card" style="margin-top:10px"><h2>Funnel by Reel</h2>'+funnel+'</section>'+
+      '<section class="cro-card" style="margin-top:10px"><h2>Mission conversion by origin</h2>'+origins+'</section>'+
+      '<div class="cro-grid cro-grid--2" style="margin-top:10px"><section class="cro-card"><h2>What people bring</h2>'+bars(tally(d.people,"contributions"),HAVE,people)+'</section>'+
+      '<section class="cro-card"><h2>Skills</h2>'+bars(tally(d.people,"skills"),SKILLS,people)+'</section></div>'+
+      '<div class="cro-grid cro-grid--2" style="margin-top:10px"><section class="cro-card"><h2>Actions by kind</h2>'+bars(kinds,{},d.events.length)+'</section>'+
+      '<section class="cro-card"><h2>Latest joins</h2>'+joins+'</section></div>';
+  }
+  function proofMedia(p){
+    /* an upload from the member's camera: the Worker signs it for the desk */
+    if(p.metadata&&p.metadata.asset_id)return '<div data-proof-upload="'+e(p.id)+'" data-proof-kind="'+e(p.metadata.media_type||p.proof_type)+'"><div class="cro-note">Loading the uploaded proof…</div></div>'+(p.proof_url?'<p style="margin-top:8px"><a class="cr-btn" href="'+e(p.proof_url)+'" target="_blank" rel="noopener">Also linked ↗</a></p>':"");
+    var u=e(p.proof_url||""); if(!u)return '<div class="cro-note">Text proof only.</div>';
+    if(p.proof_type==="video")return '<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>';
+    if(p.proof_type==="photo")return '<img alt="Submitted mission proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+    return '<a class="cr-btn" href="'+u+'" target="_blank" rel="noopener">Open submitted '+e(p.proof_type)+' ↗</a>';
+  }
+  function loadProofs(){
+    A.proofBusy=true;redraw();
+    return A.supa("action_proofs?status=eq.pending&select=id,assignment_id,user_id,proof_type,proof_url,statement,metadata,created_at,action_mission_assignments!inner(id,m_uid,status,source_content_id,source_channel,source_reel,source_actionable,action_missions!inner(id,campaign_id,title,domain,difficulty,base_points,skills))&order=created_at.asc")
+      .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.msg="Proof queue could not load: "+(err.message||err);})
+      .then(function(){A.proofBusy=false;redraw();});
+  }
+  function loadAntiLevels(){
+    A.antiBusy=true;redraw();
+    return A.supa("action_antisocial_levels?status=eq.pending&select=assignment_id,level,user_id,proof_url,media_asset_id,statement,post_id,collaborator_m_uid,created_at&order=created_at.asc&limit=100")
+      .then(function(rows){A.antiLevels=rows||[];A.antiLoaded=true;})
+      .catch(function(err){A.msg="Anti-Social review queue unavailable: "+(err.message||err);A.antiLoaded=true;})
+      .then(function(){A.antiBusy=false;redraw();});
+  }
+  function antisocialReviews(){
+    if(!A.antiLoaded&&!A.antiBusy)loadAntiLevels();
+    if(A.antiBusy)return note("Loading Anti-Social levels…");
+    if(!A.antiLevels.length)return note("No pending Anti-Social levels.");
+    return '<div class="cro-list">'+A.antiLevels.map(function(x){
+      return '<article class="cro-card"><p class="cro-meta">ANTI-SOCIAL · LEVEL '+e(x.level)+'/3 · '+e(new Date(x.created_at).toLocaleString())+'</p>'+
+        '<h2>'+e(["High Five","Five High Fives","Make Something Together"][x.level-1])+'</h2>'+
+        '<p class="cro-meta">Assignment '+e(x.assignment_id)+'</p>'+
+        '<blockquote>'+e(x.statement||"No recap")+'</blockquote>'+
+        (x.proof_url?'<p><a href="'+e(x.proof_url)+'" target="_blank" rel="noopener noreferrer">Review linked proof ↗</a></p>':"")+
+        (x.media_asset_id?'<div data-anti-upload="'+e(x.assignment_id)+'" data-anti-level="'+e(x.level)+'"><div class="cro-note">Loading consent-safe clip for reviewer…</div></div>':"")+
+        (x.post_id?'<p class="cro-meta">Shared work post: '+e(x.post_id)+' · partner '+e(x.collaborator_m_uid)+'</p>':"")+
+        '<label>Review note<textarea data-anti-note="'+e(x.assignment_id)+'-'+e(x.level)+'"></textarea></label>'+
+        '<div class="cro-actions"><button class="cr-btn cr-btn--primary" data-anti-review="'+e(x.assignment_id)+'" data-level="'+e(x.level)+'" data-decision="verified">Verify level</button>'+
+        '<button class="cr-btn" data-anti-review="'+e(x.assignment_id)+'" data-level="'+e(x.level)+'" data-decision="rejected">Reject</button></div></article>';
+    }).join("")+'</div>';
+  }
+  function reviews(){
+    if(!A.proofs.length&&!A.proofBusy)loadProofs();
+    var anti=antisocialReviews();
+    if(A.proofBusy)return anti+note("Loading proof queue…");
+    if(!A.proofs.length)return anti+note("Review queue clear. No pending standard mission proof.");
+    return anti+'<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
+  }
+
+  function controls(c){
+    var phases=Array.isArray(c.phases)?c.phases:[];
+    return'<section class="cro-card"><h2>State</h2><div class="cro-form cro-form--3">'+
+      '<label>Status<select id="crnStatus">'+STATUSES.map(function(s){return'<option value="'+s+'"'+(c.status===s?" selected":"")+'>'+s+'</option>';}).join("")+'</select></label>'+
+      '<label>Current phase<select id="crnPhase"><option value="">—</option>'+phases.map(function(p){return'<option value="'+e(p.key)+'"'+(c.current_phase===p.key?" selected":"")+'>'+e(p.title||p.key)+'</option>';}).join("")+'</select></label>'+
+      '<label>Sort<input id="crnSort" type="number" value="'+e(c.sort||0)+'"></label></div>'+
+      '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crn-state>Save state</button>'+
+      '<a class="cr-btn" href="action/?c='+e(encodeURIComponent(c.slug))+'" target="_blank" rel="noopener">Open public page</a>'+
+      '<a class="cr-btn" href="heal-the-3rd-world.html#'+e(encodeURIComponent(c.slug))+'" target="_blank" rel="noopener">Open in the gateway</a></div></section>'+
+      '<section class="cro-card" style="margin-top:10px"><h2>Money · '+(c.money_enabled?"ON":"off")+'</h2>'+
+      '<p>'+(c.money_enabled?"The public page shows a Give lane and a dollar meter counted from published receipts.":"Nothing about money is on the public page. Turn it on only when McCluster Corp can lawfully solicit for this campaign and the giving path is ready.")+'</p>'+
+      '<div class="cro-actions"><button class="cr-btn'+(c.money_enabled?"":" cr-btn--primary")+'" type="button" data-crn-money="'+(c.money_enabled?"0":"1")+'">'+(c.money_enabled?"Turn money off":"Turn money on…")+'</button></div></section>';
+  }
+  function editor(c){
+    var ch=c.chapter||{};
+    function j(v){return e(JSON.stringify(v||[],null,2));}
+    return'<section class="cro-card"><h2>Content</h2><div class="cro-form cro-form--2">'+
+      '<label>Title<input id="crnTitle" value="'+e(c.title)+'" maxlength="160"></label>'+
+      '<label>Kicker<input id="crnKicker" value="'+e(c.kicker)+'"></label>'+
+      '<label>Headline<input id="crnHeadline" value="'+e(c.headline)+'"></label>'+
+      '<label>People goal<input id="crnPeopleGoal" type="number" min="1" value="'+e(c.people_goal||"")+'"></label>'+
+      '<label>Money goal (USD)<input id="crnMoneyGoal" type="number" min="1" value="'+e(c.money_goal_cents?Math.round(c.money_goal_cents/100):"")+'"></label>'+
+      '<label>Chapter region<input id="crnRegion" value="'+e(ch.region)+'"></label>'+
+      '<label>Chapter title<input id="crnChapterTitle" value="'+e(ch.title)+'"></label>'+
+      '<label>Chapter line<input id="crnChapterLine" value="'+e(ch.line)+'"></label></div>'+
+      '<div class="cro-form" style="margin-top:8px"><label>Body<textarea id="crnBody">'+e(c.body)+'</textarea></label>'+
+      '<label>Allocation note<textarea id="crnAllocation">'+e(c.allocation_note)+'</textarea></label>'+
+      '<label>Facts (JSON: text, source, url — every fact needs its source)<textarea id="crnFacts" spellcheck="false">'+j(c.facts)+'</textarea></label>'+
+      '<label>Sources (JSON: label, publisher, url)<textarea id="crnSources" spellcheck="false">'+j(c.sources)+'</textarea></label>'+
+      '<label>Phases (JSON: key, title, detail)<textarea id="crnPhases" spellcheck="false">'+j(c.phases)+'</textarea></label></div>'+
+      '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crn-save>Save content</button></div></section>';
+  }
+  function ledger(c,d){
+    var rows=d.ledger.length?'<div class="cro-list">'+d.ledger.map(function(r){return'<div class="cro-item"><div class="cro-item__head"><div><strong>'+e(r.kind)+' · '+e(usd(r.amount_cents))+'</strong><div class="cro-meta">'+e(r.occurred_on)+(r.counterparty?" · "+e(r.counterparty):"")+" · "+e(r.purpose)+(r.evidence_url?' · <a href="'+e(r.evidence_url)+'" target="_blank" rel="noopener">evidence</a>':"")+'</div></div><span class="cro-pill">'+(r.published?"public":"private")+'</span></div><div class="cro-actions"><button class="cr-btn" type="button" data-crn-publish="'+e(r.id)+'" data-next="'+(r.published?"0":"1")+'">'+(r.published?"Unpublish":"Publish")+'</button></div></div>';}).join("")+'</div>':note("No ledger entries.");
+    return'<section class="cro-card"><h2>Add an entry</h2><div class="cro-form cro-form--3">'+
+      '<label>Kind<select id="crnLKind">'+LEDGER_KINDS.map(function(k){return'<option>'+k+'</option>';}).join("")+'</select></label>'+
+      '<label>Amount (USD)<input id="crnLAmount" type="number" min="0" step="0.01"></label>'+
+      '<label>Date<input id="crnLDate" type="date" value="'+new Date().toISOString().slice(0,10)+'"></label>'+
+      '<label>Counterparty<input id="crnLWho"></label>'+
+      '<label>Purpose<input id="crnLPurpose"></label>'+
+      '<label>Evidence URL (https)<input id="crnLEvidence" type="url"></label></div>'+
+      '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crn-ledger>Add (private)</button></div>'+
+      '<p class="cro-meta">Entries start private. Publish one when its evidence is ready; the public page lists published entries and counts published receipts toward the meter.</p></section>'+
+      '<section class="cro-card" style="margin-top:10px"><h2>Ledger</h2>'+rows+'</section>';
+  }
+  function creator(){
+    return'<section class="cro-card"><h2>New campaign</h2><div class="cro-form cro-form--3">'+
+      '<label>ID<input id="crnNewId" placeholder="water-access-002"></label>'+
+      '<label>Slug (the link)<input id="crnNewSlug" placeholder="water"></label>'+
+      '<label>Title<input id="crnNewTitle" placeholder="The Water Action Mission"></label></div>'+
+      '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crn-create>Create as draft</button></div>'+
+      '<p class="cro-meta">Drafts are invisible to the public. Fill in the content, facts and sources, then set it live.</p></section>';
+  }
+  /* MISSIONS. The desk writes missions directly (the "admins manage
+     missions" policy); members never can. A mission is born a draft and is
+     only visible to the public once it is opened. */
+  var DOMAINS=["community","music","advocacy","business","research","education","mutual_aid","creative","other"];
+  var M_STATES=[["draft","Draft"],["open","Open"],["paused","Pause"],["closed","Close"]];
+  function loadMissions(){
+    A.missionBusy=true;redraw();
+    return Promise.all([
+      A.supa("action_missions?select=id,campaign_id,title,description,domain,difficulty,base_points,skills,capacity,status,created_at&order=created_at.desc&limit=200"),
+      A.supa("rpc/action_mission_stats",{method:"POST",body:{p_campaign:null}})
+    ]).then(function(out){
+      A.missions=out[0]||[];A.missionStats={};
+      (out[1]||[]).forEach(function(st){if(st&&st.mission_id)A.missionStats[st.mission_id]=st;});
+    }).catch(function(err){A.missions=[];A.missionStats={};A.msg="Missions could not load: "+(err.message||err);})
+      .then(function(){A.missionBusy=false;redraw();});
+  }
+  function missionDesk(c){
+    if(A.missions===null&&!A.missionBusy)loadMissions();
+    if(A.missionBusy&&A.missions===null)return note("Loading missions…");
+    var list=(A.missions||[]).map(function(m){
+      var st=A.missionStats[m.id]||{};
+      var joined=Number(st.joined)||0,progress=Number(st.in_progress)||0,submitted=Number(st.submitted)||0,verified=Number(st.verified)||0,rejected=Number(st.rejected)||0;
+      var counts='<div class="cro-statgrid" style="margin:10px 0">'+
+        '<div class="cro-stat"><b>'+n(joined)+'</b><span>joined</span></div>'+
+        '<div class="cro-stat"><b>'+n(progress)+'</b><span>doing it</span></div>'+
+        '<div class="cro-stat"><b>'+n(submitted)+'</b><span>waiting review</span></div>'+
+        '<div class="cro-stat"><b>'+n(verified)+'</b><span>verified</span></div></div>';
+      return '<article class="cro-card" style="margin-bottom:10px"><div class="cro-item__head"><div><p class="cro-meta">'+e(m.domain)+' · difficulty '+e(m.difficulty)+' · '+e(m.base_points)+' base pts'+(m.capacity?' · '+e(m.capacity)+' seats':'')+(m.campaign_id?' · '+e(m.campaign_id):'')+'</p><h2>'+e(m.title)+'</h2></div><span class="cro-pill">'+e(m.status)+'</span></div>'+
+        counts+(rejected?'<p class="cro-meta">'+n(rejected)+' rejected proof'+(rejected===1?'':'s')+'</p>':'')+
+        (m.description?'<p>'+e(m.description)+'</p>':'')+(m.skills&&m.skills.length?'<p class="cro-meta">Skills: '+e(m.skills.join(", "))+'</p>':'')+
+        '<div class="cro-actions">'+M_STATES.filter(function(x){return x[0]!==m.status;}).map(function(x){return '<button class="cr-btn" type="button" data-mission-state="'+e(m.id)+'" data-to="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div></article>';
+    }).join("");
+    return '<section class="cro-card"><h2>New mission</h2><div class="cro-form cro-form--3">'+
+      '<label>Title<input id="crmTitle" maxlength="160" placeholder="Register three neighbours to vote"></label>'+
+      '<label>Domain<select id="crmDomain">'+DOMAINS.map(function(d){return '<option value="'+d+'">'+d.replace("_"," ")+'</option>';}).join("")+'</select></label>'+
+      '<label>Difficulty (1 to 5)<input id="crmDifficulty" type="number" min="1" max="5" value="1"></label>'+
+      '<label>Base points (10 to 1000)<input id="crmPoints" type="number" min="10" max="1000" value="100"></label>'+
+      '<label>Skills (comma separated)<input id="crmSkills" placeholder="organizing, civic"></label>'+
+      '<label>Seats (blank for no limit)<input id="crmCapacity" type="number" min="1"></label></div>'+
+      '<label>What to do, and what counts as proof<textarea id="crmDescription" rows="4" placeholder="The steps, and exactly what proof the reviewer will accept."></textarea></label>'+
+      '<label class="cro-check"><input id="crmCampaign" type="checkbox"'+(c?' checked':'')+'> Part of '+e(c?c.title:"this campaign")+'</label>'+
+      '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-mission-create>Create as draft</button></div>'+
+      '<p class="cro-meta">Rewards are for completed, verifiable action. Never for a viewpoint, a candidate, a party, persuasion, outrage or attention.</p></section>'+
+      (list?'<div style="margin-top:12px">'+list+'</div>':note("No missions yet."));
+  }
+  /* FELLOWSHIP. Applications from members with three or more verified
+     actions; the decision and its note go back to the member.
+     COHORT SEATS. Accepting makes someone a fellow of the network, not a
+     member of any one program's cohort. A seat is given on purpose, with
+     admit_fellow_to_cohort(), which the server limits to accepted fellows
+     and to cohorts that are still admitting. */
+  /* The 100 newest applications, plus every accepted one however old: an
+     accepted fellow waiting for a seat must never fall off the desk. */
+  var APP_COLS="id,m_uid,status,why,project,hours_per_week,verified_actions_at_apply,review_note,created_at,reviewed_at";
+  function loadApps(){
+    A.appBusy=true;redraw();
+    return Promise.all([
+      A.supa("action_fellowship_applications?select="+APP_COLS+"&order=created_at.desc&limit=100"),
+      A.supa("action_fellowship_applications?select="+APP_COLS+"&status=eq.accepted&order=created_at.desc&limit=1000"),
+      A.supa("action_cohorts?select=id,name,status,campaign_id&status=eq.active&order=created_at.desc").catch(function(){return [];}),
+      A.request?A.request("/v1/mnet/live/admin/grants").then(function(x){return x.grants||[];}).catch(function(){return [];}):Promise.resolve([])
+    ]).then(function(r){
+      var seen={};
+      A.apps=(r[0]||[]).concat(r[1]||[]).filter(function(a){if(seen[a.id])return false;seen[a.id]=1;return true;});
+      A.cohorts=r[2]||[];A.liveGrants=r[3]||[];A.seats={};
+      var fellows=A.apps.filter(function(a){return a.status==="accepted"&&a.m_uid;}).map(function(a){return a.m_uid;});
+      var chunks=[];for(var i=0;i<fellows.length;i+=100)chunks.push(fellows.slice(i,i+100));
+      return Promise.all(chunks.map(function(ids){
+        return A.supa("action_cohort_members?select=cohort_id,m_uid&m_uid=in.("+ids.map(encodeURIComponent).join(",")+")").then(function(rows){
+          (rows||[]).forEach(function(m){(A.seats[m.m_uid]=A.seats[m.m_uid]||[]).push(m.cohort_id);});
+        }).catch(function(){});
+      }));
+    }).catch(function(err){A.apps=[];A.msg="Applications could not load: "+(err.message||err);})
+      .then(function(){A.appBusy=false;redraw();});
+  }
+  function cohortName(id){var c=A.cohorts.find(function(x){return x.id===id;});return c?c.name:"a closed cohort";}
+  function seatControls(a){
+    var held=A.seats[a.m_uid]||[];
+    var open=A.cohorts.filter(function(c){return held.indexOf(c.id)<0;});
+    return (held.length?'<p class="cro-meta">In cohort: '+held.map(function(id){return e(cohortName(id));}).join(" · ")+'</p>':'')+
+      (open.length?'<div class="cro-actions"><label>Admit to a cohort<select data-seat-cohort="'+e(a.id)+'">'+open.map(function(c){return'<option value="'+e(c.id)+'">'+e(c.name)+'</option>';}).join("")+'</select></label>'+
+        '<button class="cr-btn cr-btn--primary" type="button" data-seat-admit="'+e(a.id)+'">Admit</button></div>'
+      :(held.length?'':'<p class="cro-meta">No cohort is admitting. Open one before giving a seat.</p>'));
+  }
+  var LIVE_CATEGORIES=[["music","Music"],["build","Build"],["learn","Learn"],["field","Field"],["forum","Forum"]];
+  function liveGrantControls(a){
+    var held=A.seats[a.m_uid]||[];
+    var grants=(A.liveGrants||[]).filter(function(g){return g.m_uid===a.m_uid&&g.status==="active";});
+    var rows=grants.length?'<div class="cro-list" style="margin-top:8px">'+grants.map(function(g){
+      var scope=g.basis==="cohort"?(cohortName(g.cohort_id)||"cohort"):g.basis;
+      return '<div class="cro-row"><div class="cro-row__top"><b>Live · '+e((g.allowed_categories||[]).join(" · "))+'</b><span class="cro-pill">'+e(scope)+'</span></div>'+
+        '<div class="cro-meta">Up to '+e(g.max_stage_seats||1)+' modeled stage seats · support '+(g.support_allowed?"allowed":"off")+'</div>'+
+        '<div class="cro-actions"><button class="cr-btn" type="button" data-live-revoke="'+e(g.id)+'">Revoke live access</button></div></div>';
+    }).join("")+'</div>':"";
+    if(!held.length)return rows+'<p class="cro-meta">Live access is not automatic with fellowship. Give this fellow an active cohort seat first.</p>';
+    return rows+
+      '<div class="cro-actions" style="margin-top:8px"><label>Live cohort<select data-live-cohort="'+e(a.id)+'">'+held.map(function(id){return'<option value="'+e(id)+'">'+e(cohortName(id))+'</option>';}).join("")+'</select></label>'+
+      '<label>Category<select data-live-category="'+e(a.id)+'">'+LIVE_CATEGORIES.map(function(x){return'<option value="'+x[0]+'">'+x[1]+'</option>';}).join("")+'</select></label>'+
+      '<button class="cr-btn cr-btn--primary" type="button" data-live-grant="'+e(a.id)+'">Allow live</button></div>'+
+      '<p class="cro-meta">This grants a capability, not a public role. One category at a time keeps the scope explicit. Support stays off.</p>';
+  }
+  function fellowDesk(){
+    if(A.apps===null&&!A.appBusy)loadApps();
+    if(A.appBusy&&A.apps===null)return note("Loading applications…");
+    if(!A.apps.length)return note("No fellowship applications yet. They open to members after three verified actions.");
+    return '<div class="cro-list">'+A.apps.map(function(a){
+      var open=a.status==="submitted";
+      return '<article class="cro-card" style="margin-bottom:12px"><div class="cro-item__head"><div><p class="cro-meta">FELLOWSHIP · '+e(a.verified_actions_at_apply)+' verified actions · '+e(new Date(a.created_at).toLocaleString())+(a.hours_per_week?' · '+e(a.hours_per_week)+' h/week':'')+'</p></div><span class="cro-pill">'+e(a.status)+'</span></div>'+
+        '<blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(a.why)+'</blockquote>'+
+        (a.project?'<p><b>Would build or lead:</b> '+e(a.project)+'</p>':'')+
+        (open?'<label>Note to the member<textarea data-app-note="'+e(a.id)+'" placeholder="Welcome, or what would make a stronger application."></textarea></label>'+
+          '<div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-app-review="'+e(a.id)+'" data-decision="accepted">Accept</button><button class="cr-btn" type="button" data-app-review="'+e(a.id)+'" data-decision="declined">Decline</button></div>'
+          :(a.review_note?'<p class="cro-meta">Note: '+e(a.review_note)+'</p>':'')+(a.status==="accepted"?seatControls(a)+liveGrantControls(a):''))+
+        '</article>';
+    }).join("")+'</div>';
+  }
+
+  /* POLICY MEMOS. The desk's side of the Policy Fellowship ladder
+     (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md). Fellows submit memos
+     up the line; the desk starts a review and then approves, passes
+     (declines), asks for changes, or edits the text itself with a note the
+     fellow sees. Every action is one server call, review_policy_memo(),
+     which refuses an illegal transition; the buttons offered here come from
+     the same transition table (js/policy-fellowship-ladder.js). Versions and
+     the review log are immutable on the server. */
+  var MEMO_COLS="id,status,draft_title,region_key,cohort_id,submitted_at,updated_at,decided_at,current_version_id";
+  var MEMO_ACTION_LABEL={start_review:"Start review",approve:"Approve",request_changes:"Ask for changes",decline:"Pass",owner_edit:"Save my edit"};
+  function memoOwnerActions(status){
+    var L=window.MCC_POLICY_LADDER;if(!L)return [];
+    return L.TRANSITIONS.filter(function(t){return t[0]===status&&t[2]==="owner";}).map(function(t){return t[1];});
+  }
+  function loadMemos(){
+    A.memoBusy=true;A.memoErr=null;redraw();
+    return A.supa("action_policy_memos?select="+MEMO_COLS+"&status=in.(submitted,in_review,owner_edited,changes_requested,approved,declined)&order=updated_at.desc&limit=100")
+      .then(function(rows){A.memos=rows||[];})
+      .catch(function(err){A.memos=[];A.memoErr=String(err&&err.message||err);})
+      .then(function(){A.memoBusy=false;redraw();});
+  }
+  function loadMemoHistory(id){
+    return A.supa("rpc/policy_memo_history",{method:"POST",body:{p_memo_id:id}})
+      .then(function(h){A.memoHist[id]=h||null;}).catch(function(err){A.memoHist[id]={error:String(err&&err.message||err)};})
+      .then(redraw);
+  }
+  function diffHtml(d){
+    if(!d)return"";
+    if(d.too_large)return'<p class="cro-meta">The change is too large to show line by line ('+e(d.old_lines)+' → '+e(d.new_lines)+' lines).</p>';
+    return'<p class="cro-meta">+'+e(d.added)+' / −'+e(d.removed)+' lines against the previous version</p><div style="font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid currentColor;border-radius:10px;padding:10px;max-height:50vh;overflow:auto">'+
+      (d.ops||[]).map(function(o){var mark=o.op==="+"?"+ ":o.op==="-"?"− ":"  ";var style=o.op==="+"?' style="background:rgba(60,170,90,.18)"':o.op==="-"?' style="background:rgba(200,60,60,.18);text-decoration:line-through"':"";return'<div'+style+'>'+e(mark+o.t)+'</div>';}).join("")+'</div>';
+  }
+  function memoDetail(m){
+    var h=A.memoHist[m.id];
+    if(h===undefined){loadMemoHistory(m.id);return note("Loading the memo…");}
+    if(!h||h.error)return note("The memo could not be read: "+(h&&h.error||"unknown"),true);
+    var versions=h.versions||[],cur=versions[versions.length-1]||null,actions=memoOwnerActions(m.status);
+    var log=(h.reviews||[]).map(function(r){return'<li>'+e(new Date(r.created_at).toLocaleString())+' · '+e(r.actor_role)+' · '+e(r.action)+' ('+e(r.from_status)+' → '+e(r.to_status)+')'+(r.note?' · '+e(r.note):'')+'</li>';}).join("");
+    var research=(h.research||[]).map(function(x){var link=/^https:\/\//i.test(x.url||"")?'<a href="'+e(x.url)+'" target="_blank" rel="noopener noreferrer">'+e(x.title)+'</a>':e(x.title);
+      return'<li>'+link+' · '+e(x.provider)+(x.publisher?' · '+e(x.publisher):'')+' · <span class="cro-pill">unverified lead</span>'+(x.note?'<br><span class="cro-meta">'+e(x.note)+'</span>':'')+'</li>';}).join("");
+    var form=actions.length?'<label>Note to the fellow (required to pass, ask for changes, or edit)<textarea data-memo-note="'+e(m.id)+'" rows="3"></textarea></label>'+
+      (actions.indexOf("owner_edit")>=0?'<details><summary>Edit the memo myself</summary><label>Title<input data-memo-edit-title="'+e(m.id)+'" value="'+e(cur?cur.title:m.draft_title)+'"></label><label>Text<textarea data-memo-edit-body="'+e(m.id)+'" rows="14">'+e(cur?cur.body:"")+'</textarea></label></details>':'')+
+      '<div class="cro-actions">'+actions.map(function(a){return'<button class="cr-btn'+(a==="approve"||a==="start_review"?" cr-btn--primary":"")+'" type="button" data-memo-act="'+e(m.id)+'" data-action="'+e(a)+'">'+e(MEMO_ACTION_LABEL[a]||a)+'</button>';}).join("")+'</div>'
+      :'<p class="cro-meta">No desk action is open in this state.</p>';
+    return (cur?'<p class="cro-meta">Version '+e(cur.version_no)+' by the '+e(cur.author_role)+' · sha256 '+e(String(cur.body_sha256).slice(0,12))+'…'+(cur.note?' · '+e(cur.note):'')+'</p>'+
+        '<div style="white-space:pre-wrap;overflow-wrap:anywhere;border-left:3px solid currentColor;padding:8px 12px;margin:8px 0">'+e(cur.body)+'</div>'+diffHtml(cur.diff_from_parent):note("No submitted version yet."))+
+      (research?'<h4>Research leads</h4><ul>'+research+'</ul>':'')+
+      (log?'<h4>Review log</h4><ul>'+log+'</ul>':'')+form;
+  }
+  function memoDesk(){
+    if(A.memos===null&&!A.memoBusy)loadMemos();
+    if(A.memoBusy&&A.memos===null)return note("Loading policy memos…");
+    if(A.memoErr)return note(/action_policy_memos|does not exist|404|PGRST/i.test(A.memoErr)?"Policy memos are not switched on yet: supabase/pending/policy_fellowship_ladder_v1.sql has not been applied.":"Policy memos could not load: "+A.memoErr,true);
+    if(!window.MCC_POLICY_LADDER)return note("The policy ladder rules did not load (js/policy-fellowship-ladder.js).",true);
+    if(!A.memos.length)return note("No policy memos have been submitted yet. Fellows with a seat in a state Policy Fellowship cohort write them.");
+    return'<div class="cro-list">'+A.memos.map(function(m){
+      var open=A.memoOpen===m.id;
+      return'<article class="cro-card" style="margin-bottom:12px"><div class="cro-item__head"><div><p class="cro-meta">POLICY MEMO · '+e(m.region_key||"no state")+(m.submitted_at?' · submitted '+e(new Date(m.submitted_at).toLocaleString()):'')+'</p><b>'+e(m.draft_title)+'</b></div><span class="cro-pill">'+e(m.status)+'</span></div>'+
+        '<div class="cro-actions"><button class="cr-btn" type="button" data-memo-open="'+e(m.id)+'">'+(open?"Close":"Open")+'</button></div>'+
+        (open?memoDetail(m):'')+'</article>';
+    }).join("")+'</div>';
+  }
+  function render(){
+    if(!A.loaded&&!A.loading)load();
+    var c=current(),d=c&&A.detail[c.id];
+    var chips='<div class="cro-chips">'+A.campaigns.map(function(x){return'<button class="cro-chip'+(x.id===A.sel&&A.tab!=="new"?" is-on":"")+'" type="button" data-crn-pick="'+e(x.id)+'">'+e(x.title)+' · '+e(x.status)+'</button>';}).join("")+'<button class="cro-chip'+(A.tab==="new"?" is-on":"")+'" type="button" data-crn-tab="new">+ New campaign</button></div>';
+    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
+    if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
+    if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
+    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["memos","Policy memos"],["identity","Identity"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
+    var body=!d?note("Loading "+c.title+"…"):(d.errors.length?note("Some reads failed: "+d.errors.join("; "),true):"")+
+      (A.tab==="reviews"?reviews():A.tab==="missions"?missionDesk(c):A.tab==="fellows"?fellowDesk():A.tab==="memos"?memoDesk():A.tab==="identity"?(window.CR.identityReview?window.CR.identityReview.render():note("The identity review module did not load (js/control-room/identity-review.js).",true)):A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
+    return'<div class="cro">'+chips+head+tabs+body+'</div>';
+  }
+
+  /* ---------- writes ---------- */
+  function patch(c,body){
+    body.updated_at=new Date().toISOString();
+    return A.supa("action_campaigns?id=eq."+encodeURIComponent(c.id),{method:"PATCH",body:body});
+  }
+  function run(btn,work,done){
+    if(btn)btn.disabled=true;A.msg="";
+    return work().then(function(){A.msg=done||"";return load();}).catch(function(err){if(btn)btn.disabled=false;alert(err.message||"That did not save.");});
+  }
+  function val(root,id){var el=root.querySelector("#"+id);return el?el.value:"";}
+  function parseList(text,need,label){
+    var v;try{v=JSON.parse(text||"[]");}catch(_){throw new Error(label+" is not valid JSON.");}
+    if(!Array.isArray(v))throw new Error(label+" must be a list.");
+    v.forEach(function(x,i){need.forEach(function(k){if(!x||typeof x!=="object"||!String(x[k]||"").trim())throw new Error(label+" #"+(i+1)+" needs "+k+".");});
+      if(x.url&&!/^https:\/\//i.test(x.url))throw new Error(label+" #"+(i+1)+": url must start with https://");});
+    return v;
+  }
+  function loadUploads(root){
+    if(!A.request)return;
+    root.querySelectorAll("[data-anti-upload]").forEach(function(box){
+      if(box.getAttribute("data-loaded"))return;box.setAttribute("data-loaded","1");
+      A.request("/v1/mnet/missions/antisocial/"+encodeURIComponent(box.getAttribute("data-anti-upload"))+"/"+encodeURIComponent(box.getAttribute("data-anti-level"))+"/media")
+        .then(function(m){var u=e(m&&m.url||"");if(!u)throw new Error("no url");
+          box.innerHTML=m.media_type==="video"
+            ?'<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>'
+            :'<img alt="Submitted Anti-Social proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+        }).catch(function(){box.innerHTML='<div class="cro-note">The level clip could not be opened.</div>';});
+    });
+    root.querySelectorAll("[data-proof-upload]").forEach(function(box){
+      if(box.getAttribute("data-loaded"))return; box.setAttribute("data-loaded","1");
+      A.request("/v1/mnet/missions/proofs/"+encodeURIComponent(box.getAttribute("data-proof-upload"))+"/media").then(function(m){
+        var u=e(m&&m.url||""); if(!u)throw new Error("no url");
+        box.innerHTML=(m.media_type==="video"||box.getAttribute("data-proof-kind")==="video")
+          ?'<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>'
+          :'<img alt="Submitted mission proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+      }).catch(function(){box.innerHTML='<div class="cro-note">The uploaded proof could not be opened.</div>';});
+    });
+  }
+  function bind(root){
+    if(window.CR.identityReview&&A.tab==="identity")window.CR.identityReview.bind(root);
+    if(!root)return;
+    loadUploads(root);
+    root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
+    root.querySelectorAll("[data-crn-tab]").forEach(function(b){b.onclick=function(){A.tab=b.getAttribute("data-crn-tab");A.msg="";redraw();};});
+    var mc=root.querySelector("[data-mission-create]");
+    if(mc)mc.onclick=function(){
+      var title=val(root,"crmTitle").trim(); if(!title){alert("Give the mission a title.");return;}
+      var cap=parseInt(val(root,"crmCapacity"),10), c=current(), useC=root.querySelector("#crmCampaign");
+      var body={title:title,description:val(root,"crmDescription").trim(),domain:val(root,"crmDomain"),
+        difficulty:Math.min(5,Math.max(1,parseInt(val(root,"crmDifficulty"),10)||1)),
+        base_points:Math.min(1000,Math.max(10,parseInt(val(root,"crmPoints"),10)||100)),
+        skills:val(root,"crmSkills").split(",").map(function(x){return x.trim().toLowerCase();}).filter(Boolean).slice(0,8),
+        capacity:isFinite(cap)&&cap>0?cap:null,status:"draft",campaign_id:(useC&&useC.checked&&c)?c.id:null};
+      mc.disabled=true;
+      A.supa("action_missions",{method:"POST",prefer:"return=minimal",body:body})
+        .then(function(){A.msg="Mission created as a draft. Open it when it is ready.";return loadMissions();})
+        .catch(function(err){mc.disabled=false;alert(err.message||"The mission did not save.");});
+    };
+    root.querySelectorAll("[data-mission-state]").forEach(function(b){b.onclick=function(){
+      var to=b.getAttribute("data-to"),id=b.getAttribute("data-mission-state");
+      if(to==="open"&&!confirm("Open this mission? Anyone can see and take it."))return;
+      b.disabled=true;
+      A.supa("action_missions?id=eq."+encodeURIComponent(id),{method:"PATCH",prefer:"return=minimal",body:{status:to,updated_at:new Date().toISOString()}})
+        .then(function(){A.msg="Mission is now "+to+".";return loadMissions();})
+        .catch(function(err){b.disabled=false;alert(err.message||"That did not save.");});
+    };});
+    root.querySelectorAll("[data-memo-open]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-memo-open");A.memoOpen=A.memoOpen===id?null:id;if(A.memoOpen)delete A.memoHist[id];redraw();
+    };});
+    root.querySelectorAll("[data-memo-act]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-memo-act"),action=b.getAttribute("data-action"),L=window.MCC_POLICY_LADDER;
+      var m=(A.memos||[]).find(function(x){return x.id===id;}),h=A.memoHist[id]||{},vs=h.versions||[],cur=vs[vs.length-1]||{};
+      var noteEl=root.querySelector('[data-memo-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
+      var titleEl=root.querySelector('[data-memo-edit-title="'+id+'"]'),bodyEl=root.querySelector('[data-memo-edit-body="'+id+'"]');
+      var body=action==="owner_edit"&&bodyEl?bodyEl.value:null,title=action==="owner_edit"&&titleEl?titleEl.value.trim():null;
+      var check=L&&m?L.checkAction({from:m.status,action:action,actor:"owner",note:reviewNote,body:body,currentBody:cur.body}):{ok:true};
+      if(!check.ok){alert(check.error);return;}
+      if(action!=="start_review"&&!confirm((MEMO_ACTION_LABEL[action]||action)+": the fellow is notified"+(reviewNote?" with your note":"")+". Continue?"))return;
+      b.disabled=true;
+      A.supa("rpc/review_policy_memo",{method:"POST",body:{p_memo_id:id,p_action:action,p_note:reviewNote||null,p_title:title||null,p_body:body}})
+        .then(function(r){A.msg="Memo is now "+(r&&r.status||"updated")+".";delete A.memoHist[id];return loadMemos();})
+        .catch(function(err){b.disabled=false;alert(err.message||"The review did not save.");});
+    };});
+    root.querySelectorAll("[data-app-review]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-app-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-app-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
+      if(decision==="declined"&&!reviewNote){alert("Add a note so the member knows what would make a stronger application.");return;}
+      if(!confirm(decision==="accepted"?"Accept this member into the fellowship?":"Decline this application?"))return;
+      b.disabled=true;
+      A.supa("rpc/review_fellowship_application",{method:"POST",body:{p_application_id:id,p_decision:decision,p_review_note:reviewNote||null}})
+        .then(function(){A.msg=decision==="accepted"?"Fellow accepted.":"Application declined with your note.";return loadApps();})
+        .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
+    };});
+    root.querySelectorAll("[data-seat-admit]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-seat-admit"),sel=root.querySelector('[data-seat-cohort="'+id+'"]'),cohort=sel&&sel.value;
+      if(!cohort)return;
+      if(!confirm("Give this fellow a seat in "+cohortName(cohort)+"?"))return;
+      b.disabled=true;
+      A.supa("rpc/admit_fellow_to_cohort",{method:"POST",body:{p_application_id:id,p_cohort_id:cohort}})
+        .then(function(r){A.msg=(r&&r.idempotent?"Already seated in ":"Seated in ")+cohortName(cohort)+".";return loadApps();})
+        .catch(function(err){b.disabled=false;var m=String(err&&err.message||err);
+          alert(/admit_fellow_to_cohort/.test(m)&&/find|exist/i.test(m)?"The cohort-admission function is missing from production even though migration 20261005054040_action_cohort_admission_v1 is recorded as applied. Treat this as database drift.":m||"Admission failed.");});
+    };});
+    root.querySelectorAll("[data-live-grant]").forEach(function(b){b.onclick=function(){
+      var appId=b.getAttribute("data-live-grant"),app=A.apps.find(function(x){return x.id===appId;}),cohortSel=root.querySelector('[data-live-cohort="'+appId+'"]'),catSel=root.querySelector('[data-live-category="'+appId+'"]');
+      if(!app||!cohortSel||!catSel)return;
+      var cohort=cohortSel.value,category=catSel.value;
+      if(!confirm("Allow this fellow to host "+category+" live rooms through "+cohortName(cohort)+"?"))return;
+      b.disabled=true;
+      A.request("/v1/mnet/live/admin/grants",{method:"POST",body:{m_uid:app.m_uid,basis:"cohort",cohort_id:cohort,category:category,max_stage_seats:4}})
+        .then(function(){A.msg="Live access granted for "+category+". Support remains off.";return loadApps();})
+        .catch(function(err){b.disabled=false;alert(err.message||"Live access was not granted.");});
+    };});
+    root.querySelectorAll("[data-live-revoke]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-live-revoke");
+      if(!confirm("Revoke this live-host capability? Existing live sessions can still be ended separately by the desk."))return;
+      b.disabled=true;
+      A.request("/v1/mnet/live/admin/grants/"+encodeURIComponent(id),{method:"DELETE"})
+        .then(function(){A.msg="Live access revoked.";return loadApps();})
+        .catch(function(err){b.disabled=false;alert(err.message||"Live access was not revoked.");});
+    };});
+    root.querySelectorAll("[data-anti-review]").forEach(function(b){b.onclick=function(){
+      var assignment=b.getAttribute("data-anti-review"),level=Number(b.getAttribute("data-level")),decision=b.getAttribute("data-decision");
+      var el=root.querySelector('[data-anti-note="'+assignment+'-'+level+'"]'),reviewNote=el?el.value.trim():"";
+      if(decision==="rejected"&&!reviewNote){alert("Explain the rejection.");return;}
+      if(!confirm("Review Anti-Social level "+level+" as "+decision+"?"))return;
+      b.disabled=true;
+      A.supa("rpc/review_antisocial_level",{method:"POST",body:{p_assignment_id:assignment,p_level:level,p_decision:decision,p_note:reviewNote||null}})
+        .then(function(){A.msg="Anti-Social level "+level+" "+decision+".";return Promise.all([loadAntiLevels(),loadMissions()]);})
+        .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
+    };});
+    root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
+      if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}
+      if(!confirm((decision==="verified"?"Verify this submitted action and award it exactly once?":"Reject this proof without awarding points?")))return;
+      b.disabled=true;A.supa("rpc/review_action_proof",{method:"POST",body:{p_proof_id:id,p_decision:decision,p_review_note:reviewNote||null}})
+        .then(function(){
+          A.msg=decision==="verified"?"Action verified. Campaign completion, award, skills and feed automation reconciled.":"Proof rejected. No award issued.";
+          return Promise.all([loadProofs(),loadMissions(),A.sel?loadDetail(A.sel):Promise.resolve()]);
+        })
+        .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
+    };});
+    var st=root.querySelector("[data-crn-state]");
+    if(st)st.onclick=function(){var c=current();if(!c)return;var s=val(root,"crnStatus");
+      if(s==="live"&&c.status!=="live"&&!confirm("Set \""+c.title+"\" live? It becomes public at /action/?c="+c.slug+" and appears in the Heal the 3rd World gateway."))return;
+      run(st,function(){return patch(c,{status:s,current_phase:val(root,"crnPhase")||null,sort:parseInt(val(root,"crnSort"),10)||0});},"State saved.");};
+    var mo=root.querySelector("[data-crn-money]");
+    if(mo)mo.onclick=function(){var c=current();if(!c)return;var on=mo.getAttribute("data-crn-money")==="1";
+      if(on&&!confirm("Turn money ON for \""+c.title+"\"?\n\nThis puts a Give lane and a dollar meter on the public page. Only do this when McCluster Corp is registered to solicit where it will be asking, the giving path is ready, and the page says truthfully whether gifts are tax-deductible."))return;
+      run(mo,function(){return patch(c,{money_enabled:on});},on?"Money is on.":"Money is off.");};
+    var sv=root.querySelector("[data-crn-save]");
+    if(sv)sv.onclick=function(){var c=current();if(!c)return;var body;
+      try{
+        var pg=parseInt(val(root,"crnPeopleGoal"),10),mg=parseFloat(val(root,"crnMoneyGoal"));
+        body={title:val(root,"crnTitle").trim(),kicker:val(root,"crnKicker").trim()||null,headline:val(root,"crnHeadline").trim()||null,
+          body:val(root,"crnBody").trim()||null,allocation_note:val(root,"crnAllocation").trim()||null,
+          people_goal:pg>0?pg:null,money_goal_cents:mg>0?Math.round(mg*100):null,
+          chapter:{region:val(root,"crnRegion").trim(),title:val(root,"crnChapterTitle").trim(),line:val(root,"crnChapterLine").trim()},
+          facts:parseList(val(root,"crnFacts"),["text","source","url"],"Fact"),
+          sources:parseList(val(root,"crnSources"),["label","url"],"Source"),
+          phases:parseList(val(root,"crnPhases"),["key","title"],"Phase")};
+        Object.keys(body.chapter).forEach(function(k){if(!body.chapter[k])delete body.chapter[k];});
+        if(!body.title)throw new Error("A campaign needs a title.");
+      }catch(err){alert(err.message);return;}
+      run(sv,function(){return patch(c,body);},"Content saved.");};
+    var lg=root.querySelector("[data-crn-ledger]");
+    if(lg)lg.onclick=function(){var c=current();if(!c)return;var amt=parseFloat(val(root,"crnLAmount")),ev=val(root,"crnLEvidence").trim(),purpose=val(root,"crnLPurpose").trim();
+      if(!(amt>=0)||!purpose){alert("An amount and a purpose are required.");return;}
+      if(ev&&!/^https:\/\//i.test(ev)){alert("Evidence must be an https:// link.");return;}
+      run(lg,function(){return A.supa("action_ledger",{method:"POST",body:{campaign_id:c.id,kind:val(root,"crnLKind"),amount_cents:Math.round(amt*100),counterparty:val(root,"crnLWho").trim()||null,purpose:purpose,evidence_url:ev||null,occurred_on:val(root,"crnLDate")||undefined,published:false}});},"Entry added (private).");};
+    root.querySelectorAll("[data-crn-publish]").forEach(function(b){b.onclick=function(){var on=b.getAttribute("data-next")==="1";
+      if(on&&!confirm("Publish this entry on the public page?"))return;
+      run(b,function(){return A.supa("action_ledger?id=eq."+encodeURIComponent(b.getAttribute("data-crn-publish")),{method:"PATCH",body:{published:on}});},on?"Entry published.":"Entry unpublished.");};});
+    var cr=root.querySelector("[data-crn-create]");
+    if(cr)cr.onclick=function(){var id=val(root,"crnNewId").trim().toLowerCase(),slug=val(root,"crnNewSlug").trim().toLowerCase(),title=val(root,"crnNewTitle").trim();
+      if(!/^[a-z0-9][a-z0-9-]{2,63}$/.test(id)){alert("ID: lowercase letters, numbers and dashes, 3–64 characters.");return;}
+      if(!/^[a-z0-9][a-z0-9-]{1,40}$/.test(slug)){alert("Slug: lowercase letters, numbers and dashes, 2–41 characters.");return;}
+      if(!title){alert("A title, please.");return;}
+      run(cr,function(){return A.supa("action_campaigns",{method:"POST",body:{id:id,slug:slug,title:title,status:"draft"}}).then(function(){A.sel=id;A.tab="content";});},"Draft created. Write its content, facts and sources, then set it live.");};
+  }
+  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;if(window.CR.identityReview)window.CR.identityReview.init(opts);},render:render,bind:bind,load:load,state:A};
+})();

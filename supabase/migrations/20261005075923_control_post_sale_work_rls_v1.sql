@@ -1,0 +1,10 @@
+alter table public.work_relationships enable row level security;
+alter table public.work_relationships force row level security;
+alter table public.work_projects enable row level security;
+alter table public.work_projects force row level security;
+alter table public.work_deliverables enable row level security;
+alter table public.work_deliverables force row level security;
+alter table public.work_renewals enable row level security;
+alter table public.work_renewals force row level security;
+alter table public.work_payments enable row level security;
+alter table public.work_payments force row level security;

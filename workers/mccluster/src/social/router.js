@@ -1,5 +1,7 @@
 import { createGeneration } from '../media/router.js';
 import { credentialRefForConfiguredChannel, requireOrgId, requireOrgRole } from './security.js';
+import { graphGet, tokenFor, OUTBOX_BUCKET } from './meta.js';
+import { recordAudit } from '../lib/audit.js';
 
 function headers(env) {
   return {
@@ -31,6 +33,39 @@ async function getOrg(env, userId, requestedOrgId) {
   const rows = await db(env, `org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&limit=1`);
   if (!rows?.length) throw Object.assign(new Error('No matching McCluster organization membership found'), { status: 403 });
   return rows[0];
+}
+
+async function primaryMuid(env, userId) {
+  const rows = await db(env, `m_auth_user_links?auth_user_id=eq.${encodeURIComponent(userId)}&is_primary=eq.true&select=m_uid&limit=1`);
+  return rows?.[0]?.m_uid || null;
+}
+
+function actionMissionUrl(missionId, campaignId, contentId, source = 'instagram') {
+  const q = new URLSearchParams({ view: 'missions', mission: missionId, content: contentId, src: source });
+  if (campaignId) q.set('campaign', campaignId);
+  return `https://matthew.mccluster.org/mnet.html?${q.toString()}`;
+}
+
+async function ensureActionNetworkPost(env, content) {
+  if (!content?.id || !content?.publisher_m_uid || !content?.action_mission_id) return null;
+  const existing = await db(env, `network_posts?content_id=eq.${encodeURIComponent(content.id)}&reply_to_id=is.null&deleted_at=is.null&select=id,content_id&limit=1`);
+  if (existing?.[0]) return existing[0];
+
+  const missions = await db(env, `action_missions?id=eq.${encodeURIComponent(content.action_mission_id)}&select=id,title,description,status&limit=1`);
+  const mission = missions?.[0];
+  if (!mission) throw Object.assign(new Error('Action mission no longer exists'), { status: 409 });
+
+  const master = String(content.master_caption || '').trim();
+  const fallback = [content.title, mission.title, mission.description].filter(Boolean).join('\n\n');
+  const body = master.length <= 2000 ? master : fallback.slice(0, 2000);
+  return insert(env, 'network_posts', {
+    author_m_uid: content.publisher_m_uid,
+    body: body || mission.title,
+    post_type: 'announcement',
+    visibility: 'public',
+    metadata: { creator_action: true },
+    content_id: content.id
+  });
 }
 
 async function configuredCredentialRef(env, orgId, platform, externalAccountId) {
@@ -90,13 +125,43 @@ export function scoreMetrics(metrics = {}) {
   const follows = num(metrics.follows);
   const dms = num(metrics.dms);
   const leads = num(metrics.leads);
+  const ctaClicks = num(metrics.cta_clicks);
+  const accountCreations = num(metrics.account_creations);
+  const missionJoins = num(metrics.mission_joins);
+  const proofSubmissions = num(metrics.proof_submissions);
+  const verifiedActions = num(metrics.verified_actions);
   const retention = metrics.retention_3s == null ? 0 : clamp(num(metrics.retention_3s), 0, 1);
-  const viewScore = clamp(Math.log10(views + 1) * 20, 0, 100);
-  const engagementScore = clamp(((likes + comments * 2 + shares * 4 + saves * 4) / Math.max(views, 1)) * 1000, 0, 100);
-  const conversionScore = clamp(((follows * 4 + dms * 8 + leads * 15) / Math.max(reach, 1)) * 1000, 0, 100);
-  const retentionScore = retention * 100;
-  const score = Number((viewScore * 0.20 + engagementScore * 0.35 + conversionScore * 0.25 + retentionScore * 0.20).toFixed(3));
-  return { score, components: { views: Number(viewScore.toFixed(3)), engagement: Number(engagementScore.toFixed(3)), conversion: Number(conversionScore.toFixed(3)), retention: Number(retentionScore.toFixed(3)) } };
+  const completion = metrics.completion_rate == null ? 0 : clamp(num(metrics.completion_rate), 0, 1);
+
+  /* Reach earns distribution, not quality. Likes/comments are deliberately
+     weak; shares/saves are stronger intent, and real-world Human Uprise
+     outcomes dominate when they are available. */
+  const reachScore = clamp(Math.log10(views + 1) * 20, 0, 100);
+  const attentionScore = clamp(retention * 60 + completion * 40, 0, 100);
+  const engagementScore = clamp(
+    ((likes * 0.1 + comments * 0.5 + shares * 4 + saves * 3) / Math.max(views, 1)) * 500,
+    0, 100
+  );
+  const actionScore = clamp(
+    ((follows + dms * 2 + leads * 5 + ctaClicks * 2 + accountCreations * 6 +
+      missionJoins * 8 + proofSubmissions * 12 + verifiedActions * 25) /
+      Math.max(reach, 1)) * 1000,
+    0, 100
+  );
+  const confidence = views > 0 ? 1 - Math.exp(-views / 100) : 0;
+  const raw = reachScore * 0.10 + attentionScore * 0.20 + engagementScore * 0.15 + actionScore * 0.55;
+  const score = Number((raw * confidence).toFixed(3));
+  return {
+    score,
+    components: {
+      views: Number(reachScore.toFixed(3)),
+      engagement: Number(engagementScore.toFixed(3)),
+      conversion: Number(actionScore.toFixed(3)),
+      retention: Number(attentionScore.toFixed(3)),
+      action: Number(actionScore.toFixed(3)),
+      confidence: Number(confidence.toFixed(3))
+    }
+  };
 }
 
 function generationRequest(request, payload) {
@@ -108,7 +173,7 @@ function generationRequest(request, payload) {
 async function listAccounts(request, env, user) {
   const url = new URL(request.url);
   const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
-  const rows = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.asc&select=id,org_id,platform,external_account_id,handle,display_name,status,capabilities,settings,last_synced_at,created_at,updated_at`);
+  const rows = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.asc&select=id,org_id,platform,external_account_id,handle,display_name,status,capabilities,settings,last_synced_at,last_media_discovery_at,media_discovery_error,next_media_discovery_at,provider_metrics,created_at,updated_at`);
   return { org_id: org.org_id, accounts: rows || [] };
 }
 
@@ -163,6 +228,17 @@ async function createCampaign(request, env, user) {
   }) };
 }
 
+async function actionTargets(request, env, user) {
+  const url = new URL(request.url);
+  await getOrg(env, user.id, url.searchParams.get('org_id'));
+  const [campaigns, missions] = await Promise.all([
+    db(env, 'action_campaigns?status=eq.live&select=id,slug,title,kicker,headline,current_phase&order=sort.asc,created_at.desc'),
+    db(env, 'action_missions?status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,skills&order=created_at.desc')
+  ]);
+  const openMissions = missions || [], actionable = new Set(openMissions.map((m) => m.campaign_id).filter(Boolean));
+  return { campaigns: (campaigns || []).filter((x) => actionable.has(x.id)), missions: openMissions };
+}
+
 async function generateVariant(request, env, user) {
   const body = await bodyJson(request);
   if (!body.campaign_id || !body.model_id) throw Object.assign(new Error('campaign_id and model_id are required'), { status: 400 });
@@ -210,7 +286,7 @@ async function queuePublish(request, env, user) {
   const org = await getOrg(env, user.id, body.org_id);
   requireOrgRole(org, ['owner']);
   if (!body.account_id) throw Object.assign(new Error('account_id is required'), { status: 400 });
-  const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id');
+  const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id,platform');
   if (!account) throw Object.assign(new Error('Social account not found'), { status: 404 });
   if (body.variant_id) {
     const variant = await ownedRow(env, 'social_variants', body.variant_id, org.org_id, 'id,campaign_id,output_asset_id,caption');
@@ -219,20 +295,278 @@ async function queuePublish(request, env, user) {
     body.video_asset_id ||= variant.output_asset_id;
     body.caption ||= variant.caption;
   }
-  if (!body.video_url && !body.video_asset_id) throw Object.assign(new Error('video_url, video_asset_id, or a ready variant is required'), { status: 400 });
+
+  const storagePath = body.storage_path ? String(body.storage_path) : null;
+  if (storagePath && (!storagePath.startsWith(`${org.org_id}/`) || storagePath.includes('..'))) {
+    throw Object.assign(new Error('storage_path is not in this organization\'s outbox'), { status: 400 });
+  }
+  if (!body.video_url && !body.video_asset_id && !storagePath) {
+    throw Object.assign(new Error('video_url, video_asset_id, storage_path, or a ready variant is required'), { status: 400 });
+  }
+
   const mode = body.publish_mode || 'trial';
   if (!['trial', 'reel'].includes(mode)) throw Object.assign(new Error('publish_mode must be trial or reel'), { status: 400 });
-  return { publish_job: await insert(env, 'social_publish_jobs', {
+
+  const masterCaption = String(body.caption || '').trim();
+  if (masterCaption.length > 2200) throw Object.assign(new Error('Instagram captions are limited to 2,200 characters'), { status: 400 });
+
+  const actionMissionId = body.action_mission_id ? String(body.action_mission_id) : null;
+  let actionCampaignId = body.action_campaign_id ? String(body.action_campaign_id) : null;
+  let mission = null;
+  if (actionMissionId) {
+    const missions = await db(env, `action_missions?id=eq.${encodeURIComponent(actionMissionId)}&status=eq.open&select=id,campaign_id,title,description&limit=1`);
+    mission = missions?.[0] || null;
+    if (!mission) throw Object.assign(new Error('Choose an open Human Uprise mission'), { status: 409 });
+    if (actionCampaignId && mission.campaign_id !== actionCampaignId) {
+      throw Object.assign(new Error('The selected mission does not belong to that Action campaign'), { status: 409 });
+    }
+    actionCampaignId = mission.campaign_id || null;
+  } else if (actionCampaignId) {
+    throw Object.assign(new Error('Choose a mission for an actionable post'), { status: 400 });
+  }
+
+  const muid = await primaryMuid(env, user.id);
+  if (actionMissionId && !muid) throw Object.assign(new Error('Your McCluster identity is not ready for Human Uprise publishing'), { status: 409 });
+
+  const contentId = crypto.randomUUID();
+  const source = String(account.platform || 'instagram').toLowerCase();
+  const actionUrl = actionMissionId ? actionMissionUrl(actionMissionId, actionCampaignId, contentId, source) : null;
+  const finalCaption = actionUrl ? [masterCaption, `Take action: ${actionUrl}`].filter(Boolean).join('\n\n') : masterCaption;
+  if (finalCaption.length > 2200) {
+    throw Object.assign(new Error('The caption plus its Human Uprise link is over Instagram\'s 2,200-character limit'), { status: 400 });
+  }
+
+  const content = await insert(env, 'social_content_items', {
+    id: contentId,
     org_id: org.org_id,
-    account_id: body.account_id,
-    campaign_id: body.campaign_id || null,
-    variant_id: body.variant_id || null,
-    publish_mode: mode,
+    created_by: user.id,
+    publisher_m_uid: muid,
+    publisher_key: body.publisher_key || 'matthew-mccluster',
+    title: body.title ? String(body.title).slice(0, 160) : (mission?.title || null),
+    master_caption: masterCaption,
+    source_asset_id: body.video_asset_id || null,
+    action_campaign_id: actionCampaignId,
+    action_mission_id: actionMissionId,
+    status: body.draft === true ? 'draft' : 'publishing',
+    metadata: {
+      primary_channel: source,
+      publish_to_action_network: body.publish_to_action_network !== false
+    }
+  });
+
+  let networkPost = null;
+  try {
+    if (actionMissionId && body.publish_to_action_network !== false && body.draft !== true) {
+      networkPost = await ensureActionNetworkPost(env, content);
+    }
+    const publishJob = await insert(env, 'social_publish_jobs', {
+      org_id: org.org_id,
+      account_id: body.account_id,
+      campaign_id: body.campaign_id || null,
+      variant_id: body.variant_id || null,
+      content_id: contentId,
+      publish_mode: mode,
+      scheduled_at: body.scheduled_at || new Date().toISOString(),
+      state: body.draft === true ? 'draft' : 'queued',
+      dedupe_key: body.dedupe_key || `${body.account_id}:${body.variant_id || body.video_asset_id || storagePath || body.video_url}:${body.scheduled_at || 'now'}:${mode}`,
+      payload: {
+        video_url: body.video_url || null,
+        video_asset_id: body.video_asset_id || null,
+        storage_path: storagePath,
+        caption: finalCaption,
+        master_caption: masterCaption,
+        share_to_feed: body.share_to_feed !== false,
+        graduation_strategy: body.graduation_strategy || 'MANUAL',
+        drafted_by: body.drafted_by ? String(body.drafted_by).slice(0, 80) : null,
+        action_url: actionUrl,
+        action_campaign_id: actionCampaignId,
+        action_mission_id: actionMissionId,
+        publish_to_action_network: body.publish_to_action_network !== false
+      }
+    });
+    return { publish_job: publishJob, content, action_url: actionUrl, network_post: networkPost };
+  } catch (error) {
+    await patch(env, 'social_content_items', contentId, { status: 'failed' }).catch(() => {});
+    if (networkPost?.id) {
+      await patch(env, 'network_posts', networkPost.id, { deleted_at: new Date().toISOString() }).catch(() => {});
+    }
+    throw error;
+  }
+}
+
+/* THE OUTBOX. The owner uploads a video straight to private storage on a
+   link signed here, so the file never passes through the Worker. */
+const OUTBOX_TYPES = { 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'image/jpeg': 'jpg', 'image/png': 'png' };
+async function createUpload(request, env, user) {
+  const body = await bodyJson(request);
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
+  const ext = OUTBOX_TYPES[String(body.mime_type || '').toLowerCase()];
+  if (!ext) throw Object.assign(new Error('Upload an MP4 or MOV video'), { status: 400 });
+  const size = Number(body.byte_size || 0);
+  if (!(size > 0) || size > 524288000) throw Object.assign(new Error('Videos are limited to 500 MB'), { status: 413 });
+  const storagePath = `${org.org_id}/${crypto.randomUUID()}.${ext}`;
+  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/upload/sign/${OUTBOX_BUCKET}/${storagePath}`, { method: 'POST', headers: headers(env) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data?.url) throw Object.assign(new Error('Could not create the upload'), { status: 502 });
+  return { storage_path: storagePath, upload_url: `${env.SUPABASE_URL}/storage/v1${data.url}` };
+}
+
+async function listPublishJobs(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  const rows = await db(env, `social_publish_jobs?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&limit=50&select=id,account_id,campaign_id,variant_id,content_id,publish_mode,scheduled_at,state,external_creation_id,external_media_id,attempts,last_error,payload,created_at,updated_at`);
+  const ids = [...new Set((rows || []).map((x) => x.content_id).filter(Boolean))].slice(0, 50);
+  const actionStats = {};
+  for (const row of rows || []) {
+    if (row.content_id && row.payload?.action_mission_id) {
+      actionStats[row.content_id] ||= { joined: 0, submitted: 0, verified: 0, rejected: 0 };
+    }
+  }
+  if (ids.length) {
+    const assignments = await db(env, `action_mission_assignments?source_content_id=in.(${ids.join(',')})&select=source_content_id,status,submitted_at`);
+    for (const a of assignments || []) {
+      const s = actionStats[a.source_content_id] ||= { joined: 0, submitted: 0, verified: 0, rejected: 0 };
+      s.joined += 1;
+      if (a.submitted_at) s.submitted += 1;
+      if (a.status === 'verified') s.verified += 1;
+      if (a.status === 'rejected') s.rejected += 1;
+    }
+  }
+  return { org_id: org.org_id, jobs: rows || [], action_stats: actionStats };
+}
+
+/* Approve moves a draft into the queue; cancel stops anything that has not
+   yet reached Instagram. Both are conditional updates, so a job the cron
+   already started cannot be pulled back halfway. */
+async function moveJob(request, env, user, jobId, to) {
+  const body = await bodyJson(request);
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
+
+  if (to === 'queued') {
+    const waiting = await db(env, `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&state=eq.draft&select=id,content_id,payload&limit=1`);
+    const job = waiting?.[0];
+    if (!job) throw Object.assign(new Error('Only a draft can be approved'), { status: 409 });
+    if (job.content_id && job.payload?.publish_to_action_network !== false && job.payload?.action_mission_id) {
+      const items = await db(env, `social_content_items?id=eq.${encodeURIComponent(job.content_id)}&org_id=eq.${encodeURIComponent(org.org_id)}&select=*&limit=1`);
+      if (items?.[0]) await ensureActionNetworkPost(env, items[0]);
+    }
+  }
+
+  const from = to === 'queued' ? 'state=eq.draft' : 'state=in.(draft,queued)&external_creation_id=is.null';
+  const rows = await db(env, `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&${from}`, {
+    method: 'PATCH',
+    headers: { prefer: 'return=representation' },
+    body: JSON.stringify({ state: to, updated_at: new Date().toISOString(), ...(to === 'queued' && body.scheduled_at ? { scheduled_at: body.scheduled_at } : {}) })
+  });
+  if (!rows?.length) throw Object.assign(new Error(to === 'queued' ? 'Only a draft can be approved' : 'This post is already on its way to Instagram'), { status: 409 });
+  if (rows[0].content_id) {
+    await patch(env, 'social_content_items', rows[0].content_id, { status: to === 'queued' ? 'publishing' : 'archived' }).catch(() => {});
+    if (to !== 'queued') {
+      const network = await db(env, `network_posts?content_id=eq.${encodeURIComponent(rows[0].content_id)}&reply_to_id=is.null&deleted_at=is.null&select=id&limit=5`).catch(() => []);
+      for (const post of network || []) {
+        await patch(env, 'network_posts', post.id, { deleted_at: new Date().toISOString() }).catch(() => {});
+      }
+    }
+  }
+  const audit = await recordAudit(env, {
+    orgId: org.org_id,
+    actorUserId: user.id,
+    actorKind: 'user',
+    event: to === 'queued' ? 'social_publish.approved' : 'social_publish.cancelled',
+    capability: 'social.publish.manage',
+    resourceType: 'social_publish_job',
+    resourceId: rows[0].id,
+    detail: { from: to === 'queued' ? 'draft' : 'draft_or_queued', to }
+  });
+  return { publish_job: rows[0], audit };
+}
+
+async function retryPublishJob(request, env, user, jobId) {
+  const body = await bodyJson(request);
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
+
+  const jobs = await db(env,
+    `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&state=eq.failed&select=id,org_id,content_id,state,external_creation_id,external_media_id,attempts,last_error,payload&limit=1`
+  );
+  const job = jobs?.[0];
+  if (!job) throw Object.assign(new Error('Only a failed publish job can be retried'), { status: 409 });
+  if (job.external_media_id) {
+    throw Object.assign(new Error('A publish job with external media cannot be retried'), { status: 409 });
+  }
+
+  const previousError = String(job.last_error || '').toLowerCase();
+  const deadContainer = Boolean(job.external_creation_id) &&
+    /creation container (error|expired)/.test(previousError);
+  const resumeContainer = Boolean(job.external_creation_id) && !deadContainer;
+  const nextState = resumeContainer ? 'processing' : 'queued';
+  const patchBody = {
+    state: nextState,
+    attempts: 0,
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null,
     scheduled_at: body.scheduled_at || new Date().toISOString(),
-    state: 'queued',
-    dedupe_key: body.dedupe_key || `${body.account_id}:${body.variant_id || body.video_asset_id || body.video_url}:${body.scheduled_at || 'now'}:${mode}`,
-    payload: { video_url: body.video_url || null, video_asset_id: body.video_asset_id || null, caption: body.caption || '', share_to_feed: body.share_to_feed !== false, graduation_strategy: body.graduation_strategy || 'MANUAL' }
-  }) };
+    updated_at: new Date().toISOString()
+  };
+  if (deadContainer) patchBody.external_creation_id = null;
+
+  const rows = await db(env,
+    `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&state=eq.failed&external_media_id=is.null`,
+    {
+      method: 'PATCH',
+      headers: { prefer: 'return=representation' },
+      body: JSON.stringify(patchBody)
+    }
+  );
+  if (!rows?.length) {
+    throw Object.assign(new Error('Publish job changed while retry was being prepared'), { status: 409 });
+  }
+
+  if (rows[0].content_id) {
+    await patch(env, 'social_content_items', rows[0].content_id, { status: 'publishing' }).catch(() => {});
+  }
+
+  const audit = await recordAudit(env, {
+    orgId: org.org_id,
+    actorUserId: user.id,
+    actorKind: 'user',
+    event: 'social_publish.retried',
+    capability: 'social.publish.manage',
+    resourceType: 'social_publish_job',
+    resourceId: rows[0].id,
+    detail: {
+      previous_attempts: job.attempts,
+      previous_error: job.last_error || null,
+      resumed_existing_container: resumeContainer,
+      restarted_dead_container: deadContainer,
+      to: nextState
+    }
+  });
+  return { publish_job: rows[0], audit, retry_mode: resumeContainer ? 'resume_container' : 'restart' };
+}
+
+/* Is Instagram actually connected? Asks Meta with the stored key, and
+   reports how much of the day's 100-post allowance is used. */
+async function checkAccount(request, env, user, accountId) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  const rows = await db(env, `social_accounts?id=eq.${encodeURIComponent(accountId)}&org_id=eq.${encodeURIComponent(org.org_id)}&platform=eq.instagram&select=*&limit=1`);
+  const account = rows?.[0];
+  if (!account) throw Object.assign(new Error('Instagram account not found'), { status: 404 });
+  const token = await tokenFor(env, account);
+  if (!token) return { connected: false, reason: 'no_key', message: 'The Instagram access token is not set on the Worker.' };
+  const ig = encodeURIComponent(account.external_account_id);
+  try {
+    const me = await graphGet(env, `${ig}?fields=username,followers_count,media_count`, token);
+    const limit = await graphGet(env, `${ig}/content_publishing_limit?fields=quota_usage,config`, token).catch(() => null);
+    const usage = limit?.data?.[0];
+    return { connected: true, username: me?.username || null, followers: me?.followers_count ?? null, media_count: me?.media_count ?? null, quota_used: usage?.quota_usage ?? null, quota_total: usage?.config?.quota_total ?? null };
+  } catch (error) {
+    return { connected: false, reason: 'meta_refused', message: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 async function registerPost(request, env, user) {
@@ -248,6 +582,7 @@ async function registerPost(request, env, user) {
     campaign_id: body.campaign_id || null,
     variant_id: body.variant_id || null,
     publish_job_id: body.publish_job_id || null,
+    content_id: body.content_id || null,
     external_media_id: body.external_media_id,
     permalink: body.permalink || null,
     publish_mode: body.publish_mode || 'reel',
@@ -364,8 +699,17 @@ export async function handleSocialRequest(request, env, user) {
   if (path === '/v1/social/accounts' && request.method === 'POST') return createAccount(request, env, user);
   if (path === '/v1/social/campaigns' && request.method === 'GET') return listCampaigns(request, env, user);
   if (path === '/v1/social/campaigns' && request.method === 'POST') return createCampaign(request, env, user);
+  if (path === '/v1/social/action-targets' && request.method === 'GET') return actionTargets(request, env, user);
   if (path === '/v1/social/variants/generate' && request.method === 'POST') return generateVariant(request, env, user);
   if (path === '/v1/social/publish' && request.method === 'POST') return queuePublish(request, env, user);
+  if (path === '/v1/social/publish' && request.method === 'GET') return listPublishJobs(request, env, user);
+  if (path === '/v1/social/uploads' && request.method === 'POST') return createUpload(request, env, user);
+  const moveMatch = path.match(/^\/v1\/social\/publish\/([0-9a-f-]{36})\/(approve|cancel)$/i);
+  if (moveMatch && request.method === 'POST') return moveJob(request, env, user, moveMatch[1], moveMatch[2] === 'approve' ? 'queued' : 'cancelled');
+  const retryMatch = path.match(/^\/v1\/social\/publish\/([0-9a-f-]{36})\/retry$/i);
+  if (retryMatch && request.method === 'POST') return retryPublishJob(request, env, user, retryMatch[1]);
+  const checkMatch = path.match(/^\/v1\/social\/accounts\/([0-9a-f-]{36})\/check$/i);
+  if (checkMatch && request.method === 'GET') return checkAccount(request, env, user, checkMatch[1]);
   if (path === '/v1/social/posts' && request.method === 'POST') return registerPost(request, env, user);
   if (path === '/v1/social/metrics' && request.method === 'POST') return ingestMetrics(request, env, user);
   if (path === '/v1/social/automations' && request.method === 'GET') return listAutomations(request, env, user);

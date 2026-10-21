@@ -1,0 +1,50 @@
+[
+  {
+    "id": "fixture-1",
+    "event_group_id": "event-1",
+    "split": "test",
+    "available_at": "2026-10-19T00:00:00Z",
+    "source_ids": [
+      "synthetic-source-1"
+    ],
+    "reference_label": "supported",
+    "labeler": "engineering-fixture-author",
+    "adjudication_ref": "fixture-definition-v1"
+  },
+  {
+    "id": "fixture-2",
+    "event_group_id": "event-2",
+    "split": "test",
+    "available_at": "2026-10-19T00:00:00Z",
+    "source_ids": [
+      "synthetic-source-2"
+    ],
+    "reference_label": "supported",
+    "labeler": "engineering-fixture-author",
+    "adjudication_ref": "fixture-definition-v1"
+  },
+  {
+    "id": "fixture-3",
+    "event_group_id": "event-3",
+    "split": "test",
+    "available_at": "2026-10-19T00:00:00Z",
+    "source_ids": [
+      "synthetic-source-3"
+    ],
+    "reference_label": "unsupported",
+    "labeler": "engineering-fixture-author",
+    "adjudication_ref": "fixture-definition-v1"
+  },
+  {
+    "id": "fixture-4",
+    "event_group_id": "event-4",
+    "split": "test",
+    "available_at": "2026-10-19T00:00:00Z",
+    "source_ids": [
+      "synthetic-source-4"
+    ],
+    "reference_label": "unknown",
+    "labeler": "engineering-fixture-author",
+    "adjudication_ref": "fixture-definition-v1"
+  }
+]

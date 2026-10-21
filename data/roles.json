@@ -19,17 +19,59 @@
       "credentials": []
     },
     {
-      "slug": "whip-equipped",
-      "dates": "2024 to Present",
-      "title": "Owner-Operator",
+      "slug": "whip-equipped-rd",
+      "dates": "October 2026 to Present",
+      "title": "Research & Development — Telematics & Connected Mobility",
       "org": "Whip Equipped LLC",
-      "location": "Acworth, GA",
-      "summary": "Owns and operates a parts-licensed automotive dealership organized in Acworth, Georgia, and turned the business into a story, producing a mini web series based on it.",
+      "location": "Remote",
+      "summary": "Current R&D work focused on connected mobility, GNSS/telematics, vehicle systems and an in-development urban motorcycle platform.",
       "bullets": [
-        "Founded and organized Whip Equipped LLC as a parts-licensed automotive dealership out of Acworth, Georgia in 2024.",
-        "Runs day-to-day operations: sourcing, sales, parts licensing, and compliance.",
-        "Producing a mini web series built around the dealership, scored by the McCluster catalogue (\"Dealer Plates\").",
-        "Bridges the business and the brand: retail operations on one side, media production on the other."
+        "Develops connected-mobility and telematics systems spanning GNSS, vehicle data, sensors and embedded hardware.",
+        "Researches product and manufacturing readiness for an in-development urban motorcycle platform.",
+        "Current R&D is maintained separately from Whip Equipped's earlier licensed dealer and parts operations."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "whip-equipped-parts",
+      "dates": "2024 to September 2026",
+      "title": "Parts Operations",
+      "org": "Whip Equipped LLC",
+      "location": "Georgia",
+      "summary": "Operated Whip Equipped's vehicle-parts business during its licensed parts-operation phase.",
+      "bullets": [
+        "Managed automotive parts sourcing, inventory and operational workflows within the applicable parts-business scope.",
+        "Supported vehicle systems work involving electrical, security, camera, sensor and related components.",
+        "Parts operations ended September 2026 before the current R&D phase began."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "whip-equipped-dealer",
+      "dates": "2024",
+      "title": "Dealer Operations / Vehicle Acquisition",
+      "org": "Whip Equipped LLC",
+      "location": "Georgia",
+      "summary": "Operated the vehicle-dealer and acquisition side of Whip Equipped during its licensed dealer phase.",
+      "bullets": [
+        "Handled vehicle acquisition and dealer operations only during the applicable licensed dealer period.",
+        "Kept dealer activity distinct from later parts operations and current connected-mobility R&D."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "workplace-onyx",
+      "dates": "February 2024 to April 2024",
+      "title": "Creative Director",
+      "org": "The WorkPlace",
+      "location": "Connecticut",
+      "summary": "Creative Director assignment through The WorkPlace for Onyx Elite LLC, leading photography, videography, web design and cross-functional creative execution.",
+      "bullets": [
+        "Directed photography and videography for Onyx Elite events and content productions, including coordinating and directing additional camera talent on set.",
+        "Led website and digital-experience work, delegating creative and production tasks across collaborators and reviewing deliverables.",
+        "Produced event photography, motion coverage and brand assets for Onyx Elite and its client work.",
+        "Contributed to marketing strategy, content planning, social-media campaigns, prospect development and digital operations.",
+        "Worked directly with Onyx Elite leadership and clients to translate business needs into visual, web and campaign deliverables."
       ],
       "credentials": []
     },
@@ -67,7 +109,10 @@
         "Built experience supporting business systems that demanded strong communication, organization, and technical follow-through."
       ],
       "credentials": [
-        { "label": "Infrastructure Associate · Cover Letter", "url": "" }
+        {
+          "label": "Infrastructure Associate · Cover Letter",
+          "url": ""
+        }
       ]
     },
     {
@@ -88,14 +133,50 @@
     }
   ],
   "certifications": [
-    { "label": "State of Georgia Proclamation · Georgia Youth Innovation & Civic Leadership Week (Gov. Brian P. Kemp)", "date": "Dec 12 to 18, 2025", "url": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" },
-    { "label": "City of Bridgeport Proclamation · Equity Uprise Human Rights Day (Mayor Joseph P. Ganim)", "date": "Dec 10, 2025", "url": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf" },
-    { "label": "State of Connecticut Public Charity Registration · McCluster Corp (CHR.0069693)", "date": "Oct 28, 2025", "url": "assets/credentials/mccluster-corp-public-charity-registration.pdf" },
-    { "label": "IT Bootcamp · CT State Community College (Housatonic)", "date": "Sep 20, 2023", "url": "assets/credentials/ct-state-housatonic-it-bootcamp.pdf" },
-    { "label": "CompTIA ITF+ Certification", "date": "Dec 1, 2022", "url": "assets/credentials/comptia-itf-plus.pdf" },
-    { "label": "DCI Academy · Information Technology Technical Program", "date": "2017 to 2018", "url": "" },
-    { "label": "Employee of the Month · Sovereign Home Health", "date": "Oct 25, 2014", "url": "" },
-    { "label": "Certificate of Completion · New Haven Job Corps", "date": "Oct 17, 2014", "url": "" },
-    { "label": "Certified Nursing Assistant (CNA) · New Haven Job Corps", "date": "Jun 20, 2014", "url": "" }
+    {
+      "label": "State of Georgia Proclamation · Georgia Youth Innovation & Civic Leadership Week (Gov. Brian P. Kemp)",
+      "date": "Dec 12 to 18, 2025",
+      "url": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+    },
+    {
+      "label": "City of Bridgeport Proclamation · Equity Uprise Human Rights Day (Mayor Joseph P. Ganim)",
+      "date": "Dec 10, 2025",
+      "url": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+    },
+    {
+      "label": "State of Connecticut Public Charity Registration · McCluster Corp (CHR.0069693)",
+      "date": "Oct 28, 2025",
+      "url": "assets/credentials/mccluster-corp-public-charity-registration.pdf"
+    },
+    {
+      "label": "IT Bootcamp · CT State Community College (Housatonic)",
+      "date": "Sep 20, 2023",
+      "url": "assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+    },
+    {
+      "label": "CompTIA ITF+ Certification",
+      "date": "Dec 1, 2022",
+      "url": "assets/credentials/comptia-itf-plus.pdf"
+    },
+    {
+      "label": "DCI Academy · Information Technology Technical Program",
+      "date": "2017 to 2018",
+      "url": ""
+    },
+    {
+      "label": "Employee of the Month · Sovereign Home Health",
+      "date": "Oct 25, 2014",
+      "url": ""
+    },
+    {
+      "label": "Certificate of Completion · New Haven Job Corps",
+      "date": "Oct 17, 2014",
+      "url": ""
+    },
+    {
+      "label": "Certified Nursing Assistant (CNA) · New Haven Job Corps",
+      "date": "Jun 20, 2014",
+      "url": ""
+    }
   ]
 }

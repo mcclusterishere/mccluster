@@ -1,6 +1,6 @@
 (() => {
   const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-  const API_BASE=(new URLSearchParams(location.search).get('api')||localStorage.getItem('we-api-base')||'https://api.mccluster.org').replace(/\/$/,'');
+  const API_BASE='https://api.mccluster.org';
   const SESSION_KEY='we-driver-session';let session=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
   const state={driver:null,online:false,current:'offline',offer:null,ride:null,map:null,car:null,pickup:null,dropoff:null,route:null,offerTimer:null,pollTimer:null,geoTimer:null,shiftStarted:null,completed:Number(localStorage.getItem('we-driver-completed')||0),earnings:Number(localStorage.getItem('we-driver-earnings')||0)};
   const money=c=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format((Number(c)||0)/100);

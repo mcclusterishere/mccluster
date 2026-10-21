@@ -32,8 +32,8 @@ test('Control owns native Work Create Analytics and System navigation',async()=>
     assert.ok(html.includes('data-surface="'+key+'"'),key+' is missing from the desktop Control rail');
   }
   assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
-  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"\]/);
-  assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "music"\]/);
+  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"\]/);
+  assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"\]/);
 });
 
 test('the old admin room iframe strategy is dead',async()=>{
@@ -143,6 +143,7 @@ test('native modules are loaded before the Control shell starts',async()=>{
   const shellAt=html.indexOf('js/control-room-v2.js');
   for(const path of [
     'js/control-room/work-tools.js',
+    'js/control-room/work-records.js',
     'js/control-room/social-compose.js',
     'js/control-room/music-ops.js',
     'js/control-room/analytics.js'
@@ -166,6 +167,284 @@ test('review regressions stay fixed in native Control tools',async()=>{
   assert.match(music,/var ai=a\.ai&&typeof a\.ai==="object"\?a\.ai:\{\}/);
   assert.doesNotMatch(music,/a\.ai_json/);
   assert.match(css,/\.cra-axis\{fill:var\(--cr-faint\);font-size:20px\}/);
-  assert.match(css,/\.cra-scatter__label\{fill:#dfe5ec;font-size:18px\}/);
-  assert.match(css,/@media \(min-width:54rem\)[\s\S]*\.cra-axis\{font-size:10px\}[\s\S]*\.cra-scatter__label\{font-size:9px\}/);
+  /* the panel beside the 60/40 globe steps up by its own width (container query), same 54rem step */
+  assert.match(css,/@container cra \(min-width:54rem\)[\s\S]*\.cra-axis\{font-size:10px\}/);
+  /* Reach vs repeat is drawn at the card's pixel width (a 720-wide drawing
+     shrunk to a phone lost its numbers), so its text sizes are real sizes. */
+  assert.match(css,/\.cra-reach__tick\{[^}]*font-size:11px/);
+  assert.doesNotMatch(css,/\.cra-scatter__/);
+});
+
+
+test('Home public record reads the canonical SEO authority files and exposes operator links',async()=>{
+  const js=await read('js/control-room-v2.js');
+  assert.match(js,/function loadPublicRecord\(\)/);
+  for(const path of [
+    'data/seo/entity-graph.json',
+    'data/seo/evidence-ledger.json',
+    'data/seo/sitemap-pages.json'
+  ]){
+    assert.ok(js.includes(path),path+' is not wired into the public record source');
+  }
+  assert.match(js,/panel\("Public record", "canonical search authority", renderPublicRecord\(\), "cr-span-12"\)/);
+  assert.match(js,/verification_status === "verified" && item\.publish === true/);
+  for(const href of [
+    'newsroom.html',
+    'engineering/recruiter-role-map.html',
+    'sitemap.xml',
+    'https://search.google.com/search-console',
+    'https://www.bing.com/webmasters/'
+  ]){
+    assert.ok(js.includes(href),href+' is missing from the Public record panel');
+  }
+});
+
+test('Work records are created through the Worker, not the legacy CRM', async()=>{
+  const [shell,mod,worker,entry,sql]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('js/control-room/work-records.js'),
+    read('workers/mccluster/src/work.js'),
+    read('workers/mccluster/src/entry.js'),
+    read('supabase/migrations/20261005044012_control_work_records_v1.sql')
+  ]);
+  /* + New opens the native form; nothing points at crm.html to create. */
+  assert.match(shell,/action === "new-work"\) \{[\s\S]*window\.CR\.work\.openForm\(state\.workView\)/);
+  assert.doesNotMatch(shell,/Open the legacy CRM creator/);
+  assert.doesNotMatch(shell,/There is no canonical write route for creating a lead/);
+  for (const kind of ['companies','tasks','orders','bookings']) assert.match(shell,new RegExp('window\\.CR\\.work\\.section\\((?:"'+kind+'"|view === "orders")'), kind);
+  /* the module writes only through /v1/work and never through PostgREST */
+  assert.match(mod,/"\/v1\/work\/"\+kind/);
+  assert.match(mod,/"\/v1\/work\/leads"/);
+  assert.doesNotMatch(mod,/rest\/v1|supa\(/);
+  assert.match(mod,/work_not_provisioned/);
+  /* the Worker wires the prefix and the tables refuse the browser */
+  assert.match(entry,/path\.startsWith\('\/v1\/work\/'\)/);
+  assert.match(worker,/requireMembership/);
+  assert.match(worker,/recordAudit/);
+  assert.match(sql,/revoke all on public\.%I from anon, authenticated/);
+  assert.match(sql,/enable row level security/);
+  assert.match(sql,/revoke insert, update, delete, truncate, references, trigger[\s\S]*public\.out_companies from anon, authenticated/);
+  assert.match(sql,/revoke update on table public\.leads from authenticated/);
+  assert.match(sql,/grant update \(status\) on table public\.leads to authenticated/);
+});
+
+
+test('Control can approve or reject proposed AI decisions', async()=>{
+  const [control,edge,worker]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('supabase/functions/context-decision/index.ts'),
+    read('workers/mccluster/src/ai/router.js')
+  ]);
+  assert.match(control,/data-action="decision-status"/);
+  assert.match(control,/data-status="approved"/);
+  assert.match(control,/data-status="rejected"/);
+  assert.match(control,/\/v1\/ai\/decisions\/.*\/status/);
+  assert.doesNotMatch(control,/No approve or reject route exists/);
+  assert.match(worker,/decisionStatusMatch/);
+  assert.match(worker,/callContextFunction\(request, env, 'context-decision', payload, 'PATCH'\)/);
+  assert.match(edge,/\['POST', 'GET', 'PATCH'\]/);
+  assert.match(edge,/where id = \$\{decisionId\}::uuid[\s\S]*and status = 'proposed'/);
+  assert.match(edge,/approved_by = \$\{userId\}::uuid/);
+  assert.match(edge,/approved_at = now\(\)/);
+  assert.match(edge,/decision is no longer proposed or does not belong to this organization/);
+});
+
+
+test('System Resources owns the aggregate media allowance', async()=>{
+  const [ui,entry,router,migration]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('workers/mccluster/src/entry.js'),
+    read('workers/mccluster/src/media/router.js'),
+    read('supabase/migrations/20261005063836_control_media_monthly_budget_v1.sql')
+  ]);
+  assert.match(ui,/\/v1\/media\/usage\?org_id=/);
+  assert.match(ui,/\/v1\/media\/budget\?org_id=/);
+  assert.match(ui,/data-action="save-media-budget"/);
+  assert.match(ui,/Enforce monthly cap/);
+  assert.match(entry,/path === '\/v1\/media\/budget'/);
+  assert.match(router,/Organization owner access is required to manage the media allowance/);
+  assert.match(router,/media_budget\.updated/);
+  assert.match(migration,/create table if not exists public\.org_media_budgets/);
+  assert.match(migration,/Organization monthly media allowance exceeded/);
+});
+
+
+test('Create Schedule exposes real publish retry and safe cancellation', async()=>{
+  const [control,social]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('workers/mccluster/src/social/router.js')
+  ]);
+  assert.match(control,/data-action="retry-publish"/);
+  assert.match(control,/data-action="cancel-publish"/);
+  assert.match(control,/"\/v1\/social\/publish\/" \+ encodeURIComponent\(publishJobId\) \+ "\/" \+ publishAction/);
+  assert.match(control,/publishAction = action === "retry-publish" \? "retry" : "cancel"/);
+  assert.match(control,/canCancel = \["draft", "queued"\]/);
+  assert.match(control,/canRetry = p\.state === "failed"/);
+  assert.match(social,/retryPublishJob/);
+  assert.match(social,/state=eq\.failed/);
+  assert.match(social,/external_media_id=is\.null/);
+  assert.match(social,/creation container \(error\|expired\)/);
+  assert.match(social,/event: 'social_publish\.retried'/);
+  assert.match(social,/event: to === 'queued' \? 'social_publish\.approved' : 'social_publish\.cancelled'/);
+});
+
+
+test('System Observability reads retained org-scoped request traces', async()=>{
+  const [control,entry,obs,migration,http]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('workers/mccluster/src/entry.js'),
+    read('workers/mccluster/src/lib/observability.js'),
+    read('supabase/migrations/20261005071308_control_observability_events_v1.sql'),
+    read('workers/mccluster/src/lib/http.js')
+  ]);
+  assert.match(control,/"\/v1\/observability\/events\?" \+ q/);
+  assert.match(control,/var q = "org_id=" \+ encodeURIComponent\(state\.org\.id\)/);
+  assert.match(control,/x-mccluster-org-id/);
+  assert.match(control,/x-mccluster-trace-id/);
+  assert.match(control,/data-action="load-observability"/);
+  assert.match(control,/inspect-observation/);
+  assert.doesNotMatch(control,/McCluster has no log or trace pipeline/);
+  assert.match(entry,/observeControlRequest/);
+  assert.match(entry,/path === '\/v1\/observability\/events'/);
+  assert.match(entry,/membership\.role !== 'owner'/);
+  assert.match(obs,/verifiedActor/);
+  assert.match(obs,/membership_unverified/);
+  assert.doesNotMatch(obs,/request\.text\(|request\.json\(/);
+  assert.match(migration,/force row level security/);
+  assert.match(migration,/revoke all on table public\.control_observability_events from authenticated/);
+  assert.match(http,/x-mccluster-org-id/);
+  assert.match(http,/access-control-expose-headers.*x-mccluster-trace-id/);
+});
+
+test('System Observability drills into traces and records, and failures link into them', async()=>{
+  const [control,css]=await Promise.all([read('js/control-room-v2.js'),read('css/control-room-v2.css')]);
+  /* trace and record drilldown share one owner-gated read */
+  assert.match(control,/function openTrace\(target, title\)/);
+  assert.match(control,/\{ trace_id: target\.trace_id \} : \{ resource_type: target\.resource_type, resource_id: target\.resource_id \}/);
+  assert.match(control,/action === "observe-trace"\) openTrace\(\{ trace_id:/);
+  assert.match(control,/action === "observe-resource"\) openTrace\(\{ resource_type:/);
+  /* every failure source in the ledger opens its events */
+  assert.match(control,/traceButton\(\{ trace_id: \(j\.input && j\.input\.trace_id\) \|\| j\.id \}, "Open job trace"\)/);
+  assert.match(control,/traceButton\(\{ resource_type: "media_job", resource_id: j\.id \}\)/);
+  assert.match(control,/traceButton\(\{ resource_type: "social_publish_job", resource_id: p\.id \}\)/);
+  /* ledger rows were clickable and did nothing; they now open an inspector with their trace */
+  assert.match(control,/action === "inspect-audit"\) inspectAudit\(/);
+  assert.match(control,/a\.detail && a\.detail\.trace && a\.detail\.trace\.trace_id/);
+  /* the tail pages with the server cursor instead of a fixed window */
+  assert.match(control,/data\.next_cursor/);
+  assert.match(control,/data-action="observability-older"/);
+  /* filters are mobile-first and inputs never trigger iOS zoom */
+  assert.match(css,/\.cr-observe-filters\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.cr-observe-filters \.cr-input\{grid-column:1\/-1;font-size:max\(16px,1em\)\}/);
+  assert.doesNotMatch(css,/\.cr-observe-filters\{[^}]*\b1fr\b(?!\))/);
+  /* rows render every event kind: requests by route, everything else by name */
+  const fn=control.match(/function obsLabel\(e\) \{[\s\S]*?\n  \}\n/);
+  const obsLabel=new Function(fn[0]+'return obsLabel;')();
+  assert.equal(obsLabel({event_kind:'request',method:'POST',route:'/v1/work/tasks'}),'POST /v1/work/tasks');
+  assert.equal(obsLabel({event_kind:'domain',event_name:'work.task.create',route:'/v1/work/tasks'}),'work.task.create');
+  assert.equal(obsLabel({event_kind:'job',event_name:'core.job.resident_ai_turn.completed',route:'core:job:resident_ai_turn'}),'core.job.resident_ai_turn.completed');
+});
+
+
+test('AI replies show what the resident turn checked on the web', async()=>{
+  const js=await read('js/control-room-v2.js');
+  const src=js.match(/function aiResearchHtml\(message\) \{[\s\S]*?\n  \}\n/);
+  assert.ok(src,'aiResearchHtml is missing');
+  const esc=(v)=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const render=new Function('esc','ago',src[0]+'return aiResearchHtml;')(esc,()=>'2 min ago');
+  assert.equal(render({metadata:{}}),'');
+  assert.equal(render({metadata:{current_research:{attempted:false}}}),'');
+  const grounded=render({metadata:{current_research:{attempted:true,ok:true,fetched_at:'2026-10-05T14:02:00Z',sources:[
+    {title:'Budget <vote>',url:'https://ctmirror.example/budget'},
+    {title:'bad',url:'javascript:alert(1)'}
+  ]}}});
+  assert.match(grounded,/Checked the web · 1 source · 2 min ago/);
+  assert.match(grounded,/href="https:\/\/ctmirror\.example\/budget" target="_blank" rel="noopener noreferrer">Budget &lt;vote&gt;</);
+  assert.doesNotMatch(grounded,/javascript:/);
+  assert.match(render({metadata:{current_research:{attempted:true,ok:false,sources:[]}}}),/Web check failed · answer may be out of date/);
+  assert.match(render({metadata:{current_research:{attempted:true,ok:true,sources:[]}}}),/no results · answer may be out of date/);
+  assert.match(js,/\(mine \? "" : aiResearchHtml\(message\)\)/,'assistant messages render their research line');
+});
+
+test('Work carries the post-sale graph as stored records, with honest payment verification', async()=>{
+  const [shell,mod,registry,css]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('js/control-room/work-records.js'),
+    read('js/control-registry.js'),
+    read('css/control-admin.css')
+  ]);
+  for (const kind of ['relationships','projects','deliverables','payments','renewals']) {
+    assert.match(shell,new RegExp('    '+kind+': "'),kind+' has a view note');
+    assert.match(registry,new RegExp('control\\.html#work:'+kind),kind+' is in the command palette');
+    assert.match(mod,new RegExp('"'+kind+'"'),kind+' is a Work kind');
+  }
+  /* each post-sale view is a stored-record section, not a derived lead lane */
+  assert.match(shell,/if \(POST_SALE_NOTES\[view\]\) \{[\s\S]*window\.CR\.work\.section\(view\)/);
+  /* the browser never claims a provider verified a payment */
+  assert.doesNotMatch(mod,/o\.verification|verification:/);
+  assert.match(mod,/owner recorded/);
+  assert.match(mod,/provider verified/);
+  /* history is read through the Worker, scoped to the workspace */
+  assert.match(mod,/"\/v1\/work\/history\?org_id="\+encodeURIComponent\(o\)/);
+  /* contacts come from the read-only out_contacts route, never PostgREST */
+  assert.match(mod,/contacts:\[\]/);
+  assert.doesNotMatch(mod,/rest\/v1|supa\(/);
+  /* inline selects in Work tables never trigger iOS zoom; KPIs are mobile-first */
+  assert.match(css,/\.cr-data-table select\{max-width:100%;font-size:max\(16px,1em\)\}/);
+  assert.match(css,/\.cro-kpis\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  /* a refused inline change is rolled back and said out loud */
+  assert.match(mod,/row\[field\]=prev;W\.msg=LABEL\[kind\]\+" not changed: "/);
+});
+
+test('Control operates one chosen workspace and pins its reads and writes to it', async()=>{
+  const [js,html,css]=await Promise.all([read('js/control-room-v2.js'),read('control.html'),read('css/control-room-v2.css')]);
+  /* the switcher exists, hides with one workspace, and never triggers iOS zoom */
+  assert.match(html,/<label class="cr-org" id="crOrgWrap" hidden>[\s\S]*<select class="cr-org__select" id="crOrgSelect" aria-label="Workspace">/);
+  assert.match(css,/\.cr-org__select\{[^}]*font-size:max\(16px,1em\)/);
+  assert.match(js,/if \(list\.length < 2\) \{ wrap\.hidden = true; return; \}/);
+  /* a remembered choice is honoured only when it is one of the caller's enabled memberships */
+  assert.match(js,/if \(wanted && list\[i\]\.org_id === wanted && list\[i\]\.enabled\) \{ chosen = list\[i\]; break; \}/);
+  assert.match(js,/var known = \(state\.workspaces \|\| \[\]\)\.some\(function \(w\) \{ return w\.org_id === orgId && w\.enabled; \}\);/);
+  /* switching reloads so no module carries another tenant's cached rows */
+  assert.match(js,/url\.searchParams\.set\("org", orgId\);\s*location\.assign\(url\.toString\(\)\);/);
+  /* reads that used to ignore the workspace now name it */
+  assert.match(js,/request\("\/v1\/social\/accounts\?org_id=" \+ encodeURIComponent\(state\.org\.id\)\)/);
+  assert.match(js,/request\("\/v1\/ai\/decisions\?limit=25&org_id=" \+ encodeURIComponent\(org\.id\)\)/);
+  assert.match(js,/"\/v1\/ai\/decisions\/" \+ encodeURIComponent\(decisionId\) \+ "\/status" \+ \(state\.org && state\.org\.id \? "\?org_id="/);
+  assert.match(js,/supa\("media_assets\?select=\*&order=created_at\.desc&limit=150" \+ scope\)/);
+  assert.match(js,/supa\("media_jobs\?select=\*&order=created_at\.desc&limit=120" \+ scope\)/);
+  assert.match(js,/supa\("ops_agent_jobs\?select=\*&org_id=eq\." \+ encodeURIComponent\(org\.id\)/);
+
+  /* leads: the house sees its pre-tenancy null-org leads, a client workspace only its own */
+  const fn=js.match(/function leadQueryPath\(limit, offset\) \{[\s\S]*?\n  \}\n/)[0];
+  const house=js.match(/function isHouseWorkspace\(org\) \{[^\n]*\}/)[0];
+  const build=(org,search)=>new Function('state','LEAD_SEARCH_COLUMNS',house+fn+'return leadQueryPath(200,0);')(
+    {org,search,pipelineStage:'all'},['name','email']);
+  const H={id:'h1',slug:'mccluster',kind:'studio'}, C={id:'c1',slug:'esmer',kind:'client'};
+  assert.match(build(H,''),/and=\(or\(org_id\.eq\.h1,org_id\.is\.null\)\)/);
+  assert.match(build(C,''),/and=\(org_id\.eq\.c1\)/);
+  assert.doesNotMatch(build(C,''),/is\.null/);
+  assert.match(build(C,'sam'),/and=\(org_id\.eq\.c1,or\(name\.ilike\.\*sam\*,email\.ilike\.\*sam\*\)\)/);
+  assert.doesNotMatch(build(C,'sam'),/&or=/,'search no longer escapes the org filter as a top-level or');
+});
+
+test('Home surfaces retained errors from the owner-gated event stream', async()=>{
+  const js=await read('js/control-room-v2.js');
+  assert.match(js,/observabilityQuery\(\{ level: "error", limit: 50, since:/);
+  assert.match(js,/if \(state\.recentErrors && state\.recentErrors\.count\)/);
+  assert.match(js,/action === "observe-errors"\) \{ state\.observabilityFilters\.level = "error";/);
+  /* a refused read (non-owner) shows nothing rather than a false alarm */
+  assert.match(js,/if \(!result\.ok\) return;\s*var events = pickRows\(result, "events"\);/);
+});
+
+test('Funding Intelligence is a native owner-gated Control workspace',async()=>{
+  const [html,core,ui,worker]=await Promise.all([
+    read('control.html'),read('js/control-room-v2.js'),
+    read('js/control-room/funding-intelligence.js'),
+    read('workers/mccluster/src/index.js')
+  ]);
+  assert.match(core,/window\.CR\.fundingIntelligence\.render/);
+  assert.match(html,/js\/control-room\/funding-intelligence\.js/);
+  assert.match(ui,/\/v1\/control\/funding\/catalog/);
+  assert.match(worker,/await requireHouseOwner\(request, env\);[\s\S]*handleFundingIntelligence/);
 });

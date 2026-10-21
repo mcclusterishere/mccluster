@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { canonicalMediaUploader } from "./storage-path.mjs";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -32,6 +33,15 @@ async function caller(req: Request) {
   const {data:links}=await admin.from("m_auth_user_links").select("m_uid").eq("auth_user_id",data.user.id).eq("is_primary",true).limit(1);
   return {user:data.user,mUid:links?.[0]?.m_uid||null};
 }
+async function storageBelongsToAsset(asset:any) {
+  const uploader=canonicalMediaUploader(asset);
+  if(!uploader||typeof asset.owner_m_uid!=="string")return false;
+  // The M identity, not only the metadata row, must own the authenticated
+  // user prefix that received the signed upload capability.
+  const {data:links,error}=await admin.from("m_auth_user_links").select("m_uid")
+    .eq("auth_user_id",uploader).eq("m_uid",asset.owner_m_uid).limit(1);
+  return !error && Array.isArray(links) && links.length>0;
+}
 async function blocked(a:string,b:string){
   const {count:ab}=await admin.from("network_blocks").select("*",{count:"exact",head:true}).eq("blocker_m_uid",a).eq("blocked_m_uid",b);
   if(Number(ab||0)>0)return true;
@@ -40,8 +50,15 @@ async function blocked(a:string,b:string){
 }
 async function canReadPost(viewer:string,post:any){
   if(!post||post.deleted_at)return false;
+  if(post.group_id){
+    const {count}=await admin.from("network_group_members").select("*",{count:"exact",head:true})
+      .eq("group_id",post.group_id).eq("m_uid",viewer).eq("state","joined");
+    if(Number(count||0)<1)return false;
+  }
   if(await blocked(viewer,post.author_m_uid))return false;
-  if(post.author_m_uid===viewer||post.visibility==="public")return true;
+  if(post.author_m_uid===viewer)return true;
+  if(post.group_id)return post.visibility==="network"||post.visibility==="public";
+  if(post.visibility==="public")return true;
   if(post.visibility==="network"){
     const {count}=await admin.from("network_follows").select("*",{count:"exact",head:true})
       .eq("follower_m_uid",viewer).eq("followed_m_uid",post.author_m_uid).eq("status","following");
@@ -77,10 +94,24 @@ Deno.serve(async req=>{
       return json({ok:true,asset,upload:{path:grant.path||path,token:grant.token,signed_url:grant.signedUrl||null}});
     }
 
+    if(action==="discard"){
+      const id=String(body.asset_id||"");
+      const {data:asset}=await admin.from("network_media_assets").select("*").eq("id",id).eq("owner_m_uid",who.mUid).limit(1).maybeSingle();
+      if(!asset)return json({ok:true,discarded:false});
+      if(!(await storageBelongsToAsset(asset)))return json({error:"asset storage binding invalid"},409);
+      if(asset.post_id||asset.status==="attached")return json({error:"attached media cannot be discarded"},409);
+      const {error:storageError}=await admin.storage.from(asset.bucket_id).remove([asset.object_path]);
+      if(storageError && !String(storageError.message||"").toLowerCase().includes("not found")) return json({error:storageError.message},500);
+      const {error:deleteError}=await admin.from("network_media_assets").delete().eq("id",id).eq("owner_m_uid",who.mUid).is("post_id",null);
+      if(deleteError)return json({error:deleteError.message},500);
+      return json({ok:true,discarded:true});
+    }
+
     if(action==="finalize"){
       const id=String(body.asset_id||"");
       const {data:asset}=await admin.from("network_media_assets").select("*").eq("id",id).eq("owner_m_uid",who.mUid).limit(1).maybeSingle();
       if(!asset)return json({error:"asset not found"},404);
+      if(!(await storageBelongsToAsset(asset)))return json({error:"asset storage binding invalid"},409);
       const parts=String(asset.object_path).split("/");
       const name=parts.pop()||"";
       const folder=parts.join("/");
@@ -101,10 +132,10 @@ Deno.serve(async req=>{
       if(!asset)return json({error:"asset not found"},404);
       let visible=asset.owner_m_uid===who.mUid;
       if(!visible&&asset.post_id){
-        const {data:post}=await admin.from("network_posts").select("id,author_m_uid,visibility,deleted_at").eq("id",asset.post_id).limit(1).maybeSingle();
+        const {data:post}=await admin.from("network_posts").select("id,author_m_uid,visibility,group_id,deleted_at").eq("id",asset.post_id).limit(1).maybeSingle();
         visible=await canReadPost(who.mUid,post);
       }
-      if(!visible)return json({error:"asset not found"},404);
+      if(!visible||!(await storageBelongsToAsset(asset)))return json({error:"asset not found"},404);
       const {data,error}=await admin.storage.from(asset.bucket_id).createSignedUrl(asset.object_path,3600);
       if(error||!data?.signedUrl)return json({error:error?.message||"could not sign asset"},500);
       return json({ok:true,asset_id:asset.id,url:data.signedUrl,expires_in:3600,media_type:asset.media_type,mime_type:asset.mime_type,alt_text:asset.alt_text});

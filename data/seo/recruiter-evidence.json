@@ -1,0 +1,266 @@
+{
+  "schema_version": "mccluster-recruiter-authority/v1",
+  "updated_at": "2026-10-02",
+  "person_id": "https://matthew.mccluster.org/#matthew-mccluster",
+  "policy": {
+    "title_rule": "Role titles describe recruiter/search fit unless a source explicitly identifies a historical job title.",
+    "evidence_rule": "Primary documents and public source outrank first-party résumé summaries when they conflict.",
+    "schema_rule": "Candidate pages use ProfilePage/Occupation or Article semantics; never JobPosting.",
+    "ranking_rule": "The ledger maps queries to evidence pages and does not claim or guarantee search rankings."
+  },
+  "evidence_levels": {
+    "primary": "A primary credential or engagement document is linked.",
+    "public_source": "Public source code or a current first-party operating surface is linked.",
+    "first_party": "The claim is documented in the canonical résumé/career record but no independent primary document is linked on this property."
+  },
+  "clusters": [
+    {
+      "id": "it-support-systems",
+      "label": "IT support & systems",
+      "canonical_url": "https://matthew.mccluster.org/engineering/it-support-systems.html",
+      "role_titles": [
+        "IT Support Specialist",
+        "Desktop Support Technician",
+        "Technical Support Specialist",
+        "End User Support Specialist",
+        "Systems Technician",
+        "Field IT Technician",
+        "Deployment Technician"
+      ],
+      "query_families": [
+        "Matthew McCluster IT support",
+        "Matthew McCluster desktop support",
+        "Matthew McCluster Microsoft 365",
+        "Matthew McCluster Active Directory",
+        "Matthew McCluster field IT"
+      ],
+      "skills": [
+        "Windows and macOS endpoint support",
+        "Microsoft 365",
+        "Active Directory",
+        "Google Workspace",
+        "Device imaging and deployment",
+        "Printers, VPN and email",
+        "Ticketing and escalation",
+        "Windows Server and Linux"
+      ],
+      "evidence": [
+        {
+          "level": "first_party",
+          "label": "Indexed IT résumé",
+          "url": "https://matthew.mccluster.org/resume-it-support.html",
+          "supports": [
+            "career chronology",
+            "endpoint support",
+            "Microsoft 365",
+            "Active Directory",
+            "deployment/ticketing workflow"
+          ]
+        },
+        {
+          "level": "primary",
+          "label": "CompTIA ITF+ certificate",
+          "url": "https://matthew.mccluster.org/assets/credentials/comptia-itf-plus.pdf",
+          "supports": [
+            "baseline IT credential"
+          ]
+        },
+        {
+          "level": "primary",
+          "label": "CT State IT Bootcamp certificate",
+          "url": "https://matthew.mccluster.org/assets/credentials/ct-state-housatonic-it-bootcamp.pdf",
+          "supports": [
+            "formal IT training"
+          ]
+        }
+      ],
+      "caveat": "Employer-specific support duties without a linked primary document remain first-party résumé claims."
+    },
+    {
+      "id": "data-center-networking",
+      "label": "Data center, networking & infrastructure",
+      "canonical_url": "https://matthew.mccluster.org/engineering/data-center-networking.html",
+      "role_titles": [
+        "Infrastructure Engineer",
+        "IT Infrastructure Specialist",
+        "Infrastructure Technician",
+        "Data Center Technician",
+        "Data Center Infrastructure Technician",
+        "Network Support Technician",
+        "Network Technician",
+        "Server Technician"
+      ],
+      "query_families": [
+        "Matthew McCluster infrastructure engineer",
+        "Matthew McCluster data center",
+        "Matthew McCluster network technician",
+        "Matthew McCluster Cisco",
+        "Matthew McCluster server technician"
+      ],
+      "skills": [
+        "Rack buildout",
+        "CAT6 and fiber",
+        "Cisco switching",
+        "DHCP",
+        "Windows Server",
+        "RedHat and CentOS",
+        "Server hardware",
+        "PERC RAID",
+        "PDUs",
+        "Environmental monitoring",
+        "Decommissioning"
+      ],
+      "evidence": [
+        {
+          "level": "primary",
+          "label": "IPC Systems engagement document",
+          "url": "https://matthew.mccluster.org/assets/credentials/ipc-data-center-engagement.pdf",
+          "supports": [
+            "data-center infrastructure scope",
+            "network/server hardware scope"
+          ]
+        },
+        {
+          "level": "first_party",
+          "label": "IPC evidence case study",
+          "url": "https://matthew.mccluster.org/engineering/ipc-infrastructure.html",
+          "supports": [
+            "conservative summary of the engagement document"
+          ]
+        },
+        {
+          "level": "first_party",
+          "label": "Indexed IT résumé",
+          "url": "https://matthew.mccluster.org/resume-it-support.html",
+          "supports": [
+            "career chronology and broader recruiter context"
+          ]
+        }
+      ],
+      "caveat": "The IPC primary document controls over résumé wording; duties attributed there to another person are intentionally excluded."
+    },
+    {
+      "id": "platform-backend-operations",
+      "label": "Platform, backend & technical operations",
+      "canonical_url": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+      "role_titles": [
+        "Platform Engineer",
+        "Backend Developer",
+        "PostgreSQL Developer",
+        "REST API Developer",
+        "Technical Operations Specialist",
+        "Systems Operations Specialist"
+      ],
+      "query_families": [
+        "Matthew McCluster platform engineer",
+        "Matthew McCluster backend developer",
+        "Matthew McCluster PostgreSQL",
+        "Matthew McCluster REST API",
+        "Matthew McCluster technical operations"
+      ],
+      "skills": [
+        "PostgreSQL",
+        "Row-level security",
+        "Serverless REST APIs",
+        "JavaScript",
+        "SQL",
+        "Linux services",
+        "CI and release validation",
+        "Version-aware production operations"
+      ],
+      "evidence": [
+        {
+          "level": "public_source",
+          "label": "McCluster source repository",
+          "url": "https://github.com/mcclusterishere/mccluster",
+          "supports": [
+            "public implementation and operational source"
+          ]
+        },
+        {
+          "level": "public_source",
+          "label": "Platform API source",
+          "url": "https://github.com/mcclusterishere/mccluster/blob/main/workers/mccluster/src/platform-api.js",
+          "supports": [
+            "serverless/API implementation"
+          ]
+        },
+        {
+          "level": "public_source",
+          "label": "Database migrations",
+          "url": "https://github.com/mcclusterishere/mccluster/tree/main/supabase/migrations",
+          "supports": [
+            "PostgreSQL schema and data-control work"
+          ]
+        },
+        {
+          "level": "public_source",
+          "label": "CI workflows",
+          "url": "https://github.com/mcclusterishere/mccluster/tree/main/.github/workflows",
+          "supports": [
+            "release and regression discipline"
+          ]
+        }
+      ],
+      "caveat": "Matthew is represented as architecture/operational owner; coding agents and collaborators participate in implementation where documented."
+    },
+    {
+      "id": "field-technology-telematics",
+      "label": "Field technology, telematics & vehicle systems",
+      "canonical_url": "https://matthew.mccluster.org/engineering/field-technology-telematics.html",
+      "role_titles": [
+        "Fleet Technology Specialist",
+        "Telematics Technician",
+        "GPS Installation Technician",
+        "Field Service Technician",
+        "Automotive Systems Technician"
+      ],
+      "query_families": [
+        "Matthew McCluster telematics",
+        "Matthew McCluster GPS installation",
+        "Matthew McCluster fleet technology",
+        "Matthew McCluster field service technician",
+        "Matthew McCluster automotive systems"
+      ],
+      "skills": [
+        "GNSS and GPS",
+        "Fleet telematics",
+        "Vehicle power/data integration",
+        "Electrical diagnostics",
+        "Embedded diagnostics",
+        "Immobilizer and vehicle security",
+        "ADAS",
+        "Cameras and sensors",
+        "Calibration workflows"
+      ],
+      "evidence": [
+        {
+          "level": "public_source",
+          "label": "Whip Equipped connected-mobility page",
+          "url": "https://matthew.mccluster.org/whip.html",
+          "supports": [
+            "current connected-mobility direction",
+            "LTE/GNSS and fleet-telematics product context"
+          ]
+        },
+        {
+          "level": "first_party",
+          "label": "Indexed IT résumé",
+          "url": "https://matthew.mccluster.org/resume-it-support.html",
+          "supports": [
+            "hands-on telematics and vehicle-systems work"
+          ]
+        },
+        {
+          "level": "first_party",
+          "label": "Canonical Matthew McCluster profile",
+          "url": "https://matthew.mccluster.org/matthew-mccluster.html",
+          "supports": [
+            "current venture/technical relationship"
+          ]
+        }
+      ],
+      "caveat": "First-party operating evidence does not imply OEM certification, carrier certification or regulatory approval."
+    }
+  ]
+}

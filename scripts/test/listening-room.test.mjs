@@ -83,7 +83,7 @@ test('the music wing carries exactly two rooms for the three-tab bar', async () 
   assert.equal(slots.length, 2,
     `the music wing must carry two rooms, found ${slots.length}: ${slots.join(' ')}`);
   assert.match(music, /\["album\.html",/, 'the album is the first Music wing room');
-  assert.match(music, /\["films\.html",/, 'lyric videos are the second Music wing room');
+  assert.match(music, /\["music-videos\.html",/, 'music videos are the second Music wing room');
   assert.doesNotMatch(music, /\["listen\.html",/,
     'the listening room is the Music home destination, not a duplicate wing slot');
 });
@@ -93,7 +93,9 @@ test('the bar built for pages that lack one agrees with the bar they ship', asyn
      had its own hardcoded destination, so fixing the markup alone would
      have left every generated bar pointing at the album. */
   const js = await read('js/tabbar.js');
-  assert.match(js, /ROOT \+ 'listen\.html" data-appnav="music"/,
+  /* the cell resolves against the house, which is ROOT on Matthew's site and
+     his origin on the World's own host (js/tabbar.js) */
+  assert.match(js, /HOUSE \+ 'listen\.html" data-appnav="music"/,
     'the generated bar must open the listening room too');
 });
 

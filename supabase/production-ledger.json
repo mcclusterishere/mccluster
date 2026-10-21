@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 194,
-  "latest_version": "20260927222835",
-  "latest_name": "resident_ai_durable_vps_turn",
-  "ledger_sha256": "3d2318f4a787437de0c77150a42243dd24879a88fbfbe98ed45b66b94831c965",
+  "migration_count": 335,
+  "latest_version": "20261021021724",
+  "latest_name": "live_actor_participation",
+  "ledger_sha256": "ba4ccf1931f8108fdbcb50e75f5541189f47db28c985e3ac42d028af83ebf677",
   "migrations": [
     {
       "version": "0001",
@@ -782,6 +782,570 @@
     {
       "version": "20260927222835",
       "name": "resident_ai_durable_vps_turn"
+    },
+    {
+      "version": "20260928012324",
+      "name": "music_listen_gate"
+    },
+    {
+      "version": "20260930222516",
+      "name": "music_listen_gate_hardening"
+    },
+    {
+      "version": "20260930235851",
+      "name": "uprise_action_network"
+    },
+    {
+      "version": "20261002014251",
+      "name": "end_racism_campaign"
+    },
+    {
+      "version": "20261002015418",
+      "name": "song_test"
+    },
+    {
+      "version": "20261002023107",
+      "name": "mnet_scheduled_posts"
+    },
+    {
+      "version": "20261002024701",
+      "name": "mnet_scheduled_publish_idempotency"
+    },
+    {
+      "version": "20261002055704",
+      "name": "play_counts_hotpath_v1"
+    },
+    {
+      "version": "20261002061056",
+      "name": "action_network_gamification_v1"
+    },
+    {
+      "version": "20261002061318",
+      "name": "action_network_fk_indexes"
+    },
+    {
+      "version": "20261002061954",
+      "name": "analytics_events_lean"
+    },
+    {
+      "version": "20261002063334",
+      "name": "analytics_read_events_lean"
+    },
+    {
+      "version": "20261002063754",
+      "name": "action_network_fellowship_v1"
+    },
+    {
+      "version": "20261002134705",
+      "name": "mnet_tour_seen"
+    },
+    {
+      "version": "20261002135458",
+      "name": "action_network_feed_shares_v1"
+    },
+    {
+      "version": "20261002135938",
+      "name": "network_live_v1"
+    },
+    {
+      "version": "20261002140857",
+      "name": "account_deletion_requests_v1"
+    },
+    {
+      "version": "20261002141540",
+      "name": "music_gate_sequence_v1"
+    },
+    {
+      "version": "20261002144232",
+      "name": "network_posts_spam_limits_v1"
+    },
+    {
+      "version": "20261002163249",
+      "name": "music_gate_any_album_track"
+    },
+    {
+      "version": "20261002173558",
+      "name": "action_network_organizations_authenticity_v1"
+    },
+    {
+      "version": "20261002183039",
+      "name": "social_agent_phone_worker"
+    },
+    {
+      "version": "20261002183221",
+      "name": "social_agent_phone_worker"
+    },
+    {
+      "version": "20261002183244",
+      "name": "network_rate_limits_v2"
+    },
+    {
+      "version": "20261002184158",
+      "name": "social_outbox_v1"
+    },
+    {
+      "version": "20261002185248",
+      "name": "fbi_board_v1"
+    },
+    {
+      "version": "20261003022730",
+      "name": "action_mission_camera_loop_v1"
+    },
+    {
+      "version": "20261003023055",
+      "name": "action_mission_camera_loop_v1"
+    },
+    {
+      "version": "20261003035208",
+      "name": "action_mission_completion_automation_v1"
+    },
+    {
+      "version": "20261003154052",
+      "name": "analytics_hourly_v1"
+    },
+    {
+      "version": "20261003223831",
+      "name": "analytics_hourly_hotpath_v2"
+    },
+    {
+      "version": "20261003230844",
+      "name": "creator_action_distribution_v1"
+    },
+    {
+      "version": "20261003231454",
+      "name": "creator_action_distribution_network_post_guard_v1"
+    },
+    {
+      "version": "20261003232119",
+      "name": "creator_action_distribution_rls_indexes_v1"
+    },
+    {
+      "version": "20261003232339",
+      "name": "creator_action_first_touch_attribution_v1"
+    },
+    {
+      "version": "20261003232607",
+      "name": "creator_action_conversion_semantics_v1"
+    },
+    {
+      "version": "20261003233747",
+      "name": "action_network_live_governance_v1"
+    },
+    {
+      "version": "20261003234949",
+      "name": "action_network_live_fk_indexes_v1"
+    },
+    {
+      "version": "20261003235507",
+      "name": "homelessness_action_bounties_v1"
+    },
+    {
+      "version": "20261004000122",
+      "name": "action_bounty_rejected_reclaim_guard_v1"
+    },
+    {
+      "version": "20261004000303",
+      "name": "homelessness_action_bounty_fk_indexes_v1"
+    },
+    {
+      "version": "20261004000628",
+      "name": "action_bounty_lifecycle_guard_v2"
+    },
+    {
+      "version": "20261004004111",
+      "name": "cobalt_action_missions_open_v1"
+    },
+    {
+      "version": "20261004015451",
+      "name": "action_proof_retry_and_review_notifications_v1"
+    },
+    {
+      "version": "20261004015541",
+      "name": "action_proof_review_history_fk_indexes_v1"
+    },
+    {
+      "version": "20261004021226",
+      "name": "action_origin_attribution_v2"
+    },
+    {
+      "version": "20261004023007",
+      "name": "action_network_hardening_v1"
+    },
+    {
+      "version": "20261004023603",
+      "name": "action_network_hardening_cleanup_v1"
+    },
+    {
+      "version": "20261004230939",
+      "name": "analytics_page_scoring_v1"
+    },
+    {
+      "version": "20261005040806",
+      "name": "analytics_funnel_exact_window_v1"
+    },
+    {
+      "version": "20261005044012",
+      "name": "control_work_records_v1"
+    },
+    {
+      "version": "20261005044112",
+      "name": "control_work_fk_indexes_v1"
+    },
+    {
+      "version": "20261005054031",
+      "name": "native_telemetry_lockdown_v1"
+    },
+    {
+      "version": "20261005054034",
+      "name": "owned_meeting_delegate"
+    },
+    {
+      "version": "20261005054036",
+      "name": "equity_uprise_group_docket_516r"
+    },
+    {
+      "version": "20261005054040",
+      "name": "action_cohort_admission_v1"
+    },
+    {
+      "version": "20261005054042",
+      "name": "action_network_demographics_antiracism_v1"
+    },
+    {
+      "version": "20261005054044",
+      "name": "identity_presentations_music_action_v1"
+    },
+    {
+      "version": "20261005063813",
+      "name": "canonical_ai_context_decisions_v1"
+    },
+    {
+      "version": "20261005063836",
+      "name": "control_media_monthly_budget_v1"
+    },
+    {
+      "version": "20261005071308",
+      "name": "control_observability_events_v1"
+    },
+    {
+      "version": "20261005074135",
+      "name": "control_observability_events_v2"
+    },
+    {
+      "version": "20261005075808",
+      "name": "control_post_sale_work_v1"
+    },
+    {
+      "version": "20261005075923",
+      "name": "control_post_sale_work_rls_v1"
+    },
+    {
+      "version": "20261005075938",
+      "name": "control_post_sale_work_grants_v1"
+    },
+    {
+      "version": "20261005075951",
+      "name": "control_post_sale_work_indexes_v1"
+    },
+    {
+      "version": "20261005075956",
+      "name": "control_work_task_related_types_v2"
+    },
+    {
+      "version": "20261005082148",
+      "name": "security_reaudit_execute_grants_v1"
+    },
+    {
+      "version": "20261005082220",
+      "name": "security_reaudit_function_bodies_v1"
+    },
+    {
+      "version": "20261005211205",
+      "name": "analytics_session_forensics_v1"
+    },
+    {
+      "version": "20261005211556",
+      "name": "analytics_session_forensics_v2"
+    },
+    {
+      "version": "20261005211836",
+      "name": "analytics_session_forensics_v3"
+    },
+    {
+      "version": "20261005212123",
+      "name": "analytics_session_forensics_v4"
+    },
+    {
+      "version": "20261005212323",
+      "name": "analytics_session_forensics_v5"
+    },
+    {
+      "version": "20261006021431",
+      "name": "commerce_stripe_reconciler_v1"
+    },
+    {
+      "version": "20261006022702",
+      "name": "leads_status_vocabulary_reconcile_v1"
+    },
+    {
+      "version": "20261006023453",
+      "name": "commerce_stripe_reconciler_v2"
+    },
+    {
+      "version": "20261006170955",
+      "name": "action_clipping_marketplace_v1"
+    },
+    {
+      "version": "20261006172934",
+      "name": "require_private_contact_before_action_network"
+    },
+    {
+      "version": "20261006211536",
+      "name": "experience_evidence_plane_v1"
+    },
+    {
+      "version": "20261006232625",
+      "name": "music_direct_track_sales_v1"
+    },
+    {
+      "version": "20261006233518",
+      "name": "here_album_commerce_v1_reconcile"
+    },
+    {
+      "version": "20261006234316",
+      "name": "end_racism_track_funnel_taxonomy_v1"
+    },
+    {
+      "version": "20261009204152",
+      "name": "creator_billing_subscriptions_v1"
+    },
+    {
+      "version": "20261009204158",
+      "name": "creator_published_sites_v1"
+    },
+    {
+      "version": "20261009222933",
+      "name": "creator_free_service_offers_v1"
+    },
+    {
+      "version": "20261009222938",
+      "name": "creator_trial_reports_consultations_v1"
+    },
+    {
+      "version": "20261009222941",
+      "name": "creator_selection_pool_v1"
+    },
+    {
+      "version": "20261010011154",
+      "name": "action_creator_payout_reservations"
+    },
+    {
+      "version": "20261010011201",
+      "name": "action_creator_payout_reservation_rpc"
+    },
+    {
+      "version": "20261010011502",
+      "name": "action_creator_connect_binding_finalize"
+    },
+    {
+      "version": "20261010011611",
+      "name": "action_creator_stripe_event_reconciliation"
+    },
+    {
+      "version": "20261010064726",
+      "name": "action_creator_transfer_claim_bank_events"
+    },
+    {
+      "version": "20261010070310",
+      "name": "action_creator_partial_reversal_guard"
+    },
+    {
+      "version": "20261013201327",
+      "name": "action_network_comments"
+    },
+    {
+      "version": "20261014013557",
+      "name": "action_globe_regions"
+    },
+    {
+      "version": "20261014013601",
+      "name": "action_globe_song_portfolios"
+    },
+    {
+      "version": "20261014013627",
+      "name": "action_globe_public_projection_retired"
+    },
+    {
+      "version": "20261014014033",
+      "name": "action_globe_adm1_boundaries"
+    },
+    {
+      "version": "20261014014547",
+      "name": "action_globe_region_activation"
+    },
+    {
+      "version": "20261014014747",
+      "name": "action_globe_presence"
+    },
+    {
+      "version": "20261014020454",
+      "name": "action_policy_memo_bounties"
+    },
+    {
+      "version": "20261014021057",
+      "name": "civic_global_discovery"
+    },
+    {
+      "version": "20261014021258",
+      "name": "candidate_labs_media_graph"
+    },
+    {
+      "version": "20261014023302",
+      "name": "media_geo_ingestion"
+    },
+    {
+      "version": "20261014023317",
+      "name": "media_ingest_rpc"
+    },
+    {
+      "version": "20261014023548",
+      "name": "media_news_namespace"
+    },
+    {
+      "version": "20261014023813",
+      "name": "gdelt_backoff_cache"
+    },
+    {
+      "version": "20261014184518",
+      "name": "action_globe_join_authorization"
+    },
+    {
+      "version": "20261014185154",
+      "name": "antisocial_get_social_three_levels_draft"
+    },
+    {
+      "version": "20261014185255",
+      "name": "action_resource_sources_link_only"
+    },
+    {
+      "version": "20261014185932",
+      "name": "equity_policy_memo_application_path"
+    },
+    {
+      "version": "20261015000455",
+      "name": "antisocial_get_social_completion_v1"
+    },
+    {
+      "version": "20261015001022",
+      "name": "antisocial_action_record_civic_scope"
+    },
+    {
+      "version": "20261016020407",
+      "name": "action_partner_opportunity_drafts_v1"
+    },
+    {
+      "version": "20261016031123",
+      "name": "anon_policy_scope_v1"
+    },
+    {
+      "version": "20261016151123",
+      "name": "world_gdelt_gkg_news_v1"
+    },
+    {
+      "version": "20261017030551",
+      "name": "analytics_country_v1"
+    },
+    {
+      "version": "20261017030554",
+      "name": "analytics_region_v1"
+    },
+    {
+      "version": "20261017030617",
+      "name": "intel_mission_canon_v1"
+    },
+    {
+      "version": "20261017040826",
+      "name": "analytics_geo_audience_v1"
+    },
+    {
+      "version": "20261017041311",
+      "name": "analytics_geo_audience_hotpath_v2"
+    },
+    {
+      "version": "20261017041532",
+      "name": "analytics_geo_audience_regions_v3"
+    },
+    {
+      "version": "20261017042608",
+      "name": "analytics_geo_audience_region_backfill_v4"
+    },
+    {
+      "version": "20261017050521",
+      "name": "travel_journeys_private_v1"
+    },
+    {
+      "version": "20261017054833",
+      "name": "analytics_ingestion_pipeline_v1"
+    },
+    {
+      "version": "20261017164335",
+      "name": "action_archive_cohort_v1"
+    },
+    {
+      "version": "20261017164416",
+      "name": "action_mission_reset_v1"
+    },
+    {
+      "version": "20261017214808",
+      "name": "mcp_approval_scope_v1"
+    },
+    {
+      "version": "20261020205942",
+      "name": "analytics_measurement_semantics_v1"
+    },
+    {
+      "version": "20261020205959",
+      "name": "funding_criteria_register_v1"
+    },
+    {
+      "version": "20261020210718",
+      "name": "compute_lease_authority_v2"
+    },
+    {
+      "version": "20261020211313",
+      "name": "intel_decision_integrity_v2"
+    },
+    {
+      "version": "20261020225852",
+      "name": "resident_ai_context_service_read"
+    },
+    {
+      "version": "20261021005247",
+      "name": "daily_knowledge_news_capacity"
+    },
+    {
+      "version": "20261021005615",
+      "name": "knowledge_search_indexes"
+    },
+    {
+      "version": "20261021011443",
+      "name": "royce_platform_actor"
+    },
+    {
+      "version": "20261021013739",
+      "name": "connected_operational_graph"
+    },
+    {
+      "version": "20261021014027",
+      "name": "connected_graph_read_permissions"
+    },
+    {
+      "version": "20261021014206",
+      "name": "connected_graph_query_indexes"
+    },
+    {
+      "version": "20261021021724",
+      "name": "live_actor_participation"
     }
   ]
 }

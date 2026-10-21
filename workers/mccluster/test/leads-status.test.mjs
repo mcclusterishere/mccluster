@@ -34,7 +34,7 @@ function req(body) {
   });
 }
 
-function backend({ role = 'owner', lead = { id: LEAD, status: 'new', email: 'sam@example.com', name: 'Sam' }, auditOk = true } = {}) {
+function backend({ role = 'owner', lead = { id: LEAD, org_id: HOUSE, status: 'new', email: 'sam@example.com', name: 'Sam' }, auditOk = true } = {}) {
   const calls = [];
   return {
     calls,
@@ -53,10 +53,14 @@ function backend({ role = 'owner', lead = { id: LEAD, status: 'new', email: 'sam
         return jsonResponse([{ id: 9001, at: '2026-09-22T00:00:00Z' }]);
       }
       if (href.includes('/rest/v1/leads')) {
+        const q = new URL(href).searchParams;
+        const scoped = q.get('org_id') === 'eq.' + HOUSE;
+        if (!lead || !scoped || lead.org_id !== HOUSE) return jsonResponse([]);
         if (method === 'PATCH') {
+          if (q.get('status') !== 'eq.' + lead.status) return jsonResponse([]);
           return jsonResponse([{ ...lead, status: JSON.parse(options.body).status }]);
         }
-        return jsonResponse(lead ? [lead] : []);
+        return jsonResponse([lead]);
       }
       return jsonResponse([]);
     }
@@ -152,7 +156,7 @@ test('a lead that does not exist is a 404, not a silent success', async () => {
 });
 
 test('setting the status it already has writes nothing', async () => {
-  const be = backend({ lead: { id: LEAD, status: 'booked', email: 'sam@example.com', name: 'Sam' } });
+  const be = backend({ lead: { id: LEAD, org_id: HOUSE, status: 'booked', email: 'sam@example.com', name: 'Sam' } });
   const result = await withFetchMock(be.handler, () =>
     setLeadStatus(req({ lead_id: LEAD, status: 'booked', org_id: HOUSE }), env, USER));
 
@@ -169,4 +173,42 @@ test('a broken ledger reports the hole instead of hiding it or losing the work',
   assert.equal(result.changed, true, 'the operation the person asked for still completes');
   assert.equal(result.audit.recorded, false, 'and the caller is told the record did not land');
   assert.equal(result.audit.reason, 'ledger_rejected');
+});
+
+test('another organization lead UUID cannot be read or updated by the owner of this workspace', async () => {
+  const foreign = '223e4567-e89b-42d3-a456-426614174000';
+  const be = backend({ lead: { id: LEAD, org_id: foreign, status: 'new', email: 'sensitive@example.test' } });
+  await withFetchMock(be.handler, async () => {
+    await assert.rejects(
+      () => setLeadStatus(req({ lead_id: LEAD, status: 'closed', org_id: HOUSE }), env, USER),
+      error => error.status === 404
+    );
+  });
+  assert.equal(be.calls.some(c => c.method === 'PATCH'), false);
+  assert.ok(be.calls.filter(c => c.href.includes('/rest/v1/leads')).every(c => new URL(c.href).searchParams.get('org_id') === 'eq.' + HOUSE));
+});
+
+test('a legacy unassigned lead cannot be claimed by arbitrary organization selection', async () => {
+  const be = backend({ lead: { id: LEAD, org_id: null, status: 'new', email: 'unassigned@example.test' } });
+  await withFetchMock(be.handler, async () => {
+    await assert.rejects(
+      () => setLeadStatus(req({ lead_id: LEAD, status: 'closed', org_id: HOUSE }), env, USER),
+      error => error.status === 404
+    );
+  });
+  assert.equal(be.calls.some(c => c.method === 'PATCH'), false);
+});
+
+test('read/write paths both bind org and previous state before recording audit', async () => {
+  const be = backend();
+  const result = await withFetchMock(be.handler, () => setLeadStatus(req({ lead_id: LEAD, status: 'replied', org_id: HOUSE }), env, USER));
+  assert.equal(result.changed, true);
+  const leadCalls = be.calls.filter(c => c.href.includes('/rest/v1/leads'));
+  assert.equal(leadCalls.length, 2);
+  for (const call of leadCalls) {
+    const q = new URL(call.href).searchParams;
+    assert.equal(q.get('org_id'), 'eq.' + HOUSE);
+    assert.equal(q.get('id'), 'eq.' + LEAD);
+  }
+  assert.equal(new URL(leadCalls.find(c => c.method === 'PATCH').href).searchParams.get('status'), 'eq.new');
 });

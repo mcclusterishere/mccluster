@@ -49,7 +49,7 @@
 
   /* the page's own furniture, which paper has no use for */
   .appbar, .mh, .mh__cta, .dk-peek, .pt-veil, .preloader, .wayback,
-  .grain, .site-foot, .dockwalk, .bio__cta, .bio__mark {
+  .grain, .site-foot, .dockwalk, .bio__cta, .bio__mark, .mcc-auth-chip {
     display: none !important;
   }
 

@@ -1,8 +1,17 @@
 /* Privacy gate enforcement: no McCluster analytics, device/session IDs,
    service-worker registration or location reads begin until the current site-entry
-   notice has been acknowledged. The policy page itself can still be read. */
-var MCC_PRIVACY_REQUIRED_VERSION = "2026-09-26";
+   notice has been AGREED to. Having only seen it ("Not now") is not enough.
+   The policy page itself can still be read.
+   js/live-content.js owns the notice, its version and every record of the
+   answer (browser storage, the cookie McCluster's own hosts share, a member's
+   account record), so this asks it whenever the page loads it. The fallback
+   below is for the few pages that load this file alone; the version here must
+   stay equal to live-content.js's (workers/mccluster/test/world-cctv.test.mjs). */
+var MCC_PRIVACY_REQUIRED_VERSION = "2026-10-19";
 function mccPrivacyAcknowledged() {
+  try {
+    if (window.MCC_PRIVACY && typeof window.MCC_PRIVACY.accepted === "function") return !!window.MCC_PRIVACY.accepted();
+  } catch (_) {}
   try {
     var v = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
     if (v && v.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
@@ -11,9 +20,11 @@ function mccPrivacyAcknowledged() {
     var s = JSON.parse(sessionStorage.getItem("mcc_privacy_ack") || "null");
     if (s && s.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
   } catch (_) {}
-  return document.cookie.split(";").some(function (part) {
-    return part.trim() === "mcc_privacy_ack=" + MCC_PRIVACY_REQUIRED_VERSION;
-  });
+  try {
+    return String(document.cookie || "").split(";").some(function (part) {
+      return part.trim() === "mcc_privacy_ack=" + MCC_PRIVACY_REQUIRED_VERSION;
+    });
+  } catch (_) { return false; }
 }
 if (mccPrivacyAcknowledged()) {
 /* ============================================================
@@ -67,6 +78,15 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register(swRoot + "sw.js").catch(function () {});
   });
+  /* SIGNING OUT TAKES THE DEVICE ALERTS WITH IT (owner, 2026-10-20; workers/mccluster/src/web-push.js). On a shared
+     browser the next person must never see the last member's alerts: the subscription is dropped here, and the
+     server forgets it the next time its push service answers that it is gone. */
+  window.addEventListener("mcc:auth-changed", function (e) {
+    if (!e.detail || e.detail.signed_in !== false) return;
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      return reg && reg.pushManager ? reg.pushManager.getSubscription() : null;
+    }).then(function (sub) { if (sub) return sub.unsubscribe(); }).catch(function () {});
+  });
 }
 
 window.MCC_TRACK = (function () {
@@ -97,16 +117,19 @@ window.MCC_TRACK = (function () {
   }
 
   function uuid() {
+    var b = new Uint8Array(16);
     try {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-      var b = new Uint8Array(16);
+      if (!window.crypto || !crypto.getRandomValues) throw new Error("No secure random available");
       crypto.getRandomValues(b);
-      b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
-      var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
-      return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
     } catch (e) {
-      return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      /* UUIDs are dedupe keys, never credentials. Even a legacy browser
+         without Web Crypto must mint a *valid stable UUIDv4* per event. */
+      for (var i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
     }
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+    return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
   }
 
   /* ---- the device ----
@@ -241,6 +264,14 @@ window.MCC_TRACK = (function () {
     };
   }
   window.MCC_ANALYTICS_CONTEXT = {
+    experienceContext: function () {
+      return {
+        device_id: deviceId || null,
+        session_id: sessionId() || null,
+        source: ACQ && ACQ.src || "direct",
+        path: location.pathname + location.search
+      };
+    },
     signupAttribution: signupAttributionSnapshot,
     prepareSignupAttribution: function () {
       var snapshot = signupAttributionSnapshot();
@@ -291,7 +322,7 @@ window.MCC_TRACK = (function () {
   var timer = null;
 
   function send(batch, keepalive) {
-    if (!batch.length) return;
+    if (!batch.length) return Promise.resolve(null);
     var headers = { "Content-Type": "application/json", apikey: SB_KEY };
     var auth = bearer();
     if (auth) headers.Authorization = auth;
@@ -309,18 +340,30 @@ window.MCC_TRACK = (function () {
        page is gone. It is the difference between recording the last
        thing somebody did and recording everything except that. */
     if (keepalive) opts.keepalive = true;
-    try {
-      return fetch(COLLECT, opts).then(function (r) {
-        /* A blocked or unreachable first-party route is worth one retry at
-           the writer directly. Not a loop: two attempts, then the batch is
-           gone, because nobody's page should stall over a statistic. */
-        if (!r || r.ok) return r;
-        return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; });
-      }).catch(function () {
-        try { return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; }); }
-        catch (e2) { return null; }
+    /* Both attempts carry the SAME minted event IDs. The writer's unique
+       primary key makes an ambiguous timeout followed by a successful
+       fallback safe: a retry can no longer create duplicate analytics. */
+    function attempt(endpoint) {
+      return fetch(endpoint, opts).then(function (r) {
+        if (!r || !r.ok) return null;
+        return r.clone().json().then(function (ack) {
+          return ack && ack.ok === true ? r : null;
+        }).catch(function () { return null; });
+      }).catch(function () { return null; });
+    }
+    function route() {
+      return attempt(COLLECT).then(function (r) { return r || attempt(COLLECT_FALLBACK); });
+    }
+    return route().then(function (r) {
+      if (r || keepalive || privacySignal() || !mccPrivacyAcknowledged()) return r;
+      /* A normal page can retry transient failures once more; a page being
+         torn down cannot rely on delayed work, so it uses keepalive instead.
+         This is bounded best-effort delivery, not a durable offline queue. */
+      return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(function () {
+        if (!mccPrivacyAcknowledged() || privacySignal()) return null;
+        return route();
       });
-    } catch (e) { return Promise.resolve(null); }
+    });
   }
 
   function flush(keepalive) {
@@ -341,10 +384,17 @@ window.MCC_TRACK = (function () {
   window.addEventListener("pagehide", function () { flush(true); });
 
   function queueEvent(name, params) {
+    var props = Object.assign({}, params || {});
+    // Retain the public creator identity without copying arbitrary URL queries.
+    if ((location.pathname.split("/").pop() || "") === "music-creator.html") {
+      var creatorHandle = new URLSearchParams(location.search).get("handle") || "";
+      if (/^[a-z0-9][a-z0-9._-]{2,39}$/.test(creatorHandle)) props.creator_handle = creatorHandle;
+    }
     queue.push({
+      id: uuid(), // per-event, never reused for a different action
       name: String(name || "").slice(0, 120),
       path: location.pathname.split("/").pop() || "index.html",
-      props: params || {},
+      props: props,
       referrer: document.referrer || null,
     });
     if (queue.length >= BATCH) flush(false);
@@ -591,6 +641,28 @@ window.MCC_MODEL = (function () {
     reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} } };
 })();
 
+/* EXPERIENCE PLANE BOOTSTRAP.
+   Loaded after MCC_MODEL exists so its compatibility adapter can preserve the
+   synchronous API. Scripts load serially: decision client -> adapter -> first
+   three evidence-only surfaces. Failure leaves the legacy model untouched. */
+(function(){
+  if (!document || document.querySelector('script[data-mcc-experience-bootstrap]')) return;
+  var current = document.currentScript && document.currentScript.src || "";
+  var q = current.indexOf("?") >= 0 ? current.slice(current.indexOf("?")) : "";
+  var files = ["js/experience.js","js/mcc-model-adapter.js","js/adaptive-surfaces.js"];
+  function next(i) {
+    if (i >= files.length) return;
+    var s = document.createElement("script");
+    s.src = files[i] + q;
+    s.async = false;
+    s.setAttribute("data-mcc-experience-bootstrap", files[i]);
+    s.onload = function(){ next(i + 1); };
+    s.onerror = function(){ /* legacy MCC_MODEL remains authoritative */ };
+    document.head.appendChild(s);
+  }
+  next(0);
+})();
+
 /* ============================================================
    THE DEVICE'S OWN HISTORY, AND WHY IT IS KEPT HERE.
 
@@ -706,19 +778,22 @@ window.MCC_MODEL = (function () {
      the markup, never its contents. */
   function describe(el) {
     if (!el || !el.tagName) return null;
+    // A planned route or saved trip can appear in a button or link. Its text
+    // and URL are visitor data just as much as an input value is.
+    var privateContent = !!(el.closest && el.closest('[data-private]'));
     var id = el.id ? "#" + el.id : "";
     var cls = "";
     if (el.className && typeof el.className === "string") {
       cls = "." + el.className.trim().split(/\s+/).slice(0, 2).join(".");
     }
     var txt = "";
-    if (el.textContent) txt = el.textContent.trim().replace(/\s+/g, " ").slice(0, 60);
+    if (!privateContent && el.textContent) txt = el.textContent.trim().replace(/\s+/g, " ").slice(0, 60);
     return {
       tag: el.tagName.toLowerCase(),
       sel: (el.tagName.toLowerCase() + id + cls).slice(0, 120),
       text: txt || null,
-      href: el.getAttribute ? (el.getAttribute("href") || null) : null,
-      cta: el.getAttribute ? (el.getAttribute("data-cta") || null) : null,
+      href: !privateContent && el.getAttribute ? (el.getAttribute("href") || null) : null,
+      cta: !privateContent && el.getAttribute ? (el.getAttribute("data-cta") || null) : null,
     };
   }
 
@@ -900,18 +975,58 @@ window.MCC_MODEL = (function () {
     m.observe(doc.documentElement, { childList: true, subtree: true, attributes: true });
     return m;
   });
+  /* A tap can answer without touching the DOM: the audio starts or stops,
+     a print dialog or share sheet takes the window, the page starts leaving.
+     Each of those is the page responding, so each counts as "something
+     happened" for the dead-click test below. Media events do not bubble,
+     hence the capture listeners on the document. */
+  function answered() { mutated = true; }
+  ["play", "pause", "seeked", "volumechange"].forEach(function (n) {
+    doc.addEventListener(n, answered, true);
+  });
+  root.addEventListener("beforeprint", answered);
+  root.addEventListener("blur", answered);
+  root.addEventListener("beforeunload", answered);
+  root.addEventListener("pagehide", answered);
+
+  /* Which taps can be dead at all. A field takes focus on press, before the
+     click event fires, and a checkbox or select changes a property rather
+     than an attribute, so none of them can show the test anything: they
+     were being counted as dead every time somebody typed into a form. A
+     link to another document is already navigating; slow in-app browsers
+     take longer than the test waits to unload, which was counted as dead
+     too. What is left are the controls that must visibly answer. */
+  function deadEligible(el, d) {
+    if (!el || !d) return false;
+    if (d.tag === "input" || d.tag === "textarea" || d.tag === "select" || d.tag === "label") return false;
+    if (el.isContentEditable) return false;
+    /* Current-page navigation and media controls may perform meaningful work
+       without DOM mutations within 450ms; do not mislabel them as dead. */
+    if (el.closest && el.closest(".appbar__tab.is-here,.music-inline-play,.alb__play,[aria-pressed]")) return false;
+    if (d.tag === "a") {
+      var href = el.getAttribute("href") || "";
+      if (!href || href.charAt(0) === "#") return true;
+      if (el.target && el.target !== "_self") return false;
+      if (el.hasAttribute("download") || /^(mailto|tel|sms|javascript):/i.test(href)) return false;
+      var u = safe(function () { return new URL(href, location.href); });
+      if (!u) return true;
+      return u.origin === location.origin && u.pathname === location.pathname && u.search === location.search;
+    }
+    return d.tag === "button" || el.getAttribute("role") === "button" || !!d.cta;
+  }
 
   doc.addEventListener("click", function (e) {
     var el = e.target;
-    var d = describe(el && el.closest ? (el.closest("a,button,[role=button],[data-cta],input,label") || el) : el);
+    var hit = el && el.closest ? (el.closest("a,button,[role=button],[data-cta],input,select,textarea,label") || el) : el;
+    var d = describe(hit);
     if (!d) return;
 
     var t = now();
     recent = recent.filter(function (r) { return t - r.t < 1000; });
     var near = recent.filter(function (r) {
-      return Math.abs(r.x - e.clientX) < 40 && Math.abs(r.y - e.clientY) < 40;
+      return r.sel === d.sel && r.path === location.pathname && Math.abs(r.x - e.clientX) < 40 && Math.abs(r.y - e.clientY) < 40;
     });
-    recent.push({ t: t, x: e.clientX, y: e.clientY });
+    recent.push({ t: t, x: e.clientX, y: e.clientY, sel: d.sel, path: location.pathname });
 
     var payload = {
       el: d.sel, text: d.text, href: d.href, cta: d.cta,
@@ -921,7 +1036,7 @@ window.MCC_MODEL = (function () {
       pct_y: n2(e.pageY / Math.max(1, doc.documentElement.scrollHeight) * 100),
     };
 
-    if (near.length >= 2) {
+    if (near.length >= 2 && deadEligible(hit, d)) {
       T("rage_click", payload);
       recent = [];
       return;
@@ -933,10 +1048,9 @@ window.MCC_MODEL = (function () {
        nothing at all happened, the tap went nowhere. */
     mutated = false;
     var url0 = location.href, active0 = doc.activeElement;
-    var interactive = d.tag === "a" || d.tag === "button" || d.tag === "input" ||
-      d.tag === "select" || d.tag === "textarea" || d.tag === "label" || !!d.cta;
+    var eligible = deadEligible(hit, d);
     setTimeout(function () {
-      if (!interactive) return;
+      if (!eligible) return;
       if (mutated || location.href !== url0 || doc.activeElement !== active0) return;
       T("dead_click", payload);
     }, 450);
@@ -1122,17 +1236,62 @@ window.MCC_MODEL = (function () {
   /* =========================================================
      10. ERRORS — the bugs that only ever happen to visitors
      ========================================================= */
+  /* WHOSE ERROR IT IS. Most of what used to land here was not this site's
+     code: the Instagram and Facebook in-app browsers inject their own
+     scripts into every page they open ("window.webkit.messageHandlers",
+     "Java object is gone", "_AutofillCallbackHandler", iabjs:// sources),
+     extensions run from their own schemes, and a cross-origin script error
+     arrives as a bare "Script error." with nothing to act on. Each event now
+     says which it is, so Forensics can show the site's own errors apart from
+     the noise without hiding either. */
+  var IAB = (function () {
+    var ua = navigator.userAgent || "";
+    if (/Instagram/i.test(ua)) return "instagram";
+    if (/FBAN|FBAV|FB_IAB/i.test(ua)) return "facebook";
+    if (/TikTok|musical_ly|BytedanceWebview/i.test(ua)) return "tiktok";
+    if (/Snapchat/i.test(ua)) return "snapchat";
+    if (/LinkedInApp/i.test(ua)) return "linkedin";
+    if (/\bLine\//i.test(ua)) return "line";
+    if (/Twitter/i.test(ua)) return "twitter";
+    return null;
+  })();
+  var INJECTED = /webkit\.messageHandlers|Java object is gone|_AutofillCallbackHandler|__gCrWeb|instantSearchSDKJSBridge|zaloJSV2|ucbrowser|vivoNewsDetailPage/i;
+  function errorOrigin(file, msg) {
+    file = String(file || ""); msg = String(msg || "");
+    if (/^script error\.?$/i.test(msg) && !file) return "opaque";
+    if (/^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url|resource):/i.test(file)) return "injected";
+    if (INJECTED.test(msg)) return "injected";
+    if (file) {
+      var u = safe(function () { return new URL(file, location.href); });
+      if (u && u.origin !== location.origin) return "third_party";
+    }
+    return "site";
+  }
+  function stackTop(err) {
+    var s = err && err.stack ? String(err.stack) : "";
+    return s ? s.split("\n").slice(0, 4).join(" | ").slice(0, 400) : null;
+  }
   root.addEventListener("error", function (e) {
     if (!e || !e.message) return;
     T("js_error", {
       msg: String(e.message).slice(0, 200),
       src: String(e.filename || "").slice(0, 160),
       line: e.lineno || null, col: e.colno || null,
+      origin: errorOrigin(e.filename, e.message),
+      iab: IAB,
+      stack: stackTop(e.error),
     });
   });
   root.addEventListener("unhandledrejection", function (e) {
     var r = e && e.reason;
-    T("js_rejection", { msg: String((r && (r.message || r)) || "").slice(0, 200) });
+    var msg = String((r && (r.message || r)) || "").slice(0, 200);
+    T("js_rejection", {
+      msg: msg,
+      name: r && r.name ? String(r.name).slice(0, 60) : null,
+      origin: INJECTED.test(msg) ? "injected" : "site",
+      iab: IAB,
+      stack: stackTop(r),
+    });
   });
 
   /* =========================================================

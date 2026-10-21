@@ -1,0 +1,7602 @@
+{
+  "audited_at": "2026-10-17",
+  "kind": "schema-metadata-only",
+  "relations": [
+    {
+      "name": "_analytics_baseline_tmp",
+      "columns": [
+        "taken_at",
+        "since",
+        "until",
+        "totals",
+        "top_pages",
+        "top_sources"
+      ]
+    },
+    {
+      "name": "_migrations",
+      "columns": [
+        "name",
+        "at"
+      ]
+    },
+    {
+      "name": "account_deletion_requests",
+      "columns": [
+        "user_id",
+        "m_uid",
+        "status",
+        "reason",
+        "requested_at",
+        "due_by",
+        "cancelled_at",
+        "completed_at"
+      ]
+    },
+    {
+      "name": "action_antisocial_levels",
+      "columns": [
+        "assignment_id",
+        "level",
+        "user_id",
+        "proof_url",
+        "media_asset_id",
+        "statement",
+        "post_id",
+        "collaborator_m_uid",
+        "status",
+        "review_note",
+        "reviewed_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_bounties",
+      "columns": [
+        "id",
+        "campaign_id",
+        "mission_id",
+        "title",
+        "description",
+        "reward_cents",
+        "max_awards",
+        "eligibility",
+        "claim_ttl_minutes",
+        "status",
+        "payout_note",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_bounty_claims",
+      "columns": [
+        "id",
+        "bounty_id",
+        "assignment_id",
+        "user_id",
+        "m_uid",
+        "reward_cents",
+        "status",
+        "claimed_at",
+        "expires_at",
+        "submitted_at",
+        "approved_at",
+        "paid_at",
+        "reviewer_m_uid",
+        "review_note",
+        "payout_provider",
+        "payout_ref"
+      ]
+    },
+    {
+      "name": "action_bounty_funding_ledger",
+      "columns": [
+        "id",
+        "bounty_id",
+        "delta_cents",
+        "kind",
+        "provider",
+        "provider_ref",
+        "state",
+        "note",
+        "created_by",
+        "created_at",
+        "verified_at",
+        "clip_mission_id"
+      ]
+    },
+    {
+      "name": "action_campaigns",
+      "columns": [
+        "id",
+        "slug",
+        "status",
+        "program",
+        "title",
+        "kicker",
+        "headline",
+        "body",
+        "facts",
+        "sources",
+        "phases",
+        "current_phase",
+        "people_goal",
+        "money_goal_cents",
+        "money_enabled",
+        "allocation_note",
+        "chapter",
+        "sort",
+        "created_at",
+        "updated_at",
+        "organization_id",
+        "group_id"
+      ]
+    },
+    {
+      "name": "action_clip_assets",
+      "columns": [
+        "id",
+        "mission_id",
+        "kind",
+        "label",
+        "network_media_asset_id",
+        "start_ms",
+        "end_ms",
+        "sort",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_clip_campaigns",
+      "columns": [
+        "mission_id",
+        "org_id",
+        "creator_m_uid",
+        "content_id",
+        "music_object_id",
+        "creator_track_id",
+        "platforms",
+        "rules",
+        "required_tags",
+        "currency",
+        "budget_cents",
+        "base_cpm_cents",
+        "min_views",
+        "per_clip_cap_cents",
+        "per_clipper_cap_cents",
+        "max_payable_views_per_clip",
+        "max_clips_per_clipper",
+        "earning_window_days",
+        "keep_live_days",
+        "hold_days",
+        "bonus_account_cents",
+        "bonus_listen_cents",
+        "approval_mode",
+        "status",
+        "status_reason",
+        "launched_at",
+        "ended_at",
+        "budget_exhausted_at",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_clip_claims",
+      "columns": [
+        "id",
+        "mission_id",
+        "assignment_id",
+        "user_id",
+        "m_uid",
+        "ref_code",
+        "status",
+        "status_reason",
+        "claimed_at"
+      ]
+    },
+    {
+      "name": "action_clip_conversions",
+      "columns": [
+        "id",
+        "mission_id",
+        "claim_id",
+        "submission_id",
+        "kind",
+        "converted_user_id",
+        "occurred_at",
+        "qualified",
+        "disqualified_reason",
+        "earning_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_clip_earnings",
+      "columns": [
+        "id",
+        "mission_id",
+        "org_id",
+        "claim_id",
+        "submission_id",
+        "m_uid",
+        "kind",
+        "amount_cents",
+        "state",
+        "hold_until",
+        "basis",
+        "idempotency_key",
+        "payout_id",
+        "created_at",
+        "released_at",
+        "paid_at",
+        "voided_at",
+        "void_reason"
+      ]
+    },
+    {
+      "name": "action_clip_payouts",
+      "columns": [
+        "id",
+        "org_id",
+        "m_uid",
+        "amount_cents",
+        "provider",
+        "provider_ref",
+        "note",
+        "recorded_by",
+        "recorded_at"
+      ]
+    },
+    {
+      "name": "action_clip_submissions",
+      "columns": [
+        "id",
+        "mission_id",
+        "claim_id",
+        "m_uid",
+        "user_id",
+        "platform",
+        "external_media_id",
+        "submitted_url",
+        "ref_code",
+        "moment_id",
+        "social_account_id",
+        "social_post_id",
+        "status",
+        "review_state",
+        "reviewed_by",
+        "reviewed_at",
+        "review_note",
+        "fraud_flags",
+        "hold_reason",
+        "rejection_reason",
+        "waiting_reason",
+        "posted_at",
+        "verified_at",
+        "last_metrics_at",
+        "next_metrics_at",
+        "live_checked_at",
+        "removed_at",
+        "verified_views",
+        "payable_views",
+        "earned_view_cents",
+        "caption_snapshot",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_cohort_members",
+      "columns": [
+        "cohort_id",
+        "m_uid",
+        "joined_at"
+      ]
+    },
+    {
+      "name": "action_cohorts",
+      "columns": [
+        "id",
+        "campaign_id",
+        "name",
+        "description",
+        "goal_points",
+        "status",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_collaboration_posts",
+      "columns": [
+        "post_id",
+        "mission_id",
+        "initiator_m_uid",
+        "partner_m_uid",
+        "title",
+        "kind",
+        "link",
+        "media_asset_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_creator_bank_payout_events",
+      "columns": [
+        "id",
+        "event_id",
+        "stripe_payout_id",
+        "stripe_account_id",
+        "status",
+        "amount_cents",
+        "currency",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_creator_connect_accounts",
+      "columns": [
+        "org_id",
+        "creator_m_uid",
+        "stripe_account_id",
+        "livemode",
+        "verified_at"
+      ]
+    },
+    {
+      "name": "action_creator_funding",
+      "columns": [
+        "id",
+        "org_id",
+        "mission_id",
+        "currency",
+        "funded_cents",
+        "reserved_cents",
+        "spent_cents",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_creator_payout_events",
+      "columns": [
+        "id",
+        "payout_intent_id",
+        "org_id",
+        "event_key",
+        "event_type",
+        "amount_cents",
+        "details",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_creator_payout_intents",
+      "columns": [
+        "id",
+        "org_id",
+        "mission_id",
+        "earning_id",
+        "creator_m_uid",
+        "amount_cents",
+        "currency",
+        "stripe_account_id",
+        "idempotency_key",
+        "state",
+        "approved_by",
+        "approved_at",
+        "stripe_transfer_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_events",
+      "columns": [
+        "id",
+        "campaign_id",
+        "user_id",
+        "kind",
+        "detail",
+        "at"
+      ]
+    },
+    {
+      "name": "action_feed_shares",
+      "columns": [
+        "assignment_id",
+        "post_id",
+        "m_uid",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_fellowship_applications",
+      "columns": [
+        "id",
+        "user_id",
+        "m_uid",
+        "status",
+        "why",
+        "project",
+        "hours_per_week",
+        "verified_actions_at_apply",
+        "review_note",
+        "reviewer_uid",
+        "created_at",
+        "reviewed_at"
+      ]
+    },
+    {
+      "name": "action_funding_opportunities",
+      "columns": [
+        "opportunity_id",
+        "funder_name",
+        "program_title",
+        "source_kind",
+        "availability",
+        "source_url",
+        "eligibility_note",
+        "reviewed_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_globe_member_regions",
+      "columns": [
+        "m_uid",
+        "region_key",
+        "consented_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_globe_mission_regions",
+      "columns": [
+        "mission_id",
+        "region_key",
+        "published",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_globe_presence",
+      "columns": [
+        "m_uid",
+        "region_key",
+        "last_seen_at"
+      ]
+    },
+    {
+      "name": "action_globe_region_activation",
+      "columns": [
+        "region_key",
+        "minimum_members",
+        "enabled",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_globe_region_boundaries",
+      "columns": [
+        "region_key",
+        "geom",
+        "source_name",
+        "source_version",
+        "source_license",
+        "source_url",
+        "validated_at"
+      ]
+    },
+    {
+      "name": "action_globe_regions",
+      "columns": [
+        "region_key",
+        "country_code",
+        "subdivision_code",
+        "region_label",
+        "centroid_lat",
+        "centroid_lon",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_globe_song_missions",
+      "columns": [
+        "mission_id",
+        "song_title",
+        "album_slug",
+        "approved_at"
+      ]
+    },
+    {
+      "name": "action_ledger",
+      "columns": [
+        "id",
+        "campaign_id",
+        "kind",
+        "amount_cents",
+        "counterparty",
+        "purpose",
+        "evidence_url",
+        "occurred_on",
+        "published",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_member_demographics",
+      "columns": [
+        "m_uid",
+        "race_ethnicity",
+        "prefer_not_to_say",
+        "measurement_consent",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_mission_assignments",
+      "columns": [
+        "id",
+        "mission_id",
+        "user_id",
+        "m_uid",
+        "status",
+        "joined_at",
+        "submitted_at",
+        "verified_at",
+        "source_content_id",
+        "source_channel",
+        "source_live_session_id",
+        "source_reel",
+        "source_actionable"
+      ]
+    },
+    {
+      "name": "action_mission_policies",
+      "columns": [
+        "mission_id",
+        "category",
+        "risk_tier",
+        "requires_program_cohort",
+        "recipient_privacy_required",
+        "public_proof_guidance",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_missions",
+      "columns": [
+        "id",
+        "campaign_id",
+        "title",
+        "description",
+        "domain",
+        "difficulty",
+        "base_points",
+        "proof_required",
+        "verification_mode",
+        "skills",
+        "capacity",
+        "status",
+        "starts_at",
+        "ends_at",
+        "created_at",
+        "updated_at",
+        "kind"
+      ]
+    },
+    {
+      "name": "action_participants",
+      "columns": [
+        "campaign_id",
+        "user_id",
+        "m_uid",
+        "participant_no",
+        "joined_at",
+        "origin",
+        "contributions",
+        "skills",
+        "referral_code",
+        "referred_by"
+      ]
+    },
+    {
+      "name": "action_partner_mission_drafts",
+      "columns": [
+        "draft_id",
+        "opportunity_id",
+        "presenting_to",
+        "title",
+        "mission_category",
+        "instruction",
+        "metric_keys",
+        "proof_policy",
+        "relationship_status",
+        "status",
+        "visibility",
+        "claim_enabled",
+        "compensation_cents",
+        "authorized_partner_id",
+        "published_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_points_ledger",
+      "columns": [
+        "id",
+        "m_uid",
+        "assignment_id",
+        "kind",
+        "points",
+        "reason",
+        "factors",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_policy_bills",
+      "columns": [
+        "id",
+        "source",
+        "external_id",
+        "jurisdiction",
+        "region_key",
+        "bill_number",
+        "title",
+        "summary",
+        "status",
+        "official_url",
+        "source_url",
+        "topic",
+        "last_action_at",
+        "synced_at"
+      ]
+    },
+    {
+      "name": "action_policy_memo_bounties",
+      "columns": [
+        "id",
+        "official_profile_id",
+        "bill_id",
+        "title",
+        "research_question",
+        "deliverables",
+        "amount_cents",
+        "currency",
+        "status",
+        "funding_status",
+        "due_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_policy_memo_submissions",
+      "columns": [
+        "id",
+        "bounty_id",
+        "submitter_uid",
+        "document_path",
+        "status",
+        "submitted_at"
+      ]
+    },
+    {
+      "name": "action_policy_official_profiles",
+      "columns": [
+        "id",
+        "m_uid",
+        "display_name",
+        "office_title",
+        "jurisdiction",
+        "region_key",
+        "official_website",
+        "verified_at",
+        "verification_method",
+        "published",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action_proof_review_history",
+      "columns": [
+        "id",
+        "proof_id",
+        "assignment_id",
+        "user_id",
+        "reviewer_uid",
+        "decision",
+        "review_note",
+        "proof_type",
+        "proof_url",
+        "statement",
+        "metadata",
+        "reviewed_at"
+      ]
+    },
+    {
+      "name": "action_proofs",
+      "columns": [
+        "id",
+        "assignment_id",
+        "user_id",
+        "proof_type",
+        "proof_url",
+        "statement",
+        "metadata",
+        "status",
+        "reviewer_uid",
+        "review_note",
+        "created_at",
+        "reviewed_at"
+      ]
+    },
+    {
+      "name": "action_resource_sources",
+      "columns": [
+        "slug",
+        "name",
+        "category",
+        "country_codes",
+        "directory_url",
+        "official_url",
+        "integration_status",
+        "notes",
+        "published",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_share_intents",
+      "columns": [
+        "assignment_id",
+        "user_id",
+        "share",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "action_skill_progress",
+      "columns": [
+        "m_uid",
+        "skill",
+        "xp",
+        "verified_actions",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ai_arm_scores",
+      "columns": [
+        "org_id",
+        "experiment",
+        "arm",
+        "calls",
+        "failures",
+        "avg_cost_micros",
+        "avg_latency_ms",
+        "verdicts",
+        "good",
+        "bad"
+      ]
+    },
+    {
+      "name": "ai_calls",
+      "columns": [
+        "id",
+        "conv_id",
+        "purpose",
+        "model",
+        "pattern",
+        "input_tokens",
+        "output_tokens",
+        "cache_read_tokens",
+        "cache_write_tokens",
+        "cost_micros",
+        "latency_ms",
+        "ok",
+        "error",
+        "citations",
+        "at",
+        "org_id",
+        "experiment",
+        "arm"
+      ]
+    },
+    {
+      "name": "ai_evals",
+      "columns": [
+        "id",
+        "call_id",
+        "dimension",
+        "verdict",
+        "note",
+        "by_staff",
+        "at"
+      ]
+    },
+    {
+      "name": "ai_experiments",
+      "columns": [
+        "id",
+        "org_id",
+        "key",
+        "note",
+        "dimension",
+        "arms",
+        "enabled",
+        "started_at",
+        "ended_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ai_model_prices",
+      "columns": [
+        "model",
+        "input_per_mtok",
+        "output_per_mtok",
+        "context_tokens",
+        "note",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ai_spend_24h",
+      "columns": [
+        "org_id",
+        "cost_micros",
+        "calls",
+        "failures"
+      ]
+    },
+    {
+      "name": "analytics_site_daily",
+      "columns": [
+        "site_id",
+        "day",
+        "pageviews",
+        "sessions",
+        "visitors",
+        "bot_events",
+        "error_events",
+        "form_submits"
+      ]
+    },
+    {
+      "name": "analytics_site_domains",
+      "columns": [
+        "id",
+        "site_id",
+        "hostname",
+        "verification_token",
+        "verified_at",
+        "verification_method",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "analytics_sites",
+      "columns": [
+        "id",
+        "owner_user_id",
+        "org_id",
+        "site_account_id",
+        "name",
+        "public_key",
+        "status",
+        "consent_mode",
+        "settings",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "api_consumers",
+      "columns": [
+        "id",
+        "owner_m_uid",
+        "org_id",
+        "name",
+        "slug",
+        "status",
+        "plan_code",
+        "monthly_credit_limit",
+        "hard_spend_limit_cents",
+        "settings",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "api_credit_ledger",
+      "columns": [
+        "id",
+        "consumer_id",
+        "delta",
+        "reason",
+        "reference_type",
+        "reference_id",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "api_keys",
+      "columns": [
+        "id",
+        "consumer_id",
+        "key_prefix",
+        "secret_hash",
+        "name",
+        "scopes",
+        "status",
+        "last_used_at",
+        "expires_at",
+        "created_at",
+        "revoked_at"
+      ]
+    },
+    {
+      "name": "api_plan_scopes",
+      "columns": [
+        "plan_code",
+        "scope_key",
+        "created_at"
+      ]
+    },
+    {
+      "name": "api_plans",
+      "columns": [
+        "plan_code",
+        "name",
+        "description",
+        "monthly_price_cents",
+        "monthly_credits",
+        "overage_price_per_1000_credits_cents",
+        "max_keys",
+        "rate_limit_per_minute",
+        "enabled",
+        "public",
+        "stripe_product_id",
+        "stripe_price_id",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "api_products",
+      "columns": [
+        "product_key",
+        "name",
+        "description",
+        "unit_name",
+        "default_unit_cost",
+        "enabled",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "api_rate_limit_windows",
+      "columns": [
+        "scope_type",
+        "scope_id",
+        "bucket_start",
+        "request_count",
+        "last_route",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "api_scopes",
+      "columns": [
+        "scope_key",
+        "description",
+        "risk_level",
+        "developer_mintable",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "api_subscriptions",
+      "columns": [
+        "id",
+        "consumer_id",
+        "plan_code",
+        "status",
+        "stripe_customer_id",
+        "stripe_subscription_id",
+        "current_period_start",
+        "current_period_end",
+        "cancel_at_period_end",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "api_usage_events",
+      "columns": [
+        "id",
+        "consumer_id",
+        "api_key_id",
+        "product_key",
+        "endpoint",
+        "method",
+        "units",
+        "request_id",
+        "status_code",
+        "latency_ms",
+        "source_app_id",
+        "metadata",
+        "occurred_at"
+      ]
+    },
+    {
+      "name": "api_usage_reservations",
+      "columns": [
+        "id",
+        "request_id",
+        "consumer_id",
+        "api_key_id",
+        "product_key",
+        "endpoint",
+        "method",
+        "reserved_units",
+        "settled_units",
+        "status",
+        "created_at",
+        "settled_at",
+        "metadata"
+      ]
+    },
+    {
+      "name": "authenticity_check_reviews",
+      "columns": [
+        "id",
+        "check_id",
+        "reviewer_m_uid",
+        "verdict",
+        "reasoning",
+        "evidence",
+        "created_at"
+      ]
+    },
+    {
+      "name": "authenticity_checks",
+      "columns": [
+        "id",
+        "organization_id",
+        "group_id",
+        "campaign_id",
+        "submitted_by",
+        "submitted_by_m_uid",
+        "item_type",
+        "brand",
+        "model",
+        "colorway",
+        "story",
+        "evidence",
+        "status",
+        "final_basis",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "campaigns",
+      "columns": [
+        "campaign_id",
+        "site_id",
+        "audience",
+        "objective",
+        "landing_page",
+        "primary_action",
+        "offering_id",
+        "sender_identity",
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content",
+        "created_at"
+      ]
+    },
+    {
+      "name": "civic_candidate_cohort_members",
+      "columns": [
+        "cohort_id",
+        "candidate_id",
+        "role",
+        "joined_at"
+      ]
+    },
+    {
+      "name": "civic_candidate_cohorts",
+      "columns": [
+        "id",
+        "name",
+        "jurisdiction_id",
+        "description",
+        "public_visible",
+        "created_at"
+      ]
+    },
+    {
+      "name": "civic_candidate_profiles",
+      "columns": [
+        "id",
+        "m_uid",
+        "intended_office_id",
+        "intended_jurisdiction_id",
+        "campaign_name",
+        "public_statement",
+        "status",
+        "filing_source_url",
+        "filing_verified_at",
+        "public_visible",
+        "created_at"
+      ]
+    },
+    {
+      "name": "civic_contact_channels",
+      "columns": [
+        "id",
+        "office_id",
+        "channel_type",
+        "channel_value",
+        "source_url",
+        "verified_at",
+        "is_public",
+        "created_at"
+      ]
+    },
+    {
+      "name": "civic_jurisdictions",
+      "columns": [
+        "id",
+        "country_code",
+        "level",
+        "name",
+        "local_name",
+        "parent_id",
+        "iso_code",
+        "ocd_id",
+        "external_ids",
+        "globe_region_key",
+        "source_key",
+        "source_url",
+        "verified_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "civic_office_terms",
+      "columns": [
+        "id",
+        "office_id",
+        "display_name",
+        "source_person_id",
+        "start_date",
+        "end_date",
+        "verified_at",
+        "source_url",
+        "profile_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "civic_offices",
+      "columns": [
+        "id",
+        "jurisdiction_id",
+        "title",
+        "office_type",
+        "official_url",
+        "source_key",
+        "source_url",
+        "external_id",
+        "verified_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "civic_policy_lab_projects",
+      "columns": [
+        "id",
+        "cohort_id",
+        "candidate_id",
+        "title",
+        "research_question",
+        "jurisdiction_id",
+        "visibility",
+        "created_at"
+      ]
+    },
+    {
+      "name": "civic_source_registry",
+      "columns": [
+        "source_key",
+        "display_name",
+        "docs_url",
+        "coverage",
+        "auth_mode",
+        "secret_name",
+        "license_note",
+        "enabled",
+        "last_checked_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "civic_source_sync_runs",
+      "columns": [
+        "id",
+        "source_key",
+        "started_at",
+        "finished_at",
+        "status",
+        "processed",
+        "error"
+      ]
+    },
+    {
+      "name": "comments",
+      "columns": [
+        "id",
+        "at",
+        "subject",
+        "uid",
+        "name",
+        "body",
+        "hidden"
+      ]
+    },
+    {
+      "name": "commerce_stripe_pending",
+      "columns": [
+        "id",
+        "org_id",
+        "kind",
+        "reference",
+        "payload",
+        "received_at",
+        "applied_at"
+      ]
+    },
+    {
+      "name": "comms_audit",
+      "columns": [
+        "id",
+        "org_id",
+        "thread_id",
+        "actor_type",
+        "actor_id",
+        "action",
+        "detail",
+        "created_at"
+      ]
+    },
+    {
+      "name": "comms_contacts",
+      "columns": [
+        "id",
+        "org_id",
+        "channel",
+        "address",
+        "display_name",
+        "assistant_allowed",
+        "blocked",
+        "first_seen_at",
+        "last_seen_at",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "comms_delivery_events",
+      "columns": [
+        "id",
+        "org_id",
+        "outbox_id",
+        "message_id",
+        "relay_device_id",
+        "event",
+        "status",
+        "provider_message_id",
+        "occurred_at",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "comms_messages",
+      "columns": [
+        "id",
+        "org_id",
+        "thread_id",
+        "direction",
+        "sender_type",
+        "body",
+        "status",
+        "external_id",
+        "idempotency_key",
+        "reply_to_message_id",
+        "agent_job_id",
+        "occurred_at",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "comms_outbox",
+      "columns": [
+        "id",
+        "org_id",
+        "thread_id",
+        "message_id",
+        "relay_device_id",
+        "destination",
+        "body",
+        "status",
+        "attempts",
+        "available_at",
+        "claimed_at",
+        "claimed_by",
+        "last_error",
+        "idempotency_key",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "comms_relay_devices",
+      "columns": [
+        "id",
+        "org_id",
+        "label",
+        "phone_number",
+        "token_hash",
+        "enabled",
+        "last_seen_at",
+        "capabilities",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "comms_threads",
+      "columns": [
+        "id",
+        "org_id",
+        "contact_id",
+        "relay_device_id",
+        "channel",
+        "relay_address",
+        "mode",
+        "assistant_enabled",
+        "disclosure_sent_at",
+        "takeover_at",
+        "released_at",
+        "last_inbound_at",
+        "last_outbound_at",
+        "last_agent_reply_at",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "compute_cost_ledger",
+      "columns": [
+        "id",
+        "request_id",
+        "consumer_id",
+        "provider_key",
+        "model_id",
+        "event_type",
+        "amount_microusd",
+        "credits",
+        "quantity",
+        "unit",
+        "metadata",
+        "occurred_at"
+      ]
+    },
+    {
+      "name": "compute_credit_reservations",
+      "columns": [
+        "id",
+        "request_id",
+        "consumer_id",
+        "reserved_credits",
+        "settled_credits",
+        "status",
+        "expires_at",
+        "created_at",
+        "settled_at"
+      ]
+    },
+    {
+      "name": "compute_model_price_history",
+      "columns": [
+        "id",
+        "model_id",
+        "upstream_input_microusd_per_unit",
+        "upstream_output_microusd_per_unit",
+        "upstream_flat_microusd",
+        "billing_unit",
+        "source_url",
+        "source_type",
+        "verified_at",
+        "effective_at",
+        "retired_at",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "compute_models",
+      "columns": [
+        "id",
+        "provider_key",
+        "model_key",
+        "display_name",
+        "capability",
+        "billing_unit",
+        "upstream_input_microusd_per_unit",
+        "upstream_output_microusd_per_unit",
+        "upstream_flat_microusd",
+        "upstream_currency",
+        "target_margin_bps",
+        "minimum_charge_credits",
+        "enabled",
+        "quality_tier",
+        "latency_tier",
+        "max_context_units",
+        "metadata",
+        "price_effective_at",
+        "price_verified_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "compute_price_guards",
+      "columns": [
+        "capability",
+        "minimum_margin_bps",
+        "maximum_subsidy_microusd_per_request",
+        "require_verified_price",
+        "stale_after",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "compute_provider_health",
+      "columns": [
+        "provider_key",
+        "model_id",
+        "window_start",
+        "request_count",
+        "success_count",
+        "error_count",
+        "p50_latency_ms",
+        "p95_latency_ms",
+        "p99_latency_ms",
+        "estimated_availability",
+        "metadata"
+      ]
+    },
+    {
+      "name": "compute_providers",
+      "columns": [
+        "provider_key",
+        "name",
+        "provider_type",
+        "status",
+        "base_url",
+        "supports_byok",
+        "reseller_status",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "compute_requests",
+      "columns": [
+        "id",
+        "request_id",
+        "consumer_id",
+        "api_key_id",
+        "m_uid",
+        "source_app_id",
+        "task",
+        "capability",
+        "route_key",
+        "provider_key",
+        "model_id",
+        "status",
+        "input_units",
+        "output_units",
+        "estimated_upstream_cost_microusd",
+        "actual_upstream_cost_microusd",
+        "retail_cost_microusd",
+        "credits_reserved",
+        "credits_charged",
+        "retry_count",
+        "latency_ms",
+        "cached",
+        "error_code",
+        "error_detail",
+        "request_metadata",
+        "response_metadata",
+        "created_at",
+        "started_at",
+        "completed_at"
+      ]
+    },
+    {
+      "name": "compute_route_decisions",
+      "columns": [
+        "id",
+        "request_id",
+        "consumer_id",
+        "capability",
+        "requested_policy",
+        "selected_model_id",
+        "selected_provider_key",
+        "candidate_count",
+        "estimated_upstream_cost_microusd",
+        "estimated_retail_microusd",
+        "estimated_credits",
+        "reason",
+        "created_at"
+      ]
+    },
+    {
+      "name": "compute_routes",
+      "columns": [
+        "route_key",
+        "capability",
+        "model_id",
+        "priority",
+        "max_cost_microusd",
+        "max_latency_ms",
+        "minimum_quality_tier",
+        "data_policy",
+        "enabled",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "control_approvals",
+      "columns": [
+        "id",
+        "org_id",
+        "capability",
+        "resource_type",
+        "resource_id",
+        "request_hash",
+        "reason",
+        "state",
+        "requested_by",
+        "decided_by",
+        "created_at",
+        "decided_at",
+        "expires_at"
+      ]
+    },
+    {
+      "name": "control_audit",
+      "columns": [
+        "id",
+        "org_id",
+        "actor_user_id",
+        "actor_kind",
+        "event",
+        "capability",
+        "resource_type",
+        "resource_id",
+        "command_id",
+        "detail",
+        "at"
+      ]
+    },
+    {
+      "name": "control_capabilities",
+      "columns": [
+        "capability",
+        "description",
+        "risk",
+        "created_at"
+      ]
+    },
+    {
+      "name": "control_commands",
+      "columns": [
+        "id",
+        "org_id",
+        "actor_user_id",
+        "capability",
+        "resource_type",
+        "resource_id",
+        "status",
+        "metadata",
+        "created_at",
+        "actor_kind",
+        "action",
+        "request_hash",
+        "idempotency_key",
+        "approval_id",
+        "result",
+        "error",
+        "started_at",
+        "finished_at"
+      ]
+    },
+    {
+      "name": "control_leases",
+      "columns": [
+        "org_id",
+        "resource_key",
+        "lease_id",
+        "actor_user_id",
+        "actor_kind",
+        "purpose",
+        "acquired_at",
+        "expires_at"
+      ]
+    },
+    {
+      "name": "control_observability_events",
+      "columns": [
+        "id",
+        "org_id",
+        "trace_id",
+        "request_id",
+        "parent_span_id",
+        "event_kind",
+        "level",
+        "service",
+        "route",
+        "method",
+        "status_code",
+        "duration_ms",
+        "actor_user_id",
+        "resource_type",
+        "resource_id",
+        "message",
+        "detail",
+        "created_at",
+        "event_name",
+        "span_id",
+        "occurred_at",
+        "outcome",
+        "source"
+      ]
+    },
+    {
+      "name": "control_role_capabilities",
+      "columns": [
+        "role",
+        "capability",
+        "allowed",
+        "created_at"
+      ]
+    },
+    {
+      "name": "creator_billing_events",
+      "columns": [
+        "stripe_event_id",
+        "stripe_event_type",
+        "stripe_event_created",
+        "processed_at"
+      ]
+    },
+    {
+      "name": "creator_billing_subscriptions",
+      "columns": [
+        "stripe_subscription_id",
+        "stripe_customer_id",
+        "owner_user_id",
+        "stripe_price_id",
+        "status",
+        "current_period_end",
+        "cancel_at_period_end",
+        "org_id",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "creator_consultation_entitlements",
+      "columns": [
+        "creator_user_id",
+        "duration_minutes",
+        "status",
+        "booking_reference",
+        "granted_at",
+        "redeemed_at"
+      ]
+    },
+    {
+      "name": "creator_published_sites",
+      "columns": [
+        "org_id",
+        "slug",
+        "title",
+        "tagline",
+        "bio",
+        "published_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "creator_selection_profiles",
+      "columns": [
+        "creator_user_id",
+        "discipline",
+        "stage",
+        "available_hours_weekly",
+        "onboarding_started_at",
+        "trial_started_at",
+        "trial_completed_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "creator_selection_snapshots",
+      "columns": [
+        "id",
+        "creator_user_id",
+        "report_card_id",
+        "score_version",
+        "peer_discipline",
+        "peer_stage",
+        "peer_sample_size",
+        "market_score",
+        "talent_score",
+        "execution_score",
+        "total_score",
+        "market_percentile",
+        "evidence",
+        "created_at"
+      ]
+    },
+    {
+      "name": "creator_service_offers",
+      "columns": [
+        "id",
+        "m_uid",
+        "title",
+        "description",
+        "price_cents",
+        "action_url",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "creator_talent_reviews",
+      "columns": [
+        "id",
+        "creator_user_id",
+        "reviewer_user_id",
+        "rubric_version",
+        "technique",
+        "originality",
+        "craft",
+        "audience_fit",
+        "evidence_reference",
+        "reviewed_at"
+      ]
+    },
+    {
+      "name": "creator_tracks",
+      "columns": [
+        "id",
+        "uid",
+        "created_at",
+        "title",
+        "artist",
+        "audio_url",
+        "poster_url",
+        "lyrics",
+        "reel",
+        "public",
+        "m_uid",
+        "slug",
+        "description",
+        "status",
+        "access_mode",
+        "preview_bucket",
+        "preview_path",
+        "master_bucket",
+        "master_path",
+        "duration_ms",
+        "explicit",
+        "genre",
+        "rights_status",
+        "rights_declaration",
+        "moderation_note",
+        "published_at",
+        "updated_at",
+        "music_video_url",
+        "lyrics_url",
+        "experience"
+      ]
+    },
+    {
+      "name": "creator_trial_report_cards",
+      "columns": [
+        "id",
+        "creator_user_id",
+        "trial_start",
+        "trial_end",
+        "policy_version",
+        "measurement_status",
+        "metrics",
+        "milestone_recommendations",
+        "source_provenance",
+        "generated_at"
+      ]
+    },
+    {
+      "name": "customer_licences",
+      "columns": [
+        "engagement_id",
+        "client_name",
+        "client_email",
+        "site_slug",
+        "offer_id",
+        "mode",
+        "started_on",
+        "free_until",
+        "scope_id",
+        "scope_name",
+        "scope_what",
+        "automatic",
+        "state"
+      ]
+    },
+    {
+      "name": "domain_lookups",
+      "columns": [
+        "name",
+        "tld",
+        "available",
+        "source",
+        "status",
+        "checked_at",
+        "expires_at",
+        "hits"
+      ]
+    },
+    {
+      "name": "domain_rate",
+      "columns": [
+        "client",
+        "window_start",
+        "n"
+      ]
+    },
+    {
+      "name": "domain_tlds",
+      "columns": [
+        "tld",
+        "sellable",
+        "price_usd",
+        "note",
+        "enabled",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "drivers",
+      "columns": [
+        "id",
+        "tenant_id",
+        "auth_user_id",
+        "display_name",
+        "phone",
+        "rating",
+        "vehicle_make",
+        "vehicle_model",
+        "vehicle_color",
+        "license_plate",
+        "seats",
+        "online",
+        "lat",
+        "lng",
+        "heading",
+        "last_seen_at",
+        "created_at",
+        "identity_verified",
+        "identity_verification_session_id"
+      ]
+    },
+    {
+      "name": "engagement_modules",
+      "columns": [
+        "id",
+        "engagement_id",
+        "module_id",
+        "activated_at",
+        "stopped_at",
+        "note"
+      ]
+    },
+    {
+      "name": "engagement_state",
+      "columns": [
+        "engagement_id",
+        "client_name",
+        "site_slug",
+        "decision",
+        "started_on",
+        "free_until",
+        "in_free_month",
+        "days_left_free",
+        "module_id",
+        "sprint_week",
+        "module_name",
+        "survives_cruise",
+        "activated_at",
+        "stopped_at",
+        "state"
+      ]
+    },
+    {
+      "name": "engagements",
+      "columns": [
+        "id",
+        "client_name",
+        "client_email",
+        "site_slug",
+        "offer_id",
+        "mode",
+        "started_on",
+        "free_until",
+        "decision",
+        "decided_at",
+        "note",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_applications",
+      "columns": [
+        "id",
+        "profile_id",
+        "fellowship_id",
+        "title",
+        "stage",
+        "due_on",
+        "notes",
+        "updated_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_artifact_dependencies",
+      "columns": [
+        "source_artifact_id",
+        "dependent_artifact_id",
+        "dependency_type",
+        "metadata"
+      ]
+    },
+    {
+      "name": "eu_artifacts",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "research_project_id",
+        "parent_artifact_id",
+        "artifact_type",
+        "title",
+        "status",
+        "canonical_url",
+        "storage_ref",
+        "mime_type",
+        "sha256",
+        "metadata",
+        "lineage",
+        "created_by_m_uid",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_audit",
+      "columns": [
+        "id",
+        "at",
+        "actor_id",
+        "actor",
+        "action",
+        "entity",
+        "entity_id",
+        "detail"
+      ]
+    },
+    {
+      "name": "eu_calendar_settings",
+      "columns": [
+        "org_id",
+        "provider",
+        "calendar_external_id",
+        "timezone",
+        "interview_minutes",
+        "buffer_before_minutes",
+        "buffer_after_minutes",
+        "minimum_notice_minutes",
+        "booking_horizon_days",
+        "allowed_windows",
+        "blackout_rules",
+        "auto_confirm",
+        "reminder_minutes",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_campaign_recipients",
+      "columns": [
+        "id",
+        "campaign_id",
+        "profile_id",
+        "address",
+        "status",
+        "error",
+        "sent_at"
+      ]
+    },
+    {
+      "name": "eu_campaigns",
+      "columns": [
+        "id",
+        "name",
+        "channel",
+        "topic_slug",
+        "body",
+        "audience",
+        "status",
+        "provider",
+        "created_by",
+        "approved_by",
+        "approved_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_citation_snapshots",
+      "columns": [
+        "id",
+        "org_id",
+        "publication_id",
+        "provider",
+        "cited_by_count",
+        "works",
+        "raw",
+        "recorded_at"
+      ]
+    },
+    {
+      "name": "eu_claim_evidence",
+      "columns": [
+        "claim_id",
+        "source_id",
+        "relation",
+        "locator",
+        "excerpt",
+        "note",
+        "verified_by_m_uid",
+        "verified_at"
+      ]
+    },
+    {
+      "name": "eu_claims",
+      "columns": [
+        "id",
+        "org_id",
+        "research_project_id",
+        "section_key",
+        "claim",
+        "claim_type",
+        "status",
+        "confidence",
+        "sensitivity",
+        "created_by_m_uid",
+        "approved_by_m_uid",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_commitments",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "meeting_id",
+        "stakeholder_id",
+        "owner_m_uid",
+        "description",
+        "direction",
+        "status",
+        "due_at",
+        "source_ref",
+        "created_at",
+        "completed_at"
+      ]
+    },
+    {
+      "name": "eu_communications",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "stakeholder_id",
+        "stakeholder_link_id",
+        "channel",
+        "provider",
+        "direction",
+        "external_thread_id",
+        "external_message_id",
+        "inbox_conversation_id",
+        "out_recipient_id",
+        "from_address",
+        "to_addresses",
+        "subject",
+        "body_excerpt",
+        "classification",
+        "occurred_at",
+        "ingested_at",
+        "raw_ref"
+      ]
+    },
+    {
+      "name": "eu_conversations",
+      "columns": [
+        "id",
+        "profile_id",
+        "anon_key",
+        "topic_slug",
+        "channel",
+        "status",
+        "assigned_to",
+        "signals",
+        "summary",
+        "created_at",
+        "last_at"
+      ]
+    },
+    {
+      "name": "eu_counts",
+      "columns": [
+        "profiles",
+        "perspectives",
+        "fellowships",
+        "topics"
+      ]
+    },
+    {
+      "name": "eu_ddex_messages",
+      "columns": [
+        "id",
+        "org_id",
+        "release_id",
+        "message_standard",
+        "standard_version",
+        "message_id",
+        "sender_dpid",
+        "recipient_dpid",
+        "recipient_name",
+        "payload_ref",
+        "state",
+        "validation",
+        "receipt",
+        "control_approval_id",
+        "sent_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_deliveries",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "publication_id",
+        "artifact_id",
+        "target_id",
+        "job_id",
+        "version_label",
+        "state",
+        "external_id",
+        "external_url",
+        "receipt",
+        "error",
+        "idempotency_key",
+        "submitted_at",
+        "completed_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_distribution_targets",
+      "columns": [
+        "id",
+        "org_id",
+        "provider",
+        "target_type",
+        "label",
+        "integration_id",
+        "config",
+        "capability",
+        "approval_required",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_events",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "event_type",
+        "entity_type",
+        "entity_id",
+        "source_system",
+        "source_id",
+        "actor_m_uid",
+        "actor_user_id",
+        "occurred_at",
+        "data",
+        "causation_event_id",
+        "correlation_id",
+        "idempotency_key",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_external_records",
+      "columns": [
+        "id",
+        "org_id",
+        "publication_id",
+        "artifact_id",
+        "provider",
+        "record_type",
+        "external_id",
+        "external_url",
+        "state",
+        "metadata",
+        "receipt",
+        "last_synced_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_fellowship_applications",
+      "columns": [
+        "id",
+        "org_id",
+        "m_uid",
+        "stakeholder_id",
+        "cohort",
+        "application_year",
+        "applicant_name",
+        "preferred_name",
+        "email",
+        "phone",
+        "location",
+        "occupation",
+        "policy_interests",
+        "initiative_ids",
+        "skills",
+        "availability",
+        "responses",
+        "work_samples",
+        "consent",
+        "stage",
+        "score",
+        "reviewer_notes",
+        "reviewed_by",
+        "submitted_at",
+        "created_at",
+        "updated_at",
+        "booking_token_hash"
+      ]
+    },
+    {
+      "name": "eu_fellowship_sources",
+      "columns": [
+        "id",
+        "name",
+        "url",
+        "note",
+        "kind",
+        "active",
+        "last_swept"
+      ]
+    },
+    {
+      "name": "eu_fellowships",
+      "columns": [
+        "id",
+        "slug",
+        "title",
+        "org",
+        "org_profile_id",
+        "summary",
+        "description",
+        "url",
+        "apply_url",
+        "focus_tags",
+        "topic_slugs",
+        "audience",
+        "location",
+        "region",
+        "remote",
+        "stipend",
+        "duration",
+        "deadline",
+        "deadline_note",
+        "eligibility",
+        "cost",
+        "source",
+        "source_id",
+        "source_url",
+        "verification",
+        "verified_at",
+        "status",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_government_dockets",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "target_id",
+        "provider",
+        "external_docket_id",
+        "title",
+        "docket_type",
+        "status",
+        "url",
+        "comment_deadline",
+        "metadata",
+        "last_synced_at"
+      ]
+    },
+    {
+      "name": "eu_government_submissions",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "target_id",
+        "docket_id",
+        "publication_id",
+        "submission_type",
+        "title",
+        "body",
+        "attachments",
+        "provider",
+        "state",
+        "control_approval_id",
+        "external_submission_id",
+        "receipt",
+        "submitted_at",
+        "deadline_at",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_government_targets",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "level",
+        "jurisdiction",
+        "agency",
+        "body",
+        "office",
+        "official_name",
+        "official_title",
+        "email",
+        "portal_url",
+        "api_provider",
+        "external_target_id",
+        "metadata",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_impact_events",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "publication_id",
+        "impact_type",
+        "title",
+        "description",
+        "source_url",
+        "source_id",
+        "occurred_at",
+        "confidence",
+        "verified",
+        "verified_by_m_uid",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_initiative_members",
+      "columns": [
+        "initiative_id",
+        "m_uid",
+        "role",
+        "permissions",
+        "status",
+        "joined_at"
+      ]
+    },
+    {
+      "name": "eu_initiative_updates",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "update_type",
+        "title",
+        "body",
+        "visibility",
+        "source_event_id",
+        "created_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_initiatives",
+      "columns": [
+        "id",
+        "org_id",
+        "slug",
+        "title",
+        "short_title",
+        "summary",
+        "objective",
+        "jurisdiction",
+        "geography",
+        "topic_slugs",
+        "stage",
+        "status",
+        "visibility",
+        "current_ask",
+        "next_milestone",
+        "next_milestone_at",
+        "target_outcome",
+        "owner_m_uid",
+        "settings",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_integrations",
+      "columns": [
+        "id",
+        "org_id",
+        "provider",
+        "integration_class",
+        "label",
+        "account_id",
+        "account_label",
+        "credential_mode",
+        "token_env",
+        "secret_id",
+        "refresh_secret_id",
+        "scopes",
+        "capabilities",
+        "config",
+        "status",
+        "last_ok_at",
+        "last_sync_at",
+        "last_error",
+        "last_error_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_interview_requests",
+      "columns": [
+        "id",
+        "org_id",
+        "application_id",
+        "stakeholder_id",
+        "meeting_id",
+        "requested_start",
+        "requested_end",
+        "timezone",
+        "hold_expires_at",
+        "state",
+        "conflict_reason",
+        "created_at",
+        "decided_at",
+        "decided_by"
+      ]
+    },
+    {
+      "name": "eu_job_attempts",
+      "columns": [
+        "id",
+        "job_id",
+        "attempt",
+        "worker",
+        "request",
+        "response",
+        "http_status",
+        "provider_request_id",
+        "error",
+        "started_at",
+        "finished_at"
+      ]
+    },
+    {
+      "name": "eu_jobs",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "workflow_run_id",
+        "event_id",
+        "integration_id",
+        "job_type",
+        "provider",
+        "action",
+        "capability",
+        "resource_type",
+        "resource_id",
+        "payload",
+        "state",
+        "priority",
+        "scheduled_at",
+        "lease_owner",
+        "lease_until",
+        "attempts",
+        "max_attempts",
+        "idempotency_key",
+        "approval_id",
+        "result",
+        "last_error",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_manuscript_sections",
+      "columns": [
+        "id",
+        "manuscript_id",
+        "section_key",
+        "parent_section_id",
+        "ordinal",
+        "heading",
+        "body_markdown",
+        "status",
+        "assigned_m_uid",
+        "last_editor_m_uid",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_manuscripts",
+      "columns": [
+        "id",
+        "org_id",
+        "research_project_id",
+        "title",
+        "status",
+        "current_revision",
+        "style_profile",
+        "created_by_m_uid",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_meeting_participants",
+      "columns": [
+        "meeting_id",
+        "stakeholder_id",
+        "m_uid",
+        "email",
+        "name",
+        "participant_role",
+        "response_status"
+      ]
+    },
+    {
+      "name": "eu_meetings",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "title",
+        "meeting_type",
+        "status",
+        "starts_at",
+        "ends_at",
+        "timezone",
+        "provider",
+        "external_event_id",
+        "external_join_url",
+        "agenda",
+        "prep_brief",
+        "notes",
+        "transcript_ref",
+        "summary",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_messages",
+      "columns": [
+        "id",
+        "conversation_id",
+        "role",
+        "body",
+        "author_id",
+        "meta",
+        "at"
+      ]
+    },
+    {
+      "name": "eu_monitor_hits",
+      "columns": [
+        "id",
+        "org_id",
+        "monitor_id",
+        "initiative_id",
+        "external_id",
+        "url",
+        "title",
+        "summary",
+        "occurred_at",
+        "relevance",
+        "classification",
+        "state",
+        "raw",
+        "first_seen_at",
+        "last_seen_at"
+      ]
+    },
+    {
+      "name": "eu_monitors",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "name",
+        "monitor_type",
+        "provider",
+        "query",
+        "cadence",
+        "enabled",
+        "last_run_at",
+        "next_run_at",
+        "cursor",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_music_works",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "title",
+        "iswc",
+        "writers",
+        "publishers",
+        "rights",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_oauth_connections",
+      "columns": [
+        "id",
+        "org_id",
+        "integration_id",
+        "m_uid",
+        "external_subject",
+        "external_email",
+        "access_secret_id",
+        "refresh_secret_id",
+        "scopes",
+        "expires_at",
+        "status",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_perspectives",
+      "columns": [
+        "id",
+        "profile_id",
+        "topic_slug",
+        "body",
+        "answers",
+        "priority",
+        "display_name",
+        "region",
+        "contact_email",
+        "anonymous",
+        "consent_public",
+        "status",
+        "source",
+        "conversation_id",
+        "moderated_by",
+        "moderated_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_perspectives_public",
+      "columns": [
+        "id",
+        "topic_slug",
+        "body",
+        "answers",
+        "priority",
+        "region",
+        "created_at",
+        "display_name",
+        "profile_id",
+        "handle"
+      ]
+    },
+    {
+      "name": "eu_profile_contact",
+      "columns": [
+        "id",
+        "email",
+        "phone",
+        "email_optin",
+        "sms_optin",
+        "contact_note",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_profiles",
+      "columns": [
+        "id",
+        "handle",
+        "display_name",
+        "kind",
+        "role",
+        "headline",
+        "bio",
+        "location",
+        "region",
+        "show_location",
+        "links",
+        "interests",
+        "goals",
+        "open_to",
+        "avatar_url",
+        "visibility",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_profiles_public",
+      "columns": [
+        "id",
+        "handle",
+        "display_name",
+        "kind",
+        "role",
+        "headline",
+        "bio",
+        "location",
+        "region",
+        "links",
+        "interests",
+        "goals",
+        "open_to",
+        "avatar_url",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_publication_claims",
+      "columns": [
+        "publication_id",
+        "claim_id",
+        "section_key"
+      ]
+    },
+    {
+      "name": "eu_publication_contributors",
+      "columns": [
+        "id",
+        "publication_id",
+        "m_uid",
+        "display_name",
+        "affiliation",
+        "orcid",
+        "is_author",
+        "author_order",
+        "corresponding",
+        "credit_roles",
+        "contribution_statement",
+        "approval_state",
+        "approved_at",
+        "metadata"
+      ]
+    },
+    {
+      "name": "eu_publication_sequences",
+      "columns": [
+        "org_id",
+        "publication_year",
+        "series_key",
+        "last_value"
+      ]
+    },
+    {
+      "name": "eu_publication_versions",
+      "columns": [
+        "id",
+        "publication_id",
+        "version_label",
+        "version_type",
+        "title",
+        "abstract",
+        "content_hash",
+        "html_ref",
+        "pdf_ref",
+        "docx_ref",
+        "jats_ref",
+        "bibtex",
+        "ris",
+        "csl_json",
+        "correction_note",
+        "metadata",
+        "published_at",
+        "created_by_m_uid",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_publications",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "research_project_id",
+        "manuscript_id",
+        "artifact_id",
+        "stable_id",
+        "publication_type",
+        "title",
+        "subtitle",
+        "abstract",
+        "keywords",
+        "jurisdiction",
+        "canonical_url",
+        "doi",
+        "license",
+        "funding_statement",
+        "conflict_statement",
+        "status",
+        "current_version",
+        "published_at",
+        "metadata",
+        "created_by_m_uid",
+        "approved_by_m_uid",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_recordings",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "work_id",
+        "artifact_id",
+        "title",
+        "version_title",
+        "artist",
+        "featured_artists",
+        "isrc",
+        "duration_ms",
+        "recording_year",
+        "master_owner",
+        "p_line",
+        "c_line",
+        "language",
+        "explicit",
+        "audio_ref",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_release_tracks",
+      "columns": [
+        "release_id",
+        "recording_id",
+        "disc_no",
+        "track_no"
+      ]
+    },
+    {
+      "name": "eu_releases",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "artifact_id",
+        "title",
+        "artist",
+        "upc",
+        "release_type",
+        "release_date",
+        "label",
+        "territories",
+        "artwork_ref",
+        "status",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_research_members",
+      "columns": [
+        "research_project_id",
+        "m_uid",
+        "role",
+        "permissions",
+        "status",
+        "added_at"
+      ]
+    },
+    {
+      "name": "eu_research_projects",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "slug",
+        "title",
+        "abstract",
+        "objective",
+        "methodology",
+        "status",
+        "visibility",
+        "owner_m_uid",
+        "settings",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_review_comments",
+      "columns": [
+        "id",
+        "org_id",
+        "manuscript_id",
+        "section_id",
+        "parent_id",
+        "author_m_uid",
+        "body",
+        "anchor",
+        "state",
+        "created_at",
+        "resolved_at",
+        "resolved_by_m_uid"
+      ]
+    },
+    {
+      "name": "eu_rights_splits",
+      "columns": [
+        "id",
+        "org_id",
+        "resource_type",
+        "resource_id",
+        "party_name",
+        "party_m_uid",
+        "role",
+        "share_bps",
+        "territory",
+        "rights_type",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_saves",
+      "columns": [
+        "profile_id",
+        "fellowship_id",
+        "at"
+      ]
+    },
+    {
+      "name": "eu_section_revisions",
+      "columns": [
+        "id",
+        "section_id",
+        "revision_no",
+        "body_markdown",
+        "heading",
+        "change_summary",
+        "created_by_m_uid",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_sources",
+      "columns": [
+        "id",
+        "org_id",
+        "research_project_id",
+        "source_type",
+        "title",
+        "authors",
+        "publisher",
+        "published_at",
+        "url",
+        "canonical_url",
+        "doi",
+        "external_ids",
+        "snapshot_ref",
+        "sha256",
+        "citation",
+        "verification",
+        "superseded_by",
+        "last_checked_at",
+        "added_by_m_uid",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_stage_rules",
+      "columns": [
+        "id",
+        "org_id",
+        "object_type",
+        "from_stage",
+        "event_type",
+        "to_stage",
+        "priority",
+        "conditions",
+        "enabled",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_stakeholder_links",
+      "columns": [
+        "id",
+        "org_id",
+        "initiative_id",
+        "stakeholder_id",
+        "role",
+        "stance",
+        "contribution_types",
+        "stage",
+        "stage_source",
+        "stage_reason",
+        "relationship_score",
+        "last_contact_at",
+        "last_reply_at",
+        "next_action",
+        "next_action_at",
+        "assigned_m_uid",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_stakeholder_orgs",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "domain",
+        "kind",
+        "jurisdiction",
+        "website",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_stakeholders",
+      "columns": [
+        "id",
+        "org_id",
+        "m_uid",
+        "eu_profile_id",
+        "inbox_contact_id",
+        "out_contact_id",
+        "lead_id",
+        "stakeholder_org_id",
+        "name",
+        "title",
+        "email",
+        "phone",
+        "city",
+        "region",
+        "stakeholder_types",
+        "expertise_tags",
+        "source",
+        "consent",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_suppressions",
+      "columns": [
+        "id",
+        "channel",
+        "address",
+        "reason",
+        "at"
+      ]
+    },
+    {
+      "name": "eu_topics",
+      "columns": [
+        "slug",
+        "name",
+        "tagline",
+        "description",
+        "context",
+        "dimensions",
+        "prompts",
+        "tags",
+        "resources",
+        "status",
+        "ordinal",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "eu_workflow_runs",
+      "columns": [
+        "id",
+        "org_id",
+        "workflow_id",
+        "trigger_event_id",
+        "state",
+        "correlation_id",
+        "input",
+        "output",
+        "error",
+        "started_at",
+        "finished_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "eu_workflows",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "trigger_event",
+        "initiative_id",
+        "conditions",
+        "actions",
+        "approval_mode",
+        "enabled",
+        "max_runs_per_hour",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "event_taxonomy",
+      "columns": [
+        "event_name",
+        "stage",
+        "note"
+      ]
+    },
+    {
+      "name": "events",
+      "columns": [
+        "id",
+        "at",
+        "name",
+        "path",
+        "props",
+        "uid",
+        "device_id",
+        "session_id",
+        "ip",
+        "user_agent",
+        "referrer",
+        "country",
+        "region",
+        "city",
+        "postal",
+        "latitude",
+        "longitude",
+        "timezone",
+        "asn",
+        "asn_org",
+        "is_bot",
+        "device",
+        "edge",
+        "site_id",
+        "source_host"
+      ]
+    },
+    {
+      "name": "events_lean",
+      "columns": [
+        "id",
+        "at",
+        "site_id",
+        "name",
+        "path",
+        "device_id",
+        "session_id",
+        "is_bot",
+        "country",
+        "referrer",
+        "network",
+        "src",
+        "source",
+        "track",
+        "album",
+        "listened_seconds",
+        "dwell_s",
+        "visible_s",
+        "hidden_s",
+        "depth",
+        "exit_intent",
+        "decision_id",
+        "experience_surface",
+        "experience_policy",
+        "experience_experiment",
+        "experience_arm",
+        "region",
+        "region_code"
+      ]
+    },
+    {
+      "name": "experience_assignments",
+      "columns": [
+        "experiment_id",
+        "subject_key_hash",
+        "arm_key",
+        "assignment_version",
+        "assigned_at"
+      ]
+    },
+    {
+      "name": "experience_decisions",
+      "columns": [
+        "id",
+        "surface_id",
+        "subject_key_hash",
+        "session_id",
+        "policy_id",
+        "experiment_id",
+        "arm_key",
+        "feature_snapshot_id",
+        "eligible_candidates",
+        "selected_candidates",
+        "propensities",
+        "reason_codes",
+        "objective_weights",
+        "client_context",
+        "created_at",
+        "expires_at"
+      ]
+    },
+    {
+      "name": "experience_experiment_arms",
+      "columns": [
+        "experiment_id",
+        "arm_key",
+        "policy_id",
+        "weight",
+        "is_control",
+        "created_at"
+      ]
+    },
+    {
+      "name": "experience_experiments",
+      "columns": [
+        "id",
+        "key",
+        "surface_id",
+        "research_project_id",
+        "hypothesis",
+        "primary_metric",
+        "guardrail_metrics",
+        "randomization_unit",
+        "allocation",
+        "intent",
+        "research_review",
+        "protocol_ref",
+        "consent_mode",
+        "preregistration_uri",
+        "preregistered_at",
+        "publication_eligible",
+        "status",
+        "created_by",
+        "started_at",
+        "ended_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "experience_feature_snapshots",
+      "columns": [
+        "id",
+        "subject_key_hash",
+        "schema_version",
+        "features",
+        "created_at"
+      ]
+    },
+    {
+      "name": "experience_policies",
+      "columns": [
+        "id",
+        "key",
+        "version",
+        "plane",
+        "mode",
+        "algorithm",
+        "config",
+        "source_commit_sha",
+        "enabled",
+        "promoted_from_policy_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "experience_surfaces",
+      "columns": [
+        "id",
+        "key",
+        "description",
+        "risk_tier",
+        "allowed_mutations",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "fabric_events",
+      "columns": [
+        "event_id",
+        "org_id",
+        "trace_id",
+        "schema_version",
+        "kind",
+        "origin_node",
+        "occurred_at",
+        "content_hash",
+        "payload",
+        "created_at"
+      ]
+    },
+    {
+      "name": "fabric_outbox",
+      "columns": [
+        "event_id",
+        "target_node",
+        "status",
+        "attempts",
+        "next_attempt_at",
+        "locked_at",
+        "locked_by",
+        "acked_at",
+        "last_error",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "fabric_receipts",
+      "columns": [
+        "event_id",
+        "node",
+        "state",
+        "first_seen_at",
+        "acked_at",
+        "attempts",
+        "last_error",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "fan_profiles",
+      "columns": [
+        "user_id",
+        "legal_name",
+        "display_name",
+        "address_line1",
+        "address_line2",
+        "city",
+        "region",
+        "postal_code",
+        "country",
+        "phone_e164",
+        "phone_verified_at",
+        "email_verified_at",
+        "birth_year",
+        "marketing_consent",
+        "marketing_consent_at",
+        "marketing_consent_version",
+        "share_consent",
+        "share_consent_at",
+        "share_consent_version",
+        "source",
+        "account_tier",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "fbi_board",
+      "columns": [
+        "id",
+        "kind",
+        "title",
+        "details",
+        "item",
+        "charge",
+        "city",
+        "media_asset_ids",
+        "self_surrender",
+        "published_at",
+        "legit",
+        "cap",
+        "guilty",
+        "acquitted"
+      ]
+    },
+    {
+      "name": "fbi_cases",
+      "columns": [
+        "id",
+        "kind",
+        "reporter_m_uid",
+        "title",
+        "details",
+        "item",
+        "charge",
+        "city",
+        "media_asset_ids",
+        "self_surrender",
+        "no_faces_attested",
+        "status",
+        "removal_reason",
+        "reviewed_at",
+        "published_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "fbi_reports",
+      "columns": [
+        "case_id",
+        "m_uid",
+        "reason",
+        "created_at"
+      ]
+    },
+    {
+      "name": "fbi_votes",
+      "columns": [
+        "case_id",
+        "m_uid",
+        "vote",
+        "created_at"
+      ]
+    },
+    {
+      "name": "feed",
+      "columns": [
+        "id",
+        "created_at",
+        "claim",
+        "context",
+        "sources",
+        "tag",
+        "uid"
+      ]
+    },
+    {
+      "name": "identity_presentations",
+      "columns": [
+        "m_uid",
+        "front_page_url",
+        "profile_theme",
+        "music_enabled",
+        "action_enabled",
+        "tagline",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "identity_public_profiles",
+      "columns": [
+        "m_uid",
+        "display_name",
+        "headline",
+        "bio",
+        "avatar_url",
+        "banner_url",
+        "website_url",
+        "front_page_url",
+        "profile_theme",
+        "music_enabled",
+        "action_enabled",
+        "tagline",
+        "music_handle",
+        "artist_name",
+        "music_verification_state"
+      ]
+    },
+    {
+      "name": "identity_verifications",
+      "columns": [
+        "id",
+        "user_id",
+        "purpose",
+        "stripe_verification_session_id",
+        "status",
+        "verified_at",
+        "last_error_code",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "inbox_channels",
+      "columns": [
+        "key",
+        "label",
+        "enabled",
+        "can_read_comments",
+        "can_reply_comments",
+        "can_send_dm",
+        "dm_window_hours",
+        "note",
+        "at"
+      ]
+    },
+    {
+      "name": "inbox_contacts",
+      "columns": [
+        "id",
+        "channel",
+        "external_id",
+        "handle",
+        "display_name",
+        "avatar_url",
+        "email",
+        "profile_id",
+        "first_seen",
+        "last_seen",
+        "meta",
+        "org_id"
+      ]
+    },
+    {
+      "name": "inbox_conversations",
+      "columns": [
+        "id",
+        "contact_id",
+        "channel",
+        "kind",
+        "subject_ref",
+        "status",
+        "claimed_by",
+        "claimed_at",
+        "window_ends",
+        "last_at",
+        "created_at",
+        "org_id"
+      ]
+    },
+    {
+      "name": "inbox_credentials",
+      "columns": [
+        "channel",
+        "token_env",
+        "account_id",
+        "account_label",
+        "self_ids",
+        "connected_at",
+        "follow_greeting",
+        "auto_greet",
+        "last_ok_at",
+        "last_error",
+        "last_error_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "inbox_flow_runs",
+      "columns": [
+        "id",
+        "flow_id",
+        "conv_id",
+        "matched",
+        "detail",
+        "at",
+        "org_id"
+      ]
+    },
+    {
+      "name": "inbox_flows",
+      "columns": [
+        "id",
+        "name",
+        "channel",
+        "enabled",
+        "ordinal",
+        "stop",
+        "trigger",
+        "conditions",
+        "actions",
+        "updated_at",
+        "created_at",
+        "org_id"
+      ]
+    },
+    {
+      "name": "inbox_followers",
+      "columns": [
+        "channel",
+        "follower_id",
+        "handle",
+        "first_seen",
+        "greeted_at",
+        "org_id"
+      ]
+    },
+    {
+      "name": "inbox_messages",
+      "columns": [
+        "id",
+        "conv_id",
+        "direction",
+        "author",
+        "staff_id",
+        "body",
+        "external_id",
+        "state",
+        "error",
+        "meta",
+        "at",
+        "org_id"
+      ]
+    },
+    {
+      "name": "inbox_outbound",
+      "columns": [
+        "id",
+        "conv_id",
+        "channel",
+        "as_kind",
+        "target_id",
+        "body",
+        "state",
+        "refusal",
+        "attempts",
+        "last_error",
+        "external_id",
+        "costs_money",
+        "approved_by",
+        "created_at",
+        "sent_at",
+        "dedupe_key",
+        "org_id"
+      ]
+    },
+    {
+      "name": "inbox_staff",
+      "columns": [
+        "profile_id",
+        "added_by",
+        "at"
+      ]
+    },
+    {
+      "name": "inbox_tags",
+      "columns": [
+        "contact_id",
+        "tag",
+        "at"
+      ]
+    },
+    {
+      "name": "inbox_threads",
+      "columns": [
+        "id",
+        "channel",
+        "kind",
+        "status",
+        "claimed_by",
+        "window_ends",
+        "last_at",
+        "created_at",
+        "handle",
+        "display_name",
+        "avatar_url",
+        "last_body",
+        "last_direction",
+        "message_count"
+      ]
+    },
+    {
+      "name": "intel_briefing_citations",
+      "columns": [
+        "org_id",
+        "briefing_id",
+        "ordinal",
+        "claim_id",
+        "evidence_id",
+        "locator"
+      ]
+    },
+    {
+      "name": "intel_briefings",
+      "columns": [
+        "id",
+        "org_id",
+        "title",
+        "body",
+        "status",
+        "drafting",
+        "author_id",
+        "evidence_oldest_at",
+        "evidence_newest_at",
+        "as_of",
+        "created_at"
+      ]
+    },
+    {
+      "name": "intel_claim_evidence",
+      "columns": [
+        "org_id",
+        "claim_id",
+        "evidence_id",
+        "stance",
+        "note",
+        "added_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "intel_claims",
+      "columns": [
+        "id",
+        "org_id",
+        "statement",
+        "subject_kind",
+        "purpose",
+        "status",
+        "confidence",
+        "region_label",
+        "created_by",
+        "reviewed_by",
+        "reviewed_at",
+        "visibility",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "intel_decision_basis",
+      "columns": [
+        "id",
+        "org_id",
+        "decision_id",
+        "briefing_id",
+        "claim_id",
+        "evidence_id",
+        "recorded_by",
+        "recorded_at"
+      ]
+    },
+    {
+      "name": "intel_evidence",
+      "columns": [
+        "id",
+        "org_id",
+        "kind",
+        "source_record_id",
+        "outcome_id",
+        "title",
+        "summary",
+        "publisher",
+        "source_url",
+        "license",
+        "attribution",
+        "retrieved_at",
+        "observed_at",
+        "content_sha256",
+        "measures",
+        "lat",
+        "lon",
+        "geo_source",
+        "region_label",
+        "review_status",
+        "reviewed_by",
+        "reviewed_at",
+        "visibility",
+        "retention_until",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "intel_mission_decisions",
+      "columns": [
+        "mission_id",
+        "org_id",
+        "decision_id",
+        "objectives",
+        "scope",
+        "region_label",
+        "target_measures",
+        "idempotency_key",
+        "linked_by",
+        "linked_at"
+      ]
+    },
+    {
+      "name": "intel_outcome_proofs",
+      "columns": [
+        "org_id",
+        "outcome_id",
+        "proof_id"
+      ]
+    },
+    {
+      "name": "intel_outcomes",
+      "columns": [
+        "id",
+        "org_id",
+        "mission_id",
+        "decision_id",
+        "summary",
+        "occurred_at",
+        "measures",
+        "status",
+        "submitted_by",
+        "reviewed_by",
+        "reviewed_at",
+        "review_note",
+        "idempotency_key",
+        "created_at"
+      ]
+    },
+    {
+      "name": "intel_reviews",
+      "columns": [
+        "id",
+        "org_id",
+        "subject_type",
+        "subject_id",
+        "from_status",
+        "to_status",
+        "confidence",
+        "reviewer_id",
+        "note",
+        "reviewed_at"
+      ]
+    },
+    {
+      "name": "kb_chunks",
+      "columns": [
+        "id",
+        "document_id",
+        "ordinal",
+        "heading",
+        "body",
+        "embedding",
+        "embed_model",
+        "fts",
+        "tokens",
+        "created_at"
+      ]
+    },
+    {
+      "name": "kb_documents",
+      "columns": [
+        "id",
+        "kind",
+        "url",
+        "title",
+        "body",
+        "source",
+        "content_hash",
+        "enabled",
+        "updated_at",
+        "org_id"
+      ]
+    },
+    {
+      "name": "l3_activity",
+      "columns": [
+        "id",
+        "org_id",
+        "actor_user_id",
+        "action",
+        "subject_type",
+        "subject_id",
+        "details",
+        "created_at"
+      ]
+    },
+    {
+      "name": "l3_auth_attempts",
+      "columns": [
+        "id",
+        "ip_hash",
+        "mccluster_id",
+        "success",
+        "created_at"
+      ]
+    },
+    {
+      "name": "l3_download_events",
+      "columns": [
+        "id",
+        "entitlement_id",
+        "ip_hash",
+        "user_agent",
+        "created_at"
+      ]
+    },
+    {
+      "name": "l3_entitlements",
+      "columns": [
+        "id",
+        "order_id",
+        "product_id",
+        "token",
+        "customer_email",
+        "download_count",
+        "last_download_at",
+        "revoked_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "l3_orders",
+      "columns": [
+        "id",
+        "org_id",
+        "product_id",
+        "stripe_checkout_session_id",
+        "stripe_payment_intent_id",
+        "connected_account_id",
+        "customer_email",
+        "customer_name",
+        "amount_cents",
+        "application_fee_cents",
+        "currency",
+        "status",
+        "plan_code",
+        "metadata",
+        "paid_at",
+        "refunded_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "l3_owner_invites",
+      "columns": [
+        "id",
+        "token_hash",
+        "purpose",
+        "expires_at",
+        "used_at",
+        "used_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "l3_products",
+      "columns": [
+        "id",
+        "org_id",
+        "slug",
+        "title",
+        "description",
+        "short_description",
+        "price_cents",
+        "currency",
+        "status",
+        "cover_path",
+        "asset_path",
+        "file_name",
+        "file_size_bytes",
+        "version",
+        "license_text",
+        "metadata",
+        "sort_order",
+        "published_at",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "l3_store_settings",
+      "columns": [
+        "org_id",
+        "plan_code",
+        "billing_status",
+        "platform_stripe_customer_id",
+        "platform_stripe_subscription_id",
+        "current_period_end",
+        "cancel_at_period_end",
+        "connected_account_id",
+        "storefront_enabled",
+        "support_email",
+        "store_name",
+        "store_description",
+        "terms_url",
+        "refund_policy",
+        "updated_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "leads",
+      "columns": [
+        "id",
+        "at",
+        "name",
+        "email",
+        "want",
+        "note",
+        "page",
+        "source",
+        "medium",
+        "campaign",
+        "gclid",
+        "status",
+        "org_id",
+        "company_id"
+      ]
+    },
+    {
+      "name": "licence_scopes",
+      "columns": [
+        "id",
+        "name",
+        "what",
+        "granted",
+        "ordinal"
+      ]
+    },
+    {
+      "name": "m_auth_user_links",
+      "columns": [
+        "auth_user_id",
+        "m_uid",
+        "link_method",
+        "is_primary",
+        "linked_at"
+      ]
+    },
+    {
+      "name": "m_devices",
+      "columns": [
+        "id",
+        "user_id",
+        "device_key",
+        "first_seen_at",
+        "last_seen_at",
+        "last_app_id",
+        "last_org_id",
+        "metadata",
+        "m_uid"
+      ]
+    },
+    {
+      "name": "m_people",
+      "columns": [
+        "id",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "m_person_apps",
+      "columns": [
+        "m_uid",
+        "app_id",
+        "org_id",
+        "role",
+        "settings",
+        "first_seen_at",
+        "last_seen_at"
+      ]
+    },
+    {
+      "name": "mail_aliases",
+      "columns": [
+        "id",
+        "domain_id",
+        "source",
+        "destination",
+        "active",
+        "created_at"
+      ]
+    },
+    {
+      "name": "mail_domains",
+      "columns": [
+        "id",
+        "domain",
+        "owner_org_id",
+        "dkim_selector",
+        "max_mailboxes",
+        "quota_bytes",
+        "active",
+        "created_at"
+      ]
+    },
+    {
+      "name": "mail_users",
+      "columns": [
+        "id",
+        "domain_id",
+        "local_part",
+        "email",
+        "password_hash",
+        "maildir",
+        "quota_bytes",
+        "active",
+        "created_at",
+        "last_login_at"
+      ]
+    },
+    {
+      "name": "mail_v_aliases",
+      "columns": [
+        "source",
+        "destination"
+      ]
+    },
+    {
+      "name": "mail_v_domains",
+      "columns": [
+        "domain"
+      ]
+    },
+    {
+      "name": "mail_v_users",
+      "columns": [
+        "email",
+        "password_hash",
+        "maildir",
+        "quota_bytes"
+      ]
+    },
+    {
+      "name": "mcp_approvals",
+      "columns": [
+        "id",
+        "org_id",
+        "server_id",
+        "conv_id",
+        "tool",
+        "arguments",
+        "reason",
+        "state",
+        "decided_by",
+        "decided_at",
+        "expires_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "mcp_calls",
+      "columns": [
+        "id",
+        "org_id",
+        "server_id",
+        "tool",
+        "arguments",
+        "conv_id",
+        "ai_call_id",
+        "authority",
+        "approved_by",
+        "ok",
+        "result",
+        "error",
+        "latency_ms",
+        "at"
+      ]
+    },
+    {
+      "name": "mcp_servers",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "url",
+        "transport",
+        "protocol_version",
+        "auth_kind",
+        "auth_header",
+        "token_env",
+        "secret_id",
+        "enabled",
+        "tools_ttl_s",
+        "tools_refreshed_at",
+        "last_ok_at",
+        "last_error",
+        "last_error_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "mcp_tools",
+      "columns": [
+        "id",
+        "server_id",
+        "org_id",
+        "name",
+        "title",
+        "description",
+        "input_schema",
+        "enabled",
+        "risk",
+        "auto",
+        "rejected",
+        "refreshed_at"
+      ]
+    },
+    {
+      "name": "media_articles",
+      "columns": [
+        "id",
+        "outlet_id",
+        "canonical_url",
+        "title",
+        "published_at",
+        "language_code",
+        "topic_keys",
+        "region_keys",
+        "imported_at",
+        "ingestion_provider",
+        "headline_location_label",
+        "headline_latitude",
+        "headline_longitude",
+        "location_basis",
+        "location_rule_id"
+      ]
+    },
+    {
+      "name": "media_assets",
+      "columns": [
+        "id",
+        "org_id",
+        "job_id",
+        "asset_type",
+        "role",
+        "url",
+        "storage_path",
+        "mime_type",
+        "width",
+        "height",
+        "duration_seconds",
+        "sha256",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "media_cost_events",
+      "columns": [
+        "id",
+        "org_id",
+        "job_id",
+        "event_type",
+        "amount_cents",
+        "provider",
+        "provider_request_id",
+        "pricing_snapshot",
+        "metadata",
+        "created_at",
+        "amount_usd_micros",
+        "quantity",
+        "unit",
+        "unit_price_usd_micros",
+        "pricing_version",
+        "source",
+        "raw_provider_usage",
+        "occurred_at",
+        "reconciled_at"
+      ]
+    },
+    {
+      "name": "media_entities",
+      "columns": [
+        "id",
+        "org_id",
+        "entity_type",
+        "name",
+        "slug",
+        "description",
+        "canonical_prompt",
+        "negative_prompt",
+        "attributes",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "media_entity_refs",
+      "columns": [
+        "id",
+        "org_id",
+        "entity_id",
+        "asset_id",
+        "ref_type",
+        "url",
+        "weight",
+        "approved",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "media_feedback",
+      "columns": [
+        "id",
+        "org_id",
+        "job_id",
+        "asset_id",
+        "actor_type",
+        "actor_id",
+        "verdict",
+        "score",
+        "reasons",
+        "created_at"
+      ]
+    },
+    {
+      "name": "media_gdelt_files",
+      "columns": [
+        "file_name",
+        "claimed_at",
+        "finished_at",
+        "rows_seen",
+        "articles_saved",
+        "error_text"
+      ]
+    },
+    {
+      "name": "media_gdelt_state",
+      "columns": [
+        "topic",
+        "next_attempt_at",
+        "last_success_at",
+        "last_error",
+        "failures",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "media_geo_rules",
+      "columns": [
+        "id",
+        "country_name",
+        "latitude",
+        "longitude",
+        "enabled"
+      ]
+    },
+    {
+      "name": "media_ingestion_runs",
+      "columns": [
+        "id",
+        "provider",
+        "topic",
+        "started_at",
+        "finished_at",
+        "articles_received",
+        "articles_saved",
+        "error_text"
+      ]
+    },
+    {
+      "name": "media_jobs",
+      "columns": [
+        "id",
+        "org_id",
+        "created_by",
+        "provider",
+        "provider_model_id",
+        "capability",
+        "status",
+        "prompt",
+        "input",
+        "routing",
+        "provider_request_id",
+        "provider_status",
+        "result",
+        "error",
+        "estimated_cost_cents",
+        "actual_cost_cents",
+        "submitted_at",
+        "completed_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "media_models",
+      "columns": [
+        "id",
+        "provider",
+        "provider_model_id",
+        "display_name",
+        "capability",
+        "modality_in",
+        "modality_out",
+        "commercial_use",
+        "supports_queue",
+        "supports_webhook",
+        "supports_reference_images",
+        "supports_first_last_frame",
+        "supports_native_audio",
+        "max_duration_seconds",
+        "max_resolution",
+        "cost_hint",
+        "quality_profile",
+        "parameter_schema",
+        "enabled",
+        "health_state",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "media_news_articles",
+      "columns": [
+        "id",
+        "source_id",
+        "canonical_url",
+        "title",
+        "published_at",
+        "language_code",
+        "topic_keys",
+        "ingestion_provider",
+        "headline_location_label",
+        "headline_latitude",
+        "headline_longitude",
+        "location_rule_id",
+        "location_basis",
+        "imported_at",
+        "gdelt_file",
+        "location_type",
+        "location_country_fips",
+        "tone",
+        "image_url",
+        "story_key"
+      ]
+    },
+    {
+      "name": "media_news_sources",
+      "columns": [
+        "id",
+        "domain",
+        "language_code",
+        "created_at"
+      ]
+    },
+    {
+      "name": "media_outlets",
+      "columns": [
+        "id",
+        "entity_id",
+        "domain",
+        "feed_url",
+        "language_code",
+        "country_code",
+        "source_url",
+        "verified_at"
+      ]
+    },
+    {
+      "name": "media_presets",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "preset_type",
+        "config",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "media_public_world_feed",
+      "columns": [
+        "id",
+        "title",
+        "canonical_url",
+        "published_at",
+        "language_code",
+        "topic_keys",
+        "headline_location_label",
+        "headline_latitude",
+        "headline_longitude",
+        "location_basis",
+        "publisher_domain"
+      ]
+    },
+    {
+      "name": "media_relationships",
+      "columns": [
+        "id",
+        "from_entity_id",
+        "to_entity_id",
+        "relation_type",
+        "ownership_percent",
+        "valid_from",
+        "valid_to",
+        "evidence_url",
+        "evidence_note",
+        "verified_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "media_source_assessments",
+      "columns": [
+        "id",
+        "outlet_id",
+        "dimension",
+        "observed_value",
+        "methodology_version",
+        "evidence_url",
+        "assessed_at"
+      ]
+    },
+    {
+      "name": "media_story_articles",
+      "columns": [
+        "cluster_id",
+        "article_id"
+      ]
+    },
+    {
+      "name": "media_story_clusters",
+      "columns": [
+        "id",
+        "label",
+        "clustering_method",
+        "reviewed_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "media_workflow_nodes",
+      "columns": [
+        "id",
+        "workflow_id",
+        "node_key",
+        "node_type",
+        "depends_on",
+        "status",
+        "job_id",
+        "input",
+        "output",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "media_workflows",
+      "columns": [
+        "id",
+        "org_id",
+        "created_by",
+        "name",
+        "objective",
+        "status",
+        "budget_cents",
+        "config",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "memory_facts",
+      "columns": [
+        "id",
+        "contact_id",
+        "kind",
+        "key",
+        "value",
+        "confidence",
+        "source_message_id",
+        "superseded_by",
+        "created_at",
+        "last_seen",
+        "ended_at"
+      ]
+    },
+    {
+      "name": "memory_shared",
+      "columns": [
+        "id",
+        "kind",
+        "key",
+        "value",
+        "enabled",
+        "updated_at",
+        "org_id"
+      ]
+    },
+    {
+      "name": "mnet_onboarding_state",
+      "columns": [
+        "m_uid",
+        "app_id",
+        "status",
+        "profile_completed_at",
+        "feed_entered_at",
+        "first_seen_at",
+        "last_seen_at",
+        "context"
+      ]
+    },
+    {
+      "name": "mnet_surface_config",
+      "columns": [
+        "app_id",
+        "network_enabled",
+        "entry_mode",
+        "default_feed_scope",
+        "profile_required_fields",
+        "feed_label",
+        "settings",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "modules",
+      "columns": [
+        "id",
+        "sprint_week",
+        "name",
+        "what",
+        "survives_cruise",
+        "created_at"
+      ]
+    },
+    {
+      "name": "music_catalog_objects",
+      "columns": [
+        "id",
+        "catalog_key",
+        "album_slug",
+        "album_title",
+        "track_title",
+        "artist_name",
+        "credit_line",
+        "audio_path",
+        "artwork_path",
+        "canonical_url",
+        "source_kind",
+        "creator_track_id",
+        "status",
+        "created_at",
+        "updated_at",
+        "music_video_url",
+        "lyrics_url",
+        "experience"
+      ]
+    },
+    {
+      "name": "music_creator_profiles",
+      "columns": [
+        "m_uid",
+        "handle",
+        "artist_name",
+        "bio",
+        "avatar_url",
+        "banner_url",
+        "website_url",
+        "status",
+        "verification_state",
+        "terms_version",
+        "terms_accepted_at",
+        "rights_warranty_accepted_at",
+        "payout_state",
+        "settings",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "music_direct_entitlements",
+      "columns": [
+        "id",
+        "order_id",
+        "offer_key",
+        "customer_email",
+        "token",
+        "download_count",
+        "last_download_at",
+        "revoked_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "music_direct_offers",
+      "columns": [
+        "offer_key",
+        "catalog_key",
+        "title",
+        "price_cents",
+        "currency",
+        "asset_bucket",
+        "asset_path",
+        "download_name",
+        "campaign_key",
+        "purpose_statement",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "music_direct_orders",
+      "columns": [
+        "id",
+        "offer_key",
+        "stripe_checkout_session_id",
+        "stripe_payment_intent_id",
+        "customer_email",
+        "amount_cents",
+        "currency",
+        "status",
+        "metadata",
+        "paid_at",
+        "refunded_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "music_entitlements",
+      "columns": [
+        "id",
+        "order_id",
+        "offer_id",
+        "track_id",
+        "user_id",
+        "customer_email",
+        "token",
+        "download_count",
+        "last_download_at",
+        "revoked_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "music_gated_plays",
+      "columns": [
+        "id",
+        "user_id",
+        "track_key",
+        "played_at",
+        "stream_token",
+        "stream_expires_at",
+        "stream_hits"
+      ]
+    },
+    {
+      "name": "music_isrc_allocations",
+      "columns": [
+        "id",
+        "org_id",
+        "recording_id",
+        "isrc",
+        "year_of_reference",
+        "designation_code",
+        "assigned_at",
+        "metadata"
+      ]
+    },
+    {
+      "name": "music_isrc_registrants",
+      "columns": [
+        "org_id",
+        "prefix_code",
+        "registrant_type",
+        "active",
+        "agency",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "music_license_offers",
+      "columns": [
+        "id",
+        "track_id",
+        "creator_m_uid",
+        "slug",
+        "title",
+        "license_type",
+        "price_cents",
+        "currency",
+        "terms_text",
+        "usage_terms",
+        "l3_product_id",
+        "active",
+        "sort_order",
+        "created_at",
+        "updated_at",
+        "platform_fee_bps",
+        "checkout_enabled"
+      ]
+    },
+    {
+      "name": "music_listens",
+      "columns": [
+        "id",
+        "user_id",
+        "track_key",
+        "started_at",
+        "min_seconds",
+        "finished_at",
+        "completed",
+        "heard_seconds",
+        "last_beat_at"
+      ]
+    },
+    {
+      "name": "music_orders",
+      "columns": [
+        "id",
+        "offer_id",
+        "track_id",
+        "creator_m_uid",
+        "customer_user_id",
+        "customer_email",
+        "stripe_checkout_session_id",
+        "stripe_payment_intent_id",
+        "amount_cents",
+        "platform_fee_cents",
+        "creator_net_cents",
+        "currency",
+        "status",
+        "metadata",
+        "paid_at",
+        "refunded_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "music_publish_tokens",
+      "columns": [
+        "token_hash",
+        "asset_slug",
+        "variant",
+        "bucket_id",
+        "object_path",
+        "content_type",
+        "expires_at",
+        "used_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "music_rights_attestations",
+      "columns": [
+        "id",
+        "track_id",
+        "creator_m_uid",
+        "version",
+        "owns_master",
+        "controls_composition",
+        "samples_cleared",
+        "collaborators_cleared",
+        "parody_or_derivative",
+        "derivative_permissions",
+        "notes",
+        "attested_at",
+        "ip_hash",
+        "user_agent_hash"
+      ]
+    },
+    {
+      "name": "network_activity",
+      "columns": [
+        "id",
+        "actor_m_uid",
+        "source_app_id",
+        "source_org_id",
+        "verb",
+        "object_type",
+        "object_id",
+        "summary",
+        "visibility",
+        "payload",
+        "occurred_at",
+        "created_at",
+        "event_id",
+        "schema_version",
+        "idempotency_key",
+        "ingested_at"
+      ]
+    },
+    {
+      "name": "network_attribution",
+      "columns": [
+        "id",
+        "m_uid",
+        "anonymous_id",
+        "source_app_id",
+        "source_org_id",
+        "channel",
+        "source",
+        "medium",
+        "campaign",
+        "term",
+        "content",
+        "referrer",
+        "landing_path",
+        "first_touch",
+        "occurred_at",
+        "metadata"
+      ]
+    },
+    {
+      "name": "network_blocks",
+      "columns": [
+        "blocker_m_uid",
+        "blocked_m_uid",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_bookmarks",
+      "columns": [
+        "m_uid",
+        "post_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_connections",
+      "columns": [
+        "requester_m_uid",
+        "addressee_m_uid",
+        "status",
+        "created_at",
+        "updated_at",
+        "id"
+      ]
+    },
+    {
+      "name": "network_conversation_members",
+      "columns": [
+        "conversation_id",
+        "m_uid",
+        "role",
+        "member_state",
+        "joined_at",
+        "left_at",
+        "last_read_at"
+      ]
+    },
+    {
+      "name": "network_conversations",
+      "columns": [
+        "id",
+        "kind",
+        "created_by_m_uid",
+        "title",
+        "created_at",
+        "updated_at",
+        "last_message_at"
+      ]
+    },
+    {
+      "name": "network_feed_items",
+      "columns": [
+        "id",
+        "actor_m_uid",
+        "source_app_id",
+        "source_org_id",
+        "item_type",
+        "post_id",
+        "activity_id",
+        "visibility",
+        "occurred_at",
+        "payload",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_follows",
+      "columns": [
+        "follower_m_uid",
+        "followed_m_uid",
+        "status",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_group_members",
+      "columns": [
+        "group_id",
+        "m_uid",
+        "role",
+        "state",
+        "joined_at"
+      ]
+    },
+    {
+      "name": "network_groups",
+      "columns": [
+        "id",
+        "slug",
+        "name",
+        "purpose",
+        "visibility",
+        "created_by",
+        "member_count",
+        "created_at",
+        "updated_at",
+        "organization_id",
+        "group_type",
+        "front_page_url"
+      ]
+    },
+    {
+      "name": "network_live_audience",
+      "columns": [
+        "session_id",
+        "viewer_m_uid",
+        "first_seen_at",
+        "last_seen_at"
+      ]
+    },
+    {
+      "name": "network_live_categories",
+      "columns": [
+        "key",
+        "label",
+        "description",
+        "sort",
+        "enabled"
+      ]
+    },
+    {
+      "name": "network_live_host_grants",
+      "columns": [
+        "id",
+        "m_uid",
+        "basis",
+        "cohort_id",
+        "org_id",
+        "allowed_categories",
+        "max_stage_seats",
+        "support_allowed",
+        "status",
+        "starts_at",
+        "expires_at",
+        "note",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "network_live_rooms",
+      "columns": [
+        "id",
+        "slug",
+        "owner_m_uid",
+        "title",
+        "description",
+        "room_kind",
+        "category_key",
+        "action_mission_id",
+        "cohort_id",
+        "music_object_id",
+        "seat_limit",
+        "support_enabled",
+        "support_purpose",
+        "support_goal_credits",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "network_live_sessions",
+      "columns": [
+        "id",
+        "host_m_uid",
+        "host_user_id",
+        "title",
+        "status",
+        "cf_input_uid",
+        "whep_url",
+        "post_id",
+        "started_at",
+        "last_seen_at",
+        "ended_at",
+        "ended_by",
+        "end_reason",
+        "created_at",
+        "room_id",
+        "room_kind",
+        "category_key",
+        "action_mission_id",
+        "music_object_id",
+        "cohort_id",
+        "seat_limit",
+        "support_enabled"
+      ]
+    },
+    {
+      "name": "network_live_stage_members",
+      "columns": [
+        "session_id",
+        "m_uid",
+        "stage_role",
+        "state",
+        "requested_at",
+        "joined_at",
+        "left_at"
+      ]
+    },
+    {
+      "name": "network_media_assets",
+      "columns": [
+        "id",
+        "owner_m_uid",
+        "bucket_id",
+        "object_path",
+        "media_type",
+        "mime_type",
+        "byte_size",
+        "width",
+        "height",
+        "duration_ms",
+        "alt_text",
+        "status",
+        "post_id",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "network_messages",
+      "columns": [
+        "id",
+        "conversation_id",
+        "sender_m_uid",
+        "body",
+        "media",
+        "reply_to_id",
+        "created_at",
+        "edited_at",
+        "deleted_at"
+      ]
+    },
+    {
+      "name": "network_mutes",
+      "columns": [
+        "muter_m_uid",
+        "muted_m_uid",
+        "expires_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_notifications",
+      "columns": [
+        "id",
+        "recipient_m_uid",
+        "actor_m_uid",
+        "type",
+        "object_type",
+        "object_id",
+        "source_app_id",
+        "body",
+        "metadata",
+        "read_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_operator_access_log",
+      "columns": [
+        "id",
+        "operator_user_id",
+        "subject_m_uid",
+        "action",
+        "purpose",
+        "source",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_organization_members",
+      "columns": [
+        "organization_id",
+        "m_uid",
+        "role",
+        "state",
+        "joined_at"
+      ]
+    },
+    {
+      "name": "network_organizations",
+      "columns": [
+        "id",
+        "slug",
+        "name",
+        "organization_type",
+        "description",
+        "website_url",
+        "verification_state",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "network_outbox",
+      "columns": [
+        "id",
+        "topic",
+        "aggregate_type",
+        "aggregate_id",
+        "event_type",
+        "payload",
+        "schema_version",
+        "idempotency_key",
+        "status",
+        "attempts",
+        "available_at",
+        "claimed_at",
+        "delivered_at",
+        "last_error",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_post_comments",
+      "columns": [
+        "id",
+        "post_id",
+        "author_m_uid",
+        "body",
+        "created_at",
+        "deleted_at"
+      ]
+    },
+    {
+      "name": "network_post_edges",
+      "columns": [
+        "source_post_id",
+        "target_post_id",
+        "edge_type",
+        "actor_m_uid",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_posts",
+      "columns": [
+        "id",
+        "author_m_uid",
+        "body",
+        "post_type",
+        "visibility",
+        "media",
+        "metadata",
+        "reply_to_id",
+        "created_at",
+        "updated_at",
+        "deleted_at",
+        "source_app_id",
+        "source_org_id",
+        "pinned_at",
+        "removed_at",
+        "removed_by",
+        "group_id",
+        "scheduled_post_id",
+        "content_id"
+      ]
+    },
+    {
+      "name": "network_profiles",
+      "columns": [
+        "m_uid",
+        "display_name",
+        "bio",
+        "avatar_url",
+        "banner_url",
+        "website_url",
+        "visibility",
+        "discoverable",
+        "activity_sharing",
+        "created_at",
+        "updated_at",
+        "headline",
+        "location_text",
+        "pronouns",
+        "links",
+        "categories",
+        "skills",
+        "services",
+        "featured",
+        "allow_messages_from",
+        "allow_mentions_from",
+        "allow_tagging_from",
+        "verification_state",
+        "profile_version",
+        "welcomed_at"
+      ]
+    },
+    {
+      "name": "network_rate_events",
+      "columns": [
+        "id",
+        "m_uid",
+        "action",
+        "at"
+      ]
+    },
+    {
+      "name": "network_reactions",
+      "columns": [
+        "post_id",
+        "actor_m_uid",
+        "reaction",
+        "created_at"
+      ]
+    },
+    {
+      "name": "network_reports",
+      "columns": [
+        "id",
+        "reporter_m_uid",
+        "target_type",
+        "target_id",
+        "reason",
+        "details",
+        "status",
+        "resolution",
+        "reviewed_by",
+        "reviewed_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "network_scheduled_posts",
+      "columns": [
+        "id",
+        "author_m_uid",
+        "publish_at",
+        "status",
+        "payload",
+        "post_id",
+        "error",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "network_sessions",
+      "columns": [
+        "id",
+        "m_uid",
+        "anonymous_id",
+        "source_app_id",
+        "source_org_id",
+        "started_at",
+        "last_seen_at",
+        "campaign",
+        "client"
+      ]
+    },
+    {
+      "name": "network_telemetry_events",
+      "columns": [
+        "event_id",
+        "m_uid",
+        "anonymous_id",
+        "session_id",
+        "source_app_id",
+        "source_org_id",
+        "event_name",
+        "event_version",
+        "purpose",
+        "object_type",
+        "object_id",
+        "properties",
+        "attribution",
+        "occurred_at",
+        "ingested_at"
+      ]
+    },
+    {
+      "name": "network_user_features",
+      "columns": [
+        "m_uid",
+        "app_usage",
+        "topic_affinity",
+        "creator_affinity",
+        "purchase_categories",
+        "engagement",
+        "acquisition",
+        "conversion",
+        "lifecycle",
+        "retention",
+        "recommendation_features",
+        "risk_flags",
+        "value_metrics",
+        "feature_version",
+        "computed_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "offerings",
+      "columns": [
+        "id",
+        "slug",
+        "site_id",
+        "brand_id",
+        "legal_entity_id",
+        "offering_type",
+        "revenue_type",
+        "title",
+        "short_description",
+        "full_description",
+        "price",
+        "currency",
+        "price_type",
+        "custom_min",
+        "custom_max",
+        "payment_provider",
+        "payment_account_reference",
+        "fulfillment_type",
+        "inventory_policy",
+        "primary_action",
+        "status",
+        "campaign_namespace",
+        "created_at",
+        "updated_at",
+        "billing_interval",
+        "provider_plan_id"
+      ]
+    },
+    {
+      "name": "operator_members",
+      "columns": [
+        "id",
+        "tenant_id",
+        "auth_user_id",
+        "email",
+        "role",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ops_agent_jobs",
+      "columns": [
+        "id",
+        "org_id",
+        "objective_id",
+        "job_type",
+        "target_type",
+        "target_id",
+        "status",
+        "priority",
+        "input",
+        "output",
+        "attempts",
+        "max_attempts",
+        "run_after",
+        "locked_at",
+        "locked_by",
+        "last_error",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_ai_messages",
+      "columns": [
+        "id",
+        "thread_id",
+        "org_id",
+        "role",
+        "content",
+        "model",
+        "implementation",
+        "compute_task_id",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ops_ai_threads",
+      "columns": [
+        "id",
+        "org_id",
+        "created_by",
+        "title",
+        "status",
+        "created_at",
+        "updated_at",
+        "last_message_at"
+      ]
+    },
+    {
+      "name": "ops_compute_leases",
+      "columns": [
+        "id",
+        "task_id",
+        "node_id",
+        "status",
+        "lease_token_hash",
+        "expires_at",
+        "started_at",
+        "completed_at",
+        "progress",
+        "result",
+        "last_error",
+        "created_at",
+        "updated_at",
+        "implementation"
+      ]
+    },
+    {
+      "name": "ops_compute_nodes",
+      "columns": [
+        "id",
+        "org_id",
+        "display_name",
+        "public_key_pem",
+        "key_fingerprint",
+        "protocol_version",
+        "agent_version",
+        "state",
+        "inventory",
+        "capabilities",
+        "labels",
+        "load",
+        "max_leases",
+        "enrolled_at",
+        "last_seen_at",
+        "revoked_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_compute_nonces",
+      "columns": [
+        "node_id",
+        "nonce",
+        "observed_at",
+        "expires_at"
+      ]
+    },
+    {
+      "name": "ops_compute_tasks",
+      "columns": [
+        "id",
+        "org_id",
+        "capability",
+        "implementation",
+        "input",
+        "requirements",
+        "priority",
+        "status",
+        "run_after",
+        "attempts",
+        "max_attempts",
+        "locked_by_node_id",
+        "locked_at",
+        "output",
+        "last_error",
+        "metadata",
+        "created_at",
+        "updated_at",
+        "idempotency_key",
+        "request_hash"
+      ]
+    },
+    {
+      "name": "ops_entity_aliases",
+      "columns": [
+        "id",
+        "org_id",
+        "namespace",
+        "alias_key",
+        "object_id",
+        "source_record_id",
+        "confidence",
+        "status",
+        "resolution_method",
+        "rationale",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_entity_resolution_events",
+      "columns": [
+        "id",
+        "org_id",
+        "namespace",
+        "alias_key",
+        "candidate_object_id",
+        "selected_object_id",
+        "source_record_id",
+        "decision",
+        "method",
+        "confidence",
+        "rationale",
+        "actor_user_id",
+        "actor_kind",
+        "at"
+      ]
+    },
+    {
+      "name": "ops_fact_claims",
+      "columns": [
+        "id",
+        "org_id",
+        "subject_object_id",
+        "predicate",
+        "value",
+        "value_hash",
+        "source_record_id",
+        "confidence",
+        "valid_from",
+        "valid_to",
+        "observed_at",
+        "status",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ops_ingest_connectors",
+      "columns": [
+        "id",
+        "org_id",
+        "connector_key",
+        "kind",
+        "display_name",
+        "description",
+        "config",
+        "cursor",
+        "retention_policy",
+        "license_policy",
+        "enabled",
+        "last_sync_at",
+        "last_ok_at",
+        "last_error",
+        "last_error_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_ingest_records",
+      "columns": [
+        "id",
+        "org_id",
+        "connector_id",
+        "run_id",
+        "trace_id",
+        "external_id",
+        "record_kind",
+        "source_ref",
+        "observed_at",
+        "ingested_at",
+        "content_hash",
+        "idempotency_key",
+        "payload",
+        "retention_policy",
+        "license_policy",
+        "status",
+        "error",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ops_ingest_runs",
+      "columns": [
+        "id",
+        "org_id",
+        "connector_id",
+        "trace_id",
+        "mode",
+        "status",
+        "cursor_before",
+        "cursor_after",
+        "records_seen",
+        "records_written",
+        "records_rejected",
+        "error",
+        "metadata",
+        "started_at",
+        "finished_at"
+      ]
+    },
+    {
+      "name": "ops_lead_scores",
+      "columns": [
+        "id",
+        "org_id",
+        "company_id",
+        "score",
+        "engagement_score",
+        "urgency_score",
+        "fit_score",
+        "momentum_score",
+        "rationale",
+        "model_version",
+        "computed_at"
+      ]
+    },
+    {
+      "name": "ops_meeting_delegate_events",
+      "columns": [
+        "id",
+        "org_id",
+        "session_id",
+        "event_type",
+        "payload",
+        "occurred_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ops_meeting_delegate_sessions",
+      "columns": [
+        "id",
+        "org_id",
+        "created_by",
+        "calendar_event_id",
+        "provider",
+        "provider_bot_id",
+        "platform",
+        "meeting_url_hash",
+        "native_meeting_id",
+        "mode",
+        "bot_display_name",
+        "status",
+        "scheduled_start",
+        "scheduled_end",
+        "dispatched_at",
+        "joined_at",
+        "completed_at",
+        "join_job_id",
+        "collect_job_id",
+        "brief",
+        "policy",
+        "transcript",
+        "summary",
+        "last_error",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_objectives",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "description",
+        "status",
+        "priority",
+        "success_metric",
+        "scope",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_ontology_action_runs",
+      "columns": [
+        "id",
+        "org_id",
+        "action_key",
+        "target_object_id",
+        "actor_user_id",
+        "actor_kind",
+        "parameters",
+        "request_hash",
+        "idempotency_key",
+        "approval_id",
+        "status",
+        "result",
+        "error",
+        "created_at",
+        "started_at",
+        "finished_at"
+      ]
+    },
+    {
+      "name": "ops_ontology_action_types",
+      "columns": [
+        "org_id",
+        "action_key",
+        "display_name",
+        "description",
+        "target_type_key",
+        "input_schema",
+        "effect",
+        "risk",
+        "approval_mode",
+        "version",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_ontology_lineage",
+      "columns": [
+        "id",
+        "org_id",
+        "event_type",
+        "subject_type",
+        "subject_key",
+        "object_id",
+        "link_id",
+        "action_run_id",
+        "source_ref",
+        "before_state",
+        "after_state",
+        "actor_user_id",
+        "actor_kind",
+        "at"
+      ]
+    },
+    {
+      "name": "ops_ontology_link_types",
+      "columns": [
+        "org_id",
+        "link_key",
+        "display_name",
+        "description",
+        "source_type_key",
+        "target_type_key",
+        "directed",
+        "property_schema",
+        "version",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_ontology_links",
+      "columns": [
+        "id",
+        "org_id",
+        "link_key",
+        "source_object_id",
+        "target_object_id",
+        "properties",
+        "confidence",
+        "source_ref",
+        "valid_from",
+        "valid_to",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_ontology_objects",
+      "columns": [
+        "id",
+        "org_id",
+        "type_key",
+        "object_key",
+        "display_name",
+        "properties",
+        "source_ref",
+        "observed_at",
+        "valid_from",
+        "valid_to",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_ontology_types",
+      "columns": [
+        "org_id",
+        "type_key",
+        "display_name",
+        "description",
+        "property_schema",
+        "source_binding",
+        "version",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ops_recommendations",
+      "columns": [
+        "id",
+        "org_id",
+        "company_id",
+        "contact_id",
+        "campaign_id",
+        "objective_id",
+        "recommendation_type",
+        "title",
+        "rationale",
+        "proposed_action",
+        "confidence",
+        "expected_value",
+        "status",
+        "created_at",
+        "decided_at"
+      ]
+    },
+    {
+      "name": "ops_repo_events",
+      "columns": [
+        "id",
+        "org_id",
+        "repo",
+        "ref",
+        "commit_sha",
+        "event_type",
+        "paths",
+        "test_summary",
+        "metadata",
+        "observed_at"
+      ]
+    },
+    {
+      "name": "ops_signals",
+      "columns": [
+        "id",
+        "org_id",
+        "company_id",
+        "contact_id",
+        "campaign_id",
+        "signal_type",
+        "source",
+        "source_ref",
+        "severity",
+        "confidence",
+        "payload",
+        "observed_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ops_system_contract",
+      "columns": [
+        "singleton",
+        "schema_version",
+        "migration_version",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "org_channels",
+      "columns": [
+        "org_id",
+        "channel",
+        "enabled",
+        "token_env",
+        "secret_id",
+        "account_id",
+        "account_label",
+        "self_ids",
+        "webhook_secret_env",
+        "follow_greeting",
+        "auto_greet",
+        "connected_at",
+        "last_ok_at",
+        "last_error",
+        "last_error_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "org_invitations",
+      "columns": [
+        "id",
+        "org_id",
+        "email",
+        "role",
+        "invited_by",
+        "created_at",
+        "claimed_at",
+        "claimed_by"
+      ]
+    },
+    {
+      "name": "org_media_budgets",
+      "columns": [
+        "org_id",
+        "enabled",
+        "monthly_limit_cents",
+        "warn_at_percent",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "org_members",
+      "columns": [
+        "org_id",
+        "profile_id",
+        "role",
+        "added_at"
+      ]
+    },
+    {
+      "name": "org_stripe_accounts",
+      "columns": [
+        "org_id",
+        "livemode",
+        "account_reference",
+        "stripe_account_id",
+        "charges_enabled",
+        "payouts_enabled",
+        "details_submitted",
+        "onboarding_status",
+        "requirements",
+        "last_synced_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "orgs",
+      "columns": [
+        "id",
+        "slug",
+        "name",
+        "kind",
+        "settings",
+        "enabled",
+        "created_at"
+      ]
+    },
+    {
+      "name": "out_campaigns",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "sender_id",
+        "subject",
+        "body_text",
+        "body_html",
+        "audience",
+        "audience_kind",
+        "status",
+        "throttle_per_hour",
+        "created_by",
+        "approved_by",
+        "approved_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "out_companies",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "domain",
+        "kind",
+        "city",
+        "region",
+        "source",
+        "status",
+        "notes",
+        "created_at"
+      ]
+    },
+    {
+      "name": "out_contacts",
+      "columns": [
+        "id",
+        "org_id",
+        "company_id",
+        "email",
+        "name",
+        "title",
+        "consent",
+        "consent_source",
+        "consent_at",
+        "unsub_token",
+        "created_at"
+      ]
+    },
+    {
+      "name": "out_events",
+      "columns": [
+        "id",
+        "org_id",
+        "recipient_id",
+        "address",
+        "type",
+        "detail",
+        "at"
+      ]
+    },
+    {
+      "name": "out_recipients",
+      "columns": [
+        "id",
+        "campaign_id",
+        "org_id",
+        "contact_id",
+        "address",
+        "state",
+        "skip_reason",
+        "provider_id",
+        "attempts",
+        "last_error",
+        "sent_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "out_sender_identities",
+      "columns": [
+        "id",
+        "org_id",
+        "label",
+        "from_name",
+        "from_email",
+        "reply_to",
+        "postal_address",
+        "provider",
+        "verified",
+        "created_at"
+      ]
+    },
+    {
+      "name": "out_suppressions",
+      "columns": [
+        "org_id",
+        "address",
+        "reason",
+        "detail",
+        "at"
+      ]
+    },
+    {
+      "name": "partner_catalog",
+      "columns": [
+        "id",
+        "slug",
+        "name",
+        "category",
+        "public_url",
+        "integration_mode",
+        "status",
+        "enabled",
+        "revenue_share_note",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "partner_referrals",
+      "columns": [
+        "id",
+        "partner_id",
+        "tenant_id",
+        "customer_id",
+        "resource_type",
+        "resource_id",
+        "source",
+        "external_reference",
+        "status",
+        "commission_cents",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "payments",
+      "columns": [
+        "id",
+        "tenant_id",
+        "resource_type",
+        "resource_id",
+        "connected_account_id",
+        "stripe_checkout_session_id",
+        "stripe_payment_intent_id",
+        "amount_cents",
+        "application_fee_cents",
+        "currency",
+        "status",
+        "refunded_cents",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "platform_apps",
+      "columns": [
+        "id",
+        "app_key",
+        "name",
+        "product_family",
+        "kind",
+        "bundle_id",
+        "public_url",
+        "oauth_client_id",
+        "oauth_redirect_uris",
+        "settings",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "platform_fee_policies",
+      "columns": [
+        "id",
+        "app_id",
+        "org_id",
+        "policy_key",
+        "payer_fee_bps",
+        "payee_fee_bps",
+        "white_label_payee_fee_bps",
+        "white_label_subscription_cents",
+        "currency",
+        "fee_basis",
+        "enabled",
+        "effective_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "platform_ledger",
+      "columns": [
+        "id",
+        "app_id",
+        "org_id",
+        "payer_user_id",
+        "transaction_kind",
+        "resource_type",
+        "resource_id",
+        "currency",
+        "base_amount_cents",
+        "payer_fee_cents",
+        "payer_total_cents",
+        "payee_fee_cents",
+        "processing_fee_cents",
+        "tax_cents",
+        "pass_through_cents",
+        "platform_revenue_cents",
+        "payee_economic_amount_cents",
+        "stripe_connected_account_id",
+        "stripe_payment_intent_id",
+        "stripe_charge_id",
+        "stripe_application_fee_id",
+        "stripe_checkout_session_id",
+        "status",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "platform_oauth_clients",
+      "columns": [
+        "app_id",
+        "client_id",
+        "client_type",
+        "redirect_uris",
+        "scopes",
+        "environment",
+        "registered_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "platform_profiles",
+      "columns": [
+        "user_id",
+        "display_name",
+        "primary_email",
+        "phone",
+        "avatar_url",
+        "locale",
+        "timezone",
+        "settings",
+        "created_at",
+        "updated_at",
+        "mccluster_id"
+      ]
+    },
+    {
+      "name": "platform_user_apps",
+      "columns": [
+        "user_id",
+        "app_id",
+        "org_id",
+        "role",
+        "settings",
+        "first_seen_at",
+        "last_seen_at"
+      ]
+    },
+    {
+      "name": "platform_user_devices",
+      "columns": [
+        "user_id",
+        "device_id",
+        "first_app_key",
+        "last_app_key",
+        "first_seen_at",
+        "last_seen_at",
+        "trust_level",
+        "client_meta"
+      ]
+    },
+    {
+      "name": "prim3_course_progress",
+      "columns": [
+        "user_id",
+        "course_id",
+        "module_id",
+        "reading_completed_at",
+        "assessment_score",
+        "assessment_attempts",
+        "passed_at",
+        "mastery",
+        "last_activity_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "print_orders",
+      "columns": [
+        "id",
+        "at",
+        "photo_id",
+        "format",
+        "price_usd",
+        "buyer_name",
+        "buyer_email",
+        "ship_to",
+        "status",
+        "stripe_session",
+        "lab_order_id",
+        "tracking"
+      ]
+    },
+    {
+      "name": "private_song_asset_chunks",
+      "columns": [
+        "asset_slug",
+        "variant",
+        "chunk_index",
+        "data_b64",
+        "created_at"
+      ]
+    },
+    {
+      "name": "providers",
+      "columns": [
+        "slug",
+        "uid",
+        "name",
+        "craft",
+        "rate",
+        "plan",
+        "stripe_acct",
+        "charges_enabled",
+        "stripe_customer",
+        "created_at"
+      ]
+    },
+    {
+      "name": "rental_bookings",
+      "columns": [
+        "id",
+        "tenant_id",
+        "vehicle_id",
+        "renter_id",
+        "status",
+        "start_at",
+        "end_at",
+        "pickup_label",
+        "rental_days",
+        "daily_rate_cents",
+        "extras_cents",
+        "protection_cents",
+        "tax_cents",
+        "platform_fee_cents",
+        "total_cents",
+        "license_verified",
+        "pretrip_photos_complete",
+        "pickup_instructions_seen",
+        "return_photos_complete",
+        "fuel_return_confirmed",
+        "created_at",
+        "activated_at",
+        "completed_at",
+        "updated_at",
+        "payment_status",
+        "stripe_checkout_session_id",
+        "stripe_payment_intent_id",
+        "identity_verified"
+      ]
+    },
+    {
+      "name": "rental_vehicles",
+      "columns": [
+        "id",
+        "tenant_id",
+        "name",
+        "category",
+        "operator_name",
+        "location_label",
+        "daily_rate_cents",
+        "rating",
+        "rental_count",
+        "seats",
+        "transmission",
+        "fuel_type",
+        "color_hex",
+        "mileage_per_day",
+        "available",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "research_artifacts",
+      "columns": [
+        "id",
+        "research_project_id",
+        "experiment_id",
+        "key",
+        "title",
+        "kind",
+        "status",
+        "canonical_url",
+        "doi",
+        "concept_doi",
+        "orcid_work_put_code",
+        "git_commit_sha",
+        "metadata",
+        "released_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "research_projects",
+      "columns": [
+        "id",
+        "key",
+        "title",
+        "abstract",
+        "research_question",
+        "status",
+        "lead_name",
+        "lead_orcid",
+        "canonical_url",
+        "protocol_ref",
+        "human_subjects_status",
+        "publication_plan",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "research_sources",
+      "columns": [
+        "id",
+        "citation_key",
+        "title",
+        "authors",
+        "published_year",
+        "doi",
+        "canonical_url",
+        "source_type",
+        "category",
+        "relevance",
+        "verified_at",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "rides",
+      "columns": [
+        "id",
+        "tenant_id",
+        "rider_id",
+        "driver_id",
+        "status",
+        "pickup_label",
+        "pickup_lat",
+        "pickup_lng",
+        "dropoff_label",
+        "dropoff_lat",
+        "dropoff_lng",
+        "miles",
+        "minutes",
+        "ride_tier",
+        "fare_cents",
+        "platform_fee_cents",
+        "pickup_pin",
+        "rider_name",
+        "driver_name",
+        "driver_vehicle",
+        "driver_plate",
+        "driver_rating",
+        "requested_at",
+        "accepted_at",
+        "arrived_at",
+        "started_at",
+        "completed_at",
+        "updated_at",
+        "payment_status",
+        "stripe_payment_intent_id"
+      ]
+    },
+    {
+      "name": "rights_flags",
+      "columns": [
+        "id",
+        "rights",
+        "note",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "sales_leads",
+      "columns": [
+        "id",
+        "company_name",
+        "market",
+        "website",
+        "email",
+        "phone",
+        "fleet_note",
+        "app_gap_note",
+        "status",
+        "source_url",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "shake_crew",
+      "columns": [
+        "profile_id",
+        "added_by",
+        "at"
+      ]
+    },
+    {
+      "name": "shake_open_window",
+      "columns": [
+        "id",
+        "opens_at",
+        "closes_at",
+        "note",
+        "max_orders",
+        "fee_cents",
+        "taken"
+      ]
+    },
+    {
+      "name": "shake_order_events",
+      "columns": [
+        "id",
+        "order_id",
+        "from_status",
+        "to_status",
+        "actor",
+        "note",
+        "at"
+      ]
+    },
+    {
+      "name": "shake_orders",
+      "columns": [
+        "id",
+        "code",
+        "window_id",
+        "profile_id",
+        "claim_token",
+        "customer_name",
+        "contact_phone",
+        "contact_email",
+        "stop_id",
+        "stop_name",
+        "room_detail",
+        "items",
+        "subtotal_cents",
+        "fee_cents",
+        "total_cents",
+        "status",
+        "payment_provider",
+        "payment_ref",
+        "note",
+        "placed_at",
+        "paid_at",
+        "delivered_at"
+      ]
+    },
+    {
+      "name": "shake_products",
+      "columns": [
+        "id",
+        "slug",
+        "name",
+        "blurb",
+        "price_cents",
+        "image",
+        "category",
+        "options",
+        "allergens",
+        "available",
+        "ordinal",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "shake_stops",
+      "columns": [
+        "id",
+        "name",
+        "note",
+        "active",
+        "ordinal"
+      ]
+    },
+    {
+      "name": "shake_windows",
+      "columns": [
+        "id",
+        "opens_at",
+        "closes_at",
+        "status",
+        "note",
+        "max_orders",
+        "fee_cents",
+        "opened_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "site_accounts",
+      "columns": [
+        "id",
+        "user_id",
+        "site_name",
+        "site_url",
+        "plan",
+        "price",
+        "status",
+        "started_at",
+        "notes",
+        "offer",
+        "mode",
+        "config"
+      ]
+    },
+    {
+      "name": "site_content",
+      "columns": [
+        "id",
+        "page",
+        "slot",
+        "kind",
+        "value",
+        "original",
+        "fragile",
+        "updated_at",
+        "updated_by",
+        "updated_via"
+      ]
+    },
+    {
+      "name": "site_content_history",
+      "columns": [
+        "id",
+        "content_id",
+        "page",
+        "slot",
+        "was",
+        "became",
+        "at",
+        "by_user",
+        "via"
+      ]
+    },
+    {
+      "name": "site_requests",
+      "columns": [
+        "id",
+        "user_id",
+        "kind",
+        "body",
+        "status",
+        "reply",
+        "created_at",
+        "updated_at",
+        "offer",
+        "mode",
+        "config",
+        "legacy_plan"
+      ]
+    },
+    {
+      "name": "social_accounts",
+      "columns": [
+        "id",
+        "org_id",
+        "platform",
+        "external_account_id",
+        "handle",
+        "display_name",
+        "credential_ref",
+        "status",
+        "capabilities",
+        "settings",
+        "last_synced_at",
+        "created_at",
+        "updated_at",
+        "owner_m_uid",
+        "owner_verified_at",
+        "owner_verification"
+      ]
+    },
+    {
+      "name": "social_agent_devices",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "platform",
+        "status",
+        "capabilities",
+        "last_seen_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "social_agent_events",
+      "columns": [
+        "id",
+        "org_id",
+        "device_id",
+        "job_id",
+        "kind",
+        "detail",
+        "created_at"
+      ]
+    },
+    {
+      "name": "social_agent_jobs",
+      "columns": [
+        "id",
+        "org_id",
+        "device_id",
+        "platform",
+        "action",
+        "state",
+        "media_url",
+        "caption",
+        "payload",
+        "external_id",
+        "failure",
+        "approved_by",
+        "claimed_at",
+        "finished_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "social_automation_rules",
+      "columns": [
+        "id",
+        "org_id",
+        "account_id",
+        "campaign_id",
+        "name",
+        "trigger_type",
+        "trigger_config",
+        "action_type",
+        "action_config",
+        "approval_mode",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "social_campaigns",
+      "columns": [
+        "id",
+        "org_id",
+        "account_id",
+        "name",
+        "objective",
+        "status",
+        "source_asset_id",
+        "created_by",
+        "settings",
+        "starts_at",
+        "ends_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "social_content_items",
+      "columns": [
+        "id",
+        "org_id",
+        "created_by",
+        "publisher_m_uid",
+        "publisher_key",
+        "title",
+        "master_caption",
+        "source_asset_id",
+        "action_campaign_id",
+        "action_mission_id",
+        "status",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "social_lead_attribution",
+      "columns": [
+        "id",
+        "org_id",
+        "campaign_id",
+        "post_id",
+        "contact_id",
+        "conversation_id",
+        "lead_id",
+        "conversion_type",
+        "value_cents",
+        "metadata",
+        "created_at"
+      ]
+    },
+    {
+      "name": "social_metric_snapshots",
+      "columns": [
+        "id",
+        "org_id",
+        "post_id",
+        "recorded_at",
+        "views",
+        "reach",
+        "likes",
+        "comments",
+        "shares",
+        "saves",
+        "follows",
+        "profile_visits",
+        "dms",
+        "leads",
+        "watch_time_seconds",
+        "avg_watch_time_seconds",
+        "retention_3s",
+        "score",
+        "raw",
+        "source"
+      ]
+    },
+    {
+      "name": "social_posts",
+      "columns": [
+        "id",
+        "org_id",
+        "account_id",
+        "campaign_id",
+        "variant_id",
+        "publish_job_id",
+        "external_media_id",
+        "permalink",
+        "publish_mode",
+        "caption",
+        "published_at",
+        "metadata",
+        "created_at",
+        "updated_at",
+        "last_insights_synced_at",
+        "next_insights_sync_at",
+        "content_id"
+      ]
+    },
+    {
+      "name": "social_publish_jobs",
+      "columns": [
+        "id",
+        "org_id",
+        "account_id",
+        "campaign_id",
+        "variant_id",
+        "publish_mode",
+        "scheduled_at",
+        "state",
+        "external_creation_id",
+        "external_media_id",
+        "attempts",
+        "last_error",
+        "dedupe_key",
+        "payload",
+        "created_at",
+        "updated_at",
+        "lease_owner",
+        "lease_expires_at",
+        "content_id"
+      ]
+    },
+    {
+      "name": "social_variants",
+      "columns": [
+        "id",
+        "org_id",
+        "campaign_id",
+        "source_asset_id",
+        "output_asset_id",
+        "media_job_id",
+        "variant_key",
+        "hypothesis",
+        "hook",
+        "caption",
+        "hashtags",
+        "status",
+        "score",
+        "score_components",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "social_webhook_events",
+      "columns": [
+        "id",
+        "org_id",
+        "account_id",
+        "platform",
+        "event_id",
+        "event_type",
+        "payload",
+        "state",
+        "received_at",
+        "processed_at",
+        "last_error"
+      ]
+    },
+    {
+      "name": "song_tests",
+      "columns": [
+        "track_key",
+        "album",
+        "label",
+        "question",
+        "gated",
+        "sort",
+        "active"
+      ]
+    },
+    {
+      "name": "song_verdicts",
+      "columns": [
+        "user_id",
+        "track_key",
+        "verdict",
+        "why",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "stripe_events",
+      "columns": [
+        "event_id",
+        "event_type",
+        "stripe_account_id",
+        "processed_at"
+      ]
+    },
+    {
+      "name": "tenant_domains",
+      "columns": [
+        "id",
+        "tenant_id",
+        "hostname",
+        "verified",
+        "cloudflare_custom_hostname_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "tenants",
+      "columns": [
+        "id",
+        "slug",
+        "name",
+        "logo_url",
+        "primary_color",
+        "secondary_color",
+        "tagline",
+        "white_label_enabled",
+        "platform_fee_percent",
+        "stripe_account_id",
+        "subscription_status",
+        "created_at",
+        "contact_email",
+        "stripe_customer_id",
+        "stripe_subscription_id",
+        "stripe_charges_enabled",
+        "stripe_payouts_enabled",
+        "stripe_details_submitted",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "v_acquisition",
+      "columns": [
+        "source",
+        "medium",
+        "campaign",
+        "sessions",
+        "devices",
+        "conversions",
+        "buy_taps",
+        "avg_span_s"
+      ]
+    },
+    {
+      "name": "v_acquisition_quality",
+      "columns": [
+        "source",
+        "sessions",
+        "people",
+        "engagement_rate",
+        "avg_seconds",
+        "avg_pages",
+        "conversions"
+      ]
+    },
+    {
+      "name": "v_cohort_retention",
+      "columns": [
+        "cohort_week",
+        "weeks_later",
+        "devices"
+      ]
+    },
+    {
+      "name": "v_content_performance",
+      "columns": [
+        "track",
+        "plays",
+        "listeners",
+        "sessions",
+        "plays_per_listener",
+        "repeat_listeners",
+        "first_heard",
+        "last_heard"
+      ]
+    },
+    {
+      "name": "v_engagement_daily",
+      "columns": [
+        "day",
+        "sessions",
+        "people",
+        "engaged_sessions",
+        "engagement_rate",
+        "avg_seconds",
+        "avg_pages",
+        "avg_scroll_pct",
+        "rage_clicks",
+        "errors"
+      ]
+    },
+    {
+      "name": "v_event_taxonomy_unmapped",
+      "columns": [
+        "name",
+        "hits",
+        "last_seen"
+      ]
+    },
+    {
+      "name": "v_events_staged",
+      "columns": [
+        "id",
+        "at",
+        "name",
+        "path",
+        "props",
+        "uid",
+        "device_id",
+        "session_id",
+        "ip",
+        "user_agent",
+        "referrer",
+        "country",
+        "region",
+        "city",
+        "postal",
+        "latitude",
+        "longitude",
+        "timezone",
+        "asn",
+        "asn_org",
+        "is_bot",
+        "device",
+        "edge",
+        "site_id",
+        "source_host",
+        "stage",
+        "unmapped"
+      ]
+    },
+    {
+      "name": "v_friction",
+      "columns": [
+        "path",
+        "element",
+        "label",
+        "kind",
+        "hits",
+        "sessions",
+        "last_seen"
+      ]
+    },
+    {
+      "name": "v_funnel_daily",
+      "columns": [
+        "day",
+        "arrived",
+        "heard_something",
+        "engaged",
+        "searched",
+        "asked_for_something",
+        "made_an_account",
+        "confirmed_the_email",
+        "reached_checkout",
+        "paid"
+      ]
+    },
+    {
+      "name": "v_live",
+      "columns": [
+        "session_id",
+        "last_seen",
+        "on_page",
+        "city",
+        "region",
+        "country",
+        "network",
+        "ip",
+        "device_id",
+        "uid",
+        "events"
+      ]
+    },
+    {
+      "name": "v_page_health",
+      "columns": [
+        "path",
+        "events",
+        "page_views",
+        "sessions",
+        "devices",
+        "avg_seconds",
+        "avg_scroll_pct",
+        "avg_visible_s",
+        "rage_clicks",
+        "dead_clicks",
+        "exit_intents",
+        "errors",
+        "lcp_p75_ms",
+        "ttfb_p75_ms",
+        "last_seen"
+      ]
+    },
+    {
+      "name": "v_paths",
+      "columns": [
+        "from_page",
+        "to_page",
+        "moves",
+        "sessions"
+      ]
+    },
+    {
+      "name": "v_sessions",
+      "columns": [
+        "session_id",
+        "started",
+        "ended",
+        "span_s",
+        "device_id",
+        "uid",
+        "is_bot",
+        "ip",
+        "country",
+        "region",
+        "city",
+        "asn",
+        "network",
+        "user_agent",
+        "events",
+        "pages",
+        "clicks",
+        "rage_clicks",
+        "dead_clicks",
+        "errors",
+        "conversions",
+        "buy_taps",
+        "showed_exit_intent",
+        "max_scroll_pct",
+        "visible_s",
+        "entry_page",
+        "exit_page",
+        "referrer",
+        "acquisition"
+      ]
+    },
+    {
+      "name": "v_stickiness",
+      "columns": [
+        "day",
+        "dau",
+        "wau",
+        "mau",
+        "dau_over_mau",
+        "days_observed",
+        "window_is_full"
+      ]
+    },
+    {
+      "name": "v_track_affinity",
+      "columns": [
+        "track_key",
+        "other_key",
+        "score",
+        "rn"
+      ]
+    },
+    {
+      "name": "v_track_signals",
+      "columns": [
+        "track_key",
+        "position",
+        "keep_score",
+        "momentum_score",
+        "momentum_rank",
+        "deep_cut"
+      ]
+    },
+    {
+      "name": "v_visitors",
+      "columns": [
+        "device_id",
+        "first_seen",
+        "last_seen",
+        "sessions",
+        "events",
+        "distinct_pages",
+        "has_account",
+        "uid",
+        "is_bot",
+        "last_ip",
+        "country",
+        "city",
+        "network",
+        "platform",
+        "gpu",
+        "conversions",
+        "buy_taps"
+      ]
+    },
+    {
+      "name": "work_bookings",
+      "columns": [
+        "id",
+        "org_id",
+        "lead_id",
+        "company_id",
+        "title",
+        "state",
+        "starts_at",
+        "ends_at",
+        "location",
+        "note",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "order_id"
+      ]
+    },
+    {
+      "name": "work_deliverables",
+      "columns": [
+        "id",
+        "org_id",
+        "project_id",
+        "title",
+        "kind",
+        "state",
+        "approval_state",
+        "artifact_url",
+        "media_asset_id",
+        "due_at",
+        "delivered_at",
+        "approved_at",
+        "approved_by",
+        "note",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "work_orders",
+      "columns": [
+        "id",
+        "org_id",
+        "lead_id",
+        "company_id",
+        "title",
+        "state",
+        "amount_cents",
+        "currency",
+        "items",
+        "source_table",
+        "source_id",
+        "placed_at",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "livemode"
+      ]
+    },
+    {
+      "name": "work_payments",
+      "columns": [
+        "id",
+        "org_id",
+        "title",
+        "state",
+        "amount_cents",
+        "currency",
+        "provider",
+        "provider_reference",
+        "verification",
+        "company_id",
+        "lead_id",
+        "order_id",
+        "project_id",
+        "renewal_id",
+        "due_at",
+        "paid_at",
+        "note",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "livemode"
+      ]
+    },
+    {
+      "name": "work_projects",
+      "columns": [
+        "id",
+        "org_id",
+        "title",
+        "state",
+        "summary",
+        "company_id",
+        "relationship_id",
+        "lead_id",
+        "order_id",
+        "owner_id",
+        "starts_at",
+        "due_at",
+        "budget_cents",
+        "currency",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "work_relationships",
+      "columns": [
+        "id",
+        "org_id",
+        "title",
+        "relationship_type",
+        "state",
+        "company_id",
+        "contact_id",
+        "lead_id",
+        "owner_id",
+        "started_at",
+        "ended_at",
+        "notes",
+        "created_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "work_renewals",
+      "columns": [
+        "id",
+        "org_id",
+        "title",
+        "state",
+        "cadence",
+        "company_id",
+        "relationship_id",
+        "project_id",
+        "order_id",
+        "amount_cents",
+        "currency",
+        "renews_at",
+        "last_renewed_at",
+        "source_table",
+        "source_id",
+        "note",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "livemode"
+      ]
+    },
+    {
+      "name": "work_tasks",
+      "columns": [
+        "id",
+        "org_id",
+        "title",
+        "detail",
+        "state",
+        "assignee",
+        "due_at",
+        "related_type",
+        "related_id",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "completed_at"
+      ]
+    }
+  ]
+}

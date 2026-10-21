@@ -92,6 +92,64 @@ The route maps natural-language business questions onto the fixed metric catalog
 
 An optional explicit `window` field may override the window parsed from the question.
 
+## Session forensics (Control Analytics → Forensics)
+
+These routes back the Forensics tab: a list of sessions you can open, each opened as a journey, and visitors you can follow across sessions. They are **house-owner only**, a stricter gate than `ops.use`, because the rows carry IPs, approximate places and signed-in emails. They read first-party telemetry only (`site_id is null`). The aggregation runs in Postgres (`analytics_session_list`, `analytics_visitor_list`), which only `service_role` can execute.
+
+`GET /v1/analytics/sessions?since=&until=&limit=40&offset=0&filter=all&sort=recent&q=`
+
+One page of sessions, plus counts per filter for the range.
+
+- `filter`: `all`, `identified`, `music`, `signup`, `converted`, `friction`, `returning`, `engaged` or `bots`.
+- `sort`: `recent`, `engaged`, `events`, `friction` or `oldest`.
+- Any other filter or sort value falls back to `all` / `recent`.
+- `limit` is clamped to 1–100 and `offset` to 0–20000.
+- `q` (at most 120 characters) matches page, song, email, place, IP, network or source.
+- `unsessioned_events` counts events from visitors who declined identifiers. They are counted, never stitched into sessions.
+
+`GET /v1/analytics/sessions/{session_id}`
+
+The session's summary and its events in order, capped at 2000. It also returns the visitor and their sessions over the last 180 days. For a signed-in person that means every device they used; otherwise it is this device only. Bot sessions can still be opened. Profile fields are limited to display name, email, handle, avatar and account creation date.
+
+`GET /v1/analytics/visitors?since=&until=&limit=&offset=&filter=&sort=&q=`
+
+One page of visitors. The visitor key is `u:<uid>` for a signed-in person and `d:<device_id>` otherwise.
+
+- `filter`: `all`, `identified`, `returning`, `music`, `signup`, `friction`, `engaged` or `bots`.
+- `sort`: `recent`, `sessions`, `engaged` or `first_seen`.
+
+`GET /v1/analytics/visitors/{u:uid | d:device_id}`
+
+A visitor's profile and sessions over 180 days.
+
+Malformed ids get `400` before any query runs. A session or device with nothing recorded gets `404`. Device blobs are always reduced to a fixed summary (platform, screen, viewport, language and similar), never passed through raw. The older raw-row route `GET /v1/analytics/forensics` remains; `js/analytics-suite.js` still reads it.
+
+`GET /v1/analytics/flows?since=&until=`
+
+How people move through the site, across every session in the range (the Forensics **Flows** view). It reads only `session_id, device_id, at, name, path, visible_s, depth` from `events_lean`, for non-bot first-party events with a session. Only navigation, music, conversion and friction event names are read. The window is clamped to the latest 31 days of the range (`range.clamped`). At most 60,000 rows are read, oldest first; when the cap is reached, `truncated` is true.
+
+It returns:
+
+- `sessions`, `bounced` and `bounce_rate`;
+- `pages_per_session`, bucketed 1–4 and 5+;
+- `entries`: each landing page with its bounce, played-music and signed-up shares;
+- `exits`;
+- `transitions`: the busiest page-to-page steps, each with up to three sample session ids to open;
+- `paths`: the most common full paths;
+- `pages`: per page, views, sessions, entries, exits, the median time on screen, the average read depth, outcome shares and where visitors went next, with leaving the site counted as a next step.
+
+`GET /v1/analytics/errors?since=&until=`
+
+Every error and friction point in the range, grouped (the Forensics **Errors** view). It reads `at, name, path, props, session_id, device_id, user_agent` from `events`, for the names `js_error`, `js_rejection`, `dead_click`, `rage_click`, `play_failed`, `signup_blocked`, `gated_preview_end` and `checkout_retired_link`. The 31-day clamp applies, and at most 20,000 rows are read, newest first.
+
+- **Errors** are grouped by a fingerprint: the message with URLs, quoted values and numbers masked, plus the script's file name.
+- Each error says whose it is: `site`, `third_party`, `opaque` (the bare cross-origin "Script error.") or `injected` (in-app-browser and extension scripts). The site's own errors come first.
+- **Dead and rage taps** are grouped by page and target. **Blocked steps** are grouped by reason.
+- Each group carries its count, sessions, devices, pages, browsers (OS and in-app browser), first and last time seen, and up to five sample session ids.
+- Error sources are reported without their query string or hash, because the page URL carries click and campaign ids.
+
+Both routes are house-owner only and are refused before any telemetry is read. The error inventory they were built to answer, with the fix for each error, is `docs/control-plane/JOURNEY-ERRORS.md`.
+
 ## Mnet API
 
 Mnet uses the same API host.
@@ -102,16 +160,16 @@ Current endpoints:
 - `GET /v1/mnet/feed?app_key=...&limit=...&before=...` — user-scoped feed; API keys with `mnet:read` receive public feed data.
 - `GET /v1/mnet/people/:mcclusterId` — canonical McCluster/Mnet public identity.
 - `PATCH /v1/mnet/profile?app_key=...` — universal profile update, including the canonical McCluster ID when supplied; McCluster-user session only.
-- `POST /v1/mnet/posts?app_key=...` — native post creation, or a persistent comment when `reply_to_id` is supplied; McCluster-user session only.
-- `GET /v1/mnet/posts/:postId/replies` — visible first-level comments with author/profile hydration.
-- `POST /v1/mnet/posts/:postId/reactions` — add a reaction.
-- `DELETE /v1/mnet/posts/:postId/reactions` — remove the current user's reaction.
+- `POST /v1/mnet/posts?app_key=...` — native post creation; McCluster-user session only. Conventional comments are retired, so `reply_to_id` is rejected.
+- `GET /v1/mnet/posts/:postId/replies` — retired compatibility route; returns `410 Gone`.
+- `POST /v1/mnet/posts/:postId/reactions` — retired compatibility route; returns `410 Gone`.
+- `DELETE /v1/mnet/posts/:postId/reactions` — retired compatibility route; returns `410 Gone`.
 - `POST /v1/mnet/people/:mcclusterId/follow` — follow.
 - `DELETE /v1/mnet/people/:mcclusterId/follow` — unfollow.
 - `GET /v1/mnet/notifications` — current person's notifications.
 - `POST /v1/mnet/notifications/read` — mark the current person's unread notifications read.
 
-Signed-in first-party feed responses hydrate post items with the public author-card fields needed by the client plus reaction/reply counts and the current user's like state. Reply posts remain addressable through the replies endpoint instead of being duplicated as top-level feed cards.
+Signed-in first-party feed responses hydrate post items with the public author-card fields needed by the client plus bookmark state. Group posts stay inside joined group rooms instead of leaking into the general feed. Missions, proof, verified actions and receipts are the response primitives; legacy comments and reactions are retained only as historical data.
 
 External API keys start read-oriented. Write access should be deliberately granted with scopes rather than letting an integration impersonate a human by default.
 

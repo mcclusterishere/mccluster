@@ -8,8 +8,8 @@
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music"];
+  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -67,6 +67,12 @@
     jobFilter: "all",
     pipelineStage: "all",
     resources: null,
+    observability: null,
+    observabilityTrace: null,
+    workspaces: [],
+    recentErrors: null,
+    observabilityFilters: { level: "all", kind: "all", window: 24, q: "" },
+    publicRecord: null,
     socialAccounts: null,
     decisions: [],
     leadTotal: null,
@@ -81,9 +87,9 @@
     assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
-    halo: { title: "Hitman Halo", href: "prayer-closet.html", subtitle: "Specialized intelligence workspace" },
+    halo: { title: "Hitman Halo", href: "auth/seek-first-handoff.html", subtitle: "Owner spatial intelligence workspace" },
     manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" },
-    spatial: { title: "Spatial Intelligence", href: API + "/internal/seek-first", subtitle: "Protected Seek First console", external: true }
+    spatial: { title: "Spatial Intelligence", href: "auth/seek-first-handoff.html", subtitle: "Seek First console, signed in as you" }
   };
 
   /* Formatting and source-result primitives live in js/control-room/
@@ -107,6 +113,8 @@
     return token().then(function (t) {
       if (!t) throw new Error("signed out");
       var headers = { authorization: "Bearer " + t };
+      if (state.org && state.org.id) headers["x-mccluster-org-id"] = state.org.id;
+      if (window.crypto && typeof window.crypto.randomUUID === "function") headers["x-mccluster-trace-id"] = window.crypto.randomUUID();
       if (opts.body !== undefined) headers["content-type"] = "application/json";
       return fetch(API + path, {
         method: opts.method || "GET",
@@ -812,7 +820,11 @@
     if (v === "assets") return "library";
     if (["calendar", "published"].indexOf(v) >= 0) return "schedule";
     if (["management", "socials", "socials-room"].indexOf(v) >= 0) return "channels";
+    if (["social-agent", "ig", "reels"].indexOf(v) >= 0) return "instagram";
     if (["music-review", "vault", "lanes", "review-desk"].indexOf(v) >= 0) return "music";
+    if (["action", "uprise", "mobilize"].indexOf(v) >= 0) return "action-network";
+    if (["grants", "opportunity-intelligence", "bounties-funding"].indexOf(v) >= 0) return "funding";
+    if (["build-code", "code"].indexOf(v) >= 0) return "build";
     return "projects";
   }
   function normalizeSystemView(v) {
@@ -955,6 +967,12 @@
     var routine = pending.filter(function (d) { return ["high", "critical"].indexOf(d.risk_class) < 0; });
     if (routine.length) items.push({ title: routine.length + " decision" + (routine.length === 1 ? "" : "s") + " awaiting you", sub: "Proposed in the AI context plane, not yet approved or rejected.", kind: "warn", action: "inspect-decision", id: routine[0].id });
 
+    /* Retained errors from the owner-gated event stream (System ·
+       Observability). Absent for a non-owner, whose read is refused. */
+    if (state.recentErrors && state.recentErrors.count) {
+      var latestError = state.recentErrors.latest || {};
+      items.push({ title: state.recentErrors.count + (state.recentErrors.more ? "+" : "") + " error" + (state.recentErrors.count === 1 ? "" : "s") + " in the last 24 hours", sub: "Latest: " + text(latestError.event_name || latestError.route, "event") + " · " + ago(latestError.occurred_at || latestError.created_at), kind: "bad", action: "observe-errors" });
+    }
     var newLeads = state.leads.filter(function (l) { return (l.status || "new") === "new"; });
     if (newLeads.length) items.push({ title: newLeads.length + " lead" + (newLeads.length === 1 ? "" : "s") + " never answered", sub: "Still in the new stage in the canonical leads table.", kind: "warn", action: "work-pipeline" });
     /* A source that could not be read is itself something that needs the
@@ -990,6 +1008,25 @@
   }
 
 
+  // Shows what the resident turn checked on the web so grounded evidence
+  // remains inspectable even if the local model omits inline citations.
+  function aiResearchHtml(message) {
+    var research = message.metadata && message.metadata.current_research;
+    if (!research || !research.attempted) return "";
+    var sources = (Array.isArray(research.sources) ? research.sources : []).filter(function (source) {
+      return source && /^https?:\/\//i.test(String(source.url || ""));
+    });
+    if (!research.ok || !sources.length) {
+      return '<div class="cr-ai-research cr-ai-research--none">' +
+        esc(research.ok ? "Checked the web · no results · answer may be out of date" : "Web check failed · answer may be out of date") + '</div>';
+    }
+    var when = research.fetched_at ? " · " + ago(research.fetched_at) : "";
+    return '<details class="cr-ai-research"><summary>Checked the web · ' + sources.length + " source" + (sources.length === 1 ? "" : "s") + esc(when) + '</summary><ol>' +
+      sources.map(function (source) {
+        return '<li><a href="' + esc(source.url) + '" target="_blank" rel="noopener noreferrer">' + esc(source.title || source.url) + '</a></li>';
+      }).join("") + '</ol></details>';
+  }
+
   function renderAi() {
     if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
     var selected = aiThreadById(state.selectedAiThreadId);
@@ -1023,7 +1060,7 @@
           : "";
         return '<div class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '">' +
           '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span>' + speakControl + '</div>' +
-          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div></div>';
+          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div>' + (mine ? "" : aiResearchHtml(message)) + '</div>';
       }).join("");
     }
     if (state.aiChatPending) {
@@ -1064,6 +1101,48 @@
           '</footer></section></div>';
   }
 
+  function publicRecordLink(title, subtitle, href, value, external) {
+    return '<a class="cr-row" href="' + esc(href) + '"' +
+      (external ? ' target="_blank" rel="noopener noreferrer"' : "") + '>' +
+      '<span class="cr-row__main"><span class="cr-row__title"><span>' + esc(title) + '</span></span>' +
+      (subtitle ? '<span class="cr-row__sub">' + esc(subtitle) + '</span>' : "") +
+      '</span><span class="cr-row__value">' + esc(value || "Open") + '</span></a>';
+  }
+
+  function renderPublicRecord() {
+    var source = state.sources.publicRecord;
+    var record = state.publicRecord;
+    if (!record) {
+      if (source && !source.ok) return '<div class="cr-panel__body">' + sourceBanner(source, "Public record") + '</div>';
+      return '<div class="cr-panel__body cr-muted">Loading the canonical public authority sources…</div>';
+    }
+
+    var graph = record.entityGraph || {};
+    var ledger = record.evidenceLedger || {};
+    var sitemap = record.sitemapPages || {};
+    var pages = Array.isArray(sitemap.pages) ? sitemap.pages.length : 0;
+    var evidence = Array.isArray(ledger.items) ? ledger.items.filter(function (item) {
+      return item && item.verification_status === "verified" && item.publish === true;
+    }).length : 0;
+    var occupations = graph.person && Array.isArray(graph.person.hasOccupation) ? graph.person.hasOccupation.length : 0;
+
+    return '<div class="cr-panel__body">' +
+      props([
+        ["Indexable pages", pages],
+        ["Published verified evidence", evidence],
+        ["Occupation records", occupations],
+        ["Entity graph updated", graph.updated_at || "—"]
+      ]) +
+      '<p class="cr-muted">Read-only snapshot from data/seo/entity-graph.json, data/seo/evidence-ledger.json and data/seo/sitemap-pages.json — the same files that drive the public site generators.</p></div>' +
+      '<div class="cr-list">' +
+        publicRecordLink("Newsroom", "Verified public evidence", "newsroom.html", "Open", false) +
+        publicRecordLink("Recruiter role map", "Role-to-evidence routing", "engineering/recruiter-role-map.html", "Open", false) +
+        publicRecordLink("XML sitemap", "Current indexable-page inventory", "sitemap.xml", "Open", false) +
+        publicRecordLink("Google Search Console", "Indexing and search performance", "https://search.google.com/search-console", "Open", true) +
+        publicRecordLink("Bing Webmaster Tools", "Bing and Copilot search console", "https://www.bing.com/webmasters/", "Open", true) +
+      '</div>';
+  }
+
   function renderHome() {
     var c = state.status && state.status.counts || {};
     var attention = attentionItems();
@@ -1092,7 +1171,8 @@
         row("API Worker", "api.mccluster.org", state.health && state.health.ok ? "Healthy" : "Check", state.health && state.health.ok ? "ok" : "bad", "system-overview") +
         row("Database", "Canonical Supabase", state.status && state.status.database && state.status.database.reachable ? "Healthy" : "Check", state.status && state.status.database && state.status.database.reachable ? "ok" : "warn", "system-overview") +
         row("Core", "ai_context-v4", state.ai && state.ai.ok ? "Healthy" : "Inspect", state.ai && state.ai.ok ? "ai" : "warn", "system-workload") +
-      '</div>', "cr-span-5") + '</div>';
+      '</div>', "cr-span-5") +
+      panel("Public record", "canonical search authority", renderPublicRecord(), "cr-span-12") + '</div>';
   }
 
   function unifiedInbox() {
@@ -1294,16 +1374,24 @@
     var q = String(state.search || "").trim();
     var parts = ["select=*", "order=at.desc", "limit=" + limit, "offset=" + (offset || 0)];
     if (state.pipelineStage !== "all") parts.push("status=eq." + encodeURIComponent(state.pipelineStage));
+    /* Leads belong to the active workspace. Leads with no org predate
+       tenancy and are the house pipeline (workers/mccluster/src/leads.js),
+       so only the house workspace includes them. */
+    var orgId = state.org && state.org.id ? encodeURIComponent(state.org.id) : null;
+    var orgClause = orgId ? (isHouseWorkspace(state.org) ? "or(org_id.eq." + orgId + ",org_id.is.null)" : "org_id.eq." + orgId) : null;
+    var search = null;
     if (q) {
       /* PostgREST `or` with ilike. Commas and parens would break out of the
          filter group, so they are stripped rather than escaped. */
       var safe = q.replace(/[(),*]/g, " ").trim();
       if (safe) {
-        parts.push("or=(" + LEAD_SEARCH_COLUMNS.map(function (c) {
+        search = "or(" + LEAD_SEARCH_COLUMNS.map(function (c) {
           return c + ".ilike.*" + encodeURIComponent(safe) + "*";
-        }).join(",") + ")");
+        }).join(",") + ")";
       }
     }
+    var clauses = [orgClause, search].filter(Boolean);
+    if (clauses.length) parts.push("and=(" + clauses.join(",") + ")");
     return "leads?" + parts.join("&");
   }
 
@@ -1426,10 +1514,11 @@
       companyMap[k].people += 1;
     });
     var companies = Object.keys(companyMap).map(function (k) { return companyMap[k]; });
-    /* Backend gap, stated rather than papered over with invented rows. */
-    var gap = companies.length ? "" : '<div class="cr-gap"><b>No company model exists yet.</b><span>Companies are grouped from a company field on leads. No lead currently carries one, and there is no companies table or endpoint in the canonical backend — so this view is truthfully empty rather than filled with manufactured organizations.</span></div>';
-    return sourceBanner(state.sources.leads, "Leads") + gap +
-      (companies.length ? derivedNote("Grouped from the company field on canonical leads.") : "") +
+    /* Companies are real records now (out_companies via /v1/work/companies);
+       a lead joins one through company_id. The free-text grouping below only
+       shows legacy leads that carried a company string. */
+    return sourceBanner(state.sources.leads, "Leads") + (window.CR.work ? window.CR.work.section("companies") : "") +
+      (companies.length ? derivedNote("Legacy: grouped from a free-text company field on older leads. Create the company above to make it a record.") : "") +
       (companies.length ? renderTable([{ label: "Company", key: "name" }, { label: "People", key: "people" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], companies, "No company records yet") : "");
   }
 
@@ -1455,7 +1544,8 @@
       tasks.push({ id: j.id, action: "inspect-job", task: "Resolve failed " + titleCase(j.job_type), related: text(j.target_id, j.target_type), due: j.updated_at || j.created_at });
     });
     return sourceStates([["Leads", state.sources.leads], ["Workload", state.sources.jobs]]) +
-      '<div class="cr-gap"><b>Tasks are derived, not stored.</b><span>There is no canonical tasks table, so nothing here can be created, assigned, or checked off. These are the open next actions implied by leads that have not closed and by failed Core jobs.</span></div>' +
+      (window.CR.work ? window.CR.work.section("tasks") : "") +
+      derivedNote("Suggested next actions, implied by leads that have not closed and by failed Core jobs. They are not stored; create a task above to track one.") +
       renderTable([{ label: "Next action", key: "task" }, { label: "Related", key: "related" }, { label: "Since", html: function (r) { return esc(ago(r.due)); } }], tasks, "No open next actions");
   }
 
@@ -1463,7 +1553,8 @@
     var lane = view === "orders" ? "orders" : "bookings";
     var rows = state.leads.filter(function (l) { return leadLane(l) === lane; }).map(function (l) { return { id: l.id, action: "inspect-lead", name: l.name || l.email, item: l.want || l.note || l.campaign || titleCase(lane), status: l.status || "new", last: l.at || l.created_at }; });
     return sourceBanner(state.sources.leads, "Leads") +
-      '<div class="cr-gap"><b>' + esc(titleCase(view)) + ' are lead lanes, not their own records.</b><span>The canonical schema has no ' + esc(view) + ' table. These rows are leads routed to the ' + esc(lane) + ' lane by campaign, so there is no fulfilment state, amount, or line item to show and none is invented here.</span></div>' +
+      (window.CR.work ? window.CR.work.section(view === "orders" ? "orders" : "bookings") : "") +
+      derivedNote("Incoming: leads routed to the " + lane + " lane by campaign. Turn one into a real " + (view === "orders" ? "order" : "booking") + " record above when it is agreed.") +
       renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
   }
 
@@ -1477,11 +1568,23 @@
     if (view === "companies") return renderCompanies();
     if (view === "clients") return renderClients();
     if (view === "tasks") return renderTasks();
+    if (POST_SALE_NOTES[view]) {
+      return derivedNote(POST_SALE_NOTES[view]) + (window.CR.work ? window.CR.work.section(view) : empty("Work records unavailable", "The native Control module did not load."));
+    }
     return renderOrdersBookings(view);
   }
+  /* The post-sale graph (workers/mccluster/src/work.js). Each is a stored,
+     org-scoped record linked to the canonical company / person / order. */
+  var POST_SALE_NOTES = {
+    relationships: "A relationship links this workspace to a company, contact or lead (client, partner, sponsor, vendor…). It points at the canonical records; nothing is copied. History opens everything linked to it.",
+    projects: "Post-sale service projects, linked to the company, relationship and the order they came from. History opens deliverables, payments, renewals, tasks and the audit trail.",
+    deliverables: "What each project owes the client, where the artifact lives, and its approval. Approval is stamped with who and when. A client-facing approval portal is not built yet: approval here is the owner's.",
+    payments: "McCluster's service-payment ledger. You record what was billed and received; every entry is labelled owner-recorded until a Stripe or Square reconciler verifies it. Product checkouts (prints, music, merch) keep their own payment truth in their order tables.",
+    renewals: "Recurring obligations and the next commercial decision: hosting, management, retainers. A renewal can point at the site account, API subscription or offering it renews."
+  };
   function renderWork() {
-    return renderHeader("Work", "One business graph. Inbox, pipeline, people, clients, tasks, orders, and bookings are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
-      '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + renderWorkView(state.workView);
+    return renderHeader("Work", "One business graph: inbox, pipeline, people, companies, relationships, clients, tasks, bookings, orders, projects, deliverables, payments and renewals are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
+      '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + (window.CR.work ? window.CR.work.renderForm() : "") + renderWorkView(state.workView);
   }
 
   function projectById(id) { return state.campaigns.find(function (c) { return String(c.id) === String(id); }); }
@@ -1597,10 +1700,22 @@
     var body = state.createView === "projects" ? renderProjects()
       : state.createView === "library" ? renderLibrary()
       : state.createView === "channels" ? renderChannels()
+      : state.createView === "instagram"
+        ? (window.CR.instagram ? window.CR.instagram.render() : empty("Instagram unavailable", "The native Control module did not load."))
       : state.createView === "music"
         ? (window.CR.musicOps ? window.CR.musicOps.render() : empty("Music operations unavailable", "The native Control module did not load."))
+      : state.createView === "clipping"
+        ? (window.CR.clipping ? window.CR.clipping.render() : empty("Clipping unavailable", "The native Control module did not load."))
+      : state.createView === "action-network"
+        ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Human Uprise unavailable", "The native Control module did not load."))
+      : state.createView === "funding"
+        ? (window.CR.fundingIntelligence ? window.CR.fundingIntelligence.render() : empty("Funding Intelligence unavailable", "The module did not load."))
+      : state.createView === "song-test"
+        ? (window.CR.songTest ? window.CR.songTest.render() : empty("Song test unavailable", "The native Control module did not load."))
+      : state.createView === "build"
+        ? (window.CR.buildCode ? window.CR.buildCode.render() : empty("Build unavailable", "The native Control module did not load."))
         : renderSchedule();
-    return renderHeader("Create", "Projects, assets, publishing, channels and music operations are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    return renderHeader("Create", "Projects, assets, publishing, channels, music operations, clipping and Human Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
 
   /* CHANNELS — where publishing actually points.
@@ -1817,16 +1932,172 @@
     });
     return events.sort(function (a, b) { return new Date(b.time || 0) - new Date(a.time || 0); });
   }
+  /* RETAINED OBSERVABILITY. One canonical, owner-gated event contract
+     (GET /v1/observability/events) carries Worker requests, domain events
+     (audited mutations, paid media, AI decisions, publishing) and Core job,
+     capability and resident-AI events. A trace or a record opens as a
+     timeline; the canonical failure and audit ledger below stays as context
+     and links into the same traces. */
+  function observabilityQuery(extra) {
+    var q = "org_id=" + encodeURIComponent(state.org.id);
+    Object.keys(extra || {}).forEach(function (k) {
+      if (extra[k] !== undefined && extra[k] !== null && extra[k] !== "") q += "&" + k + "=" + encodeURIComponent(extra[k]);
+    });
+    return "/v1/observability/events?" + q;
+  }
+  function loadObservability(force, older) {
+    if (state.pending.observability) return Promise.resolve();
+    if (state.observability && !force && !older) return Promise.resolve();
+    if (!state.org || !state.org.id) return Promise.resolve();
+    var f = state.observabilityFilters;
+    var cursor = older && state.observability && state.observability.ok && state.observability.data ? state.observability.data.next_cursor : null;
+    if (older && !cursor) return Promise.resolve();
+    state.pending.observability = true;
+    render();
+    return src(request(observabilityQuery({
+      limit: 100,
+      since: new Date(Date.now() - f.window * 60 * 60 * 1000).toISOString(),
+      level: f.level === "all" ? "" : f.level,
+      event_kind: f.kind === "all" ? "" : f.kind,
+      cursor: cursor
+    }))).then(function (result) {
+      if (older && result.ok && state.observability && state.observability.ok) {
+        var merged = pickRows(state.observability, "events").concat(pickRows(result, "events"));
+        result.data = Object.assign({}, result.data, { events: merged });
+      }
+      state.observability = result;
+      delete state.pending.observability;
+      render();
+    });
+  }
+  function loadRecentErrors() {
+    state.recentErrors = null;
+    if (!state.org || !state.org.id) return Promise.resolve();
+    return src(request(observabilityQuery({ level: "error", limit: 50, since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }))).then(function (result) {
+      if (!result.ok) return;
+      var events = pickRows(result, "events");
+      state.recentErrors = { count: events.length, more: Boolean(result.data && result.data.has_more), latest: events[0] || null };
+      render();
+    });
+  }
+  function retainedObservabilityEvents() {
+    return state.observability && state.observability.ok ? pickRows(state.observability, "events") : [];
+  }
+  function obsLabel(e) {
+    if (e.event_kind === "request" || (!e.event_name && e.method)) return [e.method, e.route].filter(Boolean).join(" ");
+    return e.event_name || e.route || "event";
+  }
+  function obsOutcome(e) {
+    if (e.status_code !== null && e.status_code !== undefined) return String(e.status_code) + (e.outcome && e.outcome !== "ok" ? " · " + e.outcome : "");
+    return e.outcome || "—";
+  }
+  function obsKind(e) { return e.level === "error" ? "bad" : (e.level === "warn" ? "warn" : "info"); }
+  function obsRows(events) {
+    return events.map(function (e) {
+      return {
+        id: e.id, action: "inspect-observation", time: e.occurred_at || e.created_at,
+        level: String(e.level || "info").toUpperCase(), kind: obsKind(e), label: obsLabel(e),
+        source: [e.source || "worker", e.event_kind].filter(Boolean).join(" · "),
+        outcome: obsOutcome(e), duration: e.duration_ms == null ? "—" : e.duration_ms + " ms",
+        resource: e.resource_type ? e.resource_type + (e.resource_id ? " " + String(e.resource_id).slice(0, 8) : "") : "—",
+        trace: e.trace_id ? String(e.trace_id).slice(0, 8) : "—"
+      };
+    });
+  }
+  var OBS_COLUMNS = [
+    { label: "Time", html: function (r) { return esc(ago(r.time)); } },
+    { label: "Level", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.level) + '</span>'; } },
+    { label: "Event", key: "label" },
+    { label: "Source", key: "source" },
+    { label: "Outcome", key: "outcome" },
+    { label: "Duration", key: "duration" },
+    { label: "Record", key: "resource" },
+    { label: "Trace", key: "trace" }
+  ];
+  /* A trace button: by trace id, or by the record the events are about. */
+  function traceButton(target, label) {
+    if (!target) return "";
+    if (target.trace_id) return '<button class="cr-btn cr-btn--ghost" type="button" data-action="observe-trace" data-trace="' + esc(target.trace_id) + '">' + esc(label || "Open trace") + '</button>';
+    if (target.resource_type && target.resource_id) return '<button class="cr-btn cr-btn--ghost" type="button" data-action="observe-resource" data-resource-type="' + esc(target.resource_type) + '" data-resource-id="' + esc(target.resource_id) + '">' + esc(label || "Events for this record") + '</button>';
+    return "";
+  }
+  function openTrace(target, title) {
+    if (!state.org || !state.org.id || !target) return Promise.resolve();
+    var query = target.trace_id ? { trace_id: target.trace_id } : { resource_type: target.resource_type, resource_id: target.resource_id };
+    state.observabilityTrace = { target: target, title: title || (target.trace_id ? "Trace " + String(target.trace_id).slice(0, 8) : target.resource_type + " " + String(target.resource_id).slice(0, 8)), loading: true, result: null };
+    closeInspector();
+    setSurface("system", "observability");
+    return src(request(observabilityQuery(Object.assign({ limit: 200 }, query)))).then(function (result) {
+      if (!state.observabilityTrace || state.observabilityTrace.target !== target) return;
+      state.observabilityTrace.loading = false;
+      state.observabilityTrace.result = result;
+      render();
+    });
+  }
+  function renderTracePanel() {
+    var t = state.observabilityTrace; if (!t) return "";
+    var head = '<div class="cr-observe-head"><div><strong>' + esc(t.title) + '</strong><span class="cr-live-dot">' +
+      (t.target.trace_id ? "every event sharing this trace" : "every event about this record") + '</span></div>' +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="close-trace">Close</button></div>';
+    if (t.loading) return head + '<div class="cr-canvas">' + empty("Reading trace", "Loading retained events for this trace.") + '</div>';
+    if (!t.result || !t.result.ok) return head + sourceBanner(t.result, "Trace");
+    var events = pickRows(t.result, "events").slice().sort(function (a, b) {
+      return new Date(a.occurred_at || a.created_at) - new Date(b.occurred_at || b.created_at) || Number(a.id) - Number(b.id);
+    });
+    if (!events.length) return head + '<div class="cr-canvas">' + empty("No retained events", "Nothing in the retention window carries this " + (t.target.trace_id ? "trace" : "record") + ". Info events are kept 14 days, warnings and errors 90.") + '</div>';
+    var first = new Date(events[0].occurred_at || events[0].created_at).getTime();
+    var timeline = '<div class="cr-trace cr-trace--obs">' + events.map(function (e) {
+      var offset = Math.max(0, new Date(e.occurred_at || e.created_at).getTime() - first);
+      var cls = e.level === "error" ? "is-bad" : (e.level === "warn" ? "is-live" : "is-done");
+      return '<div class="' + cls + '" data-action="inspect-trace-event" data-id="' + esc(e.id) + '" tabindex="0">' +
+        '<b>' + esc(obsLabel(e)) + '</b><span>+' + esc(String(offset)) + ' ms · ' + esc([e.source || "worker", obsOutcome(e), e.duration_ms == null ? "" : e.duration_ms + " ms"].filter(Boolean).join(" · ")) + '</span>' +
+        (e.message && e.event_kind !== "request" ? '<span>' + esc(String(e.message).slice(0, 160)) + '</span>' : "") + '</div>';
+    }).join("") + '</div>';
+    return head + timeline;
+  }
   function renderObservability() {
-    var events = observedEvents();
-    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">Snapshot ' + esc(ago(state.refreshedAt)) + ' old</span></div>' +
-      '<button class="cr-btn cr-btn--ghost" type="button" data-action="refresh">Re-read</button></div>';
-    if (!events.length) {
-      return head + '<div class="cr-canvas">' + empty("No recorded failures", "Every canonical source read cleanly and no job, media, or publish record is in a failed state. This is a real result, not an empty log view.") + '</div>';
+    var f = state.observabilityFilters;
+    var retained = retainedObservabilityEvents();
+    var q = f.q.trim().toLowerCase();
+    if (q) retained = retained.filter(function (e) {
+      return [e.event_name, e.route, e.message, e.trace_id, e.request_id, e.resource_type, e.resource_id, e.source].join(" ").toLowerCase().indexOf(q) >= 0;
+    });
+    var fallback = observedEvents();
+    var data = state.observability && state.observability.ok ? state.observability.data || {} : {};
+    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">retained · last ' + esc(f.window >= 24 ? (f.window / 24) + "d" : f.window + "h") + '</span></div>' +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="load-observability"' + (state.pending.observability ? " disabled" : "") + '>' + (state.pending.observability ? "Reading…" : "Re-read") + '</button></div>';
+    var controls = '<div class="cr-gen cr-observe-filters">' +
+      '<select class="cr-select" id="crObsLevel" aria-label="Level">' + [["all", "All levels"], ["info", "Info"], ["warn", "Warn"], ["error", "Error"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.level === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      '<select class="cr-select" id="crObsKind" aria-label="Kind">' + [["all", "All kinds"], ["request", "Requests"], ["domain", "Changes"], ["job", "Jobs"], ["dependency", "Providers"], ["capability", "Capabilities"], ["scheduled", "Scheduled"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.kind === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      '<select class="cr-select" id="crObsWindow" aria-label="Window">' + [[1, "1 hour"], [24, "24 hours"], [168, "7 days"], [720, "30 days"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.window === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      '<input class="cr-input" id="crObsSearch" type="search" placeholder="Event, route, trace or record" value="' + esc(f.q) + '">' +
+      '</div>';
+
+    var retainedBody;
+    if (state.pending.observability && !state.observability) {
+      retainedBody = '<div class="cr-canvas">' + empty("Reading retained events", "Loading the owner-gated observability tail.") + '</div>';
+    } else if (state.observability && !state.observability.ok) {
+      retainedBody = sourceBanner(state.observability, "Observability events");
+    } else if (!retained.length) {
+      retainedBody = '<div class="cr-canvas">' + empty("No retained events", "Nothing matches in this window. Fast successful reads are not retained; mutations, failures, slow reads, provider calls and Core work are.") + '</div>';
+    } else {
+      retainedBody = renderTable(OBS_COLUMNS, obsRows(retained), "No retained events") +
+        (data.has_more ? '<div class="cr-panel__body"><button class="cr-btn cr-btn--ghost" type="button" data-action="observability-older"' + (state.pending.observability ? " disabled" : "") + '>Load older</button></div>' : "");
     }
-    return head +
-      '<p class="cr-derived">McCluster has no log or trace pipeline. These are the failures the canonical tables record, plus any source this console could not read.</p>' +
-      renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } }, { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } }, { label: "Source", key: "source" }, { label: "Message", key: "message" }], events, "No events");
+
+    var fallbackBody = fallback.length
+      ? renderTable([
+          { label: "Time", html: function (r) { return esc(ago(r.time)); } },
+          { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } },
+          { label: "Source", key: "source" },
+          { label: "Message", key: "message" }
+        ], fallback, "No canonical context events")
+      : '<p class="cr-panel__body cr-muted">No failed canonical jobs and no recent privileged audit entries in the loaded snapshot.</p>';
+
+    return renderTracePanel() + head + controls +
+      '<p class="cr-derived">Retained events are org-scoped and owner-only. Worker requests are kept after the operator is verified as a member of this workspace; request bodies, prompts and credentials are never stored. Info events are kept 14 days, warnings and errors 90. Open any failure, job, media job, publish job or ledger entry to see its trace.</p>' +
+      retainedBody +
+      '<h3 class="cr-subhead">Canonical failure &amp; audit ledger</h3>' + fallbackBody;
   }
   /* SOCIAL ACCOUNTS + PUBLISHING.
 
@@ -1836,7 +2107,8 @@
   function loadSocialAccounts(force) {
     if (state.socialAccounts && !force) return Promise.resolve();
     state.socialAccounts = null;
-    return src(request("/v1/social/accounts")).then(function (result) {
+    if (!state.org || !state.org.id) { state.socialAccounts = badResult("failed", "No workspace is selected, so there are no social accounts to read."); render(); return Promise.resolve(); }
+    return src(request("/v1/social/accounts?org_id=" + encodeURIComponent(state.org.id))).then(function (result) {
       state.socialAccounts = result;
       render();
     });
@@ -1899,13 +2171,21 @@
     if (state.resources && !force) return Promise.resolve();
     state.resources = { loading: true };
     render();
+    var orgId = state.org && state.org.id;
+    var mediaUsage = orgId
+      ? src(request("/v1/media/usage?org_id=" + encodeURIComponent(orgId) + "&group_by=capability"))
+      : Promise.resolve(badResult("failed", "Workspace identity is unavailable.", 400));
+    var mediaBudget = orgId
+      ? src(request("/v1/media/budget?org_id=" + encodeURIComponent(orgId)))
+      : Promise.resolve(badResult("failed", "Workspace identity is unavailable.", 400));
     return Promise.all([
       src(request("/v1/compute/balance")),
       src(request("/v1/platform/catalog")),
       src(request("/v1/developer/consumers")),
-      src(request("/v1/media/usage?group_by=capability"))
+      mediaUsage,
+      mediaBudget
     ]).then(function (r) {
-      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3] };
+      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3], budget: r[4] };
       render();
     });
   }
@@ -1961,7 +2241,29 @@
             : '<p class="cr-muted">No media jobs in this window.</p>');
       }
 
-      usage = '<div class="cr-panel__body">' + balanceBody + spendBody +
+      var budgetBody = "";
+      var budgetResult = res.budget;
+      if (budgetResult && !budgetResult.ok) {
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' + sourceBanner(budgetResult, "Media allowance");
+      } else if (budgetResult && budgetResult.ok) {
+        var budget = budgetResult.data && budgetResult.data.budget || {};
+        var dollars = budget.monthly_limit_cents === null || budget.monthly_limit_cents === undefined
+          ? ""
+          : (Number(budget.monthly_limit_cents) / 100).toFixed(2);
+        var saveBusy = state.pending.mediaBudgetSave;
+        var saveError = state.pending.mediaBudgetError;
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' +
+          '<div class="cr-gen">' +
+            '<label class="cr-muted"><input id="crMediaBudgetEnabled" type="checkbox"' + (budget.enabled ? " checked" : "") + '> Enforce monthly cap</label>' +
+            '<input class="cr-input" id="crMediaBudgetUsd" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Monthly limit (USD)" value="' + esc(dollars) + '">' +
+            '<input class="cr-input" id="crMediaBudgetWarn" type="number" min="1" max="100" step="1" inputmode="numeric" aria-label="Warning threshold percent" value="' + esc(budget.warn_at_percent == null ? 80 : budget.warn_at_percent) + '">' +
+            '<button class="cr-btn cr-btn--primary" type="button" data-action="save-media-budget"' + (saveBusy ? " disabled" : "") + '>' + (saveBusy ? "Saving…" : "Save allowance") + '</button>' +
+          '</div>' +
+          '<p class="cr-muted">The database refuses a new paid FAL job when this organization would exceed the enabled monthly cap. Warning threshold is reserved for operator alerts.</p>' +
+          (saveError ? sourceBanner(saveError, "Media allowance update") : "");
+      }
+
+      usage = '<div class="cr-panel__body">' + balanceBody + spendBody + budgetBody +
         '<h3 class="cr-subhead">API consumers</h3>' +
         (!res.consumers.ok ? sourceBanner(res.consumers, "Developer consumers")
           : (consumerRows.length
@@ -2084,9 +2386,15 @@
     else if (state.surface === "ai") root.innerHTML = renderAi();
     else if (state.surface === "work") root.innerHTML = renderWork();
     else if (state.surface === "create") root.innerHTML = renderCreate();
-    else if (state.surface === "analytics") root.innerHTML = renderAnalytics();
+    /* Analytics keeps its mount between Control Room repaints: it owns its own
+       paint, and its globe frame (the 60/40 layout) would reload the Earth on
+       every unrelated state change if the mount were rebuilt. */
+    else if (state.surface === "analytics") { if (!(root.getAttribute("data-cr-surface") === "analytics" && $("crAnalyticsMount"))) root.innerHTML = renderAnalytics(); }
     else if (state.surface === "system") root.innerHTML = renderSystem();
     else root.innerHTML = renderApps();
+    root.setAttribute("data-cr-surface", state.surface);
+    /* the page knows its surface: Analytics runs full-bleed on a phone (css/control-analytics.css) */
+    document.body.setAttribute("data-cr-surface", state.surface);
     bindSurfaceControls();
     if (state.surface === "analytics" && window.CR.analytics) {
       var analyticsHost = $("crAnalyticsMount");
@@ -2119,6 +2427,9 @@
       state.pending["transcript:" + state.selectedThreadId] = true;
       var pendingId = state.selectedThreadId;
       loadTranscript(pendingId).then(function () { delete state.pending["transcript:" + pendingId]; });
+    }
+    if (state.surface === "system" && state.systemView === "observability" && !state.observability && !state.pending.observability) {
+      loadObservability(false);
     }
   }
 
@@ -2260,7 +2571,8 @@
         ["Attempts", count(j.attempts) + "/" + count(j.max_attempts)],
         ["Run time", durationBetween(j.started_at || j.created_at, j.finished_at || j.updated_at)],
         ["Created", formatDate(j.created_at)], ["Updated", formatDate(j.updated_at)]],
-      custom: detail, activity: activity, raw: j, tabs: ["overview", "activity", "raw", "ai"]
+      custom: detail, activity: activity, raw: j, tabs: ["overview", "activity", "raw", "ai"],
+      actions: traceButton({ trace_id: (j.input && j.input.trace_id) || j.id }, "Open job trace")
     });
   }
   /* Media jobs can come from the loaded snapshot or from a generation that
@@ -2268,25 +2580,32 @@
   function allMediaJobs() { return state.mediaJobs.concat(window.CR.media.trackedJobs()); }
   function allMediaAssets() { return state.mediaAssets.concat(window.CR.media.generatedAssets()); }
 
-  /* Decisions are read-only here. The write path (POST /v1/ai/decisions)
-     records a new decision; there is no approve/reject transition route, so
-     this shows the record and says what is missing rather than offering a
-     button that cannot persist. */
+  /* Proposed decisions are owner actions, not read-only records. The transition
+     route changes status only; decision text remains immutable history. */
   function inspectDecision(id) {
     var d = findById(state.decisions, id) || state.decisions[0];
     if (!d) return;
     var risky = ["high", "critical"].indexOf(d.risk_class) >= 0;
+    var busy = state.pending["decision:" + d.id];
+    var failure = state.pending["decisionError:" + d.id];
+    var waiting = d.status === "proposed"
+      ? inspectorSection("Waiting on you",
+          '<textarea class="cr-textarea" id="crDecisionNote" rows="3" placeholder="Optional resolution note"></textarea>' +
+          (failure ? sourceBanner(failure, "Decision transition") : "") +
+          '<p class="cr-muted">Approve or reject changes status only. The recorded decision text stays immutable.</p>')
+      : "";
     openInspector({
       title: d.title || "Decision",
       subtitle: "Decision · " + titleCase(d.status || "proposed"),
       description: d.decision || d.rationale_summary || "Recorded in the private AI context plane.",
       props: [["Status", d.status], ["Risk", d.risk_class], ["Proposed", formatDate(d.created_at)],
-        ["Proposed by", d.proposed_by], ["Supersedes", d.supersedes_id]],
-      custom: (d.status === "proposed"
-        ? inspectorSection("Waiting on you", '<div class="cr-gap"><b>No approve or reject route exists.</b>' +
-            '<span>ai_context.decisions records a status, but the backend exposes no transition endpoint, so this decision cannot be approved or rejected from here. Recording a superseding decision is the only supported write.</span></div>')
-        : "") +
+        ["Proposed by", d.proposed_by], ["Resolved", formatDate(d.approved_at)], ["Resolved by", d.approved_by], ["Supersedes", d.supersedes_id]],
+      custom: waiting +
         (risky ? inspectorSection("Risk", '<p class="cr-fail">' + esc(titleCase(d.risk_class)) + ' risk. This was flagged at record time.</p>') : ""),
+      actions: d.status === "proposed"
+        ? '<button class="cr-btn cr-btn--primary" type="button" data-action="decision-status" data-id="' + esc(d.id) + '" data-status="approved"' + (busy ? " disabled" : "") + '>' + (busy ? "Saving…" : "Approve") + '</button>' +
+          '<button class="cr-btn" type="button" data-action="decision-status" data-id="' + esc(d.id) + '" data-status="rejected"' + (busy ? " disabled" : "") + '>Reject</button>'
+        : "",
       related: d.source_conversation_id
         ? '<p class="cr-muted">Source conversation: <span class="cr-mono">' + esc(d.source_conversation_id) + '</span></p>'
         : '<p class="cr-muted">No source conversation is recorded on this decision.</p>',
@@ -2316,6 +2635,7 @@
       related: assets.length
         ? '<div class="cr-list">' + assets.map(function (a) { return row(assetName(a), "Produced asset", titleCase(a.media_type || a.type || "asset"), "ok", "inspect-asset", { id: a.id, badge: "Asset" }); }).join("") + '</div>'
         : '<p class="cr-muted">No asset rows reference this job.</p>',
+      actions: (j.routing && j.routing.trace_id ? traceButton({ trace_id: j.routing.trace_id }) : "") + traceButton({ resource_type: "media_job", resource_id: j.id }),
       raw: j, tabs: ["overview", "related", "raw", "ai"]
     });
   }
@@ -2348,8 +2668,71 @@
   }
   function inspectVariant(id) { var v = findById(state.variants, id); if (!v) return; openInspector({ title: v.variant_key || "Variant", subtitle: "Create · Project", description: v.hypothesis || v.hook || "Creative variant", props: [["Status", v.status], ["Score", v.score], ["Media job", v.media_job_id], ["Created", formatDate(v.created_at)]], raw: v, tabs: ["overview", "related", "raw", "ai"] }); }
   function inspectPost(id) { var p = findById(state.posts, id); if (!p) return; openInspector({ title: "Published post", subtitle: "Create · Schedule", description: p.caption || "Published content", props: [["Mode", p.publish_mode], ["Published", formatDate(p.published_at)], ["Permalink", p.permalink || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
-  function inspectPublish(id) { var p = findById(state.publishJobs, id); if (!p) return; openInspector({ title: "Publishing job", subtitle: "Create · Schedule", description: p.payload && p.payload.caption || "Scheduled distribution", props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
+  function inspectPublish(id) {
+    var p = findById(state.publishJobs, id); if (!p) return;
+    var busy = state.pending["publishMove:" + p.id];
+    var failure = state.pending["publishMoveError:" + p.id];
+    var canCancel = ["draft", "queued"].indexOf(p.state) >= 0 && !p.external_creation_id;
+    var canRetry = p.state === "failed" && !p.external_media_id;
+    var actions = "";
+    if (canRetry) actions += '<button class="cr-btn cr-btn--primary" type="button" data-action="retry-publish" data-id="' + esc(p.id) + '"' + (busy ? " disabled" : "") + '>' + (busy ? "Retrying…" : "Retry") + '</button>';
+    if (canCancel) actions += '<button class="cr-btn" type="button" data-action="cancel-publish" data-id="' + esc(p.id) + '"' + (busy ? " disabled" : "") + '>Cancel</button>';
+    actions += traceButton({ resource_type: "social_publish_job", resource_id: p.id });
+    openInspector({
+      title: "Publishing job",
+      subtitle: "Create · Schedule",
+      description: p.payload && p.payload.caption || "Scheduled distribution",
+      props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"],
+        ["Attempts", p.attempts], ["Meta container", p.external_creation_id || "—"], ["Published media", p.external_media_id || "—"]],
+      custom: (p.last_error ? inspectorSection("Last failure", '<p class="cr-fail">' + esc(p.last_error) + '</p>') : "") +
+        (failure ? inspectorSection("Action failed", sourceBanner(failure, "Publish recovery")) : "") +
+        (p.state === "processing" ? inspectorSection("In flight", '<p class="cr-muted">Meta already has a creation container. Control will not offer cancellation once publishing has crossed that boundary.</p>') : ""),
+      actions: actions,
+      raw: p,
+      tabs: ["overview", "activity", "raw", "ai"]
+    });
+  }
   function inspectRequest(id) { var r = findById(state.siteRequests, id); if (!r) return; openInspector({ title: r.title || r.request_type || "Site request", subtitle: "Work · Request", description: r.note || r.description || "Client/site request", props: [["Status", r.status], ["Created", formatDate(r.created_at || r.at)]], raw: r }); }
+  function observationById(id) {
+    var pool = retainedObservabilityEvents();
+    if (state.observabilityTrace && state.observabilityTrace.result && state.observabilityTrace.result.ok) pool = pool.concat(pickRows(state.observabilityTrace.result, "events"));
+    return pool.find(function (row) { return String(row.id) === String(id); });
+  }
+  function inspectObservation(id) {
+    var e = observationById(id);
+    if (!e) return;
+    var actions = traceButton({ trace_id: e.trace_id }) +
+      (e.resource_type && e.resource_id ? traceButton({ resource_type: e.resource_type, resource_id: e.resource_id }) : "");
+    openInspector({
+      title: obsLabel(e),
+      subtitle: "System · Observability · " + titleCase(e.event_kind || "event"),
+      description: e.message || "Retained observability event.",
+      props: [
+        ["Level", e.level], ["Outcome", e.outcome], ["Status", e.status_code], ["Duration", e.duration_ms == null ? "—" : e.duration_ms + " ms"],
+        ["Source", e.source], ["Service", e.service], ["Route", e.route],
+        ["Record", e.resource_type ? e.resource_type + " " + text(e.resource_id, "") : "—"],
+        ["Trace", e.trace_id], ["Request", e.request_id], ["Span", e.span_id], ["Parent span", e.parent_span_id],
+        ["Actor", e.actor_user_id], ["Occurred", formatDate(e.occurred_at || e.created_at)], ["Stored", formatDate(e.created_at)]
+      ],
+      actions: actions,
+      raw: e,
+      tabs: ["overview", "raw", "ai"]
+    });
+  }
+  function inspectAudit(id) {
+    var a = (state.audit || []).find(function (row) { return String(row.id) === String(id); });
+    if (!a) return;
+    var trace = a.detail && a.detail.trace && a.detail.trace.trace_id;
+    openInspector({
+      title: a.event,
+      subtitle: "System · Ledger",
+      description: "Privileged change recorded in control_audit.",
+      props: [["Actor", a.actor_user_id || a.actor_kind], ["Capability", a.capability], ["Record", a.resource_type ? a.resource_type + " " + text(a.resource_id, "") : "—"], ["At", formatDate(a.at)], ["Trace", trace || "not recorded (before tracing)"]],
+      actions: trace ? traceButton({ trace_id: trace }) : (a.resource_type && a.resource_id ? traceButton({ resource_type: a.resource_type, resource_id: a.resource_id }) : ""),
+      raw: a,
+      tabs: ["overview", "raw", "ai"]
+    });
+  }
 
   function openBridge(key) {
     var b = bridge[key]; if (!b) return;
@@ -2462,6 +2845,7 @@
       ["Create · Schedule", "Distribution and publishing", "create-schedule"],
       ["Create · Channels", "Social destinations and composer", "create-channels"],
       ["Create · Music", "Review, catalogue, rights and distribution", "create-music"],
+      ["Create · Funding", "Grants, award searches and private partner mission proposals", "create-funding"],
       ["Analytics", "Traffic, audience, content, identity and forensics", "analytics"],
       ["System · Command", "Speak to the signed Core capability bus", "system-command"],
       ["System · Overview", "Topology and service health", "system-overview"],
@@ -2508,6 +2892,7 @@
     else if (action === "create-schedule") setSurface("create", "schedule");
     else if (action === "create-channels") setSurface("create", "channels");
     else if (action === "create-music") setSurface("create", "music");
+    else if (action === "create-funding") setSurface("create", "funding");
     else if (action === "connect-account") {
       var platform = $("crAccPlatform") && $("crAccPlatform").value;
       var external = $("crAccExternal") && $("crAccExternal").value.trim();
@@ -2654,7 +3039,45 @@
     else if (action === "inspect-variant") inspectVariant(el.getAttribute("data-id"));
     else if (action === "inspect-post") inspectPost(el.getAttribute("data-id"));
     else if (action === "inspect-publish") inspectPublish(el.getAttribute("data-id"));
+    else if (action === "retry-publish" || action === "cancel-publish") {
+      var publishJobId = el.getAttribute("data-id");
+      var publishAction = action === "retry-publish" ? "retry" : "cancel";
+      if (!state.org || !state.org.id) {
+        state.pending["publishMoveError:" + publishJobId] = badResult("failed", "Workspace identity is unavailable.", 400);
+        inspectPublish(publishJobId);
+        return;
+      }
+      state.pending["publishMove:" + publishJobId] = true;
+      delete state.pending["publishMoveError:" + publishJobId];
+      inspectPublish(publishJobId);
+      src(request("/v1/social/publish/" + encodeURIComponent(publishJobId) + "/" + publishAction, {
+        method: "POST",
+        body: { org_id: state.org.id }
+      })).then(function (result) {
+        delete state.pending["publishMove:" + publishJobId];
+        if (!result.ok) {
+          state.pending["publishMoveError:" + publishJobId] = result;
+          inspectPublish(publishJobId);
+          return;
+        }
+        delete state.pending["publishMoveError:" + publishJobId];
+        var moved = result.data && result.data.publish_job;
+        var current = findById(state.publishJobs, publishJobId);
+        if (moved && current) Object.assign(current, moved);
+        inspectPublish(publishJobId);
+        render();
+      });
+    }
     else if (action === "inspect-request") inspectRequest(el.getAttribute("data-id"));
+    else if (action === "inspect-observation") inspectObservation(el.getAttribute("data-id"));
+    else if (action === "load-observability") loadObservability(true);
+    else if (action === "observability-older") loadObservability(false, true);
+    else if (action === "observe-errors") { state.observabilityFilters.level = "error"; state.observability = null; setSurface("system", "observability"); }
+    else if (action === "observe-trace") openTrace({ trace_id: el.getAttribute("data-trace") });
+    else if (action === "observe-resource") openTrace({ resource_type: el.getAttribute("data-resource-type"), resource_id: el.getAttribute("data-resource-id") });
+    else if (action === "close-trace") { state.observabilityTrace = null; render(); }
+    else if (action === "inspect-trace-event") inspectObservation(el.getAttribute("data-id"));
+    else if (action === "inspect-audit") inspectAudit(el.getAttribute("data-id"));
     else if (action === "open-project") { state.selectedProjectId = el.getAttribute("data-id"); render(); }
     else if (action === "close-project") { state.selectedProjectId = null; render(); }
     else if (action === "filters") {
@@ -2687,15 +3110,13 @@
       var box = $("crWorkSearch"); if (box) box.value = "";
       runLeadQuery(false); closeInspector();
     }
-    else if (action === "new-work") openInspector({
-      title: "Create a record", subtitle: "Work · " + titleCase(state.workView),
-      /* Stated plainly rather than offering a create form that would have
-         nowhere canonical to write. */
-      description: "There is no canonical write route for creating a lead, task, order, or booking from the Control Room. Records arrive from the site's own capture forms and the communications relay. Nothing is created in the browser.",
-      custom: inspectorSection("What you can do here", '<p class="cr-muted">Stage changes on an existing lead persist through Work · Pipeline. Conversations can be taken over and replied to in Work · Inbox.</p>'),
-      actions: '<button class="cr-btn" data-open-href="crm.html">Open the legacy CRM creator</button>',
-      tabs: ["overview", "ai"]
-    });
+    else if (action === "new-work") {
+      /* Records are created through the Worker's /v1/work routes
+         (js/control-room/work-records.js); the legacy CRM creator is no
+         longer the way in. */
+      if (window.CR.work) window.CR.work.openForm(state.workView);
+      else openInspector({ title: "Create a record", description: "The Work records module did not load, so nothing can be created from here right now.", tabs: ["overview"] });
+    }
     else if (action === "select-thread") {
       state.selectedThreadId = el.getAttribute("data-id");
       delete state.pending["error:" + state.selectedThreadId];
@@ -2785,6 +3206,55 @@
         props: [["Resource", rkey]], tabs: ["overview", "ai"]
       });
     } else if (action === "load-resources") { loadResources(true); }
+    else if (action === "save-media-budget") {
+      var budgetOrgId = state.org && state.org.id;
+      var enabledBox = $("crMediaBudgetEnabled");
+      var amountBox = $("crMediaBudgetUsd");
+      var warnBox = $("crMediaBudgetWarn");
+      var amountText = amountBox ? amountBox.value.trim() : "";
+      var amountUsd = amountText === "" ? null : Number(amountText);
+      var warnPercent = warnBox ? Number(warnBox.value) : 80;
+      if (!budgetOrgId) {
+        state.pending.mediaBudgetError = badResult("failed", "Workspace identity is unavailable.", 400);
+        render();
+        return;
+      }
+      if (amountUsd !== null && (!Number.isFinite(amountUsd) || amountUsd < 0)) {
+        state.pending.mediaBudgetError = badResult("failed", "Monthly limit must be a non-negative dollar amount.", 400);
+        render();
+        return;
+      }
+      if (!Number.isInteger(warnPercent) || warnPercent < 1 || warnPercent > 100) {
+        state.pending.mediaBudgetError = badResult("failed", "Warning threshold must be from 1 to 100.", 400);
+        render();
+        return;
+      }
+      var enabledBudget = Boolean(enabledBox && enabledBox.checked);
+      if (enabledBudget && amountUsd === null) {
+        state.pending.mediaBudgetError = badResult("failed", "Enter a monthly limit before enabling the cap.", 400);
+        render();
+        return;
+      }
+      state.pending.mediaBudgetSave = true;
+      delete state.pending.mediaBudgetError;
+      render();
+      src(request("/v1/media/budget?org_id=" + encodeURIComponent(budgetOrgId), {
+        method: "PATCH",
+        body: {
+          enabled: enabledBudget,
+          monthly_limit_cents: amountUsd === null ? null : Math.round(amountUsd * 100),
+          warn_at_percent: warnPercent
+        }
+      })).then(function (result) {
+        delete state.pending.mediaBudgetSave;
+        if (!result.ok) state.pending.mediaBudgetError = result;
+        else {
+          delete state.pending.mediaBudgetError;
+          if (state.resources) state.resources.budget = result;
+        }
+        render();
+      });
+    }
     else if (action === "inspect-consumer") {
       var consumers = state.resources ? pickRows(state.resources.consumers, "consumers") : [];
       var consumer = findById(consumers, el.getAttribute("data-id"));
@@ -2812,6 +3282,31 @@
     else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
     else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
     else if (action === "inspect-decision") { inspectDecision(el.getAttribute("data-id")); }
+    else if (action === "decision-status") {
+      var decisionId = el.getAttribute("data-id");
+      var decisionStatus = el.getAttribute("data-status");
+      var decisionNote = $("crDecisionNote") && $("crDecisionNote").value.trim();
+      state.pending["decision:" + decisionId] = true;
+      delete state.pending["decisionError:" + decisionId];
+      inspectDecision(decisionId);
+      src(request("/v1/ai/decisions/" + encodeURIComponent(decisionId) + "/status" + (state.org && state.org.id ? "?org_id=" + encodeURIComponent(state.org.id) : ""), {
+        method: "POST",
+        body: { status: decisionStatus, note: decisionNote || "" }
+      })).then(function (result) {
+        delete state.pending["decision:" + decisionId];
+        if (!result.ok) {
+          state.pending["decisionError:" + decisionId] = result;
+          inspectDecision(decisionId);
+          return;
+        }
+        var resolved = result.data && result.data.decision;
+        var current = findById(state.decisions, decisionId);
+        if (resolved && current) Object.assign(current, resolved);
+        delete state.pending["decisionError:" + decisionId];
+        inspectDecision(decisionId);
+        render();
+      });
+    }
     else if (action === "load-earlier") { loadEarlier(el.getAttribute("data-id")); }
     else if (action === "more-leads") { runLeadQuery(true); }
     else if (action === "open-publish") { openPublish(el.getAttribute("data-id")); }
@@ -2880,7 +3375,13 @@
     window.CR.media.bind($("crSurface"));
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
     if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
+    if (window.CR.instagram) window.CR.instagram.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
+    if (window.CR.actionNetwork) window.CR.actionNetwork.bind($("crSurface"));
+    if (window.CR.fundingIntelligence) window.CR.fundingIntelligence.bind($("crSurface"));
+    if (window.CR.clipping) window.CR.clipping.bind($("crSurface"));
+    if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
+    if (window.CR.buildCode) window.CR.buildCode.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
     var search = $("crWorkSearch");
@@ -2896,6 +3397,26 @@
       });
     }
     var hero = $("crHeroInput"); if (hero) hero.addEventListener("keydown", function (e) { if (e.key === "Enter") handleCommand(hero.value); });
+
+    /* Observability filters: level, kind and window are server queries; the
+       text box narrows what is already loaded without a round trip. */
+    [["crObsLevel", "level"], ["crObsKind", "kind"], ["crObsWindow", "window"]].forEach(function (pair) {
+      var el = $(pair[0]);
+      if (el) el.addEventListener("change", function () {
+        state.observabilityFilters[pair[1]] = pair[1] === "window" ? Number(el.value) || 24 : el.value;
+        loadObservability(true);
+      });
+    });
+    var obsSearch = $("crObsSearch");
+    if (obsSearch) obsSearch.addEventListener("input", function () {
+      state.observabilityFilters.q = obsSearch.value;
+      clearTimeout(state.pending.obsSearchTimer);
+      state.pending.obsSearchTimer = setTimeout(function () {
+        render();
+        var again = $("crObsSearch");
+        if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
+      }, 200);
+    });
 
     /* These chips were rendered before but never bound, so the workload
        filters looked live and did nothing. They filter state now. */
@@ -2946,30 +3467,86 @@
      a hardcoded slug, so Control Room could only ever open the house.
      A second tenant's operator got a console with no org, every scoped
      read silently empty, and nothing on screen saying why. */
+  /* WORKSPACE. The owner may hold several (the house plus client
+     workspaces). The chosen one rides in ?org= so a reload or a shared link
+     keeps it, with localStorage as a per-viewer fallback; it is only honoured
+     when it is one of the caller's own enabled memberships. Every scoped read
+     and write below uses state.org.id. */
+  var ORG_KEY = "mcc.control.org";
+  function preferredOrgId() {
+    var fromUrl = null;
+    try { fromUrl = new URLSearchParams(location.search).get("org"); } catch (e) { fromUrl = null; }
+    if (fromUrl) return fromUrl;
+    try { return window.localStorage.getItem(ORG_KEY); } catch (e) { return null; }
+  }
+  function isHouseWorkspace(org) { return Boolean(org) && org.slug === "mccluster" && org.kind === "studio"; }
   function discoverWorkspace() {
     return src(request("/v1/workspaces/me")).then(function (result) {
       var data = dataOf(result);
       var list = (data && data.workspaces) || [];
+      var wanted = preferredOrgId();
       var chosen = null;
       for (var i = 0; i < list.length; i++) {
-        if (list[i].org_id === data.default_org_id) { chosen = list[i]; break; }
+        if (wanted && list[i].org_id === wanted && list[i].enabled) { chosen = list[i]; break; }
+      }
+      for (var j = 0; !chosen && j < list.length; j++) {
+        if (list[j].org_id === data.default_org_id) chosen = list[j];
       }
       if (!chosen) {
         chosen = list.filter(function (w) { return w.enabled; })[0] || null;
       }
+      state.workspaces = list;
       return {
         source: result,
         membership: chosen,
-        org: chosen ? { id: chosen.org_id, slug: chosen.slug, name: chosen.name } : null
+        org: chosen ? { id: chosen.org_id, slug: chosen.slug, name: chosen.name, kind: chosen.kind, role: chosen.role } : null
       };
     });
   }
+  /* Switching reloads Control on the new workspace, so no module can carry
+     another tenant's cached rows across. */
+  function switchWorkspace(orgId) {
+    var known = (state.workspaces || []).some(function (w) { return w.org_id === orgId && w.enabled; });
+    if (!known || (state.org && state.org.id === orgId)) return;
+    try { window.localStorage.setItem(ORG_KEY, orgId); } catch (e) { /* storage blocked: ?org= still carries it */ }
+    var url = new URL(location.href);
+    url.searchParams.set("org", orgId);
+    location.assign(url.toString());
+  }
+  function renderWorkspaceSwitcher() {
+    var wrap = $("crOrgWrap"), select = $("crOrgSelect");
+    if (!wrap || !select) return;
+    var list = (state.workspaces || []).filter(function (w) { return w.enabled || (state.org && w.org_id === state.org.id); });
+    if (list.length < 2) { wrap.hidden = true; return; }
+    select.innerHTML = list.map(function (w) {
+      return '<option value="' + esc(w.org_id) + '"' + (state.org && w.org_id === state.org.id ? " selected" : "") + '>' +
+        esc((w.name || w.slug || "Workspace") + " · " + (w.role || "member")) + '</option>';
+    }).join("");
+    wrap.hidden = false;
+  }
+  function staticJson(path) {
+    return fetch(path, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw Object.assign(new Error(path + " returned HTTP " + r.status), { status: r.status });
+      return r.json();
+    });
+  }
+
+  function loadPublicRecord() {
+    return src(Promise.all([
+      staticJson("data/seo/entity-graph.json"),
+      staticJson("data/seo/evidence-ledger.json"),
+      staticJson("data/seo/sitemap-pages.json")
+    ]).then(function (r) {
+      return { entityGraph: r[0], evidenceLedger: r[1], sitemapPages: r[2] };
+    }));
+  }
+
   function loadCreative(org) {
     var orgId = org && org.id;
     var scope = orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "";
     return Promise.all([
-      src(supa("media_assets?select=*&order=created_at.desc&limit=150")),
-      src(supa("media_jobs?select=*&order=created_at.desc&limit=120")),
+      src(supa("media_assets?select=*&order=created_at.desc&limit=150" + scope)),
+      src(supa("media_jobs?select=*&order=created_at.desc&limit=120" + scope)),
       src(supa("social_campaigns?select=*&order=created_at.desc&limit=100" + scope)),
       src(supa("social_variants?select=*&order=created_at.desc&limit=200" + scope)),
       src(supa("social_publish_jobs?select=*&order=scheduled_at.desc&limit=200" + scope)),
@@ -2986,6 +3563,7 @@
       if (!r.ok) throw Object.assign(new Error("Edge health returned HTTP " + r.status), { status: r.status });
       return r.json();
     }));
+    var publicRecord = loadPublicRecord();
     var authed = token().then(function (t) {
       if (!t) return { signedOut: true };
       return discoverWorkspace().then(function (ws) {
@@ -2999,10 +3577,10 @@
           src(coreMcp("tools/list")),
           src(callCoreTool("core.resume", { org_id: org.id, since_hours: 24, limit: 25 })),
           src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
-          src(request("/v1/ai/decisions?limit=25")),
+          src(request("/v1/ai/decisions?limit=25&org_id=" + encodeURIComponent(org.id))),
           src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
-          src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")),
+          src(supa("ops_agent_jobs?select=*&org_id=eq." + encodeURIComponent(org.id) + "&order=created_at.desc&limit=200")),
           src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100")),
           loadCreative(org),
           src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id)))
@@ -3017,7 +3595,7 @@
         });
       });
     });
-    return Promise.all([health, authed]).then(function (r) {
+    return Promise.all([health, authed, publicRecord]).then(function (r) {
       var a = r[1] || {}; var c = a.creative || {};
       var signedOut = badResult("unauthorized", "This session is not signed in.", 401);
       state.sources = {
@@ -3027,10 +3605,11 @@
         aiThreads: a.aiThreads || signedOut,
         workspace: (a.workspace && a.workspace.source) || signedOut,
         audit: a.audit || signedOut,
+        publicRecord: r[2],
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
-      state.health = dataOf(state.sources.health); state.org = a.org || null;
+      state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null; renderWorkspaceSwitcher(); loadRecentErrors();
       state.workspace = (a.workspace && a.workspace.membership) || null;
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
@@ -3073,6 +3652,8 @@
     $("crInspectorTabs").addEventListener("click", function (e) { var b = e.target.closest("[data-inspector-tab]"); if (!b || !state.inspector) return; state.inspector.tab = b.getAttribute("data-inspector-tab"); renderInspector(); });
     $("crPalette").addEventListener("click", function (e) { if (e.target === $("crPalette")) closePalette(); });
     $("crPaletteInput").addEventListener("input", function () { renderPalette($("crPaletteInput").value); });
+    var orgSelect = $("crOrgSelect");
+    if (orgSelect) orgSelect.addEventListener("change", function () { switchWorkspace(orgSelect.value); });
     $("crPaletteInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { var first = $("crPaletteResults").querySelector(".cr-palette__item"); if (first) first.click(); else handleCommand($("crPaletteInput").value); } });
     $("crAccount").addEventListener("click", function () { $("crAccountMenu").classList.toggle("is-open"); });
     $("crRefresh").addEventListener("click", function () { $("crAccountMenu").classList.remove("is-open"); load(true); });
@@ -3091,7 +3672,19 @@
     getState: function () { return state; }
   });
   if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
+  if (window.CR.instagram) window.CR.instagram.init({ request: request, render: render, org: function () { return state.org; } });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
+  if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
+  if (window.CR.fundingIntelligence) window.CR.fundingIntelligence.init({ request: request, render: render });
+  if (window.CR.clipping) window.CR.clipping.init({ supa: supa, render: render, org: function () { return state.org; } });
+  if (window.CR.work) window.CR.work.init({
+    request: request, render: render,
+    orgId: function () { return state.org && state.org.id; },
+    leads: function () { return state.leads || []; },
+    refreshLeads: function () { runLeadQuery(false); }
+  });
+  if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });
+  if (window.CR.buildCode) window.CR.buildCode.init({ request: request, render: render, orgId: function () { return state.org && state.org.id; } });
 
   window.CR.media.init({
     request: request,

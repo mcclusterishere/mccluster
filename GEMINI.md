@@ -2,7 +2,7 @@
 
 Read `AGENTS.md`, `CLAUDE.md`, and `docs/control-plane/AI-HARNESS.md` first. Same law.
 
-McCluster (`mcclusterishere/mccluster` + Cloudflare Worker `mccluster` + Supabase `zmnhbrjyhxzhkxmhkexs`) is the backend and control plane for every product and every client backend. Do not invent a parallel stack. Do not create a Worker named `mccluster-core`. Do not race git pushes from CI. Ship public pages to `matthew.mccluster.org`. API is `https://api.mccluster.org`.
+McCluster (`mcclusterishere/mccluster` + Cloudflare Worker `mccluster` + Supabase `zmnhbrjyhxzhkxmhkexs`) is the backend and control plane for every product and every client backend. Do not invent a parallel stack. Do not create a Worker named `mccluster-core`. Do not race git pushes from CI. Public properties are split: `matthew.mccluster.org` is Matthew McCluster's personal property; `mccluster.org` is McCluster Corp's company property, served by Worker `mccluster` by host once routed. Do not collapse them. API is `https://api.mccluster.org`.
 
 Private cross-model context lives in Supabase schema `ai_context`. Do not commit raw ChatGPT, Claude, Grok, Gemini, Copilot, local-model, or other AI transcripts into public Git. Treat every model as a replaceable adapter to the canonical McCluster context plane. Do not create a second conversation database, vector store, memory service, CRM, or competing context source.
 

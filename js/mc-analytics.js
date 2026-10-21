@@ -30,10 +30,20 @@
       navigator.doNotTrack === "1" || window.doNotTrack === "1";
   }
   function uuid() {
-    if (crypto && crypto.randomUUID) return crypto.randomUUID();
-    var b = new Uint8Array(16); crypto.getRandomValues(b);
-    return Array.from(b, function (x) { return x.toString(16).padStart(2, "0"); }).join("");
+    var b = new Uint8Array(16);
+    try {
+      if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+      if (typeof crypto === "undefined" || !crypto.getRandomValues) throw new Error("No secure random");
+      crypto.getRandomValues(b);
+    } catch (_) {
+      // Compatibility only: UUID is an event dedupe key, never authentication.
+      for (var i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
+    }
+    b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    var hex = Array.from(b, function (x) { return x.toString(16).padStart(2, "0"); }).join("");
+    return [hex.slice(0, 8),hex.slice(8, 12),hex.slice(12, 16),hex.slice(16, 20),hex.slice(20)].join("-");
   }
+
   function storageGet(storage, key) { try { return storage.getItem(key); } catch (_) { return null; } }
   function storageSet(storage, key, value) { try { storage.setItem(key, value); } catch (_) {} }
   function storageDel(storage, key) { try { storage.removeItem(key); } catch (_) {} }
@@ -55,7 +65,7 @@
     return id;
   }
   function sessionId() {
-    if (!canSend()) return null;
+    if (consentState() !== "granted") return null; // Cookieless means no session identifier.
     var id = storageGet(sessionStorage, SESSION_KEY);
     if (!id) { id = uuid(); storageSet(sessionStorage, SESSION_KEY, id); }
     return id;
@@ -111,6 +121,7 @@
   function track(name, props) {
     if (!canSend() || !/^[a-zA-Z0-9_.:-]{1,80}$/.test(String(name || ""))) return false;
     queue.push({
+      id: uuid(), // stable across a retry, unique to this single event
       name: String(name),
       path: location.pathname + location.search,
       referrer: document.referrer || "",
@@ -141,14 +152,28 @@
         if (navigator.sendBeacon(endpoint, new Blob([body], { type: "application/json" }))) return;
       } catch (_) {}
     }
-    fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: body,
-      keepalive: !!teardown,
-      mode: "cors",
-      credentials: "omit"
-    }).catch(function () {});
+    function attempt(tries) {
+      // A consent withdrawal or new GPC/DNT signal cancels delayed retries.
+      if (!canSend()) return Promise.resolve(null);
+      return fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: body,
+        keepalive: !!teardown,
+        mode: "cors",
+        credentials: "omit"
+      }).then(function (r) {
+        if (!r.ok) throw { retryable: r.status === 429 || r.status >= 500 };
+        return r.json().then(function (ack) {
+          if (!ack || ack.ok !== true) throw { retryable: !!(ack && ack.retryable) };
+        });
+      }).catch(function (error) {
+        if (tries || teardown || !canSend() || error && error.retryable === false) return null;
+        // Idempotent IDs make this delayed one-shot retry safe on an active page.
+        return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(function () { return attempt(1); });
+      });
+    }
+    return attempt(0);
   }
   function pageview(reason) {
     pendingPageview = false;
@@ -200,10 +225,30 @@
     if (!f || f.tagName !== "FORM") return;
     track("form_submit", { id: (f.id || "").slice(0, 80), method: (f.method || "get").toLowerCase() });
   }, true);
+  /* The message is what makes an error actionable; without it every error
+     on a tenant site looked the same in Forensics. Origin says whether it is
+     the site's own code or something injected into the page (in-app
+     browsers, extensions) or an opaque cross-origin "Script error.". */
+  var INJECTED = /webkit\.messageHandlers|Java object is gone|_AutofillCallbackHandler|__gCrWeb/i;
+  function errorOrigin(file, msg) {
+    file = String(file || ""); msg = String(msg || "");
+    if (/^script error\.?$/i.test(msg) && !file) return "opaque";
+    if (/^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url):/i.test(file) || INJECTED.test(msg)) return "injected";
+    try { if (file && new URL(file, location.href).origin !== location.origin) return "third_party"; } catch (_) {}
+    return "site";
+  }
   addEventListener("error", function (e) {
-    track("js_error", { file: String(e.filename || "").slice(-160), line: e.lineno || null, col: e.colno || null });
+    track("js_error", {
+      msg: String((e && e.message) || "").slice(0, 200),
+      file: String(e.filename || "").slice(-160), line: e.lineno || null, col: e.colno || null,
+      origin: errorOrigin(e.filename, e.message)
+    });
   });
-  addEventListener("unhandledrejection", function () { track("js_rejection", {}); });
+  addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    var msg = String((r && (r.message || r)) || "").slice(0, 200);
+    track("js_rejection", { msg: msg, origin: INJECTED.test(msg) ? "injected" : "site" });
+  });
   addEventListener("pagehide", function () { track("page_leave", {}); flush(true); });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") flush(true);

@@ -1,8 +1,19 @@
-const MAX_QUERY = 1000;
+const MAX_QUERY_CHARS = 580;
+const MAX_QUERY_WORDS = 70;
 const MAX_RESULTS = 10;
 
 function text(value, max = 4000) {
   return String(value ?? '').trim().slice(0, max);
+}
+
+export function boundedResearchQuery(value) {
+  let normalized = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+  normalized = normalized.split(' ').filter(Boolean).slice(0, MAX_QUERY_WORDS).join(' ');
+  if (normalized.length > MAX_QUERY_CHARS) {
+    normalized = normalized.slice(0, MAX_QUERY_CHARS).replace(/\s+\S*$/, '').trim();
+  }
+  return normalized;
 }
 
 function decodeHtml(value) {
@@ -103,7 +114,7 @@ async function duckDuckGoSearch(query, limit) {
 }
 
 export async function researchWeb(args = {}, env = process.env) {
-  const objective = text(args.objective, MAX_QUERY);
+  const objective = boundedResearchQuery(args.objective);
   if (!objective) throw Object.assign(new Error('objective is required'), { status: 400 });
   const constraints = args.source_constraints && typeof args.source_constraints === 'object' ? args.source_constraints : {};
   const queryParts = [objective];
@@ -111,12 +122,18 @@ export async function researchWeb(args = {}, env = process.env) {
     const domain = String(constraints.domains[0] || '').replace(/[^a-zA-Z0-9.-]/g, '');
     if (domain) queryParts.push(`site:${domain}`);
   }
-  const query = queryParts.join(' ').slice(0, MAX_QUERY);
+  const query = boundedResearchQuery(queryParts.join(' '));
   const limit = Math.min(MAX_RESULTS, Math.max(1, Number(args.limit || 5)));
   const fetchedAt = new Date().toISOString();
 
   let provider = 'brave';
-  let results = await braveSearch(query, limit, env);
+  let results = null;
+  let braveError = null;
+  try {
+    results = await braveSearch(query, limit, env);
+  } catch (error) {
+    braveError = text(error?.message || error, 500);
+  }
   if (!results) {
     provider = 'duckduckgo-html';
     results = await duckDuckGoSearch(query, limit);
@@ -134,6 +151,8 @@ export async function researchWeb(args = {}, env = process.env) {
       fetched_at: fetchedAt,
       source_type: 'public-search-results',
       direct_page_fetch: false,
+      fallback_from: braveError ? 'brave' : null,
+      fallback_reason: braveError,
       note: 'Results are discovery evidence with source URLs; downstream agents must not treat snippets as canonical truth without source verification.'
     }
   };

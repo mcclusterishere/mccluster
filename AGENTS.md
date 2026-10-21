@@ -12,8 +12,8 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | GitHub org | `McCluster-Corp` |
 | Cloudflare project + Worker | `mccluster` |
 | Worker source | `workers/mccluster` |
-| Public site | `https://matthew.mccluster.org` |
-| Apex | `https://mccluster.org` → same property, not a second site |
+| Matthew McCluster's property (personal) | `https://matthew.mccluster.org` (GitHub Pages, this repo) |
+| McCluster Corp's property (company) | `https://mccluster.org`: a different site about a different entity, served by Worker `mccluster` by host once routed. See `docs/control-plane/DOMAINS-AND-ENTITIES.md` |
 | API | `https://api.mccluster.org` |
 | Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
 | Durable Object class that MUST stay exported | `HereTenantAgent` |
@@ -47,6 +47,7 @@ The canonical API Worker is `mccluster`. The approved `mccluster-mcp` extraction
     - Never `user-scalable=no` or `maximum-scale=1`. Blocking pinch zoom fails WCAG 1.4.4.
     - SVG text is sized in USER UNITS and shrinks with the viewBox, so a chart that is legible at 1440 can render 4px type on a phone. Size it for the phone and scale down at a breakpoint, not the reverse.
     - Verify by rendering at 390px and measuring `scrollWidth` against `clientWidth`. They must be equal. Eyeballing a screenshot does not catch a 25px overflow.
+15. **Two properties, two entities. Never collapse them.** `https://mccluster.org/` is **McCluster Corp's** house: it answers "what is McCluster Corp?", and its metadata, share cards, Organization data and navigation are company-first. `https://matthew.mccluster.org/` is **Matthew McCluster's** house: person, résumé, engineering, portfolio, photography, music. The I AM HERE album is a front door to Matthew's house, not its identity and never the company's homepage. Hierarchy: Matthew McCluster founded McCluster Corp; McCluster Corp operates Equity Uprise (public-interest project), Human Uprise (software product: the movement-creation social platform, formerly the Uprise Action Network; Equity Uprise runs on it as a program), PRIM3 (learning product, not a recording alias) and the McCluster Platform; **Whip Equipped LLC is Matthew's separate company, never a McCluster Corp sub-brand**; I AM HERE is Matthew's album, published through the ecosystem. Stable `@id`s do not move: Person `https://matthew.mccluster.org/#matthew-mccluster`; Organization `https://matthew.mccluster.org/#mccluster-corp`, whose `url` is `https://mccluster.org/`. Company *apps* (Human Uprise, accounts, checkout, campaigns) stay on their working URLs because sessions and returns are origin-bound; ownership changes navigation and metadata, not URLs. Authority: `data/seo/domain-architecture.json` and `docs/control-plane/DOMAINS-AND-ENTITIES.md`; tests enforce it. **Three hosts, still two entities:** the World's door today is `https://mccluster.org/` (owner, 2026-10-15: the company host's root serves the World, `workers/mccluster/src/company-site/router.js` on the shared `workers/mccluster/src/world-host.js`; the company page is `/company`; the bar's Globe goes there from Matthew's site). Human Uprise's World also has its own door, `https://humanuprise.com/` (owner, 2026-10-14), a McCluster Corp host served by the one Worker by host (`workers/mccluster/src/human-uprise/router.js`), inert until the owner routes it; on either World host, Music, the M and every creator page send to Matthew's property. Sessions are per origin, and one M Account works on every host because the bar carries a member's sign-in across (`js/tabbar.js` → `POST /v1/auth/handoff`, `workers/mccluster/src/auth-handoff.js`; the arriving host earns its own session, no refresh token crosses).
 
 ## THE LOGOS ARE NOT YOURS TO DRAW
 
@@ -70,7 +71,21 @@ Rules, no exceptions:
 - **Do not composite one.** Do not crop supplied artwork. Scale the complete supplied artwork proportionally only. Adding a shape
   the supplied file does not contain is drawing.
 - **If the variant you need does not exist, ask for it.** A missing asset is a
-  question for the owner, not a gap to fill.
+  question for the owner, not a gap to fill. Variants the owner has asked for
+  by name are theirs, not ours, and stay: the Equity Uprise emblem without its
+  white tile (`assets/img/equity-uprise-mark.png`, owner 2026-10-15: "cut the
+  white part out … keep the dark part") and the same shape painted white for
+  the World's dark grounds (`assets/img/equity-uprise-mark-white.png`, owner
+  2026-10-15: "make the actual … sign white. Just paint it white for me").
+  Both are made from the supplied file's own pixels: nothing traced, cropped
+  or added.
+- **Do not write a mark out in words where the mark is the control.** The
+  Equity Uprise emblem (`assets/img/equity-uprise-logo.webp`) is the join
+  on the Human Uprise World screen, and it stands alone: no caption, no
+  wordmark, no chevron beside it, no spelled-out name in product copy
+  (owner, 2026-10-14: "just the symbol; I never want to state it; I just
+  want to use the mark, never work it out"). Give the control an accessible
+  name that says what it does, not what the mark is called.
 - **For PRIM3 specifically, use the full uncropped owner-supplied artwork.** Resize only by proportional scaling; never crop a PRIM3 mark or lockup to make it fit a UI slot.
 
 ### Whip Equipped — the supplied kit
@@ -95,10 +110,47 @@ anywhere: it is the drawn one. Delete it, do not reference it.
 
 ## Files every agent must honor
 
+### Shared website navigation
+
+Owner direction, 2026-10-16: all admin destinations are reachable from the shared
+bottom control bar; profile/account stay at the top right. Do not add another
+global admin sidebar, header tab strip or floating destination menu. Add native
+Control routes to the existing workspace route inventory so the bottom navigator
+inherits them. Keep local filters, chapter tabs and editor tools within their
+destination. Embedded frames retain host-owned navigation. See
+`docs/control-plane/SHARED-NAVIGATION.md` for the implementation and release scope.
+
+### Public World: the social feed (travel and missions kept, switched off)
+
+Owner, 2026-10-20: "Until I refine the other features the transport and the
+missions feature will be taken off and the social feature will be the only
+feature with no tab selecting between the other two." "Keep the social feed on
+and then develop those other projects in the back end. Probably keep all three
+on admin." The World (`mnet.html`) opens on the **feed only** for everyone:
+`hu-social-only` on `<html>` is the switch, and `missions=0` tells the globe.
+Travel and Missions are **preserved, not deleted**: their code and suites stay
+(`scripts/e2e/world-switch.mjs` drives them with the switch removed), and the
+**house owner** keeps all three tabs (`js/world-owner-modes.js`, the server's
+owner check). Turning them back on for everyone is removing the switch. This
+supersedes the travel-first entry below until the owner turns them back on.
+
+Owner correction, 2026-10-17 (superseded for now by 2026-10-20 above): the logged-out World homepage is **travel first**.
+Before changing its presentation or default content, read
+`docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md` and its preserved approved
+reference. The guest starts in **Travel**, beside **Missions** and **Posts**, with
+the cinematic globe, destination search and **Your whole journey** planner as
+the focus. The mission/community-first public entry is superseded. Keep shared
+bottom navigation, top-right account/profile and internal-only intelligence
+boundaries. Do not confuse this public travel surface with admin Analytics or
+Matthew's personal homepage. The standard records the target; check the actual
+implementation before claiming its journey or booking capabilities are live.
+
 On the control repo:
 
 - `AGENTS.md` (this law + local product gates)
-- `CLAUDE.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md`
+- `docs/PRODUCT-ARCHITECTURE-ROADMAP.md` (canonical cross-product context; authority + Action Network + Control + commercial completion order)
+- `data/product-context.json` (public machine-readable product map)
+- `CLAUDE.md` / `CODEX.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md` / `.github/instructions/mccluster.instructions.md`
 - `docs/control-plane/ECOSYSTEM.md`
 - `docs/control-plane/registry.json`
 

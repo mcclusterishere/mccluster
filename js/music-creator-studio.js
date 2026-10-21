@@ -5,9 +5,13 @@ const KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 const supabase = createClient(SB, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
 const $ = (id) => document.getElementById(id);
+const PAGE = window.MCC_CREATOR_PAGE;
 let session = null;
 let mUid = null;
 let profile = null;
+let tracksCache = [];
+let editingAlbum = null;
+let editingService = null;
 
 function status(id, message, tone = "") {
   const el = $(id);
@@ -78,6 +82,7 @@ function describeSize(bytes, up) {
   return (Number.isInteger(rounded) ? rounded : rounded.toFixed(1)) + "MB";
 }
 async function uploadGrant(bucket, file) {
+  if (navigator.onLine === false) throw new Error("You are offline. Reconnect before uploading this release.");
   const max = BUCKET_MAX_BYTES[bucket];
   if (max && file.size > max) {
     throw new Error(
@@ -90,6 +95,61 @@ async function uploadGrant(bucket, file) {
     .uploadToSignedUrl(grant.path, grant.token, file, { contentType: file.type || "application/octet-stream" });
   if (error) throw error;
   return grant.path;
+}
+/* Deleting an object needs its owner: the storage policy only lets an
+   authenticated creator remove files under their own folder. The module
+   client above is anonymous (uploads go through signed URLs and need no
+   session), so a delete through it was refused and every rollback left its
+   files behind. Each removal uses a client carrying the creator's token. */
+function ownerStorage() {
+  return createClient(SB, KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: "Bearer " + session.access_token } }
+  });
+}
+async function removeUpload(bucket, path) {
+  if (!bucket || !path) return;
+  const supabase = ownerStorage();
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) throw error;
+}
+/* Is any of this creator's releases still pointing at these uploads? A write
+   can commit even when its response never arrives, and a release already
+   moved to pending_review cannot be deleted by its creator (a zero-row
+   DELETE is not an error). Files are removed only when this says no; when it
+   cannot tell, it answers yes, because a stray file costs less than a release
+   whose audio was deleted from under it. */
+async function uploadsInUse(trackId, uploads) {
+  const paths = uploads.filter((u) => u.bucket !== "creator-artwork").map((u) => '"' + u.path + '"').join(",");
+  const clauses = [];
+  if (trackId) clauses.push("id.eq." + trackId);
+  if (paths) clauses.push("master_path.in.(" + paths + ")", "preview_path.in.(" + paths + ")");
+  if (!clauses.length) return false;
+  try {
+    const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
+      "&or=" + encodeURIComponent("(" + clauses.join(",") + ")") + "&select=id&limit=1");
+    return Array.isArray(rows) && rows.length > 0;
+  } catch (_) {
+    return true;
+  }
+}
+async function rollbackRelease(trackId, uploads) {
+  const failures = [];
+  if (trackId) {
+    try { await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), { method: "DELETE", headers: { Prefer: "return=minimal" } }); }
+    catch (err) { failures.push("release record: " + (err.message || err)); }
+  }
+  if (await uploadsInUse(trackId, uploads)) {
+    failures.push("files kept: a saved release still uses them");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_release_cleanup_failed", { failures });
+    return failures;
+  }
+  for (const item of uploads.slice().reverse()) {
+    try { await removeUpload(item.bucket, item.path); }
+    catch (err) { failures.push(item.bucket + ": " + (err.message || err)); }
+  }
+  if (failures.length && window.MCC_TRACK) window.MCC_TRACK("creator_release_cleanup_failed", { failures });
+  return failures;
 }
 function publicUrl(bucket, path) {
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
@@ -109,13 +169,25 @@ function durationMs(file) {
 }
 async function loadProfile() {
   const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=m_uid,handle,artist_name,bio,website_url,status,verification_state,payout_state&limit=1");
+    "&select=m_uid,handle,artist_name,bio,website_url,avatar_url,banner_url,status,verification_state,payout_state,settings&limit=1");
   profile = rows?.[0] || null;
+  renderAlbums();
+  renderServices();
   if (!profile) return;
+  $("creatorAvatarNow").textContent = profile.avatar_url ? "Photo set. Choose a file to replace it." : "Square works best. Shown on your page and beside your tracks.";
+  $("creatorBannerNow").textContent = profile.banner_url ? "Front-page photo set. Choose a file to replace it." : "Wide and dark works best. It sits behind your name at the top of your page.";
   $("creatorHandle").value = profile.handle || "";
   $("creatorName").value = profile.artist_name || "";
   $("creatorBio").value = profile.bio || "";
   $("creatorWebsite").value = profile.website_url || "";
+  var artistTheme = profile.settings && profile.settings.experience_theme || {};
+  $("creatorAccent").value = artistTheme.accent || "#e5383b";
+  $("creatorBackground").value = artistTheme.background || "#090706";
+  $("creatorForeground").value = artistTheme.foreground || "#f4efe6";
+  $("creatorSurface").value = artistTheme.surface || "#17110f";
+  ["Accent","Background","Foreground","Surface"].forEach(function(k){
+    var el=$("track"+k); if(el) el.value=$("creator"+k).value;
+  });
   $("creatorTerms").checked = true;
   const pub = $("publicProfile");
   pub.href = "music-creator.html?handle=" + encodeURIComponent(profile.handle);
@@ -128,7 +200,9 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,moderation_note,created_at,published_at&order=created_at.desc");
+    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
+  tracksCache = rows || [];
+  renderAlbums();
   const list = $("creatorTracks");
   if (!rows?.length) {
     list.innerHTML = '<div class="creator-status">No releases yet.</div>';
@@ -148,6 +222,324 @@ function escapeHtml(value) {
   return d.innerHTML;
 }
 
+/* ---------- albums (music_creator_profiles.settings.albums) ---------- */
+
+/* Change the profile's settings without undoing anyone else's change.
+   Read the settings with their updated_at (music_creator_guard sets it on
+   every write), apply the change, and write back only if updated_at is still
+   the one read. If another tab or the profile form wrote in between, nothing
+   is written: read again and reapply, a few times at most. */
+async function saveSettings(change) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings,updated_at&limit=1");
+    if (!rows?.[0]) throw new Error("Save your creator profile first.");
+    const settings = Object.assign({}, rows[0].settings || {});
+    change(settings);
+    settings.albums = PAGE.normalizeAlbums(settings);
+    settings.services = PAGE.normalizeServices(settings);
+    if (settings.featured_album && !settings.albums.some((a) => a.id === settings.featured_album)) delete settings.featured_album;
+    const written = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) +
+      "&updated_at=eq." + encodeURIComponent(rows[0].updated_at), {
+      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ settings })
+    });
+    if (Array.isArray(written) && written.length) {
+      profile = Object.assign({}, profile, { settings: written[0].settings || settings });
+      renderAlbums();
+      renderServices();
+      return;
+    }
+  }
+  throw new Error("Your profile changed in another window while saving. Reload and try again.");
+}
+function albumsNow() { return PAGE.normalizeAlbums(profile && profile.settings); }
+function trackById(id) { return tracksCache.find((t) => String(t.id).toLowerCase() === id) || null; }
+function trackLabel(t) {
+  return t ? t.title + (t.status === "published" ? "" : " · " + t.status.replace(/_/g, " ")) : "Removed track";
+}
+function renderAlbums() {
+  const list = $("creatorAlbums");
+  const select = $("trackAlbum");
+  if (!list || !PAGE) return;
+  const albums = albumsNow();
+  const featured = PAGE.featuredId(profile && profile.settings, albums);
+  if (!profile) {
+    list.innerHTML = '<div class="creator-status">Save your creator profile first.</div>';
+  } else if (!albums.length) {
+    list.innerHTML = '<div class="creator-status">No albums yet.</div>';
+  } else {
+    list.innerHTML = albums.map((a) => {
+      const published = a.tracks.filter((id) => trackById(id)?.status === "published").length;
+      return '<div class="creator-item"><div><b>' + escapeHtml(a.title) + '</b><small>' +
+        escapeHtml([PAGE.kindLabel(a.kind), a.release_date, a.tracks.length + " track" + (a.tracks.length === 1 ? "" : "s"),
+          published + " published", a.id === featured ? "featured" : ""].filter(Boolean).join(" · ")) +
+        '</small></div><button class="creator-btn quiet" type="button" data-edit-album="' + escapeHtml(a.id) + '">Edit</button></div>';
+    }).join("");
+  }
+  if (select) {
+    const keep = select.value;
+    select.innerHTML = '<option value="">No album (single)</option>' +
+      albums.map((a) => '<option value="' + escapeHtml(a.id) + '">' + escapeHtml(a.title) + '</option>').join("");
+    if (albums.some((a) => a.id === keep)) select.value = keep;
+  }
+}
+function renderAlbumTracks() {
+  if (!editingAlbum) return;
+  const chosen = editingAlbum.tracks;
+  $("albumTracks").innerHTML = chosen.length ? chosen.map((id, i) =>
+    '<li><span>' + escapeHtml(trackLabel(trackById(id))) + '</span>' +
+    '<button type="button" class="creator-mini" data-album-move="' + i + ':-1" aria-label="Move up"' + (i ? '' : ' disabled') + '>↑</button>' +
+    '<button type="button" class="creator-mini" data-album-move="' + i + ':1" aria-label="Move down"' + (i < chosen.length - 1 ? '' : ' disabled') + '>↓</button>' +
+    '<button type="button" class="creator-mini" data-album-remove="' + i + '" aria-label="Remove from album">✕</button></li>'
+  ).join("") : '<li class="creator-status">No tracks yet. Add them below.</li>';
+  const pool = tracksCache.filter((t) => !chosen.includes(String(t.id).toLowerCase()) && t.status !== "rejected" && t.status !== "archived");
+  $("albumPool").innerHTML = pool.length ? pool.map((t) =>
+    '<li><span>' + escapeHtml(trackLabel(t)) + '</span><button type="button" class="creator-mini" data-album-add="' +
+    escapeHtml(String(t.id).toLowerCase()) + '">+ Add</button></li>'
+  ).join("") : '<li class="creator-status">' + (tracksCache.length ? "Every track is already on this album." : "Upload a track below, then add it here.") + '</li>';
+}
+function openAlbum(album) {
+  if (!profile) { status("albumStatus", "Save your creator profile first.", "bad"); return; }
+  editingAlbum = album ? JSON.parse(JSON.stringify(album)) : { id: PAGE.newAlbumId(), title: "", kind: "album", release_date: "", description: "", cover_url: "", tracks: [] };
+  const isNew = !album;
+  $("albumForm").hidden = false;
+  $("albumTitle").value = editingAlbum.title;
+  $("albumKind").value = editingAlbum.kind;
+  $("albumDate").value = editingAlbum.release_date;
+  $("albumDescription").value = editingAlbum.description;
+  $("albumCover").value = "";
+  $("albumCoverNow").textContent = editingAlbum.cover_url ? "Cover set. Choose a file to replace it." : "Square, at least 1000×1000.";
+  $("albumFeatured").checked = !isNew && PAGE.featuredId(profile.settings, albumsNow()) === editingAlbum.id;
+  $("deleteAlbum").hidden = isNew;
+  status("albumStatus", "");
+  renderAlbumTracks();
+  $("albumTitle").focus();
+}
+function closeAlbum() { editingAlbum = null; $("albumForm").hidden = true; status("albumStatus", ""); }
+
+$("newAlbum").addEventListener("click", () => openAlbum(null));
+$("cancelAlbum").addEventListener("click", closeAlbum);
+$("creatorAlbums").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-edit-album]");
+  if (!b) return;
+  const album = albumsNow().find((a) => a.id === b.getAttribute("data-edit-album"));
+  if (album) openAlbum(album);
+});
+$("albumForm").addEventListener("click", (e) => {
+  if (!editingAlbum) return;
+  const add = e.target.closest("[data-album-add]");
+  const move = e.target.closest("[data-album-move]");
+  const remove = e.target.closest("[data-album-remove]");
+  const list = editingAlbum.tracks;
+  if (add && list.length < PAGE.MAX_TRACKS) list.push(add.getAttribute("data-album-add"));
+  if (move) {
+    const [i, d] = move.getAttribute("data-album-move").split(":").map(Number);
+    const j = i + d;
+    if (j >= 0 && j < list.length) [list[i], list[j]] = [list[j], list[i]];
+  }
+  if (remove) list.splice(Number(remove.getAttribute("data-album-remove")), 1);
+  if (add || move || remove) renderAlbumTracks();
+});
+$("deleteAlbum").addEventListener("click", async () => {
+  if (!editingAlbum || !confirm("Delete this album? Its tracks stay in your releases.")) return;
+  const id = editingAlbum.id;
+  try {
+    await saveSettings((s) => { s.albums = (s.albums || []).filter((a) => a && a.id !== id); });
+    closeAlbum();
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_album_deleted", {});
+  } catch (err) { status("albumStatus", err.message || "Could not delete the album.", "bad"); }
+});
+$("albumForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!editingAlbum) return;
+  const save = $("saveAlbum");
+  let coverUpload = null;
+  try {
+    save.disabled = true;
+    const cover = $("albumCover").files[0] || null;
+    if (cover) {
+      status("albumStatus", "Uploading cover…");
+      const path = await uploadGrant("creator-artwork", cover);
+      coverUpload = { bucket: "creator-artwork", path };
+      editingAlbum.cover_url = publicUrl("creator-artwork", path);
+    }
+    const album = PAGE.normalizeAlbum(Object.assign({}, editingAlbum, {
+      title: $("albumTitle").value,
+      kind: $("albumKind").value,
+      release_date: $("albumDate").value,
+      description: $("albumDescription").value
+    }));
+    if (!album) throw new Error("Give the album a title.");
+    status("albumStatus", "Saving album…");
+    const feature = $("albumFeatured").checked;
+    await saveSettings((s) => {
+      const list = Array.isArray(s.albums) ? s.albums.slice() : [];
+      const at = list.findIndex((a) => a && a.id === album.id);
+      if (at >= 0) list[at] = album;
+      else {
+        if (PAGE.normalizeAlbums({ albums: list }).length >= PAGE.MAX_ALBUMS) throw new Error("You have the most albums a page can hold (" + PAGE.MAX_ALBUMS + ").");
+        list.push(album);
+      }
+      s.albums = list;
+      if (feature) s.featured_album = album.id;
+      else if (s.featured_album === album.id) delete s.featured_album;
+    });
+    closeAlbum();
+    status("albumStatus", "Album saved.", "good");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_album_saved", { tracks: album.tracks.length, kind: album.kind });
+  } catch (err) {
+    /* Remove the new cover only when no saved album uses it: the save may
+       have committed even though its response was lost. */
+    if (coverUpload) {
+      try {
+        const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings&limit=1");
+        const url = publicUrl(coverUpload.bucket, coverUpload.path);
+        const inUse = PAGE.normalizeAlbums(rows?.[0]?.settings).some((a) => a.cover_url === url);
+        if (!inUse) await removeUpload(coverUpload.bucket, coverUpload.path);
+      } catch (_) { /* unsure: keep the file */ }
+    }
+    status("albumStatus", err.message || "Could not save the album.", "bad");
+  } finally {
+    save.disabled = false;
+  }
+});
+
+/* ---------- rate sheet (music_creator_profiles.settings.services) ---------- */
+
+function servicesNow() { return PAGE.normalizeServices(profile && profile.settings); }
+function renderServices() {
+  const list = $("creatorServices");
+  if (!list || !PAGE) return;
+  const services = servicesNow();
+  if (!profile) { list.innerHTML = '<div class="creator-status">Save your creator profile first.</div>'; return; }
+  if (!services.length) { list.innerHTML = '<div class="creator-status">No rates yet.</div>'; return; }
+  list.innerHTML = services.map((svc, i) =>
+    '<div class="creator-item"><div><b>' + escapeHtml(svc.title) + '</b><small>' + escapeHtml(PAGE.servicePrice(svc)) + '</small></div>' +
+    '<span class="creator-rowactions">' +
+    '<button type="button" class="creator-mini" data-service-move="' + i + ':-1" aria-label="Move ' + escapeHtml(svc.title) + ' up"' + (i ? '' : ' disabled') + '>↑</button>' +
+    '<button type="button" class="creator-mini" data-service-move="' + i + ':1" aria-label="Move ' + escapeHtml(svc.title) + ' down"' + (i < services.length - 1 ? '' : ' disabled') + '>↓</button>' +
+    '<button class="creator-btn quiet" type="button" data-edit-service="' + escapeHtml(svc.id) + '">Edit</button></span></div>'
+  ).join("");
+}
+function openService(svc) {
+  if (!profile) { status("serviceStatus", "Save your creator profile first.", "bad"); return; }
+  editingService = svc ? Object.assign({}, svc) : { id: PAGE.newServiceId() };
+  $("serviceForm").hidden = false;
+  $("serviceTitle").value = svc ? svc.title : "";
+  $("servicePrice").value = svc ? String(svc.price_cents / 100) : "";
+  $("serviceUnit").value = svc ? svc.unit : "song";
+  $("serviceRoyalty").value = svc && svc.royalty_pct ? String(svc.royalty_pct) : "";
+  $("serviceDescription").value = svc ? svc.description : "";
+  $("deleteService").hidden = !svc;
+  status("serviceStatus", "");
+  $("serviceTitle").focus();
+}
+function closeService() { editingService = null; $("serviceForm").hidden = true; }
+
+$("newService").addEventListener("click", () => openService(null));
+$("cancelService").addEventListener("click", () => { closeService(); status("serviceStatus", ""); });
+$("creatorServices").addEventListener("click", async (e) => {
+  const edit = e.target.closest("[data-edit-service]");
+  const move = e.target.closest("[data-service-move]");
+  if (edit) {
+    const svc = servicesNow().find((x) => x.id === edit.getAttribute("data-edit-service"));
+    if (svc) openService(svc);
+    return;
+  }
+  if (!move) return;
+  const [i, d] = move.getAttribute("data-service-move").split(":").map(Number);
+  const id = servicesNow()[i]?.id;
+  try {
+    await saveSettings((s) => {
+      const list = PAGE.normalizeServices(s);
+      const at = list.findIndex((x) => x.id === id);
+      const to = at + d;
+      if (at >= 0 && to >= 0 && to < list.length) [list[at], list[to]] = [list[to], list[at]];
+      s.services = list;
+    });
+  } catch (err) { status("serviceStatus", err.message || "Could not reorder your rates.", "bad"); }
+});
+$("deleteService").addEventListener("click", async () => {
+  if (!editingService || !confirm("Delete this rate from your page?")) return;
+  const id = editingService.id;
+  try {
+    await saveSettings((s) => { s.services = (s.services || []).filter((x) => x && x.id !== id); });
+    closeService();
+    status("serviceStatus", "Rate deleted.", "good");
+  } catch (err) { status("serviceStatus", err.message || "Could not delete the rate.", "bad"); }
+});
+$("serviceForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!editingService) return;
+  const save = $("saveService");
+  try {
+    save.disabled = true;
+    const svc = PAGE.normalizeService({
+      id: editingService.id,
+      title: $("serviceTitle").value,
+      price_cents: Math.round(Number($("servicePrice").value) * 100),
+      unit: $("serviceUnit").value,
+      royalty_pct: Number($("serviceRoyalty").value || 0),
+      description: $("serviceDescription").value
+    });
+    if (!svc) throw new Error("Give the rate a name and a price between $1 and $100,000.");
+    status("serviceStatus", "Saving rate…");
+    await saveSettings((s) => {
+      const list = Array.isArray(s.services) ? s.services.slice() : [];
+      const at = list.findIndex((x) => x && x.id === svc.id);
+      if (at >= 0) list[at] = svc;
+      else {
+        if (PAGE.normalizeServices({ services: list }).length >= PAGE.MAX_SERVICES) throw new Error("A rate sheet holds up to " + PAGE.MAX_SERVICES + " rates.");
+        list.push(svc);
+      }
+      s.services = list;
+    });
+    closeService();
+    status("serviceStatus", "Rate saved: " + PAGE.servicePrice(svc) + ".", "good");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_rate_saved", { unit: svc.unit, royalty: svc.royalty_pct > 0 });
+  } catch (err) {
+    status("serviceStatus", err.message || "Could not save the rate.", "bad");
+  } finally {
+    save.disabled = false;
+  }
+});
+
+/* Profile photo and front-page photo: uploaded to creator-artwork once the
+   profile exists (an upload grant needs an active creator profile). */
+async function uploadProfileImages() {
+  const avatar = $("creatorAvatarFile").files[0] || null;
+  const banner = $("creatorBannerFile").files[0] || null;
+  if (!avatar && !banner) return;
+  const patch = {};
+  if (avatar) { status("profileStatus", "Uploading profile photo…"); patch.avatar_url = publicUrl("creator-artwork", await uploadGrant("creator-artwork", avatar)); }
+  if (banner) { status("profileStatus", "Uploading front-page photo…"); patch.banner_url = publicUrl("creator-artwork", await uploadGrant("creator-artwork", banner)); }
+  await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
+    method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(patch)
+  });
+  $("creatorAvatarFile").value = "";
+  $("creatorBannerFile").value = "";
+}
+
+function parseLyricCtas(raw) {
+  return String(raw || "").split(/\r?\n/).map(function(line) {
+    var parts=line.split("|").map(function(x){return x.trim();});
+    if(parts.length<3 || !parts[0] || !parts[2]) return null;
+    return { match: parts[0].slice(0,240), label:(parts[1]||"Open service").slice(0,100), href:parts.slice(2).join("|").trim().slice(0,2000) };
+  }).filter(Boolean).slice(0,24);
+}
+function experienceFromForm() {
+  var serviceUrl=$("trackServiceUrl").value.trim();
+  return {
+    theme:{
+      accent:$("trackAccent").value,
+      background:$("trackBackground").value,
+      foreground:$("trackForeground").value,
+      surface:$("trackSurface").value
+    },
+    commerce:serviceUrl ? { label:$("trackServiceLabel").value.trim() || "Take the next step", href:serviceUrl } : {},
+    lyric_ctas:parseLyricCtas($("trackLyricCtas").value)
+  };
+}
+
 $("profileForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
@@ -161,15 +553,27 @@ $("profileForm").addEventListener("submit", async (e) => {
       terms_version: "music-creator-v1",
       terms_accepted_at: new Date().toISOString()
     };
+    const theme = {
+      accent: $("creatorAccent").value,
+      background: $("creatorBackground").value,
+      foreground: $("creatorForeground").value,
+      surface: $("creatorSurface").value
+    };
     if (profile) {
+      /* The profile fields, then the colours through saveSettings: this form
+         never writes back its own (possibly old) copy of the albums and rates. */
       await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
         method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(body)
       });
+      await saveSettings((s) => { s.experience_theme = theme; });
     } else {
       await rest("music_creator_profiles", {
-        method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(body)
+        method: "POST", headers: { Prefer: "return=representation" },
+        body: JSON.stringify(Object.assign(body, { settings: { experience_theme: theme } }))
       });
     }
+    await loadProfile();
+    await uploadProfileImages();
     await loadProfile();
     status("profileStatus", "Creator profile saved.", "good");
     if (window.MCC_TRACK) window.MCC_TRACK("creator_profile_saved", {});
@@ -190,6 +594,9 @@ $("trackAccess").addEventListener("change", () => {
 $("trackForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const submit = $("submitTrack");
+  const uploaded = [];
+  let createdTrackId = null;
+  let committed = false;
   try {
     if (!profile) throw new Error("Save your creator profile first.");
     const master = $("trackMaster").files[0];
@@ -204,24 +611,42 @@ $("trackForm").addEventListener("submit", async (e) => {
       throw new Error("Describe the underlying work and your derivative/parody rights basis.");
     }
 
+    // Validate metadata, rights and all file sizes before transferring any bytes.
+    const title = $("trackTitle").value.trim();
+    const artist = $("trackArtist").value.trim() || profile.artist_name;
+    if (!title) throw new Error("Add a song title.");
+    if (!artist) throw new Error("Add an artist name.");
+    for (const [bucket, file] of [["creator-masters", master], ["creator-previews", preview], ["creator-artwork", art]]) {
+      if (!file) continue;
+      const limit = BUCKET_MAX_BYTES[bucket];
+      if (limit && file.size > limit) {
+        throw new Error(`${file.name} is ${describeSize(file.size, true)}. Maximum: ${describeSize(limit)}.`);
+      }
+      if (!file.size) throw new Error(`${file.name} is empty. Choose a valid file.`);
+    }
+    if (!$("ownsMaster").checked) throw new Error("Confirm your rights to the master recording.");
+    if (!$("collaboratorsCleared").checked) throw new Error("Confirm collaborator permissions before submitting.");
+    const dur = await durationMs(master);
+    if (!Number.isFinite(dur) || dur <= 0) throw new Error("The master audio could not be read. Try a supported audio file.");
+
     submit.disabled = true;
     status("trackStatus", "Uploading private master…");
     const masterPath = await uploadGrant("creator-masters", master);
+    uploaded.push({ bucket: "creator-masters", path: masterPath });
 
     status("trackStatus", "Uploading listener audio…");
     const previewPath = await uploadGrant("creator-previews", preview);
+    uploaded.push({ bucket: "creator-previews", path: previewPath });
     const previewUrl = publicUrl("creator-previews", previewPath);
 
     let posterUrl = "";
     if (art) {
       status("trackStatus", "Uploading artwork…");
       const artPath = await uploadGrant("creator-artwork", art);
+      uploaded.push({ bucket: "creator-artwork", path: artPath });
       posterUrl = publicUrl("creator-artwork", artPath);
     }
 
-    const title = $("trackTitle").value.trim();
-    const artist = $("trackArtist").value.trim() || profile.artist_name;
-    const dur = await durationMs(master);
     const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 7);
     const rights = {
       owns_master: $("ownsMaster").checked,
@@ -252,12 +677,16 @@ $("trackForm").addEventListener("submit", async (e) => {
         master_path: masterPath,
         duration_ms: dur,
         genre: $("trackGenre").value.trim(),
+        music_video_url: $("trackMusicVideo").value.trim(),
+        lyrics_url: $("trackLyricsUrl").value.trim(),
+        experience: experienceFromForm(),
         rights_status: "incomplete",
         rights_declaration: rights
       })
     });
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
+    createdTrackId = track.id;
 
     await rest("music_rights_attestations", {
       method: "POST",
@@ -279,10 +708,12 @@ $("trackForm").addEventListener("submit", async (e) => {
       body: JSON.stringify({ status: "pending_review", rights_status: "attested", rights_declaration: rights })
     });
 
+    committed = true;
     const price = Math.round(Number($("licensePrice").value || 0) * 100);
     const licenseTerms = $("licenseTerms").value.trim();
+    let licenseWarning = "";
     if (price > 0 && licenseTerms) {
-      await rest("music_license_offers", {
+      try { await rest("music_license_offers", {
         method: "POST", headers: { Prefer: "return=minimal" },
         body: JSON.stringify({
           track_id: track.id,
@@ -296,32 +727,212 @@ $("trackForm").addEventListener("submit", async (e) => {
           active: false,
           checkout_enabled: false
         })
-      });
+      }); } catch (licenseErr) {
+        licenseWarning = " Release submitted, but the license offer was not saved: " + (licenseErr.message || "try adding it again later.");
+        if (window.MCC_TRACK) window.MCC_TRACK("creator_license_offer_failed", { track_id: track.id });
+      }
     }
+
+    const albumId = $("trackAlbum").value;
+    let albumWarning = "";
+    if (albumId) {
+      try {
+        await saveSettings((s) => {
+          const a = (s.albums || []).find((x) => x && x.id === albumId);
+          if (a && Array.isArray(a.tracks) && a.tracks.length < PAGE.MAX_TRACKS) a.tracks.push(String(track.id).toLowerCase());
+        });
+      } catch (albumErr) {
+        albumWarning = " It was not added to the album: add it from Your albums.";
+      }
+    }
+    licenseWarning += albumWarning;
 
     $("trackForm").reset();
     $("trackAccess").value = "account";
+    if (profile) {
+      var baseTheme = profile.settings && profile.settings.experience_theme || {};
+      $("trackAccent").value = baseTheme.accent || "#e5383b";
+      $("trackBackground").value = baseTheme.background || "#090706";
+      $("trackForeground").value = baseTheme.foreground || "#f4efe6";
+      $("trackSurface").value = baseTheme.surface || "#17110f";
+    }
     $("derivativeField").hidden = true;
-    status("trackStatus", derivative
+    status("trackStatus", (derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
-      : "Uploaded. Submitted for rights and publication review.", "good");
+      : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
     await loadTracks();
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
-    status("trackStatus", err.message || "Upload failed.", "bad");
+    if (!committed && (createdTrackId || uploaded.length)) {
+      status("trackStatus", "That submission failed. Cleaning up the partial release…", "bad");
+      const cleanupFailures = await rollbackRelease(createdTrackId, uploaded);
+      const kept = cleanupFailures.some((f) => f.startsWith("files kept"));
+      status("trackStatus", (err.message || "Upload failed.") + (kept
+        ? " It may have been submitted after all: check Your releases before uploading it again."
+        : cleanupFailures.length ? " Some cleanup also needs attention." : " Nothing partial was kept."), "bad");
+      if (kept) { try { await loadTracks(); } catch (_) { /* the list refreshes on the next load */ } }
+    } else {
+      status("trackStatus", err.message || "Upload failed.", "bad");
+    }
   } finally {
     submit.disabled = false;
   }
 });
 
+/* ---------- onboarding: one click, shown only until the server says creator ---------- */
+
+const ONBOARD = window.MCC_CREATOR_ONBOARD;
+let onboardState = null;
+
+/* The two calls live in js/creator-onboarding.js (ONBOARD.client), shared with every
+   "Become a creator" door on the site: the server functions, or while they are not
+   applied the same answer built from the member's own rows, with the same two writes
+   (the picture from the member's profile included). */
+function onboardClient() {
+  return ONBOARD.client({ token: session.access_token, mUid, userId: session?.user?.id || "" });
+}
+async function creatorState() {
+  return onboardClient().state();
+}
+async function becomeCreator(input) {
+  return onboardClient().become(input);
+}
+
+function paintAvatar(el, url, name) {
+  el.replaceChildren();
+  const safe = PAGE.safeArtwork(url);
+  const initial = () => { el.textContent = (String(name || "").trim().charAt(0) || "♪").toUpperCase(); };
+  if (safe) {
+    const img = document.createElement("img");
+    img.src = safe; img.alt = ""; img.decoding = "async";
+    /* a picture that will not load (removed from storage) shows the initial, never a broken image */
+    img.onerror = () => { if (img.parentNode === el) { el.replaceChildren(); initial(); } };
+    el.append(img);
+  } else {
+    initial();
+  }
+}
+function paintOnboard(state) {
+  onboardState = state;
+  const pre = state.prefill || {};
+  const ask = ONBOARD.askFor(state);
+  const name = pre.artist_name || "";
+  const handle = pre.handle || "";
+  /* the member's own picture, the one their artist page starts with */
+  paintAvatar($("cobAvatar"), pre.avatar_url || "", name || handle);
+  $("cobName").textContent = name || "Your artist page";
+  $("cobHandle").textContent = handle ? "@" + handle : "";
+  const nameField = $("cobNameField");
+  nameField.hidden = ask.indexOf("artist_name") < 0;
+  const handleField = $("cobHandleField");
+  handleField.hidden = ask.indexOf("handle") < 0;
+  if (!handleField.hidden) {
+    const problem = state.problems && state.problems.handle;
+    if (problem) handleField.dataset.problem = problem; else delete handleField.dataset.problem;
+    if (!$("cobHandleInput").value || problem === "taken") $("cobHandleInput").value = pre.handle_suggestion || "";
+    $("cobHandleHelp").textContent = ONBOARD.handleHelp(state);
+    if (!handle && $("cobHandleInput").value) $("cobHandle").textContent = "@" + ONBOARD.normalizeHandle($("cobHandleInput").value);
+  }
+}
+function paintSummary() {
+  const box = $("creatorSummary");
+  if (!profile) { box.hidden = true; return; }
+  box.hidden = false;
+  paintAvatar($("cmeAvatar"), profile.avatar_url, profile.artist_name);
+  $("cmeName").textContent = profile.artist_name || "";
+  $("cmeHandle").textContent = "@" + (profile.handle || "") + (profile.status && profile.status !== "active" ? " · " + profile.status : "");
+  $("cmePage").href = "music-creator.html?handle=" + encodeURIComponent(profile.handle || "");
+  $("cmeEdit").href = ONBOARD.EDIT_URL;
+}
+async function showStudio(editing) {
+  $("creatorOnboard").hidden = true;
+  $("creatorApp").hidden = false;
+  /* the profile form is the EDIT screen now: shown only when asked for */
+  $("creatorIdentity").hidden = !editing;
+  await loadProfile();
+  paintSummary();
+  if (editing) {
+    $("creatorSummary").hidden = true;
+    $("creatorIdentity").scrollIntoView({ block: "start" });
+  }
+  await loadTracks();
+}
+
+$("cobForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const go = $("cobGo");
+  const say = (msg, tone) => { $("cobStatus").textContent = msg || ""; if (tone) $("cobStatus").dataset.tone = tone; else delete $("cobStatus").dataset.tone; };
+  const ask = ONBOARD.askFor(onboardState);
+  const input = {};
+  if (ask.indexOf("artist_name") >= 0) {
+    input.artist_name = $("cobNameInput").value.trim();
+    if (!input.artist_name) { say("Add your artist name.", "bad"); $("cobNameInput").focus(); return; }
+  }
+  if (ask.indexOf("handle") >= 0) {
+    input.handle = ONBOARD.normalizeHandle($("cobHandleInput").value);
+    if (!ONBOARD.validHandle(input.handle)) {
+      $("cobHandleField").dataset.problem = "invalid";
+      $("cobHandleHelp").textContent = ONBOARD.handleHelp({ problems: { handle: "invalid" } });
+      $("cobHandleInput").focus(); return;
+    }
+  }
+  go.disabled = true;
+  say("Making your page…");
+  try {
+    const state = await becomeCreator(input);
+    if (state && state.creator) {
+      if (window.MCC_TRACK) window.MCC_TRACK("creator_onboarded", { created: !!state.created });
+      say("");
+      await showStudio(false);
+      /* the analytics card asked before this member was a creator */
+      if ($("selfMusicRefresh")) $("selfMusicRefresh").click();
+      return;
+    }
+    paintOnboard(Object.assign({}, state, {
+      prefill: Object.assign({}, onboardState.prefill, state.prefill, input.artist_name ? { artist_name: input.artist_name } : {})
+    }));
+    say(state && state.problems && state.problems.handle === "taken" ? "That handle is taken. Pick another." : "Add what's missing, then try again.", "bad");
+  } catch (err) {
+    say(err.message || "Could not make your page. Try again.", "bad");
+  } finally {
+    go.disabled = false;
+  }
+});
+
+/* the card is a live preview: what they type is what their page will say */
+$("cobNameInput").addEventListener("input", () => {
+  const v = $("cobNameInput").value.trim();
+  $("cobName").textContent = v || onboardState?.prefill?.artist_name || "Your artist page";
+  paintAvatar($("cobAvatar"), onboardState?.prefill?.avatar_url || "", v);
+});
+$("cobHandleInput").addEventListener("input", () => {
+  /* the @ is drawn in the field; a typed one is dropped */
+  if ($("cobHandleInput").value.charAt(0) === "@") $("cobHandleInput").value = $("cobHandleInput").value.replace(/^@+/, "");
+  const v = ONBOARD.normalizeHandle($("cobHandleInput").value);
+  $("cobHandle").textContent = v ? "@" + v : "";
+  delete $("cobHandleField").dataset.problem;
+  $("cobHandleHelp").textContent = ONBOARD.handleHelp({});
+});
+
 (async function boot() {
   try {
     const ok = await authed();
-    if (!ok) return;
+    const state = ok ? await creatorState() : null;
+    const v = ONBOARD.view({ signedIn: ok, state, editing: ONBOARD.wantsEdit(location.search) });
+    if (v === "signin") return;
+    if (v === "onboard") {
+      /* ONE SIGN-UP (owner, 2026-10-20): a profile that is not done goes through the three pages on the World,
+         which come back here for the one tap; nothing is asked twice on this page */
+      const done = await ONBOARD.profileDone({ token: session.access_token });
+      if (done === false) { location.replace(ONBOARD.FINISH_URL); return; }
+    }
     $("creatorGate").hidden = true;
-    $("creatorApp").hidden = false;
-    await loadProfile();
-    await loadTracks();
+    if (v === "onboard") {
+      paintOnboard(state);
+      $("creatorOnboard").hidden = false;
+      return;
+    }
+    await showStudio(v === "edit");
   } catch (err) {
     $("creatorGate").hidden = false;
     $("creatorGate").querySelector("p").textContent = err.message || "Could not open Creator Studio.";

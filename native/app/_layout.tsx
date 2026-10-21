@@ -19,6 +19,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { TransportProvider } from '../src/player';
+import { MccProvider } from '../src/mcc';
 import { color } from '../src/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -41,7 +42,8 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.stage }}>
       <SafeAreaProvider>
-        <TransportProvider>
+        <MccProvider>
+          <TransportProvider>
           <StatusBar style="light" />
           <Stack
             screenOptions={{
@@ -57,8 +59,11 @@ export default function RootLayout() {
               name="track/[slug]"
               options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
             />
+            <Stack.Screen name="mission/[id]" />
+            <Stack.Screen name="group/[slug]" />
           </Stack>
-        </TransportProvider>
+          </TransportProvider>
+        </MccProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

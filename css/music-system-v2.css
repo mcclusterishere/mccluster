@@ -178,6 +178,13 @@ body.music-v2 a{color:inherit}
    onto its own white fill and the label vanished — a button you could only
    find by guessing where it was. Scoped to the one rule it has to beat. */
 body.music-v2 .music-launch a{color:#09090b}
+/* The one tap (owner, 2026-10-20): Become a creator, with the terms the tap
+   accepts written beside it. The pill is a thumb-sized target; the links in
+   the line under it are words in a sentence, not pills. */
+.music-launch .music-launch__go{display:grid;gap:8px;min-width:0;max-width:24rem}
+.music-launch .music-launch__go > a{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.music-launch__terms{color:var(--music-muted,#a1a1a7);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;border-radius:0;background:none;color:var(--music-text,#f7f7f8);font:inherit;text-decoration:underline;text-underline-offset:2px}
 
 /* Section rhythm matches Apple Music's vertically stacked shelves. */
 .music-v2 .ls__sec{margin:0 0 28px}
@@ -479,7 +486,8 @@ body.music-now-open{overflow:hidden}
   width:100%;box-sizing:border-box;
   border:0;border-radius:9px;
   background:#0d0d10;color:var(--music-text);
-  padding:11px;font-size:13px
+  /* 16px or more: iOS zooms the page into any smaller field on focus */
+  padding:11px;font-size:max(16px,13px)
 }
 .music-v2 .creator-field input:focus,.music-v2 .creator-field textarea:focus,.music-v2 .creator-field select:focus{
   outline:0;box-shadow:0 0 0 2px rgba(229,56,59,.36)

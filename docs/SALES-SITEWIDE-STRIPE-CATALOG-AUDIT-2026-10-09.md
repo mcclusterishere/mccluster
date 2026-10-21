@@ -1,0 +1,28 @@
+# Site-wide commercial catalog reconciliation — 2026-10-09
+
+## Scope and verified state
+Reviewed repository sources `data/offers.json`, `data/offerings.json`, `services.html`, `js/hire-offers.js`, `js/mccluster-platform-pricing.js`, `music-creator-terms.html` and the live Stripe catalog. Live Stripe returned **zero products and zero prices** on 2026-10-09. The sandbox Creator Platform catalog exists separately. The public website was not retrievable by the external web reader; repository files are the source for this inventory, **not a verified live-page crawl**.
+
+## Product families: keep separate
+1. **Creator Platform SaaS**: self-service software, hosting and workspace entitlements. Starter $7.50/month or $60/year; Plus $15/month; Pro $40/month; Business $99/month. Existing site JS also advertises annual Plus $180, Pro $480, Business $1,188, but **those annual prices were not created in Stripe**. Do not offer annual checkout for those plans until verified.
+2. **Managed websites / domain / hosting**: $33 draft deposit credited toward first hosting month; $66 go-live total (domain $33 + first hosting month $33), adjusted for any deposit already paid; $33 monthly hosting thereafter; $33 annual domain renewal; $360 annual hosting; $393 annual go-live (domain + hosting). **Different fulfillment from Creator Starter**: managed build, drafts/redraws, ownership and domain commitments. Do not substitute a $7.50 SaaS subscription for this agreement.
+3. **Managed marketing**: Anti-Social $875/month standard; Equity Uprise 50% of standard monthly fee ($437.50/month), plus **50% of eligible connected revenue** subject to approval, written agreement, 12-month maximum and a cap derived as 10 × 12 × standard monthly price ($105,000). The share basis is **not yet approved**. Do not expose automated Equity checkout until executed terms exist. Social-only: discovery quote only.
+4. **Photography/video production**: portrait/headshot $285/session; event $201/hour with 2-hour minimum; video half-day $990; video full-day $1,600; event film $2,040; photo brand half-day $938; photo brand full-day $1,842.50; music video **from** $2,740; brand film $3,440. Service scope, date, deliverables, rights and booking deposit need contract/order linkage before payment.
+5. **Music and campaigns**: custom scoring **from** $525/finished minute; sync license **from** $875 (web, one year, non-exclusive); jingle/anthem **from** $1,690; full campaign $15,750 plus separately quoted third-party budgets. Music rights and approval must be captured before fulfillment.
+6. **Limited Offer**: $2,800/month, 12-month term, maximum three clients, overlaps Anti-Social and production. Requires capacity gate and a written agreement.
+7. **Media goods / digital files**: prints $15/$25/$40/$55/$85 by size; personal PNG $15; full-resolution with personal print rights $40; RAW with written license $250. Shipping, fulfillment and rights need SKU-level enforcement.
+8. **Variable/conditional payments**: booking deposit $100–$10,000; approved invoice $25–$25,000; Mission Fund support $5–$25,000. These are **not fixed-price generic products**; require a verified booking/invoice/fund destination. Avoid labeling payments charitable/tax-deductible without verified legal status.
+
+## Required site-wide fixes (prioritized)
+**P0**: Resolve overlap between `hire.html` / `services.html` managed websites and `mccluster-platform.html` self-service SaaS. Label deliverables, domain costs, cancellation, ownership, draft commitments and managed-vs-DIY distinction. Keep separate product IDs, order types, subscription entitlement and terms.
+**P0**: Fix annual-plan CTA drift: Plus/Pro/Business annual figures are displayed without corresponding verified Stripe annual prices; disable those checkout paths or provision exact approved prices.
+**P0**: Preserve deposit credits and first-month proration in server-side checkout; never charge $33 deposit plus full $66 go-live without applying the $33 credit. Domain and hosting are distinct recurring obligations.
+**P0**: Do not create checkout for discovery-only, 'from' price, unapproved Equity terms or variable payments without approved quote/invoice and signed applicable terms.
+**P0**: Link Stripe products to a canonical service ID, price version, term/version, entitlement/fulfillment record and cancellation policy; never trust browser price amounts.
+**P1**: Map `data/offerings.json` to authoritative database offerings; its own header warns it is a display mirror. Reconcile with `data/offers.json`, the current booking checkout and Stripe prices before writes.
+**P1**: Inspect `onboard.html`, `hire.html`, `services.html`, `mccluster-platform.html`, `mccluster-creator-studio.html`, album/song sales pages, `music-creator-terms.html`, checkout redirects, structured data and terms/FAQ copy for price, cadence and promise drift.
+**P1**: Separate subscription cancellation from deposit refunds, booking cancellation and music licensing rights. A single generic Stripe product description does not replace a signed service agreement.
+**P1**: Review tax classification, Stripe Tax registrations and shipping tax before live checkout.
+
+## Stripe rollout protocol
+Create one live Stripe Product per well-defined service/plan, with distinct recurring Prices for each approved cadence. Use metadata `catalog_id`, `source_version`, `terms_version`, `fulfillment_type`. For quote-based items create customer-specific invoices/Checkout only after quote approval. First implement server-side catalog validation and contract acceptance, then test with Stripe sandbox, then authorize live activation. Do not assume creating a Stripe product automatically updates any website or honors contract terms.

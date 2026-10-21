@@ -305,13 +305,13 @@
    "media": [
     {
      "id": "vaunt-film",
-     "type": "video",
+     "type": "video", "title": "Vaunt · the runway performance", "about": "Commercial production · performed live with Zakir",
      "src": "assets/video/vaunt.mp4",
      "poster": "assets/frames/vaunt_0001.jpg"
     },
     {
      "id": "vauntlive-film",
-     "type": "video",
+     "type": "video", "title": "Vaunt Live · the launch", "about": "Event coverage · the campaign on its feet",
      "src": "assets/video/vauntlive.mp4",
      "poster": "assets/frames/vauntlive_0001.jpg"
     }

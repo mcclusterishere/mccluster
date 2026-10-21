@@ -2,6 +2,7 @@
 // jobs against the central control plane, runs an adapter, records attempts,
 // and converts every receipt/failure back into canonical state/events.
 import { SB, SRV, db, emitEvent, json, rpc, safeText, sha256Hex } from "../_shared/eu-policy-os.ts";
+import { secretMatches } from "../_shared/secret-match.ts";
 
 const WORKER_SECRET = Deno.env.get("EU_WORKER_SECRET") ?? "";
 const WORKER = `eu-worker:${crypto.randomUUID().slice(0, 8)}`;
@@ -386,7 +387,7 @@ async function runJob(job: any) {
 }
 
 Deno.serve(async (req) => {
-  if (!WORKER_SECRET || req.headers.get("x-eu-worker-secret") !== WORKER_SECRET) return json({ error: "unauthorized" }, 401);
+  if (!(await secretMatches(req.headers.get("x-eu-worker-secret"), WORKER_SECRET))) return json({ error: "unauthorized" }, 401);
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const limit = Math.min(Math.max(Number(body.limit) || 10, 1), 50);

@@ -1,7 +1,10 @@
+import { currentTrace, recordEvent } from '../lib/observability.js';
 import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
 import { estimateModelCost } from './pricing.js';
 import { requireOrgId } from '../social/security.js';
 import { requireCapability } from '../lib/capabilities.js';
+import { validateModelInput } from './input-contract.js';
+import { recordAudit } from '../lib/audit.js';
 
 function headers(env) {
   return {
@@ -37,7 +40,7 @@ async function getOrg(env, userId, requestedOrgId) {
   return rows[0];
 }
 
-async function modelById(env, id) {
+export async function modelById(env, id) {
   const rows = await db(env, `media_models?id=eq.${encodeURIComponent(id)}&enabled=eq.true&select=*`);
   return rows?.[0] || null;
 }
@@ -236,6 +239,93 @@ export async function getUsage(request, env, user) {
   return Array.isArray(rollup) ? rollup[0] : rollup;
 }
 
+export async function getMediaBudget(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  if (org.role !== 'owner') {
+    throw Object.assign(new Error('Organization owner access is required to manage the media allowance'), { status: 403 });
+  }
+  const rows = await db(
+    env,
+    `org_media_budgets?org_id=eq.${encodeURIComponent(org.org_id)}&select=org_id,enabled,monthly_limit_cents,warn_at_percent,updated_by,created_at,updated_at&limit=1`
+  );
+  const budget = rows?.[0] || {
+    org_id: org.org_id,
+    enabled: false,
+    monthly_limit_cents: null,
+    warn_at_percent: 80,
+    updated_by: null,
+    created_at: null,
+    updated_at: null
+  };
+  return { budget };
+}
+
+export async function updateMediaBudget(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  if (org.role !== 'owner') {
+    throw Object.assign(new Error('Organization owner access is required to manage the media allowance'), { status: 403 });
+  }
+
+  let body;
+  try { body = await request.json(); }
+  catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
+
+  if (typeof body.enabled !== 'boolean') {
+    throw Object.assign(new Error('enabled must be true or false'), { status: 400 });
+  }
+
+  let monthlyLimit = body.monthly_limit_cents;
+  if (monthlyLimit === '' || monthlyLimit === undefined) monthlyLimit = null;
+  if (monthlyLimit !== null) {
+    monthlyLimit = Number(monthlyLimit);
+    if (!Number.isSafeInteger(monthlyLimit) || monthlyLimit < 0) {
+      throw Object.assign(new Error('monthly_limit_cents must be a non-negative integer or null'), { status: 400 });
+    }
+  }
+  if (body.enabled && monthlyLimit === null) {
+    throw Object.assign(new Error('A monthly limit is required when the media allowance is enabled'), { status: 400 });
+  }
+
+  const warnAt = body.warn_at_percent === undefined ? 80 : Number(body.warn_at_percent);
+  if (!Number.isInteger(warnAt) || warnAt < 1 || warnAt > 100) {
+    throw Object.assign(new Error('warn_at_percent must be an integer from 1 to 100'), { status: 400 });
+  }
+
+  const rows = await db(env, 'org_media_budgets?on_conflict=org_id&select=org_id,enabled,monthly_limit_cents,warn_at_percent,updated_by,created_at,updated_at', {
+    method: 'POST',
+    headers: { prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({
+      org_id: org.org_id,
+      enabled: body.enabled,
+      monthly_limit_cents: monthlyLimit,
+      warn_at_percent: warnAt,
+      updated_by: user.id,
+      updated_at: new Date().toISOString()
+    })
+  });
+  const budget = rows?.[0];
+  if (!budget) throw Object.assign(new Error('Media allowance update did not return a record'), { status: 502 });
+
+  const audit = await recordAudit(env, {
+    orgId: org.org_id,
+    actorUserId: user.id,
+    actorKind: 'user',
+    event: 'media_budget.updated',
+    capability: 'media.budget.manage',
+    resourceType: 'org_media_budget',
+    resourceId: org.org_id,
+    detail: {
+      enabled: budget.enabled,
+      monthly_limit_cents: budget.monthly_limit_cents,
+      warn_at_percent: budget.warn_at_percent
+    }
+  });
+
+  return { budget, audit };
+}
+
 export async function listModels(request, env) {
   const url = new URL(request.url);
   const capability = url.searchParams.get('capability');
@@ -262,6 +352,7 @@ export async function createGeneration(request, env, user) {
   const input = { ...(body.input || {}) };
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
+  validateModelInput(model, input);
 
   const budget = budgetCents(body.budget_cents);
   const budgetUsdMicros = budget === null ? null : budget * 10_000;
@@ -299,7 +390,10 @@ export async function createGeneration(request, env, user) {
       requested_by: user.id,
       strategy: body.strategy || 'explicit-model',
       estimate_available: Boolean(estimate.available),
-      estimate_reason: estimate.available ? null : estimate.reason
+      estimate_reason: estimate.available ? null : estimate.reason,
+      /* The provider webhook arrives later on its own request; it rejoins
+         this trace through the job row. */
+      trace_id: currentTrace()?.trace_id || null
     },
     p_estimated_cost_usd_micros: estimate.available ? estimate.estimated_cost_usd_micros : null,
     p_budget_cents: budget,
@@ -308,10 +402,30 @@ export async function createGeneration(request, env, user) {
   });
   const job = Array.isArray(created) ? created[0] : created;
   if (!job?.id) throw Object.assign(new Error('Media job creation did not return a job'), { status: 500 });
+  const spend = {
+    model_id: model.id,
+    provider_model_id: model.provider_model_id,
+    capability: model.capability,
+    estimated_cost_cents: estimate.available ? estimate.estimated_cost_cents : null,
+    budget_cents: budget
+  };
+  recordEvent({
+    orgId: org.org_id, name: 'media.generation.reserved', actorUserId: user.id,
+    resourceType: 'media_job', resourceId: job.id,
+    message: `Reserved ${model.capability} on ${model.provider_model_id}`,
+    detail: spend
+  });
 
+  const submitStarted = Date.now();
   try {
     const webhookUrl = `${new URL(request.url).origin}/v1/media/webhooks/fal`;
     const submitted = await submitFal(env, model.provider_model_id, input, { webhookUrl });
+    recordEvent({
+      orgId: org.org_id, name: 'media.generation.submitted', kind: 'dependency', actorUserId: user.id,
+      resourceType: 'media_job', resourceId: job.id, durationMs: Date.now() - submitStarted,
+      message: `Submitted to fal (${model.provider_model_id})`,
+      detail: { ...spend, provider_request_id: submitted.request_id || null }
+    });
     return patchJob(env, job.id, {
       provider_request_id: submitted.request_id,
       submitted_at: new Date().toISOString(),
@@ -320,6 +434,12 @@ export async function createGeneration(request, env, user) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    recordEvent({
+      orgId: org.org_id, name: 'media.generation.submit_failed', kind: 'dependency', level: 'error', outcome: 'error',
+      actorUserId: user.id, resourceType: 'media_job', resourceId: job.id, durationMs: Date.now() - submitStarted,
+      message: `fal submission failed; reservation released: ${message.slice(0, 300)}`,
+      detail: spend
+    });
     await patchJob(env, job.id, {
       status: 'failed',
       error: { message }
@@ -348,6 +468,12 @@ export async function handleFalWebhook(request, env) {
       }
     });
     await releaseReservation(env, job.id, 'fal generation did not produce a successful output').catch(() => null);
+    recordEvent({
+      orgId: job.org_id, name: 'media.generation.failed', kind: 'dependency', level: 'error', outcome: 'error',
+      traceId: job.routing?.trace_id, resourceType: 'media_job', resourceId: job.id,
+      message: 'fal reported the generation failed; reservation released',
+      detail: { provider_request_id: providerRequestId, provider_model_id: job.provider_model_id || null }
+    });
     return { accepted: true, matched: true, job_id: failed?.id || job.id, status: 'failed' };
   }
 
@@ -364,6 +490,13 @@ export async function handleFalWebhook(request, env) {
     error: null
   });
   await saveAssets(env, job.org_id, job.id, result);
+  recordEvent({
+    orgId: job.org_id, name: 'media.generation.completed', kind: 'dependency',
+    traceId: job.routing?.trace_id, resourceType: 'media_job', resourceId: job.id,
+    durationMs: job.submitted_at ? Date.now() - Date.parse(job.submitted_at) : null,
+    message: 'fal completed the generation',
+    detail: { provider_request_id: providerRequestId, provider_model_id: job.provider_model_id || null }
+  });
   const reconciliation = await reconcileFalJobCost(env, completed || job).catch((error) => ({
     configured: Boolean(env.FAL_ADMIN_KEY),
     settled: 0,

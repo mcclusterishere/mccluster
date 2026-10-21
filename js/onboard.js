@@ -56,6 +56,7 @@
 
     /* ---------------- the person and the organization ---------------- */
     { id: "person", rail: "You", kind: "text", key: "name", required: true,
+      answered: function () { return !!(MEMBER && MEMBER.name); },
       q: "Who are you?", sub: "Your name goes on the account and on the record.",
       placeholder: "First and last name", autocomplete: "name" },
 
@@ -75,10 +76,12 @@
       ], chips: true, other: "biztypeOther", otherLabel: "Tell the desk what it is" },
 
     { id: "contact", rail: "You", kind: "contact", required: true,
+      answered: function () { return !!(MEMBER && MEMBER.email && MEMBER.phone); },
       q: "How does the desk reach you?",
       sub: "Email for the record, phone for the build call. Nothing is sold or shared." },
 
     { id: "account", rail: "You", kind: "account", required: true,
+      answered: function () { return !!MEMBER; },
       q: "Make your account.",
       sub: "Your answers are already saved on this device. The account is what carries them onto the desk, and it's how you reach your workspace later." },
 
@@ -479,9 +482,37 @@
       sub: "Change anything that isn't right. This is what lands on the desk." }
   ];
 
-  /* the live walk: only the steps whose condition holds */
-  function walk() {
+  /* DON'T ASK A MEMBER AGAIN (owner, 2026-10-20: "once you make a profile … you should be able to sign up to
+     anything else without having to enter any additional information unless your profile's not filled out"). A
+     signed-in member's name, email and phone come from their account: the session first, then their own contact
+     row (fan_profiles). A question the account already answers is not asked (its `answered`), and the account step,
+     which would only say "signed in", is skipped; the answers still go to the desk and show on the review. The
+     snapshot is taken once, before the walk is first drawn, so the steps never shift under the member. */
+  var MEMBER = null;
+  function memberSnapshot() {
+    var A = window.MCC_AUTH, u = A && A.user && A.user();
+    if (!u) return Promise.resolve(null);
+    var me = { name: u.name || "", email: u.email || "", phone: u.phone || "" };
+    var row = window.MCC_FAN && MCC_FAN.load ? MCC_FAN.load().catch(function () { return null; }) : Promise.resolve(null);
+    var patience = new Promise(function (done) { setTimeout(function () { done(null); }, 2500); });
+    return Promise.race([row, patience]).then(function (fan) {
+      if (fan) { me.name = me.name || fan.legal_name || fan.display_name || ""; me.phone = fan.phone_e164 || me.phone; }
+      MEMBER = me;
+      if (!S.name && me.name) S.name = me.name;
+      if (!S.email && me.email) S.email = me.email;
+      if (!S.phone && me.phone) S.phone = me.phone;
+      save();
+      return me;
+    });
+  }
+
+  /* every step whose answer goes to the desk, asked or answered by the account */
+  function brief() {
     return STEPS.filter(function (s) { return !s.when || s.when(); });
+  }
+  /* the live walk: only the steps whose condition holds and that the account has not already answered */
+  function walk() {
+    return brief().filter(function (s) { return !(s.answered && s.answered()); });
   }
   function railOf(w) {
     var seen = [], out = [];
@@ -586,7 +617,7 @@
 
   /* the answers, as the desk will read them */
   function answerLines() {
-    var w = walk(), out = [];
+    var w = brief(), out = [];
     w.forEach(function (s) {
       if (s.kind === "review" || s.kind === "summary" || s.kind === "account") return;
       if (s.kind === "offer" || s.kind === "mode") return;
@@ -614,7 +645,7 @@
   }
 
   function renderReview() {
-    var w = walk();
+    var w = brief();
     var rows = [];
     var o = window.MCC_OFFERS.offerOf(L, S.offer);
     var modeName = S.offer === "runway"
@@ -640,12 +671,13 @@
       }
       if (s.follow && S[s.follow.key]) v += " · " + S[s.follow.key];
       if (s.other && S[s.other]) v += " · " + S[s.other];
-      rows.push([String(s.q).replace(/\?$/, ""), v || "no answer", s.id]);
+      /* an answer the account gave is changed on the account, not here */
+      rows.push([String(s.q).replace(/\?$/, ""), v || "no answer", s.answered && s.answered() ? "" : s.id]);
     });
 
     return '<ul class="rev">' + rows.map(function (r) {
       return "<li><b>" + esc(r[0]) + "</b><span>" + esc(r[1]) + "</span>" +
-        '<button type="button" class="rev__edit" data-goto="' + esc(r[2]) + '">Change</button></li>';
+        (r[2] ? '<button type="button" class="rev__edit" data-goto="' + esc(r[2]) + '">Change</button>' : "") + "</li>";
     }).join("") + "</ul>" +
     '<p class="ob__note" id="obSendMsg"></p>';
   }
@@ -997,12 +1029,20 @@
   /* ============================================================
      BOOT
      ============================================================ */
-  window.MCC_OFFERS.load().then(function (ledger) {
-    L = ledger;
+  Promise.all([window.MCC_OFFERS.load(), memberSnapshot().catch(function () { return null; })]).then(function (loaded) {
+    L = loaded[0];
 
     /* deep links: ?offer= and ?plan= (the legacy lane links still work) */
     var q = new URLSearchParams(location.search);
     var qOffer = q.get("offer"), qMode = q.get("mode"), qPlan = q.get("plan");
+    /* Preserve business-mission attribution in the existing local intake state.
+       Client attribution is informational only, never proof of purchase or completion. */
+    var missionSource = q.get("mission"), missionGoal = q.get("goal");
+    if (missionSource === "anti-social-business" && ["website","brand","business","content"].indexOf(missionGoal) !== -1) {
+      S.mission_source = missionSource;
+      S.mission_goal = missionGoal;
+      save();
+    }
     if (qOffer && window.MCC_OFFERS.offerOf(L, qOffer)) {
       S.offer = qOffer;
       if (qOffer === "runway") S.mode = "m";

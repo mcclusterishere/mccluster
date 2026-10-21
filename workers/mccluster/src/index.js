@@ -1,9 +1,19 @@
+import { guardWorldRelease } from './world-release.js';
+import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
-import whip from './whip/identity-gateway.js';
+import whip from './whip/booking-gate.js';
+import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
+import { handleWorldLayers } from './world-layers.js';
+import { handleWorldCctv } from './world-cctv.js';
+import { handleWorldAccess } from './world-access.js';
+import { handleIntelRequest } from './intel/router.js';
+import { handlePublicComment } from './public-comment.js';
+import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
+import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -118,11 +128,17 @@ export default {
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
     try {
+      const releaseDenied = await guardWorldRelease(request, env);
+      if (releaseDenied) return releaseDenied;
       if (path === '/health' && request.method === 'GET') {
         return reply(request, env, {
           ok: true,
           service: 'mccluster'
         });
+      }
+
+      if (path.startsWith('/v1/at-night/')) {
+        return handleAtNight(request, env);
       }
 
       if (path === '/v1' && request.method === 'GET') {
@@ -133,10 +149,62 @@ export default {
         return prim3.fetch(request, env);
       }
 
+      /* the World's news from GDELT, read from our own tables (./world-news.js) */
+      if (path === NEWS_PATH) {
+        const news = await handleWorldNews(request, env);
+        if (news) return news;
+      }
+      /* how many stories mention each country, or each place in one country: the World's news heat map */
+      if (path === NEWS_HEAT_PATH) {
+        const heat = await handleWorldNewsHeat(request, env);
+        if (heat) return heat;
+      }
+
+      /* Optional World layers: release guard above, then provider adapter. */
+      if (path.startsWith('/v1/world/layers/')) {
+        const layer = await handleWorldLayers(request, env);
+        if (layer) return layer;
+      }
+
+      /* which World layers this viewer may open, by level (./world-access.js) */
+      if (path === '/v1/world/access') {
+        const access = await handleWorldAccess(request, env);
+        if (access) return access;
+      }
+
+      /* mission-gated CCTV: signed in, privacy acknowledged, a completed
+         mission; proxied from Halo server to server (./world-cctv.js) */
+      if (path.startsWith('/v1/world/cctv/')) {
+        const cctv = await handleWorldCctv(request, env);
+        if (cctv) return cctv;
+      }
+
+      /* File a public comment: open federal comment periods, read only, behind
+         PUBLIC_COMMENT_LISTING_ENABLED (./public-comment.js). Never files a comment. */
+      if (path.startsWith('/v1/public-comment/')) {
+        const comment = await handlePublicComment(request, env);
+        if (comment) return comment;
+      }
+
+      /* the World's Cesium ion: terrain, aerial imagery and buildings,
+         with the account's token kept here (./world-ion.js) */
+      if (path === WORLD_ION_PATH || path.startsWith(`${WORLD_ION_PATH}/`)) {
+        const ion = await handleWorldIon(request, env);
+        if (ion) return ion;
+      }
+
       if (path === '/v1/equity-uprise/halo-globe' && request.method === 'GET') {
         const viewer = await equityUpriseRole(request, env);
         const projection = await buildEquityUpriseHaloProjection(env, { role: viewer.role });
         return reply(request, env, { ok: true, ...projection });
+      }
+
+      /* the evidence -> claim -> briefing -> decision -> mission -> outcome
+         loop (./intel/router.js, docs/control-plane/INTEL-TO-MISSION-CANON.md).
+         Owner-only except the privacy-safe /v1/intel/geo aggregate. */
+      if (path === '/v1/intel' || path.startsWith('/v1/intel/')) {
+        const intel = await handleIntelRequest(request, env, { requireHouseOwner, authUser });
+        if (intel) return intel;
       }
 
       if (path === '/v1/seek-first' || path.startsWith('/v1/seek-first/')) {
@@ -206,6 +274,16 @@ export default {
         return stub.fetch(request);
       }
 
+      /* Funding Intelligence is a private Control route. Authentication and
+         house-owner authorization run before even reading catalog state or
+         contacting external grant providers. Never publish partner proposals. */
+      if (path === FUNDING_PREFIX || path.startsWith(FUNDING_PREFIX + '/')) {
+        await requireHouseOwner(request, env);
+        return await handleFundingIntelligence(request, env, {
+          read: p => sb(env, p)
+        });
+      }
+
       if (path === '/v1/me' && request.method === 'GET') {
         const user = await authUser(request, env);
         if (!user) return fail(request, env, 'Authentication required', 401);
@@ -230,11 +308,11 @@ export default {
           sb(env, 'inbox_channels?select=key,enabled').catch(() => null)
         ]);
 
-        const harness = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/ai_harness_status`, {
-          method: 'POST',
-          headers: sbHeaders(env),
-          body: JSON.stringify({ p_org: (await sb(env, 'orgs?slug=eq.mccluster&select=id&limit=1'))?.[0]?.id })
-        }).then(async (res) => res.ok ? res.json() : null).catch(() => null);
+        /* The legacy ai_harness_status RPC is retired (see the AI harness
+           contract test): every status check called it and got a 404. The
+           context plane reports its own health through /v1/ai, so this route
+           says where to look instead of asking a function that is gone. */
+        const harness = { ok: null, schema: 'ai_context', health: '/v1/ai' };
 
         return reply(request, env, {
           ok: true,
@@ -255,7 +333,7 @@ export default {
             conversations: convos
           },
           channels: Array.isArray(channels) ? channels : [],
-          harness: harness || { ok: false, schema: 'ai_context' }
+          harness
         });
       }
 

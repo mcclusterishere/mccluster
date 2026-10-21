@@ -3,10 +3,10 @@
   "use strict";
   window.CR=window.CR||{};
   var FIRST="__first_party__", palette=["#e5383b","#3f93d2","#d9a441","#75b798","#9c7ae8","#e27d60"];
-  var S={host:null,request:null,supa:null,section:"overview",rangeId:"7d",from:"",through:"",range:null,sites:[],site:FIRST,loading:false,loaded:false,error:null,errors:{},data:{},seq:0};
+  var S={host:null,request:null,supa:null,section:"overview",rangeId:"24h",from:"",through:"",range:null,sites:[],site:FIRST,loading:false,loaded:false,error:null,errors:{},data:{},seq:0,revoked:false,quality:{}};
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-  function n(v){v=Number(v);return Number.isFinite(v)?v.toLocaleString():"—";}
-  function money(v){v=Number(v);return Number.isFinite(v)?"$"+(v/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
+  function n(v){if(v==null||v==="")return"—";v=Number(v);return Number.isFinite(v)?v.toLocaleString():"—";}
+  function money(v){if(v==null||v==="")return"—";v=Number(v);return Number.isFinite(v)?"$"+(v/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
   function tz(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";}catch(_){return"UTC";}}
   function day(v){var d=new Date(v);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
   function inputDate(d){d=new Date(d.getTime()-d.getTimezoneOffset()*60000);return d.toISOString().slice(0,10);}
@@ -25,114 +25,1011 @@
   }
   function sid(){return S.site===FIRST?null:S.site;}
   function settled(name,p){return p.then(function(v){return{name:name,ok:true,value:v};}).catch(function(err){return{name:name,ok:false,error:err};});}
-  function rpc(name,body){return S.supa("rpc/"+name,{method:"POST",body:body});}
+  /* Every RPC used by Control Analytics is read-only. A transient PostgREST
+     statement cancellation must not permanently blank a whole data family. */
+  function rpc(name,body){return retryStatementTimeout(function(){return S.supa("rpc/"+name,{method:"POST",body:body});});}
+  function retryStatementTimeout(fn){
+    /* Dispatch the initial RPC synchronously. Globe selections rely on
+       starting the first request before the selection changes again. */
+    var first;
+    try { first=fn(); } catch(error) { first=Promise.reject(error); }
+    return Promise.resolve(first).catch(function(error){
+      var code=String(error&&error.code||""),msg=String(error&&error.message||error||"");
+      if(code!=="57014"&&!/statement timeout|canceling statement/i.test(msg))throw error;
+      return new Promise(function(resolve){setTimeout(resolve,180);}).then(fn);
+    });
+  }
   function top(rows,key){return(rows||[]).map(function(r){var o={count:Number(r.n)||0};o[key]=r.key;return o;});}
   function kpi(label,value,sub){return'<div class="cra-kpi"><small>'+e(label)+'</small><strong>'+e(value)+'</strong>'+(sub?'<span>'+e(sub)+'</span>':"")+'</div>';}
   function card(title,sub,body,wide){return'<section class="cra-card'+(wide?" cra-card--wide":"")+'"><h2>'+e(title)+'</h2>'+(sub?'<p>'+e(sub)+'</p>':"")+body+'</section>';}
   function err(name){var x=S.errors[name];return x?'<div class="cra-error"><b>'+e(name)+'</b> did not load: '+e(x.message||x)+'</div>':"";}
-  function line(rows,a,b,la,lb){
-    rows=(rows||[]).slice().sort(function(x,y){return String(x.day).localeCompare(String(y.day));});
+  function line(rows,a,b,la,lb,opts){
+    opts=opts||{};var xKey=opts.xKey||"day",hourly=!!opts.hourly;
+    rows=(rows||[]).slice().sort(function(x,y){return String(x[xKey]||"").localeCompare(String(y[xKey]||""));});
     if(!rows.length)return'<p>No series in this range.</p>';
-    var W=720,H=260,P={l:42,r:18,t:18,b:36},mx=1;
+    var W=hourly?1200:720,H=260,P={l:42,r:18,t:18,b:hourly?46:36},mx=1;
     rows.forEach(function(r){mx=Math.max(mx,Number(r[a])||0,b?Number(r[b])||0:0);});
     function X(i){return P.l+(rows.length===1?0:i/(rows.length-1)*(W-P.l-P.r));}
     function Y(v){return H-P.b-(Number(v)||0)/mx*(H-P.t-P.b);}
     function pts(k){return rows.map(function(r,i){return X(i).toFixed(1)+","+Y(r[k]).toFixed(1);}).join(" ");}
+    function label(r){if(opts.labelFor)return String(opts.labelFor(r)||"");return String(r[xKey]||"").slice(5);}
+    function values(r){return la+" "+n(r[a])+(b?" · "+lb+" "+n(r[b]):"");}
     var p1=pts(a),p2=b?pts(b):"",area=p1+" "+X(rows.length-1)+","+(H-P.b)+" "+P.l+","+(H-P.b);
-    var s=['<svg class="cra-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(la+(lb?" and "+lb:"")+" over time")+'">'];
+    var last=rows[rows.length-1],s=['<svg class="cra-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(la+(lb?" and "+lb:"")+" over time")+'">'];
     [0,.25,.5,.75,1].forEach(function(q){var y=Y(mx*q);s.push('<line class="cra-gridline" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/><text class="cra-axis" x="'+(P.l-6)+'" y="'+(y+3)+'" text-anchor="end">'+Math.round(mx*q)+'</text>');});
     s.push('<polygon class="cra-area" points="'+area+'"/><polyline class="cra-line" points="'+p1+'"/>');if(b)s.push('<polyline class="cra-line cra-line--alt" points="'+p2+'"/>');
-    var step=Math.max(1,Math.ceil(rows.length/6));rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(String(r.day||"").slice(5))+'</text>');});s.push("</svg>");
-    return'<div class="cra-legend"><div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#3f93d2"></i><span class="cra-legend__label">'+e(la)+'</span><b></b></div>'+(b?'<div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#e5383b"></i><span class="cra-legend__label">'+e(lb)+'</span><b></b></div>':"")+'</div>'+s.join("");
+    var step=opts.allLabels?1:(rows.length<=14?1:Math.max(1,Math.ceil(rows.length/8)));
+    rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis cra-axis--x" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(label(r))+'</text>');});
+    rows.forEach(function(r,i){
+      var x=X(i),prev=i?X(i-1):P.l,next=i<rows.length-1?X(i+1):W-P.r,left=i?(prev+x)/2:P.l,right=i<rows.length-1?(x+next)/2:W-P.r;
+      var lab=label(r),val=values(r),on=i===rows.length-1?" is-on":"";
+      s.push('<g class="cra-point'+on+'" role="button" tabindex="0" aria-pressed="'+(i===rows.length-1?"true":"false")+'" aria-label="'+e(lab+" · "+val)+'" data-cra-chart-point data-label="'+e(lab)+'" data-values="'+e(val)+'">'+
+        '<rect class="cra-point__hit" x="'+left.toFixed(1)+'" y="'+P.t+'" width="'+Math.max(1,right-left).toFixed(1)+'" height="'+(H-P.t-P.b)+'"/>'+
+        '<line class="cra-point__guide" x1="'+x.toFixed(1)+'" y1="'+P.t+'" x2="'+x.toFixed(1)+'" y2="'+(H-P.b)+'"/>'+
+        '<circle class="cra-point__dot" cx="'+x.toFixed(1)+'" cy="'+Y(r[a]).toFixed(1)+'" r="4.5"/>'+
+        (b?'<circle class="cra-point__dot cra-point__dot--alt" cx="'+x.toFixed(1)+'" cy="'+Y(r[b]).toFixed(1)+'" r="4.5"/>':"")+
+        '<title>'+e(lab+" · "+val)+'</title></g>');
+    });
+    s.push("</svg>");
+    return'<div class="cra-legend"><div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#3f93d2"></i><span class="cra-legend__label">'+e(la)+'</span><b></b></div>'+(b?'<div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#e5383b"></i><span class="cra-legend__label">'+e(lb)+'</span><b></b></div>':"")+'</div>'+
+      '<div class="cra-chart'+(hourly?" cra-chart--hourly":"")+'"><output class="cra-chart__readout" aria-live="polite"><b data-cra-chart-label>'+e(label(last))+'</b><span data-cra-chart-values>'+e(values(last))+'</span></output>'+
+      '<div class="cra-chart__scroll"><div class="cra-chart__frame">'+s.join("")+'</div></div></div>';
+  }
+  function trafficTrend(t){
+    var hourly=S.rangeId==="24h",rows=hourly?(t.byHour||[]):(t.byDay||[]);
+    return{rows:rows,opts:hourly?{
+      xKey:"hour",hourly:true,allLabels:true,
+      labelFor:function(r){return r.hour_label||new Date(r.hour).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}
+    }:{
+      xKey:"day",labelFor:function(r){return String(r.day||"").slice(5);}
+    }};
   }
   function donut(rows,labelKey,valueKey){
     rows=(rows||[]).slice(0,7).map(function(r){return{label:String(r[labelKey]||r.key||"Unknown"),value:Number(r[valueKey]||r.n||r.count||0)};}).filter(function(r){return r.value>0;});
     if(!rows.length)return'<p>No breakdown in this range.</p>';
     var total=rows.reduce(function(a,r){return a+r.value;},0),C=2*Math.PI*42,off=0;
-    var circles=rows.map(function(r,i){var len=C*r.value/total,c=palette[i%palette.length],out='<circle class="cra-donut__seg" cx="60" cy="60" r="42" stroke="'+c+'" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'"/>';off+=len;return out;}).join("");
-    return'<div class="cra-donut-wrap"><svg class="cra-donut" viewBox="0 0 120 120"><circle class="cra-donut__track" cx="60" cy="60" r="42"/>'+circles+'</svg><div class="cra-legend">'+rows.map(function(r,i){return'<div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:'+palette[i%palette.length]+'"></i><span class="cra-legend__label">'+e(r.label)+'</span><b class="cra-legend__value">'+n(r.value)+'</b></div>';}).join("")+'</div></div>';
+    var circles=rows.map(function(r,i){var len=C*r.value/total,c=palette[i%palette.length],key="donut-"+i,out='<circle class="cra-donut__seg" tabindex="0" role="button" aria-label="'+e(r.label+" "+n(r.value))+'" data-cra-info="'+key+'" cx="60" cy="60" r="42" stroke="'+c+'" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'"/>';off+=len;return out;}).join("");
+    return'<div class="cra-donut-wrap"><svg class="cra-donut" viewBox="0 0 120 120"><circle class="cra-donut__track" cx="60" cy="60" r="42"/>'+circles+'</svg><div class="cra-legend">'+rows.map(function(r,i){return'<button type="button" class="cra-legend__row cra-legend__row--button" data-cra-info="donut-'+i+'"><i class="cra-legend__swatch" style="--swatch:'+palette[i%palette.length]+'"></i><span class="cra-legend__label">'+e(r.label)+'</span><b class="cra-legend__value">'+n(r.value)+'</b></button>';}).join("")+'</div></div>';
   }
   function rank(rows,labelKey,valueKey){
     rows=(rows||[]).slice(0,12);if(!rows.length)return'<p>Nothing to rank in this range.</p>';var mx=Math.max.apply(null,rows.map(function(r){return Number(r[valueKey]||r.n||r.count||0);}).concat([1]));
-    return'<div class="cra-rank">'+rows.map(function(r){var v=Number(r[valueKey]||r.n||r.count||0),p=Math.max(1,v/mx*100);return'<div class="cra-rank__row"><i class="cra-rank__fill" style="--pct:'+p.toFixed(1)+'%"></i><span class="cra-rank__label">'+e(r[labelKey]||r.key||"Unknown")+'</span><b class="cra-rank__value">'+n(v)+'</b></div>';}).join("")+'</div>';
+    return'<div class="cra-rank">'+rows.map(function(r){var v=Number(r[valueKey]||r.n||r.count||0),p=Math.max(1,v/mx*100),lab=r[labelKey]||r.key||"Unknown";return'<button type="button" class="cra-rank__row" aria-label="'+e(lab+" "+n(v))+'"><i class="cra-rank__fill" style="--pct:'+p.toFixed(1)+'%"></i><span class="cra-rank__label">'+e(lab)+'</span><b class="cra-rank__value">'+n(v)+'</b></button>';}).join("")+'</div>';
+  }
+  function seconds(v){v=Number(v);if(!isFinite(v))return"—";if(v<60)return Math.round(v)+"s";var m=Math.floor(v/60),s=Math.round(v%60);return m+"m"+(s?" "+s+"s":"");}
+  function signedPct(v){v=Number(v);if(!isFinite(v))return"—";return(v>0?"+":"")+v.toFixed(1)+"%";}
+  function pagePerformance(rows){
+    rows=(rows||[]).slice().sort(function(a,b){return Number(b.overall_score||0)-Number(a.overall_score||0);}).slice(0,25);
+    if(!rows.length)return'<p>No page performance in this range.</p>';
+    function pct(v){return v==null?"—":Number(v).toFixed(0)+"%";}
+    function score(r){return r.overall_score==null?null:Math.max(0,Math.min(100,Number(r.overall_score)||0));}
+    function interpretation(r){
+      var s=score(r),conf=Number(r.confidence||0);
+      if(s===null)return"Not enough measurement";
+      if(conf<.3)return"Early signal · limited sample";
+      return s>=75?"Strong engagement":s>=50?"Moderate engagement":"Needs attention";
+    }
+    var list=rows.map(function(r,i){
+      var s=score(r),trend=r.view_change_pct==null?"Trend unavailable":signedPct(r.view_change_pct)+" vs prior range";
+      return'<details class="cra-page-row"'+(i===0?' open':'')+'><summary class="cra-page-row__summary">'+
+        '<span class="cra-page-row__rank">'+(i+1)+'</span>'+
+        '<span class="cra-page-row__main"><b>'+e(r.path||"Unknown page")+'</b><small>'+e(interpretation(r))+'</small>'+
+        '<span class="cra-page-row__bar" role="img" aria-label="'+e(s===null?"No score available":"Engagement score "+s.toFixed(0)+" of 100")+'"><i style="width:'+(s===null?0:s).toFixed(1)+'%"></i></span></span>'+
+        '<span class="cra-page-row__traffic"><b>'+n(r.views)+'</b><small>views</small></span>'+
+        '<span class="cra-page-row__score"><b>'+(s===null?"—":s.toFixed(0))+'</b><small>score / 100</small></span>'+
+        '</summary><div class="cra-page-row__detail"><p><b>Traffic:</b> '+e(trend)+' · '+n(r.visitors)+' visitors</p>'+
+        '<div class="cra-kpis">'+
+          kpi("Typical visible time",r.median_visible_s==null?"—":seconds(r.median_visible_s),"median")+
+          kpi("Scroll depth",pct(r.avg_depth),"average")+
+          kpi("Engaged 30s+",pct(r.engaged_30_pct),"visitors")+
+          kpi("Actions",n(r.action_events),"recorded events")+
+          kpi("Returning",pct(r.return_pct),"visitors")+
+          kpi("Short exits",pct(r.short_exit_pct),"visitors")+
+        '</div><p><small>Quality signal: '+e(r.quality_score==null?"—":Number(r.quality_score).toFixed(1))+' · Measurement confidence: '+pct(r.confidence==null?null:Number(r.confidence)*100)+'. The score combines attention, depth, actions, return behavior and friction, with confidence weighting; it is not a speed or SEO grade.</small></p></div></details>';
+    }).join("");
+    return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-confidence pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
   }
   function funnel(rows){
-    if(!rows||!rows.length)return'<p>No funnel rows in this range.</p>';var keys=[["arrived","Arrived"],["heard_something","Heard"],["engaged","Engaged"],["searched","Searched"],["asked_for_something","Asked"],["made_an_account","Account"],["confirmed_the_email","Confirmed"],["reached_checkout","Checkout"],["paid","Paid"]],tot={};keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});var topv=tot.arrived||1;
-    return'<div class="cra-funnel">'+keys.map(function(k){var v=tot[k[0]]||0,p=v/topv*100;return'<div class="cra-funnel__row"><span>'+e(k[1])+'</span><div class="cra-funnel__track"><i class="cra-funnel__fill" style="--pct:'+Math.max(.5,p).toFixed(1)+'%"></i></div><b>'+n(v)+' · '+p.toFixed(1)+'%</b></div>';}).join("")+'</div>';
+    if(S.data.stageTotals){
+      var d=S.data.stageTotals,stages=d.stages||[],labels={view:"Arrived",arrival:"Arrived",content:"Heard",engage:"Engaged",search:"Searched",lead:"Asked",checkout:"Checkout intent",purchase:"Purchase reports",unclassified:"Unclassified"};
+      var values=stages.map(function(x){return{label:labels[x.stage]||x.stage,count:x.value};});
+      var accounts=d.accounts;
+      return rank(values,"label","count")+'<p>Distinct devices across the whole selected window, per stage. Stages overlap. Purchase reports are client telemetry; verified payments are measured separately.</p>'+(accounts?'<div class="cra-kpis">'+kpi("Accounts created",n(accounts.made_an_account),"auth account records")+kpi("Email confirmed",n(accounts.confirmed_the_email),"auth account records")+'</div>':"");
+    }
+    if(!rows||!rows.length)return'<p>No stage activity in this range.</p>';
+    /* Legacy rows count distinct devices PER DAY and auth accounts. These
+       overlapping populations do not establish an ordered conversion cohort. */
+    var keys=[["arrived","Arrived","device-days"],["heard_something","Heard","device-days"],["engaged","Engaged","device-days"],["searched","Searched","device-days"],["asked_for_something","Asked","device-days"],["made_an_account","Account","accounts"],["confirmed_the_email","Confirmed","accounts"],["reached_checkout","Checkout intent","device-days"],["paid","Purchase reports","device-days"]],tot={};
+    keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});
+    var max=Math.max.apply(null,keys.map(function(k){return tot[k[0]];}).concat([1]));
+    return'<div class="cra-funnel">'+keys.map(function(k){var v=tot[k[0]]||0,p=v/max*100;return'<button type="button" class="cra-funnel__row" aria-label="'+e(k[1]+" "+n(v)+" "+k[2])+'"><span>'+e(k[1])+'</span><span class="cra-funnel__track" aria-hidden="true"><i class="cra-funnel__fill" style="--pct:'+Math.max(v?0.5:0,p).toFixed(1)+'%"></i></span><b>'+n(v)+' · '+k[2]+'</b></button>';}).join("")+'</div><p>Device-days add each day’s distinct devices; a returning device can count again. Stages overlap and have different populations. Purchase reports are browser events; verified sales are in Action &amp; business.</p>';
   }
-  function scatter(rows,identity){
-    var map={};((identity&&identity.tracks)||[]).forEach(function(x){map[String(x.track||"").toLowerCase()]=x;});rows=(rows||[]).slice(0,24);if(!rows.length)return'<p>No track rows in this range.</p>';var W=720,H=300,P={l:44,r:20,t:20,b:42},mx=1,my=1;
-    rows.forEach(function(r){mx=Math.max(mx,Number(r.listeners)||0);my=Math.max(my,Number(r.plays_per_listener)||0);});function X(v){return P.l+(Number(v)||0)/mx*(W-P.l-P.r);}function Y(v){return H-P.b-(Number(v)||0)/my*(H-P.t-P.b);}var s=['<svg class="cra-svg" viewBox="0 0 '+W+' '+H+'">'];[0,.25,.5,.75,1].forEach(function(q){var y=Y(my*q);s.push('<line class="cra-scatter__grid" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/>');});rows.forEach(function(r,i){var a=map[String(r.track||"").toLowerCase()]||{},x=X(r.listeners),y=Y(r.plays_per_listener),rad=4+Math.min(8,Number(a.last_touch_accounts||0)*1.4);s.push('<circle class="cra-scatter__dot" cx="'+x+'" cy="'+y+'" r="'+rad+'"><title>'+e((r.track||"Track")+": "+n(r.listeners)+" listeners")+'</title></circle>');if(i<10)s.push('<text class="cra-scatter__label" x="'+(x+8)+'" y="'+(y-7)+'">'+e(String(r.track||"").slice(0,24))+'</text>');});s.push('<text class="cra-axis" x="380" y="290" text-anchor="middle">Unique listeners →</text></svg>');return s.join("");
+  /* REACH VS REPEAT. Right is how many different people started a track;
+     up is how many times each of them started it (1x = once each). The
+     chart used to be a fixed 720-wide drawing shrunk into the card, with no
+     numbers on either axis and every name printed beside its dot, so the
+     names piled up and ran off the edge. It is now drawn at the card's real
+     width with numbered axes, names only where they fit, and one track
+     picked at a time: its dot, its dashed lines to both axes, the readout
+     and its row in the list all show the same numbers. */
+  function fx(v){return(Math.round((Number(v)||0)*100)/100).toFixed(2).replace(/\.?0+$/,"")+"×";}
+  function niceStep(span,count){var raw=span/Math.max(1,count),p=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)),f=raw/p;return(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p;}
+  function textW(t){return String(t).length*6.3;}
+  function reachRows(){
+    var id=S.data.identity||{},known=sid()===null&&Array.isArray(id.tracks)&&!S.errors.identity,map={};
+    (id.tracks||[]).forEach(function(x){map[String(x.track||"").toLowerCase()]=x;});
+    return(S.data.content||[]).filter(function(r){return Number(r.listeners)>0;})
+      .sort(function(a,b){return(Number(b.starts)||0)-(Number(a.starts)||0);}).slice(0,24)
+      .map(function(r,i){var l=Number(r.listeners)||0,st=Number(r.starts)||0,a=map[String(r.track||"").toLowerCase()];
+        return{rank:i+1,track:String(r.track||"Untitled"),listeners:l,starts:st,each:r.plays_per_listener!=null?Number(r.plays_per_listener):st/Math.max(1,l),accounts:known?Number(a&&a.last_touch_accounts||0):null};});
   }
+  function reachReadout(p){
+    return'<div class="cra-reach__readout"><div class="cra-reach__name"><span>#'+p.rank+'</span><b>'+e(p.track)+'</b></div>'+
+      '<dl class="cra-reach__facts"><div><dt>Listeners</dt><dd>'+n(p.listeners)+'</dd></div><div><dt>Starts each</dt><dd>'+fx(p.each)+'</dd></div><div><dt>Total starts</dt><dd>'+n(p.starts)+'</dd></div><div><dt>Sign-ups</dt><dd>'+(p.accounts==null?"—":n(p.accounts))+'</dd></div></dl>'+
+      '<p class="cra-reach__math">'+n(p.listeners)+' listeners × '+fx(p.each).slice(0,-1)+' starts each ≈ '+n(p.starts)+' starts</p></div>';
+  }
+  function reachSvg(rows,p,W){
+    var narrow=W<480,H=narrow?264:Math.min(360,Math.round(W*.44)),maxX=1,maxY=1,minY=1;
+    rows.forEach(function(r){maxX=Math.max(maxX,r.listeners);maxY=Math.max(maxY,r.each);minY=Math.min(minY,r.each);});
+    var P={t:28,r:18,b:42},y0=minY<1?0:1,plotH=H-P.t-P.b;
+    var yStep=niceStep(Math.max(1,maxY-y0),Math.min(7,Math.max(3,Math.floor(plotH/34)))),yTop=y0+Math.max(1,Math.ceil((maxY-y0)/yStep-1e-9))*yStep,yT=[];
+    for(var v=y0;v<=yTop+1e-9;v+=yStep)yT.push(+v.toFixed(4));
+    P.l=Math.ceil(Math.max.apply(null,yT.map(function(t){return textW(fx(t));}).concat([textW(fx(p.each))+8])))+8;
+    var plotW=W-P.l-P.r,xStep=niceStep(maxX,Math.min(8,Math.max(3,Math.floor(plotW/56)))),xTop=Math.max(1,Math.ceil(maxX/xStep-1e-9))*xStep,xT=[];
+    for(v=0;v<=xTop+1e-9;v+=xStep)xT.push(+v.toFixed(4));
+    function X(x){return P.l+x/xTop*plotW;}function Y(y){return P.t+plotH-(y-y0)/(yTop-y0)*plotH;}
+    var bottom=P.t+plotH,pxX=X(p.listeners),pxY=Y(p.each),xChipW=textW(n(p.listeners))+10,s=['<svg class="cra-reach__svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e("Reach vs repeat for "+rows.length+" tracks. Selected: "+p.track+", "+p.listeners+" listeners, "+fx(p.each)+" starts each.")+'">'];
+    s.push('<text class="cra-reach__title" x="0" y="12">↑ Starts per listener</text><text class="cra-reach__title" x="'+(W-P.r)+'" y="'+(H-3)+'" text-anchor="end">Unique listeners →</text>');
+    yT.forEach(function(t){var y=Y(t).toFixed(1);s.push('<line class="cra-reach__grid'+(t===y0?" cra-reach__base":"")+'" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/>'+(Math.abs(y-pxY)<16?"":'<text class="cra-reach__tick" x="'+(P.l-6)+'" y="'+(+y+4)+'" text-anchor="end">'+fx(t)+'</text>'));});
+    xT.forEach(function(t,i){var x=X(t).toFixed(1),lab=n(t),anchor=i===xT.length-1&&textW(lab)/2>P.r?"end":"middle";/* A tick label the picked value's chip would cover is left out. */
+      var lx=anchor==="end"?W-2-textW(lab)/2:+x,under=Math.abs(lx-pxX)<xChipW/2+textW(lab)/2+3;
+      s.push('<line class="cra-reach__grid'+(t===0?" cra-reach__base":"")+'" x1="'+x+'" y1="'+P.t+'" x2="'+x+'" y2="'+bottom+'"/>'+(under?"":'<text class="cra-reach__tick" x="'+(anchor==="end"?W-2:x)+'" y="'+(bottom+16)+'" text-anchor="'+anchor+'">'+lab+'</text>'));});
+    var pts=rows.map(function(r,i){return{r:r,i:i,x:X(r.listeners),y:Y(r.each),rad:r===p?7:5.5};}),pick=pts[p.rank-1];
+    /* The picked track's own values, drawn on the axes where they line up. */
+    s.push('<line class="cra-reach__cross" x1="'+pick.x.toFixed(1)+'" y1="'+pick.y.toFixed(1)+'" x2="'+pick.x.toFixed(1)+'" y2="'+bottom+'"/><line class="cra-reach__cross" x1="'+P.l+'" y1="'+pick.y.toFixed(1)+'" x2="'+pick.x.toFixed(1)+'" y2="'+pick.y.toFixed(1)+'"/>');
+    /* Rank 1 is drawn last so it sits on top; the picked dot goes over all. */
+    pts.slice().reverse().filter(function(q){return q.r!==p;}).concat([pick]).forEach(function(q){
+      s.push('<g class="cra-reach__pt'+(q.r===p?" is-on":"")+'" data-cra-pick="'+q.i+'"><title>'+e(q.r.track+": "+n(q.r.listeners)+" listeners, "+fx(q.r.each)+" starts each")+'</title><circle class="cra-reach__hit" cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="11"/><circle class="cra-reach__dot" cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="'+q.rad+'"/></g>');
+    });
+    /* Names only where they fit: try right, left, above, below; skip a name
+       that would touch another name, a dot or the edge. The list below the
+       chart names every dot. */
+    var boxes=pts.map(function(q){return{x:q.x-q.rad-1,y:q.y-q.rad-1,w:2*q.rad+2,h:2*q.rad+2};}),limit=narrow?6:12,placed=0;
+    function hit(a,b){return a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;}
+    [pick].concat(pts.filter(function(q){return q!==pick;})).forEach(function(q){
+      if(placed>=limit)return;var name=q.r.track.length>18?q.r.track.slice(0,17)+"…":q.r.track,w=textW(name),h=13,g=q.rad+4;
+      var tries=[{x:q.x+g,y:q.y-h/2,a:"start"},{x:q.x-g-w,y:q.y-h/2,a:"end"},{x:q.x-w/2,y:q.y-g-h,a:"middle"},{x:q.x-w/2,y:q.y+g,a:"middle"}];
+      for(var k=0;k<tries.length;k++){var b={x:tries[k].x,y:tries[k].y,w:w,h:h};
+        if(b.x<P.l+2||b.x+b.w>W-2||b.y<16||b.y+b.h>bottom-2)continue;
+        if(boxes.some(function(o,j){return j!==q.i&&hit(b,o);}))continue;
+        var tx=tries[k].a==="start"?b.x:tries[k].a==="end"?b.x+w:b.x+w/2;
+        s.push('<text class="cra-reach__label'+(q===pick?" is-on":"")+'" x="'+tx.toFixed(1)+'" y="'+(b.y+10).toFixed(1)+'" text-anchor="'+tries[k].a+'">'+e(name)+'</text>');
+        boxes.push(b);placed++;break;}
+    });
+    function chip(x,y,label,anchor){var w=textW(label)+10,bx=anchor==="end"?x-w:Math.min(W-w,Math.max(0,x-w/2));return'<g class="cra-reach__chip"><rect x="'+bx.toFixed(1)+'" y="'+(y-12)+'" width="'+w.toFixed(1)+'" height="17" rx="4"/><text x="'+(bx+w/2).toFixed(1)+'" y="'+y+'" text-anchor="middle">'+e(label)+'</text></g>';}
+    s.push(chip(pick.x,bottom+16,n(p.listeners),"middle")+chip(P.l-3,pick.y+4,fx(p.each),"end"));
+    s.push("</svg>");
+    return s.join("");
+  }
+  function reachList(rows,p){
+    var lim=S.reachAll?rows.length:Math.min(8,rows.length);
+    return'<div class="cra-reach__list"><div class="cra-reach__row cra-reach__row--head" aria-hidden="true"><span>#</span><span class="cra-reach__track">Track</span><span>Listeners</span><span>Each</span></div>'+
+      rows.slice(0,lim).map(function(r,i){return'<button type="button" class="cra-reach__row'+(r===p?" is-on":"")+'" data-cra-pick="'+i+'" aria-pressed="'+(r===p)+'"><span>'+r.rank+'</span><span class="cra-reach__track">'+e(r.track)+'</span><span>'+n(r.listeners)+'</span><span>'+fx(r.each)+'</span></button>';}).join("")+'</div>'+
+      (rows.length>8?'<button type="button" class="cra-reach__more" data-cra-reach-all>'+(S.reachAll?"Show top 8":"Show all "+rows.length+" tracks")+'</button>':"");
+  }
+  function drawReach(fromList){
+    var box=S.host&&S.host.querySelector("[data-cra-reach]");if(!box)return;
+    var rows=reachRows();if(!rows.length){box.innerHTML='<p>No track rows in this range.</p>';return;}
+    var W=Math.max(260,Math.floor(box.clientWidth||320)),p=rows.filter(function(r){return r.track===S.reachPick;})[0]||rows[0];
+    box.setAttribute("data-w",W);
+    box.innerHTML=reachReadout(p)+reachSvg(rows,p,W)+reachList(rows,p);
+    box.onclick=function(ev){
+      var t=ev.target.closest&&ev.target.closest("[data-cra-pick]");
+      if(t){S.reachPick=rows[Number(t.getAttribute("data-cra-pick"))].track;drawReach(t.tagName==="BUTTON");return;}
+      if(ev.target.closest&&ev.target.closest("[data-cra-reach-all]")){S.reachAll=!S.reachAll;drawReach();}
+    };
+    /* Picked from the list below: bring the readout back into view. */
+    if(fromList){var ro=box.querySelector(".cra-reach__readout"),rr=ro&&ro.getBoundingClientRect();if(rr&&rr.top<0&&ro.scrollIntoView)ro.scrollIntoView({block:"start",behavior:"smooth"});}
+  }
+  /* SOURCE → SONG → ACCOUNT, as ranked paths. Each row is one route people
+     actually took: where they came from, the last song they heard before
+     signing up, and how many accounts took that route. Tapping a row filters
+     the account list below to exactly those people. */
+  var PATH_SEP=" |→| ";
+  function pathKey(src,track){return String(src||"direct")+PATH_SEP+String(track||"");}
   function flow(data){
-    var js=((data&&data.journeys)||[]).filter(function(j){return j.last_track;}).slice(0,16);if(!js.length)return'<p>No song-attributed account journeys in this range.</p>';var ss=[],ts=[];js.forEach(function(j){var s=j.source||"direct";if(ss.indexOf(s)<0&&ss.length<6)ss.push(s);if(ts.indexOf(j.last_track)<0&&ts.length<9)ts.push(j.last_track);});js=js.filter(function(j){return ss.indexOf(j.source||"direct")>=0&&ts.indexOf(j.last_track)>=0;}).slice(0,14);var W=920,H=Math.max(380,Math.max(ss.length,ts.length,js.length)*34+70),SP={},TP={},AP={};function Y(i,m){return 44+(H-88)*(m<=1?.5:i/(m-1));}ss.forEach(function(x,i){SP[x]={x:24,y:Y(i,ss.length)};});ts.forEach(function(x,i){TP[x]={x:330,y:Y(i,ts.length)};});js.forEach(function(x,i){AP[i]={x:680,y:Y(i,js.length)};});var ec={};js.forEach(function(j){var k=(j.source||"direct")+"\u0000"+j.last_track;ec[k]=(ec[k]||0)+1;});var out=['<div class="cra-flow-scroll"><svg class="cra-flow" viewBox="0 0 '+W+' '+H+'">'];Object.keys(ec).forEach(function(k){var p=k.split("\u0000"),a=SP[p[0]],b=TP[p[1]];if(a&&b)out.push('<path class="cra-flow__edge" stroke-width="'+Math.min(10,1+ec[k]*1.6)+'" d="M 196 '+a.y+' C 260 '+a.y+',270 '+b.y+',330 '+b.y+'"/>');});js.forEach(function(j,i){var a=TP[j.last_track],b=AP[i];if(a&&b)out.push('<path class="cra-flow__edge" stroke-width="1.4" d="M 548 '+a.y+' C 600 '+a.y+',625 '+b.y+',680 '+b.y+'"/>');});function node(x,y,w,l,cls,note){l=String(l||"");if(l.length>27)l=l.slice(0,26)+"…";return'<g><rect class="cra-flow__node '+(cls||"")+'" x="'+x+'" y="'+(y-13)+'" width="'+w+'" height="26" rx="7"/><text class="cra-flow__label" x="'+(x+8)+'" y="'+(y+4)+'">'+e(l)+'</text>'+(note?'<text class="cra-flow__note" x="'+(x+8)+'" y="'+(y+25)+'">'+e(note)+'</text>':"")+'</g>';}ss.forEach(function(x){out.push(node(SP[x].x,SP[x].y,172,x,"","source"));});ts.forEach(function(x){out.push(node(TP[x].x,TP[x].y,218,x,"cra-flow__node--accent","track"));});js.forEach(function(j,i){out.push(node(AP[i].x,AP[i].y,215,[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"account","cra-flow__node--outcome",j.minutes_after_last_track==null?"account":j.minutes_after_last_track+"m after play"));});out.push("</svg></div>");return out.join("");
+    var js=(data&&data.journeys)||[],m={},total=0;
+    js.forEach(function(j){if(!j.last_track)return;var k=pathKey(j.source,j.last_track),r=m[k]||(m[k]={source:j.source||"direct",track:j.last_track,n:0,mins:[]});r.n++;total++;if(j.minutes_after_last_track!=null)r.mins.push(Number(j.minutes_after_last_track));});
+    var rows=Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.n-a.n||String(a.track).localeCompare(String(b.track));});
+    if(!rows.length)return'<p>No account in this range heard a song in the 7 days before signing up.</p>';
+    var top=rows[0].n,sel=S.idFilter&&S.idFilter.path;
+    return'<div class="cra-paths">'+rows.slice(0,14).map(function(r){
+      var k=pathKey(r.source,r.track),med=r.mins.length?r.mins.slice().sort(function(a,b){return a-b;})[Math.floor(r.mins.length/2)]:null;
+      return'<button type="button" class="cra-path'+(sel===k?" is-on":"")+'" data-cra-path="'+e(k)+'"><i class="cra-path__fill" style="--pct:'+(r.n/top*100).toFixed(1)+'%"></i>'+
+        '<span class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(r.source)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span><span class="cra-chip cra-chip--song">'+e(r.track)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span><span class="cra-path__acct">'+n(r.n)+(r.n===1?" account":" accounts")+'</span></span>'+
+        '<span class="cra-path__meta">'+Math.round(r.n/total*100)+'% of song-led signups'+(med!=null?' · typically '+mins(med)+' after the song':"")+'</span></button>';
+    }).join("")+'</div>';
   }
-  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
+  function mins(v){v=Number(v);if(!isFinite(v))return"—";if(v<1)return"under a minute";if(v<60)return v+" min";if(v<1440)return Math.round(v/60)+" h";return Math.round(v/1440)+" days";}
+  /* ---------- THE 60/40 GLOBE (owner, 2026-10-15: "the Halo globe inside the analytics dashboard") ----------
+     About 60% globe, 40% this panel on a wide screen; on a phone the globe comes first and the panel stacks under it and
+     folds away. Only the layout changed: every metric above keeps its query, its meaning and its card. What the globe
+     adds is drawn from data this panel already reads with the owner's own session, aggregated to COUNTRY (IP
+     geolocation is approximate; nothing finer is drawn), with any country under GEO_MIN folded into "under 5", and the
+     located / unknown split always on screen. A country never gets a made-up position: no label point, no dot.
+     docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md is the inventory behind every choice here. */
+  var GEO_MIN=5,BAD_CC={XX:1,T1:1,EU:1,AP:1};
+  var GEO_LAYERS=[
+    {id:"visitors",label:"Unique visitors by country",status:"live",source:"Distinct devices per IP country in the selected window"},
+    {id:"pageviews",label:"Page views by country",status:"live",source:"analytics_top(country): the same page views as the totals, by the country Cloudflare reports for the visitor's IP"},
+    {id:"signups",label:"Sign-ups by country",status:"live",source:"/v1/analytics/identity: accounts created in the range, by the country seen at sign-up (IP-derived)"},
+    /* INTEL EVENTS, by contract (docs/control-plane/INTEL-TO-MISSION-CANON.md §5, PR #438):
+         GET /v1/intel/geo?since=&until=&cell=10&bucket=day  ->  schema mccluster-intel-geo/v1,
+         {totals:{records,located,unknown_location,suppressed_records,suppressed_buckets}, buckets:[{cell,cell_center,cell_bounds,count}], layer:{attribution}}
+       The endpoint ships flagged off (503 intel_schema_not_ready until its migration is applied): then this layer says so
+       and draws nothing. Cells are drawn as cells, never as points; the window is clamped to the API's 92 days. */
+    {id:"intel",label:"Intel events (10° cells)",status:"live",source:"/v1/intel/geo: accepted evidence records aggregated to 10° grid cells by the intel plane"}
+  ];
+  S.geo={layer:"visitors",region:null,state:null,source:"",eventType:"",places:null,adm:{},rg:{},shown:null};
+  S.ui={reach:"visitors",aud:"visitors",filters:false,more:false};S.car={};S.gid=0;S.country=null;S.geoAudience=null;
+  /* a degree is a real number or nothing (Number(null) is 0, isFinite(null) is true: a missing centre would sit on the equator) */
+  function deg(v){if(v===null||v===undefined||v===""||typeof v==="boolean"||Array.isArray(v))return null;var x=Number(v);return isFinite(x)?x:null;}
+  function placeOf(code){var p=S.geo.places&&S.geo.places[code];return p&&deg(p[0])!==null&&deg(p[1])!==null&&!(p[0]===0&&p[1]===0)?p:null;}
+  function geoCountry(v){var c=String(v||"").trim().toUpperCase();return/^[A-Z]{2}$/.test(c)&&!BAD_CC[c]?c:null;}
+  function journeys(){
+    var js=(S.data.identity&&S.data.identity.journeys)||[],src=S.geo.source,reg=S.geo.region;
+    return js.filter(function(j){return(!src||String(j.source||"direct")===src)&&(!reg||geoCountry(j.country)===reg);});
+  }
+  /* the layer's aggregate: what is drawn, what is folded, what has no place */
+  function geoAggregate(){
+    var layer=S.geo.layer,counts={},recorded=0,total=null,noCountry=0;
+    if(layer==="visitors"){
+      var ct=S.data.countryTotals;if(!ct||!ct.ok)return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true,unavailable:S.errors.countryTotals?"Visitor geography unavailable":"Loading visitor geography…"};
+      ct.rows.forEach(function(r){var c=geoCountry(r.country),v=Number(r.visitors)||0;if(c)counts[c]=v;});
+      total=(S.data.traffic||{}).totals&&S.data.traffic.totals.visitors;
+    }else if(layer==="pageviews"){
+      (S.data.geo||[]).forEach(function(r){var c=geoCountry(r.key),v=Number(r.n)||0;recorded+=v;if(c)counts[c]=(counts[c]||0)+v;else noCountry+=v;});
+      var tv=S.data.traffic&&S.data.traffic.totals&&S.data.traffic.totals.page_views;total=tv==null?null:Number(tv);
+    }else if(layer==="signups"){
+      var src=S.geo.source,js=((S.data.identity&&S.data.identity.journeys)||[]).filter(function(j){return!src||String(j.source||"direct")===src;});
+      total=js.length;js.forEach(function(j){var c=geoCountry(j.country);if(c){counts[c]=(counts[c]||0)+1;recorded++;}else noCountry++;});
+    }else if(layer==="intel"){
+      var ig=S.data.intel;
+      if(!ig||!ig.ok)return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true,unavailable:S.errors.intel?(S.errors.intel.status===503?"The intel plane is not switched on yet (its migration is not applied).":"Intel events did not load: "+(S.errors.intel.message||S.errors.intel)):"Loading intel events…"};
+      var cells={},it=ig.totals||{},isup=Number(it.suppressed_records)||0,ilocated=0;
+      (ig.buckets||[]).forEach(function(b){var c=String(b.cell||""),ctr=b.cell_center||{},bd=Array.isArray(b.cell_bounds)?b.cell_bounds:null;var la=deg(ctr.lat),lo=deg(ctr.lon);if(!/^g\d+:-?\d+:-?\d+$/.test(c)||la===null||lo===null||Math.abs(la)>90||Math.abs(lo)>180)return;var x=cells[c]||(cells[c]={code:c,name:Math.abs(la)+(la<0?"°S ":"°N ")+Math.abs(lo)+(lo<0?"°W":"°E"),lat:la,lon:lo,bounds:bd,value:0});x.value+=Number(b.count)||0;});
+      var ipts=[];Object.keys(cells).forEach(function(k){var x=cells[k];if(x.value<GEO_MIN){isup+=x.value;return;}ilocated+=x.value;ipts.push(x);});
+      ipts.sort(function(a,b){return b.value-a.value||a.code.localeCompare(b.code);});
+      return{points:ipts,located:ilocated,suppressed:isup,unknown:Number(it.unknown_location)||0,total:it.records==null?null:Number(it.records),attribution:(ig.layer&&ig.layer.attribution)||[]};
+    }else return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true};
+    var points=[],located=0,suppressed=0,unplaced=0;
+    Object.keys(counts).forEach(function(c){var v=counts[c],p=placeOf(c);if(v<(layer==="visitors"?1:GEO_MIN)){suppressed+=v;return;}if(!p){unplaced+=v;return;}located+=v;points.push({code:c,name:p[2]||c,lon:p[0],lat:p[1],value:v});});
+    points.sort(function(a,b){return b.value-a.value||a.code.localeCompare(b.code);});
+    /* page views: anything the totals counted that the country list did not carry has no country (or sits past the top 100) */
+    var unknown=layer==="visitors"?null:layer==="pageviews"?(total==null?null:Math.max(0,total-recorded)+noCountry+unplaced):noCountry+unplaced;
+    return{points:points,located:located,suppressed:suppressed,unknown:unknown,total:total,capped:layer==="pageviews"&&(S.data.geo||[]).length>=100};
+  }
+  /* ---------- THE CHARCOAL GLOBE (owner, 2026-10-15: "this is what analytics should aspire to look like") ----------
+     One Cesium globe drawn in this page (js/control-room/analytics-globe.js), never repainted: the panel repaints around it.
+     It is handed the layer's aggregate above (country level, under 5 folded, no place without a Natural Earth label point)
+     and, for the ONE selected country only, its states' page views from GET /v1/analytics/regions (house owner only; the
+     database folds any region under 5). No arcs, no dots, no decoration (owner, 2026-10-16: "just modern selection").
+
+     ONE SELECTION (owner, 2026-10-16: "when it's selected either from the console or the globe itself"):
+     S.geo.region (an ISO country, or an intel cell) and S.geo.state (an ISO 3166-2 key inside that country, or null).
+     The dropdown, the rows, Clear and a tap on the globe all go through pickPlace(); the globe is told with
+     select({country, state}, fly) and flies to fit the shape. Clear returns to the world. */
+  function countryName(code){
+    if(!code)return"";var p=S.geo.places&&S.geo.places[code];
+    try{if(/^[A-Z]{2}$/.test(code)&&typeof Intl!=="undefined"&&Intl.DisplayNames){var dn=new Intl.DisplayNames(["en"],{type:"region"}).of(code);if(dn&&dn!==code)return dn;}}catch(_){}
+    return p&&p[2]||code;
+  }
+  function layerUnit(id,v){var one=Number(v)===1;return id==="visitors"?(one?"unique visitor":"unique visitors"):id==="signups"?(one?"sign-up":"sign-ups"):id==="intel"?(one?"record":"records"):(one?"page view":"page views");}
+  function layerOf(){return GEO_LAYERS.filter(function(x){return x.id===S.geo.layer;})[0]||GEO_LAYERS[0];}
+  function geoPayload(){
+    var a=geoAggregate();
+    return{mode:S.geo.layer==="intel"?"cells":"countries",
+      points:a.points.map(function(p){return{code:p.code,name:p.code&&/^[A-Z]{2}$/.test(p.code)?countryName(p.code):p.name,lon:p.lon,lat:p.lat,value:p.value};}),
+      cells:S.geo.layer==="intel"?a.points.map(function(p){return{code:p.code,bounds:p.bounds,value:p.value};}):[],
+      selected:S.geo.region,state:S.geo.state,states:stateData(),context:projectionContext()};
+  }
+  /* ---------- STATES AND PROVINCES of the selected country (admin analytics only) ---------- */
+  function selCountry(){return S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;}
+  function admFile(cc){var f=cc&&S.geo.adm[cc];return f&&f.states?f:null;}
+  function stateOf(k){var cc=String(k||"").slice(0,2),f=admFile(cc);if(!f)return null;for(var i=0;i<f.states.length;i++)if(f.states[i].k===k)return f.states[i];return null;}
+  function rgKey(cc){var r=S.range;return r?cc+"|"+r.since+"|"+r.until+"|"+S.site:null;}
+  function regionRead(cc){var k=cc&&rgKey(cc);return k?S.geo.rg[k]||null:null;}
+  /* the matched page views per state for the selected country; null when there is nothing to colour */
+  function stateData(){
+    var cc=selCountry(),f=admFile(cc),rr=regionRead(cc);
+    if(!cc||!f||["visitors","pageviews"].indexOf(S.geo.layer)<0||!rr||!rr.ok||rr.pending||!window.CR.analyticsGlobe)return null;
+    var m=window.CR.analyticsGlobe.matchRegions(f.states,rr.regions||[],S.geo.layer==="visitors"?"visitors":"page_views");
+    return{country:cc,byKey:m.byKey,unmatched:m.unmatched};
+  }
+  function stateStatus(){
+    var cc=selCountry(),rr=regionRead(cc);
+    if(!cc)return null;
+    if(["visitors","pageviews"].indexOf(S.geo.layer)<0)return{kind:"layer",text:"State counts: page views only"};
+    if(!rr||rr.loading)return{kind:"loading",text:"Reading state counts…"};
+    if(rr.pending)return{kind:"pending",text:"State counts not collected yet"};
+    if(!rr.ok)return{kind:"error",text:"State counts did not load"};
+    return{kind:"ok"};
+  }
+  function loadStates(){
+    var cc=selCountry();if(!cc||!window.CR.analyticsGlobe)return;
+    if(!S.geo.adm[cc])window.CR.analyticsGlobe.loadAdmin1(cc).then(function(f){S.geo.adm[cc]=f||{states:[]};if(selCountry()===cc){loadGeoAudience();paint();syncGlobe(false);}},function(){});
+    var k=rgKey(cc);if(!k||S.geo.rg[k]||!S.request)return;
+    var r=S.range,epoch=S.seq;S.geo.rg[k]={loading:true};
+    S.request("/v1/analytics/regions?country="+cc+"&since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+(sid()?"&site="+encodeURIComponent(sid()):""))
+      .then(function(x){if(epoch===S.seq&&!S.revoked)S.geo.rg[k]=x&&x.ok?x:{ok:false};},function(x){if(epoch===S.seq&&!S.revoked)S.geo.rg[k]={ok:false,error:x};})
+      .then(function(){if(epoch===S.seq&&!S.revoked&&selCountry()===cc){paint();syncGlobe(false);}});
+  }
+  function tooltipFor(sel){
+    var code=typeof sel==="string"?sel:sel&&sel.country,k=sel&&typeof sel==="object"?sel.state:null;
+    var a=geoAggregate(),p=a.points.filter(function(x){return x.code===code;})[0],L=layerOf();
+    var title=/^[A-Z]{2}$/.test(code||"")?countryName(code):(p&&p.name)||code;
+    if(k){
+      var s=stateOf(k),sd=stateData(),v=sd&&sd.byKey[k],ss=stateStatus();
+      return{title:s?s.n:k,context:title,line:v?(v.area?v.area+": ":"")+n(v.value)+" "+layerUnit(S.geo.layer,v.value):ss&&ss.kind!=="ok"?ss.text:"Under "+GEO_MIN+" or none in this range"};
+    }
+    if(L.id==="visitors"){var cr=countryRow(code);return{title:title,line:a.awaiting?(a.unavailable||"Reading unique visitors…"):n(cr&&cr.visitors)+" unique visitors"};}
+    return{title:title,line:p?n(p.value)+" "+layerUnit(L.id,p.value):"Under "+GEO_MIN+" or none in this range"};
+  }
+  function filterCount(){return(S.geo.region?1:0)+(S.geo.source?1:0)+(S.geo.eventType?1:0)+(S.geo.layer!=="visitors"?1:0);}
+  /* every country (the Natural Earth label points), and, under the selected one, its states: one control, both levels */
+  function pillHtml(){
+    var a=geoAggregate(),seen={},list=[];
+    Object.keys(S.geo.places||{}).concat(a.points.map(function(p){return p.code;})).concat(selCountry()?[selCountry()]:[]).forEach(function(c){if(/^[A-Z]{2}$/.test(c)&&!seen[c]&&!BAD_CC[c]){seen[c]=1;list.push({code:c});}});
+    list.sort(function(x,y){return countryName(x.code).localeCompare(countryName(y.code));});
+    var c=filterCount(),cc=selCountry(),f=admFile(cc),sts=f?f.states.slice().sort(function(x,y){return String(x.n).localeCompare(String(y.n));}):[];
+    var opt=function(v,label,on){return'<option value="'+e(v)+'"'+(on?" selected":"")+'>'+e(label)+'</option>';};
+    var states=cc&&sts.length?'<optgroup label="'+e(countryName(cc))+' and its states">'+opt(cc,countryName(cc),!S.geo.state)+sts.map(function(s){return opt(cc+"/"+s.k,s.n,S.geo.state===s.k);}).join("")+'</optgroup>':"";
+    return'<button type="button" class="cra-pill__filters" data-cra-filters aria-expanded="'+(S.ui.filters?"true":"false")+'" aria-controls="craFilterSheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Filters</span>'+(c?'<i class="cra-pill__n">'+c+'</i>':"")+'</button>'+
+      '<label class="cra-pill__country"><span class="sr-only">Country</span><select id="craCountry" class="cra-pill__select" aria-label="Country">'+
+      '<option value=""'+(S.geo.region?"":" selected")+'>All countries</option>'+states+(states?'<optgroup label="Countries">':"")+list.map(function(p){return states&&p.code===cc?"":opt(p.code,countryName(p.code),p.code===S.geo.region&&!states);}).join("")+(states?'</optgroup>':"")+'</select></label>';
+  }
+  function summaryHtml(){
+    var L=layerOf(),bits=[S.range&&S.range.label||"",L.id==="visitors"?"Visitors":L.id==="signups"?"Sign-ups":L.id==="intel"?"Intel events":"Page views",S.geo.source||""];
+    if(S.geo.eventType)bits.push(S.geo.eventType);
+    return e(bits.filter(Boolean).join(" · "))+(filterCount()?' <button type="button" class="cra-clear" data-cra-clear>Clear</button>':"");
+  }
+  function syncGlobe(fly){
+    var a=geoAggregate(),L=layerOf(),g=S.globe;
+    if(g&&g.ready){g.setData(geoPayload());var k=(S.geo.region||"")+"/"+(S.geo.state||"");if(fly||k!==S.geo.shown){S.geo.shown=k;g.select({country:S.geo.region,state:S.geo.state},!!fly);}}
+    var q=function(sel){return S.host&&S.host.querySelector&&S.host.querySelector(sel);};
+    var cap=q("[data-cra-globe-caption]");
+    var ss=stateStatus(),rr=regionRead(selCountry()),sd=stateData();
+    if(cap)cap.textContent=a.awaiting?L.label+": "+(a.unavailable||"nothing to draw"):ss&&ss.kind==="ok"&&rr?countryName(selCountry())+" by state: "+n(rr.regions.length)+" with "+GEO_MIN+"+ · under "+GEO_MIN+" folded "+n(rr.folded)+" · no region "+n(rr.unknown)+(sd&&sd.unmatched?" · unmatched "+n(sd.unmatched):""):ss&&ss.kind==="pending"?"State counts not collected yet: analytics_region_v1 is written, not applied. State shapes are still selectable.":"On the globe "+n(a.located)+(a.suppressed?" · under "+GEO_MIN+" folded "+n(a.suppressed):"")+" · no country "+(a.unknown==null?"—":n(a.unknown));
+    var geoSummary=q("[data-cu-geography]");if(geoSummary&&window.CR.analyticsUnified){geoSummary.innerHTML=window.CR.analyticsUnified.geography(a,S,{countryName:countryName});geoSummary.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){pickRegion(b.getAttribute("data-cra-region"));};});}
+    var pl=q("[data-cra-pill]");if(pl)pl.innerHTML=pillHtml();
+    var sm=q("[data-cra-summary]");if(sm)sm.innerHTML=summaryHtml();
+    var fs=q("[data-cra-filter-sheet]");if(fs){fs.hidden=!S.ui.filters;if(S.ui.filters)fs.innerHTML='<div class="cra-sheet__head"><b>Filters</b><button type="button" class="cra-sheet__x" data-cra-filters aria-label="Close filters">×</button></div>'+filters();}
+    var top=q("[data-cra-top]");if(top)top.innerHTML=topHtml();
+    if(S.host&&S.host.querySelector){bindStage(S.host.querySelector("[data-cra-stage]"));bindTop(top||S.host);}
+  }
+  function regionKey(c){return geoCountry(c)||(/^g\d+:-?\d+:-?\d+$/.test(String(c||""))?String(c):null);}
+  /* the one way to select: {country, state}; a state belongs to the country it names */
+  function pickPlace(sel,fly){
+    if(S.revoked)return;sel=sel||{};var c=sel.country?regionKey(sel.country):null,k=c&&/^[A-Z]{2}$/.test(c)&&/^[A-Z]{2}-[A-Z0-9~]{1,5}$/.test(String(sel.state||""))&&String(sel.state).slice(0,2)===c?String(sel.state):null;
+    S.geo.region=c;S.geo.state=k;loadCountry();loadStates();loadGeoAudience();paint();syncGlobe(fly!==false);
+  }
+  function pickRegion(code,fly){var v=String(code||""),i=v.indexOf("/");pickPlace(i>0?{country:v.slice(0,i),state:v.slice(i+1)}:{country:v||null,state:null},fly);}
+  /* ---------- the header: wordmark line, title, Live, property, range ---------- */
+  function liveState(){
+    if(S.loading)return{cls:"is-loading",label:"Updating"};
+    if(S.error)return{cls:"is-error",label:"Not live"};
+    if(S.loaded&&(Object.keys(S.errors).length||Object.keys(S.quality||{}).length))return{cls:"is-error",label:"Partial data"};
+    if(S.loaded&&S.rangeId!=="custom")return{cls:"is-live",label:"Updated"};
+    return{cls:"",label:S.loaded?"Updated":"Ready"};
+  }
+  function topHtml(){
+    var lv=liveState(),quick=[["24h","24h"],["7d","7 days"],["30d","30 days"]],more=["90d","all","custom"].indexOf(S.rangeId)>=0;
+    return'<div class="cra-top__row"><div class="cra-top__titles"><p class="cra-top__eyebrow">McCluster</p><h1 class="cra-top__title">Analytics <span class="cra-live '+lv.cls+'" role="status"><i aria-hidden="true"></i>'+e(lv.label)+'</span></h1></div>'+
+      '<button type="button" class="cra-top__me" data-cra-me aria-label="Account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c1.2-3.4 4-5 7-5s5.8 1.6 7 5"/></svg></button></div>'+
+      (function(){var all=[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]),cur=all.filter(function(x){return String(x.id)===String(S.site);})[0]||all[0],full=String(cur.name||cur.id),short=cur.id===FIRST?"First-party":full;
+        /* the face shows the property; the native select over it (16px, invisible) is what is tapped, so iOS never zooms.
+           A phone shows the short name ("McCluster" is the line above); from 30rem the full one */
+        return'<div class="cra-top__controls"><label class="cra-top__prop"><span class="cra-prop__face" aria-hidden="true"><span class="cra-prop__short">'+e(short)+'</span><span class="cra-prop__full">'+e(full)+'</span></span><select class="cra-property" id="craProperty" aria-label="Property: '+e(full)+'">'+all.map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></label>';})()+
+      '<div class="cra-seg cra-seg--range" role="group" aria-label="Range">'+quick.map(function(x){return'<button type="button" class="cra-seg__b'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'" aria-pressed="'+(S.rangeId===x[0])+'">'+x[1]+'</button>';}).join("")+'</div>'+
+      '<button type="button" class="cra-cal'+(more?" is-on":"")+'" data-cra-more aria-expanded="'+(S.ui.more?"true":"false")+'" aria-label="More ranges and custom dates"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></button></div>'+
+      (S.ui.more?'<div class="cra-more">'+ranges()+'</div>':"");
+  }
+  function bindTop(root){
+    if(!root)return;
+    var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;S.country=null;load();};
+    root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));syncGlobe(false);}else{if(S.rangeId!=="custom")S.ui.more=false;load();}};});
+    var m=root.querySelector("[data-cra-more]");if(m)m.onclick=function(){S.ui.more=!S.ui.more;syncGlobe(false);};
+    var me=root.querySelector("[data-cra-me]");if(me)me.onclick=function(ev){ev.stopPropagation();var a=document.getElementById("crAccount");if(a)a.click();};
+    var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
+    if(from)from.oninput=function(){S.from=from.value||"";};
+    if(through)through.oninput=function(){S.through=through.value||"";};
+    var ap=root.querySelector("[data-cra-apply]");if(ap)ap.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
+  }
+  function bindStage(root){
+    if(!root)return;
+    var c=root.querySelector("#craCountry");if(c)c.onchange=function(){pickRegion(c.value);};
+    root.querySelectorAll("[data-cra-filters]").forEach(function(b){b.onclick=function(){S.ui.filters=!S.ui.filters;syncGlobe(false);var target=root.querySelector(S.ui.filters?"[data-cra-filter-sheet] [data-cra-filters]":"[data-cra-pill] [data-cra-filters]");if(target)target.focus({preventScroll:true});};});
+    root.querySelectorAll("[data-cra-clear]").forEach(function(b){b.onclick=function(){S.geo.region=null;S.geo.state=null;S.geo.source="";S.geo.eventType="";S.geo.layer="visitors";S.idFilter=null;S.geoAudience=null;loadCountry();paint();syncGlobe(true);};});
+    var sheet=root.querySelector("[data-cra-filter-sheet]");if(sheet&&!sheet.hidden){
+      sheet.onkeydown=function(ev){if(ev.key!=="Escape")return;ev.preventDefault();S.ui.filters=false;syncGlobe(false);var target=root.querySelector("[data-cra-pill] [data-cra-filters]");if(target)target.focus({preventScroll:true});};
+      var gl=sheet.querySelector("#craLayer");if(gl)gl.onchange=function(){S.geo.layer=gl.value;paint();syncGlobe(false);};
+      var gr=sheet.querySelector("#craRegion");if(gr)gr.onchange=function(){pickRegion(gr.value);};
+      var gs=sheet.querySelector("#craSource");if(gs)gs.onchange=function(){S.geo.source=gs.value;paint();syncGlobe(false);};
+      var ge=sheet.querySelector("#craEvent");if(ge)ge.onchange=function(){S.geo.eventType=ge.value;paint();syncGlobe(false);};
+    }
+  }
+  function shell(){
+    return'<div class="cra-app cra-split cad-app"><div class="cra-lead-col"><header class="cra-top" data-cra-top></header>'+
+      '<div class="cu-geography"><section class="cra-globe cra-stage" data-cra-stage aria-label="Analytics globe: country aggregates. Drag to turn the Earth, pinch to zoom, tap a country to select it.">'+
+      '<div class="cra-globe__host" id="craGlobe" data-cra-globe></div>'+
+      '<div class="cra-pill" data-cra-pill></div>'+
+      '<p class="cra-summary" data-cra-summary></p>'+
+      '<p class="cra-globe__caption" data-cra-globe-caption aria-live="polite">Loading the globe…</p>'+
+      '<div class="cra-sheet" id="craFilterSheet" data-cra-filter-sheet hidden></div></section><aside class="cu-geo-summary" data-cu-geography></aside></div></div>'+
+      '<div class="cra-side"><div class="cra-side__body" id="craPanel" data-cra-panel></div></div></div>';
+  }
+  /* ---------- the swipeable cards ---------- */
+  function seg(name,opts,val){return'<div class="cra-seg" role="group" aria-label="'+e(name)+'">'+opts.map(function(o){return'<button type="button" class="cra-seg__b'+(val===o[0]?" is-on":"")+'" data-cra-seg="'+e(name)+'" data-v="'+e(o[0])+'" aria-pressed="'+(val===o[0])+'">'+e(o[1])+'</button>';}).join("")+'</div>';}
+  /* an area chart sized for the phone first: user units ~ pixels at 340 wide */
+  function area(rows,key,labelFor,aria){
+    rows=(rows||[]).filter(function(r){return r&&r[key]!=null;});
+    if(rows.length<2)return'<p class="cra-c__empty">No series in this range.</p>';
+    var W=340,H=132,P={l:4,r:4,t:10,b:22},mx=1;rows.forEach(function(r){mx=Math.max(mx,Number(r[key])||0);});
+    function X(i){return P.l+i/(rows.length-1)*(W-P.l-P.r);}function Y(v){return H-P.b-(Number(v)||0)/mx*(H-P.t-P.b);}
+    var pts=rows.map(function(r,i){return X(i).toFixed(1)+","+Y(r[key]).toFixed(1);}).join(" ");
+    var ticks=[0,Math.round((rows.length-1)/3),Math.round(2*(rows.length-1)/3),rows.length-1];
+    var gid="craG"+(++S.gid);
+    return'<svg class="cra-area-chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(aria)+'"><defs><linearGradient id="'+gid+'" x1="0" x2="0" y1="0" y2="1"><stop class="cra-ac__s0" offset="0"/><stop class="cra-ac__s1" offset="1"/></linearGradient></defs>'+
+      [0.5,1].map(function(q){var y=Y(mx*q).toFixed(1);return'<line class="cra-ac__grid" x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'"/>';}).join("")+
+      '<polygon fill="url(#'+gid+')" points="'+P.l+','+(H-P.b)+' '+pts+' '+(W-P.r)+','+(H-P.b)+'"/><polyline class="cra-ac__line" points="'+pts+'"/>'+
+      rows.map(function(r,i){var label=labelFor(r)+' · '+aria+': '+n(r[key]);return '<circle class="cra-ac__point" cx="'+X(i).toFixed(1)+'" cy="'+Y(r[key]).toFixed(1)+'" r="4" tabindex="0" role="img" aria-label="'+e(label)+'"><title>'+e(label)+'</title></circle>';}).join('')+
+      ticks.filter(function(t,i,a){return a.indexOf(t)===i;}).map(function(t,i){return'<text class="cra-ac__x" x="'+X(t).toFixed(1)+'" y="'+(H-5)+'" text-anchor="'+(i===0?"start":t===rows.length-1?"end":"middle")+'">'+e(labelFor(rows[t]))+'</text>';}).join("")+'</svg>';
+  }
+  function bars(rows,labelKey,valueKey,max){
+    rows=(rows||[]).slice(0,max||5);if(!rows.length)return'<p class="cra-c__empty">Nothing in this range.</p>';
+    var mx=Math.max.apply(null,rows.map(function(r){return Number(r[valueKey])||0;}).concat([1]));
+    return'<div class="cra-hbars">'+rows.map(function(r){var raw=r[valueKey],v=Number(raw)||0;return'<div class="cra-hbar"><span class="cra-hbar__l">'+e(r[labelKey])+'</span><b>'+nn(raw)+'</b><i style="--pct:'+Math.max(2,v/mx*100).toFixed(1)+'%"></i></div>';}).join("")+'</div>';
+  }
+  function split(aLabel,a,bLabel,b){
+    if(a==null||b==null)return'<p class="cra-c__empty">Not available for this property.</p>';
+    var t=Math.max(1,a+b);
+    return'<div class="cra-split2"><div class="cra-split2__bar" role="img" aria-label="'+e(aLabel+" "+a+", "+bLabel+" "+b)+'"><i style="--pct:'+(a/t*100).toFixed(1)+'%"></i><i></i></div><div class="cra-split2__k"><span>'+e(aLabel)+'<b>'+n(a)+'</b></span><span>'+e(bLabel)+'<b>'+n(b)+'</b></span></div></div>';
+  }
+  /* nothing is a dash, never a zero (Number(null) is 0) */
+  function nn(v){return v===null||v===undefined||v===""?"—":n(v);}
+  function slide(title,body,id){return'<article class="cra-slide" data-cra-slide="'+e(id||title)+'" aria-label="'+e(title)+'">'+body+'</article>';}
+  function big(v,label,scope,sub){return'<div class="cra-big"><strong>'+(v==null?"—":n(v))+'</strong><span class="cra-big__l">'+e(label)+'</span>'+(scope?'<span class="cra-big__s">'+e(scope)+'</span>':"")+(sub?'<span class="cra-big__s">'+e(sub)+'</span>':"")+'</div>';}
+  function carousel(id,heading,slides){
+    var i=Math.min(slides.length-1,S.car[id]||0);
+    return'<section class="cra-carsec" aria-labelledby="craH-'+id+'"><h2 class="cra-h" id="craH-'+id+'">'+e(heading)+'</h2><div class="cra-car" data-cra-car="'+id+'"><div class="cra-car__track" tabindex="0" aria-label="'+e(heading)+' cards, swipe for more">'+slides.join("")+'</div>'+
+      (slides.length>1?'<button type="button" class="cra-car__next" data-cra-next="'+id+'" aria-label="Next '+e(heading)+' card"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>':"")+'</div>'+
+      (slides.length>1?'<div class="cra-dots" role="tablist" aria-label="'+e(heading)+' cards">'+slides.map(function(_,k){return'<button type="button" class="cra-dot'+(k===i?" is-on":"")+'" data-cra-dot="'+id+'" data-i="'+k+'" aria-label="Card '+(k+1)+' of '+slides.length+'" aria-selected="'+(k===i)+'" role="tab"></button>';}).join("")+'</div>':"")+'</section>';
+  }
+  function scopeLabel(){var cc=selCountry(),s=S.geo.state&&stateOf(S.geo.state);return(cc?(s?s.n:countryName(cc)):"Worldwide")+" · "+(S.range&&S.range.label||"");}
+  function pvRows(){var t=S.data.traffic||{};return S.rangeId==="24h"?(t.byHour||[]):(t.byDay||[]);}
+  function pvLabel(r){if(r.hour){var d=new Date(r.hour);return String(d.getHours()).padStart(2,"0")+":00";}if(r.bucket){var b=new Date(r.bucket);return S.rangeId==="24h"?String(b.getHours()).padStart(2,"0")+":00":(b.getMonth()+1)+"/"+b.getDate();}return String(r.day||"").slice(5);}
+  function countryRow(code){var ct=S.data.countryTotals;if(!ct||!ct.ok)return null;return ct.rows.filter(function(r){return String(r.country||"").toUpperCase()===code;})[0]||null;}
+  function geoValue(code){var v=0;(S.data.geo||[]).forEach(function(r){if(geoCountry(r.key)===code)v+=Number(r.n)||0;});return v;}
+  function pendingNote(){var ct=S.data.countryTotals;return ct&&ct.missing?"Visitors by country need analytics_country_v1 (written, not applied).":"";}
+  function reachSlide(){
+    var t=(S.data.traffic||{}).totals||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,mode=S.ui.reach,body="";
+    if(mode==="visitors"){
+      var cr=sel?countryRow(sel):t,rows=sel?(S.country&&S.country.code===sel&&S.country.rows||[]):pvRows();
+      body=big(cr?cr.visitors:null,"Unique visitors",scopeLabel(),"Distinct devices in this window")+area(rows,"visitors",pvLabel,"Unique visitors over time");
+    }else if(mode==="sources"){
+      var src=(S.data.traffic||{}).sources||[];
+      body=big(src.length,"Sources","All countries · "+(S.range&&S.range.label||""),"referrers and tagged links (x.com, t.co, …)")+bars(src,"source","count",5);
+    }else if(mode==="returning"){
+      var vc=S.data.visitors&&S.data.visitors.counts,all=vc?Number(vc.all)||0:null,ret=vc?Number(vc.returning)||0:null;
+      body=big(ret,"Returning visitors","Worldwide · "+(S.range&&S.range.label||""),all==null?(sid()===null?"":"first-party only"):"of "+n(all)+" visitors came back for another session")+split("New",all==null?null:Math.max(0,all-ret),"Returning",ret);
+    }else{
+      var total=t.page_views==null?null:Number(t.page_views),v=sel?geoValue(sel):total,cs=S.country&&S.country.code===sel&&S.country.rows;
+      if(sel&&S.geo.state){var sd=stateData(),sv=sd&&sd.byKey[S.geo.state],ss=stateStatus();
+        return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["visitors","Visitors"],["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div><div class="cra-reach-main">'+
+          big(sv?sv.value:null,"Page views",scopeLabel(),(sv?(sv.area?"counted for "+sv.area+" · ":""):ss&&ss.kind!=="ok"?ss.text+" · ":"under "+GEO_MIN+" or none · ")+countryName(sel)+": "+n(v))+
+          '<div class="cra-reach-chart">'+area(cs||pvRows(),"page_views",pvLabel,"Page views over time, "+(cs?countryName(sel):"worldwide"))+'<small class="cra-c__note">Trend: '+e(cs?countryName(sel):"worldwide")+'</small></div></div>',"reach");}
+      var rows=sel&&cs?cs:pvRows();
+      body='<div class="cra-reach-main">'+big(v,"Page views",scopeLabel(),sel?(total==null?"":n(total)+" worldwide"):"")+
+        '<div class="cra-reach-chart">'+area(rows,"page_views",pvLabel,"Page views over time"+(sel&&!cs?" (worldwide)":""))+(sel&&!cs?'<small class="cra-c__note">Trend: worldwide'+(pendingNote()?"; "+pendingNote():"")+'</small>':"")+'</div></div>';
+    }
+    return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["visitors","Visitors"],["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div>'+body,"reach");
+  }
+  function signupSlide(){
+    var b=S.data.business&&S.data.business.snapshot,u=b&&b.users||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;
+    var js=(S.data.identity&&S.data.identity.journeys)||[],inCountry=sel?js.filter(function(j){return geoCountry(j.country)===sel;}).length:null;
+    var rows=(u.created_by_day||[]).map(function(r){return{day:r.day,page_views:r.count};});
+    return slide("Sign-ups",'<div class="cra-reach-main">'+big(sel?inCountry:(b?u.created_in_window:null),"Accounts created",scopeLabel(),b?nn(u.confirmed_in_window)+" confirmed · "+nn(u.active_in_window)+" signed in":"")+
+      '<div class="cra-reach-chart">'+area(rows,"page_views",function(r){return String(r.day||"").slice(5);},"Accounts created per day")+'</div></div>',"signups");
+  }
+  function musicSlide(){
+    var m=S.data.business&&S.data.business.snapshot&&S.data.business.snapshot.music,w=function(x){return x?x.in_window:null;};
+    var pv=m?w(m.preview_plays):null,fl=m?w(m.full_plays):null,cp=m?w(m.completions):null;
+    return slide("Music",big(m?w(m.plays):null,"Music plays","Worldwide · "+(S.range&&S.range.label||""),"previews counted apart from full listens")+
+      split("Previews",pv==null?null:Number(pv),"Full listens",fl==null?null:Number(fl))+
+      '<p class="cra-c__note">'+nn(cp)+' listened to the end · '+nn(m&&m.paid_orders?m.paid_orders.in_window:null)+' paid orders</p>',"music");
+  }
+  function audienceSlide(){
+    var t=(S.data.traffic||{}).totals||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,mode=S.ui.aud,body="";
+    if(mode==="locations"){
+      var a=geoAggregate(),list=a.points.filter(function(p){return/^[A-Z]{2}$/.test(p.code);}).map(function(p){return{label:countryName(p.code),v:p.value};});
+      body=big(S.geo.layer==="intel"?null:list.length,"Countries on the globe","with "+GEO_MIN+"+ "+layerUnit(S.geo.layer,2),"located "+n(a.located)+" · under "+GEO_MIN+" "+n(a.suppressed)+" · no country "+(a.unknown==null?"—":n(a.unknown)))+bars(list,"label","v",5);
+    }else if(mode==="networks"){
+      var nw=(S.data.traffic||{}).networks||[];
+      body=big(nw.length,"Network types","All countries · "+(S.range&&S.range.label||""),"connection type or network operator")+bars(nw,"network","count",5);
+    }else{
+      var vc=S.data.visitors&&S.data.visitors.counts,all=vc?Number(vc.all)||0:null,ret=vc?Number(vc.returning)||0:null,cr=sel?countryRow(sel):null;
+      body='<div class="cra-reach-main">'+big(sel?(cr?cr.visitors:null):(t.visitors==null?null:Number(t.visitors)),"Visitors",scopeLabel(),sel&&!cr?pendingNote():"")+
+        '<div class="cra-reach-chart">'+split("New",all==null?null:Math.max(0,all-ret),"Returning",ret)+(sel?'<small class="cra-c__note">New vs returning: worldwide</small>':"")+'</div></div>';
+    }
+    return slide("Audience",'<div class="cra-slide__head">'+seg("aud",[["visitors","Visitors"],["locations","Locations"],["networks","Networks"]],mode)+'</div>'+body,"audience");
+  }
+  function flowsSlide(){
+    var f=S.data.flows&&S.data.flows.flows;
+    if(!f)return slide("Journeys",big(null,"Sessions with a journey","",S.errors.flows?"did not load: "+(S.errors.flows.message||S.errors.flows):sid()===null?"loading…":"first-party only"),"flows");
+    var pps=f.pages_per_session||{},rows=Object.keys(pps).map(function(k){return{label:k+(k==="1"?" page":" pages"),v:pps[k]};});
+    return slide("Journeys",big(f.sessions,"Sessions","Worldwide · "+(S.range&&S.range.label||""),f.bounce_rate+"% left after one page")+bars(rows,"label","v",5)+
+      (f.entries&&f.entries[0]?'<p class="cra-c__note">Top way in: '+e(f.entries[0].path)+' ('+n(f.entries[0].sessions)+')</p>':""),"flows");
+  }
+  function healthSlide(){
+    var h=S.data.errors;
+    if(!h||!h.totals)return slide("Site health",big(null,"Errors","",S.errors.errors?"did not load: "+(S.errors.errors.message||S.errors.errors):sid()===null?"loading…":"first-party only"),"health");
+    var t=h.totals,rows=[{label:"Script errors on our pages",v:t.site_errors},{label:"Injected (extensions)",v:t.injected_errors},{label:"Dead or rage clicks",v:t.friction},{label:"Blocked journeys",v:t.journey}];
+    return slide("Site health",big(t.sessions_affected,"Sessions affected","Worldwide · "+(S.range&&S.range.label||""),n(t.errors)+" errors · "+n(t.friction)+" friction")+bars(rows,"label","v",4)+
+      (h.journey&&h.journey[0]?'<p class="cra-c__note">Most blocked: '+e(h.journey[0].kind)+' · '+e(h.journey[0].detail||"")+'</p>':""),"health");
+  }
+  function missionsSlide(){
+    var ms=S.data.missions;
+    if(!Array.isArray(ms))return slide("Missions",big(null,"Mission joins","",S.errors.missions?"did not load: "+(S.errors.missions.message||S.errors.missions):"loading…"),"missions");
+    var sum=function(k){return ms.reduce(function(a,x){return a+(Number(x[k])||0);},0);};
+    return slide("Missions",big(sum("joined"),"Mission joins","All missions · all time","admin verification decides what counts")+
+      bars([{label:"In progress",v:sum("in_progress")},{label:"Proof submitted",v:sum("submitted")},{label:"Verified by an admin",v:sum("verified")},{label:"Rejected",v:sum("rejected")}],"label","v",4),"missions");
+  }
+  function communitySlide(){
+    var m=S.data.business&&S.data.business.snapshot&&S.data.business.snapshot.mnet,w=function(k){return m&&m[k]?m[k].created_in_window:null;};
+    return slide("Community",big(w("posts"),"Posts","Equity Uprise · "+(S.range&&S.range.label||""),m&&m.profiles?nn(m.profiles.total)+" member profiles in all":"")+
+      bars([{label:"Posts",v:w("posts")},{label:"Reactions",v:w("reactions")},{label:"Follows",v:w("follows")},{label:"New profiles",v:w("profiles")}],"label","v",4),"community");
+  }
+  function carousels(){
+    var house=sid()===null;
+    return carousel("reach","Reach",[reachSlide(),signupSlide(),musicSlide()].filter(function(_,i){return house||i===0;}))+
+      carousel("audience","Audience",[audienceSlide()].concat(house?[flowsSlide(),healthSlide()]:[]))+
+      (house?carousel("action","Action",[missionsSlide(),communitySlide()]):"");
+  }
+  function bindCarousels(root){
+    root.querySelectorAll("[data-cra-seg]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-seg");S.ui[k]=b.getAttribute("data-v");paint();};});
+    root.querySelectorAll("[data-cra-car]").forEach(function(car){
+      var id=car.getAttribute("data-cra-car"),track=car.querySelector(".cra-car__track"),dots=root.querySelectorAll('[data-cra-dot="'+id+'"]');
+      if(!track||!track.children.length)return;
+      /* a card's place is its own offset (two cards show at once on a tablet), not a multiple of the track's width */
+      var at=function(i){var c=track.children[Math.max(0,Math.min(track.children.length-1,i))];return c.offsetLeft-track.children[0].offsetLeft;};
+      var nearest=function(){var best=0,d=Infinity;for(var k=0;k<track.children.length;k++){var x=Math.abs(at(k)-track.scrollLeft);if(x<d){d=x;best=k;}}return best;};
+      var mark=function(i){S.car[id]=i;dots.forEach(function(d,k){d.classList.toggle("is-on",k===i);d.setAttribute("aria-selected",k===i?"true":"false");});};
+      if(S.car[id])track.scrollLeft=at(S.car[id]);
+      var tm=0,steering=0;track.addEventListener("scrollend",function(){steering=0;});track.addEventListener("scroll",function(){if(tm||steering)return;tm=requestAnimationFrame(function(){tm=0;var i=nearest();if(i!==S.car[id])mark(i);});},{passive:true});
+      var go=function(i){var smooth=!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);mark(i);steering=1;clearTimeout(track._craT);track._craT=setTimeout(function(){steering=0;},smooth?1600:50);track.scrollTo({left:Math.min(at(i),track.scrollWidth-track.clientWidth),behavior:smooth?"smooth":"auto"});};
+      dots.forEach(function(d){d.onclick=function(){go(Number(d.getAttribute("data-i")));};});
+      var nx=car.querySelector("[data-cra-next]");if(nx)nx.onclick=function(){go((nearest()+1)%track.children.length);};
+    });
+  }
+  /* a country's own trend, from the pending read when it exists (supabase/pending/analytics_country_v1.sql) */
+  function missingFn(x){return!!x&&(x.status===404||/PGRST202|Could not find the function/i.test(String(x.message||"")+String(x.detail&&x.detail.code||"")));}
+  function loadCountry(){
+    var code=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,r=S.range;
+    if(!code||!r||(S.data.countryTotals&&S.data.countryTotals.missing)){return;}
+    var key=code+"|"+r.since+"|"+r.until+"|"+S.site+"|"+tz(),seq=S.seq;if(S.country&&S.country.key===key)return;
+    S.country={key:key,code:code,rows:null};
+    rpc("analytics_country_series",{p_country:code,p_since:r.since,p_until:r.until,p_site:sid(),p_tz:tz()}).then(function(rows){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.rows=rows||[];paint();},function(x){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.error=x;if(missingFn(x)&&S.data.countryTotals)S.data.countryTotals.missing=true;});
+  }
+  function filters(){
+    var t=S.data.traffic||{},sources=(t.sources||[]).map(function(x){return x.source;}).filter(Boolean),agg=geoAggregate();
+    var events=(S.data.contentEvents||[]).map(function(x){return x.event_name;}).filter(Boolean);
+    function opt(v,label,on,dis){return'<option value="'+e(v)+'"'+(on?" selected":"")+(dis?" disabled":"")+'>'+e(label)+'</option>';}
+    var regions=agg.points.slice();if(S.geo.region&&!regions.some(function(p){return p.code===S.geo.region;}))regions.unshift({code:S.geo.region,name:S.geo.region});
+    return'<div class="cra-filters" role="group" aria-label="Filters shared by the globe and the panel">'+
+      '<label>Layer<select class="cra-filter-select" id="craLayer">'+GEO_LAYERS.map(function(L){return opt(L.id,L.label,S.geo.layer===L.id,L.status!=="live");}).join("")+'</select></label>'+
+      '<label>Region<select class="cra-filter-select" id="craRegion">'+opt("","Everywhere",!S.geo.region)+regions.map(function(p){return opt(p.code,p.name+" ("+p.code+")",S.geo.region===p.code);}).join("")+'</select></label>'+
+      '<label>Source<select class="cra-filter-select" id="craSource">'+opt("","All sources",!S.geo.source)+sources.map(function(s){return opt(s,s,S.geo.source===s);}).join("")+'</select></label>'+
+      '<label>Event type<select class="cra-filter-select" id="craEvent">'+opt("","All events",!S.geo.eventType)+events.map(function(s){return opt(s,s,S.geo.eventType===s);}).join("")+'</select></label>'+
+      '<label>Program / mission<select class="cra-filter-select" disabled>'+opt("","Not in the current reads",true)+'</select></label>'+
+      '<p class="cra-filters__note">Applies to: range, everything · layer, the globe · region, the globe, the geography list and the identity accounts and paths · source, the identity accounts and paths and the sign-up layer · event type, the content event readout. Page views cannot be split by source or region beyond country with the current reads.</p></div>';
+  }
+  function geoCard(){
+    var a=geoAggregate(),L=GEO_LAYERS.filter(function(x){return x.id===S.geo.layer;})[0]||GEO_LAYERS[0];
+    if(a.awaiting)return card("On the globe",L.source,'<p>'+e(a.unavailable||"Nothing to draw.")+' Nothing is drawn until it answers.</p>',true);
+    var sel=S.geo.region,selRow=sel&&a.points.filter(function(p){return p.code===sel;})[0];
+    var kp='<div class="cra-kpis">'+kpi("On the globe",n(a.located),(L.id==="intel"?"in cells":"in countries")+" with "+GEO_MIN+"+")+kpi("Under "+GEO_MIN,n(a.suppressed),"folded, not drawn")+kpi("No country",a.unknown==null?"—":n(a.unknown),a.capped?"or past the top 100":"unknown location")+kpi("Total",a.total==null?"—":n(a.total),L.id==="pageviews"?"page views":L.id==="intel"?"records":"accounts")+'</div>'+(a.attribution&&a.attribution.length?'<p>Sources: '+e(a.attribution.join(" · "))+'</p>':"");
+    var detail=sel?'<div class="cra-filter"><span>'+(selRow?e(selRow.name)+' · '+n(selRow.value)+(a.located?' · '+Math.round(selRow.value/a.located*100)+'% of located':''):e(sel)+' · under '+GEO_MIN+' or not in this layer')+'</span><button type="button" class="cra-filter__x" data-cra-region="">Everywhere</button></div>':"";
+    var mx=Math.max.apply(null,a.points.map(function(p){return p.value;}).concat([1]));
+    var list=a.points.length?'<div class="cra-rank">'+a.points.slice(0,24).map(function(p){return'<button type="button" class="cra-rank__row'+(p.code===sel?" is-on":"")+'" data-cra-region="'+e(p.code)+'" aria-pressed="'+(p.code===sel)+'" aria-label="'+e(p.name+" "+n(p.value))+'"><i class="cra-rank__fill" style="--pct:'+Math.max(1,p.value/mx*100).toFixed(1)+'%"></i><span class="cra-rank__label">'+e(p.name)+'</span><b class="cra-rank__value">'+n(p.value)+'</b></button>';}).join("")+'</div>':'<p>No country reaches '+GEO_MIN+' in this range, so the globe draws nothing.</p>';
+    return card("On the globe",L.source+". Country level only; IP location is approximate. Tap a country here or on the globe to select it.",kp+detail+list,true);
+  }
+  function eventReadout(){
+    var k=S.geo.eventType;if(!k)return"";var r=(S.data.contentEvents||[]).filter(function(x){return x.event_name===k;})[0];
+    return'<div class="cra-filter"><span>'+e(k)+': '+(r?n(r.events)+' events · '+n(r.people)+' people · '+n(r.sessions)+' sessions':'none in this range')+'</span><button type="button" class="cra-filter__x" data-cra-event="">All events</button></div>';
+  }
+  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["intelligence","World intelligence"],["inventory","Data coverage"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
-    var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null,b=S.data.business&&S.data.business.snapshot||{},rangeLabel=S.range&&S.range.label||"Selected range";
-    var core=kpi("Page views",n(tot.page_views),rangeLabel)+kpi("Visitors",n(tot.visitors),"unique")+kpi("Sessions",n(tot.sessions),"selected range");
-    var scoped=house
-      ? kpi("Accounts",n(b.users&&(b.window?b.users.created_in_window:b.users.total)),b.window?"created":"all time")+kpi("Music plays",n(b.music&&b.music.plays&&(b.window?b.music.plays.in_window:b.music.plays.total)),"plays")+kpi("Gross music",money(b.music&&b.music.revenue&&(b.window?b.music.revenue.gross_cents_in_window:b.music.revenue.gross_cents)),"revenue")
-      : kpi("Plays",n(tot.plays),"selected property")+kpi("Events",n(tot.events),"selected property");
-    return'<div class="cra-kpis">'+core+scoped+'</div><div class="cra-grid">'+card("Traffic trend","Page views and visitors in the selected timestamp window.",line(t.byDay,"page_views","visitors","Page views","Visitors"),true)+card("Acquisition mix","Top sources.",donut(t.sources,"source","count"))+card("Geography","Country distribution.",donut(t.countries,"country","count"))+card("Top pages","Highest traffic paths.",rank(t.pages,"path","count"))+card("Network","Observed connection/network.",rank(t.networks,"network","count"))+'</div>'+(house?err("business"):"")+err("daily")+err("totals");
+    var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null;
+    var b=S.data.business&&S.data.business.snapshot||{},music=b.music||{},users=b.users||{};
+    var identity=S.data.identity||{},coverage=identity.coverage||{},science=S.data.audienceScience||{},audience=science.totals||{};
+    var rows=S.data.content||[],acq=S.data.acquisition||[],paths=S.data.paths||[],funnel=S.data.funnel||[];
+    var rangeLabel=S.range&&S.range.label||"Selected range",trend=trafficTrend(t);
+    function known(v,formatter){return v===null||v===undefined?"—":formatter?formatter(v):n(v);}
+    function metric(label,v,sub,formatter){return kpi(label,known(v,formatter),sub);}
+    function section(title,sub,body,link,label){return card(title,sub,body+(link?'<p><button class="cr-btn" type="button" data-cra-sec="'+link+'">'+label+' →</button></p>':""),false);}
+    var traffic='<div class="cra-kpis">'+metric("Page views",tot.page_views,rangeLabel)+metric("Visitors",tot.visitors,"unique")+metric("Sessions",tot.sessions,"selected range")+metric("Events",tot.events,"tracked")+'</div>';
+    var musicPlays=music.plays&&(b.window?music.plays.in_window:music.plays.total);
+    var gross=music.revenue&&(b.window?music.revenue.gross_cents_in_window:music.revenue.gross_cents);
+    var accounts=b.window?users.created_in_window:users.total;
+    var contentKnown=!!(S.completed&&S.completed.content&&!S.errors.content);
+    var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0);
+    var topSong=rows.slice().sort(function(a,z){return Number(z.starts||0)-Number(a.starts||0);})[0];
+    var cards='';
+    if(house){
+      cards+=section("Audience & accounts","Membership, returning listeners and signup attribution.",
+        '<div class="cra-kpis">'+metric("Accounts",S.data.business?accounts:null,b.window?"created in range":"all time")+metric("Music listeners",science.version?audience.music_listeners:null,"distinct in measured audience")+metric("Returning listeners",science.version?audience.returning_listeners:null,"measured")+metric("Song → signup",S.data.identity?coverage.attributed_accounts:null,"attributed accounts")+'</div>',"identity","Explore conversion");
+      cards+=section("Music & content","Track engagement and recorded music revenue.",
+        '<div class="cra-kpis">'+metric("Music plays",S.data.business?musicPlays:null,"recorded")+metric("Track starts",contentKnown?starts:null,"first-party events")+metric("Active tracks",contentKnown?rows.length:null,"with recorded activity")+metric("Music gross",S.data.business?gross:null,"recorded sales",money)+'</div>'+(topSong?'<p><b>Top track:</b> '+e(topSong.track||"Unknown")+' · '+n(topSong.starts)+' starts</p>':""),"content","Explore music");
+      cards+=section("Campaigns & acquisition","How people arrive and move toward an action.",
+        '<div class="cra-kpis">'+metric("Sources",S.errors.sources?null:(t.sources||[]).length,"observed")+metric("Acquisition rows",S.errors.acquisition?null:acq.length,"measured")+metric("Journey paths",S.errors.paths?null:paths.length,"tracked")+metric("Funnel stages",S.errors.funnel?null:funnel.length,"reported")+'</div><p>Campaign outcomes require verified mission or conversion events; source counts are not campaign results.</p>',"identity","Explore journeys");
+      /* Stripe sales the reconciler verified, net of refunds, live only.
+         Test-mode payments are named apart and never added (commerce/summary.js). */
+      var cm=b.commerce||{},sales=cm.available?(b.window?cm.live_in_window:cm.live):null,tst=cm.available?cm.test:null;
+      var bk=sales&&sales.bookings||{};
+      cards+=section("Sales, bookings & operations","Verified totals only; test payments are never counted.",
+        '<div class="cra-kpis">'+metric("Verified sales",sales?sales.net_cents:null,sales?n(sales.payments)+" Stripe payment"+(sales.payments===1?"":"s")+", net of refunds":"not available",money)+
+        metric("Bookings",sales?bk.total:null,sales?(bk.proposed?n(bk.proposed)+" waiting for a time":"proposed, confirmed or done"):"not available")+
+        metric("Refunded",sales?sales.refunded_cents:null,"returned to buyers",money)+
+        metric("Music gross",S.data.business?gross:null,"recorded music sales",money)+'</div>'+
+        (tst&&tst.payments?'<p><b>Test mode:</b> '+n(tst.payments)+' test payment'+(tst.payments===1?"":"s")+' ('+money(tst.gross_cents)+') kept apart, not revenue.</p>':"")+
+        (cm.available===false?'<p>Sales records did not load: '+e(cm.reason||"unavailable")+'.</p>':""),null,null);
+      cards+=section("Audience behavior","Listener distribution and engagement quality.",
+        '<div class="cra-kpis">'+metric("Profiled visitors",science.version?audience.profiled_visitors:null,"measured")+metric("Action-engaged",science.version?audience.action_engaged_listeners:null,"listeners")+metric("Returning",science.version?audience.returning_listeners:null,"listeners")+'</div>',"audience","Explore audience");
+    }else{
+      cards+=section("Property engagement","Music and event activity scoped to this property.",
+        '<div class="cra-kpis">'+metric("Plays",tot.plays,"property")+metric("Events",tot.events,"property")+'</div>',"content","Explore content");
+    }
+    var coverageNote='<p class="cra-lead"><b>Coverage:</b> Figures are drawn from the selected property and date range. An em dash means unavailable or not yet connected, not zero. Track starts and total music plays come from different measurements and should not be added together.</p>';
+    return coverageNote+traffic+'<div class="cra-grid">'+cards+'</div><div class="cra-grid">'+
+      card("Traffic trend",S.rangeId==="24h"?"Hourly page views and visitors; hover or tap for exact values.":"Daily page views and visitors.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+
+      card("Acquisition sources","Source breakdown.",donut(t.sources,"source","count"))+
+      card("Geography","Visitor country breakdown.",donut(t.countries,"country","count"))+
+      card("Page performance","Attention, depth and friction.",pagePerformance(t.pages),true)+
+      card("Networks","Observed network breakdown.",rank(t.networks,"network","count"))+
+      card("Music leaderboard","Track starts in the selected range.",rank(rows,"track","starts"))+
+      card("Content event mix","Observed media player events.",eventReadout()+donut(S.data.contentEvents||[],"event_name","events"))+
+      '</div>'+["business","content","contentEvents","identity","audienceScience","acquisition","paths","funnel","pages","sources","countries","networks","totals",S.rangeId==="24h"?"hourly":"daily"].map(err).join("");
+  }
+  function scienceSignalLabel(v){
+    if(v==="converted")return "Unverified legacy action signal";
+    if(v==="purchase_intent")return "Purchase intent";
+    if(v==="client_completion_reported")return "Client completion report";
+    return String(v||"").split("_").map(function(x){return x?x.charAt(0).toUpperCase()+x.slice(1):x;}).join(" ");
+  }
+  function audienceScience(){
+    if(sid()!==null)return"";
+    var d=S.data.audienceScience||{},t=d.totals||{},profiles=d.profiles||[],tracks=d.track_affinity||[],signals=d.signals||[],m=d.methodology||{};
+    if(S.errors.audienceScience)return err("audienceScience");
+    if(!d.version)return card("Audience science","Observed-behavior measurement is loading.","<p>Computing listener distributions and return behavior…</p>",true);
+    var summary='<div class="cra-kpis">'+
+      kpi("Profiled visitors",n(t.profiled_visitors||0))+
+      kpi("Music listeners",n(t.music_listeners||0))+
+      kpi("5+ start evidence",n(t.distribution_eligible||0))+
+      kpi("Returning listeners",n(t.returning_listeners||0))+
+      kpi("Action-engaged listeners",n(t.action_engaged_listeners||0))+
+      '</div>';
+    var signalRows=signals.map(function(x){return{label:scienceSignalLabel(x.signal),count:x.visitors};});
+    var affinity=tracks.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Track</th><th class="n">Listeners</th><th class="n">Starts</th><th class="n">Avg attention share</th><th class="n">80%+ concentration</th></tr></thead><tbody>'+
+      tracks.slice(0,25).map(function(x){return'<tr><td><b>'+e(x.track||"—")+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.starts)+'</td><td class="n">'+e((Number(x.avg_listener_share||0)*100).toFixed(1)+"%")+'</td><td class="n">'+n(x.concentrated_listeners)+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No music attention distribution in this range.</p>';
+    var ledger=profiles.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Visitor</th><th class="n">Starts</th><th class="n">Tracks</th><th>Dominant track</th><th class="n">Dominance</th><th class="n">HHI</th><th class="n">Entropy</th><th class="n">Effective catalog</th><th class="n">Repeat</th><th class="n">Sessions</th><th class="n">Actions</th><th>Observed signals</th></tr></thead><tbody>'+
+      profiles.slice(0,60).map(function(x){var id=x.uid?"member "+String(x.uid).slice(0,8):"visitor "+String(x.visitor_key||"").replace(/^d:/,"").slice(0,10);return'<tr>'+
+        '<td><b>'+e(id)+'</b><small style="display:block;opacity:.65">'+e(x.source||"direct")+' · '+n(x.active_days)+' active day'+(Number(x.active_days)===1?"":"s")+'</small></td>'+
+        '<td class="n">'+n(x.music_starts)+'</td><td class="n">'+n(x.distinct_tracks)+'</td><td>'+e(x.dominant_track||"—")+'</td>'+
+        '<td class="n">'+e((Number(x.dominant_share||0)*100).toFixed(1)+"%")+'</td><td class="n">'+e(Number(x.hhi||0).toFixed(3))+'</td>'+
+        '<td class="n">'+e(Number(x.normalized_entropy||0).toFixed(3))+'</td><td class="n">'+e(Number(x.effective_catalog_size||0).toFixed(2))+'</td>'+
+        '<td class="n">'+e((Number(x.repeat_ratio||0)*100).toFixed(1)+"%")+'</td><td class="n">'+n(x.sessions)+'</td><td class="n">'+n(x.action_events)+'</td>'+
+        '<td>'+((x.behavior_signals||[]).length?(x.behavior_signals||[]).map(function(s){return'<span class="cra-chip">'+e(scienceSignalLabel(s))+'</span>';}).join(" "):'<span style="opacity:.6">Not enough evidence</span>')+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No visitor-level evidence in this range.</p>';
+    var formulas=m.formulas||{},method='<p><b>Measurement, not mind-reading.</b> '+e(m.note||"")+'</p>'+
+      '<p>'+e(m.exposure_warning||"")+'</p>'+
+      '<dl class="cra-dns"><div><dt>Dominance</dt><dd><code>'+e(formulas.dominant_share||"")+'</code></dd></div>'+
+      '<div><dt>HHI</dt><dd><code>'+e(formulas.hhi||"")+'</code></dd></div>'+
+      '<div><dt>Shannon entropy</dt><dd><code>'+e(formulas.shannon_entropy||"")+'</code></dd></div>'+
+      '<div><dt>Effective catalog</dt><dd><code>'+e(formulas.effective_catalog_size||"")+'</code></dd></div>'+
+      '<div><dt>Repeat</dt><dd><code>'+e(formulas.repeat_ratio||"")+'</code></dd></div></dl>'+
+      (d.model_readiness?'<p><b>Model stage:</b> '+e(d.model_readiness.stage||"measurement")+'. '+e(d.model_readiness.reason||"")+'</p>':"");
+    return card("Audience science","Transparent behavioral features for first-party visitors. No ideological or personality labels.",summary+measurementNote(d),true)+
+      card("Observed behavior signals","Signals can overlap. They describe what happened, not why.",rank(signalRows,"label","count"))+
+      card("Track affinity","Which songs dominate each listener’s observed attention.",affinity,true)+
+      card("Listener feature ledger","Distribution and return features behind every signal. Purchase intent and client completion reports do not establish verified outcomes.",ledger,true)+
+      card("Method","The formulas and inference limits stay visible next to the result.",method,true);
+  }
+  function geographicStateFilters(state){
+    var states=(admFile(selCountry())||{}).states||[],others=states.filter(function(s){return s.k!==state.k;});
+    function norm(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+    var codes=(state.codes||[]).filter(function(code){return !others.some(function(s){return(s.codes||[]).indexOf(code)>=0;});}).map(function(v){return String(v).toUpperCase();});
+    var names=[state.n].concat(state.names||[]).filter(Boolean).filter(function(name){var n=norm(name);return !others.some(function(s){return[s.n,s.g,s.u].concat(s.names||[]).some(function(v){return v&&norm(v)===n;});});}).map(function(v){return String(v).trim().toLowerCase();});
+    return{codes:codes,names:names};
+  }
+  function loadGeoAudience(){
+    var cc=selCountry(),r=S.range;if(!cc||!r){S.geoAudience=null;return;}
+    var state=S.geo.state&&stateOf(S.geo.state);
+    if(S.geo.state&&!state){S.geoAudience=null;return;}
+    var key=[cc,S.geo.state||"",r.since,r.until,S.site,tz()].join("|");
+    if(S.geoAudience&&S.geoAudience.key===key)return;
+    var read=S.geoAudience={key:key,data:null,error:null};
+    var filters=state?geographicStateFilters(state):null,codes=filters?filters.codes:null,names=filters?filters.names:null;
+    rpc("analytics_geo_audience",{p_country:cc,p_since:r.since,p_until:r.until,p_site:sid(),p_region_codes:codes,p_region_names:names,p_tz:tz()}).then(function(d){
+      if(S.revoked||S.geoAudience!==read)return;if(!d||d.schema!=="analytics-geo-audience/v1")throw Error("Invalid geographic audience response");read.data=d;paint();
+    }).catch(function(error){if(S.revoked||S.geoAudience!==read)return;read.error=error;paint();});
+  }
+  function geographicAudience(){
+    var read=S.geoAudience,d=read&&read.data,scope=scopeLabel();
+    if(read&&read.error)return card("Audience · "+scope,"",'<p role="alert">'+e(read.error.message||"Geographic audience unavailable")+'</p><button type="button" data-cra-geo-retry>Retry geographic data</button>',true);
+    if(!d)return card("Audience · "+scope,"",'<p role="status">Reading this location…</p>',true);
+    if(d.suppressed)return card("Audience · "+scope,"",'<p>This state has fewer than five page views in this window. Its metrics are folded to protect small groups.</p>',true);
+    var t=d.totals||{};
+    return card("Audience at a glance",scope,'<div class="cra-kpis">'+kpi("Unique visitors",n(t.visitors),"distinct devices")+kpi("Sessions",n(t.sessions))+kpi("Returning visitors",n(t.returning),"2+ sessions here in this window")+kpi("Single-page sessions",t.bounce_rate==null?"—":n(t.bounce_rate)+"%")+kpi("Music plays",n(t.plays))+kpi("Page views",n(t.page_views))+'</div>',true)+
+      '<div class="cra-grid">'+card("Audience trend",scope+" · unique visitors per bucket; do not add buckets for the total",line(d.series,"visitors","sessions","Unique visitors","Sessions",{xKey:"bucket",hourly:true,labelFor:function(r){return String(r.bucket_label||r.bucket||"").replace("T"," ").slice(5,16);}}),true)+
+      card("Acquisition",scope+" · unique visitors by recorded source",donut(d.sources||[],"source","people"))+
+      card("Paths",scope+" · page transitions within this location",rank((d.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+
+      card("Pages",scope+" · unique visitors per page",rank(d.pages||[],"path","visitors"))+
+      card("Engagement stages",scope+" · distinct devices with each event stage; stages may overlap",rank(d.stages||[],"stage","visitors"))+'</div>';
   }
   function audience(){
+    if(selCountry())return geographicAudience();
     var house=sid()===null;
-    var scopedGap=house?"":'<div class="cra-error">The conversion funnel is hidden for this external property because the deployed backend does not expose a site-scoped funnel. Control will not mix another property into this view.</div>';
-    var funnelCard=house?card("Conversion funnel","People reaching each stage.",funnel(S.data.funnel||[]),true):"";
-    return scopedGap+'<div class="cra-grid">'+card("Audience trend","Sessions and unique visitors inside the exact selected timestamp window.",line((S.data.traffic&&S.data.traffic.byDay)||[],"sessions","visitors","Sessions","Visitors"),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
+    var scopedGap=house?"":'<div class="cra-error">Stage activity is hidden for this external property because the deployed backend does not expose site-scoped stage totals. Control will not mix another property into this view.</div>';
+    var funnelCard=house?card("Stage activity",S.data.stageTotals?"Whole-window distinct devices and separate account records.":"Daily distinct-device totals and account records; no ordered conversion rate.",funnel(S.data.funnel||[]),true):"";
+    var trend=trafficTrend(S.data.traffic||{});
+    var totals=(S.data.traffic||{}).totals||{},vis=S.data.visitors&&S.data.visitors.counts,flows=S.data.flows&&S.data.flows.flows;
+    var summary=card("Audience at a glance","Selected property · all countries · "+(S.range&&S.range.label||""),'<div class="cra-kpis">'+kpi("Unique visitors",n(totals.visitors),"distinct devices")+kpi("Sessions",n(totals.sessions))+kpi("Returning visitors",n(vis&&vis.returning),house?"more than one session":"first-party only")+kpi("Single-page sessions",flows?n(flows.bounce_rate)+"%":"—",house?"recorded sessions":"first-party only")+'</div>',true);
+    return summary+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"visitors","sessions","Unique visitors","Sessions",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("")+'<div class="cra-grid">'+card("Page performance","Attention, depth and friction · selected property.",pagePerformance((S.data.traffic||{}).pages),true)+'</div>'+(house?'<details class="cu-detail"><summary>Listening behavior & measurement method</summary><div class="cra-grid">'+audienceScience()+'</div></details>':"");
   }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
+    var contentKnown=!!(S.completed&&S.completed.content&&!S.errors.content);
     var table=rows.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Track</th><th>Album</th><th class="n">Starts</th><th class="n">Listeners</th><th class="n">Repeat</th><th class="n">Starts/listener</th><th class="n">Full</th><th class="n">Complete</th><th class="n">Shares</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td><b>'+e(r.track||"—")+'</b></td><td>'+e(r.album||"—")+'</td><td class="n">'+n(r.starts)+'</td><td class="n">'+n(r.listeners)+'</td><td class="n">'+n(r.repeat_listeners)+'</td><td class="n">'+e(r.plays_per_listener==null?"—":r.plays_per_listener)+'</td><td class="n">'+n(r.full_plays)+'</td><td class="n">'+n(r.completions)+'</td><td class="n">'+n(r.shares)+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No content rows.</p>';
-    return'<div class="cra-grid">'+card("Reach vs repeat","Right is reach. Up is starts per listener. Dot size reflects attributed accounts.",scatter(rows,S.data.identity),true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
+    var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0),listeners=rows.reduce(function(sum,r){return sum+Number(r.listeners||0);},0);
+    var musicSummary=card("Music · quick view","The essentials, from recorded first-party track activity.",'<div class="cra-kpis">'+kpi("Track starts",n(contentKnown?starts:null),"selected range")+kpi("Track listeners",n(contentKnown?listeners:null),"summed across tracks")+kpi("Tracked songs",n(contentKnown?rows.length:null),"with activity")+'</div>'+(rows.length?'<p><b>Most played:</b> '+e(rows.slice().sort(function(a,b){return Number(b.starts||0)-Number(a.starts||0);})[0].track||"—")+'</p>':contentKnown?'<p>No recorded music activity in this range.</p>':'<p>Music activity is not available yet.</p>'));
+    return'<div class="cra-grid">'+musicSummary+card("Reach vs repeat","Each dot is one track. Further right: more different people started it. Higher: each of them started it more times (1\u00d7 = once each). Tap a dot or a row to line up its numbers. Sign-ups counts accounts whose last song before joining was this one.",'<div class="cra-reach" data-cra-reach></div>',true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
   }
   function identity(){
-    var d=S.data.identity||{},c=d.coverage||{},j=d.journeys||[],t=d.tracks||[];
-    var table=j.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Created</th><th>Account</th><th>Source</th><th>Last track</th><th class="n">Minutes</th><th>Network/location</th></tr></thead><tbody>'+j.map(function(x){return'<tr><td>'+e(x.created_at?new Date(x.created_at).toLocaleString():"—")+'</td><td><b>'+e([x.first_name,x.last_name].filter(Boolean).join(" ")||x.email||x.user_id||"Account")+'</b><br><code>'+e(x.email||x.user_id||"")+'</code></td><td>'+e(x.source||"direct")+'</td><td>'+e(x.last_track||"—")+'</td><td class="n">'+e(x.minutes_after_last_track==null?"—":x.minutes_after_last_track)+'</td><td><code>'+e(x.ip||"—")+'</code><br>'+e([x.city,x.region,x.country].filter(Boolean).join(", ")||"—")+'<br>'+e(x.network||"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No account journeys in this range.</p>';
-    return'<div class="cra-kpis">'+kpi("Accounts",n(c.accounts),"created")+kpi("Device-linked",n(c.bridged_accounts),"verified bridge")+kpi("Song-attributed",n(c.attributed_accounts),"last touch")+kpi("IP context",n(c.accounts_with_ip),"owner only")+kpi("Location",n(c.accounts_with_location),"observed")+kpi("Tracks",n(t.length),"relationships")+'</div><div class="cra-grid">'+card("Source → track → account","Relationship flow. Attribution is not causation.",flow(d),true)+card("Last-touch accounts","By track.",rank(t,"track","last_touch_accounts"))+card("Assisted accounts","Tracks present in signup journeys.",rank(t,"track","assisted_accounts"))+card("Journeys","Owner-only audit detail.",table,true)+'</div>'+err("identity");
+    if(sid()!==null)return card("Signup journeys","First-party only","<p>Select McCluster first-party to see account attribution.</p>",true);
+    if(S.errors.identity)return err("identity");
+    if(!S.completed||!S.completed.identity)return '<p class="cra-loading" role="status">Reading signup journeys…</p>';
+    var d=S.data.identity||{},c=d.coverage||{},js=d.journeys||[],t=d.tracks||[];
+    var accounts=Number(c.accounts)||js.length,linked=Number(c.bridged_accounts)||0,heard=Number(c.attributed_accounts)||0;
+    var sourced=js.filter(function(j){return j.source&&j.source!=="direct";}).length;
+    /* the sentence first: what happened, in words */
+    var paths={};js.forEach(function(j){if(j.last_track){var k=pathKey(j.source,j.last_track);paths[k]=(paths[k]||0)+1;}});
+    var best=Object.keys(paths).sort(function(a,b){return paths[b]-paths[a];})[0];
+    var lead=accounts?('<p class="cra-lead"><b>'+n(accounts)+(accounts===1?" account was":" accounts were")+' created.</b> '+
+      (heard?n(heard)+' of them ('+pct(heard,accounts)+') heard a song in the 7 days before signing up'+(best?', most often <b>'+e(best.split(PATH_SEP)[0])+' → '+e(best.split(PATH_SEP)[1])+'</b> ('+n(paths[best])+')':"")+'.':'None of them can be tied to a song yet.')+'</p>')
+      :'<p class="cra-lead">No accounts were created in this range.</p>';
+    /* the funnel: each step is a share of accounts created */
+    var steps=[["Accounts created",accounts,"Everyone who signed up in this range."],["Linked to a device",linked,"We could match the account to the browser it signed up on."],["Heard a song first",heard,"That device played a song in the 7 days before signup."],["Came from a known source",sourced,"Arrived through a tagged link, not typed in or unknown."]];
+    var funnel='<div class="cra-steps2">'+steps.map(function(x,i){var p=accounts?x[1]/accounts*100:0;return'<div class="cra-step2"><span class="cra-step2__n">'+(i+1)+'</span><div class="cra-step2__body"><div class="cra-step2__top"><b>'+e(x[0])+'</b><strong>'+n(x[1])+'</strong></div><div class="cra-step2__bar"><i style="--pct:'+Math.max(x[1]?2:0,p).toFixed(1)+'%"></i></div><small>'+(i?Math.round(p)+'% of accounts · ':"")+e(x[2])+'</small></div></div>';}).join("")+'</div>';
+    /* songs, as a table you can read across */
+    var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Heard on the way</th><th class="n">Signup rate (cohort needed)</th><th class="n">Typical time</th></tr></thead><tbody>'+
+      t.slice(0,20).map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+"—"+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
+    /* the accounts themselves, filtered by the path you tapped */
+    /* the shared region and source filters narrow the paths and the accounts (the counts above stay the whole range) */
+    var fj=journeys(),f=S.idFilter&&S.idFilter.path,list=f?fj.filter(function(j){return pathKey(j.source,j.last_track)===f;}):fj;
+    var cards=list.length?'<div class="cra-accts">'+list.slice(0,60).map(function(j){
+      var name=[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"Account",assisted=(j.assisted_tracks||[]).filter(function(x){return x!==j.last_track;});
+      return'<article class="cra-acct"><div class="cra-acct__top"><b>'+e(name)+'</b><small>'+e(j.created_at?new Date(j.created_at).toLocaleString():"")+'</small></div>'+
+        '<div class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(j.source||"direct")+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>'+
+        (j.last_track?'<span class="cra-chip cra-chip--song">'+e(j.last_track)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>':'<span class="cra-chip">no song</span><span class="cra-path__arrow" aria-hidden="true">→</span>')+
+        '<span class="cra-path__acct">signed up'+(j.minutes_after_last_track!=null?' '+mins(j.minutes_after_last_track)+' later':"")+'</span></div>'+
+        (assisted.length?'<p class="cra-acct__also">Also heard: '+e(assisted.join(", "))+'</p>':"")+
+        '<details class="cra-acct__more"><summary>Owner-only details</summary><dl><dt>Email</dt><dd>'+e(j.email||"—")+'</dd><dt>Location</dt><dd>'+e([j.city,j.region,j.country].filter(Boolean).join(", ")||"—")+'</dd><dt>Network</dt><dd>'+e(j.network||"—")+'</dd><dt>IP</dt><dd><code>'+e(j.ip||"—")+'</code></dd><dt>Confirmed</dt><dd>'+e(j.confirmed_at?new Date(j.confirmed_at).toLocaleString():"not yet")+'</dd></dl></details></article>';
+    }).join("")+'</div>':'<p>No accounts match.</p>';
+    var filterNote=f?'<div class="cra-filter"><span>Showing '+e(f.split(PATH_SEP)[0])+' → '+e(f.split(PATH_SEP)[1])+'</span><button type="button" class="cra-filter__x" data-cra-path="">Show everyone</button></div>':"";
+    return lead+'<div class="cra-grid">'+card("How signups happened","Each step as a share of accounts created. Song attribution looks back 7 days on the same device; it shows what happened before, not what caused it.",funnel,true)+
+      card("Source → track → account","Every route someone took to an account. Tap one to see those people."+(S.geo.region||S.geo.source?" Narrowed by "+[S.geo.region,S.geo.source].filter(Boolean).join(" · ")+".":""),flow({journeys:fj}),true)+
+      card("Songs","Last song before signup is the song they heard right before joining. Heard on the way counts every song they played in the 7 days before.",songs,true)+
+      card("Accounts","Newest first."+(list.length>60?" Showing 60 of "+n(list.length)+".":""),filterNote+cards,true)+'</div>'+measurementNote(d)+err("identity");
   }
+  function pct(a,b){return b?Math.round(a/b*100)+"%":"0%";}
+  /* FORENSICS is its own module (js/control-room/forensics.js): sessions you
+     open and visitors you follow, not a wall of raw rows. This tab only gives
+     it a host and the selected range; it keeps its own state across repaints. */
   function forensics(){
-    var rows=(S.data.forensics&&S.data.forensics.events)||[],table=rows.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Time</th><th>Event</th><th>Path</th><th>IP</th><th>Location</th><th>Network</th><th>Device</th><th>Session</th></tr></thead><tbody>'+rows.map(function(x){var d=x.device||{};return'<tr><td>'+e(x.at?new Date(x.at).toLocaleString():"—")+'</td><td><b>'+e(x.name||"—")+'</b></td><td>'+e(x.path||"—")+'</td><td><code>'+e(x.ip||"—")+'</code></td><td>'+e([x.city,x.region,x.country,x.postal].filter(Boolean).join(", ")||"—")+'</td><td>'+e(x.asn_org||"—")+(x.asn?" · AS"+e(x.asn):"")+'</td><td>'+e(d.platform||"—")+(d.mobile===true?" · mobile":d.mobile===false?" · desktop":"")+'<br>'+e(d.screen||"")+'</td><td><code>'+e(x.session_id||"—")+'</code><br><code>'+e(x.device_id||"—")+'</code></td></tr>';}).join("")+'</tbody></table></div>':'<p>No raw events in this range.</p>';
-    return'<div class="cra-grid">'+card("Owner-only telemetry","Recent first-party IP, approximate edge geography, ASN/network, device and session context.",table,true)+'</div>'+err("forensics");
+    if(sid()!==null)return'<div class="cra-grid">'+card("Session forensics","Sessions, journeys and visitors cover McCluster first-party traffic. Pick McCluster first-party in the property menu to open them.","",true)+'</div>';
+    if(!window.CR.forensics)return'<div class="cra-error"><b>forensics</b> did not load: the session module is missing from this page.</div>';
+    return'<div class="cra-forensics" data-crf-host></div>';
+  }
+  /* SETUP. It used to be a one-item property list and a code box reading
+     "Built into matthew.mccluster.org.", which answered nothing. It now
+     says whether data is arriving for the property on screen, how to put
+     the pixel on another website, and lets the owner add one. */
+  function ago(t){var sec=(Date.now()-new Date(t).getTime())/1000;if(!isFinite(sec))return"—";if(sec<90)return"just now";if(sec<5400)return Math.round(sec/60)+" min ago";if(sec<129600)return Math.round(sec/3600)+" h ago";return Math.round(sec/86400)+" days ago";}
+  function loadPulse(){
+    if(S.revoked||S.pulseLoading)return;S.pulseLoading=true;var site=S.site,q=S.seq;
+    /* The lean copy answers this from an index; the wide events table does not. */
+    S.supa("events_lean?select=at,name,path,is_bot&"+(site===FIRST?"site_id=is.null":"site_id=eq."+encodeURIComponent(site))+"&order=at.desc&limit=8")
+      .then(function(x){if(q===S.seq&&!S.revoked)S.pulse={site:site,row:x&&x[0]||null,rows:x||[],checked:Date.now()};},function(x){if(q===S.seq&&!S.revoked)S.pulse={site:site,error:x,checked:Date.now()};})
+      .then(function(){if(q===S.seq&&!S.revoked){S.pulseLoading=false;if(S.section==="setup")paint();}});
+  }
+  function hostname(v){v=String(v||"").trim().toLowerCase().replace(/^[a-z]+:\/\//,"").replace(/[\/?#].*$/,"").replace(/:\d+$/,"");return/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(v)&&v.indexOf(".")>0?v:"";}
+  function pixel(site){return'<script async src="https://api.mccluster.org/a.js?site='+site.public_key+'&consent='+(site.consent_mode==="cookieless"?"cookieless":"required")+'"><\/script>';}
+  function pulse(){return S.pulse&&S.pulse.site===S.site?S.pulse:null;}
+  function fresh(pu){return!!(pu&&pu.row&&(Date.now()-new Date(pu.row.at).getTime())/60000<=30);}
+  function status(){
+    var pu=pulse();
+    if(!pu)return'<span class="cra-status"><i></i>Checking…</span>';
+    if(pu.error)return'<span class="cra-status cra-status--bad"><i></i>Could not check</span>';
+    if(!pu.row)return'<span class="cra-status cra-status--warn"><i></i>Waiting for first event</span>';
+    return fresh(pu)?'<span class="cra-status cra-status--ok"><i></i>Receiving data</span>':'<span class="cra-status cra-status--warn"><i></i>Quiet for '+e(ago(pu.row.at).replace(/ ago$/,""))+'</span>';
+  }
+  function lastEvent(){
+    var pu=pulse();
+    if(!pu)return"Checking…";if(pu.error)return e(pu.error.message||"Could not read events");if(!pu.row)return"None yet";
+    return'<b>'+e(ago(pu.row.at))+'</b> · '+e(pu.row.name||"event")+(pu.row.path?' on <code>'+e(pu.row.path)+'</code>':"");
+  }
+  /* One step of the checklist. state: done | todo | info. The first step that
+     is not done opens by itself, so the page always says what to do next. */
+  function step(i,st,title,detail,body,open){
+    var mark=st==="done"?"✓":st==="info"?"i":String(i);
+    return'<li class="cra-check cra-check--'+st+'"><details'+(open?" open":"")+'><summary><span class="cra-check__mark" aria-hidden="true">'+mark+'</span><span class="cra-check__copy"><b>'+e(title)+'</b><span>'+detail+'</span></span><span class="cra-check__state">'+(st==="done"?"Done":st==="info"?"Note":"To do")+'</span></summary>'+(body?'<div class="cra-check__body">'+body+'</div>':"")+'</details></li>';
+  }
+  function checklist(steps){
+    var need=steps.filter(function(x){return x.st!=="info";}),done=need.filter(function(x){return x.st==="done";}).length,opened=false;
+    var html=steps.map(function(x,i){var o=!opened&&x.st==="todo";if(o)opened=true;return step(i+1,x.st,x.title,x.detail,x.body,o);}).join("");
+    return'<div class="cra-progress"><div class="cra-progress__row"><b>'+(done===need.length?"All set":done+" of "+need.length+" done")+'</b>'+status()+'</div><div class="cra-progress__bar"><i style="width:'+Math.round(done/Math.max(1,need.length)*100)+'%"></i></div></div><ol class="cra-checks">'+html+'</ol>';
+  }
+  function live(){
+    var pu=pulse(),rows=pu&&pu.rows||[];
+    var list=!pu?'<p class="cra-live__empty">Checking…</p>':pu.error?'<p class="cra-live__empty">'+e(pu.error.message||"Could not read events")+'</p>':!rows.length?'<p class="cra-live__empty">Nothing yet. Open the website in another tab, then press Test installation.</p>':
+      '<ul class="cra-live__list">'+rows.map(function(r){return'<li><span class="cra-live__name">'+e(r.name||"event")+(r.is_bot?' <em>bot</em>':"")+'</span><span class="cra-live__path">'+e(r.path||"")+'</span><time>'+e(ago(r.at))+'</time></li>';}).join("")+'</ul>';
+    return'<div class="cra-live"><div class="cra-live__head"><button class="cr-btn cr-btn--primary" type="button" data-cra-pulse'+(S.pulseLoading?" disabled":"")+'>'+(S.pulseLoading?"Testing…":"Test installation")+'</button><span>'+(pu&&pu.checked?"Checked "+e(ago(pu.checked)):"")+'</span></div>'+list+'</div>';
   }
   function setup(){
-    var rows=[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]),sel=rows.find(function(x){return String(x.id)===String(S.site);})||rows[0],domains=sel.analytics_site_domains||[],d=domains[0],code=sel.id===FIRST?"Built into matthew.mccluster.org.":'<script async src="https://api.mccluster.org/a.js?site='+e(sel.public_key)+'&consent='+e(sel.consent_mode==="cookieless"?"cookieless":"required")+'"><\/script>';
-    return'<div class="cra-grid">'+card("Properties","Choose which property Analytics reads.",'<div class="cra-rank">'+rows.map(function(x){return'<button type="button" class="cra-rank__row" data-cra-site="'+e(x.id)+'"><span class="cra-rank__label">'+e(x.name||x.id)+'</span><b class="cra-rank__value">'+(String(x.id)===String(S.site)?"Showing":"Open")+'</b></button>';}).join("")+'</div>')+card("Install / verify","Pixel setup remains part of Analytics, not another room.",'<pre class="cro-code">'+e(code)+'</pre>'+(d&&!d.verified_at?'<button class="cr-btn" type="button" data-cra-verify="'+e(d.id)+'">Verify DNS</button>':""))+'</div>';
+    var sites=S.sites||[],sel=S.site===FIRST?null:sites.filter(function(x){return String(x.id)===String(S.site);})[0],pu=pulse(),seen=!!(pu&&pu.row),top;
+    if(!sel){
+      top=card("McCluster first-party","Built into this site. Every page reports here on its own, so there is nothing to install.",checklist([
+        {st:"done",title:"Collector installed",detail:"Every page of this site loads it already."},
+        {st:fresh(pu)?"done":"todo",title:"Receiving data",detail:"Last event: "+lastEvent(),body:'<p>Events show up within a few seconds of a page view. If this stays quiet, open the site and press Test installation below.</p>'},
+        {st:"info",title:"Privacy signals honoured",detail:"Visitors who send Global Privacy Control or Do Not Track still count as a visit, but nothing that could identify them is kept."},
+        {st:"info",title:"Bots kept apart",detail:"Crawlers are marked as bots instead of being counted as your audience."}
+      ])+live(),true);
+    }else{
+      var d=(sel.analytics_site_domains||[])[0],h=d&&d.hostname,ck=sel.consent_mode==="cookieless";
+      var code='<p>Paste it inside <code>&lt;head&gt;</code> on every page of '+e(h||"the website")+'. Only add it once per page.</p><pre class="cra-code" id="craPixel">'+e(pixel(sel))+'</pre><button class="cr-btn" type="button" data-cra-copy>Copy</button>';
+      var dns=!d?'<p>No domain was added with this website. Add the website again with its domain to verify it.</p>':
+        '<p>Add this DNS record where <b>'+e(h)+'</b> is managed, then press Verify. Most DNS changes show up within minutes, some take up to 48 hours.</p><dl class="cra-dns"><div><dt>Type</dt><dd><code>TXT</code></dd></div><div><dt>Name</dt><dd><code>_mccluster-analytics.'+e(h)+'</code></dd></div><div><dt>Value</dt><dd><code>'+e(d.verification_token)+'</code></dd></div></dl><button class="cr-btn" type="button" data-cra-verify="'+e(d.id)+'">Verify DNS</button>';
+      top=card(sel.name||h||"Website",h?e(h):"No domain",checklist([
+        {st:"done",title:"Website added",detail:ck?"Cookieless: no visitor ID is kept.":"Consent first: nothing is sent until the visitor says yes."},
+        {st:seen?"done":"todo",title:"Add the snippet",detail:seen?"Events have arrived from it.":"One line in the page’s &lt;head&gt;.",body:code},
+        {st:d&&d.verified_at?"done":"todo",title:"Verify the domain",detail:d&&d.verified_at?e(h)+" is verified.":"Proves the website is yours.",body:dns},
+        {st:fresh(pu)?"done":"todo",title:"Receiving data",detail:"Last event: "+lastEvent(),body:'<p>Open '+e(h||"the website")+' in another tab'+(ck?"":", accept the cookie banner")+', then press Test installation below.</p>'},
+        ck?{st:"info",title:"No consent banner needed",detail:"Cookieless mode keeps no visitor ID."}:{st:"info",title:"Consent",detail:"When the site’s cookie banner gets a yes, call <code>mcAnalytics.consent(true)</code>."}
+      ])+live(),true);
+    }
+    var list='<ul class="cra-sites">'+[{id:FIRST,name:"McCluster first-party"}].concat(sites).map(function(x){
+        var own=x.id===FIRST,ds=x.analytics_site_domains||[],v=own||ds.some(function(dd){return dd.verified_at&&dd.enabled!==false;}),on=String(x.id)===String(S.site);
+        return'<li class="cra-site'+(on?" is-on":"")+'"><i class="cra-site__dot'+(v?" is-ok":"")+'" aria-hidden="true"></i><div class="cra-site__copy"><b>'+e(x.name||x.id)+'</b><span>'+e(own?"Built in":ds.map(function(dd){return dd.hostname;}).join(", ")||"No domain")+(own?"":v?" · verified":ds.length?" · not verified":"")+'</span></div>'+
+          (on?'<span class="cra-site__on">Showing</span>':'<button class="cr-btn" type="button" data-cra-site="'+e(x.id)+'">View</button>')+'</li>';}).join("")+'</ul>';
+    var form='<details class="cra-add"'+(sites.length?"":" open")+'><summary>+ Add a website</summary><form class="cra-form" data-cra-add><label>Website name<input class="cra-input" name="site_name" maxlength="160" autocomplete="off" required></label>'+
+      '<label>Domain<input class="cra-input" name="site_host" placeholder="example.com" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"></label>'+
+      '<fieldset class="cra-mode"><legend>Privacy</legend><label><input type="radio" name="site_mode" value="required" checked><span><b>Ask for consent first</b>Counts people across visits once they say yes. Needs a cookie banner.</span></label><label><input type="radio" name="site_mode" value="cookieless"><span><b>Cookieless</b>No visitor ID and no banner. Every visit counts on its own.</span></label></fieldset>'+
+      '<button class="cr-btn cr-btn--primary" type="submit">Add website</button><p class="cra-form__msg" role="status" aria-live="polite"></p></form></details>';
+    return'<div class="cra-grid">'+top+card("Your websites","Every website here reports to this one dashboard. Pick one to see its setup; the menu at the top switches the whole panel.",list+form,true)+'</div>'+err("sites");
   }
-  function body(){return S.section==="audience"?audience():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+  function adaptive(){
+    if(sid()!==null)return'<div class="cra-grid">'+card("Adaptive Experience","The research and decision ledger is first-party only.","<p>Select McCluster first-party to inspect production policies, experiments and decision evidence.</p>",true)+'</div>';
+    if(S.errors.experience)return err("experience");
+    if(!S.completed||!S.completed.experience)return '<p class="cra-loading" role="status">Reading adaptive decisions…</p>';
+    var d=S.data.experience||{},t=d.totals||{},reg=d.registry||{},experiments=reg.experiments||[],policies=reg.policies||[],projects=reg.research_projects||[],recent=d.recent||[];
+    function rateNote(value,basis){return value==null||!Number.isFinite(Number(value))?"Rate unavailable":Number(value).toFixed(1)+"% "+basis;}
+    var k='<div class="cra-kpis">'+
+      kpi("Decisions",n(t.decisions))+
+      kpi("Impressions",n(t.impressions),rateNote(t.impression_rate_pct,"of decisions"))+
+      kpi("Visible",n(t.visible))+
+      kpi("Interactions",n(t.interactions),rateNote(t.interaction_rate_pct,"of visible decisions"))+
+      kpi("Client outcome reports",n(t.outcomes),rateNote(t.outcome_rate_pct,"of impressions"))+
+      '</div>';
+    var ex=experiments.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Experiment</th><th>Status</th><th>Intent</th><th>Review</th><th class="n">Traffic</th><th>Primary metric</th><th>Publishable</th></tr></thead><tbody>'+
+      experiments.map(function(x){return'<tr><td><b>'+e(x.key)+'</b><small style="display:block;opacity:.65">'+e(x.hypothesis||"")+'</small></td><td>'+e(x.status||"—")+'</td><td>'+e(x.intent||"—")+'</td><td>'+e(x.research_review||"—")+'</td><td class="n">'+e((Number(x.allocation||0)*100).toFixed(1)+"%")+'</td><td>'+e(x.primary_metric||"—")+'</td><td>'+e(x.publication_eligible?"yes":"no")+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No experiments registered. The evidence plane can collect control decisions without changing behavior.</p>';
+    var pol=policies.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Policy</th><th>Plane</th><th>Mode</th><th>Algorithm</th><th>Enabled</th></tr></thead><tbody>'+
+      policies.map(function(x){return'<tr><td><b>'+e(x.key+"@"+x.version)+'</b></td><td>'+e(x.plane)+'</td><td>'+e(x.mode)+'</td><td>'+e(x.algorithm)+'</td><td>'+e(x.enabled?"yes":"no")+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No policies registered.</p>';
+    var proj=projects.length?projects.map(function(x){return'<div class="source"><b>'+e(x.title)+'</b><small style="display:block;opacity:.7">'+e(x.key)+' · '+e(x.status)+' · human subjects: '+e(x.human_subjects_status)+'</small>'+(x.canonical_url?'<p><a href="'+e(x.canonical_url)+'" target="_blank" rel="noopener">Public research page ↗</a></p>':"")+'</div>';}).join(""):'<p>No research projects registered.</p>';
+    var dec=recent.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Decision</th><th>Surface</th><th>Policy</th><th>Experiment</th><th class="n">Eligible</th><th>Selected</th><th>Evidence</th></tr></thead><tbody>'+
+      recent.slice(0,50).map(function(x){return'<tr><td><b>'+e(String(x.id||"").slice(0,8))+'</b><small style="display:block;opacity:.65">'+e(x.created_at||"")+'</small></td><td>'+e(x.surface||"—")+'</td><td>'+e(x.policy||"—")+'</td><td>'+e(x.experiment?(x.experiment+" · "+(x.arm||"")):"control")+'</td><td class="n">'+n(x.eligible_count)+'</td><td>'+e((x.selected||[]).map(function(y){return y.id;}).join(", ")||"—")+'</td><td>'+e((x.events||[]).map(function(y){return y.name.replace("experience_","");}).join(" → ")||"decision only")+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No experience decisions in the selected range yet.</p>';
+    return k+measurementNote(d)+'<div class="cra-grid">'+
+      card("Production + research policies","Only promoted production policies are supposed to control the default experience. Research policies must earn promotion.",pol,true)+
+      card("Experiment registry","Hypothesis, assignment, research review and publication state stay attached to the experiment.",ex,true)+
+      card("Research program","Citable projects and governance state.",proj,true)+
+      card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
+      '</div>';
+  }
+  function body(){if(S.section==="cameras"&&window.CR.analyticsCameras)return window.CR.analyticsCameras.render();if(S.section==="action"&&window.CR.analyticsUnified)return window.CR.analyticsUnified.operations(S);if(window.CR.analyticsUnified&&S.section==="intelligence")return window.CR.analyticsUnified.intelligence();if(window.CR.analyticsUnified&&S.section==="inventory")return window.CR.analyticsUnified.inventory();return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
-    var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Live · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
-    return'<div class="cra"><div class="cra-head"><div class="cra-head__copy"><h1>Analytics</h1><p>Traffic, audience, content, identity, commerce and diagnostics. One range controls the whole panel.</p></div><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></div>'+ranges()+'<div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div>'+tabs()+body()+'</div>';
+    if(S.revoked)return'<p class="cra-error" role="alert">Owner access changed. Reload Control to verify your current session.</p>';
+    var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Updated · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
+    var unified=window.CR.analyticsUnified;
+    var country=selCountry(),countrySeries=country&&S.country&&S.country.code===country&&S.country.rows;
+    var trendScope=(countrySeries?countryName(country):"Worldwide")+" · "+(S.range&&S.range.label||"")+(country&&!countrySeries?" · country trend unavailable":"");
+    var summary=unified?unified.overview(S,{scopeLabel:function(){return trendScope;},chart:area(countrySeries||pvRows(),"visitors",pvLabel,"Unique visitors over time, "+trendScope),bars:bars}):carousels();
+    var detail=S.section==="overview"?summary+'<details class="cu-detail"><summary>All measured metrics & geographic coverage</summary>'+geoCard()+overview()+'</details>':body();
+    if(country&&S.section==="overview")detail=geographicAudience();
+    if(S.geo.region&&S.section!=="audience"&&S.section!=="overview")detail='<p class="cad-scope"><b>Globe: '+e(S.geo.state&&stateOf(S.geo.state)?stateOf(S.geo.state).n:country?countryName(country):S.geo.region)+'</b><span>Audience and Overview follow this location. Other views show their labeled scope.</span></p>'+detail;
+    var quality=Object.keys(S.quality||{});
+    if(quality.length)detail='<details class="cad-read-warning"><summary>Some measurements are incomplete</summary><p>'+quality.map(function(k){return e(k)+": "+e(S.quality[k]);}).join("<br>")+'</p><button type="button" data-cra-sec="inventory">Inspect data connections</button></details>'+detail;
+    var failed=Object.keys(S.errors||{});
+    if(failed.length&&!S.error&&S.section!=="inventory")detail='<details class="cad-read-warning"><summary>'+failed.length+' data '+(failed.length===1?'source needs':'sources need')+' attention</summary><p>'+failed.map(function(k){return e(k)+': '+e(S.errors[k].message||S.errors[k]);}).join('<br>')+'</p><button type="button" data-cra-sec="inventory">Inspect data connections</button></details>'+detail;
+    if(S.error)detail='<p class="cra-error" role="alert">Analytics load failed. '+e(S.error.message||S.error)+' · Refresh to retry.</p>'+detail;
+    return window.CR.analyticsDeck?window.CR.analyticsDeck.render(S,detail):'<div class="cra"><p>'+e(st)+'</p>'+tabs()+detail+'</div>';
   }
-  function paint(){if(!S.host)return;S.host.innerHTML=render();bind(S.host);}
-  function loadSites(){return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){S.sites=x||[];}).catch(function(x){S.errors.sites=x;S.sites=[];});}
+  function selectSection(section){S.section=section;paint();}
+  function paint(){
+    if(!S.host)return;
+    if(S.revoked){S.host.innerHTML=render();return;}
+    var panel=S.host.querySelector&&S.host.querySelector("[data-cra-panel]");
+    var root=panel||S.host,deck=window.CR.analyticsDeck,saved=deck?deck.before(root):null;
+    root.innerHTML=render();if(root.setAttribute)root.setAttribute("data-cra-projection",projectionContext().selection_key);bind(root);if(root.querySelectorAll)bindCarousels(root);drawReach();syncGlobe(false);
+    if(deck){deck.bind(root,S,selectSection,function(){loadSites().then(load);},saved);deck.fit(S.host);}
+    if(window.CR.analyticsUnified){window.CR.analyticsUnified.bind(root,S.request,paint);if(S.section==="inventory"){loadCoverage();if(window.CR.analyticsUnified.state.panel==="fields")window.CR.analyticsUnified.loadInventory(paint);}if(S.section==="intelligence"&&!window.CR.analyticsUnified.state.sources&&!window.CR.analyticsUnified.state.error&&!window.CR.analyticsUnified.state.busy)window.CR.analyticsUnified.load(S.request,paint);}
+    if(S.section==="cameras"&&window.CR.analyticsCameras)window.CR.analyticsCameras.bind(root,S.request,paint);
+    if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
+    if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
+  }
+  function loadSites(){if(S.revoked)return Promise.resolve();var epoch=S.seq;return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){if(epoch===S.seq&&!S.revoked)S.sites=x||[];}).catch(function(x){if(epoch===S.seq&&!S.revoked){S.errors.sites=x;S.sites=[];}});}
   function blankData(){
     return {
-      traffic:{byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
-      funnel:[],acquisition:[],paths:[],content:[],contentEvents:[],
-      identity:{},forensics:{},business:null
+      traffic:{byHour:[],byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
+      funnel:[],stageTotals:null,acquisition:[],paths:[],content:[],contentEvents:[],
+      identity:{},audienceScience:null,experience:null,business:null,geo:[],intel:null,
+      countryTotals:null,visitors:null,flows:null,errors:null,missions:null
     };
   }
   function applyResult(x){
     if(!x)return;
-    if(!x.ok){S.errors[x.name]=x.error;return;}
+    S.completed=S.completed||{};S.completed[x.name]=true;
+    if(!x.ok){S.errors[x.name]=x.error;if(x.name==="countryTotals")S.data.countryTotals={ok:false,missing:missingFn(x.error),rows:[]};return;}
     var v=x.value,t=S.data.traffic;
-    if(x.name==="daily")t.byDay=v||[];
+    var completeness=v&&v.measurement&&v.measurement.completeness;
+    if(completeness&&completeness.status!=="observed_complete"&&completeness.status!=="complete")S.quality[x.name]=completeness.status==="partial"?"Read limit or missing data; values describe the observed subset.":"Completeness has not been established.";
+    if(x.name==="hourly")t.byHour=v||[];
+    else if(x.name==="daily")t.byDay=v||[];
     else if(x.name==="totals")t.totals=v&&v[0]||{};
-    else if(x.name==="pages")t.pages=top(v,"path");
+    else if(x.name==="pages")t.pages=v||[];
     else if(x.name==="sources")t.sources=top(v,"source");
     else if(x.name==="countries")t.countries=top(v,"country");
     else if(x.name==="networks")t.networks=top(v,"network");
-    else if(x.name==="funnel")S.data.funnel=v||[];
+    else if(x.name==="geo")S.data.geo=v||[];
+    else if(x.name==="intel")S.data.intel=v||null;
+    else if(x.name==="countryTotals")S.data.countryTotals=v;
+    else if(x.name==="visitors")S.data.visitors=v||null;
+    else if(x.name==="flows")S.data.flows=v||null;
+    else if(x.name==="errors")S.data.errors=v||null;
+    else if(x.name==="missions")S.data.missions=Array.isArray(v)?v:null;
+    else if(x.name==="funnel"){
+      if(v&&v.version==="analytics-stage-totals/v1"){S.data.stageTotals=v;S.data.funnel=[];}
+      else S.data.funnel=Array.isArray(v)?v:[];
+    }
     else if(x.name==="acquisition")S.data.acquisition=v||[];
     else if(x.name==="paths")S.data.paths=v||[];
     else if(x.name==="content")S.data.content=v||[];
     else if(x.name==="contentEvents")S.data.contentEvents=v||[];
     else if(x.name==="identity")S.data.identity=v||{};
-    else if(x.name==="forensics")S.data.forensics=v||{};
-    else if(x.name==="business")S.data.business=v||null;
+    else if(x.name==="audienceScience")S.data.audienceScience=v||null;
+    else if(x.name==="experience")S.data.experience=v||null;
+    else if(x.name==="business"){
+      S.data.business=v||null;
+      if(v&&v.snapshot&&v.snapshot.partial){
+        var missing=Object.keys(v.snapshot.read_errors||{});
+        S.errors.business=new Error(missing.length
+          ?"Partial business measurements: "+missing.slice(0,8).join(", ")+(missing.length>8?" (+"+(missing.length-8)+" more)":"")+"; available values are retained."
+          :"Some business measurements are unavailable; available values are retained.");
+      }
+    }
+    else if(x.name==="coverage")S.data.coverage=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
     limit=Math.max(1,Number(limit)||1);
@@ -158,9 +1055,15 @@
       pump();
     });
   }
+  function loadCoverage(force){
+    if(S.revoked||sid()!==null||!S.range||S.coverageLoading===S.seq||!force&&S.completed&&S.completed.coverage)return;
+    var q=S.seq,r=S.range;S.coverageLoading=q;delete S.errors.coverage;paint();
+    return S.request('/v1/analytics/coverage?since='+encodeURIComponent(r.since)+'&until='+encodeURIComponent(r.until)).then(function(v){if(q===S.seq)applyResult({name:'coverage',ok:true,value:v});},function(error){if(q===S.seq)applyResult({name:'coverage',ok:false,error:error});}).finally(function(){if(q===S.seq){S.coverageLoading=null;paint();}});
+  }
   function load(){
+    if(S.revoked)return Promise.resolve();
     var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}
-    S.range=r;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.data=blankData();paint();
+    S.range=r;S.country=null;S.geoAudience=null;S.pulse=null;S.pulseLoading=false;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.quality={};S.completed={};S.data=blankData();loadGeoAudience();paint();
     var site=sid(),args={p_since:r.since,p_until:r.until,p_site:site},daily={p_since:r.since,p_until:r.until,p_site:site,p_tz:tz()};
     /* One Control open used to throw every analytics primitive at PostgREST at
        once. On production data that turned one dashboard view into a dozen
@@ -168,47 +1071,163 @@
        result could paint. Keep the full suite, but bound fan-out and paint
        each completed read immediately. */
     var tasks=[
-      {name:"daily",run:function(){return rpc("analytics_daily",daily);}},
+      {name:"hourly",run:function(){return r.id==="24h"?rpc("analytics_hourly",daily):Promise.resolve([]);}},
+      {name:"daily",run:function(){return r.id==="24h"?Promise.resolve([]):rpc("analytics_daily",daily);}},
       {name:"totals",run:function(){return rpc("analytics_totals",args);}},
       {name:"business",run:function(){return site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
-      {name:"pages",run:function(){return rpc("analytics_top",{p_dim:"page",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      {name:"pages",run:function(){return rpc("analytics_page_performance",{p_since:r.since,p_until:r.until,p_site:site,p_limit:25});}},
       {name:"sources",run:function(){return rpc("analytics_top",{p_dim:"source",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
       {name:"countries",run:function(){return rpc("analytics_top",{p_dim:"country",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      /* the globe: the same country dimension, up to its 100-row ceiling, so the located / unknown split is honest */
+      {name:"geo",run:function(){return rpc("analytics_top",{p_dim:"country",p_since:r.since,p_until:r.until,p_site:site,p_limit:100});}},
+      /* intel events for the globe (owner audience, exact): the window clamped to the API's 92 days */
+      {name:"intel",run:function(){if(site!==null)return Promise.resolve(null);var u=new Date(r.until),f=new Date(Math.max(new Date(r.since).getTime(),u.getTime()-92*86400000));return S.request("/v1/intel/geo?since="+encodeURIComponent(f.toISOString())+"&until="+encodeURIComponent(u.toISOString())+"&cell=10&bucket=day");}},
       {name:"networks",run:function(){return rpc("analytics_top",{p_dim:"network",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
       {name:"contentEvents",run:function(){return rpc("analytics_content_events",args);}},
       {name:"content",run:function(){return rpc("analytics_content",args);}},
       {name:"acquisition",run:function(){return rpc("analytics_acquisition",args);}},
       {name:"paths",run:function(){return rpc("analytics_paths",Object.assign({p_limit:40},args));}},
-      {name:"funnel",run:function(){return site===null?rpc("analytics_funnel",{p_since:r.since,p_until:r.until}):Promise.resolve([]);}},
+      {name:"funnel",run:function(){return site===null?rpc("analytics_stage_totals",args).catch(function(error){if(!missingFn(error))throw error;return rpc("analytics_funnel",{p_since:r.since,p_until:r.until});}):Promise.resolve([]);}},
       {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}},
-      {name:"forensics",run:function(){return site===null?S.request("/v1/analytics/forensics?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=150"):Promise.resolve({events:[]});}}
+      {name:"audienceScience",run:function(){return site===null?S.request("/v1/analytics/audience-science?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"experience",run:function(){return site===null?S.request("/v1/analytics/experience?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      /* reads the backend already had and no screen showed (owner, 2026-10-15: "repair backend capabilities that aren't seen
+         and get them visualized"): returning visitors, journeys, site health, missions; and, pending, visitors by country */
+      {name:"countryTotals",run:function(){return rpc("analytics_country_totals",args).then(function(rows){return{ok:true,missing:false,rows:rows||[]};});}},
+      {name:"visitors",run:function(){return site===null?S.request("/v1/analytics/visitors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=1"):Promise.resolve(null);}},
+      {name:"flows",run:function(){return site===null?S.request("/v1/analytics/flows?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"errors",run:function(){return site===null?S.request("/v1/analytics/errors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"missions",run:function(){return site===null?rpc("action_mission_stats",{p_campaign:null}):Promise.resolve(null);}}
     ];
-    return runLimited(tasks,3,function(x){
+    /* Production PostgREST reports an 8-second authenticated statement limit.
+       Two independent dashboard reads at once leave capacity for ingestion and
+       the owner-only business summary; each completed family still paints. */
+    return runLimited(tasks,2,function(x){
       if(q!==S.seq)return;
       applyResult(x);
-      S.error=S.errors.daily||S.errors.totals||null;
+      S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;
       paint();
     },function(){return q===S.seq;}).then(function(){
       if(q!==S.seq)return;
-      S.loading=false;S.loaded=true;S.error=S.errors.daily||S.errors.totals||null;paint();
+      S.loading=false;S.loaded=true;S.updatedAt=new Date().toISOString();S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;S.country=null;loadCountry();loadStates();paint();
+    });
+  }
+  function selectText(el){try{var r=document.createRange();r.selectNodeContents(el);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}catch(_){}}
+  function bindChartPoints(root){
+    root.querySelectorAll(".cra-chart").forEach(function(chart){
+      var points=[].slice.call(chart.querySelectorAll("[data-cra-chart-point]")),lab=chart.querySelector("[data-cra-chart-label]"),vals=chart.querySelector("[data-cra-chart-values]");
+      function pick(p){
+        points.forEach(function(x){var on=x===p;x.classList.toggle("is-on",on);x.setAttribute("aria-pressed",on?"true":"false");});
+        if(lab)lab.textContent=p.getAttribute("data-label")||"";
+        if(vals)vals.textContent=p.getAttribute("data-values")||"";
+      }
+      points.forEach(function(p){
+        p.addEventListener("pointerenter",function(){pick(p);});
+        p.addEventListener("focus",function(){pick(p);});
+        p.addEventListener("click",function(){pick(p);});
+        p.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();pick(p);}});
+      });
+    });
+    root.querySelectorAll("[data-cra-info]").forEach(function(node){
+      function pick(){
+        var key=node.getAttribute("data-cra-info"),scope=node.closest&&node.closest(".cra-card")||root;
+        scope.querySelectorAll("[data-cra-info]").forEach(function(x){x.classList.toggle("is-on",x.getAttribute("data-cra-info")===key);});
+      }
+      node.addEventListener("pointerenter",pick);node.addEventListener("focus",pick);node.addEventListener("click",pick);
+      node.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();pick();}});
     });
   }
   function bind(root){
+    bindChartPoints(root);
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
-    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
+    var gl=root.querySelector("#craLayer");if(gl)gl.onchange=function(){S.geo.layer=gl.value;paint();};
+    var gr=root.querySelector("#craRegion");if(gr)gr.onchange=function(){pickRegion(gr.value);};
+    var gs=root.querySelector("#craSource");if(gs)gs.onchange=function(){S.geo.source=gs.value;paint();};
+    var ge=root.querySelector("#craEvent");if(ge)ge.onchange=function(){S.geo.eventType=ge.value;paint();};
+    root.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){var c=b.getAttribute("data-cra-region");pickRegion(c&&c===S.geo.region?"":c);};});
+    root.querySelectorAll("[data-cra-event]").forEach(function(b){b.onclick=function(){S.geo.eventType=b.getAttribute("data-cra-event")||"";paint();};});
+    root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
+    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){selectSection(b.getAttribute("data-cra-sec"));};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
     if(from)from.oninput=function(){S.from=from.value||"";};
     if(through)through.oninput=function(){S.through=through.value||"";};
     var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
     root.querySelectorAll("[data-cra-site]").forEach(function(b){b.onclick=function(){S.site=b.getAttribute("data-cra-site");load();};});
+    var retryGeo=root.querySelector("[data-cra-geo-retry]");if(retryGeo)retryGeo.onclick=function(){S.geoAudience=null;loadGeoAudience();paint();};
     root.querySelectorAll("[data-cra-verify]").forEach(function(b){b.onclick=function(){S.request("/v1/analytics/domains/"+encodeURIComponent(b.getAttribute("data-cra-verify"))+"/verify",{method:"POST"}).then(loadSites).then(load).catch(function(x){S.error=x;paint();});};});
+    root.querySelectorAll("[data-cra-pulse]").forEach(function(b){b.onclick=function(){loadPulse();paint();};});
+    var cp=root.querySelector("[data-cra-copy]"),px=root.querySelector("#craPixel");
+    if(cp&&px)cp.onclick=function(){var t=px.textContent;function done(){cp.textContent="Copied";}
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,function(){selectText(px);});else selectText(px);};
+    var add=root.querySelector("[data-cra-add]");
+    if(add)add.onsubmit=function(ev){
+      ev.preventDefault();var f=add.elements,name=f.site_name.value.trim(),raw=f.site_host.value.trim(),h=hostname(raw),btn=add.querySelector("[type=submit]"),msg=add.querySelector(".cra-form__msg");
+      /* Messages are written in place: repainting would wipe what was typed. */
+      function say(t){msg.textContent=t;btn.disabled=false;btn.textContent="Add website";}
+      if(!name){say("Name the website.");f.site_name.focus();return;}
+      if(raw&&!h){say("Enter a domain like example.com.");f.site_host.focus();return;}
+      btn.disabled=true;btn.textContent="Adding\u2026";msg.textContent="";
+      S.supa("analytics_sites",{method:"POST",prefer:"return=representation",body:{name:name,consent_mode:(add.querySelector("[name=site_mode]:checked")||{}).value||"required"}}).then(function(rows){
+        var site=rows&&rows[0];if(!site)throw new Error("The website was not created.");
+        return(h?S.supa("analytics_site_domains",{method:"POST",prefer:"return=representation",body:{site_id:site.id,hostname:h}}):Promise.resolve()).then(function(){return site;});
+      }).then(function(site){S.site=site.id;S.pulse=null;return loadSites().then(load);})
+        .catch(function(x){say(x&&x.message||"Could not add the website.");});
+    };
+  }
+  /* Derived from the existing place/time selection. Unknown database watermarks
+     stay unknown; an HTTP response is not a frozen database snapshot. */
+  function projectionContext(){
+    var r=S.range||{},layer=S.geo.layer,geo={kind:layer==="intel"?"evidence_geometry":"audience_network_country",country:selCountry(),state:S.geo.state||null,cell:layer==="intel"?S.geo.region:null,precision:S.geo.state?"region":layer==="intel"?"10_degree_cell":"country"};
+    var read=geo.country&&S.geoAudience,loaded=read&&read.data,aggregate=geoAggregate();
+    return{schema:"mccluster-admin-projection/v1",metric_version:"analytics-display/2026-10-20",metric:layer,unit:layer==="visitors"?"distinct_devices":layer==="signups"?"accounts":layer==="intel"?"evidence_records":"page_views",
+      scope:{site_id:sid(),first_party:sid()===null},geography:geo,window:{since:r.since||null,until:r.until||null,bounds:"[since,until)",timezone:tz()},
+      selection_key:[S.site,r.since||"",r.until||"",tz(),layer,S.geo.region||"",S.geo.state||"",S.geo.source||"",S.geo.eventType||""].join("|"),
+      snapshot:{kind:"independent_live_reads",watermark:null,refreshed_at:S.updatedAt||null},freshness:{status:"unknown",projection_watermark:null},numerator:null,denominator:null,
+      completeness:aggregate.capped?"limit_reached":aggregate.awaiting?"unavailable":Object.keys(S.quality||{}).length?"partial":"unknown",
+      suppression:loaded&&loaded.suppressed?"suppressed":S.geo.state&&!loaded?"unknown":"not_reported",
+      filters:{source:S.geo.source||null,event_type:S.geo.eventType||null},measured_contexts:{audience:S.data.audienceScience&&S.data.audienceScience.measurement||null,experience:S.data.experience&&S.data.experience.measurement||null}};
+  }
+  function measurementNote(d){
+    var m=d&&d.measurement;if(!m)return'<p class="cu-note">Completeness and snapshot watermark were not provided by this response.</p>';
+    var c=m.completeness||{},datasets=c.datasets||{},window=m.window||{};
+    return'<details class="cu-detail"><summary>Measurement context</summary><p>'+e(m.metric_version||m.version||"Unknown version")+' · '+e(window.since||"Unknown start")+' → '+e(window.until||"Unknown end")+' · '+e(window.timezone||"UTC")+' · end excluded.</p><p>Completeness: '+e(c.status||"unknown")+'. '+Object.keys(datasets).map(function(k){var x=datasets[k]||{};return e(k)+": "+e(x.status||"unknown")+(x.rows==null?"":" · "+n(x.rows)+" rows")+(x.limit==null?"":" / "+n(x.limit)+" read limit");}).join("; ")+'</p><p>Snapshot watermark: '+e(m.snapshot&&m.snapshot.watermark||"not available; these reads are not a frozen database snapshot")+'.</p></details>';
+  }
+  function clearPrivate(){
+    ++S.seq;S.revoked=true;S.loading=false;S.loaded=false;S.autoRefresh=false;S.data=blankData();S.errors={};S.quality={};S.completed={};S.sites=[];S.country=null;S.geoAudience=null;S.geo.rg={};S.geo.region=null;S.geo.state=null;S.geo.source="";S.geo.eventType="";S.updatedAt=null;S.pulse=null;S.pulseLoading=false;S.coverageLoading=null;
+    if(window.CR.analyticsUnified&&window.CR.analyticsUnified.clearPrivate)window.CR.analyticsUnified.clearPrivate();
+    if(S.globe&&S.globe.destroy)S.globe.destroy();S.globe=null;
+    if(S.host)S.host.innerHTML='<p class="cra-error" role="alert">Owner access changed. Reload Control to verify your current session.</p>';
+  }
+  if(window.addEventListener){
+    window.addEventListener("mcc:auth-changed",function(ev){if(ev.detail&&ev.detail.signed_in===false)clearPrivate();});
+    window.addEventListener("mcc:appbar-admin",function(ev){if(ev.detail&&ev.detail.admin===false&&(S.loaded||S.loading))clearPrivate();});
+    window.addEventListener("storage",function(ev){if(ev.key==="mccdb_session"&&ev.oldValue!==ev.newValue&&(S.loaded||S.loading))clearPrivate();});
   }
   window.CR.analytics={
     init:function(opts){S.request=opts.request;S.supa=opts.supa;},
-    mount:function(host){S.host=host;if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites().then(load);},
-    refresh:function(){return loadSites().then(load);},
-    render:render,
+    mount:function(host){S.host=host;if(S.revoked){paint();return;}
+      if(typeof document!=="undefined"&&host.querySelector&&!host.querySelector("[data-cra-panel]")){
+        host.innerHTML=shell();
+        var gh=host.querySelector("[data-cra-globe]");
+        if(gh&&window.CR.analyticsGlobe)S.globe=window.CR.analyticsGlobe.mount(gh,{
+          onSelect:function(sel){pickPlace(sel,true);},
+          labelPoint:function(cc){var p=placeOf(cc);return p?[p[0],p[1]]:null;},
+          tooltipFor:tooltipFor,
+          onReady:function(){syncGlobe(false);}
+        });
+      }
+      if(!S.geo.places&&typeof fetch==="function")fetch("data/geo/country-label-points.json").then(function(r){return r.ok?r.json():null;}).then(function(j){S.geo.places=j&&j.points||{};paint();}).catch(function(){S.geo.places={};});
+      /* The reach chart is drawn at the card's pixel width; redraw it when
+         that width changes (rotation, window resize). */
+      if(!S.onResize){S.onResize=function(){clearTimeout(S.resizeTimer);S.resizeTimer=setTimeout(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);var b=S.host&&S.host.querySelector("[data-cra-reach]");if(b&&Number(b.getAttribute("data-w"))!==Math.max(260,Math.floor(b.clientWidth||320)))drawReach();},120);};if(window.addEventListener)window.addEventListener("resize",S.onResize);}
+if(window.ResizeObserver&&!S.deckObserver){S.deckObserver=new ResizeObserver(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);});var shellNode=document.querySelector(".cr-shell");if(shellNode)S.deckObserver.observe(shellNode);}
+if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites().then(load);},
+    loadCoverage:loadCoverage,refresh:function(){return loadSites().then(load);},
+    render:render,projection:projectionContext,clearPrivate:clearPrivate,
+    top:topHtml,
+    filters:filters,
+    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,select:pickPlace,states:stateData,stateFilters:geographicStateFilters,filterCount:filterCount},
     state:S
   };
 })();

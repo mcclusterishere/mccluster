@@ -13,12 +13,18 @@
   <link rel="stylesheet" href="css/control-room-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-admin.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-analytics.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-analytics-unified.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-news-context.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-connections.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-forensics.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-workspace.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-analytics-deck.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <style>.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}</style>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
-<body class="cr" data-no-appbar>
+<body class="cr">
   <section class="cr-gate" id="cpGate">
     <div class="cr-gate__brand">
       <img src="assets/img/hm-mark-wide.webp" alt="">
@@ -49,7 +55,7 @@
     <header class="cr-topbar">
       <div class="cr-topbar__title" id="crTopTitle">Home</div>
       <button class="cr-command" id="crCommandOpen" type="button" aria-label="Search or command McCluster"><span>Search or command McCluster…</span><kbd>⌘K</kbd></button>
-      <div class="cr-topbar__meta"><span class="cr-env">PROD</span><span class="cr-health-dot" id="crHealthDot" title="Checking system health"></span></div>
+      <div class="cr-topbar__meta"><label class="cr-org" id="crOrgWrap" hidden><span class="cr-org__label">Workspace</span><select class="cr-org__select" id="crOrgSelect" aria-label="Workspace"></select></label><span class="cr-env">PROD</span><span class="cr-health-dot" id="crHealthDot" title="Checking system health"></span></div>
     </header>
 
     <main class="cr-main" id="crMain"><div class="cr-surface" id="crSurface"></div></main>
@@ -71,7 +77,7 @@
 
   <div class="cr-palette" id="crPalette" aria-hidden="true"><div class="cr-palette__dialog" role="dialog" aria-modal="true" aria-label="Search or command McCluster"><input class="cr-palette__input" id="crPaletteInput" type="search" autocomplete="off" placeholder="Search, navigate, or give McCluster an objective…" aria-label="Search Control Room"><div class="cr-palette__results" id="crPaletteResults"></div></div></div>
 
-  <aside class="cr-account-menu" id="crAccountMenu" aria-label="Account actions"><div class="cr-account-menu__email" id="crAccountEmail">signed in</div><button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Control Room</button><a class="cr-btn cr-btn--ghost" href="account.html?stay=1#password">Change password</a><a class="cr-btn cr-btn--ghost" href="mnet.html">Open Mnet</a><button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button></aside>
+  <aside class="cr-account-menu" id="crAccountMenu" role="dialog" aria-label="Profile and account"><div class="cr-account-menu__email" id="crAccountEmail">signed in</div><a class="cr-btn cr-btn--ghost" href="mnet.html?view=profile">View profile</a><a class="cr-btn cr-btn--ghost" href="account.html?stay=1">Settings &amp; account</a><button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Control Room</button><a class="cr-btn cr-btn--ghost" href="account.html?stay=1#password">Change password</a><a class="cr-btn cr-btn--ghost" href="mnet.html">Open Human Uprise</a><a class="cr-btn cr-btn--ghost" href="mnet.html?view=feed&amp;desk" data-cr-desk>Your desk</a><button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button></aside>
 
   <script src="js/backend.js?v=__STAMP__"></script>
   <!-- Internal Control Room modules. Same application, loaded before it. -->
@@ -79,10 +85,31 @@
   <script src="js/control-room/sources.js?v=__STAMP__"></script>
   <script src="js/control-room/media.js?v=__STAMP__"></script>
   <script src="js/control-room/work-tools.js?v=__STAMP__"></script>
+  <script src="js/control-room/work-records.js?v=__STAMP__"></script>
   <script src="js/control-room/social-compose.js?v=__STAMP__"></script>
+  <script src="js/control-room/instagram.js?v=__STAMP__"></script>
   <script src="js/control-room/music-ops.js?v=__STAMP__"></script>
+  <script src="js/policy-fellowship-ladder.js?v=__STAMP__"></script>
+  <script src="js/identity-capture-core.js?v=__STAMP__"></script>
+  <script src="js/control-room/profile-edit-review.js?v=__STAMP__"></script>
+  <script src="js/control-room/identity-review.js?v=__STAMP__"></script>
+  <script src="js/control-room/action-network.js?v=__STAMP__"></script>
+  <script src="js/control-room/funding-intelligence.js?v=__STAMP__"></script>
+  <script src="js/control-room/clipping.js?v=__STAMP__"></script>
+  <script src="js/control-room/song-test.js?v=__STAMP__"></script>
+  <script src="js/control-room/build-code.js?v=__STAMP__"></script>
+  <script src="js/control-room/forensics.js?v=__STAMP__"></script>
+  <script src="js/heat-scale.js?v=__STAMP__"></script>
+  <script src="js/control-room/analytics-globe.js?v=__STAMP__"></script>
+  <script src="js/control-room/analytics-unified.js?v=__STAMP__"></script>
+  <script src="js/control-room/news-context.js?v=__STAMP__"></script>
+  <script src="js/control-room/connections.js?v=__STAMP__"></script>
+  <script src="js/control-room/analytics-cameras.js?v=__STAMP__"></script>
+  <script src="js/control-room/analytics-deck.js?v=__STAMP__"></script>
   <script src="js/control-room/analytics.js?v=__STAMP__"></script>
   <script src="js/control-room/voice.js?v=__STAMP__"></script>
+  <script src="js/control-room/workspace-core.js?v=__STAMP__"></script>
+  <script src="js/control-room/workspace.js?v=__STAMP__"></script>
   <script src="js/control-room-v2.js?v=__STAMP__"></script>
   <script src="js/control-room-polish.js?v=__STAMP__"></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>

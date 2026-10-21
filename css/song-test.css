@@ -1,0 +1,41 @@
+/* THE SONG TEST cards (js/song-test.js). Self-contained so the same
+   cards sit in the album player and on end-racism.html, both dark rooms.
+   Phone first: one column, 16px+ controls, nothing wider than its box. */
+.stq { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; font-family: "Manrope", system-ui, -apple-system, sans-serif; color: #f4efe6; }
+.stq-out { margin: 0; color: #b3a89c; font-weight: 600; font-size: 0.95rem; line-height: 1.6; }
+.stq-out a { color: #ff4d3d; font-weight: 800; }
+.stq-card { min-width: 0; padding: 1rem 1rem 1.05rem; border-radius: 16px; background: #15110f; box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.14); transition: box-shadow 0.4s; }
+.stq-card.is-now { box-shadow: inset 0 0 0 2px #e8c877; }
+.stq-card.is-locked { opacity: 0.78; }
+.stq-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.stq-head b { min-width: 0; overflow-wrap: anywhere; font-weight: 800; font-size: 1.02rem; }
+.stq-state { flex: none; font-weight: 800; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7d736a; }
+.stq-q { margin: 0.35rem 0 0; font-weight: 800; font-size: 1.15rem; line-height: 1.3; }
+.stq-lock { margin: 0.5rem 0 0; color: #b3a89c; font-weight: 600; font-size: 0.9rem; line-height: 1.55; }
+.stq-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 0.8rem; }
+.stq-opt, .stq-send { min-height: 48px; border: 0; border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: 800; font-size: max(16px, 0.95rem); line-height: 1.2; -webkit-tap-highlight-color: transparent; }
+.stq-opt { background: #1d1815; color: #f4efe6; box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.14); }
+.stq-opt[aria-checked="true"] { background: #f4efe6; color: #0a0807; box-shadow: none; }
+.stq-why { display: block; margin-top: 0.8rem; }
+.stq-why span { display: block; margin-bottom: 0.3rem; font-weight: 800; font-size: 0.8rem; color: #b3a89c; }
+.stq-why textarea { display: block; width: 100%; min-height: 88px; padding: 0.7rem 0.8rem; border: 0; border-radius: 12px; resize: vertical;
+  background: #0a0807; color: #f4efe6; box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.14); font-family: inherit; font-weight: 600; font-size: max(16px, 1rem); line-height: 1.45; box-sizing: border-box; }
+.stq-why textarea:focus { outline: none; box-shadow: inset 0 0 0 2px #e8c877; }
+.stq-send { width: 100%; margin-top: 0.7rem; background: #ff4d3d; color: #1a0503; }
+.stq-send[disabled] { opacity: 0.55; cursor: progress; }
+.stq-opt:focus-visible, .stq-send:focus-visible, .stq-link:focus-visible { outline: 2px solid #e8c877; outline-offset: 2px; }
+.stq-you { margin: 0.6rem 0 0.7rem; color: #b3a89c; font-weight: 600; font-size: 0.92rem; line-height: 1.55; overflow-wrap: anywhere; }
+.stq-you b { color: #f4efe6; }
+.stq-bar { display: grid; grid-template-columns: 5.2rem minmax(0, 1fr) 2.8rem; align-items: center; gap: 8px; margin-top: 6px; font-weight: 700; font-size: 0.85rem; color: #b3a89c; }
+.stq-bar.is-you { color: #f4efe6; }
+.stq-bar__t { height: 8px; border-radius: 999px; background: #1d1815; overflow: hidden; }
+.stq-bar__t i { display: block; height: 100%; border-radius: inherit; background: #7d736a; }
+.stq-bar.is-you .stq-bar__t i { background: #e8c877; }
+.stq-bar__n { text-align: right; font-variant-numeric: tabular-nums; }
+.stq-total { margin: 0.6rem 0 0; color: #7d736a; font-weight: 600; font-size: 0.8rem; }
+.stq-link { margin-top: 0.5rem; padding: 0.4rem 0; border: 0; background: none; color: #ff4d3d; font-family: inherit; font-weight: 800; font-size: max(16px, 0.9rem); line-height: 1.2; cursor: pointer; }
+.stq-msg { margin: 0.6rem 0 0; font-weight: 700; font-size: 0.88rem; color: #e8c877; }
+.stq-msg.is-bad { color: #ff9a91; }
+@media (min-width: 720px) {
+  .stq-opts { gap: 8px; }
+}

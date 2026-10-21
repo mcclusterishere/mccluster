@@ -43,6 +43,16 @@ const SITE = "https://mcclusterishere.github.io/Here";
 const RATE = 0.10; // the all-in spread — must match MCC_STRIPE.RATE in js/payments.js
 const HOUSE: Record<string, boolean> = { mccluster: true, "equity-uprise": true };
 
+// RETIRED 2026-10-05. The HOUSE branch above skips the provider lookup, so an
+// anonymous POST naming "mccluster" or "equity-uprise" minted a real Checkout
+// session on the platform account for any amount and title: the phishing and
+// card-testing primitive the note above describes. Nothing calls this
+// function (`checkout` replaced it), so every request is refused before
+// Stripe is touched. Deleting the deployment stays an owner decision; until
+// then this constant is the switch, and the code below is kept so retiring
+// stays reversible.
+const RETIRED = true;
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
@@ -53,6 +63,7 @@ const json = (b: unknown, s = 200) =>
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (RETIRED) return json({ error: "gone", use: "checkout" }, 410);
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
   const { slug, amount, title } = await req.json().catch(() => ({}));

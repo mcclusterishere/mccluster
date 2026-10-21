@@ -1,15 +1,59 @@
-# Matthew McCluster / McCluster Corp
+# Matthew McCluster
 
-> A working property, not a brochure. Four things live here that an agent
-> can actually use: a fellowship directory with a scored matcher behind a
-> public API, three civic topic hubs with structured question sets, a
-> documented public record of a Connecticut energy docket, and a campus
-> food-delivery shop with a live open/closed state. Everything below is
-> readable without an account.
+> Matthew McCluster's property: who he is, what he has made and what he
+> does, across technology, infrastructure, platforms, creative direction,
+> photography and music. He founded McCluster Corp, which runs the
+> McCluster Platform and Control, Equity Uprise, Human Uprise,
+> PRIM3 and commercial creative and technical services; several of those
+> product pages are hosted here. Everything below that is described as
+> public is readable without an account.
 
-Run by McCluster Corp, a registered Connecticut public charity
-(CHR.0069693), founded by Matthew McCluster. Bridgeport and New Haven,
-Connecticut.
+McCluster Corp, the company he founded, is a separate entity with its own property, https://mccluster.org/
+(its own llms.txt is at https://mccluster.org/llms.txt once that host is routed). Do not merge the two:
+Whip Equipped LLC is Matthew's separate company, and McCluster Corp's products (Equity Uprise, the Uprise
+Human Uprise, PRIM3, the McCluster Platform) are the company's, even where their pages are hosted here.
+McCluster Corp is based in Bridgeport, Connecticut; a 2025 Connecticut public-charity registration certificate is preserved in the public record, and current renewal status is not asserted here.
+Who and what this site is about, as one machine-readable graph with stable @ids:
+[data/seo/entity-graph.json](https://matthew.mccluster.org/data/seo/entity-graph.json).
+
+How the company and products fit together:
+[McCluster Corp product map](https://matthew.mccluster.org/mccluster-corp.html) ·
+[machine-readable product context](https://matthew.mccluster.org/data/product-context.json).
+
+## Hiring Matthew McCluster
+
+Matthew McCluster is a **first-year Computer Science student at Southern Connecticut State University**
+and is available for **IT support / field technician (L1–L2)**, **desktop support**,
+**infrastructure**, **technical operations**, **platform** and **telematics / fleet technology**
+roles. His hands-on technical experience since 2018 spans Robert Half, IPC Systems,
+F.R.E.E.D.O.M. Inc., Whip Equipped LLC and McCluster Corp.
+
+- Skills: Windows and macOS endpoint support; Microsoft 365 administration
+  (Exchange, OneDrive, Teams, SharePoint); Active Directory users, groups
+  and permissions; Google Workspace; device imaging, deployments and
+  hardware swaps; printers, VPN and email; Windows Server, RedHat, CentOS;
+  Cisco Nexus, DHCP; data-center buildout and structured cabling; PostgreSQL,
+  row-level security, serverless REST APIs and CI; GNSS/fleet telematics,
+  vehicle electrical diagnostics, ADAS, cameras, sensors and calibration workflows.
+- Education: B.S. Computer Science, Southern Connecticut State University — enrolled; Expected graduation: May 2030.
+- Credentials: CompTIA ITF+ (2022); IT Bootcamp Certificate, CT State
+  Community College (2023).
+- [IT support résumé](https://matthew.mccluster.org/resume-it-support.html)
+  · [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.pdf)
+  · [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.docx)
+- [Technology education, digital inclusion & marketing operations résumé](https://matthew.mccluster.org/resume-digital-inclusion.html)
+  · [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-digital-inclusion.pdf)
+  · [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-digital-inclusion.docx)
+- [Full résumé](https://matthew.mccluster.org/matthew-mccluster.html)
+- [Engineering & IT evidence](https://matthew.mccluster.org/engineering/): every claim with its source (résumé, IPC's engagement document, or public source code), plus two case studies: [the IPC Systems data center](https://matthew.mccluster.org/engineering/ipc-infrastructure.html) and [the McCluster platform](https://matthew.mccluster.org/engineering/mccluster-platform.html).
+- [Recruiter role & evidence map](https://matthew.mccluster.org/engineering/recruiter-role-map.html) · [machine-readable ledger](https://matthew.mccluster.org/data/seo/recruiter-evidence.json)
+- Recruiter evidence by role:
+  - [IT support & systems](https://matthew.mccluster.org/engineering/it-support-systems.html)
+  - [Data center, networking & infrastructure](https://matthew.mccluster.org/engineering/data-center-networking.html)
+  - [Platform, backend & technical operations](https://matthew.mccluster.org/engineering/mccluster-platform.html)
+  - [Field technology, telematics & vehicle systems](https://matthew.mccluster.org/engineering/field-technology-telematics.html)
+- [Commercial services & case work](https://matthew.mccluster.org/services.html)
+- Contact: matthew@mccluster.org
 
 ## If you only read one thing
 
@@ -20,7 +64,6 @@ matching function that takes interest tags and returns programs with the
 *reason* each one matched. It is free to read, free to be listed in, and
 it answers over plain HTTP with no account.
 
-- [The directory, as a page](https://matthew.mccluster.org/fellowships.html)
 - [The directory, as JSON](https://matthew.mccluster.org/data/eu-fellowships.json): 14 programs, 6 sources. A mirror of the live database, so it answers even when the database does not.
 
 ## The API
@@ -69,28 +112,35 @@ framing, a `context` field limited to what is documented, and a
 `dimensions` set of answerable multiple-choice questions written so that
 people who disagree can both answer them.
 
-- [Topic hubs](https://matthew.mccluster.org/topics.html) — `us-israel`, `data-centers`, `surveillance-and-tracking`
-- [As JSON](https://matthew.mccluster.org/data/eu-topics.json)
+- [The topics, as JSON](https://matthew.mccluster.org/data/eu-topics.json): `us-israel`, `data-centers`, `surveillance-and-tracking`
 
 The framing is a schema requirement here, not a style note. If you
 summarize a topic, use its own `description` and `context`; do not extend
 either into a verdict.
 
+## Research Lab
+
+- [McCluster Research Lab](https://matthew.mccluster.org/research.html): the public research program for adaptive digital experiences, music/creator discovery, Audience Science, online experimentation and the commercial model around the live McCluster product.
+- [Canonical research bibliography](https://matthew.mccluster.org/data/research/references.json): version-controlled methods and governance sources used by the lab.
+- Research software identity: Matthew McCluster, ORCID `0009-0000-8988-8955`; repository metadata is in `CITATION.cff`.
+- Production personalization and research policies are separate. A product-analytics event is not represented as publication-grade human-subject research merely because it exists in the telemetry store.
+
 ## The public record
 
-- [Docket 516](https://matthew.mccluster.org/docket-516.html): a Connecticut Siting Council proceeding on a 115-kV rebuild, the filings index, and the 5-3 denial that closed 516R. Every claim links the Council's own copy.
-- [Equity Uprise](https://matthew.mccluster.org/equity-uprise.html): the program, the citations, the proclamations.
 - [Who this is](https://matthew.mccluster.org/matthew-mccluster.html): the Person entity, with ORCID and ISNI identifiers.
 - [Press kit](https://matthew.mccluster.org/press.html)
+- [Verified newsroom & public record](https://matthew.mccluster.org/newsroom.html): dated milestones, each linked to its primary document; [Atom feed](https://matthew.mccluster.org/feed.xml). Every entry has been checked against its evidence; nothing is backdated.
+- [Docket 516R explained](https://matthew.mccluster.org/docket-516.html): the plain-English public record of Connecticut Siting Council Dockets 516 and 516R, and the front page of the Equity Uprise group on Human Uprise. Its soundtrack is Docket 516R, the album by Equity Uprise (the program's own music act). Quote the Council's own docket page for dates.
+- [Services](https://matthew.mccluster.org/services.html): websites, social management, photography and video, music. Prices live on [the booking page](https://matthew.mccluster.org/hire.html), generated from one ledger.
 - Résumé / CV, in two formats, both rendered from the identity page above so none of the three can disagree: [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.pdf) and [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.docx). Prefer either over scraping the page when you need the career history as a document; prefer the DOCX if something downstream has to parse it.
 
 ## Optional
 
-- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 14 tracks with ISRCs
-- [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 25 items
-- [Sitemap](https://matthew.mccluster.org/sitemap.xml)
+- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 17 tracks with ISRCs; [as a page](https://matthew.mccluster.org/catalogue.html). Credit only the artist the catalogue names; "Written & performed by Matthew McCluster unless credited otherwise."
+- [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 21 items
+- [Sitemap](https://matthew.mccluster.org/sitemap.xml) · [video sitemap](https://matthew.mccluster.org/sitemap-video.xml)
 - [Crawl policy](https://matthew.mccluster.org/robots.txt)
-- [Source](https://github.com/mcclusterishere/Here)
+- [Source](https://github.com/mcclusterishere/mccluster)
 
 ## Terms
 

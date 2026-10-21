@@ -46,6 +46,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+import { secretMatches } from "../_shared/secret-match.ts";
 const NONCE = Deno.env.get("M_OAUTH_BOOTSTRAP_NONCE") ?? "";
 
 const json = (body: unknown, status = 200) =>
@@ -64,7 +65,7 @@ Deno.serve(async (req) => {
 
   // Same 404 for wrong method and wrong nonce, so the endpoint does not
   // confirm its own existence to someone guessing.
-  if (req.method !== "GET" || u.searchParams.get("nonce") !== NONCE) {
+  if (req.method !== "GET" || !(await secretMatches(u.searchParams.get("nonce"), NONCE))) {
     return json({ error: "not_found" }, 404);
   }
 

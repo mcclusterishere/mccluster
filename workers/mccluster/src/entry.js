@@ -1,23 +1,31 @@
 import core from './index.js';
-import { fail, logEvent, reply } from './lib/http.js';
+import { applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
-import { getUsage, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
+import { getUsage, getMediaBudget, updateMediaBudget, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
 import { handleCoreMcp, handleCoreStatus } from './core/mcp.js';
 import { coreOAuthChallenge, coreOAuthMetadataResponse } from './core/oauth-resource.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
-import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
+import { discoverInstagramMedia, checkInstagramConnectionHealth, processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
 import { handleAnalyticsRequest } from './analytics/router.js';
+import { handleExperienceRequest } from './experience/router.js';
+import { handleMusicRequest } from './music/router.js';
 import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
+import { handleWorkRequest } from './work.js';
+import { checkoutReceipt } from './commerce/receipt.js';
+import { handleClippingRequest } from './clipping/router.js';
+import { runClipping } from './clipping/runner.js';
+import { collectorEnabled, runScheduledIntelCollectors } from './intel/usgs-collector.js';
 import { recentAudit } from './lib/audit.js';
+import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -30,10 +38,12 @@ async function authUser(req, env) {
   return res.json();
 }
 
+/* Routes below that authenticate before checking the method. */
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
+
 export { HereTenantAgent } from './here-tenant-agent.js';
 
-export default {
-  async fetch(request, env, ctx) {
+async function dispatchRequest(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
@@ -55,6 +65,19 @@ export default {
 
     if (path === '/.well-known/oauth-protected-resource' && request.method === 'GET') {
       return coreOAuthMetadataResponse();
+    }
+
+    /* The buyer's confirmation page after Stripe (pay.html). Public by design:
+       the Checkout Session id is the key, and the answer carries no personal
+       or payment details (see commerce/receipt.js). */
+    if (path === '/v1/commerce/receipt' && request.method === 'GET') {
+      try {
+        const res = reply(request, env, await checkoutReceipt(env, url.searchParams.get('session')));
+        res.headers.set('cache-control', 'no-store');
+        return res;
+      } catch (err) {
+        return fail(request, env, err.status && err.status < 500 ? err.message : 'receipt unavailable', err.status || 500);
+      }
     }
 
     if (path === '/a.js' && request.method === 'GET') {
@@ -204,11 +227,44 @@ export default {
       }
     }
 
+    /* The browser's CORS preflight carries no Authorization header, so it
+       must be answered before any sign-in gate. These prefixes
+       authenticate before they look at the method; sending their preflight
+       through authUser returned 401, the browser refused to make the real
+       request, and Control > Analytics showed "business / identity /
+       forensics did not load: Load failed". Core answers every other
+       preflight the same way (index.js). */
+    if (request.method === 'OPTIONS' && AUTH_FIRST_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`))) {
+      return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+    }
+
+    if (path === '/v1/music' || path.startsWith('/v1/music/')) {
+      try {
+        const user = await authUser(request, env);
+        const musicResponse = await handleMusicRequest(request, env, user);
+        if (musicResponse) return musicResponse;
+      } catch (error) {
+        return fail(request, env, error.message || 'Music request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/experience' || path.startsWith('/v1/experience/')) {
+      try {
+        const user = await authUser(request, env);
+        const experienceResponse = await handleExperienceRequest(request, env, user);
+        if (experienceResponse) return applyCors(request, env, experienceResponse);
+      } catch (error) {
+        return fail(request, env, error.message || 'Experience request failed', error.status || 500, error.detail);
+      }
+    }
+
     if (path === '/v1/analytics' || path.startsWith('/v1/analytics/')) {
       try {
         const user = await authUser(request, env);
         const analyticsResponse = await handleAnalyticsRequest(request, env, user);
-        if (analyticsResponse) return analyticsResponse;
+        /* The analytics router builds bare JSON responses; without CORS
+           headers the browser discards a 200 it already received. */
+        if (analyticsResponse) return applyCors(request, env, analyticsResponse);
       } catch (error) {
         return fail(request, env, error.message || 'Analytics request failed', error.status || 500, error.detail);
       }
@@ -290,6 +346,22 @@ export default {
       }
     }
 
+    /* Retained operational events for Control. The outer request wrapper
+       writes these only after independently verifying the claimed workspace;
+       the read is owner-gated again here. */
+    if (path === '/v1/observability/events' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const orgId = url.searchParams.get('org_id');
+        const membership = await requireMembership(env, user, orgId);
+        if (membership.role !== 'owner') return fail(request, env, 'Organization owner access required', 403);
+        return reply(request, env, await listObservabilityEvents(env, orgId, url));
+      } catch (error) {
+        return fail(request, env, error.message || 'Observability read failed', error.status || 500, error.detail);
+      }
+    }
+
     /* The ledger, read back. Scoped to one org and membership-checked, so
        a tenant never reads another tenant's history. */
     if (path === '/v1/audit/recent' && request.method === 'GET') {
@@ -315,6 +387,48 @@ export default {
         return reply(request, env, await setLeadStatus(request, env, user));
       } catch (error) {
         return fail(request, env, error.message || 'Lead update failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* Clipping: the routes that need the Worker (platform reads, signed
+       source files). Claims, submissions, dashboards and payouts are
+       database functions called with the member's own session. */
+    if (path === '/v1/clips' || path.startsWith('/v1/clips/')) {
+      try {
+        const user = path === '/v1/clips/platforms' ? null : await authUser(request, env);
+        const result = await handleClippingRequest(request, env, user, url);
+        if (result) return reply(request, env, result);
+        return fail(request, env, 'Unknown clipping route', 404);
+      } catch (error) {
+        return fail(request, env, error.message || 'Clipping request failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* Control · Work: companies, tasks, orders, bookings and hand-made
+       leads — the canonical write routes the console was missing. See
+       src/work.js. */
+    if (path.startsWith('/v1/work/')) {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const result = await handleWorkRequest(request, env, user, url);
+        if (result) return reply(request, env, result, request.method === 'POST' ? 201 : 200);
+        return fail(request, env, 'Unknown Work route', 404);
+      } catch (error) {
+        return fail(request, env, error.message || 'Work request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/media/budget' && (request.method === 'GET' || request.method === 'PATCH')) {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const data = request.method === 'GET'
+          ? await getMediaBudget(request, env, user)
+          : await updateMediaBudget(request, env, user);
+        return reply(request, env, data);
+      } catch (error) {
+        return fail(request, env, error.message || 'Media allowance request failed', error.status || 500, error.detail);
       }
     }
 
@@ -415,21 +529,45 @@ export default {
     }
 
     return core.fetch(request, env, ctx);
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    return observeControlRequest(request, env, ctx, (tracedRequest) => dispatchRequest(tracedRequest, env, ctx));
   },
 
-  async scheduled(_controller, env, ctx) {
+  async scheduled(controller, env, ctx) {
+    /* Retention needs to run hourly, not on every five-minute tick. */
+    const pruneDue = new Date(controller?.scheduledTime || Date.now()).getUTCMinutes() < 5;
     ctx.waitUntil(Promise.all([
-      reconcilePendingFalCosts(env, { limit: 50 }).catch((error) => {
+      (pruneDue ? pruneObservabilityEvents(env) : Promise.resolve(null)).catch((error) => {
+        console.error(JSON.stringify({ event: 'observability_prune_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      observeScheduled(env, ctx, 'media.cost_reconciliation', () => reconcilePendingFalCosts(env, { limit: 50 })).catch((error) => {
         console.error(JSON.stringify({ event: 'media_cost_reconciliation_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       attachCompletedVariantAssets(env).catch((error) => {
         console.error(JSON.stringify({ event: 'social_variant_attachment_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
-      processInstagramPublishQueue(env, { limit: 10 }).catch((error) => {
+      checkInstagramConnectionHealth(env, { limit: 10, maxAgeMinutes: 55 }).catch((error) => {
+        console.error(JSON.stringify({ event: 'social_instagram_connection_health_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      observeScheduled(env, ctx, 'social.publish_queue', () => processInstagramPublishQueue(env, { limit: 10 })).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_publish_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
-      syncInstagramInsights(env, { limit: 25 }).catch((error) => {
+      observeScheduled(env, ctx, 'social.media_discovery', () => discoverInstagramMedia(env)).catch((error) => {
+        console.error(JSON.stringify({ event: 'social_media_discovery_failed', message: error.message }));
+      }),
+      observeScheduled(env, ctx, 'social.insights', () => syncInstagramInsights(env, { limit: 25 })).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_insights_sync_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      observeScheduled(env, ctx, 'clipping.settlement', () => runClipping(env, { limit: 25 })).catch((error) => {
+        console.error(JSON.stringify({ event: 'clipping_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      /* USGS evidence collector: off unless INTEL_USGS_COLLECTOR_ENABLED is "true";
+         returns before any network or database call when off. */
+      (collectorEnabled(env) ? observeScheduled(env, ctx, 'intel.usgs_collector', () => runScheduledIntelCollectors(env)) : Promise.resolve(null)).catch((error) => {
+        console.error(JSON.stringify({ event: 'intel_usgs_collector_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }

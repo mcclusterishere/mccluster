@@ -1,4 +1,6 @@
+import { normalizeAustinCameras } from './camera-catalog.js';
 import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js';
+import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_PROVIDER_ROWS = 2000;
@@ -92,9 +94,10 @@ async function providerFetch(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, {
+    // Workers' fetch rejects redirect: 'error'. The provider may only redirect
+    // to its own host over https; anything else fails as upstream_redirect.
+    const response = await fetchNoCrossHostRedirect(url, {
       ...init,
-      redirect: 'error',
       signal: controller.signal,
       headers: {
         accept: 'application/json',
@@ -114,6 +117,9 @@ async function providerFetch(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
     return response;
   } catch (error) {
     if (error instanceof GeoAdapterError) throw error;
+    if (error instanceof UpstreamError) {
+      throw new GeoAdapterError('Provider redirected outside its own host', 502, error.code, { provider_status: error.providerStatus });
+    }
     if (error?.name === 'AbortError') throw new GeoAdapterError('Provider request timed out', 504, 'provider_timeout');
     throw new GeoAdapterError('Provider request failed', 502, 'provider_network_error');
   } finally {
@@ -792,12 +798,101 @@ async function gbfs(input) {
   return result('gbfs', 'feed', url, records, data);
 }
 
+function viewportBbox(input) {
+  const raw = String(input?.bbox || '').trim();
+  const values = raw.split(',').map(Number);
+  if (values.length !== 4 || values.some((value) => !Number.isFinite(value))) {
+    throw new GeoAdapterError('bbox must be west,south,east,north', 400, 'invalid_parameter');
+  }
+  const [west, south, east, north] = values;
+  finite(west, 'west', { min: -180, max: 180 });
+  finite(east, 'east', { min: -180, max: 180 });
+  finite(south, 'south', { min: -90, max: 90 });
+  finite(north, 'north', { min: -90, max: 90 });
+  if (east <= west || north <= south) {
+    throw new GeoAdapterError('bbox must have east > west and north > south', 400, 'invalid_parameter');
+  }
+  if (east - west > 30 || north - south > 30) {
+    throw new GeoAdapterError('bbox span exceeds 30 degrees', 400, 'invalid_parameter');
+  }
+  return { west, south, east, north };
+}
+
+async function peeringDb(input) {
+  const { west, south, east, north } = viewportBbox(input);
+  const limit = integer(input?.limit ?? 250, 'limit', { min: 1, max: 500 });
+  const url = new URL('https://www.peeringdb.com/api/fac');
+  url.searchParams.set('latitude__gte', String(south));
+  url.searchParams.set('latitude__lte', String(north));
+  url.searchParams.set('longitude__gte', String(west));
+  url.searchParams.set('longitude__lte', String(east));
+  url.searchParams.set('limit', String(limit));
+  const { data } = await jsonFetch(url);
+  const rows = Array.isArray(data?.data) ? data.data : [];
+  const records = clampRows(rows).map((facility) => record('entity', {
+    external_id: String(facility?.id || crypto.randomUUID()),
+    entity_type: 'internet_facility',
+    name: facility?.name || facility?.name_long || `PeeringDB facility ${facility?.id || ''}`.trim(),
+    point: point(facility?.latitude, facility?.longitude),
+    observed_at: new Date().toISOString(),
+    source_url: facility?.id ? `https://www.peeringdb.com/fac/${facility.id}` : null,
+    properties: {
+      city: facility?.city || null,
+      state: facility?.state || null,
+      country: facility?.country || null,
+      net_count: facility?.net_count ?? null,
+      ix_count: facility?.ix_count ?? null,
+      status_dashboard: facility?.status_dashboard || null,
+      geo_method: 'facility_address_geocode',
+      geo_precision_m: null,
+      geo_confidence: 0.8
+    }
+  })).filter((item) => item.point);
+  return result('peeringdb', 'facilities', url, records, data);
+}
+
+async function ripeAtlas(input) {
+  const { west, south, east, north } = viewportBbox(input);
+  const limit = integer(input?.limit ?? 250, 'limit', { min: 1, max: 500 });
+  const connectedOnly = input?.connected_only !== false;
+  const url = new URL('https://atlas.ripe.net/api/v2/probes/');
+  url.searchParams.set('latitude__gte', String(south));
+  url.searchParams.set('latitude__lte', String(north));
+  url.searchParams.set('longitude__gte', String(west));
+  url.searchParams.set('longitude__lte', String(east));
+  url.searchParams.set('is_public', 'true');
+  if (connectedOnly) url.searchParams.set('status', '1');
+  url.searchParams.set('page_size', String(limit));
+  const { data } = await jsonFetch(url);
+  const rows = Array.isArray(data?.results) ? data.results.slice(0, limit) : [];
+  const records = rows.map((probe) => record('entity', {
+    external_id: String(probe?.id || crypto.randomUUID()),
+    entity_type: probe?.is_anchor ? 'ripe_atlas_anchor' : 'ripe_atlas_probe',
+    name: probe?.is_anchor ? `RIPE Atlas Anchor ${probe?.id}` : `RIPE Atlas Probe ${probe?.id}`,
+    point: point(probe?.latitude, probe?.longitude),
+    observed_at: new Date().toISOString(),
+    source_url: probe?.id ? `https://atlas.ripe.net/probes/${probe.id}/` : null,
+    properties: {
+      asn_v4: probe?.asn_v4 ?? null,
+      asn_v6: probe?.asn_v6 ?? null,
+      country_code: probe?.country_code || null,
+      is_anchor: Boolean(probe?.is_anchor),
+      status: probe?.status || null,
+      tags: Array.isArray(probe?.tags) ? probe.tags : [],
+      geo_method: 'privacy_obfuscated',
+      geo_precision_m: null,
+      geo_confidence: 0.75
+    }
+  })).filter((item) => item.point);
+  return result('ripe_atlas', 'probes', url, records, data);
+}
+
 async function cctv(input) {
   const provider = input?.provider || 'austin';
   if (provider !== 'austin') throw new GeoAdapterError('Only the audited Austin CCTV catalog is enabled in this adapter', 400, 'unsupported_provider');
   const url = new URL('https://data.austintexas.gov/api/views/b4k4-adkb/rows.json?accessType=DOWNLOAD');
   const { data } = await jsonFetch(url);
-  return result('cctv', 'catalog', url, [], data, { note: 'Catalog is returned transiently; camera-frame redistribution remains provider-governed.' });
+  return result('cctv', 'catalog', url, normalizeAustinCameras(data, input?.limit), data, { note: 'Catalog metadata only. Stream health has not been checked. Camera-frame redistribution remains provider-governed.' });
 }
 
 async function copernicus(input, env) {
@@ -916,6 +1011,8 @@ export async function executeAdapter(sourceKey, input = {}, env = {}) {
     case 'radio_browser': return radioBrowser(input);
     case 'gbfs': return gbfs(input);
     case 'cctv': return cctv(input);
+    case 'peeringdb': return peeringDb(input);
+    case 'ripe_atlas': return ripeAtlas(input);
     case 'copernicus': return copernicus(input, env);
     case 'planet_research': return planet(input, env);
     case 'reearth_terrain':
@@ -931,7 +1028,7 @@ export async function executeAdapter(sourceKey, input = {}, env = {}) {
 export function adapterCapabilities() {
   return {
     persistent: ['usgs', 'open_meteo', 'celestrak', 'adsb_lol', 'overpass', 'launch_library2', 'grants_gov', 'usaspending', 'nhtsa', 'census', 'fred', 'bls', 'eia', 'data_commons', 'nasa_firms', 'copernicus', 'planet_research', 'radio_browser', 'gbfs'],
-    transient: ['opensky_research', 'tomtom', 'mapbox', 'nominatim', 'gdelt', 'cctv', 'aisstream'],
+    transient: ['opensky_research', 'tomtom', 'mapbox', 'nominatim', 'gdelt', 'cctv', 'aisstream', 'peeringdb', 'ripe_atlas'],
     never_persist: ['google_maps', 'cesium_ion'],
     config_only: ['reearth_terrain', 'cesium_ion']
   };

@@ -16,7 +16,13 @@
         "UIBackgroundModes": [
           "audio"
         ]
-      }
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "associatedDomains": [
+        "applinks:matthew.mccluster.org"
+      ]
     },
     "android": {
       "package": "org.mccluster.here",
@@ -26,10 +32,36 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "matthew.mccluster.org",
+              "pathPrefix": "/mnet.html"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow HERE to choose photos and videos as mission proof.",
+          "cameraPermission": "Allow HERE to use the camera to record mission proof.",
+          "microphonePermission": "Allow HERE to use the microphone when recording video mission proof."
+        }
+      ],
       [
         "expo-audio",
         {

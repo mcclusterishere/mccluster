@@ -74,7 +74,7 @@
      pocket tile there would be a second record playing over the first.
      Both of those pages read the same banked position and resume it
      themselves; everywhere else, this widget is the player. */
-  var ownsPlayer = /(^|\/)(album|index)\.html$/.test(location.pathname) ||
+  var ownsPlayer = !!window.MCC_MUSIC || /(^|\/)(album|index)\.html$/.test(location.pathname) ||
     /\/$/.test(location.pathname);
 
   function read() {
@@ -110,8 +110,21 @@
     return Boolean(window.MCC_SUPA && window.MCC_SUPA.url && window.MCC_SUPA.key && window.MCC_SUPA.token);
   }
 
+  /* NOT PROVISIONED IS AN ANSWER, NOT A RETRY. When the listener_state table
+     is not there (PostgREST answers 404 / PGRST205), every signed-in page
+     was sending a read and a write per song that could only fail. One 404
+     parks the sync on this device for a day; once the table exists the next
+     day's first call finds it and the mirror resumes on its own. */
+  var PARK = "mcc_pocket_remote_parked";
+  function parked() {
+    try { return Number(localStorage.getItem(PARK) || 0) > Date.now(); } catch (e) { return false; }
+  }
+  function park() {
+    try { localStorage.setItem(PARK, String(Date.now() + 24 * 3600 * 1000)); } catch (e) {}
+  }
+
   function remote(method, body, keepalive) {
-    if (!signedIn()) return Promise.resolve(null);
+    if (!signedIn() || parked()) return Promise.resolve(null);
     return window.MCC_SUPA.token().then(function (tok) {
       if (!tok) return null;
       var uid = window.MCC_SUPA.uid && window.MCC_SUPA.uid();
@@ -131,6 +144,7 @@
         opts.body = JSON.stringify({ profile_id: uid, state: body });
       }
       return fetch(url, opts).then(function (r) {
+        if (r.status === 404) { park(); return null; }
         if (!r.ok) return null;
         return r.status === 204 ? null : r.json().catch(function () { return null; });
       });
@@ -269,7 +283,8 @@
     box.querySelector(".pocket__sub").textContent = albumName(st.album);
 
     if (st.poster) film.poster = abs(st.poster);
-    if (st.video) { film.src = abs(st.video); film.load(); }
+    var musicVideo = st.music_video || st.video || "";
+    if (musicVideo) { film.src = abs(musicVideo); film.load(); }
 
     /* the masthead pill lives in this exact corner at this exact height, so
        the page is told the pocket is here and the pill steps up above it */
@@ -398,6 +413,8 @@
        end it for them. */
     audio.addEventListener("ended", advance);
     audio.addEventListener("durationchange", setPositionState);
+    /* the song the album was playing goes on here: keep counting it */
+    ledger(function (L) { if (!pocketListen) pocketListen = L.adopt(L.keyOf(st.src), pocketPlaying); });
 
     setMetadata();
     wireMediaControls();
@@ -485,7 +502,32 @@
       .catch(function () { queue = []; return queue; });
   }
 
+  /* THE LISTEN LEDGER rides along. A song the pocket rolls into starts from
+     the top, so a signed-in listener's full listens here count toward an
+     earned record exactly as they do on the album (js/listen-ledger.js;
+     the API times them). The ledger script is only fetched for somebody
+     signed in, and the gated record never counts toward itself. */
+  var pocketListen = null;
+  function pocketPlaying() { return !!audio && !audio.paused; }
+  function signedInHere() {
+    try {
+      var s = JSON.parse(localStorage.getItem("mccdb_session") || "null");
+      return !!(s && s.access_token);
+    } catch (e) { return false; }
+  }
+  function ledger(cb) {
+    if (window.MCC_LISTENS) { cb(window.MCC_LISTENS); return; }
+    if (!signedInHere()) return;
+    var tag = document.createElement("script");
+    tag.src = abs("js/listen-ledger.js");
+    tag.onload = function () { if (window.MCC_LISTENS) cb(window.MCC_LISTENS); };
+    document.head.appendChild(tag);
+  }
+
   function advance() {
+    /* ended or skipped: the API decides whether the song was heard through */
+    if (pocketListen && window.MCC_LISTENS) window.MCC_LISTENS.finish(pocketListen);
+    pocketListen = null;
     var roll = function (list) {
       var i = -1;
       for (var k = 0; k < list.length; k++) if (list[k].src === st.src) { i = k; break; }
@@ -520,6 +562,7 @@
       }
       lastStash = 0;
       stash(true);
+      if (!next.gated) ledger(function (L) { pocketListen = L.start(L.keyOf(next), pocketPlaying); });
       if (window.MCC_TRACK) window.MCC_TRACK("pocket_advance", { song: st.title });
     };
     if (queue) roll(queue); else loadAlbum().then(roll);

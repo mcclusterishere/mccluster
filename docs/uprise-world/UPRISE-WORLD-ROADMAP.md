@@ -2,6 +2,14 @@
 
 Version 1.0
 
+> **LEGACY / HISTORICAL — DO NOT EXECUTE AS AN ACTIVE ROADMAP.**
+>
+> On 2026-10-05 the owner reclassified Uprise World as a preserved R&D
+> experiment rather than an unfinished product to complete. This document
+> remains as evidence of the approach that was taken. Any future revival
+> must begin with `LEGACY-EXPERIMENT-RETROSPECTIVE.md` and a new product
+> brief; do not continue from the phase sequence below.
+
 This roadmap is mandatory. Codex may not skip phases because a later feature seems easy or because it can generate more code quickly. Every phase has an explicit gate. A failed gate blocks progression.
 
 ## Global rules

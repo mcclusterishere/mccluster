@@ -21,6 +21,7 @@
   audio.setAttribute("playsinline", "");
   var previewLimit = 0;
   var startedAt = 0;
+  var playbackRequest = 0;
   var CREATOR_TRACKS = {};
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -127,7 +128,7 @@
     }
     doc.getElementById("musicMiniPlay").addEventListener("click", function () {
       if (!current) return;
-      if (audio.paused) audio.play().catch(function () {});
+      if (audio.paused) resumeCurrent().catch(function () {});
       else audio.pause();
     });
     doc.getElementById("musicMiniOpen").addEventListener("click", openNow);
@@ -136,7 +137,7 @@
     doc.getElementById("musicNowClose").addEventListener("click", closeNow);
     doc.getElementById("musicNowPlay").addEventListener("click", function () {
       if (!current) return;
-      if (audio.paused) audio.play().catch(function () {});
+      if (audio.paused) resumeCurrent().catch(function () {});
       else audio.pause();
     });
     doc.getElementById("musicNowPrev").addEventListener("click", function () { playAdjacent(-1); });
@@ -205,7 +206,7 @@
     var film = doc.getElementById("musicNowFilm");
     var wrap = doc.getElementById("musicNowArtwrap");
     if (!film || !wrap || !current) return;
-    var video = current.video || current.video_url || "";
+    var video = current.music_video || current.music_video_url || current.video || current.video_url || "";
     var poster = current.poster || current.poster_url || art || "";
     if (poster) film.poster = poster;
 
@@ -265,6 +266,19 @@
     doc.getElementById("musicMiniArt").src = art;
     doc.getElementById("musicMiniTitle").textContent = current.title;
     doc.getElementById("musicMiniAlbum").textContent = artist || album;
+    // Mission portfolio entry: shared Action globe, scoped to the playing song.
+    // Never fabricate a completed-action count; the globe must resolve approved evidence.
+    var impactLink = doc.getElementById("musicMiniImpact");
+    if (!impactLink) {
+      impactLink = doc.createElement("a");
+      impactLink.id = "musicMiniImpact";
+      impactLink.textContent = "See this song's impact ↗";
+      impactLink.style.cssText = "display:inline-block;color:#ef5362;font-size:12px;margin-top:4px";
+      var titleNode = doc.getElementById("musicMiniTitle");
+      titleNode.parentNode.appendChild(impactLink);
+    }
+    impactLink.href = "action-globe.html?song=" + encodeURIComponent(current.title || "");
+
     var access = doc.getElementById("musicMiniAccess");
     access.textContent = accessLabel;
     access.className = "music-mini__access is-" + (currentAccess || "idle");
@@ -318,6 +332,22 @@
       b.classList.toggle("is-playing", same && !audio.paused);
       b.setAttribute("aria-pressed", same && !audio.paused ? "true" : "false");
     });
+    root.dispatchEvent(new CustomEvent("mcc:music-state", {detail:{title:current.title, access:currentAccess, playing:!audio.paused}}));
+  }
+
+  function announceSelection() {
+    root.dispatchEvent(new CustomEvent("mcc:music-selected", { detail: { title: current && current.title } }));
+  }
+
+  function resumeCurrent() {
+    if (!current) return Promise.resolve(null);
+    // While an access request is pending the element can still contain the
+    // previous source. Repeated Play must not start that stale cached source.
+    if (currentAccess === "loading") return Promise.resolve({state:"loading"});
+    if (currentAccess !== "full" && currentAccess !== "preview") {
+      return current.creatorTrackId ? openCreatorTrack(current.creatorTrackId, true) : openTrack(current.albumSlug, current.title, true);
+    }
+    return audio.play();
   }
 
   function loadLibrary() {
@@ -362,14 +392,25 @@
     });
   }
 
-  function sourceFor(t) {
+  /* A gated record is earned (js/gated-audio.js): locked or signed-out
+     listeners get the preview, and an earned play is only spent when the
+     listener actually opens the track. `peek` repaints without spending. */
+  function sourceFor(t, peek) {
     if (t.creatorTrackId) return creatorSourceFor(t);
     if (!t.gated) return Promise.resolve({ state: "full", url: t.src });
     return gateReady().then(function (g) {
       if (!g) return { state: "preview", url: t.src, reason: "auth-loading" };
       return g.resolve(t.gated).then(function (out) {
-        if (out.state === "full") return { state: "full", url: out.url };
-        if (out.state === "preview") return { state: "preview", url: t.src, reason: out.reason };
+        if (out.state === "earned" && !peek) {
+          return g.claim(t.gated).then(function (c) {
+            return c.state === "full"
+              ? { state: "full", url: c.url, granted: true }
+              : { state: "preview", url: t.src, reason: c.state };
+          });
+        }
+        if (out.state === "preview" || out.state === "locked" || out.state === "earned") {
+          return { state: "preview", url: t.src, reason: out.state };
+        }
         return out;
       });
     });
@@ -433,7 +474,7 @@
       artist: t.artist || t.artist_name || "Independent creator",
       art: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
       poster: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
-      video: t.video_url || t.video || "",
+      music_video: t.music_video_url || t.video_url || t.music_video || t.video || "",
       title: t.title || "Untitled"
     });
     var item = CREATOR_TRACKS[String(t.id)];
@@ -444,16 +485,21 @@
     var t = CREATOR_TRACKS[String(id)] || null;
     if (!t) return Promise.reject(new Error("Creator track not registered"));
     var same = current && current.creatorTrackId === t.creatorTrackId;
-    if (same && !force) {
+    if (same && !force && currentAccess === "loading") return Promise.resolve({state:"loading"});
+    if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
       if (audio.paused) return audio.play().then(function () { return { state: currentAccess }; });
       audio.pause();
       return Promise.resolve({ state: currentAccess });
     }
+    var request = ++playbackRequest;
+    audio.pause();
     current = t;
     currentAccess = "loading";
+    announceSelection();
     previewLimit = t.preview_seconds == null ? 30 : Number(t.preview_seconds);
     paint();
     return creatorSourceFor(t).then(function (out) {
+      if (request !== playbackRequest) return {state:"superseded"};
       if (out.state !== "full" && out.state !== "preview") {
         currentAccess = "unavailable";
         paint();
@@ -461,6 +507,7 @@
       }
       currentAccess = out.state;
       previewLimit = out.state === "preview" ? (t.preview_seconds == null ? 30 : Number(t.preview_seconds)) : 0;
+      dropListen();
       audio.src = out.url;
       audio.currentTime = 0;
       startedAt = Date.now();
@@ -470,6 +517,9 @@
       trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play",
         { source: "creator_discovery", creator_track_id: t.creatorTrackId });
       return audio.play().then(function () { return out; }).catch(function () { return out; });
+    }).catch(function (err) {
+      if (request === playbackRequest) { currentAccess = "unavailable"; paint(); }
+      throw err;
     });
   }
 
@@ -482,7 +532,7 @@
         album: t.albumName || "",
         artwork: t.art ? [{ src: t.art }] : []
       });
-      navigator.mediaSession.setActionHandler("play", function () { audio.play(); });
+      navigator.mediaSession.setActionHandler("play", function () { resumeCurrent().catch(function () {}); });
       navigator.mediaSession.setActionHandler("pause", function () { audio.pause(); });
       navigator.mediaSession.setActionHandler("previoustrack", function () { playAdjacent(-1); });
       navigator.mediaSession.setActionHandler("nexttrack", function () { playAdjacent(1); });
@@ -493,23 +543,30 @@
   }
 
   function openTrack(albumSlug, title, force) {
+    var request;
     return loadLibrary().then(function (by) {
       var t = by[key(albumSlug, title)];
       if (!t) throw new Error("Track not found");
 
       var same = current && key(current.albumSlug, current.title) === key(t.albumSlug, t.title);
-      if (same && !force) {
+      /* a spent play is not resumed: opening it again asks for a new one */
+      if (same && !force && currentAccess === "loading") return {state:"loading"};
+      if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
         if (audio.paused) return audio.play().then(function () { return { state: currentAccess }; });
         audio.pause();
         return { state: currentAccess };
       }
 
+      request = ++playbackRequest;
+      audio.pause();
       current = t;
       currentAccess = "loading";
+      announceSelection();
       previewLimit = 0;
       paint();
 
       return sourceFor(t).then(function (out) {
+        if (request !== playbackRequest) return {state:"superseded"};
         if (out.state !== "full" && out.state !== "preview") {
           currentAccess = "unavailable";
           paint();
@@ -517,6 +574,8 @@
         }
         currentAccess = out.state;
         previewLimit = out.state === "preview" && t.gated ? Number(t.gated.preview_seconds || 0) : 0;
+        dropListen();
+        grantMax = 0;
         audio.src = out.url;
         audio.currentTime = 0;
         startedAt = Date.now();
@@ -527,6 +586,7 @@
         return audio.play().then(function () { return out; }).catch(function () { return out; });
       });
     }).catch(function (err) {
+      if (request !== undefined && request !== playbackRequest) throw err;
       var p = ensureUI();
       p.hidden = false;
       currentAccess = "unavailable";
@@ -539,9 +599,11 @@
 
   function upgradeCurrent() {
     if (!current || !current.gated) return;
+    /* the one earned play keeps playing whatever changes around it */
+    if (currentAccess === "full" || currentAccess === "spent") return;
     var wasPlaying = !audio.paused;
     var at = audio.currentTime || 0;
-    sourceFor(current).then(function (out) {
+    sourceFor(current, true).then(function (out) {
       if (!out || (out.state !== "full" && out.state !== "preview")) return;
       if (out.state === currentAccess) return;
       currentAccess = out.state;
@@ -557,10 +619,32 @@
     });
   }
 
-  audio.addEventListener("play", function () { paint(); syncNowFilm(false); });
+  /* THE LISTEN LEDGER. A song heard from the top is timed by the API;
+     the gated record never counts toward itself. */
+  var listen = null, grantMax = 0;
+  function enginePlaying() { return !audio.paused; }
+  function countStart() {
+    if (!current || current.gated || current.creatorTrackId || !root.MCC_LISTENS) return;
+    if (listen && listen.item === current) return;
+    var key = root.MCC_LISTENS.keyOf(current);
+    var h = audio.currentTime > 3
+      ? root.MCC_LISTENS.adopt(key, enginePlaying)
+      : root.MCC_LISTENS.start(key, enginePlaying);
+    listen = h ? { item: current, handle: h } : null;
+  }
+  function dropListen() {
+    if (listen && root.MCC_LISTENS) root.MCC_LISTENS.release(listen.handle);
+    listen = null;
+  }
+  function granted() { return current && current.gated && currentAccess === "full"; }
+  audio.addEventListener("play", function () { countStart(); paint(); syncNowFilm(false); });
+  audio.addEventListener("seeking", function () {
+    if (granted() && audio.currentTime < grantMax - 0.75) audio.currentTime = grantMax;
+  });
   audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
   audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
   audio.addEventListener("timeupdate", function () {
+    if (granted()) grantMax = Math.max(grantMax, audio.currentTime);
     if (previewLimit && audio.currentTime >= previewLimit) {
       audio.pause();
       audio.currentTime = Math.max(0, previewLimit - .05);
@@ -570,7 +654,14 @@
     syncNowFilm(false);
   });
   audio.addEventListener("ended", function () {
-    trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000) });
+    if (listen && listen.item === current && root.MCC_LISTENS) root.MCC_LISTENS.finish(listen.handle);
+    listen = null;
+    if (granted()) {
+      currentAccess = "spent";
+      if (root.MCC_GATED) root.MCC_GATED.forget();
+    }
+    trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000),
+      creator_track_id: current && current.creatorTrackId ? current.creatorTrackId : undefined });
     paint();
     if (!previewLimit && queue.length > 1) playAdjacent(1);
   });
@@ -609,6 +700,7 @@
     playCreator: openCreatorTrack,
     registerCreatorTrack: registerCreatorTrack,
     pause: function () { audio.pause(); },
+    resume: resumeCurrent,
     next: function () { return playAdjacent(1); },
     previous: function () { return playAdjacent(-1); },
     openNow: openNow,

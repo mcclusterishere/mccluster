@@ -221,7 +221,7 @@ html { scroll-behavior: smooth; }
       /* the six track pages are gone; the reel is where a record's film
          and its licensing door both live now, so the drawer names that
          instead of six doors into the same two things */
-      { href: "films.html",     label: "Lyric videos: every record, with the words" },
+      { href: "music-videos.html",     label: "Music videos: every record, with the words" },
     ] },
     { group: "The music", rooms: [
       /* The listening room, first: it is what the Music tab opens and the
@@ -230,18 +230,27 @@ html { scroll-behavior: smooth; }
          errand from wanting something to play. */
       { href: "listen.html",    label: "Listen: every record, one room" },
       { href: "catalogue.html", label: "The whole catalogue" },
-      { href: "films.html",     label: "Lyric videos" },
+      { href: "music-videos.html",     label: "Music videos" },
       { href: "license.html",   label: "License the music" },
       { href: "sponsor.html",   label: "Sponsor the work" },
     ] },
     { group: "The work", rooms: [
       { href: "portfolio.html",    label: "The full portfolio" },
+      /* The evidence pages: what the IT, infrastructure and platform work
+         actually was, role by role, and the services with the work behind
+         each one. Without a door here they are reachable only from the
+         résumé. */
+      { href: "engineering/",      label: "Engineering & IT evidence, role by role" },
+      { href: "services.html",     label: "Services & case work" },
+      { href: "gallery.html",      label: "Photography: the gallery" },
     ] },
-    /* Equity Uprise is put away while the site concentrates on the music
-       and on Mnet, so its group is not listed here. The rooms all still
-       exist and still answer on their own URLs; the map simply stops
-       handing them to a visitor who came for a record. Restoring the
-       group is restoring these lines. */
+    /* Equity Uprise came back as a group on Human Uprise, and its
+       front page is the Docket 516R record. Its older rooms stay put away
+       in _unfinished/; only the record and the network are on the map. */
+    { group: "Equity Uprise", rooms: [
+      { href: "docket-516.html", label: "Docket 516R: the public record, and what to do with it" },
+      { href: "action/?c=equity-uprise", label: "The Equity Uprise campaign" },
+    ] },
     /* The Closet is put away with the other lines the site is not
        concentrating on. Its rooms are intact on disk; the map simply stops
        offering them. */
@@ -253,6 +262,7 @@ html { scroll-behavior: smooth; }
       { href: "account.html",   label: "Your profile" },
       { href: "matthew-mccluster.html", label: "Who I am" },
       { href: "press.html",     label: "Press & citations" },
+      { href: "newsroom.html",  label: "Verified newsroom & public record" },
       /* HITMAN used to be reachable only because js/theme.js rewrote the
          fifth tab into it after boot. That override was retired when the
          shop took the tab, so this line is now the page's only door.

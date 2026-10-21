@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read=(p)=>readFile(p,'utf8');
 const json=async(p)=>JSON.parse(await read(p));
 
-test('gated single is one logical track with signed-out preview and signed-in full asset', async()=>{
+test('gated single is one logical track: public preview, master only for an entitled member', async()=>{
   const albums=await json('data/albums.json');
   const album=albums.albums.find(a=>a.slug==='cia-mind-control');
   const track=album.tracks.find(t=>t.title==='Niggy Nigg Niggr');
@@ -13,18 +13,61 @@ test('gated single is one logical track with signed-out preview and signed-in fu
   assert.equal(track.gated.bucket,'mcc-gated-audio');
   assert.equal(track.gated.object,'niggy-nigg/niggy-nigg.mp3');
   assert.equal(track.gated.access_mode,'account');
-  assert.equal(track.gated.preview_visibility,'signed_out_only');
-  assert.equal(track.gated.full_visibility,'signed_in');
+  assert.equal(track.gated.preview_visibility,'until_entitled');
+  assert.equal(track.gated.full_visibility,'entitled_play');
+  /* Owner, 2026-10-15: full audio only with three admin-verified missions
+     and a verified identity. The numbers live in the action_unlock_rules
+     row; albums.json and the Worker name the same row. */
+  assert.equal(album.tracks[album.tracks.length-1],track,'the gated record closes the album');
+  assert.equal(track.gated.unlock_rule,'gated_track_niggy_nigg');
+  assert.deepEqual(track.gated.requires,{verified_missions:3,identity_verified:true,identity_purpose:'referral_signup'});
+  assert.equal(track.gated.listen_gate,undefined,'listens no longer unlock the closer');
+  const router=await read('workers/mccluster/src/music/router.js');
+  assert.match(router,/'niggy-nigg':\s*\{[^}]*?rule:\s*'gated_track_niggy_nigg'/,'the Worker gates niggy-nigg by the data rule');
+  const sql=await read('supabase/pending/gated_track_mission_identity_v1.sql');
+  assert.match(sql,/'gated_track_niggy_nigg'[\s\S]*'identity_verified', null, null,\s*'\{"purpose": "referral_signup", "min_verified_missions": 3/,'the rule row: 3 missions + identity');
+  assert.equal(album.tracks.filter(t=>t.gated).length,1,'the other two tracks stay freely playable');
   assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
   assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');
 });
 
-test('signed-in album gate never arms the public preview while the master resolves', async()=>{
+test('the album only plays the master for a play the API granted, and never twice', async()=>{
   const album=await read('album.html');
   assert.match(album,/function hasStoredSession\(\)/);
   assert.match(album,/function paintGateOpening\(row\)/);
-  assert.match(album,/row\.setAttribute\("data-src", ""\)/);
   assert.match(album,/if \(signed\) paintGateOpening\(row\);\s*\n\s*else paintGate\(row, \{ state: "preview" \}\);/);
+  /* pressing play on an earned row spends it through the API first */
+  assert.match(album,/data-gate"\) === "earned" && !row\.hasAttribute\("data-granted"\)[\s\S]*claimThenPlay\(target\)/);
+  assert.match(album,/window\.MCC_GATED\.claim\(gateSpec\(row\)\)/);
+  /* the master URL is only ever set from a granted claim */
+  const masterSets=album.match(/setAttribute\("data-src", out\.url\)/g)||[];
+  assert.equal(masterSets.length,1,'the master URL must come from exactly one place: a granted claim');
+  /* ending or leaving spends it; rewinding is blocked */
+  assert.match(album,/function spend\(row\)/);
+  const ended=album.split('deck.addEventListener("ended"')[1].slice(0,2000);
+  assert.ok(ended.indexOf('spend(rows[cur]);')>-1&&ended.indexOf('spend(rows[cur]);')<ended.indexOf('next();'),'the play is spent before the record moves on');
+  /* played straight through, the album asks for its closer only after the
+     song before it has been counted */
+  assert.match(ended,/spend\(rows\[cur\]\);[\s\S]*finished\.then\(function \(\) \{ claimThenPlay\(upNext\); \}/);
+  assert.match(album,/deck\.addEventListener\("seeking"[\s\S]*granted\(\) && deck\.currentTime < grantMax/);
+  /* no file to keep */
+  assert.doesNotMatch(album,/data-dl|data-fmt|MCC_GATED\.download/);
+});
+
+test('every player reports full listens from the top, and the gated record never counts', async()=>{
+  const album=await read('album.html');
+  const engine=await read('js/music-engine.js');
+  const pip=await read('js/pip.js');
+  assert.match(album,/js\/listen-ledger\.js/);
+  assert.match(await read('listen.html'),/js\/listen-ledger\.js/);
+  assert.match(album,/function countStart\(\)[\s\S]*data-gated-bucket[\s\S]*deck\.currentTime > 3/);
+  assert.match(album,/MCC_LISTENS\.finish\(listen\.handle\)/);
+  assert.match(engine,/function countStart\(\)[\s\S]*current\.gated[\s\S]*audio\.currentTime > 3/);
+  assert.match(engine,/MCC_LISTENS\.finish\(listen\.handle\)/);
+  assert.match(pip,/if \(!next\.gated\) ledger\(/);
+  const ledger=await read('js/listen-ledger.js');
+  assert.doesNotMatch(ledger,/seconds\s*:|duration/,'the browser must never tell the server how long a song is');
+  assert.match(ledger,/\/beat"/,'listens are credited by beats while playing, not by start-to-end time');
 });
 
 test('discovery has one persistent transport and inline play controls', async()=>{
@@ -182,9 +225,60 @@ test('Now Playing preserves live video artwork instead of flattening every track
   assert.match(engine,/id="musicNowFilm"/);
   assert.match(engine,/function paintNowVisual\(art\)/);
   assert.match(engine,/function syncNowFilm\(hard\)/);
-  assert.match(engine,/current\.video \|\| current\.video_url/);
+  assert.match(engine,/current\.music_video \|\| current\.music_video_url/);
   assert.match(engine,/audio\.currentTime % film\.duration/);
   assert.match(css,/\.music-now__artwrap\.has-video \.music-now__film\{opacity:1\}/);
   assert.match(css,/prefers-reduced-motion: reduce/);
-  assert.match(albums,/"video":/);
+  assert.match(albums,/"music_video":/);
+  assert.doesNotMatch(albums,/"video":/);
+});
+
+
+test('Creator Studio release submission rolls back partial uploads and isolates optional license failure', async()=>{
+  const studio=await read('js/music-creator-studio.js');
+  assert.match(studio,/navigator\.onLine === false[\s\S]*Reconnect before uploading/);
+  assert.match(studio,/async function removeUpload\(bucket, path\)/);
+  assert.match(studio,/supabase\.storage\.from\(bucket\)\.remove\(\[path\]\)/);
+  assert.match(studio,/async function rollbackRelease\(trackId, uploads\)/);
+  assert.match(studio,/method: "DELETE"/);
+  assert.match(studio,/if \(!committed && \(createdTrackId \|\| uploaded\.length\)\)/);
+  assert.match(studio,/creator_release_cleanup_failed/);
+  assert.match(studio,/creator_license_offer_failed/);
+  assert.match(studio,/Release submitted, but the license offer was not saved/);
+});
+
+test("Music creator profiles converge on Action Network identity",async()=>{const js=await read("js/music-creator-profile.js");assert.match(js,/Put this music into action/);assert.match(js,/mnet\.html\?profile=/);});
+
+
+test('public play counts use the dedicated album-play track index', async()=>{
+  const sql=await read('supabase/migrations/20261002055704_play_counts_hotpath_v1.sql');
+  assert.match(sql,/create index if not exists events_album_play_track_idx/);
+  assert.match(sql,/on public\.events \(\(props->>'track'\)\)/);
+  assert.match(sql,/where name = 'album_play' and props \? 'track'/);
+  assert.match(sql,/create or replace function public\.play_counts\(\)/);
+  assert.match(sql,/set search_path = ''/);
+  assert.match(sql,/revoke all on function public\.play_counts\(\) from public/);
+  assert.match(sql,/grant execute on function public\.play_counts\(\) to anon, authenticated, service_role/);
+});
+
+
+test('album throttles the expensive public play-count RPC behind a fresh cache', async()=>{
+  const album=await read('album.html');
+  assert.match(album,/Date\.now\(\) - c\.at < 15 \* 60 \* 1000/);
+  assert.match(album,/if \(fresh\) return;\s*fetch\(SB_URL \+ "\/rest\/v1\/rpc\/play_counts"/);
+});
+
+
+test('Creator Studio validates rights, metadata and file sizes before any storage transfer', async()=>{
+  const studio=await read('js/music-creator-studio.js');
+  const submit=studio.slice(studio.indexOf('$("trackForm").addEventListener("submit"'));
+  const preflight=submit.indexOf('Validate metadata, rights and all file sizes before transferring any bytes.');
+  const upload=submit.indexOf('await uploadGrant("creator-masters", master)');
+  assert.ok(preflight>=0 && upload>preflight,'preflight must run before master upload');
+  for(const clause of ['BUCKET_MAX_BYTES[bucket]','!file.size','!$("ownsMaster").checked','!$("collaboratorsCleared").checked','durationMs(master)','!Number.isFinite(dur)']){
+    const index=submit.indexOf(clause);
+    assert.ok(index>preflight && index<upload,clause+' must be checked before storage transfer');
+  }
+  assert.ok(submit.indexOf('const title = $("trackTitle").value.trim();')<upload);
+  assert.ok(submit.indexOf('const artist = $("trackArtist").value.trim() || profile.artist_name;')<upload);
 });

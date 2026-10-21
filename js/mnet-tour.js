@@ -1,4 +1,4 @@
-/* THE WALKTHROUGH — a guided tour of Mnet for somebody who just arrived.
+/* THE WALKTHROUGH — a guided tour of Equity Uprise for somebody who just arrived.
 
    Started three ways, all the same tour:
      - mnet.html?tour=1, the link in Matthew's welcome message;
@@ -7,46 +7,61 @@
      - window.MCC_TOUR.start() from anywhere else.
 
    Each step names one thing, rings it, and dims the rest. Steps that live
-   on another Mnet tab switch to it by pressing that tab's own button, so the
+   on another Equity Uprise tab switch to it by pressing that tab's own button, so the
    tour uses the page exactly the way a person does and needs nothing from
    js/mnet.js. A step whose target is not on screen (a signed-out view, an
    empty list) still shows, centred, so the tour never stalls.
 
    Phone first: the card is a bottom sheet that sits above the app bar,
    buttons are 44px, and the ring follows the target on scroll and rotate.
-   Colours are the site's own tokens, so light and dark both hold. Nothing
-   is sent anywhere; "seen" is a per-device convenience in localStorage. */
+   Colours are the site's own tokens, so light and dark both hold. "Seen" is
+   kept on the account (mnet_mark_tour_seen) with localStorage as a fallback,
+   and a member who has never seen it gets it once, automatically. */
 (function (w, d) {
   "use strict";
 
+  /* "Seen" on this browser is kept per account, so a second person signing
+     in on the same device still gets their walkthrough. */
   var SEEN = "mcc_mnet_tour_seen";
+  function seenKey() {
+    var id = null;
+    try { id = w.MCC_MNET && w.MCC_MNET.identity && w.MCC_MNET.identity().m_uid; } catch (e) { /* not booted */ }
+    return id ? SEEN + ":" + id : null;
+  }
 
+  /* The tour leads with doing: missions, proof, the receipt and the
+     fellowship come before the social tabs, because that is what the
+     Equity Uprise is for. Wording follows the product contract: no
+     points for opinions, no likes-for-rewards, nobody gets labelled. */
   var STEPS = [
-    { title: "Welcome to Mnet",
-      body: "The network behind McCluster: the music, the people around it, and a straight line to Matthew. This takes about a minute." },
-    { target: ".mn__tabs", title: "Six tabs, that's the whole map",
-      body: "Feed, Discover, Groups, Messages, Alerts and Me. Everything on Mnet lives behind one of these." },
-    { view: "feed", target: "#mnPostBody", title: "Post something",
-      body: "Say what you're listening to, share a photo, ask a question. Your posts show up in the feed for everyone who follows you." },
-    { view: "discover", target: "#mnDiscoverView", title: "Find people",
-      body: "Search for anyone on Mnet by name or @handle, and follow the ones you want to hear from." },
-    { view: "groups", target: "#mngCards", title: "Join a group",
-      body: "Groups are where the real conversations happen. Open Explore, pick one that fits, and say hello." },
-    { view: "messages", target: "#mnConversations", title: "Your messages",
-      body: "Matthew's welcome is in here. Reply any time: questions, ideas, problems. It goes straight to him." },
-    { view: "profile", target: "#mnEditProfile", title: "Make it yours",
-      body: "Add a photo, a headline and a short bio so people know who they're talking to." },
+    { title: "Welcome to Equity Uprise",
+      body: "The place for doers. Don't just watch. Act. This takes about a minute." },
+    { view: "feed", target: "#mnWorld", title: "The world is your feed",
+      body: "The Earth on top, the people under it. Tap a red pin to see a mission and the posts about it. Search finds places, people, groups and missions. Your bell has your alerts; your picture has your profile, messages and settings." },
+    { view: "missions", target: "#mnMissionList", title: "Start with a mission",
+      body: "A mission is one real thing to do out in the world, like feeding someone who is unhoused or paying off a kid's lunch debt. Join one, then go do it." },
+    { view: "missions", target: "#mnMissionList", title: "Show your proof",
+      body: "When it's done, add a photo, a link or a short note. A person on the desk checks it. Once it's verified it goes on your Action Record with a receipt you can share." },
+    { view: "missions", target: "#mnRecord", title: "Three verified actions",
+      body: "After three verified actions you can apply to be a fellow. Fellows help lead missions and can go live on the network." },
+    { view: "feed", target: "#mnPostBody", title: "Your feed",
+      body: "Post what you did, what you're listening to, and what's next. Follow the people doing the same missions as you." },
+    { view: "messages", target: "#mnConversations", title: "A straight line to Matthew",
+      body: "Matthew's welcome is in your messages. Reply any time with questions, ideas or problems. It goes straight to him." },
+    { view: "profile", target: "#mnEditProfile", title: "Your profile",
+      body: "Edit profile is where your photo, headline and short bio go, so people know who they're doing this with." },
     { target: '.appbar [data-appnav="music"]', title: "The music",
-      body: "This tab at the bottom takes you to the music. The middle one is home, and the last one brings you back here." },
-    { title: "That's the tour",
-      body: "You can replay it any time from Me → Take the tour.",
+      body: "This tab at the bottom takes you to the music. The middle one is home, and the Globe brings you back here." },
+    { title: "Put it into action",
+      body: "You can replay this any time from your picture \u2192 View profile \u2192 Take the tour.",
       finish: [
-        { label: "Message Matthew", view: "messages" },
-        { label: "Done" }
+        { label: "Look around" },
+        { label: "Pick a mission", view: "missions" }
       ] }
   ];
 
   var ui = null, idx = 0, active = false, lastTarget = null, raf = 0;
+  function track(name,data){try{if(w.MCC_TRACK)w.MCC_TRACK(name,Object.assign({surface:"action_network"},data||{}));}catch(e){}}
 
   function css() {
     if (d.getElementById("mccTourStyle")) return;
@@ -132,8 +147,8 @@
 
   function openView(name) {
     if (!name) return;
-    var tab = d.querySelector('.mn__tabs [data-mn-view="' + name + '"]');
-    if (tab && !tab.classList.contains("is-active")) tab.click();
+    /* there is no tab row any more: ask the network to switch rooms */
+    if (window.MCC_MNET && typeof window.MCC_MNET.setView === "function") window.MCC_MNET.setView(name);
   }
 
   function show(i) {
@@ -163,7 +178,10 @@
     setTimeout(function () {
       lastTarget = step.target ? d.querySelector(step.target) : null;
       if (lastTarget && visible(lastTarget)) {
-        lastTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+        /* The sheet covers the lower half of a phone, so lift the target
+           into the clear space under the header instead of centring it. */
+        var top = lastTarget.getBoundingClientRect().top + (w.pageYOffset || 0) - 132;
+        w.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
         setTimeout(place, 320);
       }
       place();
@@ -172,9 +190,12 @@
     }, 60);
   }
 
-  function end() {
+  function end(reason) {
+    track("mnet_tour_end",{reason:reason||"complete",step:idx+1});
     active = false;
-    try { localStorage.setItem(SEEN, new Date().toISOString()); } catch (e) { /* storage blocked */ }
+    try { var key = seenKey(); if (key) localStorage.setItem(key, new Date().toISOString()); } catch (e) { /* storage blocked */ }
+    /* Remember it on the account too, so the app and the web agree. */
+    try { if (w.MCC_MNET && w.MCC_MNET.markTourSeen) w.MCC_MNET.markTourSeen(); } catch (e) { /* best effort */ }
     if (ui) {
       ui.ring.remove(); ui.card.remove();
       d.removeEventListener("keydown", onKey);
@@ -193,11 +214,11 @@
     var act = b.getAttribute("data-tour");
     if (act === "next") show(idx + 1);
     else if (act === "back") show(idx - 1);
-    else if (act === "skip") end();
+    else if (act === "skip") end("skip");
     var fin = b.getAttribute("data-tour-finish");
     if (fin != null) {
       var f = STEPS[idx].finish[Number(fin)];
-      end();
+      end("finish");
       if (f && f.view) openView(f.view);
     }
   }
@@ -213,7 +234,7 @@
      link may still be on the sign-in or profile screen, so wait for the app
      to appear rather than touring a door. */
   function whenAppReady(cb) {
-    /* No time limit: signing in and finishing the Mnet profile can take
+    /* No time limit: signing in and finishing a Equity Uprise profile can take
        minutes, and the walkthrough should still start the moment the app
        appears. Watches #mnApp's hidden attribute rather than polling. */
     var app = d.getElementById("mnApp");
@@ -246,6 +267,7 @@
     whenAppReady(function (ready) {
       if (!ready || active) return;
       active = true;
+      track("mnet_tour_start",{});
       if (!ui) build();
       show(0);
     });
@@ -258,7 +280,17 @@
     start();
   });
 
-  w.MCC_TOUR = { start: start, stop: end, steps: STEPS.length };
+  /* A new member gets the tour once, the first time the app opens for them.
+     The account remembers it (bootstrap's onboarding context); this browser's
+     own note is only a fallback when the account cannot be written. */
+  function autoStart(boot) {
+    var ctx = boot && boot.onboarding && boot.onboarding.context || {};
+    if (ctx.tour_done_at || active) return;
+    try { var key = seenKey(); if (key && localStorage.getItem(key)) return; } catch (e) { /* storage blocked */ }
+    start();
+  }
+
+  w.MCC_TOUR = { start: start, stop: end, autoStart: autoStart, steps: STEPS.length };
 
   if (/[?&]tour=1\b/.test(location.search)) start();
 })(window, document);
