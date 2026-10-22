@@ -186,6 +186,11 @@ jobs:
         run: |
           rm -rf docs packages apps scripts supabase .github tests node_modules redirects tools _unfinished workers
           rm -f README.md capacitor.config.json wrangler.toml wrangler.jsonc AGENTS.md CLAUDE.md CODEX.md GEMINI.md
+          # Helix preview must never be shipped until the owner explicitly approves.
+          if [ -e helix.html ] || [ -e css/helix.css ] || [ -d js/helix ] || [ -e _unfinished/helix/index.html ]; then
+            echo "::error::Helix preview must never be shipped"
+            exit 1
+          fi
           git add -A
           git commit -m "Publish: web root only, internals stripped" --allow-empty
 
