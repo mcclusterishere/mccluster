@@ -76,6 +76,32 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  const crowd=await page.evaluate(()=>{const q=['.hx-brand','.hx-operator','.hx-tabs','.hx-stats','.hx-clock','.hx-search','.hx-layers-btn','.hx-ctl','.hx-left','.hx-time'],els=q.map(s=>[s,document.querySelector(s)]).filter(([,e])=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'),hits=[];for(let i=0;i<els.length;i++)for(let j=i+1;j<els.length;j++){if(els[i][1].contains(els[j][1])||els[j][1].contains(els[i][1]))continue;const a=els[i][1].getBoundingClientRect(),b=els[j][1].getBoundingClientRect();if(a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1)hits.push(els[i][0]+' × '+els[j][0])}return hits});
  check(scope,'the frame\'s parts never sit on each other',crowd.length===0,crowd);
  check(scope,'no document horizontal overflow',await noOverflow());
+ /* A phone must expose a genuine touchable map, not just a strip between fixed panels. */
+ if(width<768){
+  const geometry=()=>page.evaluate(()=>{
+   const g=document.querySelector('#globe').getBoundingClientRect();
+   const s=document.querySelector('.hx-search').getBoundingClientRect();
+   const p=document.querySelector('.hx-left').getBoundingClientRect();
+   const t=document.querySelector('.hx-time').getBoundingClientRect();
+   const clearTop=Math.max(g.top,s.bottom),clearBottom=Math.min(g.bottom,p.top,t.top);
+   const probeY=Math.min(g.bottom-32,Math.max(s.bottom+48,g.top+g.height*0.55));
+   const hit=document.elementFromPoint(g.left+g.width/2,probeY);
+   return {height:g.height,viewport:window.innerHeight,clear:Math.max(0,clearBottom-clearTop),canvasHit:!!(hit&&hit.closest('#globe')),panel:p.height};
+  });
+  const initial=await geometry();
+  check(scope,'mobile opens globe-first with a small drawer and an interactive Cesium surface',
+    initial.panel<=90&&initial.height>=initial.viewport*0.5&&initial.clear>=220&&initial.canvasHit,initial);
+  await page.locator('.hx-map-focus').click();
+  const immersive=await geometry();
+  check(scope,'Full globe releases panel and timeline space while preserving map hit testing',
+    (await state()).mapFocus&&immersive.height>=initial.height+90&&
+    !(await page.locator('.hx-left').isVisible())&&!(await page.locator('.hx-time').isVisible())&&immersive.canvasHit,immersive);
+  await page.locator('.hx-map-focus').click();
+  const restored=await geometry();
+  check(scope,'Show panels restores the compact data drawer and original globe dimensions',
+    !(await state()).mapFocus&&await page.locator('.hx-left').isVisible()&&
+    Math.abs(restored.height-initial.height)<4&&restored.clear>=220,restored);
+ }
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
