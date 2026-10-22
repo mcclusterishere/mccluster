@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 340,
-  "latest_version": "20261021205801",
-  "latest_name": "analytics_business_event_counts_v1",
-  "ledger_sha256": "1453f7f2c58cc4c614a74171f5e7fdb6e2333c7dcc5aa12d8ae0a10650d9baca",
+  "migration_count": 341,
+  "latest_version": "20261022005028",
+  "latest_name": "analytics_event_inventory_v1",
+  "ledger_sha256": "6d07efdb44d8129b2cd9259e57528e9b554b17691d2c520a5ce6de7c83da1426",
   "migrations": [
     {
       "version": "0001",
@@ -1366,6 +1366,10 @@
     {
       "version": "20261021205801",
       "name": "analytics_business_event_counts_v1"
+    },
+    {
+      "version": "20261022005028",
+      "name": "analytics_event_inventory_v1"
     }
   ]
 }
