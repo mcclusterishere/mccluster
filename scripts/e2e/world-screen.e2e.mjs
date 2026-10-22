@@ -222,7 +222,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     /* the news heat map's counts: the fixture's stories by the country each mentions, and Kenya's as places */
     if (u.pathname === '/v1/world/news-heat') {
       const c = u.searchParams.get('country');
-      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, posts: { KE: 3, US: 12 }, attribution: GDELT });
+      /* Fixture: 19 Kenyan members explicitly opted into coarse region sharing; only a consented count reaches the public card. */
+      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, posts: { KE: 3, US: 12 }, members: { KE: 19 }, member_regions: {}, attribution: GDELT });
       if (c === 'KE') return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: 'KE', cells: [[36.8, -1.3, 8]], total: 8, capped: false, attribution: GDELT });
       return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: c, cells: [], total: 0, capped: false, attribution: GDELT });
     }
