@@ -23,6 +23,12 @@ test('no provider data never becomes zero reach or verified Instagram metrics',(
   assert.equal(a.instagram.status,'reauthorization_required');
   assert.equal(a.instagram.provider_observation,'not_measured');
   assert.equal(socialCoverage([],0,null).instagram.status,'unavailable');
+  const failedAccounts=socialCoverage(null,8,5).instagram;
+  assert.equal(failedAccounts.account_count,null);
+  assert.equal(failedAccounts.connected_accounts,null);
+  assert.equal(failedAccounts.imported_posts,null);
+  assert.equal(failedAccounts.metric_snapshots,null);
+  assert.equal(failedAccounts.status,'unavailable');
 });
 test('invalid or nonfinite inventory counts reject the response',()=>{
   assert.throws(()=>cleanInventory([{event_name:'bad',raw_total:Infinity,lean_total:0,bot_rows:0}]),/Invalid event-name/);
@@ -42,6 +48,28 @@ test('staff are denied before any event or social data reads',async()=>{
   try{
     await assert.rejects(()=>handleAnalyticsRequest(new Request('https://api.test/v1/analytics/event-inventory'),env,{id:'user-staff'}),/owner access required/);
     assert.equal(calls.some(path=>path.endsWith('/rpc/analytics_event_inventory_v1')),false);
+  }finally{globalThis.fetch=original;}
+});
+test('owner account read failure stays unavailable despite provider records',async()=>{
+  const original=globalThis.fetch;
+  globalThis.fetch=async raw=>{
+    const path=new URL(raw).pathname;
+    if(path.endsWith('/orgs'))return data([{id:'00000000-0000-4000-8000-000000000090'}]);
+    if(path.endsWith('/org_members'))return data([{role:'owner'}]);
+    if(path.endsWith('/rpc/analytics_event_inventory_v1'))return data([{event_name:'music_play',raw_total:12,lean_total:12,bot_rows:0,recent_24h:1,recent_7d:8,taxonomy_stage:'content'}]);
+    if(path.endsWith('/social_accounts'))return data({code:'57014'},500);
+    if(path.endsWith('/rpc/analytics_instagram_source_status_v1'))return data([{instagram_posts:1,verified_insight_snapshots:2}]);
+    throw Error('Unexpected source '+path);
+  };
+  try{
+    const res=await handleAnalyticsRequest(new Request('https://api.test/v1/analytics/event-inventory'),env,{id:'owner'});
+    assert.equal(res.status,200);
+    const answer=await res.json();
+    assert.equal(answer.partial,true);
+    assert.equal(answer.providers.instagram.status,'unavailable');
+    assert.equal(answer.providers.instagram.connected_accounts,null);
+    assert.equal(answer.providers.instagram.account_count,null);
+    assert.equal(answer.providers.instagram.metric_snapshots,null);
   }finally{globalThis.fetch=original;}
 });
 test('owner sees stored event names and authenticated source status only',async()=>{
