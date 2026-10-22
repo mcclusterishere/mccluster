@@ -1,0 +1,12 @@
+[Unit]
+Description=Run McCluster OVH Layer 1 observations every 15 minutes
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=30s
+AccuracySec=1min
+Unit=mccluster-market-observer.service
+
+[Install]
+WantedBy=timers.target
