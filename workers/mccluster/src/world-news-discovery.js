@@ -605,6 +605,22 @@ async function placedPosts(env, fetchImpl) {
     return out;
   } catch { return null; }
 }
+/* Public voluntary region counts, separate from /v1/world/members which is
+   derived from account sign-ins. A failing or capped RPC cannot yield a partial total. */
+async function publicSharingCounts(env, fetchImpl) {
+  try {
+    const rows = await serviceRpc(env, 'world_public_member_counts', {}, fetchImpl);
+    if (!Array.isArray(rows) || rows.length >= 1000) return null;
+    const countries = {}, subdivisions = {};
+    for (const r of rows) {
+      const n = Number(r && r.member_count), c = r && r.country_code, sub = r && r.subdivision_code;
+      if (!Number.isSafeInteger(n) || n < 5 || typeof c !== 'string' || !/^[A-Z]{2}$/.test(c)) continue;
+      if (sub === null || sub === undefined) countries[c] = n;
+      else if (typeof sub === 'string' && new RegExp('^' + c + '-[A-Z0-9]{1,8}$').test(sub)) subdivisions[sub] = n;
+    }
+    return { countries, subdivisions };
+  } catch (_) { return null; }
+}
 export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cacheImpl = null, now = () => Date.now() } = {}) {
   const url = new URL(request.url);
   if ((url.pathname.replace(/\/+$/, '') || '/') !== NEWS_HEAT_PATH) return null;
@@ -639,7 +655,10 @@ export async function handleWorldNewsHeat(request, env, { fetchImpl = fetch, cac
         const countries = {};
         let total = 0;
         for (const r of rows) { const c = isoFromGdelt(r && r.location_country_fips); if (!c) continue; countries[c] = (countries[c] || 0) + 1; total++; }
-        return { countries, total, capped, posts: await placedPosts(env, fetchImpl) };
+        const shared = await publicSharingCounts(env, fetchImpl);
+        return { countries, total, capped, posts: await placedPosts(env, fetchImpl),
+          shared_countries: shared ? shared.countries : null,
+          shared_subdivisions: shared ? shared.subdivisions : null };
       }
       const cells = new Map();
       let total = 0;

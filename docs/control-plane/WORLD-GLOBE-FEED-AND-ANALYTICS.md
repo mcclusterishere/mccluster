@@ -655,3 +655,23 @@ first, as for every core route).
    not collected yet" and states stay selectable.
 8. Licences for live camera feeds stay as recorded in Halo's
    `DATA_SOURCES.md`; restricted feeds (NYC DOT) must stay off.
+
+
+### Optional, explicit region sharing (independent counts)
+
+Account → World privacy lets members voluntarily choose a country and broad region,
+then withdraw the choice. These records use the already-applied
+`20261021173902_world_region_sharing_v1` migration and never collect an IP
+address or precise location. `GET /v1/world/news-heat` separately returns
+`shared_countries` and `shared_subdivisions` only where five or more members
+consented. The card labels these as **opted in to region sharing**. Existing
+`/v1/world/members` country/state counts based on latest signed-in IP are
+preserved and not merged with the opt-in counts. Cache expiry can delay visible
+withdrawal for up to five minutes; direct RPC totals update immediately.
+
+`js/world-region-scope.js` accepts short, valid subdivision keys directly and
+uses stable `Z`-prefixed internal codes for named legacy geometry identifiers
+such as `GB:England`. Unnamed sliver geometries are not offered. The same
+mapping is used for saving choices and showing counts on the globe. This is an
+internal scoped identifier, **not** an ISO 3166-2 assertion. The production SQL
+and its 341-entry migration ledger stay unchanged; **do not replay migrations**.
