@@ -1104,22 +1104,15 @@ export async function handleAnalyticsRequest(request, env, user) {
     const events=cleanInventory(await sbRows(env,
       'rpc/analytics_event_inventory_v1',));
     const safeOrg=encodeURIComponent(org.id);
-    const [accounts,counts]=await Promise.allSettled([
-      sbRows(env,'social_accounts?org_id=eq.'+safeOrg+
-        '&select=platform,status,media_discovery_error&limit=100'),
-      sbRows(env,'rpc/analytics_instagram_source_status_v1?p_org='+safeOrg)
-    ]);
-    let provider=null;
+    // One complete source-scoped aggregate: no unordered or capped account
+    // fetch, and no false zero when one backend source fails.
+    let provider;
     try {
-      const found=counts.status==='fulfilled'&&counts.value?.length===1?counts.value[0]:null;
-      provider=socialCoverage(
-        accounts.status==='fulfilled'?accounts.value:null,
-        found?.instagram_posts??null,
-        found?.verified_insight_snapshots??null
-      );
-
+      const counts=await sbRows(env,
+        'rpc/analytics_instagram_source_status_v1?p_org='+safeOrg);
+      provider=socialCoverage(Array.isArray(counts)&&counts.length===1?counts[0]:null);
     } catch {
-      provider=socialCoverage(null,null,null);
+      provider=socialCoverage(null);
     }
     return json({ok:true,measured_at:new Date().toISOString(),...events,providers:provider,
       partial:provider.instagram.status==='unavailable'});
