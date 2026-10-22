@@ -1113,13 +1113,13 @@ export async function handleAnalyticsRequest(request, env, user) {
     try {
       const found=counts.status==='fulfilled'&&counts.value?.length===1?counts.value[0]:null;
       provider=socialCoverage(
-        accounts.status==='fulfilled'?accounts.value:[],
+        accounts.status==='fulfilled'?accounts.value:null,
         found?.instagram_posts??null,
         found?.verified_insight_snapshots??null
       );
-      if(accounts.status!=='fulfilled') provider.instagram.status='unavailable';
+
     } catch {
-      provider={instagram:{status:'unavailable',imported_posts:null,metric_snapshots:null}};
+      provider=socialCoverage(null,null,null);
     }
     return json({ok:true,measured_at:new Date().toISOString(),...events,providers:provider,
       partial:provider.instagram.status==='unavailable'});
