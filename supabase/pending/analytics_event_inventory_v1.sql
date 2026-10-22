@@ -33,6 +33,18 @@ create index if not exists events_lean_first_party_inventory_v1_idx
   on public.events_lean (name, at desc)
   where site_id is null;
 
+-- Index-only reads depend on visibility maps. Default insert-only
+-- autovacuum thresholds can leave weeks of new pages requiring heap access.
+-- Keep this local to the two analytics stores, not the whole database.
+alter table public.events set (
+  autovacuum_vacuum_insert_scale_factor = 0.01,
+  autovacuum_vacuum_insert_threshold = 500
+);
+alter table public.events_lean set (
+  autovacuum_vacuum_insert_scale_factor = 0.01,
+  autovacuum_vacuum_insert_threshold = 500
+);
+
 
 insert into public.event_taxonomy(event_name,stage,note)
 values
