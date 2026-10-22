@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { CONTROL_TOOLS } from '../src/tools/control.mjs';
 import {
   SOURCES, boundedJson, collectWdi, collectBls, collectEia, collectSec, collectAlpaca,
   observeLayerOne, sourceReadiness, layerOneStatus
@@ -20,6 +21,13 @@ const fakeDb = ({onCall=()=>{}, connector={enabled:true,last_sync_at:null}}={}) 
   rows:async (url)=> { onCall('rows',[url]); return url.includes('ops_ingest_connectors')?[connector]:[]; },
   rpc:async (name,args)=>{onCall(name,args);return name==='market_layer1_policy_ready_service'?true:name.includes('begin_run')?
     {id:'00000000-0000-4000-8000-000000000002'}:{ok:true};}
+});
+
+test('Core tool registry exposes read-only source health without caller-defined URLs or credentials',()=>{
+  const tool=CONTROL_TOOLS.find(x=>x.name==='core.market.layer1.status');
+  assert.ok(tool);
+  assert.deepEqual(tool.inputSchema.properties,{});
+  assert.equal(tool.inputSchema.additionalProperties,false);
 });
 
 test('source catalog is bounded and registered independently from existing news and quake authorities',()=>{
