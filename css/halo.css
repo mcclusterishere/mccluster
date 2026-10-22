@@ -358,9 +358,9 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
 .hx-follow-btn{margin-top:10px}
 .hx-hud-host{position:fixed;z-index:7;top:calc(var(--hx-head) + 60px);left:8px;max-width:calc(100% - 72px);pointer-events:none}
 
-/* Phone: globe-first. The data drawer is an expandable preview rather than
-   a permanent third-of-screen overlay; search floats over the Cesium canvas. */
-@media (max-width:767px){
+/* Mobile-first: the data drawer is an expandable preview rather than
+   a permanent third-of-screen overlay; search floats over the Cesium canvas.
+   Tablet/desktop restores are in the min-width breakpoint below. */
   .hx-left:not([data-expanded="true"]) .hx-panel__body{display:none}
   .hx-left:not([data-expanded="true"]) .hx-panel__head{align-items:center;padding-bottom:6px}
   .hx-left:not([data-expanded="true"]) .hx-panel__head p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -371,10 +371,17 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   html.halo-on[data-halo-map="focus"] .hx-left,
   html.halo-on[data-halo-map="focus"] .hx-time{display:none}
   html.halo-on[data-halo-map="focus"] .hx-legend{bottom:12px}
-}
 
 /* ---------- tablet: the tabs join the bar; the list and the detail float as columns ---------- */
 @media (min-width:768px){
+  /* Keep the pre-existing floating columns, timeline and map tools on desktop. */
+  .hx-map-focus{display:none}
+  .hx-left:not([data-expanded="true"]) .hx-panel__body{display:block}
+  .hx-left:not([data-expanded="true"]) .hx-panel__head{align-items:flex-start;padding-bottom:12px}
+  .hx-left:not([data-expanded="true"]) .hx-panel__head p{white-space:normal;overflow:visible;text-overflow:clip}
+  html.halo-on[data-halo-map="focus"]{--hx-peek:0px;--hx-time:92px}
+  html.halo-on[data-halo-map="focus"] .hx-left{display:flex}
+  html.halo-on[data-halo-map="focus"] .hx-time{display:grid}
   html.halo-on{--hx-tabs:0px;--hx-top:56px;--hx-strip:46px;--hx-time:92px;--hx-peek:0px;--hx-left-w:320px;--hx-right-w:320px;--hx-gap:16px}
   html.halo-on[data-halo-view]:not([data-halo-view="world"]){--hx-strip:96px}
   html.halo-on.globe-explore #globe{inset:var(--hx-head) 0 var(--hx-bottom) 0}
