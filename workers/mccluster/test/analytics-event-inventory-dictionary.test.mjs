@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY } from '../src/analytics/measurement-dictionary.js';
 
 test('reviewed taxonomy and owner measurement dictionary stay identical',()=>{
-  const sql=readFileSync('supabase/pending/analytics_event_inventory_v1.sql','utf8');
+  const sql=readFileSync(new URL('../../../supabase/pending/analytics_event_inventory_v1.sql', import.meta.url),'utf8');
   const rows=sql.split('\n').map(line=>line.match(/^\s+\('([^']+)','([^']+)','([^']+)'\),?$/)).filter(Boolean);
   assert.equal(rows.length,30);
   assert.equal(DICTIONARY_VERSION,'analytics-dictionary/2026-10-21.1');
