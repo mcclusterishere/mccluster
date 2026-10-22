@@ -16,19 +16,27 @@ test('classifications are explicit and raw/lean drift stays visible',()=>{
   assert.equal(x.rows[1].classification,'unclassified');
   assert.equal(x.rows[1].taxonomy_stage,null);
 });
-test('no provider data never becomes zero reach or verified Instagram metrics',()=>{
-  const a=socialCoverage([{platform:'instagram',status:'connected',media_discovery_error:'meta_error_190'}],0,0);
-  assert.equal(a.instagram.reauthorization_required,true);
-  assert.equal(a.instagram.metric_snapshots,0);
-  assert.equal(a.instagram.status,'reauthorization_required');
-  assert.equal(a.instagram.provider_observation,'not_measured');
-  assert.equal(socialCoverage([],0,null).instagram.status,'unavailable');
-  const failedAccounts=socialCoverage(null,8,5).instagram;
-  assert.equal(failedAccounts.account_count,null);
-  assert.equal(failedAccounts.connected_accounts,null);
-  assert.equal(failedAccounts.imported_posts,null);
-  assert.equal(failedAccounts.metric_snapshots,null);
-  assert.equal(failedAccounts.status,'unavailable');
+test('Instagram only counts fully observed provider records',()=>{
+  const complete=socialCoverage({instagram_posts:0,verified_insight_snapshots:0,
+    instagram_accounts:2,connected_accounts:1,authorization_expired:true});
+  assert.equal(complete.instagram.reauthorization_required,true);
+  assert.equal(complete.instagram.status,'reauthorization_required');
+  assert.equal(complete.instagram.account_count,2);
+  assert.equal(complete.instagram.connected_accounts,1);
+  assert.equal(complete.instagram.metric_snapshots,0);
+  assert.equal(complete.instagram.provider_observation,'not_measured');
+  const missing=socialCoverage(null).instagram;
+  assert.equal(missing.status,'unavailable');
+  assert.equal(missing.account_count,null);
+  assert.equal(missing.connected_accounts,null);
+  assert.equal(missing.metric_snapshots,null);
+  assert.equal(socialCoverage({instagram_posts:null,verified_insight_snapshots:0,
+    instagram_accounts:2,connected_accounts:1,authorization_expired:true}).instagram.status,'unavailable');
+  const many=socialCoverage({instagram_posts:5,verified_insight_snapshots:7,
+    instagram_accounts:173,connected_accounts:129,authorization_expired:false}).instagram;
+  assert.equal(many.account_count,173);
+  assert.equal(many.connected_accounts,129);
+  assert.equal(many.status,'provider_records_present');
 });
 test('invalid or nonfinite inventory counts reject the response',()=>{
   assert.throws(()=>cleanInventory([{event_name:'bad',raw_total:Infinity,lean_total:0,bot_rows:0}]),/Invalid event-name/);
@@ -50,15 +58,14 @@ test('staff are denied before any event or social data reads',async()=>{
     assert.equal(calls.some(path=>path.endsWith('/rpc/analytics_event_inventory_v1')),false);
   }finally{globalThis.fetch=original;}
 });
-test('owner account read failure stays unavailable despite provider records',async()=>{
+test('failed provider RPC remains partial, even with possible auth expiry',async()=>{
   const original=globalThis.fetch;
   globalThis.fetch=async raw=>{
     const path=new URL(raw).pathname;
     if(path.endsWith('/orgs'))return data([{id:'00000000-0000-4000-8000-000000000090'}]);
     if(path.endsWith('/org_members'))return data([{role:'owner'}]);
     if(path.endsWith('/rpc/analytics_event_inventory_v1'))return data([{event_name:'music_play',raw_total:12,lean_total:12,bot_rows:0,recent_24h:1,recent_7d:8,taxonomy_stage:'content'}]);
-    if(path.endsWith('/social_accounts'))return data({code:'57014'},500);
-    if(path.endsWith('/rpc/analytics_instagram_source_status_v1'))return data([{instagram_posts:1,verified_insight_snapshots:2}]);
+    if(path.endsWith('/rpc/analytics_instagram_source_status_v1'))return data({code:'57014'},500);
     throw Error('Unexpected source '+path);
   };
   try{
@@ -80,7 +87,7 @@ test('owner sees stored event names and authenticated source status only',async(
     if(path.endsWith('/org_members'))return data([{role:'owner'}]);
     if(path.endsWith('/rpc/analytics_event_inventory_v1'))return data([{event_name:'music_play',raw_total:12,lean_total:12,bot_rows:0,recent_24h:1,recent_7d:8,taxonomy_stage:'content'}]);
     if(path.endsWith('/social_accounts'))return data([{platform:'instagram',status:'connected',media_discovery_error:'meta_error_190'}]);
-    if(path.endsWith('/rpc/analytics_instagram_source_status_v1'))return data([{instagram_posts:0,verified_insight_snapshots:0}]);
+    if(path.endsWith('/rpc/analytics_instagram_source_status_v1'))return data([{instagram_posts:0,verified_insight_snapshots:0,instagram_accounts:2,connected_accounts:1,authorization_expired:true}]);
     throw Error('Unexpected backend path '+path);
   };
   try{
