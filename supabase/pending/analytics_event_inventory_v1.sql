@@ -100,10 +100,13 @@ grant execute on function public.analytics_event_inventory_v1()
 -- Manually reported snapshots and non-Instagram accounts are not evidence
 -- that Instagram authorization/discovery is operational.
 create or replace function public.analytics_instagram_source_status_v1(p_org uuid)
-returns table(instagram_posts bigint, verified_insight_snapshots bigint)
+returns table(
+  instagram_posts bigint, verified_insight_snapshots bigint,
+  instagram_accounts bigint, connected_accounts bigint, authorization_expired boolean
+)
 language sql stable security invoker
 set search_path = ''
-as $$
+as $
   select
     (select count(*)::bigint
       from public.social_posts p
@@ -114,8 +117,17 @@ as $$
       join public.social_posts p on p.id=m.post_id
       join public.social_accounts a on a.id=p.account_id
       where m.org_id=p_org and p.org_id=p_org and a.org_id=p_org
-        and a.platform='instagram' and m.source='platform_api');
-$$;
+        and a.platform='instagram' and m.source='platform_api'),
+    (select count(*)::bigint
+      from public.social_accounts a
+      where a.org_id=p_org and a.platform='instagram'),
+    (select count(*)::bigint
+      from public.social_accounts a
+      where a.org_id=p_org and a.platform='instagram' and a.status='connected'),
+    exists(select 1 from public.social_accounts a
+      where a.org_id=p_org and a.platform='instagram'
+        and a.media_discovery_error='meta_error_190');
+$;
 revoke all on function public.analytics_instagram_source_status_v1(uuid)
   from public,anon,authenticated;
 grant execute on function public.analytics_instagram_source_status_v1(uuid)
