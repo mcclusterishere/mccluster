@@ -189,7 +189,7 @@ export async function collectEia({ fetchImpl = fetch, env = process.env, now = n
   for (const row of rows) {
     const spec=EIA_WEEKLY[row?.series];
     if (!spec) throw fail('eia_series_mismatch');
-    if (row?.units !== spec.unit || !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(row.period)))
+    if (row?.units !== spec.unit || !/^\d{4}-\d{2}-\d{2}$/.test(String(row.period)))
       throw fail('eia_unit_or_period_invalid');
     const t=Date.parse(row.period+'T12:00:00Z');
     if (!Number.isFinite(t) || t>now.getTime()) throw fail('eia_future_or_invalid_period');
