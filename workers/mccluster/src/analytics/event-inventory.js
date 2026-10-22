@@ -27,29 +27,30 @@ export function cleanInventory(rows) {
       unclassified_events:items.filter(r=>!r.taxonomy_stage).reduce((n,r)=>n+r.raw_total,0),
       mismatched_names:items.filter(r=>!r.projection_match).length}};
 }
-const validError=v=>/^meta_error_[0-9]{3}$/.test(String(v||''))?String(v):null;
-export function socialCoverage(accounts,postCount,snapshotCount){
-  // Missing account reads must not be presented as a measured zero.
-  if(accounts===null||accounts===undefined)return {instagram:{
-    account_count:null,connected_accounts:null,imported_posts:null,metric_snapshots:null,
-    provider_observation:'not_measured',reauthorization_required:null,error_codes:[],
-    status:'unavailable',next_step:'Retry the account and provider measurements.'
-  }};
-  if(!Array.isArray(accounts))throw Error('Social source inventory unavailable');
-  const instagram=accounts.filter(a=>a?.platform==='instagram');
-  const errors=instagram.map(a=>validError(a.media_discovery_error)).filter(Boolean);
-  const connected=instagram.filter(a=>a.status==='connected').length;
-  const posts=int(postCount),snapshots=int(snapshotCount);
+// One organization-scoped SQL read returns complete account and provider
+// counts. A missing/cancelled read is unknown, never an exact zero.
+export function socialCoverage(source) {
+  const posts=int(source?.instagram_posts);
+  const snapshots=int(source?.verified_insight_snapshots);
+  const accounts=int(source?.instagram_accounts);
+  const connected=int(source?.connected_accounts);
+  const expired=source?.authorization_expired;
+  const complete=posts!==null&&snapshots!==null&&accounts!==null&&
+    connected!==null&&connected<=accounts&&typeof expired==='boolean';
+  const authRequired=complete?expired:null;
   return {instagram:{
-    account_count:instagram.length,connected_accounts:connected,
-    imported_posts:posts,metric_snapshots:snapshots,
+    account_count:complete?accounts:null,
+    connected_accounts:complete?connected:null,
+    imported_posts:complete?posts:null,
+    metric_snapshots:complete?snapshots:null,
     provider_observation:'not_measured',
-    reauthorization_required:errors.includes('meta_error_190'),
-    error_codes:[...new Set(errors)],
-    status:errors.includes('meta_error_190')?'reauthorization_required'
-      :posts===null||snapshots===null?'unavailable'
-      :snapshots===0?'no_verified_provider_metrics':'provider_records_present',
-    next_step:errors.includes('meta_error_190')?'Reconnect Instagram in Control → Create → Channels, then run verified media discovery.'
-      :'Connect and verify a provider account before claiming reach.'
+    reauthorization_required:authRequired,
+    error_codes:authRequired===true?['meta_error_190']:[],
+    status:!complete?'unavailable':expired?'reauthorization_required':
+      snapshots===0?'no_verified_provider_metrics':'provider_records_present',
+    next_step:!complete?'Check provider measurement availability, then retry.':
+      expired?'Reconnect Instagram in Control → Create → Channels, then run verified media discovery.':
+      snapshots===0?'No verified Instagram insight snapshots; verify connection and discovery.':
+      'Provider API records are present; do not infer impression or reach totals from record counts.'
   }};
 }
