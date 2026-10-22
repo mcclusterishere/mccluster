@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 434,
+  "candidate_count": 436,
   "capability_source_count": 104,
-  "support_only_count": 330,
-  "checks_total": 1634,
-  "checks_passed": 1634,
+  "support_only_count": 332,
+  "checks_total": 1642,
+  "checks_passed": 1642,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -109,9 +109,11 @@
     "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
     "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
     "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
+    "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md",
     "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
     "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md",
     "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
+    "docs/action-network/THREE-PATH-MISSION-AUDIT.md",
     "docs/agent-web.md",
     "docs/analytics/application-schema-inventory.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
@@ -448,7 +450,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "434 entries"
+      "detail": "436 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2291,6 +2293,26 @@
       "detail": ""
     },
     {
+      "name": "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md capability ids known",
       "passed": true,
       "detail": ""
@@ -2347,6 +2369,26 @@
     },
     {
       "name": "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/THREE-PATH-MISSION-AUDIT.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/THREE-PATH-MISSION-AUDIT.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/action-network/THREE-PATH-MISSION-AUDIT.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/action-network/THREE-PATH-MISSION-AUDIT.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -6831,6 +6873,46 @@
       "detail": ""
     },
     {
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -6907,46 +6989,6 @@
     },
     {
       "name": "supabase/pending/20261015230000_identity_verification_levels_v1.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 434,
+  "candidate_count": 436,
   "capability_source_count": 104,
-  "support_only_count": 330,
+  "support_only_count": 332,
   "entries": [
     {
       "path": ".cursorrules",
@@ -809,6 +809,13 @@
       "rationale": "Human Uprise rename and globe-over-feed product contract; not a physical building capability."
     },
     {
+      "path": "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network mission/song product plan; an explanatory mapping of services, not building geometry or an independent physical capability."
+    },
+    {
       "path": "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -828,6 +835,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Cross-product globe reconciliation and privacy design; not a physical building capability."
+    },
+    {
+      "path": "docs/action-network/THREE-PATH-MISSION-AUDIT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Three-path mission audit and product boundary documentation; does not create an Equity Uprise building capability."
     },
     {
       "path": "docs/agent-web.md",
@@ -2595,6 +2609,20 @@
       "rationale": "Applied Action Network mission catalog reset, paused-assignment preservation and private partner-development arsenal. Reuses the existing Equity Uprise campaign and mobilization infrastructure without defining a building capability or publishing held mission concepts."
     },
     {
+      "path": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared analytics projection correction retains the existing admin-role helper; it defines no independent program capability."
+    },
+    {
+      "path": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending screening metadata on the existing opportunity catalog; program references are requirements context and not an approved program or spatial capability."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2621,20 +2649,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
-    },
-    {
-      "path": "supabase/migrations/20261020205959_funding_criteria_register_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending screening metadata on the existing opportunity catalog; program references are requirements context and not an approved program or spatial capability."
-    },
-    {
-      "path": "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending shared analytics projection correction retains the existing admin-role helper; it defines no independent program capability."
     },
     {
       "path": "supabase/pending/README.md",
