@@ -49,6 +49,11 @@ html.halo-on.globe-explore .osm-credit{z-index:7;left:8px;right:auto;bottom:calc
 .hx-brand span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:500 15px/1 Inter,system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase}
 .hx-operator{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 4px 0 10px;border:0;border-radius:999px;background:transparent;cursor:pointer;color:var(--hx-ink-2);font-size:12px!important;font-weight:600!important;letter-spacing:.12em;text-transform:uppercase}
 .hx-operator__label{display:none}
+.hx-feed{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--hx-line);border-radius:999px;color:var(--hx-ink-2);font:600 12px/1 Inter,system-ui,sans-serif;text-decoration:none;white-space:nowrap}
+.hx-feed:hover,.hx-feed:focus-visible{color:var(--hx-ink);border-color:var(--hx-line-2)}
+/* a phone keeps the Halo name whole: the door says Feed, and World feed from 420px */
+.hx-feed__long{display:none}
+@media (min-width:420px){.hx-feed__long{display:inline}.hx-feed__short{display:none}}
 .hx-operator svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
 .hx-avatar{display:inline-grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;overflow:hidden;background:#1b2a40;color:var(--hx-ink);font:600 13px/1 Inter,system-ui,sans-serif;letter-spacing:0;border:1px solid var(--hx-line-2)}
 .hx-avatar img{width:100%;height:100%;object-fit:cover}
@@ -365,7 +370,9 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   .hx-tabs{position:absolute;left:50%;top:var(--hx-safe-top);transform:translateX(-50%);display:flex;gap:4px;height:var(--hx-top);border-top:0}
   .hx-tabs button{padding:0 18px;font-size:15px}
   .hx-tabs button[aria-selected="true"]::after{left:0;right:0}
+  .hx-feed{margin-left:auto}
   .hx-operator{margin-left:auto}
+  .hx-feed+.hx-operator{margin-left:0}
   .hx-operator__label{display:inline}
   .hx-strip{top:calc(var(--hx-safe-top) + var(--hx-top));padding:0 24px;flex-wrap:wrap;align-content:center;column-gap:16px;row-gap:0}
   .hx-title{display:flex;align-items:baseline;gap:16px;flex:1 1 60%;min-width:0;height:50px;align-content:center;flex-wrap:nowrap;align-items:center}

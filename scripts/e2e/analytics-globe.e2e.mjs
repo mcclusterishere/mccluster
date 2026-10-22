@@ -158,7 +158,7 @@ for (const size of SIZES) {
   check(S, 'filter pill and summary line', /Filters/.test(ui.pill) && /All countries/.test(ui.pill) && /24 hours · Page views · All sources/.test(ui.summary), { pill: ui.pill, summary: ui.summary });
   check(S, 'Reach (133 page views worldwide) and Audience (40 visitors) cards', /133/.test(ui.reach) && /Page views/.test(ui.reach) && /40/.test(ui.audience) && /New/.test(ui.audience) && /Returning/.test(ui.audience), { reach: ui.reach.slice(0, 120), audience: ui.audience.slice(0, 120) });
   check(S, 'Reach, Audience, Action carousels with dots', ['Reach', 'Audience', 'Action'].every((h) => ui.headings.includes(h)) && ui.dots >= 7, ui.headings);
-  check(S, 'the owner bar: Play, Home, M, Analytics, Globe; Analytics is the current tab; the M is the supplied PNG', ui.bar && JSON.stringify(ui.tabs) === JSON.stringify(['music', 'admin-home', 'home', 'analytics', 'world']) && ui.here === 'analytics' && /assets\/img\/m-mark\.png$/.test(ui.mImg || ''), ui);
+  check(S, 'the owner bar: Play, Home, M, Analytics, Globe; Analytics is the current tab; the M is the supplied PNG', ui.bar && JSON.stringify(ui.tabs) === JSON.stringify(['music', 'admin-home', 'home', 'analytics', 'halo']) && ui.here === 'analytics' && /assets\/img\/m-mark\.png$/.test(ui.mImg || ''), ui);
   check(S, 'no "Illustrative data" footnote on real screens', !ui.illustrative);
   let w = await widths(page);
   check(S, 'no sideways overflow (scrollWidth === clientWidth)', w.scrollW === w.clientW, w);

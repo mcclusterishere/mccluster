@@ -147,7 +147,7 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  const dimensions=await page.locator('.cu-geography').boundingBox();check(size.width,'globe stays inside viewport',dimensions.height>150&&dimensions.y+dimensions.height<=size.height,dimensions);
  check(size.width,'document has no dashboard scroll',await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),await page.evaluate(()=>({height:document.documentElement.scrollHeight,window:innerHeight,body:getComputedStyle(document.body).paddingBottom})));
  const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{el.dataset.testIdentity='same-earth';return el.querySelectorAll('canvas').length;});
- const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'original five tab bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-home','home','analytics','world']),tabs);
+ const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'original five tab bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-home','home','analytics','halo']),tabs);
  check(size.width,'overview exposes six connected metrics',await page.locator('.cu-overview-metrics .cu-metric-link').count()===6);
  check(size.width,'trend exposes exact keyboard values',await page.locator('.cra-ac__point[tabindex="0"]').count()===24);
  await page.screenshot({path:OUT+'/unified-'+size.width+(size.workspace?'-workspace':'')+'.png',fullPage:false});

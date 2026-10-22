@@ -85,7 +85,8 @@ test('every tab destination has the bar it was reached from', async () => {
      destination carries the bar, the Control Room included (it no longer opts out) */
   const admin = all.slice(all.indexOf('function adminBar()'), all.indexOf('function markAdminHere()'));
   const adminHrefs = [...admin.matchAll(/href="'\s*\+\s*HOUSE\s*\+\s*'([a-z0-9-]+\.html)/g)].map((m) => m[1]);
-  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'index.html', 'control.html']);
+  /* the owner's globe is Hitman's Halo (2026-10-22), on the house like the other four */
+  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'index.html', 'control.html', 'action-globe.html']);
   for (const href of new Set(adminHrefs)) {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/, `${href} is an owner tab destination but has no app bar`);

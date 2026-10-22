@@ -38,8 +38,13 @@ Intelligence), "analyze it and try to get it close to this". They are kept as th
   four screens are the only Halo any McCluster menu or button opens. The Control menu's "Hitman's Halo" used to open the
   separate app at `prime.mccluster.org`, and the Control layout's Halo switch framed that app and handed it the owner's
   session; both now open this page, and Control sends no session to another site. The menu's second entry, "Halo on the
-  globe", is gone. The bar's globe button stays on the World feed, and Analytics keeps its own globe and World
-  intelligence tab (the owner's choices).
+  globe", is gone. Analytics keeps its own globe and World intelligence tab (the owner's choice).
+- **The owner's globe is Halo** (owner, 2026-10-22: "click the globe as matthew@mccluster.org signed in. It'll take you to
+  the user globe and not the Hitman Halo globe"). In the owner's five-tab bar (`js/tabbar.js` `adminBar`), the globe opens
+  this page (`data-appnav="halo"`, lit while Halo is on screen). Everyone else's globe is still the World. Halo's header
+  carries the way back to the World feed: "World feed" ("Feed" under 420px), the same World door the bar gives everyone
+  (`MCC_BAR.navigation.world`), which the site opens the way it always opens the World from a page with the player.
+  Browser proof: `scripts/e2e/owner-halo-globe.e2e.mjs`.
 
   The plain full-screen globe (`?explore=1`) stays the plain globe.
 - **Seek First is gone from Control.** The "Spatial Intelligence" tile, which opened the Seek First console

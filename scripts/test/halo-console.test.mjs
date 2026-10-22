@@ -108,6 +108,21 @@ test('the Control Room and the site menu no longer point at Seek First; every Ha
     assert.doesNotMatch(read(f), /prime\.mccluster\.org/, f + ' links no other Halo');
 });
 
+test('the owner\'s globe in the bar is Hitman\'s Halo; Halo carries the way to the World feed (owner, 2026-10-22)', () => {
+  const bar = read('js/tabbar.js');
+  const admin = bar.slice(bar.indexOf('function adminBar()'), bar.indexOf('function markAdminHere()'));
+  assert.match(admin, /href="' \+ HOUSE \+ 'action-globe\.html\?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo"/);
+  assert.doesNotMatch(admin, /worldAt\(|data-appnav="world"/, 'the owner bar has no second, user globe');
+  /* lit while Halo is on screen */
+  assert.match(bar, /action-globe\\\.html\$\/\.test\(location\.pathname\) && new URLSearchParams\(location\.search\)\.has\("halo"\)\) return "halo";/);
+  /* everyone else's globe is still the World */
+  assert.match(bar, /href="' \+ WORLD \+ 'mnet\.html\?view=feed" data-appnav="world"/);
+  const halo = read('js/halo/halo.js');
+  assert.match(halo, /<a class="hx-feed" href="' \+ esc\(feedHref\(\)\) \+ '" aria-label="Open the World feed"><span class="hx-feed__short">Feed<\/span><span class="hx-feed__long">World feed<\/span><\/a>/);
+  assert.match(halo, /window\.MCC_BAR\.navigation\.world/);
+  assert.match(read('css/halo.css'), /\.hx-feed\{[^}]*min-height:44px/);
+});
+
 test('the view keeps to the mobile rules: 44px targets, 16px inputs, minmax columns, min-width breakpoints only', () => {
   const css = read('css/halo.css');
   assert.doesNotMatch(css, /@media[^{]*max-width/, 'no max-width media queries');
