@@ -987,6 +987,11 @@
   }
 
   /* ---------- the frame ---------- */
+  /* the same World door the bar gives everyone (js/tabbar.js MCC_BAR.navigation.world), this site's World page without it */
+  function feedHref() {
+    const w = window.MCC_BAR && window.MCC_BAR.navigation && window.MCC_BAR.navigation.world;
+    return typeof w === 'string' && /^(https:\/\/[a-z0-9.-]*mccluster\.org\/|[a-z0-9-]+\.html)/i.test(w) ? w : 'mnet.html?view=feed';
+  }
   function build() {
     const root = document.createElement('div');
     root.className = 'hx'; root.id = 'haloShell';
@@ -994,6 +999,8 @@
     const base = '<div class="hx-base" role="group" aria-label="Base map"><button type="button" data-base="sat" aria-pressed="true">Satellite</button><button type="button" data-base="map" aria-pressed="false">Map</button><button type="button" data-base="3d" aria-pressed="false">3D cities</button></div>';
     root.innerHTML =
       '<div class="hx-top" role="banner"><div class="hx-top__row"><a class="hx-brand" href="action-globe.html?explore=1&amp;halo=1" aria-label="Hitman’s Halo"><img src="assets/img/hm-mark-96.png" alt="" width="96" height="96"><span>Hitman’s Halo</span></a>' +
+      /* the World feed, one tap away: the owner's bar globe opens Halo, so Halo carries the way to the World (2026-10-22) */
+      '<a class="hx-feed" href="' + esc(feedHref()) + '" aria-label="Open the World feed"><span class="hx-feed__short">Feed</span><span class="hx-feed__long">World feed</span></a>' +
       '<button type="button" class="hx-operator"><span class="hx-operator__label">Owner</span>' + ICON.down + '<span class="hx-avatar" data-op>?</span></button></div>' +
       '<div class="hx-tabs" role="tablist" aria-label="Halo">' + VIEWS.map((v) => '<button type="button" role="tab" id="hxTab-' + v + '" data-view="' + v + '" aria-controls="hxLeft" aria-selected="false">' + esc(META[v].tab) + '</button>').join('') + '</div></div>' +
       '<div class="hx-strip"><div class="hx-title"></div><div class="hx-clock"><time></time><span class="hx-live" role="img" aria-label="Connection"></span></div><ul class="hx-stats" aria-label="Counts"></ul><a class="hx-action" href="#" hidden></a></div>' +

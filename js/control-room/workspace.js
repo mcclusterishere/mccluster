@@ -8,9 +8,11 @@
   const initialHash = location.hash;
   const get = id => document.getElementById(id);
   let active = false, disposed = false, blocked = false, ownerId = '', ownerOrg = '', ownerToken = '', epoch = 0, verifying = null;
-  let header = null, tools = null, observer = null, cachedHost = null, frame = null;
-  let scene = 'black', lastRoute = '', queued = false, lastVerified = 0, frameRequestAt = 0;
-  let abort = null, haloTimer = 0;
+  let header = null, tools = null, observer = null, cachedHost = null;
+  /* the Intelligence scene is the black globe; Hitman's Halo is its own page (one Halo: the four screens on the globe) */
+  const scene = 'black';
+  let lastRoute = '', queued = false, lastVerified = 0;
+  let abort = null;
   const lastPages = {...C.defaults};
   const originalMount = A && A.mount;
   const announce = text => { const node = get('cwStatus'); if (node && node.textContent !== text) node.textContent = text; };
@@ -56,7 +58,7 @@
     tools = element('div','cw-tools'); tools.id='cwTools';
     tools.innerHTML='<div class="cw-location"><span class="cw-eyebrow" id="cwEyebrow">PRIVATE WORKSPACE</span><strong id="cwPlace">Worldwide</strong></div>'+
       '<div class="cw-tools__choices"><label id="cwRouteWrap" hidden>Workspace section<select id="cwRoute" aria-label="Workspace section"></select></label>'+
-      '<div class="cw-intelligence-tools"><div class="cw-segment" aria-label="Intelligence scene" role="group"><button type="button" data-cw-scene="black" aria-pressed="true">Black globe</button><button type="button" data-cw-scene="halo" aria-pressed="false" aria-label="Hitman’s Halo"><span class="cw-halo-long">Hitman’s </span>Halo</button></div>'+
+      '<div class="cw-intelligence-tools"><div class="cw-segment" aria-label="Intelligence scene" role="group"><button type="button" data-cw-scene="black" aria-pressed="true">Black globe</button><a class="cw-halo-door" data-cw-halo href="'+C.HALO_PAGE.replace(/&/g,'&amp;')+'" aria-label="Open Hitman’s Halo"><span class="cw-halo-long">Hitman’s </span>Halo</a></div>'+
       '<button type="button" id="cwSources" aria-expanded="false" aria-controls="cwSourcePanel">Sources</button>'+
       '<button type="button" id="cwLayout" aria-label="Expand the inspector" aria-pressed="false">Details</button></div></div>';
     const status = element('p','cw-status'); status.id='cwStatus'; status.setAttribute('role','status'); status.setAttribute('aria-live','polite');
@@ -70,7 +72,6 @@
     get('cwAsk').onclick=()=>get('crCommandOpen').click();
     get('cwAccount').onclick=event=>{event.stopPropagation();get('crAccount').click();};
     header.querySelectorAll('[data-cw-page]').forEach(button=>button.onclick=()=>go(lastPages[button.dataset.cwPage]));
-    tools.querySelectorAll('[data-cw-scene]').forEach(button=>button.onclick=()=>setScene(button.dataset.cwScene));
     get('cwRoute').onchange=e=>go(e.target.value);
     get('cwSources').onclick=()=>{
       panel.hidden=!panel.hidden; get('cwSources').setAttribute('aria-expanded',String(!panel.hidden));
@@ -79,7 +80,6 @@
     get('cwSourcesClose').onclick=()=>{panel.hidden=true;get('cwSources').setAttribute('aria-expanded','false');get('cwSources').focus();};
     get('cwLayout').onclick=()=>{
       const full=document.body.dataset.cwLayout!=='details';
-      if(full && frame)closeHalo();
       document.body.dataset.cwLayout=full?'details':'balanced';
       get('cwLayout').textContent=full?'Show globe':'Details';
       get('cwLayout').setAttribute('aria-label',full?'Show the globe':'Expand the inspector');
@@ -115,7 +115,6 @@
     });
     if(route.hash!=='#ai')lastPages[route.page]=route.hash;
     if(lastRoute!==route.hash){
-      if(!isIntel) closeHalo();
       if(A?.state.globe?.setActive)A.state.globe.setActive(isIntel&&scene==='black'&&!document.hidden&&document.body.dataset.cwLayout!=='details');
       get('cwSourcePanel').hidden=true;get('cwSources').setAttribute('aria-expanded','false');
       const select=get('cwRoute');select.replaceChildren();
@@ -134,9 +133,9 @@
     const selected=ctx.country?(names?.[ctx.country]?.[2]||ctx.country)+(ctx.state?' / '+ctx.state:''):'Worldwide';
     const place=isIntel?selected:route.label;
     if(get('cwPlace').textContent!==place)get('cwPlace').textContent=place;
-    get('cwEyebrow').textContent=isIntel?(scene==='halo'?'PRIVATE HALO SCENE':'PRIVATE INTELLIGENCE'):route.page.toUpperCase()+' · EXISTING CONTROL WORKFLOWS';
+    get('cwEyebrow').textContent=isIntel?'PRIVATE INTELLIGENCE':route.page.toUpperCase()+' · EXISTING CONTROL WORKFLOWS';
     if(isIntel) {
-      announce(scene==='black'?'Owner preview · existing data and permissions. No public interface changed.':'Halo uses its own camera and source permissions. Analytics filters remain in this inspector.');
+      announce('Owner preview · existing data and permissions. No public interface changed.');
       if(A?.state.globe?.setActive)A.state.globe.setActive(scene==='black'&&!document.hidden&&document.body.dataset.cwLayout!=='details');
     } else announce('Selected geography stays in Intelligence. These records are not automatically filtered by it.');
   }
@@ -151,48 +150,12 @@
       const state=element('small','',layer.id==='intel'?(A.state.data.intel?.ok?'Evidence loaded for this period':(A.state.errors.intel?.status===503?'Not enabled · nothing plotted':'No verified response in this view')):'Uses the current analytics response; see its loading/error state');
       card.append(button,info,state);rows.appendChild(card);
     });
-    const halo=element('article','cw-source');halo.innerHTML='<strong>Hitman’s Halo</strong><p>Separate scene and independently authorized feeds. No private analytics rows, banks, or provider secrets are sent to it. CCTV media and paid feeds require Halo’s own access checks.</p>';rows.appendChild(halo);
-  }
-  async function sendHaloToken(expectedFrame) {
-    if(!active||!frame||frame!==expectedFrame||scene!=='halo'||document.hidden)return;
-    const current=await token();
-    if(!active||frame!==expectedFrame||!current||current!==ownerToken)return;
-    // Token comes from the existing auth service; only authority is the server check.
-    frame.contentWindow.postMessage({type:'mccluster:halo-owner-token',token:current},C.HALO_ORIGIN);
-  }
-  function closeHalo() {
-    clearTimeout(haloTimer);
-    if(frame){try{frame.contentWindow.postMessage({type:'mccluster:halo-owner-token:clear'},C.HALO_ORIGIN);}catch(_){}frame.remove();frame=null;}
-    get('cwHaloPanel')?.remove();scene='black';document.body.dataset.cwScene='black';
-    tools?.querySelectorAll('[data-cw-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cwScene==='black')));
-  }
-  async function setScene(next) {
-    if(!active||C.resolve(location.hash).page!=='intelligence')return;
-    if(next==='black'){closeHalo();A?.state.globe?.setActive(!document.hidden&&document.body.dataset.cwLayout!=='details');sync();return;}
-    if(next!=='halo'||frame)return;
-    if(!C.PARENT_ORIGINS.includes(location.origin)) {announce('The secure Halo session bridge requires a recognized McCluster host. Black globe remains available.');return;}
-    if(!(await verify()))return;
-    const stage=get('crSurface').querySelector('[data-cra-stage]');if(!stage)return;
-    scene='halo';document.body.dataset.cwScene='halo';
-    document.body.dataset.cwLayout='balanced';get('cwLayout').textContent='Details';get('cwLayout').setAttribute('aria-pressed','false');
-    A?.state.globe?.setActive(false);
-    const holder=element('section','cw-halo');holder.id='cwHaloPanel';
-    const note=element('div','cw-halo-note','Opening the full Halo product…');note.id='cwHaloNote';
-    const link=element('a','','Open separately ↗');link.href=C.HALO_ORIGIN+'/';link.target='_blank';link.rel='noopener noreferrer';
-    note.appendChild(link);holder.appendChild(note);
-    frame=document.createElement('iframe');frame.title='Hitman’s Halo private scene';frame.referrerPolicy='no-referrer';
-    frame.allow='fullscreen';frame.src=C.HALO_ORIGIN+'/';
-    const mine=frame;
-    frame.addEventListener('load',()=>{if(frame!==mine)return;sendHaloToken(mine);});
-    holder.appendChild(frame);stage.appendChild(holder);
-    haloTimer=setTimeout(()=>{if(frame===mine)get('cwHaloNote').firstChild.textContent='If Halo is blocked or needs sign-in, open it separately. ';},12000);
-    tools.querySelectorAll('[data-cw-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cwScene==='halo')));
-    sync();
+    const halo=element('article','cw-source');halo.innerHTML='<strong>Hitman’s Halo</strong><p>The owner’s four screens on the globe (World, Missions, People, Intelligence), on their own page: <a href="'+C.HALO_PAGE.replace(/&/g,'&amp;')+'">open Halo</a>. Its feeds keep their own owner-only checks.</p>';rows.appendChild(halo);
   }
   function revoke(message) {
     blocked=true;document.body.dataset.cwBlocked='true';
     ++epoch;ownerToken='';active=false;lastVerified=0;
-    closeHalo();observer?.disconnect();observer=null;
+    observer?.disconnect();observer=null;
     A?.state.globe?.destroy();if(A)A.state.globe=null;
     cachedHost?.replaceChildren();cachedHost=null;
     // Remove any private mounted view on loss of verified owner authority.
@@ -225,17 +188,12 @@
           return false;
         }
         if(ownerId && ownerId!==data.profile.id){revoke('Account changed. Reload Control to avoid carrying another account’s data.');return false;}
-        ownerId=data.profile.id;ownerOrg=C.selectedWorkspace(data,wantedWorkspace()).org_id;ownerToken=current;lastVerified=Date.now();install();if(frame)sendHaloToken(frame);return true;
+        ownerId=data.profile.id;ownerOrg=C.selectedWorkspace(data,wantedWorkspace()).org_id;ownerToken=current;lastVerified=Date.now();install();return true;
       }catch(_){if(mine===epoch&&active)revoke('Owner verification is unavailable. Private workspace closed safely.');return false;}
       finally{clearTimeout(timeout);abort=null;}
     })().finally(()=>{verifying=null;});
     return verifying;
   }
-  window.addEventListener('message',event=>{
-    if(!active||!frame||!C.acceptsHaloRequest(event,frame.contentWindow)||document.hidden)return;
-    const now=Date.now();if(now-frameRequestAt<1000)return;frameRequestAt=now;
-    const mine=frame;verify().then(ok=>{if(ok)sendHaloToken(mine);});
-  });
   window.addEventListener('hashchange',schedule);
   window.addEventListener('mcc:auth-changed',event=>{
     if(event.detail?.signed_in===false){abort?.abort();revoke('Signed out.');return;}
@@ -244,7 +202,6 @@
   window.addEventListener('storage',event=>{if(event.key==='mccdb_session'){abort?.abort();++epoch;if(active)revoke('Session changed. Reload Control to verify the current owner account.');verify();}});
   document.addEventListener('visibilitychange',()=>{
     A?.state.globe?.setActive(active&&!document.hidden&&C.resolve(location.hash).page==='intelligence'&&scene==='black'&&document.body.dataset.cwLayout!=='details');
-    if(document.hidden&&frame){closeHalo();sync();}
     if(!document.hidden)verify();
   });
   document.addEventListener('click',event=>{

@@ -34,11 +34,9 @@ test('chosen client workspace cannot inherit the owner presentation',()=>{
   assert.equal(C.isOwnerWorkspace(data,'client'),false);
   assert.equal(C.isOwnerWorkspace(data,'house'),true);
 });
-test('Halo session replies require the pinned origin and exact direct frame',()=>{
-  const expected={};const good={origin:C.HALO_ORIGIN,source:expected,data:{type:'mccluster:halo-owner-token:request'}};
-  assert.equal(C.acceptsHaloRequest(good,expected),true);
-  for(const patch of [{origin:'https://evil.example'},{origin:'https://prime.mccluster.org.evil.example'},{source:{}},{data:{type:'other'}}])assert.ok(!C.acceptsHaloRequest({...good,...patch},expected));
-  assert.ok(!C.acceptsHaloRequest(good,null));
+test('one Halo: the workspace names the four screens on the globe and keeps no bridge to another site (owner, 2026-10-22)',()=>{
+  assert.equal(C.HALO_PAGE,'action-globe.html?explore=1&halo=1');
+  assert.equal(C.HALO_ORIGIN,undefined);assert.equal(C.acceptsHaloRequest,undefined);
 });
 test('selection context allowlists geography, never sensitive analytics',()=>{
   assert.deepEqual(C.context({geo:{region:'US',state:'US-CT',email:'private',points:[1]},rangeId:'24h',token:'secret',bank:[4]}),{country:'US',state:'US-CT',period:'24h'});
@@ -52,12 +50,12 @@ test('preview uses the existing Control page and leaves bar sources alone',async
   assert.match(js,/data\?\.profile\?\.id/);assert.match(js,/No clone and no second analytics instance/);
   assert.doesNotMatch(js,/localStorage\.setItem|sessionStorage\.setItem|innerHTML\s*=\s*.*token/);
 });
-test('full Halo is an explicit choice, no wildcard token transmission',async()=>{
+test('Halo is a door to its own page: no frame of another site, no owner session sent anywhere',async()=>{
   const js=await read('js/control-room/workspace.js');
-  assert.match(js,/frame\.src=C\.HALO_ORIGIN/);assert.match(js,/mccluster:halo-owner-token:clear/);
-  assert.match(js,/frame\.contentWindow\.postMessage\([\s\S]*?,C\.HALO_ORIGIN\)/);
-  assert.doesNotMatch(js,/postMessage\([^;]*['"]\*['"]/);
-  assert.match(js,/pagehide/);assert.match(js,/mcc:auth-changed/);assert.match(js,/frame!==expectedFrame/);
+  assert.match(js,/<a class="cw-halo-door" data-cw-halo href="'\+C\.HALO_PAGE/);
+  assert.doesNotMatch(js,/prime\.mccluster\.org|HALO_ORIGIN|halo-owner-token|createElement\('iframe'\)/);
+  assert.doesNotMatch(js,/postMessage\(/);
+  assert.match(js,/pagehide/);assert.match(js,/mcc:auth-changed/);
 });
 test('globe material is preserved; lifecycle cancels hidden scenes and late initialization',async()=>{
   const globe=await read('js/control-room/analytics-globe.js');

@@ -92,15 +92,35 @@ test('People never puts a person on the Earth: its marks are mission places, and
   assert.match(halo, /\['Location', 'Not shared'\]/);
 });
 
-test('the Control Room and the site menu no longer point at Seek First; Hitman Halo opens the admin globe', () => {
+test('the Control Room and the site menu no longer point at Seek First; every Halo door opens the one Halo', () => {
   const cr = read('js/control-room-v2.js');
   assert.doesNotMatch(cr, /href: "auth\/seek-first-handoff\.html"/);
-  assert.match(cr, /halo: \{ title: "Hitman Halo", href: "action-globe\.html\?explore=1&halo=1"/);
+  assert.match(cr, /halo: \{ title: "Hitman’s Halo", href: "action-globe\.html\?explore=1&halo=1"/);
   assert.doesNotMatch(cr, /bridge\.spatial/);
   assert.doesNotMatch(read('js/control-room/workspace.js'), /seek-first-handoff/);
   const nav = read('js/site-navigation.js');
   assert.doesNotMatch(nav, /seek-first-handoff|context:'Seek First'/);
-  assert.match(nav, /label:'Halo on the globe', group:'Products', href:new URL\('action-globe\.html\?explore=1&halo=1', house\)\.href/);
+  /* one Halo (owner, 2026-10-22: "it takes you to multiple different places"): the menu's Hitman's Halo is the four screens,
+     never the separate app, and there is no second Halo entry */
+  assert.match(nav, /label:'Hitman’s Halo', group:'Products', href:new URL\('action-globe\.html\?explore=1&halo=1', house\)\.href/);
+  assert.doesNotMatch(nav, /prime\.mccluster\.org|Halo on the globe/);
+  for (const f of ['js/control-room-v2.js', 'js/control-room/workspace.js', 'js/control-room/workspace-core.js', 'js/action-globe.js', 'js/halo/halo.js'])
+    assert.doesNotMatch(read(f), /prime\.mccluster\.org/, f + ' links no other Halo');
+});
+
+test('the owner\'s globe in the bar is Hitman\'s Halo; Halo carries the way to the World feed (owner, 2026-10-22)', () => {
+  const bar = read('js/tabbar.js');
+  const admin = bar.slice(bar.indexOf('function adminBar()'), bar.indexOf('function markAdminHere()'));
+  assert.match(admin, /href="' \+ HOUSE \+ 'action-globe\.html\?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo"/);
+  assert.doesNotMatch(admin, /worldAt\(|data-appnav="world"/, 'the owner bar has no second, user globe');
+  /* lit while Halo is on screen */
+  assert.match(bar, /action-globe\\\.html\$\/\.test\(location\.pathname\) && new URLSearchParams\(location\.search\)\.has\("halo"\)\) return "halo";/);
+  /* everyone else's globe is still the World */
+  assert.match(bar, /href="' \+ WORLD \+ 'mnet\.html\?view=feed" data-appnav="world"/);
+  const halo = read('js/halo/halo.js');
+  assert.match(halo, /<a class="hx-feed" href="' \+ esc\(feedHref\(\)\) \+ '" aria-label="Open the World feed"><span class="hx-feed__short">Feed<\/span><span class="hx-feed__long">World feed<\/span><\/a>/);
+  assert.match(halo, /window\.MCC_BAR\.navigation\.world/);
+  assert.match(read('css/halo.css'), /\.hx-feed\{[^}]*min-height:44px/);
 });
 
 test('the view keeps to the mobile rules: 44px targets, 16px inputs, minmax columns, min-width breakpoints only', () => {

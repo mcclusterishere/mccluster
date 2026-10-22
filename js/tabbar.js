@@ -598,6 +598,8 @@
   var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
   var CHART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4.5" y="11" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16.5" y="8" width="3" height="12" rx="1"/></svg>';
   function adminHere() {
+    /* the owner's globe is Hitman's Halo: lit while Halo is on screen */
+    if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("halo")) return "halo";
     if (!/control\.html$/.test(location.pathname)) return null;
     return /^#analytics/i.test(location.hash) ? "analytics" : "admin-home";
   }
@@ -606,7 +608,10 @@
       '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: the Control Room">' + HOME_SVG + '<span>Home</span></a>' +
       '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'index.html" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'control.html#analytics" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
-      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + worldAt("?view=feed") + '" data-appnav="world" aria-label="Open the World globe">' + WORLD_SVG + '<span class="appbar__sr">Globe</span></a>';
+      /* THE OWNER'S GLOBE IS HITMAN'S HALO (owner, 2026-10-22: "click the globe as matthew@mccluster.org ... It'll take you
+         to the user globe and not the Hitman Halo globe"). Everyone else's globe is the World; the owner reaches the World
+         feed from Halo's own header. Its key is "halo", not "world", so nothing that repaints the World door rewrites it. */
+      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + HOUSE + 'action-globe.html?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo">' + WORLD_SVG + '<span class="appbar__sr">Hitman’s Halo</span></a>';
   }
   function markAdminHere() {
     if (!ADMIN_ON) return;
