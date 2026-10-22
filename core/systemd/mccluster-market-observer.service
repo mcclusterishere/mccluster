@@ -1,0 +1,32 @@
+[Unit]
+Description=McCluster OVH Global Market Intelligence Layer 1 collector
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=mccluster-core
+Group=mccluster-core
+WorkingDirectory=/opt/mccluster/core
+Environment=HOME=/var/lib/mccluster-core
+EnvironmentFile=/etc/mccluster/core.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/market/layer-one.mjs
+TimeoutStartSec=12min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+SystemCallArchitectures=native
+MemoryMax=1G
+CPUQuota=100%
+TasksMax=48
