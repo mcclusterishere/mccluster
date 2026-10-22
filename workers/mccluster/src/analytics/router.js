@@ -6,6 +6,7 @@ import { createExperienceAnalyticsRoutes } from './experience.js';
 import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
+import {cleanInventory, socialCoverage} from './event-inventory.js';
 import { readBoundedRows, measurementContext } from './measurement.js';
 import { loadBusinessEventCounts } from './business-event-counts.js';
 import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
@@ -1095,6 +1096,26 @@ export async function handleAnalyticsRequest(request, env, user) {
     return json({ ok:true, version:DICTIONARY_VERSION, source:DICTIONARY_SOURCE,
       unknown_event_policy:'unclassified', events:EVENT_DICTIONARY,
       metrics:METRIC_DICTIONARY, datasets:DATASETS });
+  }
+  if (path === '/v1/analytics/event-inventory') {
+    // All event names (including operations and unknown stages) are owner-only.
+    const {org}=await requireHouseOwner(env,user);
+    if(request.method!=='GET')return json({ok:false,error:'GET required'},405);
+    const events=cleanInventory(await sbRows(env,
+      'rpc/analytics_event_inventory_v1',));
+    const safeOrg=encodeURIComponent(org.id);
+    // One complete source-scoped aggregate: no unordered or capped account
+    // fetch, and no false zero when one backend source fails.
+    let provider;
+    try {
+      const counts=await sbRows(env,
+        'rpc/analytics_instagram_source_status_v1?p_org='+safeOrg);
+      provider=socialCoverage(Array.isArray(counts)&&counts.length===1?counts[0]:null);
+    } catch {
+      provider=socialCoverage(null);
+    }
+    return json({ok:true,measured_at:new Date().toISOString(),...events,providers:provider,
+      partial:provider.instagram.status==='unavailable'});
   }
   if (path === '/v1/analytics/coverage') {
     if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
