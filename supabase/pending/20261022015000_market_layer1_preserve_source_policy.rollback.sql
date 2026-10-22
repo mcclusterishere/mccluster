@@ -6,5 +6,5 @@
 begin;
 update public.ops_ingest_connectors
 set enabled = false, updated_at = now()
-where connector_key in ('market.wdi','market.bls','market.sec','market.alpaca.iex');
+where connector_key in ('market.wdi','market.bls','market.eia','market.sec','market.alpaca.iex');
 commit;
