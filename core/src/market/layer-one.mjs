@@ -9,6 +9,7 @@ const HOUR = 3_600_000, DAY = 24 * HOUR;
 export const SOURCES = Object.freeze([
   { key: 'market.wdi', name: 'World Bank WDI macro indicators', cadence: DAY, provider: 'World Bank', terms: 'https://data.worldbank.org/summary-terms-of-use', retentionDays: 3650 },
   { key: 'market.bls', name: 'U.S. BLS economic observations', cadence: DAY, provider: 'Bureau of Labor Statistics', terms: 'https://www.bls.gov/developers/', retentionDays: 1825 },
+  { key: 'market.eia', name: 'EIA weekly petroleum supply indicators', cadence: 6 * HOUR, provider: 'U.S. Energy Information Administration', terms: 'https://www.eia.gov/opendata/', retentionDays: 1825 },
   { key: 'market.sec', name: 'SEC EDGAR filing notices', cadence: HOUR, provider: 'U.S. Securities and Exchange Commission', terms: 'https://www.sec.gov/about/webmaster-frequently-asked-questions', retentionDays: 365 },
   { key: 'market.alpaca.iex', name: 'Alpaca IEX minute bars (limited coverage)', cadence: 15 * 60_000, provider: 'Alpaca', terms: 'https://docs.alpaca.markets/us/docs/about-market-data-api', retentionDays: 30 }
 ].map(x => Object.freeze(x)));
@@ -24,7 +25,11 @@ const BLS = Object.freeze({
   CES0000000001: 'Total nonfarm employment, seasonally adjusted'
 });
 const SEC_FORMS = new Set(['8-K','8-K/A','10-K','10-K/A','10-Q','10-Q/A','20-F','6-K']);
-const ALLOWED_HOSTS = new Set(['api.worldbank.org','api.bls.gov','data.sec.gov','data.alpaca.markets']);
+const EIA_WEEKLY = Object.freeze({
+  WCRFPUS2: { unit:'MBBLD', metric:'crude_oil_field_production', label:'U.S. crude oil field production' },
+  WCRSTUS1: { unit:'MBBL', metric:'crude_oil_stocks_including_spr', label:'U.S. crude oil stocks including SPR' }
+});
+const ALLOWED_HOSTS = new Set(['api.worldbank.org','api.bls.gov','api.eia.gov','data.sec.gov','data.alpaca.markets']);
 const VALID_SYMBOL = /^[A-Z][A-Z0-9.]{0,9}$/;
 const VALID_CIK = /^\d{1,10}$/;
 
@@ -37,6 +42,7 @@ function commaList(value, fallback, max, check) {
 }
 export function sourceReadiness(source, env = process.env) {
   if (source === 'market.wdi' || source === 'market.bls') return 'ready';
+  if (source === 'market.eia') return env.EIA_API_KEY ? 'ready' : 'needs_eia_api_key';
   if (source === 'market.sec') {
     const ciks = String(env.MCCLUSTER_MARKET_SEC_CIKS || '').trim();
     if (!ciks || !env.MCCLUSTER_MARKET_SEC_USER_AGENT) return 'needs_sec_ciks_and_user_agent';
@@ -163,6 +169,43 @@ export async function collectBls({ fetchImpl = fetch, now = new Date() } = {}) {
   return results;
 }
 
+export async function collectEia({ fetchImpl = fetch, env = process.env, now = new Date() } = {}) {
+  if (sourceReadiness('market.eia', env) !== 'ready') throw fail('eia_not_configured');
+  const base = 'https://api.eia.gov/v2/petroleum/sum/sndw/data/';
+  const target = new URL(base);
+  target.searchParams.set('api_key', String(env.EIA_API_KEY));
+  target.searchParams.set('frequency','weekly');
+  target.searchParams.set('data[0]','value');
+  for (const series of Object.keys(EIA_WEEKLY)) target.searchParams.append('facets[series][]',series);
+  target.searchParams.set('sort[0][column]','period');
+  target.searchParams.set('sort[0][direction]','desc');
+  target.searchParams.set('offset','0');
+  target.searchParams.set('length','12');
+  // EIA requires the key in the URL. Never write this request URL to the database or logs.
+  const data = await boundedJson(target.href, { fetchImpl });
+  const rows = data?.response?.data;
+  if (!Array.isArray(rows) || rows.length > 12) throw fail('eia_response_invalid');
+  const results = [];
+  for (const row of rows) {
+    const spec=EIA_WEEKLY[row?.series];
+    if (!spec) throw fail('eia_series_mismatch');
+    if (row?.units !== spec.unit || !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(row.period)))
+      throw fail('eia_unit_or_period_invalid');
+    const t=Date.parse(row.period+'T12:00:00Z');
+    if (!Number.isFinite(t) || t>now.getTime()) throw fail('eia_future_or_invalid_period');
+    const value=cleanNumber(row.value);
+    if (value===null) continue;
+    results.push(observation(row.series+':'+row.period,'economic_indicator',
+      new Date(t).toISOString(), {
+        series:row.series, metric:spec.metric, label:spec.label,
+        value, unit:spec.unit, period:row.period, frequency:'weekly',
+        is_real_time:false, observed_time_kind:'week_ending_date',
+        note:'Published weekly observation; publication time is not asserted.'
+      }, base, 'EIA', now.toISOString()));
+  }
+  return results;
+}
+
 export async function collectSec({ fetchImpl = fetch, env = process.env, now = new Date() } = {}) {
   const ciks = commaList(env.MCCLUSTER_MARKET_SEC_CIKS, '', 8, VALID_CIK), results = [];
   const userAgent = String(env.MCCLUSTER_MARKET_SEC_USER_AGENT);
@@ -215,7 +258,7 @@ export async function collectAlpaca({ fetchImpl = fetch, env = process.env, now 
   return results;
 }
 
-const COLLECT = { 'market.wdi': collectWdi, 'market.bls': collectBls, 'market.sec': collectSec, 'market.alpaca.iex': collectAlpaca };
+const COLLECT = { 'market.wdi': collectWdi, 'market.bls': collectBls, 'market.eia': collectEia, 'market.sec': collectSec, 'market.alpaca.iex': collectAlpaca };
 export function createDb({ restImpl = rest, resolveOrg = resolveHouseOrgId } = {}) {
   return {
     org: resolveOrg,
