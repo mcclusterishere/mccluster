@@ -26,6 +26,11 @@ begin
      to_regclass('public.events_lean_first_party_inventory_v1_idx') is null then
     raise exception 'Both first-party inventory covering indexes are required';
   end if;
+  if (select count(*) from pg_class
+      where relname in ('events','events_lean')
+        and 'autovacuum_vacuum_insert_scale_factor=0.01'=any(reloptions)) <> 2 then
+    raise exception 'Both analytics stores require insert-triggered visibility maintenance';
+  end if;
 end $$;
 
 do $$
