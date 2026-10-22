@@ -42,3 +42,14 @@ $$;
 
 -- No grants added. private schema remains outside the Data API; the existing
 -- public service RPC stays the only authorized ingestion path.
+
+-- A narrow service-only readiness sentinel. A disabled flag alone is not an
+-- adequate substitute: Core must fail closed when an approved DB migration
+-- has not yet been applied.
+create or replace function public.market_layer1_policy_ready_service()
+returns boolean language sql stable security invoker set search_path = ''
+as $$ select true $$;
+revoke all on function public.market_layer1_policy_ready_service()
+  from public, anon, authenticated;
+grant execute on function public.market_layer1_policy_ready_service()
+  to service_role;
