@@ -292,14 +292,20 @@ export async function observeLayerOne({ db = createDb(), fetchImpl = fetch, env 
 }
 
 export async function layerOneStatus({ db = createDb(), env = process.env, now = new Date() } = {}) {
+  let policyReady = false;
+  try { policyReady = await db.rpc('market_layer1_policy_ready_service', {}) === true; }
+  catch { /* Migration not applied; status must still work */ }
   const org=await db.org(), rows=await db.rows('ops_ingest_connectors?org_id=eq.'+org+
     '&select=connector_key,enabled,last_ok_at,last_sync_at,last_error,last_error_at&limit=200');
   const byKey=new Map((rows||[]).map(r=>[r.connector_key,r]));
   const sources=SOURCES.map(def=>{
     const row=byKey.get(def.key), readiness=sourceReadiness(def.key,env);
     const age=row?.last_ok_at?now.getTime()-Date.parse(row.last_ok_at):null;
-    const state=readiness!=='ready'?'blocked':!row?'not_registered':!row.enabled?'disabled_by_owner':
-      age===null?'never_succeeded':age>def.cadence*2?'stale':'healthy';
+    const failedRecently = !!(row?.last_error && row?.last_error_at &&
+      (!row.last_ok_at || Date.parse(row.last_error_at) > Date.parse(row.last_ok_at)));
+    const state=readiness!=='ready'?'blocked':!policyReady?'migration_required':
+      !row?'not_registered':!row.enabled?'disabled_by_owner':
+      failedRecently?'error':age===null?'never_succeeded':age>def.cadence*2?'stale':'healthy';
     return { source:def.key, status:state, reason:readiness!=='ready'?readiness:row?.last_error||null,
       last_ok_at:row?.last_ok_at||null, last_sync_at:row?.last_sync_at||null, cadence_minutes:def.cadence/60_000 };
   });
@@ -307,11 +313,15 @@ export async function layerOneStatus({ db = createDb(), env = process.env, now =
   const [news]=await Promise.all([db.rows('media_news_articles?select=imported_at&order=imported_at.desc&limit=1')
     .catch(()=>[])]);
   const quake=byKey.get('usgs.earthquakes');
-  sources.push({source:'world.gdelt',status:news?.[0]?'existing_pipeline':'unverified',
-    last_observed_at:news?.[0]?.imported_at||null, scope:'existing_worker_ingest'});
-  sources.push({source:'usgs.earthquakes',status:quake?.last_ok_at?'existing_pipeline':'unverified',
+  const newsAt=news?.[0]?.imported_at||null;
+  const newsAge=newsAt?now.getTime()-Date.parse(newsAt):null;
+  const quakeAge=quake?.last_ok_at?now.getTime()-Date.parse(quake.last_ok_at):null;
+  sources.push({source:'world.gdelt',status:newsAge===null?'unverified':
+    newsAge>2*HOUR?'stale':'existing_pipeline',last_observed_at:newsAt,scope:'existing_worker_ingest'});
+  sources.push({source:'usgs.earthquakes',status:quakeAge===null?'unverified':
+    quakeAge>3*HOUR?'stale':'existing_pipeline',
     last_ok_at:quake?.last_ok_at||null, scope:'existing_intel_collector'});
-  return {schema:'market-layer1-status/v1',generated_at:now.toISOString(),
+  return {schema:'market-layer1-status/v1',generated_at:now.toISOString(),policy_ready:policyReady,
     enabled:env.MCCLUSTER_MARKET_LAYER1_ENABLED==='true',sources};
 }
 
