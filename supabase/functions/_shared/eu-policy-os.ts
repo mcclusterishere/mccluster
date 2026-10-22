@@ -29,7 +29,7 @@ export async function rpc(fn: string, args: Record<string, unknown>) {
   return db(`rpc/${fn}`, { method: "POST", body: JSON.stringify(args) });
 }
 
-export type Caller = { authUserId: string; mUid: string | null; email: string };
+export type Caller = { authUserId: string; mUid: string | null; email: string; emailVerified: boolean };
 
 export async function verifyCaller(req: Request): Promise<Caller | null> {
   const h = req.headers.get("authorization") ?? "";
@@ -42,7 +42,7 @@ export async function verifyCaller(req: Request): Promise<Caller | null> {
   const u = await r.json();
   if (typeof u?.id !== "string") return null;
   const links = await db(`m_auth_user_links?auth_user_id=eq.${encodeURIComponent(u.id)}&select=m_uid&limit=1`);
-  return { authUserId: u.id, mUid: links?.[0]?.m_uid ?? null, email: String(u.email ?? "") };
+  return { authUserId: u.id, mUid: links?.[0]?.m_uid ?? null, email: String(u.email ?? ""), emailVerified: typeof u.email_confirmed_at === "string" && Number.isFinite(Date.parse(u.email_confirmed_at)) };
 }
 
 export async function orgBySlug(slug = "mccluster") {
@@ -180,7 +180,30 @@ export function safeText(value: unknown, max: number) {
 
 export function safeEmail(value: unknown) {
   const s = safeText(value, 254).toLowerCase();
+  // `*` and `%` are LIKE wildcards in PostgREST filters and `\` is the LIKE
+  // escape character. They are legal in a quoted local part but nobody
+  // submits them, and accepting them let "*@*.*" match someone else's row.
+  if (/[*%\\]/.test(s)) return "";
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : "";
+}
+
+/**
+ * A PostgREST `ilike` filter value that matches `value` exactly, ignoring
+ * case, and nothing else.
+ *
+ * Public intake finds an existing stakeholder or application by email and
+ * then updates it or echoes it back, so a pattern here lets one anonymous
+ * submission overwrite or read someone else's row: PostgREST turns `*` into
+ * `%`, and `%` / `_` are LIKE wildcards.
+ * Values carrying `*`, `%` or the escape character `\` are refused (empty
+ * string; callers must treat that as "no match"), and `_` is escaped so it
+ * only matches a literal underscore. encodeURIComponent turns the escaping
+ * backslash into %5C, which PostgREST decodes back before Postgres sees it.
+ */
+export function ilikeExact(value: string) {
+  const s = String(value ?? "");
+  if (!s || /[*%\\]/.test(s)) return "";
+  return `ilike.${encodeURIComponent(s.replace(/_/g, "\\_"))}`;
 }
 
 export async function sha256Hex(value: string) {

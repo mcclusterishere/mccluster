@@ -24,6 +24,7 @@
   var SESSION = 'mccdb_session';
   var KEEP = 'mcc_sess_keep';
   var VERIFIER = 'mcc.pkce';
+  var RECOVERY = 'mcc.recovery.pkce.v1';
   var OAUTH_PROVIDER = 'mcc.oauth_provider';
   var DEVICE = 'mcc.device_id';
   var SOCIAL = { google: true, apple: true, facebook: true, x: true };
@@ -231,8 +232,15 @@
       var s = readSession();
       if (!s || !s.refresh_token) return Promise.resolve(null);
       return authApi('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
-        .then(writeSession)
-        .catch(function () { writeSession(null); return null; });
+        .then(function (next) {
+          var current = readSession();
+          if (!current || current.refresh_token !== s.refresh_token) return current;
+          return writeSession(next);
+        }).catch(function () {
+          var current = readSession();
+          if (current && current.refresh_token === s.refresh_token) writeSession(null);
+          return readSession();
+        });
     },
 
     refreshIfNeeded: function () {
@@ -332,12 +340,22 @@
     requestPasswordReset: function (email, redirectTo) {
       email = String(email || '').trim().toLowerCase();
       if (!email) return Promise.reject(new Error('Enter your email address.'));
-      return authApi('recover', {
-        method: 'POST',
-        body: {
-          email: email,
-          redirect_to: redirectTo || (root.location.origin + '/reset-password.html')
-        }
+      var target;
+      try {
+        target = new URL(redirectTo || '/reset-password.html', root.location.origin);
+        if (target.origin !== root.location.origin || target.username || target.password || target.hash) throw new Error();
+      } catch (_) { return Promise.reject(new Error('Password recovery must return to this site.')); }
+      var verifier = random(48);
+      var intent = JSON.stringify({ verifier: verifier, email: email, created: Date.now(), path: target.pathname });
+      set('localStorage', RECOVERY, intent);
+      if (get('localStorage', RECOVERY) !== intent) return Promise.reject(new Error('Enable browser storage to start password recovery.'));
+      return challenge(verifier).then(function (c) {
+        return authApi('recover?redirect_to=' + encodeURIComponent(target.href), {
+          method: 'POST', body: { email: email, code_challenge: c, code_challenge_method: 's256' }
+        });
+      }).catch(function (error) {
+        if (get('localStorage', RECOVERY) === intent) del('localStorage', RECOVERY);
+        throw error;
       });
     },
 
@@ -371,22 +389,45 @@
     },
 
     acceptRecoveryFromUrl: function () {
-      var raw = String(root.location.hash || '').replace(/^#/, '');
-      if (!raw) return Promise.resolve(null);
-      var params = new URLSearchParams(raw);
-      var type = params.get('type') || '';
-      var access = params.get('access_token') || '';
-      if (type !== 'recovery' || !access) return Promise.resolve(null);
-      var session = {
-        access_token: access,
-        refresh_token: params.get('refresh_token') || '',
-        expires_in: Number(params.get('expires_in') || 3600),
-        token_type: params.get('token_type') || 'bearer'
-      };
-      writeSession(session);
-      root.history.replaceState({}, '', root.location.pathname + root.location.search);
-      root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
-      return Promise.resolve(session);
+      var params = new URLSearchParams(root.location.search || '');
+      var fragment = new URLSearchParams(String(root.location.hash || '').replace(/^#/, ''));
+      var code = params.get('code');
+      var hasToken = fragment.has('access_token') || fragment.has('refresh_token');
+      if (!code && !hasToken) return Promise.resolve(null);
+      params.delete('code');
+      var query = params.toString();
+      root.history.replaceState({}, '', root.location.pathname + (query ? '?' + query : ''));
+      var raw = get('localStorage', RECOVERY), intent;
+      try { intent = JSON.parse(raw || 'null'); } catch (_) {}
+      if (!code || hasToken || !intent || typeof intent.verifier !== 'string' ||
+          intent.path !== root.location.pathname || !Number.isFinite(intent.created) ||
+          Date.now() - intent.created < 0 || Date.now() - intent.created > 30 * 60 * 1000) {
+        return Promise.reject(new Error('Request a new reset link and open it in the same browser.'));
+      }
+      // Consume the browser proof before awaiting the exchange. A second tab
+      // cannot reuse it, and no URL bearer can bypass this path.
+      del('localStorage', RECOVERY);
+      var previous = get('localStorage', SESSION);
+      return authApi('token?grant_type=pkce', {
+        method: 'POST', body: { auth_code: code, code_verifier: intent.verifier }
+      }).then(function (next) {
+        if (!next || !next.access_token || !next.user || !next.user.id ||
+            String(next.user.email || '').toLowerCase() !== intent.email ||
+            get('localStorage', SESSION) !== previous) throw new Error('Recovery did not match the requested account.');
+        var current = readSession();
+        if (current && current.access_token) {
+          return authApi('user', { token: current.access_token }).then(function (u) {
+            if (!u || u.id !== next.user.id) throw new Error('Sign out before recovering a different account.');
+            return next;
+          });
+        }
+        return next;
+      }).then(function (next) {
+        if (get('localStorage', SESSION) !== previous) throw new Error('Your sign-in changed. Request a fresh reset link.');
+        writeSession(next);
+        root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
+        return next;
+      });
     },
 
     updatePassword: function (password) {

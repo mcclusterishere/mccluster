@@ -98,10 +98,12 @@ test('a member\'s World opens on the World (or the room asked for), and rooms sw
   assert.match(day, /html\[data-daylight="day"\] \.mn__skel i \{/);
 });
 
-test('a sign-in carried in is taken in place: the World waits for it and the bar does not reload the page', () => {
+test('a retired handoff is scrubbed and releases World startup without reloading or minting a session', () => {
   const bar = read('js/tabbar.js'), js = read('js/mnet.js'), palette = read('js/control-palette.js');
-  assert.match(bar, /if \(emit\("mcc:handoff", \{ ok: true \}, true\)\) \{ emit\("mcc:auth-changed", \{ signed_in: true, carried: true \}\); return true; \}\n        location\.reload\(\);/,
-    'a page that takes the session cancels mcc:handoff; every other page still reloads signed in');
+  const arrival = bar.slice(bar.indexOf('function arriveWithHandoff()'), bar.indexOf('/* ON THE WORLD\'S HOST'));
+  assert.match(arrival, /params\.delete\('mcc_handoff'\)/, 'a legacy handoff bearer is removed from the URL');
+  assert.match(arrival, /emit\('mcc:handoff', \{ ok: false, reason: 'reauthentication_required' \}\)/, 'World startup is released to its destination sign-in');
+  assert.doesNotMatch(arrival, /fetch\(|location\.reload\(|localStorage\.setItem\(/, 'the retired handoff cannot exchange a bearer, reload, or create a session');
   assert.match(bar, /ev = new CustomEvent\(n, \{ detail: d \|\| \{\}, cancelable: !!cancelable \}\);/);
   assert.match(js, /handoff\.pending = \/\(\?:\^#\|&\)mcc_handoff=\[\^&\]\/\.test\(location\.hash\) && !JSON\.parse\(localStorage\.getItem\("mccdb_session"\) \|\| "null"\);/,
     'read before tabbar.js scrubs the fragment, on the same test tabbar.js uses');

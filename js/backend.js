@@ -88,14 +88,14 @@
     // Query strings are shareable, logged and attacker-controlled navigation data.
     var raw = location.hash.slice(1);
     if (raw.indexOf("access_token=") === -1 && raw.indexOf("error") === -1) return;
+    var params = new URLSearchParams(raw);
     var q = {};
-    raw.split("&").forEach(function (kv) {
-      if (!kv) return;
-      var p = kv.split("="); q[p[0]] = decodeURIComponent((p[1] || "").replace(/\+/g, " "));
-    });
+    params.forEach(function (value, key) { q[key] = value; });
     if (q.access_token) {
-      saveSession({ access_token: q.access_token, refresh_token: q.refresh_token || "" });
-      history.replaceState(null, "", location.pathname + location.search);
+      // URL fragments are attacker-controlled even when the token is genuine.
+      // Email confirmation may complete at Supabase, but the app requires an
+      // explicit password or initiation-bound PKCE login; it never adopts this.
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
       return;
     }
     var msg = q.error_description || q.error_code || q.error;
@@ -126,9 +126,13 @@
       headers: { apikey: KEY, "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: s.refresh_token }),
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var current = session();
+      if (!current || current.refresh_token !== s.refresh_token) return current;
       if (j && j.access_token) { saveSession({ access_token: j.access_token, refresh_token: j.refresh_token }); return session(); }
-      jdel("session"); return null;
-    }).catch(function () { return s; }); // offline: keep the session, RLS still guards
+      jdel("session");
+      try { localStorage.removeItem("mcc_sess_keep"); } catch (e) {}
+      return null;
+    }).catch(function () { return session(); }); // a failed request cannot resurrect a signed-out session
   }
 
   function token() {

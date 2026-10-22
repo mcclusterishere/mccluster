@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_generated:
-        description: 'Commit regenerated plans, production packages, reports, and GLB back to the selected non-main branch'
+        description: 'Upload regenerated plans, production packages, reports, and GLB as a workflow artifact (never pushed)'
         required: false
         default: false
         type: boolean
@@ -152,7 +152,7 @@ jobs:
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
 
       - name: Require committed generated artifacts to be current
-        if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[publish-generated]')) }}
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -184,16 +184,16 @@ jobs:
   publish-generated:
     name: Publish generated building artifacts
     needs: validate
-    # Never grant branch-writing automation to pull_request validation.
-    # Artifact publishing requires explicit workflow_dispatch opt-in on a non-main branch.
+    # AGENTS.md hard rule 2: CI never pushes onto a feature branch. The
+    # regenerated snapshot is uploaded as a workflow artifact; a person
+    # downloads it and commits it. Explicit workflow_dispatch opt-in only.
     if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' && inputs.publish_generated == true }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -241,10 +241,10 @@ jobs:
           python docs/design/equity-uprise-building/production/audit_building_context.py --write
           python docs/design/equity-uprise-building/production/audit_building_context.py
 
-      - name: Commit one deterministic generated-output snapshot
+      - name: Collect one deterministic generated-output snapshot
+        env:
+          SOURCE_REF: ${{ github.ref_name }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/design/equity-uprise-building/references
           git add docs/design/equity-uprise-building/production/basement-b1
           git add docs/design/equity-uprise-building/production/floor-01
@@ -259,11 +259,21 @@ jobs:
           git add -f docs/design/equity-uprise-building/production/generated
           git add -f docs/design/equity-uprise-building/production/asset-registry/generated
           git add -f docs/design/equity-uprise-building/production/electronics/generated
+          out="$RUNNER_TEMP/equity-uprise-generated"
+          mkdir -p "$out/files"
+          printf 'source_ref=%s\nsource_sha=%s\n' "$SOURCE_REF" "$GITHUB_SHA" > "$out/SOURCE"
+          git diff --cached --name-only --diff-filter=D > "$out/deleted.txt"
+          git diff --cached --binary > "$out/generated.patch"
+          git diff --cached --name-only -z --diff-filter=ACMR | xargs -0 -r cp --parents -t "$out/files"
           if git diff --cached --quiet; then
             echo "Generated building artifacts already current."
-            exit 0
+          else
+            echo "Regenerated artifacts differ from $SOURCE_REF; download the artifact and apply generated.patch (git apply)."
           fi
-          git commit -m "Regenerate Equity Uprise Core V2 derived artifacts"
-          TARGET_BRANCH="${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}"
-          git pull --rebase origin "${TARGET_BRANCH}"
-          git push origin "HEAD:${TARGET_BRANCH}"
+
+      - name: Upload regenerated building artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: equity-uprise-generated-${{ github.run_id }}
+          path: ${{ runner.temp }}/equity-uprise-generated
+          retention-days: 14

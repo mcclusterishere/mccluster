@@ -1,4 +1,5 @@
 import { handlePlatformApi as existingPlatformApi } from './platform-api.js';
+import { handleDeveloperSecurity, readPublicDeveloperProfile } from './developer-security.js';
 import { fail, reply } from './lib/http.js';
 
 const encoder = new TextEncoder();
@@ -41,7 +42,7 @@ async function apiKeyPrincipal(request, env) {
   const hash = await sha256(raw);
   const keys = await service(env, `api_keys?key_prefix=eq.${encodeURIComponent(prefix)}&secret_hash=eq.${hash}&status=eq.active&select=id,consumer_id,scopes,expires_at&limit=1`);
   const key = keys?.[0];
-  if (!key || (key.expires_at && Date.parse(key.expires_at) < Date.now())) return null;
+  if (!key || (key.expires_at && (!Number.isFinite(Date.parse(key.expires_at)) || Date.parse(key.expires_at) <= Date.now()))) return null;
   const consumers = await service(env, `api_consumers?id=eq.${key.consumer_id}&status=eq.active&select=id,plan_code&limit=1`);
   const consumer = consumers?.[0];
   return consumer ? { key, consumer } : null;
@@ -52,7 +53,9 @@ function hasScope(principal, scope) {
 }
 
 function requestId(request) {
-  return request.headers.get('idempotency-key') || request.headers.get('x-request-id') || crypto.randomUUID();
+  // A GET returns fresh data, not a persisted replay. Reusing a settled
+  // reservation would serve unlimited new responses for one charge.
+  return crypto.randomUUID();
 }
 
 async function reserve(env, principal, id, product, endpoint, method) {
@@ -102,23 +105,30 @@ async function handleMeteredMnetRead(request, env) {
 
   try {
     if (feed) {
-      const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 25)));
-      const rows = await service(env, `network_feed_items?visibility=eq.public&order=occurred_at.desc&limit=${limit}&select=*`);
+      const publicUrl = new URL(request.url); publicUrl.pathname = '/v1/mnet/public-feed';
+      const response = await existingPlatformApi(new Request(publicUrl, request), env);
+      if (!response.ok) {
+        await settle(env, id, response.status, started, { release: true });
+        return response;
+      }
+      const data = await response.json();
       const billing = await settle(env, id, 200, started);
-      return reply(request, env, { items: rows || [], scope: 'public', request_id: id, billing });
+      const result = reply(request, env, { ...data, request_id: id, billing });
+      result.headers.set('cache-control', 'private, no-store');
+      return result;
     }
 
-    const mcclusterId = decodeURIComponent(person[1]);
-    const identities = await service(env, `platform_profiles?mccluster_id=ilike.${encodeURIComponent(mcclusterId)}&select=user_id,display_name,avatar_url,mccluster_id&limit=1`);
-    if (!identities?.length) {
+    let mcclusterId;
+    try { mcclusterId = decodeURIComponent(person[1]); } catch { mcclusterId = ''; }
+    const data = await readPublicDeveloperProfile(env, mcclusterId);
+    if (!data) {
       await settle(env, id, 404, started, { release: true, metadata: { reason: 'not_found' } });
       return fail(request, env, 'Person not found', 404);
     }
-    const links = await service(env, `m_auth_user_links?auth_user_id=eq.${identities[0].user_id}&is_primary=eq.true&select=m_uid&limit=1`);
-    const muid = links?.[0]?.m_uid;
-    const profiles = muid ? await service(env, `network_profiles?m_uid=eq.${muid}&select=*&limit=1`) : [];
     const billing = await settle(env, id, 200, started);
-    return reply(request, env, { identity: identities[0], profile: profiles?.[0] || null, request_id: id, billing });
+    const result = reply(request, env, { ...data, request_id: id, billing });
+    result.headers.set('cache-control', 'private, no-store');
+    return result;
   } catch (error) {
     await settle(env, id, error.status || 500, started, { release: true, metadata: { reason: 'request_failed' } }).catch(() => {});
     throw error;
@@ -126,7 +136,12 @@ async function handleMeteredMnetRead(request, env) {
 }
 
 export async function handlePlatformApi(request, env) {
+  const developer = await handleDeveloperSecurity(request, env);
+  if (developer) return developer;
   const metered = await handleMeteredMnetRead(request, env);
   if (metered) return metered;
+  if (/^bearer mcc_/i.test(request.headers.get('authorization') || '') && new URL(request.url).pathname.startsWith('/v1/mnet/')) {
+    return fail(request, env, 'This developer endpoint is not available through the metered public API', 403);
+  }
   return existingPlatformApi(request, env);
 }

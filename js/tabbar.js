@@ -147,7 +147,7 @@
      It now means what it says: this page has no bar. If one was written
      into the HTML anyway, it is removed rather than left, because a nav
      hidden with CSS still reaches a screen reader and still takes tab
-     focus.
+     focus, which is the opposite of putting something away.
 
      matthew-mccluster.html used to opt out, on the reasoning that a hiring
      manager opening it from a job application should not be handed a bar
@@ -731,79 +731,37 @@
     });
   }
 
-  /* ---------- ONE M ACCOUNT, EVERY HOST ----------
-     Owner, 2026-10-14: "one M Account works on every site". A session is
-     per origin (localStorage), so crossing from one house to another
-     while signed in used to mean arriving as a guest. Now the bar carries
-     the sign-in across. LEAVING: a cross-host link to one of the
-     ecosystem's own origins gets the member's current access token in its
-     URL fragment, the way auth/seek-first-handoff.html already hands a
-     token to the console: a fragment is never sent to any server and
-     never appears in a Referer. ARRIVING: before anything else, the
-     fragment is scrubbed from the address; then the token is exchanged at
-     the API (POST /v1/auth/handoff, which answers only the ecosystem's own
-     origins and checks the token with Supabase) for a one-time magic-link
-     token, Supabase turns that into a session of THIS origin's own, it is
-     stored the ordinary way, and the page reloads signed in. No password,
-     no second sign-in. A page that already holds a session keeps it. */
+  /* Cross-origin navigation never carries a bearer in a URL. The same M
+     account signs in through the destination's own password/PKCE flow.
+     Existing sessions on either origin are untouched. */
   var API_ORIGIN = "https://api.mccluster.org";
-  var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
-  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var ECOSYSTEM = [HOUSE_ORIGIN.replace(/\/$/, ""), "https://mccluster.org", "https://www.mccluster.org", "https://humanuprise.com", "https://www.humanuprise.com"];
-  var HANDOFF = "mcc_handoff";
   function crossesHouse(url) {
     return url && /^https?:$/.test(url.protocol) && url.origin !== location.origin && ECOSYSTEM.indexOf(url.origin) !== -1;
   }
-  /* the link, with the sign-in riding along when there is one to carry */
   function handoffHref(dest) {
-    var url;
-    try { url = new URL(dest, location.href); } catch (e) { return Promise.resolve(dest); }
-    var stored = readAuthSession();
-    if (!crossesHouse(url) || !stored || !stored.access_token) return Promise.resolve(url.href);
-    var fresh = window.MCC && typeof window.MCC.refreshIfNeeded === "function"
-      ? window.MCC.refreshIfNeeded().then(function (s) { return (s && s.access_token) || stored.access_token; })
-      : Promise.resolve(stored.access_token);
-    return fresh.catch(function () { return stored.access_token; }).then(function (token) {
-      url.hash = (url.hash && url.hash !== "#" ? url.hash + "&" : "#") + HANDOFF + "=" + encodeURIComponent(token);
-      return url.href;
-    });
+    try {
+      var url = new URL(dest, location.href);
+      var fragment = new URLSearchParams(url.hash.replace(/^#/, ''));
+      if (fragment.has('mcc_handoff')) {
+        fragment.delete('mcc_handoff'); url.hash = fragment.toString();
+      }
+      return Promise.resolve(url.href);
+    } catch (e) { return Promise.resolve(dest); }
   }
   function navigateDocument(href) {
     if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.leaveFrame(href)) return;
     location.href = href;
   }
   function arriveWithHandoff() {
-    var hash = location.hash || "";
-    var m = /(?:^#|&)mcc_handoff=([^&]*)/.exec(hash);
-    if (!m) return Promise.resolve(false);
-    var token = decodeURIComponent(m[1] || "");
-    var rest = hash.replace(/(?:^#|&)mcc_handoff=[^&]*/, "");
-    if (rest === "#") rest = "";
-    try { history.replaceState(null, "", location.pathname + location.search + rest); } catch (e) {}
-    if (!token || readAuthSession()) return Promise.resolve(false);
-    return fetch(API_ORIGIN + "/v1/auth/handoff", { method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: "{}" })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("handoff refused")); })
-      .then(function (j) {
-        if (!j || !j.token_hash) throw new Error("no token");
-        return fetch(SB_URL + "/auth/v1/verify", { method: "POST", headers: { apikey: SB_KEY, "content-type": "application/json" }, body: JSON.stringify({ type: "magiclink", token_hash: j.token_hash }) });
-      })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("verify refused")); })
-      .then(function (s) {
-        if (!s || !s.access_token) throw new Error("no session");
-        var session = JSON.stringify({
-          access_token: s.access_token, refresh_token: s.refresh_token || "",
-          expires_at: Number(s.expires_at) || Math.floor(Date.now() / 1000) + (Number(s.expires_in) || 3600)
-        });
-        localStorage.setItem("mccdb_session", session);
-        try { localStorage.setItem("mcc_sess_keep", session); } catch (e) {}
-        /* NO SECOND PAINT (owner, 2026-10-20: no screen flashes). A page that can take the session where it stands says so
-           by cancelling mcc:handoff (js/mnet.js, the World, which waited for it); it then hears the ordinary sign-in event
-           and nothing reloads. Every other page reloads signed in, as before. */
-        if (emit("mcc:handoff", { ok: true }, true)) { emit("mcc:auth-changed", { signed_in: true, carried: true }); return true; }
-        location.reload();
-        return true;
-      })
-      .catch(function () { emit("mcc:handoff", { ok: false }); return false; });
+    var hash = location.hash || '';
+    if (!/(?:^#|&)mcc_handoff=/.test(hash)) return Promise.resolve(false);
+    var params = new URLSearchParams(hash.replace(/^#/, ''));
+    params.delete('mcc_handoff');
+    var clean = params.toString();
+    try { history.replaceState(null, '', location.pathname + location.search + (clean ? '#' + clean : '')); } catch (e) {}
+    emit('mcc:handoff', { ok: false, reason: 'reauthentication_required' });
+    return Promise.resolve(false);
   }
   /* ON THE WORLD'S HOST, A LINK TO ONE OF MATTHEW'S ROOMS LOOKS SAME-ORIGIN
      (album.html, creator.html, a receipt), and the Worker would 301 it to his

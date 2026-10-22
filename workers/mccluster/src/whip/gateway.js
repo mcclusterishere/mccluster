@@ -1,4 +1,5 @@
 import app from './router.js';
+import { DRIVER_OFFER_FIELDS } from './worker.js';
 
 const JSON_HEADERS={'content-type':'application/json; charset=utf-8'};
 const DRIVER_TRANSITIONS=new Set(['DRIVER_EN_ROUTE','DRIVER_ARRIVED','VERIFIED','IN_PROGRESS','COMPLETED']);
@@ -49,11 +50,11 @@ export default{async fetch(req,env,ctx){
     }
     if(path==='/api/offers'&&req.method==='GET'){
       const {driver}=await requireClearedDriver(req,env);if(!driver.online)return reply(env,{offers:[]});
-      const rows=await sb(env,`rides?tenant_id=eq.${encodeURIComponent(driver.tenant_id)}&status=eq.REQUESTED&payment_status=in.(authorized,paid)&order=requested_at.asc&limit=20&select=*`);return reply(env,{offers:rows||[]})
+      const rows=await sb(env,`rides?tenant_id=eq.${encodeURIComponent(driver.tenant_id)}&status=eq.REQUESTED&payment_status=in.(authorized,paid)&order=requested_at.asc&limit=20&select=${DRIVER_OFFER_FIELDS}`);return reply(env,{offers:rows||[]})
     }
     const presence=path.match(/^\/api\/drivers\/([^/]+)\/presence$/);
     if(presence&&req.method==='PATCH'){
-      const copy=req.clone(),body=await copy.json().catch(()=>({}));
+      const copy=req.clone(),body=await copy.json().catch(()=>({}));if(typeof body?.online!=='boolean')return fail(env,'online must be true or false',400);
       const {driver}=body.online===true ? await requireClearedDriver(req,env) : await requireDriver(req,env);
       if(driver.id!==presence[1])return fail(env,'Cannot modify another driver',403);
       return app.fetch(req,env,ctx)
