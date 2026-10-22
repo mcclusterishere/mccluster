@@ -239,6 +239,10 @@ export async function observeLayerOne({ db = createDb(), fetchImpl = fetch, env 
   now = new Date(), source = null, replay = false } = {}) {
   if (env.MCCLUSTER_MARKET_LAYER1_ENABLED !== 'true') return { status:'disabled', reason:'operator_flag_not_enabled' };
   if (source && !SOURCES.some(s => s.key === source)) throw fail('unknown_source');
+  // A production migration fixes a legacy upsert that clears license/retention metadata.
+  // Abort BEFORE registering/writing anything until the verified service-only contract exists.
+  const policyReady = await db.rpc('market_layer1_policy_ready_service', {}).catch(() => false);
+  if (policyReady !== true) return { status:'blocked', reason:'policy_migration_not_applied' };
   const org = await db.org(), results = [];
   const defs = SOURCES.filter(x => !source || x.key === source);
   for (const def of defs) {
