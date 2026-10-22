@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 434,
+  "candidate_count": 435,
   "capability_source_count": 104,
-  "support_only_count": 330,
+  "support_only_count": 331,
   "entries": [
     {
       "path": ".cursorrules",
@@ -73,6 +73,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "docs/control-plane/PRIM3-CHARACTER-RECHARACTERIZATION-V1.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Proposed PRIM3 virtual-performer video editing and McCluster Studio media workflow. It references the fictional Equity Uprise workplace for continuity, but does not define an Equity Uprise building or program capability."
     },
     {
       "path": "GEMINI.md",
