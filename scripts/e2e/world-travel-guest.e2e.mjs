@@ -170,6 +170,10 @@ try {
     geometry = await settled(page, frame);
     check(scope, 'expanded map controls do not overlap Fullscreen, modes or dock', !geometry.hits.length && geometry.inside, geometry);
     await page.locator('.mn__world-expand').click();
+    /* the globe moves its own controls after the World changes size (as after expanding, above): wait for them to settle
+       before tapping one, or the World's mode buttons can still be over it */
+    await page.waitForFunction(() => !document.documentElement.classList.contains('wt-expanded'));
+    await settled(page, frame);
     await page.locator('#wtLocate').click();
     await page.waitForFunction(() => /Location access is off/.test(document.getElementById('wtLocationStatus').textContent));
     check(scope, 'denied GPS leaves a retry and manual starting address', await page.isEnabled('#wtLocate') && await page.isEditable('#wtFrom'));

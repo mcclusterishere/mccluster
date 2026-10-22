@@ -6,7 +6,10 @@ import { createExperienceAnalyticsRoutes } from './experience.js';
 import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
+import {cleanInventory, socialCoverage} from './event-inventory.js';
 import { readBoundedRows, measurementContext } from './measurement.js';
+import { loadBusinessEventCounts } from './business-event-counts.js';
+import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
@@ -34,7 +37,9 @@ async function sb(env, path, init = {}) {
 async function sbJson(env, path, init = {}) {
   const res = await sb(env, path, init);
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw Object.assign(new Error('Analytics database read failed'), { status: 502, detail: body });
+  if (!res.ok) throw Object.assign(new Error('Analytics database read failed'), {
+    status: 502, detail: body, ...databaseErrorMetadata(res, body)
+  });
   return body;
 }
 
@@ -61,7 +66,11 @@ async function sbCountFiltered(env, table, column = 'id', filters = {}, sinceIso
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    throw Object.assign(new Error(`Could not count ${table}`), { status: 502, detail: detail.slice(0, 300) });
+    let body = null;
+    try { body = JSON.parse(detail); } catch {}
+    throw Object.assign(new Error(`Could not count ${table}`), {
+      status: 502, ...databaseErrorMetadata(res, body)
+    });
   }
   return countFromRange(res.headers.get('content-range'));
 }
@@ -545,14 +554,11 @@ export async function businessSnapshot(env, windowSpec = null) {
   const since = windowSpec?.since || null;
   const until = windowSpec?.until || null;
   const readErrors = {};
+  const readDiagnostics = {};
   const [
     postsTotal, followsTotal, reactionsTotal, profilesTotal,
     postsWindow, followsWindow, reactionsWindow, profilesWindow,
-    eventsTotal, eventsWindow, pageViewsTotal, pageViewsWindow,
-    clicksTotal, clicksWindow, acquiredTotal, acquiredWindow,
-    legacyPlaysTotal, legacyPlaysWindow, musicPlaysTotal, musicPlaysWindow,
-    previewPlaysTotal, previewPlaysWindow, fullPlaysTotal, fullPlaysWindow,
-    completesTotal, completesWindow, creatorProfilesTotal, creatorProfilesWindow,
+    eventCounts, creatorProfilesTotal, creatorProfilesWindow,
     creatorTracksTotal, creatorTracksWindow, publishedTracksTotal, activeOffersTotal,
     paidOrdersTotal, paidOrdersWindow, entitlementsTotal, entitlementsWindow, paidOrderRows
   ] = await boundedReads([
@@ -564,24 +570,7 @@ export async function businessSnapshot(env, windowSpec = null) {
     {key: 'followsWindow', run: () => since ? sbCount(env, 'network_follows', 'follower_m_uid', since, until) : Promise.resolve(null)},
     {key: 'reactionsWindow', run: () => since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null)},
     {key: 'profilesWindow', run: () => since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null)},
-    {key: 'eventsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, null, 'at')},
-    {key: 'eventsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'pageViewsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, null, 'at')},
-    {key: 'pageViewsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'clicksTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, null, 'at')},
-    {key: 'clicksWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'acquiredTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, null, 'at')},
-    {key: 'acquiredWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'legacyPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, null, 'at')},
-    {key: 'legacyPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'musicPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, null, 'at')},
-    {key: 'musicPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'previewPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, null, 'at')},
-    {key: 'previewPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'fullPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, null, 'at')},
-    {key: 'fullPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null)},
-    {key: 'completesTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, null, 'at')},
-    {key: 'completesWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'eventCounts', run: () => loadBusinessEventCounts((path, init) => sbJson(env, path, init), {since, until})},
     {key: 'creatorProfilesTotal', run: () => sbCount(env, 'music_creator_profiles', 'm_uid')},
     {key: 'creatorProfilesWindow', run: () => since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null)},
     {key: 'creatorTracksTotal', run: () => sbCount(env, 'creator_tracks')},
@@ -594,17 +583,57 @@ export async function businessSnapshot(env, windowSpec = null) {
     {key: 'entitlementsWindow', run: () => since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since, 'created_at', until) : Promise.resolve(null)},
     {key: 'paidOrderRows', run: () => sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')}
   ].map(task => async () => {
-    try { return await task.run(); }
-    catch { readErrors[task.key] = 'Data read unavailable'; return null; }
+    const started = Date.now();
+    try {
+      const value = await task.run();
+      readDiagnostics[task.key] = successfulReadDiagnostics(Date.now() - started,
+        value === null && (task.key.endsWith('Window') || task.key === 'paidOrderRows') && !since);
+      return value;
+    } catch (error) {
+      readErrors[task.key] = 'Data read unavailable';
+      readDiagnostics[task.key] = readFailureDiagnostics(error, Date.now() - started);
+      return null;
+    }
   }), 3); // Keep owner business reads below the dashboard's concurrent RPC load.
+  // A failed aggregate leaves its family unknown; never substitute zero.
+  // The readErrors.eventCounts key identifies the single server-side read.
+  const eventCount = key => eventCounts == null ? null : eventCounts[key];
+  const eventsTotal = eventCount('events_total');
+  const eventsWindow = eventCount('events_window');
+  const pageViewsTotal = eventCount('page_views_total');
+  const pageViewsWindow = eventCount('page_views_window');
+  const clicksTotal = eventCount('clicks_total');
+  const clicksWindow = eventCount('clicks_window');
+  const acquiredTotal = eventCount('acquired_total');
+  const acquiredWindow = eventCount('acquired_window');
+  const legacyPlaysTotal = eventCount('legacy_plays_total');
+  const legacyPlaysWindow = eventCount('legacy_plays_window');
+  const musicPlaysTotal = eventCount('music_plays_total');
+  const musicPlaysWindow = eventCount('music_plays_window');
+  const previewPlaysTotal = eventCount('preview_plays_total');
+  const previewPlaysWindow = eventCount('preview_plays_window');
+  const fullPlaysTotal = eventCount('full_plays_total');
+  const fullPlaysWindow = eventCount('full_plays_window');
+  const completesTotal = eventCount('completes_total');
+  const completesWindow = eventCount('completes_window');
 
   /* Verified Stripe sales and bookings from the commerce reconciler, live
      only, net of refunds; test-mode money is reported apart (commerce/
      summary.js). A failure here leaves the rest of the snapshot intact. */
+  const commerceStarted = Date.now();
+  let commerceFailure = null;
   const commerce = await loadCommerceSummary((path) => sbRows(env, path), windowSpec)
-    .catch((err) => ({ available: false, reason: String(err?.message || err).slice(0, 200) }));
+    .catch((err) => {
+      commerceFailure = err;
+      return { available: false, reason: 'Verified commerce read unavailable' };
+    });
 
-  if (commerce.available === false) readErrors.commerce = 'Verified commerce read unavailable';
+  if (commerce.available === false) {
+    readErrors.commerce = 'Verified commerce read unavailable';
+    readDiagnostics.commerce = readFailureDiagnostics(commerceFailure, Date.now() - commerceStarted);
+  } else {
+    readDiagnostics.commerce = successfulReadDiagnostics(Date.now() - commerceStarted);
+  }
   const paidRowsInWindow = since
     ? paidOrderRows?.filter((row) => {
         const at = Date.parse(row.created_at || '');
@@ -616,6 +645,7 @@ export async function businessSnapshot(env, windowSpec = null) {
   return {
     generated_at: new Date().toISOString(),
     read_errors: readErrors,
+    read_diagnostics: readDiagnostics,
     partial: Object.keys(readErrors).length > 0,
     timezone: timeZone,
     window: windowSpec,
@@ -859,7 +889,7 @@ export function answerBusinessQuestion(question, snapshot) {
   };
 }
 async function handleBusinessSnapshot(request, env, user, url) {
-  await requireHouseOps(env, user);
+  const { membership } = await requireHouseOps(env, user);
   if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
   const rawWindow = url.searchParams.get('window') || '';
   const rawSince = url.searchParams.get('since') || '';
@@ -875,7 +905,9 @@ async function handleBusinessSnapshot(request, env, user, url) {
       since: since.toISOString(), until: until.toISOString(), rolling:false
     };
   }
-  return json({ ok: true, snapshot: await businessSnapshot(env, windowSpec) });
+  return json({ ok: true, snapshot: visibleBusinessSnapshot(
+    await businessSnapshot(env, windowSpec), membership?.role === 'owner'
+  ) });
 }
 
 async function handleBusinessQuestion(request, env, user) {
@@ -1064,6 +1096,26 @@ export async function handleAnalyticsRequest(request, env, user) {
     return json({ ok:true, version:DICTIONARY_VERSION, source:DICTIONARY_SOURCE,
       unknown_event_policy:'unclassified', events:EVENT_DICTIONARY,
       metrics:METRIC_DICTIONARY, datasets:DATASETS });
+  }
+  if (path === '/v1/analytics/event-inventory') {
+    // All event names (including operations and unknown stages) are owner-only.
+    const {org}=await requireHouseOwner(env,user);
+    if(request.method!=='GET')return json({ok:false,error:'GET required'},405);
+    const events=cleanInventory(await sbRows(env,
+      'rpc/analytics_event_inventory_v1',));
+    const safeOrg=encodeURIComponent(org.id);
+    // One complete source-scoped aggregate: no unordered or capped account
+    // fetch, and no false zero when one backend source fails.
+    let provider;
+    try {
+      const counts=await sbRows(env,
+        'rpc/analytics_instagram_source_status_v1?p_org='+safeOrg);
+      provider=socialCoverage(Array.isArray(counts)&&counts.length===1?counts[0]:null);
+    } catch {
+      provider=socialCoverage(null);
+    }
+    return json({ok:true,measured_at:new Date().toISOString(),...events,providers:provider,
+      partial:provider.instagram.status==='unavailable'});
   }
   if (path === '/v1/analytics/coverage') {
     if (request.method !== 'GET') return json({ error: 'GET required' }, 405);

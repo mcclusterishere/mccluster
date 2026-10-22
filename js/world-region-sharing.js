@@ -60,9 +60,12 @@
     }).then(function (data) {
       var states = data && Array.isArray(data.states) ? data.states : [];
       states.sort(function (a, b) { return String(a.properties && a.properties.name || '').localeCompare(String(b.properties && b.properties.name || '')); });
+      var seen = new Set();
       states.forEach(function (state) {
         var p = state.properties || {}, opt = document.createElement('option');
-        opt.value = p.key || ''; opt.textContent = p.name || p.key || ''; select.appendChild(opt);
+        var code = root.MCC_WORLD_REGION_SCOPE && root.MCC_WORLD_REGION_SCOPE.code(country, p.key);
+        if (!code || seen.has(code)) return;
+        seen.add(code); opt.value = code; opt.textContent = p.name || p.key || ''; select.appendChild(opt);
       });
       select.disabled = !$('worldRegionShare').checked;
       select.value = selected && Array.from(select.options).some(function (o) { return o.value === selected; }) ? selected : '';
@@ -90,10 +93,11 @@
     if (!on) work = rpc('world_region_sharing_clear', {});
     else {
       var country = $('worldRegionCountry').value, subdivision = $('worldRegionSubdivision').value || null;
+      if (subdivision && !new RegExp('^' + country + '-[A-Z0-9]{1,8}$').test(subdivision)) { button.disabled = false; setMessage('Select a supported region or choose whole country.'); return; }
       if (!/^[A-Z]{2}$/.test(country)) { button.disabled = false; setMessage('Choose a country first.'); return; }
       work = rpc('world_region_sharing_set', { p_country_code: country, p_subdivision_code: subdivision });
     }
-    work.then(function () { setMessage(on ? 'Shared. Only this coarse region can contribute to public counts.' : 'Region sharing is off. You are no longer included in World member counts.'); return load(); })
+    work.then(function () { setMessage(on ? 'Saved. This voluntary choice contributes to separately labelled opt-in counts once five members share an area; updates can take five minutes.' : 'Sharing withdrawn. Cached public opt-in totals may take up to five minutes to update.'); return load(); })
       .catch(function (e) { setMessage(e.message || 'That setting did not save.'); })
       .then(function () { button.disabled = false; });
   }

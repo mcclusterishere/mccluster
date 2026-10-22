@@ -23,8 +23,6 @@ create index if not exists network_posts_public_country_timeline_v1
   where country_code is not null and visibility='public'
     and deleted_at is null and group_id is null and reply_to_id is null;
 
--- Live room country labels are reserved here for the audio-room transport.
--- Never use IP geolocation for hosts/guests without clear opt-in.
 alter table if exists public.network_live_sessions add column if not exists country_code text;
 do $$
 begin
@@ -36,8 +34,4 @@ begin
    check (country_code is null or country_code ~ '^[A-Z]{2}$');
  end if;
 end $$;
--- Existing GDELT country codes live in media_news_articles.location_country_fips.
--- They are FIPS, NOT ISO; Workers use GeoNames FIPS_TO_ISO crosswalk.
--- News source is article place *mention*, not independently geolocated event.
--- Media news table and ingest migrations are already in production.
 commit;

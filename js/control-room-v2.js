@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
+  var CREATE_VIEWS = ["projects", "front-page", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -87,9 +87,11 @@
     assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
-    halo: { title: "Hitman Halo", href: "auth/seek-first-handoff.html", subtitle: "Owner spatial intelligence workspace" },
-    manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" },
-    spatial: { title: "Spatial Intelligence", href: "auth/seek-first-handoff.html", subtitle: "Seek First console, signed in as you" }
+    /* HITMAN'S HALO ON THE GLOBE (owner, 2026-10-21: "fix the fact that the control room points to seek first"): the
+       owner's full-screen globe with the Halo console open. Seek First (the retired console behind
+       auth/seek-first-handoff.html) is no longer a door from here. */
+    halo: { title: "Hitman’s Halo", href: "action-globe.html?explore=1&halo=1", subtitle: "World · Missions · People · Intelligence" },
+    manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" }
   };
 
   /* Formatting and source-result primitives live in js/control-room/
@@ -825,6 +827,7 @@
     if (["action", "uprise", "mobilize"].indexOf(v) >= 0) return "action-network";
     if (["grants", "opportunity-intelligence", "bounties-funding"].indexOf(v) >= 0) return "funding";
     if (["build-code", "code"].indexOf(v) >= 0) return "build";
+    if (["front", "site", "homepage", "home-page", "index"].indexOf(v) >= 0) return "front-page";
     return "projects";
   }
   function normalizeSystemView(v) {
@@ -1714,8 +1717,10 @@
         ? (window.CR.songTest ? window.CR.songTest.render() : empty("Song test unavailable", "The native Control module did not load."))
       : state.createView === "build"
         ? (window.CR.buildCode ? window.CR.buildCode.render() : empty("Build unavailable", "The native Control module did not load."))
+      : state.createView === "front-page"
+        ? (window.CR.frontPage ? window.CR.frontPage.render() : empty("Front page unavailable", "The native Control module did not load."))
         : renderSchedule();
-    return renderHeader("Create", "Projects, assets, publishing, channels, music operations, clipping and Human Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    return renderHeader("Create", "Your front page, projects, assets, publishing, channels, music operations, clipping and Human Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
 
   /* CHANNELS — where publishing actually points.
@@ -2373,7 +2378,7 @@
 
   function renderApps() {
     var registered = state.apps.map(function (a) { return appCard(a.name || a.app_key, [a.product_family, a.kind].filter(Boolean).join(" · ") || "Registered application", a.public_url || "#", a.app_key || "registered", true); }).join("") || '<div class="cr-panel__body cr-muted">No registered applications were returned.</div>';
-    var specialty = [bridge.whip, bridge.spatial, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
+    var specialty = [bridge.whip, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
     return renderHeader("Apps", "Specialized products stay one launch away without becoming permanent Control Room navigation.") + '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
   }
 
@@ -3382,6 +3387,7 @@
     if (window.CR.clipping) window.CR.clipping.bind($("crSurface"));
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
     if (window.CR.buildCode) window.CR.buildCode.bind($("crSurface"));
+    if (window.CR.frontPage) window.CR.frontPage.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
     var search = $("crWorkSearch");
@@ -3685,6 +3691,7 @@
   });
   if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });
   if (window.CR.buildCode) window.CR.buildCode.init({ request: request, render: render, orgId: function () { return state.org && state.org.id; } });
+  if (window.CR.frontPage) window.CR.frontPage.init({ request: request, render: render });
 
   window.CR.media.init({
     request: request,

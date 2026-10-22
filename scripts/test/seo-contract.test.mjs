@@ -273,7 +273,7 @@ test("public document pages show the privacy notice as a banner, and recording s
   assert.match(live, /@media print\{#mccPrivacyNotice\{display:none!important\}\}/, "the banner must never print onto a résumé");
   /* owner, 2026-10-20: the notice is shown once; "Not now" is an answer that keeps it from coming back, never an agreement */
   assert.match(live, /getElementById\("mccPrivacyNoticeLater"\)\.addEventListener\("click", function \(\) \{\s*writeSeen\(\);/, "Not now records that the notice was seen");
-  assert.match(read("js/analytics.js"), /if \(mccPrivacyAcknowledged\(\)\) \{/, "analytics still waits for acknowledgement");
+  assert.match(read("js/analytics.js"), /if \(mccPrivacyAcknowledged\(\) && !mccControlPreview\(\)\) \{/, "analytics still waits for acknowledgement");
   const must = ["matthew-mccluster.html", "resume-it-support.html", "press.html", "services.html", "newsroom.html",
     "docket-516.html", "hire.html", "catalogue.html", ...ENGINEERING];
   for (const f of must) {

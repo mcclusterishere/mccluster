@@ -3,6 +3,8 @@
 Promoted 2026-10-21: `listener_state_v1.sql` is applied in production as `20261021125121_listener_state_v1.sql`. The Pocket cross-device state table now exists, with authenticated ownership RLS, forced RLS, a 4 KiB JSON cap, and no anon read. Exact stored production SQL matches the reviewed pending source. Test: `bash scripts/test-listener-state-db.sh`. Do not replay the pending file.
 
 
+Pending (2026-10-21): `member_fronts_v1.sql` gives every account its own front page (owner: "all the accounts need to be able to recreate with their own media this exact same experience"). It adds `public.member_fronts`, which only the Worker's service role reaches (forced RLS, revoked from anon and authenticated), and the public `front-media` bucket, where each account lists, writes, replaces and removes only its own folder (its auth uid), up to 2,500 files and 1 GiB (`public.front_media_has_room()`). Until it is applied, `/v1/fronts` answers 503. Test: `scripts/test-member-fronts-db.sh`. Docs: `docs/control-plane/MEMBER-FRONT-PAGES.md`. Rollback: in the file's header. Promote it using the steps below.
+
 Promoted on 2026-10-17: `action_archive_cohort_v1.sql` is
 `supabase/migrations/20261017164335_action_archive_cohort_v1.sql`, and
 `action_mission_reset_v1.sql` is
@@ -13,6 +15,8 @@ missions remain open; larger concepts are private partner-development drafts.
 The exact production SQL and ledger are recorded. Regression gate:
 `bash scripts/test-action-archive-db.sh`; public source and release notes:
 `docs/control-plane/MISSION-RESET-DOCKET-516R.md`.
+
+Pending: `world_member_regions_v1.sql` adds `public.world_member_regions()`, the World place card's members: accounts by the IP country, region code and rounded place of their latest signed-in visit, read from `public.events` (nothing new collected; service role only). Until it is applied, `GET /v1/world/members` answers `unavailable` and the card shows a dash. Test: `node --test workers/mccluster/test/world-members.test.mjs`. Rollback: `drop function if exists public.world_member_regions(integer);`. Promote it using the steps below.
 
 A migration is committed under `supabase/migrations/` only with the exact
 version production recorded for it (see `supabase/production-ledger.json` and

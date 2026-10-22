@@ -24,7 +24,18 @@ export const LAYER_RULES = Object.freeze({
   audience: { min: 'creator_business', label: 'Your audience' },
   /* Whip Equipped LLC is Matthew McCluster's separate company. This legacy
      globe adapter is operator-only; rides are not live. */
-  transport: { min: 'fan', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC', service_live: false, driver_signup_url: WHIP_DRIVER_SIGNUP_URL }
+  transport: { min: 'fan', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC', service_live: false, driver_signup_url: WHIP_DRIVER_SIGNUP_URL },
+  /* Halo feeds on the admin globe (./world-halo-layers.js); owner-only through the release guard */
+  military: { min: 'fan', label: 'Military flights' },
+  quakes: { min: 'fan', label: 'Earthquakes' },
+  fires: { min: 'fan', label: 'Active fires' },
+  perimeters: { min: 'fan', label: 'Wildfire perimeters' },
+  cyclones: { min: 'fan', label: 'Tropical cyclones' },
+  vessels: { min: 'fan', label: 'Ships (AIS)' },
+  search: { min: 'fan', label: 'Place search' },
+  /* Halo operations and NOAA water levels (./world-halo-ops.js); owner-only through the release guard and the handler */
+  'halo-ops': { min: 'fan', label: 'Missions and people' },
+  tides: { min: 'fan', label: 'Coastal water levels' }
 });
 
 const rank = (level) => LEVELS.indexOf(level);

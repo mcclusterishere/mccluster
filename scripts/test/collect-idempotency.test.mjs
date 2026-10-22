@@ -128,12 +128,15 @@ test('DNT still suppresses visitor metadata when using a replay-safe event ID',a
   assert.deepEqual(JSON.parse(JSON.stringify(saved.props)),{});
 });
 
-test('all first-party and SDK events mint UUIDs before enqueueing; no durable cross-visit retry store is introduced',async()=>{
+test('all first-party and SDK events mint UUIDs; house recovery stores only minimal consent-gated envelopes',async()=>{
   const [house,sdk]=await Promise.all([
     readFile(new URL('../../js/analytics.js',import.meta.url),'utf8'),
     readFile(new URL('../../js/mc-analytics.js',import.meta.url),'utf8')
   ]);
-  assert.match(house,/queue\.push\(\{\s*id:\s*uuid\(\)/);
+  assert.match(house,/var event = \{\s*id:\s*uuid\(\)/);
+  assert.match(house,/eventOutbox\.put\(event\)/);
+  assert.match(house,/queue\.push\(event\)/);
+  assert.match(house,/if \(!permitted\(\)\) \{purge\(\); return false;\}/);
   assert.match(house,/attempt\(COLLECT_FALLBACK\)/);
   assert.match(house,/if \(r \|\| keepalive \|\| privacySignal\(\) \|\| !mccPrivacyAcknowledged\(\)\) return r/);
   assert.match(sdk,/queue\.push\(\{\s*id:\s*uuid\(\)/);

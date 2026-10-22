@@ -143,15 +143,17 @@
       /* the selection outline: the accent, lifted toward white so it reads as an edge over its own fill */
       C.outline = Cs.Color.lerp(C.accent, Cs.Color.WHITE, 0.28, new Cs.Color());
     }
-    /* THE SHADING (owner, 2026-10-21: "lackluster, really lackluster, because the shading isn't dynamic enough"): each
-       value's level is half its rank and half its log size (js/heat-scale.js), on a ramp from the land through the accent
-       to a light tint of it, so the whole ramp is used however lopsided the numbers are. The accent stays the one token. */
+    /* THE SHADING (owner, 2026-10-21: "lackluster, really lackluster, because the shading isn't dynamic enough", then
+       "things that are not doing well should be gray, the same color as a globe, and things that are having more shit
+       going on should be red"): each value's level is half its rank and half its log size (js/heat-scale.js), on a ramp
+       from the land's own grey straight to the accent's full red, so the whole ramp is used however lopsided the numbers
+       are and the busiest place is the reddest. The accent stays the one token. */
     var levelCache = { src: null, fn: null }, stateLevelCache = { src: null, fn: null };
     function levelOf(cache, src, values) { if (cache.src !== src) { cache.src = src; cache.fn = window.HuHeat ? window.HuHeat.levels(values()) : null; } return cache.fn; }
     function rampColor(t) {
       var H = window.HuHeat;
-      if (!H) return Cs.Color.lerp(C.land, C.accent, 0.22 + 0.68 * t, new Cs.Color()).withAlpha(1);
-      var c = H.at(H.accentRamp([C.land.red, C.land.green, C.land.blue], [C.accent.red, C.accent.green, C.accent.blue], true), t);
+      if (!H) return Cs.Color.lerp(C.land, C.accent, t, new Cs.Color()).withAlpha(1);
+      var c = H.at(H.greyRamp([C.land.red, C.land.green, C.land.blue], [C.accent.red, C.accent.green, C.accent.blue]), t);
       return new Cs.Color(c[0], c[1], c[2], 1);
     }
     function valueOf(code) { if (!code) return null; for (var i = 0; i < api.data.points.length; i++) if (api.data.points[i].code === code) return api.data.points[i]; return null; }

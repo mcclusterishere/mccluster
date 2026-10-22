@@ -40,12 +40,13 @@
     return native.concat([
       {label:'World', group:'Products', href:world, context:'Human Uprise'},
       {label:'Your desk', group:'Operations', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
-      {label:'Hitman’s Halo', group:'Products', href:'https://prime.mccluster.org/', context:'Spatial intelligence'},
+      /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
+         Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
+      {label:'Hitman’s Halo', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'World · Missions · People · Intelligence'},
       {label:'PRIM3', group:'Products', href:new URL('prim3.html', house).href, context:'Learning'},
       {label:'Whip', group:'Products', href:new URL('whip.html', house).href, context:'Mobility'},
       {label:'WE Manufacture', group:'Products', href:new URL('we-manufacture.html', house).href, context:'Manufacturing'},
-      {label:'Asset Lab', group:'Studio', href:new URL('asset-lab.html', house).href, context:'Asset tools'},
-      {label:'Spatial Intelligence', group:'Products', href:new URL('auth/seek-first-handoff.html', house).href, context:'Seek First'}
+      {label:'Asset Lab', group:'Studio', href:new URL('asset-lab.html', house).href, context:'Asset tools'}
     ]);
   }
   function closePanel(focus = false) {

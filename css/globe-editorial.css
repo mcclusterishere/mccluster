@@ -28,6 +28,10 @@ html.globe-editorial, .globe-editorial body, .globe-editorial #globe {background
 .globe-editorial .globe-editorial-world .globe-ctl span {display:none;}
 .globe-editorial .globe-editorial-world svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4;}
 .globe-editorial .globe-editorial-world .globe-ctl:focus-visible {outline:2px solid #fff;outline-offset:2px;}
+/* the house owner's Halo door stands above World in the same corner (js/action-globe.js haloSync); everyone else sees World only */
+.globe-editorial .globe-editorial-world {display:flex;flex-direction:column;gap:8px;}
+.globe-editorial .globe-editorial-world .globe-ctl[hidden] {display:none;}
+.globe-editorial .globe-editorial-world a.globe-ctl {text-decoration:none;}
 .globe-editorial.globe-bare .globe-editorial-world,.globe-travel .globe-editorial-world {display:none;}
 .globe-editorial.globe-bare .globe-editorial-tools {display:none;}
 

@@ -129,7 +129,7 @@ test('owner bar: five tabs for the owner from the server\'s answer, three for ev
   assert.match(block, /sessionStorage\.setItem\(ADMIN_KEY, JSON\.stringify\(\{ sub: sub, at: Date\.now\(\), admin: r\.ok \}\)\)/);
   assert.match(block, /if \(r\.ok \|\| r\.status === 401 \|\| r\.status === 403\)/, 'only a definite answer changes the bar');
   const order = [...block.matchAll(/data-appnav="([a-z-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['music', 'admin-home', 'home', 'analytics', 'world']);
+  assert.deepEqual(order, ['music', 'admin-home', 'home', 'analytics', 'halo']);
   assert.match(block, /control\.html#home/);
   assert.match(block, /control\.html#analytics/);
   assert.match(block, /<img class="appbar__m" src="' \+ ROOT \+ 'assets\/img\/m-mark\.png" alt="">/, 'the supplied mark, no plate, nothing drawn');

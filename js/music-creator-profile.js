@@ -153,6 +153,24 @@
     identityLink.textContent = "Put this music into action → @" + p.handle;
     identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on Human Uprise");
     $("apDoors").appendChild(identityLink);
+    ownerDoors(p);
+  }
+  /* THE ARTIST'S OWN TOOLS, ON THEIR OWN PAGE (owner, 2026-10-21: "I have a whole account on Hitman Benji ... I never
+     seen nothing like that, to be able to edit my profile"). Signed in as the account behind this page, the artist sees
+     where to edit it (Creator Studio) and where to build their front page (front-studio.html). Nobody else sees them,
+     and both editors check the account again themselves. */
+  function ownerDoors(p) {
+    var session = root.MCC && root.MCC.session && root.MCC.session();
+    if (!session || !session.access_token) return;
+    fetch(SB + "/rest/v1/rpc/current_m_uid", { method: "POST", headers: { apikey: KEY, authorization: "Bearer " + session.access_token, "content-type": "application/json" }, body: "{}" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (mine) {
+        if (!mine || mine !== p.m_uid || !$("apDoors") || doc.getElementById("apOwnerEdit")) return;
+        var edit = doc.createElement("a"); edit.id = "apOwnerEdit"; edit.className = "ap-door ap-door--lead"; edit.href = "creator.html?edit=profile"; edit.textContent = "Edit my artist page";
+        var build = doc.createElement("a"); build.id = "apOwnerFront"; build.className = "ap-door"; build.href = "front-studio.html"; build.textContent = "Build my front page";
+        $("apDoors").insertBefore(build, $("apDoors").firstChild);
+        $("apDoors").insertBefore(edit, $("apDoors").firstChild);
+      }).catch(function () {});
   }
 
   /* ---------- the rate sheet and booking requests ---------- */

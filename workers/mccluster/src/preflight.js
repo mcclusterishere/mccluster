@@ -29,7 +29,9 @@ export const PREFLIGHT_FIRST_PREFIXES = [
   '/v1/action-archive',
   '/v1/identity',
   /* the morning brief (brief.html): the house owner's and region leaders' session rides with every call */
-  '/v1/news-briefs'
+  '/v1/news-briefs',
+  /* every account's front page: the editor saves with the account's session (./member-fronts.js) */
+  '/v1/fronts'
 ];
 
 export function preflightResponse(request, env) {

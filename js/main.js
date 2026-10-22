@@ -34,6 +34,99 @@
 
   var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  /* ---------------- THE OWNER'S FRONT PAGE SETTINGS ----------------
+     Owner, 2026-10-21: "I should be able to control my site's front page ... with the scroll dependent and the VR and all
+     that stuff from my admin panel." Control → Create → Front page saves ONE row, site_content (page index.html, slot
+     @front, a JSON value), which js/live-content.js reads for every visitor, and its preview posts a draft of the same
+     shape to this page when it is framed by the Control Room on this origin. index.html is never rewritten.
+     Every value is checked and bounded here; anything missing or wrong keeps what the page has always done, so no row
+     (or a bad one) is the shipped page exactly. Settings that arrive after the page started apply where they still can:
+     the scroll feel and the night room at once, the cabin's opening view and tags the next time it mounts. */
+  var FRONT_DEFAULT = {
+    scenes: { doors: true, vaunt: true, night: true, world: true },
+    scroll: { duration: 0.85, touchLerp: 0.14 },
+    vr: { enabled: true, hold: true, band: [0.40, 0.50], yaw: -140, pitch: -32, spots: [
+      // pinned on the flight console between the pilots, measured off the equirect frame
+      { yaw: -77, pitch: -13, label: "The cockpit · fly with Vaunt", href: "https://vauntapi.flyvaunt.com/referral/nuao1K", blank: true },
+      { yaw: 131, pitch: -29, label: "Get to the bag", href: "hire.html", urgent: true },
+      { yaw: -140, pitch: -40, label: "McCluster · the résumé", href: "matthew-mccluster.html" },
+    ] },
+    night: { arrive: 0.74 },
+  };
+  function frontNum(v, lo, hi, d) { var n = typeof v === "number" ? v : NaN; return isFinite(n) && n >= lo && n <= hi ? n : d; }
+  function frontBool(v, d) { return typeof v === "boolean" ? v : d; }
+  /* a tag's link stays on this site, or is an https link the owner typed; never a script */
+  function frontHref(v) {
+    var h = typeof v === "string" ? v.trim() : "";
+    if (!h || h.length > 300) return null;
+    if (/^https:\/\/[^\s"'<>]+$/i.test(h)) return h;
+    return /^(?![a-z][a-z0-9+.-]*:)(?!\/\/)[a-z0-9_./?#=&%-]+$/i.test(h) ? h : null;
+  }
+  /* AN ACCOUNT'S MEDIA (owner, 2026-10-21: "all the accounts need to be able to recreate with their own media this exact
+     same experience"): only files in an account's own folder of the public front-media bucket (packages/front-config
+     checks the folder is the account's before anything is stored). A film is its frames, cut in the account's browser:
+     base + 0001.webp … (and sm/ for phones). */
+  var FRONT_MEDIA_RE = /^https:\/\/zmnhbrjyhxzhkxmhkexs\.supabase\.co\/storage\/v1\/object\/public\/front-media\/[0-9a-f-]{36}\/[A-Za-z0-9._\/-]+$/;
+  function frontMediaUrl(v) { return typeof v === "string" && v.length <= 400 && v.indexOf("..") < 0 && FRONT_MEDIA_RE.test(v) ? v : null; }
+  function frontFilm(x) {
+    if (!x || typeof x !== "object") return null;
+    var base = frontMediaUrl(x.base), n = x.count;
+    return base && /\/$/.test(base) && n === (n | 0) && n >= 8 && n <= 240 && (x.ext === "webp" || x.ext === "jpg") ? { base: base, count: n, ext: x.ext, sm: x.sm === true } : null;
+  }
+  function frontMedia(m) {
+    m = m && typeof m === "object" ? m : {};
+    var c = m.cabin && typeof m.cabin === "object" ? m.cabin : null, cs = c && frontMediaUrl(c.src);
+    return {
+      hero: frontFilm(m.hero), scene1: frontFilm(m.scene1), scene2: frontFilm(m.scene2), night: frontFilm(m.night),
+      cabin: cs && (c.kind === "video" || c.kind === "image") ? { src: cs, kind: c.kind, poster: frontMediaUrl(c.poster) } : null,
+      sound: m.sound && frontMediaUrl(m.sound.src) ? { src: m.sound.src } : null,
+      still: m.still && frontMediaUrl(m.still.src) ? { src: m.still.src } : null,
+    };
+  }
+  /* member: an account's page (front.html). Its 360 room has its own tags or none, never the house's (Codex #595). */
+  function frontConfig(raw, member) {
+    var r = raw && typeof raw === "object" ? raw : {}, D = FRONT_DEFAULT;
+    var sc = r.scenes || {}, sr = r.scroll || {}, v = r.vr || {}, n = r.night || {};
+    var band = Array.isArray(v.band) && v.band.length === 2 ? [frontNum(v.band[0], 0.15, 0.85, NaN), frontNum(v.band[1], 0.15, 0.85, NaN)] : null;
+    if (!band || !(band[1] - band[0] >= 0.04)) band = D.vr.band.slice();
+    var spots = Array.isArray(v.spots) ? v.spots.slice(0, 5).map(function (x) {
+      var label = x && typeof x.label === "string" ? x.label.trim().slice(0, 60) : "", href = frontHref(x && x.href);
+      if (!label || !href) return null;
+      return { yaw: frontNum(x.yaw, -180, 180, 0), pitch: frontNum(x.pitch, -85, 85, 0), label: label, href: href, blank: /^https:/i.test(href), urgent: x.urgent === true };
+    }).filter(Boolean) : null;
+    return {
+      scenes: { doors: frontBool(sc.doors, true), vaunt: frontBool(sc.vaunt, true), night: frontBool(sc.night, true), world: frontBool(sc.world, true) },
+      scroll: { duration: frontNum(sr.duration, 0.3, 1.8, D.scroll.duration), touchLerp: frontNum(sr.touchLerp, 0.05, 0.4, D.scroll.touchLerp) },
+      vr: { enabled: frontBool(v.enabled, true), hold: frontBool(v.hold, true), band: band, yaw: frontNum(v.yaw, -180, 180, D.vr.yaw), pitch: frontNum(v.pitch, -85, 85, D.vr.pitch), spots: member ? (spots || []) : spots && spots.length ? spots : D.vr.spots },
+      night: { arrive: frontNum(n.arrive, 0.5, 0.86, D.night.arrive) },
+      media: frontMedia(r.media),
+    };
+  }
+  /* AN ACCOUNT'S OWN FRONT PAGE (front.html?u=<handle>): js/front-member.js reads the account's published page (or, in
+     its editor's preview, the draft) before this file runs and hands it over here, with the page's words already in
+     place. The same engine then runs the account's media. The house page (index.html) has no such hand-over. */
+  var MEMBER = window.MCC_FRONT_SOURCE && typeof window.MCC_FRONT_SOURCE === "object" ? window.MCC_FRONT_SOURCE : null;
+  var FRONT = frontConfig(MEMBER ? MEMBER.config : null, !!MEMBER);
+  window.MCC_FRONT_DEFAULT = frontConfig(null);   // what the page does with no row: the Control Room's starting point
+  var frontHooks = [];
+  function frontRow() {
+    var rows = window.MCC_CONTENT_ROWS;
+    if (!Array.isArray(rows)) return null;
+    for (var i = 0; i < rows.length; i++) if (rows[i] && rows[i].slot === "@front") { try { return JSON.parse(rows[i].value); } catch (e) { return null; } }
+    return null;
+  }
+  function setFront(raw, source) {
+    FRONT = frontConfig(raw, !!MEMBER);
+    window.MCC_FRONT = { config: FRONT, source: source || "shipped" };
+    document.documentElement.setAttribute("data-front", source || "shipped");
+    frontHooks.forEach(function (fn) { try { fn(FRONT); } catch (e) {} });
+  }
+  window.MCC_FRONT = { config: FRONT, source: MEMBER ? "member" : "shipped" };
+  /* the editors' preview: a draft from the frame's parent on this origin (the house's Control Room, or an account's own
+     editor, front-studio.html), never from anywhere else */
+  var framedByControl = false;
+  try { framedByControl = window.parent !== window && window.parent.location.origin === location.origin && /(?:control|front-studio)\.html$/.test(window.parent.location.pathname); } catch (e) {}
+
   /* ---------------- Lenis smooth scroll ----------------
      Tuned for CONTROL: the page must feel held, not driven. A shorter
      glide (0.85s), and on touch devices the scroll runs through Lenis
@@ -44,16 +137,18 @@
   var lenis;
   if (typeof Lenis === "function") {
     lenis = new Lenis({
-      duration: 0.85,
+      duration: FRONT.scroll.duration,
       easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
       smoothWheel: !prefersReduced,
       syncTouch: !prefersReduced,
-      syncTouchLerp: 0.14,
+      syncTouchLerp: FRONT.scroll.touchLerp,
       touchInertiaMultiplier: 22,
     });
     lenis.on("scroll", typeof ScrollTrigger !== "undefined" ? ScrollTrigger.update : function () {});
     gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
     gsap.ticker.lagSmoothing(0);
+    /* Lenis reads its options as it goes: a new scroll feel takes effect at once */
+    frontHooks.push(function (f) { lenis.options.duration = f.scroll.duration; lenis.options.syncTouchLerp = f.scroll.touchLerp; });
   } else {
     lenis = {
       on: function () {},
@@ -221,6 +316,22 @@
     return name === "hero" ? 1 : 2;
   }
 
+  /* which of an account's films plays in which of the page's canvases */
+  var FILM_KEYS = { hero: "hero", vauntlive: "scene1", vaunt: "scene2", nightscroll: "night" };
+  /* only on an account's page: the house page's films are its own, whatever a settings row carries */
+  function memberFilm(name) { var k = FILM_KEYS[name]; return (MEMBER && k && FRONT.media && FRONT.media[k]) || null; }
+  function frameUrl(name, i) {
+    var f = memberFilm(name);
+    if (f) return f.base + (f.sm && FRAME_DIR ? "sm/" : "") + pad4(i) + "." + f.ext;
+    return "assets/frames/" + FRAME_DIR + name + "_" + pad4(i) + ".webp";
+  }
+  /* an account's page has no manifest file: its films are its settings */
+  function memberManifest() {
+    var m = {};
+    Object.keys(FILM_KEYS).forEach(function (name) { var f = memberFilm(name); if (f) m[name] = { count: f.count }; });
+    return m;
+  }
+
   function loadSequence(seq, name, count, onProgress) {
     seq.count = count;
     var FRAME_STEP = stepFor(name);              /* shadows the global, per film */
@@ -240,7 +351,7 @@
           var img = new Image();
           /* the scroll sequences ship as webp: same frames, roughly half the
              bytes, and every engine since 2020 decodes them */
-          img.src = "assets/frames/" + FRAME_DIR + name + "_" + pad4(i) + ".webp";
+          img.src = frameUrl(name, i);
           img.onload = img.onerror = function () {
             loaded++;
             flags[i - 1] = true;
@@ -351,8 +462,8 @@
     }, "-=0.7");
   }
 
-  fetch("assets/frames/manifest.json", { cache: "no-cache" })
-    .then(function (r) { if (!r.ok) throw new Error("no manifest"); return r.json(); })
+  (MEMBER ? Promise.resolve(memberManifest()) : fetch("assets/frames/manifest.json", { cache: "no-cache" })
+    .then(function (r) { if (!r.ok) throw new Error("no manifest"); return r.json(); }))
     .then(function (m) {
       // Open on a LEAD BATCH, not the whole orbit. The hero section is 520vh
       // tall, so the viewer physically cannot scrub past the first frames
@@ -361,14 +472,16 @@
       // ticker's loadedMax clamp holds the newest decoded frame until each one
       // arrives, so the scrub never shows black. This drops the blocking load
       // from ~161 frames (~7.4 MB) to ~48 (~1.4 MB) without a half-loaded feel.
-      var full = m.hero.count;
+      var full = m.hero ? m.hero.count : 0;
       var heroGate = Math.min(48, full);
       var opened = false;
       window.__MCC_ENTER = function () {
         if (!opened) { opened = true; openSite(); }
       };
       if (enterAsked) window.__MCC_ENTER(); // a tap that landed early is honored now
-      loadSequence(sequences.hero, "hero", full, function () {
+      /* an account's page with no hero film opens on its still at once */
+      if (!full) { if (sequences.hero) sequences.hero.fallback(); opened = true; openSite(); }
+      else loadSequence(sequences.hero, "hero", full, function () {
         var ready = sequences.hero.loadedMax + 1; // contiguous frames from 0
         var gp = Math.min(1, ready / heroGate);
         var pct = gp * 100;
@@ -385,7 +498,7 @@
           var s = sequences[key];
           if (!s || !m[name]) return;
           var img = new Image();
-          img.src = "assets/frames/" + name + "_0001.jpg";
+          img.src = memberFilm(name) ? frameUrl(name, 1) : "assets/frames/" + name + "_0001.jpg";
           img.onload = function () {
             if (s.ready) return;
             var cw = s.canvas.width, ch = s.canvas.height;
@@ -575,7 +688,8 @@
        The pin is lengthened by the dwell rather than the scrub being
        squeezed into the old length, so the descent still plays at the pace
        it always did. */
-    var PB_ARRIVE = 0.74;
+    var PB_ARRIVE = FRONT.night.arrive;   // 0.74 as shipped; the owner's front page settings can move it
+    frontHooks.push(function (f) { PB_ARRIVE = f.night.arrive; });
     var PB_RAMP = 0.13;       // fully up well before the pin ends; rest is dwell
     var nightRoom = document.getElementById("nightRoom");
     var nightRoomLive = false;
@@ -807,10 +921,39 @@
   var workVR = {
     el: document.getElementById("workVR"),
     viewer: null, live: false, landing: false, held: false, lastP: null,
-    band: [0.40, 0.50],
+    band: FRONT.vr.band.slice(),
   };
+  /* js/vr360.js writes a tag's label as HTML, so a label the owner typed is escaped on its way in */
+  function vrSpots(list) {
+    var esc = function (t) { return String(t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+    return list.map(function (x) { return { yaw: x.yaw, pitch: x.pitch, label: esc(x.label), href: x.href, blank: x.blank, urgent: x.urgent }; });
+  }
+  frontHooks.push(function (f) {
+    workVR.band = f.vr.band.slice();
+    if (!cabinOn()) leaveCabinQuietly();
+    /* the hold turned off while someone is inside: the cabin stays on screen, the page is handed back (Codex #591) */
+    else if (!f.vr.hold && holding) lockPageScroll(false);
+    /* a mounted cabin takes new tags at once (its layer is cleared first: setSpots adds, it does not replace) */
+    if (workVR.viewer && workVR.viewer.setSpots) {
+      var layer = document.querySelector("#workVR .vr360-spots");
+      if (layer) layer.innerHTML = "";
+      workVR.viewer.setSpots(vrSpots(f.vr.spots));
+    }
+  });
+  /* the cabin turned off (or its section) while someone is inside: hand the page back, nothing else */
+  function leaveCabinQuietly() {
+    if (!workVR.live && !workVR.held) return;
+    workVR.held = false; workVR.live = false;
+    if (workVR.el) workVR.el.classList.remove("is-live");
+    if (workVR.viewer) workVR.viewer.pause();
+    lockPageScroll(false);
+  }
+  /* the cabin plays when it is on, its scene is on, and (on an account's page) the account has a 360 to put in it */
+  function cabinOn() { return FRONT.vr.enabled && FRONT.scenes.vaunt && (!MEMBER || !!FRONT.media.cabin); }
   function workVRSet(p) {
     if (!workVR.el || !window.VR360) return;
+    /* the owner turned the cabin off: the band is just more of the runway */
+    if (!cabinOn()) { workVR.lastP = p; return; }
     /* WHO DECIDES THE CABIN IS OVER.
 
        Not the scroll: the scroll is frozen the moment you arrive. The old
@@ -838,27 +981,25 @@
        stops being a latch for them and goes back to being a band: it holds
        while they are inside it and lets go the moment they are not, so
        "scroll on to continue" is literally true. */
-    if (workVR.declined) workVR.held = inBand;
+    /* the owner can also let the band go without holding the page (Control → Front page: "Hold the page in the cabin") */
+    if (workVR.declined || !FRONT.vr.hold) workVR.held = inBand;
     else if (!workVR.landing && (inBand || vaulted)) workVR.held = true;
     var on = workVR.held && !workVR.landing;
     // mount well before the band so the poster is up and the film is
     // buffered by the time the look-around takes the screen
     if (!workVR.viewer && p >= 0.12) {
+      /* the house's jet, or (on an account's page only) the account's own 360, a film or a still */
+      var room = MEMBER ? FRONT.media.cabin : null;
       workVR.viewer = VR360.mount(document.getElementById("workVRCanvas"), {
-        src: "assets/video/vaunt-360.mp4", video: true, autoplay: false,
-        poster: "assets/img/vaunt-360-poster.jpg",
-        // open facing McCluster in his seat (measured off the equirect frame)
-        yaw: -140, pitch: -32, touchAction: "none",
+        src: room ? room.src : "assets/video/vaunt-360.mp4",
+        video: room ? room.kind === "video" : true, autoplay: false,
+        poster: room ? (room.poster || undefined) : "assets/img/vaunt-360-poster.jpg",
+        // open facing McCluster in his seat (measured off the equirect frame), unless the owner set another view
+        yaw: FRONT.vr.yaw, pitch: FRONT.vr.pitch, touchAction: "none",
         // three tags, not five. The camera and the six-string were scenery
         // pointing at pages the other doors already reach; what is pinned
-        // now is the flight, the work, and the man.
-        spots: [
-          // pinned on the flight console between the pilots, measured off
-          // the equirect frame
-          { yaw: -77, pitch: -13, label: "The cockpit · fly with Vaunt", href: "https://vauntapi.flyvaunt.com/referral/nuao1K", blank: true },
-          { yaw: 131, pitch: -29, label: "Get to the bag", href: "hire.html", urgent: true },
-          { yaw: -140, pitch: -40, label: "McCluster · the résumé", href: "matthew-mccluster.html" },
-        ],
+        // now is the flight, the work, and the man (FRONT_DEFAULT.vr.spots; the owner can relabel or repoint them).
+        spots: vrSpots(FRONT.vr.spots),
       });
       window.__MCC_VR = workVR; // debug/verification handle
       /* the film is blurred from its very first frame, poster included */
@@ -883,7 +1024,7 @@
       if (workVR.viewer) { (on && !workVR.declined) ? workVR.viewer.play() : workVR.viewer.pause(); }
       /* Cancel hands the scroll back for good; re-entering the band must not
          quietly take it again. */
-      lockPageScroll(on && !workVR.declined);
+      lockPageScroll(on && !workVR.declined && FRONT.vr.hold);
       if (on) openGate();
       // inside the 360 the acoustic takes the cabin; either side of it,
       // the full record flies
@@ -1655,6 +1796,65 @@
       }
     });
   });
+
+  /* ---------------- the owner's front page settings, applied ----------------
+     The scenes the owner turned off are taken out of the page (one attribute, data-front-off, that only this code sets
+     or clears, so the World's own hidden rule is never undone) and the pins are measured again. Turning the Vaunt scene
+     off turns its cabin off with it, so the page can never be held by a band that is not there. */
+  var FRONT_SCENES = { doors: ".hero__doors", vaunt: "#work", night: "#pillars", world: "#guestWorld" };
+  (function () {
+    var st = document.createElement("style");
+    st.textContent = "[data-front-off]{display:none!important}";
+    document.head.appendChild(st);
+  })();
+  function applyScenes(f) {
+    var moved = false;
+    Object.keys(FRONT_SCENES).forEach(function (k) {
+      var el = document.querySelector(FRONT_SCENES[k]);
+      if (!el) return;
+      var off = f.scenes[k] === false;
+      if (off === el.hasAttribute("data-front-off")) return;
+      if (off) el.setAttribute("data-front-off", ""); else el.removeAttribute("data-front-off");
+      moved = true;
+    });
+    if (moved) { try { ScrollTrigger.refresh(); } catch (e) {} }
+  }
+  frontHooks.push(applyScenes);
+  /* the saved settings: read now if live-content already has them, and again whenever it applies */
+  var saved = MEMBER ? null : frontRow();
+  if (saved) setFront(saved, "saved");
+  else if (MEMBER) applyScenes(FRONT);
+  window.addEventListener("mcc:content-applied", function () {
+    if (MEMBER) return;   // an account's page is its own settings, never the house's site_content rows
+    if (window.MCC_FRONT && window.MCC_FRONT.source === "preview") return;   // a draft on screen outranks what is saved
+    var row = frontRow();
+    setFront(row, row ? "saved" : "shipped");
+  });
+  /* THE CONTROL ROOM'S PREVIEW. Only a parent on this origin that is the Control Room may send a draft or move the page;
+     a draft lives in this frame only and is never saved from here. */
+  if (framedByControl) {
+    window.addEventListener("message", function (e) {
+      if (e.origin !== location.origin || e.source !== window.parent || !e.data || typeof e.data !== "object") return;
+      if (e.data.type === "mcc:front-preview") {
+        setFront(e.data.config, "preview");
+        /* the page answers with what it applied, checked and bounded, so the Control Room saves exactly that */
+        try { window.parent.postMessage({ type: "mcc:front-applied", seq: e.data.seq, commit: !!e.data.commit, config: FRONT }, location.origin); } catch (err) {}
+      }
+      else if (e.data.type === "mcc:front-goto") frontGoto(String(e.data.to || ""));
+    });
+    try { window.parent.postMessage({ type: "mcc:front-ready" }, location.origin); } catch (e) {}
+  }
+  /* where the preview's scene buttons go: the top, a scene's start, or the middle of the cabin's band */
+  function frontGoto(to) {
+    var y = 0, el = null;
+    if (to === "cabin" && workST) y = workST.start + (workST.end - workST.start) * (workVR.band[0] + workVR.band[1]) / 2;
+    else if (to !== "top") { el = document.querySelector(FRONT_SCENES[to === "world" ? "world" : to === "night" ? "night" : "vaunt"]); if (!el || el.hasAttribute("data-front-off") || !el.offsetHeight) return; y = el.getBoundingClientRect().top + window.scrollY; }
+    if (holding) leaveCabinQuietly();
+    lenis.scrollTo(y, { immediate: true, force: true });
+    try { ScrollTrigger.update(); } catch (e) {}
+  }
+  window.__MCC_FRONT_GOTO = frontGoto; // verification handles
+  window.__MCC_FRONT_HOLDING = function () { return holding; };
   } catch (err) {
     /* The whole scroll engine sits inside that try. That is the right call —
        one bad selector must not leave the page under a black gate — but a

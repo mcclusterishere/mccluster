@@ -96,3 +96,31 @@
 .crb-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .crb-actions .cr-btn{min-height:44px}
 @media (min-width:760px){.crb-meta{grid-template-columns:max-content minmax(0,1fr)}.crb-meta dd{margin:0}}
+/* Control · Create · Front page (js/control-room/front-page.js): the real index.html in a frame at a phone's or a desktop's
+   width, scaled down to fit; the settings beside it from 1100px, under it before that */
+.cfp{grid-template-columns:minmax(0,1fr)}
+.cfp-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;min-width:0}
+.cfp-bar .cro-chips{flex:1 1 220px;min-width:0}
+.cfp-bar>.cro-tabs{flex:none}
+.cfp-bar>.cr-btn{flex:none;width:auto;max-width:100%}
+.cfp-bar .cro-tab,.cfp-bar .cro-chip,.cfp .cr-btn{min-height:44px}
+.cfp-viewport{width:100%;min-width:0;overflow:hidden}
+.cfp-device{position:relative;width:calc(var(--cfp-w) * var(--cfp-k,1));height:calc(var(--cfp-h) * var(--cfp-k,1));max-width:100%;margin:0 auto;border:1px solid var(--cr-line-strong);border-radius:18px;overflow:hidden;background:#000}
+.cfp-device iframe{position:absolute;left:0;top:0;width:var(--cfp-w);height:var(--cfp-h);border:0;transform:scale(var(--cfp-k,1));transform-origin:0 0}
+.cfp-form{gap:10px}
+.cfp-group{display:grid;gap:8px;min-width:0;margin:0;padding:10px;border:1px solid var(--cr-line);border-radius:11px}
+.cfp-group legend{padding:0 6px;color:var(--cr-text);font-size:11px;font-weight:800}
+.cfp-group[disabled]{opacity:.55}
+.cro-form .cfp-check{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:10px;min-height:44px;color:var(--cr-text);font-size:12px;font-weight:700;letter-spacing:0;text-transform:none}
+.cro-form .cfp-check input{width:22px;height:22px;min-height:0;margin:2px 0 0;padding:0}
+.cfp-check small{display:block;margin-top:2px;color:var(--cr-faint);font-size:11px;font-weight:500}
+.cfp-pair{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.cfp-spots{display:grid;gap:8px}
+.cfp-spot{display:grid;gap:6px;padding:9px;border:1px solid var(--cr-line);border-radius:10px}
+.cfp-spot b{font-size:11px}
+.cfp-actions{margin-top:10px}
+@media (min-width:560px){.cfp-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:768px){.cfp-bar .cro-chips{flex-wrap:wrap;overflow:visible}}
+@media (min-width:1100px){.cfp{grid-template-columns:minmax(0,1fr) minmax(320px,400px);align-items:start;padding-bottom:110px}.cfp-panel{max-height:var(--cfp-room,none);overflow:auto;overscroll-behavior:contain}}
+.cfp-spot.is-bad{border-color:rgba(239,90,99,.5)}
+.cfp-spot__bad{margin:0;color:#ffb7bb;font-size:11px;line-height:1.45}

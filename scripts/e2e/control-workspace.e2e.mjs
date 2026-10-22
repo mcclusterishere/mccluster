@@ -151,22 +151,17 @@ try{
     await page.click('#cwSourcesClose');await page.click('#cwLayout');
     check(key+' focus details suspends globe',await page.evaluate(()=>window.CR.analytics.state.globe.active===false));
     await page.click('#cwLayout');
-    await page.click('[data-cw-scene="halo"]');await page.waitForSelector('#cwHaloPanel iframe');
-    const hf=page.frames().find(f=>f.url().startsWith('https://prime.mccluster.org'));
-    await hf.waitForFunction(()=>window.received>0);
-    check(key+' explicit Halo scene uses existing secure bridge',true);
-    check(key+' black render loop stops behind Halo',await page.evaluate(()=>window.__keptGlobe.active===false));
-    await page.click('#cwLayout');
-    check(key+' focusing details unloads the Halo frame',await page.locator('#cwHaloPanel iframe').count()===0);
-    await page.click('#cwLayout');
-    check(key+' Halo is unloaded on return to black',await page.locator('#cwHaloPanel iframe').count()===0);
-    check(key+' black globe is restored with selection',await page.evaluate(()=>window.__keptGlobe.active&&window.__keptGlobe.sel.state==='US-CT'));
+    /* one Halo (owner, 2026-10-22): the scene control's Halo is a door to the four screens on the globe, never a frame of
+       the separate app, and nothing is sent to another site */
+    const door=await page.evaluate(()=>{const a=document.querySelector('[data-cw-halo]');return a?{href:a.getAttribute('href'),tag:a.tagName,target:a.target}:null;});
+    check(key+' Halo is a door to the one Halo page',!!door&&door.tag==='A'&&door.href==='action-globe.html?explore=1&halo=1'&&!door.target,door);
+    check(key+' no frame of another Halo, no request to it',await page.locator('#cwHaloPanel, iframe[src*="prime.mccluster.org"]').count()===0&&!calls.some(c=>c.host==='prime.mccluster.org'));
+    check(key+' black globe keeps its selection',await page.evaluate(()=>window.__keptGlobe.active&&window.__keptGlobe.sel.state==='US-CT'));
     dimensions=await overflow(page);check(key+' no overflow after all navigation',dimensions.width===dimensions.scroll,dimensions);
     check(key+' no JavaScript page errors',errors.length===0,errors);
-    await page.click('[data-cw-scene="halo"]');await page.waitForSelector('#cwHaloPanel iframe');
     await page.evaluate(()=>window.MCC_AUTH.signOut());
     await page.waitForSelector('body[data-cw-blocked="true"]');
-    check(key+' sign out removes Halo and destroys private globe',await page.evaluate(()=>!document.querySelector('#cwHaloPanel iframe')&&!window.CR.analytics.state.globe&&document.getElementById('crApp').hidden));
+    check(key+' sign out destroys the private globe and the workspace',await page.evaluate(()=>!document.querySelector('[data-cw-halo]')&&!window.CR.analytics.state.globe&&document.getElementById('crApp').hidden));
     await ctx.close();
   }
   {

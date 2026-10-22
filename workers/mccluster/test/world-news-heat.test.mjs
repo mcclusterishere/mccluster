@@ -11,15 +11,13 @@ const NOW = Date.parse('2026-10-21T12:02:00Z');
 const get = (q = '') => new Request(`https://api.mccluster.org${NEWS_HEAT_PATH}${q}`, { headers: { origin: 'https://matthew.mccluster.org' } });
 function memoryCache() { const m = new Map(); return { async match(k) { const v = m.get(k.url); return v ? new Response(v) : undefined; }, async put(k, r) { m.set(k.url, await r.text()); }, raw: m }; }
 /* the table, served a page at a time the way PostgREST does (limit/offset), with every request kept */
-function db(rows, { status = 200, memberRows = [] } = {}) {
+function db(rows, { status = 200, sharedRows = [] } = {}) {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     const u = new URL(String(url));
     calls.push({ url: u, headers: init.headers || {} });
     if (status !== 200) return new Response('{"message":"down"}', { status });
-    if (u.pathname.endsWith('/rpc/world_public_member_counts')) {
-      return new Response(JSON.stringify(memberRows), { status: 200, headers: { 'content-type': 'application/json' } });
-    }
+    if (u.pathname.endsWith('/rpc/world_public_member_counts')) return new Response(JSON.stringify(sharedRows), { status: 200 });
     const limit = Number(u.searchParams.get('limit')), offset = Number(u.searchParams.get('offset') || 0);
     const fips = u.searchParams.get('location_country_fips');
     const want = fips ? (fips.startsWith('in.(') ? fips.slice(4, -1).split(',') : [fips.slice(3)]) : null;
@@ -55,11 +53,9 @@ test('reads page after page, and says when it stopped at the cap', async () => {
   const d = db(rows);
   const body = await (await handleWorldNewsHeat(get(), ENV, { fetchImpl: d.fetchImpl, cacheImpl: memoryCache(), now: () => NOW })).json();
   assert.deepEqual(body.countries, { FR: 1250, US: 1250 });
-  const newsCalls = d.calls.filter((c) => c.url.pathname.endsWith('/media_news_articles'));
-  assert.equal(newsCalls.length, 3, 'two full news pages and a short one');
-  assert.deepEqual(newsCalls.map((c) => c.url.searchParams.get('offset')), ['0', '1000', '2000']);
-  assert.equal(newsCalls[0].url.searchParams.get('order'), 'id.asc', 'a stable order, so pages do not overlap');
-  assert.equal(d.calls.filter((c) => c.url.pathname.endsWith('/rpc/world_public_member_counts')).length, 1, 'member counts are one separate aggregate read');
+  assert.equal(d.calls.filter(c=>c.url.pathname.endsWith('/media_news_articles')).length, 3, 'two full news pages and a short one');
+  assert.deepEqual(d.calls.filter(c=>c.url.pathname.endsWith('/media_news_articles')).map(c=>c.url.searchParams.get('offset')), ['0', '1000', '2000']);
+  assert.equal(d.calls[0].url.searchParams.get('order'), 'id.asc', 'a stable order, so pages do not overlap');
   const many = db(Array.from({ length: 16000 }, () => story('US', 1, 1)));
   const capped = await (await handleWorldNewsHeat(get(), ENV, { fetchImpl: many.fetchImpl, cacheImpl: memoryCache(), now: () => NOW })).json();
   assert.equal(capped.capped, true);
@@ -101,8 +97,8 @@ test('kept five minutes: a second ask in the same slot reads nothing', async () 
   const d = db([story('US', 1, 1)]), cache = memoryCache();
   await handleWorldNewsHeat(get(), ENV, { fetchImpl: d.fetchImpl, cacheImpl: cache, now: () => NOW });
   await handleWorldNewsHeat(get(), ENV, { fetchImpl: d.fetchImpl, cacheImpl: cache, now: () => NOW + 60e3 });
-  assert.equal(d.calls.filter((c) => c.url.pathname.endsWith('/media_news_articles')).length, 1, 'news is read once');
-  assert.equal(d.calls.filter((c) => c.url.pathname.endsWith('/rpc/world_public_member_counts')).length, 1, 'member aggregate is cached with the same response');
+  assert.equal(d.calls.filter(c=>c.url.pathname.endsWith('/media_news_articles')).length, 1);
+  assert.equal(d.calls.filter(c=>c.url.pathname.endsWith('/rpc/world_public_member_counts')).length, 1);
 });
 
 test('with the feed in native-reader-only mode, nothing is counted', async () => {
@@ -112,18 +108,18 @@ test('with the feed in native-reader-only mode, nothing is counted', async () =>
   assert.equal(d.calls.length, 0);
 });
 
-test('member counts come only from the explicit-sharing aggregate and keep sub-five scopes private', async () => {
-  const d = db([story('US', 1, 1)], { memberRows: [
-    { scope_key: 'US', country_code: 'US', subdivision_code: null, member_count: 7 },
-    { scope_key: 'US-CT', country_code: 'US', subdivision_code: 'US-CT', member_count: 5 },
-    /* Defensive Worker filtering too: the database function itself suppresses this row in production. */
-    { scope_key: 'FR', country_code: 'FR', subdivision_code: null, member_count: 4 },
-  ] });
-  const body = await (await handleWorldNewsHeat(get(), ENV, { fetchImpl: d.fetchImpl, cacheImpl: memoryCache(), now: () => NOW })).json();
-  assert.deepEqual(body.members, { US: 7 });
-  assert.deepEqual(body.member_regions, { 'US-CT': 5 });
-  assert.equal(body.members.FR, undefined);
-  assert.equal(d.calls.filter((c) => c.url.pathname.endsWith('/rpc/world_public_member_counts')).length, 1);
+test('voluntary region sharing totals are distinct, suppress under five and reject wrong-country keys', async () => {
+ const d=db([story('US',1,1)],{sharedRows:[
+  {country_code:'US',subdivision_code:null,member_count:7},
+  {country_code:'US',subdivision_code:'US-CT',member_count:5},
+  {country_code:'FR',subdivision_code:null,member_count:4},
+  {country_code:'GB',subdivision_code:'US-CT',member_count:5}
+ ]});
+ const body=await (await handleWorldNewsHeat(get(),ENV,{fetchImpl:d.fetchImpl,cacheImpl:memoryCache(),now:()=>NOW})).json();
+ assert.deepEqual(body.shared_countries,{US:7});
+ assert.deepEqual(body.shared_subdivisions,{'US-CT':5});
+ assert.equal(body.members,undefined,'existing account sign-in members stay on their own route');
+ assert.equal(d.calls.filter(c=>c.url.pathname.endsWith('/rpc/world_public_member_counts')).length,1);
 });
 
 /* THE COUNTRY CARD (owner, 2026-10-21): the whole-world answer also counts the member posts placed in each country, but only

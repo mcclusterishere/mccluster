@@ -40,8 +40,8 @@ AUDIO_SFU_ROOMS_ENABLED = "false"
 # which signs the visitor's listening pass. Other regions, hands and speaking always need sign-in.
 AUDIO_ROOMS_VISITOR_LISTEN_ENABLED = "false"
 # Country-scoped public regional feeds and explicit author-assigned post countries.
-# Production SQL applied as 20261021173729_world_place_scope_v1.sql. Public place reads remain public-only;
-# region member counts come from the separate explicit-sharing migration 20261021173902_world_region_sharing_v1.sql.
+# Both migrations are applied and attested in the canonical 341-migration ledger.
+# Do not deploy this setting before exact-head public feed QA and release approval.
 WORLD_PLACE_SCOPE_ENABLED = "true"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
