@@ -152,10 +152,12 @@ test('owner-disabled source never creates a run and freshness defers duplicate r
 test('read-only status includes existing pipelines, with explicit coverage and blocked provider states',async()=>{
   const status=await layerOneStatus({now:NOW,env:{},db:{
     org:async()=> '00000000-0000-4000-8000-000000000001',
+    rpc:async()=>true,
     rows:async url=>url.includes('media_news_articles')?[{imported_at:'2026-10-21T17:45:00Z'}]:[
       {connector_key:'usgs.earthquakes',enabled:true,last_ok_at:'2026-10-21T17:59:00Z'}]
   }});
   assert.equal(status.enabled,false);
+  assert.equal(status.policy_ready,true);
   assert.equal(status.sources.find(x=>x.source==='world.gdelt').status,'existing_pipeline');
   assert.equal(status.sources.find(x=>x.source==='market.alpaca.iex').status,'blocked');
   assert.equal(status.sources.find(x=>x.source==='market.wdi').status,'not_registered');
