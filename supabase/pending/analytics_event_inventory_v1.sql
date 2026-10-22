@@ -8,6 +8,22 @@
 -- owners request an all-name inventory. Keep the two stores independently
 -- indexed so projection mismatch remains visible, without changing rows.
 -- A short lock timeout refuses to block the live collector for long.
+-- On a populated live collector, indexes MUST already be valid. Build them
+-- CONCURRENTLY in separate statements first, then apply this migration.
+-- The same file remains replayable in an empty isolated database.
+do $
+begin
+  if exists (select 1 from public.events limit 1) and (
+    not exists (select 1 from pg_catalog.pg_index
+      where indexrelid=to_regclass('public.events_first_party_inventory_v1_idx')
+        and indisvalid and indisready)
+    or not exists (select 1 from pg_catalog.pg_index
+      where indexrelid=to_regclass('public.events_lean_first_party_inventory_v1_idx')
+        and indisvalid and indisready)
+  ) then
+    raise exception 'Build both analytics inventory indexes concurrently before live migration';
+  end if;
+end $;
 set local lock_timeout = '5s';
 set local statement_timeout = '30s';
 create index if not exists events_first_party_inventory_v1_idx
