@@ -60,7 +60,8 @@
     sort: svg('<path d="M8 4v16M4 8l4-4 4 4M16 20V4M12 16l4 4 4-4"/>'),
     db: svg('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>'),
     flag: svg('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
-    lock: svg('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>')
+    lock: svg('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+    expand: svg('<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>')
   };
 
   /* WORLD DATA: the groups of the owner's screen, each layer what it really is today. "planned" rows are Halo layers not
@@ -81,7 +82,7 @@
   let ui = {}, vision = null, hud = null, layers = null, data = null, offs = [];
   let view = 'world', sel = null, dtab = 'overview';
   let tabs = { missions: 'active', people: 'all', intel: 'feed' }, sorts = { missions: 'priority', people: 'activity' }, query = { missions: '', people: '', intel: '' };
-  let area = 'earth', hours = 24, expanded = {}, missionsOn = true, collapsed = false, sheetOpen = false;
+  let area = 'earth', hours = 24, expanded = {}, missionsOn = true, collapsed = false, sheetOpen = false, mapFocus = false;
   let followTarget = null, followTick = null, orbitTick = null, orbitLast = 0, photo = null, photoPhase = 'off';
   let marks = null, saved = null, paintQueued = false, listSig = '', detailSig = '', markSig = '', thumbs = {}, timelineFor = null;
 
@@ -992,6 +993,31 @@
     const w = window.MCC_BAR && window.MCC_BAR.navigation && window.MCC_BAR.navigation.world;
     return typeof w === 'string' && /^(https:\/\/[a-z0-9.-]*mccluster\.org\/|[a-z0-9-]+\.html)/i.test(w) ? w : 'mnet.html?view=feed';
   }
+  /* Mobile-only immersive globe. The panel and timeline return without changing
+     any source, map selection or camera coordinates. */
+  function setMapFocus(on) {
+    mapFocus = !!on && !wide();
+    document.documentElement.dataset.haloMap = mapFocus ? 'focus' : 'split';
+    if (mapFocus) {
+      sheetOpen = false;
+      ui.left.dataset.expanded = 'false';
+      $('.hx-grip', ui.root).setAttribute('aria-label', 'Expand the list');
+      $('.hx-collapse', ui.root).setAttribute('aria-label', 'Expand the panel');
+      setPop(false);
+    }
+    if (ui.mapFocus) {
+      ui.mapFocus.setAttribute('aria-pressed', mapFocus ? 'true' : 'false');
+      ui.mapFocus.setAttribute('aria-label', mapFocus ? 'Show the data drawer and timeline' : 'Expand the interactive globe');
+      $('span', ui.mapFocus).textContent = mapFocus ? 'Show panels' : 'Full globe';
+    }
+    /* Keep camera position while Cesium resizes its canvas to the new layout. */
+    if (mounted && V) requestAnimationFrame(() => {
+      if (mounted) { V.resize(); V.scene.requestRender(); }
+    });
+  }
+  function onViewportResize() {
+    if (wide() && mapFocus) setMapFocus(false);
+  }
   function build() {
     const root = document.createElement('div');
     root.className = 'hx'; root.id = 'haloShell';
@@ -1004,9 +1030,10 @@
       '<button type="button" class="hx-operator"><span class="hx-operator__label">Owner</span>' + ICON.down + '<span class="hx-avatar" data-op>?</span></button></div>' +
       '<div class="hx-tabs" role="tablist" aria-label="Halo">' + VIEWS.map((v) => '<button type="button" role="tab" id="hxTab-' + v + '" data-view="' + v + '" aria-controls="hxLeft" aria-selected="false">' + esc(META[v].tab) + '</button>').join('') + '</div></div>' +
       '<div class="hx-strip"><div class="hx-title"></div><div class="hx-clock"><time></time><span class="hx-live" role="img" aria-label="Connection"></span></div><ul class="hx-stats" aria-label="Counts"></ul><a class="hx-action" href="#" hidden></a></div>' +
-      '<section class="hx-left hx-panel" id="hxLeft" role="tabpanel" aria-labelledby="hxTab-world" data-expanded="false"><button type="button" class="hx-grip" aria-label="Expand the list"></button><div class="hx-panel__head"><div><h2></h2><p></p></div><button type="button" class="hx-collapse" aria-label="Collapse the panel"><span>' + ICON.up + '</span></button></div><div class="hx-panel__body"></div></section>' +
+      '<section class="hx-left hx-panel" id="hxLeft" role="tabpanel" aria-labelledby="hxTab-world" data-expanded="false"><button type="button" class="hx-grip" aria-label="Expand the list"></button><div class="hx-panel__head"><div><h2></h2><p></p></div><button type="button" class="hx-collapse" aria-label="Expand the panel"><span>' + ICON.up + '</span></button></div><div class="hx-panel__body"></div></section>' +
       '<div class="hx-map"><form class="hx-search" role="search">' + ICON.search + '<input type="search" name="q" aria-label="Search places, missions, people" placeholder="Search places, missions, people…" autocomplete="off" maxlength="120" enterkeyhint="search"></form><ul class="hx-results" hidden></ul>' +
       '<button type="button" class="hx-layers-btn" aria-expanded="false" aria-controls="hxPop">' + ICON.layers + 'Layers</button>' +
+      '<button type="button" class="hx-map-focus" aria-pressed="false" aria-label="Expand the interactive globe">' + ICON.expand + '<span>Full globe</span></button>' +
       '<div class="hx-pop" id="hxPop" hidden><p class="hx-label">Base map</p>' + base + '<p class="hx-label">Vision</p><div class="hx-styles">' + styles + '</div>' +
       '<div class="hx-tools" style="margin-top:6px"><button type="button" class="hx-tool" data-fx="sharpen" aria-pressed="false">Sharpen</button><button type="button" class="hx-tool" data-fx="bloom" aria-pressed="false">Bloom</button></div><p class="hx-note">Visual treatments only: they change how the Earth looks, not what any sensor saw.</p>' +
       '<p class="hx-label">Tools</p><div class="hx-tools"><button type="button" class="hx-tool" data-tool="hud" aria-pressed="false">Telemetry HUD <kbd>H</kbd></button><button type="button" class="hx-tool" data-tool="orbit" aria-pressed="false">Orbit <kbd>O</kbd></button><button type="button" class="hx-tool" data-tool="stop" hidden>Stop following <kbd>Esc</kbd></button><button type="button" class="hx-tool" data-tool="share">Copy a link to this view</button><button type="button" class="hx-tool" data-tool="home">Back to the whole Earth</button></div><p class="hx-share" aria-live="polite"></p></div>' +
@@ -1020,7 +1047,7 @@
       root, stats: $('.hx-stats', root), title: $('.hx-title', root), action: $('.hx-action', root), clock: $('.hx-clock time', root), live: $('.hx-live', root),
       operator: $('.hx-operator', root), opAvatar: $('[data-op]', root), left: $('.hx-left', root), leftTitle: $('.hx-panel__head h2', root), leftSub: $('.hx-panel__head p', root), leftBody: $('.hx-panel__body', root),
       right: $('.hx-right', root), detailBody: $('.hx-detail__body', root), detailFoot: $('.hx-detail__foot', root), search: $('.hx-search input', root), results: $('.hx-results', root),
-      layersBtn: $('.hx-layers-btn', root), pop: $('.hx-pop', root), share: $('.hx-share', root), legend: $('.hx-legend', root), compass: $('.hx-compass svg', root),
+      layersBtn: $('.hx-layers-btn', root), mapFocus: $('.hx-map-focus', root), pop: $('.hx-pop', root), share: $('.hx-share', root), legend: $('.hx-legend', root), compass: $('.hx-compass svg', root),
       timeTitle: $('.hx-time h2', root), axis: $('.hx-axis', root), window: $('.hx-window', root), follow: $('.hx-follow', root), hudHost: $('.hx-hud-host', root)
     };
     $$('.hx-tabs [role="tab"]', root).forEach((b) => {
@@ -1035,13 +1062,16 @@
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }
       else { sheetOpen = !sheetOpen; ui.left.dataset.expanded = sheetOpen ? 'true' : 'false'; }
-      $('.hx-grip', root).setAttribute('aria-label', sheetOpen ? 'Shrink the list' : 'Expand the list');
+      const open = wide() ? !collapsed : sheetOpen;
+      $('.hx-grip', root).setAttribute('aria-label', open ? 'Shrink the list' : 'Expand the list');
+      $('.hx-collapse', root).setAttribute('aria-label', open ? 'Collapse the panel' : 'Expand the panel');
     };
     $('.hx-grip', root).onclick = toggleSheet; $('.hx-collapse', root).onclick = toggleSheet;
     $('.hx-search', root).onsubmit = (e) => { e.preventDefault(); search(ui.search.value); };
     let typing = 0;
     ui.search.oninput = () => { clearTimeout(typing); typing = setTimeout(() => search(ui.search.value), 350); };
     ui.layersBtn.onclick = () => setPop(ui.pop.hidden);
+    ui.mapFocus.onclick = () => setMapFocus(!mapFocus);
     $$('[data-base]', root).forEach((b) => { b.onclick = () => setBase(b.dataset.base); });
     $$('[data-style]', root).forEach((b) => { b.onclick = () => { if (vision) vision.set(b.dataset.style); paintVision(); savePrefs(); }; });
     $$('[data-fx]', root).forEach((b) => { b.onclick = () => { if (!vision) return; const on = b.getAttribute('aria-pressed') !== 'true'; b.dataset.fx === 'sharpen' ? vision.setSharpen(on) : vision.setBloom(on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }; });
@@ -1078,6 +1108,7 @@
     if (ui.legend.innerHTML !== html) ui.legend.innerHTML = html;
   }
   function setView(next) {
+    if (mapFocus) setMapFocus(false); /* switching views restores the data preview */
     if (!VIEWS.includes(next)) next = 'world';
     const changed = next !== view || !ui.leftBody.childElementCount;
     view = next;
@@ -1133,11 +1164,13 @@
     layers = window.HaloLayers ? HaloLayers.create(G) : null;
     data = window.HaloData ? HaloData.create(G) : null;
     build();
+    setMapFocus(false);
     hud = window.HaloHud ? HaloHud.mount(V, ui.hudHost) : null;
     marks = { points: V.scene.primitives.add(new C.PointPrimitiveCollection()), labels: V.scene.primitives.add(new C.LabelCollection()) };
     if (layers) offs.push(layers.onChange(() => schedulePaint()));
     if (data) offs.push(data.on(() => schedulePaint()));
     document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onViewportResize);
     V.camera.changed.addEventListener(onCamera);
     const p = prefs(), shared = readShared();
     expanded = p.expanded && typeof p.expanded === 'object' ? p.expanded : { air: true };
@@ -1160,6 +1193,7 @@
     mounted = false;
     clearInterval(ui.poll); clearInterval(ui.tick);
     document.removeEventListener('keydown', onKey);
+    window.removeEventListener('resize', onViewportResize);
     document.removeEventListener('click', onDocClick, true);
     V.camera.changed.removeEventListener(onCamera);
     stopFollow(); setOrbit(false);
@@ -1172,9 +1206,9 @@
     if (data) data.destroy();
     if (saved) { if (V.scene.skyBox && saved.sky !== null) V.scene.skyBox.show = saved.sky; V.scene.backgroundColor = saved.bg; if (G.missions && saved.missions !== null) G.missions.show(saved.missions); saved = null; }
     if (ui.root) ui.root.remove();
-    ui = {}; layers = null; vision = null; hud = null; data = null; sel = null;
+    ui = {}; layers = null; vision = null; hud = null; data = null; sel = null; mapFocus = false;
     const html = document.documentElement;
-    html.classList.remove('halo-on'); delete html.dataset.haloView; delete html.dataset.haloDetail;
+    html.classList.remove('halo-on'); delete html.dataset.haloView; delete html.dataset.haloDetail; delete html.dataset.haloMap;
     requestAnimationFrame(() => { try { V.resize(); } catch (e) { /* gone */ } });
   }
 
@@ -1184,7 +1218,7 @@
     const l = {};
     ALL_ITEMS.forEach((it) => { const s = stateOf(it); l[it.id] = { on: isOn(it), state: s.state, text: s.text }; });
     const cur = current();
-    return { mounted, view, selected: cur ? { kind: cur.kind, id: cur.id } : null, detailOpen: !!sel, style: vision ? vision.get() : null, hud: !!(hud && hud.shown()), orbit: !!orbitTick, following: followTarget ? followTarget.label : null, photoreal: photoPhase, layers: l, readout: hud && hud.readout ? hud.readout() : null, marks: marks ? marks.points.length : 0, hours };
+    return { mounted, view, selected: cur ? { kind: cur.kind, id: cur.id } : null, detailOpen: !!sel, style: vision ? vision.get() : null, hud: !!(hud && hud.shown()), orbit: !!orbitTick, following: followTarget ? followTarget.label : null, photoreal: photoPhase, layers: l, readout: hud && hud.readout ? hud.readout() : null, marks: marks ? marks.points.length : 0, hours, mapFocus, panelExpanded: sheetOpen };
   }
 
   window.HaloConsole = Object.freeze({ mount, unmount, pick, state, follow, stopFollow, setView: (v) => mounted && setView(v), select: (s) => mounted && select(s), _share: { viewState: () => (mounted ? viewState() : null), link: () => (mounted ? shareLink() : null) } });
