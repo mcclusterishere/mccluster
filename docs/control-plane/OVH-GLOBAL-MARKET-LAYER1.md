@@ -21,6 +21,7 @@ A missing credential reports `blocked`, not successful collection.
 |---|---|---:|---|
 | `market.wdi` | GDP level/growth, population, CPI inflation, unemployment, trade share from WDI; actual year | 24 h | Keyless; default WLD, US, CN, IN, DE, JP, GB, BR; up to 12 validated economies |
 | `market.bls` | U.S. CPI-U index, unemployment rate, nonfarm jobs by published month | 24 h | Keyless unregistered BLS v1, one request/day; max 25 unregistered requests/day |
+| `market.eia` | U.S. weekly crude field production and crude inventories including SPR; true week-end date | 6 h | EIA registered API key (`EIA_API_KEY`); no key stored in records or logs |
 | `market.sec` | 8-K/10-K/10-Q/20-F/6-K filing notice metadata by exact CIK | 1 h | Explicit CIK allowlist and declared SEC User-Agent with operator contact |
 | `market.alpaca.iex` | Most recent 1-minute IEX stock/ETF bars for at most 10 symbols | 15 min | Alpaca key pair **and** explicit market-data storage/licence review flag |
 
@@ -52,11 +53,12 @@ Environment variables (names only, no credentials in Git):
 
 - `MCCLUSTER_MARKET_LAYER1_ENABLED=true` — enables ingestion *after* migration validation; defaults OFF.
 - `MCCLUSTER_MARKET_ECONOMIES=WLD,US,CN,IN,DE,JP,GB,BR` — vetted economy codes, up to 12.
+- `EIA_API_KEY` — optional registered U.S. Energy Information Administration credential; never stored in the database.
 - `MCCLUSTER_MARKET_SEC_CIKS` and `MCCLUSTER_MARKET_SEC_USER_AGENT` — declared identity, up to eight CIKs. No SEC calls without both.
 - `MCCLUSTER_MARKET_ALPACA_STORAGE_APPROVED=true`, `APCA_API_KEY_ID`, `APCA_API_SECRET_KEY` — optional private market data. No calls or credentials stored in observations without review.
 - `MCCLUSTER_MARKET_SYMBOLS=SPY,QQQ,TLT,GLD,USO` — validated list, at most ten names.
 
-No FRED ingestion is added; FRED API terms require separate review for use in AI workflows. EIA, Comtrade, IMF, international exchanges and deeper country coverage remain source-catalog research, **not represented as connected collectors**. Source approvals and data licenses are per dataset; no feed is implicitly licensed for public redistribution or model training.
+No FRED ingestion is added; FRED API terms require separate review for use in AI workflows. Comtrade, IMF, international exchanges and deeper country coverage remain source-catalog research, **not represented as connected collectors**. Source approvals and data licenses are per dataset; no feed is implicitly licensed for public redistribution or model training.
 
 Commands on the OVH host:
 
@@ -81,7 +83,7 @@ Those commands are documented acceptance steps, **not evidence they have run**. 
 1. `npm test --prefix core` including `core/test/market-layer1.test.mjs`; format/syntax checks.
 2. Readiness tests prove opt-in for credentialed sources, refusal of untrusted URLs/redirects, bounded HTTP bodies, exact geography/units, genuine observation timestamps, no leaked keys.
 3. Database-backed proof of policy preservation before enabling live records. Migration must be approved and recorded; no orphan migration in the production ledger.
-4. Live OVH pilot: one successful WDI run and BLS run, with nonempty `ops_ingest_records`, explicit provenance/policies, `ops_ingest_runs` completion and a working `--status` report; repeat a replay and confirm unchanged records are not duplicated.
+4. Live OVH pilot: one successful WDI run and BLS run (plus EIA when the key is provisioned), with nonempty `ops_ingest_records`, explicit provenance/policies, `ops_ingest_runs` completion and a working `--status` report; repeat a replay and confirm unchanged records are not duplicated.
 5. Failure drill: simulate an upstream HTTP 5xx; verify failed run status, unadvanced cursor, no fabricated observation, no source credential in logs, and recovery on the next interval.
 6. After admission and observed health, measure freshness, completeness and source coverage, plus storage and compute pressure, before increasing economy/market breadth.
 
