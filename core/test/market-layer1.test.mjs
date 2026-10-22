@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SOURCES, boundedJson, collectWdi, collectBls, collectSec, collectAlpaca,
+  SOURCES, boundedJson, collectWdi, collectBls, collectEia, collectSec, collectAlpaca,
   observeLayerOne, sourceReadiness, layerOneStatus
 } from '../src/market/layer-one.mjs';
 
@@ -23,7 +23,7 @@ const fakeDb = ({onCall=()=>{}, connector={enabled:true,last_sync_at:null}}={}) 
 });
 
 test('source catalog is bounded and registered independently from existing news and quake authorities',()=>{
-  assert.deepEqual(SOURCES.map(x=>x.key), ['market.wdi','market.bls','market.sec','market.alpaca.iex']);
+  assert.deepEqual(SOURCES.map(x=>x.key), ['market.wdi','market.bls','market.eia','market.sec','market.alpaca.iex']);
   assert.ok(SOURCES.every(x=>x.terms.startsWith('https://') && x.retentionDays > 0));
 });
 
@@ -31,6 +31,8 @@ test('market credentials and market data storage permissions fail closed',()=>{
   assert.equal(sourceReadiness('market.alpaca.iex',{}),'needs_market_data_license_review');
   assert.equal(sourceReadiness('market.alpaca.iex',{MCCLUSTER_MARKET_ALPACA_STORAGE_APPROVED:'true'}),'needs_alpaca_credentials');
   assert.equal(sourceReadiness('market.sec',{}),'needs_sec_ciks_and_user_agent');
+  assert.equal(sourceReadiness('market.eia',{}),'needs_eia_api_key');
+  assert.equal(sourceReadiness('market.eia',{EIA_API_KEY:'testing-key'}),'ready');
   assert.equal(sourceReadiness('market.sec',{MCCLUSTER_MARKET_SEC_CIKS:'10', MCCLUSTER_MARKET_SEC_USER_AGENT:'NoEmailHere'}),'invalid_sec_user_agent');
   assert.equal(sourceReadiness('market.wdi',{}),'ready');
 });
@@ -69,6 +71,29 @@ test('BLS identifies monthly observations, skips annual averages and future mont
   assert.equal(got[0].payload.period,'2026-09');
   assert.equal(got[0].payload.provisional,true);
   assert.equal(got[0].payload.unit,'index');
+});
+
+test('EIA weekly petroleum is opt-in and never writes the API key into provenance',async()=>{
+  const data={response:{data:[
+    {series:'WCRFPUS2',period:'2026-10-16',value:'13269',units:'MBBLD'},
+    {series:'WCRSTUS1',period:'2026-10-16',value:'695200',units:'MBBL'}
+  ]}};
+  const got=await collectEia({env:{EIA_API_KEY:'do-not-store-key'},now:NOW,
+    fetchImpl:async(url)=>{
+      assert.ok(url.includes('api_key=do-not-store-key'));
+      assert.ok(url.includes('frequency=weekly'));
+      return response(data);
+    }});
+  assert.equal(got.length,2);
+  assert.equal(got[0].payload.metric,'crude_oil_field_production');
+  assert.equal(got[1].payload.unit,'MBBL');
+  assert.equal(got[0].observed_at,'2026-10-16T12:00:00.000Z');
+  assert.ok(!JSON.stringify(got).includes('do-not-store-key'));
+
+  const bad=structuredClone(data);bad.response.data[0].units='USD';
+  await assert.rejects(collectEia({env:{EIA_API_KEY:'k'},now:NOW,fetchImpl:async()=>response(bad)}),/eia_unit_or_period_invalid/);
+  const future=structuredClone(data);future.response.data[0].period='2026-12-31';
+  await assert.rejects(collectEia({env:{EIA_API_KEY:'k'},now:NOW,fetchImpl:async()=>response(future)}),/eia_future_or_invalid_period/);
 });
 
 test('SEC requires a declared operator, validates CIK, and reads filing metadata only',async()=>{
