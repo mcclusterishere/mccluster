@@ -20,13 +20,13 @@ grant select on public.events,public.events_lean,public.event_taxonomy,
   public.social_accounts,public.social_posts,public.social_metric_snapshots to service_role;
 grant usage on schema public to service_role;
 \ir ../pending/analytics_event_inventory_v1.sql
-do $
+do $$
 begin
   if to_regclass('public.events_first_party_inventory_v1_idx') is null or
      to_regclass('public.events_lean_first_party_inventory_v1_idx') is null then
     raise exception 'Both first-party inventory covering indexes are required';
   end if;
-end $;
+end $$;
 
 do $$
 begin
