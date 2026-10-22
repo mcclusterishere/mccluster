@@ -60,6 +60,8 @@ Environment variables (names only, no credentials in Git):
 
 No FRED ingestion is added; FRED API terms require separate review for use in AI workflows. Comtrade, IMF, international exchanges and deeper country coverage remain source-catalog research, **not represented as connected collectors**. Source approvals and data licenses are per dataset; no feed is implicitly licensed for public redistribution or model training.
 
+Core's authenticated tool broker also exposes the read-only `core.market.layer1.status` tool (zero user arguments). It queries the canonical house org and returns no source keys, trade instructions or user-supplied URLs. It is not a new public REST endpoint; the canonical MCP edge authority still applies.
+
 Commands on the OVH host:
 
 ```bash
