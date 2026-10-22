@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Action Network | Immersive View</title>
+<meta name="description" content="Explore an interactive Action Network scene with optional on-device camera tracking.">
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#09090e;color:#f7f7fb}*{box-sizing:border-box}
+body{margin:0;min-height:100vh}main{max-width:1100px;margin:auto;padding:24px 18px 72px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:center}a{color:#ff8189}header a{font-weight:750}
+h1{font-size:clamp(2.4rem,7vw,5rem);letter-spacing:-.06em;line-height:1.02;margin:55px 0 14px}p{color:#c5c5d0;line-height:1.6;max-width:660px}
+.scene{position:relative;overflow:hidden;isolation:isolate;min-height:390px;height:min(64vw,600px);max-height:600px;border-radius:28px;border:1px solid #48424f;background:radial-gradient(ellipse at 50% 55%,#36232d 0%,#14131d 50%,#08080d 100%);perspective:850px;touch-action:pan-y}
+.world{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(var(--yaw,0deg)) rotateX(var(--pitch,0deg));transition:transform 110ms ease-out;pointer-events:none}
+.ring{position:absolute;left:50%;top:50%;width:min(48vw,360px);height:min(48vw,360px);border:3px solid #f35462;border-radius:50%;box-shadow:0 0 50px #f3546255,inset 0 0 40px #f3546233;transform:translate(-50%,-50%) translateZ(90px)}
+.token{position:absolute;left:50%;top:50%;width:min(36vw,260px);height:min(36vw,260px);border:1px solid #e66c7b66;border-radius:24px;display:grid;place-items:center;background:#201722;transform:translate(-50%,-50%) translateZ(145px)}
+.token span{font-size:clamp(5rem,18vw,11rem);font-weight:1000;color:white;line-height:1}
+.depth{position:absolute;border:1px solid #ffffff24;border-radius:25px;inset:13%;transform:translateZ(-100px)}
+.depth.two{inset:6%;transform:translateZ(-180px)}
+.scene-label{position:absolute;bottom:20px;left:24px;font-size:12px;letter-spacing:.17em;font-weight:800;color:#ffffffa8}
+.controls{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}button{border:1px solid #77717e;background:#24212c;color:white;padding:12px 18px;border-radius:12px;font:inherit;font-weight:700;cursor:pointer}
+button.primary{background:#e44854;border-color:#e44854}button:focus-visible,a:focus-visible{outline:3px solid #ffd36e;outline-offset:3px}
+button:disabled{opacity:.55;cursor:not-allowed}.status{font-size:14px;min-height:24px}
+video{display:none}small{color:#b8b8c2}
+@media(prefers-reduced-motion:reduce){.world{transition:none}}
+</style>
+</head>
+<body><main>
+<header><strong>ACTION <span style="color:#f45b66">NETWORK</span></strong><a href="action-network-discovery.html">Creator discovery ↗</a></header>
+<h1>Move. The world responds.</h1>
+<p>Experience a head-tracked 3D perspective. Camera access is optional: your pointer or finger controls the same scene without a camera.</p>
+<section class="scene" id="scene" aria-label="Interactive 3D Action Network scene" tabindex="0">
+<div class="world" id="world" aria-hidden="true"><div class="depth two"></div><div class="depth"></div><div class="ring"></div><div class="token"><span style="font-size:clamp(1rem,3vw,1.5rem);font-weight:700">3D STUDY</span></div></div>
+<div class="scene-label">ACTION NETWORK / IMMERSIVE EXPERIMENT</div>
+</section>
+<div class="controls"><button class="primary" id="camera" type="button">Enable head tracking</button><button id="stop" type="button" disabled>Stop camera</button><button id="reset" type="button">Reset view</button></div>
+<p id="status" class="status" role="status" aria-live="polite">Pointer, touch and arrow keys are ready. No camera access requested.</p>
+<small>Camera frames are processed locally in your browser using MediaPipe Face Landmarker. No video is uploaded or stored by this page. Tracking requires HTTPS and a supported browser; if unavailable, pointer and touch remain active. Camera permission can be revoked in browser settings.</small>
+<video id="video" autoplay muted playsinline aria-hidden="true"></video>
+</main>
+<script type="module">
+const scene=document.getElementById('scene'),world=document.getElementById('world');
+const cameraButton=document.getElementById('camera'),stopButton=document.getElementById('stop'),resetButton=document.getElementById('reset'),status=document.getElementById('status'),video=document.getElementById('video');
+let stream=null,landmarker=null,frame=0,starting=false,mode='pointer',yaw=0,pitch=0,generation=0;
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+function orient(x,y){yaw=clamp(x,-1,1)*17;pitch=clamp(y,-1,1)*-12;world.style.setProperty('--yaw',yaw+'deg');world.style.setProperty('--pitch',pitch+'deg')}
+function pointer(e){if(mode==='camera')return;const r=scene.getBoundingClientRect();orient(((e.clientX-r.left)/r.width-.5)*2,((e.clientY-r.top)/r.height-.5)*2)}
+scene.addEventListener('pointermove',pointer);
+scene.addEventListener('pointerdown',pointer);
+scene.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();if(mode==='camera')return;orient(yaw/17+(e.key==='ArrowRight'?.12:e.key==='ArrowLeft'?-.12:0),pitch/-12+(e.key==='ArrowDown'?.12:e.key==='ArrowUp'?-.12:0))});
+function stop(){generation++;starting=false;mode='pointer';cancelAnimationFrame(frame);frame=0;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}video.srcObject=null;if(landmarker){landmarker.close();landmarker=null}cameraButton.disabled=false;stopButton.disabled=true;status.textContent='Camera stopped. Pointer, touch and arrow keys are ready.'}
+stopButton.addEventListener('click',stop);
+resetButton.addEventListener('click',()=>orient(0,0));
+async function start(){
+if(starting||stream)return;
+starting=true;const run=++generation;cameraButton.disabled=true;status.textContent='Requesting camera permission…';
+try{
+if(!navigator.mediaDevices?.getUserMedia||!window.isSecureContext)throw new Error('Camera requires a secure HTTPS browser.');
+const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+if(run!==generation){acquired.getTracks().forEach(t=>t.stop());return;}
+stream=acquired;
+stream.getTracks().forEach(t=>t.addEventListener('ended',()=>{if(run===generation)stop();},{once:true}));
+stopButton.disabled=false;video.srcObject=stream;await video.play();if(run!==generation)return;
+status.textContent='Loading on-device face tracking…';
+const {FaceLandmarker,FilesetResolver}=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');
+if(run!==generation)return;
+const vision=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');
+if(run!==generation)return;
+const model=await FaceLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1});
+if(run!==generation){model.close();return;}
+landmarker=model;
+mode='camera';status.textContent='Head tracking active. Move your head to shift the scene.';
+let last=-1;
+function tick(){if(mode!=='camera')return;if(video.readyState>=2&&video.currentTime!==last){last=video.currentTime;const faces=landmarker.detectForVideo(video,performance.now()).faceLandmarks;if(faces?.length){const points=faces[0],nose=points[1];if(nose)orient((.5-nose.x)*3,(nose.y-.5)*3)}else status.textContent='Looking for a face. Move into the camera view.'}frame=requestAnimationFrame(tick)}
+tick();
+}catch(e){if(run!==generation)return;stop();status.textContent='Head tracking unavailable: '+(e?.name==='NotAllowedError'?'camera permission denied':e?.message||'camera or model could not load')+'. Pointer and touch still work.'}
+finally{if(run===generation){starting=false;if(!stream)cameraButton.disabled=false}}
+}
+cameraButton.addEventListener('click',start);
+window.addEventListener('pagehide',stop);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||starting))stop()});
+</script>
+<script src="js/tabbar.js?v=__STAMP__"></script></body></html>
