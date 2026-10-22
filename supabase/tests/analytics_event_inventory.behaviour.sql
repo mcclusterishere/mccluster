@@ -19,7 +19,7 @@ create table public.social_metric_snapshots(id uuid primary key,org_id uuid not 
 grant select on public.events,public.events_lean,public.event_taxonomy,
   public.social_accounts,public.social_posts,public.social_metric_snapshots to service_role;
 grant usage on schema public to service_role;
-\ir ../pending/analytics_event_inventory_v1.sql
+\ir ../migrations/20261022005028_analytics_event_inventory_v1.sql
 do $$
 begin
   if to_regclass('public.events_first_party_inventory_v1_idx') is null or

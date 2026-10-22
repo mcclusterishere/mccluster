@@ -2,7 +2,7 @@ name: Analytics event inventory (isolated)
 on:
   pull_request:
     paths:
-      - 'supabase/pending/analytics_event_inventory_v1.sql'
+      - 'supabase/migrations/20261022005028_analytics_event_inventory_v1.sql'
       - 'supabase/tests/analytics_event_inventory.behaviour.sql'
       - 'workers/mccluster/src/analytics/event-inventory.js'
       - 'workers/mccluster/src/analytics/router.js'

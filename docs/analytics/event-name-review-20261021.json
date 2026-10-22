@@ -4,7 +4,7 @@
   "observed_on": "2026-10-21",
   "scope": "first_party_all_bot_statuses",
   "limitation": "Observed event names, not full audit of every product emitter. Classifications must not be equated with verified outcomes.",
-  "reviewed_mapping_source": "supabase/pending/analytics_event_inventory_v1.sql",
+  "reviewed_mapping_source": "supabase/migrations/20261022005028_analytics_event_inventory_v1.sql",
   "summary": {
     "observed_unclassified_at_snapshot": 78,
     "approved_pending_migration": 30,

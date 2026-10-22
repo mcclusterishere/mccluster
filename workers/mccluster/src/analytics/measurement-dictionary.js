@@ -6,7 +6,7 @@ export const DICTIONARY_VERSION = 'analytics-dictionary/2026-10-21.1';
 export const DICTIONARY_SOURCE = {
   code_sha: 'e9d8604988496783fa25f4c450bd49fec69ba476',
   taxonomy_snapshot: 'docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json',
-  reviewed_taxonomy_migration: 'supabase/pending/analytics_event_inventory_v1.sql',
+  reviewed_taxonomy_migration: 'supabase/migrations/20261022005028_analytics_event_inventory_v1.sql',
   review_manifest: 'docs/analytics/event-name-review-20261021.json',
   interpretation: 'Baseline classifications plus 30 reviewed client-signal mappings; unknown names remain unclassified. Client telemetry is not verified account registration, payment or completed mission.'
 };
