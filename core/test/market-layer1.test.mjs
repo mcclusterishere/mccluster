@@ -18,7 +18,7 @@ const fakeDb = ({onCall=()=>{}, connector={enabled:true,last_sync_at:null}}={}) 
   org:async()=> '00000000-0000-4000-8000-000000000001',
   ensure:async (...a)=>onCall('ensure',a),
   rows:async (url)=> { onCall('rows',[url]); return url.includes('ops_ingest_connectors')?[connector]:[]; },
-  rpc:async (name,args)=>{onCall(name,args);return name.includes('begin_run')?
+  rpc:async (name,args)=>{onCall(name,args);return name==='market_layer1_policy_ready_service'?true:name.includes('begin_run')?
     {id:'00000000-0000-4000-8000-000000000002'}:{ok:true};}
 });
 
@@ -102,6 +102,15 @@ test('disabled flag performs no database or network writes',async()=>{
   let calls=0;
   const result=await observeLayerOne({env:{},db:{org:async()=>{calls++;}},fetchImpl:async()=>{calls++;}});
   assert.equal(result.status,'disabled');
+  assert.equal(calls,0);
+});
+
+test('missing DB policy migration blocks ingestion before writing any rows',async()=>{
+  let calls=0;
+  const result=await observeLayerOne({env:{MCCLUSTER_MARKET_LAYER1_ENABLED:'true'},
+    db:{rpc:async()=>false,org:async()=>{calls++;}},fetchImpl:async()=>{calls++;}});
+  assert.equal(result.status,'blocked');
+  assert.equal(result.reason,'policy_migration_not_applied');
   assert.equal(calls,0);
 });
 
