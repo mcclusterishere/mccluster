@@ -216,4 +216,12 @@
     else if (bar.auth().signed_in) bar.verifyAdmin();
   });
   syncProfile(); syncAdmin();
+  // Client-branded perspective is a public skin over the same bar, never a role.
+  // Kept separate from js/tabbar.js while concurrent World/navigation work lands.
+  if (!document.querySelector('script[data-mcc-managed-client]')) {
+    const perspective = document.createElement('script');
+    perspective.dataset.mccManagedClient = '1';
+    perspective.src = root + 'js/managed-client-perspective.js?v=__STAMP__';
+    document.head.appendChild(perspective);
+  }
 })();
