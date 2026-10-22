@@ -26,6 +26,9 @@ body[data-control-workspace] .cr-rail,body[data-control-workspace] .cr-bottom,bo
 .cw-intelligence-tools>button{font-size:12px}.cw-segment{display:flex;align-items:center;border:1px solid var(--cw-line);border-radius:11px;padding:3px;background:#131417;gap:2px}
 .cw-tools .cw-segment button{border:0;min-height:38px;font-size:12px;padding:7px 10px;background:transparent;color:#a0a4ad}
 .cw-tools .cw-segment button[aria-pressed="true"]{color:#fff;background:#292a2e}
+/* Hitman's Halo is its own page: a door in the scene control, not a scene (one Halo, 2026-10-22) */
+.cw-tools .cw-segment .cw-halo-door{display:inline-flex;align-items:center;min-height:38px;padding:7px 10px;border-radius:8px;color:#a0a4ad;font-size:12px;text-decoration:none}
+.cw-tools .cw-segment .cw-halo-door:hover,.cw-tools .cw-segment .cw-halo-door:focus-visible{color:#fff;background:#202125}
 .cw-header [hidden],.cw-tools [hidden],.cw-source-panel[hidden]{display:none!important}
 body[data-control-workspace] #crMain{grid-area:main;min-width:0;padding:20px 16px calc(var(--appbar-h,76px) + 24px)!important;overflow-x:hidden}
 body[data-control-workspace][data-cw-page="intelligence"] #crMain{padding:0 0 calc(var(--appbar-h,76px) + 30px)!important}
@@ -58,11 +61,6 @@ body[data-control-workspace] .cr-account-menu{z-index:90;top:70px;right:16px;lef
 .cw-source-panel{position:fixed;z-index:60;inset:130px 16px auto;max-height:calc(100dvh - 250px);overflow:auto;padding:18px;border:1px solid #42444c;border-radius:16px;background:#111214;box-shadow:0 20px 80px #000b;color:#d9dde5;font:400 13px/1.5 system-ui,sans-serif}
 .cw-source-panel header{display:flex;align-items:center;justify-content:space-between;gap:10px}.cw-source-panel h2{font-size:19px;margin:0}
 .cw-source-panel p{color:#adb3bf}.cw-source{padding:12px 0;border-top:1px solid #303238}.cw-source button{font-size:14px;text-align:left}.cw-source button[aria-pressed="true"]{border-color:#c73244;background:#2b171c}.cw-source small{color:#afb4c0}
-.cw-halo{position:absolute;inset:0;display:flex;flex-direction:column;background:#0b0b0d;z-index:3}
-.cw-halo iframe{width:100%;flex:1 1 auto;min-height:0;border:0;background:#0b0b0d}
-.cw-halo-note{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#151619;color:#a8afbc;font:400 11px/1.4 system-ui,sans-serif}
-.cw-halo-note a{flex:none;min-height:44px;display:flex;align-items:center;color:#e1e5ee}
-body[data-control-workspace][data-cw-scene="halo"] .cra-stage>.cra-globe__host,body[data-control-workspace][data-cw-scene="halo"] .cra-stage>.cra-pill,body[data-control-workspace][data-cw-scene="halo"] .cra-stage>.cra-summary,body[data-control-workspace][data-cw-scene="halo"] .cra-stage>.cra-globe__caption{visibility:hidden}
 body[data-control-workspace][data-cw-layout="details"] .cra-stage{display:none}
 body[data-control-workspace] button:focus-visible,body[data-control-workspace] select:focus-visible,body[data-control-workspace] a:focus-visible{outline:2px solid #eceff5;outline-offset:3px}
 @media(min-width:600px){.cw-header{padding:18px 24px 10px;gap:14px}.cw-brand img{width:96px;height:40px}.cw-brand>span{font-size:11px}.cw-brand b{font-size:10px}.cw-header #cwAsk,.cw-header #cwAccount{font-size:13px;padding:9px 12px}.cw-actions kbd{display:inline-block;margin-left:12px;color:#b0b5bf}.cw-pages button{font-size:15px}.cw-tools{padding:18px 24px}.cw-location strong{font-size:28px}.cw-source-panel{left:auto;width:440px;right:24px}.cw-tools .cw-segment button{min-height:40px;font-size:13px}}

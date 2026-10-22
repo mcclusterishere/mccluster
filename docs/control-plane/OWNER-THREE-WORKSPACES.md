@@ -25,7 +25,7 @@ actual original Control route arrays so a missing subview fails CI.
 | `#home` | Operations | Existing overview and actionable attention list |
 | `#work:*` (all 15 views) | Operations | Native inbox, CRM, people, organizations, tasks, bookings, orders, projects, deliverables, payments, renewals, outreach and administration |
 | `#system:*` (all 5 views) | Operations | Native command, overview, workload, observability and resources |
-| `#apps` | Operations | Existing application registry; preview Halo links use the actual Halo host |
+| `#apps` | Operations | Existing application registry; its Halo tile opens the one Halo (the four screens on the globe) |
 | `#ai` | Operations / global command | Existing McCluster conversation and command palette; no new model or paid call |
 | `#create:*` (all 9 views) | Studio | Native projects, library, publishing, channels, Instagram, music, clipping, missions and song tests |
 
@@ -40,7 +40,7 @@ Operations record filter.
 The existing analytical Earth retains its colors, lighting, boundaries, lake
 geometry, country/state selection and privacy-suppressed aggregate handling.
 The same DOM and Cesium instance survive switching pages. Its render loop stops
-while detached, behind Halo, in details focus, or in a background tab. Revocation
+while detached, in details focus, or in a background tab. Revocation
 and page exit destroy the widget, handler and observer; late loads cannot
 recreate a destroyed scene.
 
@@ -49,26 +49,14 @@ split with an independently scrolling inspector. Focus details yields the full
 workspace to the cards. New controls are touch-sized and reduced-motion aware.
 The global bottom bar is not redesigned.
 
-## Halo integration: actual product, explicit limitations
+## Halo: one page, not an embed
 
-The explicit Hitman's Halo choice lazily loads `https://prime.mccluster.org/`
-in the globe stage, keeping the existing analytics inspector beside it. The
-black widget is paused, not redrawn as a second active scene.
-
-Owner session exchange reuses Halo's documented existing `ownerAuthBridge.js`
-protocol. The parent pins the exact frame and origin, verifies the owner
-workspace before replying, transmits only the current access token (not refresh
-token or provider keys), and never persists/logs it. The Halo Worker independently
-checks every gated request. On close/sign-out/hidden tab, the frame receives a
-clear message and is removed. A failed owner recheck closes the private preview.
-
-**This is an interim product embed, not renderer extraction or data fusion.**
-Halo's camera is independent; analytics selection is not claimed to move Halo.
-No private analytics rows are sent to the frame, and no fabricated map relations
-are drawn. Source feeds still require their own licenses, credentials and
-entitlements. CCTV media in bearer mode may require the existing proxy/Access
-session. Hosted frame policy, actual owner sign-in and iPad GPU behavior require
-manual verification; a separate-open link remains available if framing fails.
+**Superseded 2026-10-22** (owner: "it takes you to multiple different places. Not everything is consolidated"). The
+Intelligence scene control no longer frames the separate Halo app at `https://prime.mccluster.org/` and no longer hands
+it the owner's session. Its Halo button is now a door to the one Halo, the four screens on the globe
+(`action-globe.html?explore=1&halo=1`, `docs/control-plane/HALO-ADMIN-GLOBE.md`), the same page the Control tile and the
+Control menu open. The black globe is the only scene drawn here. The workspace keeps no frame, timer or message listener
+for Halo, and nothing in it posts a message to another site.
 
 The two old Control product shortcuts are corrected only in this opt-in preview.
 Legacy Seek First APIs and application are not deleted or renamed by this PR.
@@ -82,8 +70,8 @@ that is run by the repository CI against this head.
 Local Chromium navigation is blocked by managed browser policy. That policy was
 not changed. Browser testing runs in the dedicated read-only GitHub Actions job,
 with real Cesium 1.131.0, 1180x820, 820x1180 and 390x844 viewports and synthetic
-API responses. Every network request is intercepted. The Halo frame is explicitly
-a bridge fixture, not proof the production Halo scene rendered.
+API responses. Every network request is intercepted. The Halo door is checked to
+open the one Halo page and to make no request to the separate app.
 
 The workflow uploads screenshots, a results file and failure evidence. Screenshots
 are labeled synthetic; they are not production analytics. Do not merge for public

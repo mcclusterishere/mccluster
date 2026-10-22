@@ -90,7 +90,7 @@
     /* HITMAN'S HALO ON THE GLOBE (owner, 2026-10-21: "fix the fact that the control room points to seek first"): the
        owner's full-screen globe with the Halo console open. Seek First (the retired console behind
        auth/seek-first-handoff.html) is no longer a door from here. */
-    halo: { title: "Hitman Halo", href: "action-globe.html?explore=1&halo=1", subtitle: "Owner spatial intelligence on the globe" },
+    halo: { title: "Hitman’s Halo", href: "action-globe.html?explore=1&halo=1", subtitle: "World · Missions · People · Intelligence" },
     manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" }
   };
 

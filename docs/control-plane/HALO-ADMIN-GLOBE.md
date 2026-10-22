@@ -32,12 +32,19 @@ Intelligence), "analyze it and try to get it close to this". They are kept as th
 - **Doors to it:**
   - the World's frame (`mnet.html`) shows the owner a round Halo button above World;
   - the full-screen globe's header shows the owner a Halo button beside "← World";
-  - the Control Room tile "Hitman Halo" and the site menu's "Halo on the globe" open the same link.
+  - the Control Room tile "Hitman's Halo", the Control menu's "Hitman's Halo" and the Control layout's Halo door
+    (`?workspace=1`) open the same link.
+- **One Halo** (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"). These
+  four screens are the only Halo any McCluster menu or button opens. The Control menu's "Hitman's Halo" used to open the
+  separate app at `prime.mccluster.org`, and the Control layout's Halo switch framed that app and handed it the owner's
+  session; both now open this page, and Control sends no session to another site. The menu's second entry, "Halo on the
+  globe", is gone. The bar's globe button stays on the World feed, and Analytics keeps its own globe and World
+  intelligence tab (the owner's choices).
 
   The plain full-screen globe (`?explore=1`) stays the plain globe.
 - **Seek First is gone from Control.** The "Spatial Intelligence" tile, which opened the Seek First console
-  (`auth/seek-first-handoff.html`), is removed, and nothing in Control links to Seek First any more. The standalone Halo
-  product (`prime.mccluster.org`) keeps its own menu entry.
+  (`auth/seek-first-handoff.html`), is removed, and nothing in Control links to Seek First any more. The separate Halo
+  app (`prime.mccluster.org`, its own repository) still runs, but nothing in the McCluster menus links to it.
 - **Who sees it.** `js/action-globe.js` loads none of these files unless the Worker's `/v1/world/access` answer says
   `release.admin_preview === true` for this session (the house owner: `org_members` owner of `mccluster`). Losing that answer
   unmounts the view, its marks and its layers.

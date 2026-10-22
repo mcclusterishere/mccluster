@@ -32,12 +32,9 @@
     const row = selectedWorkspace(payload, wanted);
     return !!row && row.slug === 'mccluster' && row.kind === 'studio' && row.role === 'owner';
   }
-  const HALO_ORIGIN = 'https://prime.mccluster.org';
-  const PARENT_ORIGINS = Object.freeze(['https://mccluster.org','https://matthew.mccluster.org','https://api.mccluster.org']);
-  function acceptsHaloRequest(event, frameWindow) {
-    return !!event && !!frameWindow && event.origin === HALO_ORIGIN && event.source === frameWindow &&
-      event.data && event.data.type === 'mccluster:halo-owner-token:request';
-  }
+  /* Hitman's Halo is one page, the four screens on the globe (owner, 2026-10-22). Control no longer frames the separate
+     Halo app on its own subdomain, so no owner session is handed to another site from here. */
+  const HALO_PAGE = 'action-globe.html?explore=1&halo=1';
   // An allowlisted presentation context, NOT a bag of private analytics rows.
   function context(analytics) {
     const geo = analytics && analytics.geo || {};
@@ -46,5 +43,5 @@
     return Object.freeze({country,state,period: typeof analytics?.rangeId === 'string' ? analytics.rangeId.slice(0,20) : '24h'});
   }
   root.CR = root.CR || {};
-  root.CR.workspaceCore = Object.freeze({pages,routes:Object.freeze(routes),defaults,resolve,selectedWorkspace,isOwnerWorkspace,HALO_ORIGIN,PARENT_ORIGINS,acceptsHaloRequest,context});
+  root.CR.workspaceCore = Object.freeze({pages,routes:Object.freeze(routes),defaults,resolve,selectedWorkspace,isOwnerWorkspace,HALO_PAGE,context});
 })(typeof window === 'undefined' ? globalThis : window);
