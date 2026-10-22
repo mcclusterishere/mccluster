@@ -29,6 +29,12 @@ export function cleanInventory(rows) {
 }
 const validError=v=>/^meta_error_[0-9]{3}$/.test(String(v||''))?String(v):null;
 export function socialCoverage(accounts,postCount,snapshotCount){
+  // Missing account reads must not be presented as a measured zero.
+  if(accounts===null||accounts===undefined)return {instagram:{
+    account_count:null,connected_accounts:null,imported_posts:null,metric_snapshots:null,
+    provider_observation:'not_measured',reauthorization_required:null,error_codes:[],
+    status:'unavailable',next_step:'Retry the account and provider measurements.'
+  }};
   if(!Array.isArray(accounts))throw Error('Social source inventory unavailable');
   const instagram=accounts.filter(a=>a?.platform==='instagram');
   const errors=instagram.map(a=>validError(a.media_discovery_error)).filter(Boolean);
