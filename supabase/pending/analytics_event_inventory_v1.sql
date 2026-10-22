@@ -3,6 +3,21 @@
 -- bot events in the inventory, with a separate bot_rows indicator.
 -- Performance: read only on explicit owner request, not the home dashboard.
 
+-- 126k+ event rows are much wider than these narrow name/time columns.
+-- First-party partial covering indexes avoid two unbounded heap scans when
+-- owners request an all-name inventory. Keep the two stores independently
+-- indexed so projection mismatch remains visible, without changing rows.
+-- A short lock timeout refuses to block the live collector for long.
+set local lock_timeout = '5s';
+set local statement_timeout = '30s';
+create index if not exists events_first_party_inventory_v1_idx
+  on public.events (name, at desc) include (is_bot)
+  where site_id is null;
+create index if not exists events_lean_first_party_inventory_v1_idx
+  on public.events_lean (name, at desc)
+  where site_id is null;
+
+
 insert into public.event_taxonomy(event_name,stage,note)
 values
   ('mnet_view','view','Client-reported community profile/content view; not unique people.'),
