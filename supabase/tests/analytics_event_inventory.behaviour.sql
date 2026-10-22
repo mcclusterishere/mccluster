@@ -13,7 +13,7 @@ create table public.events_lean (
  name text not null, is_bot boolean
 );
 create table public.event_taxonomy(event_name text primary key,stage text not null,note text);
-create table public.social_accounts(id uuid primary key,org_id uuid not null,platform text not null);
+create table public.social_accounts(id uuid primary key,org_id uuid not null,platform text not null,status text not null default 'connected',media_discovery_error text);
 create table public.social_posts(id uuid primary key,org_id uuid not null,account_id uuid not null);
 create table public.social_metric_snapshots(id uuid primary key,org_id uuid not null,post_id uuid not null,source text not null);
 grant select on public.events,public.events_lean,public.event_taxonomy,
@@ -52,9 +52,10 @@ insert into public.events_lean(id,site_id,name,at,is_bot) values
  ('00000000-0000-4000-8000-000000000003',null,'signup_succeeded',now()-interval '2 days',false);
 
 
-insert into public.social_accounts(id,org_id,platform) values
- ('00000000-0000-4000-8000-000000000100','00000000-0000-4000-8000-000000000090','instagram'),
- ('00000000-0000-4000-8000-000000000101','00000000-0000-4000-8000-000000000090','tiktok');
+insert into public.social_accounts(id,org_id,platform,status,media_discovery_error) values
+ ('00000000-0000-4000-8000-000000000100','00000000-0000-4000-8000-000000000090','instagram','connected','meta_error_190'),
+ ('00000000-0000-4000-8000-000000000101','00000000-0000-4000-8000-000000000090','tiktok','connected',null),
+ ('00000000-0000-4000-8000-000000000107','00000000-0000-4000-8000-000000000090','instagram','disconnected',null);
 insert into public.social_posts(id,org_id,account_id) values
  ('00000000-0000-4000-8000-000000000102','00000000-0000-4000-8000-000000000090','00000000-0000-4000-8000-000000000100'),
  ('00000000-0000-4000-8000-000000000103','00000000-0000-4000-8000-000000000090','00000000-0000-4000-8000-000000000101');
@@ -66,7 +67,8 @@ do $$
 declare r record;
 begin
  select * into strict r from public.analytics_instagram_source_status_v1('00000000-0000-4000-8000-000000000090');
- if r.instagram_posts<>1 or r.verified_insight_snapshots<>1
+ if r.instagram_posts<>1 or r.verified_insight_snapshots<>1 or
+    r.instagram_accounts<>2 or r.connected_accounts<>1 or r.authorization_expired is distinct from true
  then raise exception 'Provider data illegally counted other social platform or manually reported snapshots: %',row_to_json(r);end if;
  if has_function_privilege('anon','public.analytics_instagram_source_status_v1(uuid)','execute')
     or has_function_privilege('authenticated','public.analytics_instagram_source_status_v1(uuid)','execute')
