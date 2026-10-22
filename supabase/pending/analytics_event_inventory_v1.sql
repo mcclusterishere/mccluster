@@ -11,7 +11,7 @@
 -- On a populated live collector, indexes MUST already be valid. Build them
 -- CONCURRENTLY in separate statements first, then apply this migration.
 -- The same file remains replayable in an empty isolated database.
-do $
+do $$
 begin
   if exists (select 1 from public.events limit 1) and (
     not exists (select 1 from pg_catalog.pg_index
@@ -23,7 +23,7 @@ begin
   ) then
     raise exception 'Build both analytics inventory indexes concurrently before live migration';
   end if;
-end $;
+end $$;
 set local lock_timeout = '5s';
 set local statement_timeout = '30s';
 create index if not exists events_first_party_inventory_v1_idx
@@ -122,7 +122,7 @@ returns table(
 )
 language sql stable security invoker
 set search_path = ''
-as $
+as $$
   select
     (select count(*)::bigint
       from public.social_posts p
@@ -143,7 +143,7 @@ as $
     exists(select 1 from public.social_accounts a
       where a.org_id=p_org and a.platform='instagram'
         and a.media_discovery_error='meta_error_190');
-$;
+$$;
 revoke all on function public.analytics_instagram_source_status_v1(uuid)
   from public,anon,authenticated;
 grant execute on function public.analytics_instagram_source_status_v1(uuid)
