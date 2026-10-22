@@ -17,7 +17,7 @@ html.halo-on{
   --hx-bg:#030912;--hx-bar:#050c17;--hx-panel:rgba(7,14,26,.95);--hx-panel-2:#0b1526;--hx-raise:#0e1b2f;
   --hx-line:#15243a;--hx-line-2:#22364f;--hx-ink:#eef3f9;--hx-ink-2:#c6d1df;--hx-mute:#8e9fb5;
   --hx-cyan:#45b8f4;--hx-cyan-2:#91e1f6;--hx-amber:#f2b448;--hx-green:#4fdf98;--hx-red:#ff7a7a;
-  --hx-top:52px;--hx-tabs:44px;--hx-strip:44px;--hx-time:52px;--hx-peek:min(34dvh,300px);
+  --hx-top:52px;--hx-tabs:44px;--hx-strip:40px;--hx-time:44px;--hx-peek:68px;
   --hx-safe-top:env(safe-area-inset-top,0px);
   --hx-head:calc(var(--hx-top) + var(--hx-tabs) + var(--hx-strip) + var(--hx-safe-top));
   --hx-bottom:calc(var(--hu-bar-h,0px) + var(--hx-time));
@@ -30,8 +30,8 @@ html.halo-on.globe-explore header,html.halo-on .globe-controls,html.halo-on .glo
 html.halo-on .bare-exit,html.halo-on .world-mode,html.halo-on .world-tools,html.halo-on .globe-editorial-tools,html.halo-on .globe-editorial-world,
 html.halo-on .globe-editorial-shelf,html.halo-on .halo-enter{display:none!important}
 html.halo-on body[data-site-navigation] #mccAuthChip{display:none!important}
-/* on a phone the Earth's frame starts under the search row, so the search never covers it */
-html.halo-on.globe-explore #globe{inset:calc(var(--hx-head) + 56px) 0 calc(var(--hx-bottom) + var(--hx-peek)) 0}
+/* The globe is the interaction surface: search floats over it instead of claiming a separate row. */
+html.halo-on.globe-explore #globe{inset:var(--hx-head) 0 calc(var(--hx-bottom) + var(--hx-peek)) 0}
 html.halo-on.globe-explore .osm-credit{z-index:7;left:8px;right:auto;bottom:calc(var(--hx-bottom) + var(--hx-peek) + 4px);max-width:calc(100% - 16px);background:rgba(3,9,18,.72)}
 
 .hx,.hx *{box-sizing:border-box}
@@ -286,6 +286,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
 /* ---------- over the Earth: search, Layers, the control column, the hint, the legend, the base map ---------- */
 .hx-map{position:fixed;z-index:7;top:var(--hx-head);left:0;right:0;bottom:calc(var(--hx-bottom) + var(--hx-peek));pointer-events:none}
 .hx-map > *{pointer-events:auto}
+.hx-map-focus{display:none}
 .hx-search{position:absolute;top:8px;left:8px;right:126px;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--hx-line-2);border-radius:6px;background:rgba(5,11,21,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .hx-search svg{flex:none;width:18px;height:18px;fill:none;stroke:var(--hx-ink-2);stroke-width:1.8}
 .hx-search input{flex:1 1 auto;min-width:0;min-height:42px;border:0;background:transparent;color:var(--hx-ink);font:400 max(16px,1rem)/1.2 Inter,system-ui,sans-serif;outline:none}
@@ -356,6 +357,21 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
 .hx-follow button{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:#13243a;color:#fff;font-weight:600;cursor:pointer}
 .hx-follow-btn{margin-top:10px}
 .hx-hud-host{position:fixed;z-index:7;top:calc(var(--hx-head) + 60px);left:8px;max-width:calc(100% - 72px);pointer-events:none}
+
+/* Phone: globe-first. The data drawer is an expandable preview rather than
+   a permanent third-of-screen overlay; search floats over the Cesium canvas. */
+@media (max-width:767px){
+  .hx-left:not([data-expanded="true"]) .hx-panel__body{display:none}
+  .hx-left:not([data-expanded="true"]) .hx-panel__head{align-items:center;padding-bottom:6px}
+  .hx-left:not([data-expanded="true"]) .hx-panel__head p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hx-map-focus{position:absolute;top:60px;left:8px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--hx-line-2);border-radius:6px;background:rgba(5,11,21,.9);color:var(--hx-ink);font-size:13px;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  .hx-map-focus svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .hx-map-focus[aria-pressed="true"]{border-color:var(--hx-cyan);background:rgba(12,28,49,.94)}
+  html.halo-on[data-halo-map="focus"]{--hx-peek:0px;--hx-time:0px}
+  html.halo-on[data-halo-map="focus"] .hx-left,
+  html.halo-on[data-halo-map="focus"] .hx-time{display:none}
+  html.halo-on[data-halo-map="focus"] .hx-legend{bottom:12px}
+}
 
 /* ---------- tablet: the tabs join the bar; the list and the detail float as columns ---------- */
 @media (min-width:768px){
