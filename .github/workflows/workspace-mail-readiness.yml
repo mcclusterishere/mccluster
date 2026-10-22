@@ -1,0 +1,20 @@
+name: Workspace mail readiness (isolated)
+on:
+  pull_request:
+    paths:
+      - "scripts/mail/**"
+      - "docs/control-plane/MCCLUSTER-WORKSPACE-OVH.md"
+      - ".github/workflows/workspace-mail-readiness.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hermetic-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Parse shell scripts
+        run: bash -n scripts/mail/verify-mail.sh && bash -n scripts/mail/test-verify-mail.sh
+      - name: Test readiness with mocked DNS/network
+        run: bash scripts/mail/test-verify-mail.sh
