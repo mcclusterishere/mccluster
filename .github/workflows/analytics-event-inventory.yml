@@ -7,6 +7,8 @@ on:
       - 'workers/mccluster/src/analytics/event-inventory.js'
       - 'workers/mccluster/src/analytics/router.js'
       - 'workers/mccluster/test/analytics-event-inventory.test.mjs'
+      - 'workers/mccluster/src/analytics/measurement-dictionary.js'
+      - 'workers/mccluster/test/analytics-event-inventory-dictionary.test.mjs'
       - 'js/control-room/analytics-unified.js'
       - '.github/workflows/analytics-event-inventory.yml'
   workflow_dispatch:
@@ -40,7 +42,7 @@ jobs:
         run: |
           node --check workers/mccluster/src/analytics/event-inventory.js
           node --check js/control-room/analytics-unified.js
-          node --test workers/mccluster/test/analytics-event-inventory.test.mjs
+          node --test workers/mccluster/test/analytics-event-inventory.test.mjs workers/mccluster/test/analytics-event-inventory-dictionary.test.mjs
       - name: Install PostgreSQL client
         run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
       - name: Validate source stages, counts and private service RPC
