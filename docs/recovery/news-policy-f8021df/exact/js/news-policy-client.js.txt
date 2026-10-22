@@ -1,0 +1,60 @@
+/* Same M Account and McCluster API as World. Never sends credentials to a
+ * publisher, article URL, iframe message, or URL query string. */
+(function () {
+  'use strict';
+  const API = 'https://api.mccluster.org';
+  const PREFIX = '/v1/news-policy';
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  async function token() {
+    try {
+      const session = window.MCC && window.MCC.refreshIfNeeded ? await window.MCC.refreshIfNeeded() : null;
+      return session && typeof session.access_token === 'string' ? session.access_token : null;
+    } catch (_) { return null; }
+  }
+  function subject(accessToken) {
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return UUID.test(payload.sub || '') ? payload.sub : null;
+    } catch (_) { return null; }
+  }
+  async function request(path, options = {}) {
+    if (typeof path !== 'string' || !(path === PREFIX || path.startsWith(PREFIX + '/')) || path.includes('#')) {
+      throw new Error('Invalid news or policy request.');
+    }
+    const url = new URL(path, API);
+    if (url.origin !== API || !url.pathname.startsWith(PREFIX + '/')) throw new Error('Invalid request destination.');
+    const accessToken = await token();
+    if (options.auth === true && !accessToken) throw Object.assign(new Error('Sign in to continue.'), { status: 401, code: 'authentication_required' });
+    // Token decoding binds this draft to the account that composed it. It is
+    // only a consistency check; Supabase validates the JWT and authorizes it.
+    if ((options.expectedSubject !== undefined && subject(accessToken) !== options.expectedSubject) ||
+        (typeof options.beforeSend === 'function' && options.beforeSend() === false)) {
+      throw Object.assign(new Error('Your account or project changed. Review the current draft before sending it.'), { status: 409, code: 'request_context_changed' });
+    }
+    const headers = { accept: 'application/json' };
+    if (accessToken) headers.authorization = 'Bearer ' + accessToken;
+    if (options.body !== undefined) headers['content-type'] = 'application/json';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(url.href, {
+        method: options.method || 'GET', headers, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer',
+        body: options.body === undefined ? undefined : JSON.stringify(options.body), signal: controller.signal
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data || data.ok === false) {
+        throw Object.assign(new Error(data && data.error || 'This request could not be completed.'), {
+          status: response.status, code: data && data.code, data
+        });
+      }
+      return data;
+    } catch (error) {
+      if (error.name === 'AbortError') throw Object.assign(new Error('The request took too long. Please try again.'), { status: 504, code: 'request_timeout' });
+      throw error;
+    } finally { clearTimeout(timer); }
+  }
+  window.MCC_NEWS_POLICY = Object.freeze({
+    request, token,
+    articlePath: (id) => UUID.test(String(id || '')) ? 'news-article.html?id=' + encodeURIComponent(id) : null
+  });
+})();

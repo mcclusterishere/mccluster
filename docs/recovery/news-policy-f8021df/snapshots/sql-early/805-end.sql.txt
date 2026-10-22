@@ -1,0 +1,104 @@
+  if exists(select 1 from private.eu_news_source_provenance where source_id=old.id) then
+    raise exception using errcode='42501',message='immutable_policy_source'; end if;
+  if tg_op='DELETE' then return old; end if; return new;
+end $$;
+create trigger eu_news_source_guard before update or delete on public.eu_sources for each row execute function private.eu_news_source_guard();
+create function private.eu_news_claim_guard() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not exists(select 1 from private.eu_news_claim_origins where claim_id=old.id) then
+    if tg_op='DELETE' then return old; end if; return new;
+  end if;
+  if tg_op='DELETE' then raise exception using errcode='42501',message='immutable_policy_claim'; end if;
+  if (to_jsonb(new)-array['status','approved_by_m_uid','updated_at']) is distinct from (to_jsonb(old)-array['status','approved_by_m_uid','updated_at']) then
+    raise exception using errcode='42501',message='immutable_policy_claim';
+  end if;
+  if not exists(select 1 from private.eu_news_claim_reviews r where r.claim_id=old.id and r.from_status=old.status
+    and r.to_status=new.status and r.actor_m_uid=private.eu_news_actor() and r.transaction_id=txid_current()
+    and (new.approved_by_m_uid is not distinct from case when new.status='approved' then r.actor_m_uid else null end)) then
+    raise exception using errcode='42501',message='atomic_independent_review_required';
+  end if;
+  return new;
+end $$;
+create trigger eu_news_claim_guard before update or delete on public.eu_claims for each row execute function private.eu_news_claim_guard();
+create function private.eu_news_evidence_guard() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if exists(select 1 from private.eu_news_claim_origins where claim_id=old.claim_id) then
+    raise exception using errcode='42501',message='immutable_claim_evidence'; end if;
+  if tg_op='DELETE' then return old; end if; return new;
+end $$;
+create trigger eu_news_evidence_guard before update or delete on public.eu_claim_evidence for each row execute function private.eu_news_evidence_guard();
+create function private.eu_news_revision_guard() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if exists(select 1 from private.eu_news_manuscripts where section_id=old.section_id) then
+    raise exception using errcode='42501',message='immutable_memo_revision'; end if;
+  if tg_op='DELETE' then return old; end if; return new;
+end $$;
+create trigger eu_news_revision_guard before update or delete on public.eu_section_revisions for each row execute function private.eu_news_revision_guard();
+
+create function private.eu_news_legacy_project_allowed(p_project_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists(select 1 from public.eu_research_projects where id=p_project_id)
+    and not exists(select 1 from private.eu_news_protected_projects where project_id=p_project_id)
+$$;
+create function public.eu_news_legacy_project_allowed(p_project_id uuid) returns boolean
+language sql stable security invoker set search_path = '' as $$ select private.eu_news_legacy_project_allowed(p_project_id) $$;
+
+-- Thin public RPCs are invokers. Their private implementations carry explicit
+-- actor checks and use an empty search_path. No unguarded definer is exposed.
+create function public.media_news_article_get(p_article_id uuid) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_article_get(p_article_id) $$;
+create function public.media_news_content_get(p_article_id uuid) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_content_get(p_article_id) $$;
+create function public.media_news_content_put(p_article_id uuid,p_payload jsonb,p_grant_id text,p_content_hash text) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_content_put(p_article_id,p_payload,p_grant_id,p_content_hash) $$;
+create function public.media_news_comments_list(p_article_id uuid,p_before text default null,p_limit integer default 30) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_comments_list(p_article_id,p_before,p_limit) $$;
+create function public.media_news_comment_create(p_article_id uuid,p_body text,p_parent_id uuid default null,p_request_id uuid default null) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_comment_create(p_article_id,p_body,p_parent_id,p_request_id) $$;
+create function public.media_news_comment_delete(p_comment_id uuid) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_comment_delete(p_comment_id) $$;
+create function public.media_news_comment_report(p_comment_id uuid,p_reason text) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_comment_report(p_comment_id,p_reason) $$;
+create function public.media_news_comment_moderate(p_comment_id uuid,p_status text,p_note text) returns jsonb language sql security invoker set search_path='' as $$ select private.media_news_comment_moderate(p_comment_id,p_status,p_note) $$;
+create function public.eu_news_workspace() returns jsonb language sql security invoker set search_path='' as $$ select private.eu_news_workspace() $$;
+create function public.eu_news_project_get(p_project_id uuid) returns jsonb language sql security invoker set search_path='' as $$ select private.eu_news_project_get(p_project_id) $$;
+create function public.eu_news_project_create(p_title text) returns jsonb language sql security invoker set search_path='' as $$ select private.eu_news_project_create(p_title) $$;
+create function public.eu_news_project_member_set(p_project_id uuid,p_m_uid uuid,p_role text,p_active boolean default true) returns jsonb language sql security invoker set search_path='' as $$ select private.eu_news_project_member_set(p_project_id,p_m_uid,p_role,p_active) $$;
+create function public.eu_news_capture_evidence(p_project_id uuid,p_article_id uuid default null,p_intel_evidence_id uuid default null,p_claim text default null,
+  p_claim_type text default 'factual',p_relation text default 'supports',p_locator text default null,p_note text default null,p_request_id uuid default null)
+returns jsonb language sql security invoker set search_path='' as $$ select private.eu_news_capture_evidence(p_project_id,p_article_id,p_intel_evidence_id,p_claim,p_claim_type,p_relation,p_locator,p_note,p_request_id) $$;
+create function public.eu_news_claim_review(p_claim_id uuid,p_decision text,p_note text) returns jsonb language sql security invoker set search_path='' as $$ select private.eu_news_claim_review(p_claim_id,p_decision,p_note) $$;
+create function public.eu_news_memo_save(p_project_id uuid,p_title text,p_body text,p_expected_revision integer default 0,p_submit_for_review boolean default false,p_request_id uuid default null)
+returns jsonb language sql security invoker set search_path='' as $$ select private.eu_news_memo_save(p_project_id,p_title,p_body,p_expected_revision,p_submit_for_review,p_request_id) $$;
+
+-- Clear Supabase's default PUBLIC and API-role function grants explicitly.
+do $$ declare f record; begin
+  for f in select p.oid::regprocedure as signature from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname in ('public','private') and
+      (p.proname like 'eu_news_%' or p.proname in ('media_news_preserve_identity','media_news_retain_metadata','media_news_article_get','media_news_content_get',
+        'media_news_content_put','media_news_comment_shape','media_news_comments_list','media_news_comment_create','media_news_comment_delete','media_news_comment_report','media_news_comment_moderate'))
+  loop execute format('revoke all on function %s from public,anon,authenticated,service_role',f.signature); end loop;
+end $$;
+grant usage on schema private to anon,authenticated,service_role;
+grant execute on function public.eu_news_legacy_project_allowed(uuid),private.eu_news_legacy_project_allowed(uuid) to service_role;
+grant execute on function public.media_news_article_get(uuid),private.media_news_article_get(uuid),
+  public.media_news_comments_list(uuid,text,integer),private.media_news_comments_list(uuid,text,integer) to anon,authenticated,service_role;
+grant execute on function public.media_news_content_get(uuid),private.media_news_content_get(uuid),
+  public.media_news_content_put(uuid,jsonb,text,text),private.media_news_content_put(uuid,jsonb,text,text) to service_role;
+grant execute on function
+  public.media_news_comment_create(uuid,text,uuid,uuid),private.media_news_comment_create(uuid,text,uuid,uuid),
+  public.media_news_comment_delete(uuid),private.media_news_comment_delete(uuid),
+  public.media_news_comment_report(uuid,text),private.media_news_comment_report(uuid,text),
+  public.media_news_comment_moderate(uuid,text,text),private.media_news_comment_moderate(uuid,text,text),
+  public.eu_news_workspace(),private.eu_news_workspace(),public.eu_news_project_get(uuid),private.eu_news_project_get(uuid),
+  public.eu_news_project_create(text),private.eu_news_project_create(text),
+  public.eu_news_project_member_set(uuid,uuid,text,boolean),private.eu_news_project_member_set(uuid,uuid,text,boolean),
+  public.eu_news_capture_evidence(uuid,uuid,uuid,text,text,text,text,text,uuid),private.eu_news_capture_evidence(uuid,uuid,uuid,text,text,text,text,text,uuid),
+  public.eu_news_claim_review(uuid,text,text),private.eu_news_claim_review(uuid,text,text),
+  public.eu_news_memo_save(uuid,text,text,integer,boolean,uuid),private.eu_news_memo_save(uuid,text,text,integer,boolean,uuid)
+to authenticated;
+grant execute on function private.eu_news_project_read_guard(uuid),private.eu_news_source_read_guard(uuid),
+  private.eu_news_claim_read_guard(uuid),private.eu_news_manuscript_read_guard(uuid),private.eu_news_section_read_guard(uuid)
+to anon,authenticated;
+
+comment on table public.media_news_article_records is 'Durable, attributed metadata only; raw news retention cannot erase discussions or policy citations. No publisher body or republication grant.';
+comment on table public.media_news_article_content is 'Service RPC-only stored native text; every Worker read rechecks the current approved publisher/adapter grant and content digest.';
+comment on function public.eu_news_capture_evidence(uuid,uuid,uuid,text,text,text,text,text,uuid) is 'Canonical source snapshot -> draft eu_claim -> relation; article identity and provenance come from trusted database rows. News is not automatically verified proof.';
+notify pgrst,'reload schema';
+commit;

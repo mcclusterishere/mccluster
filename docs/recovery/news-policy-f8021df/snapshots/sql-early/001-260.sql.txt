@@ -1,0 +1,260 @@
+-- PENDING: on-site news discussion + the existing Equity Uprise policy graph.
+-- Created with `supabase migration new news_policy_workspace_v1`; moved here
+-- because only production-recorded versions belong in migrations/. Not applied.
+-- Depends on the applied media_news namespace, GKG news and intel canon, and
+-- the existing eu_research_* / eu_sources / eu_claims / manuscript graph.
+-- Does NOT apply or enable policy_fellowship_ladder_v1.sql.
+-- All actor IDs come from current_m_uid() and active primary credentials.
+-- Content grants remain a Worker-owned, reviewed allowlist, not feed claims.
+
+begin;
+set local lock_timeout = '5s';
+create schema if not exists private;
+
+-- News metadata is durable. Raw 7-day ingestion pruning must never delete a
+-- discussion or the source of a policy claim. No publisher article body lives
+-- in this public metadata snapshot, and no FK points back to the prunable row.
+create table public.media_news_article_records (
+  id uuid primary key,
+  canonical_url text not null unique check (length(canonical_url) between 1 and 2000 and canonical_url ~ '^https?://'),
+  title text not null check (length(title) between 1 and 500),
+  publisher_domain text not null check (length(publisher_domain) between 1 and 200),
+  published_at timestamptz,
+  language_code text,
+  topic_keys text[] not null default '{}',
+  ingestion_provider text not null check (ingestion_provider in ('gdelt_doc_v2','gdelt_gkg_v2')),
+  headline_location_label text,
+  headline_latitude float8,
+  headline_longitude float8,
+  location_basis text not null default 'none',
+  location_country_fips text,
+  gdelt_file text,
+  imported_at timestamptz not null,
+  retained_at timestamptz not null default now()
+);
+alter table public.media_news_article_records enable row level security;
+revoke all on public.media_news_article_records from public, anon, authenticated;
+grant select on public.media_news_article_records to anon, authenticated, service_role;
+create policy media_news_article_records_public on public.media_news_article_records for select to anon, authenticated using (true);
+
+create function private.media_news_preserve_identity() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare v_id uuid;
+begin
+  if tg_op = 'UPDATE' then
+    if new.id is distinct from old.id or new.canonical_url is distinct from old.canonical_url then
+      raise exception using errcode='22023', message='article_identity_immutable';
+    end if;
+  elsif new.ingestion_provider in ('gdelt_doc_v2','gdelt_gkg_v2') then
+    -- URL re-ingestion after raw pruning keeps its original discussion ID.
+    select id into v_id from public.media_news_article_records where canonical_url = new.canonical_url;
+    if v_id is not null then new.id := v_id; end if;
+  end if;
+  return new;
+end $$;
+create function private.media_news_retain_metadata() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.ingestion_provider not in ('gdelt_doc_v2','gdelt_gkg_v2') then return new; end if;
+  insert into public.media_news_article_records (
+    id,canonical_url,title,publisher_domain,published_at,language_code,topic_keys,
+    ingestion_provider,headline_location_label,headline_latitude,headline_longitude,
+    location_basis,location_country_fips,gdelt_file,imported_at
+  ) select new.id,new.canonical_url,new.title,s.domain,new.published_at,new.language_code,new.topic_keys,
+    new.ingestion_provider,new.headline_location_label,new.headline_latitude,new.headline_longitude,
+    new.location_basis,new.location_country_fips,new.gdelt_file,new.imported_at
+  from public.media_news_sources s where s.id=new.source_id
+  on conflict (id) do nothing;
+  return new;
+end $$;
+create trigger media_news_preserve_identity before insert or update on public.media_news_articles
+for each row execute function private.media_news_preserve_identity();
+create trigger media_news_retain_metadata after insert on public.media_news_articles
+for each row execute function private.media_news_retain_metadata();
+insert into public.media_news_article_records (
+  id,canonical_url,title,publisher_domain,published_at,language_code,topic_keys,
+  ingestion_provider,headline_location_label,headline_latitude,headline_longitude,
+  location_basis,location_country_fips,gdelt_file,imported_at
+)
+select a.id,a.canonical_url,a.title,s.domain,a.published_at,a.language_code,a.topic_keys,
+  a.ingestion_provider,a.headline_location_label,a.headline_latitude,a.headline_longitude,
+  a.location_basis,a.location_country_fips,a.gdelt_file,a.imported_at
+from public.media_news_articles a join public.media_news_sources s on s.id=a.source_id
+where a.ingestion_provider in ('gdelt_doc_v2','gdelt_gkg_v2')
+on conflict (id) do nothing;
+
+create table public.media_news_article_content (
+  article_id uuid primary key references public.media_news_article_records(id) on delete restrict,
+  payload jsonb not null check (jsonb_typeof(payload)='object' and octet_length(payload::text)<=1500000),
+  grant_id text not null check (length(grant_id) between 1 and 200),
+  adapter_id text not null check (length(adapter_id) between 1 and 200),
+  content_hash text not null check (content_hash ~ '^[0-9a-f]{64}$'),
+  ingested_at timestamptz not null default now()
+);
+alter table public.media_news_article_content enable row level security;
+revoke all on public.media_news_article_content from public, anon, authenticated, service_role;
+-- Body access is service RPC only; even a stale client grant cannot expose it.
+
+create table public.media_news_comments (
+  id uuid primary key default gen_random_uuid(),
+  article_id uuid not null references public.media_news_article_records(id) on delete restrict,
+  author_m_uid uuid not null references public.m_people(id) on delete restrict,
+  parent_id uuid,
+  body text not null check (length(body)<=4000),
+  status text not null default 'visible' check (status in ('visible','deleted','hidden')),
+  created_at timestamptz not null default clock_timestamp(),
+  updated_at timestamptz not null default clock_timestamp(),
+  unique(id,article_id),
+  foreign key(parent_id,article_id) references public.media_news_comments(id,article_id) on delete restrict,
+  check (parent_id is distinct from id),
+  check (status <> 'visible' or length(btrim(body))>0)
+);
+create index media_news_comments_page_idx on public.media_news_comments(article_id,created_at desc,id desc);
+create index media_news_comments_author_idx on public.media_news_comments(author_m_uid,created_at desc);
+create index media_news_comments_parent_idx on public.media_news_comments(parent_id) where parent_id is not null;
+alter table public.media_news_comments enable row level security;
+revoke all on public.media_news_comments from public, anon, authenticated, service_role;
+
+create table private.media_news_comment_reports (
+  comment_id uuid not null references public.media_news_comments(id) on delete restrict,
+  reporter_m_uid uuid not null references public.m_people(id) on delete restrict,
+  reason text not null check (length(btrim(reason)) between 1 and 1000),
+  created_at timestamptz not null default clock_timestamp(),
+  primary key(comment_id,reporter_m_uid)
+);
+create table private.media_news_comment_actions (
+  id bigint generated always as identity primary key,
+  comment_id uuid not null references public.media_news_comments(id) on delete restrict,
+  actor_m_uid uuid not null references public.m_people(id) on delete restrict,
+  action text not null check (action in ('created','deleted','hidden','restored')),
+  note text not null default '' check (length(note)<=1000),
+  created_at timestamptz not null default clock_timestamp()
+);
+create table private.eu_news_rate_windows (
+  actor_m_uid uuid not null,
+  action text not null,
+  window_start timestamptz not null,
+  hits integer not null check (hits>0),
+  primary key(actor_m_uid,action)
+);
+create table private.eu_news_requests (
+  actor_m_uid uuid not null,
+  operation text not null,
+  request_id uuid not null,
+  fingerprint text not null,
+  response jsonb not null check (octet_length(response::text)<=200000),
+  created_at timestamptz not null default now(),
+  primary key(actor_m_uid,operation,request_id)
+);
+
+-- Only projects explicitly created here enter this protected workflow. Existing
+-- projects may have in-flight publication jobs and are never silently adopted.
+create table private.eu_news_protected_projects (
+  project_id uuid primary key references public.eu_research_projects(id) on delete restrict,
+  registered_by_m_uid uuid not null references public.m_people(id) on delete restrict,
+  registered_at timestamptz not null default clock_timestamp()
+);
+create table private.eu_news_intel_projects (
+  project_id uuid primary key references private.eu_news_protected_projects(project_id) on delete restrict,
+  restricted_by_m_uid uuid not null references public.m_people(id) on delete restrict,
+  restricted_at timestamptz not null default clock_timestamp()
+);
+
+-- References extend canonical eu_sources, rather than adding a second graph.
+create table private.eu_news_source_provenance (
+  source_id uuid primary key references public.eu_sources(id) on delete restrict,
+  project_id uuid not null references public.eu_research_projects(id) on delete restrict,
+  org_id uuid not null references public.orgs(id) on delete restrict,
+  article_id uuid references public.media_news_article_records(id) on delete restrict,
+  intel_evidence_id uuid references public.intel_evidence(id) on delete restrict,
+  snapshot jsonb not null check (jsonb_typeof(snapshot)='object' and octet_length(snapshot::text)<=40000),
+  snapshot_sha256 text not null check (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+  captured_by_m_uid uuid not null references public.m_people(id) on delete restrict,
+  captured_at timestamptz not null default clock_timestamp(),
+  check (num_nonnulls(article_id,intel_evidence_id)=1),
+  unique(project_id,article_id),
+  unique(project_id,intel_evidence_id)
+);
+create table private.eu_news_claim_origins (
+  claim_id uuid primary key references public.eu_claims(id) on delete restrict,
+  source_id uuid not null references public.eu_sources(id) on delete restrict,
+  project_id uuid not null references public.eu_research_projects(id) on delete restrict,
+  created_at timestamptz not null default clock_timestamp()
+);
+create table private.eu_news_claim_reviews (
+  id uuid primary key default gen_random_uuid(),
+  claim_id uuid not null references public.eu_claims(id) on delete restrict,
+  project_id uuid not null references public.eu_research_projects(id) on delete restrict,
+  actor_m_uid uuid not null references public.m_people(id) on delete restrict,
+  from_status text not null,
+  to_status text not null check (to_status in ('supported','contested','approved','retired')),
+  note text not null check (length(btrim(note)) between 1 and 3000),
+  claim_snapshot jsonb not null,
+  transaction_id bigint not null default txid_current(),
+  created_at timestamptz not null default clock_timestamp()
+);
+create index eu_news_claim_reviews_claim_idx on private.eu_news_claim_reviews(claim_id,created_at desc);
+create table private.eu_news_manuscripts (
+  project_id uuid primary key references public.eu_research_projects(id) on delete restrict,
+  manuscript_id uuid not null unique references public.eu_manuscripts(id) on delete restrict,
+  section_id uuid not null unique references public.eu_manuscript_sections(id) on delete restrict
+);
+create table private.eu_news_memo_revision_basis (
+  section_revision_id bigint primary key references public.eu_section_revisions(id) on delete restrict,
+  manuscript_id uuid not null references public.eu_manuscripts(id) on delete restrict,
+  actor_m_uid uuid not null references public.m_people(id) on delete restrict,
+  source_claim_snapshot jsonb not null check (jsonb_typeof(source_claim_snapshot)='object' and octet_length(source_claim_snapshot::text)<=1000000),
+  submitted_for_review boolean not null,
+  created_at timestamptz not null default clock_timestamp()
+);
+
+do $$ declare t text; begin
+  foreach t in array array['media_news_comment_reports','media_news_comment_actions','eu_news_rate_windows',
+    'eu_news_requests','eu_news_protected_projects','eu_news_intel_projects','eu_news_source_provenance','eu_news_claim_origins','eu_news_claim_reviews',
+    'eu_news_manuscripts','eu_news_memo_revision_basis'] loop
+    execute format('alter table private.%I enable row level security',t);
+    execute format('revoke all on private.%I from public,anon,authenticated,service_role',t);
+  end loop;
+end $$;
+
+create function private.eu_news_actor() returns uuid
+language sql stable security definer set search_path = '' as $$
+  select p.id from public.m_people p
+  join public.m_auth_user_links l on l.m_uid=p.id
+  join auth.users u on u.id=l.auth_user_id
+  where p.id=(select public.current_m_uid()) and p.status='active'
+    and l.auth_user_id=(select auth.uid()) and l.is_primary=true
+  limit 1
+$$;
+create function private.eu_news_require_actor() returns uuid
+language plpgsql stable security definer set search_path = '' as $$
+declare v_actor uuid := private.eu_news_actor();
+begin
+  if v_actor is null then raise exception using errcode='42501',message='active_primary_m_account_required'; end if;
+  return v_actor;
+end $$;
+create function private.eu_news_house_manager() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.eu_news_actor() is not null and exists (
+    select 1 from public.orgs o join public.org_members m on m.org_id=o.id
+    where o.slug='mccluster' and m.profile_id=(select auth.uid()) and m.role='owner'
+  )
+$$;
+create function private.eu_news_member_is_intel_admin(p_m_uid uuid,p_org_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists(select 1 from public.m_auth_user_links l
+    join public.m_people p on p.id=l.m_uid and p.status='active'
+    join public.org_members m on m.profile_id=l.auth_user_id and m.org_id=p_org_id and m.role in ('owner','admin')
+    where l.m_uid=p_m_uid and l.is_primary)
+$$;
+create function private.eu_news_project_allowed(p_project_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.eu_news_actor() is not null and exists (
+    select 1 from public.eu_research_projects p where p.id=p_project_id
+    and exists(select 1 from private.eu_news_protected_projects n where n.project_id=p.id)
+    and (private.eu_news_house_manager() or exists (
+      select 1 from public.eu_research_members m where m.research_project_id=p.id
+      and m.m_uid=private.eu_news_actor() and m.status='active'))
+    and (not exists(select 1 from private.eu_news_intel_projects n where n.project_id=p.id) or public.intel_is_org_admin(p.org_id))
+  )
+$$;

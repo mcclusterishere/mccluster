@@ -1,0 +1,67 @@
+-- RECOVERY FRAGMENT ONLY. These complete function/policy excerpts were printed
+-- later than the archived sql-early snapshot. They are NOT an integrated final
+-- migration and must NOT be executed as a standalone patch. Call sites, grants,
+-- ordering and the remaining final changes need reconciliation and fresh tests.
+-- Original target: supabase/pending/news_policy_workspace_v1.sql, local f8021df.
+
+-- V1 returns the entire graph in one response. Enforce a real capacity rather
+-- than accept writes that disappear behind an implicit LIMIT or exceed HTTP
+-- and immutable-revision budgets. Checks run inside the mutation transaction.
+create function private.eu_news_project_capacity(p_project_id uuid) returns jsonb
+language sql stable security definer set search_path='' as $$
+  select jsonb_build_object(
+    'claims',(select count(*) from public.eu_claims where research_project_id=p_project_id),
+    'sources',(select count(*) from public.eu_sources where research_project_id=p_project_id),
+    'members',(select count(*) from public.eu_research_members where research_project_id=p_project_id),
+    'reviews',(select count(*) from private.eu_news_claim_reviews where project_id=p_project_id),
+    'bytes',coalesce((select sum(octet_length(to_jsonb(s)::text)) from public.eu_sources s where s.research_project_id=p_project_id),0)
+      +coalesce((select sum(octet_length(to_jsonb(c)::text)*2) from public.eu_claims c where c.research_project_id=p_project_id),0)
+      +coalesce((select sum(octet_length(to_jsonb(e)::text)) from public.eu_claim_evidence e join public.eu_claims c on c.id=e.claim_id where c.research_project_id=p_project_id),0)
+      +coalesce((select sum(octet_length(to_jsonb(r)::text)) from private.eu_news_claim_reviews r where r.project_id=p_project_id),0)
+      +coalesce((select sum(octet_length(to_jsonb(m)::text)) from public.eu_research_members m where m.research_project_id=p_project_id),0)
+      +coalesce((select sum(octet_length(s.body_markdown)+octet_length(s.heading)) from public.eu_manuscript_sections s join private.eu_news_manuscripts n on n.section_id=s.id where n.project_id=p_project_id),0),
+    'max_claims',100,'max_sources',100,'max_members',100,'max_reviews',200,'max_bytes',1000000)
+$$;
+create function private.eu_news_require_capacity(p_project_id uuid) returns void
+language plpgsql security definer set search_path='' as $$
+declare v jsonb:=private.eu_news_project_capacity(p_project_id);
+begin
+  if (v->>'claims')::integer>100 or (v->>'sources')::integer>100 or (v->>'members')::integer>100
+    or (v->>'reviews')::integer>200 or (v->>'bytes')::bigint>1000000 then
+    raise exception using errcode='P0001',message='project_capacity_reached';
+  end if;
+end $$;
+
+-- The original project/member policies recursively selected each other.
+-- These equivalent private lookups retain legacy access but avoid 42P17 when
+-- the new boundary is exercised by a direct Data API SELECT.
+create function private.eu_news_legacy_project_read(p_project_id uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+  select exists(select 1 from public.eu_research_projects p where p.id=p_project_id
+    and (p.visibility='public' or public.is_org_member(p.org_id) or exists(
+      select 1 from public.eu_research_members m join public.m_auth_user_links l on l.m_uid=m.m_uid
+      where m.research_project_id=p.id and m.status='active' and l.auth_user_id=(select auth.uid()))))
+$$;
+create function private.eu_news_legacy_member_read(p_project_id uuid,p_m_uid uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+  select exists(select 1 from public.eu_research_projects p where p.id=p_project_id and public.is_org_member(p.org_id))
+    or exists(select 1 from public.m_auth_user_links l where l.m_uid=p_m_uid and l.auth_user_id=(select auth.uid()))
+$$;
+drop policy eu_research_projects_read on public.eu_research_projects;
+create policy eu_research_projects_read on public.eu_research_projects for select to anon,authenticated
+  using(private.eu_news_legacy_project_read(id));
+drop policy eu_research_members_read on public.eu_research_members;
+create policy eu_research_members_read on public.eu_research_members for select to authenticated
+  using(private.eu_news_legacy_member_read(research_project_id,m_uid));
+
+-- Additional recovered call-site evidence (comments, not an executable patch):
+-- project shape included 'capacity',private.eu_news_project_capacity(p.id).
+-- Project creation acquired pg_advisory_xact_lock(hashtextextended(
+--   'news-policy-project-capacity',0)); and rejected >=100 protected projects
+-- with P0001 workspace_capacity_reached.
+-- Project read, member mutation, evidence capture, claim review and memo save
+-- called private.eu_news_require_capacity within the corresponding transaction.
+-- The two legacy read helpers received explicit anon/authenticated EXECUTE
+-- grants alongside the existing private read-guard grants.
+-- Final disabled-member-removal and service-role guards are not represented
+-- completely by these excerpts. Compare all final files with the manifest.

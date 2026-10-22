@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 434,
+  "candidate_count": 445,
   "capability_source_count": 104,
-  "support_only_count": 330,
+  "support_only_count": 341,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3310,6 +3310,83 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/README.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/RECOVERY-STATUS.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/exact/policy-workspace.html.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/exact/supabase/functions/_shared/eu-policy-os.ts.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/fragments/later-capacity-and-rls-repairs.sql.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/snapshots/news-policy-route-assembly.js.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/snapshots/sql-early/001-260.sql.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/snapshots/sql-early/260-525.sql.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/snapshots/sql-early/525-805.sql.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/snapshots/sql-early/805-end.sql.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
+    },
+    {
+      "path": "docs/recovery/news-policy-f8021df/snapshots/test-news-policy-db.mjs.txt",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived news/policy recovery record for source reconstruction and audit; not an active runtime source or additional physical building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

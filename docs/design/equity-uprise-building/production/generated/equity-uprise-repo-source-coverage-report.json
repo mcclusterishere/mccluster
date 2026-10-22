@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 434,
+  "candidate_count": 445,
   "capability_source_count": 104,
-  "support_only_count": 330,
-  "checks_total": 1634,
-  "checks_passed": 1634,
+  "support_only_count": 341,
+  "checks_total": 1678,
+  "checks_passed": 1678,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -161,6 +161,17 @@
     "docs/legal/EXPOSURE-AUDIT.md",
     "docs/music-platform.md",
     "docs/pay-now.md",
+    "docs/recovery/news-policy-f8021df/README.md",
+    "docs/recovery/news-policy-f8021df/RECOVERY-STATUS.md",
+    "docs/recovery/news-policy-f8021df/exact/policy-workspace.html.txt",
+    "docs/recovery/news-policy-f8021df/exact/supabase/functions/_shared/eu-policy-os.ts.txt",
+    "docs/recovery/news-policy-f8021df/fragments/later-capacity-and-rls-repairs.sql.txt",
+    "docs/recovery/news-policy-f8021df/snapshots/news-policy-route-assembly.js.txt",
+    "docs/recovery/news-policy-f8021df/snapshots/sql-early/001-260.sql.txt",
+    "docs/recovery/news-policy-f8021df/snapshots/sql-early/260-525.sql.txt",
+    "docs/recovery/news-policy-f8021df/snapshots/sql-early/525-805.sql.txt",
+    "docs/recovery/news-policy-f8021df/snapshots/sql-early/805-end.sql.txt",
+    "docs/recovery/news-policy-f8021df/snapshots/test-news-policy-db.mjs.txt",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
     "docs/sales-redesign/CRM-MIGRATION.md",
     "docs/sales-redesign/MOBBIN-REFERENCES.md",
@@ -448,7 +459,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "434 entries"
+      "detail": "445 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8612,6 +8623,226 @@
     },
     {
       "name": "world-news.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/README.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/README.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/README.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/RECOVERY-STATUS.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/RECOVERY-STATUS.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/RECOVERY-STATUS.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/RECOVERY-STATUS.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/policy-workspace.html.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/policy-workspace.html.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/policy-workspace.html.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/policy-workspace.html.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/supabase/functions/_shared/eu-policy-os.ts.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/supabase/functions/_shared/eu-policy-os.ts.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/supabase/functions/_shared/eu-policy-os.ts.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/exact/supabase/functions/_shared/eu-policy-os.ts.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/fragments/later-capacity-and-rls-repairs.sql.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/fragments/later-capacity-and-rls-repairs.sql.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/fragments/later-capacity-and-rls-repairs.sql.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/fragments/later-capacity-and-rls-repairs.sql.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/news-policy-route-assembly.js.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/news-policy-route-assembly.js.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/news-policy-route-assembly.js.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/news-policy-route-assembly.js.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/001-260.sql.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/001-260.sql.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/001-260.sql.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/001-260.sql.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/260-525.sql.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/260-525.sql.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/260-525.sql.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/260-525.sql.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/525-805.sql.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/525-805.sql.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/525-805.sql.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/525-805.sql.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/805-end.sql.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/805-end.sql.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/805-end.sql.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/sql-early/805-end.sql.txt support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/test-news-policy-db.mjs.txt capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/test-news-policy-db.mjs.txt classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/test-news-policy-db.mjs.txt support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/recovery/news-policy-f8021df/snapshots/test-news-policy-db.mjs.txt support rationale present",
       "passed": true,
       "detail": ""
     }

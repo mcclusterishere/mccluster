@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex">
+  <title>News reader · Human Uprise</title>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/news-policy.css?v=__STAMP__">
+</head>
+<body class="np-page np-article-page">
+  <a class="np-skip" href="#articleTitle">Skip to article</a>
+  <div class="np-shell">
+    <header class="np-topbar">
+      <a class="np-back" href="mnet.html?view=feed" data-np-standalone>← World</a>
+      <p class="np-kicker">News / Reader</p>
+    </header>
+    <main id="newsMain">
+      <article class="np-reader" aria-labelledby="articleTitle">
+        <p id="articleStatus" class="np-status" role="status">Loading this report…</p>
+        <header class="np-article-heading">
+          <p id="articlePublisher" class="np-kicker"></p>
+          <h1 id="articleTitle" tabindex="-1">News, in context.</h1>
+          <p id="articleMeta" class="np-meta"></p>
+          <div class="np-actions">
+            <a class="np-button np-button-quiet" href="#discussion">Discussion</a>
+            <button id="useEvidence" class="np-button np-button-primary" type="button" disabled>Use as evidence</button>
+            <button id="copyArticleLink" class="np-button np-button-quiet" type="button" disabled>Copy link</button>
+          </div>
+        </header>
+        <div id="articleBody" class="np-article-body"></div>
+        <details id="articleSources" class="np-source-details" hidden>
+          <summary>Source and context</summary>
+          <dl id="articleFacts" class="np-facts"></dl>
+          <p class="np-small" id="gdeltAttribution">News discovery data is provided by the GDELT Project. <span class="np-source-url">https://www.gdeltproject.org/</span></p>
+          <p class="np-small">A place mentioned in a report may describe its context. It does not establish the location of an event.</p>
+        </details>
+      </article>
+
+      <section id="articleEvidence" class="np-section np-capture" aria-labelledby="captureTitle" hidden>
+        <div class="np-section-heading">
+          <div><p class="np-kicker">Policy fellowship</p><h2 id="captureTitle" tabindex="-1">Build on this report</h2></div>
+          <button id="closeCapture" class="np-button np-button-quiet" type="button">Close</button>
+        </div>
+        <p id="captureStatus" class="np-status" role="status"></p>
+        <p id="captureSignIn" hidden><a class="np-button np-button-primary" data-np-signin href="login.html">Sign in to use evidence</a></p>
+        <button id="captureWorkspace" class="np-button" type="button" hidden>Open policy workspace</button>
+        <form id="articleEvidenceForm" class="np-form" hidden>
+          <label for="captureProject">Policy project</label>
+          <select id="captureProject" required></select>
+          <label for="captureClaim">What claim does this source inform?</label>
+          <textarea id="captureClaim" rows="3" maxlength="4000" required placeholder="Write one specific claim to test against this source."></textarea>
+          <div class="np-form-grid">
+            <div><label for="captureClaimType">Claim type</label><select id="captureClaimType"><option value="factual">Observation</option><option value="analytic">Analysis</option><option value="recommendation">Recommendation</option><option value="definition">Definition</option><option value="estimate">Estimate</option></select></div>
+            <div><label for="captureRelation">This source</label><select id="captureRelation"><option value="supports">Supports the claim</option><option value="contradicts">Contradicts the claim</option><option value="context">Provides context</option><option value="method">Informs the method</option></select></div>
+          </div>
+          <label for="captureLocator">Where in the source? <span class="np-optional">Optional</span></label>
+          <input id="captureLocator" maxlength="500" placeholder="Section, paragraph, table, or time reference">
+          <label for="captureNote">Your research note <span class="np-optional">Optional</span></label>
+          <textarea id="captureNote" rows="3" maxlength="3000" placeholder="Explain what the source establishes and what needs checking."></textarea>
+          <p class="np-small">This saves a source reference and your claim to the project for review. It does not mark the claim as verified.</p>
+          <div class="np-actions"><button id="captureSave" class="np-button np-button-primary" type="submit">Add and open project</button><button id="captureOpenProject" class="np-button np-button-quiet" type="button" hidden>Open policy project</button></div>
+        </form>
+      </section>
+
+      <section id="discussion" class="np-section np-discussion" aria-labelledby="discussionTitle">
+        <div class="np-section-heading"><div><p class="np-kicker">The conversation</p><h2 id="discussionTitle">Discussion</h2></div><button id="refreshComments" class="np-button np-button-quiet" type="button">Refresh</button></div>
+        <form id="commentForm" class="np-form">
+          <div id="replyContext" class="np-reply-context" hidden><span id="replyLabel"></span><button id="cancelReply" class="np-button np-button-quiet" type="button">Cancel reply</button></div>
+          <label for="commentBody">Your perspective</label>
+          <textarea id="commentBody" rows="3" maxlength="4000" required placeholder="Add your perspective on this report…" aria-describedby="commentDraftStatus"></textarea>
+          <div class="np-form-footer"><p id="commentDraftStatus" class="np-small"></p><button id="postComment" class="np-button np-button-primary" type="submit" disabled>Post comment</button></div>
+          <p id="commentSignIn" class="np-small" hidden><a data-np-signin href="login.html">Sign in to post your comment</a>. Your draft will stay in this tab while you sign in.</p>
+        </form>
+        <p id="commentStatus" class="np-status" role="status"></p>
+        <div id="commentsList" class="np-comments" aria-label="Article comments"></div>
+        <button id="moreComments" class="np-button np-button-wide" type="button" hidden>Load more comments</button>
+      </section>
+    </main>
+    <noscript><p class="np-notice">JavaScript is needed to load the article and discussion.</p></noscript>
+  </div>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/news-policy-client.js?v=__STAMP__"></script>
+  <script src="js/news-article.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
