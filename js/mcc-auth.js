@@ -102,7 +102,7 @@
       try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
       if (!res.ok) {
         var msg = data && (data.message || data.error_description || data.msg || data.error);
-        var code = (data && data.error_code) || '';
+        var code = (data && (data.error_code || data.code)) || '';
         if (res.status === 429 && (MAIL_QUOTA.test(code) || MAIL_QUOTA.test(msg || ''))) {
           var wait = retryAfterSeconds(res, data);
           throw Object.assign(
@@ -111,7 +111,10 @@
                         + (Math.ceil(wait / 60) === 1 ? '' : 's') : wait + ' seconds') + '.'),
             { status: 429, data: data, mailQuota: true, retryAfter: wait });
         }
-        throw Object.assign(new Error(msg || 'Request failed'), { status: res.status, data: data });
+        throw Object.assign(new Error(msg || 'Request failed'), {
+          status: res.status, code: code, data: data,
+          retryAfter: res.status === 429 ? retryAfterSeconds(res, data) : 0
+        });
       }
       return data;
     });
@@ -306,7 +309,14 @@
         }
       } catch (_) {}
 
-      return Promise.resolve(attributionRead).then(function (attribution) {
+      /* Analytics must never prevent registration or hide its successful result. */
+      var boundedAttribution = new Promise(function (resolve) {
+        var timer = setTimeout(function () { resolve(null); }, 800);
+        Promise.resolve(attributionRead).then(function (value) {
+          clearTimeout(timer); resolve(value);
+        }, function () { clearTimeout(timer); resolve(null); });
+      });
+      return boundedAttribution.then(function (attribution) {
         return authApi('signup', {
           method: 'POST',
           body: { email: email, password: password, data: data || {} }
@@ -318,14 +328,18 @@
           root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
           result = { session: true, user: session.user || null, confirm: false, existing: false };
         } else {
-          var identities = session && session.user && session.user.identities;
+          /* GoTrue returns the user directly when confirmation is required. */
+          var signupUser = session && (session.user || (session.id ? session : null));
+          var identities = signupUser && signupUser.identities;
           var existing = Array.isArray(identities) && identities.length === 0;
-          result = { session: false, user: session && session.user || null, confirm: !existing, existing: existing };
+          result = { session: false, user: signupUser || null, confirm: !existing, existing: existing };
         }
         if (result.existing || !root.MCC_ANALYTICS_CONTEXT ||
             !root.MCC_ANALYTICS_CONTEXT.recordAccountCreated) return result;
-        return Promise.resolve(root.MCC_ANALYTICS_CONTEXT.recordAccountCreated(bundle.attribution, result.user))
-          .catch(function () { return null; }).then(function () { return result; });
+        Promise.resolve().then(function () {
+          return root.MCC_ANALYTICS_CONTEXT.recordAccountCreated(bundle.attribution, result.user);
+        }).catch(function () { /* optional telemetry */ });
+        return result;
       });
     },
 
