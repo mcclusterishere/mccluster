@@ -52,17 +52,45 @@ denial, all eighteen business counts and the three indexed access paths.
 The existing Worker diagnostics, coverage and region tests also run. No test
 fixtures are inserted into production.
 
-## Verification boundary
+## Authenticated follow-up and longer ranges
 
-The authenticated owner page was **not visually verified**. Its redirect from
-`mccluster.org/control.html#analytics` to `matthew.mccluster.org` was denied by
-automatic browser approval review. Cloudflare's connector additionally required
-reauthentication; the owner's reconnect screen reported temporarily unavailable
-client metadata. Neither issue prevented the Supabase repair.
+With the owner's approval, the signed-in page on `matthew.mccluster.org` was
+checked. A fresh 24-hour and seven-day load each reached **Updated**, but the
+30-day load reproduced **Partial data**. Identity, audience science and visitor
+reads intermittently failed. Live SQLSTATE `57014` records also identified the
+country, daily/total and geographically located news reads. The initial 24-hour
+success was not sufficient evidence that longer ranges were healthy.
 
-Other genuinely missing provider data or capped source reads can still cause a
-partial-data indicator. This repair does not hide warnings, assert that every
-provider is complete, or claim an authenticated end-to-end dashboard result.
+Applied follow-up: `20261023234659_analytics_long_range_v4`, exact stored SQL
+verified. Four concurrent indexes support ordered identity pagination, covering
+identity links, summary windows, audience pages and located-news windows. The
+temporary identity index was replaced by its covering form. Daily, hourly,
+total and country functions use explicit NULL-site branches and indexed legacy
+page-view cutoffs. Counting definitions and all existing function grants remain
+unchanged; no event records, auth configuration or RLS policies were modified.
+Production ledger: 344 migrations.
+
+The isolated regression compares 96 old/new function cases (including DST,
+empty windows, NULL bot values, tenants and legacy fallback), identity page
+parity, unchanged grants and four planner-selected access paths. All pass.
+Service-role live reads, each bounded to eight seconds: 30-day totals 205 ms,
+daily 197 ms, countries 278 ms, visitor list 3,103 ms. Sample identity pages took
+97–222 ms, with JSON serialization checks at 544–644 ms. These are observations,
+not latency guarantees.
+
+After the follow-up migration, the signed-in 30-day dashboard reached **Updated**
+at 7:47 PM America/New_York, with no source-failure warning. A separate dataset
+inventory read reported one unavailable range count near the end of its work:
+first adaptive decisions, then system events on retry. The adaptive query passed
+directly in 236 ms, with no matching database timeout. The inventory previously
+made 48 database fetches plus authentication and owner checks. This is consistent
+with a 50-external-subrequest limit, but Cloudflare runtime logs were unavailable
+to confirm the exact thrown error. The client now reads sequential pages of 12
+datasets (at most 24 fetches per request), and known empty sets skip redundant
+range counts. Tests cover all-populated catalogs, malformed continuation, and
+failed subsequent pages so an incomplete inventory cannot appear complete.
+External-provider completeness and browser event loss remain separate from
+whether these stored-data reads complete. The warning has not been suppressed.
 
 ## Recovery
 

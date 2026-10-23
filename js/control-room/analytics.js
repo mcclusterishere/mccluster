@@ -1069,7 +1069,22 @@
   function loadCoverage(force){
     if(S.revoked||sid()!==null||!S.range||S.coverageLoading===S.seq||!force&&S.completed&&S.completed.coverage)return;
     var q=S.seq,r=S.range;S.coverageLoading=q;delete S.errors.coverage;paint();
-    return S.request('/v1/analytics/coverage?since='+encodeURIComponent(r.since)+'&until='+encodeURIComponent(r.until)).then(function(v){if(q===S.seq)applyResult({name:'coverage',ok:true,value:v});},function(error){if(q===S.seq)applyResult({name:'coverage',ok:false,error:error});}).finally(function(){if(q===S.seq){S.coverageLoading=null;paint();}});
+    var base='/v1/analytics/coverage?since='+encodeURIComponent(r.since)+'&until='+encodeURIComponent(r.until),combined=null;
+    function page(offset){
+      if(q!==S.seq||S.revoked)return Promise.reject(new Error('Analytics selection changed'));
+      return S.request(base+'&limit=12&offset='+offset).then(function(v){
+        if(!v||v.ok!==true||!Array.isArray(v.datasets))throw new Error('Invalid dataset coverage response');
+        if(!combined)combined=Object.assign({},v,{datasets:[],metrics:{},summary:{datasets:0,populated:0,empty:0,quiet:0,unavailable:0}});
+        combined.datasets=combined.datasets.concat(v.datasets);Object.assign(combined.metrics,v.metrics||{});
+        Object.keys(combined.summary).forEach(function(k){combined.summary[k]+=Number(v.summary&&v.summary[k])||0;});
+        var p=v.pagination,next=p&&p.next_offset;
+        if(p&&(p.offset!==offset||!Number.isSafeInteger(p.total)||p.total<combined.datasets.length))throw new Error('Invalid dataset coverage pagination');
+        if(next!=null){if(!Number.isSafeInteger(next)||next!==combined.datasets.length||next<=offset||next>=p.total)throw new Error('Invalid dataset coverage continuation');return page(next);}
+        if(p&&combined.datasets.length!==p.total)throw new Error('Incomplete dataset coverage');
+        delete combined.pagination;return combined;
+      });
+    }
+    return page(0).then(function(v){if(q===S.seq)applyResult({name:'coverage',ok:true,value:v});},function(error){if(q===S.seq)applyResult({name:'coverage',ok:false,error:error});}).finally(function(){if(q===S.seq){S.coverageLoading=null;paint();}});
   }
   function load(){
     if(S.revoked)return Promise.resolve();
