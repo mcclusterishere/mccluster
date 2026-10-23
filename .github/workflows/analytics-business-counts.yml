@@ -4,6 +4,14 @@ on:
     paths:
       - 'supabase/migrations/20261021205801_analytics_business_event_counts_v1.sql'
       - 'supabase/tests/analytics_business_event_counts.behaviour.sql'
+      - 'supabase/migrations/*_analytics_read_hotpaths_v2.sql'
+      - 'supabase/migrations/*_analytics_region_covering_v3.sql'
+      - 'supabase/pending/analytics_read_hotpaths_v2.sql'
+      - 'supabase/pending/analytics_region_covering_v3.sql'
+      - 'supabase/ops/*_v2_idx.sql'
+      - 'supabase/ops/*_v3_idx.sql'
+      - 'scripts/test-analytics-hotpaths-db.mjs'
+      - 'supabase/tests/analytics_region.behaviour.sql'
       - 'workers/mccluster/src/analytics/business-event-counts.js'
       - 'workers/mccluster/src/analytics/router.js'
       - 'workers/mccluster/test/analytics-business-event-counts.test.mjs'
@@ -44,3 +52,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
       - name: Test semantics and browser-role denial in disposable PostgreSQL
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/analytics_business_event_counts.behaviour.sql
+      - name: Test regional parity and indexed analytics access paths
+        run: |
+          npm install --prefix "$RUNNER_TEMP/analytics-hotpaths" --no-audit --no-fund --ignore-scripts @electric-sql/pglite@0.5.10
+          PGLITE_MODULE_PATH="$RUNNER_TEMP/analytics-hotpaths/node_modules/@electric-sql/pglite/dist/index.js" node scripts/test-analytics-hotpaths-db.mjs
