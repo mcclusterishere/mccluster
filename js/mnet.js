@@ -2988,10 +2988,23 @@
   function privacyAgreed() {
     try { return !!(window.MCC_PRIVACY && MCC_PRIVACY.accepted && MCC_PRIVACY.accepted()); } catch (e) { return false; }
   }
+  function showSignupVerification(email, seconds) {
+    state.pendingVerificationEmail = email;
+    setAuthMode("signin");
+    setStatus($("mnAuthStatus"), "Check your email to finish creating your account. Open the verification link in your inbox or spam folder, then sign in here with your password. You do not need to create the account again.", "ok");
+    $("mnResend").hidden = false;
+    MCC.holdButton($("mnResend"), seconds || 60, "Resend verification email");
+    try { $("mnAuthStatus").scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+  }
   function submitPasswordAuth() {
     var create = $("mnSignedOut").getAttribute("data-auth-mode") === "create";
     var email = $("mnEmail").value.trim(), password = $("mnPassword").value;
-    var button = $("mnAuthGo");
+    var button = $("mnAuthGo"), retrySeconds = 0;
+    if (button.disabled) return;
+    if (create && state.pendingVerificationEmail && email.toLowerCase() === state.pendingVerificationEmail.toLowerCase()) {
+      showSignupVerification(email, 60);
+      return;
+    }
     if (!email || !password) {
       if (create) authFail("Enter your email and a password.", email ? "mnPassword" : "mnEmail", email ? "missing_password" : "missing_email");
       else setStatus($("mnAuthStatus"), "Enter your email and password.", "error");
@@ -3027,25 +3040,33 @@
       }
       if (create && result && result.confirm) {
         track("signup_succeeded", { flow: "password", verification: "pending" });
-        state.pendingVerificationEmail = email;
         /* the first sign-in after the confirmation carries on into the pages, and back (FLOW) */
         rememberJoin(email);
-        setStatus($("mnAuthStatus"), "Check your email to verify your address. After verification, sign in with the password you just created.", "ok");
-        $("mnResend").hidden = false;
+        showSignupVerification(email, 60);
         return null;
       }
       /* a new account goes straight into the three pages */
       if (create) { track("signup_succeeded", { flow: "password", verification: "immediate" }); FLOW.on = true; }
       return enterAfterAuth();
     }).catch(function (e) {
-      if (!create) { setStatus($("mnAuthStatus"), e.message || "Could not sign in.", "error"); return; }
-      var rateLimited = /429/.test(String(e && (e.code || e.status) || "")) || /rate.limit|too many requests/i.test(String(e && e.message || ""));
+      if (!create) {
+        if (e.code === "email_not_confirmed" || /email not confirmed/i.test(e.message || "")) {
+          showSignupVerification(email, 60);
+        } else setStatus($("mnAuthStatus"), e.message || "Could not sign in.", "error");
+        return;
+      }
+      var rateLimited = e.status === 429 || /429/.test(String(e && e.code || "")) || /rate.limit|too many requests/i.test(String(e && e.message || ""));
       track("signup_failed", { flow: "password", reason: rateLimited ? "rate_limited" : "server_error" });
-      authFail(rateLimited ? "Too many sign-ups right now. Wait a minute before trying again, or sign in if you already have an account." : (e.message || "Could not create that account."),
+      retrySeconds = rateLimited ? (e.retryAfter || 60) : 0;
+      authFail(rateLimited && !e.mailQuota && /after \d+ seconds?/i.test(e.message || "")
+        ? "A verification request was made recently. Check your inbox and spam folder. If no email arrives, wait " + retrySeconds + " seconds before trying again."
+        : (e.message || "Could not create that account."),
         null, "server_" + String(e && (e.code || e.status) || "error").slice(0, 40));
     }).finally(function () {
       button.disabled = false;
-      button.textContent = create ? "Create account" : "Sign in";
+      var stillCreating = $("mnSignedOut").getAttribute("data-auth-mode") === "create";
+      button.textContent = stillCreating ? "Create account" : "Sign in";
+      if (retrySeconds && stillCreating) MCC.holdButton(button, retrySeconds, "Create account");
     });
   }
 
@@ -3071,7 +3092,7 @@
         MCC.holdButton(button, 60, "Resend verification email");
       }).catch(function (e) {
         setStatus($("mnAuthStatus"), e.message || "Could not resend verification.", "error");
-        if (e.mailQuota) MCC.holdButton(button, e.retryAfter, "Resend verification email");
+        if (e.status === 429 || e.mailQuota) MCC.holdButton(button, e.retryAfter || 60, "Resend verification email");
         else { button.disabled = false; button.textContent = "Resend verification email"; }
       });
     };

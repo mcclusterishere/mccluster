@@ -75,7 +75,7 @@ test('the World reads ?next through the same rule and opens the pages only for t
   assert.match(js, /if \(FLOW\.next\) \{ location\.replace\(FLOW\.next\); return; \}/, 'a finished profile sent here goes straight back');
   assert.match(js, /if \(FLOW\.next\) \{ track\("onboarding_done", \{ step: "next" \}\); location\.assign\(FLOW\.next\); return Promise\.resolve\(\); \}/, 'the last page goes back to where the person started');
   assert.match(js, /if \(create\) \{ track\("signup_succeeded", \{ flow: "password", verification: "immediate" \}\); FLOW\.on = true; \}/, 'a new account goes straight into the pages');
-  assert.match(js, /rememberJoin\(email\);\n\s*setStatus\(\$\("mnAuthStatus"\), "Check your email/, 'an emailed confirmation keeps the flow, bound to the account, for the first sign-in after it');
+  assert.match(js, /rememberJoin\(email\);\n\s*showSignupVerification\(email, 60\)/, 'an emailed confirmation keeps the flow, bound to the account, for the first sign-in after it');
   assert.match(js, /if \(FLOW\.join\) \{ openSignIn\("create"\); return; \}/, '?join=1 opens Create account');
 });
 
