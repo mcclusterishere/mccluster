@@ -112,6 +112,9 @@ jobs:
       - name: Test canonical system health
         working-directory: core
         run: npm run test:system-health
+      - name: Test OVH Global Market Intelligence Layer 1
+        working-directory: core
+        run: node --test test/market-layer1.test.mjs
       - name: Test autonomous game studio production loop
         working-directory: core
         run: npm run test:game-studio
