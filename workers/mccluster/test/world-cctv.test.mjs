@@ -30,7 +30,7 @@ const SOURCES = { sources: [
 
 /* one world: who the user is, what the database holds, and what Halo answers */
 const ACK = { privacy_policy_version: '2026-10-19', privacy_acknowledged_at: '2026-10-01T00:00:00Z' };
-function world({ user = true, privacy = 'current', assignment = 'verified', halo = {} } = {}) {
+function world({ user = true, privacy = 'current', assignment = 'verified', owner = false, halo = {} } = {}) {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     const u = String(url instanceof Request ? url.url : url);
@@ -41,6 +41,11 @@ function world({ user = true, privacy = 'current', assignment = 'verified', halo
       return user && headers.get('authorization') === 'Bearer member-token' ? json({ id: UID, user_metadata: meta }) : json({ msg: 'bad jwt' }, 401);
     }
     if (u.includes('world_location_consents') || u.includes('location-consent')) throw new Error('no location-consent table or route any more: ' + u);
+    if (u.startsWith('https://sb.test/rest/v1/orgs?')) return json([{ id: 'house' }]);
+    if (u.startsWith('https://sb.test/rest/v1/org_members?')) {
+      assert.match(u, /org_id=eq\.house/); assert.match(u, new RegExp(`profile_id=eq\\.${UID}`)); assert.match(u, /role=eq\.owner/);
+      return owner === 'lookup-error' ? json({}, 503) : json(owner ? [{ role: 'owner' }] : []);
+    }
     if (u.startsWith('https://sb.test/rest/v1/action_proofs') || u.startsWith('https://sb.test/rest/v1/action_missions')) throw new Error('the canonical definition reads assignments only: ' + u);
     if (u.startsWith('https://sb.test/rest/v1/action_mission_assignments')) {
       /* THE predicate (PR #444, action_member_verified_mission_count): a verified assignment on a non-clip mission */
@@ -115,6 +120,33 @@ for (const [name, opts, checks, reason, status] of MATRIX) {
     assert.equal(w.haloCalls().length, 0, 'Halo is never asked on behalf of someone not eligible');
   });
 }
+
+test('the house owner can view cameras without fabricating a completed member mission', async () => {
+  const w = world({ owner: true, assignment: 'none' });
+  const e = await (await handleWorldCctv(req('/v1/world/cctv/eligibility'), ENV, { fetchImpl: w.fetchImpl })).json();
+  assert.equal(e.eligible, true); assert.equal(e.reason, null); assert.equal(e.access_basis, 'owner');
+  assert.equal(e.checks.mission_completed, false);
+  assert.equal((await handleWorldCctv(req('/v1/world/cctv/sources'), ENV, { fetchImpl: w.fetchImpl })).status, 200);
+  assert.equal((await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl: w.fetchImpl })).status, 200);
+});
+
+test('owner camera access still requires privacy acknowledgement and fails closed on owner lookup errors', async () => {
+  for (const options of [{ owner: true, privacy: 'none', assignment: 'none' }, { owner: 'lookup-error', assignment: 'none' }]) {
+    resetRateLimits();
+    const w = world(options);
+    const r = await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl: w.fetchImpl });
+    assert.equal(r.status, 403); assert.equal(w.haloCalls().length, 0);
+  }
+});
+
+test('revoking owner access stops the next frame when no qualifying member mission exists', async () => {
+  let owner = true;
+  const w = world({ assignment: 'none' });
+  const fetchImpl = (url, init) => String(url).includes('/org_members?') ? json(owner ? [{ role: 'owner' }] : []) : w.fetchImpl(url, init);
+  assert.equal((await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl })).status, 200);
+  owner = false;
+  assert.equal((await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl })).status, 403);
+});
 
 test('sources: proxied with the internal header (never the member bearer), trimmed, no 0,0 and no positionless cameras', async () => {
   const w = world();

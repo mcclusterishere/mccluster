@@ -45,6 +45,13 @@ test('owner preview preserves independent CCTV prerequisites and withdrawal', as
   assert.equal(b.layers.transport.driver_signup_url,WHIP_DRIVER_SIGNUP_URL);
 });
 
+test('the owner camera layer uses administrative access after privacy acknowledgement without a member mission', async () => {
+  const b = await (await handleWorldAccess(req('t'), ENV, { fetchImpl: db({ owner: true, privacy: true, mission: false }) })).json();
+  assert.equal(b.level, 'owner');
+  assert.ok(b.unlocked_layers.includes('cctv'));
+  assert.ok(!b.locked_layers.some(layer => layer.id === 'cctv'));
+});
+
 test('the access map carries the IP-derived approximate location, never 0,0', async () => {
   const r = new Request('https://api.mccluster.org/v1/world/access', { headers: { origin: 'https://mccluster.org' } });
   Object.defineProperty(r, 'cf', { value: { country: 'US', region: 'Connecticut', city: 'New Haven', latitude: '41.3083', longitude: '-72.9279' } });

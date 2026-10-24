@@ -29,7 +29,7 @@
       Cloudflare attaches to the request (request.cf; never stored here);
       precise GPS comes only through the browser's own permission prompt,
       which browsers enforce and this code does not try to get around.
-   3. mission_completed: the ONE predicate, identical to PR #444's
+   3. For ordinary members, mission_completed: the ONE predicate, identical to PR #444's
       public.action_member_verified_mission_count(): a verified
       action_mission_assignments row on a mission whose kind is not 'clip'
         where a.user_id = p_user and a.status = 'verified'
@@ -38,8 +38,11 @@
       'clip'). An assignment becomes 'verified' only when an admin reviews
       its proof (review_action_proof); there is no auto-verify path.
 
-   Eligibility is re-checked on every request (no per-member cache), so a
-   revoked proof takes effect on the next call. Frames reach the page by
+   Owner direction, 2026-10-23: the backend owner must be able to view the
+   deployed cameras in Halo. A verified house owner uses existing administrative
+   camera access without a member mission; privacy acknowledgement still applies.
+   Ownership and eligibility are re-checked on every request (no grant cache), so a
+   revoked role or proof takes effect on the next call. Frames reach the page by
    fetch() with the member's Authorization header and are shown from a
    blob: object URL (js/action-globe.js openCamera); no bearer or signed
    token ever rides in a URL, and <img src> never points at this route.
@@ -105,6 +108,15 @@ export async function service(env, path, fetchImpl) {
 }
 export const uuid = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 
+// Shared by the access map and the frame gate. Lookup failures grant nothing.
+export async function isHouseOwner(env, userId, fetchImpl) {
+  const orgs = await service(env, 'orgs?slug=eq.mccluster&select=id&limit=1', fetchImpl).catch(() => []);
+  const houseId = orgs[0] && orgs[0].id;
+  if (!houseId) return false;
+  const rows = await service(env, `org_members?org_id=eq.${encodeURIComponent(houseId)}&profile_id=eq.${userId}&role=eq.owner&select=role&limit=1`, fetchImpl).catch(() => []);
+  return rows.length > 0;
+}
+
 /* the member acknowledged the current Privacy Policy: their own auth record says so (see the header) */
 export function privacyAcknowledged(user) {
   const m = (user && user.user_metadata) || {};
@@ -135,15 +147,18 @@ export async function eligibility(request, env, fetchImpl = fetch) {
   if (!user || !uuid(user.id)) return { user: null, eligible: false, checks: { signed_in: false, privacy_acknowledged: false, mission_completed: false } };
   /* checked on EVERY request, never cached (Halo's contract, docs/AUTH-BOUNDARY.md there): a revoked proof stops the
      very next frame */
-  const completed = await missionCompleted(env, user.id, fetchImpl);
+  const [completed, owner] = await Promise.all([
+    missionCompleted(env, user.id, fetchImpl).catch(() => false),
+    isHouseOwner(env, user.id, fetchImpl)
+  ]);
   const checks = { signed_in: true, privacy_acknowledged: privacyAcknowledged(user), mission_completed: completed };
-  return { user, eligible: checks.signed_in && checks.privacy_acknowledged && checks.mission_completed, checks };
+  return { user, owner, eligible: checks.signed_in && checks.privacy_acknowledged && (checks.mission_completed || owner), checks };
 }
 
-function reasonOf(checks) {
+function reasonOf(checks, owner = false) {
   if (!checks.signed_in) return 'sign_in_required';
   if (!checks.privacy_acknowledged) return 'privacy_acknowledgement_required';
-  if (!checks.mission_completed) return 'mission_required';
+  if (!checks.mission_completed && !owner) return 'mission_required';
   return null;
 }
 
@@ -228,13 +243,13 @@ export async function handleWorldCctv(request, env, { fetchImpl = fetch } = {}) 
 
   if (path === '/v1/world/cctv/eligibility') {
     if (who) { const retry = rateLimited(`elig:${who}`, LIMITS.eligibility); if (retry) return tooMany(request, env, retry); }
-    return privateJson(request, env, { eligible: result.eligible, checks: result.checks, reason: reasonOf(result.checks), privacy_version: PRIVACY_VERSION, privacy_url: 'privacy.html', approximate_location: approximateLocation(request), missions_url: 'mnet.html?view=missions' });
+    return privateJson(request, env, { eligible: result.eligible, checks: result.checks, reason: reasonOf(result.checks, result.owner), access_basis: result.eligible ? (result.owner ? 'owner' : 'verified_mission') : null, privacy_version: PRIVACY_VERSION, privacy_url: 'privacy.html', approximate_location: approximateLocation(request), missions_url: 'mnet.html?view=missions' });
   }
 
   /* nothing below is reached by anyone who is not eligible: no list, no frame, no upstream call */
   if (!result.eligible) {
-    const reason = reasonOf(result.checks);
-    return privateJson(request, env, { error: 'CCTV is for signed-in members who acknowledged the Privacy Policy and completed a mission', detail: { reason, checks: result.checks } }, reason === 'sign_in_required' ? 401 : 403);
+    const reason = reasonOf(result.checks, result.owner);
+    return privateJson(request, env, { error: 'Camera access requires sign-in, the current Privacy Policy acknowledgement, and a verified mission or house-owner access', detail: { reason, checks: result.checks } }, reason === 'sign_in_required' ? 401 : 403);
   }
   const retry = rateLimited(`${frame ? 'frame' : 'sources'}:${who}`, frame ? LIMITS.frame : LIMITS.sources);
   if (retry) return tooMany(request, env, retry);
