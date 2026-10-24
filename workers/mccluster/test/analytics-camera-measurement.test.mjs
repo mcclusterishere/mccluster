@@ -26,6 +26,15 @@ test('owner authorization precedes all catalog and feed access',async()=>{
  const res=await route(new Request(url),env,{id:'member'},url,url.pathname);
  assert.equal(res.status,403);assert.equal(calls,0);
 });
+test('Halo TxDOT snapshots are measured while placeholder and unknown provenance remain unavailable',async()=>{
+ for(const sourceKind of ['txdot-snapshot','synthetic','streetview','unknown','']){
+  const result=await checkCamera(env,'txdot-aus-example',async()=>new Response(png,{headers:{'content-type':'image/png','x-cctv-source':sourceKind}}));
+  assert.equal(result.status,sourceKind==='txdot-snapshot'?'image_received':'unavailable');
+  if(sourceKind==='txdot-snapshot')assert.deepEqual(Uint8Array.from(Buffer.from(result.image.split(',')[1],'base64')),png);
+ }
+ const invalid=await checkCamera(env,'txdot-aus-example',async()=>new Response('<html>unavailable</html>',{headers:{'content-type':'image/jpeg','x-cctv-source':'txdot-snapshot'}}));
+ assert.equal(invalid.status,'unavailable');
+});
 test('full batches preserve bounded raster payload bytes and reject oversized streams',async()=>{
  // Exercise transport and byte limits independently of the browser decode check.
  const limit=2*1024*1024,bytes=new Uint8Array(limit);
