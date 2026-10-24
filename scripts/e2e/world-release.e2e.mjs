@@ -246,6 +246,24 @@ for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PER
   await page.goto(BASE+'/action-globe.html?explore=1&halo=missions');
   // The shell contains fixed-position panels and has no layout box of its own.
   await page.waitForSelector('html.halo-no-map #haloShell .hx-left',{timeout:20000});
+  if(width===1280){
+    await page.locator('[data-closed="1"]').click();
+    await page.waitForSelector('[data-closed="0"]');
+    check(scope,'closed mission filter is represented in the address',new URL(page.url()).searchParams.get('section')==='closed');
+    await page.goBack();
+    await page.waitForSelector('[data-closed="1"]');
+    check(scope,'Back restores active missions',await page.locator('[data-seg="active"]').getAttribute('aria-selected')==='true');
+    await page.locator('[data-sort="missions"]').selectOption('newest');
+    await page.reload();
+    await page.waitForSelector('[data-sort="missions"]');
+    check(scope,'reload retains newest mission sorting',await page.locator('[data-sort="missions"]').inputValue()==='newest');
+    await page.locator('[data-view="intel"]').click();
+    await page.locator('[data-hours]').selectOption('6');
+    check(scope,'time window is represented in the address',new URL(page.url()).searchParams.get('hours')==='6');
+    await page.goBack();
+    await page.waitForFunction(()=>HaloConsole.state().hours===24);
+    check(scope,'Back restores both time selectors',await page.locator('[data-hours]').inputValue()==='24'&&await page.locator('.hx-window').inputValue()==='24');
+  }
   for(const v of ['world','missions','people','intel']){
     await page.locator('[data-view="'+v+'"]').click();
     await page.waitForTimeout(150);
