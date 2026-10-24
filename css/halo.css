@@ -482,3 +482,9 @@ html.halo-no-map .hx-panel__head .hx-btn{display:inline-flex}
 .hx-density input[type=range]{width:100%;min-height:44px;accent-color:#45b8f4}
 .hx-density input[type=checkbox]{width:22px;height:22px;accent-color:#45b8f4}
 .hx-density output{font:12px ui-monospace,monospace;color:#a7b9c8}
+
+/* Event identity is carried by shape and a persistent explanation, not color. */
+.hx-event-key{font-size:11px;color:#d5e4ef;max-width:220px;white-space:normal}
+.hx-density label:has(input[type=checkbox]){display:flex;align-items:center;gap:10px}
+.hx-density input[type=range]{cursor:pointer}
+.hx-detail__actions{gap:8px}

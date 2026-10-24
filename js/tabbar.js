@@ -593,6 +593,11 @@
      and lives under Home instead (the Control Room's account menu links the Desk: mnet.html?view=feed&desk). The
      "mcc:appbar-admin" event fires whenever this changes. */
   var ADMIN_KEY = "mcc_appbar_admin", ADMIN_TTL = 60000, ADMIN_ON = false, BASE_BAR = null;
+  var navPermissionReady = false, navPresentationReady = false;
+  function revealNavigation() {
+    if (navPermissionReady && navPresentationReady) window.MCC_SHELL?.navigationReady();
+  }
+  window.addEventListener('mcc:navigation-ready', function () { navPresentationReady = true; revealNavigation(); });
   var adminEpoch = 0, authEpoch = 0, adminSession = null, adminFlight = null;
   var PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.8v14.4L19 12z" fill="currentColor"/></svg>';
   var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
@@ -624,6 +629,8 @@
   }
   function paintAdmin(on) {
     on = !!on;
+    navPermissionReady = true;
+    if (!on) revealNavigation();
     if (on === ADMIN_ON) { markAdminHere(); return; }
     if (wingOn) revert();
     if (on) { BASE_BAR = dock.innerHTML; dock.innerHTML = adminBar(); }
@@ -698,7 +705,9 @@
     var attempt = ++authEpoch;
     ++adminEpoch;
     var session = readAuthSession();
-    if (!session || session.access_token !== adminSession) paintAdmin(false);
+    var oldSubject = adminSession ? jwtPayload(adminSession).sub : null;
+    var newSubject = session?.access_token ? jwtPayload(session.access_token).sub : null;
+    if (!session || oldSubject && oldSubject !== newSubject) paintAdmin(false);
     if (!session || !session.access_token) {
       ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
       lastVerifiedSubject=""; storePerspective(null);
@@ -1272,10 +1281,12 @@
   // One shared implementation on every page carrying the bar, including nested rooms.
   var navigationStyle = document.createElement("link");
   navigationStyle.rel = "stylesheet"; navigationStyle.href = ROOT + "css/site-navigation.css?v=__STAMP__";
-  navigationStyle.onload = function () { document.body.dataset.siteNavigation = "ready"; };
+  navigationStyle.onload = function () { document.body.dataset.siteNavigation = "ready"; window.dispatchEvent(new Event("mcc:navigation-style-ready")); };
+  navigationStyle.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationStyle);
   var navigationScript = document.createElement("script");
   navigationScript.src = ROOT + "js/site-navigation.js?v=__STAMP__";
+  navigationScript.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationScript);
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 

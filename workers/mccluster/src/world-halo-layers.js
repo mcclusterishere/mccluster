@@ -92,11 +92,14 @@
      trimmed and must be 2 to 120 characters; each normalized query is kept
      24 h. At most 6 results. Both providers failing is an honest
      `unavailable` with no results, never cached. */
+import { fetchWeather, fetchNatural } from './world-events.js';
 import { fail, reply } from './lib/http.js';
 import { UpstreamError } from './lib/safe-fetch.js';
 import { cachedLayer, normalizeAdsbAircraft, upstream } from './world-layers.js';
 
 export const HALO_LAYERS = Object.freeze({
+  weather: Object.freeze({ ttl: 120, max: 1500, rows: 'events', base: Object.freeze({ credit: 'Weather alerts: NOAA NWS', attribution_url: 'https://www.weather.gov', license: 'Public domain (U.S. Government work)' }) }),
+  natural: Object.freeze({ ttl: 600, max: 500, rows: 'events', base: Object.freeze({ credit: 'Natural events: NASA EONET', attribution_url: 'https://eonet.gsfc.nasa.gov', license: 'NASA open data' }) }),
   military: Object.freeze({ ttl: 30, max: 4000, rows: 'aircraft', base: Object.freeze({ attribution: 'adsb.lol, Open Database License (ODbL) 1.0', attribution_url: 'https://adsb.lol', credit: 'Military flights: adsb.lol (ODbL)', license: 'ODbL-1.0' }) }),
   quakes: Object.freeze({ ttl: 120, max: 2000, rows: 'quakes', base: Object.freeze({ attribution: 'U.S. Geological Survey, Earthquake Hazards Program', attribution_url: 'https://earthquake.usgs.gov', credit: 'Earthquakes: USGS', license: 'Public domain (U.S. Government work)' }) }),
   fires: Object.freeze({ ttl: 1800, max: 25000, rows: 'fires', requires: Object.freeze(['FIRMS_MAP_KEY']), base: Object.freeze({ attribution: 'NASA FIRMS, VIIRS 375 m near real-time (Suomi NPP and NOAA-20)', attribution_url: 'https://firms.modaps.eosdis.nasa.gov', credit: 'Fires: NASA FIRMS', license: 'NASA open data (no restriction on reuse; acknowledgement requested)' }) }),
@@ -104,7 +107,7 @@ export const HALO_LAYERS = Object.freeze({
   cyclones: Object.freeze({ ttl: 600, max: 50, rows: 'cyclones', base: Object.freeze({ attribution: 'NOAA National Hurricane Center', attribution_url: 'https://www.nhc.noaa.gov', credit: 'Tropical cyclones: NOAA NHC', license: 'Public domain (U.S. Government work)' }) }),
   vessels: Object.freeze({ ttl: 0, max: 8000, rows: 'vessels', requires: Object.freeze(['AISSTREAM_API_KEY', 'HereTenantAgent']), base: Object.freeze({ attribution: 'AISStream.io', attribution_url: 'https://aisstream.io', credit: 'Ships: AISStream.io', license: 'AISStream.io terms of service' }) })
 });
-const HALO_PATH = /^\/v1\/world\/layers\/(military|quakes|fires|perimeters|cyclones|vessels)$/;
+const HALO_PATH = /^\/v1\/world\/layers\/(military|quakes|fires|perimeters|cyclones|vessels|weather|natural)$/;
 export const WORLD_GEOCODE_PATH = '/v1/world/geocode';
 
 /* ---------- trust nothing: numbers, strings and links from a provider ----------
@@ -500,7 +503,7 @@ async function vesselsLayer(env) {
 }
 
 /* ---------- the routes ---------- */
-const FETCHERS = { military: fetchMilitary, quakes: fetchQuakes, fires: fetchFires, perimeters: fetchPerimeters, cyclones: fetchCyclones };
+const FETCHERS = { weather: fetchWeather, natural: fetchNatural, military: fetchMilitary, quakes: fetchQuakes, fires: fetchFires, perimeters: fetchPerimeters, cyclones: fetchCyclones };
 
 /* owner-only answers never sit in a browser or shared cache */
 function send(request, env, body, status = 200) {

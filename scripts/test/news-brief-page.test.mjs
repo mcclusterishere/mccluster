@@ -11,7 +11,7 @@ test('the page is private to search, phone-first and loads only the house script
   const html = await read('brief.html');
   assert.match(html, /<meta name="robots" content="noindex,nofollow">/);
   assert.match(html, /width=device-width,initial-scale=1/); assert.doesNotMatch(html, /user-scalable=no/);
-  assert.deepEqual([...html.matchAll(/<script[^>]+src="([^"?]+)/g)].map((m) => m[1]), ['js/analytics.js', 'js/mcc-auth.js', 'js/tabbar.js', 'js/news-brief.js']);
+  assert.deepEqual([...html.matchAll(/<script[^>]+src="([^"?]+)/g)].map((m) => m[1]), ['js/shell-boot.js', 'js/analytics.js', 'js/mcc-auth.js', 'js/tabbar.js', 'js/news-brief.js']);
   const css = await read('css/news-brief.css');
   assert.match(css, /font: 400 max\(16px, 1rem\)/, 'form text never below 16px');
   assert.doesNotMatch(css, /@media \(max-width/, 'breakpoints only add');

@@ -737,7 +737,7 @@ function paintAccess(){loadMembers();Object.keys(ACCESS_IDS).forEach(k=>{const b
  if(lockOf('ion'))ionOff('release unavailable');paintLayerCredits();haloSync()}
 let accessToken='',accessSeq=0;
 async function loadAccess(){const seq=++accessSeq,t=sessionToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),4000);if(accessToken!==t){access=null;accessToken=t;paintAccess()}
- try{const r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('access '+r.status);const d=await r.json();if(seq!==accessSeq||t!==sessionToken())return null;access=d&&d.release?.version==='globe-admin-preview/v1'&&Array.isArray(d.locked_layers)&&Array.isArray(d.unlocked_layers)?d:null}catch(e){if(seq!==accessSeq)return null;access=null}finally{clearTimeout(timeout)}paintAccess();return access}
+ try{const r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('access '+r.status);const d=await r.json();if(seq!==accessSeq||t!==sessionToken())return null;access=d&&d.release?.version==='globe-admin-preview/v1'&&Array.isArray(d.locked_layers)&&Array.isArray(d.unlocked_layers)?d:null}catch(e){if(seq!==accessSeq)return null;access=null}finally{clearTimeout(timeout)}paintAccess();if(!access)window.MCC_SHELL?.haloReady();return access}
 window.addEventListener('storage',e=>{if(!e.key||e.key==='mccdb_session'){access=null;accessSeq++;accessToken='';paintAccess();loadAccess()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadAccess()});
 setInterval(()=>{if(!document.hidden)loadAccess()},60000);
@@ -814,7 +814,7 @@ function cctvOff(){cctv.on=false;if(cctv.points&&viewer){viewer.scene.primitives
 async function toggleCctv(){const b=$('ctlCctv');if(!viewer||!b)return;if(cctv.on){cctvOff();return}if(lockOf('cctv'))return;if(!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  const d=await cctvEligibility();if(!d||!d.eligible){cctvGate(d);return}
  b.setAttribute('aria-busy','true');try{const r=await cctvFetch('/v1/world/cctv/sources');if(r.status===401||r.status===403){await cctvEligibility();cctvGate();return}const data=await r.json();if(!r.ok)throw Error(data&&data.error||'cctv '+r.status);if(lockOf('cctv'))return;
-  const col=new Cesium.PointPrimitiveCollection(),c=Cesium.Color.fromCssColorString('#7cfc9a');cctv.sources=(data.sources||[]).filter(s=>lonLat(s.lon,s.lat)).map(s=>Object.assign({},s,{lon:deg(s.lon),lat:deg(s.lat)}));cctv.sources.forEach(s=>col.add({position:Cesium.Cartesian3.fromDegrees(s.lon,s.lat,30),pixelSize:7,color:c,outlineColor:Cesium.Color.BLACK.withAlpha(.8),outlineWidth:1.5,id:{layer:'cctv',cam:String(s.id)}}));
+  const col=window.HaloEvents?new Cesium.BillboardCollection():new Cesium.PointPrimitiveCollection(),c=Cesium.Color.fromCssColorString('#7cfc9a');cctv.sources=(data.sources||[]).filter(s=>lonLat(s.lon,s.lat)).map(s=>Object.assign({},s,{lon:deg(s.lon),lat:deg(s.lat)}));cctv.sources.forEach(s=>col.add({position:Cesium.Cartesian3.fromDegrees(s.lon,s.lat,30),...(window.HaloEvents?{image:HaloEvents.symbol('camera'),width:24,height:24}:{pixelSize:7,color:c,outlineColor:Cesium.Color.BLACK.withAlpha(.8),outlineWidth:1.5}),id:{layer:'cctv',cam:String(s.id)}}));
   viewer.scene.primitives.add(col);cctv.points=col;cctv.on=true;b.setAttribute('aria-pressed','true');tell({type:'hu:layer',layer:'cctv',on:true,count:cctv.sources.length,creditHeight:creditHeight()})}
  catch(e){tell({type:'hu:layer',layer:'cctv',on:false,failed:true});sheet('CCTV','<p>'+escHtml(String(e&&e.message||'CCTV could not load right now.'))+'</p>')}finally{b.removeAttribute('aria-busy')}}
 function fmtTime(v){const d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'}):null}
@@ -971,11 +971,11 @@ function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo
  /* the full-screen globe's own door to Halo, beside "← World", for the owner only */
  let enter=$('haloEnter');const back=$('worldBack');if(!enter&&back){enter=document.createElement('a');enter.id='haloEnter';enter.className='halo-enter';enter.href='action-globe.html?explore=1&halo=1';enter.setAttribute('aria-label',"Open Hitman's Halo");enter.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>Halo</span>';back.after(enter)}
  if(enter)enter.hidden=!owner||HALO_OPEN!==null;
- if(!owner){if(window.HaloConsole)HaloConsole.unmount();return}
+ if(!owner){if(access||!sessionToken())window.MCC_SHELL?.haloReady();if(window.HaloConsole)HaloConsole.unmount();return}
  if(HALO_OPEN===null)return;
  if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{view:HALO_VIEW});return}
  /* the view lays the Earth out by its stylesheet, so the styles land before the view mounts */
- if(!haloLoad){haloLoad=['js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css'].map(haloStyle)))
+ if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css'].map(haloStyle)))
    .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
 /* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
 window.HuGlobe=Object.freeze({
