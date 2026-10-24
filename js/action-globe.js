@@ -724,7 +724,7 @@ function lockOf(id){
  return null}
 function paintAccess(){loadMembers();Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});
  const a=$('ctlAudience');if(a&&lockOf('audience'))a.hidden=true;
- if(!viewer)return;
+ if(!viewer){haloSync();return;}
  Object.keys(DATA_LAYERS).forEach(k=>{if(lockOf(k)&&layerState[k].on){layerState[k].on=false;clearLayer(k);const b=$(DATA_LAYERS[k].id);if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:k,on:false})}});
  if(lockOf('intel')&&intel.on)intelOff();if(lockOf('cctv')&&cctv.on)cctvOff();if(lockOf('audience'))drawAudience([]);
  if(lockOf('ion'))ionOff('release unavailable');paintLayerCredits();haloSync()}
@@ -784,17 +784,17 @@ function cctvFetch(path,init){const t=sessionToken();if(!t)return Promise.reject
 async function cctvEligibility(){const b=$('ctlCctv');if(!b)return null;if(!sessionToken()||ANALYTICS||lockOf('cctv')){cctv.state=null;if(cctv.on)cctvOff();paintAccess();return null}
  try{const r=await cctvFetch('/v1/world/cctv/eligibility');if(!r.ok)throw Error('eligibility '+r.status);const d=await r.json();cctv.state=d;paintAccess();if(!d.eligible&&cctv.on)cctvOff();return d}
  catch(e){cctv.state=null;paintAccess();return null}}
-function sheet(title,html){clearSpaceFocus();const s=$('cctvSheet');if(!s)return;$('cctvTitle').textContent=title;$('cctvBody').innerHTML=html;s.hidden=false}
+function sheet(title,html){$('cctvClose').onclick=closeSheet;clearSpaceFocus();const s=$('cctvSheet');if(!s)return;$('cctvTitle').textContent=title;$('cctvBody').innerHTML=html;s.hidden=false}
 function closeSheet(){clearSpaceFocus();const s=$('cctvSheet');if(s)s.hidden=true;if(cctv.url){URL.revokeObjectURL(cctv.url);cctv.url=null}cctv.seq++}
-function cctvGate(d){d=d||cctv.state||{checks:{}};const c=d.checks||{},row=(ok,title,detail,action)=>'<li class="cctv-check'+(ok?' is-ok':'')+'"><span class="cctv-check__mark" aria-hidden="true">'+(ok?'✓':'✕')+'</span><span><b>'+title+'</b><small>'+(ok?'Done.':detail)+'</small>'+(ok?'':action||'')+'</span></li>';
+function cctvGate(d){d=d||cctv.state;if(!d){sheet('Camera access','<p>Could not check camera access. Close this panel and try again.</p>');return;}const c=d.checks||{},row=(ok,title,detail,action)=>'<li class="cctv-check'+(ok?' is-ok':'')+'"><span class="cctv-check__mark" aria-hidden="true">'+(ok?'✓':'✕')+'</span><span><b>'+title+'</b><small>'+(ok?'Done.':detail)+'</small>'+(ok?'':action||'')+'</span></li>';
  const target=window.top!==window?' target="_top"':'';
  /* LOCATION CONSENT IS THE PRIVACY ACKNOWLEDGEMENT (owner, 2026-10-15). The site-entry notice (js/live-content.js) is kept
     in this browser; the Worker reads the member's own record of it (auth user_metadata, workers/mccluster/src/world-cctv.js).
     A member who signed up another way records it here with one tap, the same two fields the join flow writes. */
- sheet('CCTV is for members who earned it','<p>Live public cameras open when all three are true:</p><ol class="cctv-checks">'+
+ sheet('Camera access','<p>Camera snapshots require current account eligibility:</p><ol class="cctv-checks">'+
   row(c.signed_in,'Signed in','Sign in with your M Account.','<a class="cctv-act" href="account.html?stay=1"'+target+'>Sign in →</a>')+
   row(c.privacy_acknowledged,'Privacy Policy agreed','Agreeing to the <a href="privacy.html"'+target+'>Privacy Policy</a> is your location consent: we use your approximate location from your connection, and your precise location only if your browser asks you and you allow it.','<button class="cctv-act" type="button" data-cctv-privacy>I agree to the Privacy Policy</button>')+
-  row(c.mission_completed,'A mission completed','You have no verified mission yet. Join one, send its proof, and it counts once a reviewer verifies it.','<a class="cctv-act" href="mnet.html?view=missions"'+target+'>Find a mission →</a>')+
+  row(d.access_basis==='owner'||c.mission_completed,d.access_basis==='owner'?'Owner camera access':'A mission completed','You have no verified mission yet. Join one, send its proof, and it counts once a reviewer verifies it.','<a class="cctv-act" href="mnet.html?view=missions"'+target+'>Find a mission →</a>')+
   '</ol><p class="cctv-msg" role="status" aria-live="polite"></p>');
  const msg=document.querySelector('#cctvBody .cctv-msg');
  const agree=document.querySelector('[data-cctv-privacy]');if(agree)agree.onclick=()=>{agree.disabled=true;msg.textContent='Saving…';recordPrivacyAck(d.privacy_version).then(()=>cctvEligibility()).then(n=>cctvGate(n||cctv.state)).catch(e=>{agree.disabled=false;msg.textContent=String(e&&e.message||'Could not save that right now; try again.')})}}
@@ -811,14 +811,26 @@ async function toggleCctv(){const b=$('ctlCctv');if(!viewer||!b)return;if(cctv.o
   viewer.scene.primitives.add(col);cctv.points=col;cctv.on=true;b.setAttribute('aria-pressed','true');tell({type:'hu:layer',layer:'cctv',on:true,count:cctv.sources.length,creditHeight:creditHeight()})}
  catch(e){tell({type:'hu:layer',layer:'cctv',on:false,failed:true});sheet('CCTV','<p>'+escHtml(String(e&&e.message||'CCTV could not load right now.'))+'</p>')}finally{b.removeAttribute('aria-busy')}}
 function fmtTime(v){const d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'}):null}
+async function browseCameras(){
+ if(!isOwner())return;
+ const d=await cctvEligibility();if(!d||!d.eligible){cctvGate(d);return}
+ sheet('Camera snapshots','<p role="status">Loading camera catalog…</p>');
+ const seq=++cctv.seq;
+ try{const r=await cctvFetch('/v1/world/cctv/sources');const b=await r.json();if(seq!==cctv.seq)return;if(!r.ok)throw Error('Camera catalog is unavailable.');
+ cctv.sources=(b.sources||[]).filter(s=>lonLat(s.lon,s.lat));
+ sheet('Camera snapshots','<p>'+cctv.sources.length+' listed cameras. Availability is checked when you open a snapshot.'+(b.truncated_count?' '+Number(b.truncated_count)+' additional records omitted.':'')+'</p><label>Find a camera<input type="search" id="cameraSearch" placeholder="Name, city or provider" style="width:100%;min-height:44px;font-size:16px"></label><p id="cameraCount" role="status"></p><div id="cameraResults"></div><button type="button" class="cctv-act" id="cameraMore">Show more</button>');
+ let limit=50;const paint=()=>{const q=$('cameraSearch').value.toLowerCase();const rows=cctv.sources.filter(c=>[c.name,c.city,c.provider].join(' ').toLowerCase().includes(q));$('cameraCount').textContent='Showing '+Math.min(limit,rows.length)+' of '+rows.length;$('cameraResults').innerHTML=rows.slice(0,limit).map(c=>'<button type="button" class="cctv-act" data-camera-id="'+escHtml(c.id)+'" style="display:block;width:100%;margin:8px 0;text-align:left">'+escHtml(c.name||c.id)+' · '+escHtml(c.provider||'')+'</button>').join('');$('cameraMore').hidden=limit>=rows.length;$('cameraResults').querySelectorAll('[data-camera-id]').forEach(btn=>btn.onclick=()=>openCamera(btn.dataset.cameraId));};
+ $('cameraSearch').oninput=()=>{limit=50;paint()};$('cameraMore').onclick=()=>{limit+=50;paint()};paint();
+ }catch(e){if(seq===cctv.seq)sheet('Camera snapshots','<p>Could not load the catalog. Close this panel and try again.</p>')}
+}
 async function openCamera(id){if(lockOf('cctv'))return;const cam=cctv.sources.find(s=>String(s.id)===id);if(!cam)return;const seq=++cctv.seq;if(cctv.url){URL.revokeObjectURL(cctv.url);cctv.url=null}
- const where=[cam.city,cam.provider].filter(Boolean).map(escHtml).join(' · ');sheet(String(cam.name||'Camera'),'<p class="cctv-meta">'+where+'</p><p class="cctv-msg" role="status" aria-live="polite">Loading the live frame…</p>');
+ const where=[cam.city,cam.provider].filter(Boolean).map(escHtml).join(' · ');sheet(String(cam.name||'Camera'),'<p class="cctv-meta">'+where+'</p><p class="cctv-msg" role="status" aria-live="polite">Loading snapshot…</p>');
  try{const r=await cctvFetch('/v1/world/cctv/frame/'+encodeURIComponent(id),{headers:{accept:'image/*'}});if(seq!==cctv.seq)return;
   if(r.status===401||r.status===403){await cctvEligibility();cctvGate();return}
-  if(!r.ok){const j=await r.json().catch(()=>({}));$('cctvBody').querySelector('.cctv-msg').textContent=j&&j.detail&&j.detail.reason==='no_live_frame'?'No live frame from this camera right now. Nothing is shown in its place.':(j&&j.error)||'This camera could not load right now.';return}
+  if(!r.ok){const j=await r.json().catch(()=>({}));$('cctvBody').querySelector('.cctv-msg').textContent=j&&j.detail&&j.detail.reason==='no_live_frame'?'No snapshot is available from this camera right now.':(j&&j.error)||'This camera could not load right now.';return}
   const blob=await r.blob();if(seq!==cctv.seq||lockOf('cctv'))return;cctv.url=URL.createObjectURL(blob);const h=k=>r.headers.get(k);
   const facts=[['Provider',h('x-cctv-provider')||cam.provider],['Captured',fmtTime(h('x-cctv-captured-at')||h('last-modified'))],['Retrieved',fmtTime(h('x-cctv-retrieved-at'))],['Media',h('content-type')],['Licence',h('x-cctv-license')||cam.license]].filter(x=>x[1]);
-  $('cctvBody').innerHTML='<p class="cctv-meta">'+where+'</p><figure class="cctv-frame"><img alt="'+escHtml('Live snapshot from '+(cam.name||'this camera'))+'" src="'+cctv.url+'"><figcaption>Live snapshot</figcaption></figure><dl class="cctv-facts">'+facts.map(x=>'<div><dt>'+x[0]+'</dt><dd>'+escHtml(String(x[1]).slice(0,120))+'</dd></div>').join('')+'</dl>'}
+  $('cctvBody').innerHTML='<button type="button" class="cctv-act" id="cameraBack">← Camera list</button> <button type="button" class="cctv-act" id="cameraRefresh">Refresh snapshot</button><p class="cctv-meta">'+where+'</p><figure class="cctv-frame"><img alt="'+escHtml('Snapshot from '+(cam.name||'this camera'))+'" src="'+cctv.url+'"><figcaption>Provider snapshot · not a continuous video stream</figcaption></figure><dl class="cctv-facts">'+facts.map(x=>'<div><dt>'+x[0]+'</dt><dd>'+escHtml(String(x[1]).slice(0,120))+'</dd></div>').join('')+'</dl>'; $('cameraBack').onclick=browseCameras;$('cameraRefresh').onclick=()=>openCamera(id)}
  catch(e){if(seq===cctv.seq){const m=$('cctvBody').querySelector('.cctv-msg');if(m)m.textContent='This camera could not load right now.'}}}
 /* ---------- THE ANALYTICS SURFACE (Control Room → Analytics, the 60/40 globe) ----------
    The owner's dashboard sends country aggregates it already read with the owner's own session (js/control-room/analytics.js);
@@ -943,12 +955,12 @@ function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartog
    from the Worker's owner-gated routes (/v1/world/layers/*, /v1/world/halo/*, /v1/world/tides/*, /v1/world/geocode,
    /v1/world/ion, /v1/intel/*). Losing the owner answer unmounts it. */
 const HALO_OPEN=new URLSearchParams(location.search).get('halo'),HALO_VIEW=['world','missions','people','intel'].includes(HALO_OPEN)?HALO_OPEN:undefined;
-let haloPhotoreal=false,haloLoad=null;
+let haloPhotoreal=false,haloLoad=null,haloMapFailed=false;
 function isOwner(){const t=sessionToken();return !!(t&&access&&access.release?.version==='globe-admin-preview/v1'&&access.release.admin_preview===true&&accessToken===t)}
 function haloScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+(HU_V?'?v='+encodeURIComponent(HU_V):'');s.onload=res;s.onerror=()=>rej(Error(src));document.head.appendChild(s)})}
 function haloStyle(href){return new Promise(res=>{if(document.querySelector('link[data-halo="'+href+'"]'))return res();const l=document.createElement('link');l.rel='stylesheet';l.href=href+(HU_V?'?v='+encodeURIComponent(HU_V):'');l.dataset.halo=href;l.onload=l.onerror=()=>res();document.head.appendChild(l)})}
 function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo');if(door)door.hidden=!owner;
- if(!EXPLORE||BARE||!viewer)return;
+ if(!EXPLORE||BARE||(!viewer&&!haloMapFailed))return;
  /* the full-screen globe's own door to Halo, beside "← World", for the owner only */
  let enter=$('haloEnter');const back=$('worldBack');if(!enter&&back){enter=document.createElement('a');enter.id='haloEnter';enter.className='halo-enter';enter.href='action-globe.html?explore=1&halo=1';enter.setAttribute('aria-label',"Open Hitman's Halo");enter.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>Halo</span>';back.after(enter)}
  if(enter)enter.hidden=!owner||HALO_OPEN!==null;
@@ -960,7 +972,7 @@ function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo
    .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
 /* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
 window.HuGlobe=Object.freeze({
- version:HU_V,api:API,viewer:()=>viewer,token:sessionToken,owner:isOwner,lockOf:id=>lockOf(id),
+ cameras:browseCameras,version:HU_V,api:API,viewer:()=>viewer,token:sessionToken,owner:isOwner,lockOf:id=>lockOf(id),
  sheet:(title,html)=>sheet(title,html),closeSheet:()=>closeSheet(),esc:escHtml,tell:m=>tell(m),
  home:()=>{if(viewer)viewer.camera.flyTo({destination:homePosition(),duration:1.4})},
  layer:Object.freeze({
@@ -1008,4 +1020,4 @@ try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new
 // Layout and the parent-owned location request work even if WebGL cannot load.
 wireEditorialTools();wireTravelControlLayout();
 if(EDITORIAL&&parentFrame){$('ctlLocate').onclick=()=>{if(travelMode)tell({type:'hu:request-location'})};for(const id of ['ctlZoomIn','ctlZoomOut'])$(id).disabled=true;}
-if(window.Cesium)boot().catch(e=>{if(leaving)return;$('status').hidden=false;$('status').textContent='Interactive globe unavailable on this device. Mission browsing will be available when the map can load.';readyMessage={type:'hu:globe-unavailable'};tell(readyMessage);console.warn(e)});else{$('status').textContent='Unable to load globe.';readyMessage={type:'hu:globe-unavailable'};tell(readyMessage)}})();
+if(window.Cesium)boot().catch(e=>{if(leaving)return;$('status').hidden=false;$('status').textContent='Interactive globe unavailable on this device. Mission browsing will be available when the map can load.';readyMessage={type:'hu:globe-unavailable'};tell(readyMessage);console.warn(e);haloMapFailed=true;loadAccess().then(()=>haloSync())});else{haloMapFailed=true;loadAccess().then(()=>haloSync());$('status').textContent='Unable to load globe.';readyMessage={type:'hu:globe-unavailable'};tell(readyMessage)}})();

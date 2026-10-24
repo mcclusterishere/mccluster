@@ -134,7 +134,7 @@ test('CCTV on the globe: shaded for guests (tap asks to sign in), locked with th
   assert.doesNotMatch(js, /prime\.mccluster\.org|\/api\/cctv\//, 'the page never talks to Halo directly');
   for (const words of ['Signed in', 'Privacy Policy agreed', 'A mission completed', 'Find a mission', 'I agree to the Privacy Policy']) assert.ok(js.includes(words), words);
   assert.match(js, /mnet\.html\?view=missions/);
-  assert.match(js, /No live frame from this camera right now\. Nothing is shown in its place\./);
+  assert.match(js, /No snapshot is available from this camera right now\./);
   /* location consent IS the privacy acknowledgement (owner, 2026-10-15): no separate consent route, no position sent */
   assert.doesNotMatch(js, /location-consent|location_consent|consent_store/);
   assert.match(js, /fetch\(SB\+'\/auth\/v1\/user',\{method:'PUT'[^\n]*privacy_policy_version:version,privacy_acknowledged_at:/, 'the member records the same two fields the join flow writes');

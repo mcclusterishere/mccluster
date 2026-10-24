@@ -18,7 +18,7 @@
   "use strict";
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
-    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,antiLevels:[],antiBusy:false,antiLoaded:false,
+    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,proofLoaded:false,proofError:"",antiLevels:[],antiBusy:false,antiLoaded:false,
     missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{},liveGrants:[],
     memos:null,memoBusy:false,memoErr:null,memoOpen:null,memoHist:{}};
   var STATUSES=["draft","live","paused","closed"];
@@ -100,10 +100,10 @@
     return '<a class="cr-btn" href="'+u+'" target="_blank" rel="noopener">Open submitted '+e(p.proof_type)+' ↗</a>';
   }
   function loadProofs(){
-    A.proofBusy=true;redraw();
+    if(A.proofBusy)return Promise.resolve();A.proofBusy=true;A.proofError="";redraw();
     return A.supa("action_proofs?status=eq.pending&select=id,assignment_id,user_id,proof_type,proof_url,statement,metadata,created_at,action_mission_assignments!inner(id,m_uid,status,source_content_id,source_channel,source_reel,source_actionable,action_missions!inner(id,campaign_id,title,domain,difficulty,base_points,skills))&order=created_at.asc")
-      .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.msg="Proof queue could not load: "+(err.message||err);})
-      .then(function(){A.proofBusy=false;redraw();});
+      .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.proofError="Proof queue could not load. Try again.";})
+      .then(function(){A.proofBusy=false;A.proofLoaded=true;redraw();});
   }
   function loadAntiLevels(){
     A.antiBusy=true;redraw();
@@ -130,11 +130,12 @@
     }).join("")+'</div>';
   }
   function reviews(){
-    if(!A.proofs.length&&!A.proofBusy)loadProofs();
+    if(!A.proofLoaded&&!A.proofBusy)loadProofs();
     var anti=antisocialReviews();
     if(A.proofBusy)return anti+note("Loading proof queue…");
+    if(A.proofError)return anti+note(A.proofError,true)+'<button type="button" class="cr-btn" data-proof-retry>Retry proof queue</button>';
     if(!A.proofs.length)return anti+note("Review queue clear. No pending standard mission proof.");
-    return anti+'<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
+    return anti+'<div class="cro-list">'+A.proofs.filter(function(p){return !A.haloMission||(p.action_mission_assignments||{}).action_missions?.id===A.haloMission;}).map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
   }
 
   function controls(c){
@@ -209,7 +210,7 @@
   function missionDesk(c){
     if(A.missions===null&&!A.missionBusy)loadMissions();
     if(A.missionBusy&&A.missions===null)return note("Loading missions…");
-    var list=(A.missions||[]).map(function(m){
+    var list=(A.missions||[]).filter(function(m){return !A.haloMission||m.id===A.haloMission;}).map(function(m){
       var st=A.missionStats[m.id]||{};
       var joined=Number(st.joined)||0,progress=Number(st.in_progress)||0,submitted=Number(st.submitted)||0,verified=Number(st.verified)||0,rejected=Number(st.rejected)||0;
       var counts='<div class="cro-statgrid" style="margin:10px 0">'+
@@ -370,10 +371,13 @@
     }).join("")+'</div>';
   }
   function render(){
+    var q=new URLSearchParams(location.search),key=q.get('haloTask')||'';
+    if(A.haloRoute!==key+'|'+q.get('mission')){A.haloRoute=key+'|'+q.get('mission');A.haloMission=/^[a-f0-9-]{36}$/i.test(q.get('mission')||'')?q.get('mission'):'';if(['missions','reviews'].includes(key))A.tab=key;}
+
     if(!A.loaded&&!A.loading)load();
     var c=current(),d=c&&A.detail[c.id];
     var chips='<div class="cro-chips">'+A.campaigns.map(function(x){return'<button class="cro-chip'+(x.id===A.sel&&A.tab!=="new"?" is-on":"")+'" type="button" data-crn-pick="'+e(x.id)+'">'+e(x.title)+' · '+e(x.status)+'</button>';}).join("")+'<button class="cro-chip'+(A.tab==="new"?" is-on":"")+'" type="button" data-crn-tab="new">+ New campaign</button></div>';
-    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
+    var head=(key?'<p class="cro-note"><a href="action-globe.html?explore=1&amp;halo=missions'+(A.haloMission?'&amp;item=mission:'+e(A.haloMission):'')+'">← Back to Halo</a> · '+(A.haloMission?'Selected mission':'Mission workspace')+' <button type="button" class="cr-btn" data-halo-clear>Show all missions</button></p>':'')+(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
     var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["memos","Policy memos"],["identity","Identity"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
@@ -424,6 +428,8 @@
     if(window.CR.identityReview&&A.tab==="identity")window.CR.identityReview.bind(root);
     if(!root)return;
     loadUploads(root);
+    var retry=root.querySelector('[data-proof-retry]');if(retry)retry.onclick=loadProofs;
+    var clear=root.querySelector('[data-halo-clear]');if(clear)clear.onclick=function(){A.haloMission='';var u=new URL(location.href);u.searchParams.delete('mission');u.searchParams.delete('haloTask');history.replaceState(null,'',u);redraw();};
     root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
     root.querySelectorAll("[data-crn-tab]").forEach(function(b){b.onclick=function(){A.tab=b.getAttribute("data-crn-tab");A.msg="";redraw();};});
     var mc=root.querySelector("[data-mission-create]");

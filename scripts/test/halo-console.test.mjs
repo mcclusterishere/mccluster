@@ -12,7 +12,7 @@ test('the globe loads Halo only for the owner the Worker names, only on the full
   const js = read('js/action-globe.js');
   assert.match(js, /function isOwner\(\)\{const t=sessionToken\(\);return !!\(t&&access&&access\.release\?\.version==='globe-admin-preview\/v1'&&access\.release\.admin_preview===true&&accessToken===t\)\}/);
   const sync = js.slice(js.indexOf('function haloSync()'), js.indexOf('/* what the Halo console may use'));
-  assert.match(sync, /if\(!EXPLORE\|\|BARE\|\|!viewer\)return;/, 'only the full-screen globe mounts the view');
+  assert.match(sync, /if\(!EXPLORE\|\|BARE\|\|\(!viewer&&!haloMapFailed\)\)return;/, 'only the full-screen globe mounts the view');
   assert.match(sync, /if\(!owner\)\{if\(window\.HaloConsole\)HaloConsole\.unmount\(\);return\}/, 'role loss unmounts');
   assert.match(sync, /if\(HALO_OPEN===null\)return;/, 'the view opens only from a Halo link (?halo=…)');
   assert.ok(sync.indexOf('if(!owner)') < sync.indexOf('haloScript('), 'no Halo code is fetched before the owner answer');
@@ -131,6 +131,6 @@ test('the view keeps to the mobile rules: 44px targets, 16px inputs, minmax colu
   for (const sel of ['.hx-tabs button{', '.hx-seg button{', '.hx-operator{', '.hx-layers-btn{', '.hx-collapse{', '.hx-close{', '.hx-grip{', '.hx-disclose{', '.hx-axis__ev{', '.hx-cta,.hx-btn{', '.hx-brand{'])
     assert.match(css.slice(css.indexOf(sel)), /^[^}]*(min-height:44px|height:44px)/, sel + ' is a full tap target');
   assert.match(css, /\.hx-ctl button\{display:grid;place-items:center;width:44px;height:44px/);
-  assert.match(css, /@media \(min-width:768px\)/);
+  assert.match(css, /@media \(min-width:1100px\)/);
   assert.match(css, /@media \(min-width:1200px\)/);
 });

@@ -80,6 +80,7 @@
 
   let G = null, V = null, C = null, mounted = false;
   let ui = {}, vision = null, hud = null, layers = null, data = null, offs = [];
+  let routeReady = false, restoringRoute = false;
   let view = 'world', sel = null, dtab = 'overview';
   let tabs = { missions: 'active', people: 'all', intel: 'feed' }, sorts = { missions: 'priority', people: 'activity' }, query = { missions: '', people: '', intel: '' };
   let area = 'earth', hours = 24, expanded = {}, missionsOn = true, collapsed = false, sheetOpen = false, mapFocus = false;
@@ -90,7 +91,7 @@
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const esc = (s) => (G ? G.esc(String(s == null ? '' : s)) : String(s == null ? '' : s));
   const reduced = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const wide = () => !!(window.matchMedia && matchMedia('(min-width:768px)').matches);
+  const wide = () => !!(window.matchMedia && matchMedia('(min-width:1100px)').matches);
   const desk = () => !!(window.matchMedia && matchMedia('(min-width:1200px)').matches);
   const fin = (v) => typeof v === 'number' && Number.isFinite(v);
   const ms = (iso) => { const t = iso ? Date.parse(iso) : NaN; return Number.isFinite(t) ? t : null; };
@@ -141,11 +142,11 @@
   const missionById = (id) => missions().find((m) => m.id === id) || null;
   const personById = (id) => peopleList().find((p) => p.m_uid === id) || null;
   function missionTone(m) { return m.review ? 'amber' : m.status === 'active' ? 'cyan' : m.status === 'blocked' ? 'red' : m.status === 'completed' ? 'green' : 'mute'; }
-  function missionWord(m) { return { active: 'Active', planned: 'Planned', blocked: 'Paused', completed: 'Completed' }[m.status] || 'Unknown'; }
+  function missionWord(m) { return { active: 'Active', planned: 'Planned', blocked: 'Paused', completed: 'Closed' }[m.status] || 'Unknown'; }
   function missionProgress(m) {
     const c = m.counts || {}, joined = fin(c.joined) ? c.joined : 0, verified = fin(c.verified) ? c.verified : 0;
     const total = Math.max(joined, verified);
-    return { done: verified, total, pct: total ? Math.round(verified / total * 100) : 0 };
+    return { known: fin(c.joined) && fin(c.verified), done: verified, total, pct: total ? Math.round(verified / total * 100) : 0 };
   }
   const shortId = (id) => String(id || '').replace(/-/g, '').slice(0, 6).toUpperCase();
 
@@ -171,6 +172,7 @@
     return { state: s.state, text: s.state === 'on' ? n(s.count) + (s.stale ? ' · stale' : '') : (words[s.state] || ''), stale: s.stale, fetched: s.fetched, reason: s.reason };
   }
   async function setItem(it, on) {
+    if (!V && !it.own) return;
     if (it.planned || isOn(it) === !!on) return;
     if (it.own) { missionsOn = !!on; markSig = ''; }
     else if (it.globe) { if (G.regions) G.regions.show(!!on); }
@@ -181,6 +183,9 @@
   /* how a source is doing, in the screen's words: observed and fresh, calculated, stale, partial, missing a key, unavailable */
   function health(it) {
     const s = stateOf(it);
+    if (it.own) return dataHealth('missions');
+    if (it.id === 'cctv') return { tone: 'hollow', text: 'Catalog loaded · snapshots checked when opened' };
+    if (it.core && it.id !== 'satellites') return { tone: 'hollow', text: 'Snapshot loaded · freshness varies by source' };
     if (it.id === 'satellites') return { tone: 'cyan', text: 'Calculated from orbital elements' };
     if (it.id === 'tides' && s.state === 'on') return { tone: 'hollow', text: 'Reference: ' + n(layers.status('tides').count) + ' stations' };
     if (s.state === 'locked') return { tone: 'amber', text: 'Locked for this session' };
@@ -226,14 +231,15 @@
     const m = photoPhase === 'on' || photoPhase === 'loading' ? '3d' : G.basemap && G.basemap.get() === 'map' ? 'map' : 'sat';
     $$('[data-base]', ui.root).forEach((b) => {
       b.setAttribute('aria-pressed', b.dataset.base === m ? 'true' : 'false');
-      if (b.dataset.base === '3d') { b.disabled = photoPhase === 'unavailable'; b.title = photoPhase === 'unavailable' ? 'Photoreal 3D is unavailable (Cesium ion asset 2275207 not in the token scope?)' : ''; }
+      if (!V) { b.disabled=true; return; }
+      if (b.dataset.base === '3d') { b.disabled = photoPhase === 'unavailable'; b.title = photoPhase === 'unavailable' ? '3D cities are unavailable. Try again later.' : ''; }
     });
   }
 
   /* ---------- follow and orbit ---------- */
   function follow(target) {
     stopFollow();
-    if (!target || typeof target.position !== 'function') return;
+    if (!V || !target || typeof target.position !== 'function') return;
     const p0 = target.position();
     if (!p0) return;
     followTarget = target;
@@ -258,7 +264,7 @@
   }
   function setOrbit(on) {
     if (orbitTick) { V.scene.preRender.removeEventListener(orbitTick); orbitTick = null; }
-    if (!on || reduced()) { paintTools(); return; }
+    if (!V || !on || reduced()) { paintTools(); return; }
     orbitLast = 0;
     orbitTick = () => {
       const now = performance.now(), dt = orbitLast ? Math.min(0.1, (now - orbitLast) / 1000) : 0;
@@ -277,7 +283,7 @@
     return R / Math.sin(angle) - R;
   }
   function flyTo(lon, lat, height) {
-    if (!fin(lon) || !fin(lat)) return;
+    if (!V || !fin(lon) || !fin(lat)) return;
     stopFollow();
     /* a pick from a list turns the Earth to it and keeps the whole Earth in view, as on the owner's screens; Go there zooms */
     const h = fin(height) ? height : Math.max(V.camera.positionCartographic.height, wholeEarth());
@@ -296,7 +302,7 @@
     }
     document.documentElement.dataset.haloDetail = sel ? 'open' : 'closed';
     if (ui.right) ui.right.dataset.open = sel ? 'true' : 'false';
-    schedulePaint();
+    rememberRoute(); schedulePaint();
   }
   function whereIs(s) {
     if (!s) return null;
@@ -429,6 +435,7 @@
     paint(places, places.length || local.length ? (b && b.attribution ? String(b.attribution).slice(0, 80) : '') : (b ? 'Nothing found.' : 'Place search is unavailable right now.'));
   }
   function flyToPlace(x) {
+    if (!V) return;
     stopFollow();
     const bb = Array.isArray(x.bbox) && x.bbox.length === 4 && x.bbox.every(fin) ? x.bbox : null;
     const big = bb && (Math.abs(bb[2] - bb[0]) > 0.02 || Math.abs(bb[3] - bb[1]) > 0.02);
@@ -438,12 +445,13 @@
 
   /* ---------- share a view (owner only, like everything here) ---------- */
   function viewState() {
+    if (!V) return { v: view, item: sel };
     const c = V.camera.positionCartographic;
-    return { v: view, c: [C.Math.toDegrees(c.longitude), C.Math.toDegrees(c.latitude), Math.round(c.height), V.camera.heading, V.camera.pitch].map((x) => Math.round(x * 1e5) / 1e5), s: vision ? vision.get() : 'normal', h: !!(hud && hud.shown()), l: ALL_ITEMS.filter(isOn).map((it) => it.id) };
+    return { v: view, item: sel && {kind:sel.kind,id:sel.id}, section: tabs.intel, c: [C.Math.toDegrees(c.longitude), C.Math.toDegrees(c.latitude), Math.round(c.height), V.camera.heading, V.camera.pitch].map((x) => Math.round(x * 1e5) / 1e5), s: vision ? vision.get() : 'normal', h: !!(hud && hud.shown()), l: ALL_ITEMS.filter(isOn).map((it) => it.id) };
   }
   function shareLink() {
     const enc = btoa(unescape(encodeURIComponent(JSON.stringify(viewState())))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    const url = new URL(location.href); url.searchParams.set('halo', '1'); url.hash = 'halo=' + enc;
+    const url = new URL(location.href); url.searchParams.set('halo', '1'); url.searchParams.delete('item'); url.searchParams.delete('section'); url.hash = 'halo=' + enc;
     return url.toString();
   }
   function readShared() {
@@ -458,11 +466,12 @@
   }
   async function apply(v, fly) {
     if (!v) return;
-    if (Array.isArray(v.c) && v.c.length === 5 && v.c.every(fin) && Math.abs(v.c[1]) <= 90 && Math.abs(v.c[0]) <= 180) {
+    if (V && Array.isArray(v.c) && v.c.length === 5 && v.c.every(fin) && Math.abs(v.c[1]) <= 90 && Math.abs(v.c[0]) <= 180) {
       const to = { destination: C.Cartesian3.fromDegrees(v.c[0], v.c[1], Math.max(50, Math.min(4e7, v.c[2]))), orientation: { heading: v.c[3], pitch: v.c[4], roll: 0 } };
       if (fly) V.camera.flyTo(Object.assign(to, { duration: reduced() ? 0 : 1.2 })); else V.camera.setView(to);
     }
     if (VIEWS.includes(v.v)) setView(v.v);
+    if (v.item && ['mission','person','evidence','brief','source'].includes(v.item.kind) && typeof v.item.id === 'string') select(v.item,{fly:false});
     if (vision && typeof v.s === 'string') vision.set(v.s);
     if (hud && typeof v.h === 'boolean') hud.show(v.h);
     /* the layer list is the exact state: what it names is on, everything else off (a shared view reproduces as shared) */
@@ -533,8 +542,30 @@
       rows.push({ id: 'intel-connector', name: 'Intelligence connector', on: true, prov: 'reported', h: hs.error && !hb ? { tone: 'red', text: hs.error === 'not deployed' ? 'Not deployed' : 'Could not reach the Worker' } : stale ? { tone: 'amber', text: 'Stale: last success ' + ago(ms(sh.last_success_at)) } : sh && sh.last_success_at ? { tone: 'green', text: 'Updated ' + ago(ms(sh.last_success_at)) } : { tone: 'amber', text: 'No successful run yet' } });
     }
     const ms2 = data.peek('missions');
-    rows.push({ id: 'missions-data', name: 'Missions and evidence', on: true, prov: 'reported', h: ms2.error && !ms2.body ? { tone: 'red', text: ms2.error === 'not deployed' ? 'Not deployed yet' : 'Could not reach the Worker' } : ms2.at ? { tone: 'green', text: 'Updated ' + ago(ms2.at) } : { tone: 'mute', text: 'Loading…' } });
+    rows.push({ id: 'missions-data', name: 'Missions and evidence', on: true, prov: 'reported', h: dataHealth('missions') });
     return rows;
+  }
+
+  function dataHealth(key) {
+    const s = data.peek(key), b = s.body;
+    if (s.error) return { tone: 'red', text: (b ? 'Stale data · ' : '') + s.error };
+    if (!b) return { tone: 'mute', text: s.loading ? 'Loading…' : 'Not loaded' };
+    const missing = Object.entries(b.sources || {}).filter(([,v]) => v !== 'ok').map(([k]) => k);
+    if (b.truncated || missing.length) return { tone: 'amber', text: [b.truncated ? 'Partial results · list capped' : '', missing.length ? 'Unavailable: ' + missing.join(', ') : ''].filter(Boolean).join(' · ') };
+    return { tone: 'green', text: 'Updated ' + ago(s.at) };
+  }
+  function coverage(key) {
+    const s = data.peek(key), b = s.body, h = dataHealth(key);
+    return '<p class="hx-note" role="status">' + esc(h.text) + (b && fin(b.total) ? ' · Showing ' + n((b.missions || b.people || []).length) + ' of ' + n(b.total) : '') + '</p>';
+  }
+  function taskLink(task, id) { return 'control.html?haloTask=' + task + (id ? '&amp;mission=' + encodeURIComponent(id) : '') + '#create:action-network'; }
+  function briefLink(b) { return BRIEFS + '?country=' + encodeURIComponent(b.country || '') + '&amp;day=' + encodeURIComponent(b.day || ''); }
+  function rememberRoute() {
+    if (!mounted) return;
+    const u = new URL(location.href); u.searchParams.set('halo', view);
+    if (sel && ['mission','person','evidence','brief','source'].includes(sel.kind)) u.searchParams.set('item', sel.kind + ':' + sel.id); else u.searchParams.delete('item');
+    if (view === 'intel') u.searchParams.set('section', tabs.intel); else u.searchParams.delete('section');
+    if (u.href !== location.href) { if (routeReady && !restoringRoute) history.pushState(null, '', u); else history.replaceState(null, '', u); }
   }
 
   /* ---------- painting ---------- */
@@ -546,6 +577,7 @@
   }
   function paint() {
     paintStrip(); paintList(); drawMarks(); paintDetail(); paintTimeline(); paintOperator(); paintBase();
+    if (!V) $$('[data-fly],[data-follow],[data-toggle-source]',ui.right).forEach(b => b.disabled = true);
   }
 
   function stat(v, label, tone, title) { return '<li data-tone="' + (tone || 'cyan') + '"' + (title ? ' title="' + esc(title) + '"' : '') + '><b>' + esc(v) + '</b>' + esc(label) + '</li>'; }
@@ -556,7 +588,7 @@
     if (view === 'world') {
       html = stat(v(c && c.active), 'Active missions') + stat(pb && fin(pb.online) ? n(pb.online) : '—', 'Members online', 'ink', 'Shown only when five or more are online') + stat(v(c && c.review), 'Awaiting review', 'amber');
     } else if (view === 'missions') {
-      html = stat(v(c && c.active), 'Active') + stat(v(c && c.blocked), 'Paused', 'amber') + stat(v(c && c.review), 'Awaiting review', 'amber') + stat(v(c && c.completed), 'Completed', 'ink');
+      html = stat(v(c && c.active), 'Active') + stat(v(c && c.blocked), 'Paused', 'amber') + stat(v(c && c.review), 'Awaiting review', 'amber') + stat(v(c && c.completed), 'Closed', 'ink');
     } else if (view === 'people') {
       const pv = (x) => (pc && fin(x) ? n(x) : '—');
       html = stat(pv(pc && pc.people), 'People') + stat(pb && fin(pb.online) ? n(pb.online) : '—', 'Online', 'ink', 'Shown only when five or more are online') + stat(pv(pc && pc.on_mission), 'On missions', 'ink') + stat(pv(pc && pc.awaiting_review), 'Awaiting review', 'amber');
@@ -567,12 +599,12 @@
     if (ui.stats.innerHTML !== html) ui.stats.innerHTML = html;
     const meta = META[view];
     ui.title.innerHTML = '<h1>' + esc(meta.title) + '</h1><p>' + esc(meta.sub) + '</p>';
-    const act = view === 'missions' ? { href: CONTROL, text: 'New mission' } : view === 'people' ? { href: CONTROL, text: 'Manage missions' } : view === 'intel' ? { href: BRIEFS, text: 'Daily briefs' } : null;
+    const act = view === 'missions' ? { href: taskLink('missions'), text: 'New mission' } : view === 'people' ? { href: taskLink('missions'), text: 'Manage missions' } : view === 'intel' ? { href: BRIEFS, text: 'Daily briefs' } : null;
     ui.action.hidden = !act;
     if (act) { ui.action.href = act.href; ui.action.innerHTML = ICON.plus + esc(act.text); }
-    const bad = ['missions', 'people'].some((k) => data.peek(k).error);
-    ui.live.dataset.state = bad ? 'warn' : 'ok';
-    ui.live.title = bad ? 'Some owner data could not be refreshed' : 'Connected to the Worker';
+    const bad = ['missions', 'people', 'evidence', 'health'].some((k) => ['red','amber'].includes(dataHealth(k).tone));
+    ui.live.dataset.state = bad || !body('missions') ? 'warn' : 'ok';
+    ui.live.title = bad ? 'Some owner data could not be refreshed' : 'Data loaded; see source health for coverage';
   }
   function paintClock() { if (ui.clock) ui.clock.textContent = hhmm(Date.now()) + ' UTC'; }
   function paintOperator() {
@@ -589,9 +621,10 @@
     ui.leftBody.innerHTML = '';
     listSig = '';
     if (view === 'world') {
-      ui.leftBody.innerHTML = '<ul class="hx-groups">' + GROUPS.map((g) => '<li class="hx-group" data-group="' + g.id + '"><div class="hx-group__row"><span class="hx-group__icon">' + ICON[g.icon] + '</span><span><span class="hx-group__name">' + esc(g.name) + '</span><span class="hx-group__sub">' + esc(g.items.slice(0, 3).map((i) => i.short || i.label).join(' · ') + (g.items.length > 3 ? ' +' + (g.items.length - 3) : '')) + '</span></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(g.name) + ': all available layers"><i></i></label><button type="button" class="hx-disclose" aria-expanded="false" aria-controls="hxg-' + g.id + '" aria-label="Show ' + esc(g.name) + ' layers">' + ICON.down + '</button></div>' +
+      ui.leftBody.innerHTML = '<button type="button" class="hx-btn" data-camera-list>Browse camera snapshots</button><p class="hx-note">Listed cameras are not guaranteed live streams.</p><ul class="hx-groups">' + GROUPS.map((g) => '<li class="hx-group" data-group="' + g.id + '"><div class="hx-group__row"><span class="hx-group__icon">' + ICON[g.icon] + '</span><span><span class="hx-group__name">' + esc(g.name) + '</span><span class="hx-group__sub">' + esc(g.items.slice(0, 3).map((i) => i.short || i.label).join(' · ') + (g.items.length > 3 ? ' +' + (g.items.length - 3) : '')) + '</span></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(g.name) + ': all available layers"><i></i></label><button type="button" class="hx-disclose" aria-expanded="false" aria-controls="hxg-' + g.id + '" aria-label="Show ' + esc(g.name) + ' layers">' + ICON.down + '</button></div>' +
         '<ul class="hx-layers" id="hxg-' + g.id + '" hidden>' + g.items.map((it) => '<li class="hx-layer" data-item="' + it.id + '" data-state="off"><span class="hx-layer__name">' + esc(it.label) + '</span><span class="hx-layer__state" aria-live="polite"></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(it.label) + '"' + (it.planned ? ' disabled' : '') + '><i></i></label></li>').join('') + '</ul></li>').join('') + '</ul>' +
         '<div class="hx-section"><p class="hx-label">Source health</p><ul class="hx-health"></ul><button type="button" class="hx-more" data-go="sources">View all sources ' + ICON.arrow + '</button></div>';
+      const cam = $('[data-camera-list]', ui.leftBody); if (cam) cam.onclick = () => G.cameras();
       GROUPS.forEach((g) => {
         const li = $('[data-group="' + g.id + '"]', ui.leftBody), dis = $('.hx-disclose', li), list = $('.hx-layers', li);
         const open = (o) => { dis.setAttribute('aria-expanded', o ? 'true' : 'false'); list.hidden = !o; expanded[g.id] = o; };
@@ -634,7 +667,7 @@
         const row = $('[data-item="' + it.id + '"]', li), st = stateOf(it);
         row.dataset.state = st.state; $('input', row).checked = isOn(it);
         $('.hx-layer__state', row).textContent = st.text;
-        if (st.state === 'locked') $('input', row).disabled = true;
+        $('input', row).disabled = st.state === 'locked' || (!V && !it.own);
       });
     });
     const hl = $('.hx-health', ui.leftBody), on = ALL_ITEMS.filter((it) => !it.planned && isOn(it));
@@ -652,7 +685,7 @@
       '<span class="hx-card__title">' + esc(m.title) + '</span><span class="hx-card__place">' + esc(placed(m) ? m.place.label : 'No place on the map') + '</span>' +
       '<span class="hx-status" data-tone="' + missionTone(m) + '">' + esc(m.review ? 'Evidence ready' : missionWord(m)) + '</span>' +
       '<span class="hx-bar"><i style="width:' + p.pct + '%"></i></span>' +
-      '<span class="hx-card__meta"><span>' + n(p.done) + ' of ' + n(p.total) + ' verified' + (fin(c.pending_proofs) && c.pending_proofs ? ' · ' + n(c.pending_proofs) + ' to review' : '') + '</span><span>' + esc(m.ends_at ? 'Due ' + due(m.ends_at) : '') + '</span></span>' +
+      '<span class="hx-card__meta"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified' + (fin(c.pending_proofs) && c.pending_proofs ? ' · ' + n(c.pending_proofs) + ' to review' : '') + '</span><span>' + esc(m.ends_at ? 'Due ' + due(m.ends_at) : '') + '</span></span>' +
       '<span class="hx-faces"><span>' + faces + '</span>' + who + '</span></span>' + ICON.chev.replace('<svg', '<svg class="hx-card__chev"') + '</button></li>';
   }
   function personRow(p, cur) {
@@ -673,7 +706,7 @@
   function loadingOr(key, title, text) {
     const s = data.peek(key);
     if (!s.body && s.loading) return empty('Loading…', '');
-    if (!s.body && s.error) return empty(s.error === 'not deployed' ? 'Not deployed yet' : 'Could not load', s.error === 'not deployed' ? 'Deploy the Worker to bring this view its data.' : 'The Worker did not answer; it will be asked again shortly.');
+    if (!s.body && s.error) return empty(s.error === 'not deployed' ? 'Not deployed yet' : 'Could not load', s.error === 'not deployed' ? 'This source is not available yet.' : 'This source could not be refreshed. Retry or check again shortly.');
     return empty(title, text);
   }
   function paintList() {
@@ -688,22 +721,22 @@
       const rows = missionsFiltered();
       html = rows.length ? '<ul class="hx-cards">' + rows.map((m) => missionCard(m, cur && cur.kind === 'mission' && cur.id === m.id)).join('') + '</ul>' : loadingOr('missions', 'No missions here', tabs.missions === 'review' ? 'Nothing is waiting for review.' : 'Missions are written in the Control Room.');
       const closed = all.filter((m) => m.status === 'blocked' || m.status === 'completed').length;
-      html += tabs.missions === 'closed' ? '<button type="button" class="hx-more" data-closed="0">' + ICON.arrow.replace('<svg', '<svg style="transform:scaleX(-1)"') + ' Back to active missions</button>' : '<button type="button" class="hx-more" data-closed="1">View paused and completed (' + n(closed) + ') ' + ICON.arrow + '</button>';
-      ui.leftSub.textContent = n(all.length) + ' missions';
+      html += tabs.missions === 'closed' ? '<button type="button" class="hx-more" data-closed="0">' + ICON.arrow.replace('<svg', '<svg style="transform:scaleX(-1)"') + ' Back to active missions</button>' : '<button type="button" class="hx-more" data-closed="1">View paused and closed (' + n(closed) + ') ' + ICON.arrow + '</button>';
+      html = coverage('missions') + html; ui.leftSub.textContent = n(all.length) + ' missions';
     } else if (view === 'people') {
       const all = peopleList();
       counts.all = all.length; counts.mission = all.filter((p) => p.state === 'on_mission' || p.state === 'awaiting_review').length; counts.available = all.filter((p) => p.state === 'available').length;
       const rows = peopleSorted();
       html = rows.length ? '<ul class="hx-people">' + rows.map((p) => personRow(p, cur && cur.kind === 'person' && cur.id === p.m_uid)).join('') + '</ul>' : loadingOr('people', 'No one here yet', 'People appear when they join a mission or the house team.');
       html += '<p class="hx-note">' + ICON.lock.replace('<svg', '<svg width="12" height="12" style="vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:1.8"') + ' No one has shared a location with Halo. The Earth shows mission places, never a person.</p>';
-      ui.leftSub.textContent = 'Showing ' + n(rows.length) + ' of ' + n(all.length);
+      html = coverage('people') + html; ui.leftSub.textContent = 'Showing ' + n(rows.length) + ' of ' + n(all.length);
     } else {
       const f = feedFiltered(), briefs = (data.peekBriefs().body || {}).briefs || [], src = sources();
       counts.feed = f.length; counts.briefs = briefs.length; counts.sources = src.length;
-      if (tabs.intel === 'feed') html = f.length ? '<ul class="hx-cards">' + f.slice(0, 60).map((x) => feedCard(x, cur && sameSel(cur, x.sel))).join('') + '</ul>' : empty('Nothing in this window', 'Turn on Earthquakes, Thermal or Cyclones in World, widen the time, or wait for evidence to arrive.');
+      if (tabs.intel === 'feed') html = f.length ? '<ul class="hx-cards">' + f.map((x) => feedCard(x, cur && sameSel(cur, x.sel))).join('') + '</ul>' : empty('Nothing in this window', 'Turn on Earthquakes, Thermal or Cyclones in World, widen the time, or wait for evidence to arrive.');
       else if (tabs.intel === 'briefs') html = briefs.length ? '<ul class="hx-cards">' + briefs.map((b) => '<li><button type="button" class="hx-card" data-brief="' + esc(b.country) + '" aria-current="' + (cur && cur.kind === 'brief' && cur.id === b.country ? 'true' : 'false') + '"><span class="hx-thumb">' + ICON.doc + '</span><span><span class="hx-card__title">' + esc(b.country_name || b.country) + '</span><span class="hx-card__place">' + esc(String(b.overview || '').slice(0, 90)) + '</span><span class="hx-card__meta"><span class="hx-status" data-tone="' + (b.status === 'ready' || b.status === 'published' ? 'green' : 'amber') + '">' + esc(b.editorial_status || b.status || '') + '</span><span>' + esc(b.day || '') + '</span></span></span>' + ICON.chev.replace('<svg', '<svg class="hx-card__chev"') + '</button></li>').join('') + '</ul>' : (data.peekBriefs().loading ? empty('Loading…', '') : empty('No briefs yet', 'Daily country briefs are written through the day.'));
       else html = '<ul class="hx-health">' + src.map((r) => '<li><span class="hx-group__icon">' + ICON[r.id === 'satellites' ? 'sat' : r.id === 'tides' ? 'wave' : r.id === 'missions-data' ? 'flag' : 'db'] + '</span><button type="button" class="hx-more" style="display:block;text-align:left;width:100%" data-source="' + esc(r.id) + '"><b>' + esc(r.name) + '</b><small><span class="hx-dot" data-tone="' + r.h.tone + '"></span>' + esc(r.h.text) + '</small></button></li>').join('') + '</ul><a class="hx-more" href="' + BRIEFS + '">Open the daily briefs ' + ICON.arrow + '</a>';
-      if (tabs.intel === 'briefs' && !briefs.length && !data.peekBriefs().loading && !data.peekBriefs().at) data.briefs().then(schedulePaint);
+      html = (tabs.intel === 'briefs' ? coverage('briefs') : coverage('evidence')) + html;
       ui.leftSub.textContent = tabs.intel === 'feed' ? n(f.length) + ' signals' : tabs.intel === 'briefs' ? n(briefs.length) + ' briefs' : n(src.length) + ' sources';
     }
     $$('[data-seg]', ui.leftBody).forEach((b) => { b.setAttribute('aria-selected', b.dataset.seg === tabs[view] ? 'true' : 'false'); $('.hx-count', b).textContent = n(counts[b.dataset.seg] || 0); });
@@ -766,7 +799,7 @@
     const teamGrid = (list) => '<ul class="hx-team">' + list.map((t) => '<li>' + avatar(t.name, t.avatar_url, '<i data-tone="' + ({ verified: 'green', submitted: 'amber', in_progress: 'cyan' }[t.status] || 'mute') + '"></i>') + '<span>' + esc(String(t.name || 'Member').split(/\s+/)[0]) + '</span></li>').join('') + '</ul>';
     if (dtab === 'overview') {
       html += (m.description ? '<p class="hx-lead">' + esc(String(m.description).split('\n')[0].slice(0, 160)) + '</p>' : '') +
-        '<div class="hx-bar" style="height:6px;margin-top:12px"><i style="width:' + p.pct + '%"></i></div><div class="hx-progress"><span>' + n(p.done) + ' of ' + n(p.total) + ' verified</span><span>' + p.pct + '%</span></div>' +
+        '<div class="hx-bar" style="height:6px;margin-top:12px"><i style="width:' + p.pct + '%"></i></div><div class="hx-progress"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified</span><span>' + p.pct + '%</span></div>' +
         '<dl class="hx-kv"><div><dt>Team</dt><dd>' + n(c.joined || team.length) + (fin(m.capacity) ? ' of ' + n(m.capacity) : '') + '</dd></div><div><dt>Due</dt><dd>' + esc(due(m.ends_at)) + '</dd></div></dl>' +
         '<div class="hx-section" style="border-top:0;margin-top:4px"><p class="hx-label">Team</p>' + (team.length ? teamGrid(team.slice(0, 6)) + '<p class="hx-note">' + esc(last ? 'Last activity ' + ago(last) : '') + '</p>' : '<p class="hx-note">No one has joined yet.</p>') + '</div>' +
         '<div class="hx-section"><p class="hx-label">Next steps</p><ul class="hx-chips" style="display:grid;gap:6px">' + nextSteps(m).map((s) => '<li>' + esc(s) + '</li>').join('') + '</ul></div>' +
@@ -774,7 +807,7 @@
     } else if (dtab === 'team') html += team.length ? '<div class="hx-section" style="border-top:0">' + teamGrid(team) + dl(team.map((t) => [t.name || 'Member', cap(String(t.status || '').replace('_', ' ')) + (t.since ? ' · ' + ago(ms(t.since)) : '')])) + '</div>' : '<p class="hx-note">No one has joined yet.</p>';
     else if (dtab === 'evidence') html += ev.length ? '<div class="hx-section" style="border-top:0">' + evidenceList(ev) + '</div>' : '<p class="hx-note">No evidence submitted yet.</p>';
     else html += '<div class="hx-section" style="border-top:0">' + activityList(missionEvents(m)) + '</div>';
-    const foot = (m.review ? '<a class="hx-cta" href="' + CONTROL + '">Review evidence ' + ICON.arrow + '</a>' : '<a class="hx-cta" href="' + CONTROL + '">Open in the Control Room ' + ICON.arrow + '</a>') +
+    const foot = (m.review ? '<a class="hx-cta" href="' + taskLink('reviews', m.id) + '">Review evidence ' + ICON.arrow + '</a>' : '<a class="hx-cta" href="' + taskLink('missions', m.id) + '">Open in the Control Room ' + ICON.arrow + '</a>') +
       '<div class="hx-pair">' + (sitePath(m.path) ? '<a class="hx-btn" href="' + esc(m.path) + '">Open mission</a>' : '<button type="button" class="hx-btn" disabled title="Not published">Open mission</button>') + '<button type="button" class="hx-btn" data-history>' + ICON.clock + 'Activity</button></div>';
     return { html, foot };
   }
@@ -832,7 +865,7 @@
     const near = nearMissions(e.lat, e.lon, 2);
     if (near.length) html += '<div class="hx-section"><p class="hx-label">Missions within 300 km</p>' + near.map((x) => missionLink(x.m, Math.round(x.d) + ' km away')).join('') + '</div>';
     const url = typeof e.source_url === 'string' && /^https:\/\//.test(e.source_url) ? e.source_url : '';
-    const foot = (e.review_status === 'unreviewed' ? '<a class="hx-cta" href="control.html#analytics">Review in the Control Room ' + ICON.arrow + '</a>' : '') + '<div class="hx-pair">' + (url ? '<a class="hx-btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + ICON.external + 'View source</a>' : '<button type="button" class="hx-btn" disabled>View source</button>') + '<button type="button" class="hx-btn" data-fly' + (fin(e.lat) ? '' : ' disabled') + '>' + ICON.pin + 'Go there</button></div>';
+    const foot = (e.review_status === 'unreviewed' ? '<p class="hx-note">Needs review. Review actions are not available in this view.</p>' : '') + '<div class="hx-pair">' + (url ? '<a class="hx-btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + ICON.external + 'View source</a>' : '<button type="button" class="hx-btn" disabled>View source</button>') + '<button type="button" class="hx-btn" data-fly' + (fin(e.lat) ? '' : ' disabled') + '>' + ICON.pin + 'Go there</button></div>';
     return { html, foot };
   }
   function detailBrief(code) {
@@ -842,7 +875,7 @@
     let html = head('Daily brief / ' + (b.day || ''), b.country_name || b.country, '', pill(b.editorial_status || b.status || 'Brief', 'mute', true));
     html += '<div class="hx-brief"><p>' + esc(b.overview || '') + '</p>' + (b.happened && b.happened.length ? '<p class="hx-label">What happened</p>' + list(b.happened) : '') + (b.may_mean && b.may_mean.length ? '<p class="hx-label">What it may mean</p>' + list(b.may_mean) : '') + (b.uncertain && b.uncertain.length ? '<p class="hx-label">Uncertain</p>' + list(b.uncertain) : '') +
       (Array.isArray(b.sources) && b.sources.length ? '<p class="hx-label">Sources</p><ul>' + b.sources.slice(0, 8).map((x) => '<li>' + (x && /^https:\/\//.test(x.url || '') ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.title || x.domain || x.url) + '</a>' : esc(x && x.title || '')) + '</li>').join('') + '</ul>' : '') + '</div>';
-    return { html, foot: '<a class="hx-btn" href="' + BRIEFS + '">Open the daily briefs</a>' };
+    return { html, foot: '<a class="hx-btn" href="' + briefLink(b) + '">Open this brief</a>' };
   }
   function detailSource(id) {
     const r = sources().find((x) => x.id === id);
@@ -859,7 +892,7 @@
     document.documentElement.dataset.haloDetail = sel ? 'open' : 'closed';
     ui.right.dataset.open = sel ? 'true' : 'false';
     const resolve = () => {
-      if (!cur) return { html: '<div class="hx-detail__top"><p class="hx-crumb">Nothing selected</p></div>' + empty('Tap anything on the Earth', 'Its detail opens here, with what its source said and how fresh it is.'), foot: '' };
+      if (!cur) return { html: '<div class="hx-detail__top"><p class="hx-crumb">Nothing selected</p></div>' + empty('Select a list item or map pin', 'Its detail opens here, with what its source said and how fresh it is.'), foot: '' };
       if (cur.kind === 'mission') { const m = missionById(cur.id); return m ? detailMission(m) : null; }
       if (cur.kind === 'person') { const p = personById(cur.id); return p ? detailPerson(p) : null; }
       if (cur.kind === 'obs') return detailObs(cur);
@@ -979,7 +1012,7 @@
     const set = (k, on) => { const b = $('[data-tool="' + k + '"]', ui.root); if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false'); };
     set('hud', !!(hud && hud.shown())); set('orbit', !!orbitTick);
     const stop = $('[data-tool="stop"]', ui.root); if (stop) stop.hidden = !followTarget;
-    const orbit = $('[data-tool="orbit"]', ui.root); if (orbit) orbit.disabled = reduced();
+    const orbit = $('[data-tool="orbit"]', ui.root); if (orbit) orbit.disabled = !V || reduced();
   }
   function setPop(open) {
     ui.pop.hidden = !open;
@@ -1021,7 +1054,7 @@
   function build() {
     const root = document.createElement('div');
     root.className = 'hx'; root.id = 'haloShell';
-    const styles = (window.HaloVision ? HaloVision.STYLES : []).map((s) => '<button type="button" data-style="' + esc(s.id) + '" aria-pressed="false"><span>' + esc(s.label) + '</span><kbd>' + esc(s.key) + '</kbd></button>').join('');
+    const styles = (V && window.HaloVision ? HaloVision.STYLES : []).map((s) => '<button type="button" data-style="' + esc(s.id) + '" aria-pressed="false"><span>' + esc(s.label) + '</span><kbd>' + esc(s.key) + '</kbd></button>').join('');
     const base = '<div class="hx-base" role="group" aria-label="Base map"><button type="button" data-base="sat" aria-pressed="true">Satellite</button><button type="button" data-base="map" aria-pressed="false">Map</button><button type="button" data-base="3d" aria-pressed="false">3D cities</button></div>';
     root.innerHTML =
       '<div class="hx-top" role="banner"><div class="hx-top__row"><a class="hx-brand" href="action-globe.html?explore=1&amp;halo=1" aria-label="Hitman’s Halo"><img src="assets/img/hm-mark-96.png" alt="" width="96" height="96"><span>Hitman’s Halo</span></a>' +
@@ -1040,11 +1073,11 @@
       '<div class="hx-ctl" role="toolbar" aria-label="Globe controls" aria-orientation="vertical"><button type="button" class="hx-compass" data-ctl="north" aria-label="Face north">' + ICON.north + '<b>N</b></button><button type="button" data-ctl="in" aria-label="Zoom in">' + ICON.plus + '</button><button type="button" data-ctl="out" aria-label="Zoom out">' + ICON.minus + '</button><button type="button" data-ctl="locate" aria-label="Near me (approximate)">' + ICON.locate + '</button></div>' +
       '<p class="hx-hint"><span class="hx-hint__narrow">' + ICON.hand + 'Drag to turn · Pinch to zoom</span><span class="hx-hint__wide">' + ICON.mouse + 'Drag to orbit · Scroll to zoom</span></p><ul class="hx-legend" aria-label="Legend"></ul>' + base + '</div>' +
       '<section class="hx-right hx-panel hx-detail" aria-label="Detail" data-open="false"><div class="hx-detail__body"></div><div class="hx-detail__foot"></div></section>' +
-      '<section class="hx-time" aria-label="Activity timeline"><h2></h2><div class="hx-time__mode" role="group" aria-label="Timeline mode"><button type="button" aria-pressed="true">Current</button><button type="button" disabled title="Replay arrives with the time machine (phase 4)">Replay</button></div><div class="hx-axis"></div><label><span class="hx-sr">Window</span><select class="hx-window"><option value="1">Last 1 h</option><option value="6">Last 6 h</option><option value="24">Last 24 h</option></select></label></section>' +
+      '<section class="hx-time" aria-label="Activity timeline"><h2></h2><div class="hx-time__mode" role="group" aria-label="Timeline mode"><button type="button" aria-pressed="true">Current</button><button type="button" disabled title="Replay is not available yet">Replay</button></div><div class="hx-axis"></div><label><span class="hx-sr">Window</span><select class="hx-window"><option value="1">Last 1 h</option><option value="6">Last 6 h</option><option value="24">Last 24 h</option></select></label></section>' +
       '<div class="hx-follow" hidden><span>Following <b></b></span><button type="button">Stop</button></div><div class="hx-hud-host"></div>';
     document.body.appendChild(root);
     ui = {
-      root, stats: $('.hx-stats', root), title: $('.hx-title', root), action: $('.hx-action', root), clock: $('.hx-clock time', root), live: $('.hx-live', root),
+      root, map: $('.hx-map', root), stats: $('.hx-stats', root), title: $('.hx-title', root), action: $('.hx-action', root), clock: $('.hx-clock time', root), live: $('.hx-live', root),
       operator: $('.hx-operator', root), opAvatar: $('[data-op]', root), left: $('.hx-left', root), leftTitle: $('.hx-panel__head h2', root), leftSub: $('.hx-panel__head p', root), leftBody: $('.hx-panel__body', root),
       right: $('.hx-right', root), detailBody: $('.hx-detail__body', root), detailFoot: $('.hx-detail__foot', root), search: $('.hx-search input', root), results: $('.hx-results', root),
       layersBtn: $('.hx-layers-btn', root), mapFocus: $('.hx-map-focus', root), pop: $('.hx-pop', root), share: $('.hx-share', root), legend: $('.hx-legend', root), compass: $('.hx-compass svg', root),
@@ -1058,6 +1091,7 @@
         setView(next); $('#hxTab-' + next).focus();
       };
     });
+    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs();}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
     ui.operator.onclick = () => { const chip = document.getElementById('mccAuthChip'); if (chip) chip.click(); else location.href = 'account.html'; };
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }
@@ -1124,9 +1158,15 @@
       if (view === 'missions' || view === 'world') data.get('missions');
       if (view === 'people') { data.get('people'); data.get('missions'); }
     }
-    paintLegend(); savePrefs(); schedulePaint();
+    paintLegend(); savePrefs(); rememberRoute(); schedulePaint();
   }
 
+  function restoreRoute() {
+    if(!mounted)return;restoringRoute=true;const q=new URLSearchParams(location.search),v=q.get('halo'),item=q.get('item')||'';
+    if(['feed','briefs','sources'].includes(q.get('section')))tabs.intel=q.get('section');
+    setView(VIEWS.includes(v)?v:'world');
+    if(/^(mission|person|evidence|brief|source):.{1,150}$/.test(item)){const [kind,...id]=item.split(':');select({kind,id:id.join(':')},{fly:false});}else select(null,{fly:false});restoringRoute=false;
+  }
   function onKey(e) {
     if (!mounted || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
     const t = e.target;
@@ -1145,34 +1185,35 @@
     if (e.key === 'o' || e.key === 'O') setOrbit(!orbitTick);
   }
   function onCamera() {
-    if (ui.compass) ui.compass.style.transform = 'rotate(' + (-C.Math.toDegrees(V.camera.heading)).toFixed(1) + 'deg)';
+    if (V && ui.compass) ui.compass.style.transform = 'rotate(' + (-C.Math.toDegrees(V.camera.heading)).toFixed(1) + 'deg)';
   }
 
   function mount(globe, opts) {
-    if (mounted) { if (opts && opts.view) setView(opts.view); return; }
+    if (mounted) return;
     G = globe; V = G && G.viewer(); C = window.Cesium;
-    if (!V || !C || !G.owner()) return;
+    if (!G || !G.owner()) return;
     mounted = true;
     const html = document.documentElement;
-    html.classList.add('halo-on');
+    html.classList.add('halo-on'); html.classList.toggle('halo-no-map', !V); document.title='Hitman’s Halo · McCluster';
     /* the Earth in space, as on the owner's screens: stars on, the World's own mission pins step aside for Halo's */
-    saved = { sky: V.scene.skyBox ? V.scene.skyBox.show : null, bg: V.scene.backgroundColor.clone(), missions: G.missions ? G.missions.shown() : null };
-    if (V.scene.skyBox) V.scene.skyBox.show = true;
-    V.scene.backgroundColor = C.Color.fromCssColorString('#020610');
-    if (G.missions) G.missions.show(false);
-    vision = window.HaloVision ? HaloVision.mount(V) : null;
-    layers = window.HaloLayers ? HaloLayers.create(G) : null;
+    if (V) saved = { sky: V.scene.skyBox ? V.scene.skyBox.show : null, bg: V.scene.backgroundColor.clone(), missions: G.missions ? G.missions.shown() : null };
+    if (V && V.scene.skyBox) V.scene.skyBox.show = true;
+    if (V) V.scene.backgroundColor = C.Color.fromCssColorString('#020610');
+    if (V && G.missions) G.missions.show(false);
+    vision = V && window.HaloVision ? HaloVision.mount(V) : null;
+    layers = V && window.HaloLayers ? HaloLayers.create(G) : null;
     data = window.HaloData ? HaloData.create(G) : null;
     build();
     setMapFocus(false);
-    hud = window.HaloHud ? HaloHud.mount(V, ui.hudHost) : null;
-    marks = { points: V.scene.primitives.add(new C.PointPrimitiveCollection()), labels: V.scene.primitives.add(new C.LabelCollection()) };
+    hud = V && window.HaloHud ? HaloHud.mount(V, ui.hudHost) : null;
+    if (V) marks = { points: V.scene.primitives.add(new C.PointPrimitiveCollection()), labels: V.scene.primitives.add(new C.LabelCollection()) };
     if (layers) offs.push(layers.onChange(() => schedulePaint()));
     if (data) offs.push(data.on(() => schedulePaint()));
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey); window.addEventListener('popstate', restoreRoute);
     window.addEventListener('resize', onViewportResize);
-    V.camera.changed.addEventListener(onCamera);
-    const p = prefs(), shared = readShared();
+    if (V) V.camera.changed.addEventListener(onCamera);
+    const p = prefs(), shared = readShared(), route = new URLSearchParams(location.search);
+    if (['feed','briefs','sources'].includes(route.get('section'))) tabs.intel=route.get('section');
     expanded = p.expanded && typeof p.expanded === 'object' ? p.expanded : { air: true };
     hours = [1, 6, 24].includes(p.hours) ? p.hours : 24; ui.window.value = String(hours);
     collapsed = !!p.collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false';
@@ -1181,21 +1222,23 @@
     if (shared) apply(shared, false);
     /* a first visit has no saved layers: the globe keeps what it shows by default */
     else apply({ s: typeof p.style === 'string' ? p.style : 'normal', h: !!p.hud, l: Array.isArray(p.layers) ? p.layers : null }, false);
-    paintVision(); paintTools(); paintClock(); onCamera();
+    const item=route.get('item')||'';if (/^(mission|person|evidence|brief|source):.{1,150}$/.test(item)) {const [kind,...id]=item.split(':');select({kind,id:id.join(':')},{fly:false});}
+    if (!V) {ui.left.dataset.expanded='true';ui.map.innerHTML='<p class="hx-empty">The 3D map is unavailable in this browser. Your data remains available below. <button type="button" class="hx-btn" data-retry-map>Retry map</button></p>'; $('[data-retry-map]',ui.map).onclick=()=>location.reload();}
+    paintVision(); paintTools(); paintClock(); onCamera(); routeReady=true;
     ui.poll = setInterval(() => { if (!document.hidden) schedulePaint(); }, 2000);
     ui.tick = setInterval(paintClock, 15000);
     /* the Earth's frame changed size: let Cesium see it, then frame the whole Earth in the space left for it */
-    requestAnimationFrame(() => { if (!mounted) return; V.resize(); if (!shared) G.home(); });
+    requestAnimationFrame(() => { if (!mounted || !V) return; V.resize(); if (!shared) G.home(); });
   }
 
   function unmount() {
     if (!mounted) return;
     mounted = false;
     clearInterval(ui.poll); clearInterval(ui.tick);
-    document.removeEventListener('keydown', onKey);
+    document.removeEventListener('keydown', onKey); window.removeEventListener('popstate', restoreRoute); routeReady=false;
     window.removeEventListener('resize', onViewportResize);
     document.removeEventListener('click', onDocClick, true);
-    V.camera.changed.removeEventListener(onCamera);
+    if (V) V.camera.changed.removeEventListener(onCamera);
     stopFollow(); setOrbit(false);
     if (photo || photoPhase !== 'off') { photoPhase = 'off'; if (photo && V.scene.primitives.contains(photo)) V.scene.primitives.remove(photo); photo = null; V.scene.globe.show = true; G.setPhotoreal(false); }
     offs.forEach((off) => off()); offs = [];
@@ -1205,10 +1248,10 @@
     if (hud) hud.destroy();
     if (data) data.destroy();
     if (saved) { if (V.scene.skyBox && saved.sky !== null) V.scene.skyBox.show = saved.sky; V.scene.backgroundColor = saved.bg; if (G.missions && saved.missions !== null) G.missions.show(saved.missions); saved = null; }
-    if (ui.root) ui.root.remove();
+    G.closeSheet(); if (ui.root) ui.root.remove();
     ui = {}; layers = null; vision = null; hud = null; data = null; sel = null; mapFocus = false;
     const html = document.documentElement;
-    html.classList.remove('halo-on'); delete html.dataset.haloView; delete html.dataset.haloDetail; delete html.dataset.haloMap;
+    html.classList.remove('halo-on', 'halo-no-map'); delete html.dataset.haloView; delete html.dataset.haloDetail; delete html.dataset.haloMap;
     requestAnimationFrame(() => { try { V.resize(); } catch (e) { /* gone */ } });
   }
 
