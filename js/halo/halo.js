@@ -750,7 +750,7 @@
     $$('[data-feed]', list).forEach((b) => { b.onclick = () => { const f = feed().find((x) => x.key === b.dataset.feed); if (f) select(f.sel); }; });
     $$('[data-brief]', list).forEach((b) => { b.onclick = () => select({ kind: 'brief', id: b.dataset.brief }, { fly: false }); });
     $$('[data-source]', list).forEach((b) => { b.onclick = () => select({ kind: 'source', id: b.dataset.source }, { fly: false }); });
-    $$('[data-closed]', list).forEach((b) => { b.onclick = () => { tabs.missions = b.dataset.closed === '1' ? 'closed' : 'active'; schedulePaint(); }; });
+    $$('[data-closed]', list).forEach((b) => { b.onclick = () => { tabs.missions = b.dataset.closed === '1' ? 'closed' : 'active'; rememberRoute(); schedulePaint(); }; });
   }
 
   /* ---------- the detail panel ---------- */
@@ -962,7 +962,7 @@
     hours = [1, 6, 24].includes(h) ? h : 24;
     if (ui.window) ui.window.value = String(hours);
     const hs = $('[data-hours]', ui.leftBody); if (hs) hs.value = String(hours);
-    savePrefs(); schedulePaint();
+    savePrefs(); rememberRoute(); schedulePaint();
   }
   function paintTimeline() {
     ui.timeTitle.textContent = META[view].time;
@@ -1168,12 +1168,13 @@
     const v=q.get('halo'),section=q.get('section');
     const allowed={missions:['active','planned','review','closed'],people:['all','mission','available'],intel:['feed','briefs','sources']};
     if(allowed[v]){if(allowed[v].includes(section))tabs[v]=section;query[v]=(q.get('q')||'').slice(0,200);}
-    if(['priority','due','title','activity','name'].includes(q.get('sort'))&&sorts[v])sorts[v]=q.get('sort');
+    if(['priority','due','title','newest','activity','name'].includes(q.get('sort'))&&sorts[v])sorts[v]=q.get('sort');
     if([1,6,24].includes(+q.get('hours')))hours=+q.get('hours');
   }
   function restoreRoute() {
     if(!mounted)return;restoringRoute=true;const q=new URLSearchParams(location.search),v=q.get('halo'),item=q.get('item')||'';
     readRouteFilters(q);
+    if(ui.window)ui.window.value=String(hours);
     setView(VIEWS.includes(v)?v:'world');buildLeft();
     if(/^(mission|person|evidence|brief|source):.{1,150}$/.test(item)){const [kind,...id]=item.split(':');select({kind,id:id.join(':')},{fly:false});}else select(null,{fly:false});restoringRoute=false;
   }
