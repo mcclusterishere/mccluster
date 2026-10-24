@@ -12,6 +12,9 @@ test('an empty proof queue settles once; failures show a retry without looping',
  api.init({supa:async()=>{calls++;if(fail)throw Error('offline');return [];},render:()=>api.render()});
  api.render();await settle();await settle();
  const out=api.render();assert.equal(calls,1);assert.ok(A.proofLoaded);assert.equal(A.proofBusy,false);assert.match(out,fail?/Retry proof queue/:/Review queue clear/);
+ const refresh={};api.bind({querySelector:sel=>sel==='[data-proof-retry]'?refresh:null,querySelectorAll:()=>[]});
+ await refresh.onclick();assert.equal(calls,2);assert.equal(A.proofBusy,false);
+ if(!fail)assert.match(api.render(),/Refresh proof queue/);
  }
 });
 test('HTTP-success unavailable envelopes do not erase a last good Halo answer',async()=>{
