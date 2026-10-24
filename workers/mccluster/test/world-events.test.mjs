@@ -43,3 +43,9 @@ test('new routes return private unavailable answers on provider failure, never f
     const b=await res.json();assert.equal(res.headers.get('cache-control'),'private, no-store');assert.equal(b.unavailable,true);assert.deepEqual(b.events,[]);
   }
 });
+
+test('named cyclones in NASA severe storms use cyclone geometry without misreading wildfire names',()=>{
+  const e={id:'event',title:'Hurricane TEST',categories:[{title:'Severe Storms'}],geometry:[{type:'Point',coordinates:[0,0],date:'2026-10-23'}]};
+  assert.equal(normalizeNatural(e).kind,'cyclone');
+  assert.equal(normalizeNatural({...e,title:'Snow Creek Fire',categories:[{title:'Wildfires'}]}).kind,'fire');
+});

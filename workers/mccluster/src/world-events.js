@@ -67,7 +67,9 @@ export function normalizeNatural(e) {
   const geometry = (Array.isArray(e.geometry) ? e.geometry : []).filter(g => iso(g.date)).sort((a, b) => Date.parse(b.date) - Date.parse(a.date))[0];
   if (!geometry) return null;
   const categories = (e.categories || []).map(c => text(c.title || c.id, 80)).filter(Boolean);
-  return { id: text(e.id, 100), name: text(e.title), event: categories.join(' · '), kind: eventKind(categories.join(' ')), provenance: 'reported',
+  const categoryKind = eventKind(categories.join(' ')), namedKind = eventKind(e.title);
+  const kind = categoryKind === 'storm' && ['cyclone', 'tornado'].includes(namedKind) ? namedKind : categoryKind;
+  return { id: text(e.id, 100), name: text(e.title), event: categories.join(' · '), kind, provenance: 'reported',
     ...eventGeometry(geometry), observed_at: iso(geometry.date), expires_at: null, description: text(e.description, 2000), source: 'NASA EONET',
     magnitude: Number.isFinite(geometry.magnitudeValue) ? geometry.magnitudeValue : null, unit: text(geometry.magnitudeUnit, 60),
     url: 'https://eonet.gsfc.nasa.gov/api/v3/events/' + encodeURIComponent(text(e.id, 100)) };
