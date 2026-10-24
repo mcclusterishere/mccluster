@@ -373,7 +373,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   html.halo-on[data-halo-map="focus"] .hx-legend{bottom:12px}
 
 /* ---------- tablet: the tabs join the bar; the list and the detail float as columns ---------- */
-@media (min-width:768px){
+@media (min-width:1100px){
   /* Keep the pre-existing floating columns, timeline and map tools on desktop. */
   .hx-map-focus{display:none}
   .hx-left:not([data-expanded="true"]) .hx-panel__body{display:block}
@@ -461,3 +461,16 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   .hx-hint{display:inline-flex;bottom:14px}
 }
 @media (prefers-reduced-motion:reduce){.hx-left,.hx-collapse svg,.hx-disclose svg,.hx-switch i,.hx-switch i::after{transition:none}}
+
+/* A data-first fallback shares the same authorized shell and four views. */
+html.halo-no-map #globe,html.halo-no-map .osm-credit,html.halo-no-map .hx-time{display:none}
+html.halo-no-map .hx-map{position:fixed;inset:var(--hx-head) 0 auto;pointer-events:auto;padding:0 12px;height:100px}
+html.halo-no-map .hx-left{top:calc(var(--hx-head) + 110px);bottom:max(80px,var(--hu-bar-h,80px));height:auto!important;left:12px;right:12px;width:auto}
+html.halo-no-map .hx-left .hx-panel__body{display:block}
+html.halo-no-map .hx-right[data-open="false"]{display:none}
+html.halo-no-map .hx-right[data-open="true"]{top:calc(var(--hx-head) + 100px);bottom:max(80px,var(--hu-bar-h,80px));height:auto;max-height:none;left:12px;right:12px;width:auto;z-index:12}
+.hx-panel__head .hx-btn{pointer-events:auto;margin-left:auto;white-space:normal;min-width:70px}
+.hx-left:not([data-expanded="true"]) .hx-panel__head .hx-btn{display:none}
+html.halo-no-map .hx-panel__head .hx-btn{display:inline-flex}
+@media (min-width:1100px){.hx-left:not([data-expanded="true"]) .hx-panel__head .hx-btn{display:inline-flex}}
+@media (min-width:1100px){html.halo-no-map .hx-left{right:52%}html.halo-no-map .hx-right[data-open="true"]{left:50%}}

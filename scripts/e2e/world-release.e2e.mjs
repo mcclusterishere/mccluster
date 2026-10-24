@@ -77,7 +77,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  check(scope,'the frame\'s parts never sit on each other',crowd.length===0,crowd);
  check(scope,'no document horizontal overflow',await noOverflow());
  /* A phone must expose a genuine touchable map, not just a strip between fixed panels. */
- if(width<768){
+ if(width<1100){
   const geometry=()=>page.evaluate(()=>{
    const g=document.querySelector('#globe').getBoundingClientRect();
    const s=document.querySelector('.hx-search').getBoundingClientRect();
@@ -106,7 +106,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
  /* World data: a group switch turns its layers on; each says what it holds */
- if(width<768)await page.locator('.hx-grip').click();
+ if(width<1100)await page.locator('.hx-grip').click();
  await page.locator('[data-group="earth"] .hx-group__row .hx-switch input').click({force:true});
  await page.waitForFunction(()=>{const l=HaloConsole.state().layers;return l.quakes.state==='on'&&l.fires.state==='unavailable'&&l.tides.state==='on'},null,{timeout:10000}).catch(()=>{});
  st=await state();
@@ -128,7 +128,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.waitForFunction(()=>/Harbor water check/.test((document.querySelector('.hx-detail h2')||{}).textContent||''),null,{timeout:8000}).catch(()=>{});
  st=await state();
  check(scope,'a mission opens with its progress, team, next steps and evidence',st.selected&&st.selected.kind==='mission'&&await page.locator('.hx-detail h2').isVisible()&&/Harbor water check/.test(await page.textContent('.hx-detail h2'))&&/1 of 3 verified/.test(await page.textContent('.hx-detail'))&&/Review 2 submitted proofs/.test(await page.textContent('.hx-detail'))&&(await page.locator('.hx-detail .hx-team li').count())===3,{sel:st.selected,text:(await page.textContent('.hx-detail')).slice(0,400),team:await page.locator('.hx-detail .hx-team li').count()});
- check(scope,'Review evidence goes to the Control Room review, Open mission to its page',(await page.getAttribute('.hx-detail__foot .hx-cta','href'))==='control.html#create:action-network'&&/mnet\.html\?mission=/.test(await page.getAttribute('.hx-detail__foot a.hx-btn','href')));
+ check(scope,'Review evidence goes to the Control Room review, Open mission to its page',/^control\.html\?haloTask=reviews&mission=.+#create:action-network$/.test(await page.getAttribute('.hx-detail__foot .hx-cta','href'))&&/mnet\.html\?mission=/.test(await page.getAttribute('.hx-detail__foot a.hx-btn','href')));
  check(scope,'the timeline shows the mission\'s evidence as it arrived (close events share one counted dot)',await page.evaluate(()=>{const l=[...document.querySelectorAll('.hx-axis__ev')].map(b=>b.getAttribute('aria-label')).join(' | ');return /received · Harbor water check/.test(l)&&[...document.querySelectorAll('.hx-axis__ev')].reduce((n,b)=>n+(+(/^(\d+) events/.exec(b.getAttribute('aria-label'))||[0,1])[1]),0)>=5}));
  small=await smallTargets();
  check(scope,'Missions: every visible control is a full tap target',small.length===0,small);
@@ -136,7 +136,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  /* People: no one's location, ever */
  await page.locator('#hxTab-people').click();
  await page.waitForFunction(()=>document.querySelectorAll('.hx-left .hx-person').length>=4,null,{timeout:8000}).catch(()=>{});
- if(width<768&&await page.locator('.hx-right').getAttribute('data-open')==='true')await page.locator('.hx-detail .hx-close').click();
+ if(width<1100&&await page.locator('.hx-right').getAttribute('data-open')==='true')await page.locator('.hx-detail .hx-close').click();
  check(scope,'People: the team listed with their state',(await page.locator('.hx-left .hx-person').count())===4&&/Awaiting review/.test(await page.textContent('.hx-left')));
  await page.locator('.hx-left .hx-person').first().click();
  await page.waitForFunction(()=>/Not shared/.test(document.querySelector('.hx-detail').textContent),null,{timeout:8000}).catch(()=>{});
@@ -151,14 +151,14 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.locator('.hx-left .hx-card',{hasText:'M5.4'}).first().click();
  await page.waitForFunction(()=>!!document.querySelector('.hx-detail .hx-big'),null,{timeout:8000}).catch(()=>{});
  check(scope,'an observation opens with its magnitude and the official USGS link',/5\.4/.test(await page.textContent('.hx-detail .hx-big'))&&(await page.locator('.hx-detail__foot a[href^="https://earthquake.usgs.gov/"]').count())===1);
- if(width<768)await page.locator('.hx-detail .hx-close').click();
+ if(width<1100)await page.locator('.hx-detail .hx-close').click();
  await page.locator('.hx-left .hx-seg [data-seg="sources"]').click();
  await page.waitForFunction(()=>/Intelligence connector/.test(document.querySelector('.hx-left').textContent),null,{timeout:8000}).catch(()=>{});
  check(scope,'Sources lists every source with its health',/Intelligence connector/.test(await page.textContent('.hx-left'))&&/Missions and evidence/.test(await page.textContent('.hx-left')));
  await page.locator('.hx-left .hx-seg [data-seg="feed"]').click();
  await shot('intel');
  /* the Layers menu: base map, vision, HUD (on a phone, the list sheet shrinks to show the Earth first) */
- if(width<768&&await page.locator('.hx-left').getAttribute('data-expanded')==='true')await page.locator('.hx-grip').click();
+ if(width<1100&&await page.locator('.hx-left').getAttribute('data-expanded')==='true')await page.locator('.hx-grip').click();
  await page.locator('.hx-layers-btn').click();
  check(scope,'Layers opens the base map, the visual modes and the tools',await page.locator('.hx-pop').isVisible()&&(await page.locator('.hx-pop [data-style]').count())===7&&(await page.locator('.hx-pop [data-base]').count())===3);
  await page.locator('.hx-pop [data-style="flir"]').click();
@@ -199,7 +199,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
 }
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 try {
-for(const width of [390,1280])for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
+for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
  const scope=width+' '+persona, ctx=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390});
  let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[];
  await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest')localStorage.setItem('mccdb_session',JSON.stringify({access_token:p}));},persona);
@@ -240,6 +240,25 @@ for(const width of [390,1280])for(const persona of (process.env.WORLD_QA_PERSONA
   if(persona==='creator'){await host.evaluate(()=>{const f=document.querySelector('iframe').contentWindow;f.postMessage({type:'hu:creator-mode',on:true},location.origin);f.postMessage({type:'hu:audience-points',points:[{lon:-74,lat:41,views:7,name:'Fixture'}]},location.origin);});await page.waitForTimeout(100);check(scope,'parent messages cannot bypass release policy',await page.evaluate(()=>window.__huAudienceCount()===0));}
  }else if(persona==='halo'){
   await haloChecks(scope,page,host,width,ctx,()=>{owner=false},()=>calls);
+  // The authorized data shell must survive missing WebGL/runtime assets.
+  owner=true;
+  await ctx.route('**/Build/Cesium/Cesium.js',r=>r.abort());
+  await page.goto(BASE+'/action-globe.html?explore=1&halo=missions');
+  // The shell contains fixed-position panels and has no layout box of its own.
+  await page.waitForSelector('html.halo-no-map #haloShell .hx-left',{timeout:20000});
+  for(const v of ['world','missions','people','intel']){
+    await page.locator('[data-view="'+v+'"]').click();
+    await page.waitForTimeout(150);
+    check(scope,'mapless '+v+' remains usable',await page.locator('.hx-left').isVisible()&&(await page.locator('[data-view="'+v+'"]').getAttribute('aria-selected'))==='true');
+  }
+  check(scope,'mapless layout has no overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+  await page.waitForFunction(()=>document.querySelector('.hx-panel__body')?.textContent.includes('Harbor flooding report'));
+  check(scope,'mapless Intelligence loads evidence independently of map layers',await page.locator('.hx-left').getByText('Harbor flooding report',{exact:true}).isVisible());
+  await page.screenshot({path:join(OUT,'halo-fallback-'+width+'.png')});
+  owner=false;await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+  await page.waitForFunction(()=>!document.getElementById('haloShell'));
+  check(scope,'mapless owner revocation removes private data',!(await page.locator('#haloShell').count()));
+
  }else{
   await page.locator('.globe-editorial-tools > summary').click();
   check(scope,'the owner sees the Halo door beside ← World, a full tap target',await page.evaluate(()=>{const d=document.getElementById('haloEnter'),b=d&&d.getBoundingClientRect();return !!d&&!d.hidden&&d.getAttribute('href')==='action-globe.html?explore=1&halo=1'&&b.height>=44&&b.width>=44}));
