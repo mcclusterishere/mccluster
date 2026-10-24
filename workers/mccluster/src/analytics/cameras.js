@@ -1,6 +1,7 @@
 /* Owner Analytics reads the existing Halo bridge. No upstream URL or token is
    accepted from a browser. Catalog and verified image counts are independent. */
 import { cleanSource, HALO_DEFAULT_BASE } from '../world-cctv.js';
+import { Buffer } from 'node:buffer';
 
 const MAX_JSON_BYTES = 12 * 1024 * 1024;
 const MAX_FRAME_BYTES = 2 * 1024 * 1024;
@@ -87,9 +88,9 @@ export function rasterType(bytes) {
 }
 
 function base64(bytes) {
-  let result = '';
-  for (let at = 0; at < bytes.length; at += 8192) result += String.fromCharCode(...bytes.subarray(at, at + 8192));
-  return btoa(result);
+  // Native encoding avoids expanding every image byte into JS call arguments
+  // and a second binary string, which exhausted CPU during sustained checks.
+  return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('base64');
 }
 
 export async function checkCamera(env, id, fetchImpl = fetch) {
