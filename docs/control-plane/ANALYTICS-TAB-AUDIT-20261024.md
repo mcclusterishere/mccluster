@@ -12,7 +12,7 @@ Scope: every Analytics chapter, its principal controls, phone (390 px), tablet (
 - Journeys stopped at 60 accounts and 20 songs; event names stopped at 150. Added incremental account/event disclosure, kept all returned songs available, and tested the last returned row. Backend result limits and measurement semantics are unchanged.
 - Dataset, event, field and source searches required leaving the field. They now update on input while retaining field focus.
 - Data status said it inspected connections but opened Datasets. It now opens Connections directly.
-- Wide tables and hourly charts now advertise sideways scrolling and are keyboard reachable. Hourly axis text no longer collides.
+- Wide tables and hourly charts now advertise sideways scrolling and are keyboard reachable. Hourly axis text no longer collides; small-count charts use unique, correctly positioned integer ticks.
 - Connected operations used an unstyled native select. It now shares the other Analytics form styles.
 - Instagram's guidance claimed Channels could renew authorization, although that page has no reconnect control. Guidance now identifies the existing server integration and describes the Channels link accurately.
 - Camera failures discarded their cause. The owner API now distinguishes absent configuration, invalid address, rejected authorization, timeout and upstream failure without revealing credentials or upstream response bodies.
@@ -37,6 +37,6 @@ Scope: every Analytics chapter, its principal controls, phone (390 px), tablet (
 
 The new `scripts/e2e/analytics-tabs.e2e.mjs` runs the actual Control renderer with synthetic responses, exercises all 11 tabs at three widths, measures document and panel overflow, checks that selected tabs are not covered, and captures chapter tops, ends and interaction results. It runs in the existing Control workspace visual workflow; screenshots and machine-readable checks are retained in that workflow's artifact. These images contain synthetic fixtures, not production telemetry.
 
-Local validation before the PR: 183 all-tab browser assertions, 44 Analytics UI unit tests, 89 Worker Analytics tests; existing unified browser regression across five viewport/workspace combinations; repository source classification 1,634/1,634; control-plane migration ledger contract (346 migrations) and whitespace checks. Final CI and deployment receipts belong to the PR, not to an assumed production result.
+Local validation before the PR: 189 all-tab browser assertions, 44 Analytics UI unit tests, 89 Worker Analytics tests; existing unified browser regression across five viewport/workspace combinations; repository source classification 1,634/1,634; control-plane migration ledger contract (346 migrations) and whitespace checks. Final CI and deployment receipts belong to the PR, not to an assumed production result.
 
 The task did not create provider accounts, grant access, publish content, create production test records, or alter payment/identity measurement definitions. Missing credentials and provider authorization cannot be repaired by styling or invented zero values.

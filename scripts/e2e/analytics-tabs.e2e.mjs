@@ -16,7 +16,7 @@ for(const width of [390,820,1280]){
  await ctx.route('https://api.mccluster.org/v1/analytics/event-inventory',route=>json(route,{ok:true,measured_at:new Date().toISOString(),summary:{names:173,unclassified_names:1,unclassified_events:4,mismatched_names:0},rows:Array.from({length:173},(_,i)=>({name:'audit_event_'+String(i).padStart(3,'0'),raw_total:i+1,lean_total:i+1,recent_24h:1,recent_7d:3,taxonomy_stage:'view',taxonomy_note:'Synthetic event for layout checks',first_seen_at:new Date().toISOString()})),providers:{instagram:{reauthorization_required:true,status:'reauthorization_required',connected_accounts:1,imported_posts:0,metric_snapshots:0}}}));
  await ctx.route('https://api.mccluster.org/v1/analytics/cameras',route=>cameraFail?json(route,{error:'Halo connection is not configured'},503):json(route,{ok:true,catalog_count:3,stale_count:0,retrieved_at:new Date().toISOString(),packs:[{name:'Test provider',cameras:3,status:'ok'}],cameras:[1,2,3].map(id=>({id:String(id),name:'Camera '+id,pack:'Test provider'}))}));
  await ctx.route('https://api.mccluster.org/v1/analytics/experience?**',route=>json(route,{totals:{decisions:30,impressions:20,visible:10,interactions:4,outcomes:0},registry:{policies:[{key:'control-order',version:'v1',plane:'production',mode:'promoted',algorithm:'identity_order',enabled:true}],experiments:[],research_projects:[]},recent:[{id:'fixture-1',created_at:new Date().toISOString(),surface:'music.next_step',policy:'control-order@v1',eligible_count:26,selected:songs.map(s=>({id:s.track})),events:[{name:'experience_impression'}]}]}));
- await ctx.route('https://api.mccluster.org/v1/analytics/sessions?**',route=>json(route,{ok:true,total:1,counts:{all:1,visitors:1},sessions:[{session_id:'audit-session',started_at:new Date().toISOString(),duration_s:45,events:3,pages:[{path:'/audit'}],country:'US'}]}));
+ await ctx.route('https://api.mccluster.org/v1/analytics/sessions?**',route=>json(route,{ok:true,total:1,counts:{all:1,visitors:1},sessions:[{session_id:'audit-session',started_at:new Date().toISOString(),duration_s:45,events:3,pages:['/audit'],country:'US'}]}));
  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/rest/v1/rpc/analytics_content',route=>json(route,songs));
  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/rest/v1/events_lean?**',route=>json(route,[{at:new Date().toISOString(),name:'page_view',path:'/audit',is_bot:false}]));
  await page.goto(BASE+'/control.html#analytics',{waitUntil:'domcontentloaded'});
@@ -38,7 +38,11 @@ for(const width of [390,820,1280]){
  // Overview shortcuts, keyboard navigation, scroll restoration and shared actions.
  await page.getByRole('tab',{name:'Overview',exact:true}).click();
  await page.getByRole('button',{name:/Unique visitors:.*Open details/}).click();check(scope+' visitor metric opens Audience',await page.getByRole('tabpanel',{name:'Audience',exact:true}).isVisible());
- await page.getByRole('tab',{name:'Audience',exact:true}).press('End');check(scope+' End reaches Setup',await page.getByRole('tabpanel',{name:'Setup',exact:true}).isVisible());
+ const ticks=await page.locator('.cra-chart--hourly .cra-axis--x').evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,right:r.right,text:el.textContent};}));
+ check(scope+' hourly labels do not overlap',ticks.length===24&&ticks.every((t,i)=>!i||t.x>=ticks[i-1].right-1),ticks);
+ const values=await page.locator('.cra-chart--hourly .cra-axis:not(.cra-axis--x)').allTextContents();check(scope+' small-count axis has unique ticks',values.length>=2&&new Set(values).size===values.length,values);
+ await page.getByRole('tab',{name:'Audience',exact:true}).press('End');
+ check(scope+' End reaches Setup',await page.getByRole('tabpanel',{name:'Setup',exact:true}).isVisible());
  await page.getByRole('tab',{name:'Setup',exact:true}).press('Home');check(scope+' Home reaches Overview',await page.getByRole('tabpanel',{name:'Overview',exact:true}).isVisible());
  await page.getByRole('button',{name:'Inspect data connections',exact:true}).click();check(scope+' data status opens Connections',await page.getByRole('heading',{name:'Data connections',exact:true}).isVisible());
  // Journey controls must expose rows beyond the former hard cap of sixty.

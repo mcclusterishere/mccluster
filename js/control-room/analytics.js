@@ -56,10 +56,10 @@
     function values(r){return la+" "+n(r[a])+(b?" · "+lb+" "+n(r[b]):"");}
     var p1=pts(a),p2=b?pts(b):"",area=p1+" "+X(rows.length-1)+","+(H-P.b)+" "+P.l+","+(H-P.b);
     var last=rows[rows.length-1],s=['<svg class="cra-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(la+(lb?" and "+lb:"")+" over time")+'">'];
-    [0,.25,.5,.75,1].forEach(function(q){var y=Y(mx*q);s.push('<line class="cra-gridline" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/><text class="cra-axis" x="'+(P.l-6)+'" y="'+(y+3)+'" text-anchor="end">'+Math.round(mx*q)+'</text>');});
+    [0,.25,.5,.75,1].map(function(q){return Math.round(mx*q);}).filter(function(v,i,a){return a.indexOf(v)===i;}).forEach(function(v){var y=Y(v);s.push('<line class="cra-gridline" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/><text class="cra-axis" x="'+(P.l-6)+'" y="'+(y+3)+'" text-anchor="end">'+v+'</text>');});
     s.push('<polygon class="cra-area" points="'+area+'"/><polyline class="cra-line" points="'+p1+'"/>');if(b)s.push('<polyline class="cra-line cra-line--alt" points="'+p2+'"/>');
     var step=opts.allLabels?1:(rows.length<=14?1:Math.max(1,Math.ceil(rows.length/8)));
-    rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis cra-axis--x" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(label(r))+'</text>');});
+    rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis cra-axis--x" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(hourly?label(r).replace(/:00(?=\s*[AP]M)/i,''):label(r))+'</text>');});
     rows.forEach(function(r,i){
       var x=X(i),prev=i?X(i-1):P.l,next=i<rows.length-1?X(i+1):W-P.r,left=i?(prev+x)/2:P.l,right=i<rows.length-1?(x+next)/2:W-P.r;
       var lab=label(r),val=values(r),on=i===rows.length-1?" is-on":"";
