@@ -7,7 +7,7 @@
    Halo operations ('halo-ops': /v1/world/halo/*, the owner's missions and
    people) and NOAA water levels ('tides': /v1/world/layers/tides and
    /v1/world/tides/*). */
-export const GLOBE_FEATURES = Object.freeze(['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search','halo-ops','tides']);
+export const GLOBE_FEATURES = Object.freeze(['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search','halo-ops','tides','airquality']);
 export const GLOBE_RELEASE_VERSION = 'globe-admin-preview/v1';
 export function globeRelease(feature, env = {}) {
   if (!GLOBE_FEATURES.includes(feature)) return 'withdrawn';

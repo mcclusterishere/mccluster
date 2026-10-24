@@ -90,17 +90,17 @@ const NHC = { activeStorms: [
 ] };
 
 /* ---------- the routes ---------- */
-test('the routes are exactly the six Halo layers, GET and HEAD only, and the World layers are not answered here', async () => {
+test('the routes are exactly the registered Halo layers, GET and HEAD only, and the World layers are not answered here', async () => {
   for (const p of ['/v1/world/layers/flights', '/v1/world/layers/satellites', '/v1/world/layers/launches', '/v1/world/layers/weather', '/v1/world/layers/militaryx', '/v1/world/geocode', '/v1/world/layer/military']) {
     assert.equal(await handleHaloLayers(req(p), ENV, { fetchImpl: () => { throw new Error('no call'); } }), null, p);
   }
-  assert.deepEqual(Object.keys(HALO_LAYERS), ['military', 'quakes', 'fires', 'perimeters', 'cyclones', 'vessels']);
+  assert.deepEqual(Object.keys(HALO_LAYERS), ['airquality', 'military', 'quakes', 'fires', 'perimeters', 'cyclones', 'vessels']);
   const post = await handleHaloLayers(req('/v1/world/layers/quakes', { method: 'POST' }), ENV);
   assert.equal(post.status, 405); headersOk(post);
   assert.equal(await handleWorldGeocode(req('/v1/world/layers/quakes'), ENV), null);
   assert.equal(WORLD_GEOCODE_PATH, '/v1/world/geocode');
   assert.deepEqual(Object.fromEntries(Object.entries(HALO_LAYERS).map(([k, v]) => [k, [v.ttl, v.max, v.rows]])), {
-    military: [30, 4000, 'aircraft'], quakes: [120, 2000, 'quakes'], fires: [1800, 25000, 'fires'],
+    airquality: [600, 500, 'readings'], military: [30, 4000, 'aircraft'], quakes: [120, 2000, 'quakes'], fires: [1800, 25000, 'fires'],
     perimeters: [600, 400, 'perimeters'], cyclones: [600, 50, 'cyclones'], vessels: [0, 8000, 'vessels']
   });
 });
