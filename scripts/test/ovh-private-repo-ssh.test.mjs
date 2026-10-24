@@ -23,6 +23,6 @@ test('OVH SSH key remains host-local and is never staged in Git',()=>{
  assert.match(source,/KEY_DIR=\/var\/lib\/mccluster\/reconcile\/ssh/);
  assert.match(source,/umask 077/);
  assert.match(source,/stat -c %u/);
- assert.match(source,/cat "${KEY}\.pub"/);
+ assert.ok(source.includes('cat "${KEY}.pub"'), 'only the public key may be printed');
  assert.ok(!source.includes('cat "${KEY}"'), 'private key must not be printed');
 });
