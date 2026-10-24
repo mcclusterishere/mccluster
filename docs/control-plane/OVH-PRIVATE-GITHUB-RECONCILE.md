@@ -16,6 +16,8 @@ The checked-in systemd service defaults to unauthenticated HTTPS, which worked w
 
 The script never copies or prints a private key, sends no credential to GitHub except standard public-key authentication, and uses strict host-key checking. If key registration fails, keep the repository public and #510 open; do not disable SSH host verification or revert to a token embedded in the Git URL.
 
+The reconciler writes a non-secret, time-stamped `last-source-fetch.json` only after validated Git ref fetches and the production ancestry gate. When GitHub's anonymous REST endpoints return Not Found for a private repository, Core health may use this **only while fresh (10 minutes)** instead of treating an authenticated successful Git fetch as a source outage. Missing/expired/malformed receipts still surface the actual REST error. The system-health result distinguishes `github_rest_api` versus `ovh_reconciler_git_fetch_receipt` as the verification method; neither asserts actual runtime deployment.
+
 ## Database drift correction
 
 Production Supabase project `zmnhbrjyhxzhkxmhkexs` already has 348 migrations at latest `20261024014732_analytics_forensics_search_index_v8`, ledger SHA-256 `831e4c7ab8f77390573bf72269e860c47b1f113198d709ff2f0c3f724e47e3ab`. The deployed contract at OVH SHA `ae77f3c2d3627014bdb066f6f576d98955a3ad3c` expected 341. Update the production contract, its ledger, and seven existing SQL migration source files without applying or replaying any production SQL. Keep the remaining newer main commits out of this isolated recovery promotion.
