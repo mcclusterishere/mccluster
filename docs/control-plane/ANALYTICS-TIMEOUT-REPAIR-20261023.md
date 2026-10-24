@@ -103,3 +103,9 @@ applied migration or modify the recorded SQL; use a new migration for changes.
 ## Index payload safeguard
 
 Follow-up migration `20261023235817_analytics_audience_index_width_v5` replaces the audience covering index with `(at,id,name)` and the same predicate. URL and event payload text are unbounded in the lean projection, so they must not be included in a B-tree entry. A regression reproduces the covering-index failure with a 16 KB incompressible referrer and verifies insertion after the replacement. The replacement is valid and ready; a late 30-day page uses its ordered index scan in 3.22 seconds under the 8-second service-role limit. The production ledger now has 345 entries.
+
+## Reproduced API call and repeated-page load
+
+A further stress run still timed out identity, country and visitor reads. Matching PostgREST’s lateral JSON argument wrapper reproduced a 5.91-second country read with 51,491 buffer hits, despite the direct call being much faster. `20261024000310_analytics_summary_parameter_plans_v6` preserves the four summary queries and binds actual parameters through PL/pgSQL EXECUTE USING. The same API-shaped read then took 1.43 seconds with 2,602 total buffer accesses. These measurements supersede direct-call timings as the useful API comparison. Grants and invoker security are unchanged. Production now records 346 migrations.
+
+Event reads ordered by `(at,id)` now use a timestamp/UUID cursor and zero offset, preserving PostgreSQL microseconds and ties. Other tables retain their existing bounded pagination. The dashboard starts one read family at a time, preserving incremental rendering while reducing overlap with ingestion. Tests cover ascending/descending cursors, timestamp ties, caps, invalid continuation, 192 direct/API-shaped old/new SQL cases, and all 88 analytics Worker tests. Deployment and live verification are required before declaring the remaining symptoms resolved.

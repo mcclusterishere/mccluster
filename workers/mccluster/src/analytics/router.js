@@ -7,7 +7,8 @@ import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
 import {cleanInventory, socialCoverage} from './event-inventory.js';
-import { readBoundedRows, measurementContext } from './measurement.js';
+import { measurementContext } from './measurement.js';
+import { readAnalyticsPages } from './paged-reads.js';
 import { loadBusinessEventCounts } from './business-event-counts.js';
 import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
@@ -81,9 +82,9 @@ async function sbRows(env, path) {
 }
 
 async function sbRowsPaged(env, path, maxRows = 100000) {
-  return readBoundedRows((start, end) => sbJson(env, path, {
+  return readAnalyticsPages((pagePath, start, end) => sbJson(env, pagePath, {
     headers: { range: `${start}-${end}` }
-  }), maxRows);
+  }), path, maxRows);
 }
 
 function finiteDate(value, fallback) {

@@ -54,7 +54,7 @@ export function measurementContext({ metricVersion, since, until, datasets, unit
       status: statuses.every((x) => x === 'complete') ? 'observed_complete'
         : statuses.includes('limit_reached') ? 'partial' : 'unknown',
       datasets: reads,
-      note: 'Stored rows only. Live offset pagination is not a frozen snapshot; late arrivals and browser loss are not measured.'
+      note: 'Stored rows only. Live pagination is not a frozen snapshot; late arrivals and browser loss are not measured.'
     },
     suppression: { status: 'not_applied', access: 'house_owner' },
     freshness: { status: 'unknown', projection_watermark: null }

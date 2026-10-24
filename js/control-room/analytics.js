@@ -1126,9 +1126,9 @@
       {name:"missions",run:function(){return site===null?rpc("action_mission_stats",{p_campaign:null}):Promise.resolve(null);}}
     ];
     /* Production PostgREST reports an 8-second authenticated statement limit.
-       Two independent dashboard reads at once leave capacity for ingestion and
+       One dashboard read at a time leaves capacity for ingestion and
        the owner-only business summary; each completed family still paints. */
-    return runLimited(tasks,2,function(x){
+    return runLimited(tasks,1,function(x){
       if(q!==S.seq)return;
       applyResult(x);
       S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;

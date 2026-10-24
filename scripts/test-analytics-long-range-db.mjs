@@ -9,6 +9,8 @@ const promoted=(await readdir(resolve(root,'supabase/migrations'))).find(f=>f.en
 const migration=await read(promoted?'supabase/migrations/'+promoted:'supabase/pending/analytics_long_range_v4.sql');
 const v5=(await readdir(resolve(root,'supabase/migrations'))).find(f=>f.endsWith('_analytics_audience_index_width_v5.sql'));
 const widthMigration=await read('supabase/migrations/'+v5);
+const v6=(await readdir(resolve(root,'supabase/migrations'))).find(f=>f.endsWith('_analytics_summary_parameter_plans_v6.sql'));
+const parameterMigration=await read(v6?'supabase/migrations/'+v6:'supabase/pending/analytics_summary_parameter_plans_v6.sql');
 const db=new PGlite();
 try {
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
@@ -43,12 +45,20 @@ try {
     for(const [since,until] of windows)
       for(const fn of ['analytics_totals','analytics_daily','analytics_hourly','analytics_country_totals'])
         queries.push(`select * from public.${fn}('${since}','${until}',${site}${['analytics_totals','analytics_country_totals'].includes(fn)?'':",'America/New_York'"})`);
+  // Match PostgREST's lateral JSON argument wrapper, which changes planning.
+  const apiQueries=queries.map(q=>{
+    const [,fn,args]=q.match(/^select \* from public\.(\w+)\((.*)\)$/),values=args.split(',');
+    const names=['p_since','p_until','p_site','p_tz'].slice(0,values.length);
+    const types=['timestamptz','timestamptz','uuid','text'];
+    return `select f.* from (select json_build_object(${names.map((n,i)=>`'${n}',${values[i]}`).join(',')}) as body) p, lateral (select * from json_to_record(p.body) as x(${names.map((n,i)=>`${n} ${types[i]}`).join(',')}) limit 1) a, lateral public.${fn}(${names.map(n=>'a.'+n).join(',')}) f`;
+  });
+  queries.push(...apiQueries);
   const before=[];
   await db.exec('set role service_role');
   for(const q of queries)before.push((await db.query(q)).rows);
   await db.exec('reset role');
   const aclBefore=(await db.query("select proname,proacl::text,prosecdef from pg_proc where pronamespace='public'::regnamespace order by proname")).rows;
-  await db.exec('begin');await db.exec(migration);await db.exec('commit');
+  await db.exec('begin');await db.exec(migration);await db.exec(parameterMigration);await db.exec('commit');
   assert.deepEqual((await db.query("select proname,proacl::text,prosecdef from pg_proc where pronamespace='public'::regnamespace order by proname")).rows,aclBefore);
   await db.exec('set role service_role');
   for(let i=0;i<queries.length;i++)assert.deepEqual((await db.query(queries[i])).rows,before[i],queries[i]);

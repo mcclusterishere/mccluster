@@ -74,7 +74,7 @@ test('Control Analytics bounds concurrent reads instead of stampeding PostgREST'
   while(!A.state.loaded&&Date.now()<deadline)await new Promise((resolve)=>setTimeout(resolve,10));
   assert.ok(completed>=12,'expected the full analytics suite to complete');
   /* Heavy independent RPCs run two at a time; background writes must retain headroom. */
-  assert.ok(peak<=2,'analytics opened '+peak+' concurrent reads');
+  assert.equal(peak,1,'analytics opened '+peak+' concurrent reads');
   assert.ok(paints>4,'completed reads should repaint progressively');
   assert.equal(A.state.loading,false);
 });
