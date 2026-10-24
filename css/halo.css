@@ -470,4 +470,7 @@ html.halo-no-map .hx-left .hx-panel__body{display:block}
 html.halo-no-map .hx-right[data-open="false"]{display:none}
 html.halo-no-map .hx-right[data-open="true"]{top:calc(var(--hx-head) + 100px);bottom:var(--hu-bar-h,80px);height:auto;max-height:none;left:12px;right:12px;width:auto;z-index:12}
 .hx-panel__head .hx-btn{pointer-events:auto;margin-left:auto;white-space:normal;min-width:70px}
+.hx-left:not([data-expanded="true"]) .hx-panel__head .hx-btn{display:none}
+html.halo-no-map .hx-panel__head .hx-btn{display:inline-flex}
+@media (min-width:1100px){.hx-left:not([data-expanded="true"]) .hx-panel__head .hx-btn{display:inline-flex}}
 @media (min-width:1100px){html.halo-no-map .hx-left{right:52%}html.halo-no-map .hx-right[data-open="true"]{left:50%}}
