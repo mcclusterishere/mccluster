@@ -216,6 +216,7 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
       github_promoted_sha: promotedSha || null,
       promoted_ref: source.promoted_ref || null,
       observed_at: source.observed_at || null,
+      verification_method: source.verification_method || null,
       error: source.error || null,
     },
     host,
