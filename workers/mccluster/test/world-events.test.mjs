@@ -16,6 +16,7 @@ test('unlocated warnings never fabricate a coordinate; polygon anchors are label
   const missing=normalizeAlert(alert(),NOW);assert.equal(missing.lon,null);assert.equal(missing.lat,null);assert.equal(missing.location_kind,'unmapped');
   const polygon={type:'Polygon',coordinates:[[[-73,41],[-72,41],[-72,42],[-73,41]],[[-72.8,41.1],[-72.5,41.1],[-72.5,41.3],[-72.8,41.1]]]};
   const area=eventGeometry(polygon);assert.equal(area.location_kind,'area_label');assert.equal(area.polygons[0].length,2);assert.equal(area.lon,-73);
+  assert.equal(eventGeometry({...polygon,coordinates:[[],polygon.coordinates[1]]}).location_kind,'unmapped');
   assert.equal(eventGeometry({type:'Point',coordinates:[0,0]}).location_kind,'reported_point');
   assert.equal(eventGeometry({type:'Point',coordinates:[null,0]}).lon,null);
   assert.equal(eventGeometry({type:'Point',coordinates:[999,45]}).lon,null);

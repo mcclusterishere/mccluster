@@ -26,12 +26,19 @@ export function eventKind(value) {
 export function eventGeometry(g) {
   if (g?.type === 'Point' && point(g.coordinates)) return { lon: g.coordinates[0], lat: g.coordinates[1], location_kind: 'reported_point', polygons: [] };
   const raw = g?.type === 'Polygon' ? [g.coordinates] : g?.type === 'MultiPolygon' ? g.coordinates : [];
-  const polygons = (Array.isArray(raw) ? raw : []).slice(0, 32).map(poly => (Array.isArray(poly) ? poly : []).slice(0, 24).map(ring => {
+  const ringPoints = ring => {
     if (!Array.isArray(ring) || ring.length < 4 || !ring.every(point)) return [];
     const step = Math.max(1, Math.ceil(ring.length / 512)), out = ring.filter((_, i) => i % step === 0).map(p => p.slice(0, 2));
     if (out.length && (out[0][0] !== out.at(-1)[0] || out[0][1] !== out.at(-1)[1])) out.push(out[0]);
     return out;
-  }).filter(r => r.length >= 4)).filter(poly => poly.length);
+  };
+  const polygons = (Array.isArray(raw) ? raw : []).slice(0, 32).flatMap(poly => {
+    if (!Array.isArray(poly)) return [];
+    const outer = ringPoints(poly[0]);
+    // A valid hole cannot become an exterior if the exterior is malformed.
+    if (outer.length < 4) return [];
+    return [[outer, ...poly.slice(1, 24).map(ringPoints).filter(r => r.length >= 4)]];
+  });
   // A boundary vertex is a truthful label anchor, not a claimed event position.
   const anchor = polygons[0]?.[0]?.[0];
   return { lon: anchor?.[0] ?? null, lat: anchor?.[1] ?? null, location_kind: anchor ? 'area_label' : 'unmapped', polygons };

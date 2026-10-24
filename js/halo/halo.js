@@ -358,7 +358,8 @@
     /* the chosen one is labelled first; any other is labelled only with no labelled neighbour within 900 km */
     items.slice().sort((a, b) => (b.chosen ? 1 : 0) - (a.chosen ? 1 : 0)).forEach((i) => {
       const position = C.Cartesian3.fromDegrees(i.lon, i.lat, 0), color = C.Color.fromCssColorString(TONE[i.tone] || TONE.cyan);
-      marks.points.add({ position, image: HaloEvents.symbol(i.sel.kind === 'obs' ? HaloEvents.kindFor(i.sel.layer,i.sel.item) : i.sel.kind === 'mission' ? (view === 'people' ? 'person' : 'mission') : 'evidence'), width: i.chosen ? 38 : 28, height: i.chosen ? 38 : 28, color, id: { haloPick: true, layer: 'halo-mark', sel: i.sel } });
+      const glyph = i.sel.kind === 'obs' ? HaloEvents.kindFor(i.sel.layer,i.sel.item) : i.sel.kind === 'mission' ? (view === 'people' ? 'person' : 'mission') : 'evidence';
+      marks.points.add({ position, imageId: 'halo-mark:' + glyph, image: HaloEvents.symbol(glyph), width: i.chosen ? 38 : 28, height: i.chosen ? 38 : 28, color, id: { haloPick: true, layer: 'halo-mark', sel: i.sel } });
       const room = !labelled.some((o) => km(o, i) < 900);
       if (i.label && room && (i.chosen || (!many && view !== 'world'))) {
         labelled.push(i);
@@ -1169,6 +1170,13 @@
       timelineFor = null; markSig = ''; detailSig = ''; listSig = '';
       ui.detailBody.replaceChildren(); ui.detailFoot.replaceChildren();
       buildLeft();
+      // Choosing a list-based screen must expose its content, even after the
+      // World drawer was collapsed to explore the globe.
+      if (!wide() && view !== 'world') {
+        sheetOpen = true; ui.left.dataset.expanded = 'true';
+        $('.hx-grip', ui.root).setAttribute('aria-label', 'Shrink the list');
+        $('.hx-collapse', ui.root).setAttribute('aria-label', 'Collapse the panel');
+      }
       /* Intelligence reads the Earth's own observations: earthquakes and cyclones come on with it */
       if (view === 'intel') { if (layers) ['quakes', 'cyclones'].forEach((id) => { if (!layers.on(id)) layers.set(id, true); }); data.get('evidence'); data.get('health'); data.briefs().then(schedulePaint); }
       if (view === 'missions' || view === 'world') data.get('missions');

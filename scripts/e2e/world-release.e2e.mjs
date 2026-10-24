@@ -108,6 +108,8 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
     !(await state()).mapFocus&&await page.locator('.hx-left').isVisible()&&
     Math.abs(restored.height-initial.height)<4&&restored.clear>=220,restored);
  }
+ await page.waitForFunction(()=>MCC_BAR.admin());
+ check(scope,'Halo retains the same five owner destinations',await page.locator('.appbar [data-appnav]').count()===5);
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
@@ -151,7 +153,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.waitForFunction(()=>HaloConsole.state().events?.types.includes('tornado'));
  check(scope,'natural events have distinct visual families and finite detail budgets',await page.evaluate(()=>{const s=HaloConsole.state().events;return s.types.length>=14&&s.models<=8&&s.animated<=48}),await state());
  if(width<1100)await page.locator('.hx-grip').click();
- await page.evaluate(()=>{const v=HuGlobe.viewer();v.camera.setView({destination:Cesium.Cartesian3.fromDegrees(-97.4,34.5,150000),orientation:{heading:0,pitch:Cesium.Math.toRadians(-38),roll:0}});});
+ await page.evaluate(()=>{const v=HuGlobe.viewer();v.camera.lookAt(Cesium.Cartesian3.fromDegrees(-97.5,35.4,5000),new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-38),180000));v.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);});
  await page.waitForTimeout(1200);
  check(scope,'nearby event builds 3D representation',await page.evaluate(()=>HaloConsole.state().events.models>0));
  await shot('tornado-area');
@@ -161,7 +163,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  if(width===1280){
    for(const kind of ['volcano','fire','flood','snow','ice','wind','dust','landslide','heat','storm','rain']){
      const item=HALO_FIXTURES['/v1/world/layers/natural'].events.find(e=>e.kind===kind);
-     await page.evaluate(item=>{HaloConsole.pick({id:{haloPick:true,layer:'natural',item}});HuGlobe.viewer().camera.setView({destination:Cesium.Cartesian3.fromDegrees(item.lon,item.lat-.8,140000),orientation:{heading:0,pitch:Cesium.Math.toRadians(-38),roll:0}});},item);
+     await page.evaluate(item=>{HaloConsole.pick({id:{haloPick:true,layer:'natural',item}});const c=HuGlobe.viewer().camera;c.lookAt(Cesium.Cartesian3.fromDegrees(item.lon,item.lat,3000),new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-38),180000));c.lookAtTransform(Cesium.Matrix4.IDENTITY);},item);
      await page.waitForTimeout(700);check(scope,kind+' remains individually inspectable',await page.locator('.hx-detail h2').textContent()===item.name);await shot('event-'+kind);
    }
  }
@@ -268,7 +270,7 @@ try {
 for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
  const scope=width+' '+persona, ctx=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390});
  let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[];
- await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest')localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:'owner-'+p,exp:Math.floor(Date.now()/1000)+3600}))+'.y'}));},persona);
+ await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest'){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:'owner-'+p,exp}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:'owner-'+p,email:'fixture@example.invalid'}}));}},persona);
  await ctx.route('**/*',async route=>{
   const url=new URL(route.request().url()), headers={'access-control-allow-origin':'*','access-control-allow-headers':'*'};
   const json=(body,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(body)});

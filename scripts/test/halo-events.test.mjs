@@ -14,3 +14,9 @@ test('bad positions and expired warnings cannot enter the scene',()=>{
 test('the renderer has finite detail budgets and a cleanup path',()=>{
   assert.equal(E.MOTION_CAP,48);assert.equal(E.MODEL_CAP,8);assert.match(source,/document.hidden/);assert.match(source,/prefers-reduced-motion/);assert.match(source,/removeEventListener\(tick\)/);assert.match(source,/clearInterval\(clock\)/);
 });
+
+test('animation reuses bounded texture IDs instead of allocating an image every frame',()=>{
+  assert.match(source,/imageId:'halo-event:'/);
+  assert.match(source,/\.setImage\('halo-event:'/);
+  assert.doesNotMatch(source,/r\.b\.image\s*=/);
+});

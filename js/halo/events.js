@@ -74,7 +74,7 @@
         if(!valid(item)||expired(item))continue;const kind=kindFor(layer,item),key=keyFor(layer,item,i),pick={haloPick:true,layer,item};
         const position=C.Cartesian3.fromDegrees(item.lon,item.lat,layer==='military'?Math.max(0,item.alt??0):60);
         const symbolSize=kind==='aircraft'?28:['tornado','cyclone','volcano'].includes(kind)?42:30;
-        const b=symbols.add({position,image:symbol(kind),width:symbolSize,height:symbolSize,id:pick,scaleByDistance:new C.NearFarScalar(3e5,1.25,2e7,.7)});
+        const b=symbols.add({position,imageId:'halo-event:'+kind+':0',image:symbol(kind),width:symbolSize,height:symbolSize,id:pick,scaleByDistance:new C.NearFarScalar(3e5,1.25,2e7,.7)});
         rows.push({key,kind,item,pick,position,b});
         // Reported polygon with its holes. No generated storm or damage extent.
         for(const poly of (item.polygons||[]).slice(0,8)){
@@ -132,7 +132,9 @@
       if(!alive||document.hidden)return;const now=performance.now();if(now-lastTick<33)return;lastTick=now;
       if(now-lastSelect>650){lastSelect=now;selectRows();}
       const moving=animated&&!reduce?.matches,f=moving?Math.floor(now/100)%12:0;
-      if(frame!==f){frame=f;for(const r of active)r.b.image=symbol(r.kind,f);}
+      // Stable IDs share twelve atlas entries per family, even across thousands
+      // of observations. Assigning a canvas to .image generates a new GUID.
+      if(frame!==f){frame=f;for(const r of active)r.b.setImage('halo-event:'+r.kind+':'+f,symbol(r.kind,f));}
       const t=moving?now/1000:0;
       for(const m of models.values())for(const p of m.parts){
         if(p.lightning)p.e.show=!moving||Math.floor(t)%4===0;
