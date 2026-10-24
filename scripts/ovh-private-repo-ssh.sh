@@ -27,7 +27,7 @@ for cmd in ssh-keygen git systemctl stat; do
 done
 
 install -d -o root -g root -m 0700 "${KEY_DIR}"
-if [[ -L "${KEY}" || -L "${KNOWN}" ]]; then
+if [[ -L "${KEY_DIR}" || -L "${KEY}" || -L "${KEY}.pub" || -L "${KNOWN}" ]]; then
   echo "Refusing symlinked SSH credential or host-key file." >&2
   exit 2
 fi
