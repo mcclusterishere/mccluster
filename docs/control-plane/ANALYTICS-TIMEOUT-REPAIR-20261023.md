@@ -99,3 +99,7 @@ Retain the covering indexes if reverting the region function. Replacing only
 `20261017030554_analytics_region_v1.sql` restores the previous raw-source read and
 its grants, but also restores its expensive access path. Do not replay either
 applied migration or modify the recorded SQL; use a new migration for changes.
+
+## Index payload safeguard
+
+Follow-up migration `20261023235817_analytics_audience_index_width_v5` replaces the audience covering index with `(at,id,name)` and the same predicate. URL and event payload text are unbounded in the lean projection, so they must not be included in a B-tree entry. A regression reproduces the covering-index failure with a 16 KB incompressible referrer and verifies insertion after the replacement. The replacement is valid and ready; a late 30-day page uses its ordered index scan in 3.22 seconds under the 8-second service-role limit. The production ledger now has 345 entries.

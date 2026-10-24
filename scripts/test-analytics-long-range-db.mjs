@@ -7,6 +7,8 @@ const read=p=>readFile(resolve(root,p),'utf8');
 const {PGlite}=await import(process.env.PGLITE_MODULE_PATH?pathToFileURL(resolve(process.env.PGLITE_MODULE_PATH)).href:'@electric-sql/pglite');
 const promoted=(await readdir(resolve(root,'supabase/migrations'))).find(f=>f.endsWith('_analytics_long_range_v4.sql'));
 const migration=await read(promoted?'supabase/migrations/'+promoted:'supabase/pending/analytics_long_range_v4.sql');
+const v5=(await readdir(resolve(root,'supabase/migrations'))).find(f=>f.endsWith('_analytics_audience_index_width_v5.sql'));
+const widthMigration=await read('supabase/migrations/'+v5);
 const db=new PGlite();
 try {
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
@@ -63,12 +65,20 @@ try {
   await db.exec('begin;drop index events_identity_cover_v4_idx');
   assert.deepEqual((await db.query(identity)).rows,rows,'identity pagination output unchanged');
   await db.exec('rollback');
+  // Payload fields are unbounded. An incompressible long URL must remain ingestible.
+  const wideInsert="insert into public.events_lean(id,at,name,device_id,is_bot,referrer) select gen_random_uuid(),now(),'page_view','wide-url',false,string_agg(md5(g::text),'') from generate_series(1,500) g";
+  await db.exec('begin');
+  await assert.rejects(()=>db.exec(wideInsert),/index row|index tuple|maximum/i);
+  await db.exec('rollback');
+  await db.exec('begin');await db.exec(widthMigration);await db.exec('commit');
+  await db.exec(wideInsert);
+  assert.equal((await db.query("select octet_length(referrer) as bytes from public.events_lean where device_id='wide-url'")).rows[0].bytes,16000);
   const access=[
     [identity,'events_identity_cover_v4_idx'],
-    ["select id,at,name,path,device_id,session_id,track,src,source,referrer,is_bot,listened_seconds,dwell_s,visible_s from public.events_lean where site_id is null and is_bot is false and device_id is not null and name in ('page_view','page_leave') and at>=now()-interval '30 days' order by at,id limit 100",'events_lean_audience_window_v4_idx'],
+    ["select id,at,name,path,device_id,session_id,track,src,source,referrer,is_bot,listened_seconds,dwell_s,visible_s from public.events_lean where site_id is null and is_bot is false and device_id is not null and name in ('page_view','page_leave') and at>=now()-interval '30 days' order by at,id limit 100",'events_lean_audience_order_v5_idx'],
     ["select name,device_id,session_id,dwell_s from public.events_lean where site_id is null and not is_bot and at>=now()-interval '1 hour'",'events_lean_summary_window_v4_idx'],
     ["select id from public.media_news_articles where ingestion_provider='gdelt_gkg_v2' and published_at>=now()-interval '30 days' and location_country_fips is not null order by published_at,id limit 100",'media_news_geo_window_v4_idx']
   ];
   for(const [q,index] of access)assert.ok(JSON.stringify((await db.query('explain (format json) '+q)).rows).includes(index),index);
-  console.log(`PASS ${queries.length} summary parity cases, DST, empty/tenant/bot boundaries, grants, identity page parity, and four access paths`);
+  console.log(`PASS ${queries.length} summary parity cases, DST, empty/tenant/bot boundaries, grants, identity page parity, four access paths, and long-URL ingestion`);
 }finally{await db.close();}
