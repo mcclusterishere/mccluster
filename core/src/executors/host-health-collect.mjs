@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { rest, recentJobs } from '../supabase.mjs';
 import { listNodes } from '../compute/store.mjs';
+import { verifiedReconcilerGitSource } from '../reconciler-source-receipt.mjs';
 import {
   SYSTEM_CONTRACT_MIGRATION,
   SYSTEM_HEALTH_SCHEMA,
@@ -79,12 +80,22 @@ async function githubSource() {
   const errors = [];
   if (main.status === 'rejected') errors.push(`main: ${errorText(main.reason)}`);
   if (promoted.status === 'rejected') errors.push(`${promotedRef}: ${errorText(promoted.reason)}`);
+  // The public GitHub API cannot read private repos without a token. The
+  // root-owned reconciler has its own read-only SSH transport; a fresh receipt
+  // from its successful, ancestry-checked ref fetch is valid source evidence.
+  // A missing/stale/invalid receipt never overrides a GitHub fetch error.
+  if (errors.length) {
+    const receipt = parseJson(await textFile('/var/lib/mccluster/reconcile/last-source-fetch.json'));
+    const verified = verifiedReconcilerGitSource(receipt, { repository: REPOSITORY, promotedRef });
+    if (verified) return verified;
+  }
   return {
     repository: REPOSITORY,
     github_main_sha: main.status === 'fulfilled' ? main.value : null,
     github_promoted_sha: promoted.status === 'fulfilled' ? promoted.value : null,
     promoted_ref: promotedRef,
     observed_at: new Date().toISOString(),
+    verification_method: 'github_rest_api',
     error: errors.length ? errors.join('; ') : null,
   };
 }

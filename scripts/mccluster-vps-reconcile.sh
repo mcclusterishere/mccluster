@@ -38,6 +38,25 @@ if ! git merge-base --is-ancestor "${TARGET_SHA}" refs/remotes/origin/main; then
   exit 3
 fi
 
+# A private GitHub repository cannot be queried anonymously via the REST API.
+# Record a short-lived, non-secret attestation only AFTER both ref fetches and
+# the ancestry guard succeed. Core reads this receipt if public API visibility
+# is absent; a stale receipt must never be treated as fresh source evidence.
+if [[ "${DEPLOY_REF}" != "deploy/ovh-production" ]]; then
+  echo "refusing source attestation for unapproved deployment ref" >&2
+  exit 3
+fi
+MAIN_SHA="$(git rev-parse "refs/remotes/origin/main^{commit}")"
+if [[ ! "${MAIN_SHA}" =~ ^[0-9a-f]{40}$ || ! "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "invalid Git source revision; refusing source attestation" >&2
+  exit 3
+fi
+SOURCE_RECEIPT_TMP="${STATE_ROOT}/last-source-fetch.json.tmp"
+printf '{"schema_version":"mccluster-reconcile-git-source/v1","repository":"mcclusterishere/mccluster","promoted_ref":"deploy/ovh-production","github_main_sha":"%s","github_promoted_sha":"%s","observed_at":"%s"}\n' \
+  "${MAIN_SHA}" "${TARGET_SHA}" "$(date -u +%FT%TZ)" > "${SOURCE_RECEIPT_TMP}"
+chmod 0644 "${SOURCE_RECEIPT_TMP}"
+mv -f "${SOURCE_RECEIPT_TMP}" "${STATE_ROOT}/last-source-fetch.json"
+
 git reset --hard "${TARGET_SHA}"
 # Dedicated reconcile checkout must contain only the promoted revision. Remove ignored
 # build/test residue too so stale local state cannot influence validation or deployment.
