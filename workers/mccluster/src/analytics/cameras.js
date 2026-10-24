@@ -1,6 +1,6 @@
 /* Owner Analytics reads the existing Halo bridge. No upstream URL or token is
    accepted from a browser. Catalog and verified image counts are independent. */
-import { cleanSource, HALO_DEFAULT_BASE } from '../world-cctv.js';
+import { cleanSource, HALO_DEFAULT_BASE, isHaloSnapshotSource } from '../world-cctv.js';
 import { Buffer } from 'node:buffer';
 
 const MAX_JSON_BYTES = 12 * 1024 * 1024;
@@ -98,7 +98,7 @@ export async function checkCamera(env, id, fetchImpl = fetch) {
   try {
     return await haloRead(env, '/api/cctv/frame/' + encodeURIComponent(id), async response => {
       // Halo labels decoded TxDOT API snapshots separately from direct images.
-      if (!['upstream-image', 'txdot-snapshot'].includes(response.headers.get('x-cctv-source'))) throw new Error('No upstream image');
+      if (!isHaloSnapshotSource(response.headers.get('x-cctv-source'))) throw new Error('No upstream image');
       const bytes = await boundedBody(response, MAX_FRAME_BYTES), type = rasterType(bytes);
       if (!type || !String(response.headers.get('content-type')).startsWith(type)) throw new Error('Invalid image');
       return { id, checked_at, status: 'image_received', captured_at: response.headers.get('x-cctv-captured-at') || response.headers.get('last-modified') || null,

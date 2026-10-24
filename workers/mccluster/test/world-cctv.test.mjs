@@ -50,13 +50,13 @@ function world({ user = true, privacy = 'current', assignment = 'verified', halo
     }
     if (u.startsWith('https://prime.mccluster.org/api/cctv/sources')) {
       if (halo.redirect) return new Response(null, { status: 302, headers: { location: 'https://elsewhere.example/api/cctv/sources' } });
-      return halo.sourcesStatus ? json({ error: 'x' }, halo.sourcesStatus) : json(SOURCES);
+      return halo.sourcesStatus ? json({ error: 'x' }, halo.sourcesStatus) : json(halo.sources || SOURCES);
     }
     if (u.startsWith('https://prime.mccluster.org/api/cctv/frame/')) {
       const id = decodeURIComponent(u.split('/').pop());
       if (id === 'streetview-cam') return new Response('jpeg', { headers: { 'content-type': 'image/jpeg', 'x-cctv-source': 'streetview' } });
       if (id === 'synthetic-cam') return new Response('<svg/>', { headers: { 'content-type': 'image/svg+xml; charset=utf-8', 'x-cctv-source': 'synthetic' } });
-      return new Response('JPEGBYTES', { headers: { 'content-type': 'image/jpeg', 'x-cctv-source': 'upstream-image', 'last-modified': 'Thu, 15 Oct 2026 19:00:00 GMT', date: 'Thu, 15 Oct 2026 19:00:05 GMT', 'set-cookie': 'leak=1' } });
+      return new Response('JPEGBYTES', { headers: { 'content-type': halo.frameType || 'image/jpeg', 'x-cctv-source': halo.frameSource || 'upstream-image', 'last-modified': 'Thu, 15 Oct 2026 19:00:00 GMT', date: 'Thu, 15 Oct 2026 19:00:05 GMT', 'set-cookie': 'leak=1' } });
     }
     throw new Error('unexpected fetch ' + u);
   };
@@ -130,6 +130,43 @@ test('sources: proxied with the internal header (never the member bearer), trimm
   assert.equal(call.url, 'https://prime.mccluster.org/api/cctv/sources');
   assert.equal(call.headers.get('x-halo-internal'), 'halo-secret-value');
   assert.equal(call.headers.get('authorization'), null, 'the member bearer is not forwarded');
+});
+
+test('Halo viewer lists the full deployed catalog and opens a TxDOT camera after record 5,000', async () => {
+  const sources = Array.from({ length: 9458 }, (_, i) => ({ id: `txdot-aus-${i}`, lat: 30.27, lon: -97.75, provider: 'TxDOT' }));
+  const w = world({ halo: { sources: { sources }, frameSource: 'txdot-snapshot' } });
+  const listing = await handleWorldCctv(req('/v1/world/cctv/sources'), ENV, { fetchImpl: w.fetchImpl });
+  const body = await listing.json();
+  assert.equal(body.sources.length, 9458);
+  assert.equal(body.sources.at(-1).id, 'txdot-aus-9457');
+  assert.equal(body.dropped_without_position, 0);
+  assert.equal(body.truncated_count, 0);
+  const frame = await handleWorldCctv(req('/v1/world/cctv/frame/txdot-aus-9457'), ENV, { fetchImpl: w.fetchImpl });
+  assert.equal(frame.status, 200);
+  assert.equal(frame.headers.get('x-cctv-source'), 'txdot-snapshot');
+  assert.equal(await frame.text(), 'JPEGBYTES');
+});
+
+test('catalog overflow is counted separately from invalid positions', async () => {
+  const sources = Array.from({ length: 10001 }, (_, i) => ({ id: `austin-${i}`, lat: 30.27, lon: -97.75 }));
+  sources.push({ id: 'no-position', lat: null, lon: null });
+  const w = world({ halo: { sources: { sources } } });
+  const r = await handleWorldCctv(req('/v1/world/cctv/sources'), ENV, { fetchImpl: w.fetchImpl });
+  const body = await r.json();
+  assert.equal(body.sources.length, 10000);
+  assert.equal(body.upstream_total, 10002);
+  assert.equal(body.dropped_without_position, 1);
+  assert.equal(body.truncated_count, 1);
+});
+
+test('TxDOT provenance does not admit non-raster types or unknown image provenance', async () => {
+  for (const halo of [{ frameSource: 'txdot-snapshot', frameType: 'text/html' }, { frameSource: 'txdot-snapshot', frameType: 'image/svg+xml' }, { frameSource: 'unknown' }]) {
+    resetRateLimits();
+    const w = world({ halo });
+    const r = await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl: w.fetchImpl });
+    assert.equal(r.status, 502);
+    assert.equal((await r.json()).detail.reason, 'no_live_frame');
+  }
 });
 
 test('HALO_API_BASE overrides the default; a non-https base is refused', async () => {

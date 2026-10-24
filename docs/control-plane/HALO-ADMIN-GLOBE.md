@@ -56,7 +56,7 @@ Intelligence), "analyze it and try to get it close to this". They are kept as th
   - Every Halo request goes to the canonical Worker `mccluster` on owner-gated routes.
   - The release guard (`packages/release-policy/globe.mjs`, `workers/mccluster/src/world-release.js`) refuses everyone else
     before dispatch, and each operations route re-checks the owner itself.
-  - There is no second backend: Halo's own Worker and OVH runtime are not called.
+  - The browser uses the canonical API Worker. CCTV is the existing exception behind that API: its server-side proxy reads the Halo camera service with the encrypted internal credential; the browser receives no Halo credential.
 
 ## Capabilities on the admin globe
 
@@ -152,3 +152,11 @@ presence figure is `online`, the k-anonymous total from `action_globe_public_onl
 
 The visual-mode shaders are adapted from God's Eye View (MIT, © 2026 Bilawal Sidhu) via Hitman's Halo. The notice is at
 `vendor/LICENSES/gods-eye-view-MIT.txt`.
+
+## Camera viewer follow-up — 23 October 2026, America/New_York
+
+Analytics camera verification and the Halo globe use distinct API routes. Restoring the shared service connection made the catalog available, but the globe proxy still cut it to 5,000 entries and rejected Halo's `txdot-snapshot` image label. The globe's limit now matches the deployed Halo service's 10,000-record ceiling, so the observed 9,458-record catalog fits. Overflow above that ceiling is explicitly reported as `truncated_count`, separate from invalid-coordinate exclusions. A shared source-label predicate keeps Analytics and the globe aligned for direct upstream images and decoded TxDOT snapshots.
+
+To view cameras in the McCluster Halo interface: World data → Places & media → Cameras (CCTV), then select a camera pin. The existing signed-in/current-privacy/verified-mission checks still apply; no authorization gate was removed. The current viewer opens provider snapshots with source/time information. A listed camera is not a guarantee of an available image or continuous video. Ontario requires its provider key, and TfL/NSW upstream failures remain visible.
+
+Validation: 122 camera/Analytics backend tests pass, including full 9,458-record delivery and a successful last-record TxDOT frame, explicit overflow reporting at 10,001 valid records, rejection of unknown/synthetic provenance and non-raster types, and the existing eligibility/revocation/credential protections. The associated PR carries deployment verification.
