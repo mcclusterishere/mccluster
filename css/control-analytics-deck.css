@@ -214,3 +214,6 @@ body.cr[data-cr-surface="analytics"] #mccEditBar{display:none!important}
 /* Hourly ticks keep every hour readable without labels colliding. */
 .cad-body .cra-chart--hourly .cra-chart__frame{min-width:1200px}
 .cad-body .cra-chart--hourly .cra-axis{font-size:12px}
+
+/* Operational Control views do not edit the surrounding website. */
+body.cr[data-cr-surface="create"] #mccEditBar{display:none!important}
