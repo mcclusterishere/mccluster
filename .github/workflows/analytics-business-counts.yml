@@ -11,9 +11,23 @@ on:
       - 'supabase/ops/*_v2_idx.sql'
       - 'supabase/ops/*_v3_idx.sql'
       - 'scripts/test-analytics-hotpaths-db.mjs'
+      - 'scripts/test-analytics-long-range-db.mjs'
+      - 'supabase/tests/analytics_summary_before_v4.sql'
+      - 'supabase/migrations/*_analytics_long_range_v4.sql'
+      - 'supabase/ops/*_v4_idx.sql'
+      - 'supabase/ops/*_v5_idx.sql'
+      - 'supabase/migrations/*_analytics_audience_index_width_v5.sql'
+      - 'supabase/migrations/*_analytics_summary_parameter_plans_v6.sql'
+      - 'workers/mccluster/src/analytics/paged-reads.js'
+      - 'workers/mccluster/src/analytics/measurement.js'
+      - 'workers/mccluster/test/analytics-paged-reads.test.mjs'
       - 'supabase/tests/analytics_region.behaviour.sql'
       - 'workers/mccluster/src/analytics/business-event-counts.js'
       - 'workers/mccluster/src/analytics/router.js'
+      - 'workers/mccluster/src/analytics/coverage.js'
+      - 'workers/mccluster/test/analytics-coverage.test.mjs'
+      - 'js/control-room/analytics.js'
+      - 'scripts/test/control-analytics-coverage-pages.test.mjs'
       - 'workers/mccluster/test/analytics-business-event-counts.test.mjs'
       - '.github/workflows/analytics-business-counts.yml'
   workflow_dispatch:
@@ -48,6 +62,7 @@ jobs:
           node --check workers/mccluster/src/analytics/business-event-counts.js
           node --check workers/mccluster/src/analytics/router.js
           node --test workers/mccluster/test/analytics-business-event-counts.test.mjs
+          node --test workers/mccluster/test/analytics-coverage.test.mjs scripts/test/control-analytics-coverage-pages.test.mjs
       - name: Install PostgreSQL client
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
       - name: Test semantics and browser-role denial in disposable PostgreSQL
@@ -56,3 +71,4 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/analytics-hotpaths" --no-audit --no-fund --ignore-scripts @electric-sql/pglite@0.5.10
           PGLITE_MODULE_PATH="$RUNNER_TEMP/analytics-hotpaths/node_modules/@electric-sql/pglite/dist/index.js" node scripts/test-analytics-hotpaths-db.mjs
+          PGLITE_MODULE_PATH="$RUNNER_TEMP/analytics-hotpaths/node_modules/@electric-sql/pglite/dist/index.js" node scripts/test-analytics-long-range-db.mjs

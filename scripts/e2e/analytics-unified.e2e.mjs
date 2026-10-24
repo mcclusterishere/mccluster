@@ -77,7 +77,7 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
   const calls = [];
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const req = route.request(), p = new URL(req.url()).pathname;
-    calls.push(p);
+    calls.push(req.url());
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
     if (p === '/v1/seek-first/sources') return json(route,{sources:[{key:'cctv',name:'Public Traffic Camera Catalogs',capabilities:['traffic-cameras'],persistence:'transient',configured:true,entitlement:{allowed:true}},{key:'usgs',name:'U.S. Geological Survey',capabilities:['earthquakes'],persistence:'persistent',configured:true,entitlement:{allowed:true}}]});
     if (p === '/v1/seek-first/readiness') return json(route,{database_schema_ready:false});
@@ -90,10 +90,13 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if(p==='/v1/analytics/cameras')return json(route,{ok:true,catalog_count:3,stale_count:0,retrieved_at:new Date().toISOString(),packs:[{name:'Test provider',cameras:3,status:'ok'}],cameras:[1,2,3].map(id=>({id:String(id),name:'Camera '+id,pack:'Test provider'}))});
     if(p==='/v1/analytics/cameras/check')return json(route,{ok:true,checks:[{id:'1',status:'image_received',checked_at:new Date().toISOString(),image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqoAAAAASUVORK5CYII='},{id:'2',status:'unavailable',checked_at:new Date().toISOString()},{id:'3',status:'image_received',image:'data:image/png;base64,YmFk',checked_at:new Date().toISOString()}]});
     if(p==='/v1/intel/health')return json(route,{schema_ready:true,collector:{enabled:false},latest_run:null,last_successful_run:null});
-    if(p==='/v1/analytics/coverage')return json(route,{schema:'analytics-coverage/v2',measured_at:new Date().toISOString(),summary:{datasets:3,populated:1,empty:1,quiet:0,unavailable:1},datasets:[
+    if(p==='/v1/analytics/coverage'){const datasets=[
       {key:'headlines',label:'News headlines',family:'Intelligence',state:'populated',count:4200,window_count:40,window_status:'measured',scope:'News catalog',section:'intelligence',time_field:'imported_at',latest_at:new Date().toISOString(),next_step:'Open analysis'},
       {key:'evidence',label:'Evidence',family:'Intelligence',state:'empty',count:0,window_count:0,scope:'House',section:'intelligence',time_field:'created_at',next_step:'No stored records'},
-      {key:'spatial',label:'Spatial archive',family:'Intelligence',state:'missing',count:null,window_count:null,scope:'House',section:'intelligence',time_field:'last_seen_at',next_step:'Provision storage'}]});
+      {key:'spatial',label:'Spatial archive',family:'Intelligence',state:'missing',count:null,window_count:null,scope:'House',section:'intelligence',time_field:'last_seen_at',next_step:'Provision storage'}];
+      const offset=Number(new URL(req.url()).searchParams.get('offset')||0),page=datasets.slice(offset,offset+2);
+      return json(route,{ok:true,schema:'analytics-coverage/v2',measured_at:new Date().toISOString(),datasets:page,summary:{datasets:page.length,populated:page.filter(x=>x.state==='populated').length,empty:page.filter(x=>x.state==='empty').length,quiet:0,unavailable:page.filter(x=>x.state==='missing').length},pagination:{offset,total:datasets.length,next_offset:offset+page.length<datasets.length?offset+page.length:null}});
+    }
     if (p === '/v1/analytics/business') return json(route, {ok:true,snapshot:FIX.business});
     if (p === '/v1/analytics/audience-science') return json(route, {version:'fixture',totals:{music_listeners:18,returning_listeners:7},profiles:[],signals:[],track_affinity:[]});
     if (p === '/v1/analytics/identity') return json(route, FIX.identity);
@@ -202,6 +205,7 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  }
  check(size.width,'dataset counts are not fetched on every dashboard open',!calls.some(x=>x.includes('/analytics/coverage')));
  await page.locator('[data-cad-health]').click();await page.waitForSelector('[data-cu-dataset="headlines"]');
+ check(size.width,'dataset explorer completes both pages',calls.filter(x=>x.includes('/analytics/coverage')).length===2&&calls.some(x=>x.includes('offset=2')));
  check(size.width,'dataset explorer shows measured empty and missing states',await page.locator('.cu-dataset-list').innerText().then(t=>t.includes('Empty')&&t.includes('Storage missing')));
  await page.locator('#cuDatasetStatus').selectOption('empty');
  check(size.width,'dataset health filter narrows the view',await page.locator('[data-cu-dataset]').count()===1);
