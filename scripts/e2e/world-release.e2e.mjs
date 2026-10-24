@@ -244,7 +244,8 @@ for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PER
   owner=true;
   await ctx.route('**/Build/Cesium/Cesium.js',r=>r.abort());
   await page.goto(BASE+'/action-globe.html?explore=1&halo=missions');
-  await page.waitForSelector('html.halo-no-map #haloShell',{timeout:20000});
+  // The shell contains fixed-position panels and has no layout box of its own.
+  await page.waitForSelector('html.halo-no-map #haloShell .hx-left',{timeout:20000});
   for(const v of ['world','missions','people','intel']){
     await page.locator('[data-view="'+v+'"]').click();
     await page.waitForTimeout(150);
