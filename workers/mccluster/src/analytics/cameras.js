@@ -97,7 +97,8 @@ export async function checkCamera(env, id, fetchImpl = fetch) {
   const checked_at = new Date().toISOString();
   try {
     return await haloRead(env, '/api/cctv/frame/' + encodeURIComponent(id), async response => {
-      if (response.headers.get('x-cctv-source') !== 'upstream-image') throw new Error('No upstream image');
+      // Halo labels decoded TxDOT API snapshots separately from direct images.
+      if (!['upstream-image', 'txdot-snapshot'].includes(response.headers.get('x-cctv-source'))) throw new Error('No upstream image');
       const bytes = await boundedBody(response, MAX_FRAME_BYTES), type = rasterType(bytes);
       if (!type || !String(response.headers.get('content-type')).startsWith(type)) throw new Error('Invalid image');
       return { id, checked_at, status: 'image_received', captured_at: response.headers.get('x-cctv-captured-at') || response.headers.get('last-modified') || null,
