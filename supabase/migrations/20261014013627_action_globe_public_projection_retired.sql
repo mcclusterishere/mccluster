@@ -1,5 +1,0 @@
--- Historical migration slot intentionally retired before deployment.
--- Public globe geographic data now uses first-level administrative regions only.
--- See 20261013233000_action_globe_regions.sql and
--- 20261013234500_action_globe_song_portfolios.sql.
--- Do not create or publish city-level member projections.

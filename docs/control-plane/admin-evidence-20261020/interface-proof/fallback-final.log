@@ -1,6 +1,0 @@
-PASS no-WebGL removes third-party error overlay
-PASS no-WebGL accessible explanation
-PASS no-WebGL country list and cards remain usable
-Expected no-WebGL diagnostics: 2
-PASS no-WebGL no unexpected runtime errors: []
-PASS 4 assertions

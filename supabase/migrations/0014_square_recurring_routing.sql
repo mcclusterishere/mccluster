@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0014_square_recurring_routing.
--- Executable reconstruction SQL: supabase/replay_migrations/0014_square_recurring_routing.sql
--- Intentionally no-op in production; this version is already registered live.
