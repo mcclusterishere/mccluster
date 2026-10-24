@@ -258,6 +258,7 @@
     paintTools();
   }
   function stopFollow() {
+    setOrbit(false);
     if (followTick) { V.scene.preRender.removeEventListener(followTick); followTick = null; }
     if (followTarget) { followTarget = null; V.camera.lookAtTransform(C.Matrix4.IDENTITY); }
     if (ui.follow) ui.follow.hidden = true;
@@ -377,6 +378,7 @@
     if (id && id.haloPick && layers) {
       const d = layers.describe(id);
       if (!d) return false;
+      stopFollow(); setOrbit(false);
       G.closeSheet();
       select({ kind: 'obs', id: id.layer + ':' + (id.item && (id.item.id || id.item.hex || id.item.mmsi || (id.item.lon + ',' + id.item.lat))), layer: id.layer, d, item: id.item }, { fly: false });
       return true;

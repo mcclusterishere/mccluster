@@ -352,9 +352,9 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
 .hx-window{min-height:44px;max-width:120px;padding:0 6px;border:1px solid var(--hx-line-2);border-radius:5px;background:#08111f;color:var(--hx-ink);font:400 max(16px,1rem)/1 Inter,system-ui,sans-serif;cursor:pointer}
 
 /* following something */
-.hx-follow{position:fixed;z-index:9;left:50%;top:calc(var(--hx-head) + 60px);transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);min-height:44px;padding:0 4px 0 16px;border:1px solid var(--hx-cyan);border-radius:999px;background:rgba(5,11,21,.94);color:var(--hx-ink);font-size:13px}
+.hx-follow{position:fixed;z-index:9;left:8px;top:calc(var(--hx-head) + 112px);transform:none;display:flex;align-items:center;gap:8px;max-width:calc(100% - 88px);min-height:44px;padding:0 4px 0 16px;border:1px solid var(--hx-cyan);border-radius:999px;background:rgba(5,11,21,.94);color:var(--hx-ink);font-size:13px}
 .hx-follow span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hx-follow button{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:#13243a;color:#fff;font-weight:600;cursor:pointer}
+.hx-follow button{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:#13243a;color:#fff;font-weight:600;cursor:pointer}
 .hx-follow-btn{margin-top:10px}
 .hx-hud-host{position:fixed;z-index:7;top:calc(var(--hx-head) + 60px);left:8px;max-width:calc(100% - 72px);pointer-events:none}
 
@@ -372,7 +372,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   html.halo-on[data-halo-map="focus"] .cctv-sheet,
   html.halo-on[data-halo-map="focus"] .hx-left,
   html.halo-on[data-halo-map="focus"] .hx-time{display:none}
-  html.halo-on[data-halo-map="focus"] .hx-legend{bottom:12px}
+  html.halo-on[data-halo-map="focus"] .hx-legend{bottom:30px}
 
 /* ---------- tablet: the tabs join the bar; the list and the detail float as columns ---------- */
 @media (min-width:1100px){
@@ -441,7 +441,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   .hx-time__mode button[aria-pressed="true"]{background:#16263c;color:#fff}
   .hx-time__mode button:disabled{opacity:.45;cursor:not-allowed}
   .hx-window{max-width:none;padding:0 10px}
-  .hx-follow{top:calc(var(--hx-head) + 22px)}
+  .hx-follow{left:50%;transform:translateX(-50%);top:calc(var(--hx-head) + 22px);max-width:calc(100% - 32px)}
   .hx-hud-host{left:calc(var(--hx-gap) + var(--hx-left-w) + 16px);top:calc(var(--hx-head) + 70px);max-width:calc(100% - var(--hx-left-w) - 120px)}
 }
 

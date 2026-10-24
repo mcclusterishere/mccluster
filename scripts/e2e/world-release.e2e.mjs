@@ -176,6 +176,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.locator('[data-event-orbit]').click();
  check(scope,'event orbit follows the inspected object and exposes the globe',!!(await state()).following&&(await state()).orbit&&(width>=1100||(await state()).mapFocus&&await page.locator('.hx-detail').isHidden()));
  await shot('event-orbit');
+ if(width<1100){await page.locator('.hx-map-focus').click();check(scope,'Show panels remains clickable while orbiting',!(await state()).mapFocus&&await page.locator('.hx-detail').isVisible());}
  await page.locator('#hxTab-people').click();
  check(scope,'view switch removes warning panel and overlay immediately',!(await page.textContent('.hx-detail')).includes('Tornado Warning')&&await page.locator('.hx-pop').isHidden()&&await page.locator('.hx-results').isHidden());
  await page.locator('#hxTab-world').click();

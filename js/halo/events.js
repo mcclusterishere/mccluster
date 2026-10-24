@@ -91,7 +91,7 @@
     function makeModel(r){
       const entities=[],origin=C.Transforms.eastNorthUpToFixedFrame(r.position),unit=unitFor(r);
       const pos=(x,y,z)=>C.Matrix4.multiplyByPoint(origin,new C.Cartesian3(x*unit,y*unit,z*unit),new C.Cartesian3());
-      const add=(x,y,z,shape)=>{const heading=r.kind==='vessel'?(r.item.heading??r.item.cog??0):0;const e=viewer.entities.add({position:pos(x,y,z),orientation:C.Transforms.headingPitchRollQuaternion(r.position,new C.HeadingPitchRoll(C.Math.toRadians(heading),0,0)),...shape});e.haloObjectPick=r.pick;entities.push(e);return e;};
+      const add=(x,y,z,shape)=>{const heading=r.kind==='vessel'?(r.item.heading??r.item.cog??0):0,position=pos(x,y,z);if(shape.ellipsoid)shape.ellipsoid={stackPartitions:12,slicePartitions:20,...shape.ellipsoid};const e=viewer.entities.add({position:new C.CallbackPositionProperty(()=>position,false),orientation:C.Transforms.headingPitchRollQuaternion(r.position,new C.HeadingPitchRoll(C.Math.toRadians(heading),0,0)),...shape});e.haloObjectPick=r.pick;entities.push(e);return e;};
       const parts=[];
       if(r.kind==='tornado'){
         for(let i=0;i<8;i++){const h=.15+i*.23,rad=.08+i*.085;parts.push({e:add(0,0,h,{ellipsoid:{radii:new C.Cartesian3(rad*unit,rad*unit,.16*unit),material:C.Color.fromCssColorString(i<3?'#7e7369':'#c4c6c9').withAlpha(.88)}}),i});}
@@ -141,6 +141,9 @@
         if(old&&(unit>old.unit*1.5||unit<old.unit/1.5))removeModel(r.key);
         if(!models.has(r.key))models.set(r.key,makeModel(r));
       }
+      // Nearby procedural geometry replaces its far symbol. Keep the fallback
+      // for GLB aircraft while the external asset is loading.
+      for(const {r} of pool){const m=models.get(r.key);if(m?.entities.length&&m.kind!=='aircraft')r.b.show=false;}
     }
     function tick(){
       if(!alive||document.hidden)return;const now=performance.now();if(now-lastTick<33)return;lastTick=now;
