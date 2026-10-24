@@ -162,7 +162,8 @@
     if (it.core) {
       if (G.layer.locked(it.id)) return { state: 'locked', text: 'Locked' };
       const on = G.layer.on(it.id), c = G.layer.count(it.id);
-      return { state: on ? 'on' : 'off', text: on ? n(c) : '' };
+      const detail=G.objects&&G.objects.stats(),budget=detail&&detail[it.id];
+      return { state: on ? 'on' : 'off', text: on ? (budget ? n(budget.shown)+' shown / '+n(budget.loaded)+' loaded' : n(c)) : '' };
     }
     const s = layers && layers.status(it.id);
     if (!s) return { state: 'off', text: '' };
@@ -240,12 +241,14 @@
     if (!V || !target || typeof target.position !== 'function') return;
     const p0 = target.position();
     if (!p0) return;
+    V.camera.cancelFlight();
     followTarget = target;
     V.camera.lookAt(p0, new C.HeadingPitchRange(V.camera.heading, C.Math.toRadians(-35), target.range || 80000));
     let last = p0;
     followTick = () => {
       const p = followTarget && followTarget.position();
-      if (!p || C.Cartesian3.distance(p, last) < 0.5) return;
+      if (!p) { stopFollow(); return; }
+      if (C.Cartesian3.distance(p, last) < 0.5) return;
       last = p;
       V.camera.lookAt(p, new C.HeadingPitchRange(V.camera.heading, V.camera.pitch, C.Cartesian3.magnitude(V.camera.position)));
     };
@@ -367,7 +370,7 @@
   /* ---------- pick: what a tap on the Earth opens ---------- */
   function pick(e) {
     if (!mounted || !e) return false;
-    const id = e.id;
+    const id = e.id && e.id.haloObjectPick || e.id;
     if (id && id.haloPick && id.layer === 'halo-mark' && id.sel) { select(id.sel); openSheetIfPhone(); return true; }
     if (id && id.haloPick && layers) {
       const d = layers.describe(id);
@@ -378,14 +381,14 @@
     }
     if (id && id.layer === 'flights' && id.aircraft) {
       const a = id.aircraft;
-      G.openAircraft(id);
-      addFollow({ label: a.callsign || a.id || 'aircraft', range: 60000, position: () => C.Cartesian3.fromDegrees(a.lon, a.lat, Math.max(0, a.altitude ?? 9000)) });
+      stopFollow();setOrbit(false);G.openAircraft(id);
+      addFollow({ label: a.callsign || a.id || 'aircraft', range: 2500, position: () => C.Cartesian3.fromDegrees(a.lon, a.lat, Math.max(0, a.altitude ?? 0)) });
       return true;
     }
     if (id && id.layer === 'satellites' && id.sat) {
       const sat = id.sat;
-      G.openSatellite(sat);
-      addFollow({ label: sat.name || 'satellite', range: 900000, position: () => G.satPosition(sat) });
+      stopFollow();setOrbit(false);G.openSatellite(sat);
+      addFollow({ label: sat.name || 'satellite', range: 200000, position: () => G.satPosition(sat) });
       return true;
     }
     return false;
@@ -396,7 +399,8 @@
     if (!b) return;
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'cctv-act hx-follow-btn'; btn.textContent = 'Follow';
-    btn.onclick = () => { follow(target); G.closeSheet(); };
+    btn.onclick = () => { follow(target); if(G.hideInspection)G.hideInspection(); };
+    const orbit=document.createElement('button');orbit.type='button';orbit.className='cctv-act hx-follow-btn';orbit.textContent='Orbit object';orbit.disabled=reduced();orbit.onclick=()=>{follow(target);setOrbit(true);if(G.hideInspection)G.hideInspection();};b.appendChild(orbit);
     b.appendChild(btn);
   }
 
@@ -1070,7 +1074,7 @@
       '<button type="button" class="hx-map-focus" aria-pressed="false" aria-label="Expand the interactive globe">' + ICON.expand + '<span>Full globe</span></button>' +
       '<div class="hx-pop" id="hxPop" hidden><p class="hx-label">Base map</p>' + base + '<p class="hx-label">Vision</p><div class="hx-styles">' + styles + '</div>' +
       '<div class="hx-tools" style="margin-top:6px"><button type="button" class="hx-tool" data-fx="sharpen" aria-pressed="false">Sharpen</button><button type="button" class="hx-tool" data-fx="bloom" aria-pressed="false">Bloom</button></div><p class="hx-note">Visual treatments only: they change how the Earth looks, not what any sensor saw.</p>' +
-      '<p class="hx-label">Tools</p><div class="hx-tools"><button type="button" class="hx-tool" data-tool="hud" aria-pressed="false">Telemetry HUD <kbd>H</kbd></button><button type="button" class="hx-tool" data-tool="orbit" aria-pressed="false">Orbit <kbd>O</kbd></button><button type="button" class="hx-tool" data-tool="stop" hidden>Stop following <kbd>Esc</kbd></button><button type="button" class="hx-tool" data-tool="share">Copy a link to this view</button><button type="button" class="hx-tool" data-tool="home">Back to the whole Earth</button></div><p class="hx-share" aria-live="polite"></p></div>' +
+      '<fieldset class="hx-density"><legend>Object detail & density</legend><label>Aircraft shown <input type="range" min="1" max="5000" value="5000" data-density="flights" aria-label="Aircraft shown"><output data-density-count="flights"></output></label><label>Satellites shown <input type="range" min="1" max="240" value="240" data-density="satellites" aria-label="Satellites shown"><output data-density-count="satellites"></output></label><label><input type="checkbox" data-models checked> Nearby 3D objects</label><p class="hx-note">Counts apply to loaded data. Nearby objects use 3D models; distant objects keep selectable symbols. Selected objects stay visible.</p></fieldset><p class="hx-label">Tools</p><div class="hx-tools"><button type="button" class="hx-tool" data-tool="hud" aria-pressed="false">Telemetry HUD <kbd>H</kbd></button><button type="button" class="hx-tool" data-tool="orbit" aria-pressed="false">Orbit <kbd>O</kbd></button><button type="button" class="hx-tool" data-tool="stop" hidden>Stop following <kbd>Esc</kbd></button><button type="button" class="hx-tool" data-tool="share">Copy a link to this view</button><button type="button" class="hx-tool" data-tool="home">Back to the whole Earth</button></div><p class="hx-share" aria-live="polite"></p></div>' +
       '<div class="hx-ctl" role="toolbar" aria-label="Globe controls" aria-orientation="vertical"><button type="button" class="hx-compass" data-ctl="north" aria-label="Face north">' + ICON.north + '<b>N</b></button><button type="button" data-ctl="in" aria-label="Zoom in">' + ICON.plus + '</button><button type="button" data-ctl="out" aria-label="Zoom out">' + ICON.minus + '</button><button type="button" data-ctl="locate" aria-label="Near me (approximate)">' + ICON.locate + '</button></div>' +
       '<p class="hx-hint"><span class="hx-hint__narrow">' + ICON.hand + 'Drag to turn · Pinch to zoom</span><span class="hx-hint__wide">' + ICON.mouse + 'Drag to orbit · Scroll to zoom</span></p><ul class="hx-legend" aria-label="Legend"></ul>' + base + '</div>' +
       '<section class="hx-right hx-panel hx-detail" aria-label="Detail" data-open="false"><div class="hx-detail__body"></div><div class="hx-detail__foot"></div></section>' +
@@ -1105,7 +1109,11 @@
     $('.hx-search', root).onsubmit = (e) => { e.preventDefault(); search(ui.search.value); };
     let typing = 0;
     ui.search.oninput = () => { clearTimeout(typing); typing = setTimeout(() => search(ui.search.value), 350); };
-    ui.layersBtn.onclick = () => setPop(ui.pop.hidden);
+    if(V&&G.objects)G.objects.start();
+    function paintDensity(){const stats=G.objects&&G.objects.stats();for(const k of ['flights','satellites']){const o=$('[data-density-count="'+k+'"]',root),s=stats&&stats[k];o.textContent=s?s.shown+' shown / '+s.loaded+' loaded':'Map unavailable';}}
+    $$('[data-density]',root).forEach(input=>{input.disabled=!V;input.oninput=()=>{if(G.objects)G.objects.setLimit(input.dataset.density,input.value);paintDensity();};});
+    $('[data-models]',root).disabled=!V;$('[data-models]',root).onchange=e=>{if(G.objects)G.objects.setModels(e.target.checked);};
+    ui.layersBtn.onclick = () => {paintDensity();setPop(ui.pop.hidden);};
     ui.mapFocus.onclick = () => setMapFocus(!mapFocus);
     $$('[data-base]', root).forEach((b) => { b.onclick = () => setBase(b.dataset.base); });
     $$('[data-style]', root).forEach((b) => { b.onclick = () => { if (vision) vision.set(b.dataset.style); paintVision(); savePrefs(); }; });
@@ -1252,6 +1260,7 @@
     if (photo || photoPhase !== 'off') { photoPhase = 'off'; if (photo && V.scene.primitives.contains(photo)) V.scene.primitives.remove(photo); photo = null; V.scene.globe.show = true; G.setPhotoreal(false); }
     offs.forEach((off) => off()); offs = [];
     if (marks) { V.scene.primitives.remove(marks.points); V.scene.primitives.remove(marks.labels); marks = null; }
+    if(G.objects)G.objects.stop();
     if (layers) layers.destroy();
     if (vision) vision.destroy();
     if (hud) hud.destroy();
