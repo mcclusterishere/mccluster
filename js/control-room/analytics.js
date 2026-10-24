@@ -813,11 +813,11 @@
     var funnel='<div class="cra-steps2">'+steps.map(function(x,i){var p=accounts?x[1]/accounts*100:0;return'<div class="cra-step2"><span class="cra-step2__n">'+(i+1)+'</span><div class="cra-step2__body"><div class="cra-step2__top"><b>'+e(x[0])+'</b><strong>'+n(x[1])+'</strong></div><div class="cra-step2__bar"><i style="--pct:'+Math.max(x[1]?2:0,p).toFixed(1)+'%"></i></div><small>'+(i?Math.round(p)+'% of accounts · ':"")+e(x[2])+'</small></div></div>';}).join("")+'</div>';
     /* songs, as a table you can read across */
     var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Heard on the way</th><th class="n">Signup rate (cohort needed)</th><th class="n">Typical time</th></tr></thead><tbody>'+
-      t.slice(0,20).map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+"—"+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
+      t.map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+"—"+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
     /* the accounts themselves, filtered by the path you tapped */
     /* the shared region and source filters narrow the paths and the accounts (the counts above stay the whole range) */
     var fj=journeys(),f=S.idFilter&&S.idFilter.path,list=f?fj.filter(function(j){return pathKey(j.source,j.last_track)===f;}):fj;
-    var cards=list.length?'<div class="cra-accts">'+list.slice(0,60).map(function(j){
+    var cards=list.length?'<div class="cra-accts">'+list.slice(0,S.journeyLimit||30).map(function(j){
       var name=[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"Account",assisted=(j.assisted_tracks||[]).filter(function(x){return x!==j.last_track;});
       return'<article class="cra-acct"><div class="cra-acct__top"><b>'+e(name)+'</b><small>'+e(j.created_at?new Date(j.created_at).toLocaleString():"")+'</small></div>'+
         '<div class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(j.source||"direct")+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>'+
@@ -830,7 +830,7 @@
     return lead+'<div class="cra-grid">'+card("How signups happened","Each step as a share of accounts created. Song attribution looks back 7 days on the same device; it shows what happened before, not what caused it.",funnel,true)+
       card("Source → track → account","Every route someone took to an account. Tap one to see those people."+(S.geo.region||S.geo.source?" Narrowed by "+[S.geo.region,S.geo.source].filter(Boolean).join(" · ")+".":""),flow({journeys:fj}),true)+
       card("Songs","Last song before signup is the song they heard right before joining. Heard on the way counts every song they played in the 7 days before.",songs,true)+
-      card("Accounts","Newest first."+(list.length>60?" Showing 60 of "+n(list.length)+".":""),filterNote+cards,true)+'</div>'+measurementNote(d)+err("identity");
+      card("Accounts","Newest first."+(list.length>(S.journeyLimit||30)?" Showing "+n(Math.min(S.journeyLimit||30,list.length))+" of "+n(list.length)+".":""),filterNote+cards+(list.length>(S.journeyLimit||30)?'<button type="button" class="cr-btn" data-cra-more-journeys>Show more accounts</button>':""),true)+'</div>'+measurementNote(d)+err("identity");
   }
   function pct(a,b){return b?Math.round(a/b*100)+"%":"0%";}
   /* FORENSICS is its own module (js/control-room/forensics.js): sessions you
@@ -1172,7 +1172,8 @@
     var ge=root.querySelector("#craEvent");if(ge)ge.onchange=function(){S.geo.eventType=ge.value;paint();};
     root.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){var c=b.getAttribute("data-cra-region");pickRegion(c&&c===S.geo.region?"":c);};});
     root.querySelectorAll("[data-cra-event]").forEach(function(b){b.onclick=function(){S.geo.eventType=b.getAttribute("data-cra-event")||"";paint();};});
-    root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
+    var moreJourneys=root.querySelector("[data-cra-more-journeys]");if(moreJourneys)moreJourneys.onclick=function(){S.journeyLimit=(S.journeyLimit||30)+30;paint();};
+    root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.journeyLimit=30;S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
     root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){selectSection(b.getAttribute("data-cra-sec"));};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");

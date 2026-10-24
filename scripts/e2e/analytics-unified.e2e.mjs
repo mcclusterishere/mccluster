@@ -204,7 +204,7 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
   check(size.width,'touch swipe changes the whole chapter',await page.locator('[role=tab][aria-selected=true]').innerText()==='Audience');
  }
  check(size.width,'dataset counts are not fetched on every dashboard open',!calls.some(x=>x.includes('/analytics/coverage')));
- await page.locator('[data-cad-health]').click();await page.waitForSelector('[data-cu-dataset="headlines"]');
+ await page.locator('[data-cad-health]').click();await page.waitForSelector('.cad-health');await page.locator('[data-cu-panel="datasets"]').click();await page.waitForSelector('[data-cu-dataset="headlines"]');
  check(size.width,'dataset explorer completes both pages',calls.filter(x=>x.includes('/analytics/coverage')).length===2&&calls.some(x=>x.includes('offset=2')));
  check(size.width,'dataset explorer shows measured empty and missing states',await page.locator('.cu-dataset-list').innerText().then(t=>t.includes('Empty')&&t.includes('Storage missing')));
  await page.locator('#cuDatasetStatus').selectOption('empty');

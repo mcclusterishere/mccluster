@@ -3,7 +3,7 @@
 (function(){
   'use strict';
   window.CR=window.CR||{};
-  var H={health:null,healthError:null,sources:null,readiness:null,error:null,busy:false,source:'',query:'',inventory:null,inventoryError:null,inventoryBusy:false,eventInventory:null,eventError:null,eventBusy:false,eventQuery:'',fieldQuery:'',fieldLimit:30,panel:'datasets',datasetQuery:'',family:'',datasetStatus:'',dataset:'',records:null,runs:null,result:null,recordError:null,reading:false,seq:0};
+  var H={health:null,healthError:null,sources:null,readiness:null,error:null,busy:false,source:'',query:'',inventory:null,inventoryError:null,inventoryBusy:false,eventInventory:null,eventError:null,eventBusy:false,eventQuery:'',eventLimit:50,fieldQuery:'',fieldLimit:30,panel:'datasets',datasetQuery:'',family:'',datasetStatus:'',dataset:'',records:null,runs:null,result:null,recordError:null,reading:false,seq:0};
   var W={economy:'WLD',data:null,error:null,busy:false,seq:0};
   var WORKSPACE=[['Inbox','work:inbox'],['People','work:people'],['Projects','work:projects'],['Payments','work:payments'],['Renewals','work:renewals'],['Publishing','create:schedule'],['Library','create:library'],['Music','create:music'],['McCluster AI','ai'],['Apps','apps']];
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -74,7 +74,7 @@
       rows([['Accounts connected',num(provider.connected_accounts)],
         ['Imported posts',num(provider.imported_posts)],['Provider insight snapshots',num(provider.metric_snapshots)],
         ['Provider state',provider.status||'Unknown']])+
-      (provider.reauthorization_required?'<p role="alert">Meta error 190: authorization needs renewal. '+esc(provider.next_step)+'</p>'+link('Open Channels','create:channels'):'<p>'+esc(provider.next_step||'')+'</p>')):'';
+      (provider.reauthorization_required?'<p role="alert">Meta error 190: authorization needs renewal. '+'Renew the existing Instagram authorization in the server’s Meta integration, then run verified media discovery. Channels lists the account but does not renew its authorization.</p>'+link('View registered channels','create:channels'):'<p>'+esc(provider.next_step||'')+'</p>')):'';
     if(H.eventBusy)return '<p role="status">Reading all stored first-party event names…</p>';
     if(H.eventError)return '<p role="alert">'+esc(H.eventError)+'</p><button type="button" data-cu-events-retry>Retry event inventory</button>';
     if(!d)return '<p>Event-name inventory is measured on demand, with taxonomy and raw/lean reconciliation.</p><button type="button" data-cu-events-retry>Read event inventory</button>';
@@ -86,7 +86,7 @@
       fact('Unclassified records',num(d.summary&&d.summary.unclassified_events),'Stored raw events, all time')+
       fact('Raw/lean mismatches',num(d.summary&&d.summary.mismatched_names),'Must be investigated, not backfilled blindly')+'</div>';
     var filters='<label class="cu-search">Find event name or stage<input id="cuEventQuery" type="search" value="'+esc(H.eventQuery)+'" placeholder="music_play, unclassified…"></label>';
-    var body='<div class="cu-dataset-list">'+matched.slice(0,150).map(function(r){
+    var body='<div class="cu-dataset-list">'+matched.slice(0,H.eventLimit).map(function(r){
       return '<details class="cu-dataset-row"><summary><b>'+esc(r.name)+'</b><small>'+esc(r.taxonomy_stage||'Unclassified')+' · 24h '+num(r.recent_24h)+' · 7d '+num(r.recent_7d)+' · lifetime '+num(r.raw_total)+'</small></summary>'+
         rows([['Raw events',num(r.raw_total)],['Lean projection',num(r.lean_total)],['Bot events',num(r.bot_rows)],
         ['First recorded',date(r.first_seen_at)],['Last recorded',date(r.last_seen_at)],
@@ -95,8 +95,8 @@
     }).join('')+'</div>';
     return card('Event dictionary','Raw vs lean, observed and unclassified records; client outcomes are not verified accounts, payments or mission completions.',
       '<p>Checked '+esc(date(d.measured_at))+'. '+(d.partial?'Provider source incomplete.':'Live database read, not a frozen snapshot.')+'</p>'+summary+filters+
-      '<p>'+num(matched.length)+' matching names · displaying up to 150. Taxonomy stages are review classifications, not proof of real-world outcomes.</p>'+body+
-      (matched.length>150?'<p>Refine the search to view all remaining names.</p>':'')) +nav;
+      '<p>'+num(matched.length)+' matching names · showing '+num(Math.min(matched.length,H.eventLimit))+'. Taxonomy stages are review classifications, not proof of real-world outcomes.</p>'+body+
+      (matched.length>H.eventLimit?'<button type="button" data-cu-more-events>Show more event names</button>':'')) +nav;
   }
   async function loadEvents(request,paint,force){
     if(H.eventBusy||(!force&&H.eventInventory))return;
@@ -179,16 +179,17 @@
     if(window.CR.connections)window.CR.connections.bind(root,request,paint);
     root.querySelectorAll('[data-cu-panel]').forEach(function(b){b.onclick=function(){H.panel=b.dataset.cuPanel;if(H.panel==='events')loadEvents(request,paint);paint();};});
     root.querySelectorAll('[data-cu-dataset]').forEach(function(b){b.onclick=function(){H.dataset=b.dataset.cuDataset;paint();var host=window.CR.analytics.state.host;var detail=host&&host.querySelector('[data-cu-dataset-detail]');if(detail)detail.scrollIntoView({block:'nearest'});};});
-    [['#cuDatasetSearch','datasetQuery'],['#cuDatasetFamily','family'],['#cuDatasetStatus','datasetStatus']].forEach(function(x){var el=root.querySelector(x[0]);if(el)el.onchange=function(){H[x[1]]=el.value;H.dataset='';paint();};});
+    [['#cuDatasetSearch','datasetQuery'],['#cuDatasetFamily','family'],['#cuDatasetStatus','datasetStatus']].forEach(function(x){var el=root.querySelector(x[0]);if(el)el[x[0]==='#cuDatasetSearch'?'oninput':'onchange']=function(){H[x[1]]=el.value;H.dataset='';paint();};});
     var retry=root.querySelector('[data-cu-coverage-retry]');if(retry)retry.onclick=function(){window.CR.analytics.loadCoverage(true);};
     var er=root.querySelector('[data-cu-events-retry]');if(er)er.onclick=function(){H.eventInventory=null;loadEvents(request,paint,true);};
-    var evq=root.querySelector('#cuEventQuery');if(evq)evq.onchange=function(){H.eventQuery=evq.value;paint();};
+    var evq=root.querySelector('#cuEventQuery');if(evq)evq.oninput=function(){H.eventQuery=evq.value;H.eventLimit=50;paint();};
+    var moreEvents=root.querySelector('[data-cu-more-events]');if(moreEvents)moreEvents.onclick=function(){H.eventLimit+=50;paint();};
     var directoryRetry=root.querySelector('[data-cu-inventory-retry]');if(directoryRetry)directoryRetry.onclick=function(){H.inventoryError=null;loadInventory(paint);};
 
     var world=root.querySelector('#cuWorldContext');if(world)world.onsubmit=function(e){e.preventDefault();loadWorld(request,paint,root.querySelector('#cuEconomy').value.trim().toUpperCase());};
-    var field=root.querySelector('#cuFieldSearch');if(field)field.onchange=function(){H.fieldQuery=field.value;H.fieldLimit=30;paint();};var more=root.querySelector('[data-cu-more-fields]');if(more)more.onclick=function(){H.fieldLimit+=30;paint();};
+    var field=root.querySelector('#cuFieldSearch');if(field)field.oninput=function(){H.fieldQuery=field.value;H.fieldLimit=30;paint();};var more=root.querySelector('[data-cu-more-fields]');if(more)more.onclick=function(){H.fieldLimit+=30;paint();};
     var refresh=root.querySelector('[data-cu-refresh]');if(refresh)refresh.onclick=function(){load(request,paint);};
-    var search=root.querySelector('#cuSourceSearch');if(search)search.onchange=function(){H.query=search.value;paint();};
+    var search=root.querySelector('#cuSourceSearch');if(search)search.oninput=function(){H.query=search.value;paint();};
     root.querySelectorAll('[data-cu-source]').forEach(function(b){b.onclick=function(){++H.seq;H.reading=false;H.source=b.dataset.cuSource;H.records=null;H.result=null;H.recordError=null;H.parameters=JSON.stringify(H.source==='cctv'?{provider:'austin',limit:100}:H.source==='celestrak'?{group:'stations'}:['usgs','open_meteo','adsb_lol','overpass','nominatim','tomtom'].includes(H.source)?{lat:41.31,lon:-72.93}: {},null,2);paint();};});
     var archive=root.querySelector('[data-cu-archive]');if(archive)archive.onclick=function(){read(request,paint,false);};
     var form=root.querySelector('#cuSnapshot');if(form)form.onsubmit=function(e){e.preventDefault();H.parameters=root.querySelector('#cuParameters').value;try{var p=JSON.parse(H.parameters);if(!p||Array.isArray(p)||typeof p!=='object')throw Error('Use a JSON object.');if(Object.keys(p).some(function(k){return /token|secret|password|api.?key|credential/i.test(k);}))throw Error('Provider credentials stay in server settings.');read(request,paint,true,p);}catch(e){H.recordError=e.message;paint();}};
