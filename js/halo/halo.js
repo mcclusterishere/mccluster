@@ -141,7 +141,7 @@
   const placed = (m) => m && m.place && fin(m.place.lat) && fin(m.place.lon);
   const missionById = (id) => missions().find((m) => m.id === id) || null;
   const personById = (id) => peopleList().find((p) => p.m_uid === id) || null;
-  function missionTone(m) { return m.review ? 'amber' : m.status === 'active' ? 'cyan' : m.status === 'blocked' ? 'red' : m.status === 'completed' ? 'green' : 'mute'; }
+  function missionTone(m) { return m.review ? 'amber' : m.status === 'active' ? 'cyan' : m.status === 'blocked' ? 'red' : m.status === 'completed' ? 'mute' : 'mute'; }
   function missionWord(m) { return { active: 'Active', planned: 'Planned', blocked: 'Paused', completed: 'Closed' }[m.status] || 'Unknown'; }
   function missionProgress(m) {
     const c = m.counts || {}, joined = fin(c.joined) ? c.joined : 0, verified = fin(c.verified) ? c.verified : 0;
@@ -539,7 +539,7 @@
     const hb = body('health'), hs = data.peek('health');
     if (hb || hs.error) {
       const sh = hb && hb.source_health, stale = sh && sh.stale;
-      rows.push({ id: 'intel-connector', name: 'Intelligence connector', on: true, prov: 'reported', h: hs.error && !hb ? { tone: 'red', text: hs.error === 'not deployed' ? 'Not deployed' : 'Could not reach the Worker' } : stale ? { tone: 'amber', text: 'Stale: last success ' + ago(ms(sh.last_success_at)) } : sh && sh.last_success_at ? { tone: 'green', text: 'Updated ' + ago(ms(sh.last_success_at)) } : { tone: 'amber', text: 'No successful run yet' } });
+      rows.push({ id: 'intel-connector', name: 'Intelligence connector', on: true, prov: 'reported', h: hs.error ? { tone: 'red', text: (hb ? 'Stale data · ' : '') + hs.error } : stale ? { tone: 'amber', text: 'Stale: last success ' + ago(ms(sh.last_success_at)) } : sh && sh.last_success_at ? { tone: 'green', text: 'Updated ' + ago(ms(sh.last_success_at)) } : { tone: 'amber', text: 'No successful run yet' } });
     }
     const ms2 = data.peek('missions');
     rows.push({ id: 'missions-data', name: 'Missions and evidence', on: true, prov: 'reported', h: dataHealth('missions') });
@@ -802,11 +802,11 @@
     const teamGrid = (list) => '<ul class="hx-team">' + list.map((t) => '<li>' + avatar(t.name, t.avatar_url, '<i data-tone="' + ({ verified: 'green', submitted: 'amber', in_progress: 'cyan' }[t.status] || 'mute') + '"></i>') + '<span>' + esc(String(t.name || 'Member').split(/\s+/)[0]) + '</span></li>').join('') + '</ul>';
     if (dtab === 'overview') {
       html += (m.description ? '<p class="hx-lead">' + esc(String(m.description).split('\n')[0].slice(0, 160)) + '</p>' : '') +
-        '<div class="hx-bar" style="height:6px;margin-top:12px"><i style="width:' + p.pct + '%"></i></div><div class="hx-progress"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified</span><span>' + p.pct + '%</span></div>' +
+        '<div class="hx-bar" style="height:6px;margin-top:12px"><i style="width:' + p.pct + '%"></i></div><div class="hx-progress"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified</span><span>' + (p.known ? p.pct + '%' : '—') + '</span></div>' +
         '<dl class="hx-kv"><div><dt>Team</dt><dd>' + n(c.joined || team.length) + (fin(m.capacity) ? ' of ' + n(m.capacity) : '') + '</dd></div><div><dt>Due</dt><dd>' + esc(due(m.ends_at)) + '</dd></div></dl>' +
         '<div class="hx-section" style="border-top:0;margin-top:4px"><p class="hx-label">Team</p>' + (team.length ? teamGrid(team.slice(0, 6)) + '<p class="hx-note">' + esc(last ? 'Last activity ' + ago(last) : '') + '</p>' : '<p class="hx-note">No one has joined yet.</p>') + '</div>' +
         '<div class="hx-section"><p class="hx-label">Next steps</p><ul class="hx-chips" style="display:grid;gap:6px">' + nextSteps(m).map((s) => '<li>' + esc(s) + '</li>').join('') + '</ul></div>' +
-        (ev.length ? '<div class="hx-section"><p class="hx-label">Evidence · ' + n(ev.length) + (ev.length === 1 ? ' item' : ' items') + '</p>' + evidenceList(ev.slice(0, 3)) + '</div>' : '');
+        (ev.length ? '<div class="hx-section"><p class="hx-label">Recent evidence · ' + n(ev.length) + (ev.length === 1 ? ' item' : ' items') + '</p>' + evidenceList(ev.slice(0, 3)) + '</div>' : '');
     } else if (dtab === 'team') html += team.length ? '<div class="hx-section" style="border-top:0">' + teamGrid(team) + dl(team.map((t) => [t.name || 'Member', cap(String(t.status || '').replace('_', ' ')) + (t.since ? ' · ' + ago(ms(t.since)) : '')])) + '</div>' : '<p class="hx-note">No one has joined yet.</p>';
     else if (dtab === 'evidence') html += ev.length ? '<div class="hx-section" style="border-top:0">' + evidenceList(ev) + '</div>' : '<p class="hx-note">No evidence submitted yet.</p>';
     else html += '<div class="hx-section" style="border-top:0">' + activityList(missionEvents(m)) + '</div>';
