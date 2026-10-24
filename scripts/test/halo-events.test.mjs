@@ -20,3 +20,9 @@ test('animation reuses bounded texture IDs instead of allocating an image every 
   assert.match(source,/\.setImage\('halo-event:'/);
   assert.doesNotMatch(source,/r\.b\.image\s*=/);
 });
+
+test('moving geometry uses dynamic properties so asynchronous builds can finish',()=>{
+  assert.match(source,/new C.CallbackPositionProperty/);
+  assert.match(source,/p\.radius/);
+  assert.doesNotMatch(source,/else[^\n]*p\.e\.position=/);
+});

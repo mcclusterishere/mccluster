@@ -861,7 +861,7 @@
       const near = fin(it.lat) ? nearMissions(it.lat, it.lon, 2) : [];
       if (near.length) html += '<div class="hx-section"><p class="hx-label">Missions within 300 km</p>' + near.map((x) => missionLink(x.m, Math.round(x.d) + ' km away')).join('') + '</div>';
     } else html += dl([['Source', d.credit || ''], ['Provenance', cap(prov)], ['Retrieved', layers && layers.status(s.layer) && layers.status(s.layer).fetched ? ago(layers.status(s.layer).fetched) : '—']]);
-    const foot = (d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '') + (d.position ? '<div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>' : '<p class="hx-note">This source supplies no map coordinates.</p>');
+    const foot = (d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '') + (d.position ? '<button type="button" class="hx-cta" data-event-orbit>Orbit object</button><div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>' : '<p class="hx-note">This source supplies no map coordinates.</p>');
     return { html, foot };
   }
   function detailEvidence(e) {
@@ -920,6 +920,7 @@
     $$('[data-sel]', ui.right).forEach((b) => { b.onclick = () => { const [k, ...rest] = b.dataset.sel.split(':'); if (k === 'mission' && view !== 'missions' && view !== 'world') setView('missions'); select({ kind: k, id: rest.join(':') }); }; });
     const hist = $('[data-history]', ui.detailFoot); if (hist) hist.onclick = () => { dtab = 'activity'; detailSig = ''; paintDetail(); };
     const fol = $('[data-follow]', ui.detailFoot); if (fol && cur && cur.d && cur.d.position) fol.onclick = () => follow({ label: cur.d.title, range: cur.d.range, position: cur.d.position });
+    const eventOrbit = $('[data-event-orbit]', ui.detailFoot); if (eventOrbit && cur?.d?.position) eventOrbit.onclick = () => { follow({ label: cur.d.title, range: cur.d.range, position: cur.d.position }); setOrbit(true); if (!wide()) setMapFocus(true); };
     const fly = $('[data-fly]', ui.detailFoot); if (fly) fly.onclick = () => { const at = whereIs(cur); if (at) flyTo(at.lon, at.lat, at.close || 1.5e6); };
     const tog = $('[data-toggle-source]', ui.detailFoot); if (tog) tog.onclick = async () => { const it = ALL_ITEMS.find((x) => x.id === tog.dataset.toggleSource); if (it) { await setItem(it, !isOn(it)); detailSig = ''; schedulePaint(); } };
     loadThumbs(ui.detailBody);

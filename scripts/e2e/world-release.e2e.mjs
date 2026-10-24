@@ -173,6 +173,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
    }
  }
 
+ await page.locator('[data-event-orbit]').click();
+ check(scope,'event orbit follows the inspected object and exposes the globe',!!(await state()).following&&(await state()).orbit&&(width>=1100||(await state()).mapFocus&&await page.locator('.hx-detail').isHidden()));
+ await shot('event-orbit');
  await page.locator('#hxTab-people').click();
  check(scope,'view switch removes warning panel and overlay immediately',!(await page.textContent('.hx-detail')).includes('Tornado Warning')&&await page.locator('.hx-pop').isHidden()&&await page.locator('.hx-results').isHidden());
  await page.locator('#hxTab-world').click();
@@ -272,7 +275,7 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
 }
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 try {
-for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
+for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDTH)]:[390,820,1280]))for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
  const scope=width+' '+persona, ctx=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390});
  let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[];
  await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest'){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:'owner-'+p,exp}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:'owner-'+p,email:'fixture@example.invalid'}}));}},persona);

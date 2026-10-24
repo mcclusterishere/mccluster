@@ -119,6 +119,13 @@
       } else if(r.kind==='aircraft' && Number.isFinite(r.item.alt)){
         const e=add(0,0,0,{model:{uri:'assets/3d/halo/airplane.glb',minimumPixelSize:70,maximumScale:300}});e.orientation=C.Transforms.headingPitchRollQuaternion(r.position,new C.HeadingPitchRoll(C.Math.toRadians((r.item.track||0)+180),0,0));
       } else if(['ice','landslide'].includes(r.kind)) add(0,0,.25,{ellipsoid:{radii:new C.Cartesian3(unit*.7,unit*.4,unit*.4),material:color(r.kind)}});
+      // Dynamic properties update an existing object. Reassigning constant
+      // geometry every frame repeatedly restarts Cesium's asynchronous build.
+      for(const p of parts){
+        if(p.e.position){p.position=p.e.position.getValue(viewer.clock.currentTime);p.e.position=new C.CallbackPositionProperty(()=>p.position,false);}
+        if(p.e.ellipse){p.radius=unit*(p.i+1)/3;p.tint=color(r.kind,.9);p.e.ellipse.semiMajorAxis=new C.CallbackProperty(()=>p.radius,false);p.e.ellipse.semiMinorAxis=new C.CallbackProperty(()=>p.radius,false);p.e.ellipse.outlineColor=new C.CallbackProperty(()=>p.tint,false);}
+        if(p.flow){p.positions=p.e.polyline.positions.getValue(viewer.clock.currentTime);p.e.polyline.positions=new C.CallbackProperty(()=>p.positions,false);}
+      }
       return {entities,parts,pos,unit,kind:r.kind};
     }
     function selectRows(){
@@ -145,12 +152,12 @@
       const t=moving?now/1000:0;
       for(const m of models.values())for(const p of m.parts){
         if(p.lightning)p.e.show=!moving||Math.floor(t)%4===0;
-        else if(p.precip)p.e.position=m.pos((p.i%5-2)*.23+(m.kind==='snow'?Math.sin(t+p.i)*.08:0),Math.floor(p.i/5)*.3-.15,1.15-((t*(m.kind==='rain'?.7:.2)+p.i*.1)%1));
-        else if(p.flow)p.e.polyline.positions=Array.from({length:16},(_,j)=>m.kind==='heat'?m.pos((p.i-1)*.3+Math.sin(j*.5-t)*.08,0,j*.08):m.pos((j-8)*.12,(p.i-1)*.28+Math.sin(j*.5-t)*.08,.3+Math.sin(j*.5-t)*.1));
-        else if(m.kind==='tornado')p.e.position=m.pos(Math.sin(t*2+p.i*.7)*.04*p.i,Math.cos(t*2+p.i*.7)*.04*p.i,.15+p.i*.23);
-        else if(m.kind==='cyclone'){const a=p.a+t*.2;p.e.position=m.pos(Math.cos(a)*p.rad,Math.sin(a)*p.rad,.1);}
-        else if(['quake','flood','wave','tide'].includes(m.kind)){const q=(t*.23+p.i/3)%1;p.e.ellipse.semiMajorAxis=p.e.ellipse.semiMinorAxis=m.unit*(.12+q);p.e.ellipse.outlineColor=color(m.kind,1-q*.85);}
-        else p.e.position=m.pos(Math.sin(t+p.i)*.12,Math.cos(t+p.i)*.12,.3+p.i*.23+Math.sin(t*1.5+p.i)*.08);
+        else if(p.precip)p.position=m.pos((p.i%5-2)*.23+(m.kind==='snow'?Math.sin(t+p.i)*.08:0),Math.floor(p.i/5)*.3-.15,1.15-((t*(m.kind==='rain'?.7:.2)+p.i*.1)%1));
+        else if(p.flow)p.positions=Array.from({length:16},(_,j)=>m.kind==='heat'?m.pos((p.i-1)*.3+Math.sin(j*.5-t)*.08,0,j*.08):m.pos((j-8)*.12,(p.i-1)*.28+Math.sin(j*.5-t)*.08,.3+Math.sin(j*.5-t)*.1));
+        else if(m.kind==='tornado')p.position=m.pos(Math.sin(t*2+p.i*.7)*.04*p.i,Math.cos(t*2+p.i*.7)*.04*p.i,.15+p.i*.23);
+        else if(m.kind==='cyclone'){const a=p.a+t*.2;p.position=m.pos(Math.cos(a)*p.rad,Math.sin(a)*p.rad,.1);}
+        else if(['quake','flood','wave','tide'].includes(m.kind)){const q=(t*.23+p.i/3)%1;p.radius=m.unit*(.12+q);p.tint=color(m.kind,1-q*.85);}
+        else p.position=m.pos(Math.sin(t+p.i)*.12,Math.cos(t+p.i)*.12,.3+p.i*.23+Math.sin(t*1.5+p.i)*.08);
       }
     }
     viewer.scene.preRender.addEventListener(tick);

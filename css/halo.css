@@ -368,6 +368,8 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   .hx-map-focus svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .hx-map-focus[aria-pressed="true"]{border-color:var(--hx-cyan);background:rgba(12,28,49,.94)}
   html.halo-on[data-halo-map="focus"]{--hx-peek:0px;--hx-time:0px}
+  html.halo-on[data-halo-map="focus"] .hx-right,
+  html.halo-on[data-halo-map="focus"] .cctv-sheet,
   html.halo-on[data-halo-map="focus"] .hx-left,
   html.halo-on[data-halo-map="focus"] .hx-time{display:none}
   html.halo-on[data-halo-map="focus"] .hx-legend{bottom:12px}
