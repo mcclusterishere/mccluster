@@ -451,7 +451,7 @@
   }
   function shareLink() {
     const enc = btoa(unescape(encodeURIComponent(JSON.stringify(viewState())))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    const url = new URL(location.href); url.searchParams.set('halo', '1'); url.searchParams.delete('item'); url.searchParams.delete('section'); url.hash = 'halo=' + enc;
+    const url = new URL(location.href); url.searchParams.set('halo', '1'); url.searchParams.delete('item'); url.searchParams.delete('section'); url.searchParams.delete('hours'); url.searchParams.delete('q'); url.searchParams.delete('sort'); url.hash = 'halo=' + enc;
     return url.toString();
   }
   function readShared() {
@@ -560,12 +560,15 @@
   }
   function taskLink(task, id) { return 'control.html?haloTask=' + task + (id ? '&amp;mission=' + encodeURIComponent(id) : '') + '#create:action-network'; }
   function briefLink(b) { return BRIEFS + '?country=' + encodeURIComponent(b.country || '') + '&amp;day=' + encodeURIComponent(b.day || ''); }
-  function rememberRoute() {
+  function rememberRoute(replace = false) {
     if (!mounted) return;
     const u = new URL(location.href); u.searchParams.set('halo', view);
     if (sel && ['mission','person','evidence','brief','source'].includes(sel.kind)) u.searchParams.set('item', sel.kind + ':' + sel.id); else u.searchParams.delete('item');
-    if (view === 'intel') u.searchParams.set('section', tabs.intel); else u.searchParams.delete('section');
-    if (u.href !== location.href) { if (routeReady && !restoringRoute) history.pushState(null, '', u); else history.replaceState(null, '', u); }
+    if(tabs[view])u.searchParams.set('section',tabs[view]);else u.searchParams.delete('section');
+    if(query[view])u.searchParams.set('q',query[view].slice(0,200));else u.searchParams.delete('q');
+    if(sorts[view])u.searchParams.set('sort',sorts[view]);else u.searchParams.delete('sort');
+    u.searchParams.set('hours',String(hours));
+    if (u.href !== location.href) { if (routeReady && !restoringRoute && !replace) history.pushState(null, '', u); else history.replaceState(null, '', u); }
   }
 
   /* ---------- painting ---------- */
@@ -645,9 +648,9 @@
         '<div class="hx-seg" role="tablist" aria-label="' + esc(head[0]) + '">' + segs.map(([k, l]) => '<button type="button" role="tab" data-seg="' + k + '" aria-selected="false">' + esc(l) + ' <span class="hx-count">0</span></button>').join('') + '</div>' + filters + '<div class="hx-list"></div>';
       const input = $('.hx-find input', ui.leftBody);
       input.value = query[view];
-      input.oninput = () => { query[view] = input.value; schedulePaint(); };
-      $$('[data-seg]', ui.leftBody).forEach((b) => { b.onclick = () => { tabs[view] = b.dataset.seg; if (!sel || !sel.pinned) sel = null; schedulePaint(); }; });
-      const s = $('[data-sort]', ui.leftBody); if (s) { s.value = sorts[view]; s.onchange = () => { sorts[view] = s.value; schedulePaint(); }; }
+      input.oninput = () => { query[view] = input.value; rememberRoute(true); schedulePaint(); };
+      $$('[data-seg]', ui.leftBody).forEach((b) => { b.onclick = () => { tabs[view] = b.dataset.seg; if (!sel || !sel.pinned) sel = null; rememberRoute(); schedulePaint(); }; });
+      const s = $('[data-sort]', ui.leftBody); if (s) { s.value = sorts[view]; s.onchange = () => { sorts[view] = s.value; rememberRoute(); schedulePaint(); }; }
       const a = $('[data-area]', ui.leftBody); if (a) { a.value = area; a.onchange = () => { area = a.value; schedulePaint(); }; }
       const hsel = $('[data-hours]', ui.leftBody); if (hsel) { hsel.value = String(hours); hsel.onchange = () => setHours(+hsel.value); }
     }
@@ -922,7 +925,7 @@
   async function paintTide(box, id) {
     const b = await data.tide(id);
     if (!box.isConnected) return;
-    if (!b || !Array.isArray(b.observations)) { box.innerHTML = '<p class="hx-label">Water level</p><p class="hx-note">' + esc(data.peekTide(id).error === 'not deployed' ? 'Not deployed yet: deploy the Worker to read NOAA water levels.' : 'NOAA did not answer for this station.') + '</p>'; return; }
+    if (!b || !Array.isArray(b.observations)) { box.innerHTML = '<p class="hx-label">Water level</p><p class="hx-note">' + esc(data.peekTide(id).error === 'not deployed' ? 'Water levels are not available yet.' : 'NOAA did not answer for this station.') + '</p>'; return; }
     const pts = b.observations.map((o) => [ms(o[0]), o[1]]).filter((p) => fin(p[0]) && fin(p[1]));
     const latest = b.latest && fin(b.latest.value) ? b.latest : null;
     box.innerHTML = '<p class="hx-label">Water level</p>' + (latest ? '<p class="hx-big">' + latest.value.toFixed(2) + '<small>' + esc(b.units || 'm') + '</small></p><p class="hx-note">' + esc((b.datum || 'MLLW') + ' datum · ' + (latest.quality || '') + ' · observed ' + ago(ms(latest.observed_at))) + '</p>' : '<p class="hx-note">No recent reading.</p>') + '<div data-chart></div><p class="hx-note">' + esc(b.note || 'Observed water level, not a tide prediction.') + '</p>';
@@ -1161,10 +1164,17 @@
     paintLegend(); savePrefs(); rememberRoute(); schedulePaint();
   }
 
+  function readRouteFilters(q) {
+    const v=q.get('halo'),section=q.get('section');
+    const allowed={missions:['active','planned','review','closed'],people:['all','mission','available'],intel:['feed','briefs','sources']};
+    if(allowed[v]){if(allowed[v].includes(section))tabs[v]=section;query[v]=(q.get('q')||'').slice(0,200);}
+    if(['priority','due','title','activity','name'].includes(q.get('sort'))&&sorts[v])sorts[v]=q.get('sort');
+    if([1,6,24].includes(+q.get('hours')))hours=+q.get('hours');
+  }
   function restoreRoute() {
     if(!mounted)return;restoringRoute=true;const q=new URLSearchParams(location.search),v=q.get('halo'),item=q.get('item')||'';
-    if(['feed','briefs','sources'].includes(q.get('section')))tabs.intel=q.get('section');
-    setView(VIEWS.includes(v)?v:'world');
+    readRouteFilters(q);
+    setView(VIEWS.includes(v)?v:'world');buildLeft();
     if(/^(mission|person|evidence|brief|source):.{1,150}$/.test(item)){const [kind,...id]=item.split(':');select({kind,id:id.join(':')},{fly:false});}else select(null,{fly:false});restoringRoute=false;
   }
   function onKey(e) {
@@ -1213,9 +1223,9 @@
     window.addEventListener('resize', onViewportResize);
     if (V) V.camera.changed.addEventListener(onCamera);
     const p = prefs(), shared = readShared(), route = new URLSearchParams(location.search);
-    if (['feed','briefs','sources'].includes(route.get('section'))) tabs.intel=route.get('section');
+    readRouteFilters(route);
     expanded = p.expanded && typeof p.expanded === 'object' ? p.expanded : { air: true };
-    hours = [1, 6, 24].includes(p.hours) ? p.hours : 24; ui.window.value = String(hours);
+    hours = [1,6,24].includes(+route.get('hours')) ? +route.get('hours') : [1, 6, 24].includes(p.hours) ? p.hours : 24; ui.window.value = String(hours);
     collapsed = !!p.collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false';
     ['missions', 'people', 'profile'].forEach((k) => data.get(k));
     setView((opts && opts.view) || (VIEWS.includes(p.view) ? p.view : 'world'));
