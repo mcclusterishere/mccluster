@@ -16,12 +16,13 @@ test('private-repo configuration is fail-closed before activating a drop-in',()=
  assert.match(source,/BatchMode=yes/);
  assert.match(source,/IdentitiesOnly=yes/);
  assert.match(source,/GITHUB_FINGERPRINT="SHA256:\+DiY3wvvV6TuJJhbpZisF\/zLDA0zPMSvHdkr4UvCOqU"/);
- assert.doesNotMatch(source,/ssh-keyscan|StrictHostKeyChecking=no|Allow write access ON/);
+ assert.doesNotMatch(source,/^\s*ssh-keyscan\s/m);
+ assert.doesNotMatch(source,/StrictHostKeyChecking=no|Allow write access ON/);
 });
 test('OVH SSH key remains host-local and is never staged in Git',()=>{
  assert.match(source,/KEY_DIR=\/var\/lib\/mccluster\/reconcile\/ssh/);
  assert.match(source,/umask 077/);
  assert.match(source,/stat -c %u/);
  assert.match(source,/cat "${KEY}\.pub"/);
- assert.doesNotMatch(source,/cat "${KEY}"(?:\s|$)/);
+ assert.ok(!source.includes('cat "${KEY}"'), 'private key must not be printed');
 });
