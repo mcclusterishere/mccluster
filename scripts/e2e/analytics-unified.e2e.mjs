@@ -77,7 +77,7 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
   const calls = [];
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const req = route.request(), p = new URL(req.url()).pathname;
-    calls.push(p);
+    calls.push(req.url());
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
     if (p === '/v1/seek-first/sources') return json(route,{sources:[{key:'cctv',name:'Public Traffic Camera Catalogs',capabilities:['traffic-cameras'],persistence:'transient',configured:true,entitlement:{allowed:true}},{key:'usgs',name:'U.S. Geological Survey',capabilities:['earthquakes'],persistence:'persistent',configured:true,entitlement:{allowed:true}}]});
     if (p === '/v1/seek-first/readiness') return json(route,{database_schema_ready:false});
