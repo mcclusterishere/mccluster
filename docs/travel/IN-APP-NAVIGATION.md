@@ -32,6 +32,22 @@ location, with a 30-second rerouting cooldown. Poor accuracy cannot advance the
 route or falsely report arrival. Ambiguous crossings favor continuity with the
 current progress instead of jumping to a later loop.
 
+The active GPS camera uses a street-scale, tilted, heading-up view (160–550 m
+camera range depending on mode, speed and accuracy). Device course is preferred;
+movement between accurate fixes supplies the course when the browser omits it.
+Stationary GPS jitter retains the last course. Each usable fix eases the camera
+to the traveler; dragging or zooming pauses follow until Recenter. A fresh fix
+already in memory engages follow as soon as Go is pressed. Reduced-motion
+preferences remove camera animation.
+
+Address taps/clicks commit the complete candidate label and coordinates before
+blur can shift the keyboard or suggestion list. Dragging/scrolling does not
+select an address; arrow keys, Enter and Escape remain supported. Drive, Walk
+and Bike use explicit contrasting selected/unselected colors in day and night.
+Route controls precede rentals and flight planning. During navigation the sheet
+shows the current turn, Stop/Recenter and route steps; Stop restores the editor.
+The existing owner-only Travel availability is unchanged.
+
 Stop, leaving Travel, hiding the page, leaving World, sign-out and switching an
 existing account cancel the applicable watches or in-flight work. Returning to
 Music also pauses navigation when World is retained for continuous audio. Late

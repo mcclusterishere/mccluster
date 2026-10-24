@@ -44,13 +44,13 @@ async function open(viewport, { automatic = false, webgl = true, audioParent = f
     Object.defineProperty(navigator, 'doNotTrack', { value:'1', configurable:true });
     let nextId = 0, timestamp = Date.now(); const watches = new Map(), pending = [];
     const geo = window.__geo = { calls:[], cleared:[], answer:automatic ? 'hold' : 'deny', coordinates:origin };
-    const position = (coordinates = geo.coordinates) => ({ coords:{ longitude:coordinates[0], latitude:coordinates[1], accuracy:8 }, timestamp:timestamp = Math.max(Date.now(), timestamp + 1) });
+    const position = (coordinates = geo.coordinates, motion = {}) => ({ coords:{ longitude:coordinates[0], latitude:coordinates[1], accuracy:8, ...motion }, timestamp:timestamp = Math.max(Date.now(), timestamp + 1) });
     const respond = (success, error, answer) => {
       if (answer === 'hold') { pending.push({ success, error }); return; }
       setTimeout(() => answer === 'grant' ? success(position()) : error({ code:answer === 'deny' ? 1 : 3 }), 40);
     };
     geo.release = answer => { for (const call of pending.splice(0)) respond(call.success, call.error, answer); };
-    geo.emit = coordinates => { for (const call of watches.values()) call.success(position(coordinates)); };
+    geo.emit = (coordinates, motion) => { for (const call of watches.values()) call.success(position(coordinates, motion)); };
     geo.failWatch = () => { for (const call of [...watches.values()]) call.error({ code:1 }); };
     geo.watchCount = () => watches.size;
     Object.defineProperty(navigator, 'geolocation', { configurable:true, value:{
@@ -193,21 +193,52 @@ try {
       const barTop = bar && bar.offsetHeight ? bar.getBoundingClientRect().top : innerHeight;
       return !!list.style.maxHeight && rect.bottom <= barTop + 1 && rect.bottom <= innerHeight;
     }));
-    await page.locator('#wtToResults button').first().click(); await ready(page);
+    const fullAddress = await page.locator('#wtToResults button').first().textContent();
+    if (size.width < 600) await page.locator('#wtToResults button').first().tap();
+    else await page.locator('#wtToResults button').first().click();
+    await ready(page);
+    check(scope, 'tap or click fills the complete address without Enter', await page.inputValue('#wtTo') === fullAddress);
     check(scope, 'selecting a destination automatically returns guest directions and Go', app.requests.length === 1 && !app.requests[0].authenticated && await page.isVisible('#wtRouteSummary'), app.requests);
+    for (const theme of ['day', 'night']) {
+      await page.evaluate(theme => { document.documentElement.dataset.daylight = theme; }, theme);
+      const contrasts = await page.locator('.wt-local-toolbar button').evaluateAll(buttons => {
+        const luminance = color => {
+          const [r,g,b] = color.match(/[\d.]+/g).slice(0,3).map(Number).map(v => v / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
+          return r * .2126 + g * .7152 + b * .0722;
+        };
+        return buttons.map(button => {
+          const style = getComputedStyle(button), a = luminance(style.color), b = luminance(style.backgroundColor);
+          return { label:button.textContent, ratio:(Math.max(a,b) + .05) / (Math.min(a,b) + .05), opacity:style.opacity };
+        });
+      });
+      check(scope, `${theme}: selected and unselected modes have readable contrast`, contrasts.every(c => c.ratio >= 4.5 && c.opacity === '1'), contrasts);
+    }
+    await page.evaluate(() => { document.documentElement.dataset.daylight = 'day'; });
     await page.screenshot({ path:join(OUT, `guest-route-preview-${scope}.png`) });
     check(scope, 'route summary and Go are fully exposed above floating controls', await exposed(page, 'wtRouteSummary') && await exposed(page, 'wtNavigate'));
     check(scope, 'guest directions contain no save journey, saved journeys or Draft controls', await page.isHidden('#wtSaveRow') && await page.isHidden('#wtSaveFooter') && await page.isHidden('#wtDraftStatus'));
     const exitBlocked = await page.evaluate(() => { const event = new Event('beforeunload', { cancelable:true }); dispatchEvent(event); return event.defaultPrevented; });
     check(scope, 'guest navigation has no unsaved-journey exit prompt', !exitBlocked);
     await page.locator('#wtNavigate').click();
-    await page.evaluate(coordinates => __geo.emit(coordinates), fixture.routes[0].geometry[0]);
+    await page.evaluate(coordinates => __geo.emit(coordinates, { heading:90, speed:8 }), fixture.routes[0].geometry[0]);
     await frame.waitForFunction(() => __huNavigation().following);
+    await frame.waitForFunction(() => __testViewer.camera.positionCartographic.height < 550 && Math.abs(__testViewer.camera.heading - Math.PI/2) < .05);
+    check(scope, 'GPS follow is close to the street and turns to the travel heading', await frame.evaluate(() => __testViewer.camera.positionCartographic.height > 100 && __testViewer.camera.pitch > -Math.PI/2));
+    const movingPoint = fixture.routes[0].geometry[3];
+    await page.evaluate(coordinates => __geo.emit(coordinates, { heading:110, speed:8 }), movingPoint);
+    await frame.waitForFunction(coordinates => {
+      const p = Cesium.SceneTransforms.worldToWindowCoordinates(__testViewer.scene, Cesium.Cartesian3.fromDegrees(...coordinates));
+      return p && Math.hypot(p.x - innerWidth/2, p.y - innerHeight/2) < 6 && Math.abs(Cesium.Math.toDegrees(__testViewer.camera.heading) - 110) < 2;
+    }, movingPoint);
+    check(scope, 'a moving GPS fix stays centered while the map rotates with the traveler', true);
     check(scope, 'Go starts foreground GPS guidance without signing in', await page.evaluate(() => __geo.watchCount() === 1 && document.documentElement.classList.contains('wt-navigating')) && await page.isVisible('#wtNavInstruction'));
     check(scope, 'the active turn is fully exposed above floating controls', await exposed(page, 'wtNavInstruction'));
     await page.screenshot({ path:join(OUT, `guest-navigation-${scope}.png`) });
     check(scope, 'Stop is exposed without scrolling behind music controls', await exposed(page, 'wtStopNavigation'));
     await frame.locator('#ctlZoomOut').click(); await page.waitForFunction(() => !document.getElementById('wtRecenter').hidden);
+    await page.evaluate(coordinates => __geo.emit(coordinates, { heading:180, speed:8 }), movingPoint);
+    await frame.waitForFunction(() => !__huNavigation().following);
+    check(scope, 'new GPS fixes respect a deliberate map inspection until Recenter', await page.isVisible('#wtRecenter'));
     check(scope, 'Stop and Recenter remain exposed after inspecting the map', await exposed(page, 'wtStopNavigation') && await exposed(page, 'wtRecenter'));
     await page.locator('#wtRecenter').click();
     await frame.locator('#ctlLocate').click();
@@ -232,6 +263,35 @@ try {
     check(scope, 'no JavaScript exceptions in the full World page or real globe', app.errors.length === 0, app.errors);
     await app.ctx.close();
   }
+  // A focus/keyboard layout change must not eat a pointer selection. This
+  // intentionally moves the list on blur, reproducing the down/blur/up race.
+  const inputApp = await open({ width:1280,height:800 }, { webgl:false });
+  await inputApp.page.fill('#wtFrom', 'New Haven Green');
+  await inputApp.page.locator('#wtFromResults button').first().waitFor();
+  await inputApp.page.locator('#wtFrom').press('ArrowDown');
+  await inputApp.page.locator('#wtFromResults button').first().press('Enter');
+  check('autocomplete', 'keyboard selection still fills the complete starting address', /New Haven Green, New Haven/.test(await inputApp.page.inputValue('#wtFrom')));
+  await inputApp.page.fill('#wtTo', 'Union Station');
+  await inputApp.page.locator('#wtToResults button').first().waitFor();
+  await inputApp.page.evaluate(() => {
+    const input = document.getElementById('wtTo'), list = document.getElementById('wtToResults');
+    input.addEventListener('blur', () => { window.__addressAtBlur = input.value; list.style.marginTop = '80px'; }, { once:true });
+  });
+  await inputApp.page.locator('#wtToResults button').first().click();
+  await ready(inputApp.page);
+  check('autocomplete', 'pointer selection commits before blur can move the list and requests exactly one route', inputApp.requests.length === 1 && await inputApp.page.evaluate(() => __addressAtBlur === 'Union Station, New Haven, Connecticut, United States'));
+  await inputApp.page.fill('#wtTo', 'Union Station again');
+  await inputApp.page.locator('#wtToResults button').first().waitFor();
+  const option = inputApp.page.locator('#wtToResults button').first();
+  const bounds = await option.boundingBox();
+  await inputApp.page.mouse.move(bounds.x + 12, bounds.y + 12);
+  await inputApp.page.mouse.down();
+  await inputApp.page.mouse.move(bounds.x + 50, bounds.y + 12);
+  await inputApp.page.mouse.up();
+  check('autocomplete', 'dragging across a suggestion does not select an address', await inputApp.page.inputValue('#wtTo') === 'Union Station again' && inputApp.requests.length === 1);
+  await inputApp.page.locator('#wtTo').press('Escape');
+  check('autocomplete', 'Escape dismisses suggestions without starting a route', await inputApp.page.isHidden('#wtToResults'));
+  await inputApp.ctx.close();
   // Actual Cesium map clicks must select endpoints, request a truthful street
   // route, render its polyline and leave Go/Stop accessible in expanded Earth.
   const picked = await open({ width:390,height:844 });
