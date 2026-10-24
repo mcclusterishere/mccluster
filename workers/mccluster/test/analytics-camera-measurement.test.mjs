@@ -26,6 +26,23 @@ test('owner authorization precedes all catalog and feed access',async()=>{
  const res=await route(new Request(url),env,{id:'member'},url,url.pathname);
  assert.equal(res.status,403);assert.equal(calls,0);
 });
+test('full batches preserve bounded raster payload bytes and reject oversized streams',async()=>{
+ // Exercise transport and byte limits independently of the browser decode check.
+ const limit=2*1024*1024,bytes=new Uint8Array(limit);
+ for(let i=0;i<bytes.length;i++)bytes[i]=i%256;
+ bytes.set(png.subarray(0,8));bytes.set(png.subarray(-12),bytes.length-12);
+ const route=createCameraRoutes({requireOwner:async()=>{},json,fetchImpl:async()=>new Response(new ReadableStream({start(controller){
+  for(let at=0;at<bytes.length;at+=8191)controller.enqueue(bytes.subarray(at,at+8191));
+  controller.close();
+ }}),{headers:{'content-type':'image/png','x-cctv-source':'upstream-image'}})});
+ const url=new URL('https://api.mccluster.org/v1/analytics/cameras/check'),ids=Array.from({length:CAMERA_CHECK_BATCH},(_,i)=>'camera-'+i);
+ const response=await route(new Request(url,{method:'POST',body:JSON.stringify({ids})}),env,{},url,url.pathname);
+ assert.equal(response.status,200);
+ const body=await response.json();assert.equal(body.checks.length,CAMERA_CHECK_BATCH);
+ for(const check of body.checks){assert.equal(check.status,'image_received');assert.deepEqual(Uint8Array.from(Buffer.from(check.image.split(',')[1],'base64')),bytes);}
+ const oversized=await checkCamera(env,'oversized',async()=>new Response(new Uint8Array(limit+1),{headers:{'content-type':'image/png','x-cctv-source':'upstream-image'}}));
+ assert.equal(oversized.status,'unavailable');assert.equal(oversized.image,undefined);
+});
 test('checks bound fan-out and reject URLs, oversized batches, missing bodies and invalid catalog responses',async()=>{
  let calls=0;
  const route=createCameraRoutes({requireOwner:async()=>{},json,fetchImpl:async()=>{calls++;return json({});}});
