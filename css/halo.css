@@ -81,7 +81,7 @@ html.halo-on.globe-explore .osm-credit{z-index:7;left:8px;right:auto;bottom:calc
 /* ---------- panels ---------- */
 .hx-panel{background:var(--hx-panel);border:1px solid var(--hx-line-2);color:var(--hx-ink);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 18px 40px rgba(0,0,0,.45)}
 .hx-left{position:fixed;z-index:8;left:0;right:0;bottom:var(--hx-bottom);height:var(--hx-peek);display:flex;flex-direction:column;border-radius:18px 18px 0 0;border-bottom:0;overflow:hidden;transition:height .22s ease}
-.hx-left[data-expanded="true"]{height:calc(100dvh - var(--hx-head) - var(--hx-bottom) - 8px)}
+.hx-left[data-expanded="true"]{height:calc(100dvh - var(--hx-head) - var(--hx-bottom) - 64px)}
 .hx-grip{position:relative;z-index:1;flex:none;display:flex;justify-content:center;align-items:flex-start;width:100%;min-height:44px;margin-bottom:-28px;padding:8px 0 0;border:0;background:transparent;cursor:pointer}
 .hx-grip::before{content:"";width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.24)}
 .hx-panel__head{position:relative;z-index:2;flex:none;display:flex;align-items:flex-start;gap:8px;padding:2px 16px 10px;pointer-events:none}
@@ -484,7 +484,8 @@ html.halo-no-map .hx-panel__head .hx-btn{display:inline-flex}
 .hx-density output{font:12px ui-monospace,monospace;color:#a7b9c8}
 
 /* Event identity is carried by shape and a persistent explanation, not color. */
-.hx-event-key{font-size:11px;color:#d5e4ef;max-width:220px;white-space:normal}
+.hx-legend{flex-wrap:wrap;gap:6px 14px;border-radius:12px}
+.hx-legend .hx-event-key{flex-basis:100%;font-size:11px;color:#d5e4ef;white-space:normal}
 .hx-density label:has(input[type=checkbox]){display:flex;align-items:center;gap:10px}
 .hx-density input[type=range]{cursor:pointer}
 .hx-detail__actions{gap:8px}

@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 434,
+  "candidate_count": 435,
   "capability_source_count": 104,
-  "support_only_count": 330,
+  "support_only_count": 331,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3310,6 +3310,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
+    },
+    {
+      "path": "js/site-navigation.js",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared navigation names the existing World product door; it adds no building program or physical capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

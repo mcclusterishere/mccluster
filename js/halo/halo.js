@@ -1172,10 +1172,10 @@
       buildLeft();
       // Choosing a list-based screen must expose its content, even after the
       // World drawer was collapsed to explore the globe.
-      if (!wide() && view !== 'world') {
-        sheetOpen = true; ui.left.dataset.expanded = 'true';
-        $('.hx-grip', ui.root).setAttribute('aria-label', 'Shrink the list');
-        $('.hx-collapse', ui.root).setAttribute('aria-label', 'Collapse the panel');
+      if (!wide()) {
+        sheetOpen = view !== 'world'; ui.left.dataset.expanded = String(sheetOpen);
+        $('.hx-grip', ui.root).setAttribute('aria-label', sheetOpen ? 'Shrink the list' : 'Expand the list');
+        $('.hx-collapse', ui.root).setAttribute('aria-label', sheetOpen ? 'Collapse the panel' : 'Expand the panel');
       }
       /* Intelligence reads the Earth's own observations: earthquakes and cyclones come on with it */
       if (view === 'intel') { if (layers) ['quakes', 'cyclones'].forEach((id) => { if (!layers.on(id)) layers.set(id, true); }); data.get('evidence'); data.get('health'); data.briefs().then(schedulePaint); }

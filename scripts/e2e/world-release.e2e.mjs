@@ -156,6 +156,11 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.evaluate(()=>{const v=HuGlobe.viewer();v.camera.lookAt(Cesium.Cartesian3.fromDegrees(-97.5,35.4,5000),new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-38),180000));v.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);});
  await page.waitForTimeout(1200);
  check(scope,'nearby event builds 3D representation',await page.evaluate(()=>HaloConsole.state().events.models>0));
+ const renderedEvent=()=>{const v=HuGlobe.viewer();return v.entities.values.filter(e=>e.haloObjectPick?.layer==='weather'&&e.ellipsoid).map(e=>{const p=e.position.getValue(v.clock.currentTime),s=Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,p);return {screen:s&&{x:s.x,y:s.y},show:e.show,radii:e.ellipsoid.radii.getValue(v.clock.currentTime),picked:!!s&&v.scene.drillPick(s,20).some(h=>h.id===e)};});};
+ await page.waitForFunction('('+renderedEvent.toString()+')().some(e=>e.picked)',null,{timeout:8000}).catch(()=>{});
+ const eventProof=await page.evaluate(renderedEvent);
+ check(scope,'a tornado volume is rendered and pickable in the actual canvas',eventProof.some(e=>e.picked),eventProof);
+ console.log('EVENT_RENDER_PROOF',JSON.stringify(eventProof));
  await shot('tornado-area');
  await page.evaluate(item=>HaloConsole.pick({id:{haloPick:true,layer:'weather',item}}),HALO_FIXTURES['/v1/world/layers/weather'].events[0]);
  check(scope,'warning is explicitly differentiated from an observed tornado',/Warning/.test(await page.textContent('.hx-detail'))&&/not confirmation/.test(await page.textContent('.hx-detail')));

@@ -75,6 +75,8 @@
         const position=C.Cartesian3.fromDegrees(item.lon,item.lat,layer==='military'?Math.max(0,item.alt??0):60);
         const symbolSize=kind==='aircraft'?28:['tornado','cyclone','volcano'].includes(kind)?42:30;
         const b=symbols.add({position,imageId:'halo-event:'+kind+':0',image:symbol(kind),width:symbolSize,height:symbolSize,id:pick,scaleByDistance:new C.NearFarScalar(3e5,1.25,2e7,.7)});
+        const heading=kind==='aircraft'?item.track:kind==='vessel'?(item.heading??item.cog):null;
+        if(Number.isFinite(heading)){const enu=C.Transforms.eastNorthUpToFixedFrame(position);b.alignedAxis=new C.Cartesian3(enu[4],enu[5],enu[6]);b.rotation=-C.Math.toRadians(heading);}
         rows.push({key,kind,item,pick,position,b});
         // Reported polygon with its holes. No generated storm or damage extent.
         for(const poly of (item.polygons||[]).slice(0,8)){
@@ -85,10 +87,11 @@
       }
       sets.set(layer,{symbols,rows,areas});lastSelect=-Infinity;viewer.scene.requestRender();
     }
+    const unitFor=r=>Math.max(250,Math.min(16000,C.Cartesian3.distance(viewer.camera.positionWC,r.position)*.022));
     function makeModel(r){
-      const entities=[],origin=C.Transforms.eastNorthUpToFixedFrame(r.position),unit=Math.max(250,Math.min(16000,C.Cartesian3.distance(viewer.camera.positionWC,r.position)*.022));
+      const entities=[],origin=C.Transforms.eastNorthUpToFixedFrame(r.position),unit=unitFor(r);
       const pos=(x,y,z)=>C.Matrix4.multiplyByPoint(origin,new C.Cartesian3(x*unit,y*unit,z*unit),new C.Cartesian3());
-      const add=(x,y,z,shape)=>{const e=viewer.entities.add({position:pos(x,y,z),orientation:C.Transforms.headingPitchRollQuaternion(r.position,new C.HeadingPitchRoll(0,0,0)),...shape});e.haloObjectPick=r.pick;entities.push(e);return e;};
+      const add=(x,y,z,shape)=>{const heading=r.kind==='vessel'?(r.item.heading??r.item.cog??0):0;const e=viewer.entities.add({position:pos(x,y,z),orientation:C.Transforms.headingPitchRollQuaternion(r.position,new C.HeadingPitchRoll(C.Math.toRadians(heading),0,0)),...shape});e.haloObjectPick=r.pick;entities.push(e);return e;};
       const parts=[];
       if(r.kind==='tornado'){
         for(let i=0;i<8;i++){const h=.15+i*.23,rad=.08+i*.085;parts.push({e:add(0,0,h,{ellipsoid:{radii:new C.Cartesian3(rad*unit,rad*unit,.16*unit),material:C.Color.fromCssColorString(i<3?'#7e7369':'#c4c6c9').withAlpha(.88)}}),i});}
@@ -126,7 +129,11 @@
       active=pool.slice(0,density).map(x=>x.r);
       const wanted=new Set(pool.filter(x=>x.r.key===selected||x.d<1.8e6).slice(0,Math.min(MODEL_CAP,density)).map(x=>x.r.key));
       for(const key of models.keys())if(!wanted.has(key))removeModel(key);
-      for(const {r} of pool.slice(0,MODEL_CAP))if(wanted.has(r.key)&&!models.has(r.key))models.set(r.key,makeModel(r));
+      for(const {r} of pool.slice(0,MODEL_CAP))if(wanted.has(r.key)){
+        const old=models.get(r.key),unit=unitFor(r);
+        if(old&&(unit>old.unit*1.5||unit<old.unit/1.5))removeModel(r.key);
+        if(!models.has(r.key))models.set(r.key,makeModel(r));
+      }
     }
     function tick(){
       if(!alive||document.hidden)return;const now=performance.now();if(now-lastTick<33)return;lastTick=now;
