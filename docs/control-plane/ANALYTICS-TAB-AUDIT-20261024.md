@@ -19,6 +19,7 @@ Scope: every Analytics chapter, its principal controls, phone (390 px), tablet (
 - Concurrent News context and Connected operations requests invalidated each other’s owner verification, silently dropping a result. Verification now shares only an in-flight request for the same session and authorization epoch; completed grants are not cached by this change. Regression checks keep both results and retain sign-out/failure protections.
 - Site health displayed historically misdecoded location labels such as `Nuevo LeÃ\u0083Â³n`. Valid UTF-8 byte sequences are now repaired for display in session and visitor locations; original measurements, valid non-Latin names and HTML escaping are preserved. Ten Forensics tests cover this and existing interactions.
 - Camera failures discarded their cause. The owner API now distinguishes absent configuration, invalid address, rejected authorization, timeout and upstream failure without revealing credentials or upstream response bodies.
+- The final deployed 30-day Site health check exposed an intermittent session-query timeout. Three API reads failed at about 8.2–8.8 seconds; the database role reproduced SQLSTATE 57014. An analyzed plan took 9.17 seconds, dominated by identity and unsessioned-event scans. Two narrow partial indexes cover those reads without changing queries, data, permissions or the eight-second deadline. A rolled-back experiment took 1.69 seconds; after applying the migration, Sessions took 3.30 seconds and Visitors 0.92 seconds as `service_role`. The live session list then recovered.
 
 ## All-tab matrix
 
@@ -47,3 +48,7 @@ The task did not create provider accounts, grant access, publish content, create
 ## Live deployment verification
 
 PR #605 deployed backend commit `c8daa8e2335a9de6400ad2df3d783f9c5d7e3363` and matching frontend assets. The live 24-hour and 30-day windows reached 23/23 ready reads. All 228 event names and all 62 returned 30-day accounts were reachable. The USGS archive returned its bounded 50-record sample instead of zero. Setup reported receiving data. The subsequent location-label correction is covered by the Forensics regression suite; its release receipt is recorded in the follow-up PR.
+
+PR #606 deployed frontend `e6fee2ab8def00d6511cb95cf1cd76c0cb608ad1`; all six PR checks passed, including 75 UI unit tests, 94 Worker tests and the full Analytics browser suite. Production now renders Nuevo León correctly. Concurrent connected-record and news requests also completed together in the deployed browser: 27 records / 30 relationships and 12 stories / 14 annual indicators.
+
+The subsequent database-only fix is applied as `20261024014226_analytics_forensics_read_indexes_v7`. Its exact SQL matches the production migration record. The 347-entry production ledger hash is `0ebf03faa940fe98390f5670ce294c879449e12c6b44167783947e9bbdb6776b`. Final 30-day Sessions returned 1,684 sessions / 1,021 devices; counts move as the rolling window advances. Cameras and Instagram retain the explicit integration limitations above.
