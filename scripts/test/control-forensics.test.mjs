@@ -11,13 +11,29 @@ import vm from 'node:vm';
 const read = (p) => readFile(p, 'utf8');
 
 async function load() {
-  const context = { window: { CR: {} }, document: { activeElement: null }, console, URL, setTimeout, clearTimeout };
+  const context = { window: { CR: {} }, document: { activeElement: null }, console, URL, TextDecoder, setTimeout, clearTimeout };
   vm.createContext(context);
   vm.runInContext(await read('js/control-room/forensics.js'), context);
   return context.window.CR.forensics;
 }
 const host = () => ({ innerHTML: '', querySelector: () => null, querySelectorAll: () => [] });
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+test('location labels repair historical UTF-8 misdecoding without changing source records or HTML safety', async () => {
+  for (const [stored, expected] of [['Nuevo LeÃ\u0083Â³n', 'Nuevo León'], ['MÃ¼nchen', 'München'],
+    ['São Paulo', 'São Paulo'], ['東京', '東京'], ['Âland', 'Âland'], ['MÃ¼nchen <img>', 'München &lt;img&gt;']]) {
+    for (const mode of ['sessions', 'visitors']) {
+      const F = await load(), h = host(), row = { session_id: 'fixture', visitor_key: 'fixture', city: stored, country: 'MX', pages: [] };
+      F.state.mode = mode;
+      F.mount(h, { request: async () => ({ total: 1, counts: { all: 1 }, [mode]: [row] }),
+        range: { since: '2026-10-01T00:00:00Z', until: '2026-10-24T00:00:00Z' } });
+      await tick();
+      assert.ok(h.innerHTML.includes(expected + ', MX'), stored + ' in ' + mode);
+      assert.equal(row.city, stored, 'the stored measurement is retained');
+      assert.doesNotMatch(h.innerHTML, /<img>/);
+    }
+  }
+});
 
 const EVENTS = [
   { at: '2026-10-05T12:00:00Z', name: 'acquired', path: 'album.html', props: { src: 'instagram', med: 'trial_reel', cmp: 'launch' } },
