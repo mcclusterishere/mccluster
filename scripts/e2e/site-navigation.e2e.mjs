@@ -18,6 +18,7 @@ async function setup(width,persona='owner'){
   const ctx=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const auth={status:persona==='owner'?200:403,signed:persona!=='guest',delay:false,release:null},calls=[],errors=[];
   await ctx.addInitScript(({signed,USER})=>{
+    window.__navFrames=[];const sample=()=>{const b=document.querySelector('.appbar');if(b){const c=getComputedStyle(b);if(c.visibility==='visible'&&c.display!=='none')window.__navFrames.push(b.querySelectorAll('[data-appnav]').length);}requestAnimationFrame(sample);};requestAnimationFrame(sample);
     localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(signed){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:USER,exp,email:'qa@fixture.invalid'}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:USER,email:'qa@fixture.invalid'}}));}
   },{signed:auth.signed,USER});
@@ -67,6 +68,7 @@ try{
     const {ctx,page,auth,errors}=await setup(width);
     await page.goto(BASE+'/control.html?org=o1#home');
     await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
+    check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===5)),await page.evaluate(()=>__navFrames));
     check(width+' profile is top right',await topRight(page));
     check(width+' one global bottom bar',await page.locator('.appbar').count()===1&&await page.locator('.cr-rail').isHidden()&&await page.locator('.cr-bottom').isHidden());
     await open(page);
@@ -94,6 +96,13 @@ try{
     await page.keyboard.press('Escape');
     await open(page);await page.screenshot({path:join(OUT,'destinations-'+width+'.png')});
     await page.keyboard.press('Escape');
+
+    for(const path of ['/license.html','/brief.html','/asset-lab.html','/music-admin.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
+      await page.goto(BASE+path);await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
+      check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===5&&__navFrames.every(n=>n===5)));
+    }
+    const routes=await page.evaluate(()=>CR.workspaceCore.routes.map(r=>r.hash));
+    for(const hash of routes){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>location.hash===h&&document.getElementById('crSurface')?.childElementCount>0,hash);check(width+' owner navigation stable at '+hash,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===5&&!document.querySelector('#crInspector')?.classList.contains('is-open')));}
     // Permission withdrawal is checked when opening, not trusted from an old UI.
     auth.status=403;await page.click('#mccControlToggle');
     await page.waitForFunction(()=>!window.MCC_BAR.admin());

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 434,
+  "candidate_count": 435,
   "capability_source_count": 104,
-  "support_only_count": 330,
-  "checks_total": 1634,
-  "checks_passed": 1634,
+  "support_only_count": 331,
+  "checks_total": 1638,
+  "checks_passed": 1638,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -209,6 +209,7 @@
     "js/onboard.js",
     "js/payments.js",
     "js/policy-fellowship-ladder.js",
+    "js/site-navigation.js",
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
     "js/world-audio-continuity.js",
@@ -448,7 +449,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "434 entries"
+      "detail": "435 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8612,6 +8613,26 @@
     },
     {
       "name": "world-news.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/site-navigation.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/site-navigation.js classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "js/site-navigation.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/site-navigation.js support rationale present",
       "passed": true,
       "detail": ""
     }

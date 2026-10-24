@@ -38,7 +38,7 @@
     }));
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
-      {label:'World', group:'Products', href:world, context:'Human Uprise'},
+      {label:'World', group:'Products', href:world, context:'Equity Uprise'},
       {label:'Your desk', group:'Operations', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
@@ -121,12 +121,14 @@
     // Keep the phone keyboard closed until the person chooses to search.
     panel.showPopover(); get('mccDestinationsClose').focus({preventScroll:true});
   }
+  function ready() { if (document.body.dataset.siteNavigation === 'ready') window.dispatchEvent(new Event('mcc:navigation-ready')); }
+  window.addEventListener('mcc:navigation-style-ready', () => { if (!bar.admin() || installed) ready(); });
   async function syncAdmin() {
     if (!bar.admin()) {
       closePanel(); panel?.remove(); panel = null; installed = false;
-      delete document.body.dataset.adminNavigation; return;
+      delete document.body.dataset.adminNavigation; ready(); return;
     }
-    try { await core(); } catch (_) { return; } // Original Home link and rails remain usable on load failure.
+    try { await core(); } catch (_) { ready(); return; } // Original Home link and rails remain usable on load failure.
     if (!bar.admin()) return;
     const old = dock.querySelector('[data-appnav="admin-home"]');
     if (!old) return;
@@ -141,7 +143,7 @@
       old.replaceWith(button);
     }
     installed = true; document.body.dataset.adminNavigation = 'ready';
-    markCurrent();
+    markCurrent(); ready();
   }
   function markCurrent() {
     if (!installed) return;

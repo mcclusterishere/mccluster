@@ -49,6 +49,9 @@ const HALO_PEOPLE={ok:true,schema:'halo-people/v1',generated_at:iso(0),total:4,t
 const TIDES=Array.from({length:24},(_,i)=>[new Date(NOW-(23-i)*3600e3).toISOString(),+(0.6+0.25*Math.sin(i/3.8)).toFixed(3),'p']);
 const HALO_SAT={name:'ISS (ZARYA)',tle1:'1 25544U 98067A   26286.82178372  .00006592  00000+0  12831-3 0  9991',tle2:'2 25544  51.6325  76.5471 0003201 125.0532 235.0866 15.49721212537052'};
 const HALO_FIXTURES={
+ '/v1/world/layers/weather':{ok:true,layer:'weather',fetched_at:iso(0),credit:'NOAA NWS',count:2,events:[{id:'warning1',name:'Tornado Warning · test fixture',event:'Tornado Warning',kind:'tornado',provenance:'warning',lon:-97.5,lat:35.4,location_kind:'area_label',polygons:[[[[-97.5,35.4],[-97.1,35.4],[-97.1,35.8],[-97.5,35.4]]]],observed_at:iso(10),expires_at:new Date(NOW+3600000).toISOString(),source:'NOAA NWS',description:'Deterministic fixture, not a live warning.'},{id:'unmapped1',name:'Zone-only flood advisory',event:'Flood Advisory',kind:'flood',provenance:'warning',lon:null,lat:null,location_kind:'unmapped',polygons:[],observed_at:iso(5),expires_at:new Date(NOW+3600000).toISOString(),source:'NOAA NWS'}]},
+ '/v1/world/layers/natural':{ok:true,layer:'natural',fetched_at:iso(0),credit:'NASA EONET',count:11,events:['volcano','fire','flood','snow','ice','wind','dust','landslide','heat','storm','rain'].map((kind,i)=>({id:'natural-'+kind,name:kind+' · test fixture',event:kind,kind,provenance:'reported',lon:-120+(i%4)*15,lat:24+Math.floor(i/4)*12,location_kind:'reported_point',polygons:[],observed_at:iso(40),source:'NASA EONET'}))},
+
  '/v1/world/layers/satellites':{count:1,satellites:[HALO_SAT]},
  '/v1/world/layers/flights':{count:3,aircraft:[['abc001','HALO ONE',-73.9,40.7,9000,200,45],['abc002','HALO TWO',-73.95,40.72,8500,180,90],['abc003','HALO THREE',-74,40.75,9500,220,180]]},
  '/v1/world/layers/quakes':{ok:true,layer:'quakes',fetched_at:iso(0),credit:'Earthquakes: USGS',count:3,quakes:[{id:'us1',mag:5.4,place:'10 km S of Fixture, Chile',time:iso(20),lon:-71.5,lat:-33.4,depth_km:12,url:'https://earthquake.usgs.gov/earthquakes/eventpage/us1',tsunami:false,alert:'green'},{id:'us2',mag:2.1,place:'Fixture, California',time:iso(60),lon:-118.2,lat:34.05,depth_km:8,url:'',tsunami:false,alert:null},{id:'us3',mag:4.6,place:'Fixture, Japan',time:iso(90),lon:142.4,lat:38.3,depth_km:110,url:'',tsunami:false,alert:null}]},
@@ -105,6 +108,8 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
     !(await state()).mapFocus&&await page.locator('.hx-left').isVisible()&&
     Math.abs(restored.height-initial.height)<4&&restored.clear>=220,restored);
  }
+ await page.waitForFunction(()=>MCC_BAR.admin());
+ check(scope,'Halo retains the same five owner destinations',await page.locator('.appbar [data-appnav]').count()===5);
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
@@ -145,6 +150,47 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  check(scope,'Source health says each source\'s state in words',/Earthquakes[\s\S]*Updated/.test(await page.textContent('.hx-health'))&&/Needs a key/.test(await page.textContent('.hx-health')));
  check(scope,'the World panel counts actual sources without planned placeholders',/\d+ available · 4 context$/.test(await page.textContent('.hx-panel__head p')));
  await shot('world');
+ await page.waitForFunction(()=>HaloConsole.state().events?.types.includes('tornado'));
+ check(scope,'natural events have distinct visual families and finite detail budgets',await page.evaluate(()=>{const s=HaloConsole.state().events;return s.types.length>=14&&s.models<=8&&s.animated<=48}),await state());
+ if(width<1100)await page.locator('.hx-grip').click();
+ await page.evaluate(()=>{const v=HuGlobe.viewer();v.camera.lookAt(Cesium.Cartesian3.fromDegrees(-97.5,35.4,5000),new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-38),180000));v.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);});
+ await page.waitForTimeout(1200);
+ check(scope,'nearby event builds 3D representation',await page.evaluate(()=>HaloConsole.state().events.models>0));
+ const renderedEvent=()=>{const v=HuGlobe.viewer();return v.entities.values.filter(e=>e.haloObjectPick?.layer==='weather'&&e.ellipsoid).map(e=>{const p=e.position.getValue(v.clock.currentTime),s=Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,p);return {screen:s&&{x:s.x,y:s.y},show:e.show,radii:e.ellipsoid.radii.getValue(v.clock.currentTime),picked:!!s&&v.scene.drillPick(s,20).some(h=>h.id===e)};});};
+ await page.waitForFunction('('+renderedEvent.toString()+')().some(e=>e.picked)',null,{timeout:8000}).catch(()=>{});
+ const eventProof=await page.evaluate(renderedEvent);
+ check(scope,'a tornado volume is rendered and pickable in the actual canvas',eventProof.some(e=>e.picked),eventProof);
+ console.log('EVENT_RENDER_PROOF',JSON.stringify(eventProof));
+ await shot('tornado-area');
+ await page.evaluate(item=>HaloConsole.pick({id:{haloPick:true,layer:'weather',item}}),HALO_FIXTURES['/v1/world/layers/weather'].events[0]);
+ check(scope,'warning is explicitly differentiated from an observed tornado',/Warning/.test(await page.textContent('.hx-detail'))&&/not confirmation/.test(await page.textContent('.hx-detail')));
+ await shot('warning-detail');
+ if(width===1280){
+   for(const kind of ['volcano','fire','flood','snow','ice','wind','dust','landslide','heat','storm','rain']){
+     const item=HALO_FIXTURES['/v1/world/layers/natural'].events.find(e=>e.kind===kind);
+     await page.evaluate(item=>{HaloConsole.pick({id:{haloPick:true,layer:'natural',item}});const c=HuGlobe.viewer().camera;c.lookAt(Cesium.Cartesian3.fromDegrees(item.lon,item.lat,3000),new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-38),180000));c.lookAtTransform(Cesium.Matrix4.IDENTITY);},item);
+     await page.waitForTimeout(700);check(scope,kind+' remains individually inspectable',await page.locator('.hx-detail h2').textContent()===item.name);await shot('event-'+kind);
+   }
+ }
+
+ await page.locator('[data-event-orbit]').click();
+ check(scope,'event orbit follows the inspected object and exposes the globe',!!(await state()).following&&(await state()).orbit&&(width>=1100||(await state()).mapFocus&&await page.locator('.hx-detail').isHidden()));
+ await shot('event-orbit');
+ if(width<1100){await page.locator('.hx-map-focus').click();check(scope,'Show panels remains clickable while orbiting',!(await state()).mapFocus&&await page.locator('.hx-detail').isVisible());}
+ await page.locator('#hxTab-people').click();
+ check(scope,'view switch removes warning panel and overlay immediately',!(await page.textContent('.hx-detail')).includes('Tornado Warning')&&await page.locator('.hx-pop').isHidden()&&await page.locator('.hx-results').isHidden());
+ await page.locator('#hxTab-world').click();
+ await page.locator('.hx-layers-btn').click();
+ await page.locator('[data-event-motion]').uncheck();
+ check(scope,'event animation can be paused without removing observations',await page.evaluate(()=>HaloConsole.state().events.animated===0&&HaloConsole.state().events.loaded>0));
+ await page.locator('[data-event-motion]').check();
+ await page.locator('[data-event-density]').press('Home');
+ await page.waitForTimeout(800);
+ check(scope,'event detail budget zero removes all animated 3D effects',await page.evaluate(()=>HaloConsole.state().events.models===0&&HaloConsole.state().events.animated===0));
+ await page.locator('[data-event-density]').press('End');
+ await page.locator('[data-tool="home"]').click();
+ await page.locator('.hx-layers-btn').click();
+
  /* a NOAA station opens its observed water level with a chart */
  await page.evaluate(()=>HaloConsole.pick({id:{haloPick:true,layer:'tides',item:{id:'8465705',name:'New Haven',lon:-72.9083,lat:41.2833,state:'CT'}}}));
  await page.waitForSelector('.hx-detail .hx-chart svg',{timeout:8000}).catch(()=>{});
@@ -230,10 +276,10 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
 }
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
 try {
-for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
+for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDTH)]:[390,820,1280]))for(const persona of (process.env.WORLD_QA_PERSONA?[process.env.WORLD_QA_PERSONA]:['guest','member','creator','owner','halo','failed'])){
  const scope=width+' '+persona, ctx=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390});
  let owner=persona==='owner'||persona==='halo', calls=0, slow=false, mapReads=0, haloCode=0;const errors=[];
- await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest')localStorage.setItem('mccdb_session',JSON.stringify({access_token:p}));},persona);
+ await ctx.addInitScript(p=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));if(p!=='guest'){const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({sub:'owner-'+p,exp}))+'.y',expires_at:exp,refresh_token:'fixture-only',user:{id:'owner-'+p,email:'fixture@example.invalid'}}));}},persona);
  await ctx.route('**/*',async route=>{
   const url=new URL(route.request().url()), headers={'access-control-allow-origin':'*','access-control-allow-headers':'*'};
   const json=(body,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(body)});
@@ -243,6 +289,7 @@ for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PER
   }
   if(url.hostname==='api.mccluster.org'){
    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
+   if(url.pathname==='/v1/status')return json({ok:owner},owner?200:403);
    if(url.pathname==='/v1/world/access'){mapReads++;return persona==='failed'?json({},503):json({release:{version:'globe-admin-preview/v1',admin_preview:owner},level:owner?'owner':persona,unlocked_layers:owner?['flights','satellites','launches','music','audience','transport']:[],locked_layers:FEATURES.filter(x=>!owner||['ion','cctv','intel'].includes(x)).map(id=>({id,reason:'admin_preview'})),layers:{}});}
    if(persona==='halo'&&HALO_FIXTURES[url.pathname]){calls++;return json(HALO_FIXTURES[url.pathname]);}
    if(persona==='halo'&&url.pathname==='/v1/news-briefs')return json({day:url.searchParams.get('day'),briefs:[{country:'US',country_name:'United States',day:url.searchParams.get('day'),status:'ready',editorial_status:'draft',overview:'Fixture overview of the day.',happened:['Fixture event'],may_mean:[],uncertain:[],sources:[{n:1,title:'Fixture source',url:'https://example.org/a',domain:'example.org'}]}]});
@@ -251,7 +298,7 @@ for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PER
    if(url.pathname.includes('/v1/world/layers/')){calls++;if(slow)await new Promise(r=>setTimeout(r,250));return json({aircraft:[],count:0});}
    return json({},404);
   }
-  if(url.hostname.endsWith('supabase.co'))return json(url.pathname.includes('/rpc/')?[]:{});
+  if(url.hostname.endsWith('supabase.co'))return json(url.pathname==='/auth/v1/user'?{id:'owner-'+persona,email:'fixture@example.invalid'}:url.pathname.includes('/rpc/')?[]:{});
   if(route.request().resourceType()==='image')return route.fulfill({body:PNG,contentType:'image/png',headers});
   return route.abort();
  });

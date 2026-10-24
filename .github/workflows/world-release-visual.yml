@@ -22,6 +22,11 @@ concurrency:
   cancel-in-progress: true
 jobs:
   world-release-browser:
+    name: world-release-${{ matrix.width }}
+    strategy:
+      fail-fast: false
+      matrix:
+        width: [390, 820, 1280]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -37,15 +42,16 @@ jobs:
           /tmp/world-qa/node_modules/.bin/playwright install --with-deps chromium
       - name: Verify release authorization and the actual globe
         env:
+          WORLD_QA_WIDTH: ${{ matrix.width }}
           PLAYWRIGHT_DIR: /tmp/world-qa/node_modules
           CESIUM_DIR: /tmp/world-qa/node_modules/cesium/Build/Cesium
         run: |
           node --test workers/mccluster/test/world-release.test.mjs workers/mccluster/test/world-access.test.mjs
-          node --test scripts/test/halo-consistency.test.mjs scripts/test/halo-console.test.mjs scripts/test/halo-objects.test.mjs
+          node --test scripts/test/halo-consistency.test.mjs scripts/test/halo-console.test.mjs scripts/test/halo-objects.test.mjs scripts/test/halo-events.test.mjs workers/mccluster/test/world-events.test.mjs
           node scripts/e2e/world-release.e2e.mjs /tmp/world-proof
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: world-release-proof-${{ github.run_id }}
+          name: world-release-proof-${{ github.run_id }}-${{ matrix.width }}
           path: /tmp/world-proof
           retention-days: 7

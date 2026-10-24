@@ -126,7 +126,7 @@ export function renderPage(ledger) {
 
   return `<!doctype html>
 <html lang="en">
-<head>
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Newsroom &amp; Public Record · Matthew McCluster / McCluster Corp</title>

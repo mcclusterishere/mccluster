@@ -12,6 +12,8 @@
   'use strict';
 
   const SPECS = Object.freeze({
+    weather: Object.freeze({ label: 'Weather alerts (NOAA)', rows: 'events', every: 120000, color: '#d1d5df' }),
+    natural: Object.freeze({ label: 'Natural events (NASA)', rows: 'events', every: 600000, color: '#dfae9b' }),
     military: Object.freeze({ label: 'Military flights', rows: 'aircraft', every: 30000, color: '#ffbf3c' }),
     vessels: Object.freeze({ label: 'Ships (AIS)', rows: 'vessels', every: 60000, color: '#5ad1c4' }),
     quakes: Object.freeze({ label: 'Earthquakes', rows: 'quakes', every: 60000, color: '#ff7a59' }),
@@ -21,7 +23,7 @@
     tides: Object.freeze({ label: 'Water levels (NOAA)', rows: 'stations', every: 3600000, color: '#45b8f4' })
   });
   /* what each layer's points are: an observation, a calculation, or reference (docs/design/halo/HALO-VIEW-DESIGN.md) */
-  const PROVENANCE = Object.freeze({ military: 'observed', vessels: 'observed', quakes: 'observed', fires: 'observed', perimeters: 'reported', cyclones: 'observed', tides: 'reference' });
+  const PROVENANCE = Object.freeze({ weather: 'warning', natural: 'reported', military: 'observed', vessels: 'observed', quakes: 'observed', fires: 'observed', perimeters: 'reported', cyclones: 'observed', tides: 'reference' });
 
   const finite = (v) => typeof v === 'number' && Number.isFinite(v);
   const lonLat = (lon, lat) => finite(lon) && finite(lat) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
@@ -65,6 +67,7 @@
   function create(G) {
     const C = window.Cesium;
     const state = {};
+    const visuals = window.HaloEvents ? HaloEvents.create(C, G.viewer()) : null;
     const listeners = new Set();
     Object.keys(SPECS).forEach((id) => { state[id] = { on: false, phase: 'off', count: 0, stale: false, reason: '', credit: '', fetched: 0, checked: 0, prims: [], entities: [], timer: 0, seq: 0, items: [] }; });
 
@@ -72,9 +75,10 @@
     function changed(id) { listeners.forEach((fn) => { try { fn(id, status(id)); } catch (_) { /* a listener's own fault */ } }); }
     function status(id) {
       const L = state[id];
-      return L ? { on: L.on, state: L.phase, count: L.count, stale: L.stale, reason: L.reason, credit: L.credit, fetched: L.fetched } : null;
+      return L ? { mapped: L.items.filter(it => lonLat(it.lon,it.lat)).length, on: L.on, state: L.phase, count: L.count, stale: L.stale, reason: L.reason, credit: L.credit, fetched: L.fetched } : null;
     }
-    function clear(id) {
+    function clear(id, keepVisual = false) {
+      if (!keepVisual && visuals) visuals.clear(id);
       const L = state[id], v = viewer();
       if (v) {
         L.prims.forEach((p) => { if (v.scene.primitives.contains(p)) v.scene.primitives.remove(p); });
@@ -86,12 +90,14 @@
     function pickId(id, item) { return { haloPick: true, layer: id, item }; }
 
     const draw = {
+      weather(id, rows) { state[id].items = rows.filter(r => r && typeof r.id === 'string' && !window.HaloEvents?.expired(r)); state[id].count = state[id].items.length; },
+      natural(id, rows) { draw.weather(id, rows); },
       military(id, rows) {
         const v = viewer(), col = new C.BillboardCollection(), L = state[id];
         rows.forEach((r) => {
           if (!Array.isArray(r) || !lonLat(r[2], r[3])) return;
           const item = { hex: text(r[0], 12), callsign: text(r[1], 16), lon: r[2], lat: r[3], alt: finite(r[4]) ? r[4] : null, speed: finite(r[5]) ? r[5] : null, track: finite(r[6]) ? r[6] : null, type: text(r[7], 24), squawk: text(r[8], 8), emergency: r[9] === true };
-          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, Math.max(0, item.alt ?? 9000));
+          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, Math.max(0, item.alt ?? 0));
           col.add({
             position, image: icon('aircraft', item.emergency ? '#ff4444' : SPECS.military.color), width: 22, height: 22,
             rotation: item.track === null ? 0 : -C.Math.toRadians(item.track), alignedAxis: item.track === null ? C.Cartesian3.ZERO : headingAxis(C, position),
@@ -207,9 +213,13 @@
       L.checked = Date.now(); L.fetched = Number.isFinite(provided) ? provided : body ? L.checked : L.fetched;
       L.reason = reason; L.stale = !!(body && body.stale); L.credit = body ? text(body.credit || body.attribution, 80) : '';
       if (body && !body.unavailable) {
-        clear(id);
+        clear(id, true);
         const rows = Array.isArray(body[SPECS[id].rows]) ? body[SPECS[id].rows] : [];
-        try { draw[id](id, rows); } catch (e) { phase = 'error'; reason = 'could not draw'; clear(id); }
+        try { draw[id](id, rows); if (visuals) {
+          // Keep reported wildfire footprints; replace the generic markers of other feeds.
+          if (id !== 'perimeters') { L.prims.forEach(p => { if (v.scene.primitives.contains(p)) v.scene.primitives.remove(p); }); L.prims = []; }
+          visuals.setLayer(id, L.items);
+        } } catch (e) { phase = 'error'; reason = 'could not draw'; clear(id); }
       } else if (phase !== 'on') clear(id);
       L.phase = phase;
       if (v.scene.requestRender) v.scene.requestRender();
@@ -243,13 +253,14 @@
       const at = (h) => () => C2.Cartesian3.fromDegrees(it.lon, it.lat, h || 0);
       const credit = L.credit || SPECS[pick.layer].label;
       switch (pick.layer) {
-        case 'military': return { title: it.callsign || it.hex || 'Military aircraft', rows: [['Type', it.type || 'Unknown'], ['Altitude', fmt(it.alt, 'ft', 3.28084)], ['Ground speed', fmt(it.speed, 'kn', 1.94384)], ['Track', fmt(it.track, '°')], ['Squawk', it.squawk || 'Unknown'], ['ICAO', it.hex || 'Unknown']], note: (it.emergency ? 'Emergency squawk broadcast. ' : '') + 'Broadcast by the aircraft’s own transponder (ADS-B). Many military aircraft never broadcast; this is not every one.', credit, position: at(Math.max(0, it.alt ?? 9000)), range: 60000 };
+        case 'weather': case 'natural': return { title: it.name || it.event || 'Natural event', rows: [['Type', it.event || 'Unknown'], ['Source', it.source || credit], ['Reported', when(it.observed_at)], ['Expires', it.expires_at ? when(it.expires_at) : 'No expiry supplied'], ['Severity', it.severity || 'Not supplied'], ['Certainty', it.certainty || 'Not supplied'], ['Location', it.location_kind === 'reported_point' ? 'Reported position' : it.location_kind === 'area_label' ? 'Label on the reported area boundary' : 'No coordinates supplied']], note: (it.description || '') + (it.instructions ? '\n' + it.instructions : '') + '\nAnimated representation of the event type, enlarged for visibility. It is not a live image, measured size, or confirmed storm position. ' + (pick.layer === 'weather' ? 'NOAA alert area; a warning is not confirmation of a tornado on the ground.' : 'Latest NASA EONET report; an open report does not establish ongoing activity at this instant.'), credit, position: lonLat(it.lon,it.lat) ? at(0) : null, range: 160000, link: /^https:\/\/(api.weather.gov\/alerts\/|eonet.gsfc.nasa.gov\/api\/v3\/events\/)/.test(it.url || '') ? it.url : '' };
+        case 'military': return { title: it.callsign || it.hex || 'Military aircraft', rows: [['Type', it.type || 'Unknown'], ['Altitude', fmt(it.alt, 'ft', 3.28084)], ['Ground speed', fmt(it.speed, 'kn', 1.94384)], ['Track', fmt(it.track, '°')], ['Squawk', it.squawk || 'Unknown'], ['ICAO', it.hex || 'Unknown']], note: (it.emergency ? 'Emergency squawk broadcast. ' : '') + 'Broadcast by the aircraft’s own transponder (ADS-B). Many military aircraft never broadcast; this is not every one.', credit, position: at(Math.max(0, it.alt ?? 0)), range: 60000 };
         case 'vessels': return { title: it.name || 'MMSI ' + it.mmsi, rows: [['MMSI', it.mmsi || 'Unknown'], ['Speed', finite(it.sog) ? it.sog.toFixed(1) + ' kn' : 'Unknown'], ['Course', fmt(it.cog, '°')], ['Heading', fmt(it.heading, '°')]], note: 'The ship’s own AIS broadcast, received from shore. Ships far from a receiver are not shown.', credit, position: at(0), range: 25000 };
-        case 'quakes': return { title: (finite(it.mag) ? 'M' + it.mag.toFixed(1) + ' · ' : '') + (it.place || 'Earthquake'), rows: [['Magnitude', finite(it.mag) ? it.mag.toFixed(1) : 'Unknown'], ['Depth', fmt(it.depth, 'km')], ['Time', when(it.time)], ['Tsunami flag', it.tsunami ? 'Yes' : 'No'], ['PAGER alert', it.alert || 'None']], link: it.url && /^https:\/\/earthquake\.usgs\.gov\//.test(it.url) ? it.url : '', note: 'USGS, last 24 hours. Magnitude and location are revised as review continues.', credit, position: at(0), range: 400000 };
+        case 'quakes': return { title: (finite(it.mag) ? 'M' + it.mag.toFixed(1) + ' · ' : '') + (it.place || 'Earthquake'), rows: [['Magnitude', finite(it.mag) ? it.mag.toFixed(1) : 'Unknown'], ['Depth', fmt(it.depth, 'km')], ['Time', when(it.time)], ['Tsunami flag', it.tsunami ? 'Yes' : 'No'], ['PAGER alert', it.alert || 'None']], link: it.url && /^https:\/\/earthquake\.usgs\.gov\//.test(it.url) ? it.url : '', note: 'USGS, last 24 hours. Animated rings and fracture symbol identify the event, not a measured fault or real-time seismic wave. Magnitude and location may be revised.', credit, position: at(0), range: 400000 };
         case 'fires': return { title: 'Fire detection', rows: [['Radiative power', finite(it.frp) ? it.frp.toFixed(1) + ' MW' : 'Unknown'], ['Confidence', it.confidence || 'Unknown'], ['Detected', when(it.acq)], ['Satellite', it.satellite || 'Unknown'], ['Pass', it.daynight === 'D' ? 'Day' : it.daynight === 'N' ? 'Night' : 'Unknown']], note: 'A satellite thermal hotspot (VIIRS), not a confirmed wildfire. Industry, flares and volcanoes show too.', credit, position: at(0), range: 60000 };
-        case 'perimeters': return { title: it.name || 'Wildfire', rows: [['Size', fmt(it.acres, 'acres')], ['Contained', finite(it.contained) ? Math.round(it.contained) + '%' : 'Unknown'], ['Discovered', when(it.discovered)]], note: 'The incident perimeter as reported by U.S. agencies (NIFC). It lags the fire.', credit, position: at(0), range: 120000 };
+        case 'perimeters': return { title: it.name || 'Wildfire', rows: [['Size', fmt(it.acres, 'acres')], ['Contained', finite(it.contained) ? Math.round(it.contained) + '%' : 'Unknown'], ['Discovered', when(it.discovered)]], note: 'Reported NIFC perimeter, which can lag the fire. Flame and plume are illustrative, not measured flame height or current spread.', credit, position: at(0), range: 120000 };
         case 'tides': return { title: it.name || 'Water-level station', rows: [['Station', it.id || 'Unknown'], ['State', it.state || 'Unknown']], note: 'A NOAA CO-OPS water-level station. Its reading is the observed level, not a tide prediction.', credit, tide: it.id, position: at(0), range: 60000 };
-        case 'cyclones': return { title: it.name || 'Tropical cyclone', rows: [['Class', it.classification || 'Unknown'], ['Wind', fmt(it.intensity, 'kt')], ['Pressure', fmt(it.pressure, 'mb')], ['Moving', finite(it.dir) ? Math.round(it.dir) + '° at ' + fmt(it.speed, 'kt') : 'Unknown']], link: it.url && /^https:\/\/www\.nhc\.noaa\.gov\//.test(it.url) ? it.url : '', note: 'Latest National Hurricane Center position. Follow the official advisory for forecasts and warnings.', credit, position: at(0), range: 1500000 };
+        case 'cyclones': return { title: it.name || 'Tropical cyclone', rows: [['Class', it.classification || 'Unknown'], ['Wind', fmt(it.intensity, 'kt')], ['Pressure', fmt(it.pressure, 'mb')], ['Moving', finite(it.dir) ? Math.round(it.dir) + '° at ' + fmt(it.speed, 'kt') : 'Unknown']], link: it.url && /^https:\/\/www\.nhc\.noaa\.gov\//.test(it.url) ? it.url : '', note: 'Latest National Hurricane Center position. Spiral clouds illustrate the type, not observed cloud shape or storm size. Follow the official advisory for forecasts and warnings.', credit, position: at(0), range: 1500000 };
         default: return null;
       }
     }
@@ -257,10 +268,12 @@
     function destroy() {
       document.removeEventListener('visibilitychange', onVisible);
       Object.keys(state).forEach((id) => { const L = state[id]; L.on = false; L.seq++; clearInterval(L.timer); clear(id); });
+      if (visuals) visuals.destroy();
       listeners.clear();
     }
 
     return Object.freeze({
+      visuals,
       ids: Object.keys(SPECS),
       toggle: (id) => setOn(id, !(state[id] && state[id].on)),
       set: setOn,

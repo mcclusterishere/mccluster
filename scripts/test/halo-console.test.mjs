@@ -13,7 +13,7 @@ test('the globe loads Halo only for the owner the Worker names, only on the full
   assert.match(js, /function isOwner\(\)\{const t=sessionToken\(\);return !!\(t&&access&&access\.release\?\.version==='globe-admin-preview\/v1'&&access\.release\.admin_preview===true&&accessToken===t\)\}/);
   const sync = js.slice(js.indexOf('function haloSync()'), js.indexOf('/* what the Halo console may use'));
   assert.match(sync, /if\(!EXPLORE\|\|BARE\|\|\(!viewer&&!haloMapFailed\)\)return;/, 'only the full-screen globe mounts the view');
-  assert.match(sync, /if\(!owner\)\{if\(window\.HaloConsole\)HaloConsole\.unmount\(\);return\}/, 'role loss unmounts');
+  assert.match(sync, /if\(!owner\)\{if\(access\|\|!sessionToken\(\)\)window\.MCC_SHELL\?\.haloReady\(\);if\(window\.HaloConsole\)HaloConsole\.unmount\(\);return\}/, 'role loss unmounts');
   assert.match(sync, /if\(HALO_OPEN===null\)return;/, 'the view opens only from a Halo link (?halo=…)');
   assert.ok(sync.indexOf('if(!owner)') < sync.indexOf('haloScript('), 'no Halo code is fetched before the owner answer');
   assert.match(sync, /enter\.hidden=!owner\|\|HALO_OPEN!==null;/, 'the header door shows for the owner only');
@@ -42,7 +42,7 @@ test('the view\'s layers are the Worker\'s release features', () => {
   const ctx = { window: {}, document: { addEventListener() {}, removeEventListener() {} } };
   vm.runInNewContext(read('js/halo/layers.js'), ctx);
   const ids = Object.keys(ctx.window.HaloLayers.SPECS).sort();
-  assert.deepEqual(ids, ['cyclones', 'fires', 'military', 'perimeters', 'quakes', 'tides', 'vessels']);
+  assert.deepEqual(ids, ['cyclones', 'fires', 'military', 'natural', 'perimeters', 'quakes', 'tides', 'vessels', 'weather']);
   const policy = read('packages/release-policy/globe.mjs');
   for (const id of ids) assert.match(policy, new RegExp("'" + id + "'"), id + ' is a release feature, owner-only by the guard');
   assert.match(policy, /\/v1\/world\/geocode/, 'place search is a release feature too');
