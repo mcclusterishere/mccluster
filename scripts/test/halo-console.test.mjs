@@ -42,7 +42,7 @@ test('the view\'s layers are the Worker\'s release features', () => {
   const ctx = { window: {}, document: { addEventListener() {}, removeEventListener() {} } };
   vm.runInNewContext(read('js/halo/layers.js'), ctx);
   const ids = Object.keys(ctx.window.HaloLayers.SPECS).sort();
-  assert.deepEqual(ids, ['cyclones', 'fires', 'military', 'perimeters', 'quakes', 'tides', 'vessels']);
+  assert.deepEqual(ids, ['airquality', 'cyclones', 'fires', 'military', 'perimeters', 'quakes', 'tides', 'vessels']);
   const policy = read('packages/release-policy/globe.mjs');
   for (const id of ids) assert.match(policy, new RegExp("'" + id + "'"), id + ' is a release feature, owner-only by the guard');
   assert.match(policy, /\/v1\/world\/geocode/, 'place search is a release feature too');

@@ -97,6 +97,7 @@ import { UpstreamError } from './lib/safe-fetch.js';
 import { cachedLayer, normalizeAdsbAircraft, upstream } from './world-layers.js';
 
 export const HALO_LAYERS = Object.freeze({
+  airquality: Object.freeze({ ttl: 600, max: 500, rows: 'readings', base: Object.freeze({ attribution: 'Environment and Climate Change Canada', attribution_url: 'https://api.weather.gc.ca', credit: 'Air quality: ECCC · Canada only', license: 'Open Government Licence – Canada', coverage: 'Canada AQHI stations', scale: 'AQHI' }) }),
   military: Object.freeze({ ttl: 30, max: 4000, rows: 'aircraft', base: Object.freeze({ attribution: 'adsb.lol, Open Database License (ODbL) 1.0', attribution_url: 'https://adsb.lol', credit: 'Military flights: adsb.lol (ODbL)', license: 'ODbL-1.0' }) }),
   quakes: Object.freeze({ ttl: 120, max: 2000, rows: 'quakes', base: Object.freeze({ attribution: 'U.S. Geological Survey, Earthquake Hazards Program', attribution_url: 'https://earthquake.usgs.gov', credit: 'Earthquakes: USGS', license: 'Public domain (U.S. Government work)' }) }),
   fires: Object.freeze({ ttl: 1800, max: 25000, rows: 'fires', requires: Object.freeze(['FIRMS_MAP_KEY']), base: Object.freeze({ attribution: 'NASA FIRMS, VIIRS 375 m near real-time (Suomi NPP and NOAA-20)', attribution_url: 'https://firms.modaps.eosdis.nasa.gov', credit: 'Fires: NASA FIRMS', license: 'NASA open data (no restriction on reuse; acknowledgement requested)' }) }),
@@ -104,7 +105,7 @@ export const HALO_LAYERS = Object.freeze({
   cyclones: Object.freeze({ ttl: 600, max: 50, rows: 'cyclones', base: Object.freeze({ attribution: 'NOAA National Hurricane Center', attribution_url: 'https://www.nhc.noaa.gov', credit: 'Tropical cyclones: NOAA NHC', license: 'Public domain (U.S. Government work)' }) }),
   vessels: Object.freeze({ ttl: 0, max: 8000, rows: 'vessels', requires: Object.freeze(['AISSTREAM_API_KEY', 'HereTenantAgent']), base: Object.freeze({ attribution: 'AISStream.io', attribution_url: 'https://aisstream.io', credit: 'Ships: AISStream.io', license: 'AISStream.io terms of service' }) })
 });
-const HALO_PATH = /^\/v1\/world\/layers\/(military|quakes|fires|perimeters|cyclones|vessels)$/;
+const HALO_PATH = /^\/v1\/world\/layers\/(military|quakes|fires|perimeters|cyclones|vessels|airquality)$/;
 export const WORLD_GEOCODE_PATH = '/v1/world/geocode';
 
 /* ---------- trust nothing: numbers, strings and links from a provider ----------
@@ -499,8 +500,57 @@ async function vesselsLayer(env) {
   return body;
 }
 
+/* ECCC station coordinates and hourly AQHI observations are separate collections.
+   A retrieval timestamp never substitutes for an observation timestamp. */
+export function normalizeAirQuality(stations, observations, now = Date.now()) {
+  if (!Array.isArray(stations?.features) || !Array.isArray(observations?.features)) throw new UpstreamError('upstream_invalid_json', 'Invalid ECCC collections');
+  const places = new Map(), readings = new Map();
+  for (const f of stations.features.slice(0, 500)) {
+    const p = f?.properties, c = f?.geometry?.coordinates;
+    const lon = finite(c?.[0]), lat = finite(c?.[1]);
+    if (!p || lon === null || lat === null || Math.abs(lon) > 180 || Math.abs(lat) > 90) continue;
+    const id = String(p.location_id ?? f.id ?? '').slice(0, 80);
+    if (id) places.set(id, { id, name: String(p.location_name_en || id).slice(0, 160), lon, lat });
+  }
+  for (const f of observations.features.slice(0, 500)) {
+    const p = f?.properties, place = places.get(String(p?.location_id ?? ''));
+    const raw = finite(p?.aqhi), time = Date.parse(p?.observation_datetime);
+    if (!place || raw === null || raw < 0 || !Number.isFinite(time) || time > now + 300000 || now - time > 21600000) continue;
+    if (readings.has(place.id) && Date.parse(readings.get(place.id).observed_at) >= time) continue;
+    const value = Math.max(1, Math.round(raw));
+    readings.set(place.id, { ...place, value, scale: 'AQHI', observed_at: new Date(time).toISOString(), stale: now - time > 7200000, label: value > 10 ? '10+' : String(value), band: value <= 3 ? 'Low' : value <= 6 ? 'Moderate' : value <= 10 ? 'High' : 'Very high' });
+  }
+  return [...readings.values()];
+}
+async function readAirQualityJson(response) {
+  const reader = response.body?.getReader();
+  if (!reader) throw new UpstreamError('upstream_invalid_json', 'Empty ECCC response');
+  const chunks = []; let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      size += value.byteLength;
+      if (size > 4 * 1024 * 1024) { await reader.cancel(); throw new UpstreamError('upstream_invalid_json', 'ECCC response exceeds limit'); }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(size); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  try { return JSON.parse(new TextDecoder().decode(bytes)); }
+  catch { throw new UpstreamError('upstream_invalid_json', 'Invalid ECCC JSON'); }
+}
+export async function fetchAirQuality(env, fetchImpl = fetch) {
+  const root = 'https://api.weather.gc.ca/collections/';
+  const [stations, observations] = await Promise.all([
+    upstream(root + 'aqhi-stations/items?f=json&limit=500', {}, fetchImpl, readAirQualityJson),
+    upstream(root + 'aqhi-observations-realtime/items?f=json&latest=true&limit=500', {}, fetchImpl, readAirQualityJson)
+  ]);
+  const readings = normalizeAirQuality(stations, observations);
+  return { readings, count: readings.length, observation_stale: !readings.length || readings.every(r => r.stale) };
+}
+
 /* ---------- the routes ---------- */
-const FETCHERS = { military: fetchMilitary, quakes: fetchQuakes, fires: fetchFires, perimeters: fetchPerimeters, cyclones: fetchCyclones };
+const FETCHERS = { airquality: fetchAirQuality, military: fetchMilitary, quakes: fetchQuakes, fires: fetchFires, perimeters: fetchPerimeters, cyclones: fetchCyclones };
 
 /* owner-only answers never sit in a browser or shared cache */
 function send(request, env, body, status = 200) {
