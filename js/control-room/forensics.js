@@ -83,7 +83,21 @@
     var os = u.os || d.platform || "";
     return [os, u.app || u.browser, d.mobile === true && !/iPhone|Android|iPad/.test(os) ? "mobile" : ""].filter(Boolean).join(" · ") || "Unknown device";
   }
-  function place(x) { return [x.city, x.region, x.country].filter(Boolean).join(", "); }
+  function placeLabel(value) {
+    var text = String(value == null ? "" : value);
+    // Some historical provider labels were decoded as Latin-1 more than once.
+    // Repair only valid UTF-8 byte sequences; retain original data elsewhere.
+    for (var pass = 0; pass < 3 && /[ÃÂ]/.test(text); pass++) {
+      if (typeof TextDecoder === "undefined" || /[^\u0000-\u00ff]/.test(text)) break;
+      try {
+        var decoded = new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(text, function (c) { return c.charCodeAt(0); }));
+        if (decoded === text) break;
+        text = decoded;
+      } catch (_) { break; }
+    }
+    return text;
+  }
+  function place(x) { return [x.city, x.region, x.country].filter(Boolean).map(placeLabel).join(", "); }
   function who(x) {
     var name = x.display_name || (x.profile && x.profile.display_name);
     var email = x.email || (x.profile && x.profile.email);
