@@ -11,7 +11,14 @@ const journeys=Array.from({length:65},(_,i)=>({first_name:'Fixture',last_name:'A
 try{
 for(const width of [390,820,1280]){
  const scope=String(width),{ctx,page,errors,calls}=await context({width,height:width===390?844:1000},{deviceScaleFactor:1});
- let cameraFail=true;
+ let cameraFail=true,archiveFail=false;
+ await ctx.route('https://api.mccluster.org/v1/seek-first/readiness',route=>json(route,{database_schema_ready:true}));
+ await ctx.route('https://api.mccluster.org/v1/seek-first/records?**',route=>archiveFail?json(route,{error:'Stored event read unavailable'},503):json(route,{records:[
+  {kind:'event',record_type:'earthquake',name:'Stored earthquake',observed_at:new Date().toISOString(),properties:{magnitude:3}},
+  {kind:'entity',record_type:'station',name:'Stored station',observed_at:new Date().toISOString(),properties:{}},
+  {kind:'observation',record_type:'temperature',name:'Stored temperature',observed_at:new Date().toISOString(),properties:{value_number:0,unit:'C'}}
+ ]}));
+ await ctx.route('https://api.mccluster.org/v1/seek-first/ingestion-runs?**',route=>json(route,{runs:[]}));
  await ctx.route('https://api.mccluster.org/v1/analytics/identity?**',route=>json(route,{coverage:{accounts:65,bridged_accounts:65,attributed_accounts:65},journeys,tracks:songs}));
  await ctx.route('https://api.mccluster.org/v1/analytics/event-inventory',route=>json(route,{ok:true,measured_at:new Date().toISOString(),summary:{names:173,unclassified_names:1,unclassified_events:4,mismatched_names:0},rows:Array.from({length:173},(_,i)=>({name:'audit_event_'+String(i).padStart(3,'0'),raw_total:i+1,lean_total:i+1,recent_24h:1,recent_7d:3,taxonomy_stage:'view',taxonomy_note:'Synthetic event for layout checks',first_seen_at:new Date().toISOString()})),providers:{instagram:{reauthorization_required:true,status:'reauthorization_required',connected_accounts:1,imported_posts:0,metric_snapshots:0}}}));
  await ctx.route('https://api.mccluster.org/v1/analytics/cameras',route=>cameraFail?json(route,{error:'Halo connection is not configured'},503):json(route,{ok:true,catalog_count:3,stale_count:0,retrieved_at:new Date().toISOString(),packs:[{name:'Test provider',cameras:3,status:'ok'}],cameras:[1,2,3].map(id=>({id:String(id),name:'Camera '+id,pack:'Test provider'}))}));
@@ -57,6 +64,15 @@ for(const width of [390,820,1280]){
  await page.getByRole('tab',{name:'Content',exact:true}).click();await page.locator('.cra-reach__row[data-cra-pick]').nth(1).click();
  check(scope+' track selection updates readout',(await page.locator('.cra-reach__name').innerText()).includes('Fixture track 2'));
  check(scope+' wide table is keyboard reachable',await page.locator('.cra-scroll').evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth+2||el.tabIndex===0)));
+ // Stored events and observations must not disappear behind entity-only reads.
+ await page.getByRole('tab',{name:'World intelligence',exact:true}).click();
+ await page.locator('#cuSourceSearch').fill('Geological');check(scope+' source search updates immediately',await page.locator('[data-cu-source]').count()===1);
+ await page.locator('[data-cu-source]').click();await page.getByRole('button',{name:'Read stored records',exact:true}).click();await page.waitForFunction(()=>!CR.analyticsUnified.state.reading);
+ check(scope+' archive includes all stored record kinds',await page.locator('.cu-records details').count()===3);
+ await page.locator('.cu-records details').last().locator('summary').click();
+ check(scope+' measurement details preserve zero and type',(await page.locator('.cu-records').innerText()).includes('temperature')&&(await page.locator('.cu-records').innerText()).includes('"value_number": 0'));
+ archiveFail=true;await page.getByRole('button',{name:'Read stored records',exact:true}).click();await page.waitForFunction(()=>!CR.analyticsUnified.state.reading);
+ check(scope+' failed archive clears stale records',await page.locator('.cu-records details').count()===0&&(await page.locator('.cad-body').innerText()).includes('Stored event read unavailable'));
  // Event dictionary: all rows, inline details, instant search with retained focus.
  await page.getByRole('tab',{name:'Data explorer',exact:true}).click();await page.getByRole('button',{name:'Events',exact:true}).click();await page.locator('#cuEventQuery').waitFor();
  check(scope+' dictionary starts with fifty',await page.locator('details.cu-dataset-row').count()===50);

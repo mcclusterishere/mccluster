@@ -15,6 +15,7 @@ Scope: every Analytics chapter, its principal controls, phone (390 px), tablet (
 - Wide tables and hourly charts now advertise sideways scrolling and are keyboard reachable. Hourly axis text no longer collides; small-count charts use unique, correctly positioned integer ticks.
 - Connected operations used an unstyled native select. It now shares the other Analytics form styles.
 - Instagram's guidance claimed Channels could renew authorization, although that page has no reconnect control. Guidance now identifies the existing server integration and describes the Channels link accurately.
+- World intelligence’s archive read only entities, hiding ingested earthquake events and observations. The owner-only, house-scoped archive now merges bounded samples from all three record kinds and fails visibly if any read fails. A live pre-fix check showed zero records alongside successful earthquake ingestion runs. A read-only production query confirmed 50 earthquake events in the bounded sample and zero entities; the new query’s selected columns were verified against production.
 - Camera failures discarded their cause. The owner API now distinguishes absent configuration, invalid address, rejected authorization, timeout and upstream failure without revealing credentials or upstream response bodies.
 
 ## All-tab matrix
@@ -26,7 +27,7 @@ Scope: every Analytics chapter, its principal controls, phone (390 px), tablet (
 | Journeys | Source/track filtering and reset; all returned songs; 65 synthetic accounts reached in pages | Live attribution and accounts rendered; no identifying production records included in this report |
 | Content | Track selection updates readout; track list; scrollable ledger | Live track activity, media mix and detail rendered |
 | Action & business | Participation, sales and community cards; workspace links; dataset shortcut | Live cards rendered; verified sales remain distinct from client reports |
-| World intelligence | Source selection/search; permission states; snapshot failure; record browsing/comparison regression suites | 32 sources listed; earthquake collection enabled with successful recorded run. Source configuration is not proof of a live feed |
+| World intelligence | Source selection/search; permission states; snapshot failure; record browsing/comparison regression suites | 32 sources listed; World Bank indicators and Site health subviews returned live data; earthquake collection enabled with successful recorded run. Source configuration is not proof of a live feed |
 | Cameras | Catalog loading, visible failure, retry, provider selection, image decoding and verification | Live catalog failed twice. Connection inspection blocked by Cloudflare Worker-read scope; do not claim camera coverage restored |
 | Adaptive | Responsive metrics; policies, experiment empty state and ledger | Live decision totals, production policy, research record and ledger rendered |
 | Site health | Sessions, Visitors, Flows, Errors; search/filter/sort controls; nested module mounting | Live session counts and detail rows rendered. Subviews are independently requested |
@@ -37,6 +38,6 @@ Scope: every Analytics chapter, its principal controls, phone (390 px), tablet (
 
 The new `scripts/e2e/analytics-tabs.e2e.mjs` runs the actual Control renderer with synthetic responses, exercises all 11 tabs at three widths, measures document and panel overflow, checks that selected tabs are not covered, and captures chapter tops, ends and interaction results. It runs in the existing Control workspace visual workflow; screenshots and machine-readable checks are retained in that workflow's artifact. These images contain synthetic fixtures, not production telemetry.
 
-Local validation before the PR: 189 all-tab browser assertions, 44 Analytics UI unit tests, 89 Worker Analytics tests; existing unified browser regression across five viewport/workspace combinations; repository source classification 1,634/1,634; control-plane migration ledger contract (346 migrations) and whitespace checks. Final CI and deployment receipts belong to the PR, not to an assumed production result.
+Local validation before the PR: 201 all-tab browser assertions, 44 Analytics UI unit tests, 197 Worker Analytics/spatial tests; existing unified browser regression across five viewport/workspace combinations; repository source classification 1,634/1,634; control-plane migration ledger contract (346 migrations) and whitespace checks. Final CI and deployment receipts belong to the PR, not to an assumed production result.
 
 The task did not create provider accounts, grant access, publish content, create production test records, or alter payment/identity measurement definitions. Missing credentials and provider authorization cannot be repaired by styling or invented zero values.
