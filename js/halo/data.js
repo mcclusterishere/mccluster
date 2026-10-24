@@ -62,9 +62,9 @@
 
     function utcDay(offset) { const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); const p = Object.fromEntries(parts.map(x => [x.type, x.value])); return new Date(Date.UTC(+p.year, +p.month - 1, +p.day) - offset * 864e5).toISOString().slice(0, 10); }
     /* Match the reading page: yesterday’s New York edition. */
-    async function briefs() {
+    async function briefs(force) {
       // The reading page and Halo use the same New York yesterday edition.
-      const before = await load('briefs:' + utcDay(1), '/v1/news-briefs?day=' + utcDay(1), 600e3, false);
+      const before = await load('briefs:' + utcDay(1), '/v1/news-briefs?day=' + utcDay(1), 600e3, !!force);
       slots.briefs = slots['briefs:' + utcDay(1)];
       return before;
     }

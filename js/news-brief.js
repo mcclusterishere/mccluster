@@ -191,7 +191,7 @@
     $("nbLeadForm").addEventListener("submit", function (e) { e.preventDefault(); changeLead("POST", { handle: $("nbLeadHandle").value, country: $("nbLeadCountry").value }); });
     $("nbLeadList").addEventListener("click", function (e) { var b = e.target.closest("[data-unlead]"); if (b) changeLead("DELETE", { m_uid: b.getAttribute("data-unlead"), country: b.getAttribute("data-country") }); });
     var q=new URLSearchParams(location.search), day=q.get('day'); state.country=/^[A-Z]{2}$/.test(q.get('country')||'')?q.get('country'):''; state.day = /^\d{4}-\d{2}-\d{2}$/.test(day||'')&&day<=nyYesterday()?day:nyYesterday(); $("nbDay").value = state.day; $("nbDay").max = nyYesterday();
-    var back=document.createElement("a");back.href="action-globe.html?explore=1&halo=intel&section=briefs&item=brief:"+encodeURIComponent(state.country);back.textContent="← Back to Halo briefs";$("nbTitle").before(back);
+    if(q.get('from')==='halo'){var back=document.createElement("a");back.href="action-globe.html?explore=1&halo=intel&section=briefs&item=brief:"+encodeURIComponent(state.country);back.textContent="← Back to Halo briefs";$("nbTitle").before(back);}
     $("nbDay").addEventListener("change", function () { if (/^\d{4}-\d{2}-\d{2}$/.test(this.value)) { state.day = this.value; load(); } });
     $("nbCountry").addEventListener("change", function () { state.country = this.value; paintBrief(); });
     $("nbAskGo").addEventListener("click", function () { ask(false); });

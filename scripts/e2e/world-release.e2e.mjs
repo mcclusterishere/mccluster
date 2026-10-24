@@ -252,6 +252,8 @@ for(const width of [390,820,1280])for(const persona of (process.env.WORLD_QA_PER
     check(scope,'mapless '+v+' remains usable',await page.locator('.hx-left').isVisible()&&(await page.locator('[data-view="'+v+'"]').getAttribute('aria-selected'))==='true');
   }
   check(scope,'mapless layout has no overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+  await page.waitForFunction(()=>document.querySelector('.hx-panel__body')?.textContent.includes('Harbor flooding report'));
+  check(scope,'mapless Intelligence loads evidence independently of map layers',await page.getByText('Harbor flooding report',{exact:true}).isVisible());
   await page.screenshot({path:join(OUT,'halo-fallback-'+width+'.png')});
   owner=false;await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
   await page.waitForFunction(()=>!document.getElementById('haloShell'));

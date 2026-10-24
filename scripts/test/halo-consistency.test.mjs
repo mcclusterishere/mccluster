@@ -25,6 +25,14 @@ test('initial unavailable Halo read remains unknown, not a valid zero',async()=>
  const context={window:{},document:{hidden:false},fetch:async()=>({ok:true,status:200,json:async()=>({unavailable:true,counts:{active:0},missions:[]})}),setInterval:()=>1,clearInterval,Date,Intl};
  vm.createContext(context);vm.runInContext(read('js/halo/data.js'),context);const d=context.window.HaloData.create({api:'',token:()=>''});await d.get('missions');assert.equal(d.peek('missions').body,null);assert.match(d.peek('missions').error,/unavailable/);
 });
+test('manual brief refresh bypasses the cached edition',async()=>{
+ let calls=0;
+ const context={window:{},document:{hidden:false},fetch:async()=>({ok:true,status:200,json:async()=>({briefs:[{country:'US',revision:++calls}]})}),setInterval:()=>1,clearInterval,Date,Intl};
+ vm.createContext(context);vm.runInContext(read('js/halo/data.js'),context);
+ const d=context.window.HaloData.create({api:'',token:()=>''});
+ await d.briefs();await d.briefs();assert.equal(calls,1);
+ await d.briefs(true);assert.equal(calls,2);assert.equal(d.peekBriefs().body.briefs[0].revision,2);d.destroy();
+});
 test('mission destinations carry record and intent and brief destinations carry edition',()=>{
  const s=read('js/halo/halo.js');assert.match(s,/taskLink\('reviews', m.id\)/);assert.match(s,/taskLink\('missions', m.id\)/);assert.match(s,/briefLink\(b\)/);assert.match(s,/completed: 'Closed'/);assert.match(s,/coverage\('people'\)/);
 });

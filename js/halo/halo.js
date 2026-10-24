@@ -559,7 +559,7 @@
     return '<p class="hx-note" role="status">' + esc(h.text) + (b && fin(b.total) ? ' · Showing ' + n((b.missions || b.people || []).length) + ' of ' + n(b.total) : '') + '</p>';
   }
   function taskLink(task, id) { return 'control.html?haloTask=' + task + (id ? '&amp;mission=' + encodeURIComponent(id) : '') + '#create:action-network'; }
-  function briefLink(b) { return BRIEFS + '?country=' + encodeURIComponent(b.country || '') + '&amp;day=' + encodeURIComponent(b.day || ''); }
+  function briefLink(b) { return BRIEFS + '?from=halo&amp;country=' + encodeURIComponent(b.country || '') + '&amp;day=' + encodeURIComponent(b.day || ''); }
   function rememberRoute(replace = false) {
     if (!mounted) return;
     const u = new URL(location.href); u.searchParams.set('halo', view);
@@ -1094,7 +1094,7 @@
         setView(next); $('#hxTab-' + next).focus();
       };
     });
-    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs();}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
+    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
     ui.operator.onclick = () => { const chip = document.getElementById('mccAuthChip'); if (chip) chip.click(); else location.href = 'account.html'; };
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }
@@ -1157,7 +1157,7 @@
       timelineFor = null; markSig = ''; detailSig = '';
       buildLeft();
       /* Intelligence reads the Earth's own observations: earthquakes and cyclones come on with it */
-      if (view === 'intel' && layers) { ['quakes', 'cyclones'].forEach((id) => { if (!layers.on(id)) layers.set(id, true); }); data.get('evidence'); data.get('health'); data.briefs().then(schedulePaint); }
+      if (view === 'intel') { if (layers) ['quakes', 'cyclones'].forEach((id) => { if (!layers.on(id)) layers.set(id, true); }); data.get('evidence'); data.get('health'); data.briefs().then(schedulePaint); }
       if (view === 'missions' || view === 'world') data.get('missions');
       if (view === 'people') { data.get('people'); data.get('missions'); }
     }
