@@ -64,14 +64,12 @@
     expand: svg('<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>')
   };
 
-  /* WORLD DATA: the groups of the owner's screen, each layer what it really is today. "planned" rows are Halo layers not
-     yet on this globe (docs/control-plane/HALO-ADMIN-GLOBE.md, phase 3); they are listed so the count is honest. */
+  /* WORLD DATA: only implemented sources belong in the operational layer picker. */
   const GROUPS = [
     { id: 'air', name: 'Air & sea', icon: 'plane', items: [{ id: 'flights', label: 'Aircraft', core: true }, { id: 'military', label: 'Military aircraft', short: 'Military' }, { id: 'vessels', label: 'Ships (AIS)', short: 'Ships' }] },
     { id: 'earth', name: 'Earth & weather', icon: 'cloud', items: [{ id: 'quakes', label: 'Earthquakes', short: 'Quakes' }, { id: 'fires', label: 'Thermal hotspots (NASA FIRMS)', short: 'Thermal' }, { id: 'tides', label: 'Water levels (NOAA)', short: 'NOAA' }, { id: 'cyclones', label: 'Tropical cyclones (NOAA)', short: 'Cyclones' }, { id: 'perimeters', label: 'Wildfire perimeters', short: 'Perimeters' }] },
-    { id: 'infra', name: 'Infrastructure', icon: 'building', items: [{ id: 'networks', label: 'Networks', planned: true }, { id: 'dams', label: 'Dams', planned: true }, { id: 'sites', label: 'Data centres', short: 'Sites', planned: true }] },
     { id: 'space', name: 'Space', icon: 'sat', items: [{ id: 'satellites', label: 'Satellites', core: true }, { id: 'launches', label: 'Launches', core: true }] },
-    { id: 'places', name: 'Places & media', icon: 'camera', items: [{ id: 'cctv', label: 'Cameras (CCTV)', short: 'Cameras', core: true }, { id: 'radio', label: 'Radio', planned: true }, { id: 'news', label: 'News', planned: true }] },
+    { id: 'places', name: 'Places & media', icon: 'camera', items: [{ id: 'cctv', label: 'Cameras (CCTV)', short: 'Cameras', core: true }] },
     { id: 'ops', name: 'Field operations', icon: 'people', items: [{ id: 'missions', label: 'Missions', own: true }, { id: 'regions', label: 'Member regions (5 or more)', short: 'People', globe: true }, { id: 'intel', label: 'Intel events (evidence)', short: 'Evidence', core: true }] }
   ];
   const CONTEXT = ['Satellite imagery', 'Street map', 'Photoreal 3D cities', 'Country borders'];
@@ -659,7 +657,7 @@
     const items = ALL_ITEMS;
     let avail = 0;
     items.forEach((it) => { if (!it.planned) avail++; });
-    ui.leftSub.textContent = avail + ' available · ' + CONTEXT.length + ' context · ' + items.filter((i) => i.planned).length + ' planned';
+    ui.leftSub.textContent = avail + ' available · ' + CONTEXT.length + ' context';
     GROUPS.forEach((g) => {
       const li = $('[data-group="' + g.id + '"]', ui.leftBody);
       if (!li) return;
