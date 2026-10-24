@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-22.1",
+  "catalogVersion": "2026-10-24.1",
   "capabilities": [
     {
       "id": "core.resume",
@@ -1943,6 +1943,51 @@
           }
         }
       }
+    },
+    {
+      "id": "speech.converse.full_duplex",
+      "title": "Full-duplex conversational speech",
+      "description": "Native simultaneous speech-in/speech-out. Reserved for a consented, authenticated private streaming implementation; provider adapters such as Moshi or Dessa require explicit review and operational release.",
+      "domain": "ai.speech",
+      "lifecycle": "planned",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Authorized speech adapter selected at session creation"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Consented spoken interaction purpose"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string"
+          },
+          "expires_in_seconds": {
+            "type": "integer"
+          }
+        }
+      },
+      "tags": [
+        "voice",
+        "full-duplex",
+        "consent-required",
+        "feature-gated"
+      ]
     }
   ],
   "bindings": [
