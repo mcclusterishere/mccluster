@@ -666,15 +666,15 @@ function openAircraft(contact){const a=contact.aircraft;if(!a)return;const known
  if(haloObjects)haloObjects.select('flights:'+a.id);
  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(a.lon,a.lat,Math.max(0,a.altitude??0)),100),{duration:1.4,offset:new Cesium.HeadingPitchRange(Cesium.Math.toRadians(a.heading||0),-.35,2500)})}
 let spaceFocus=null;
-function clearSpaceFocus(){if(!spaceFocus)return;spaceFocus.entities.forEach(e=>viewer.entities.remove(e));spaceFocus=null}
+function clearSpaceFocus(){if(!spaceFocus)return;if(spaceFocus.orbit)viewer.scene.primitives.remove(spaceFocus.orbit);spaceFocus.entities.forEach(e=>viewer.entities.remove(e));spaceFocus=null}
 function openSatellite(sat){const now=new Date(),position=satPos(sat,now);if(!position)return;
- const times=HuSpace.orbitTimes(sat.rec,now.getTime()),path=times.map(t=>satPos(sat,t));
+ const times=HuSpace.orbitTimes(sat.rec,now.getTime()),path=times.map(t=>satOrbitPos(sat,t,now));
  const valid=path.length>1&&path.every(Boolean),geo=Cesium.Cartographic.fromCartesian(position);
  sheet(sat.name||'Satellite','<p class="cctv-meta">CelesTrak · position calculated from orbital elements</p><dl class="flight-facts"><div><dt>Altitude</dt><dd>'+Math.round(geo.height/1000).toLocaleString()+' km</dd></div><div><dt>Orbit preview</dt><dd>'+(valid?Math.round((times.at(-1)-now)/60000)+' minutes':'Unavailable')+'</dd></div></dl><p class="cctv-note">Generic 3D satellite schematic, enlarged for visibility. Shape and attitude do not represent this spacecraft. The cyan path predicts one orbit from its TLE, not a live observed trail.</p>');
  const model=haloObjects?null:viewer.entities.add({position,model:{uri:HuSpace.satelliteModel(),minimumPixelSize:90,maximumScale:25000},orientation:Cesium.Transforms.headingPitchRollQuaternion(position,new Cesium.HeadingPitchRoll(.5,.45,.25))});
  if(haloObjects)haloObjects.select(sat.key);
- const entities=model?[model]:[];if(valid)entities.push(viewer.entities.add({polyline:{positions:path,width:2,material:Cesium.Color.fromCssColorString('#4fd1ff').withAlpha(.75)}}));
- spaceFocus={layer:'satellites',sat,model,entities};viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(position,120000),{duration:1.5,offset:new Cesium.HeadingPitchRange(0,-.5,700000)});
+ const entities=model?[model]:[];let orbit=null;if(valid){orbit=viewer.scene.primitives.add(new Cesium.Primitive({geometryInstances:new Cesium.GeometryInstance({geometry:new Cesium.PolylineGeometry({positions:path,width:2,vertexFormat:Cesium.PolylineColorAppearance.VERTEX_FORMAT}),attributes:{color:Cesium.ColorGeometryInstanceAttribute.fromColor(Cesium.Color.fromCssColorString('#4fd1ff').withAlpha(.75))}}),appearance:new Cesium.PolylineColorAppearance({translucent:true}),asynchronous:false,allowPicking:false}));}
+ spaceFocus={layer:'satellites',sat,model,entities,orbit,gmst:satellite.gstime(now)};viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(position,120000),{duration:1.5,offset:new Cesium.HeadingPitchRange(0,-.5,700000)});
 }
 function openLaunch(l){const pad=l.pad||{};if(!HuSpace.coordinates(pad.lon,pad.lat))return;
  const date=l.net?new Date(l.net):null,when=date&&!isNaN(date)?date.toLocaleString():'To be announced';
@@ -682,8 +682,9 @@ function openLaunch(l){const pad=l.pad||{};if(!HuSpace.coordinates(pad.lon,pad.l
  const position=Cesium.Cartesian3.fromDegrees(pad.lon,pad.lat,0),model=viewer.entities.add({position,model:{uri:HuSpace.rocketModel(),minimumPixelSize:110,maximumScale:3000},orientation:Cesium.Transforms.headingPitchRollQuaternion(position,new Cesium.HeadingPitchRoll(0,0,0))});
  spaceFocus={layer:'launches',model,entities:[model]};viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(position,20000),{duration:1.5,offset:new Cesium.HeadingPitchRange(0,-.45,150000)});
 }
+function satOrbitPos(sat,time,epoch){try{const pv=satellite.propagate(sat.rec,time);if(!pv||!pv.position)return null;const g=satellite.eciToGeodetic(pv.position,satellite.gstime(epoch));if(![g.longitude,g.latitude,g.height].every(Number.isFinite))return null;return Cesium.Cartesian3.fromRadians(g.longitude,g.latitude,g.height*1000)}catch(e){return null}}
 function satPos(sat,now){try{const pv=satellite.propagate(sat.rec,now);if(!pv||!pv.position||typeof pv.position!=='object')return null;const g=satellite.eciToGeodetic(pv.position,satellite.gstime(now));if(!isFinite(g.latitude)||!isFinite(g.longitude)||!isFinite(g.height))return null;return Cesium.Cartesian3.fromRadians(g.longitude,g.latitude,Math.max(0,g.height*1000))}catch(e){return null}}
-function stepSatellites(){const L=layerState.satellites;if(!L.points||!viewer)return;const now=new Date();L.sats.forEach(s=>{const p=satPos(s,now);if(!p)return;s.point.position=p;if(s.label)s.label.position=p;if(spaceFocus&&spaceFocus.sat===s&&spaceFocus.model)spaceFocus.model.position=p})}
+function stepSatellites(){const L=layerState.satellites;if(!L.points||!viewer)return;const now=new Date();if(spaceFocus&&spaceFocus.orbit)Cesium.Matrix4.fromRotationTranslation(Cesium.Matrix3.fromRotationZ(-(satellite.gstime(now)-spaceFocus.gmst)),Cesium.Cartesian3.ZERO,spaceFocus.orbit.modelMatrix);L.sats.forEach(s=>{const p=satPos(s,now);if(!p)return;s.point.position=p;if(s.label)s.label.position=p;if(spaceFocus&&spaceFocus.sat===s&&spaceFocus.model)spaceFocus.model.position=p})}
 function loadSatelliteLib(){if(window.satellite)return Promise.resolve();return new Promise((res,rej)=>{const t=document.createElement('script');t.src='vendor/satellite.min.js';t.onload=res;t.onerror=()=>rej(Error('sgp4'));document.head.appendChild(t)})}
 let satelliteGlyph;
 function satelliteIcon(){if(satelliteGlyph)return satelliteGlyph;const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d');x.strokeStyle='#081621';x.lineWidth=2;x.fillStyle='#ffffff';for(const [a,b,w,h] of [[2,15,14,18],[32,15,14,18],[18,18,12,12]]){x.fillRect(a,b,w,h);x.strokeRect(a,b,w,h)}x.beginPath();x.moveTo(16,24);x.lineTo(32,24);x.moveTo(24,18);x.lineTo(24,8);x.stroke();satelliteGlyph=c;return c}

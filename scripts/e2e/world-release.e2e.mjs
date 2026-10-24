@@ -47,7 +47,9 @@ const HALO_PEOPLE={ok:true,schema:'halo-people/v1',generated_at:iso(0),total:4,t
  {m_uid:U(4),name:'Dee Fixture',avatar_url:null,headline:'Survey lead',role:'participant',skills:[],missions:[{id:'a1b2c3d4-0000-4000-8000-000000000002',title:'Coastal survey',status:'in_progress'}],state:'on_mission',last_activity_at:iso(25),last_activity:'started',location_shared:false},
  {m_uid:U(5),name:'Eve Fixture',avatar_url:null,headline:'Analyst',role:'member',skills:[],missions:[],state:'available',last_activity_at:null,last_activity:null,location_shared:false}],sources:{}};
 const TIDES=Array.from({length:24},(_,i)=>[new Date(NOW-(23-i)*3600e3).toISOString(),+(0.6+0.25*Math.sin(i/3.8)).toFixed(3),'p']);
+const HALO_SAT={name:'ISS (ZARYA)',tle1:'1 25544U 98067A   26286.82178372  .00006592  00000+0  12831-3 0  9991',tle2:'2 25544  51.6325  76.5471 0003201 125.0532 235.0866 15.49721212537052'};
 const HALO_FIXTURES={
+ '/v1/world/layers/satellites':{count:1,satellites:[HALO_SAT]},
  '/v1/world/layers/flights':{count:3,aircraft:[['abc001','HALO ONE',-73.9,40.7,9000,200,45],['abc002','HALO TWO',-73.95,40.72,8500,180,90],['abc003','HALO THREE',-74,40.75,9500,220,180]]},
  '/v1/world/layers/quakes':{ok:true,layer:'quakes',fetched_at:iso(0),credit:'Earthquakes: USGS',count:3,quakes:[{id:'us1',mag:5.4,place:'10 km S of Fixture, Chile',time:iso(20),lon:-71.5,lat:-33.4,depth_km:12,url:'https://earthquake.usgs.gov/earthquakes/eventpage/us1',tsunami:false,alert:'green'},{id:'us2',mag:2.1,place:'Fixture, California',time:iso(60),lon:-118.2,lat:34.05,depth_km:8,url:'',tsunami:false,alert:null},{id:'us3',mag:4.6,place:'Fixture, Japan',time:iso(90),lon:142.4,lat:38.3,depth_km:110,url:'',tsunami:false,alert:null}]},
  '/v1/world/layers/military':{ok:true,layer:'military',fetched_at:iso(0),credit:'Military flights: adsb.lol (ODbL)',count:2,aircraft:[['ae1234','RCH123',-77.0,38.9,9000,220,90,'C17','4521',false],['ae5678','DUKE01',-1.5,51.2,7000,180,270,'K35R','7700',true]]},
@@ -122,6 +124,18 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.locator('[data-tool="home"]').click();
  await page.locator('.hx-layers-btn').click();
  await page.evaluate(()=>HuGlobe.layer.toggle('flights'));
+ await page.evaluate(()=>HuGlobe.layer.toggle('satellites'));
+ await page.waitForFunction(()=>HuGlobe.objects.stats()?.satellites.loaded===1);
+ await page.evaluate(s=>HaloConsole.pick({id:{layer:'satellites',sat:{name:s.name,key:'satellites:25544',rec:satellite.twoline2satrec(s.tle1,s.tle2)}}}),HALO_SAT);
+ await page.waitForTimeout(1800);
+ check(scope,'satellite inspection shows a 3D object and calculated orbit',await page.evaluate(()=>HuGlobe.objects.stats().satellites.models===1)&&/Orbit preview/.test(await page.textContent('#cctvBody')));
+ await shot('satellite-object');
+ await page.getByRole('button',{name:'Follow',exact:true}).click();
+ check(scope,'satellite follow retains the selected 3D object',!!(await state()).following&&await page.evaluate(()=>HuGlobe.objects.stats().satellites.models===1));
+ await page.locator('.hx-layers-btn').click();
+ await page.locator('[data-tool="home"]').click();
+ await page.locator('.hx-layers-btn').click();
+ await page.evaluate(()=>HuGlobe.layer.toggle('satellites'));
  /* World data: a group switch turns its layers on; each says what it holds */
  if(width<1100)await page.locator('.hx-grip').click();
  await page.locator('[data-group="earth"] .hx-group__row .hx-switch input').click({force:true});

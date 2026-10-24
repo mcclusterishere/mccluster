@@ -162,7 +162,8 @@
     if (it.core) {
       if (G.layer.locked(it.id)) return { state: 'locked', text: 'Locked' };
       const on = G.layer.on(it.id), c = G.layer.count(it.id);
-      return { state: on ? 'on' : 'off', text: on ? n(c) : '' };
+      const detail=G.objects&&G.objects.stats(),budget=detail&&detail[it.id];
+      return { state: on ? 'on' : 'off', text: on ? (budget ? n(budget.shown)+' shown / '+n(budget.loaded)+' loaded' : n(c)) : '' };
     }
     const s = layers && layers.status(it.id);
     if (!s) return { state: 'off', text: '' };
