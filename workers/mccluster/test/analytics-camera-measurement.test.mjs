@@ -54,3 +54,13 @@ test('stored coverage counts are owner-only, organization scoped, and never repl
   for(const table of ['ops_ingest_records','ops_ingest_connectors','control_observability_events'])assert.equal(calls.find(u=>u.pathname.endsWith('/'+table)).searchParams.get('org_id'),'eq.house');
  } finally {globalThis.fetch=previous;}
 });
+
+test('camera connection failures give the owner safe, actionable reasons',async()=>{
+ const url=new URL('https://api.mccluster.org/v1/analytics/cameras');
+ for(const [settings,status,code,message] of [[{},503,'halo_not_configured','has not been configured'],[env,401,'halo_authorization_failed','renew'],[env,503,'halo_upstream_unavailable','Retry']]){
+  const route=createCameraRoutes({requireOwner:async()=>{},json,fetchImpl:async()=>new Response('private upstream response',{status})});
+  const r=await route(new Request(url),settings,{},url,url.pathname),body=await r.json();
+  assert.equal(body.code,code);assert.ok(body.error.includes(message));assert.doesNotMatch(JSON.stringify(body),/test-only|private upstream response/);
+  assert.equal(body.retryable,code==='halo_upstream_unavailable');
+ }
+});

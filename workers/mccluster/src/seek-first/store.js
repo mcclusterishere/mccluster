@@ -275,6 +275,32 @@ export async function listEntities(env, orgId, { source, entityType, limit = 100
   return db(env, `seek_first_entities?${parts.join('&')}`);
 }
 
+// The Analytics archive includes every persisted record kind. Each table is
+// independently scoped and bounded before the newest observations are merged.
+export async function listSourceRecords(env, orgId, { source, limit = 50 } = {}) {
+  const take = Math.max(1, Math.min(Number(limit) || 50, 100));
+  const common = 'id,source_key,external_id,observed_at,provenance,location';
+  const families = [
+    ['entity', 'seek_first_entities', 'entity_type,name,properties,source_url'],
+    ['event', 'seek_first_events', 'event_type,name,properties,source_url,severity,status,starts_at,ends_at'],
+    ['observation', 'seek_first_observations', 'observation_type,metric,value_number,value_text,unit,payload']
+  ];
+  const records = [];
+  for (const [kind, table, columns] of families) {
+    const params = new URLSearchParams({ org_id: `eq.${orgId}`, source_key: `eq.${source}`,
+      select: `${common},${columns}`, order: 'observed_at.desc,id.desc', limit: String(take) });
+    const rows = await db(env, `${table}?${params}`);
+    if (!Array.isArray(rows)) throw new GeoAdapterError('Stored records response unavailable', 502, 'invalid_archive_response');
+    for (const row of rows) records.push({ ...row, kind,
+      record_type: row.entity_type || row.event_type || row.observation_type,
+      name: row.name || row.metric || row.external_id,
+      properties: kind === 'observation' ? { ...row.payload, metric: row.metric,
+        value_number: row.value_number, value_text: row.value_text, unit: row.unit } : row.properties });
+  }
+  return records.sort((a, b) => Date.parse(b.observed_at) - Date.parse(a.observed_at) ||
+    String(b.id).localeCompare(String(a.id)) || a.kind.localeCompare(b.kind)).slice(0, take);
+}
+
 export async function listIngestionRuns(env, orgId, { source, limit = 50 } = {}) {
   const parts = [
     `org_id=eq.${encodeURIComponent(orgId)}`,

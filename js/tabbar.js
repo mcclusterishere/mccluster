@@ -593,7 +593,7 @@
      and lives under Home instead (the Control Room's account menu links the Desk: mnet.html?view=feed&desk). The
      "mcc:appbar-admin" event fires whenever this changes. */
   var ADMIN_KEY = "mcc_appbar_admin", ADMIN_TTL = 60000, ADMIN_ON = false, BASE_BAR = null;
-  var adminEpoch = 0, authEpoch = 0, adminSession = null;
+  var adminEpoch = 0, authEpoch = 0, adminSession = null, adminFlight = null;
   var PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.8v14.4L19 12z" fill="currentColor"/></svg>';
   var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
   var CHART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4.5" y="11" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16.5" y="8" width="3" height="12" rx="1"/></svg>';
@@ -643,15 +643,20 @@
     try { var m = JSON.parse(sessionStorage.getItem(ADMIN_KEY) || "null"); return m && m.admin === false && m.sub === sub && Date.now() >= m.at && Date.now() - m.at < ADMIN_TTL ? m : null; } catch (e) { return null; }
   }
   function checkAdmin(force) {
-    var attempt = ++adminEpoch;
     var session = readAuthSession();
     var token = session && session.access_token, sub = token ? jwtPayload(token).sub : null;
-    if (!AUTH_STATE.signed_in || !token || !sub) { adminSession = null; try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} paintAdmin(false); return Promise.resolve(false); }
+    if (!AUTH_STATE.signed_in || !token || !sub) { ++adminEpoch; adminSession = null; adminFlight = null; try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} paintAdmin(false); return Promise.resolve(false); }
+    // Independent owner panels may verify together. Share only an in-flight
+    // check for this exact session and epoch; never reuse a completed grant.
+    if (adminFlight && adminFlight.token === token && adminFlight.epoch === adminEpoch) return adminFlight.promise;
+    var attempt = ++adminEpoch;
     var memo = !force && readAdminMemo(sub);
     if (memo) { paintAdmin(memo.admin); return Promise.resolve(memo.admin); }
     var controller = new AbortController(), timeout = setTimeout(function () { controller.abort(); }, 5000);
     function current() { return attempt === adminEpoch && AUTH_STATE.signed_in && (readAuthSession() || {}).access_token === token; }
-    return fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store", signal: controller.signal })
+    var flight = { token: token, epoch: attempt, promise: null };
+    adminFlight = flight;
+    flight.promise = fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store", signal: controller.signal })
       .then(function (r) {
         if (!current()) return false;
         /* Only definite answers are cached. An unavailable authority closes navigation. */
@@ -667,7 +672,8 @@
         paintAdmin(r.ok);
         return r.ok;
       }).catch(function () { if (current()) { paintAdmin(false); try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} } return false; })
-      .finally(function () { clearTimeout(timeout); });
+      .finally(function () { clearTimeout(timeout); if (adminFlight === flight) adminFlight = null; });
+    return flight.promise;
   }
   window.addEventListener("hashchange", markAdminHere);
   function loadCanonicalAuth() {

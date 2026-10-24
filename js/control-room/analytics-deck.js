@@ -30,7 +30,7 @@
   function bind(root,S,select,refresh,saved){
     var changed=active!==S.section;active=S.section;
     var body=root.querySelector('.cad-body'),tabs=root.querySelector('.cad-tabs');
-    if(body)body.scrollTop=scroll[active]||0;
+    if(body){body.scrollTop=scroll[active]||0;body.querySelectorAll('.cra-scroll,.cra-table-wrap,.cra-chart__scroll').forEach(function(el){if(el.scrollWidth>el.clientWidth+2){el.tabIndex=0;el.setAttribute('role','region');var heading=el.closest('section')?.querySelector('h2');el.setAttribute('aria-label',(heading?heading.textContent:'Data')+' — scroll horizontally for more detail');var hint=document.createElement('p');hint.className='cra-table-hint';hint.textContent=el.classList.contains('cra-chart__scroll')?'Scroll sideways for every hour':'Scroll sideways for all columns';el.before(hint);}});}
     if(saved&&!changed){
       (saved.controls||[]).forEach(function(c){var el=document.getElementById(c.id);if(el&&root.contains(el)&&c.source===el.getAttribute('data-source')){el.value=c.value;if(c.id===saved.focus){el.focus({preventScroll:true});if(el.setSelectionRange&&c.start!=null)try{el.setSelectionRange(c.start,c.end);}catch(_){}}}});
       root.querySelectorAll('details').forEach(function(el){if((saved.open||[]).includes(el.querySelector('summary')?.textContent))el.open=true;});
@@ -50,7 +50,7 @@
       surface.addEventListener('touchend',function(ev){if(!start)return;var p=ev.changedTouches[0],dx=p.clientX-start.x,dy=p.clientY-start.y;start=null;if(Math.abs(dx)>65&&Math.abs(dx)>Math.abs(dy)*1.7)go(sections.findIndex(function(s){return s[0]===S.section;})+(dx<0?1:-1),false);},{passive:true});
       surface.addEventListener('touchcancel',function(){start=null;},{passive:true});
     });
-    var statusButton=root.querySelector('[data-cad-health]');if(statusButton)statusButton.onclick=function(){select('inventory');};
+    var statusButton=root.querySelector('[data-cad-health]');if(statusButton)statusButton.onclick=function(){if(window.CR.analyticsUnified)window.CR.analyticsUnified.state.panel='connections';select('inventory');};
     var button=root.querySelector('[data-cad-refresh]');if(button)button.onclick=refresh;
     button=root.querySelector('[data-cad-auto]');if(button)button.onclick=function(){S.autoRefresh=!S.autoRefresh;select(S.section);};
     clearTimeout(timer);

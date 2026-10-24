@@ -23,6 +23,7 @@ on:
       - 'workers/mccluster/src/analytics/**'
       - 'workers/mccluster/test/analytics-camera-measurement.test.mjs'
       - 'scripts/e2e/analytics-unified.e2e.mjs'
+      - 'scripts/e2e/analytics-tabs.e2e.mjs'
       - 'css/control-workspace.css'
       - 'scripts/e2e/control-workspace.e2e.mjs'
       - 'scripts/test/control-workspace.test.mjs'
@@ -65,6 +66,7 @@ jobs:
           node scripts/e2e/site-navigation.e2e.mjs /tmp/control-proof/navigation
           node scripts/e2e/control-workspace.e2e.mjs
           node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
+          node scripts/e2e/analytics-tabs.e2e.mjs /tmp/control-proof/analytics-tabs
           node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
           node scripts/e2e/connections.e2e.mjs /tmp/control-proof/connections
           node scripts/e2e/live-actors.e2e.mjs

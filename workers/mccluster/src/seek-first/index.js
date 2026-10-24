@@ -25,6 +25,7 @@ import {
   entityRevisions,
   getEntity,
   listEntities,
+  listSourceRecords,
   listIngestionRuns,
   listLayers,
   jurisdictionPolicyRow,
@@ -610,6 +611,16 @@ export default {
         params.limit = int(params.limit, 'limit', 1, 2000, 500);
         const rows = await entitiesInBbox(env, org.id, params);
         return reply(request, env, { ok: true, service: SERVICE, entities: rows || [] });
+      }
+
+      if (path === '/v1/seek-first/records' && request.method === 'GET') {
+        const { org } = await protectedContext(request, env, options, { requireSchema: true });
+        const source = sourceOrThrow(url.searchParams.get('source'));
+        const records = await listSourceRecords(env, org.id, {
+          source: source.key,
+          limit: int(url.searchParams.get('limit'), 'limit', 1, 100, 50)
+        });
+        return reply(request, env, { ok: true, service: SERVICE, records });
       }
 
       if (path === '/v1/seek-first/entities' && request.method === 'GET') {

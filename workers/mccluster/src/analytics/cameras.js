@@ -25,9 +25,9 @@ async function boundedBody(response, max) {
 }
 
 async function haloRead(env, path, consume, fetchImpl) {
-  if (!env.HALO_INTERNAL_TOKEN) throw Object.assign(new Error('Halo connection is not configured'), { status: 503 });
+  if (!env.HALO_INTERNAL_TOKEN) throw Object.assign(new Error('Halo connection is not configured'), { status: 503, cameraCode: 'halo_not_configured' });
   const url = new URL(env.HALO_API_BASE || HALO_DEFAULT_BASE);
-  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid Halo connection');
+  if (url.protocol !== 'https:' || url.username || url.password) throw Object.assign(new Error('Invalid Halo connection'), {cameraCode:'halo_configuration_invalid',status:503});
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 14000);
   try {
@@ -37,10 +37,10 @@ async function haloRead(env, path, consume, fetchImpl) {
     });
     if (!response.ok || response.status >= 300) {
       await response.body?.cancel().catch(() => {});
-      throw Object.assign(new Error('Halo request failed'), { status: 502 });
+      throw Object.assign(new Error('Halo request failed'), { status: 502, cameraCode: response.status===401||response.status===403?'halo_authorization_failed':'halo_upstream_unavailable' });
     }
     return await consume(response);
-  } finally { clearTimeout(timer); }
+  } catch(error) { if(controller.signal.aborted)throw Object.assign(new Error('Halo timed out'),{status:504,cameraCode:'halo_timeout'});throw error; } finally { clearTimeout(timer); }
 }
 
 export function summarizeCatalog(data, now = new Date().toISOString()) {
@@ -126,6 +126,10 @@ export function createCameraRoutes({ requireOwner, json, fetchImpl = fetch }) {
       }
       if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
       return json(await loadCameraCatalog(env, fetchImpl));
-    } catch (error) { return json({ ok: false, error: error.status === 401 || error.status === 403 ? error.message : 'Camera measurement unavailable', retryable: true }, error.status || 502); }
+    } catch (error) {
+      const messages={halo_not_configured:'The Halo camera connection has not been configured. An operator must connect the existing Halo service before this catalog can be read.',halo_configuration_invalid:'The Halo service address is invalid. An operator must correct the existing connection settings.',halo_authorization_failed:'Halo rejected the camera connection. An operator must renew the existing service authorization.',halo_upstream_unavailable:'Halo could not supply the camera catalog. Retry when the camera service is available.',halo_timeout:'Halo took too long to return the camera catalog. Try again.'};
+      const code=error.cameraCode||'camera_unavailable';
+      return json({ok:false,error:error.status===401||error.status===403?error.message:messages[code]||'Camera measurement unavailable. Try again.',code,retryable:!['halo_not_configured','halo_configuration_invalid','halo_authorization_failed'].includes(code)},error.status||502);
+    }
   };
 }

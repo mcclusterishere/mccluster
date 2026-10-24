@@ -28,7 +28,7 @@ body.cr[data-cr-surface="analytics"] .cr-surface{margin-bottom:0}
 .cad-app .cu-georows button{font-size:11px;min-height:25px;padding:3px 0 5px}
 .cad-app .cu-geo-summary>small{font-size:9px}
 .cad-app .cra-side,.cr[data-control-workspace] .cad-app .cra-side{display:block;min-height:0;overflow:hidden;padding:0;border-top:1px solid #2a2a30;height:100%;background:#0e0e11}
-.cad-app .cra-side__body{height:100%;min-height:0;container-type:normal}
+.cad-app .cra-side__body{height:100%;min-height:0;container-type:inline-size;container-name:cra}
 .cad-deck{height:100%;min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;color:#eeeef1}
 .cad-tabs{display:flex;gap:2px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:5px 10px 0;border-bottom:1px solid #29292f;min-width:0}
 .cad-tabs button{flex:none;min-height:43px;padding:8px 13px;border:0;border-bottom:2px solid transparent;background:none;color:#a3a3ad;font:500 12px/1.2 var(--ui,system-ui);white-space:nowrap;cursor:pointer}
@@ -167,9 +167,50 @@ body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-su
 .cu-dataset-filters label:first-child{grid-column:1/-1}
 .cu-dataset-filters input,.cu-dataset-filters select{min-width:0;width:100%;min-height:44px;padding:8px;background:#0e0d12;color:#eee;border:1px solid #3c3542;border-radius:7px}
 .cu-dataset-list{display:grid;gap:0}
-.cad-body .cu-dataset-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(54px,.3fr) minmax(54px,.3fr);gap:8px;align-items:center;width:100%;padding:13px 2px;text-align:left;border:0;border-top:1px solid #302a36;border-radius:0;background:none;color:#eee;font:inherit}
+.cad-body button.cu-dataset-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(54px,.3fr) minmax(54px,.3fr);gap:8px;align-items:center;width:100%;padding:13px 2px;text-align:left;border:0;border-top:1px solid #302a36;border-radius:0;background:none;color:#eee;font:inherit}
 .cu-dataset-row>span{min-width:0}.cu-dataset-row>span:not(:first-child){text-align:right}
 .cu-dataset-row b{display:block;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .cu-dataset-row small{display:block;color:#aaa0b3;font-size:11px;line-height:1.5;margin-top:4px}
-.cad-body .cu-dataset-row[aria-pressed="true"]{background:#261b24;box-shadow:inset 2px 0 #e5869a;padding-left:8px}
+.cad-body button.cu-dataset-row[aria-pressed="true"]{background:#261b24;box-shadow:inset 2px 0 #e5869a;padding-left:8px}
 @media(min-width:40rem){.cu-dataset-filters{grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(0,1fr))}.cu-dataset-filters label:first-child{grid-column:auto}}
+
+/* Full-tab audit: reserve the shared profile slot; never cover a chapter tab. */
+body.cr[data-cr-surface="analytics"][data-site-navigation] .cra-top__titles{padding-right:104px}
+body.cr[data-cr-surface="analytics"][data-site-navigation] .cra-top__me{display:none}
+body.cr[data-cr-surface="analytics"] #mccEditBar{display:none!important}
+.cad-tabs{scrollbar-color:#65515d transparent;scroll-padding-inline:12px}
+.cad-app .cra-top__controls select{font-size:max(16px,1rem)}
+/* Legacy and unified cards share readable typography and touch controls. */
+.cad-body .cra-card p,.cad-body .cu-card p{font-size:13px;line-height:1.55}
+.cad-body .cra-kpi small{font-size:11px;letter-spacing:.035em;line-height:1.4}
+.cad-body .cra-kpi span{font-size:12px;line-height:1.4}
+.cad-body .cra-kpis{margin-bottom:12px;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr))}
+.cad-body .cra-table{font-size:13px;line-height:1.5}
+.cad-body .cra-table th{font-size:11px;letter-spacing:.03em}
+.cad-body .cra-table td,.cad-body .cra-table th{padding:12px 10px}
+.cad-body .cra-scroll,.cad-body .cra-table-wrap{max-width:100%;overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain}
+.cad-body .cra-card :is(button,summary),.cad-body .cu-card summary{min-height:44px}
+.cad-body .cra-rank__row,.cad-body .cra-funnel__row,.cad-body .cra-legend__row{font-size:12px;line-height:1.45}
+.cad-body .cra-legend__row--button{min-height:44px}
+.cad-body .cra-card .cra-live{display:grid;gap:12px;align-items:stretch;margin-top:16px;padding-top:16px;border-top:1px solid #302c35;line-height:1.5}
+.cad-body .cra-live__head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.cad-body .cra-live__list{margin:0;padding:0;list-style:none;font-size:12px}
+.cad-body .cra-live__list li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;padding:10px 0;overflow-wrap:anywhere}
+.cad-body .cra-mode label{letter-spacing:0;text-transform:none;font-size:13px;line-height:1.5}
+.cad-body .cu-small-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cad-body details.cu-dataset-row{display:block;border-top:1px solid #34303a;padding:0;text-align:left}
+.cad-body details.cu-dataset-row>summary{display:list-item;cursor:pointer;padding:14px 4px;overflow-wrap:anywhere}
+.cad-body details.cu-dataset-row>summary b{display:inline;font-size:14px}
+.cad-body details.cu-dataset-row>summary small{font-size:12px;line-height:1.6}
+.cad-body details.cu-dataset-row[open]{background:#1c1720;padding:0 10px 8px;border-radius:8px}
+.cad-body .cu-rows>div{align-items:baseline}.cad-body .cu-rows dt{flex:1;min-width:0}.cad-body .cu-rows dd{flex:1;min-width:0;font-size:13px}
+.cad-body .cu-actions{flex-wrap:wrap}
+.cad-body .cg-card select{min-height:44px;padding:8px 12px;border:1px solid #3c3542;border-radius:8px;background:#0e0d12;color:#eee}
+.cad-body .cra-table-hint{font-size:12px;color:#bcb3c3;margin:6px 0}
+@media(min-width:64rem){
+ body.cr[data-cr-surface="analytics"][data-site-navigation]:not([data-control-workspace]) .cad-tabs{margin-right:110px}
+ body.cr[data-cr-surface="analytics"][data-site-navigation] .cra-top__titles{padding-right:0}
+}
+/* Hourly ticks keep every hour readable without labels colliding. */
+.cad-body .cra-chart--hourly .cra-chart__frame{min-width:1200px}
+.cad-body .cra-chart--hourly .cra-axis{font-size:12px}
