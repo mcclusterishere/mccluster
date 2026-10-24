@@ -71,7 +71,7 @@ test('the globe carries three data layers: flights for everyone, satellites and 
   assert.match(globe, /headers\.authorization='Bearer '\+t/);
   assert.match(globe, /new Cesium\.PointPrimitiveCollection\(\)/, 'thousands of points, one primitive');
   assert.match(globe, /t\.src='vendor\/satellite\.min\.js'/, 'SGP4 loads only when the layer is on');
-  assert.match(globe, /L\.timer=setInterval\(stepSatellites,1500\)/, 'satellites move');
+  assert.match(globe, /L\.timer=setInterval\(stepSatellites,1000\)/, 'satellites move');
   assert.match(globe, /window\.__huLayerCounts=\(\)=>/);
   assert.match(css, /\.globe-data\{position:absolute;z-index:6;left:10px;bottom:34px;display:flex;gap:8px\}/);
   assert.match(css, /\.globe-ctl\.is-locked::after\{content:"";/, 'the lock is a red dot, drawn in CSS');

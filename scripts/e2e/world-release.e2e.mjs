@@ -48,6 +48,7 @@ const HALO_PEOPLE={ok:true,schema:'halo-people/v1',generated_at:iso(0),total:4,t
  {m_uid:U(5),name:'Eve Fixture',avatar_url:null,headline:'Analyst',role:'member',skills:[],missions:[],state:'available',last_activity_at:null,last_activity:null,location_shared:false}],sources:{}};
 const TIDES=Array.from({length:24},(_,i)=>[new Date(NOW-(23-i)*3600e3).toISOString(),+(0.6+0.25*Math.sin(i/3.8)).toFixed(3),'p']);
 const HALO_FIXTURES={
+ '/v1/world/layers/flights':{count:3,aircraft:[['abc001','HALO ONE',-73.9,40.7,9000,200,45],['abc002','HALO TWO',-73.95,40.72,8500,180,90],['abc003','HALO THREE',-74,40.75,9500,220,180]]},
  '/v1/world/layers/quakes':{ok:true,layer:'quakes',fetched_at:iso(0),credit:'Earthquakes: USGS',count:3,quakes:[{id:'us1',mag:5.4,place:'10 km S of Fixture, Chile',time:iso(20),lon:-71.5,lat:-33.4,depth_km:12,url:'https://earthquake.usgs.gov/earthquakes/eventpage/us1',tsunami:false,alert:'green'},{id:'us2',mag:2.1,place:'Fixture, California',time:iso(60),lon:-118.2,lat:34.05,depth_km:8,url:'',tsunami:false,alert:null},{id:'us3',mag:4.6,place:'Fixture, Japan',time:iso(90),lon:142.4,lat:38.3,depth_km:110,url:'',tsunami:false,alert:null}]},
  '/v1/world/layers/military':{ok:true,layer:'military',fetched_at:iso(0),credit:'Military flights: adsb.lol (ODbL)',count:2,aircraft:[['ae1234','RCH123',-77.0,38.9,9000,220,90,'C17','4521',false],['ae5678','DUKE01',-1.5,51.2,7000,180,270,'K35R','7700',true]]},
  '/v1/world/layers/fires':{ok:true,layer:'fires',fetched_at:null,unavailable:true,upstream_error:'not_configured',count:0,fires:[]},
@@ -105,14 +106,30 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await shot('start');
  let small=await smallTargets();
  check(scope,'every visible Halo control is a full 44px tap target',small.length===0,small);
+ /* Object rendering: real glTF asset, bounded density and target-relative camera. */
+ await page.evaluate(()=>HuGlobe.layer.toggle('flights'));
+ await page.waitForFunction(()=>HuGlobe.objects.stats()?.flights.loaded===3);
+ await page.evaluate(()=>HaloConsole.pick({id:{layer:'flights',aircraft:HuTransport.aircraft(['abc001','HALO ONE',-73.9,40.7,9000,200,45])}}));
+ await page.waitForTimeout(1800);
+ check(scope,'selecting an aircraft creates an inspectable 3D object',await page.evaluate(()=>HuGlobe.objects.stats().flights.models>0)&&/HALO ONE/.test(await page.textContent('#cctvTitle')));
+ await shot('aircraft-object');
+ await page.getByRole('button',{name:'Orbit object',exact:true}).click();
+ check(scope,'orbit follows the selected aircraft',!!(await state()).following&&(await state()).orbit);
+ await page.locator('.hx-layers-btn').click();
+ await page.locator('[data-density="flights"]').press('Home');
+ check(scope,'aircraft density changes the actual displayed fleet',await page.evaluate(()=>HuGlobe.objects.stats().flights.shown===1&&HuGlobe.objects.stats().flights.loaded===3));
+ await shot('object-density');
+ await page.locator('[data-tool="home"]').click();
+ await page.locator('.hx-layers-btn').click();
+ await page.evaluate(()=>HuGlobe.layer.toggle('flights'));
  /* World data: a group switch turns its layers on; each says what it holds */
  if(width<1100)await page.locator('.hx-grip').click();
  await page.locator('[data-group="earth"] .hx-group__row .hx-switch input').click({force:true});
  await page.waitForFunction(()=>{const l=HaloConsole.state().layers;return l.quakes.state==='on'&&l.fires.state==='unavailable'&&l.tides.state==='on'},null,{timeout:10000}).catch(()=>{});
  st=await state();
- check(scope,'Earth & weather turns on Earthquakes (3), NOAA water levels (2); Thermal says it needs a key',st.layers.quakes.text==='3'&&st.layers.tides.text==='2'&&st.layers.fires.text==='Needs a key'&&st.layers.networks.state==='planned',{q:st.layers.quakes,t:st.layers.tides,f:st.layers.fires});
+ check(scope,'Earth & weather turns on Earthquakes (3), NOAA water levels (2); Thermal says it needs a key',st.layers.quakes.text==='3'&&st.layers.tides.text==='2'&&st.layers.fires.text==='Needs a key'&&!st.layers.networks,{q:st.layers.quakes,t:st.layers.tides,f:st.layers.fires});
  check(scope,'Source health says each source\'s state in words',/Earthquakes[\s\S]*Updated/.test(await page.textContent('.hx-health'))&&/Needs a key/.test(await page.textContent('.hx-health')));
- check(scope,'the World panel counts what is available, context and planned',/\d+ available · 4 context · 5 planned/.test(await page.textContent('.hx-panel__head p')));
+ check(scope,'the World panel counts actual sources without planned placeholders',/\d+ available · 4 context$/.test(await page.textContent('.hx-panel__head p')));
  await shot('world');
  /* a NOAA station opens its observed water level with a chart */
  await page.evaluate(()=>HaloConsole.pick({id:{haloPick:true,layer:'tides',item:{id:'8465705',name:'New Haven',lon:-72.9083,lat:41.2833,state:'CT'}}}));
