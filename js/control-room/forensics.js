@@ -146,6 +146,25 @@
     m = /^server_(.+)$/.exec(r); if (m) return "the server refused it (" + m[1].replace(/_/g, " ") + ")";
     return r.replace(/_/g, " ");
   }
+  // A name mention alone is not proof of browser injection. Keep script-backed
+  // failures actionable, even when a browser callback is named in the message.
+  function autofillDiagnostic(file, msg, stack) {
+    return /^(?:ReferenceError: )?Can't find variable: _AutofillCallbackHandler$/.test(String(msg || "").trim()) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(file || "")) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(stack || ""));
+  }
+  function eventOrigin(p) {
+    var msg = String(p.msg || p.message || "");
+    if (msg.indexOf('_AutofillCallbackHandler') !== -1) {
+      if (p.origin === "site") return "site";
+      if (autofillDiagnostic(p.src || p.file, msg, p.stack)) return "injected";
+      if (p.origin === "injected") return "site";
+    }
+    return p.origin || "site";
+  }
+  function isDiagnostic(x) {
+    return (x.name === "js_error" || x.name === "js_rejection") && eventOrigin(x.props || {}) === "injected";
+  }
   function describe(x) {
     var p = x.props && typeof x.props === "object" ? x.props : {}, nm = x.name || "event", cat = category(nm), t, d = "";
     switch (nm) {
@@ -157,7 +176,8 @@
       case "dead_click": t = "Tapped " + q(p.text || p.el || "something") + " and nothing happened"; d = trim(p.el || "", 60); break;
       case "rage_click": t = "Rage-tapped " + q(p.text || p.el || "something"); d = trim(p.el || "", 60); break;
       case "js_error": case "js_rejection":
-        t = (p.origin === "injected" ? "In-app browser error (not this site): " : p.origin === "opaque" ? "Cross-origin script error: " : "Page error: ") + trim(p.msg || p.message || "unknown", 110);
+        cat = isDiagnostic(x) ? "diagnostic" : "friction";
+        t = (isDiagnostic(x) ? "Browser diagnostic (likely injected): " : eventOrigin(p) === "opaque" ? "Cross-origin script error: " : eventOrigin(p) === "third_party" ? "Third-party script error: " : "Page error: ") + trim(p.msg || p.message || "unknown", 110);
         d = [p.src ? trim(p.src, 70) + (p.line ? ":" + p.line : "") : "", p.iab ? "inside " + p.iab : ""].filter(Boolean).join(" · "); break;
       case "play_failed": t = "Could not start " + q(p.track || "the track"); d = [p.error, p.gated ? "gated" + (p.gate ? " · " + p.gate : "") : ""].filter(Boolean).join(" · "); break;
       case "signup_blocked": t = "Sign-up refused: " + signupReason(p.reason); break;
@@ -272,7 +292,7 @@
     if (s.checkout) b.push(badge("Checkout", "win"));
     if (s.submitted) b.push(badge("Sent a form", "win"));
     if (s.plays) b.push(badge("▶ " + n(s.plays), "music", s.plays + " plays"));
-    if (s.friction) b.push(badge("⚠ " + n(s.friction), "bad", [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " errors" : ""].filter(Boolean).join(", ")));
+    if (s.friction) b.push(badge("⚠ " + n(s.friction), "bad", [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " script events (includes browser diagnostics)" : ""].filter(Boolean).join(", ")));
     if (s.visit_number > 1) b.push(badge("Visit " + n(s.visit_number), "info"));
     else if (s.device_sessions > 1) b.push(badge("Returning", "info"));
     if (s.source && s.source !== "direct") b.push(badge(sourceLabel(s.source), "src"));
@@ -507,12 +527,12 @@
   var TROUBLE = CATS.friction.concat(["gated_preview_end", "checkout_retired_link"]);
   var TAPS = ["click", "cta_click", "dead_click", "rage_click"];
   var PLAYS = ["album_play", "music_play", "song_start", "music_full_play", "music_preview_play"];
-  function isTrouble(nm) { return TROUBLE.indexOf(nm) !== -1; }
+  function isTrouble(x) { return TROUBLE.indexOf(x.name) !== -1 && !isDiagnostic(x); }
   function troubleMoments(groups, start) {
     var out = [];
     groups.forEach(function (g, gi) {
       g.events.forEach(function (it, k) {
-        var x = it.ev; if (!isTrouble(x.name)) return;
+        var x = it.ev; if (!isTrouble(x)) return;
         var before = null, after = null;
         for (var b = k - 1; b >= 0; b--) {
           var pb = g.events[b].ev;
@@ -521,7 +541,7 @@
         }
         for (var a = k + 1; a < g.events.length; a++) {
           var pa = g.events[a].ev;
-          if (category(pa.name) !== "system" && !isTrouble(pa.name)) { after = pa; break; }
+          if (category(pa.name) !== "system" && !isTrouble(pa) && !isDiagnostic(pa)) { after = pa; break; }
         }
         if (!after && groups[gi + 1]) after = { name: "page_view", at: groups[gi + 1].start, path: groups[gi + 1].path, props: {} };
         out.push({ ev: x, gi: gi, before: before, after: after, off: Math.max(0, Math.round(ms(start, x.at) / 1000)) });
@@ -531,9 +551,9 @@
   }
   function troubleSection(groups, start) {
     var list = troubleMoments(groups, start);
-    if (!list.length) return '<section class="crf-sec"><h3>Where it went wrong</h3><p class="crf-muted">No errors, dead taps or blocked steps in this session.</p></section>';
+    if (!list.length) return '<section class="crf-sec"><h3>Where it went wrong</h3><p class="crf-muted">No actionable errors, dead taps or blocked steps in the recorded events.</p></section>';
     return '<section class="crf-sec"><h3>Where it went wrong <small>' + n(list.length) + "</small></h3><ol class=\"crf-errs\">" + list.map(function (m) {
-      var x = m.ev, d = describe(x), p = x.props || {}, own = !(x.name === "js_error" || x.name === "js_rejection") || !p.origin || p.origin === "site";
+      var x = m.ev, d = describe(x), p = x.props || {}, own = !(x.name === "js_error" || x.name === "js_rejection") || eventOrigin(p) === "site";
       var lines = [];
       if (m.before) lines.push("Just before: " + describe(m.before).text.charAt(0).toLowerCase() + describe(m.before).text.slice(1) + " (" + dur(Math.max(0, ms(m.before.at, x.at) / 1000)) + " earlier)");
       lines.push(m.after ? "Then: " + (m.after.name === "page_view" && m.after.path !== x.path ? "went to " + page(m.after.path) : describe(m.after).text.charAt(0).toLowerCase() + describe(m.after).text.slice(1)) +
@@ -556,7 +576,7 @@
         var nm = it.ev.name;
         if (TAPS.indexOf(nm) !== -1) c.taps++;
         if (PLAYS.indexOf(nm) !== -1) c.plays++;
-        if (isTrouble(nm)) c.trouble++;
+        if (isTrouble(it.ev)) c.trouble++;
         if (category(nm) === "convert") c.won++;
       });
       var t = visitTime(g), meta = [dur(t) + " on screen", g.depth != null ? "read " + pct(g.depth) : "", n(c.taps) + (c.taps === 1 ? " tap" : " taps"),
@@ -574,7 +594,7 @@
       (v.key ? '<button type="button" class="crf-btn" data-crf-visitor="' + e(v.key) + '">Visitor profile</button>' : "") + "</header>";
     var kpis = '<div class="crf-kpis">' + kpi("Session", dur(s.duration_s), clock(s.started_at) + " – " + clock(s.ended_at)) + kpi("On screen", dur(s.engaged_s)) +
       kpi("Pages", n(s.page_views)) + kpi("Taps", n(s.clicks)) + kpi("Plays", n(s.plays)) + kpi("Deepest read", maxDepth ? pct(maxDepth) : "—") +
-      kpi("Friction", n(s.friction), [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " errors" : ""].filter(Boolean).join(" · ")) + "</div>";
+      kpi("Recorded friction signals", n(s.friction), [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " script events (includes browser diagnostics)" : ""].filter(Boolean).join(" · ")) + "</div>";
     var cards = '<div class="crf-cards">' +
       card("Who", facts([["Person", w.known ? w.name : "Not signed in"], ["Account", w.sub], ["Visit", s.visit_number ? "#" + n(s.visit_number) + (s.days_known ? " · known " + n(s.days_known) + " days" : "") : (s.device_sessions > 1 ? "Returning in this range" : "First seen in this range")],
         ["Device id", s.device_id ? "<code>" + e(s.device_id) + "</code>" : "", true], ["Session id", "<code>" + e(s.session_id) + "</code>", true]])) +
@@ -590,7 +610,9 @@
       journeyPath(groups) + '<div class="crf-timeline">' + timeline(ev) + "</div></section>";
     var tracks = (s.tracks || []).length ? '<section class="crf-sec"><h3>Music heard</h3><div class="crf-badges">' + s.tracks.map(function (t) { return badge("▶ " + t, "music"); }).join("") + "</div></section>" : "";
     var hist = v.key ? '<section class="crf-sec"><h3>' + (w.known ? e(w.name) + "’s sessions" : "This visitor’s sessions") + "</h3>" + historyList(v, s.session_id) + "</section>" : "";
-    return head + kpis + wrong + cards + pagesSec + journey + tracks + hist;
+    var diagnostics = ev.filter(isDiagnostic).length;
+    var diagnosticNote = diagnostics ? '<section class="crf-sec"><h3>Browser diagnostics <small>' + n(diagnostics) + '</small></h3><p class="crf-muted">Likely injected by an in-app browser or extension. These events alone do not establish a failed user flow. Each remains visible in Journey; tap it for the original record.</p></section>' : "";
+    return head + kpis + wrong + diagnosticNote + cards + pagesSec + journey + tracks + hist;
   }
   function card(title, body) { return '<section class="crf-card"><h3>' + e(title) + "</h3>" + body + "</section>"; }
 

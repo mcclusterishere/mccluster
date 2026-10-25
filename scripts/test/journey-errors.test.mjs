@@ -54,7 +54,7 @@ test('errors say whose they are: injected, opaque, third-party or the site’s o
   assert.equal(C.errorOrigin('https://cdn.example.net/lib.js', 'boom'), 'third_party');
   assert.equal(C.errorOrigin('https://matthew.mccluster.org/js/filament.js', 'boom'), 'site');
   const src = await read('js/analytics.js');
-  assert.match(src, /T\("js_error", \{[^}]*origin: errorOrigin\(e\.filename, e\.message\),[^}]*iab: IAB,[^}]*stack: stackTop\(e\.error\)/s);
+  assert.match(src, /T\("js_error", \{[^}]*origin: errorOrigin\(e\.filename, e\.message, e\.error && e\.error\.stack\),[^}]*iab: IAB,[^}]*stack: stackTop\(e\.error\)/s);
   assert.match(src, /T\("js_rejection", \{[^}]*origin:[^}]*iab: IAB/s);
   const sdk = await read('js/mc-analytics.js');
   assert.match(sdk, /js_error[\s\S]{0,200}msg/, 'the tenant SDK sends the message too');
