@@ -9,6 +9,7 @@ import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
+import { layerOneStatus } from '../market/layer-one.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -70,6 +71,11 @@ const BASE_TOOLS = [
       properties: { org_id: { type: 'string' }, turn_id: { type: 'string' } },
       additionalProperties: false
     }
+  },
+  {
+    name: 'core.market.layer1.status', title: 'Read OVH market observation source health',
+    description: 'House-only, read-only global market Layer 1 source readiness, last verified collector success, freshness, and existing GDELT/USGS status. Returns no credentials or market orders.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false }
   },
   {
     name: 'core.repo.inspect', title: 'Inspect repository',
@@ -150,6 +156,8 @@ export async function callControlTool(name, args = {}, options = {}) {
       turnId: args.turn_id,
     });
   }
+
+  if (name === 'core.market.layer1.status') return layerOneStatus();
 
   if (name === 'core.repo.inspect') {
     const repository = requireRepo(args.repository);

@@ -1,5 +1,8 @@
 # Pending migrations
 
+Pending (OVH Global Market Intelligence Layer 1): `20261022015000_market_layer1_preserve_source_policy.sql` repairs the existing canonical ingestion helper that overwrites license and retention policies with empty objects, and adds a service-only readiness gate. **No production deployment/registration/collection until this migration is reviewed, tested and promoted using the steps below.** Regression fixture: `supabase/tests/market_layer1_policy.behaviour.sql`. Rollback companion disables the new market sources without restoring the unsafe behavior; all historical evidence is preserved. Implementation and operator gates: `docs/control-plane/OVH-GLOBAL-MARKET-LAYER1.md`.
+
+
 Promoted 2026-10-21: `listener_state_v1.sql` is applied in production as `20261021125121_listener_state_v1.sql`. The Pocket cross-device state table now exists, with authenticated ownership RLS, forced RLS, a 4 KiB JSON cap, and no anon read. Exact stored production SQL matches the reviewed pending source. Test: `bash scripts/test-listener-state-db.sh`. Do not replay the pending file.
 
 
