@@ -268,3 +268,30 @@ test('the forensics stylesheet keeps the mobile-first rules', async () => {
   assert.match(css, /\.crf-search input,\.crf-sort select\{[^}]*font-size:max\(16px,/);
   assert.match(css, /\.crf--open \.crf-list\{display:none\}/, 'on a phone an open session takes the screen');
 });
+
+test('detail responses cannot overwrite back, filter, range or a newer session; retry targets the open record', async () => {
+ const F=await load(), buttons={};
+ const button=(selector,attrs={})=>buttons[selector]||(buttons[selector]={getAttribute:k=>attrs[k],closest:()=>null});
+ const session=button('[data-crf-session]',{'data-crf-session':'sess-fixture'});
+ const back=button('[data-crf-back]');
+ const filter=button('[data-crf-filter]',{'data-crf-filter':'signup'});
+ const retry=button('[data-crf-detail-retry]');
+ const h={innerHTML:'',querySelector:()=>null,querySelectorAll:q=>buttons[q]?[buttons[q]]:[]};
+ const pending=[];
+ const request=path=>path.includes('/sessions/')?new Promise((resolve,reject)=>pending.push({path,resolve,reject})):Promise.resolve({sessions:[],counts:{},total:0});
+ const range={since:'2026-10-01',until:'2026-10-25'};
+ F.mount(h,{request,range});await tick();
+ session.onclick();back.onclick();pending.shift().resolve({session:{session_id:'stale'}});await tick();
+ assert.equal(F.state.detail,null);assert.equal(F.state.loadingDetail,false);
+ session.onclick();filter.onclick();pending.shift().resolve({session:{session_id:'stale'}});await tick();
+ assert.equal(F.state.detail,null);assert.equal(F.state.filter,'signup');assert.equal(F.state.stack.length,0);
+ session.onclick();const old=pending.shift();session.onclick();const newer=pending.shift();
+ newer.resolve({session:{session_id:'newest'},events:[]});await tick();old.resolve({session:{session_id:'stale'},events:[]});await tick();
+ assert.equal(F.state.detail.session.session_id,'newest');
+ session.onclick();pending.shift().reject(new Error('Analytics database read failed'));await tick();
+ assert.match(h.innerHTML,/data-crf-detail-retry/);assert.equal(F.state.detail,null);
+ retry.onclick();assert.match(pending[0].path,/sessions\/sess-fixture$/);pending.shift().resolve({session:{session_id:'retried'},events:[]});await tick();
+ assert.equal(F.state.detail.session.session_id,'retried');
+ session.onclick();F.mount(h,{request,range:{since:'2026-10-20',until:'2026-10-25'}});
+ pending.shift().resolve({session:{session_id:'old-range'},events:[]});await tick();assert.equal(F.state.detail,null);
+});

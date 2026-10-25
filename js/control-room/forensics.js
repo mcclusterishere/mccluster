@@ -14,7 +14,7 @@
     mode: "sessions", filter: "all", sort: "recent", q: "",
     list: null, items: [], listError: null, loadingList: false, loadingMore: false, seq: 0,
     stack: [], detail: null, detailError: null, loadingDetail: false, dseq: 0,
-    showSystem: false, raw: {}, timer: null,
+    historyLoading: false, historyError: null, showSystem: false, raw: {}, timer: null,
     insight: { flows: null, errors: null }, insightError: { flows: null, errors: null }, insightLoading: { flows: false, errors: false },
     iseq: 0, iseqOf: { flows: 0, errors: 0 }, showInjected: false
   };
@@ -273,13 +273,24 @@
     if (replace) F.stack = [];
     F.stack.push(entry); F.raw = {}; loadDetail(); scrollToTop();
   }
-  function back() { F.stack.pop(); F.raw = {}; if (top()) loadDetail(); else { F.detail = null; paint(); } }
+  function back() { F.dseq++; F.loadingDetail = false; F.historyLoading = false; F.stack.pop(); F.raw = {}; if (top()) loadDetail(); else { F.detail = null; paint(); } }
   function loadDetail() {
     var t = top(); if (!t || !F.request) return;
-    var seq = ++F.dseq; F.loadingDetail = true; F.detailError = null; F.detail = null; paint();
+    var seq = ++F.dseq, key = F.rangeKey; F.historyLoading = false; F.historyError = null; F.loadingDetail = true; F.detailError = null; F.detail = null; paint();
     var path = t.type === "session" ? "/v1/analytics/sessions/" + encodeURIComponent(t.id) : "/v1/analytics/visitors/" + encodeURIComponent(t.key);
-    F.request(path).then(function (out) { if (seq === F.dseq) F.detail = out; }, function (err) { if (seq === F.dseq) F.detailError = err; })
-      .then(function () { if (seq === F.dseq) { F.loadingDetail = false; paint(); } });
+    F.request(path).then(function (out) { if (seq === F.dseq && key === F.rangeKey && top() === t) F.detail = out; }, function (err) { if (seq === F.dseq && key === F.rangeKey && top() === t) F.detailError = err; })
+      .then(function () { if (seq === F.dseq && key === F.rangeKey && top() === t) { F.loadingDetail = false; paint(); } });
+  }
+  function loadHistory() {
+    var t = top(); if (!t || t.type !== "session" || !F.detail || F.historyLoading) return;
+    var seq = F.dseq, key = F.rangeKey;
+    var mine = function () { return seq === F.dseq && key === F.rangeKey && top() === t; };
+    F.historyLoading = true; F.historyError = null; paint();
+    F.request("/v1/analytics/sessions/" + encodeURIComponent(t.id) + "?include_history=1").then(function (out) {
+      if (mine()) F.detail.visitor = out.visitor;
+    }, function (err) { if (mine()) F.historyError = err; }).then(function () {
+      if (mine()) { F.historyLoading = false; paint(); }
+    });
   }
   function scrollToTop() { try { if (F.host && F.host.scrollIntoView) F.host.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (_) {} }
 
@@ -514,6 +525,9 @@
     return (hidden || F.showSystem ? toggle : "") + out.join("");
   }
   function historyList(v, currentId) {
+    if (v && v.history_status === "not_loaded") return '<p class="crf-muted">The session is loaded. Visitor history is a separate read covering up to 180 days.</p>' +
+      (F.historyError ? '<p role="alert" class="crf-muted">Visitor history did not load: ' + e(F.historyError.message || F.historyError) + '. The recorded session remains available.</p>' : '') +
+      '<button type="button" class="crf-btn" data-crf-history' + (F.historyLoading ? ' disabled' : '') + '>' + (F.historyLoading ? 'Loading visitor history…' : F.historyError ? 'Retry visitor history' : 'Load visitor history') + '</button>';
     var list = (v && v.sessions) || [];
     if (!list.length) return '<p class="crf-muted">No other sessions on this device in the last 180 days.</p>';
     var oldest = list[list.length - 1];
@@ -651,7 +665,7 @@
     var label = F.stack.length > 1 ? (F.stack[F.stack.length - 2].type === "visitor" ? "Back to visitor" : "Back to session") : (isInsight(F.mode) ? "Back to " : "All ") + F.mode;
     var body;
     if (F.loadingDetail) body = '<div class="crf-empty" aria-busy="true"><b>Opening ' + (t.type === "session" ? "session" : "visitor") + "…</b></div>";
-    else if (F.detailError) body = '<div class="crf-empty crf-empty--bad"><b>Could not open it.</b><span>' + e(F.detailError.message || F.detailError) + "</span></div>";
+    else if (F.detailError) body = '<div class="crf-empty crf-empty--bad"><b>Could not open it.</b><span>' + e(F.detailError.message || F.detailError) + "</span><p>Retry this read, or return to the list to choose another record.</p><button type=\"button\" class=\"crf-btn\" data-crf-detail-retry>Retry</button></div>";
     else if (F.detail) body = t.type === "session" ? sessionDetail(F.detail) : visitorDetail(F.detail);
     else body = "";
     return '<section class="crf-detail" aria-label="' + (t.type === "session" ? "Session" : "Visitor") + '"><div class="crf-detail__bar"><button type="button" class="crf-back" data-crf-back>← ' + e(label) + "</button>" +
@@ -676,13 +690,15 @@
     }; });
     h.querySelectorAll("[data-crf-insight-retry]").forEach(function (b) { b.onclick = function () { loadInsight(F.mode); }; });
     h.querySelectorAll("[data-crf-injected]").forEach(function (b) { b.onclick = function () { F.showInjected = !F.showInjected; paint(); }; });
-    h.querySelectorAll("[data-crf-filter]").forEach(function (b) { b.onclick = function () { F.filter = b.getAttribute("data-crf-filter"); loadList(false); }; });
+    h.querySelectorAll("[data-crf-filter]").forEach(function (b) { b.onclick = function () { F.dseq++; F.stack = []; F.detail = null; F.loadingDetail = false; F.historyLoading = false; F.filter = b.getAttribute("data-crf-filter"); loadList(false); }; });
     var sort = h.querySelector("[data-crf-sort]"); if (sort) sort.onchange = function () { F.sort = sort.value; loadList(false); };
     var input = h.querySelector("[data-crf-q]");
     if (input) {
       input.oninput = function () { F.q = input.value; clearTimeout(F.timer); F.timer = setTimeout(function () { loadList(false); }, 380); };
       input.onkeydown = function (ev) { if (ev.key === "Enter") { ev.preventDefault(); clearTimeout(F.timer); loadList(false); } };
     }
+    h.querySelectorAll("[data-crf-history]").forEach(function (b) { b.onclick = loadHistory; });
+    h.querySelectorAll("[data-crf-detail-retry]").forEach(function (b) { b.onclick = loadDetail; });
     h.querySelectorAll("[data-crf-retry]").forEach(function (b) { b.onclick = function () { loadList(false); }; });
     h.querySelectorAll("[data-crf-more]").forEach(function (b) { b.onclick = function () { loadList(true); }; });
     h.querySelectorAll("[data-crf-session]").forEach(function (b) { b.onclick = function () {
@@ -694,7 +710,7 @@
       open({ type: "visitor", key: key }, !inDetail);
     }; });
     h.querySelectorAll("[data-crf-back]").forEach(function (b) { b.onclick = back; });
-    h.querySelectorAll("[data-crf-close]").forEach(function (b) { b.onclick = function () { F.stack = []; F.detail = null; paint(); }; });
+    h.querySelectorAll("[data-crf-close]").forEach(function (b) { b.onclick = function () { F.dseq++; F.loadingDetail = false; F.historyLoading = false; F.stack = []; F.detail = null; paint(); }; });
     h.querySelectorAll("[data-crf-system]").forEach(function (b) { b.onclick = function () { F.showSystem = !F.showSystem; paint(); }; });
     h.querySelectorAll("[data-crf-raw]").forEach(function (b) { b.onclick = function () { var i = b.getAttribute("data-crf-raw"); F.raw[i] = !F.raw[i]; paint(); }; });
     h.querySelectorAll("[data-crf-jump]").forEach(function (a) { a.onclick = function (ev) {

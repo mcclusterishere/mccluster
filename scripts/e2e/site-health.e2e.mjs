@@ -9,15 +9,27 @@ function check(ok,label){assert.ok(ok,label);checks++;console.log('PASS '+label)
 try {
  for(const width of [390,820,1024,1440]){
   const {ctx,page,errors}=await context({width,height:width===1024?768:1000},{deviceScaleFactor:1});
+  let detailFailure=false, historyFailure=true;
+  await ctx.route('https://api.mccluster.org/v1/analytics/sessions/diagnostic-fixture**',r=>{
+   const history=new URL(r.request().url()).searchParams.has('include_history');
+   if(detailFailure||(history&&historyFailure))return json(r,{error:'Analytics database read failed'},502);
+   return json(r,{session,events,visitor:{key:'d:fixture',history_status:history?'ready':'not_loaded',total:history?1:null,sessions:history?[session]:null}});
+  });
   await ctx.route('https://api.mccluster.org/v1/analytics/sessions?**',r=>json(r,{ok:true,total:1,counts:{all:1},sessions:[session]}));
   await page.goto(BASE+'/control.html#analytics',{waitUntil:'domcontentloaded'});await settle(page);
   await page.getByRole('tab',{name:'Site health',exact:true}).click();
   await page.waitForSelector('[data-crf-session]');
-  // Mount the actual detail renderer and bind its raw, jump and back controls.
-  await page.evaluate(({session,events})=>{
-   const f=window.CR.forensics;f.state.stack=[{type:'session',id:session.session_id}];f.state.detail={session,events,visitor:{key:'fixture',sessions:[]}};
-   f.mount(document.querySelector('[data-crf-host]'),{range:f.state.range});
-  },{session,events});
+  await page.locator('[data-crf-session]').first().click();
+  await page.waitForSelector('.crf-kpis');
+  if(width===390){
+   await page.getByRole('button',{name:'Load visitor history',exact:true}).click();
+   await page.getByRole('button',{name:'Retry visitor history',exact:true}).waitFor();
+   check(await page.locator('.crf-step').count()===events.length,'history failure preserves the actual journey');
+   historyFailure=false;
+   await page.getByRole('button',{name:'Retry visitor history',exact:true}).click();
+   await page.waitForFunction(()=>window.CR.forensics.state.detail.visitor.history_status==='ready');
+   check(await page.locator('.crf-step').count()===events.length,'history retry succeeds without replacing journey');
+  }
   for(const nested of [false,true]){
    await page.locator('[data-crf-host]').evaluate((el,n)=>{el.style.width=n?'min(100%, 320px)':'';},nested);
    const scope=width+(nested?' narrow':'');
@@ -36,6 +48,13 @@ try {
    await page.screenshot({path:OUT+`/health-${width}${nested?'-nested':''}.png`});
   }
   await page.locator('[data-crf-back]').click();check(await page.locator('.crf-detail').count()===0,width+' back returns to sessions');
+  if(width===390){
+   detailFailure=true;await page.locator('[data-crf-session]').first().click();
+   await page.getByRole('button',{name:'Retry',exact:true}).waitFor();
+   check(await page.locator('.crf-kpis').count()===0,'failed core read never renders fake empty data');
+   detailFailure=false;await page.getByRole('button',{name:'Retry',exact:true}).click();
+   await page.waitForSelector('.crf-kpis');check(true,'core read retry loads session');
+  }
   check(errors.length===0,width+' no unexpected browser errors '+errors.join(';'));
   await ctx.close();
  }
