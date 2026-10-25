@@ -903,6 +903,13 @@
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
     },
     {
+      "path": "docs/control-plane/MCCLUSTER-WORKSPACE-OVH.md",
+      "classification": "shared_infrastructure_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stage-only OVH email/productivity migration contract cross-references the existing Equity Uprise integration; no physical building or Equity Uprise program capability."
+    },
+    {
       "path": "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
       "classification": "documentation_support",
       "capability_ids": [],

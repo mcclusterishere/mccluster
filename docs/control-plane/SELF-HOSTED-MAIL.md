@@ -23,12 +23,16 @@ both risks on the same day.
 `verify-mail.sh` needs to know which half exists:
 
 ```sh
-MAIL_MODE=send-only ./verify-mail.sh   # sending only; MX must stay elsewhere
-MAIL_MODE=full      ./verify-mail.sh   # both; MX should point here
+MAIL_MODE=send-only ./verify-mail.sh   # sends only; MX must stay elsewhere
+MAIL_MODE=staged    ./verify-mail.sh   # receives and sends; MX STILL elsewhere
+MAIL_MODE=full      ./verify-mail.sh   # after cutover; MX exclusively here
 ```
 
 It defaults to `send-only`, because claiming a host receives mail when it
-does not is how mail disappears.
+does not is how mail disappears. All modes are host-side configuration checks,
+not proof of real message delivery. An off-host port-25 check fails closed.
+Before changing MX, use `staged` (not `full`) and separately prove actual
+inbound/outbound delivery.
 
 ---
 
@@ -235,7 +239,10 @@ swaks --server mail.mccluster.org --to matthew@mccluster.org \
       --from you@somewhere-else.com --tls
 ```
 
-Then `MAIL_MODE=full ./verify-mail.sh` on the VPS. It must say **Ready**.
+Then `MAIL_MODE=staged ./verify-mail.sh` on the mail VPS. It must say
+**STAGING PRECHECK PASSED**. This validates configuration while mail still
+arrives at Google; it is **not** proof of real delivery or permission to
+switch MX. Verify delivery both directions and a restored offsite backup.
 
 ### Step D — flip the MX
 
@@ -246,6 +253,10 @@ In Cloudflare, replace the five Google MX records with one:
 | MX | `@` | 10 | `mail.mccluster.org` |
 
 Grey cloud. Mail cannot be proxied.
+
+Immediately after the MX change, run `MAIL_MODE=full ./verify-mail.sh`
+on the mail VPS and send live inbound and outbound test messages. Its
+**HOST PRECHECK PASSED** status does not replace checking real delivery.
 
 Mail already in flight goes to Google for a few hours while DNS caches
 expire — that is what step B's second pass collects. **Do not cancel
