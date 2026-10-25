@@ -12,7 +12,7 @@
 .cra-custom[hidden]{display:none}.cra-custom label{display:grid;gap:5px;color:var(--cr-faint);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
 .cra-state{display:flex;align-items:center;gap:7px;color:var(--cr-faint);font-size:10px}.cra-state i{width:7px;height:7px;border-radius:50%;background:var(--cr-ok)}.cra-state.is-loading i{background:var(--cr-ai);animation:craPulse 1s ease-in-out infinite}.cra-state.is-error i{background:var(--cr-bad)}
 @keyframes craPulse{50%{opacity:.3}}
-.cra-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cra-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));gap:8px}
 .cra-kpi{min-width:0;padding:11px;border:1px solid var(--cr-line);border-radius:10px;background:var(--cr-panel)}
 .cra-kpi small{display:block;color:var(--cr-faint);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}.cra-kpi strong{display:block;margin-top:6px;font-size:clamp(20px,7vw,29px);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.cra-kpi span{display:block;margin-top:5px;color:var(--cr-dim);font-size:9px}
 .cra-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0}
@@ -68,8 +68,8 @@
 .cra-error{padding:9px;border:1px solid rgba(239,90,99,.38);border-radius:9px;background:rgba(239,90,99,.06);color:#ffb7bb;font-size:10px;line-height:1.5}
 /* The panel is ~40% of a wide screen beside the globe, so its columns follow the PANEL's width (a container query),
    not the window's: mobile first, min-width only, the same steps as before. */
-@container cra (min-width:36rem){.cra-head{grid-template-columns:minmax(0,1fr) minmax(12rem,16rem);align-items:end}.cra-custom{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.cra-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.cra-reach__facts{grid-template-columns:repeat(4,minmax(0,1fr))}.cra-facts,.cra-dns{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@container cra (min-width:54rem){.cra-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cra-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}.cra-axis{font-size:10px}.cra-form{grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:end}.cra-form__msg{grid-column:1/-1}}
+@container cra (min-width:36rem){.cra-head{grid-template-columns:minmax(0,1fr) minmax(12rem,16rem);align-items:end}.cra-custom{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.cra-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr))}.cra-reach__facts{grid-template-columns:repeat(4,minmax(0,1fr))}.cra-facts,.cra-dns{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container cra (min-width:54rem){.cra-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cra-kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr))}.cra-axis{font-size:10px}.cra-form{grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:end}.cra-form__msg{grid-column:1/-1}}
 /* ---------- Identity: source → song → account ----------
    Phone first: one column of paths and account cards; wider screens only
    give the table and cards more room. */

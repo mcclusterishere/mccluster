@@ -256,15 +256,15 @@ test('errors: this site’s own errors lead, injected ones wait behind a toggle,
   F.state.showInjected = true;
   assert.match(F.render(), /window\.webkit\.messageHandlers/);
   assert.equal(F.describe({ name: 'signup_blocked', props: { reason: 'password_mismatch' } }).text, 'Sign-up refused: passwords did not match');
-  assert.match(F.describe({ name: 'js_error', props: { msg: 'x', origin: 'injected' } }).text, /^In-app browser error \(not this site\)/);
+  assert.match(F.describe({ name: 'js_error', props: { msg: 'x', origin: 'injected' } }).text, /^Browser diagnostic \(likely injected\)/);
 });
 
 test('the forensics stylesheet keeps the mobile-first rules', async () => {
   const css = await read('css/control-forensics.css');
-  const queries = css.match(/@media[^{]+/g) || [];
+  const queries = css.match(/@container[^{]+/g) || [];
   assert.ok(queries.length >= 2);
-  for (const q of queries) assert.match(q, /^@media \(min-width:\d+rem\)\s*$/, 'breakpoints only add: ' + q);
-  assert.doesNotMatch(css.replace(/minmax\(0,1fr\)/g, ''), /\b1fr\b/, 'never a bare 1fr');
+  for (const q of queries) assert.match(q, /^@container crf-(?:pane|host) \(min-width:\d+rem\)\s*$/, 'breakpoints only add: ' + q);
+  assert.doesNotMatch(css.replace(/minmax\(0,1fr\)|minmax\(min\(100%,9rem\),1fr\)/g, ''), /\b1fr\b/, 'never a bare 1fr');
   assert.match(css, /\.crf-search input,\.crf-sort select\{[^}]*font-size:max\(16px,/);
   assert.match(css, /\.crf--open \.crf-list\{display:none\}/, 'on a phone an open session takes the screen');
 });
