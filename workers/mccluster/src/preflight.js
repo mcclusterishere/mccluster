@@ -31,7 +31,7 @@ export const PREFLIGHT_FIRST_PREFIXES = [
   /* the morning brief (brief.html): the house owner's and region leaders' session rides with every call */
   '/v1/news-briefs',
   /* every account's front page: the editor saves with the account's session (./member-fronts.js) */
-  '/v1/fronts', '/v1/projects'
+  '/v1/fronts', '/v1/customer-social', '/v1/projects'
 ];
 
 export function preflightResponse(request, env) {
