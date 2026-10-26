@@ -223,3 +223,9 @@ test('pending reconciler v3 serialises deliveries and is exercised in CI', async
   assert.ok(ci.indexOf('-f supabase/tests/commerce_stripe_reconciler_v3_regression.sql') > apply, 'then the v3 suite');
   assert.ok(ci.indexOf('bash supabase/tests/commerce_stripe_concurrency.sh') > apply, 'then the race');
 });
+
+test('storefront metadata is routed only through its immutable-order adapter', () => {
+  const metadata={offering:'print-11x14',creator_store_order_id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',mccluster_org_id:'seller'};
+  assert.equal(checkoutRecord({...SESSION,metadata},{...EVENT,account:'acct_seller'}),null);
+  assert.equal(refundRecord({payment_intent:'pi_store00001',amount:4000,amount_refunded:4000,metadata},{...EVENT,account:'acct_seller'}),null);
+});
