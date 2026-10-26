@@ -17,6 +17,8 @@
   var ownPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/edit" : "/v1/fronts/me";
   var publishedPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/published" : "/v1/fronts/me/published";
   var editorReturn = projectMode ? "project-studio.html?project=" + encodeURIComponent(projectSlug || "") : "front-studio.html";
+  var offersTemplate=new URLSearchParams(location.search).get('template')==='offers';
+  if(offersTemplate)editorReturn+=(editorReturn.indexOf('?')>=0?'&':'?')+'template=offers';
   function publicUrl(handle) { return projectMode ? "front.html?project=" + encodeURIComponent(projectSlug) : "front.html?u=" + encodeURIComponent(handle); }
 
   var FILMS = [
@@ -146,12 +148,17 @@
   }
   function form() {
     var c = S.draft, wd = c.words || {}, m = c.media || {}, v = c.vr || {}, sc = c.scroll || {}, n = c.night || {};
+    var picker=S.me.registry_key?'':'<fieldset class="fs-group"><legend>Page layout</legend><label class="fs-field"><span>Template</span><select name="layout"><option value="cinematic"'+(c.layout!=='offers'?' selected':'')+'>Cinematic front</option><option value="offers"'+(c.layout==='offers'?' selected':'')+'>Words, images and offers</option></select></label><p class="fs-help">The offers layout needs no paid plan or media preparation allowance. Uploaded images are public bytes; publish only images you may share.</p></fieldset>';
+    if(c.layout==='offers'&&!S.me.registry_key){
+      var offer=c.offer_page||{},cards=offer.cards||[];
+      return picker+'<fieldset class="fs-group"><legend>Your introduction</legend>'+field('offer_page.title','Page headline',offer.title,100)+field('offer_page.intro','Introduction',offer.intro,600)+linkRow('offer_page.primary',offer.primary,0,60)+linkRow('offer_page.secondary',offer.secondary,1,60)+'<button type="button" class="fs-btn" data-act="offer-example">Use Equity Uprise example content</button><p class="fs-help">Copies editable example words and links into this draft. It does not assign an identity, domain or account.</p></fieldset>'+cards.map(function(card,i){return '<fieldset class="fs-group"><legend>Offer '+(i+1)+'</legend>'+field('offer_page.cards.'+i+'.title','Offer title',card.title,80)+field('offer_page.cards.'+i+'.body','Description',card.body,600)+field('offer_page.cards.'+i+'.status','Availability note',card.status,120)+linkRow('offer_page.cards.'+i+'.action',card.action,i,60)+(card.experiences||[]).map(function(item,j){return field('offer_page.cards.'+i+'.experiences.'+j+'.title','Experience '+(j+1),item.title,60)+field('offer_page.cards.'+i+'.experiences.'+j+'.body','Experience description',item.body,300);}).join('')+mediaRow('offer'+i,'Offer image','Optional JPEG, PNG or WebP. Uploaded through your website storage allowance.','image/jpeg,image/png,image/webp',card.image,function(){return 'Your image';})+'<button type="button" class="fs-btn fs-btn--ghost" data-act="offer-remove" data-i="'+i+'">Remove offer</button></fieldset>';}).join('')+(cards.length<6?'<button type="button" class="fs-btn" data-act="offer-add">Add an offer</button>':'');
+    }
     var feel = "standard";
     Object.keys(FEEL).forEach(function (k) { if (sc.duration === FEEL[k][0] && sc.touchLerp === FEEL[k][1]) feel = k; });
     if (sc.duration !== undefined && feel === "standard" && !(sc.duration === 0.85 && sc.touchLerp === 0.14)) feel = "custom";
     var spots = Array.isArray(v.spots) ? v.spots : [], links = Array.isArray(c.links) ? c.links : [];
     var filmWhat = function (f) { return f.count + " frames, cut from your video"; };
-    return '' +
+    return picker +
       '<fieldset class="fs-group"><legend>Words</legend>' +
         field("words.eyebrow", "Above your name", wd.eyebrow, 60, "e.g. Producer · Atlanta") +
         '<div class="fs-pair">' + field("words.title1", "Big title, line 1", wd.title1, 14) + field("words.title2", "Line 2 (red)", wd.title2, 14) + '</div>' +
@@ -193,6 +200,11 @@
     chk(wd.door1, "button 1"); chk(wd.door2, "button 2");
     (c.vr && c.vr.spots || []).forEach(function (s, i) { chk(s, "tag " + (i + 1)); });
     (c.links || []).forEach(function (x, i) { chk(x, "link " + (i + 1)); });
+    if(c.layout==='offers'){
+      var o=c.offer_page||{};if(!String(o.title||'').trim()||!String(o.intro||'').trim())out.push('headline and introduction');
+      chk(o.primary,'main button');chk(o.secondary,'second button');
+      (o.cards||[]).forEach(function(x,i){if(!String(x.title||'').trim()||!String(x.body||'').trim())out.push('offer '+(i+1));chk(x.action,'offer '+(i+1)+' button');});
+    }
     return out;
   }
   function busy() { return Object.keys(S.busy).some(function (k) { return S.busy[k]; }); }
@@ -242,7 +254,12 @@
   var LIVE = /^(vr\.|night\.|feel$)/;
   function set(name, value, checked) {
     var c = S.draft, p = name.split("."), n = Number(value);
-    if (name === "feel") { if (FEEL[value]) { var sc = ensure(c, "scroll"); sc.duration = FEEL[value][0]; sc.touchLerp = FEEL[value][1]; } }
+    if(name==='layout'&&!S.me.registry_key){c.layout=value==='offers'?'offers':'cinematic';if(c.layout==='offers'&&!c.offer_page)c.offer_page=w.MCC_SITE_OFFERS.defaults(S.me.name);paintForm();}
+    else if(p[0]==='offer_page'){
+      var target=ensure(c,'offer_page');for(var j=1;j<p.length-1;j++)target=target[p[j]]=target[p[j]]||{};
+      if(String(value).trim())target[p[p.length-1]]=value;else delete target[p[p.length-1]];
+    }
+    else if (name === "feel") { if (FEEL[value]) { var sc = ensure(c, "scroll"); sc.duration = FEEL[value][0]; sc.touchLerp = FEEL[value][1]; } }
     else if (name === "vr.hold") ensure(c, "vr").hold = !!checked;
     else if (name === "vr.yaw" || name === "vr.pitch") { var vv = ensure(c, "vr"); if (String(value).trim() === "") delete vv[p[1]]; else if (isFinite(n)) vv[p[1]] = n; }
     else if (name === "night.arrive") { var nn = ensure(c, "night"); if (String(value).trim() === "") delete nn.arrive; else if (isFinite(n)) nn.arrive = n / 100; }
@@ -257,6 +274,12 @@
   function viewer() { var f = frameWin(); try { return f && f.__MCC_VR && f.__MCC_VR.live ? f.__MCC_VR.viewer : null; } catch (_) { return null; } }
   function act(a, btn) {
     var c = S.draft, i = Number(btn && btn.getAttribute("data-i"));
+    if(a==='offer-add'){c.offer_page.cards=c.offer_page.cards||[];if(c.offer_page.cards.length<6)c.offer_page.cards.push({title:'New offer',body:'Describe what is available.'});S.dirty=true;paintForm();reloadPreview(true);return;}
+    if(a==='offer-remove'){c.offer_page.cards.splice(i,1);S.dirty=true;paintForm();reloadPreview(true);return;}
+    if(a==='offer-example'){
+      var epoch=authEpoch;S.saving=true;paint();
+      fetch('data/equity-uprise-offers-template.json').then(function(r){if(!r.ok)throw Error('Example unavailable');return r.json();}).then(function(example){if(epoch!==authEpoch||!S.draft)return;S.draft.offer_page=example;S.dirty=true;S.msg='Example copied into your draft. Review and edit before publishing.';}).catch(function(err){if(epoch===authEpoch){S.msg=err.message;S.bad=true;}}).finally(function(){if(epoch===authEpoch){S.saving=false;paintForm();reloadPreview(true);}});return;
+    }
     if (a === "refresh-access") {
       if (S.saving) return;
       S.saving = true; paint();
@@ -309,21 +332,24 @@
     }).then(function () { S.saving = false; paint(); });
   }
   function upload(key, file, input) {
-    var M = w.MCC_FRONT_MEDIA, dir = folder();
+    var M = w.MCC_FRONT_MEDIA, dir = folder(), uploadEpoch=authEpoch;
+    var offerCard=/^offer[0-5]$/.test(key)&&S.draft.offer_page.cards[Number(key.slice(5))];
     if (!M || !dir || !file) return;
     S.busy[key] = true; S.progress[key] = "Starting…"; S.msg = ""; paintForm();
     var start = S.sweeping || Promise.resolve();
-    var pct = function (x) { S.progress[key] = "Uploading " + Math.round(x * 100) + "%"; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; };
+    var pct = function (x) { if(uploadEpoch!==authEpoch)return;S.progress[key] = "Uploading " + Math.round(x * 100) + "%"; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; };
     var job = start.then(function () {
-      return key === "cabin" ? M.cabin(file, dir, pct) : key === "still" ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
+      return key === "cabin" ? M.cabin(file, dir, pct) : key === "still"||/^offer[0-5]$/.test(key) ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
         : M.film(file, dir, function (p) { S.progress[key] = "Cutting frames " + p.cut + " of " + p.of + " · uploaded " + p.sent + " of " + p.total; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; });
     });
     job.then(function (res) {
+      if(uploadEpoch!==authEpoch||!S.draft)return;
+      if(offerCard){if((S.draft.offer_page.cards||[]).includes(offerCard)){offerCard.image=res.src;S.dirty=true;S.msg='Image added. Review before publishing.';S.bad=false;}return;}
       var m = ensure(S.draft, "media");
       m[key] = key === "hero" || key === "scene1" || key === "scene2" || key === "night" ? { base: res.base, count: res.count, ext: res.ext, sm: res.sm } : res;
       S.dirty = true; S.msg = "Added. Save or publish to keep it."; S.bad = false;
-    }).catch(function (err) { S.msg = err.message || String(err); S.bad = true; })
-      .then(function () { S.busy[key] = false; S.progress[key] = ""; if (input) input.value = ""; paintForm(); reloadPreview(true); });
+    }).catch(function (err) { if(uploadEpoch===authEpoch){S.msg = err.message || String(err); S.bad = true;} })
+      .then(function () { if(uploadEpoch!==authEpoch)return;S.busy[key] = false; S.progress[key] = ""; if (input) input.value = ""; paintForm(); reloadPreview(true); });
   }
   function bind(root) {
     root.addEventListener("click", function (ev) {
@@ -332,7 +358,7 @@
       if (b.hasAttribute("data-act")) { ev.preventDefault(); act(b.getAttribute("data-act"), b); }
       else if (b.hasAttribute("data-device")) { S.device = b.getAttribute("data-device"); fit(); paint(); }
       else if (b.hasAttribute("data-go")) post({ type: "mcc:front-goto", to: b.getAttribute("data-go") });
-      else if (b.hasAttribute("data-remove")) { var m = ensure(S.draft, "media"); delete m[b.getAttribute("data-remove")]; S.dirty = true; paintForm(); reloadPreview(true); }
+      else if (b.hasAttribute("data-remove")) { var key=b.getAttribute('data-remove');if(/^offer[0-5]$/.test(key))delete S.draft.offer_page.cards[Number(key.slice(5))].image;else{var m = ensure(S.draft, "media"); delete m[key];} S.dirty = true; paintForm(); reloadPreview(true); }
     });
     /* A field is never redrawn under the hand typing in it: leaving one for the next must not replace the next (that
        lost what was typed there, and the tap on a button after it). Text applies as it is typed; a link row says what
@@ -356,6 +382,7 @@
   function boot() {
     api(ownPath).then(function (me) {
       S.me = me; S.draft = clone(me.draft || me.published) || {}; S.state = "ready";
+      if(offersTemplate&&!me.registry_key&&!S.draft.layout&&Object.keys(S.draft).every(function(k){return k==='schema';})){S.draft.layout='offers';S.draft.offer_page=w.MCC_SITE_OFFERS.defaults(me.name);S.dirty=true;S.msg='Choose your words, or copy the editable Equity Uprise example below.';}
       if (me.removed) { S.msg = "McCluster took your published page down. You can keep editing your draft."; S.bad = true; }
       paintForm();
     }).catch(function (err) {

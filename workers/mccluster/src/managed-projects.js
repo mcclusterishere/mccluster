@@ -86,6 +86,7 @@ export async function handleManagedProjects(request, env, deps = {}) {
       if (!b || !b.config || typeof b.config !== 'object' || Array.isArray(b.config)) return error('A page configuration is required',400,'invalid_config');
       if (['owner_user_id','m_uid','slug','registry_key','removed_at','published','id','presentation','studio_revision_id','studio_draft_id','studio_org_id'].some(k=>k in b)) return error('Protected project fields cannot be changed',400,'protected_fields');
       if (b.publish === true && blocker(row)) return error('Review your profile visibility before publishing',409,blocker(row));
+      if(row.registry_key&&b.config.layout==='offers')return error('This repository-managed presentation cannot change templates here',409,'protected_presentation');
       const checked = validateFront(b.config,{mediaPrefix:media});
       if (!checked.ok) return error('Page configuration is too large',413,'too_large');
       // Reject stripped media/settings rather than silently publishing incomplete content.

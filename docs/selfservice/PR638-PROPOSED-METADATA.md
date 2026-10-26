@@ -12,7 +12,7 @@ assertions.”
 
 ## Proposed title
 
-First-offer website foundation: owned free publication, storage quotas, tenant modules and addresses
+First website offer: editable Equity Uprise template, owned publishing and tenant boundaries
 
 ## Proposed body
 
@@ -25,9 +25,10 @@ World tab/discovery settings, and immutable company-host aliases. Advertising
 has a server-validated disabled/no-fill policy and no live provider integration.
 
 New tile preparation still requires the separately approved native processing
-model, executor and preparation allowance. Basic text/image-only tiles that
-avoid that pipeline are not implemented. Device-prepared cinematic fronts use
-their separate public-byte upload path. No paid entitlement or processing
+model, executor and preparation allowance. The ordinary front editor now also supplies an editable text/image offers
+layout through its separate quota-aware public-byte upload path. It preserves
+three audiences and nine experiences; the Studio tile pipeline remains separate.
+Device-prepared cinematic fronts remain available. No paid entitlement or processing
 allowance is granted by the free publication or storage proposal.
 
 Validation includes Worker/source suites, isolated SQL/RLS and concurrent quota
@@ -38,11 +39,17 @@ required pinned-browser CI must pass independently. Economic Core CI has been
 blocked before tests by Supabase image pulls returning GHCR rate limits. Consult
 the exact head's terminal checks; local fixtures are not production verification.
 
+New local proof includes1174 source tests,43 integrated owner-editor browser
+checks, and390/1440 real-audio artist/Back/contextual-mark fixtures. These browser
+checks use Chromium154 and intercepted services; final CI remains separate.
+
 Activation remains blocked on the pending schema/flag/cutover prerequisites in
 `docs/selfservice/FIRST-OFFER-ACTIVATION.md`. Production site tables remain absent.
 No migration, merge, deployment, DNS change, purchase, payment, provider/legal
 acceptance or ad activation was performed. Platform domain purchase remains
 disabled pending contractual/ownership/renewal/fulfillment gates. Equity Uprise
-artist linking needs a verified owned act profile; existing credits and civic
-identity are unchanged. Composer, Stories and on-demand streaming are subsequent
+artist linking uses the explicit stable act ID and the user-authorized canonical
+platform-home template preview, with supplied E=Up navigation; Matthew retains
+his personal destination. Owned production project/domain provisioning remains
+gated. Existing recording credits and civic identity are unchanged. Composer, Stories and on-demand streaming are subsequent
 focused milestones, not part of this draft's completion claim.

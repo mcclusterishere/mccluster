@@ -971,7 +971,7 @@
         (data.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
-        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "" };
+        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "", artist_profile_id: alb.artist_profile_id || "" };
         queue = alb.tracks.map(function (t) {
           return Object.assign({}, t, {
             albSlug: alb.slug, albName: "", art: alb.art,
@@ -986,18 +986,21 @@
       document.getElementById("albBy").textContent = head.by || "";
       /* an album may be billed to someone other than the house */
       ARTIST = head.artist || HOUSE;
-      /* the artist's name was plain bold text and got tapped like a link;
-         the house artist now opens his own page, other billings stay text */
+      /* A recording's explicit stable act ID selects its canonical destination.
+         Display names, tenant slugs and civic organization records grant no binding. */
       document.getElementById("albArtist").textContent = ARTIST;
-      if (ARTIST === HOUSE) {
+      var artistProfile = (data.artist_profiles || {})[head.artist_profile_id];
+      if (artistProfile && /^(?:matthew-mccluster|platform-home)\.html$/.test(artistProfile.home)) {
         var artistEl = document.getElementById("albArtist");
         var artistLink = document.createElement("a");
-        artistLink.href = "matthew-mccluster.html";
+        artistLink.href = artistProfile.home;
         artistLink.className = "alb__artist";
         artistLink.setAttribute("data-cta", "album-artist");
         artistLink.textContent = ARTIST;
         artistEl.textContent = "";
         artistEl.appendChild(artistLink);
+        window.MCC_PAGE_PROFILE = {name: ARTIST, home: artistProfile.home, logo: artistProfile.logo};
+        if (window.MCC_BAR && window.MCC_BAR.pageProfile) window.MCC_BAR.pageProfile(window.MCC_PAGE_PROFILE);
       }
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;

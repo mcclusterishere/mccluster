@@ -1,5 +1,7 @@
 (function () {
   'use strict';
+  var offersTemplate=new URLSearchParams(location.search).get('template')==='offers';
+  if(offersTemplate){var account=document.querySelector('a[href="account.html?next=customer-projects.html"]');if(account)account.href='account.html?next='+encodeURIComponent('customer-projects.html?template=offers');}
   var list=document.getElementById('projectList'), message=document.getElementById('projectMessage'), form=document.getElementById('projectCreate'), generation=0;
   function node(tag,text) { var n=document.createElement(tag); n.textContent=text; return n; }
   async function api(path, init) {
@@ -38,7 +40,7 @@
     } catch(e){if(seq===generation) message.textContent=e.message;}
   }
   form.addEventListener('submit',async function(e){e.preventDefault();var button=form.querySelector('button');button.disabled=true;
-    try {var data=await api('',{method:'POST',body:JSON.stringify({name:document.getElementById('projectName').value,slug:document.getElementById('projectSlug').value})}); location.href='project-studio.html?project='+encodeURIComponent(data.slug);}
+    try {var data=await api('',{method:'POST',body:JSON.stringify({name:document.getElementById('projectName').value,slug:document.getElementById('projectSlug').value})}); location.href='project-studio.html?project='+encodeURIComponent(data.slug)+(offersTemplate?'&template=offers':'');}
     catch(e){message.textContent=e.message;}finally{button.disabled=false;}
   });
   document.getElementById('projectRetry').addEventListener('click',load);

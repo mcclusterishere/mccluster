@@ -215,7 +215,8 @@
     },
     "artist_brand": "Matthew McCluster",
     "commerce_mode": "lyric-service"
-   }
+   },
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "prim3",
@@ -232,7 +233,8 @@
      "reel": "data/reels/got-wifi.json",
      "music_video": "assets/video/prim3.mp4"
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "equity-uprise",
@@ -278,7 +280,8 @@
      "reel": "data/reels/money-or-the-power.json",
      "music_video": "assets/video/moneyglitch.mp4"
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise"
   },
   {
    "slug": "heal-the-3",
@@ -303,7 +306,8 @@
      "poster": "assets/frames/angel_0001.jpg",
      "music_video": "assets/video/angel.mp4"
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "vaunt-ep",
@@ -318,7 +322,8 @@
      "poster": "assets/frames/vauntlive_0001.jpg",
      "music_video": "assets/video/vauntlive.mp4"
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "whip-equipped",
@@ -341,7 +346,8 @@
      "poster": "assets/img/wing-whip-poster.jpg",
      "music_video": "assets/video/dealer-plates-b-video.mp4"
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "singles",
@@ -358,7 +364,8 @@
      "reel": "data/reels/upset.json",
      "music_video": "assets/video/coffeecam.mp4"
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "cia-mind-control",
@@ -414,5 +421,15 @@
     }
    ]
   }
- ]
+ ],
+ "artist_profiles": {
+  "https://matthew.mccluster.org/#matthew-mccluster": {
+   "home": "matthew-mccluster.html",
+   "logo": "assets/img/m-mark.png"
+  },
+  "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise": {
+   "home": "platform-home.html",
+   "logo": "assets/img/equity-uprise-mark-white.png"
+  }
+ }
 }

@@ -136,6 +136,15 @@
       if (w.MCC_BAR && w.MCC_BAR.pageProfile) w.MCC_BAR.pageProfile(pageProfile);
     }
     var config = settings(page);
+    if(config.layout==='offers'&&!isProject&&w.MCC_SITE_OFFERS){
+      d.documentElement.setAttribute('data-front-layout','offers');
+      d.getElementById('top').hidden=true;d.getElementById('frontFoot').hidden=true;
+      var offers=w.MCC_SITE_OFFERS.render(page);d.getElementById('top').before(offers);
+      w.MCC_FRONT_SOURCE={handle:page.handle,name:page.name,config:config,studio:inStudio};
+      d.documentElement.setAttribute('data-front-state','ready');
+      w.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
+      return;
+    }
     if (isProject) {
       d.documentElement.setAttribute("data-front-project", params.get("project"));
       d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });

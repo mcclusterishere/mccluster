@@ -145,7 +145,7 @@ jobs:
           node-version: '22'
       - run: npm install --prefix /tmp/selfservice-tools --no-audit --no-fund playwright@1.64.1 @electric-sql/pglite@0.5.11 esbuild@0.25.12
       - run: /tmp/selfservice-tools/node_modules/.bin/playwright install --with-deps chromium
-        timeout-minutes: 8
+        timeout-minutes: 15
       - name: Install native media fixture tools
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Use installed Chromium for all fixture runners
@@ -169,6 +169,7 @@ jobs:
           node scripts/e2e/customer-site-policy.e2e.mjs
           node scripts/e2e/first-offer-acceptance.e2e.mjs
           node scripts/e2e/managed-projects.e2e.mjs
+          node scripts/e2e/equity-offers-artist.e2e.mjs
           node scripts/e2e/platform-home.e2e.mjs
           node scripts/e2e/platform-home-transition.e2e.mjs
           node scripts/e2e/world-directory.e2e.mjs
@@ -187,6 +188,7 @@ jobs:
         with:
           name: customer-selfservice-browser-proof
           path: |
+            /tmp/equity-offers-proof
             /tmp/managed-project-proof
             /tmp/platform-audiences-proof
             /tmp/project-tiles-proof

@@ -154,8 +154,9 @@ entries. Supabase's pending-file promotion procedure still governs actual releas
    It grants no processing allowance or custom-domain entitlement. Every tile
    still requires a registered, ready, explicitly public-approved media source.
    An ordinary free account can reuse its existing approved media without a new
-   preparation job. A basic text/image-only tile path independent of preparation
-   is not implemented. New Studio media cannot finish publication until the
+   preparation job. The ordinary front editor now also offers a separate text/image
+   offers layout (see below), without this Studio preparation pipeline.
+   New Studio media cannot finish publication until the
    separate native model/executor/preparation-allowance gates are satisfied.
    The fixture's free-publication test removes its subscription but retains a
    separately approved preparation allowance; it does not prove that an ordinary
@@ -197,7 +198,7 @@ reviewed operational plan; this document does not authorize it.
 | Landing → existing membership → saved draft | `first-offer-acceptance.e2e.mjs`, customer-site fixture | Synthetic sessions; real signup/mail/approval unchanged and unverified |
 | Repeated/interrupted checkout | Browser reuses request ID after retry/reload; existing checkout reservation SQL/Worker fixtures | No Stripe request, money or provider webhook delivery |
 | Media quota | Actual SQL/RLS, streamed over/under-size checks, durable HEAD/recovery, replacement/deletion; native CI two-session race | Managed Storage and ingress cutover still need authorized verification |
-| Tile edit/preview/publish | Free-publisher SQL/Worker cases plus actual browser/native FFmpeg approval/revision path | Existing approved media only without a preparation allowance; basic text/image-only tiles remain unimplemented; 500 MB provides no compute allowance |
+| Tile edit/preview/publish | Free-publisher SQL/Worker cases plus actual browser/native FFmpeg approval/revision path | Native Studio tiles need approved media/preparation; the separate offers layout now supplies basic text/image pages; 500 MB provides no compute allowance |
 | Module off/on | Owner settings, direct API rejection, real shared bottom-tab browser hide/restore | Project-native post attribution composer remains subsequent work |
 | Tenant switching/unauthorized access | Account-switch browser suites, owner filters, direct table/function denial | No production account created or impersonated |
 | Four pilot fixtures/free addresses | Equity Uprise, Whip Equipped, Zone Five Fitness, Benji Chase isolated SQL aliases; collision/WWW/private-source tests | Fixture-only suffixes; no real namespace/DNS/BenjiChase.com ownership or availability claim |
@@ -213,18 +214,94 @@ verified, with website `https://matthew.mccluster.org/docket-516.html` and null
 owned artist destination. Docket 516R's album credit is already Equity Uprise;
 its stable act ID `catalogue.html#artist-equity-uprise` is distinct from the civic
 `#equity-uprise`. Do not map it to the docket civic page, invent a member handle,
-seed an owner or change credits/ISRCs. The artist-link correction needs a verified
-act-to-owned-profile mapping; that production migration is not performed here.
+seed an owner or change credits/ISRCs. The owner's subsequent explicit destination
+instruction authorizes the code-owned `platform-home.html` bootstrap preview as
+the stable act's destination. `data/albums.json` maps explicit artist IDs to that
+page or Matthew's existing personal page; it never matches a tenant display name.
+Production act-to-owned-project provisioning is still not performed here.
+
+## Editable Equity Uprise preview and concrete domain target
+
+The existing `platform-home.html` is the canonical Equity Uprise **template
+preview**, not a claim that an owned production tenant exists. It retains three
+audiences and nine experiences. Its editable example content lives in
+`data/equity-uprise-offers-template.json`; the same content can be copied into any
+ordinary owner's draft from the front editor. The `offers` layout stores words,
+links, three experiences per card and optional images in the existing front
+configuration. There is no new table, registry, account type or payment gate.
+The ordinary owner can save, reload, preview, publish and take down this layout.
+Images use the existing quota-aware website upload endpoint; the editor discloses
+that these are **public bytes**, including before page publication. This is not a
+private media archive. It needs no native Studio model or processing allowance.
+The cinematic layout and protected Vaunt presentation remain available.
+
+The intended production target is an ordinary `managed_projects` row, owned by
+the confirmed signed-in account, with this offers configuration and a verified
+custom-host binding to that exact immutable project ID/owner. No production row
+or owner identity was invented. Copying the example or choosing the name Equity
+Uprise grants no canonical artist/domain authority. That binding requires a
+separate reviewed owner provisioning step. Album credits and ISRCs are unchanged.
+
+Management links always go to the existing canonical host's project editor.
+Signed-out users use its fixed, encoded account return path; authenticated edits
+still require the project's owner. This proves a central owner-dashboard path,
+**not** shared cookies, a custom-domain authenticated community session or new
+SSO. Query parameters do not override verified public custom-host/alias bindings.
+
+Read-only domain evidence supplied by the coordinating audit on 2026-10-26:
+EquityUprise.com is already owned and controllable in WordPress. Registration and
+SSL are active; the registrar is Automattic/WordPress, renewal through 2027-01-31.
+Existing WordPress nameservers and managed apex records remain unchanged. No
+purchase or transfer is needed. No Cloudflare zone for this domain was created.
+The existing mccluster.org SaaS fallback-origin read returned HTTP401/code1456,
+“Access to configure this resource has not been granted for this zone. This
+feature is available with SSL for SaaS.” No fallback/hostname target was verified.
+
+The current SaaS adapter also sends `custom_metadata` and depends on it to avoid
+adopting/deleting another provider record. Cloudflare's current plans list that
+as an Enterprise paid add-on. Enabling a Free-zone SaaS feature alone therefore
+**does not establish compatibility of the current adapter**. A separate bounded
+provider capability/ownership-reconciliation change is required. Do not simply
+remove this field and weaken adoption/idempotency protections. The current UI's
+CNAME-only verification likewise does not establish apex support.
+
+There are no safe exact DNS target records to apply yet. Workers Custom Domains
+require an active Cloudflare zone. Retaining WordPress DNS would instead require
+an actually provisioned SaaS target and verified apex behavior: WordPress supports
+ALIAS at the main domain, but its compatibility with this SaaS setup is unverified;
+www CNAME plus supported apex forwarding is another candidate. Cloudflare's
+static-IP apex-proxying add-on is separate. No invented IP, CNAME or nameserver is
+an activation instruction. References: [Workers Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/),
+[WordPress DNS types](https://wordpress.com/support/domains/custom-dns/add-a-new-dns-record/),
+[SaaS plans and custom metadata](https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/plans/).
+
+Minimum prerequisites are still: reviewed pending-schema application and managed
+Storage boundary verification; exact Worker/static-assets release with terminal
+CI; confirmed ordinary owner/project provisioning; approved provider capability
+and immutable host binding; then the separately approved DNS/TLS cutover with
+apex/www redirect, isolation, central sign-in return and logout checks. The parent
+is coordinating provider/DNS approval. None is authorized or performed by this
+code checkpoint. Existing WordPress service stays in place while those gates are
+unresolved.
+
+Local proof for this layout: 43 integrated managed-project browser checks include
+owner editing, nine experiences, an intercepted website image upload, save/reload,
+publication, public text-injection safety, image retention and 390/1440 layout.
+Clean viewport/card captures include all three audience sections at both widths.
+Full-page captures include the existing offscreen translated `.pt-veil` as a
+viewport-sized band; use the actual scrolled viewport/card proofs for visual
+acceptance. No global transition behavior was changed to hide that capture issue.
+Real Worker validation separately rejects foreign project images, executable
+links and nonowner writes. Browser upload responses use fixtures; authoritative
+quota/Storage evidence remains the independent Worker/SQL tests above.
 
 ## Deferred additions from the continuing owner request
 
 Complete the first offer before expanding the existing composer and Stories.
-The next website engineering gap is a basic text/image tile path that preserves
-ownership, rights, explicit public approval and quota enforcement without
-requiring the existing native media-preparation pipeline. This is unfinished
-engineering, not a provider-permission gate. The current candidate offers free
-cinematic profile/media editing plus free publication of approved prepared tile
-assets; it does not complete a general free tile builder.
+The ordinary front editor now supplies a basic text/image offers page in addition
+to the cinematic layout and prepared Studio tiles. Further drag-and-drop layout
+or general app-builder work remains separate; no new native preparation bypass
+was added to the Studio tile publisher.
 Composer work must reconcile #624/#628/#634's durable World/Instagram delivery
 identity, use server-verified creator/business and owned-account capabilities,
 preserve regular native posting, and implement an overlay/bottom sheet with
