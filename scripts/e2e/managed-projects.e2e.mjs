@@ -204,7 +204,13 @@ try {
  await visitor.page.reload({waitUntil:'domcontentloaded'});await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
  check('unpublish','take down keeps draft and removes public page',!!world.projects[0].draft&&!world.projects[0].published&&await visitor.page.getAttribute('html','data-front-state')!=='ready');
  await page.fill('[name="words.eyebrow"]','UNSAVED ALICE SECRET');
- await page.evaluate(a=>{const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:a.id})).replace(/=+$/,'')+'.y',expires_at:exp,user:{id:a.id}}));window.dispatchEvent(new Event('mcc:auth-changed'));},VISITOR);
+ // The real auth handler clears the old document synchronously and then reloads.
+ // Wait for that navigation before starting the unrelated invalid-slug journey;
+ // observing the cleared old state alone races its scheduled reload on CI.
+ await Promise.all([
+   page.waitForNavigation({waitUntil:'domcontentloaded'}),
+   page.evaluate(a=>{const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:a.id})).replace(/=+$/,'')+'.y',expires_at:exp,user:{id:a.id}}));window.dispatchEvent(new Event('mcc:auth-changed'));},VISITOR)
+ ]);
  await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='off'||window.__MCC_FRONT_STUDIO?.state==='error');
  check('account-switch','reload clears old draft and new account cannot edit project',!(await page.textContent('body')).includes('UNSAVED ALICE SECRET')&&!await page.evaluate(()=>window.__MCC_FRONT_STUDIO?.draft));
  const before=world.calls.length;
