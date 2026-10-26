@@ -91,7 +91,61 @@ async function world(page){
   return frame;
 }
 async function audioState(page){return page.evaluate(()=>({time:MCC_MUSIC.audio.currentTime,src:MCC_MUSIC.audio.currentSrc,paused:MCC_MUSIC.audio.paused,muted:MCC_MUSIC.audio.muted,playing:__audioObjects.filter(a=>!a.paused).length,unloads:__unloads}));}
+async function captureMeasurement(page){await page.evaluate(()=>{
+  const track=MCC_TRACK;window.__measurement=[];
+  window.MCC_TRACK=(name,props)=>{__measurement.push({name,...props});return track(name,props);};
+});}
 try{
+  {
+    const {context,page}=await setup();await captureMeasurement(page);
+    await page.evaluate(async()=>{
+      const audio=MCC_MUSIC.audio,play=audio.play;
+      audio.play=()=>Promise.reject(new DOMException('Fixture rejection','NotAllowedError'));
+      await MCC_MUSIC.play('here','Who Did The Shoot',true);audio.play=play;
+    });
+    const rejected=await page.evaluate(()=>__measurement.filter(x=>x.name.startsWith('music_')));
+    check('rejected play is a diagnostic, never a successful start',rejected.length===1&&rejected[0].name==='music_error'&&rejected[0].reason==='play_rejected',rejected);
+    await play(page);await page.waitForTimeout(650);await page.evaluate(()=>MCC_MUSIC.pause());
+    await page.waitForTimeout(1200);await page.locator('#musicMiniPlay').click();await page.waitForTimeout(650);
+    await page.evaluate(()=>{MCC_MUSIC.audio.currentTime=MCC_MUSIC.audio.duration-.2;});
+    await page.waitForFunction(()=>__measurement.some(x=>x.name==='music_complete'));
+    const events=await page.evaluate(()=>__measurement.filter(x=>/^music_(play|full_play|complete)$/.test(x.name))),end=events.find(x=>x.name==='music_complete');
+    check('real static player excludes pause and seek displacement from completion time',end.listened_seconds>.5&&end.listened_seconds<4&&end.playback_elapsed_ms>2300&&end.progress_discontinuities>0,end);
+    const attempt=events.filter(x=>x.playback_attempt_id===end.playback_attempt_id);
+    check('resume keeps the same attempt and ordered event sequence',attempt.filter(x=>x.name==='music_play').length===1&&attempt.every((x,i)=>!i||x.playback_sequence===attempt[i-1].playback_sequence+1),attempt);
+    check('retry after rejection has a fresh attempt',end.playback_attempt_id!==rejected[0].playback_attempt_id);
+    await context.close();
+  }
+  {
+    const {context,page}=await setup();await captureMeasurement(page);
+    await page.evaluate(()=>{
+      MCC_MUSIC.registerCreatorTrack({id:'fixture-creator',title:'Fixture creator track',access_mode:'public',previewUrl:'assets/audio/fixture.m4a'});
+      return MCC_MUSIC.playCreator('fixture-creator',true);
+    });
+    await page.waitForFunction(()=>__measurement.some(x=>x.name==='music_play'));await page.waitForTimeout(600);
+    await page.evaluate(()=>{MCC_MUSIC.audio.currentTime=MCC_MUSIC.audio.duration-.2;});
+    await page.waitForFunction(()=>__measurement.some(x=>x.name==='music_complete'));
+    const creator=await page.evaluate(()=>__measurement.find(x=>x.name==='music_complete'));
+    check('creator playback uses the same progress contract and explicit creator ID',creator.creator_track_id==='fixture-creator'&&creator.measurement_version==='browser-progress/v1'&&creator.listened_seconds<3,creator);
+    await page.evaluate(()=>{
+      __measurement=[];MCC_MUSIC.registerCreatorTrack({id:'fixture-preview',title:'Fixture preview',access_mode:'paid',previewUrl:'assets/audio/fixture.m4a',preview_seconds:.5});
+      return MCC_MUSIC.playCreator('fixture-preview',true);
+    });
+    await page.waitForFunction(()=>__measurement.some(x=>x.name==='music_preview_complete'));
+    await page.evaluate(()=>MCC_MUSIC.audio.dispatchEvent(new Event('timeupdate')));
+    const preview=await page.evaluate(()=>__measurement);
+    check('preview end is emitted once and never as a full completion',preview.filter(x=>x.name==='music_preview_complete').length===1&&!preview.some(x=>x.name==='music_complete'),preview);
+    await context.close();
+  }
+  {
+    const {context,page}=await setup(390,false,{start:'/mnet.html'});await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_PLAYBACK);await captureMeasurement(page);
+    await page.locator('#mnWorldPlay').click();await page.waitForFunction(()=>__measurement.some(x=>x.name==='song_start'));
+    await page.waitForTimeout(600);await page.evaluate(()=>{const a=__audioObjects.find(a=>!a.paused);a.currentTime=a.duration-.2;});
+    await page.waitForFunction(()=>__measurement.filter(x=>x.name==='song_start').length>=2);
+    const songs=await page.evaluate(()=>__measurement.filter(x=>/^song_(start|end)$/.test(x.name))),first=songs.find(x=>x.name==='song_start'),end=songs.find(x=>x.name==='song_end'),next=songs.filter(x=>x.name==='song_start')[1];
+    check('World automatic advance ends one measured attempt and starts a distinct one',first.playback_attempt_id===end.playback_attempt_id&&next.playback_attempt_id!==first.playback_attempt_id&&end.validated_played_seconds<3,songs);
+    await context.close();
+  }
   {
     let release;
     const held=new Promise(resolve=>release=resolve);

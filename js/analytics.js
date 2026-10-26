@@ -115,6 +115,57 @@ function mccCreateEventOutbox(area, clock, allowed) {
 }
 /* EVENT_OUTBOX_FACTORY_END */
 
+/* PLAYBACK_MEASUREMENT_FACTORY_BEGIN */
+/* Browser progress evidence, separate from entitlement/royalty decisions.
+   No timer, storage, network, visibility test or ownership inference here.
+   A gap over 2.5s cannot be reconstructed reliably from two positions: expose
+   it as unmeasured, rather than crediting a suspended callback or a seek.
+   Background audio with regular progress callbacks is measured normally. */
+function mccCreatePlaybackMeasurement(audio, uuid, clock) {
+  var id = uuid(), began = clock(), last = began, position = Number(audio.currentTime);
+  var active = false, started = false, done = false, sequence = 0;
+  var played = 0, gaps = 0, jumps = 0, rate = Number(audio.playbackRate) || 1;
+  function sample(boundary) {
+    var now = clock(), next = Number(audio.currentTime), dt = now - last, delta = next - position;
+    if (!done && active && Number.isFinite(dt) && dt > 0) {
+      if (dt > 2500) gaps += dt;
+      else if (audio.seeking || !Number.isFinite(delta) || delta < 0 || delta > dt / 1000 * rate + 0.25) jumps++;
+      else if ((boundary || !audio.paused) && audio.readyState >= 3 && rate > 0 && delta > 0) played += Math.min(dt / 1000, delta / rate);
+    }
+    // A non-monotonic clock cannot add time. Rebase and await fresh evidence.
+    last = now; position = next; rate = Number(audio.playbackRate) || 1;
+  }
+  function suspend(discontinuity) {
+    if (discontinuity) { active = false; jumps++; }
+    sample(true); active = false;
+  }
+  return {
+    playing: function () {
+      if (done) return false;
+      sample(false); active = !audio.paused && !audio.seeking && audio.readyState >= 3;
+      var first = !started && active; if (active) started = true;
+      return first;
+    },
+    sample: function () { sample(false); },
+    pause: function () { suspend(false); },
+    waiting: function () { suspend(false); },
+    seeking: function () { suspend(true); },
+    resumeAfterSeek: function () { sample(false); active = started && !done && !audio.paused && !audio.seeking && audio.readyState >= 3; },
+    finish: function () { if (done || !started) return false; sample(true); done = true; active = false; return true; },
+    finished: function () { return done; },
+    seconds: function () { sample(false); return Math.round(played * 1000) / 1000; },
+    report: function () {
+      sample(false);
+      return { measurement_version: "browser-progress/v1", playback_attempt_id: id,
+        playback_sequence: ++sequence, playback_elapsed_ms: Math.max(0, Math.round(clock() - began)),
+        validated_played_seconds: Math.round(played * 1000) / 1000,
+        unmeasured_gap_ms: Math.round(gaps), progress_discontinuities: jumps,
+        measurement_status: "browser_progress_not_attention" };
+    }
+  };
+}
+/* PLAYBACK_MEASUREMENT_FACTORY_END */
+
 if (mccPrivacyAcknowledged() && !mccControlPreview()) {
 /* ============================================================
    THE HOUSE'S OWN EYES.
@@ -279,6 +330,11 @@ window.MCC_TRACK = (function () {
     var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
     return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
   }
+
+  window.MCC_PLAYBACK = { create: function (audio) {
+    if (!consentNow() || !window.performance || typeof window.performance.now !== "function") return null;
+    return mccCreatePlaybackMeasurement(audio, uuid, function () { return window.performance.now(); });
+  } };
 
   /* ---- the device ----
      A random id kept in localStorage. Deliberately NOT a fingerprint
