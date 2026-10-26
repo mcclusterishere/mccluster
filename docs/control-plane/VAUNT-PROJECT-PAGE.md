@@ -1,7 +1,8 @@
 # Vaunt creator project and public profile shell
 
-This is a local implementation proposed for review, not a deployed profile or a
-company account. **This is interim partial fulfillment of the requested named
+The initial repository project shipped in #621; the scroll-first followup below
+is proposed for review and is not deployed. No company account is provisioned.
+**This is interim partial fulfillment of the requested named
 Vaunt user/profile. A static Matthew-managed project is not equivalent to an
 independently managed database profile.** The route is `front.html?project=vaunt` on Matthew's property.
 Matthew McCluster manages its repository content. No auth identity, company
@@ -133,3 +134,39 @@ publishing, public read/private draft separation, and compatible routing from
 company representation. Existing scene media/order, album links and footer hooks
 are the presentation contract to preserve. Any eventual seed remains pending
 separate production approval; no profile row is provisioned by this PR.
+
+## Scroll-first followup (pending review/release)
+
+Based on main `396760eb72121e9673c6fc3df062f3af29660c10`, the project
+now opens on the runway itself. `js/front-project-entry.js` moves the existing
+title, album/portfolio controls and Matthew management credit into that first
+scene; it hides the redundant hero stage. The scene clears its intro before
+takeoff and restores it on return. `#hero` remains an opening-scene alias.
+Public copy uses Vaunt's title and the factual management credit; the former
+relationship disclaimer is removed. Matthew's portfolio entry stays intact.
+
+`MCC_PAGE_PROFILE` and `MCC_BAR.pageProfile({name, home, logo})` are document-local
+presentation hooks, not stored identity or authorization. Same-origin profile
+homes/logos are accepted, missing logos use an accessible initial, and clearing
+the context restores existing navigation. Vaunt supplies the unchanged
+`assets/img/vaunt-logo.webp`, contained without cropping. Its center tab returns
+to the runway and releases the cabin's scroll hold. Music, World, account
+perspective and auth contracts remain intact. The current-tab handler compares
+queries as well as paths, so distinct profiles do not get mistaken for one page.
+
+Shared-file coordination for the self-service work: small mount hook in
+`js/front-member.js`, scene-entry handling in `js/main.js`, and document-local
+branding in `js/tabbar.js`. The registry, entry module and CSS own presentation;
+no editor, schema, provisioning or publication contract changes here.
+
+Direct read-only inspection of the live route was blocked in this environment
+(`ERR_TUNNEL_CONNECTION_FAILED`). Local browser proof renders the exact release
+base plus these changes using intercepted assets/APIs; it is not live verification.
+Responsive proof includes phone, iPad portrait/landscape and desktop, reduced and
+normal motion, frame scrubbing, cabin consent/escape/home, album navigation/back,
+profile changes, fallback branding, auth entry and horizontal overflow.
+
+Followup local validation: 1,157 source checks and 1,234 Worker checks passed;
+the existing shared navigation browser suite passed. Screenshot evidence lives
+in `/tmp/vaunt-scroll-first-proof` and shared navigation proof in
+`/tmp/vaunt-nav-proof`; CI uploads the project proof for review.

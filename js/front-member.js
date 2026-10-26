@@ -103,10 +103,11 @@
       d.documentElement.setAttribute("data-front-project", params.get("project"));
       d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });
       var note = d.createElement('p'); note.className = 'front-project-note';
-      note.textContent = 'Managed by ' + project.owner + '. ' + project.attribution;
+      note.textContent = 'Managed by ' + project.owner;
       d.querySelector('.hero__content').appendChild(note);
       var profile = d.getElementById('frontProfile');
       profile.textContent = 'About ' + project.owner;
+      if (w.MCC_PROJECT_ENTRY) w.MCC_PROJECT_ENTRY.mount(project);
     }
     /* without the night film the close moves to the foot of the page */
     if (config.scenes.night === false) Array.prototype.forEach.call(d.querySelectorAll("[data-fw-foot]"), function (el) { el.hidden = false; });

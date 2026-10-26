@@ -334,8 +334,9 @@
     /* "/" and "/index.html" are the same page (the HERE tab links the
        latter; the canonical home URL is the former) */
     var same = function (p) { return p.replace(/\/index\.html$/, "/"); };
-    if (to.origin !== location.origin || same(to.pathname) !== same(location.pathname)) return;
+    if (to.origin !== location.origin || same(to.pathname) !== same(location.pathname) || to.search !== location.search) return;
     e.preventDefault();
+    if (PAGE_PROFILE && window.__MCC_FRONT_GOTO) { window.__MCC_FRONT_GOTO("top"); return; }
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
   });
   var HOME_BAR = dock.innerHTML;
@@ -410,16 +411,34 @@
   }
   function initialOf(name) { var m = String(name).match(/[A-Za-z0-9\u00C0-\u024F]/); return m ? m[0].toUpperCase() : "@"; }
   function shortName(name) { var w = String(name).split(" ")[0]; return w.length > 12 ? w.slice(0, 11) + "\u2026" : w; }
+  /* A public profile may brand its own page for guests and members alike.
+     This context is document-local: never saved as an account perspective. */
+  function cleanPageProfile(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var name = String(raw.name || "").trim().slice(0, 60), home, logo = "";
+    try { home = new URL(raw.home, location.href); } catch (e) { return null; }
+    if (!name || !raw.home || home.origin !== location.origin || !/^https?:$/.test(home.protocol)) return null;
+    if (raw.logo) try { var image = new URL(raw.logo, location.href); if (image.origin === location.origin && /^https?:$/.test(image.protocol)) logo = image.href; } catch (e) {}
+    return { kind: "page", handle: "page-profile", name: name, home: home.href, avatar: logo };
+  }
+  var PAGE_PROFILE = cleanPageProfile(window.MCC_PAGE_PROFILE);
+  function setPageProfile(raw) {
+    PAGE_PROFILE = cleanPageProfile(raw);
+    if (wingOn) revert();
+    paintPerspective();
+    HOME_BAR = dock.innerHTML;
+    return !!PAGE_PROFILE;
+  }
   function paintPerspective() {
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
-    var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null),
+    var p = PAGE_PROFILE || PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null),
       label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
     if(p && p.kind==="house") p=null;
     /* THE OWNER'S M IS HIS FRONT PAGE (owner, 2026-10-21: "My front page as the admin is not my actual site's front
        page ... it should represent as my actual front page"). With the owner's bar on, the M is index.html, the page
        Control → Create → Front page shows and controls, never a member card. */
-    if (ADMIN_ON) p = null;
+    if (ADMIN_ON && !PAGE_PROFILE) p = null;
     if (!p) {
       /* M is the McCluster platform home for everyone (owner, 2026-10-14);
          the member feed lives in World, not behind the emblem. */
@@ -434,7 +453,7 @@
       WINGS.home.slots[0] = HOUSE_ROOM;
       return;
     }
-    var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
+    var door = p.kind === "page" ? p.home : HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
       "?handle=" + encodeURIComponent(p.handle);
     homeTab.href = door;
     homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
@@ -444,9 +463,10 @@
         ? '<img class="appbar__m appbar__m--creator" src="' + attrOf(p.avatar) + '" alt="">'
         : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(p.name)) + "</span>";
     }
+    if (p.kind === "page") homeTab.querySelector(".appbar__m").classList.add("appbar__m--brand");
     if (label) label.textContent = shortName(p.name);
     /* their own front page lights the middle coin, as the house lights the M */
-    var theirs = /(?:music-creator|member-front)\.html$/.test(location.pathname) &&
+    var theirs = p.kind === "page" || /(?:music-creator|member-front)\.html$/.test(location.pathname) &&
       String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
     homeTab.classList.toggle("is-here", theirs);
     WINGS.home.home = door;
@@ -1071,6 +1091,7 @@
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
       veilOff(); revert();
       if (url.hash) location.hash = url.hash;
+      else if (PAGE_PROFILE && window.__MCC_FRONT_GOTO) window.__MCC_FRONT_GOTO("top");
       else window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -1268,6 +1289,7 @@
     wing: function () { return wingOn; },
     refreshAuth: refreshAuthState,
     auth: function () { return AUTH_STATE; },
+    pageProfile: function (p) { return arguments.length ? setPageProfile(p) : PAGE_PROFILE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
     ownPerspective: function(){return SELF_PROFILE;},
