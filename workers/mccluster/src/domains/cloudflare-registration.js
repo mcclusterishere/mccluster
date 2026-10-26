@@ -1,6 +1,7 @@
 // Registration-only Cloudflare API adapter. No contact-ID fabrication, renewal,
 // account provisioning, automatic renewal or blind retry of financial requests.
 // Official schema: /registrar/domain-check, /registrations, /registration-status.
+import {validateRegistrationSchema} from './registration-schema.js';
 import {hostname} from '../creator-domains.js';
 const invalid = message => Object.assign(new Error(message), {noCharge:true});
 const cents = value => {
@@ -83,9 +84,9 @@ export function cloudflareRegistrationAdapter({accountId,apiToken,mode='sandbox'
   };
 }
 
-// No runtime calls this factory yet. Both the factory and existing customer
-// checkout stay disabled by default. Explicit sandbox mode cannot hit live URLs.
-export function configuredCloudflareRegistration(env,{fetchImpl,validateExtension}={}) {
+// Worker order and verified funding routes use this factory lazily.
+// Both the factory and customer checkout stay disabled by default. Explicit sandbox mode cannot hit live URLs.
+export function configuredCloudflareRegistration(env,{fetchImpl,validateExtension=validateRegistrationSchema}={}) {
   if(env.CREATOR_CF_REGISTRATION_ENABLED!=='true')return null;
   if(env.CREATOR_CF_REGISTRATION_MODE!=='sandbox')throw invalid('Only the reviewed sandbox registration mode is available');
   return cloudflareRegistrationAdapter({accountId:env.CREATOR_CF_REGISTRAR_ACCOUNT_ID,apiToken:env.CREATOR_CF_REGISTRAR_TOKEN,mode:'sandbox',fetchImpl,allowNetwork:true,validateExtension});

@@ -7,6 +7,9 @@ on:
       - 'front*.html'
       - 'project*.html'
       - 'platform-home.html'
+      - 'music-research.html'
+      - 'js/music-research-queue.mjs'
+      - 'css/music-research-queue.css'
       - 'website-studio*.html'
       - 'music*.html'
       - 'mnet.html'
@@ -120,6 +123,7 @@ jobs:
           node scripts/test/creator-store-commerce-db.mjs
           node scripts/test/creator-domain-target-schema.mjs
           node scripts/test/creator-cf-registration-schema.mjs
+          node scripts/test/creator-inline-domain-contacts.mjs
           node scripts/test-world-social-delivery-db.mjs
           node scripts/test/music-workspace-handoff-db.mjs
           node scripts/test/music-workspace-handoff-worker.mjs
@@ -159,13 +163,18 @@ jobs:
           node scripts/e2e/customer-site.e2e.mjs
           node scripts/e2e/managed-projects.e2e.mjs
           node scripts/e2e/platform-home.e2e.mjs
+          node scripts/e2e/platform-home-transition.e2e.mjs
           node scripts/e2e/world-directory.e2e.mjs
           node scripts/e2e/member-front-auth.e2e.mjs
           node scripts/e2e/music-profile-auth.e2e.mjs
           node scripts/test/music-workspace-handoff-browser.mjs
+          node scripts/test/music-research-review-browser.mjs
+          node scripts/test/studio-processing-integration.mjs
           node scripts/e2e/project-tiles.e2e.mjs
+          STUDIO_PROCESS_UPLOADS=1 node scripts/e2e/project-tiles.e2e.mjs
           node scripts/e2e/project-tiles-redirect.e2e.mjs
           node scripts/test/world-social-composer.browser.mjs
+          node scripts/test/creator-domain-purchases-ui.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

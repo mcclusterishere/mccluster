@@ -1,6 +1,6 @@
 import {domainStore} from '../creator-domains.js';
-// owner/contact binding comes from a server-owned consent intent, never a request
-// body. No route wires this adapter until the encrypted contact path is reviewed.
+// Owner comes from verified auth/funding. Contact reference and digest are
+// rechecked against the funded order by the claim RPC, never trusted from a browser.
 export function cloudflareRegistrationStore(env,{owner,contactReference,contactSha256,fetchImpl=fetch}={}) {
   if(!/^[a-f0-9-]{36}$/.test(owner||''))throw Error('Registration owner required');
   const db=(path,init)=>domainStore(env,path,init,fetchImpl);

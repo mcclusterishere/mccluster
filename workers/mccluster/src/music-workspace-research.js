@@ -9,12 +9,18 @@ async function requestText(request){
 export async function handleMusicWorkspaceResearch(request,env,{fetchImpl=fetch}={}){
  if(new URL(request.url).pathname!=='/v1/music-workspace/analysis')return null;
  const send=(body,status)=>{const r=reply(request,env,body,status);r.headers.set('cache-control','private, no-store');return r};
- if(request.method!=='POST')return send({error:'Method not allowed'},405);
- if(env.MUSIC_WORKSPACE_RESEARCH_ENQUEUE_ENABLED!=='true')return send({error:'Workspace analysis queue is unavailable'},503);
+ if(!['GET','POST'].includes(request.method))return send({error:'Method not allowed'},405);
+ if(request.method==='POST'&&env.MUSIC_WORKSPACE_RESEARCH_ENQUEUE_ENABLED!=='true')return send({error:'Workspace analysis queue is unavailable'},503);
  if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return send({error:'Workspace analysis is not configured'},503);
  const authorization=request.headers.get('authorization')||'';
  if(!/^Bearer\s+\S+$/i.test(authorization))return send({error:'Sign in to continue'},401);
  try{
+  if(request.method==='GET'){
+   const r=await fetchImpl(env.SUPABASE_URL+'/rest/v1/rpc/music_workspace_research_state',{method:'POST',headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization,'content-type':'application/json'},body:'{}'});
+   if(!r.ok)return send({error:'Private research records are unavailable'},503);
+   const state=await r.json();
+   return send({...state,enqueue_enabled:env.MUSIC_WORKSPACE_RESEARCH_ENQUEUE_ENABLED==='true'&&state.enqueue_enabled===true},200);
+  }
   const raw=await requestText(request);
   const b=JSON.parse(raw);
   if(!uuid.test(b.track_id||'')||!['analyze','separate','transcribe','engrave'].includes(b.stage)||!/^[-a-z0-9_:]{3,80}$/.test(b.model_id||'')||!/^[-A-Za-z0-9._:]{12,128}$/.test(b.idempotency_key||'')||(b.parent_job_id!=null&&!uuid.test(b.parent_job_id))||b.consent!==true)return send({error:'Valid draft, stage, model, request key and explicit analysis consent required'},400);

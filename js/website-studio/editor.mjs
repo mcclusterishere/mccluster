@@ -3,7 +3,7 @@ import {renderWebsite} from './renderer.mjs';
 const $=id=>document.getElementById(id),API='https://api.mccluster.org/v1/creator-sites/studio';
 const project=new URLSearchParams(location.search).get('project')||'',validProject=/^[a-z0-9][a-z0-9-]{2,39}$/.test(project);let authEpoch=0;
 const projectAPI='https://api.mccluster.org/v1/projects/'+encodeURIComponent(project)+'/tiles';
-let definition,doc,draftID,revision=0,assets=[],dispose=()=>{},dirty=false,busy=false;
+let definition,doc,draftID,revision=0,assets=[],processing={can_prepare:false,blockers:[]},dispose=()=>{},dirty=false,busy=false;
 const status=(s,error=false)=>{$('status').textContent=s;$('status').classList.toggle('ws-error',error);};
 async function api(path,init={}){
  const epoch=authEpoch;await window.MCC?.refreshIfNeeded?.();if(epoch!==authEpoch)throw Error('Account changed');
@@ -16,7 +16,7 @@ function pending(){sessionStorage.setItem('studio-template-intent','motion-portf
 function changed(){dirty=true;status('Unsaved edits. Save before previewing or publishing.');}
 const node=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
 function field(parent,label,control){control.setAttribute('aria-label',label);const l=node('label',label);l.append(control);parent.append(l);return control;}
-async function media(){assets=(await api('/assets')).assets||[];renderEditor();}
+async function media(){const result=await api('/assets');assets=result.assets||[];processing=result.processing||{can_prepare:false,blockers:['Processing readiness could not be verified.']};let notice=$('processingState');if(!notice){notice=node('p');notice.id='processingState';$('guidance').after(notice);}notice.textContent=processing.can_prepare?'Preparation allowance available. Jobs wait for a compatible compute node; refresh media status to track completion.':processing.blockers.join(' ');renderEditor();}
 function renderEditor(){
  $('title').value=doc.title;$('mode').value=doc.mode;const host=$('tiles');host.replaceChildren();
  doc.tiles.forEach((t,i)=>{
@@ -24,7 +24,7 @@ function renderEditor(){
   const kind=node('select');for(const [key,label]of [['music','Music'],['native_video','Native video'],['immersive360','360 panorama']]){const o=node('option',label);o.value=key;kind.append(o);}kind.value=t.kind;field(card,'Content type',kind);kind.onchange=()=>{t.kind=kind.value;t.source_ref=null;t.playback='manual';t.action=null;changed();renderEditor();};
   for(const [key,label,max]of [['headline','Headline',120],['body','Description',2000]]){const c=node(key==='body'?'textarea':'input');c.value=t[key];c.maxLength=max;c.oninput=()=>{t[key]=c.value;changed();};field(card,label,c);}
   const select=node('select');const blank=node('option','Choose approved media');blank.value='';select.append(blank);
-  assets.filter(a=>a.kind===t.kind).forEach(a=>{const o=node('option',a.asset_id.slice(0,8)+' · '+a.state+(a.public_approved?' · public approved':''));o.value=a.asset_id;select.append(o);});select.value=t.source_ref?.type==='media_asset'?t.source_ref.key:'';field(card,'Your uploaded media',select);select.onchange=()=>{t.source_ref=select.value?{type:'media_asset',key:select.value}:null;changed();};
+  assets.filter(a=>a.kind===t.kind).forEach(a=>{const o=node('option',a.asset_id.slice(0,8)+' · '+a.state+(a.public_approved?' · public approved':''));o.value=a.asset_id;select.append(o);});select.value=t.source_ref?.type==='media_asset'?t.source_ref.key:'';field(card,'Your uploaded media',select);select.onchange=()=>{t.source_ref=select.value?{type:'media_asset',key:select.value}:null;changed();renderEditor();};
   if(t.kind==='native_video'){const post=node('input');post.placeholder='Existing native post UUID';post.value=t.source_ref?.type==='network_post'?t.source_ref.key:'';field(card,'Or pin a registered native post',post);post.onchange=()=>{t.source_ref=post.value.trim()?{type:'network_post',key:post.value.trim()}:null;changed();};card.append(node('p','Only posts with an authorized registered media asset are supported. Private posts stay private.'));}
   const contentFile=node('input');contentFile.type='file';contentFile.accept=t.kind==='music'?'audio/*':t.kind==='immersive360'?'image/jpeg,image/png,image/webp':'video/*';field(card,'Upload your content',contentFile);contentFile.onchange=()=>upload(contentFile.files[0],{kind:t.kind},key=>{t.source_ref={type:'media_asset',key};});
   const transSelect=node('select');const none=node('option','No transition');none.value='';transSelect.append(none);assets.filter(a=>a.kind==='transition').forEach(a=>{const o=node('option',a.asset_id.slice(0,8)+' · '+a.state);o.value=a.asset_id;transSelect.append(o);});transSelect.value=t.transition?.asset_ref.key||'';field(card,'Scroll transition',transSelect);
@@ -33,16 +33,21 @@ function renderEditor(){
   const focal=node('input');focal.type='range';focal.min='0';focal.max='1';focal.step='.01';focal.value='.5';field(card,'Subject position: left to right',focal);
   const clip=node('input');clip.type='file';clip.accept='video/*';field(card,'Upload a transition',clip);clip.onchange=()=>upload(clip.files[0],{kind:'transition',in_ms:Math.round(Number(start.value)*1000),out_ms:Math.round(Number(end.value)*1000),focal_x:Number(focal.value),focal_y:.5},key=>{t.transition=transition(key,{in_ms:Math.round(Number(start.value)*1000),out_ms:Math.round(Number(end.value)*1000),focal_x:Number(focal.value),focal_y:.5});});
   const approve=node('button','Approve selected media for public use');approve.type='button';approve.onclick=()=>guard(async()=>{if(!confirm('Allow the selected content and transition to appear on your public website?'))return;for(const key of [t.source_ref?.type==='media_asset'?t.source_ref.key:null,t.transition?.asset_ref.key].filter(Boolean))await api('/assets/'+key+'/approve',{method:'POST',body:{public_approved:true}});await media();status('Media approval saved. Publish remains a separate step.');});card.append(approve);
+  for(const key of [t.source_ref?.type==='media_asset'?t.source_ref.key:null,t.transition?.asset_ref.key].filter(Boolean)){
+   const selected=assets.find(a=>a.asset_id===key);if(!selected)continue;
+   card.append(node('p','Media '+key.slice(0,8)+': '+selected.state+(selected.error?' · '+selected.error:'')));
+   if(selected.retryable){const retry=node('button','Prepare or retry '+key.slice(0,8));retry.type='button';retry.disabled=!processing.can_prepare;retry.onclick=()=>guard(async()=>{if(!confirm('Prepare this retained upload? Each attempt reserves the existing preparation allowance.'))return;const result=await api('/assets/'+key+'/complete',{method:'POST',body:{}});await media();status('Media '+result.state+'. Refresh media status to check completion.');});card.append(retry);}
+  }
   const move=node('button','Move tile up');move.disabled=i===0;move.onclick=()=>{[doc.tiles[i-1],doc.tiles[i]]=[doc.tiles[i],doc.tiles[i-1]];changed();renderEditor();};card.append(move);host.append(card);
  });
 }
 function transition(key,s){return {asset_ref:{type:'media_asset',key},in_ms:s.in_ms,out_ms:s.out_ms,pace:'standard',focal:{desktop:{x:s.focal_x??.5,y:s.focal_y??.5},mobile:{x:s.focal_x??.5,y:s.focal_y??.5}}};}
 async function guard(fn){if(busy)return;busy=true;try{await fn();}catch(e){status(e.message,true);}finally{busy=false;}}
 async function upload(file,settings,select){if(!file)return;return guard(async()=>{if(!confirm('Do you own this media or have permission to use it?'))return;
- status('Registering upload…');const r=await api('/uploads',{method:'POST',body:{bytes:file.size,settings,rights_confirmed:true}});
+ const epoch=authEpoch;status('Registering upload…');const r=await api('/uploads',{method:'POST',body:{bytes:file.size,settings,rights_confirmed:true}});
  status('Uploading. Keep this page open.');const u=new URL(r.upload_url);if(u.protocol!=='https:'||u.hostname!=='zmnhbrjyhxzhkxmhkexs.supabase.co')throw Error('Unexpected upload destination');
- const response=await fetch(r.upload_url,{method:'PUT',headers:{'content-type':file.type||'application/octet-stream'},body:file});if(!response.ok)throw Error('Upload failed. Your draft has not changed.');
- select(r.asset_id);changed();await api('/assets/'+r.asset_id+'/complete',{method:'POST',body:{}});await media();status('Upload saved; preparation queued. Refresh media status to see the result.');});}
+ const response=await fetch(r.upload_url,{method:'PUT',headers:{'content-type':file.type||'application/octet-stream'},body:file});if(epoch!==authEpoch)throw Error('Account changed');if(!response.ok)throw Error('Upload failed. Select the file again to retry. Your saved draft has not changed.');
+ select(r.asset_id);changed();await media();if(!processing.can_prepare){status('Upload retained. Save your draft to keep this selection. '+processing.blockers.join(' '),true);return;}try{const queued=await api('/assets/'+r.asset_id+'/complete',{method:'POST',body:{}});await media();status('Upload saved; media '+queued.state+'. Save your draft and refresh media status to see the result.');}catch(e){await media();throw Error('Upload retained. Save your draft, then use Prepare or retry. '+e.message);}});}
 async function start(){
  if(!validProject)throw Error('Choose an existing project from Your projects first.');
  pending();if(!await window.MCC?.user?.()){$('auth').hidden=false;status('Sign in to use this project template.');return;}

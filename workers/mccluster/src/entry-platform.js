@@ -34,7 +34,9 @@ import { handleMemberFronts } from './member-fronts.js';
 import { handleManagedProjects } from './managed-projects.js';
 import { handleProjectTiles } from './project-tiles.js';
 import { handleCreatorDomains } from './creator-domains.js';
-import { handleCreatorDomainOrders } from './creator-domain-orders.js';
+import { handleCreatorDomainOrders, handleVerifiedCloudflareDomainFunding } from './creator-domain-orders.js';
+import { configuredCloudflareRegistration } from './domains/cloudflare-registration.js';
+import { createCreatorDomainCheckout } from './creator-domain-billing.js';
 import { handleCreatorDomainHost } from './creator-domain-host.js';
 import { handleCustomerSocial } from './social/customer.js';
 
@@ -96,7 +98,7 @@ export default {
       const regional = await handleRegionScope(request, env);
       if (regional) return regional;
 
-      const billingWebhook = await handleCreatorBillingWebhook(request, env, { onStorePaid: recordCreatorStorePayment, onStoreRefunded: recordCreatorStoreRefund });
+      const billingWebhook = await handleCreatorBillingWebhook(request, env, { onStorePaid: recordCreatorStorePayment, onStoreRefunded: recordCreatorStoreRefund, onDomainPaid: (event) => handleVerifiedCloudflareDomainFunding(event, env, { provider: configuredCloudflareRegistration(env) }) });
       if (billingWebhook) return billingWebhook;
       /* live missions (./live/index.js): flagged off with LIVE_MISSIONS_ENABLED;
          its Cloudflare webhooks authenticate themselves, so it sits before the key gate */
@@ -117,7 +119,9 @@ export default {
       if (archive) return archive;
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
       // Purchases remain unavailable without a complete reviewed registrar/checkout adapter.
-      const domainOrders = await handleCreatorDomainOrders(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
+      const domainProvider = url.pathname.startsWith('/v1/creator-domain-orders') ? configuredCloudflareRegistration(env) : null;
+      const domainOrders = await handleCreatorDomainOrders(request, env, { authorizeEntitlement: hasActiveSitePlan, provider: domainProvider,
+        createDomainCheckout: domainProvider ? (order) => createCreatorDomainCheckout(order, env, { registrarReady: domainProvider.capabilities?.mode === 'sandbox' }) : undefined });
       if (domainOrders) return domainOrders;
       const domains = await handleCreatorDomains(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
       if (domains) return domains;
