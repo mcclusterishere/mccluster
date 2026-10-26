@@ -84,6 +84,23 @@ export async function tokenFor(env, account) {
   if (!parsed) return null;
   if (parsed.kind === 'env') return env[parsed.name] || null;
   if (parsed.kind === 'vault') {
+    // The private registry is authoritative; neither account settings nor job payload
+    // can remove a customer's entitlement gate. Also prevents copying a Vault id
+    // into a different organization owned by the same user.
+    let access;
+    try {
+      access = await db(env, 'rpc/customer_social_credential_access', {
+        method: 'POST', body: JSON.stringify({ p_org: account.org_id, p_secret: parsed.id })
+      });
+    } catch (error) {
+      // Before the migration there can be no customer OAuth credentials. Keep
+      // existing operator Vault bindings working; other failures are closed.
+      if (error.detail?.code !== 'PGRST202') throw error;
+      if (env.CUSTOMER_SOCIAL_ENABLED === 'true') throw error;
+    }
+    if (access?.managed && (env.CUSTOMER_SOCIAL_ENABLED !== 'true' || !access.allowed)) {
+      throw Object.assign(new Error('Customer Instagram publishing requires an enabled service and active site plan; reconnect if access expired'), { status: 402 });
+    }
     const token = await db(env, 'rpc/vault_secret', {
       method: 'POST',
       body: JSON.stringify({ p_id: parsed.id })
@@ -232,6 +249,9 @@ async function claimPublishJobs(env, limit) {
 }
 
 export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
+  if (env.CUSTOMER_SOCIAL_ENABLED !== undefined) {
+    await db(env, 'rpc/customer_social_selection_gc', { method: 'POST', body: '{}' });
+  }
   const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
   const jobs = await claimPublishJobs(env, safeLimit);
   const results = [];
@@ -311,7 +331,15 @@ export async function checkInstagramConnectionHealth(env, { limit = 10, maxAgeMi
       continue;
     }
 
-    const token = await tokenFor(env, account);
+    let token;
+    try { token = await tokenFor(env, account); }
+    catch (error) {
+      // A lapsed customer connection must not stop the health pass for other orgs.
+      const message = error.status === 402 ? 'customer_social_access_expired' : 'credential_lookup_unavailable';
+      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
+      results.push({ org_id: orgId, account_id: account.id, connected: false, reason: message });
+      continue;
+    }
     if (!token) {
       const message = 'credential_secret_not_configured';
       await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });

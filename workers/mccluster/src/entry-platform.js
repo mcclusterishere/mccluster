@@ -30,6 +30,8 @@ import { handleMemberFronts } from './member-fronts.js';
 
 import { handleManagedProjects } from './managed-projects.js';
 
+import { handleCustomerSocial } from './social/customer.js';
+
 export { HereTenantAgent } from './here-tenant-agent.js';
 
 function healthResponse(request, env) {
@@ -104,6 +106,8 @@ export default {
       const archive = await handleActionArchive(request, env);
       if (archive) return archive;
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
+      const social = await handleCustomerSocial(request, env);
+      if (social) return social;
       const projects = await handleManagedProjects(request, env);
       if (projects) return projects;
       const fronts = await handleMemberFronts(request, env);

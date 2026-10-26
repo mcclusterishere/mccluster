@@ -1,0 +1,71 @@
+// Offline PostgreSQL behavior test. Vault is a fixture, NOT an encryption test.
+import { readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+const { PGlite } = await import(process.env.PGLITE_MODULE_PATH ? pathToFileURL(process.env.PGLITE_MODULE_PATH).href : '@electric-sql/pglite');
+const db = new PGlite();
+const org='11111111-1111-4111-8111-111111111111', other='22222222-2222-4222-8222-222222222222';
+const user='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', user2='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+try {
+ await db.exec(`
+ create role anon; create role authenticated; create role service_role;
+ create schema vault; create schema storage;
+ create table vault.secrets(id uuid primary key default gen_random_uuid(),secret text);
+ create view vault.decrypted_secrets as select id,secret as decrypted_secret from vault.secrets;
+ create function vault.create_secret(text,text,text) returns uuid language plpgsql as $$declare v uuid; begin insert into vault.secrets(secret) values($1) returning id into v; return v; end$$;
+ create table public.orgs(id uuid primary key);
+ create table public.creator_billing_subscriptions(org_id uuid,owner_user_id uuid,status text,current_period_end timestamptz);
+ create table public.org_members(org_id uuid,profile_id uuid,role text);
+ create table public.social_accounts(id uuid primary key default gen_random_uuid(),org_id uuid,platform text,external_account_id text,handle text,credential_ref text,status text,capabilities jsonb,updated_at timestamptz,unique(org_id,platform,external_account_id));
+ create table public.org_channels(org_id uuid,channel text,enabled boolean,secret_id uuid,token_env text,account_id text,account_label text,connected_at timestamptz,updated_at timestamptz,primary key(org_id,channel));
+ create table public.social_publish_jobs(id uuid primary key default gen_random_uuid(),org_id uuid,account_id uuid,publish_mode text,state text,dedupe_key text unique,payload jsonb,lease_expires_at timestamptz,created_at timestamptz default now(),updated_at timestamptz);
+ create table storage.objects(bucket_id text,name text,metadata jsonb);
+ insert into orgs values('${org}'),('${other}');
+ insert into creator_billing_subscriptions values('${org}','${user}','active','2099-01-01');
+ insert into org_members values('${org}','${user}','owner'),('${other}','${user2}','owner');
+ `);
+ await db.exec(await readFile(new URL('../supabase/pending/customer_social_selfservice.sql',import.meta.url),'utf8'));
+ async function rpc(action,data={},tenant=org,actor=user){ const r=await db.query('select public.customer_social_service($1,$2,$3,$4) result',[action,tenant,actor,JSON.stringify(data)]);return r.rows[0].result; }
+ await assert.rejects(rpc('status',{},other,user),/owner required/);
+ await rpc('begin',{state_hash:'state'});
+ await assert.rejects(rpc('claim',{state_hash:'state'},org,user2),/owner required/);
+ await rpc('claim',{state_hash:'state'});
+ await assert.rejects(rpc('claim',{state_hash:'state'}),/expired state/);
+ await rpc('stage',{state_hash:'state',selection_hash:'selection',token:'user-fixture',expires_at:'2099-01-01'});
+ assert.equal((await rpc('selection',{selection_hash:'selection'})).token,'user-fixture');
+ await assert.rejects(rpc('selection',{selection_hash:'selection'},other,user2),/expired selection/);
+ await rpc('install',{selection_hash:'selection',token:'page-fixture',external_id:'123',handle:'shop'});
+ await assert.rejects(rpc('install',{selection_hash:'selection',token:'bad',external_id:'999'}),/expired selection/);
+ assert.equal((await rpc('status')).handle,'shop');
+ assert.equal((await db.query('select count(*) n from vault.secrets')).rows[0].n,1);
+ const payload={source:'customer-social',storage_path:org+'/fixture.mp4',caption:'Hello'};
+ await assert.rejects(rpc('enqueue',{key:'one',hash:'same',payload}),/upload not complete/);
+ await db.query('insert into storage.objects values($1,$2,$3)',['social-outbox',payload.storage_path,JSON.stringify({size:123,mimetype:'video/mp4'})]);
+ const a=await rpc('enqueue',{key:'one',hash:'same',payload});
+ const b=await rpc('enqueue',{key:'one',hash:'same',payload});
+ assert.equal(a.id,b.id);
+ await db.exec("update creator_billing_subscriptions set status='past_due'");
+ await assert.rejects(db.query("insert into social_publish_jobs(org_id,account_id,state,payload) values($1,$2,'queued','{}')",[org,a.account_id]),/active site plan required/);
+ const secret=(await db.query('select secret_id from private.customer_social_connections')).rows[0].secret_id;
+ assert.equal((await db.query('select customer_social_credential_access($1,$2) a',[org,secret])).rows[0].a.allowed,false);
+ await db.exec("update creator_billing_subscriptions set status='active'");
+ assert.equal((await db.query('select customer_social_credential_access($1,$2) a',[org,secret])).rows[0].a.allowed,true);
+ assert.equal((await db.query('select customer_social_credential_access($1,$2) a',[other,secret])).rows[0].a.allowed,false);
+ // Existing operator tenant remains outside the customer-paid boundary.
+ await db.query("insert into social_publish_jobs(org_id,state,payload) values($1,'queued','{}')",[other]);
+ await assert.rejects(rpc('enqueue',{key:'one',hash:'changed',payload}),/idempotency conflict/);
+ await db.query("update social_publish_jobs set state='processing' where id=$1",[a.id]);
+ await assert.rejects(rpc('disconnect'),/publishing active/);
+ await db.query("update social_publish_jobs set state='queued' where id=$1",[a.id]);
+ await rpc('disconnect');
+ assert.equal(await rpc('status'),null);
+ assert.equal((await db.query('select count(*) n from vault.secrets')).rows[0].n,0);
+ assert.equal((await db.query('select state from social_publish_jobs where org_id=$1',[org])).rows[0].state,'cancelled');
+ await db.exec('grant select,update,insert on public.org_channels to authenticated');
+ await db.exec('set role authenticated');
+ await assert.rejects(db.query("update org_channels set token_env='SOCIAL_IG_PRIMARY_ACCESS_TOKEN' where org_id=$1",[org]),/backend authority/);
+ await assert.rejects(db.query("insert into org_channels(org_id,channel,token_env) values($1,'instagram','SOCIAL_IG_PRIMARY_ACCESS_TOKEN')",[other]),/backend authority/);
+ await assert.rejects(rpc('status'),/permission denied/);
+ await db.exec('reset role');
+ console.log('Customer social PostgreSQL fixtures passed: two tenants, one-use state, token lifecycle, idempotency, incomplete upload, in-flight protection, disconnect, role denial. Vault encryption and live provider not exercised.');
+} finally { await db.close(); }
