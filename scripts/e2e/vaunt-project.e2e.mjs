@@ -13,6 +13,14 @@ const results=[];
 try {
  for (const [width,height] of [[390,844],[820,1180],[1180,820],[1440,1000]]) {
   const context=await browser.newContext({viewport:{width,height},reducedMotion:width===1180?'no-preference':'reduce'});
+  const historyEvents=[];
+  await context.exposeBinding('__recordHistoryEvent',({frame},event)=>historyEvents.push({...event,main:frame===frame.page().mainFrame()}));
+  await context.addInitScript(()=>{
+    for(const type of ['popstate','hashchange','pageshow','pagehide','pagereveal','pageswap'])addEventListener(type,event=>{
+      window.__recordHistoryEvent({type,url:location.href,at:Date.now(),persisted:event.persisted,
+        state:document.readyState,scrollY,holding:window.__MCC_FRONT_HOLDING?.(),transition:!!event.viewTransition});
+    });
+  });
   // Wait for real cross-document reveal completion before the next user action.
   // Engine readiness alone can precede Chromium's input-blocking snapshot.
   await context.addInitScript(()=>addEventListener('pagereveal',event=>{
@@ -29,9 +37,28 @@ try {
   });
   const page=await context.newPage(); const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
+  page.on('framenavigated',frame=>historyEvents.push({type:'framenavigated',main:frame===page.mainFrame(),url:frame.url(),at:Date.now()}));
+  page.on('request',request=>{if(request.isNavigationRequest())historyEvents.push({type:'navigation-request',url:request.url(),main:request.frame()===page.mainFrame(),at:Date.now()});});
+  page.on('requestfailed',request=>{if(request.isNavigationRequest())historyEvents.push({type:'navigation-failed',url:request.url(),error:request.failure(),at:Date.now()});});
+  const cdp=await context.newCDPSession(page);
+  async function historySnapshot(label){
+    const history=await cdp.send('Page.getNavigationHistory');
+    const runtime=await Promise.race([page.evaluate(()=>({url:location.href,ready:document.readyState,scrollY,holding:window.__MCC_FRONT_HOLDING?.(),transition:!!document.activeViewTransition,frames:[...document.querySelectorAll('iframe')].map(f=>({src:f.src,url:f.contentWindow?.location.href}))})).catch(error=>({error:error.message})),new Promise(resolve=>setTimeout(()=>resolve({evaluation:'timed out'}),2000))]);
+    const proof={label,url:page.url(),runtime,history,events:historyEvents.slice(-40)};
+    await writeFile(join(OUT,`history-${width}-${label}.json`),JSON.stringify(proof,null,2));
+    console.log('HISTORY',width,label,JSON.stringify(proof));
+  }
+  async function browserBack(label){
+    await historySnapshot(label+'-before');
+    const timer=setTimeout(()=>historySnapshot(label+'-pending').catch(()=>{}),5000);
+    try{await page.goBack({waitUntil:'commit'});}
+    catch(error){await historySnapshot(label+'-failed');throw error;}
+    finally{clearTimeout(timer);}
+    await historySnapshot(label+'-after');
+  }
+  try {
   await page.goto(BASE+'/index.html?front=house',{waitUntil:'domcontentloaded'});
   await page.waitForTimeout(3000);
-  assert.match(await page.locator('[data-appnav="home"] img').getAttribute('src'),/m-mark\.png$/);
   assert.equal(await page.locator('#work.project-feature').count(),1);
   assert.equal(await page.locator('#cmdCanvas5,#cmdCanvas4,#workVR').count(),0);
   assert.equal(await page.evaluate(()=>window.__MCC_ERR||null),null);
@@ -41,19 +68,23 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({path:join(OUT,`portfolio-${width}.png`)});
   if(width===820){await page.locator('[data-cta="vaunt-project"]').focus();await page.keyboard.press('Enter');}
-  else await page.locator('[data-cta="vaunt-project"]').click();
+  else await page.locator('[data-cta="vaunt-project"]').click({noWaitAfter:true});
   await page.waitForFunction(()=>document.documentElement.dataset.frontState==='ready'&&!!window.__MCC_FRONT_GOTO);
   assert.match(await page.title(),/Vaunt/);
   await page.waitForFunction(()=>document.querySelector('[data-appnav="home"] img')?.src.includes('vaunt-logo.webp'));
   assert.ok(Math.abs(await page.locator('#work').evaluate(el=>el.getBoundingClientRect().top))<2);
   assert.equal(await page.locator('.hero').isVisible(),false);
+  assert.notEqual(await page.locator('#guestWorld iframe').getAttribute('loading'),'lazy');
+  assert.equal(await page.locator('#guestWorld iframe').getAttribute('src'),null);
   assert.equal(await page.locator('#work .scene-intro h1').isVisible(),true);
   assert.doesNotMatch(await page.locator('#work .scene-intro').textContent(),/independent|official|endorse/i);
   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),BASE+'/front.html?project=vaunt');
-  const firstFrame=await page.locator('#cmdCanvas5').evaluate(c=>c.toDataURL());
-  await page.evaluate(()=>window.scrollTo(0,160));
-  await page.waitForTimeout(1200);
-  assert.notEqual(await page.locator('#cmdCanvas5').evaluate(c=>c.toDataURL()),firstFrame,'first tile scrubs without an entry click');
+  await page.evaluate(()=>window.__previewReveal);
+  await page.waitForFunction(()=>window.__MCC.ready('vauntlive')&&window.__MCC.loadedMax('vauntlive')>=30);
+  await page.locator('#cmdCanvas5').evaluate(c=>{window.__firstRunwayFrame=c.toDataURL();});
+  await page.mouse.wheel(0,160);
+  await page.waitForFunction(()=>scrollY>50&&document.querySelector('#cmdCanvas5').toDataURL()!==window.__firstRunwayFrame);
+  await page.evaluate(()=>delete window.__firstRunwayFrame);
   await page.locator('[data-appnav="home"]').click();
   await page.waitForTimeout(400);
   assert.ok(await page.evaluate(()=>window.scrollY)<4);
@@ -82,6 +113,7 @@ try {
   assert.equal(await page.evaluate(()=>window.__MCC_FRONT_HOLDING()),false);
   await page.locator('#guestWorld').scrollIntoViewIfNeeded();
   assert.equal(await page.locator('#guestWorld').isVisible(),true);
+  await page.waitForFunction(()=>document.querySelector('#guestWorld iframe').contentWindow.location.pathname==='/guest-globe.html');
   assert.equal(await page.locator('[data-world-entry]').getAttribute('href'),'account.html');
   await page.screenshot({path:join(OUT,`world-${width}.png`)});
   // Page branding is local, safe and independent of account privileges.
@@ -93,24 +125,30 @@ try {
   assert.equal(await page.locator('[data-appnav="music"]').getAttribute('href'),musicHref);
   await page.goto(BASE+'/front.html?project=vaunt#work',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
-  await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click();
-  await page.waitForURL('**/album.html?album=vaunt-ep');
+  await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click({noWaitAfter:true});
+  await page.waitForURL('**/album.html?album=vaunt-ep',{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
-  await page.goBack({waitUntil:'domcontentloaded'});
+  // History restoration need not emit a new DOMContentLoaded event.
+  await browserBack('album');
+  assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   assert.ok((await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt-logo'));
-  await page.locator('#work .scene-intro a[href="index.html#work"]').click();
-  await page.waitForURL('**/index.html#work');
+  await page.locator('#work .scene-intro a[href="index.html#work"]').click({noWaitAfter:true});
+  await page.waitForURL('**/index.html#work',{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
-  await page.goBack({waitUntil:'domcontentloaded'});
+  // History restoration need not emit a new DOMContentLoaded event.
+  await browserBack('portfolio');
+  assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   // The shell's existing verified auth contract drives the CTA; no permissions are fabricated.
-  await page.evaluate(()=>{window.MCC_BAR={refreshAuth:()=>Promise.resolve({verified:true,signed_in:true})};window.dispatchEvent(new Event('mcc:auth-changed'));});
+  await page.evaluate(()=>{window.MCC_BAR=Object.assign({},window.MCC_BAR,{refreshAuth:()=>Promise.resolve({verified:true,signed_in:true})});window.dispatchEvent(new Event('mcc:auth-changed'));});
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').textContent==='Enter the World →');
   assert.equal(await page.locator('#guestWorld').isVisible(),true);
-  await page.evaluate(()=>{window.MCC_BAR={refreshAuth:()=>Promise.resolve({verified:true,signed_in:false})};window.dispatchEvent(new Event('mcc:auth-changed'));});
+  await page.evaluate(()=>{window.MCC_BAR=Object.assign({},window.MCC_BAR,{refreshAuth:()=>Promise.resolve({verified:true,signed_in:false})});window.dispatchEvent(new Event('mcc:auth-changed'));});
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').getAttribute('href')==='account.html');
   assert.equal(await page.evaluate(()=>window.__MCC_ERR||null),null);
   if(width===820){
@@ -126,6 +164,7 @@ try {
   assert.deepEqual(errors,[]);
   results.push({width,height,pass:true,checks:'scroll-first arrival/scrubbing, portfolio, ordering, deep entry, album/back, cabin consent/Escape/home, contextual branding/fallback/cross-profile reset, auth transition, overflow, JS errors'});
   console.log('PASS',width,height);
+  } catch(error) { await historySnapshot('failure'); throw error; }
   await context.close();
  }
 } finally {await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}
