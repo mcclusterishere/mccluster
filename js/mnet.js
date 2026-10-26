@@ -512,6 +512,7 @@
      opens sign-in instead, and the server refuses it anyway. */
   function enterGuestWorld() {
     state.guest = true;
+    if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.user("");
     paintNewsroom();
     document.documentElement.classList.add("mn-guest");
     $("mnGuestBar").hidden = false;
@@ -2038,7 +2039,14 @@
     var news = !!($("mnNewsroom") && $("mnNewsroom").checked && !$("mnNewsroomRow").hidden);
     if (news && $("mnVisibility").value !== "public") { setStatus($("mnPostStatus"), "A newsroom article is public. Choose Public to publish it.", "error"); return; }
     if (news && !body) { setStatus($("mnPostStatus"), "A newsroom article needs words. Write the headline on the first line.", "error"); return; }
+    var externalDelivery = null;
+    try {
+      if (window.MCC_WORLD_COMPOSER) externalDelivery = window.MCC_WORLD_COMPOSER.capture({
+        caption: body, visibility: $("mnVisibility").value, media: state.mediaAssets
+      });
+    } catch (e) { setStatus($("mnPostStatus"), e.message, "error"); return; }
     var button = $("mnPost");
+    if (button.disabled) return;
     button.disabled = true;
     setStatus($("mnPostStatus"), "Posting…");
     var draft = { body:body, visibility:$("mnVisibility").value, track:selectedTrack,
@@ -2053,6 +2061,9 @@
       method:"POST",
       body:draft
     }).then(function (out) {
+      if (window.MCC_WORLD_COMPOSER && externalDelivery) {
+        window.MCC_WORLD_COMPOSER.worldSucceeded(externalDelivery, out && out.post && out.post.id);
+      }
       $("mnPostBody").value = "";
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
       if ($("mnNewsroom")) $("mnNewsroom").checked = false;
@@ -2239,11 +2250,13 @@
   function clearMediaQueue() {
     state.mediaAssets.forEach(revokePreviews);
     state.mediaAssets = [];
+    if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.preview({caption: "", media: []});
     if ($("mnMediaQueue")) { $("mnMediaQueue").innerHTML = ""; $("mnMediaQueue").hidden = true; }
     if ($("mnMediaInput")) $("mnMediaInput").value = "";
     setStatus($("mnMediaStatus"), "");
   }
   function renderMediaQueue() {
+    if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.preview({caption: $("mnPostBody").value.trim(), media: state.mediaAssets});
     var host = $("mnMediaQueue");
     if (!host) return;
     host.hidden = !state.mediaAssets.length;
@@ -2331,6 +2344,7 @@
             media_type:ready.media_type||(/video\//.test(file.type)?"video":/image\//.test(file.type)?"image":"file"),
             poster_id:out.poster&&out.poster.id||null,
             name:file.name,
+            file:file, /* retained only in memory for explicit cross-post uploads */
             preview:URL.createObjectURL(file),
             poster_preview:out.posterFile?URL.createObjectURL(out.posterFile):""
           });
@@ -2957,6 +2971,7 @@
   function enterAfterAuth() {
     return MCC.user().then(function (user) {
       state.user = user;
+      if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.user(user && user.id);
       if (!user) throw new Error("Your session did not open.");
       leaveGuestWorld();
       state.stall = null;
@@ -3182,6 +3197,7 @@
     var composer = $("mnComposer"), body = $("mnPostBody");
     if (composer && body) {
       body.addEventListener("focus", function () { composer.classList.add("is-open"); });
+      body.addEventListener("input", function () { if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.preview({caption: body.value.trim(), media: state.mediaAssets}); });
       composer.addEventListener("focusout", function () {
         setTimeout(function () {
           if (!composer.contains(document.activeElement) && !body.value.trim() && !state.mediaAssets.length && !$("mnTrackPick").value) composer.classList.remove("is-open");
@@ -3210,6 +3226,7 @@
     MCC.user().then(function (user) {
       if (leaving) return;
       state.user = user;
+      if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.user(user && user.id);
       if (!user) {
         var existing = MCC.session && MCC.session();
         if (existing && existing.access_token) showSignedInLoadError(new Error("Could not verify the existing session."));
