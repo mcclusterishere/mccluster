@@ -179,6 +179,7 @@ jobs:
           node scripts/e2e/managed-projects.e2e.mjs
           node scripts/test/platform-center-nav.browser.mjs
           node scripts/e2e/equity-offers-artist.e2e.mjs
+          node scripts/e2e/canonical-artist-owner.e2e.mjs
           node scripts/e2e/platform-home.e2e.mjs
           node scripts/e2e/platform-home-transition.e2e.mjs
           node scripts/e2e/world-directory.e2e.mjs

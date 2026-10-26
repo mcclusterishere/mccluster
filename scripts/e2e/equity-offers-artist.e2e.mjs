@@ -10,10 +10,12 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTA
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.svg':'image/svg+xml','.mp3':'audio/mpeg','.m4a':'audio/mp4','.mp4':'video/mp4','.woff2':'font/woff2'};
 await mkdir(OUT,{recursive:true});
 try{for(const width of [390,1440]){
- const ctx=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'}),errors=[];
+ const ctx=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'}),errors=[];let binding='absent';
  await ctx.addInitScript(()=>localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()})));
  await ctx.route('**/*',async route=>{
   const u=new URL(route.request().url());
+  if(u.hostname==='api.mccluster.org'&&u.pathname==='/v1/canonical-artists/resolve')return route.fulfill({status:binding==='private'?404:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(binding==='bound'?{state:'bound',home:'front.html?project=equity-fixture'}:{state:'unbound'})});
+  if(u.hostname==='api.mccluster.org'&&u.pathname==='/v1/projects/equity-fixture')return route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true,name:'Equity Uprise',slug:'equity-fixture',config:{schema:'mccluster-front/v1',layout:'offers',offer_page:{title:'Owned fixture offers',intro:'Ordinary owned project',cards:[{title:'Build',body:'Website fixture'}]}}})});
   if(u.origin!==BASE)return route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{}'});
   const path=resolve(ROOT,'.'+u.pathname);if(!path.startsWith(ROOT+'/'))return route.abort();
   try{return route.fulfill({body:await readFile(path),contentType:types[extname(path)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
@@ -42,5 +44,14 @@ try{for(const width of [390,1440]){
  assert.equal(await page.locator('#albArtist a').getAttribute('href'),'matthew-mccluster.html');
  await page.waitForFunction(()=>window.MCC_BAR?.pageProfile()?.name==='Matthew McCluster');
  assert.match(await page.locator('[data-appnav="home"] img').getAttribute('src'),/m-mark.png$/);
+ binding='bound';await page.goto(BASE+'/album.html?album=equity-uprise',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('#albArtist a')?.getAttribute('href')==='front.html?project=equity-fixture');
+ await page.click('#playAll');await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('deck').currentTime>0);
+ await page.click('#albArtist a');await page.waitForURL('**/front.html?project=equity-fixture',{waitUntil:'domcontentloaded'});await page.getByText('Owned fixture offers',{exact:true}).waitFor();
+ await page.goBack({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('#albArtist a')?.getAttribute('href')==='front.html?project=equity-fixture');
+ await page.evaluate(()=>document.getElementById('deck').pause());await page.click('#playAll');await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('deck').currentTime>0);
+ binding='private';await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.getElementById('albArtist')?.textContent==='Equity Uprise'&&!document.querySelector('#albArtist a'));
+ assert.equal(await page.evaluate(()=>window.MCC_PAGE_PROFILE),null);
+ assert.notEqual(await page.locator('[data-appnav="home"]').getAttribute('href'),'front.html?project=equity-fixture');
  assert.deepEqual(errors,[]);await ctx.close();console.log('PASS '+width+': stable artist destinations, real audio start/resume, Back, contextual supplied marks, nine experiences, no overflow');
 }}finally{await browser.close();}

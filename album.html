@@ -1001,6 +1001,24 @@
         artistEl.appendChild(artistLink);
         window.MCC_PAGE_PROFILE = {name: ARTIST, home: artistProfile.home, logo: artistProfile.logo};
         if (window.MCC_BAR && window.MCC_BAR.pageProfile) window.MCC_BAR.pageProfile(window.MCC_PAGE_PROFILE);
+        // Optional owned-project adapter. A missing migration keeps the supplied
+        // bootstrap page; a known private/revoked binding removes the destination.
+        (function(id,link,profile,search){
+          fetch('https://api.mccluster.org/v1/canonical-artists/resolve?id='+encodeURIComponent(id),{cache:'no-store',signal:AbortSignal.timeout(4000)})
+            .then(async function(r){
+              var destination=await r.json().catch(function(){return null;});
+              if(location.search!==search||!link.isConnected)return;
+              if(r.status===403||r.status===404){
+                link.replaceWith(document.createTextNode(link.textContent));
+                window.MCC_PAGE_PROFILE=null;
+                if(window.MCC_BAR&&window.MCC_BAR.pageProfile)window.MCC_BAR.pageProfile(null);
+              }else if(r.ok&&destination?.state==='bound'&&/^(?:front|website-studio-view)\.html\?project=[a-z0-9][a-z0-9-]{2,39}$/.test(destination.home)){
+                link.href=destination.home;
+                window.MCC_PAGE_PROFILE={name:profile.name||ARTIST,home:destination.home,logo:profile.logo};
+                if(window.MCC_BAR&&window.MCC_BAR.pageProfile)window.MCC_BAR.pageProfile(window.MCC_PAGE_PROFILE);
+              }
+            }).catch(function(){/* Existing supplied fallback; no ownership inferred. */});
+        })(head.artist_profile_id,artistLink,artistProfile,location.search);
       }
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;

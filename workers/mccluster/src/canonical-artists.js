@@ -53,7 +53,8 @@ export async function handleCanonicalArtists(request,env,deps={}){
    if(!(await isHouseOwner(env,actor.auth_uid,fetchImpl)))throw fail(403,'McCluster house owner access required');
    if(typeof b.provenance!=='string'||b.provenance.trim().length<10||b.provenance.length>500||action==='grant'&&!UUID.test(b.owner_user_id||''))throw fail(400,'Reviewed owner and provenance required');
   }
-  await db.rpc('canonical_artist_binding_v1',{p_action:action,p_artist:b.artist_id,p_actor:actor.auth_uid,p_owner:b.owner_user_id||null,p_project:b.project_id||null,p_provenance:b.provenance?.trim()||null});
+  try{await db.rpc('canonical_artist_binding_v1',{p_action:action,p_artist:b.artist_id,p_actor:actor.auth_uid,p_owner:b.owner_user_id||null,p_project:b.project_id||null,p_provenance:b.provenance?.trim()||null});}
+  catch(e){throw fail(e.status||503,e.status===403?'This grant or project is no longer available to your account. Refresh your projects.':e.status===409?'This artist already has a grant or permanent binding. A reviewed authority change is required.':'Artist binding could not be confirmed. Refresh its status before trying again.');}
   return send({ok:true});
  }catch(e){return send({ok:false,error:e.status?e.message:'Artist binding is unavailable',code:e.status===404?'destination_unavailable':'binding_unavailable'},e.status||503);}
 }

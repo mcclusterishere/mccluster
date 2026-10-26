@@ -56,8 +56,19 @@ Revocation, owner-link changes, removed/private/unpublished targets fail closed.
 Absent binding retains the existing static fallback. Migration unavailability is
 a distinct service error, not an inferred owned tenant.
 
-This first backend checkpoint does not yet wire the album or owner dashboard to
-the adapter. That integration and its browser checks are the next small commit.
+The existing project dashboard displays only the signed-in grantee's reviewed
+identities and owned projects. A delayed response or account change during token
+refresh cannot submit or display a previous account's binding. The album selects
+the adapter using its explicit stable act ID; a bound destination is generated
+from the immutable project, while 403/404 removes the stale link and contextual
+home. Unavailable adapter/migration retains the supplied static bootstrap page,
+without claiming that a managed tenant exists.
+
+Intercepted 390/1440 browser fixtures run the real dashboard with Worker/SQL
+authority, account-switch races and same-name foreign project exclusion. The
+existing artist/player fixture also exercises bound-project navigation, real
+audio start/resume, browser Back and private-binding link removal. Local Chromium
+154 evidence is separate from final-head CI's browser result.
 
 ## Domain follow-up still pending
 
