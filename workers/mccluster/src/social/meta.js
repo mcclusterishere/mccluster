@@ -114,9 +114,9 @@ export async function tokenFor(env, account) {
    Meta fetches it from a link signed for a day, long enough for Meta's own
    processing and retries, and the file itself never becomes public. */
 export const OUTBOX_BUCKET = 'social-outbox';
-async function signOutboxUrl(env, storagePath) {
+async function signOutboxUrl(env, storagePath, bucket = OUTBOX_BUCKET) {
   const objectPath = String(storagePath).split('/').map(encodeURIComponent).join('/');
-  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${OUTBOX_BUCKET}/${objectPath}`, {
+  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${bucket}/${objectPath}`, {
     method: 'POST',
     headers: headers(env),
     body: JSON.stringify({ expiresIn: 86400 })
@@ -128,6 +128,10 @@ async function signOutboxUrl(env, storagePath) {
 }
 
 async function resolveVideoUrl(env, job) {
+  if (job.payload?.world_delivery === true) {
+    const asset = await db(env, 'rpc/world_social_video', {method:'POST',body:JSON.stringify({p_job:job.id})});
+    return signOutboxUrl(env,asset.object_path,'mnet-media');
+  }
   if (job.payload?.video_url) return job.payload.video_url;
   if (job.payload?.storage_path) return signOutboxUrl(env, job.payload.storage_path);
   if (!job.payload?.video_asset_id) return null;
@@ -230,7 +234,10 @@ async function processPublishJob(env, job) {
     return { state: job.state, deferred: true, reason: 'credential_secret_not_configured' };
   }
   if (job.state === 'queued') return beginInstagramPublish(env, job, account, token);
-  if (job.state === 'processing') return finishInstagramPublish(env, job, account, token);
+  if (job.state === 'processing') {
+    if(job.payload?.world_delivery === true) await db(env,'rpc/world_social_video',{method:'POST',body:JSON.stringify({p_job:job.id})});
+    return finishInstagramPublish(env, job, account, token);
+  }
   await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
   return { state: job.state, skipped: true };
 }
