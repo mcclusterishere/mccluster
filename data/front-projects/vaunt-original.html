@@ -1,0 +1,94 @@
+<template id="vaunt-original">
+    <section class="command" id="work">
+      <div class="command__sticky">
+        <canvas class="bg-canvas command__canvas" id="cmdCanvas5" aria-label="Vaunt: Matthew singing and Zakir on guitar on the runway, the camera lifting to the jet in flight"></canvas>
+        <canvas class="bg-canvas command__canvas" id="cmdCanvas4" aria-label="Vaunt: fly-through from open sky past Matthew into the cockpit"></canvas>
+        <div class="scrim scrim--deep" aria-hidden="true"></div>
+
+        <!-- the 360 band: between the runway performance and the fly-through,
+             the real inside-the-jet film takes over and you can look anywhere -->
+        <div class="workvr" id="workVR" aria-label="Inside the jet. The page is held here: drag in any direction to look around, and use Land or Back to the card to leave">
+          <canvas class="workvr__canvas" id="workVRCanvas"></canvas>
+          <!-- THE GATE. Not a briefing and not a countdown: the film itself
+               is blurred, in the canvas, and it stays blurred until Allow is
+               pressed. Clicking away does not open it, waiting does not open
+               it, dragging the pane does not open it. Cancel is a real answer
+               too and hands the scroll straight back. -->
+          <div class="vrbrief vrbrief--gate" id="workVRCompass" role="dialog" aria-modal="true"
+               aria-labelledby="vrGateTitle">
+            <div class="vrbrief__card">
+              <img class="vrbrief__logo" src="assets/img/vaunt-logo.webp" alt="Vaunt"
+                   width="200" height="200" loading="lazy" decoding="async">
+              <p class="vrbrief__k">Vaunt &middot; inside the jet</p>
+              <h3 class="vrbrief__title" id="vrGateTitle"><span>Blurred until</span><span>you allow it.</span></h3>
+              <p class="vrbrief__lede">Real 360 footage, shot inside the jet. It takes the page
+                and your thumb while it plays, so it does not start until you say so.</p>
+              <div class="vrgate__acts" id="vrGateActs">
+                <button class="vrgate__btn vrgate__allow" id="vrGateAllow" type="button">Allow to see</button>
+                <button class="vrgate__btn vrgate__deny" id="vrGateDeny" type="button">Cancel</button>
+              </div>
+              <p class="vrgate__note" id="vrGateNote">Allow and the cabin is yours &mdash; drag
+                anywhere to look around, <b>Land</b> is the way out. Cancel and you scroll
+                straight on.</p>
+              <div class="vrgate__after" id="vrGateAfter" hidden>
+                <p class="vrgate__afterh">Cancelled &middot; the cabin stays blurred</p>
+                <p class="vrgate__afterp"><b>Reload the page</b> and press Allow if you want to
+                  see inside &mdash; or <b>scroll on</b> to continue.</p>
+              </div>
+            </div>
+          </div>
+          <!-- the cabin announcement: thrown across the whole screen the moment
+               the count clears, the way the seatbelt sign going off is announced -->
+          <p class="vrsign" id="workVRSign" aria-hidden="true"><b>You are now free to<br>move around the cabin</b></p>
+          <!-- Motion is no longer a card to find and press: the phone's own
+               tilt is armed on the way in. What is left is where you came
+               from, and the way out. -->
+          <div class="workvr__side">
+            <button class="workvr__btn workvr__btn--top" id="workVRTop" type="button">
+              <svg class="workvr__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg>
+              <span>Back to the card</span>
+            </button>
+            <button class="workvr__btn workvr__btn--land" id="workVRSkip" type="button">
+              <svg class="workvr__icon workvr__icon--jet" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 22h20"/><path d="M3.77 10.77 2 9l2-4.5 1.1.55c.55.28.9.84.9 1.45s.35 1.17.9 1.45L8 8.5l3-6 1.05.53a2 2 0 0 0 1.09 1.52l.72 5.4a2 2 0 0 0 1.09 1.52l4.4 2.2c.42.22.78.55 1.01.96l.6 1.03c.49.88-.06 1.98-1.06 2.1l-1.18.15c-.47.06-.95-.02-1.37-.24L4.29 11.15a2 2 0 0 1-.52-.38Z"/></svg>
+              <span>Land</span>
+            </button>
+          </div>
+          <p class="workvr__tag">Inside the jet &middot; 360 &middot; live footage</p>
+        </div>
+        <!-- the booking pill rides between the Brand Collabs head and the slow-hand ask -->
+        <div class="work__flypill" id="workFlyPill" aria-hidden="true">
+          <a class="wordpill wordpill--vaunt" href="https://vauntapi.flyvaunt.com/referral/nuao1K" target="_blank" rel="noopener" data-cta="vaunt-referral" title="Fly with Vaunt, through McCluster's link">
+            <span class="wordpill__seal wordpill__seal--logo"><img src="assets/img/vaunt-logo.jpeg" alt="Vaunt logo"></span>
+            <span>Fly with Vaunt</span>
+          </a>
+        </div>
+        <!-- after touchdown: the fly-through asks for a slow hand -->
+        <div class="work__slowhint" id="workSlowHint" aria-hidden="true">
+          <p class="work__slowhint-big">Scroll<br>Slow</p>
+          <svg class="work__slowhint-phone" viewBox="0 0 48 84">
+            <rect x="7" y="4" width="34" height="76" rx="8"/>
+            <g class="work__slowhint-swipe"><path d="M24 30v24"/><path d="M19 35l5-5 5 5"/><path d="M19 49l5 5 5-5"/></g>
+          </svg>
+          <p class="work__slowhint-tiny">scroll slow &middot; homie</p>
+        </div>
+        <!-- THE TAKEOFF: runway rails on both edges warn the cabin is coming -->
+        <div class="work__runway" id="workRunway" aria-hidden="true">
+          <div class="work__runway-rail work__runway-rail--l">
+            <b>RWY 01</b>
+            <svg viewBox="0 0 24 36"><path d="M5 6l7 8 7-8"/><path d="M5 18l7 8 7-8"/></svg>
+          </div>
+          <div class="work__runway-rail work__runway-rail--r">
+            <b>RWY 01</b>
+            <svg viewBox="0 0 24 36"><path d="M5 6l7 8 7-8"/><path d="M5 18l7 8 7-8"/></svg>
+          </div>
+          <p class="work__runway-note"><span>Taking off!</span><b>Scroll slow!</b></p>
+        </div>
+        <!-- the panels stay as the scene engine's checkpoints. The words are gone,
+             the picture does the talking -->
+        <div class="command__panels">
+          <article class="command__panel" data-scene="0"></article>
+          <article class="command__panel" data-scene="1"></article>
+        </div>
+      </div>
+    </section>
+</template>

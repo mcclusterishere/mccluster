@@ -107,6 +107,9 @@
      place. The same engine then runs the account's media. The house page (index.html) has no such hand-over. */
   var MEMBER = window.MCC_FRONT_SOURCE && typeof window.MCC_FRONT_SOURCE === "object" ? window.MCC_FRONT_SOURCE : null;
   var FRONT = frontConfig(MEMBER ? MEMBER.config : null, !!MEMBER);
+  // Repository-managed project assets are separate from member-upload validation.
+  var PROJECT = MEMBER && !MEMBER.studio && window.MCC_FRONT_PROJECTS && window.MCC_FRONT_PROJECTS.get(MEMBER.project);
+  if (PROJECT) FRONT.media = PROJECT.config.media;
   window.MCC_FRONT_DEFAULT = frontConfig(null);   // what the page does with no row: the Control Room's starting point
   var frontHooks = [];
   function frontRow() {
@@ -117,6 +120,7 @@
   }
   function setFront(raw, source) {
     FRONT = frontConfig(raw, !!MEMBER);
+    if (PROJECT) FRONT.media = PROJECT.config.media;
     window.MCC_FRONT = { config: FRONT, source: source || "shipped" };
     document.documentElement.setAttribute("data-front", source || "shipped");
     frontHooks.forEach(function (fn) { try { fn(FRONT); } catch (e) {} });
@@ -322,7 +326,7 @@
   function memberFilm(name) { var k = FILM_KEYS[name]; return (MEMBER && k && FRONT.media && FRONT.media[k]) || null; }
   function frameUrl(name, i) {
     var f = memberFilm(name);
-    if (f) return f.base + (f.sm && FRAME_DIR ? "sm/" : "") + pad4(i) + "." + f.ext;
+    if (f) return f.base + (f.sm && FRAME_DIR ? "sm/" : "") + (f.prefix || "") + pad4(i) + "." + f.ext;
     return "assets/frames/" + FRAME_DIR + name + "_" + pad4(i) + ".webp";
   }
   /* an account's page has no manifest file: its films are its settings */
@@ -517,6 +521,8 @@
           });
         }
         function loadNear(sel, specs) {
+          specs = specs.filter(function (spec) { return sequences[spec[0]]; });
+          if (!document.querySelector(sel) || !specs.length) return;
           specs.forEach(function (spec) { loadPoster(spec[0], spec[1]); });
           ScrollTrigger.create({
             // the diet: films load when the section is under two screens away,
@@ -760,7 +766,8 @@
     { seq: "vauntlive", f0: 0, f1: 1, speed: 1 },    // runway performance up to the sky...
     { seq: "vaunt", f0: 0, f1: 1, speed: 1.75 },     // ...into the cabin fly-through
   ];
-  // two scenes, ONE project: Vaunt (the brand collab)
+  cmdScenes = cmdScenes.filter(function (scene) { return sequences[scene.seq]; });
+  // Two scroll films with the 360 cabin between them.
   var cmdProjects = [1, 1];
   var cmdProjectCount = 1;
   // the full record carries both flight legs: the runway liftoff and the
@@ -811,6 +818,7 @@
   }
 
   function applyCommand(p) {
+    if (!cmdScenes.length) return;
     var n = cmdScenes.length;
     var active = Math.min(n - 1, Math.floor(p * n));
     cmdScenes.forEach(function (sc, i) {
@@ -1139,7 +1147,7 @@
   var workSlow = document.getElementById("workSlowHint");
   var workFly = document.getElementById("workFlyPill");
   var workRunway = document.getElementById("workRunway");
-  var workST = ScrollTrigger.create({
+  var workST = cmdScenes.length ? ScrollTrigger.create({
     trigger: "#work",
     start: "top top",
     end: "bottom bottom",
@@ -1173,7 +1181,7 @@
         if (!workVR.live) lockPageScroll(false);
       }
     },
-  });
+  }) : null;
 
   /* THE DOORS. The cabin holds the page, so leaving is never something the
      scroll does by accident — it is something a door does on purpose. All of
@@ -1801,7 +1809,7 @@
      The scenes the owner turned off are taken out of the page (one attribute, data-front-off, that only this code sets
      or clears, so the World's own hidden rule is never undone) and the pins are measured again. Turning the Vaunt scene
      off turns its cabin off with it, so the page can never be held by a band that is not there. */
-  var FRONT_SCENES = { doors: ".hero__doors", vaunt: "#work", night: "#pillars", world: "#guestWorld" };
+  var FRONT_SCENES = { doors: ".hero__doors", vaunt: "#work.command", night: "#pillars", world: "#guestWorld" };
   (function () {
     var st = document.createElement("style");
     st.textContent = "[data-front-off]{display:none!important}";
@@ -1812,7 +1820,7 @@
     Object.keys(FRONT_SCENES).forEach(function (k) {
       var el = document.querySelector(FRONT_SCENES[k]);
       if (!el) return;
-      var off = f.scenes[k] === false;
+      var off = f.scenes[k] === false && !el.hasAttribute("data-profile-world");
       if (off === el.hasAttribute("data-front-off")) return;
       if (off) el.setAttribute("data-front-off", ""); else el.removeAttribute("data-front-off");
       moved = true;
@@ -1848,7 +1856,7 @@
   function frontGoto(to) {
     var y = 0, el = null;
     if (to === "cabin" && workST) y = workST.start + (workST.end - workST.start) * (workVR.band[0] + workVR.band[1]) / 2;
-    else if (to !== "top") { el = document.querySelector(FRONT_SCENES[to === "world" ? "world" : to === "night" ? "night" : "vaunt"]); if (!el || el.hasAttribute("data-front-off") || !el.offsetHeight) return; y = el.getBoundingClientRect().top + window.scrollY; }
+    else if (to !== "top") { el = to === "vaunt" ? document.getElementById("work") : document.querySelector(FRONT_SCENES[to === "world" ? "world" : to === "night" ? "night" : "vaunt"]); if (!el || el.hasAttribute("data-front-off") || !el.offsetHeight) return; y = el.getBoundingClientRect().top + window.scrollY; }
     if (holding) leaveCabinQuietly();
     lenis.scrollTo(y, { immediate: true, force: true });
     try { ScrollTrigger.update(); } catch (e) {}

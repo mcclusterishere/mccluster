@@ -1,0 +1,35 @@
+name: Public profile project preview
+on:
+  pull_request:
+    paths:
+      - 'front.html'
+      - 'index.html'
+      - 'member-front.html'
+      - 'guest-globe.html'
+      - 'js/front-*.js'
+      - 'js/main.js'
+      - 'js/guest-world.js'
+      - 'css/profile-shell.css'
+      - 'scripts/e2e/vaunt-project.e2e.mjs'
+      - '.github/workflows/profile-project-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm install --prefix /tmp/profile-tools playwright@1.58.2 --ignore-scripts --no-audit --no-fund
+      - run: /tmp/profile-tools/node_modules/.bin/playwright install --with-deps chromium
+      - run: node scripts/e2e/vaunt-project.e2e.mjs /tmp/profile-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/profile-tools/node_modules
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-profile-proof
+          path: /tmp/profile-proof
