@@ -42,7 +42,7 @@ export async function handleCreatorBillingWebhook(request,env,{onDomainPaid,onSt
   const charge=await stripeRequest(env,'charges/'+encodeURIComponent(source.id),{},{method:'GET',account:event.account});
   const orderId=charge.metadata?.creator_store_order_id;
   if(orderId!==source.metadata.creator_store_order_id||!/^[0-9a-f-]{36}$/i.test(orderId||''))return fail(request,env,'Refund order mismatch',409);
-  await onStoreRefunded({orderId,eventId:event.id,accountId:event.account,chargeId:charge.id,paymentIntentId:typeof charge.payment_intent==='string'?charge.payment_intent:charge.payment_intent?.id,amount:charge.amount,refunded:charge.amount_refunded,currency:charge.currency},env);
+  await onStoreRefunded({orderId,livemode:event.livemode===true,eventId:event.id,accountId:event.account,chargeId:charge.id,paymentIntentId:typeof charge.payment_intent==='string'?charge.payment_intent:charge.payment_intent?.id,amount:charge.amount,refunded:charge.amount_refunded,currency:charge.currency},env);
   return reply(request,env,{received:true});
  }
  const storeOrderId=event.data?.object?.metadata?.creator_store_order_id;
@@ -52,7 +52,7 @@ export async function handleCreatorBillingWebhook(request,env,{onDomainPaid,onSt
   const session=await stripeRequest(env,'checkout/sessions/'+encodeURIComponent(event.data.object.id),{},{method:'GET',account:event.account});
   if(session.metadata?.creator_store_order_id!==storeOrderId||!/^[0-9a-f-]{36}$/i.test(storeOrderId)||session.mode!=='payment')return fail(request,env,'Store checkout mismatch',409);
   if(session.payment_status!=='paid')return reply(request,env,{received:true,pending:true});
-  await onStorePaid({orderId:storeOrderId,accountId:event.account,eventId:event.id,sessionId:session.id,paymentIntentId:typeof session.payment_intent==='string'?session.payment_intent:session.payment_intent?.id,amountTotal:session.amount_total,currency:session.currency,email:session.customer_details?.email,shipping:session.collected_information?.shipping_details||session.shipping_details,paidAt:new Date(event.created*1000).toISOString()},env);
+  await onStorePaid({orderId:storeOrderId,livemode:event.livemode===true,accountId:event.account,eventId:event.id,sessionId:session.id,paymentIntentId:typeof session.payment_intent==='string'?session.payment_intent:session.payment_intent?.id,amountTotal:session.amount_total,currency:session.currency,email:session.customer_details?.email,shipping:session.collected_information?.shipping_details||session.shipping_details,paidAt:new Date(event.created*1000).toISOString()},env);
   return reply(request,env,{received:true});
  }
  const domainOrderId=event.data?.object?.metadata?.creator_domain_order_id;
