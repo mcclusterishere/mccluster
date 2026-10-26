@@ -15,6 +15,8 @@ import { humanUpriseResponse } from './human-uprise/router.js';
 import { handleAuthHandoff } from './auth-handoff.js';
 import { preflightResponse } from './preflight.js';
 import { handleCreatorCheckout } from './creator-billing.js';
+import { handleCreatorCommerce } from './creator-commerce.js';
+import { handleCreatorStore, recordCreatorStorePayment, recordCreatorStoreRefund } from './creator-store.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
 import { handleCreatorEntitlement, hasActiveSitePlan } from './creator-entitlement.js';
@@ -26,20 +28,14 @@ import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
 import { handleRegionScope } from './world-region-feed.js';
+import { handleWorldDirectory } from './world-directory.js';
+import { handleMusicWorkspace } from './music-workspace.js';
 import { handleMemberFronts } from './member-fronts.js';
-
 import { handleManagedProjects } from './managed-projects.js';
-
-import { handleCustomerSocial } from './social/customer.js';
-
-import { handleCreatorCommerce } from './creator-commerce.js';
-import { handleCreatorStore, recordCreatorStorePayment, recordCreatorStoreRefund } from './creator-store.js';
-
 import { handleCreatorDomains } from './creator-domains.js';
 import { handleCreatorDomainOrders } from './creator-domain-orders.js';
 import { handleCreatorDomainHost } from './creator-domain-host.js';
-
-import { handleWorldDirectory } from './world-directory.js';
+import { handleCustomerSocial } from './social/customer.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -119,14 +115,15 @@ export default {
       const archive = await handleActionArchive(request, env);
       if (archive) return archive;
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
-      const social = await handleCustomerSocial(request, env);
-      if (social) return social;
+      // Purchases remain unavailable without a complete reviewed registrar/checkout adapter.
       const domainOrders = await handleCreatorDomainOrders(request, env, { authorizeEntitlement: hasActiveSitePlan });
       if (domainOrders) return domainOrders;
       const domains = await handleCreatorDomains(request, env, { authorizeEntitlement: hasActiveSitePlan });
       if (domains) return domains;
       const projects = await handleManagedProjects(request, env);
       if (projects) return projects;
+      const social = await handleCustomerSocial(request, env);
+      if (social) return social;
       const fronts = await handleMemberFronts(request, env);
       if (fronts) return fronts;
 
@@ -138,6 +135,8 @@ export default {
       if (creatorEntitlement) return creatorEntitlement;
       const actionConnect = await handleActionConnect(request, env);
       if (actionConnect) return actionConnect;
+      const musicWorkspace = await handleMusicWorkspace(request, env);
+      if (musicWorkspace) return musicWorkspace;
       const creatorStore = await handleCreatorStore(request, env);
       if (creatorStore) return creatorStore;
       const creatorCommerce = await handleCreatorCommerce(request, env);

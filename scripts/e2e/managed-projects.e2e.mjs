@@ -271,12 +271,21 @@ try {
  const privatePreview=previewFrame(privateEditor.page);
  check('vaunt','private owner preview carries registry binding and immutable media',await mediaContract(privatePreview)&&(await privatePreview.locator('[data-fw="eyebrow"]').first().textContent())==='Owner edited Vaunt words');
  await privateEditor.ctx.close();world.visibility='public';
- registryRow.removed_at=new Date().toISOString();await vp.reload({waitUntil:'domcontentloaded'});await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
- check('vaunt','removed bound project never falls back to static',!await vp.evaluate(()=>window.MCC_FRONT_SOURCE));
- registryRow.removed_at=null;registryRow.published=null;registryRow.published_at=null;await vp.reload({waitUntil:'domcontentloaded'});await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
- check('vaunt','unpublished project_unavailable never falls back to static',!await vp.evaluate(()=>window.MCC_FRONT_SOURCE));
- world.projectsUnavailable=true;await vp.reload({waitUntil:'domcontentloaded'});await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
- check('vaunt','storage 503 never falls back to static',!await vp.evaluate(()=>window.MCC_FRONT_SOURCE));world.projectsUnavailable=false;
+ // Independent negative responses use new visitor contexts. They must fail closed
+ // on first visit, without depending on the earlier page's loaded registry/media.
+ // Same-page publication/privacy transitions are exercised above.
+ for (const condition of ['removed','unpublished','storage 503']) {
+   registryRow.removed_at=condition==='removed'?new Date().toISOString():null;
+   registryRow.published=condition==='unpublished'?null:registryConfig;
+   registryRow.published_at=registryRow.published?new Date().toISOString():null;
+   world.projectsUnavailable=condition==='storage 503';
+   const negative=await setup({width:390,height:844},null);
+   await negative.page.goto(BASE+'/front.html?project=vaunt',{waitUntil:'domcontentloaded'});
+   await negative.page.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
+   check('vaunt',condition+' never falls back to static',!await negative.page.evaluate(()=>window.MCC_FRONT_SOURCE)&&negative.errors.length===0,negative.errors);
+   await negative.ctx.close();
+ }
+ world.projectsUnavailable=false;
  check('vaunt','registry public and private preview produce no uncaught errors',vaunt.errors.length===0&&privateEditor.errors.length===0,{public:vaunt.errors,preview:privateEditor.errors});
  await vaunt.ctx.close();
  check('runtime','editor and public renderer have no uncaught errors',app.errors.length===0&&visitor.errors.length===0,{editor:app.errors,public:visitor.errors});
