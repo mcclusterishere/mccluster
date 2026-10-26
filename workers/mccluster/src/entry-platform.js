@@ -35,6 +35,7 @@ import { handleCustomerSiteModules } from './customer-site-modules.js';
 import { handleCustomerSiteStorage } from './customer-site-storage.js';
 import { handleCustomerSiteWorld } from './customer-site-world.js';
 import { handleCustomerSiteAddress } from './customer-site-addresses.js';
+import { handleCustomerSiteAdvertising } from './customer-site-advertising.js';
 import { handleManagedProjects } from './managed-projects.js';
 import { handleProjectTiles } from './project-tiles.js';
 import { handleCreatorDomains } from './creator-domains.js';
@@ -123,6 +124,8 @@ export default {
       if (siteStorage) return siteStorage;
       const siteAddress = await handleCustomerSiteAddress(request, env);
       if (siteAddress) return siteAddress;
+      const siteAdvertising = await handleCustomerSiteAdvertising(request, env);
+      if (siteAdvertising) return siteAdvertising;
       /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
       const handoff = await handleAuthHandoff(request, env);
       if (handoff) return handoff;

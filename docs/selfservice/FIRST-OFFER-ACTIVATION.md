@@ -82,11 +82,14 @@ future tenant revenue sharing, subject to platform onboarding/eligibility. A
 standard AdSense account is not evidence of that permission. No direct advertiser
 marketplace is in this first-offer scope.
 
-`data/site-advertising-contract.json` is an inert architecture artifact, not a
-runtime eligibility engine. Provider/tenant/property/format approval, consent,
-rights, exclusivity, revenue and no-fill fields describe future controls; those
-controls and slots are **not yet implemented**. Every placement and provider is
-disabled. No script imports this contract to serve ads or make network requests.
+`data/site-advertising-contract.json` describes the inert architecture. The tested
+`customer-site-advertising.js` server resolver validates the authenticated owner,
+website and known placement, then always returns disabled/no-fill: collapse display
+space or continue playback. It rejects provider/activation/owner input, does not
+request a provider, and has no enabling flag. No browser requests this endpoint.
+Actual provider/property/format approvals, consent/rights verification, exclusivity,
+creative slots, revenue and payouts remain **not implemented**. Those future
+controls cannot be bypassed by treating this disabled decision as approval.
 
 ## Proposed 500 MB storage boundary
 
@@ -146,7 +149,16 @@ entries. Supabase's pending-file promotion procedure still governs actual releas
    `website_studio_v2.sql` → `project_tiles_v1.sql` → `project_tiles_free_v1.sql`.
    The new free publisher verifies owner, active identity, public profile and
    exact saved revision. Existing API/public-read media approval checks remain.
-   It grants no processing allowance or custom-domain entitlement.
+   It grants no processing allowance or custom-domain entitlement. Every tile
+   still requires a registered, ready, explicitly public-approved media source.
+   An ordinary free account can reuse its existing approved media without a new
+   preparation job. A basic text/image-only tile path independent of preparation
+   is not implemented. New Studio media cannot finish publication until the
+   separate native model/executor/preparation-allowance gates are satisfied.
+   The fixture's free-publication test removes its subscription but retains a
+   separately approved preparation allowance; it does not prove that an ordinary
+   unprovisioned free account can prepare media. Cinematic front uploads use the
+   separate device-prepared path and its existing public-byte disclosure.
 6. Review one exact combined Worker/assets SHA and require terminal CI. Proposed
    flags: `CUSTOMER_SITE_OFFER_ENABLED=true` enables modules/aliases/free tile
    publication; `WEBSITE_STUDIO_ENABLED=true` enables the recovered tile editor.
@@ -183,12 +195,12 @@ reviewed operational plan; this document does not authorize it.
 | Landing → existing membership → saved draft | `first-offer-acceptance.e2e.mjs`, customer-site fixture | Synthetic sessions; real signup/mail/approval unchanged and unverified |
 | Repeated/interrupted checkout | Browser reuses request ID after retry/reload; existing checkout reservation SQL/Worker fixtures | No Stripe request, money or provider webhook delivery |
 | Media quota | Actual SQL/RLS, streamed over/under-size checks, durable HEAD/recovery, replacement/deletion; native CI two-session race | Managed Storage and ingress cutover still need authorized verification |
-| Tile edit/preview/publish | Free-publisher SQL/Worker cases plus actual browser/native FFmpeg approval/revision path | Compute allowance/executor stay separate; no paid plan silently granted |
+| Tile edit/preview/publish | Free-publisher SQL/Worker cases plus actual browser/native FFmpeg approval/revision path | Existing approved media only without a preparation allowance; basic text/image-only tiles remain unimplemented; 500 MB provides no compute allowance |
 | Module off/on | Owner settings, direct API rejection, real shared bottom-tab browser hide/restore | Project-native post attribution composer remains subsequent work |
 | Tenant switching/unauthorized access | Account-switch browser suites, owner filters, direct table/function denial | No production account created or impersonated |
 | Four pilot fixtures/free addresses | Equity Uprise, Whip Equipped, Zone Five Fitness, Benji Chase isolated SQL aliases; collision/WWW/private-source tests | Fixture-only suffixes; no real namespace/DNS/BenjiChase.com ownership or availability claim |
 | Existing identities/navigation | Existing personal/Vaunt source and browser suites | Uploaded remote logos retain prior validation/fallback; no arbitrary image-host trust |
-| Advertising | Inert disabled contract and researched provider constraints | Runtime eligibility, actual placements/revenue/payouts are not implemented |
+| Advertising | Tested owner/placement-bound server resolver always disabled/no-fill with zero provider requests | Real eligibility, actual placements/revenue/payouts are not implemented |
 
 Production read-only audit on 2026-10-26 found `member_fronts`, `managed_projects`
 and `customer_site_addresses` absent (`to_regclass` null) in canonical project
@@ -205,6 +217,12 @@ act-to-owned-profile mapping; that production migration is not performed here.
 ## Deferred additions from the continuing owner request
 
 Complete the first offer before expanding the existing composer and Stories.
+The next website engineering gap is a basic text/image tile path that preserves
+ownership, rights, explicit public approval and quota enforcement without
+requiring the existing native media-preparation pipeline. This is unfinished
+engineering, not a provider-permission gate. The current candidate offers free
+cinematic profile/media editing plus free publication of approved prepared tile
+assets; it does not complete a general free tile builder.
 Composer work must reconcile #624/#628/#634's durable World/Instagram delivery
 identity, use server-verified creator/business and owned-account capabilities,
 preserve regular native posting, and implement an overlay/bottom sheet with
