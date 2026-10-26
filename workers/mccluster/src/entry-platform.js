@@ -17,7 +17,7 @@ import { preflightResponse } from './preflight.js';
 import { handleCreatorCheckout } from './creator-billing.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
-import { handleCreatorEntitlement } from './creator-entitlement.js';
+import { handleCreatorEntitlement, hasActiveSitePlan } from './creator-entitlement.js';
 import { handleCreatorPublish } from './creator-site-publish.js';
 import { handleCreatorSiteView } from './creator-site-view.js';
 import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
@@ -34,6 +34,10 @@ import { handleCustomerSocial } from './social/customer.js';
 
 import { handleCreatorCommerce } from './creator-commerce.js';
 import { handleCreatorStore, recordCreatorStorePayment, recordCreatorStoreRefund } from './creator-store.js';
+
+import { handleCreatorDomains } from './creator-domains.js';
+import { handleCreatorDomainOrders } from './creator-domain-orders.js';
+import { handleCreatorDomainHost } from './creator-domain-host.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -63,6 +67,8 @@ export default {
        at its root, the company page at /company. Null for every other host,
        so the API below is untouched. Inert until the owner routes the apex
        to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
+    const domain = await handleCreatorDomainHost(request, env, { authorizeEntitlement: hasActiveSitePlan });
+    if (domain) return domain;
     const company = await companySiteResponse(request, env);
     if (company) return company;
     /* Human Uprise's own door (humanuprise.com, www): the World by host, the
@@ -111,6 +117,10 @@ export default {
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
       const social = await handleCustomerSocial(request, env);
       if (social) return social;
+      const domainOrders = await handleCreatorDomainOrders(request, env, { authorizeEntitlement: hasActiveSitePlan });
+      if (domainOrders) return domainOrders;
+      const domains = await handleCreatorDomains(request, env, { authorizeEntitlement: hasActiveSitePlan });
+      if (domains) return domains;
       const projects = await handleManagedProjects(request, env);
       if (projects) return projects;
       const fronts = await handleMemberFronts(request, env);

@@ -17,6 +17,14 @@
   var handle = String(params.get("u") || "").toLowerCase();
   var projectSlug = String(params.get("project") || "").toLowerCase();
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
+  // Only the verified-host Worker injects this binding. Query parameters cannot
+  // choose a different tenant or a credential destination on a custom domain.
+  var hostBinding = w.MCC_FRONT_HOST;
+  if (hostBinding && hostBinding.api === location.origin && HANDLE.test(hostBinding.handle || "")) {
+    handle = hostBinding.handle;
+    projectSlug = "";
+    API = location.origin;
+  }
   var inStudio = false;
   try { inStudio = w.parent !== w && w.parent.location.origin === location.origin && /(?:front|project)-studio\.html$/.test(w.parent.location.pathname); } catch (e) {}
   // The editor replaces this frame whenever words/media change. Cross-document
