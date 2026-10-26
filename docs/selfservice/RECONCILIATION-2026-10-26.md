@@ -191,6 +191,14 @@ No payment-provider, registrar, Meta or production approval is implied here.
    delivery or scheduling.
 5. Coordinate latest profile-brand navigation before #627 merge: verified active
    profile logo/route, E=Up only platform/default, no stale logo on owner switch.
+   The separate draft [#630](https://github.com/mcclusterishere/mccluster/pull/630),
+   head `2cc9a0ce15249fc45f23fbaf409594552e03e04b`, now implements a document-local
+   `MCC_BAR.pageProfile()` hook, same-origin profile home/logo validation and Vaunt
+   entry behavior. Its tabbar remains based on main's perspective logic, whereas
+   #627 replaced that logic with unconditional platform home. These require a
+   deliberate merge preserving profile priority and platform fallback; simply
+   choosing either complete file loses the other behavior. Also reconcile
+   `front-member.js`, `main.js`, registry wording and project browser fixtures.
 6. Minimum external decisions remain explicit: approved site plan price IDs and
    Connect configuration; registrar/provider plus registrant/renewal/terms model;
    owned EquityUprise.com zone/routing; Meta app/scopes/callback. Scope each request
