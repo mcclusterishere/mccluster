@@ -5,6 +5,16 @@ on:
     paths:
       - '.github/workflows/customer-selfservice-ci.yml'
       - 'front*.html'
+      - 'project*.html'
+      - 'platform-home.html'
+      - 'js/tabbar.js'
+      - 'js/platform-home.js'
+      - 'js/project-studio.js'
+      - 'workers/mccluster/src/entry-platform.js'
+      - 'workers/mccluster/src/preflight.js'
+      - 'workers/mccluster/src/social/**'
+      - 'workers/mccluster/src/managed-projects.js'
+      - 'scripts/e2e/**'
       - 'customer-*.html'
       - 'js/front-*.js'
       - 'js/customer-*.js'
@@ -55,3 +65,65 @@ jobs:
           node --import ./workers/mccluster/test/support/offline-network.mjs --test
           workers/mccluster/test/member-fronts.test.mjs
           scripts/test/member-front-pages.test.mjs
+
+  code-and-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: workers/mccluster
+      - name: Offline Worker and source regressions
+        run: |
+          node --import ./workers/mccluster/test/support/offline-network.mjs --test workers/mccluster/test/*.test.mjs
+          node --import ./workers/mccluster/test/support/offline-network.mjs --test scripts/test/*.test.mjs
+      - name: Install isolated database fixture engine
+        run: npm install --prefix /tmp/selfservice-tools --no-audit --no-fund @electric-sql/pglite@0.5.11
+      - name: Execute tenant, OAuth and funding SQL fixtures
+        env:
+          PGLITE_DIR: /tmp/selfservice-tools/node_modules
+          PGLITE_MODULE: /tmp/selfservice-tools/node_modules/@electric-sql/pglite/dist/index.js
+          PGLITE_MODULE_PATH: /tmp/selfservice-tools/node_modules/@electric-sql/pglite/dist/index.js
+        run: |
+          node scripts/test-managed-projects-db.mjs
+          node scripts/test-customer-social-db.mjs
+          node scripts/test/creator-domain-schema.mjs
+          node scripts/test/creator-domain-orders.mjs
+          node scripts/test/creator-checkout-reservation-db.mjs
+          node scripts/test/creator-publish-rpc-db.mjs
+          node scripts/test/creator-store-db.mjs
+
+  browser-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm install --prefix /tmp/selfservice-tools --no-audit --no-fund playwright@1.64.1
+      - run: /tmp/selfservice-tools/node_modules/.bin/playwright install --with-deps chromium
+      - name: Use installed Chromium for all fixture runners
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const {chromium} = require('/tmp/selfservice-tools/node_modules/playwright');
+          fs.appendFileSync(process.env.GITHUB_ENV, 'CHROMIUM_PATH=' + chromium.executablePath() + '\nCHROMIUM_EXECUTABLE=' + chromium.executablePath() + '\n');
+          NODE
+      - name: Customer journey and mobile layout fixtures
+        env:
+          PLAYWRIGHT_DIR: /tmp/selfservice-tools/node_modules
+        run: |
+          node scripts/e2e/customer-site.e2e.mjs
+          node scripts/e2e/managed-projects.e2e.mjs
+          node scripts/e2e/platform-home.e2e.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: customer-selfservice-browser-proof
+          path: |
+            /tmp/managed-project-proof
+            /tmp/platform-audiences-proof
