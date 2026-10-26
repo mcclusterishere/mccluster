@@ -95,6 +95,7 @@ try {
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click({noWaitAfter:true});
   await page.waitForURL('**/album.html?album=vaunt-ep',{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   await page.goBack({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
@@ -102,6 +103,7 @@ try {
   assert.ok((await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt-logo'));
   await page.locator('#work .scene-intro a[href="index.html#work"]').click({noWaitAfter:true});
   await page.waitForURL('**/index.html#work',{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   await page.goBack({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
