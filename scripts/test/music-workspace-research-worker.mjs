@@ -13,3 +13,8 @@ test('default-off bridge forwards consent and user JWT to existing queue only; f
  assert.equal(calls[0].url,'https://fixture.invalid/rest/v1/rpc/music_workspace_research_enqueue');assert.equal(calls[0].init.headers.authorization,'Bearer member-session');assert.equal(JSON.parse(calls[0].init.body).p_consent,true);assert.equal(response.headers.get('cache-control'),'private, no-store');
  denied=true;response=await handleMusicWorkspaceResearch(request(),env,{fetchImpl});assert.equal(response.status,409);assert.equal(calls.length,2);assert.equal(JSON.parse(calls[1].init.body).p_idempotency_key,body.idempotency_key);
 });
+test('read-only state remains available with enqueue off and combines both capability gates',async()=>{
+ const calls=[];const fetchImpl=async(url,init)=>{calls.push({url,init});return Response.json({tracks:[],jobs:[],models:[],artifacts:[],enqueue_enabled:true,execution_enabled:false})};
+ const req=new Request('https://api.mccluster.org/v1/music-workspace/analysis',{headers:{authorization:'Bearer member-session'}});
+ const r=await handleMusicWorkspaceResearch(req,{...env,MUSIC_WORKSPACE_RESEARCH_ENQUEUE_ENABLED:undefined},{fetchImpl});assert.equal(r.status,200);assert.equal((await r.json()).enqueue_enabled,false);assert.equal(calls.length,1);assert.equal(calls[0].url,'https://fixture.invalid/rest/v1/rpc/music_workspace_research_state');assert.equal(calls[0].init.headers.authorization,'Bearer member-session');
+});

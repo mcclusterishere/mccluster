@@ -188,9 +188,10 @@ try {
  const prefix=BENJI.id+'/projects/first-project/';
  const objects=[BENJI.id+'/personal.jpg',BENJI.id+'/projects/second-project/other.jpg',prefix+'orphan.jpg'];
  for(const k of objects)world.objects.set(k,{type:'image/jpeg',body:Buffer.from('fixture')});
+ const cleanupResponse=page.waitForResponse(r=>r.url()===SB+'/storage/v1/object/front-media'&&r.request().method()==='DELETE');
  await page.click('[data-act="publish"]');
  await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg.startsWith('Published.'));
- await page.waitForTimeout(200);
+ await cleanupResponse; // Cleanup is asynchronous after publication; assert its completed effect, not a 200ms guess.
  check('cleanup','cleanup preserves personal and same-owner other project files',world.objects.has(objects[0])&&world.objects.has(objects[1])&&!world.objects.has(objects[2]),world.removed);
  await visitor.page.reload({waitUntil:'domcontentloaded'});await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')==='ready');
  check('publish','real public renderer shows published words',await visitor.page.locator('[data-fw="eyebrow"]').first().textContent()==='Private project draft');

@@ -32,7 +32,7 @@ test('reconciled SQL executes; two creators, private review, stage ordering, ide
  const as=async(owner,role='authenticated')=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[owner]);await db.exec('set role '+role)};
  const root=()=>db.exec('reset role');
  await db.query('insert into m_people values($1),($2)',[a,b]);
- await db.query("insert into creator_tracks values($1,$2,$2,'draft','incomplete','creator-masters',$3,'{}')",[track,a,a+'/workspace/master.wav']);
+ await db.query("insert into creator_tracks(id,uid,m_uid,status,rights_status,master_bucket,master_path,rights_declaration) values($1,$2,$2,'draft','incomplete','creator-masters',$3,'{}')",[track,a,a+'/workspace/master.wav']);
  const enqueue=(stage='analyze',model='mcc_spectral_v1',key='fixture-request-1',parent=null)=>db.query('select mcc_music_research_enqueue($1,$2,$3,$4,$5,true) id',[track,stage,model,key,parent]).then(x=>x.rows[0].id);
  await as(a);await assert.rejects(enqueue(),/enqueue disabled/);
  await assert.rejects(db.exec('update music_research_capabilities set enqueue_enabled=true'),/permission denied/);
@@ -80,9 +80,11 @@ test('workspace bridge requires completed authoritative handoff, explicit consen
  const db=await researchFixture();try{
  await db.exec('create table music_workspace_release_handoffs(id uuid,track_id uuid,owner_id uuid,creator_m_uid uuid,completed_at timestamptz,master_path text)');
  await db.exec(await readFile(new URL('../../supabase/pending/music_workspace_research_bridge.sql',import.meta.url),'utf8'));
+ await db.exec("alter table creator_tracks add column title text default 'Fixture master'");
+ await db.exec(await readFile(new URL('../../supabase/pending/music_workspace_research_state.sql',import.meta.url),'utf8'));
  const hid='dddddddd-dddd-dddd-dddd-dddddddddddd',path=a+'/workspace/'+hid+'.wav';
  await db.query('insert into m_people values($1),($2)',[a,b]);
- await db.query("insert into creator_tracks values($1,$2,$2,'draft','attested','creator-masters',$3,$4)",[track,a,path,JSON.stringify({workspace_handoff:{id:hid}})]);
+ await db.query("insert into creator_tracks(id,uid,m_uid,status,rights_status,master_bucket,master_path,rights_declaration) values($1,$2,$2,'draft','attested','creator-masters',$3,$4)",[track,a,path,JSON.stringify({workspace_handoff:{id:hid}})]);
  await db.query('insert into music_rights_attestations values($1,$2,true,true)',[track,a]);
  const as=async(id)=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated')};
  const enqueue=(consent=true)=>db.query("select music_workspace_research_enqueue($1,'analyze','mcc_spectral_v1','fixture-bridge-request',null,$2) id",[track,consent]);
@@ -91,12 +93,14 @@ test('workspace bridge requires completed authoritative handoff, explicit consen
  await as(a);await assert.rejects(enqueue(),/completed creator-owned/);
  await db.exec('reset role');await db.exec('update music_workspace_release_handoffs set completed_at=now()');
  await as(a);await assert.rejects(enqueue(),/enqueue disabled/);
+ const ownerState=(await db.query('select music_workspace_research_state() s')).rows[0].s;
+ assert.equal(ownerState.tracks.length,1);assert.equal(ownerState.tracks[0].eligible,true);assert.equal(ownerState.enqueue_enabled,false);assert.equal(ownerState.execution_enabled,false);assert.equal(JSON.stringify(ownerState).includes('master_path'),false);
  await db.exec('reset role');await db.exec('update music_research_capabilities set enqueue_enabled=true');
- await as(b);await assert.rejects(enqueue(),/completed creator-owned/);
+ await as(b);await assert.rejects(enqueue(),/completed creator-owned/);assert.deepEqual((await db.query('select music_workspace_research_state() s')).rows[0].s.tracks,[]);
  await as(a);const first=(await enqueue()).rows[0].id;assert.equal((await enqueue()).rows[0].id,first);
  assert.equal((await db.query('select * from music_research_jobs')).rows.length,1);
  await assert.rejects(db.query("select mcc_music_research_enqueue($1,'analyze','mcc_spectral_v1','fixture-direct-without-consent')",[track]),/explicit analysis consent/);
  await db.exec('reset role');await db.exec("update creator_tracks set rights_status='incomplete'");
- await as(a);await assert.rejects(enqueue(),/rights-attested/);
+ await as(a);await assert.rejects(enqueue(),/rights-attested/);assert.equal((await db.query('select music_workspace_research_state() s')).rows[0].s.tracks[0].eligible,false);
  }finally{await db.close()}
 });
