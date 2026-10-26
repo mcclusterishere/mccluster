@@ -1,6 +1,8 @@
 (function () {
   'use strict';
   const root = document.getElementById('domains'), status = document.getElementById('domainStatus');
+  let targets = [];
+  const targetSelect = document.getElementById('domainTarget');
   let generation = 0, controller = new AbortController();
   const stale = () => Object.assign(new Error('Session changed'), { name: 'AbortError' });
   async function api(path = '', method = 'GET', body, scope = generation) {
@@ -13,11 +15,17 @@
   function el(tag, text) { const n = document.createElement(tag); n.textContent = text; return n; }
   async function load() {
     const scope = ++generation; controller.abort(); controller = new AbortController();
+    targets = []; targetSelect.replaceChildren(); targetSelect.disabled = true;
     root.replaceChildren(); document.getElementById('connect').disabled = true; status.textContent = 'Loading…';
     let b; try { b = await api('', 'GET', undefined, scope); } catch (e) { if (scope === generation && e.name !== 'AbortError') status.textContent = e.message; return; }
     if (scope !== generation) return; status.textContent = b.capabilities.reason; document.getElementById('connect').disabled = !b.capabilities.connect; root.replaceChildren();
+    targets = b.targets || [];
+    targets.forEach((target, i) => { const option = el('option',target.label); option.value=String(i); targetSelect.append(option); });
+    targetSelect.disabled = !targets.length;
+    if (!targets.length) document.getElementById('connect').disabled = true;
     for (const row of b.domains) {
       const card = el('article',''); card.append(el('h2',row.hostname), el('p','Status: ' + row.status.replaceAll('_',' ') + ' · Certificate: ' + (row.ssl_status || 'not requested')));
+      if (row.target) card.append(el('p','Site: ' + row.target.slug));
       if (row.last_error) card.append(el('p',row.last_error));
       card.append(el('p','Add these records at your DNS provider. Keep the ownership TXT record in place. DNS changes can take time; retry verification after they propagate.'));
       card.append(el('pre', row.records.map(r => `${r.type} ${r.name}\n${r.value}`).join('\n\n')));
@@ -28,7 +36,7 @@
       root.append(card);
     }
   }
-  document.getElementById('domainForm').addEventListener('submit',async e => { e.preventDefault(); const scope = generation; const btn=document.getElementById('connect'); btn.disabled=true; try { await api('','POST',{hostname:document.getElementById('hostname').value},scope); if (scope === generation) await load(); } catch(err) { if (scope === generation && err.name !== 'AbortError') { status.textContent=err.message; btn.disabled=false; } } });
+  document.getElementById('domainForm').addEventListener('submit',async e => { e.preventDefault(); const scope = generation; const btn=document.getElementById('connect'); btn.disabled=true; try { await api('','POST',{hostname:document.getElementById('hostname').value,target:targets[Number(targetSelect.value)]},scope); if (scope === generation) await load(); } catch(err) { if (scope === generation && err.name !== 'AbortError') { status.textContent=err.message; btn.disabled=false; } } });
   document.getElementById('domainRefresh').addEventListener('click', load);
   window.addEventListener('mcc:auth-changed', load);
   load();
