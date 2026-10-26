@@ -21,7 +21,7 @@ try {
   window.MCC={api:async(path,init)=>{
    let data;
    if(path.includes('/creator-billing/entitlement'))data={workspaces:[{org_id:'org-alice'}]};
-   else if(path.includes('/customer-social/status'))data={configured:window.connected,connection:{account_id:'account-alice',status:'connected',handle:'alice'}};
+   else if(path.includes('/customer-social/status'))data={configured:window.connected,capability:{eligible:true,can_publish:window.connected,formats:['instagram_reels']},connection:{account_id:'account-alice',status:'connected',handle:'alice'}};
    else if(path.includes('/customer-social/action-targets'))data={campaigns:[],missions:[]};
    else if(path.includes('/mnet/deliveries'))data={deliveries:window.saved?[window.saved]:[]};
    else if(path.endsWith('/submit')){window.publishKeys.push(path);window.externalCount++;window.saved.state='queued';if(window.lostResponse){window.lostResponse=false;throw Error('Lost response');}data={publish_job:{id:'job-one',state:'queued'}};}
@@ -35,6 +35,8 @@ try {
  await page.addScriptTag({content:await read('js/world-social-composer.js')});
  await page.waitForFunction(()=>document.getElementById('mnExternalOptIn').disabled===false);
  await page.addScriptTag({content:`
+ var compositionOwner='alice',compositionEpoch=0,compositionPending=null,compositionRestoring=false,compositionStore={clear(){}};
+ function compositionCurrent(){return true};function assertComposition(){};function saveComposition(){return true};function paintCompositionPending(){$('mnPost').disabled=!!compositionPending};
  var APP='mccluster-web'; var state={mediaAssets:[{id:'media-alice',file:new File(['fixture'],'reel.mp4',{type:'video/mp4'})}],placeScope:{enabled:false},world:{}};
  function $(id){return document.getElementById(id)};function pickedTrack(){return null};
  function setStatus(node,text){node.textContent=text};function api(path,init){return MCC.api(path,init).then(r=>r.json())};

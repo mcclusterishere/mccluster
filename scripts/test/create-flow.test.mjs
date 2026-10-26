@@ -60,8 +60,8 @@ test('a video post from Create carries a cover, chosen on the filmstrip', async 
   assert.match(js, /if \(asset && up\.poster && S\.kind === "video"\) payload\.poster_asset_ids = \[up\.poster\.id\];/);
   assert.match(js, /payload\.media_asset_ids = \[asset\.id\]/);
   /* replaced, cancelled or never posted: discarded; posted: kept */
-  assert.match(js, /if \(c\.asset && !\(keep && c\.sent\)\) discardUploadAsset\(c\.asset\);/);
-  assert.match(js, /S\.coverSeq\+\+; dropCover\(S\.completed\);/);
+  assert.match(js, /if \(!accountChanged && c\.asset && !\(keep && c\.sent\)\) discardUploadAsset\(c\.asset\);/);
+  assert.match(js, /S\.coverSeq\+\+; dropCover\(S\.completed,opts\.accountChanged\);/);
   assert.match(js, /S\.coverSeq\+\+; dropCover\(false\); \$\("crCover"\)\.removeAttribute\("aria-busy"\); paintCover\(\);/);
   assert.match(js, /if \(next\.dropped\) discardUploadAsset\(asset\);/);
   /* the details step shows the cover beside the caption */
@@ -116,7 +116,8 @@ test('create follows the mobile rules and the copy rules', async () => {
 
 test('Create survives common client-side failure modes', async () => {
   const [html, js] = await Promise.all([read('create.html'), read('js/create.js')]);
-  assert.match(js, /DRAFT_KEY = "mnet_create_draft_v1"/);
+  assert.match(js, /MCCCompositionDraft.browser\("advanced"\)/);
+  assert.doesNotMatch(js, /getItem\(DRAFT_KEY\)/);
   assert.match(js, /window\.addEventListener\("beforeunload", saveDraft\)/);
   assert.match(js, /document\.addEventListener\("visibilitychange"/);
   assert.match(js, /restoreDraft\(\)/);
@@ -158,11 +159,11 @@ test('Create exposes recoverable network lifecycle states', async () => {
 
 test("Create lifecycle fences cancellation, offline reservation, drafts, and attached media", async () => {
   const js = await read("js/create.js");
-  assert.match(js, /if \(S\.busy \|\| S\.completed\) return/);
+  assert.match(js, /if \(!S\.owner \|\| S\.busy \|\| S\.completed\) return/);
   assert.match(js, /reset\(\{ preserveComposition: S\.draftRestored \}\)/);
   assert.match(js, /if \(navigator\.onLine === false\)[\s\S]*S\.upload = null; S\.uploadPhase = "waiting"/);
   assert.match(js, /S\.upload !== mine\.p \|\| S\.uploadCancelled/);
   assert.match(js, /The media upload is waiting for a connection/);
   assert.match(js, /S\.completed = true; S\.draftRestored = false; S\.uploadPhase = "attached"/);
-  assert.match(js, /var abandoned = S\.completed \? null/);
+  assert.match(js, /var abandoned = S\.completed \|\| opts\.accountChanged \? null/);
 });

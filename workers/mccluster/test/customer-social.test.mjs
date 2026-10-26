@@ -102,3 +102,21 @@ test('canonical token loader blocks expired customer credentials before Vault/Me
  await assert.rejects(tokenFor({...env,CUSTOMER_SOCIAL_ENABLED:'false'},account),{status:402});
  managed=false;assert.equal(await tokenFor({...env,CUSTOMER_SOCIAL_ENABLED:'false'},account),'fixture-page-token');
 });
+
+test('status capability uses owned active workspace entitlement, never admin metadata',async()=>{
+ for(const active of [false,true]){
+  globalThis.fetch=async input=>{
+   const u=new URL(input);
+   if(u.pathname.endsWith('/org_members'))return response([{role:'owner'}]);
+   if(u.pathname.endsWith('/creator_billing_subscriptions')){assert.equal(u.searchParams.get('owner_user_id'),'eq.'+user.id);assert.equal(u.searchParams.get('status'),'eq.active');return response([{current_period_end:active?'2099-01-01':'2000-01-01'}]);}
+   return response({status:'connected',account_id:'owned-account'});
+  };
+  const result=await handler(request('status'),env,{...user,user_metadata:{role:'admin'}});
+  assert.equal(result.capability.eligible,active);assert.equal(result.capability.can_publish,active);
+  assert.deepEqual(result.capability.formats,['instagram_reels']);
+ }
+});
+test('eligible owner can discover setup while unready connection stays nonpublishable',async()=>{
+ mock(()=>response(null));const result=await handler(request('status'),env,user);
+ assert.equal(result.capability.eligible,true);assert.equal(result.capability.can_publish,false);assert.equal(result.capability.reason,'owned_connection_required');
+});

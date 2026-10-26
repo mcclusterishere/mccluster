@@ -180,6 +180,10 @@
     });
   }
   function api(path, init) {
+    if(init&&init.method&&init.method!=='GET'&&/^\/v1\/mnet\/(posts|media)(?:[/?]|$)/.test(path)){
+      var epoch=compositionEpoch,owner=compositionOwner;
+      init=Object.assign({},init,{expectedUserId:owner,beforeFetch:function(){assertComposition(epoch,owner);}});
+    }
     return window.MCC.api(path, init).then(parse);
   }
   function profile() { return state.boot && state.boot.profile || {}; }
@@ -2032,7 +2036,62 @@
     return state.catalogue[Number(sel.value)] || null;
   }
 
+  /* One local composition checkpoint; the existing server delivery is the outbox.
+     Unconfirmed requests never expire into permission to create a duplicate. */
+  var compositionStore=window.MCCCompositionDraft.browser('world'),compositionOwner='',compositionEpoch=0,compositionAuthEpoch=0,compositionPending=null,compositionReviewed=null,compositionRestoring=false,compositionMediaEpoch=0,compositionUploads=new Set();
+  function compositionCurrent(epoch,owner){return epoch===compositionEpoch&&!!owner&&owner===compositionOwner;}
+  function assertComposition(epoch,owner){if(!compositionCurrent(epoch,owner))throw Object.assign(new Error('Account changed. Reopen your draft.'),{stale:true});}
+  function compositionData(){return {body:$("mnPostBody").value,visibility:$("mnVisibility").value,track:pickedTrack(),media:state.mediaAssets.map(function(a){return {id:a.id,poster_id:a.poster_id||null};}),pending:compositionPending,reviewed:compositionReviewed};}
+  function saveComposition(){
+    if(!compositionOwner||compositionRestoring)return false;
+    var saved=compositionStore.write(compositionOwner,compositionData());
+    if(!saved)setStatus($("mnDraftStatus"),'Draft stays in this tab. Browser storage is unavailable.','error');
+    else if(!compositionPending)setStatus($("mnDraftStatus"),'Draft saved on this device.');
+    return saved;
+  }
+  function paintCompositionPending(){
+    var pending=!!compositionPending;
+    $("mnPost").disabled=pending||compositionRestoring;
+    $("mnCompositionRetry").hidden=!pending||!compositionPending.request?.delivery;
+    $("mnNativeReview").hidden=!pending||!!compositionPending.request?.delivery;
+    $("mnStartSeparateDraft").hidden=$("mnNativeReview").hidden;$("mnStartSeparateDraft").disabled=!$("mnNativeReviewed").checked;
+    $("mnReviewedRequest").hidden=!compositionReviewed;$("mnReviewedBody").textContent=compositionReviewed?'Latest manually reviewed, unconfirmed post: '+String(compositionReviewed.request?.body||'(media or track post)'):'';
+    if(pending)setStatus($("mnDraftStatus"),compositionPending.request?.delivery?'The previous combined post is unconfirmed. Retry that exact request to recover its saved delivery.':'The previous World post is unconfirmed. Check your profile before posting again; automatic retry is blocked to avoid duplicates.','error');
+  }
+  function bindCompositionOwner(owner){
+    owner=owner||'';if(owner===compositionOwner)return;
+    saveComposition();compositionMediaEpoch++;compositionUploads.forEach(function(xhr){xhr.abort();});compositionUploads.clear();compositionEpoch++;compositionOwner=owner;compositionPending=null;compositionReviewed=null;compositionRestoring=false;$("mnNativeReviewed").checked=false;
+    $("mnPostBody").value='';$("mnVisibility").value='public';$("mnTrackPick").value='';
+    if($("mnNewsroom"))$("mnNewsroom").checked=false;if($("mnPostPlaceOptIn"))$("mnPostPlaceOptIn").checked=false;
+    clearMediaQueue();if($("mnUploadCancel"))$("mnUploadCancel").hidden=true;setStatus($("mnPostStatus"),'');setStatus($("mnDraftStatus"),'');paintCompositionPending();
+    if(!owner)return;
+    var stored=compositionStore.read(owner);if(!stored)return;
+    var epoch=compositionEpoch;
+    $("mnPostBody").value=typeof stored.body==='string'?stored.body.slice(0,16000):'';
+    $("mnVisibility").value=['public','network','private'].includes(stored.visibility)?stored.visibility:'private';
+    compositionPending=stored.pending||null;compositionReviewed=stored.reviewed||null;compositionRestoring=true;paintCompositionPending();
+    var ids=[];(Array.isArray(stored.media)?stored.media.slice(0,4):[]).forEach(function(a){[a?.id,a?.poster_id].forEach(function(id){if(/^[a-f0-9-]{36}$/i.test(id||''))ids.push(id);});});
+    var mediaRead=ids.length&&!compositionPending?api('/v1/mnet/media/drafts?ids='+encodeURIComponent(Array.from(new Set(ids)).join(','))).then(function(out){
+      assertComposition(epoch,owner);var allowed=new Map((out.assets||[]).map(function(a){return [a.id,a];}));
+      state.mediaAssets=stored.media.slice(0,4).filter(function(a){return allowed.has(a.id);}).map(function(a){return Object.assign({},allowed.get(a.id),{poster_id:allowed.has(a.poster_id)?a.poster_id:null,name:'Restored '+allowed.get(a.id).media_type});});renderMediaQueue();
+      if(state.mediaAssets.length!==stored.media.length)setStatus($("mnDraftStatus"),'Some attachments are no longer available to this account. Choose them again.','error');
+    }):Promise.resolve();
+    Promise.all([mediaRead,loadCatalogue().then(function(tracks){if(!compositionCurrent(epoch,owner))return;var i=stored.track?tracks.findIndex(function(t){return t.albumSlug===stored.track.albumSlug&&t.title===stored.track.title;}):-1;$("mnTrackPick").value=i>=0?String(i):'';})]).catch(function(e){if(compositionCurrent(epoch,owner))setStatus($("mnDraftStatus"),'Draft text restored. Media ownership could not be verified; choose attachments again.','error');}).finally(function(){if(compositionCurrent(epoch,owner)){compositionRestoring=false;paintCompositionPending();}});
+  }
+  function retryComposition(){
+    var pending=compositionPending,epoch=compositionEpoch,owner=compositionOwner;
+    if(!pending?.request?.delivery||!owner)return;
+    $("mnCompositionRetry").disabled=true;
+    api('/v1/mnet/posts?app_key='+encodeURIComponent(APP),{method:'POST',body:pending.request}).then(function(out){
+      assertComposition(epoch,owner);if(!out?.post?.id||!out?.delivery?.id||(out.delivery.user&&out.delivery.user!==owner)||(out.delivery.key&&out.delivery.key!==pending.request.delivery.operation_key))throw new Error('Delivery confirmation is incomplete. Keep the original request.');
+      if(window.MCC_WORLD_COMPOSER)window.MCC_WORLD_COMPOSER.worldSucceeded({user:owner,worldId:null},out);
+      compositionPending=null;$("mnPostBody").value='';$("mnTrackPick").value='';clearMediaQueue();compositionStore.clear(owner);paintCompositionPending();setStatus($("mnDraftStatus"),'Recovered the original World post and delivery.','ok');if(window.MCC_WORLD_OVERLAY?.isOpen())window.MCC_WORLD_OVERLAY.close();loadFeed(true);
+    }).catch(function(e){if(compositionCurrent(epoch,owner))setStatus($("mnDraftStatus"),e.message||'Recovery is unavailable. Keep the original request.','error');}).finally(function(){if(compositionCurrent(epoch,owner))$("mnCompositionRetry").disabled=false;});
+  }
+
   function createPost() {
+    if(!compositionOwner||compositionPending||compositionRestoring)return;
+    var postEpoch=compositionEpoch,postOwner=compositionOwner;
     var body = $("mnPostBody").value.trim();
     var selectedTrack = pickedTrack();
     if (!body && !state.mediaAssets.length && !selectedTrack) { setStatus($("mnPostStatus"), "Write something, attach media, or pick a track first.", "error"); return; }
@@ -2058,10 +2117,15 @@
                state.world.country ? state.world.country.code : undefined };
     if (news) draft.newsroom = true;
     if (externalDelivery) draft.delivery = window.MCC_WORLD_COMPOSER.request(externalDelivery, draft);
+    compositionPending={kind:"world-post",request:draft};
+    if(!saveComposition()){compositionPending=null;button.disabled=false;return;}
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
       body:draft
     }).then(function (out) {
+      assertComposition(postEpoch,postOwner);
+      if(!out?.post?.id||(externalDelivery&&(!out?.delivery?.id||(out.delivery.user&&out.delivery.user!==postOwner)||(out.delivery.key&&out.delivery.key!==draft.delivery.operation_key))))throw new Error("Post confirmation is incomplete. Keep the original request before retrying.");
+      compositionPending=null;compositionStore.clear(postOwner);
       if (window.MCC_WORLD_COMPOSER && externalDelivery) {
         window.MCC_WORLD_COMPOSER.worldSucceeded(externalDelivery, out);
       }
@@ -2089,10 +2153,14 @@
       if (focused && composerBox && composerBox.contains(focused) && focused.blur) focused.blur();
       if (composerBox) composerBox.classList.remove("is-open");
       /* a post lands now, so a rewound feed comes back to Live to show it */
+      setStatus($("mnDraftStatus"), "");
+      if(window.MCC_WORLD_OVERLAY?.isOpen())window.MCC_WORLD_OVERLAY.close();
       return loadFeed(true);
     }).catch(function (e) {
-      setStatus($("mnPostStatus"), e.message || "Could not post.", "error");
-    }).finally(function () { button.disabled = false; });
+      if(!compositionCurrent(postEpoch,postOwner))return;
+      if([400,401,402,403,404,413,422,429].includes(e.status)){compositionPending=null;saveComposition();}
+      setStatus($("mnPostStatus"), e.message || "Could not confirm the post.", "error");
+    }).finally(function () { if(compositionCurrent(postEpoch,postOwner))paintCompositionPending(); });
   }
 
   // a post can be on the main feed or on a country's Local feed: share, save and mission taps look in both
@@ -2269,6 +2337,7 @@
         '<span>' + esc(x.name || x.media_type) + '</span>';
       return '<div class="mn__media-chip' + (x.media_type === "video" ? ' is-video' : '') + '">' + visual + '<button type="button" data-remove-media="' + i + '" aria-label="Remove attachment">×</button></div>';
     }).join("");
+    saveComposition();
     host.querySelectorAll("[data-remove-media]").forEach(function (b) {
       b.onclick = function () {
         var i = Number(b.dataset.removeMedia), item = state.mediaAssets[i];
@@ -2283,27 +2352,30 @@
     });
   }
   /* meta ({width,height,duration_ms}, or a promise of it) rides with finalize where it is known */
-  function uploadOneMedia(file,meta){
-    var token=sessionToken();
-    if(!token)return Promise.reject(new Error("Sign in before uploading media."));
+  function uploadOneMedia(file,meta,operation){
+    var token=sessionToken(),epoch=compositionEpoch,owner=compositionOwner,generation=compositionMediaEpoch,asset=null;
+    function current(){assertComposition(epoch,owner);if(generation!==compositionMediaEpoch)throw Object.assign(new Error('Upload cancelled.'),{cancelled:true});if(operation)operation();}
+    if(!token||!owner)return Promise.reject(new Error("Sign in before uploading media."));
+    current();
     return api("/v1/mnet/media/upload-url",{method:"POST",body:{file_name:file.name||"upload",mime_type:file.type||"application/octet-stream",byte_size:file.size}})
       .then(function(grant){
-        var path=grant&&grant.upload&&grant.upload.path,asset=grant&&grant.asset,uploadToken=grant&&grant.upload&&grant.upload.token;
+        asset=grant&&grant.asset;current();
+        var path=grant&&grant.upload&&grant.upload.path,uploadToken=grant&&grant.upload&&grant.upload.token;
         if(!path||!asset)throw new Error("The upload slot was not created.");
-        var url=uploadToken
-          ? SB_URL+"/storage/v1/object/upload/sign/mnet-media/"+storagePath(path)+"?token="+encodeURIComponent(uploadToken)
-          : SB_URL+"/storage/v1/object/mnet-media/"+storagePath(path);
-        return fetch(url,{method:uploadToken?"PUT":"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+token,"content-type":file.type||"application/octet-stream","x-upsert":"false"},body:file})
-          .then(function(res){
-            if(!res.ok)return res.text().then(function(t){throw new Error("Upload rejected ("+res.status+"): "+(t||"no detail"));});
-            return Promise.resolve(meta).catch(function(){return null;}).then(function(m){
-              var body={asset_id:asset.id};
-              if(m)["width","height","duration_ms"].forEach(function(k){if(Number(m[k])>0)body[k]=Math.round(Number(m[k]));});
-              return api("/v1/mnet/media/finalize",{method:"POST",body:body});
-            });
-          })
-          .then(function(fin){return (fin&&fin.asset)||asset;});
-      });
+        var url=uploadToken?SB_URL+"/storage/v1/object/upload/sign/mnet-media/"+storagePath(path)+"?token="+encodeURIComponent(uploadToken):SB_URL+"/storage/v1/object/mnet-media/"+storagePath(path);
+        return new Promise(function(resolve,reject){
+          current();var xhr=new XMLHttpRequest();compositionUploads.add(xhr);
+          xhr.open(uploadToken?'PUT':'POST',url);xhr.setRequestHeader('apikey',SB_KEY);xhr.setRequestHeader('authorization','Bearer '+token);xhr.setRequestHeader('content-type',file.type||'application/octet-stream');xhr.setRequestHeader('x-upsert','false');
+          xhr.upload.onprogress=function(e){if(compositionCurrent(epoch,owner)&&generation===compositionMediaEpoch&&e.lengthComputable)setStatus($("mnMediaStatus"),'Uploading '+file.name+' · '+Math.round(e.loaded/e.total*100)+'%');};
+          function done(){compositionUploads.delete(xhr);}
+          xhr.onload=function(){done();xhr.status>=200&&xhr.status<300?resolve():reject(new Error('Upload rejected ('+xhr.status+').'));};
+          xhr.onerror=function(){done();reject(new Error('Upload interrupted. Choose the file again to retry.'));};
+          xhr.onabort=function(){done();reject(Object.assign(new Error('Upload cancelled.'),{cancelled:true}));};xhr.send(file);
+        }).then(function(){current();return Promise.resolve(meta).catch(function(){return null;});}).then(function(m){
+          current();var body={asset_id:asset.id};if(m)["width","height","duration_ms"].forEach(function(k){if(Number(m[k])>0)body[k]=Math.round(Number(m[k]));});
+          return api("/v1/mnet/media/finalize",{method:"POST",body:body});
+        }).then(function(fin){current();return (fin&&fin.asset)||asset;});
+      }).catch(function(e){if(asset&&compositionCurrent(epoch,owner))discardMedia(asset.id);throw e;});
   }
   /* THE PICTURE OF A VIDEO: the shared capture (js/video-poster.js). Resolves {file, width, height, video:{...}} or null;
      no picture never stops the video itself. */
@@ -2316,29 +2388,36 @@
   }
   /* the picture is taken WHILE the video goes up, not after it; the video's finalize carries its size and length */
   function uploadMediaWithPoster(file){
+    var epoch=compositionEpoch,owner=compositionOwner,generation=compositionMediaEpoch;
+    function current(){assertComposition(epoch,owner);if(generation!==compositionMediaEpoch)throw Object.assign(new Error('Upload cancelled.'),{cancelled:true});}
     if(String(file.type||"").indexOf("video/")!==0)return uploadOneMedia(file).then(function(asset){return {asset:asset,poster:null,posterFile:null};});
     var metaKnown,meta=new Promise(function(r){metaKnown=r;});
     var shot=makeVideoPoster(file,{onMeta:metaKnown});
     shot.then(function(s){metaKnown(s&&s.video||null);});
     var posterUp=shot.then(function(s){
-      return s&&s.file?uploadOneMedia(s.file,{width:s.width,height:s.height}).catch(function(){return null;}):null;
+      current();return s&&s.file?uploadOneMedia(s.file,{width:s.width,height:s.height},current).catch(function(){return null;}):null;
     });
-    return uploadOneMedia(file,meta).then(function(asset){
+    return uploadOneMedia(file,meta,current).then(function(asset){
+      current();
       return Promise.all([posterUp,shot]).then(function(r){return {asset:asset,poster:r[0]||null,posterFile:r[1]&&r[1].file||null};});
     },function(e){
-      posterUp.then(function(p){discardMedia(p&&p.id);});
+      posterUp.then(function(p){if(compositionCurrent(epoch,owner))discardMedia(p&&p.id);}).catch(function(){});
       throw e;
     });
   }
   function uploadMediaFiles(files) {
+    var epoch=compositionEpoch,owner=compositionOwner,generation=compositionMediaEpoch;
+    function current(){assertComposition(epoch,owner);if(generation!==compositionMediaEpoch)throw Object.assign(new Error('Upload cancelled.'),{cancelled:true});}
     files=Array.prototype.slice.call(files||[]).slice(0,Math.max(0,4-state.mediaAssets.length));
     if(!files.length)return Promise.resolve();
     if(!sessionToken())return Promise.reject(new Error("Sign in before uploading media."));
     setStatus($("mnMediaStatus"),"Uploading "+files.length+(files.length===1?" file…":" files…"));
+    $("mnUploadCancel").hidden=false;
     var chain=Promise.resolve();
     files.forEach(function(file){
       chain=chain.then(function(){
-        return uploadMediaWithPoster(file).then(function(out){
+        current();return uploadMediaWithPoster(file).then(function(out){
+          current();
           var ready=out.asset;
           state.mediaAssets.push({
             id:ready.id,
@@ -2353,8 +2432,8 @@
         });
       });
     });
-    return chain.then(function(){setStatus($("mnMediaStatus"),state.mediaAssets.length+" attachment"+(state.mediaAssets.length===1?"":"s")+" ready.","ok");})
-      .catch(function(e){setStatus($("mnMediaStatus"),e.message||"Upload failed.","error");throw e;});
+    return chain.then(function(){current();setStatus($("mnMediaStatus"),state.mediaAssets.length+" attachment"+(state.mediaAssets.length===1?"":"s")+" ready.","ok");})
+      .catch(function(e){if(compositionCurrent(epoch,owner))setStatus($("mnMediaStatus"),e.message||"Upload failed.","error");throw e;}).finally(function(){if(compositionCurrent(epoch,owner))$("mnUploadCancel").hidden=true;});
   }
   /* A signed media address lives an hour (mnet-media view-url, expires_in); one with under five minutes left is asked
      for again rather than handed to a player that will outlive it. */
@@ -2970,8 +3049,11 @@
     }, 15000);
   }
   function enterAfterAuth() {
+    var authEpoch=compositionAuthEpoch;
     return MCC.user().then(function (user) {
+      if(authEpoch!==compositionAuthEpoch)return;
       state.user = user;
+      bindCompositionOwner(user&&user.id);
       if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.user(user && user.id);
       if (!user) throw new Error("Your session did not open.");
       leaveGuestWorld();
@@ -3194,14 +3276,23 @@
       var y = window.scrollY, on = top.classList.contains("is-scrolled");
       top.classList.toggle("is-scrolled", on ? y > 0 : (y > 24 && document.documentElement.scrollHeight - window.innerHeight > 120));
     }, { passive: true });
+    ["mnPostBody","mnVisibility","mnTrackPick"].forEach(function(id){$(id).addEventListener('input',saveComposition);$(id).addEventListener('change',saveComposition);});
+    window.addEventListener('mcc:composition-save',saveComposition);window.addEventListener('beforeunload',saveComposition);
+    $("mnCompositionRetry").onclick=retryComposition;
+    $("mnNativeReviewed").onchange=paintCompositionPending;
+    $("mnStartSeparateDraft").onclick=function(){if(!compositionPending||compositionPending.request?.delivery||!$("mnNativeReviewed").checked)return;compositionReviewed=compositionPending;compositionPending=null;$("mnPostBody").value='';$("mnTrackPick").value='';clearMediaQueue();$("mnNativeReviewed").checked=false;saveComposition();paintCompositionPending();setStatus($("mnPostStatus"),'New draft. The earlier unconfirmed request is retained below for your review.');};
+    $("mnUploadCancel").onclick=function(){compositionMediaEpoch++;compositionUploads.forEach(function(xhr){xhr.abort();});compositionUploads.clear();$("mnUploadCancel").hidden=true;setStatus($("mnMediaStatus"),'Upload cancelled. Your text and ready attachments remain.');};
+    function refreshCompositionIdentity(){var epoch=++compositionAuthEpoch;bindCompositionOwner('');state.user=null;MCC.user().then(function(user){if(epoch!==compositionAuthEpoch)return;state.user=user;bindCompositionOwner(user&&user.id);}).catch(function(){});}
+    window.addEventListener('mcc:auth-changed',refreshCompositionIdentity);
+    window.addEventListener('storage',function(e){if(e.key==='mccdb_session')refreshCompositionIdentity();});
     /* the composer is one line until it is used */
     var composer = $("mnComposer"), body = $("mnPostBody");
     if (composer && body) {
-      body.addEventListener("focus", function () { composer.classList.add("is-open"); });
+      body.addEventListener("focus", function () { composer.classList.add("is-open"); if(window.MCC_WORLD_OVERLAY)window.MCC_WORLD_OVERLAY.open(body); });
       body.addEventListener("input", function () { if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.preview({caption: body.value.trim(), media: state.mediaAssets}); });
       composer.addEventListener("focusout", function () {
         setTimeout(function () {
-          if (!composer.contains(document.activeElement) && !body.value.trim() && !state.mediaAssets.length && !$("mnTrackPick").value) composer.classList.remove("is-open");
+          if (!window.MCC_WORLD_OVERLAY?.isOpen() && !composer.contains(document.activeElement) && !body.value.trim() && !state.mediaAssets.length && !$("mnTrackPick").value) composer.classList.remove("is-open");
         }, 150);
       });
     }
@@ -3224,9 +3315,11 @@
     enterSession();
   }
   function enterSession() {
+    var authEpoch=compositionAuthEpoch;
     MCC.user().then(function (user) {
-      if (leaving) return;
+      if (leaving||authEpoch!==compositionAuthEpoch) return;
       state.user = user;
+      bindCompositionOwner(user&&user.id);
       if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.user(user && user.id);
       if (!user) {
         var existing = MCC.session && MCC.session();
