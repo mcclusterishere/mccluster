@@ -13,6 +13,14 @@ const results=[];
 try {
  for (const [width,height] of [[390,844],[820,1180],[1180,820],[1440,1000]]) {
   const context=await browser.newContext({viewport:{width,height},reducedMotion:width===1180?'no-preference':'reduce'});
+  const historyEvents=[];
+  await context.exposeBinding('__recordHistoryEvent',({frame},event)=>historyEvents.push({...event,main:frame===frame.page().mainFrame()}));
+  await context.addInitScript(()=>{
+    for(const type of ['popstate','hashchange','pageshow','pagehide','pagereveal','pageswap'])addEventListener(type,event=>{
+      window.__recordHistoryEvent({type,url:location.href,at:Date.now(),persisted:event.persisted,
+        state:document.readyState,scrollY,holding:window.__MCC_FRONT_HOLDING?.(),transition:!!event.viewTransition});
+    });
+  });
   // Wait for real cross-document reveal completion before the next user action.
   // Engine readiness alone can precede Chromium's input-blocking snapshot.
   await context.addInitScript(()=>addEventListener('pagereveal',event=>{
@@ -28,6 +36,22 @@ try {
   });
   const page=await context.newPage(); const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
+  page.on('framenavigated',frame=>historyEvents.push({type:'framenavigated',main:frame===page.mainFrame(),url:frame.url(),at:Date.now()}));
+  const cdp=await context.newCDPSession(page);
+  async function historySnapshot(label){
+    const history=await cdp.send('Page.getNavigationHistory');
+    const proof={label,url:page.url(),history,events:historyEvents.slice(-40)};
+    await writeFile(join(OUT,`history-${width}-${label}.json`),JSON.stringify(proof,null,2));
+    console.log('HISTORY',width,label,JSON.stringify(proof));
+  }
+  async function browserBack(label){
+    await historySnapshot(label+'-before');
+    const timer=setTimeout(()=>historySnapshot(label+'-pending').catch(()=>{}),5000);
+    try{await page.goBack({waitUntil:'commit'});}
+    catch(error){await historySnapshot(label+'-failed');throw error;}
+    finally{clearTimeout(timer);}
+    await historySnapshot(label+'-after');
+  }
   await page.goto(BASE+'/index.html?front=house',{waitUntil:'domcontentloaded'});
   await page.waitForTimeout(3000);
   assert.equal(await page.locator('#work.project-feature').count(),1);
@@ -98,7 +122,7 @@ try {
   await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   // History restoration need not emit a new DOMContentLoaded event.
-  await page.goBack({waitUntil:'commit'});
+  await browserBack('album');
   assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
@@ -108,7 +132,7 @@ try {
   await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   // History restoration need not emit a new DOMContentLoaded event.
-  await page.goBack({waitUntil:'commit'});
+  await browserBack('portfolio');
   assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
