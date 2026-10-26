@@ -412,12 +412,26 @@
             </label>
             <button class="mn__post" id="mnPost" type="button">Post</button>
           </div>
+          <details id="mnExternalDestinations" style="padding:.75rem;max-width:100%;overflow-wrap:anywhere">
+            <summary>Destinations · World selected</summary>
+            <p>World is always included. Choose Instagram only when you want this video published there too.</p>
+            <label for="mnExternalSite">Your connected Instagram account</label>
+            <select id="mnExternalSite" style="max-width:100%;font-size:16px" aria-label="Connected site Instagram account"></select>
+            <label><input id="mnExternalOptIn" type="checkbox" disabled> Also publish to Instagram Reels</label>
+            <p id="mnExternalPreview"></p>
+            <p id="mnExternalNotice" role="status">Checking connections…</p>
+            <button id="mnExternalRefresh" class="mn__attach" type="button">Refresh connections</button>
+            <a class="mn__attach" href="https://matthew.mccluster.org/customer-site.html">Your site / connect Instagram</a>
+            <p>Publishes now. Scheduling and other external platforms are not supported here. Instagram uses only the video and caption; World visibility does not restrict Instagram. Keep this page open until the external upload finishes.</p>
+          </details>
           <!-- THE NEWSROOM (owner, 2026-10-20): shown only to the house owner. A public post ticked here is also an article
                on mccluster.org/news/, for search engines and news indexes (workers/mccluster/src/company-site/news.js). -->
           <label class="mn__newsroom" id="mnNewsroomRow" hidden><input type="checkbox" id="mnNewsroom"> <span>Also publish to the newsroom, as an article on mccluster.org/news. The first line is its headline.</span></label>
           <p class="mn__status" id="mnMediaStatus" role="status"></p>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
+
+        <section id="mnExternalDeliveries" aria-label="Post delivery status" style="padding:.75rem;overflow-wrap:anywhere" hidden></section>
 
         <!-- WORLD NEWS (owner, 2026-10-15): one member post to one news item, ingested from GDELT into the McCluster plane
              and served by the Worker. GDELT's licence asks for this credit; it shows whenever a news card does. -->
@@ -510,6 +524,7 @@
       </dialog>
 
       <section class="mn__view" id="mnDiscoverView" hidden>
+        <p><a class="mn__attach" href="world-discover.html">Businesses, services &amp; projects</a></p>
         <div class="mn__section-head">
           <div><p class="mn__eyebrow">Find the doers</p><h2>People taking action</h2></div>
           <button class="mn__quiet" id="mnShowBlocked" type="button">Blocked</button>
@@ -720,6 +735,8 @@
   <script src="js/name-integrity.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
+  <script src="js/world-publish-core.js?v=__STAMP__"></script>
+  <script src="js/world-social-composer.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>

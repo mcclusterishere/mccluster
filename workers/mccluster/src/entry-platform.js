@@ -39,6 +39,8 @@ import { handleCreatorDomains } from './creator-domains.js';
 import { handleCreatorDomainOrders } from './creator-domain-orders.js';
 import { handleCreatorDomainHost } from './creator-domain-host.js';
 
+import { handleWorldDirectory } from './world-directory.js';
+
 export { HereTenantAgent } from './here-tenant-agent.js';
 
 function healthResponse(request, env) {
@@ -92,6 +94,8 @@ export default {
       const briefs = await handleNewsBriefs(request, env);
       if (briefs) return briefs;
       // Public coarse-country discovery; never enters the member auth gate.
+      const directory = await handleWorldDirectory(request, env);
+      if (directory) return directory;
       const regional = await handleRegionScope(request, env);
       if (regional) return regional;
 
