@@ -28,7 +28,7 @@ try {
   });
   const page=await context.newPage(); const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(BASE+'/index.html?front=house');
+  await page.goto(BASE+'/index.html?front=house',{waitUntil:'domcontentloaded'});
   await page.waitForTimeout(3000);
   assert.equal(await page.locator('#work.project-feature').count(),1);
   assert.equal(await page.locator('#cmdCanvas5,#cmdCanvas4,#workVR').count(),0);
@@ -89,7 +89,7 @@ try {
   await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Unsafe',home:'javascript:alert(1)',logo:'https://bad.example/logo.png'}));
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   assert.equal(await page.locator('[data-appnav="music"]').getAttribute('href'),musicHref);
-  await page.goto(BASE+'/front.html?project=vaunt#work');
+  await page.goto(BASE+'/front.html?project=vaunt#work',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click();
   await page.waitForURL('**/album.html?album=vaunt-ep');
@@ -112,7 +112,7 @@ try {
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').getAttribute('href')==='account.html');
   assert.equal(await page.evaluate(()=>window.__MCC_ERR||null),null);
   if(width===820){
-    await page.reload();
+    await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
     await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
     await page.waitForTimeout(1000);
