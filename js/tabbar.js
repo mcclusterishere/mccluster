@@ -120,6 +120,13 @@
       '<rect' + b + ' x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>';
   }
   var WORLD_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg>';
+  // Existing supplied E=Up variants; preserve full artwork and its proportions.
+  function platformMark() {
+    return '<img class="appbar__platform" src="' + ROOT + 'assets/img/equity-uprise-mark-white.png" alt="" style="width:2.6rem;height:2.6rem;object-fit:contain;display:block">';
+  }
+  var platformMarkStyle = document.createElement("style");
+  platformMarkStyle.textContent = 'html[data-theme="light"] .appbar__platform{content:url("' + ROOT + 'assets/img/equity-uprise-mark.png")}';
+  document.head.appendChild(platformMarkStyle);
   function buildBar() {
     var nav = document.createElement("nav");
     nav.className = "appbar";
@@ -127,8 +134,8 @@
     nav.innerHTML =
       '<a class="appbar__tab" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'index.html" data-appnav="home">' +
-        '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
+      '<a class="appbar__tab" href="' + HOUSE + 'platform-home.html" data-appnav="home">' +
+        platformMark() + '<span>Platform</span></a>' +
       /* LAST COLUMN: the Globe, Equity Uprise's World screen. It replaced the
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
@@ -222,10 +229,10 @@
       ],
     },
     home: {
-      home: "index.html",
+      home: "platform-home.html",
       slots: [
-        ["hire.html", "case", "Hire", { title: "Hire the agency",
-          sub: "Brand films, photography, web builds, campaign strategy. One team, start to finish." }],
+        ["index.html?front=house", "mmark", "Matthew", { title: "Matthew McCluster",
+          sub: "Matthew’s personal site, portfolio and music." }],
         [MAP, "grid", "Everything", { title: "Every room in the house",
           sub: "The full map: the tracks, the gallery, the print shop, the archive, the desks. Everything the three wings do not carry." }],
       ],
@@ -298,9 +305,9 @@
        no coin rather than lighting one that is not on the bar. The pages
        still answer — nothing here deletes a room, it only stops the bar
        pointing at one. */
-    /* the front door is the house: the landing page opens on the emblem,
-       so / and /index.html light the M coin; the record lives behind Music */
-    "": "home", "index.html": "home",
+    /* Only the platform landing lights its center emblem. Matthew’s front
+       page remains a personal destination, and the record stays under Music. */
+    "platform-home.html": "home",
     "hire.html": "home",
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
@@ -342,27 +349,16 @@
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
 
-  /* ---------- A CREATOR'S PERSPECTIVE ----------
-     Owner, 2026-10-14: from Music, "if they select one individual, they
-     should be able to go to their front page and experience the site from
-     their perspective, just like they experience the site from my
-     perspective" with the M in the middle. A creator's front page
-     (music-creator.html?handle=) tells the bar whose it is (the
-     mcc:perspective event from js/music-creator-profile.js), and for the
-     rest of the session the middle cell is that creator: their own avatar,
-     round, or the initial of their name (never a mark drawn for them,
-     AGENTS.md), and it opens their front page. The held wing keeps the way
-     to McCluster's house, the M as supplied, beside Everything. The house
-     clears it: standing at Matthew's front door, the M is back. */
+  /* Creator perspective remains available to profile navigation and the
+     held home wing. The center emblem always opens the platform home,
+     regardless of the current member, artist, or owner perspective. */
   var PERSPECTIVE_KEY = "mcc_perspective";
   var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";
   var SELF_PROFILE = null, selfProfileEpoch = 0, lastVerifiedSubject = "";
   var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var HOUSE_ROOM = WINGS.home.slots[0];
-  var HOUSE_LABEL = (function () {
-    var t = dock.querySelector('[data-appnav="home"] span:last-child');
-    return t && t.textContent ? t.textContent : "HERE";
-  })();
+  var HOUSE_LABEL = "Platform";
+  var EVERYTHING_ROOM = WINGS.home.slots[1];
   function textOf(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
   function attrOf(x) { return textOf(x).replace(/"/g, "&quot;"); }
   function cleanPerspective(p) {
@@ -413,45 +409,24 @@
   function paintPerspective() {
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
-    var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null),
-      label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
-    if(p && p.kind==="house") p=null;
-    /* THE OWNER'S M IS HIS FRONT PAGE (owner, 2026-10-21: "My front page as the admin is not my actual site's front
-       page ... it should represent as my actual front page"). With the owner's bar on, the M is index.html, the page
-       Control → Create → Front page shows and controls, never a member card. */
-    if (ADMIN_ON) p = null;
-    if (!p) {
-      /* M is the McCluster platform home for everyone (owner, 2026-10-14);
-         the member feed lives in World, not behind the emblem. */
-      homeTab.href = HOUSE + "index.html";
-      homeTab.setAttribute("aria-label", "Open the McCluster home");
-      homeTab.removeAttribute("data-perspective");
-      if (coin && (coin.tagName !== "IMG" || coin.classList.contains("appbar__m--creator"))) {
-        coin.outerHTML = '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt="">';
-      }
-      if (label) label.textContent = HOUSE_LABEL;
-      WINGS.home.home = HOUSE + "index.html";
-      WINGS.home.slots[0] = HOUSE_ROOM;
-      return;
+    homeTab.href = HOUSE + "platform-home.html";
+    homeTab.setAttribute("aria-label", "Open the Equity Uprise platform home");
+    homeTab.removeAttribute("data-perspective");
+    homeTab.innerHTML = platformMark() + '<span class="appbar__sr">Platform</span>';
+    var atPlatform = /platform-home\.html$/.test(location.pathname);
+    homeTab.classList.toggle("is-here", atPlatform);
+    if (atPlatform) homeTab.setAttribute("aria-current", "page");
+    else homeTab.removeAttribute("aria-current");
+    WINGS.home.home = HOUSE + "platform-home.html";
+    WINGS.home.slots[0] = HOUSE_ROOM;
+    WINGS.home.slots[1] = EVERYTHING_ROOM;
+    var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null);
+    if (p && p.kind !== "house") {
+      var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
+        "?handle=" + encodeURIComponent(p.handle);
+      WINGS.home.slots[1] = [door, "folk", shortName(p.name), { title: p.name + "’s profile",
+        sub: "Return to this " + (p.kind === "artist" ? "artist" : "member") + "’s front page." }];
     }
-    var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
-      "?handle=" + encodeURIComponent(p.handle);
-    homeTab.href = door;
-    homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
-    homeTab.setAttribute("data-perspective", p.handle);
-    if (coin) {
-      coin.outerHTML = p.avatar
-        ? '<img class="appbar__m appbar__m--creator" src="' + attrOf(p.avatar) + '" alt="">'
-        : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(p.name)) + "</span>";
-    }
-    if (label) label.textContent = shortName(p.name);
-    /* their own front page lights the middle coin, as the house lights the M */
-    var theirs = /(?:music-creator|member-front)\.html$/.test(location.pathname) &&
-      String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
-    homeTab.classList.toggle("is-here", theirs);
-    WINGS.home.home = door;
-    WINGS.home.slots[0] = [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
-      sub: "Matthew McCluster\u2019s front door: the M, the records and the World from his side." }];
   }
   function setPerspective(raw) {
     var p = cleanPerspective(raw);
@@ -536,7 +511,7 @@
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* Center tab: visited profile > authenticated owner profile > original guest house. */
+    /* The center remains the platform door; profile context updates its held wing. */
     paintPerspective();
     /* Exactly three columns, signed in or not. Record and Analytics were
        member-only columns; they are contextual now (Create in the World
@@ -580,7 +555,7 @@
   }
   /* ---------- THE OWNER'S FIVE TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
      For the house owner only, the bar widens to five: Play (the player), Home (the Control Room: the admin back end lives
-     under Home now), the M (as supplied, assets/img/m-mark.png: scaled, never redrawn, no plate added), Analytics (its
+     under Home now), the platform emblem (the supplied E=Up asset), Analytics (its
      own tab, control.html#analytics) and the Globe. Everyone else keeps the three columns above.
      Who is the owner is the server's answer, never this browser's: GET /v1/status, the same owner check the Control Room
      and js/owner-control-redirect.js use (requireHouseOwner in the Worker). The answer is remembered for this tab's
@@ -611,7 +586,7 @@
   function adminBar() {
     return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: the Control Room">' + HOME_SVG + '<span>Home</span></a>' +
-      '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'index.html" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
+      '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'platform-home.html" data-appnav="home">' + platformMark() + '<span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
       '<a class="appbar__tab" href="' + HOUSE + 'control.html#analytics" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
       /* THE OWNER'S GLOBE IS HITMAN'S HALO (owner, 2026-10-22: "click the globe as matthew@mccluster.org ... It'll take you
          to the user globe and not the Hitman Halo globe"). Everyone else's globe is the World; the owner reaches the World
