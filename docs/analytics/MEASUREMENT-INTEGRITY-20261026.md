@@ -83,9 +83,8 @@ All browser data/audio/accounts are local fixtures; production was not accessed.
 ## Remaining work
 
 - Replace latest-UID visitor attribution with event-bound account evidence and
-  explicit ambiguous/unattributed history. The account-evidence repairs above
-  do not change the existing Visitors RPC; its replacement still needs isolated
-  SQL validation and explicit activation approval.
+  explicit ambiguous/unattributed history. The dormant v6 proposal below passes
+  isolated SQL tests; detail/history consumers and deployment remain gated.
 - Extend purpose-specific allowlists to remaining producers/tenant SDK and enforce
   at ingestion; add minimized occurrence metadata. Preserve current consent and
   intentional untracked embeds. Keep recovery outbox payloads minimal.
@@ -99,6 +98,40 @@ All browser data/audio/accounts are local fixtures; production was not accessed.
 - Canonical recording/artist relations require verified ownership evidence;
   no title-based creator mapping, historical invented signals, ad activation,
   royalty rule or payout allocation is authorized by this work.
+
+## Checkpoint 5: dormant database proposals and dependency plan
+
+`supabase/pending/analytics_visitor_event_identity_v6.sql` adds a new, unused
+service-role-only invoker RPC. The isolated PostgreSQL test first reproduces
+v5 assigning six shared-device events to the latest account, then verifies v6
+partitions those events into anonymous/A/B buckets using each raw event UUID.
+It preserves filter/search/pagination behavior, avoids double-counting paired
+full-play reports as starts, scopes location search to the relevant bucket and
+excludes tenant rows. It neither replaces v5 nor changes any row.
+
+`supabase/pending/analytics_tenant_history_restrict_v1.sql` proposes changing the
+existing raw-event site foreign key from SET NULL to RESTRICT. A site with
+retained events then cannot be deleted until its retention/deletion workflow is
+explicitly resolved. The fixture verifies a denied delete leaves both raw and
+lean site IDs intact; applying the proposal twice is safe. No live delete was
+attempted, and no current tenant-loss incident is claimed.
+
+Activation order (requires exact approval; none performed):
+
+1. Review the existing database objects and representative bounded query plans;
+   these local tests establish semantics, not production latency.
+2. Finish event-bound visitor-detail/session-history consumers. A shared session
+   can span anonymous and several account buckets, so session membership sums
+   are not distinct sessions or people. Do not point the Worker at v6 yet.
+3. Review the tenant archive/deletion behavior, locking window and rollback.
+   Never delete events merely to make a tenant deletion succeed.
+4. Apply approved SQL transactionally through the established migration process;
+   record exact live versions/bytes in the production ledger and drift contract.
+5. Release compatible Worker/UI consumers, verify authenticated reads and compare
+   raw/lean scope and completeness. Retention scheduling remains separately
+   unverified; neither proposal activates a cron job or changes the 400-day policy.
+
+CI runs these proposals only in isolated PostgreSQL/WASM with synthetic rows.
 
 ## Coordination and activation gates
 
