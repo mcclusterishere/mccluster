@@ -125,6 +125,7 @@ jobs:
           node scripts/test/customer-site-addresses-db.mjs
           node scripts/test-world-directory-db.mjs
           node scripts/test-customer-social-db.mjs
+          node scripts/test/social-provider-attempts-db.mjs
           node scripts/test/creator-domain-schema.mjs
           node scripts/test/creator-domain-orders.mjs
           node scripts/test/creator-checkout-reservation-db.mjs
