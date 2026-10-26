@@ -148,7 +148,7 @@ export function buildGraph(cat, albums) {
         "@type": "MusicGroup",
         "@id": EQUITY_UPRISE_ACT["@id"],
         name: "Equity Uprise",
-        url: `${SITE}/album.html?album=equity-uprise`,
+        url: `${SITE}/platform-home.html`,
         description: "The music act of Equity Uprise, McCluster Corp's civic program. Its album is Docket 516R."
       },
       ...albumNodes,

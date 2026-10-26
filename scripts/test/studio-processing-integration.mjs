@@ -5,7 +5,7 @@ import {executeStudioTask} from '../../core/src/website-studio/executor.mjs';
 import {A,B} from '../../workers/mccluster/test/support/project-tiles-fixture.mjs';
 const f=await studioProcessingFixture();
 const task=async id=>(await f.sql.query("select input from ops_compute_tasks where input->>'asset_id'=$1 order by created_at desc limit 1",[id])).rows[0].input;
-async function upload(kind,file){const bytes=await readFile(new URL('../e2e/fixtures/front-media/'+file,import.meta.url));const r=await f.mediaCall('/uploads','POST',{bytes:bytes.length,rights_confirmed:true,settings:{kind}});assert.equal(r.status,200,JSON.stringify(r));await f.fetcher(r.body.upload_url,{method:'PUT',body:bytes});return r.body.asset_id;}
+async function upload(kind,file){const bytes=await readFile(new URL('../e2e/fixtures/front-media/'+file,import.meta.url));const r=await f.mediaCall('/uploads','POST',{bytes:bytes.length,rights_confirmed:true,settings:{kind}});assert.equal(r.status,200,JSON.stringify(r));const result=await f.fetcher(r.body.upload_url,{method:'POST',headers:{authorization:'Bearer fixture-alice','x-site-bytes':String(bytes.length),'content-type':kind==='music'?'audio/wav':kind==='immersive360'?'image/jpeg':'video/webm'},body:bytes});assert.equal(result.status,200,await result.text());return r.body.asset_id;}
 try{
  const ready=await f.mediaCall('/assets');assert.equal(ready.body.processing.can_prepare,true);assert.equal(ready.body.processing.executor_status,'not_verified');
  const ids=[];

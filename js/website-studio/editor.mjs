@@ -45,8 +45,9 @@ function transition(key,s){return {asset_ref:{type:'media_asset',key},in_ms:s.in
 async function guard(fn){if(busy)return;busy=true;try{await fn();}catch(e){status(e.message,true);}finally{busy=false;}}
 async function upload(file,settings,select){if(!file)return;return guard(async()=>{if(!confirm('Do you own this media or have permission to use it?'))return;
  const epoch=authEpoch;status('Registering upload…');const r=await api('/uploads',{method:'POST',body:{bytes:file.size,settings,rights_confirmed:true}});
- status('Uploading. Keep this page open.');const u=new URL(r.upload_url);if(u.protocol!=='https:'||u.hostname!=='zmnhbrjyhxzhkxmhkexs.supabase.co')throw Error('Unexpected upload destination');
- const response=await fetch(r.upload_url,{method:'PUT',headers:{'content-type':file.type||'application/octet-stream'},body:file});if(epoch!==authEpoch)throw Error('Account changed');if(!response.ok)throw Error('Upload failed. Select the file again to retry. Your saved draft has not changed.');
+ status('Uploading. Keep this page open.');const u=new URL(r.upload_url);if(u.origin!=='https://api.mccluster.org'||u.pathname!=='/v1/customer-site/media'||r.upload_method!=='POST'||r.requires_authorization!==true)throw Error('Unexpected upload destination');
+ const token=window.MCC?.session()?.access_token;if(!token||epoch!==authEpoch)throw Error('Account changed');
+ const response=await fetch(r.upload_url,{method:'POST',headers:{authorization:'Bearer '+token,'x-site-bytes':String(file.size),'content-type':file.type||'application/octet-stream'},body:file,signal:AbortSignal.timeout(130000)});if(epoch!==authEpoch)throw Error('Account changed');if(!response.ok)throw Error('Upload was not confirmed. Refresh storage in Your site before retrying. Your saved draft has not changed.');
  select(r.asset_id);changed();await media();if(!processing.can_prepare){status('Upload retained. Save your draft to keep this selection. '+processing.blockers.join(' '),true);return;}try{const queued=await api('/assets/'+r.asset_id+'/complete',{method:'POST',body:{}});await media();status('Upload saved; media '+queued.state+'. Save your draft and refresh media status to see the result.');}catch(e){await media();throw Error('Upload retained. Save your draft, then use Prepare or retry. '+e.message);}});}
 async function start(){
  if(!validProject)throw Error('Choose an existing project from Your projects first.');
@@ -55,7 +56,9 @@ async function start(){
  $('guidance').textContent='Publishing requires an active paid workspace and a public profile. Private media preparation remains separately gated; no processing allowance is granted here. '+definition.guidance.transition.help;
  const saved=await api('');doc=structuredClone(saved.draft?.document||definition.definition);draftID=saved.draft?.id||'project';revision=saved.draft?.revision||0;dirty=!revision;
  $('editor').hidden=false;$('load').hidden=false;await media();
- const access=await api('/workspaces');$('workspace').replaceChildren();for(const w of access.workspaces||[]){if(!/^[0-9a-f-]{36}$/.test(w.org_id))continue;const option=node('option','Workspace '+w.org_id);option.value=w.org_id;$('workspace').append(option);}
+ $('guidance').textContent=(saved.free_publication?'Publish your owned website for free with a public profile.':'Publishing requires an active paid workspace and a public profile.')+' Media approval and preparation allowances remain separate. '+definition.guidance.transition.help;
+ $('workspace').closest('label').hidden=saved.free_publication===true;
+ const access=saved.free_publication?{workspaces:[]}:await api('/workspaces');$('workspace').replaceChildren();for(const w of access.workspaces||[]){if(!/^[0-9a-f-]{36}$/.test(w.org_id))continue;const option=node('option','Workspace '+w.org_id);option.value=w.org_id;$('workspace').append(option);}
  status(revision?'Loaded saved revision '+revision:'Template ready. This draft is not saved yet.');sessionStorage.removeItem('studio-template-intent');
 }
 $('useTemplate').onclick=()=>guard(start);

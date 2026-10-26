@@ -1,0 +1,83 @@
+{
+  "title": "Build something people belong to.",
+  "intro": "Equity Uprise brings music, people and projects together. Give your work a home, contribute your skills, and follow what comes next.",
+  "primary": {
+    "label": "Build your website",
+    "href": "https://matthew.mccluster.org/customer-site.html"
+  },
+  "secondary": {
+    "label": "Listen to Docket 516R",
+    "href": "https://matthew.mccluster.org/album.html?album=equity-uprise"
+  },
+  "cards": [
+    {
+      "title": "Builders",
+      "body": "Create your profile and an owned website using your existing M Account. Edit your words, images and links, then preview and publish. Custom hosting and domain connections are optional and depend on setup availability.",
+      "status": "Website activation is in preparation",
+      "action": {
+        "label": "Start your website",
+        "href": "https://matthew.mccluster.org/customer-site.html"
+      },
+      "experiences": [
+        {
+          "title": "Build",
+          "body": "Create your free profile and website with your own words, images and links."
+        },
+        {
+          "title": "Run",
+          "body": "Edit and publish your page. Storefront and customer tools depend on availability."
+        },
+        {
+          "title": "Grow",
+          "body": "Choose whether your site participates in World; explore supported campaigns."
+        }
+      ]
+    },
+    {
+      "title": "Contributors",
+      "body": "Explore available campaigns, read the brief, and submit your work for review. Eligibility, available funding and verified work determine what can be paid. Participation does not guarantee earnings.",
+      "status": "Check current opportunities",
+      "action": {
+        "label": "Explore clipping campaigns",
+        "href": "https://matthew.mccluster.org/mnet.html?view=clips"
+      },
+      "experiences": [
+        {
+          "title": "Discover",
+          "body": "Explore people, projects and available clipping campaigns."
+        },
+        {
+          "title": "Contribute",
+          "body": "Read the brief, complete the work and submit evidence for review."
+        },
+        {
+          "title": "Earn",
+          "body": "Follow verified review and reward status. Eligibility and available funding apply."
+        }
+      ]
+    },
+    {
+      "title": "Backers",
+      "body": "Get to know projects and follow their public updates. Rewards-based backing is planned; no project funding is collected here.",
+      "status": "Backing is not yet available",
+      "action": {
+        "label": "Explore World",
+        "href": "https://matthew.mccluster.org/mnet.html?view=feed"
+      },
+      "experiences": [
+        {
+          "title": "Discover",
+          "body": "Get to know creators, organizations and their projects."
+        },
+        {
+          "title": "Back",
+          "body": "Rewards-based project backing is planned and is not collecting funds."
+        },
+        {
+          "title": "Follow",
+          "body": "Follow public updates now; dedicated backing updates are planned."
+        }
+      ]
+    }
+  ]
+}

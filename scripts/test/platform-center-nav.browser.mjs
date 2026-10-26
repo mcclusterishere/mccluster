@@ -48,6 +48,13 @@ try {
    await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Second profile',home:'front.html?project=second'}));
    assert.equal(await page.locator('[data-appnav="home"] .appbar__m--initial').textContent(),'S');
    assert.equal(await page.locator('[data-appnav="home"] img').count(),0);
+   const uploaded='https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/public/front-media/11111111-1111-4111-8111-111111111111/projects/logo-site/still-logo.png';
+   await page.evaluate(logo=>window.MCC_BAR.pageProfile({name:'Owned logo',home:location.pathname,logo}),uploaded);
+   assert.equal(await page.locator('[data-appnav="home"] img').getAttribute('src'),uploaded);
+   for(const logo of [uploaded.replace('zmnhbrjyhxzhkxmhkexs.supabase.co','other.supabase.co'),uploaded.replace('public/front-media','authenticated/front-media'),uploaded+'?token=secret',uploaded.replace('front-media','private-masters')]){
+    await page.evaluate(logo=>window.MCC_BAR.pageProfile({name:'Rejected logo',home:location.pathname,logo}),logo);
+    assert.equal(await page.locator('[data-appnav="home"] img').count(),0);
+   }
    await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Unsafe',home:'https://other.invalid/',logo:'javascript:alert(1)'}));
    assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),'https://matthew.mccluster.org/platform-home.html');
    assert.equal(await page.evaluate(()=>window.MCC_BAR.pageProfile()),null);

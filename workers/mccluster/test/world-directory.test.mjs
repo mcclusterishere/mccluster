@@ -3,6 +3,17 @@ import assert from 'node:assert/strict';
 import {handleWorldDirectory} from '../src/world-directory.js';
 import {directoryFixture,A,B} from './support/world-directory-fixture.mjs';
 const listing=(overrides={})=>({source_kind:'project',source_key:'alpha',entity_type:'service',title:'Audio mastering',description:'Mix and master songs',category:'music',online_only:false,location_label:'Chicago',service_area:'Illinois',is_listed:true,location_consent:true,...overrides});
+test('tenant module off blocks direct listing and hides retained listings without changing membership',async()=>{
+ const {call,tables,env}=directoryFixture();env.CUSTOMER_SITE_OFFER_ENABLED='true';tables.customer_site_modules=[];
+ assert.equal((await call('/me','POST',listing(),'alice')).body.code,'module_disabled');
+ tables.customer_site_modules.push({owner_user_id:A,source_kind:'project',source_key:'alpha',module_key:'world_discovery',enabled:true});
+ assert.equal((await call('/me','POST',listing(),'alice')).status,200);assert.equal((await call()).body.items.length,1);
+ tables.customer_site_modules[0].enabled=false;
+ assert.equal((await call()).body.items.length,0);assert.equal((await call('/me','GET',null,'alice')).body.listings.length,1);
+ assert.equal(tables.network_profiles[0].discoverable,true);assert.equal(tables.world_directory_listings.length,1);
+ tables.customer_site_modules[0].enabled=true;tables.customer_site_modules[0].owner_user_id=B;assert.equal((await call()).body.items.length,0);
+ delete tables.customer_site_modules;assert.equal((await call()).status,503);
+});
 test('public search filters real opt-in sources and preserves provenance without coordinates',async()=>{
  const {call}=directoryFixture();
  assert.equal((await call('/me','POST',listing(),'alice')).status,200);
