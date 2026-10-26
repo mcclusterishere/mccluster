@@ -100,6 +100,39 @@ test('publishing makes the page public at its handle; visitors never see a draft
   assert.equal(me.media_prefix, PREFIX, 'the editor is told its own folder');
 });
 
+test('private and missing profiles can save drafts, but cannot claim a public publication', async () => {
+  for (const profiles of [[], [{ m_uid: BENJI_M, visibility: 'private' }]]) {
+    const d = db({ profiles });
+    const code = profiles.length ? 'private_profile' : 'profile_required';
+    const me = await (await call(d, '/v1/fronts/me', { token: 'benji' })).json();
+    assert.equal(me.publish_blocker, code);
+    assert.equal(me.publicly_available, false);
+    assert.equal((await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG } })).status, 200);
+    const writes = d.calls.filter(x => x.method === 'POST').length;
+    const publish = await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } });
+    assert.equal(publish.status, 409);
+    assert.equal((await publish.json()).detail.code, code);
+    assert.equal(d.calls.filter(x => x.method === 'POST').length, writes, 'refused publication has no writes');
+    assert.equal(d.t.member_fronts[0].published, null);
+    // A settings change is made outside the publisher, then the same draft can be published.
+    d.t.profiles = [{ m_uid: BENJI_M, visibility: 'public' }];
+    const recovered = await (await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } })).json();
+    assert.equal(recovered.publicly_available, true);
+    assert.equal((await call(d, '/v1/fronts/benji.chase')).status, 200);
+    d.t.profiles = [];
+    assert.equal((await call(d, '/v1/fronts/benji.chase')).status, 404, 'a missing profile must fail closed');
+  }
+});
+
+test('a caller-supplied identity cannot replace another member\'s page', async () => {
+  const other = { m_uid: HOUSE, auth_user_id: OWNER, handle: 'another.creator', draft: { words: { title1: 'OTHER' } }, published: null };
+  const d = db({ fronts: [other] });
+  const result = await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { m_uid: HOUSE, auth_user_id: OWNER, handle: other.handle, config: CONFIG, publish: true } });
+  assert.equal(result.status, 200);
+  assert.deepEqual(d.t.member_fronts.find(x => x.m_uid === HOUSE), other);
+  assert.equal(d.t.member_fronts.find(x => x.m_uid === BENJI_M).handle, 'benji.chase');
+});
+
 test('a published page is checked again on the way out: a row can only show its own account\'s media', async () => {
   const d = db({ fronts: [{ m_uid: BENJI_M, auth_user_id: BENJI, handle: 'benji.chase', draft: {}, published: { media: { hero: { base: `${SB}/storage/v1/object/public/front-media/${OWNER}/hero/`, count: 100, ext: 'webp' } }, words: { title1: 'OK' } }, published_at: '2026-10-21T00:00:00Z', removed_at: null }] });
   const page = await (await call(d, '/v1/fronts/benji.chase')).json();
