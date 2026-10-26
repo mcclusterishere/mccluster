@@ -6,9 +6,22 @@ function show(signedIn){
   panel.hidden=shared?false:!!signedIn;
   var entry=panel.querySelector('[data-world-entry]');
   if(entry){entry.textContent=signedIn?'Enter the World →':'Sign in / Join the World →';entry.href=signedIn?'mnet.html?view=feed':'account.html';}
-  if(!panel.hidden&&frame&&!frame.getAttribute('src'))frame.src=frame.getAttribute('data-src');
+  if(!panel.hidden)watchFrame();
 }
-var frame=panel.querySelector('iframe[data-src]');var epoch=0;
+var frame=panel.querySelector('iframe[data-src]');var epoch=0;var observer=null;var frameStarted=false;
+/* Native lazy iframe navigation can start during a cross-document snapshot and
+   strand browser Back. Defer explicitly while leaving the blank frame settled. */
+if(frame)frame.loading='eager';
+function loadFrame(){
+  if(!frame||frameStarted||panel.hidden)return;
+  frameStarted=true;if(observer)observer.disconnect();
+  frame.src=frame.getAttribute('data-src');
+}
+function watchFrame(){
+  if(!frame||frameStarted)return;
+  if(!window.IntersectionObserver){loadFrame();return;}
+  if(!observer){observer=new IntersectionObserver(function(entries){if(entries.some(function(entry){return entry.isIntersecting;}))loadFrame();},{rootMargin:'600px'});observer.observe(panel);}
+}
 /* Control → Create → Front page previews the page as a visitor gets it; the frame shares the owner's session, so the
    guest-only World is shown there as a guest would see it (js/control-room/front-page.js, Codex #591) */
 var preview=(function(){try{return window.parent!==window&&window.parent.location.origin===location.origin&&/control\.html$/.test(window.parent.location.pathname);}catch(e){return false;}})();
