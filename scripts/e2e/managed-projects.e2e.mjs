@@ -145,6 +145,8 @@ async function setup(viewport,account,{holdReload=false}={}){
   page.on('pageerror',e=>errors.push(e.message));
   return {ctx,page,errors,media};
 }
+// Readiness is asserted by each journey below. Background films and embeds are
+// not navigation readiness: waiting for full load can hang on media on CI.
 const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
 const studio=page=>page.evaluate(()=>{const S=window.__MCC_FRONT_STUDIO;return S?{state:S.state,dirty:S.dirty,msg:S.msg,bad:S.bad,busy:Object.keys(S.busy).filter(k=>S.busy[k]),draft:JSON.parse(JSON.stringify(S.draft||null)),me:S.me&&{handle:S.me.handle,published:!!S.me.published}}:null;});
 const previewFrame=page=>page.frames().find(f=>/\/front\.html$/.test(new URL(f.url()).pathname));
@@ -163,7 +165,7 @@ async function uploadInto(page,key,file){
 
 try {
  const app=await setup({width:390,height:844},BENJI), {page}=app;
- await page.goto(BASE+'/customer-projects.html');
+ await page.goto(BASE+'/customer-projects.html',{waitUntil:'domcontentloaded'});
  await page.fill('#projectName','First Project');await page.fill('#projectSlug','first-project');
  await Promise.all([page.waitForURL('**/project-studio.html?project=first-project'),page.click('#projectCreate button')]);
  await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');
@@ -172,12 +174,12 @@ try {
  await page.click('[data-act="save"]');await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg==='Draft saved.');
  check('draft','saves through project endpoint only',world.projects[0].draft.words.eyebrow==='Private project draft'&&!world.projects[0].published&&!world.calls.some(c=>c.path.startsWith('/v1/fronts')));
  const visitor=await setup({width:390,height:844},null);
- await visitor.page.goto(BASE+'/front.html?project=first-project');
+ await visitor.page.goto(BASE+'/front.html?project=first-project',{waitUntil:'domcontentloaded'});
  await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
  check('draft','public renderer cannot read private draft',await visitor.page.getAttribute('html','data-front-state')!=='ready');
  await previewReady(page);
  check('preview','same-origin draft preview uses project words',await previewFrame(page).locator('[data-fw="eyebrow"]').first().textContent()==='Private project draft');
- const second=await app.ctx.newPage();await second.goto(BASE+'/customer-projects.html');
+ const second=await app.ctx.newPage();await second.goto(BASE+'/customer-projects.html',{waitUntil:'domcontentloaded'});
  await second.fill('#projectName','Second Project');await second.fill('#projectSlug','second-project');
  await Promise.all([second.waitForURL('**/project-studio.html?project=second-project'),second.click('#projectCreate button')]);
  await second.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');await second.close();
@@ -190,30 +192,30 @@ try {
  await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg.startsWith('Published.'));
  await page.waitForTimeout(200);
  check('cleanup','cleanup preserves personal and same-owner other project files',world.objects.has(objects[0])&&world.objects.has(objects[1])&&!world.objects.has(objects[2]),world.removed);
- await visitor.page.reload();await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')==='ready');
+ await visitor.page.reload({waitUntil:'domcontentloaded'});await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')==='ready');
  check('publish','real public renderer shows published words',await visitor.page.locator('[data-fw="eyebrow"]').first().textContent()==='Private project draft');
  check('responsive','editor has no 390px overflow',await overflow(page)===0);
  await page.screenshot({path:join(OUT,'project-editor-phone.png'),fullPage:true});
  await visitor.page.screenshot({path:join(OUT,'project-public-phone.png'),fullPage:true});
- world.visibility='private';await visitor.page.reload();await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
+ world.visibility='private';await visitor.page.reload({waitUntil:'domcontentloaded'});await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
  check('privacy','making owner profile private hides saved publication',await visitor.page.getAttribute('html','data-front-state')!=='ready');
  world.visibility='public';
  page.once('dialog',d=>d.accept());await page.click('[data-act="unpublish"]');await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg==='Taken down. Your draft is kept.');
- await visitor.page.reload();await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
+ await visitor.page.reload({waitUntil:'domcontentloaded'});await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
  check('unpublish','take down keeps draft and removes public page',!!world.projects[0].draft&&!world.projects[0].published&&await visitor.page.getAttribute('html','data-front-state')!=='ready');
  await page.fill('[name="words.eyebrow"]','UNSAVED ALICE SECRET');
  await page.evaluate(a=>{const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:a.id})).replace(/=+$/,'')+'.y',expires_at:exp,user:{id:a.id}}));window.dispatchEvent(new Event('mcc:auth-changed'));},VISITOR);
  await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='off'||window.__MCC_FRONT_STUDIO?.state==='error');
  check('account-switch','reload clears old draft and new account cannot edit project',!(await page.textContent('body')).includes('UNSAVED ALICE SECRET')&&!await page.evaluate(()=>window.__MCC_FRONT_STUDIO?.draft));
  const before=world.calls.length;
- await page.goto(BASE+'/project-studio.html?project=../../bad');await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='error');
+ await page.goto(BASE+'/project-studio.html?project=../../bad',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='error');
  check('invalid','invalid project slug fails closed without personal API requests',world.calls.length===before);
  check('isolation','no personal front writes during entire flow',!world.calls.some(c=>c.path.startsWith('/v1/fronts')&&c.method!=='GET')&&world.fronts.length===0);
  // Keep the old document alive during its reload to exercise the epoch guard,
  // rather than relying on navigation destroying a late response callback.
  for(const mode of ['reject','stall']) {
    const authCase=await setup({width:390,height:844},BENJI,{holdReload:true}), p=authCase.page;
-   await p.goto(BASE+'/project-studio.html?project=first-project');
+   await p.goto(BASE+'/project-studio.html?project=first-project',{waitUntil:'domcontentloaded'});
    await p.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');
    await p.fill('[name="words.eyebrow"]','OLD PRIVATE '+mode);
    await p.evaluate(()=>{
@@ -248,26 +250,26 @@ try {
    const m=window.MCC_FRONT?.config.media;
    return m?.scene1?.prefix==='vauntlive_'&&m?.scene2?.prefix==='vaunt_'&&m?.cabin?.src==='assets/video/vaunt-360.mp4'&&m?.sound?.src==='assets/audio/who-did-the-shoot.mp3';
  });
- await vp.goto(BASE+'/front.html?project=vaunt');await readyProject();
+ await vp.goto(BASE+'/front.html?project=vaunt',{waitUntil:'domcontentloaded'});await readyProject();
  check('vaunt','explicit project_not_found uses frozen static registry',await mediaContract(vp)&&await vp.getAttribute('html','data-front-project')==='vaunt');
  const registryConfig={words:{eyebrow:'Owner edited Vaunt words'},media:{cabin:{kind:'video',src:SB+'/storage/v1/object/public/front-media/'+BENJI.id+'/projects/vaunt/replacement.mp4'}}};
  const registryRow={slug:'vaunt',name:'Vaunt managed fixture',owner_user_id:BENJI.id,m_uid:BENJI.m_uid,registry_key:'vaunt',draft:registryConfig,published:registryConfig,published_at:new Date().toISOString(),removed_at:null};
  world.projects.push(registryRow);
- await vp.reload();await readyProject();
+ await vp.reload({waitUntil:'domcontentloaded'});await readyProject();
  check('vaunt','managed words merge while registry scene media stays immutable',(await vp.locator('[data-fw="eyebrow"]').first().textContent())==='Owner edited Vaunt words'&&await mediaContract(vp));
  check('vaunt','managed registry retains album and shared World footer',await vp.locator('a[href="album.html?album=vaunt-ep"]').count()>0&&await vp.locator('[data-profile-world]').count()>0&&await vp.locator('[data-world-entry]').count()>0);
- world.visibility='private';await vp.reload();await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
+ world.visibility='private';await vp.reload({waitUntil:'domcontentloaded'});await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
  check('vaunt','private bound project never falls back to static',!await vp.evaluate(()=>window.MCC_FRONT_SOURCE));
  const privateEditor=await setup({width:390,height:844},BENJI);
- await privateEditor.page.goto(BASE+'/project-studio.html?project=vaunt');await privateEditor.page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');await previewReady(privateEditor.page);
+ await privateEditor.page.goto(BASE+'/project-studio.html?project=vaunt',{waitUntil:'domcontentloaded'});await privateEditor.page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');await previewReady(privateEditor.page);
  const privatePreview=previewFrame(privateEditor.page);
  check('vaunt','private owner preview carries registry binding and immutable media',await mediaContract(privatePreview)&&(await privatePreview.locator('[data-fw="eyebrow"]').first().textContent())==='Owner edited Vaunt words');
  await privateEditor.ctx.close();world.visibility='public';
- registryRow.removed_at=new Date().toISOString();await vp.reload();await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
+ registryRow.removed_at=new Date().toISOString();await vp.reload({waitUntil:'domcontentloaded'});await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
  check('vaunt','removed bound project never falls back to static',!await vp.evaluate(()=>window.MCC_FRONT_SOURCE));
- registryRow.removed_at=null;registryRow.published=null;registryRow.published_at=null;await vp.reload();await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
+ registryRow.removed_at=null;registryRow.published=null;registryRow.published_at=null;await vp.reload({waitUntil:'domcontentloaded'});await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
  check('vaunt','unpublished project_unavailable never falls back to static',!await vp.evaluate(()=>window.MCC_FRONT_SOURCE));
- world.projectsUnavailable=true;await vp.reload();await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
+ world.projectsUnavailable=true;await vp.reload({waitUntil:'domcontentloaded'});await vp.waitForFunction(()=>document.documentElement.dataset.frontState==='empty');
  check('vaunt','storage 503 never falls back to static',!await vp.evaluate(()=>window.MCC_FRONT_SOURCE));world.projectsUnavailable=false;
  check('vaunt','registry public and private preview produce no uncaught errors',vaunt.errors.length===0&&privateEditor.errors.length===0,{public:vaunt.errors,preview:privateEditor.errors});
  await vaunt.ctx.close();
