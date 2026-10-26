@@ -413,7 +413,7 @@
             </label>
             <button class="mn__post" id="mnPost" type="button">Post</button>
           </div>
-          <details id="mnExternalDestinations" style="padding:.75rem;max-width:100%;overflow-wrap:anywhere">
+          <details id="mnExternalDestinations" hidden style="padding:.75rem;max-width:100%;overflow-wrap:anywhere">
             <summary>Destinations · World selected</summary>
             <p>World is always included. Choose Instagram only when you want this video published there too.</p>
             <label for="mnExternalSite" style="display:block">Your connected Instagram account</label>
@@ -430,7 +430,13 @@
           <!-- THE NEWSROOM (owner, 2026-10-20): shown only to the house owner. A public post ticked here is also an article
                on mccluster.org/news/, for search engines and news indexes (workers/mccluster/src/company-site/news.js). -->
           <label class="mn__newsroom" id="mnNewsroomRow" hidden><input type="checkbox" id="mnNewsroom"> <span>Also publish to the newsroom, as an article on mccluster.org/news. The first line is its headline.</span></label>
+          <button class="mn__attach" id="mnUploadCancel" type="button" hidden>Cancel upload</button>
           <p class="mn__status" id="mnMediaStatus" role="status"></p>
+          <p class="mn__status" id="mnDraftStatus" role="status"></p>
+          <button class="mn__attach" id="mnCompositionRetry" type="button" hidden>Recover original post</button>
+          <label id="mnNativeReview" hidden><input id="mnNativeReviewed" type="checkbox"> I checked my profile. The earlier post may already exist; a new draft is a separate post.</label>
+          <button class="mn__attach" id="mnStartSeparateDraft" type="button" hidden disabled>Start separate draft</button>
+          <details id="mnReviewedRequest" hidden><summary>Previous unconfirmed post</summary><p id="mnReviewedBody"></p></details>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 

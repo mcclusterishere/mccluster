@@ -105,9 +105,9 @@ test("a (near) black frame is tried again; a dark scene with light in it is not"
 test("the composer takes the picture while the video uploads and shows it, not a black box", () => {
   const up = mnet.slice(mnet.indexOf("function uploadMediaWithPoster"), mnet.indexOf("function uploadMediaFiles"));
   assert.ok(up.indexOf("var shot=makeVideoPoster(file,{onMeta:metaKnown})") < up.indexOf("uploadOneMedia(file,"), "capture starts before the video upload, in parallel");
-  assert.match(up, /uploadOneMedia\(file,meta\)/, "the video's finalize carries its size and length");
+  assert.match(up, /uploadOneMedia\(file,meta,current\)/, "the video's finalize carries its size and length");
   assert.match(poster, /opts\.onMeta\(out\.video\)/, "as soon as they are known, not after the picture");
-  assert.match(up, /uploadOneMedia\(s\.file,\{width:s\.width,height:s\.height\}\)/, "the poster's finalize carries its size");
+  assert.match(up, /uploadOneMedia\(s\.file,\{width:s\.width,height:s\.height\},current\)/, "the poster's finalize carries its size");
   assert.match(mnet, /\["width","height","duration_ms"\]\.forEach/);
   assert.match(mnet, /poster_preview:out\.posterFile\?URL\.createObjectURL\(out\.posterFile\):""/);
   assert.match(mnet, /x\.media_type === "video" && x\.poster_preview \? '<img src="' \+ esc\(x\.poster_preview\) \+ '" alt="Video">' \+ PLAY_MARK/);

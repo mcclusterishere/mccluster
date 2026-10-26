@@ -89,6 +89,7 @@
   function assertOwner(epoch,owner){if(epoch!==ownerEpoch||owner!==S.owner)throw Object.assign(new Error("Account changed. Reopen this account's draft."),{stale:true});}
   function api(path, init) {
     var epoch=ownerEpoch,owner=S.owner;
+    init=Object.assign({},init,{expectedUserId:owner,beforeFetch:function(){assertOwner(epoch,owner);}});
     return window.MCC.api(path, init).then(function (res) {
       if(epoch!==ownerEpoch)throw new Error("Account changed. Reopen this account's draft.");
       return res.text().then(function (t) {

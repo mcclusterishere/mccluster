@@ -77,17 +77,23 @@ export async function handleCustomerSocialRequest(request, env, user) {
   const rpc = (action, data = {}) => db(env, 'rpc/customer_social_service', { p_action: action, p_org: org, p_user: user.id, p_data: data });
   const blockers = configuration(env);
   const suffix = url.pathname.replace('/v1/customer-social/', '');
+  const activeOwnedPlan = async () => {
+    const paid = await db(env, `creator_billing_subscriptions?org_id=eq.${org}&owner_user_id=eq.${encodeURIComponent(user.id)}&status=eq.active&select=current_period_end&limit=10`);
+    return !!paid?.some(row => Date.parse(row.current_period_end) > Date.now());
+  };
   if (suffix === 'status' && request.method === 'GET') {
     let connection = null;
     try { connection = await rpc('status'); } catch (e) { if (e.status !== 503) throw e; blockers.push('Customer social database migration is not available.'); }
-    return { org_id: org, provider: 'instagram', configured: !blockers.length, blockers, connection, supported: ['instagram_reels'] };
+    const eligible = await activeOwnedPlan();
+    const reason = !eligible ? 'active_owned_workspace_required' : blockers.length ? 'provider_unavailable' : connection?.status !== 'connected' ? 'owned_connection_required' : null;
+    return { org_id: org, provider: 'instagram', configured: !blockers.length, blockers, connection, supported: ['instagram_reels'],
+      capability: { eligible, can_publish: reason === null, reason, authority: 'owned_active_creator_workspace', formats: ['instagram_reels'] } };
   }
   // Disconnect stays available when the feature is disabled.
   if (suffix === 'disconnect' && request.method === 'POST') return rpc('disconnect');
   const cancelling = /^jobs\/[a-f0-9-]{36}\/cancel$/i.test(suffix);
   if (request.method === 'POST' && !cancelling) {
-    const paid = await db(env, `creator_billing_subscriptions?org_id=eq.${org}&owner_user_id=eq.${encodeURIComponent(user.id)}&status=eq.active&select=current_period_end&limit=10`);
-    if (!paid?.some(row => Date.parse(row.current_period_end) > Date.now())) throw error('An active site plan is required for Instagram publishing.', 402);
+    if (!await activeOwnedPlan()) throw error('An active site plan is required for Instagram publishing.', 402);
   }
   if (blockers.length && !cancelling && suffix !== 'jobs') throw error(blockers.join(' '), 503);
   if (suffix === 'action-targets' && request.method === 'GET') {

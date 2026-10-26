@@ -22,3 +22,11 @@ test('corrupt timestamps/data, oversized records and unavailable storage fail wi
  assert.equal(create({setItem(){throw Error('Quota exceeded');}},'world').write(a,{body:'kept in memory'}),false);
  assert.throws(()=>create(store,'../bad'));assert.throws(()=>create(store,'x'.repeat(50)));
 });
+test('unresolved post identity survives draft TTL until confirmed, including native uncertainty',()=>{
+ const {items,store}=fixture(),draft=create(store,'world'),key='mcc_composition_v2:world:'+a;
+ for(const request of [{body:'native'},{body:'combined',delivery:{operation_key:'stable'}}]){
+  items.set(key,JSON.stringify({owner:a,saved_at:Date.now()-30*86400000,data:{body:'private',pending:{kind:'world-post',request}}}));
+  assert.deepEqual(draft.read(a).pending.request,request);assert.equal(draft.read(b),null);
+ }
+ draft.clear(a);assert.equal(draft.read(a),null);
+});

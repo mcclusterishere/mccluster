@@ -16,6 +16,7 @@ on:
       - 'create.html'
       - 'js/create.js'
       - 'js/composition-draft.js'
+      - 'js/mcc-auth.js'
       - 'css/create.css'
       - 'css/world-composer-overlay.css'
       - 'js/website-studio/**'

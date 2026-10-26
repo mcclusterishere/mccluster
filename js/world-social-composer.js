@@ -4,7 +4,10 @@
   var $ = function (id) { return document.getElementById(id); };
   function message(text) { if ($('mnExternalNotice')) $('mnExternalNotice').textContent = text; }
   async function api(path, init) {
+    var owner=viewer,mine=discovery;
+    init=Object.assign({},init,{expectedUserId:owner,beforeFetch:function(){if(!owner||viewer!==owner||mine!==discovery)throw new Error('Account changed. Reopen this delivery.');}});
     var response = await root.MCC.api(path, init), data = await response.json();
+    if(viewer!==owner||mine!==discovery)throw new Error('Account changed. Reopen this delivery.');
     if (!response.ok) throw new Error(data.error || 'External publishing is unavailable.');
     return data;
   }
@@ -59,6 +62,7 @@
     var mine = ++discovery;
     if (viewer !== user) { viewer = user; preview = null; controller?.reset(); }
     choices = []; selected = null;
+    if($('mnExternalDestinations'))$('mnExternalDestinations').hidden=true;
     loadActionTargets();
     if (!$('mnExternalSite')) return;
     $('mnExternalSite').replaceChildren(); $('mnExternalOptIn').checked = false; $('mnExternalOptIn').disabled = true;
@@ -71,11 +75,12 @@
       var workspaces = entitlement.workspaces || [];
       var statuses = await Promise.all(workspaces.map(async function (w) {
         try { var status = await api('/v1/customer-social/status?org_id=' + encodeURIComponent(w.org_id));
-          return status.configured && status.connection?.status === 'connected' ? { org: w.org_id, account: status.connection.account_id, handle: status.connection.handle || 'Instagram' } : null;
+          return {eligible:status.capability?.eligible === true, choice:status.capability?.can_publish === true && status.capability.formats?.includes('instagram_reels') && status.connection?.status === 'connected' ? { org: w.org_id, account: status.connection.account_id, handle: status.connection.handle || 'Instagram' } : null};
         } catch (_) { return null; }
       }));
       if (mine !== discovery || viewer !== user) return;
-      choices = statuses.filter(Boolean);
+      choices = statuses.map(function(s){return s?.choice;}).filter(Boolean);
+      $('mnExternalDestinations').hidden=!statuses.some(function(s){return s?.eligible;});
       choices.forEach(function (c) { var option = document.createElement('option'); option.value = c.org; option.textContent = '@' + c.handle; $('mnExternalSite').append(option); });
       selectionChanged();
       message(choices.length ? 'World is selected. Instagram is opt-in for each post; check the preview before posting.' : 'No ready Instagram connection on your active sites. You can still post to World. Connect Instagram in Your site.');
@@ -111,7 +116,7 @@
       var state = event.detail || {};
       if (state.verified) discover(state.signed_in ? state.user?.id || '' : '');
     });
-    root.addEventListener('mcc:auth-changed', function () { discovery++; viewer = ''; choices = []; selected = null; loadActionTargets(); controller.reset(); preview = null; $('mnExternalSite').replaceChildren(); paintPreview(); $('mnExternalOptIn').checked = false; $('mnExternalOptIn').disabled = true; message('Refreshing your account connections…'); });
+    root.addEventListener('mcc:auth-changed', function () { discovery++; if($('mnExternalDestinations'))$('mnExternalDestinations').hidden=true; viewer = ''; choices = []; selected = null; loadActionTargets(); controller.reset(); preview = null; $('mnExternalSite').replaceChildren(); paintPreview(); $('mnExternalOptIn').checked = false; $('mnExternalOptIn').disabled = true; message('Refreshing your account connections…'); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',init); else init();
 })(window);

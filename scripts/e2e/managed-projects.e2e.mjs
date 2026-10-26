@@ -217,7 +217,11 @@ try {
  await offerEditor.click('[data-act="save"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg==='Draft saved.');
  const imageUrl=world.projects[1].draft.offer_page.cards[0].image;
  check('offers','saved image survives orphan cleanup',!!imageUrl&&world.objects.has(imageUrl.split('/front-media/')[1]));
- await offerEditor.reload({waitUntil:'domcontentloaded'});await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');
+ const reloadEvents=[];
+ offerEditor.on('framenavigated',frame=>{reloadEvents.push({event:'navigate',main:frame===offerEditor.mainFrame(),url:frame.url()});if(reloadEvents.length>30)reloadEvents.shift();});
+ offerEditor.on('requestfailed',request=>{reloadEvents.push({event:'requestfailed',url:request.url(),error:request.failure()?.errorText});if(reloadEvents.length>30)reloadEvents.shift();});
+ try{await offerEditor.reload({waitUntil:'domcontentloaded'});}catch(error){console.error('OFFER_EDITOR_RELOAD',JSON.stringify({events:reloadEvents,url:offerEditor.url()}));throw error;}
+ await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');
  check('offers','saved text and nine experiences recover on reload',(await studio(offerEditor)).draft.offer_page.cards.reduce((n,c)=>n+c.experiences.length,0)===9);
  await offerEditor.click('[data-act="publish"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg.startsWith('Published.'));
  const offerPublic=await visitor.ctx.newPage();await offerPublic.goto(BASE+'/front.html?project=second-project',{waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontState==='ready');
