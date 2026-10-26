@@ -13,6 +13,11 @@ const results=[];
 try {
  for (const [width,height] of [[390,844],[820,1180],[1180,820],[1440,1000]]) {
   const context=await browser.newContext({viewport:{width,height},reducedMotion:width===1180?'no-preference':'reduce'});
+  // Wait for real cross-document reveal completion before the next user action.
+  // Engine readiness alone can precede Chromium's input-blocking snapshot.
+  await context.addInitScript(()=>addEventListener('pagereveal',event=>{
+    window.__previewReveal=event.viewTransition ? event.viewTransition.finished.catch(()=>{}) : Promise.resolve();
+  }));
   await context.addInitScript(()=>localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()})));
   await context.route('**/*',async route=>{
    const u=new URL(route.request().url());
@@ -90,12 +95,14 @@ try {
   await page.waitForURL('**/album.html?album=vaunt-ep');
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   await page.goBack();
+  await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   assert.ok((await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt-logo'));
   await page.locator('#work .scene-intro a[href="index.html#work"]').click();
   await page.waitForURL('**/index.html#work');
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   await page.goBack();
+  await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   // The shell's existing verified auth contract drives the CTA; no permissions are fabricated.
   await page.evaluate(()=>{window.MCC_BAR={refreshAuth:()=>Promise.resolve({verified:true,signed_in:true})};window.dispatchEvent(new Event('mcc:auth-changed'));});
