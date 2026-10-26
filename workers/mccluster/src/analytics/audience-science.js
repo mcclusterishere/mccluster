@@ -18,14 +18,14 @@
 
 import { measurementContext } from './measurement.js';
 
-export const AUDIENCE_SCIENCE_VERSION = 'audience-science/v2';
+export const AUDIENCE_SCIENCE_VERSION = 'audience-science/v3';
 export const MAX_AUDIENCE_WINDOW_DAYS = 31;
 
 export const START_EVENT_NAMES = new Set([
   'album_play', 'song_start', 'track_start', 'music_play'
 ]);
 export const COMPLETE_EVENT_NAMES = new Set([
-  'music_complete', 'music_preview_complete'
+  'music_complete'
 ]);
 export const FULL_EVENT_NAMES = new Set(['music_full_play']);
 export const SHARE_EVENT_NAMES = new Set([
@@ -44,7 +44,7 @@ export const AUDIENCE_EVENT_NAMES = [
   'page_view', 'page_leave', 'acquired',
   ...START_EVENT_NAMES,
   'music_full_play', 'music_preview_play',
-  ...COMPLETE_EVENT_NAMES,
+  ...COMPLETE_EVENT_NAMES, 'music_preview_complete',
   ...SHARE_EVENT_NAMES,
   ...ACTION_EVENT_NAMES,
   ...INTENT_EVENT_NAMES,
@@ -130,7 +130,6 @@ function behaviorSignals(profile) {
   if (enough && profile.dominant_share >= 0.8) out.push('concentrated_attention');
   if (profile.distinct_tracks >= 4 && profile.normalized_entropy >= 0.65) out.push('broad_exploration');
   if (profile.music_starts >= 4 && profile.repeat_ratio >= 0.5) out.push('repeat_listening');
-  if (profile.music_starts >= 2 && profile.completion_rate >= 0.5) out.push('deep_listening');
   if (profile.sessions >= 2 || profile.active_days >= 2) out.push('returning');
   if (profile.action_events > 0) out.push('action_engaged');
   if (profile.intent_events > 0) out.push('purchase_intent');
@@ -190,6 +189,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         music_starts: 0,
         full_plays: 0,
         completions: 0,
+        preview_starts: 0,
+        preview_completions: 0,
         shares: 0,
         action_events: 0,
         intent_events: 0,
@@ -234,6 +235,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
     }
     if (FULL_EVENT_NAMES.has(name)) b.full_plays++;
     if (COMPLETE_EVENT_NAMES.has(name)) b.completions++;
+    if (name === 'music_preview_play') b.preview_starts++;
+    if (name === 'music_preview_complete') b.preview_completions++;
     if (SHARE_EVENT_NAMES.has(name)) b.shares++;
     if (ACTION_EVENT_NAMES.has(name)) b.action_events++;
     if (INTENT_EVENT_NAMES.has(name)) b.intent_events++;
@@ -262,7 +265,11 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
       music_starts: starts,
       full_plays: b.full_plays,
       completions: b.completions,
-      completion_rate: starts ? round(Math.min(1, b.completions / starts)) : 0,
+      preview_starts: b.preview_starts,
+      preview_completions: b.preview_completions,
+      // Legacy rows do not identify paired, eligible playback attempts.
+      completion_rate: null,
+      completion_rate_status: 'unavailable_unpaired_events',
       shares: b.shares,
       action_events: b.action_events,
       intent_events: b.intent_events,
@@ -319,6 +326,7 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         repeat_ratio: '(music_starts - distinct_tracks) / music_starts'
       },
       exposure_warning: 'Observed attention is not the same as preference. The current event schema does not fully record every track a visitor was shown, so exposure-adjusted preference is not claimed.',
+      completion_policy: 'Separate preview and full completion report counts. Completion rate is unavailable without paired eligible playback attempts; counts do not prove listening or attention.',
       outcome_policy: 'Checkout events measure intent. account_created and action_complete are client-reported completions. Verified accounts, payments and action outcomes require their canonical backend records and are not measured here.',
       identity_basis: 'Device IDs, linked only where exactly one account is observed for the device in the queried window; not a count of distinct people.',
       ambiguous_identity_devices: [...candidatesByDevice.values()].filter((x) => x.size > 1).length

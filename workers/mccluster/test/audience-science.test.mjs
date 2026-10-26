@@ -109,3 +109,27 @@ test('audience science route clamps to 31 days and reads narrow first-party evid
   const idCall = calls.find((c) => c.path === 'events');
   assert.equal(idCall.query.get('uid'), 'not.is.null');
 });
+
+test('preview endings cannot inflate a full completion rate or imply deep listening', () => {
+  const row = (name) => ({device_id:'shared',session_id:'s',track:'song',at:t(1),name});
+  const rows = [row('music_play'),row('music_play'),...Array.from({length:3},()=>row('music_preview_complete')),row('music_preview_play'),row('music_complete')];
+  for (const input of [rows, rows.slice().reverse()]) {
+    const p = summarizeAudienceScience(input).profiles[0];
+    assert.equal(p.music_starts,2);
+    assert.equal(p.completions,1);
+    assert.equal(p.preview_starts,1);
+    assert.equal(p.preview_completions,3);
+    assert.equal(p.completion_rate,null);
+    assert.equal(p.completion_rate_status,'unavailable_unpaired_events');
+    assert.ok(!p.behavior_signals.includes('deep_listening'));
+  }
+  assert.equal(summarizeAudienceScience([row('music_complete')]).profiles[0].completion_rate,null);
+});
+
+test('shared-device ambiguity remains unlinked regardless of latest account order', () => {
+  for (const identities of [[{device_id:'d1',uid:'A'},{device_id:'d1',uid:'B'}],[{device_id:'d1',uid:'B'},{device_id:'d1',uid:'A'}]]) {
+    const out = summarizeAudienceScience([start('d1','s','song',1)],identities);
+    assert.equal(out.profiles[0].uid,null);
+    assert.equal(out.methodology.ambiguous_identity_devices,1);
+  }
+});

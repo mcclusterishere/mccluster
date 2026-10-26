@@ -109,7 +109,7 @@
       return s>=75?"Strong engagement":s>=50?"Moderate engagement":"Needs attention";
     }
     var list=rows.map(function(r,i){
-      var s=score(r),trend=r.view_change_pct==null?"Trend unavailable":signedPct(r.view_change_pct)+" vs prior range";
+      var s=score(r),trend=r.view_change_pct==null||!(r.prior_views>0)?"Trend unavailable (no positive prior denominator)":signedPct(r.view_change_pct)+" vs prior range";
       return'<details class="cra-page-row"'+(i===0?' open':'')+'><summary class="cra-page-row__summary">'+
         '<span class="cra-page-row__rank">'+(i+1)+'</span>'+
         '<span class="cra-page-row__main"><b>'+e(r.path||"Unknown page")+'</b><small>'+e(interpretation(r))+'</small>'+
@@ -120,13 +120,13 @@
         '<div class="cra-kpis">'+
           kpi("Typical visible time",r.median_visible_s==null?"—":seconds(r.median_visible_s),"median")+
           kpi("Scroll depth",pct(r.avg_depth),"average")+
-          kpi("Engaged 30s+",pct(r.engaged_30_pct),"visitors")+
-          kpi("Actions",n(r.action_events),"recorded events")+
-          kpi("Returning",pct(r.return_pct),"visitors")+
-          kpi("Short exits",pct(r.short_exit_pct),"visitors")+
-        '</div><p><small>Quality signal: '+e(r.quality_score==null?"—":Number(r.quality_score).toFixed(1))+' · Measurement confidence: '+pct(r.confidence==null?null:Number(r.confidence)*100)+'. The score combines attention, depth, actions, return behavior and friction, with confidence weighting; it is not a speed or SEO grade.</small></p></div></details>';
+          kpi("Visible 30s+",r.measured_exits>0?pct(r.engaged_30_pct):"—","page-leave reports")+
+          kpi("Action points",n(r.action_events),"weighted: mission 5, account/form/conversion 4, CTA 1")+
+          kpi("Repeat-session proxy",r.sessions>0?pct(r.return_pct):"—","max(sessions − browser IDs, 0) / sessions")+
+          kpi("Short exits",r.measured_exits>0?pct(r.short_exit_pct):"—","page-leave reports; missing time counts as short")+
+        '</div><p><small>Quality signal: '+e(r.quality_score==null?"—":Number(r.quality_score).toFixed(1))+' · View-volume weight: '+pct(r.confidence==null?null:Number(r.confidence)*100)+'. The score combines attention, depth, actions, return behavior and friction, with a view-volume weight of 1 − exp(−views/30). These are legacy heuristics, not measurement accuracy, attention proof or a speed/SEO grade. Exit reports: '+n(r.measured_exits)+' / '+n(r.views)+' pageviews (different event populations, not matched coverage).</small></p></div></details>';
     }).join("");
-    return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-confidence pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
+    return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-volume pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
   }
   function funnel(rows){
     if(S.data.stageTotals){
@@ -701,6 +701,7 @@
       '</div>'+["business","content","contentEvents","identity","audienceScience","acquisition","paths","funnel","pages","sources","countries","networks","totals",S.rangeId==="24h"?"hourly":"daily"].map(err).join("");
   }
   function scienceSignalLabel(v){
+    if(v==="deep_listening")return "Unverified legacy completion signal";
     if(v==="converted")return "Unverified legacy action signal";
     if(v==="purchase_intent")return "Purchase intent";
     if(v==="client_completion_reported")return "Client completion report";
@@ -711,7 +712,7 @@
     var d=S.data.audienceScience||{},t=d.totals||{},profiles=d.profiles||[],tracks=d.track_affinity||[],signals=d.signals||[],m=d.methodology||{};
     if(S.errors.audienceScience)return err("audienceScience");
     if(!d.version)return card("Audience science","Observed-behavior measurement is loading.","<p>Computing listener distributions and return behavior…</p>",true);
-    var summary='<div class="cra-kpis">'+
+    var summary='<p>Playback completion rate unavailable: legacy starts and ends are unpaired; preview reports are separate. Browser reports do not prove human attention.</p><div class="cra-kpis">'+
       kpi("Profiled visitors",n(t.profiled_visitors||0))+
       kpi("Music listeners",n(t.music_listeners||0))+
       kpi("5+ start evidence",n(t.distribution_eligible||0))+
