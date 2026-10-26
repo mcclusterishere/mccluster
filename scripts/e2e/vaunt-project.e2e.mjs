@@ -73,6 +73,8 @@ try {
   await page.waitForFunction(()=>document.querySelector('[data-appnav="home"] img')?.src.includes('vaunt-logo.webp'));
   assert.ok(Math.abs(await page.locator('#work').evaluate(el=>el.getBoundingClientRect().top))<2);
   assert.equal(await page.locator('.hero').isVisible(),false);
+  assert.notEqual(await page.locator('#guestWorld iframe').getAttribute('loading'),'lazy');
+  assert.equal(await page.locator('#guestWorld iframe').getAttribute('src'),null);
   assert.equal(await page.locator('#work .scene-intro h1').isVisible(),true);
   assert.doesNotMatch(await page.locator('#work .scene-intro').textContent(),/independent|official|endorse/i);
   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),BASE+'/front.html?project=vaunt');
@@ -110,6 +112,7 @@ try {
   assert.equal(await page.evaluate(()=>window.__MCC_FRONT_HOLDING()),false);
   await page.locator('#guestWorld').scrollIntoViewIfNeeded();
   assert.equal(await page.locator('#guestWorld').isVisible(),true);
+  await page.waitForFunction(()=>document.querySelector('#guestWorld iframe').contentWindow.location.pathname==='/guest-globe.html');
   assert.equal(await page.locator('[data-world-entry]').getAttribute('href'),'account.html');
   await page.screenshot({path:join(OUT,`world-${width}.png`)});
   // Page branding is local, safe and independent of account privileges.
