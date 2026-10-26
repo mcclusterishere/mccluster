@@ -103,3 +103,24 @@ test('Adaptive preserves undefined rates and distinguishes client outcomes from 
  const html=A.render();assert.equal((html.match(/Rate unavailable/g)||[]).length,3);assert.doesNotMatch(html,/0\.0%/);assert.match(html,/Client outcome reports/);
  A.state.data.experience.totals={};assert.match(A.render(),/<small>Decisions<\/small><strong>—<\/strong>/);
 });
+
+test('page score labels expose weights and undefined denominators instead of confidence',async()=>{
+ const {A}=await panel(); A.state.section='overview';
+ A.state.data.traffic={pages:[{path:'/fixture',views:100,prior_views:0,view_change_pct:100,visitors:1,sessions:5,measured_exits:0,confidence:.96,overall_score:70,quality_score:80,action_events:500,return_pct:80,engaged_30_pct:0,short_exit_pct:0}]};
+ const html=A.render();
+ assert.match(html,/Action points/);
+ assert.match(html,/View-volume weight/);
+ assert.match(html,/Repeat-session proxy/);
+ assert.match(html,/Trend unavailable \(no positive prior denominator\)/);
+ assert.match(html,/Exit reports: 0 \/ 100/);
+ assert.doesNotMatch(html,/Measurement confidence|500<[^>]+>recorded events/);
+});
+
+test('signup journeys show unknown attribution without claiming a listen or a known source',async()=>{
+ const {A}=await panel();A.state.section='identity';A.state.completed={identity:true};
+ A.state.data.identity={coverage:{accounts:1,bridged_accounts:1,attributed_accounts:0},journeys:[{source:'unknown',last_track:null}]};
+ const html=A.render();assert.match(html,/Music attribution is unknown/);
+ assert.match(html,/Anonymous\/shared-device history stays unattributed/);
+ assert.match(html,/Came from a known source<\/b><strong>0<\/strong>/);
+ assert.doesNotMatch(html,/That device played a song|>no song</);
+});

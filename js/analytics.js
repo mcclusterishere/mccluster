@@ -115,6 +115,66 @@ function mccCreateEventOutbox(area, clock, allowed) {
 }
 /* EVENT_OUTBOX_FACTORY_END */
 
+/* PLAYBACK_MEASUREMENT_FACTORY_BEGIN */
+/* Browser progress evidence, separate from entitlement/royalty decisions.
+   No timer, storage, network, visibility test or ownership inference here.
+   A gap over 2.5s cannot be reconstructed reliably from two positions: expose
+   it as unmeasured, rather than crediting a suspended callback or a seek.
+   Background audio with regular progress callbacks is measured normally. */
+function mccCreatePlaybackMeasurement(audio, uuid, clock, allowed) {
+  var id = uuid(), began = clock(), last = began, position = Number(audio.currentTime);
+  var active = false, started = false, done = false, sequence = 0;
+  var played = 0, gaps = 0, jumps = 0, rate = Number(audio.playbackRate) || 1;
+  var invalid = false;
+  function valid() {
+    if (allowed && !allowed()) { invalid = true; active = false; }
+    return !invalid;
+  }
+  function sample(boundary) {
+    if (!valid()) return;
+    var now = clock(), next = Number(audio.currentTime), dt = now - last, delta = next - position;
+    if (!done && active && Number.isFinite(dt) && dt > 0) {
+      if (dt > 2500) gaps += dt;
+      else if (audio.seeking || !Number.isFinite(delta) || delta < 0 || delta > dt / 1000 * rate + 0.25) jumps++;
+      else if ((boundary || !audio.paused) && audio.readyState >= 3 && rate > 0 && delta > 0) played += Math.min(dt / 1000, delta / rate);
+    }
+    // A non-monotonic clock cannot add time. Rebase and await fresh evidence.
+    last = now; position = next; rate = Number(audio.playbackRate) || 1;
+  }
+  function suspend(discontinuity) {
+    if (discontinuity) { active = false; jumps++; }
+    sample(true); active = false;
+  }
+  return {
+    playing: function () {
+      if (done || !valid()) return false;
+      sample(false); active = !audio.paused && !audio.seeking && audio.readyState >= 3;
+      var first = !started && active; if (active) started = true;
+      return first;
+    },
+    sample: function () { sample(false); },
+    pause: function () { suspend(false); },
+    waiting: function () { suspend(false); },
+    seeking: function () { suspend(true); },
+    resumeAfterSeek: function () { sample(false); active = valid() && started && !done && !audio.paused && !audio.seeking && audio.readyState >= 3; },
+    finish: function () { if (done || !started || !valid()) return false; sample(true); done = true; active = false; return true; },
+    finished: function () { return done; },
+    valid: valid,
+    seconds: function () { sample(false); return valid() ? Math.round(played * 1000) / 1000 : null; },
+    report: function () {
+      sample(false);
+      if (!valid()) return { measurement_version: "browser-progress/v1",
+        measurement_status: "unavailable_consent_boundary", validated_played_seconds: null };
+      return { measurement_version: "browser-progress/v1", playback_attempt_id: id,
+        playback_sequence: ++sequence, playback_elapsed_ms: Math.max(0, Math.round(clock() - began)),
+        validated_played_seconds: Math.round(played * 1000) / 1000,
+        unmeasured_gap_ms: Math.round(gaps), progress_discontinuities: jumps,
+        measurement_status: "browser_progress_not_attention" };
+    }
+  };
+}
+/* PLAYBACK_MEASUREMENT_FACTORY_END */
+
 if (mccPrivacyAcknowledged() && !mccControlPreview()) {
 /* ============================================================
    THE HOUSE'S OWN EYES.
@@ -201,6 +261,65 @@ window.MCC_TRACK = (function () {
   var COLLECT = "https://api.mccluster.org/v1/collect";
   var COLLECT_FALLBACK = SB_URL + "/functions/v1/collect";
 
+  /* Browser diagnostics and interaction counters have no reason to carry
+     account secrets, URL queries, copied prose or arbitrary custom fields.
+     Keep error signatures/stack locations useful after minimization. This
+     is a transport boundary, so callers cannot accidentally skip it. Other
+     product events keep bounded properties while their purpose contracts
+     are reviewed; this is not a claim that all free text is anonymous. */
+  function diagnosticURL(value) {
+    try {
+      var url = new URL(String(value || ""), location.href);
+      if (!/^(https?:|iabjs:|chrome-extension:|moz-extension:|safari-extension:|safari-web-extension:|webkit-masked-url:|resource:)$/.test(url.protocol)) return null;
+      return (url.protocol === "http:" || url.protocol === "https:" ? url.origin : url.protocol + "//" + url.host) +
+        url.pathname.replace(/[A-Z0-9._%+-]+(?:@|%40)[A-Z0-9.-]+/ig, "[redacted]");
+    } catch (_) { return null; }
+  }
+  function diagnosticText(value) {
+    return String(value).replace(/(?:https?:\/\/|(?:iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url|resource):\/\/)[^\s<>"']+/gi,
+      function (url) { return diagnosticURL(url) || "[redacted-url]"; })
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig, "[redacted-email]")
+      .replace(/\bBearer\s+[^\s,;]+/ig, "Bearer [redacted]")
+      .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[redacted-token]")
+      .replace(/\b(access_token|refresh_token|password|secret|api_key|authorization)\s*[:=]\s*[^\s,;]+/ig, "$1=[redacted]")
+      .slice(0, 400);
+  }
+  function boundedProps(value, depth) {
+    if (depth > 3) return null;
+    if (value == null || typeof value === "boolean") return value;
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    if (typeof value === "string") return diagnosticText(value);
+    if (Array.isArray(value)) return value.slice(0, 20).map(function (v) { return boundedProps(v, depth + 1); });
+    if (typeof value !== "object") return null;
+    var out = {};
+    Object.keys(value).slice(0, 60).forEach(function (key) {
+      if (/pass|pwd|token|secret|authorization|cookie|email|phone|address|card|cvc|cvv|^body$|^content$|^message$|__proto__|constructor|prototype/i.test(key)) return;
+      if (/^(href|url|src|referrer)$/i.test(key) && typeof value[key] === "string" && /[\/?#:]/.test(value[key])) out[key] = diagnosticURL(value[key]);
+      else out[key.slice(0, 80)] = boundedProps(value[key], depth + 1);
+    });
+    return out;
+  }
+  var purposeFields = {
+    js_error: "msg src line col origin iab stack",
+    js_rejection: "msg name origin iab stack",
+    click: "el href cta x y pct_x pct_y",
+    dead_click: "el href cta x y pct_x pct_y",
+    rage_click: "el href cta x y pct_x pct_y",
+    copy: "chars"
+  };
+  function eventProps(name, params) {
+    var input = params && typeof params === "object" ? params : {};
+    var fields = purposeFields[name];
+    if (typeof fields === "string") {
+      var chosen = {};
+      fields.split(" ").forEach(function (key) {
+        if (Object.prototype.hasOwnProperty.call(input, key)) chosen[key] = input[key];
+      });
+      input = chosen;
+    }
+    return boundedProps(input, 0);
+  }
+
   function store(read) {
     try { return read(); } catch (e) { return null; }
   }
@@ -220,6 +339,14 @@ window.MCC_TRACK = (function () {
     var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
     return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
   }
+
+  var playbackConsentEpoch = 0;
+  window.MCC_PLAYBACK = { create: function (audio) {
+    if (!consentNow() || privacySignal() || !window.performance || typeof window.performance.now !== "function") return null;
+    var epoch = playbackConsentEpoch;
+    return mccCreatePlaybackMeasurement(audio, uuid, function () { return window.performance.now(); },
+      function () { return epoch === playbackConsentEpoch && mccPrivacyAcknowledged() && !mccControlPreview() && !privacySignal(); });
+  } };
 
   /* ---- the device ----
      A random id kept in localStorage. Deliberately NOT a fingerprint
@@ -409,6 +536,7 @@ window.MCC_TRACK = (function () {
   var LINGER_MS = 2500;
   var queue = [];
   var timer = null;
+  var leaving = false;
   var retryingStored = false, lastStoredRetry = 0;
   var eventOutbox = mccCreateEventOutbox(
     (function(){try{return localStorage;}catch(_){return null;}})(),
@@ -493,7 +621,8 @@ window.MCC_TRACK = (function () {
   window.addEventListener("online",function(){retryOutbox();});
   window.addEventListener("focus",function(){retryOutbox();});
   window.addEventListener("storage",function(ev){
-    if (ev.key === "mcc_privacy_ack" && !ev.newValue) {
+    if ((ev.key === "mcc_privacy_ack" && !ev.newValue) || ev.key === null) {
+      playbackConsentEpoch++;
       eventOutbox.purge();queue=[];
     } else if (ev.key && ev.key.indexOf("mcc_event_outbox_v1:")===0 && ev.newValue) {
       if (document.visibilityState !== "hidden") retryOutbox();
@@ -517,10 +646,11 @@ window.MCC_TRACK = (function () {
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") flush(true);
   });
-  window.addEventListener("pagehide", function () { flush(true); });
+  window.addEventListener("pagehide", function () { leaving = true; flush(true); });
+  window.addEventListener("pageshow", function () { leaving = false; });
 
   function queueEvent(name, params) {
-    var props = Object.assign({}, params || {});
+    var props = eventProps(String(name || ""), params);
     // Retain the public creator identity without copying arbitrary URL queries.
     if ((location.pathname.split("/").pop() || "") === "music-creator.html") {
       var creatorHandle = new URLSearchParams(location.search).get("handle") || "";
@@ -532,14 +662,17 @@ window.MCC_TRACK = (function () {
       name: String(name || "").slice(0, 120),
       path: location.pathname.split("/").pop() || "index.html",
       props: props,
-      referrer: document.referrer || null,
+      referrer: document.referrer ? diagnosticURL(document.referrer) : null,
     };
     // Storage is deliberately minimal: raw client-supplied properties and
     // referrers never land in the retry shelf. First attempt keeps the full
     // in-memory event; later retries retain its identity but omit those fields.
     eventOutbox.put(event);
     queue.push(event);
-    if (queue.length >= BATCH) flush(false);
+    // Later lifecycle listeners enqueue dwell/page_leave after our initial
+    // hidden flush. Send those now with keepalive; a timer may never run.
+    if (leaving || document.visibilityState === "hidden") flush(true);
+    else if (queue.length >= BATCH) flush(false);
     else if (!timer) timer = setTimeout(function () { flush(false); }, LINGER_MS);
   }
 

@@ -171,7 +171,7 @@ async function identityAnalytics(env, sinceIso, untilIso) {
   for (const ids of chunks(userIds)) {
     if (!ids.length) continue;
     const batch = await sbRowsPaged(env,
-      `events?uid=in.(${ids.join(',')})&device_id=not.is.null` +
+      `events?site_id=is.null&uid=in.(${ids.join(',')})&device_id=not.is.null` +
       `&at=gte.${encodeURIComponent(bridgeSince)}&at=lt.${encodeURIComponent(bridgeUntil)}` +
       `&select=${eventSelect}&order=at.desc,id.desc`,
       100000
@@ -182,7 +182,9 @@ async function identityAnalytics(env, sinceIso, untilIso) {
 
   const directByUser = new Map();
   for (const e of direct) {
-    const uid = String(e?.props?.signup_user_id || e?.uid || '');
+    // signup_user_id is a client claim; only the collector-verified uid can
+    // attach account evidence. Anonymous signup reports remain raw evidence.
+    const uid = String(e?.uid || '');
     if (uid) directByUser.set(uid, e);
   }
   const bridgeByUser = new Map();
@@ -249,16 +251,16 @@ async function identityAnalytics(env, sinceIso, untilIso) {
     const all = deviceId ? (byDevice.get(deviceId) || []) : [];
     const pre = all.filter((e) => {
       const at = Date.parse(e.at || '');
-      return Number.isFinite(at) && at <= createdAt && at >= createdAt - 7 * 86400000;
+      return String(e.uid || '') === String(u.id) && Number.isFinite(at) &&
+        at <= createdAt && at >= createdAt - 7 * 86400000;
     });
     const music = pre.filter((e) => normalizedTrack(e, trackMap));
     const lastMusic = music.length ? music[music.length - 1] : null;
     const assisted = [...new Set(music.map((e) => normalizedTrack(e, trackMap)).filter(Boolean))];
-    const directProps = directEvent?.props && typeof directEvent.props === 'object' ? directEvent.props : {};
-    const directTrack = String(directProps.track || '').trim();
-    if (directTrack && !assisted.includes(directTrack)) assisted.push(directTrack);
-    const lastTrack = directTrack || (lastMusic ? normalizedTrack(lastMusic, trackMap) : null);
-    const lastTrackAt = directProps.last_track_at || lastMusic?.at || null;
+    // Browser-stored signup context can belong to a previous person on this
+    // device. Do not turn its claimed last track into account listening.
+    const lastTrack = lastMusic ? normalizedTrack(lastMusic, trackMap) : null;
+    const lastTrackAt = lastMusic?.at || null;
     const lastAt = Date.parse(lastTrackAt || '');
     const acquired = pre.filter((e) => e.name === 'acquired');
     const sourceEvent = acquired.length ? acquired[acquired.length - 1] : null;
@@ -274,7 +276,9 @@ async function identityAnalytics(env, sinceIso, untilIso) {
       confirmed_at: u.email_confirmed_at || u.confirmed_at || null,
       device_id: deviceId,
       session_id: directEvent?.session_id || lastMusic?.session_id || loc?.session_id || null,
-      source: directProps.source || (sourceEvent ? acquisitionSource(sourceEvent) : 'direct'),
+      source: sourceEvent ? acquisitionSource(sourceEvent) : 'unknown',
+      attribution_status: lastTrack ? 'event_bound_account_evidence' : 'unknown_no_account_bound_touch',
+      unattributed_device_events: all.filter((e) => !e.uid).length,
       last_track: lastTrack || null,
       last_track_at: lastTrackAt,
       minutes_after_last_track: Number.isFinite(lastAt)
@@ -328,13 +332,13 @@ async function identityAnalytics(env, sinceIso, untilIso) {
 
   return {
     range:{since:since.toISOString(),until:until.toISOString(),attribution_window_days:7},
-    measurement:measurementContext({metricVersion:'identity-attribution/v2',
+    measurement:measurementContext({metricVersion:'identity-attribution/v3',
       since:since.toISOString(),until:until.toISOString(),datasets:readDatasets,
-      unit:'accounts',identityBasis:'auth.users.id_with_observed_device_attribution'}),
+      unit:'accounts',identityBasis:'auth.users.id_with_event_bound_account_evidence'}),
     methodology:{population:'Accounts created in the window; descriptive attribution may look back seven days.',
       signup_rate:'unavailable_without_ordered_matching_cohort',
       listener_read:contentReadStatus,
-      note:'A pre-signup device touch is an association, not proof the content caused registration.'},
+      note:'Only events carrying this account uid can contribute music/source attribution. Anonymous device history and client signup-context claims are not assigned to an account; missing evidence stays unknown. Association is not causation.'},
     coverage:{
       accounts:created.length,
       bridged_accounts:journeys.filter((j)=>j.device_id).length,
