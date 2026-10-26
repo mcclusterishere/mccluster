@@ -1,7 +1,11 @@
+import {handleMusicWorkspaceResearch} from './music-workspace-research.js';
+import {handleMusicWorkspaceRelease} from './music-workspace-release.js';
 import {reply,fail,corsHeaders} from './lib/http.js';
 const UUID=/^[0-9a-f-]{36}$/i,MAX=26214400;
 export function musicAudioSignature(bytes,mime){const text=(a,b)=>String.fromCharCode(...bytes.slice(a,b));return mime==='audio/wav'?text(0,4)==='RIFF'&&text(8,12)==='WAVE':mime==='audio/flac'?text(0,4)==='fLaC':mime==='audio/ogg'?text(0,4)==='OggS':mime==='audio/mp4'?text(4,8)==='ftyp':mime==='audio/webm'?bytes[0]===0x1a&&bytes[1]===0x45&&bytes[2]===0xdf&&bytes[3]===0xa3:mime==='audio/mpeg'?(text(0,3)==='ID3'||bytes[0]===255&&(bytes[1]&224)===224):false}
 export async function handleMusicWorkspace(request,env){
+ const research=await handleMusicWorkspaceResearch(request,env);if(research)return research;
+ const handoff=await handleMusicWorkspaceRelease(request,env);if(handoff)return handoff;
  const url=new URL(request.url);if(!url.pathname.startsWith('/v1/music-workspace/'))return null;
  const authorization=request.headers.get('authorization')||'';if(!/^Bearer\s+\S+$/i.test(authorization))return fail(request,env,'Sign in to your creator account',401);
  if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return fail(request,env,'Music workspace is not configured',503);

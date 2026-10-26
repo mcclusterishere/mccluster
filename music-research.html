@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Private audio review · McCluster Studio</title>
+<link rel="stylesheet" href="css/music-research-queue.css?v=__STAMP__">
+</head><body>
+<main class="mr-shell">
+  <header class="mr-header"><p class="mr-eyebrow">MCCLUSTER MUSIC / PRIVATE STUDIO R&D</p>
+    <h1>Private audio review</h1>
+    <p>Analyze → Separate → Transcribe → Engrave. Each stage requires approved model licensing, creator ownership, and explicit review before the next stage. No artifact is published automatically.</p>
+    <p class="mr-warning">Requests and processing are off by default. Availability is checked below; existing results remain private and require your review.</p>
+  </header>
+  <section class="mr-panel" aria-labelledby="mrAccountTitle">
+    <div class="mr-heading"><h2 id="mrAccountTitle">Your private research workspace</h2>
+    <button id="mrReload" type="button">Refresh records</button></div>
+    <p class="mr-status" id="mrStatus" role="status" aria-live="polite">Checking your account and the research service…</p>
+    <p id="mrAvailability" class="mr-hint">Checking availability…</p>
+    <label for="mrTrack">Your completed workspace handoff</label>
+    <select id="mrTrack"><option value="">Sign in to load tracks</option></select>
+    <label for="mrStage">Processing stage</label>
+    <select id="mrStage">
+      <option value="analyze">1. Spectral / tempo / key analysis (CPU)</option>
+      <option value="separate">2. Stem separation (licensed GPU)</option>
+      <option value="transcribe">3. Isolated audio → MIDI notes (licensed model)</option>
+      <option value="engrave">4. Approved MIDI → draft MusicXML</option>
+    </select>
+    <label for="mrModel">Approved model for this stage</label><select id="mrModel"><option value="">Loading eligible models…</option></select>
+    <p class="mr-hint" id="mrDependency">Stage 1 has no prerequisite. Other stages require an approved parent job.</p>
+    <label class="mr-confirm"><input id="mrResearchConsent" type="checkbox"> I own/control this recording, authorize private analysis of this release, and understand that outputs are estimates requiring my review. This does not permit training an external model.</label>
+    <button id="mrEnqueue" type="button" disabled>Request private analysis</button>
+    <p class="mr-hint">A registered commercial model with verified licensed weights is required for GPU separation or transcription. If no approved model exists, that stage cannot be queued.</p>
+  </section>
+  <section class="mr-panel" aria-labelledby="mrJobsTitle">
+    <div class="mr-heading"><h2 id="mrJobsTitle">Job history & creator approvals</h2><span>ONLY YOU CAN APPROVE</span></div>
+    <div id="mrJobs" class="mr-jobs" aria-live="polite">No records loaded yet.</div>
+    <p class="mr-hint">Review results, playable stem previews and draft notation before approval. Selecting Reject halts that pipeline branch; nothing is published automatically.</p>
+  </section>
+  <footer class="mr-footer">All data are scoped to your McCluster creator identity. <a href="music-workspace.html">Back to music workspace</a> · <a href="creator.html">Rights and release review</a></footer>
+</main>
+<script src="js/mcc-auth.js?v=__STAMP__"></script>
+<script type="module" src="js/music-research-queue.mjs"></script>
+<script defer src="js/tabbar.js?v=__STAMP__"></script>
+</body></html>
