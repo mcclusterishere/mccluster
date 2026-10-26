@@ -19,14 +19,31 @@ volume weight, weighted action points, repeat-session proxy and exit-report
 populations explicitly. Zero prior views cannot yield a percentage trend; absent
 exit reports cannot yield a measured zero rate. No stored rows or SQL changed.
 
-## Remaining work, not implemented by checkpoint 1
+## Checkpoint 2: browser payload minimization and final-event delivery
+
+The first-party collector boundary allowlists error diagnostics, clicks and copy
+counts. It omits clicked/copied prose, removes URL queries/fragments/credentials,
+scrubs recognizable emails/tokens and bounds nested custom properties. The exact
+Autofill diagnostic signature and real application stack locations remain useful;
+no error event or classification is suppressed. Unknown product event properties
+still require purpose-by-purpose review; this does not certify arbitrary text as
+anonymous. Tenant SDK and server collector enforcement remain separate work.
+
+Events queued by later hidden/pagehide handlers now send with keepalive instead
+of relying on a suspended timer. BFCache restoration resumes normal batching.
+Existing consent, minimized recovery envelopes and stable retry IDs are preserved.
+Synthetic transport tests cover redaction, genuine failures, fallback retries,
+late lifecycle producers, BFCache and consent revocation. No observed leak is
+claimed, and no production payload was fetched for these tests.
+
+## Remaining work
 
 - Replace latest-UID visitor attribution with event-bound account evidence and
   explicit ambiguous/unattributed history. Audience Science's existing ambiguity
   guard is retained/tested, but is not a repair of the Visitors RPC.
-- Purpose-specific allowlists/scrubbing, lifecycle flush ordering and minimized
-  replay/occurrence metadata. Preserve current consent and intentional untracked
-  embeds. Do not restore rich payloads to the minimal recovery outbox.
+- Extend purpose-specific allowlists to remaining producers/tenant SDK and enforce
+  at ingestion; add minimized occurrence metadata. Preserve current consent and
+  intentional untracked embeds. Keep recovery outbox payloads minimal.
 - Shared progress adapter: attempts versus segments, monotonic sequence,
   same event IDs on retry, pause/seek/buffer/gap/background/loop coverage across
   existing players. Existing entitlement credit behavior must remain separate.
