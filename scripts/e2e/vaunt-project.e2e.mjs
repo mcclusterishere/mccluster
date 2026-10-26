@@ -97,7 +97,9 @@ try {
   await page.waitForURL('**/album.html?album=vaunt-ep',{waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
-  await page.goBack({waitUntil:'domcontentloaded'});
+  // History restoration need not emit a new DOMContentLoaded event.
+  await page.goBack({waitUntil:'commit'});
+  assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   assert.ok((await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt-logo'));
@@ -105,7 +107,9 @@ try {
   await page.waitForURL('**/index.html#work',{waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
-  await page.goBack({waitUntil:'domcontentloaded'});
+  // History restoration need not emit a new DOMContentLoaded event.
+  await page.goBack({waitUntil:'commit'});
+  assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   // The shell's existing verified auth contract drives the CTA; no permissions are fabricated.
