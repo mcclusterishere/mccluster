@@ -1,4 +1,4 @@
-import { domainCapabilities, domainStore, dnsRecords } from './creator-domains.js';
+import { domainCapabilities, domainStore, dnsRecords, PROVIDER_ID } from './creator-domains.js';
 import { resolveDomainTarget, storedDomainTarget } from './creator-domain-targets.js';
 import { handleMemberFronts } from './member-fronts.js';
 const CANONICAL = new Set(['api.mccluster.org','mccluster.org','www.mccluster.org','matthew.mccluster.org','humanuprise.com','www.humanuprise.com','localhost','127.0.0.1']);
@@ -10,9 +10,12 @@ export async function handleCreatorDomainHost(request, env, { fetchImpl = fetch,
   // Disabling custom hosting must not expose the general API on a still-routed customer hostname.
   if (!domainCapabilities(env).connect) return closed();
   try {
-    const rows = await domainStore(env, `creator_domains?hostname=eq.${encodeURIComponent(url.hostname)}&status=eq.active&select=auth_user_id,handle,target_type,target_id,hostname,ssl_status,last_checked_at&limit=1`, {}, fetchImpl);
+    const rows = await domainStore(env, `creator_domains?hostname=eq.${encodeURIComponent(url.hostname)}&status=eq.active&select=auth_user_id,handle,target_type,target_id,hostname,ssl_status,last_checked_at,provider_id,provider_zone_id,provider_state&limit=1`, {}, fetchImpl);
     const row = rows[0];
-    if (!row || row.ssl_status !== 'active' || !await authorizeEntitlement(row.auth_user_id, env, fetchImpl)) return closed();
+    // Provider checks are refreshed by explicit Verify. A stale or legacy mapping
+    // fails closed; no provider request is made on each visitor request.
+    const age=Date.now()-Date.parse(row?.last_checked_at||'');
+    if (!row || row.hostname!==url.hostname || row.ssl_status !== 'active' || row.provider_state!=='bound'||row.provider_zone_id!==env.CREATOR_DOMAINS_ZONE_ID||!PROVIDER_ID.test(row.provider_id||'')||!Number.isFinite(age)||age<0||age>86400000||!await authorizeEntitlement(row.auth_user_id, env, fetchImpl)) return closed();
     // CNAME check on every request avoids serving a detached/reassigned hostname from stale local state.
     if (!(await dnsRecords(row.hostname, 'CNAME', fetchImpl)).includes(env.CREATOR_DOMAINS_CNAME.toLowerCase().replace(/\.$/, ''))) return closed();
     if (!['GET','HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405 });

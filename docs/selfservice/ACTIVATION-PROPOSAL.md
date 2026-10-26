@@ -1,5 +1,10 @@
 # Self-service activation proposal — not authorization
 
+For the latest tested free-site subset and optional canonical-artist/provider
+extensions, use [the minimal release sequence](IDENTITY-DOMAIN-BINDINGS.md#smallest-free-website-release).
+It includes independent immutable project identity; no paid-domain schema is
+required merely to edit and publish a free offers or cinematic page.
+
 **Updated first-offer candidate:** the two-file minimum below describes the
 earlier PR637 baseline only. PR638 now routes website uploads through authoritative
 quota reservations and adds owned aliases/modules/free tile publication. Do not

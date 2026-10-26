@@ -5,6 +5,11 @@ neither saved head. No production SQL, owner grant, host record, DNS, provider
 activation, payment, deployment or authentication configuration has been applied.
 Recent open-PR audit found the separately owned analytics #640; its telemetry,
 music-engine and listening schemas remain outside this change.
+The parent independently refreshed production metadata at 2026-10-26 19:48 UTC:
+348 migrations, latest `20261024014732`; member_fronts, managed_projects,
+customer_site_modules, customer_site_addresses, canonical_artist_bindings,
+canonical_artist_binding_events and creator_domains were all absent. This is
+read-only count/latest/table-presence evidence, not a SQL hash-equivalence audit.
 
 ## Smallest free website release
 
@@ -70,15 +75,48 @@ existing artist/player fixture also exercises bound-project navigation, real
 audio start/resume, browser Back and private-binding link removal. Local Chromium
 154 evidence is separate from final-head CI's browser result.
 
-## Domain follow-up still pending
+## Domain provider authority
 
-The old adapter still depends on Enterprise-only `custom_metadata`. Replace it
-with durable zone/provider-ID authority and an explicit uncertain-create state.
-Do not adopt an unknown same-host record or retry an ambiguously accepted POST.
-Persist a returned provider ID before later DNS checks; verify zone/hostname on
-readback before deletion and on serving. Retain claims needing reviewed
-reconciliation. CNAME remains the supported connection contract; no new apex
-target, nameserver or shared Cloudflare address is inferred.
+The adapter no longer sends or depends on Enterprise-only `custom_metadata`.
+Apply `creator_domain_provider_bindings_v1.sql` only after the separate reviewed
+`creator_domains_v1.sql` and `creator_domain_targets_v1.sql`; none is a free-site
+prerequisite. The full source remains stacked on #638/#639 and their dependencies;
+the small SQL list above is an activation subset, not a standalone source merge.
+
+The domain RPC durably records create intent before provider POST, immediately
+saves returned zone/UUID identity, and fences changes with an operation token,
+two-minute lease and expected provider state. Unknown matching hosts, lost create
+responses and malformed success retain a reserved reconciliation claim. No
+automatic adoption or second POST occurs. If ID persistence committed but its
+response was lost, readback preserves that proven binding for safe verification.
+Delete reads the exact zone/ID and confirms hostname before remote deletion;
+known-ID 404 permits cleanup, unknown-ID reconciliation does not. A disconnected
+uncertain claim retains its verified hostname against other owners.
+
+Before applying, read-only preflight must check duplicate verified hostnames
+including detached rows. The stricter index deliberately fails its transaction
+if duplicates exist; it does not delete or reassign customer data. Legacy IDs
+without recorded zone provenance enter reconciliation, never inferred adoption.
+Reviewed reconciliation tooling remains an operator task; the customer sees the
+explicit state and no misleading Verify/Disconnect retry controls.
+
+Serving requires matching configured zone, bound provider UUID, active TLS,
+current CNAME, paid entitlement and the original project's public renderer. The
+provider snapshot expires after 24 hours and explicit Verify refreshes it. This
+is an **engineering blocker for unattended hosting**, not an approval/configuration
+gate: manual daily verification does not complete self-service hosting. No
+unattended provider-refresh job is added here. A subsequent bounded implementation
+must supply authoritative scheduled refresh and a tested failure policy before
+real host activation. No live provider behavior or TLS has been verified by fixtures.
+
+CNAME remains this adapter's supported connection contract; the UI labels its
+routing record as conditional and does not prescribe a CNAME for an apex. No
+new apex target, nameserver or shared Cloudflare address is inferred. WordPress
+ALIAS compatibility is unverified. Separately, Workers Custom Domains support an
+apex in an active owned Cloudflare zone, but that is a different unimplemented
+adapter and requires the parent's pending DNS/zone approval. Enterprise static-IP
+SaaS apex proxying is an option, not a universal requirement. No purchase,
+transfer or DNS change is needed merely to demonstrate this local code.
 
 Cloudflare create metadata is optional, while its plans list metadata as an
 Enterprise add-on. No documented create idempotency parameter was found in the

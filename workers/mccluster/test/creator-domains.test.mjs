@@ -13,16 +13,17 @@ function fixture(){
   if(u.hostname==='cloudflare-dns.com')return json({Status:0,Answer:(u.searchParams.get('type')==='TXT'?txt:cnames).map(data=>({type:u.searchParams.get('type')==='TXT'?16:5,data}))});
   if(u.hostname==='api.cloudflare.com'){
    if(failure)return json({success:false},503);
-   if(method==='POST'){creates++;if(removeDuringProvider)frontAvailable=false;const p={...JSON.parse(init.body),id:'provider',status:'active',ssl:{status:'active'}};providers.push(p);return json({success:true,result:p});}
+   if(method==='POST'){creates++;if(removeDuringProvider)frontAvailable=false;const p={...JSON.parse(init.body),id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',status:'active',ssl:{status:'active'}};assert.equal(p.custom_metadata,undefined);providers.push(p);return json({success:true,result:p});}
    if(method==='DELETE'){providers.length=0;return json({success:true,result:null});}
-   return json({success:true,result:u.searchParams.has('hostname')?providers:providers[0]});
+   return json({success:true,result:u.searchParams.has('hostname.exact')?providers:providers[0]});
   }
   if(u.pathname.endsWith('/managed_projects'))return json([]);
   if(u.pathname.endsWith('/member_fronts'))return json(frontAvailable?[{auth_user_id:u.searchParams.get('auth_user_id')?.slice(3) || A,handle:'creator'}]:[]);
-  if(u.pathname.endsWith('/rpc/claim_creator_domain')){const b=JSON.parse(init.body),r=rows.find(r=>r.id===b.domain_id&&r.auth_user_id===b.owner_id);if(!r||r.lease_until)return json(false);r.lease_until='busy';return json(true);}
+  if(u.pathname.endsWith('/rpc/claim_creator_domain_v2')){const b=JSON.parse(init.body),r=rows.find(r=>r.id===b.domain_id&&r.auth_user_id===b.owner_id);if(!r||r.lease_until)return json(null);r.lease_until='busy';r.operation_id=b.operation_id;if(b.mark_verified===false)r.status='detached';return json(r);}
+  if(u.pathname.endsWith('/rpc/update_creator_domain_v2')){const b=JSON.parse(init.body),r=rows.find(r=>r.id===b.domain_id&&r.auth_user_id===b.owner_id&&r.operation_id===b.operation_id);if(!r)return json({code:'40001'},409);if(b.forget){rows.splice(rows.indexOf(r),1);return json(null);}Object.assign(r,b.changes);if(b.finish){r.lease_until=null;r.operation_id=null;}return json(r);}
   if(u.pathname.endsWith('/creator_domains')){
    const found=rows.filter(r=>[...u.searchParams].every(([k,v])=>!v.startsWith('eq.')||String(r[k])===v.slice(3)));
-   if(method==='POST'){const r={id:crypto.randomUUID(),status:'ownership_pending',...JSON.parse(init.body)};rows.push(r);return json([r]);}
+   if(method==='POST'){const r={id:crypto.randomUUID(),status:'ownership_pending',provider_state:'none',...JSON.parse(init.body)};rows.push(r);return json([r]);}
    if(method==='PATCH'){found.forEach(r=>Object.assign(r,JSON.parse(init.body)));return json(found);}
    if(method==='DELETE'){found.forEach(r=>rows.splice(rows.indexOf(r),1));return json([]);}return json(found);
   }throw Error('Unexpected fixture '+u.pathname);
@@ -41,7 +42,7 @@ test('registrar transport prevents accidental live calls and disables auto-renew
 import {handleCreatorDomainHost} from '../src/creator-domain-host.js';
 test('host routing uses actual hostname, published page and entitlement; cannot select a different tenant',async()=>{
  let privateProfile=false,paid=true,recycled=false;
- const fetchImpl=async input=>{const u=new URL(input);if(u.pathname.endsWith('/creator_domains'))return Response.json(u.searchParams.get('hostname')==='eq.www.customer.org'?[{auth_user_id:A,handle:'creator',hostname:'www.customer.org',ssl_status:'active'}]:[]);
+ const fetchImpl=async input=>{const u=new URL(input);if(u.pathname.endsWith('/creator_domains'))return Response.json(u.searchParams.get('hostname')==='eq.www.customer.org'?[{auth_user_id:A,handle:'creator',hostname:'www.customer.org',ssl_status:'active',provider_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',provider_zone_id:'zone',provider_state:'bound',last_checked_at:new Date().toISOString()}]:[]);
  if(u.hostname==='cloudflare-dns.com')return Response.json({Status:0,Answer:[{type:5,data:'sites.mccluster.org.'}]});
  if(u.pathname.endsWith('/member_fronts'))return Response.json([{m_uid:A,auth_user_id:recycled?B:A,handle:'creator',published:{words:{title1:'Creator'}}}]);
  if(u.pathname.endsWith('/network_profiles'))return Response.json([{visibility:privateProfile?'private':'public'}]);

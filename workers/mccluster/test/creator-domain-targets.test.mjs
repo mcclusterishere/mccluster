@@ -19,7 +19,7 @@ test('managed domain delegates immutable authority; unpublish, missing integrati
  const env={SUPABASE_URL:'https://db.invalid',SUPABASE_SERVICE_ROLE_KEY:'fixture',CREATOR_DOMAINS_ENABLED:'true',CREATOR_DOMAINS_ZONE_ID:'zone',CREATOR_DOMAINS_API_TOKEN:'fixture',CREATOR_DOMAINS_CNAME:'sites.mccluster.org'};
  let owner=A,id=ID,published=true,tiles=false,options;
  const fetchImpl=async input=>{const u=new URL(input);
-  if(u.pathname.endsWith('/creator_domains'))return Response.json([{auth_user_id:A,handle:'portfolio',target_type:'managed_project',target_id:ID,hostname:'www.customer.org',ssl_status:'active'}]);
+  if(u.pathname.endsWith('/creator_domains'))return Response.json([{auth_user_id:A,handle:'portfolio',target_type:'managed_project',target_id:ID,hostname:'www.customer.org',ssl_status:'active',provider_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',provider_zone_id:'zone',provider_state:'bound',last_checked_at:new Date().toISOString()}]);
   if(u.pathname.endsWith('/managed_projects'))return Response.json([{id,owner_user_id:owner,slug:'portfolio'}]);
   if(u.hostname==='cloudflare-dns.com')return Response.json({Status:0,Answer:[{type:5,data:'sites.mccluster.org.'}]});
   if(['/front.html','/website-studio-view.html'].includes(u.pathname))return new Response('<html><head></head></html>');throw Error('Unexpected fetch');};

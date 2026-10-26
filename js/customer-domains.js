@@ -27,12 +27,18 @@
       const card = el('article',''); card.append(el('h2',row.hostname), el('p','Status: ' + row.status.replaceAll('_',' ') + ' · Certificate: ' + (row.ssl_status || 'not requested')));
       if (row.target) card.append(el('p','Site: ' + row.target.slug));
       if (row.last_error) card.append(el('p',row.last_error));
-      card.append(el('p','Add these records at your DNS provider. Keep the ownership TXT record in place. DNS changes can take time; retry verification after they propagate.'));
-      card.append(el('pre', row.records.map(r => `${r.type} ${r.name}\n${r.value}`).join('\n\n')));
-      if (row.provider_records.length) card.append(el('p','Additional hosting/certificate verification records:'),el('pre',JSON.stringify(row.provider_records,null,2)));
+      if (row.connection_note) card.append(el('p',row.connection_note));
+      if(row.status!=='reconciliation_required'){
+        card.append(el('p','Add these records at your DNS provider. Keep the ownership TXT record in place. DNS changes can take time; retry verification after they propagate.'));
+        card.append(el('pre', row.records.map(r => `${r.type} ${r.name}\n${r.value}`).join('\n\n')));
+        if(row.routing_candidate?.requires_public_cname&&row.routing_candidate.value){card.append(el('p','For a hostname that supports a public CNAME, the configured routing target is below. Do not replace apex A/AAAA records using this candidate; apex support needs a separate verified connection plan.'),el('pre','CNAME '+row.routing_candidate.name+'\n'+row.routing_candidate.value));}
+        if (row.provider_records.length) card.append(el('p','Additional hosting/certificate verification records:'),el('pre',JSON.stringify(row.provider_records,null,2)));
+      }
       for (const [label,path,method] of [['Verify again','/verify','POST'],['Disconnect','','DELETE']]) {
+        if(row.status==='reconciliation_required')continue;
         const btn = el('button',label); btn.type='button'; btn.addEventListener('click',async () => { btn.disabled=true; try { await api('/'+row.id+path,method,undefined,scope); if (scope === generation) await load(); } catch(e) { if (scope === generation && e.name !== 'AbortError') { status.textContent=e.message; btn.disabled=false; } } }); card.append(btn);
       }
+      if(row.status==='reconciliation_required')card.append(el('p','This connection needs a reviewed provider ownership check. Refresh status after reconciliation; creating another claim cannot safely recover it.'));
       root.append(card);
     }
   }

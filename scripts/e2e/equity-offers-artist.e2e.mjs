@@ -14,7 +14,7 @@ try{for(const width of [390,1440]){
  await ctx.addInitScript(()=>localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()})));
  await ctx.route('**/*',async route=>{
   const u=new URL(route.request().url());
-  if(u.hostname==='api.mccluster.org'&&u.pathname==='/v1/canonical-artists/resolve')return route.fulfill({status:binding==='private'?404:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(binding==='bound'?{state:'bound',home:'front.html?project=equity-fixture'}:{state:'unbound'})});
+  if(u.hostname==='api.mccluster.org'&&u.pathname==='/v1/canonical-artists/resolve')return route.fulfill({status:binding==='private'?404:binding==='forbidden'?403:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(binding==='bound'?{state:'bound',home:'front.html?project=equity-fixture'}:{state:'unbound'})});
   if(u.hostname==='api.mccluster.org'&&u.pathname==='/v1/projects/equity-fixture')return route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true,name:'Equity Uprise',slug:'equity-fixture',config:{schema:'mccluster-front/v1',layout:'offers',offer_page:{title:'Owned fixture offers',intro:'Ordinary owned project',cards:[{title:'Build',body:'Website fixture'}]}}})});
   if(u.origin!==BASE)return route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{}'});
   const path=resolve(ROOT,'.'+u.pathname);if(!path.startsWith(ROOT+'/'))return route.abort();
@@ -53,5 +53,6 @@ try{for(const width of [390,1440]){
  binding='private';await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.getElementById('albArtist')?.textContent==='Equity Uprise'&&!document.querySelector('#albArtist a'));
  assert.equal(await page.evaluate(()=>window.MCC_PAGE_PROFILE),null);
  assert.notEqual(await page.locator('[data-appnav="home"]').getAttribute('href'),'front.html?project=equity-fixture');
+ binding='forbidden';await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.getElementById('albArtist')?.textContent==='Equity Uprise'&&!document.querySelector('#albArtist a'));assert.equal(await page.evaluate(()=>window.MCC_PAGE_PROFILE),null);
  assert.deepEqual(errors,[]);await ctx.close();console.log('PASS '+width+': stable artist destinations, real audio start/resume, Back, contextual supplied marks, nine experiences, no overflow');
 }}finally{await browser.close();}

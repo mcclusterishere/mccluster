@@ -30,6 +30,7 @@ try{for(const width of [390,1440]){
   await f.sql.query("select canonical_artist_binding_v1('grant',$1,$2,$3,null,'Synthetic reviewed artist ownership')",[artist,O,A]);
   await page.getByRole('button',{name:'Refresh projects'}).click();await page.locator('#artistBindings').waitFor();
   assert.equal(await page.locator('#artistBindings select option').count(),2);await page.locator('#artistBindings select').selectOption({label:'Equity Uprise'});
+  await page.screenshot({path:join(OUT,'artist-owner-select-'+width+'.png'),fullPage:true});assert.ok((await page.locator('#projectName').boundingBox()).height>=44);
   // Account switches during refresh must not submit old selected project using B.
   await page.evaluate(()=>{window.refreshHold=new Promise(r=>window.releaseRefresh=r);});await page.getByRole('button',{name:'Bind artist destination'}).click();
   await page.evaluate(()=>{window.fixtureSession={access_token:'fixture-bob'};window.dispatchEvent(new Event('mcc:auth-changed'));window.releaseRefresh(fixtureSession);window.refreshHold=null;});
