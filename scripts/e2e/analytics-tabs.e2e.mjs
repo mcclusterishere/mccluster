@@ -9,7 +9,7 @@ const tabs=['Overview','Audience','Journeys','Content','Action & business','Worl
 const songs=Array.from({length:26},(_,i)=>({track:'Fixture track '+(i+1),album:'Audit album',listeners:35-i,starts:70-i*2,repeat_listeners:12,plays_per_listener:2,last_touch_accounts:2,assisted_accounts:3}));
 const journeys=Array.from({length:65},(_,i)=>({first_name:'Fixture',last_name:'Account '+(i+1),created_at:new Date(Date.now()-i*60000).toISOString(),source:i%2?'direct':'fixture',last_track:songs[i%26].track,country:'US',assisted_tracks:[],email:'fixture'+i+'@example.test'}));
 try{
-for(const width of [390,820,1280]){
+for(const width of [390,820,1024,1440]){
  const scope=String(width),{ctx,page,errors,calls}=await context({width,height:width===390?844:1000},{deviceScaleFactor:1});
  let cameraFail=true,archiveFail=false;
  await ctx.route('https://api.mccluster.org/v1/seek-first/readiness',route=>json(route,{database_schema_ready:true}));
@@ -35,6 +35,12 @@ for(const width of [390,820,1280]){
   const w=await widths(page);check(scope+' '+name+' viewport fits',w.scrollW===w.clientW,w);
   const body=await page.locator('.cad-body').evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth,height:el.clientHeight,text:el.innerText.length}));
   check(scope+' '+name+' bounded readable panel',body.scroll<=body.client+1&&body.height>100&&body.text>20,body);
+  for(const nested of [false,true]){
+   await page.locator('.cad-body').evaluate((el,n)=>el.style.maxWidth=n?'340px':'',nested);
+   const metrics=await page.locator('.cad-body').evaluate(el=>[...el.querySelectorAll('.cra-kpi strong,.cu-fact>strong')].filter(x=>x.getClientRects().length).map(x=>{const r=document.createRange();r.selectNodeContents(x);return {text:x.textContent,fit:x.scrollWidth<=x.clientWidth+1,lines:r.getClientRects().length};}));
+   check(scope+' '+name+(nested?' nested':'')+' metric values stay readable',metrics.every(x=>x.fit&&x.lines===1),metrics);
+  }
+  await page.locator('.cad-body').evaluate(el=>el.style.maxWidth='');
   const selected=await page.getByRole('tab',{name,exact:true}).evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===el||el.contains(hit);});
   check(scope+' '+name+' tab is not covered',selected);
   await page.screenshot({path:OUT+'/'+scope+'-'+name.toLowerCase().replace(/[^a-z]+/g,'-')+'.png'});

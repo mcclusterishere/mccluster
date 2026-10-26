@@ -22,6 +22,8 @@ on:
       - 'js/control-room/connections.js'
       - 'css/control-connections.css'
       - 'css/control-analytics*.css'
+      - 'css/control-forensics.css'
+      - 'scripts/e2e/site-health.e2e.mjs'
       - 'workers/mccluster/src/analytics/**'
       - 'workers/mccluster/test/analytics-camera-measurement.test.mjs'
       - 'scripts/e2e/analytics-unified.e2e.mjs'
@@ -63,12 +65,13 @@ jobs:
           CESIUM_DIR: /tmp/control-qa/node_modules/cesium/Build/Cesium
           CONTROL_QA_OUTPUT: /tmp/control-proof/screenshots
         run: |
-          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/control-surface.test.mjs
+          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/browser-diagnostics.test.mjs scripts/test/control-surface.test.mjs
           node --test workers/mccluster/test/analytics-*.test.mjs
           node scripts/e2e/site-navigation.e2e.mjs /tmp/control-proof/navigation
           node scripts/e2e/control-workspace.e2e.mjs
           node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
           node scripts/e2e/analytics-tabs.e2e.mjs /tmp/control-proof/analytics-tabs
+          node scripts/e2e/site-health.e2e.mjs /tmp/control-proof/site-health
           node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
           node scripts/e2e/connections.e2e.mjs /tmp/control-proof/connections
           node scripts/e2e/live-actors.e2e.mjs
