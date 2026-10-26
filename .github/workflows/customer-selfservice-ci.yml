@@ -164,6 +164,7 @@ jobs:
           NODE_PATH: /tmp/selfservice-tools/node_modules
         run: |
           node scripts/e2e/customer-site.e2e.mjs
+          node scripts/e2e/customer-site-policy.e2e.mjs
           node scripts/e2e/managed-projects.e2e.mjs
           node scripts/e2e/platform-home.e2e.mjs
           node scripts/e2e/platform-home-transition.e2e.mjs

@@ -4,8 +4,8 @@
    what makes a scrub feel held instead of chased. So an account's film is cut into frames here, in its own browser,
    from the video it picks: up to 160 frames, each at full size (up to 1280px on the long side) and at phone size
    (640px, the engine's sm/ set), as WebP where the browser can make it and JPEG where it cannot. Nothing is sent to a
-   server to be processed; the frames go straight to the account's own folder of the public front-media bucket with its
-   own session (the bucket's policies allow nothing else), uploaded as they are cut.
+   server to be processed; the frames stream through the quota-aware Worker to the account's own folder of the public front-media bucket,
+   authenticated with its session and uploaded as they are cut.
 
    A 360 room (an equirectangular video or photo), a still and a soundtrack are uploaded as they are, after a size
    check; a 360 video also gets a poster from its first frame. */
@@ -77,7 +77,7 @@
   }
   /* THE SWEEP: everything in the account's folder that none of the given pages uses is removed. A replaced film, a 360
      swapped for another, an upload never saved, the frames of a cut that failed: none of it should count against the
-     account's room (2,500 files, 1 GiB). Run after a save, when no upload is under way. */
+     account's shared website allowance. Run after a save, when no upload is under way. */
   function sweep(prefixPath, configs) {
     var keep = uses(configs), gone = [];
     return list(prefixPath).then(function (rows) {

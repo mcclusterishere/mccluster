@@ -6,7 +6,7 @@ create table if not exists public.customer_site_modules (
  owner_user_id uuid not null references auth.users(id),
  source_kind text not null check(source_kind in ('front','project')),
  source_key text not null,
- module_key text not null check(module_key='world_discovery'),
+ module_key text not null check(module_key in ('world','world_discovery')),
  enabled boolean not null default false,
  updated_at timestamptz not null default now(),
  primary key(owner_user_id,source_kind,source_key,module_key),

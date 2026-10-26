@@ -423,6 +423,22 @@
     return { kind: "page", handle: "page-profile", name: name, home: home.href, avatar: logo };
   }
   var PAGE_PROFILE = cleanPageProfile(window.MCC_PAGE_PROFILE);
+  var SITE_POLICY = window.MCC_SITE_POLICY || null;
+  function paintSitePolicy() {
+    var tab=dock.querySelector('[data-appnav="world"]');if(!tab)return;
+    var disabled=SITE_POLICY&&SITE_POLICY.world!==true;
+    tab.hidden=!!disabled;tab.style.display=disabled?'none':'';
+    dock.style.gridTemplateColumns=disabled?'repeat(2,minmax(0,1fr))':'';
+    if(SITE_POLICY&&SITE_POLICY.world===true) {
+      try{var dest=new URL(SITE_POLICY.world_href,document.baseURI);if(dest.origin===new URL(ROOT,location.href).origin&&/\/customer-world\.html$/.test(dest.pathname)){tab.href=dest.href;WINGS.world.home=dest.href;}}catch(e){}
+    }
+  }
+  function setSitePolicy(policy) {
+    SITE_POLICY=policy&&typeof policy.world==='boolean'?policy:null;
+    if(wingOn)revert();
+    var tab=dock.querySelector('[data-appnav="world"]');if(tab)tab.href=worldAt('?view=feed');WINGS.world.home=worldAt('?view=feed');
+    paintSitePolicy();HOME_BAR=dock.innerHTML;
+  }
   if (!PAGE_PROFILE && location.hostname === "matthew.mccluster.org" && (/^(index\.html)?$/.test(PAGE_KEY) || PAGE_KEY === "matthew-mccluster.html")) {
     PAGE_PROFILE = cleanPageProfile({name:"Matthew McCluster", home:HOUSE+"index.html", logo:ROOT+"assets/img/m-mark.png"});
   }
@@ -434,6 +450,7 @@
     return !!PAGE_PROFILE;
   }
   function paintPerspective() {
+    paintSitePolicy();
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
     homeTab.href = HOUSE + "platform-home.html";
@@ -1287,6 +1304,7 @@
     refreshAuth: refreshAuthState,
     auth: function () { return AUTH_STATE; },
     pageProfile: function (p) { return arguments.length ? setPageProfile(p) : PAGE_PROFILE; },
+    sitePolicy: function (p) { return arguments.length ? setSitePolicy(p) : SITE_POLICY; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
     ownPerspective: function(){return SELF_PROFILE;},

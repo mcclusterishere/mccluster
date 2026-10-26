@@ -2,6 +2,18 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {handleManagedProjects} from '../src/managed-projects.js';
 import {projectTilesFixture,A,B,ORG} from './support/project-tiles-fixture.mjs';
 const ids=['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','cccccccc-cccc-4ccc-8ccc-cccccccccccc'];
+test('explicit free site publication needs owner, public profile and approved media but no subscription',{skip:!process.env.PGLITE_DIR},async()=>{
+ const f=await projectTilesFixture();try{
+ f.env.CUSTOMER_SITE_OFFER_ENABLED='true';f.providerActive=false;await f.sql.exec('delete from creator_billing_subscriptions;delete from org_members;');
+ const doc=structuredClone((await f.call('/templates')).body.templates[0].definition);for(let i=0;i<3;i++){await f.prepare(ids[i],doc.tiles[i].kind);doc.tiles[i].source_ref={type:'media_asset',key:ids[i]};}
+ await f.call('','PUT',{expected_revision:0,document:doc});assert.equal((await f.call('')).body.free_publication,true);
+ assert.equal((await f.call('/publish','POST',{expected_revision:1,confirm_public:true})).status,200);
+ assert.equal((await f.call('/public','GET',null,null)).status,200);assert.equal((await f.db.select('managed_projects',{slug:'eq.alpha'}))[0].studio_org_id,null);
+ assert.equal((await f.call('/publish','POST',{expected_revision:1,confirm_public:true},'bob')).status,404);
+ await f.sql.query("update creator_site_media_state set public_approved=false where asset_id=$1",[ids[0]]);assert.equal((await f.call('/public','GET',null,null)).status,409);
+ await f.sql.exec('set role authenticated');await assert.rejects(()=>f.sql.query("select project_tile_publish_free_v1($1,$1,'alpha',1)",[A]),/permission denied/);await f.sql.exec('reset role');
+ }finally{await f.close();}
+});
 test('paid nonadmin template → revision → private media preview → public project, preserving cinematic snapshots',{skip:!process.env.PGLITE_DIR},async()=>{
  const f=await projectTilesFixture();try{
  const template=(await f.call('/templates')).body.templates[0];const doc=structuredClone(template.definition);

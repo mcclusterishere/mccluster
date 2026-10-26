@@ -56,7 +56,9 @@ async function start(){
  $('guidance').textContent='Publishing requires an active paid workspace and a public profile. Private media preparation remains separately gated; no processing allowance is granted here. '+definition.guidance.transition.help;
  const saved=await api('');doc=structuredClone(saved.draft?.document||definition.definition);draftID=saved.draft?.id||'project';revision=saved.draft?.revision||0;dirty=!revision;
  $('editor').hidden=false;$('load').hidden=false;await media();
- const access=await api('/workspaces');$('workspace').replaceChildren();for(const w of access.workspaces||[]){if(!/^[0-9a-f-]{36}$/.test(w.org_id))continue;const option=node('option','Workspace '+w.org_id);option.value=w.org_id;$('workspace').append(option);}
+ $('guidance').textContent=(saved.free_publication?'Publish your owned website for free with a public profile.':'Publishing requires an active paid workspace and a public profile.')+' Media approval and preparation allowances remain separate. '+definition.guidance.transition.help;
+ $('workspace').closest('label').hidden=saved.free_publication===true;
+ const access=saved.free_publication?{workspaces:[]}:await api('/workspaces');$('workspace').replaceChildren();for(const w of access.workspaces||[]){if(!/^[0-9a-f-]{36}$/.test(w.org_id))continue;const option=node('option','Workspace '+w.org_id);option.value=w.org_id;$('workspace').append(option);}
  status(revision?'Loaded saved revision '+revision:'Template ready. This draft is not saved yet.');sessionStorage.removeItem('studio-template-intent');
 }
 $('useTemplate').onclick=()=>guard(start);

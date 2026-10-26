@@ -109,7 +109,7 @@
     c.appendChild(el('p',project?'Settings for project: '+project:'Settings for your personal website.'));
     result.data.modules.forEach(function(m){
       var row=el('div','', 'site-module');
-      if(m.configurable&&m.key==='world_discovery') {
+      if(m.configurable&&['world','world_discovery'].includes(m.key)) {
         var label=el('label'),input=el('input');input.type='checkbox';input.checked=m.enabled===true;
         label.append(input,document.createTextNode(' '+m.name));row.append(label);
         input.addEventListener('change',async function(){
@@ -119,7 +119,7 @@
             if(!response.ok)throw Error('Settings could not be saved.');
             var d=await response.json();if(id!==generation)return;
             if(!d.modules.some(function(x){return x.key===m.key&&x.enabled===wanted;}))throw Error('Settings were not confirmed.');
-            note.textContent=wanted?'World discovery is on. Create a listing and keep your page public to appear.':'World discovery is off. Your website is excluded from the directory.';
+            note.textContent=m.key==='world'?(wanted?'World tab is on for this website.':'World tab is off for this website.'):(wanted?'World discovery is on. Create a listing and keep your page public to appear.':'World discovery is off. Your website is excluded from the directory.');
           }catch(e){if(id!==generation)return;input.checked=!wanted;note.textContent='Settings could not be saved. Please retry.';}
           finally{if(id===generation)input.disabled=false;}
         });

@@ -5,6 +5,7 @@ import {supabaseStore, limitedBytes, fail} from './website-studio/service.mjs';
 
 export const SITE_MODULES = Object.freeze([
   {key:'site', name:'Website', required:true, configurable:false, capability:'managed-projects', description:'Your profile, drafts, media and published website.'},
+  {key:'world', name:'World feed', required:false, configurable:true, capability:'network-posts', description:'Show a World tab and this website’s public native updates. Your personal World membership is separate.'},
   {key:'world_discovery', name:'World discovery', required:false, configurable:true, capability:'world-directory', description:'Allow this website to appear in World after you create a public listing. Your personal World membership is separate.'},
   {key:'hosting', name:'Custom hosting', required:false, configurable:false, capability:'creator-domains', description:'Optional paid hosting. Availability and entitlement are checked in Domains.'},
   {key:'advertising', name:'Advertising', required:false, configurable:false, capability:null, description:'Planned. No ads or advertising requests are enabled.'}
@@ -13,6 +14,12 @@ export const SITE_MODULES = Object.freeze([
 export async function siteModuleEnabled(db, owner, kind, key, module='world_discovery') {
   const rows=await db.select('customer_site_modules',{owner_user_id:'eq.'+owner,source_kind:'eq.'+kind,source_key:'eq.'+key,module_key:'eq.'+module,limit:'1'},'enabled');
   return rows[0]?.enabled===true;
+}
+export async function siteModuleProjection(env,owner,kind,key,fetchImpl,store){
+ if(env.CUSTOMER_SITE_OFFER_ENABLED!=='true')return null;
+ const db=store||supabaseStore(env,fetchImpl);
+ const world=await siteModuleEnabled(db,owner,kind,key,'world');
+ return {world,world_href:'customer-world.html?'+(kind==='project'?'project=':'owner=')+encodeURIComponent(kind==='project'?key:owner)};
 }
 
 export async function handleCustomerSiteModules(request,env,deps={}) {
@@ -32,7 +39,7 @@ export async function handleCustomerSiteModules(request,env,deps={}) {
       if(!b||Object.keys(b).some(k=>!['module','enabled'].includes(k))||typeof b.enabled!=='boolean'||!SITE_MODULES.some(m=>m.key===b.module&&m.configurable))throw fail(400,'Choose a configurable website module');
       await db.rpc('customer_site_module_set_v1',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_kind:kind,p_key:key,p_module:b.module,p_enabled:b.enabled});
     } else if(request.method!=='GET')throw fail(405,'Method not allowed');
-    const enabled=await siteModuleEnabled(db,actor.auth_uid,kind,key);
-    return send({ok:true,source:{kind,key},modules:SITE_MODULES.map(m=>({...m,enabled:m.required||m.key==='world_discovery'&&enabled})),global_membership_unchanged:true});
+    const [world,discovery]=await Promise.all(['world','world_discovery'].map(m=>siteModuleEnabled(db,actor.auth_uid,kind,key,m)));
+    return send({ok:true,source:{kind,key},modules:SITE_MODULES.map(m=>({...m,enabled:m.required||m.key==='world'&&world||m.key==='world_discovery'&&discovery})),global_membership_unchanged:true});
   }catch(e){return send({error:e.status?e.message:'Website module settings are unavailable',code:e.status===404?'not_found':'unavailable'},e.status||503);}
 }

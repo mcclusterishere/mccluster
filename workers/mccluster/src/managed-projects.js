@@ -1,5 +1,6 @@
 /* Multiple pages per existing M Account. No client-controlled owner, media grant or registry binding. */
 import {handleProjectTiles} from './project-tiles.js';
+import {siteModuleProjection} from './customer-site-modules.js';
 import { reply } from './lib/http.js';
 import { validateFront, mediaPrefix, FRONT_MAX_BYTES } from '../../../packages/front-config/index.mjs';
 const SLUG = /^[a-z0-9][a-z0-9-]{2,39}$/;
@@ -44,7 +45,7 @@ export async function handleManagedProjects(request, env, deps = {}) {
       if (profiles?.[0]?.visibility !== 'public') return error('Project is not public',404,'project_unavailable');
       const checked = validateFront(row.published,{mediaPrefix:projectMedia(env,row.owner_user_id,row.slug)});
       if (!checked.ok) return error('Project is not public',404,'project_unavailable');
-      return send({ok:true,slug:row.slug,handle:row.slug,name:row.name,config:checked.config,published_at:row.published_at,registry_key:row.registry_key || null});
+      return send({ok:true,slug:row.slug,handle:row.slug,name:row.name,config:checked.config,published_at:row.published_at,registry_key:row.registry_key || null,site_modules:await siteModuleProjection(env,row.owner_user_id,'project',slug,fetchImpl)});
     }
     const auth = request.headers.get('authorization') || '';
     if (!/^Bearer \S+$/i.test(auth)) return error('Sign in to manage projects',401,'signin');

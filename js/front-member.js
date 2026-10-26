@@ -73,6 +73,8 @@
     if (/^https:/i.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
   }
   function fill(page) {
+    w.MCC_SITE_POLICY=page.site_modules||null;
+    if(w.MCC_BAR&&w.MCC_BAR.sitePolicy)w.MCC_BAR.sitePolicy(w.MCC_SITE_POLICY);
     var t = words(page), c = page.config || {}, m = c.media || {};
     Array.prototype.forEach.call(d.querySelectorAll("[data-fw]"), function (el) { text(el, t[el.getAttribute("data-fw")]); });
     /* the hero's and the close's letters are built by the engine from data-word */
