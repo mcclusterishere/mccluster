@@ -73,6 +73,18 @@ export async function resolveDocument(db,owner,document,purpose='preview'){
  }
  return {document,media,expires_in:300};
 }
+async function processingReadiness(db,env,actor){
+ const blockers=[];
+ if(env.WEBSITE_STUDIO_PROCESSOR_ENABLED!=='true')blockers.push('Automatic preparation is not enabled. Uploaded originals are retained.');
+ const models=await db.select('media_models',{provider:'eq.native',provider_model_id:'eq.studio-native-1',capability:'eq.media.prepare',enabled:'eq.true',limit:'1'},'id');
+ if(!models.length)blockers.push('The native preparation model is not configured.');
+ const allowances=await db.select('creator_site_access',{owner_m_uid:'eq.'+actor.m_uid,enabled:'eq.true',expires_at:'gt.'+new Date().toISOString(),limit:'1'},'org_id,preparation_budget_microusd');
+ const access=allowances[0];
+ const members=access?await db.select('org_members',{org_id:'eq.'+access.org_id,profile_id:'eq.'+actor.auth_uid,role:'in.(owner,admin)',limit:'1'},'org_id'):[];
+ if(!access||!members.length)blockers.push('An existing approved preparation allowance for your workspace is required. A site subscription alone does not provide this allowance.');
+ else if(Number(access.preparation_budget_microusd)<10000)blockers.push('The preparation allowance is exhausted. No additional job has been charged.');
+ return {can_prepare:blockers.length===0,blockers,executor_status:'not_verified',max_source_bytes:67108864,reservation_microusd:10000};
+}
 export async function handleWebsiteStudio(request,env,deps={}){
  const url=new URL(request.url);if(!url.pathname.startsWith(PREFIX+'/'))return null;
  const origins=new Set(['https://matthew.mccluster.org','https://mccluster.org','https://humanuprise.com',...(deps.origins||[])]);const origin=request.headers.get('origin');
@@ -86,7 +98,7 @@ export async function handleWebsiteStudio(request,env,deps={}){
  const db=deps.db||supabaseStore(env,deps.fetch),p=url.pathname.slice(PREFIX.length);
  if(p==='/templates'&&request.method==='GET')return answer({templates:await db.select('creator_site_template_versions',{status:'eq.active'},'template_key,version,definition,guidance')});
  if(p.startsWith('/processor/')){
-  const m=p.match(/^\/processor\/([a-f0-9-]{36})(?:\/files\/([a-z.]+))?(?:\/(finish|fail))?$/);if(!m)throw fail(404,'Unknown processor route');
+  const m=p.match(/^\/processor\/([a-f0-9-]{36})(?:\/files\/([a-z0-9.]+))?(?:\/(finish|fail))?$/);if(!m)throw fail(404,'Unknown processor route');
   const key=id(m[1]),bearer=request.headers.get('authorization')||'';if(!/^Bearer [a-f0-9]{64}$/.test(bearer))throw fail(401,'Job capability required');const hash=await sha(bearer.slice(7));
   const rows=await db.select('creator_site_media_state',{asset_id:'eq.'+key,ticket_hash:'eq.'+hash,ticket_expires_at:'gt.'+new Date().toISOString(),state:'in.(queued,processing)',limit:'1'}),a=rows[0];if(!a)throw fail(403,'Job capability expired');
   if(m[2]&&request.method==='PUT'){
@@ -103,11 +115,14 @@ export async function handleWebsiteStudio(request,env,deps={}){
    }
    await db.rpc('studio_finish_v2',{p_id:key,p_ticket_hash:hash,p_manifest:m[3]==='finish'?b:null,p_error:m[3]==='fail'?'Media preparation failed':null});return answer({ok:true});
   }
-  if(request.method==='GET'){await db.patch('creator_site_media_state',{asset_id:'eq.'+key},{state:'processing'});return answer({source_url:await db.sign(a.source_path),settings:a.settings,expected_bytes:a.expected_bytes});}
+  if(request.method==='GET'){await db.patch('creator_site_media_state',{asset_id:'eq.'+key,ticket_hash:'eq.'+hash,state:'in.(queued,processing)'},{state:'processing'});return answer({source_url:await db.sign(a.source_path),settings:a.settings,expected_bytes:a.expected_bytes});}
   throw fail(405,'Method not allowed');
  }
  const actor=await db.actor(request);
- if(p==='/assets'&&request.method==='GET')return answer({assets:await db.select('creator_site_media_state',{owner_m_uid:'eq.'+actor.m_uid,state:'neq.withdrawn',order:'created_at.desc',limit:'100'},'asset_id,kind,state,settings,public_approved,error')});
+ if(p==='/assets'&&request.method==='GET'){
+  const assets=await db.select('creator_site_media_state',{owner_m_uid:'eq.'+actor.m_uid,state:'neq.withdrawn',order:'created_at.desc',limit:'100'},'asset_id,kind,state,settings,public_approved,error,ticket_expires_at');
+  return answer({assets:assets.map(({ticket_expires_at,...a})=>({...a,retryable:['awaiting_upload','failed'].includes(a.state)||['queued','processing'].includes(a.state)&&Date.parse(ticket_expires_at)<=Date.now()})),processing:await processingReadiness(db,env,actor)});
+ }
  if(p==='/uploads'&&request.method==='POST'){
   const b=await json(request);if(!Number.isSafeInteger(b.bytes)||b.bytes<1||b.bytes>67108864)throw fail(400,'Use a file no larger than 64 MiB');if(b.rights_confirmed!==true)throw fail(400,'Confirm that you may use this media');
   const s=assertSettings(b.settings),key=crypto.randomUUID();const r=await db.rpc('studio_register_upload_v2',{p_actor:actor.m_uid,p_id:key,p_bytes:b.bytes,p_kind:s.kind,p_settings:s});return answer({asset_id:key,upload_url:await db.sign(r.path,true),state:'awaiting_upload'});
@@ -117,9 +132,10 @@ export async function handleWebsiteStudio(request,env,deps={}){
   const key=id(am[1]);const rows=await db.select('creator_site_media_state',{asset_id:'eq.'+key,owner_m_uid:'eq.'+actor.m_uid,limit:'1'});const a=rows[0];if(!a)throw fail(404,'Asset unavailable');
   if(am[2]==='complete'){
    if(env.WEBSITE_STUDIO_PROCESSOR_ENABLED!=='true')throw fail(503,'Automatic preparation is not enabled yet. Your upload is retained.');
+   if(!['queued','processing','ready'].includes(a.state)||Date.parse(a.ticket_expires_at)<=Date.now()){const readiness=await processingReadiness(db,env,actor);if(!readiness.can_prepare)throw fail(409,readiness.blockers.join(' '));}
    await db.exists(a.source_path,Number(a.expected_bytes));const ticket=secret();return answer(await db.rpc('studio_queue_v2',{p_actor:actor.m_uid,p_id:key,p_auth_uid:actor.auth_uid,p_ticket_hash:await sha(ticket),p_ticket:ticket,p_origin:'https://api.mccluster.org'}));
   }
-  const b=await json(request);if(am[2]==='approve'&&b.public_approved!==true)throw fail(400,'Explicit public media approval required');
+  const b=await json(request);if(am[2]==='approve'&&a.state!=='ready')throw fail(409,'Wait for preparation to finish before approving public use');if(am[2]==='approve'&&b.public_approved!==true)throw fail(400,'Explicit public media approval required');
   await db.patch('creator_site_media_state',{asset_id:'eq.'+key,owner_m_uid:'eq.'+actor.m_uid},am[2]==='approve'?{public_approved:true}:{state:'withdrawn',public_approved:false,ticket_hash:null});return answer({ok:true});
  }
  throw fail(404,'Studio route unavailable');

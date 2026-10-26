@@ -17,6 +17,7 @@ export async function projectTilesFixture(){
  create table orgs(id uuid primary key);
  create table org_members(org_id uuid,profile_id uuid,role text);
  create table creator_billing_subscriptions(owner_user_id uuid,org_id uuid,status text,stripe_subscription_id text,stripe_price_id text,current_period_end timestamptz);
+ create table media_models(id uuid default gen_random_uuid(),provider text,provider_model_id text,capability text,enabled boolean);
  create table media_assets(id uuid primary key,asset_type text,role text,storage_path text,metadata jsonb);
  create table media_jobs(id uuid primary key,status text,result jsonb,error jsonb,completed_at timestamptz,updated_at timestamptz);
  create table network_posts(id uuid,author_m_uid uuid,visibility text,media jsonb,deleted_at timestamptz,removed_at timestamptz);
@@ -44,7 +45,7 @@ export async function projectTilesFixture(){
   async actor(request){const h=request.headers.get('authorization');if(!['Bearer fixture-alice','Bearer fixture-bob'].includes(h))throw fail(401,'Sign in first');const uid=h.endsWith('alice')?A:B;return {m_uid:uid,auth_uid:uid};},
   async select(table,filters={},columns='*'){const values=[];let q='select '+(columns==='*'?'*':columns.split(',').map(identifier).join(','))+' from '+identifier(table)+where(filters,values);if(filters.order){const [k,direction]=filters.order.split('.');q+=' order by '+identifier(k)+(direction==='desc'?' desc':' asc');}if(filters.limit)q+=' limit '+Number(filters.limit);return(await sql.query(q,values)).rows;},
   async patch(table,filters,body){const values=[];const set=Object.entries(body).map(([k,v])=>{values.push(v);return identifier(k)+'=$'+values.length;});await sql.query('update '+identifier(table)+' set '+set.join(',')+where(filters,values),values);},
-  async rpc(name,args){await sql.exec('set role service_role');try{return(await sql.query('select '+identifier(name)+'('+Object.keys(args).map((k,i)=>identifier(k)+'=> $'+(i+1)).join(',')+') as result',Object.values(args).map(v=>typeof v==='object'?JSON.stringify(v):v))).rows[0].result;}catch(e){throw fail(e.code==='40001'?409:e.code==='42501'?403:e.code==='54000'?429:503,e.message);}finally{await sql.exec('reset role');}},
+  async rpc(name,args){await sql.exec('set role service_role');try{return(await sql.query('select '+identifier(name)+'('+Object.keys(args).map((k,i)=>identifier(k)+'=> $'+(i+1)).join(',')+') as result',Object.values(args).map(v=>v!==null&&typeof v==='object'?JSON.stringify(v):v))).rows[0].result;}catch(e){throw fail(e.code==='40001'?409:e.code==='42501'?403:e.code==='54000'?429:503,e.message);}finally{await sql.exec('reset role');}},
   async sign(path){signed++;return 'https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/sign/mnet-media/'+path+'?token=fixture';}
  };
  const env={SUPABASE_URL:'https://zmnhbrjyhxzhkxmhkexs.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'fixture',STRIPE_SECRET_KEY:'sk_test_fixture',CREATOR_STARTER_MONTHLY_PRICE_ID:'price_fixture',WEBSITE_STUDIO_ENABLED:'true'};

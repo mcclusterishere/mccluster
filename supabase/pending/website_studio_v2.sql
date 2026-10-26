@@ -103,10 +103,19 @@ returns jsonb language plpgsql security invoker set search_path=pg_catalog,publi
 declare a public.creator_site_media_state; g public.creator_site_access; j public.media_jobs; begin
  select * into a from public.creator_site_media_state where asset_id=p_id and owner_m_uid=p_actor for update;
  if not found then raise exception 'asset unavailable' using errcode='42501';end if;
+ if not exists(select 1 from public.m_auth_user_links where auth_user_id=p_auth_uid and m_uid=p_actor and is_primary) then raise exception 'identity unavailable' using errcode='42501';end if;
+ -- An expired capability cannot finish. Cancel its old canonical task before an explicit retry.
+ if a.state in ('queued','processing') and a.ticket_expires_at<=now() then
+  update public.ops_compute_tasks set status='canceled',updated_at=now() where metadata->>'media_job_id'=a.job_id::text and status in ('queued','leased','running');
+  update public.media_jobs set status='failed',error='{"message":"Preparation capability expired"}'::jsonb,completed_at=now(),updated_at=now() where id=a.job_id;
+  a.state:='failed';
+ end if;
  if a.state in ('queued','processing','ready') then return jsonb_build_object('asset_id',a.asset_id,'state',a.state,'job_id',a.job_id);end if;
  if a.state not in ('awaiting_upload','failed') then raise exception 'asset unavailable' using errcode='42501';end if;
  select * into g from public.creator_site_access where owner_m_uid=p_actor and enabled and expires_at>now() for update;
  if not found or g.preparation_budget_microusd<10000 then raise exception 'preparation access not active' using errcode='42501';end if;
+ if not exists(select 1 from public.org_members where org_id=g.org_id and profile_id=p_auth_uid and role in ('owner','admin')) then raise exception 'preparation workspace unavailable' using errcode='42501';end if;
+ if not exists(select 1 from public.media_models where provider='native' and provider_model_id='studio-native-1' and capability='media.prepare' and enabled) then raise exception 'preparation model unavailable' using errcode='42501';end if;
  -- Lock grants so reservations cannot exceed the explicitly sponsored budget.
  update public.creator_site_access set preparation_budget_microusd=preparation_budget_microusd-10000 where owner_m_uid=p_actor and preparation_budget_microusd>=10000;
  if not found then raise exception 'preparation budget exhausted' using errcode='54000';end if;
