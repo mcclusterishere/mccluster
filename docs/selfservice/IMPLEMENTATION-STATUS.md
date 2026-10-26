@@ -1,6 +1,11 @@
 # Customer self-service implementation status
 
 This is proposed engineering, not a deployed product or release authorization.
+Read [the historical reconciliation](RECONCILIATION-2026-10-26.md) before extending
+these drafts: substantial editors, commerce and music implementations already
+exist on main and parked branches. "Not integrated here" does not mean absent
+from the repository. In particular, #493 Studio, #396 canonical commerce and
+#278/#541/#543 recording/analysis require deliberate consolidation.
 Read-only baseline: main `16bf23358b742b47f6c77138701f59465dfed34f`, Pages
 `85ab1350cebd38a5c983cedf2167d2a673944b4a`, active Worker version
 `87ff8184-0389-4b07-8d4a-70fe93358b28`. The baseline Worker had no exact Git SHA attestation. Local integration was later rebased onto `396760eb` after the separately authorized #620/#621 releases; those releases are not self-service activation.
@@ -20,12 +25,12 @@ performed for this work. Current membership policy has not been changed.
 | Purchase site plan | `creator-billing.js`, `creator-entitlement.js`; authenticated price catalog, persisted checkout reservation, portal, provider-confirmed expiry recovery | Stripe sandbox/live configuration and webhook delivery unverified |
 | Paid publication RPC | `20261010009100_creator_publish_cohort_entitlement.sql` fixes existing five-argument caller compatibility | Compare exact production function/schema and approve migration; do not remove ownership parameter |
 | Seller onboarding | `creator-commerce.js`, `customer-seller.js`; owned paid workspace, Stripe hosted onboarding/recovery, provider status and payout dashboard | Connected-account provider verification and live activation required |
-| Products/services | `creator-store.js`, `customer-store.js`, `customer-checkout.html`; immutable order price, verified paid/refund state, owner fulfillment | Fixed-price USD, US shipping included; no inventory, automatic tax, digital delivery or booking calendar |
-| Domains already owned | `creator-domains.js`, `creator-domain-host.js`; TXT ownership, CNAME, provider TLS state, immutable owner binding | Cloudflare SaaS hosting configuration/credentials, real DNS/TLS verification and approved route needed |
+| Products/services | `creator-store.js`, `customer-store.js`, `customer-checkout.html`; immutable order price, verified paid/refund state, owner fulfillment | Integration with existing #396 canonical work_orders/payments/fulfillment is a release blocker. Fixed-price USD, US shipping included; no inventory, automatic tax, digital delivery or booking calendar |
+| Domains already owned | `creator-domains.js`, `creator-domain-host.js`; TXT ownership, CNAME, provider TLS state, immutable owner binding | Targets personal member fronts only; managed-project/#493/We Trust targets need integration. Cloudflare SaaS configuration, real DNS/TLS verification and approved route needed |
 | Domain purchases/renewals | `creator-domain-orders.js`; immutable quote/contact/consent, funding and fulfillment state machine, replay/reconciliation fixtures | Default disabled; complete verified registrar adapter, processor checkout wiring and reviewed terms required |
 | World posts + cross-posting | Existing World composer plus opt-in connected Instagram Reels; separate delivery state/retry; fixture proves one World post despite external retry | No cross-network scheduling; local in-memory retry state; actual provider delivery unverified |
 | World directory | `world-directory.js`, `world-discover.html`; explicit owner listings, strict visibility/discoverability/source checks, category/locality/search | Business/service/project only; no invented coordinates or event/campaign listing support |
-| Music collaboration | `music-workspace.js`, private projects/invites/roles, originals/credits, microphone review, ordered versions/comments/release-ready snapshot | Async collaboration, not DAW; no waveform editing/mixing/export/video editing/stem or MIDI/MusicXML analysis |
+| Music collaboration | `music-workspace.js`, private projects/invites/roles, originals/credits, microphone review, ordered versions/comments/release-ready snapshot | Async collaboration, not DAW. Existing #278 capture/trim/posting and #541/#543 branch analysis/runtime are not integrated here; existing release studio also needs rights-preserving handoff |
 | External social | `social/customer.js` + existing queue; owner OAuth/account selection, uploads, status/retry/cancel/disconnect | Instagram Professional Reels only; Meta app approval/configuration and live callback/Vault encryption unverified |
 | Platform navigation | `platform-home.html`, `js/tabbar.js`; supplied E=Up mark for platform default, separate personal/artist destination | Latest profile-specific center-tab requirement is pending the coordinated Vaunt follow-up; do not merge the earlier global E=Up behavior. New public-domain hosting not configured |
 | Campaign participation | Existing clipping screen linked; sponsor launch honestly assisted | General mission marketplace/payment automation not completed by this change |

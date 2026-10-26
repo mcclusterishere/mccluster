@@ -1,0 +1,3347 @@
+[
+  {
+    "branch": "adaptive-experience-compat-v1",
+    "sha": "4ccb2b898265142e3f5cf6a4fd61f3d5d52aed68",
+    "pull_requests": [
+      384
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2059,
+    "merge_base": "dc3f5f02082df0a41b3c7f47c3bd1e63f1e12cc1",
+    "changed_paths_since_common_ancestor": 47,
+    "unique_relevant_paths": [
+      "docs/END-RACISM-TWO-PATH-CAMPAIGN.md",
+      "scripts/test/action-network.test.mjs",
+      "scripts/test/here-album-commerce.test.mjs",
+      "supabase/functions/music-direct-checkout/index.ts",
+      "supabase/functions/stripe-webhook/index.ts",
+      "supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql",
+      "supabase/migrations/20261006023453_commerce_stripe_reconciler_v2.sql",
+      "supabase/migrations/20261006233518_here_album_commerce_v1_reconcile.sql"
+    ]
+  },
+  {
+    "branch": "adaptive-production-policy-v1",
+    "sha": "73460219d286390ebbfd64f17c4da1d50981649f",
+    "pull_requests": [
+      385
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2065,
+    "merge_base": "dc3f5f02082df0a41b3c7f47c3bd1e63f1e12cc1",
+    "changed_paths_since_common_ancestor": 56,
+    "unique_relevant_paths": [
+      "docs/END-RACISM-TWO-PATH-CAMPAIGN.md",
+      "js/mnet.js",
+      "scripts/test/action-network.test.mjs",
+      "scripts/test/here-album-commerce.test.mjs",
+      "supabase/functions/music-direct-checkout/index.ts",
+      "supabase/functions/stripe-webhook/index.ts",
+      "supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql",
+      "supabase/migrations/20261006023453_commerce_stripe_reconciler_v2.sql",
+      "supabase/migrations/20261006233518_here_album_commerce_v1_reconcile.sql"
+    ]
+  },
+  {
+    "branch": "architecture/equity-uprise-core-v2",
+    "sha": "1a8433acaf2e6224447edf4acfc493d666b82ad6",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2726,
+    "merge_base": "9554d6c3e4e5785cad37f3cc6f143d0f8258a2fd",
+    "changed_paths_since_common_ancestor": 204,
+    "unique_relevant_paths": [
+      "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
+      "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md"
+    ]
+  },
+  {
+    "branch": "architecture/finish-ten-v1",
+    "sha": "9259b95e78754c06683a0d1958b415fc7f4531b0",
+    "pull_requests": [
+      104
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3179,
+    "merge_base": "b521edc9a469b8e262f18f6ca887713d46736f9e",
+    "changed_paths_since_common_ancestor": 13,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "architecture/platform-reconstruction-v1",
+    "sha": "2dc6f071ccb3157573f9c941147ba1742b40b820",
+    "pull_requests": [
+      111
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3154,
+    "merge_base": "102a92aafc2219cd74ba85845b51fc5ffc8adefc",
+    "changed_paths_since_common_ancestor": 46,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "archive/we-rental-era-2026-09-08",
+    "sha": "33ba69b67c130d5ee3109732b773de02083be541",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 3435,
+    "merge_base": "33ba69b67c130d5ee3109732b773de02083be541",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "astra/action-network-gamification-v1",
+    "sha": "587f0e01b76cd425787f0a56a454d27f7029f618",
+    "pull_requests": [
+      291
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2296,
+    "merge_base": "ada707f8e8aabe62f91651070e2ba299bb886040",
+    "changed_paths_since_common_ancestor": 27,
+    "unique_relevant_paths": [
+      "css/mnet.css",
+      "css/music-creator.css",
+      "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
+      "js/mnet-tour.js",
+      "js/mnet.js",
+      "js/music-creator-profile.js",
+      "js/socials-room.js",
+      "mnet.html",
+      "scripts/test/mnet-real-network.test.mjs"
+    ]
+  },
+  {
+    "branch": "astra/action-network-v2-community-missions",
+    "sha": "721fc9d7b4e86f3b27f92efa3039a101fad92849",
+    "pull_requests": [
+      275
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2312,
+    "merge_base": "a8e7aa3d0a7a6653028afccad664e3c46fbe29cf",
+    "changed_paths_since_common_ancestor": 7,
+    "unique_relevant_paths": [
+      "docs/architecture/MNET-ACTION-NETWORK-V2.md",
+      "js/mnet.js",
+      "mnet.html",
+      "scripts/test/mnet-action-network-v2.test.mjs",
+      "supabase/pending_migrations/20260930235930_mnet_action_network_v2.sql"
+    ]
+  },
+  {
+    "branch": "astra/action-profile-frontpage",
+    "sha": "ca74d40b96cde90528adb79b318d9cadd7e8c413",
+    "pull_requests": [
+      289
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2295,
+    "merge_base": "ada707f8e8aabe62f91651070e2ba299bb886040",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": [
+      "css/mnet.css",
+      "js/mnet.js",
+      "mnet.html",
+      "scripts/test/mnet-real-network.test.mjs"
+    ]
+  },
+  {
+    "branch": "astra/create-lifecycle-hardening",
+    "sha": "bcc68bce858a1550889941e7bbc56689bd460e34",
+    "pull_requests": [
+      287
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2295,
+    "merge_base": "ada707f8e8aabe62f91651070e2ba299bb886040",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "astra/unified-identity-music-action",
+    "sha": "c9ea406e9a953326055569bba5c0d8103e1d317f",
+    "pull_requests": [
+      290
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2295,
+    "merge_base": "ada707f8e8aabe62f91651070e2ba299bb886040",
+    "changed_paths_since_common_ancestor": 24,
+    "unique_relevant_paths": [
+      "css/mnet.css",
+      "css/music-creator.css",
+      "js/mnet-tour.js",
+      "js/mnet.js",
+      "js/music-creator-profile.js",
+      "js/socials-room.js",
+      "mnet.html",
+      "scripts/test/mnet-real-network.test.mjs"
+    ]
+  },
+  {
+    "branch": "astra/universal-polish-system",
+    "sha": "1985e389ce803a564c3cc06a39eacc0b5dd36cbe",
+    "pull_requests": [
+      283
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2297,
+    "merge_base": "6cc709a885832a9767585ff62e0d7e13821eba74",
+    "changed_paths_since_common_ancestor": 7,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "audit/database-reconciliation-15d-20261021",
+    "sha": "2b27bec9184d900eae75a19e47386b4c49158ba1",
+    "pull_requests": [
+      582
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 371,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "audit/equity-uprise-floor1-finalize-20260921",
+    "sha": "88e49b8c4d86575fd2457229b1047591bf896fac",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2705,
+    "merge_base": "8182b175f16d57e6a7f6ed561a5e707ce46ac482",
+    "changed_paths_since_common_ancestor": 29,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "audit/equity-uprise-live-acceptance-step8",
+    "sha": "9b81623551a6c21b222353de914271624d8b71ba",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2468,
+    "merge_base": "4910de1c66f333ef95af1732b333b1f6667402a4",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "audit/equity-uprise-live-diagnostic",
+    "sha": "712acf3e48bf10201a96b713a9085c3333e54a9b",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2468,
+    "merge_base": "4910de1c66f333ef95af1732b333b1f6667402a4",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "audit/equity-uprise-live-interactions",
+    "sha": "962cd44b0fa417881c08086acea6b7af2b35a987",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2468,
+    "merge_base": "4910de1c66f333ef95af1732b333b1f6667402a4",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "audit/equity-uprise-playable-building-v1",
+    "sha": "8e73b0b226a24a1a4e7e7c53e744ba8c6b37e7e6",
+    "pull_requests": [
+      208
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2442,
+    "merge_base": "9c4e5721ba71ddf8d01905f75bf2efc064a322e1",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "backup/pr93-pre-reconcile-20260913",
+    "sha": "de2aa051e21d4e7a36a2a74fb9741a8490a0cb90",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3223,
+    "merge_base": "dc6fcec08f1ea620d0b75c66ff8ff41720419089",
+    "changed_paths_since_common_ancestor": 17,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "chatgpt/homelessness-action-bounties-v1",
+    "sha": "d8c44e950ca0badbe512883b2def1232044ece0a",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2194,
+    "merge_base": "4f22d5aa21f6340bbc741527ec69c3703d9959ea",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-facade-finish-step4",
+    "sha": "c513a3138cb9262c3404ccbc09615bf28b156586",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2523,
+    "merge_base": "c513a3138cb9262c3404ccbc09615bf28b156586",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-facade-finish-step5",
+    "sha": "d203468ef18436cea0e3b4b6b19c1929f8c3afba",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2519,
+    "merge_base": "d203468ef18436cea0e3b4b6b19c1929f8c3afba",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-facade-finish-step6",
+    "sha": "0f89e1ab43da0d7cf9f6538c7c5b742d89824e41",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2518,
+    "merge_base": "0f89e1ab43da0d7cf9f6538c7c5b742d89824e41",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-facade-finish-step7",
+    "sha": "c0508a8c140e2de1f3c7ad5dffc9bbd0efe1a9da",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2515,
+    "merge_base": "c0508a8c140e2de1f3c7ad5dffc9bbd0efe1a9da",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-facade-finish-step8",
+    "sha": "45116643d2dc4ffb4ca5bd237a083d23181cbb56",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2514,
+    "merge_base": "45116643d2dc4ffb4ca5bd237a083d23181cbb56",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-facade-step8-complete",
+    "sha": "45116643d2dc4ffb4ca5bd237a083d23181cbb56",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2514,
+    "merge_base": "45116643d2dc4ffb4ca5bd237a083d23181cbb56",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-facade-v1-structural-shell",
+    "sha": "2fe78f264237c905cd002365de747b3da071ea5b",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2523,
+    "merge_base": "2fe78f264237c905cd002365de747b3da071ea5b",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-floor5-final",
+    "sha": "ce23d6eb8c0b036f963ce4864254a5510995459c",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2634,
+    "merge_base": "ce23d6eb8c0b036f963ce4864254a5510995459c",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-floor6-final",
+    "sha": "85447f7b0191f568cbb7e4a58fe525afa92d475f",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2629,
+    "merge_base": "85447f7b0191f568cbb7e4a58fe525afa92d475f",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-floor6-globe-final",
+    "sha": "f451964df686faf882a639d91da864594ffd7205",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2586,
+    "merge_base": "f451964df686faf882a639d91da864594ffd7205",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-floor6-halo-southwest",
+    "sha": "28ad09fd1e76b398ad17486f03eb95df1c63bb57",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2607,
+    "merge_base": "28ad09fd1e76b398ad17486f03eb95df1c63bb57",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-services-step2",
+    "sha": "41b7404343b8208676084aa2fc1bab12994bee4e",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 2512,
+    "merge_base": "41b7404343b8208676084aa2fc1bab12994bee4e",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "checkpoint/equity-uprise-services-step3-b1-connected",
+    "sha": "57ae8ce5e349329509c0ee70edcb525e16a37f72",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2514,
+    "merge_base": "3b2ab77110d6c5638096630cf44bbedd85040e19",
+    "changed_paths_since_common_ancestor": 12,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "chore/equity-uprise-context-index-generated",
+    "sha": "1cf3885deeafaf82886aef9636379d920a238934",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2688,
+    "merge_base": "40b9ae8577d968914e42b8c6093acdf4e25a11c5",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "chore/port-ai-context-migrations",
+    "sha": "22ee87ff8c7a3084381d049037ff7e82f8747a5e",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3130,
+    "merge_base": "b3e21decb750ce2185d4adaad1468c3de96466b9",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/app-store-deployment-audit-sncef9",
+    "sha": "8a2844f6849b15ff7e920b9d773357ace65fc3d0",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3535,
+    "merge_base": "c064c057919e563a3f686be688770880023d7e94",
+    "changed_paths_since_common_ancestor": 15,
+    "unique_relevant_paths": [
+      "native/app/(tabs)/profile.tsx"
+    ]
+  },
+  {
+    "branch": "claude/audit-fixes-20261020",
+    "sha": "8ae32383be82d1b7645a70e6c81fd071a63af7bb",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1066,
+    "merge_base": "4e641b912bf688b65e556a3a86f7a203f137e3d8",
+    "changed_paths_since_common_ancestor": 42,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/backend-control-integration-601s0k",
+    "sha": "a40a68c41ec4b8e616d6a27168485764d684300a",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3090,
+    "merge_base": "3ea7dc5540d2a50a5a14fa79300b8d0181b95fd3",
+    "changed_paths_since_common_ancestor": 51,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/breach-vision-prototype-601s0k",
+    "sha": "7caaf509a2b15e774f5215613405efb8142e8bd5",
+    "pull_requests": [
+      215
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2458,
+    "merge_base": "1a1777aed1e0779097e1294731b008b984a934b0",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/commerce-stripe-reconciler",
+    "sha": "4eb85a817ab845764ba417fec95a67d800595a4e",
+    "pull_requests": [
+      376
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2090,
+    "merge_base": "520f30c8c4fdd429ca31f8d8b1632b2d54512a6a",
+    "changed_paths_since_common_ancestor": 17,
+    "unique_relevant_paths": [
+      "docs/control-plane/COMMERCE-RECONCILER.md",
+      "scripts/test/stripe-commerce-reconciler.test.mjs",
+      "supabase/functions/checkout/index.ts",
+      "supabase/functions/stripe-webhook/commerce.ts",
+      "supabase/functions/stripe-webhook/index.ts",
+      "supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql",
+      "supabase/migrations/20261006023453_commerce_stripe_reconciler_v2.sql",
+      "supabase/tests/commerce_stripe_reconciler_regression.sql"
+    ]
+  },
+  {
+    "branch": "claude/control-canonical-writes",
+    "sha": "9f8a3ff5facc5a941c1b957371866d13f6d8eef0",
+    "pull_requests": [
+      340
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2168,
+    "merge_base": "77b2a7215bf82e869b0d99b07b35aac43522c319",
+    "changed_paths_since_common_ancestor": 14,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/core-mcp-remote-bridge",
+    "sha": "269f168594514f467b27a64397d6081a91022cc5",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3164,
+    "merge_base": "6d0e985357b9e106e831c20e64ab1d394f752777",
+    "changed_paths_since_common_ancestor": 14,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/esmer-stripe-backend-s8js2r",
+    "sha": "1b4228f4d4544fc8f9721942d9c1e08091a5ea0a",
+    "pull_requests": [
+      38
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3430,
+    "merge_base": "33ba69b67c130d5ee3109732b773de02083be541",
+    "changed_paths_since_common_ancestor": 53,
+    "unique_relevant_paths": [
+      "supabase/functions/social/index.ts",
+      "supabase/migrations/0060_social_publish_lease_and_connect.sql",
+      "supabase/migrations/20260908220000_reconcile_social_credential_and_lease.sql",
+      "workers/mccluster/src/social/router.js"
+    ]
+  },
+  {
+    "branch": "claude/gev-spatial-intelligence-c6ep2b",
+    "sha": "61eb712c8a48d54f22e441b00a02bd23beafb895",
+    "pull_requests": [
+      46,
+      45,
+      44
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3191,
+    "merge_base": "b521edc9a469b8e262f18f6ca887713d46736f9e",
+    "changed_paths_since_common_ancestor": 39,
+    "unique_relevant_paths": [
+      "docs/social-platform.md"
+    ]
+  },
+  {
+    "branch": "claude/level3-media-repo-deploy-re1i8a",
+    "sha": "a2ecf313cdb576e0fd72d594a10714d4867aff4c",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3411,
+    "merge_base": "4183a8d50384faad672d36167bf322f0bac72620",
+    "changed_paths_since_common_ancestor": 10,
+    "unique_relevant_paths": [
+      "supabase/migrations/20260910004500_level_3_media_social_channels.sql",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/src/social/router.js",
+      "workers/mccluster/src/social/security.js",
+      "workers/mccluster/test/social-hardening.test.mjs"
+    ]
+  },
+  {
+    "branch": "claude/media-input-safety",
+    "sha": "9d42d11b7c2c50e9fa2bc8cfa69bda1885255efe",
+    "pull_requests": [
+      343
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2168,
+    "merge_base": "1565cbb08ad6e73f50227065f47e7fc2bc52e9c5",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/resident-ai-grounding",
+    "sha": "caa39b1de28b6afa3514d7fccbe0250a0ea9a79e",
+    "pull_requests": [
+      344
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2168,
+    "merge_base": "1565cbb08ad6e73f50227065f47e7fc2bc52e9c5",
+    "changed_paths_since_common_ancestor": 7,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "claude/seo-aeo-authority-system",
+    "sha": "62a29a9533d217f591e43401936a55e5ab438df4",
+    "pull_requests": [
+      314
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2234,
+    "merge_base": "6e7a0fb539097903fdb45f9d6c1627c5b585a900",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": [
+      "docs/END-RACISM-TWO-PATH-CAMPAIGN.md"
+    ]
+  },
+  {
+    "branch": "claude/we-hero-visuals-assets-bekxbk",
+    "sha": "08c42daaa9c21da3168166b7f39c47e266d1a5c3",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3166,
+    "merge_base": "6d0e985357b9e106e831c20e64ab1d394f752777",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "closure/ten-point-backlog",
+    "sha": "e23bde7bb0d978dfa4064dacf6e8e15f5554706a",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3198,
+    "merge_base": "b521edc9a469b8e262f18f6ca887713d46736f9e",
+    "changed_paths_since_common_ancestor": 36,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "codex/end-racism-reel-funnel-v1",
+    "sha": "cecccfe4b6367611ad776c8095bf9acade30cfaf",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2181,
+    "merge_base": "4e567f0023b254469974a85a9f3417c9d8be7d24",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": [
+      "data/social/end-racism-reel-bumper-v1.json"
+    ]
+  },
+  {
+    "branch": "control-plane/agent-kit",
+    "sha": "1e3decfe0a364cd74dc3a5906d833557913dee35",
+    "pull_requests": [
+      3
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3524,
+    "merge_base": "14d65a423ab2c3459818e48b0f2f316666ae3b34",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "control-plane/homepage-is-the-platform",
+    "sha": "e0b7e5c65cf9e26c039d96eae34a369ede0e7ce4",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3519,
+    "merge_base": "ca859653cf8bf7346772371f634bd43ac1c117c3",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "control-plane/kill-core-name-on-main",
+    "sha": "c29fed46e6bf5d09f8f9134a86a1fdb5053a03e1",
+    "pull_requests": [
+      5
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3519,
+    "merge_base": "44772ca20af7b835c56c0ec2ca1f02e6a36c0d30",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "control-plane/whip-core-best-practices",
+    "sha": "83831da26aadc834ed5a0f33e104890efdd5ad9c",
+    "pull_requests": [
+      4
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3519,
+    "merge_base": "4fdc58b50bf98566c32f775993d746ff0aa7bb71",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "copilot/fix-github-actions-job",
+    "sha": "0fdad78dd91b6796ff3210e85a465c4a4072244f",
+    "pull_requests": [
+      233
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2376,
+    "merge_base": "f796e1f8c18e2bf7692c276d6a86bc9a61a87094",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "core/autonomous-game-studio-v0.1",
+    "sha": "ff0fb3e9b54d7281553caa91b8216eb0f8e3eca1",
+    "pull_requests": [
+      79
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3244,
+    "merge_base": "27e355badc3e042746ced365f9853a2bec694c43",
+    "changed_paths_since_common_ancestor": 25,
+    "unique_relevant_paths": [
+      "docs/control-plane/specs/TEST_MISSION_000.json"
+    ]
+  },
+  {
+    "branch": "core/autonomous-game-studio-v0.2-reconciled",
+    "sha": "43fe2f63f99f437a27ba669df9c570c49d312c39",
+    "pull_requests": [
+      85
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3240,
+    "merge_base": "85c5974d111cc9e30d2f98375620414aa8b68c6d",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "core/compute-gateway-hardening-v1",
+    "sha": "561019ec2e82a488b800a87e7c7c2713e8a4c051",
+    "pull_requests": [
+      69
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3318,
+    "merge_base": "bae60fc605bab3968662287daa663fa19c469a9d",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "core/node-agent-v1",
+    "sha": "820b91e6cdb4db69b799e8bdc77886b2d3141bf3",
+    "pull_requests": [
+      65
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3326,
+    "merge_base": "e7877129fd61b42cb3b9cfa52139336ec4e2f661",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "core/node-agent-v1-rebuild",
+    "sha": "58e5a831dc1e255c5c45cf8f0083b64f2bb6e86b",
+    "pull_requests": [
+      67
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3323,
+    "merge_base": "7e58d6fd25d691ddf8b3593842c022fea5cea874",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "core/runner-v0",
+    "sha": "25ed7ee3c50566ee53948ded695a355856218cbe",
+    "pull_requests": [
+      56
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3376,
+    "merge_base": "08969c305096d8cbb71a2731118d7bc1045c740a",
+    "changed_paths_since_common_ancestor": 19,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "core/runtime-v1",
+    "sha": "0af140bef123c4b9db80e9d587cbc8412464e611",
+    "pull_requests": [
+      59
+    ],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 3346,
+    "merge_base": "0af140bef123c4b9db80e9d587cbc8412464e611",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "db/reconcile-live-fabric-v1",
+    "sha": "e0e11e875062f55fdbcefc2ac1fdd8775bbc3cca",
+    "pull_requests": [
+      83
+    ],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 3261,
+    "merge_base": "e0e11e875062f55fdbcefc2ac1fdd8775bbc3cca",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "deploy/creative-orchestrator-costs",
+    "sha": "9d47b8334be704571d4cfcab58eaa096125abb11",
+    "pull_requests": [
+      27
+    ],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 3454,
+    "merge_base": "9d47b8334be704571d4cfcab58eaa096125abb11",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "deploy/creative-orchestrator-reconciliation",
+    "sha": "a9dfe89d8885d8b367d014e2f83199b3cce41ed4",
+    "pull_requests": [
+      28
+    ],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 3453,
+    "merge_base": "a9dfe89d8885d8b367d014e2f83199b3cce41ed4",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "deploy/creative-orchestrator-webhooks",
+    "sha": "ed28e37ea4db781b7cff47a4054b9d3a24249ffb",
+    "pull_requests": [
+      26
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3455,
+    "merge_base": "940c8a801c5d7cec7caec0818581d3a35847293a",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "deploy/ovh-dc6fcec",
+    "sha": "a06f7e1ae71c71116de6ed7f66879984d918361e",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3226,
+    "merge_base": "dc6fcec08f1ea620d0b75c66ff8ff41720419089",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "deploy/ovh-production",
+    "sha": "da5a44ad895492a1979bae6e428ec405ce08a4ec",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 318,
+    "merge_base": "da5a44ad895492a1979bae6e428ec405ce08a4ec",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "docs/research-intelligence-week-2026-10-12",
+    "sha": "3f99b24975d236100e14972d812024bea72d6bb7",
+    "pull_requests": [
+      413
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 368,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "equity-uprise-institutional-v2",
+    "sha": "d85f7c2b6d03d4861c5dfdf82a3026d20410137c",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3455,
+    "merge_base": "28c2f3e704adce907f53d13e45fcdddfe429aebd",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "equity-uprise-policy-os",
+    "sha": "0afe91554ffaed4c5cbb2d8a02bc50b4e69ae279",
+    "pull_requests": [
+      37,
+      36,
+      34
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3433,
+    "merge_base": "618d8c1ce4753c9eb27395876515dde75924366e",
+    "changed_paths_since_common_ancestor": 23,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "explore/artist-ecosystem-rashawn-hendricks",
+    "sha": "3e2a61a67859cccceb01a7e536e42cd3907a3353",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2331,
+    "merge_base": "454f51b0430f8c9e55bb7942e9f15d6aeb74f274",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": [
+      "supabase/functions/artist-checkout/index.ts",
+      "supabase/functions/stripe-webhook/index.ts",
+      "supabase/migrations/20260930120000_artist_ecosystems_commerce_v1.sql"
+    ]
+  },
+  {
+    "branch": "feat/action-mission-curation-referral-partners-20261014",
+    "sha": "d6afd5ce90044467808532acedea5b13b8899b36",
+    "pull_requests": [
+      431
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1882,
+    "merge_base": "07c8ecbe5540710ea797a494b83a091668c7c350",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": [
+      "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
+      "js/mnet.js",
+      "scripts/test/action-mission-curation.test.mjs",
+      "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql"
+    ]
+  },
+  {
+    "branch": "feat/action-network-simplify-418",
+    "sha": "729f785314f39442f4f54bd3fc825470b0d347e5",
+    "pull_requests": [
+      419
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1896,
+    "merge_base": "0b703c2b6bb549ad05d309f9473a8e70bf3ecc72",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": [
+      "js/mnet.js",
+      "mnet.html",
+      "scripts/test/action-network-live-governance.test.mjs",
+      "scripts/test/mnet-real-network.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/action-three-path-missions",
+    "sha": "886d09d5fcce660b39508ead20a97ac25fd3e064",
+    "pull_requests": [
+      426
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 371,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": [
+      "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md",
+      "docs/action-network/SONG-MISSION-ONE-PER-TRACK.md",
+      "docs/action-network/THREE-PATH-MISSION-AUDIT.md"
+    ]
+  },
+  {
+    "branch": "feat/ai-desktop-lease-safety-20261020",
+    "sha": "f0c20e2043e60604aa434f479f04af053bad8e40",
+    "pull_requests": [
+      557
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1023,
+    "merge_base": "2463c71f0922d8b0220e1e956950b46a1f0d0e1f",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/analytics-additive-insights",
+    "sha": "1de67606ba3e2781689c045f685d17254a586131",
+    "pull_requests": [
+      406
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1936,
+    "merge_base": "43820c7ef59396f0638db0a45e7f68b98e5656aa",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/analytics-attribution-relationships-detail-20260926",
+    "sha": "5423a823e926a011311e9103f988c74ed96305f0",
+    "pull_requests": [
+      242
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2359,
+    "merge_base": "92f16ebd5fe18be4df3dfe0b22c99a54fae94821",
+    "changed_paths_since_common_ancestor": 11,
+    "unique_relevant_paths": [
+      "mnet.html"
+    ]
+  },
+  {
+    "branch": "feat/analytics-identity-forensics-20260926",
+    "sha": "14436c42a4745cc926e8b5dc19f8936dffd6da50",
+    "pull_requests": [
+      244
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2360,
+    "merge_base": "09448cecad3083e4a8c73d4615b013f27f8faea9",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/artist-fan-intelligence-mobbin",
+    "sha": "66eb5de541f97a7e41b5aa6b6fa8a09cb1a091d6",
+    "pull_requests": [
+      411
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1915,
+    "merge_base": "0b81e33ecd9edc3bd1aaa1d5a695d8fd9db4cf37",
+    "changed_paths_since_common_ancestor": 21,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/cloudflare-pages-direct-upload-20261019",
+    "sha": "faf22222c6c804be3c1650baa131c357e7c4eeee",
+    "pull_requests": [
+      528
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1064,
+    "merge_base": "c499ce0704756e316a80c3eed27bba4e45d3cca3",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/control-100-operator-contract-20261005",
+    "sha": "3c64d799e477a287d6db1a0686af57757c185357",
+    "pull_requests": [
+      354
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2154,
+    "merge_base": "77dfb0e8f3bee2940409347021d8813454844349",
+    "changed_paths_since_common_ancestor": 12,
+    "unique_relevant_paths": [
+      "workers/mccluster/src/social/router.js",
+      "workers/mccluster/test/social-outbox.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/control-100-operator-contract-v2-20261005",
+    "sha": "245def3ad2bffb3c9c8e141d4ffce8e258110d18",
+    "pull_requests": [
+      356
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2153,
+    "merge_base": "690bf7ad3dbc7aba13e454eef3439f78b76b69bc",
+    "changed_paths_since_common_ancestor": 12,
+    "unique_relevant_paths": [
+      "workers/mccluster/src/social/router.js",
+      "workers/mccluster/test/social-outbox.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/control-observability-v1-20261005",
+    "sha": "966b0baa0118b7b81a54b31c9d8c6f51ea135a24",
+    "pull_requests": [
+      364
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2148,
+    "merge_base": "5a429348e5c84e7b9c2d6f90a987122603dc3b7c",
+    "changed_paths_since_common_ancestor": 10,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/control-publish-recovery-20261005",
+    "sha": "82e04234990d4746b13eaa9934e66194c545aa61",
+    "pull_requests": [
+      357
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2153,
+    "merge_base": "690bf7ad3dbc7aba13e454eef3439f78b76b69bc",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": [
+      "workers/mccluster/src/social/router.js",
+      "workers/mccluster/test/social-outbox.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/decision-intelligence-platform",
+    "sha": "853ecdc7de3820b1cd624b8e4199f9934b8eef20",
+    "pull_requests": [
+      408
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1925,
+    "merge_base": "a424df44b32d8a3f4c636ef3274a2f69e691d71a",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/equity-uprise-floor-native-lab-depth-v1",
+    "sha": "5a84daa192020737faf5aa857414947c59618203",
+    "pull_requests": [
+      200
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2467,
+    "merge_base": "a05ece249f2d59fd4e4efe115363e8e5ad88df62",
+    "changed_paths_since_common_ancestor": 10,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/equity-uprise-services-step3-b1-plant",
+    "sha": "7f3f2a9d2910425fdc585767ed90d08be27e12bb",
+    "pull_requests": [
+      166
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2514,
+    "merge_base": "3b2ab77110d6c5638096630cf44bbedd85040e19",
+    "changed_paths_since_common_ancestor": 15,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/fal-video-quality-refresh-20260927",
+    "sha": "2064b7cf16cde42553913657a4a826229cce1c63",
+    "pull_requests": [
+      269
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 371,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/first-touch-outreach-agent",
+    "sha": "966bedc4913c13e664fe25ae97110ef6d0c148e6",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3172,
+    "merge_base": "d87399238ec3a2ef7ec2447eeaf43b6dde4c9f8d",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/gated-niggy-nigg",
+    "sha": "9fffbc06d5cfb2e2b63ff01e29c98e2ee54454b5",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3112,
+    "merge_base": "f8140412bc930eac2472c104d617f5c0c5a6581d",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/halo-gev-data-parity",
+    "sha": "65410eddf6c6e65a773aa37a9d202400313d93c5",
+    "pull_requests": [
+      614
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 182,
+    "merge_base": "63c26783b55461dd9ed78a5305c1f96f966c6332",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/halo-owner-geo-aggregates",
+    "sha": "719b99d52b32185ef9ba438c79e956baf1fcfd6d",
+    "pull_requests": [
+      410
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1905,
+    "merge_base": "bcb1a708a6312af87bda5e20fe74d3bc73c81349",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/managed-client-perspectives-20261017",
+    "sha": "5b5208994228e953e0fdda3a2633e3d41e38447e",
+    "pull_requests": [
+      502
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 374,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/mccluster-durable-home-memory",
+    "sha": "7d2f5116e19899a1c6666b525a305e7bde44bf2e",
+    "pull_requests": [
+      261
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2339,
+    "merge_base": "aa2ad68521866eea905c2ccc9aa9c2b58a2d870f",
+    "changed_paths_since_common_ancestor": 15,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/music-collaboration-workspace",
+    "sha": "83c3bd1b4ada26fd12057358eb71ce01e7991676",
+    "pull_requests": [
+      629
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 122,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 122,
+    "unique_relevant_paths": [
+      "creator.html",
+      "css/customer-social.css",
+      "css/front-studio.css",
+      "customer-checkout.html",
+      "customer-commerce.html",
+      "customer-domain-purchases.html",
+      "customer-domains.html",
+      "customer-social.html",
+      "docs/control-plane/MANAGED-PROJECTS.md",
+      "docs/self-service/customer-social.md",
+      "docs/selfservice/domains.md",
+      "front-studio.html",
+      "js/customer-checkout.js",
+      "js/customer-commerce.js",
+      "js/customer-domain-purchases.js",
+      "js/customer-domains.js",
+      "js/customer-social.js",
+      "js/front-studio.js",
+      "js/mnet.js",
+      "js/music-workspace.js",
+      "js/world-social-composer.js",
+      "mnet.html",
+      "music-workspace.html",
+      "scripts/e2e/managed-projects.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/test-customer-social-db.mjs",
+      "scripts/test-managed-projects-db.mjs",
+      "scripts/test/creator-billing-testmode-contract.test.mjs",
+      "scripts/test/creator-checkout-reservation-db.mjs",
+      "scripts/test/creator-commerce.test.mjs",
+      "scripts/test/creator-domain-billing.test.mjs",
+      "scripts/test/creator-domain-orders.mjs",
+      "scripts/test/creator-domain-purchases-ui.mjs",
+      "scripts/test/creator-domain-schema.mjs",
+      "scripts/test/creator-domain-ui.mjs",
+      "scripts/test/creator-entitlement-contract.test.mjs",
+      "scripts/test/creator-publish-rpc-db.mjs",
+      "scripts/test/creator-store-db.mjs",
+      "scripts/test/creator-store.test.mjs",
+      "scripts/test/customer-commerce-browser.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "scripts/test/music-workspace-browser.mjs",
+      "scripts/test/music-workspace-db.mjs",
+      "scripts/test/music-workspace-worker.mjs",
+      "scripts/test/world-social-composer.browser.mjs",
+      "supabase/migrations/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+      "supabase/migrations/pending/20261026009200_creator_checkout_reservations.sql",
+      "supabase/migrations/pending/20261026009300_creator_store.sql",
+      "supabase/pending/creator_domain_orders_v1.sql",
+      "supabase/pending/creator_domains_v1.sql",
+      "supabase/pending/customer_social_selfservice.sql",
+      "workers/mccluster/src/creator-billing-webhook.js",
+      "workers/mccluster/src/creator-billing.js",
+      "workers/mccluster/src/creator-commerce.js",
+      "workers/mccluster/src/creator-domain-billing.js",
+      "workers/mccluster/src/creator-domain-host.js",
+      "workers/mccluster/src/creator-domain-orders.js",
+      "workers/mccluster/src/creator-domains.js",
+      "workers/mccluster/src/creator-entitlement.js",
+      "workers/mccluster/src/creator-store.js",
+      "workers/mccluster/src/domains/namesilo.js",
+      "workers/mccluster/src/managed-projects.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/src/music-workspace.js",
+      "workers/mccluster/src/social/customer.js",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/test/creator-domains.test.mjs",
+      "workers/mccluster/test/customer-social.test.mjs",
+      "workers/mccluster/test/managed-projects.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/music-isrc-registry",
+    "sha": "06340d251ac31c045f88298970d8b38a127ae57a",
+    "pull_requests": [
+      109
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3112,
+    "merge_base": "f8140412bc930eac2472c104d617f5c0c5a6581d",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/music-resonance-atlas-v1-20261019",
+    "sha": "e528b3609a84935c515352d2679020eab2986bb2",
+    "pull_requests": [
+      541
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1054,
+    "merge_base": "c3482102d94a97f9b9a938ca32ef41cf9199ba80",
+    "changed_paths_since_common_ancestor": 27,
+    "unique_relevant_paths": [
+      "creator.html",
+      "js/music-creator-studio.js"
+    ]
+  },
+  {
+    "branch": "feat/music-runtime-queued-pipeline-v1-20261019",
+    "sha": "2d0b8da4e3dd70fb3daf043797e0a7a0db1da166",
+    "pull_requests": [
+      543
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1079,
+    "merge_base": "c3482102d94a97f9b9a938ca32ef41cf9199ba80",
+    "changed_paths_since_common_ancestor": 52,
+    "unique_relevant_paths": [
+      "creator.html",
+      "js/music-creator-studio.js"
+    ]
+  },
+  {
+    "branch": "feat/ovh-market-layer1-ingestion-20261021",
+    "sha": "e7b0fc26374cef051f6e988d66cda4891fadc3c2",
+    "pull_requests": [
+      600
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 248,
+    "merge_base": "aeca79fa88406d3c5de3495e0b83080943c9f361",
+    "changed_paths_since_common_ancestor": 11,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/ovh-workspace-stage0-20261021",
+    "sha": "cf81bf931f3fdc439f7802ea8514fbbde7c0bc68",
+    "pull_requests": [
+      589
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 344,
+    "merge_base": "19243fe3bf93b1e554a0fbf91503187d0529e98d",
+    "changed_paths_since_common_ancestor": 7,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/owned-meeting-delegate",
+    "sha": "bb865c589cd7f297a436e7f8302ccd22a7eb0ebc",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2632,
+    "merge_base": "eef8fa1015a7d78eeacdccb2073a2ffa1b3a5105",
+    "changed_paths_since_common_ancestor": 15,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/platform-audiences",
+    "sha": "ae7510399a73aa9662922b0e544982d2cecc4105",
+    "pull_requests": [
+      627
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 96,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 96,
+    "unique_relevant_paths": [
+      "css/customer-social.css",
+      "css/front-studio.css",
+      "customer-checkout.html",
+      "customer-commerce.html",
+      "customer-domain-purchases.html",
+      "customer-domains.html",
+      "customer-social.html",
+      "docs/control-plane/MANAGED-PROJECTS.md",
+      "docs/self-service/customer-social.md",
+      "docs/selfservice/domains.md",
+      "front-studio.html",
+      "js/customer-checkout.js",
+      "js/customer-commerce.js",
+      "js/customer-domain-purchases.js",
+      "js/customer-domains.js",
+      "js/customer-social.js",
+      "js/front-studio.js",
+      "scripts/e2e/managed-projects.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/test-customer-social-db.mjs",
+      "scripts/test-managed-projects-db.mjs",
+      "scripts/test/creator-billing-testmode-contract.test.mjs",
+      "scripts/test/creator-checkout-reservation-db.mjs",
+      "scripts/test/creator-commerce.test.mjs",
+      "scripts/test/creator-domain-billing.test.mjs",
+      "scripts/test/creator-domain-orders.mjs",
+      "scripts/test/creator-domain-purchases-ui.mjs",
+      "scripts/test/creator-domain-schema.mjs",
+      "scripts/test/creator-domain-ui.mjs",
+      "scripts/test/creator-entitlement-contract.test.mjs",
+      "scripts/test/creator-publish-rpc-db.mjs",
+      "scripts/test/creator-store-db.mjs",
+      "scripts/test/creator-store.test.mjs",
+      "scripts/test/customer-commerce-browser.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "supabase/migrations/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+      "supabase/migrations/pending/20261026009200_creator_checkout_reservations.sql",
+      "supabase/migrations/pending/20261026009300_creator_store.sql",
+      "supabase/pending/creator_domain_orders_v1.sql",
+      "supabase/pending/creator_domains_v1.sql",
+      "supabase/pending/customer_social_selfservice.sql",
+      "workers/mccluster/src/creator-billing-webhook.js",
+      "workers/mccluster/src/creator-billing.js",
+      "workers/mccluster/src/creator-commerce.js",
+      "workers/mccluster/src/creator-domain-billing.js",
+      "workers/mccluster/src/creator-domain-host.js",
+      "workers/mccluster/src/creator-domain-orders.js",
+      "workers/mccluster/src/creator-domains.js",
+      "workers/mccluster/src/creator-entitlement.js",
+      "workers/mccluster/src/creator-store.js",
+      "workers/mccluster/src/domains/namesilo.js",
+      "workers/mccluster/src/managed-projects.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/src/social/customer.js",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/test/creator-domains.test.mjs",
+      "workers/mccluster/test/customer-social.test.mjs",
+      "workers/mccluster/test/managed-projects.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/privacy-gate-account-integrity-20260926",
+    "sha": "a3afe4ee47dc3b2d122d5128a7fd65c105de5fb7",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2362,
+    "merge_base": "09448cecad3083e4a8c73d4615b013f27f8faea9",
+    "changed_paths_since_common_ancestor": 11,
+    "unique_relevant_paths": [
+      "js/mnet.js",
+      "mnet.html"
+    ]
+  },
+  {
+    "branch": "feat/procedural-music-helix-20261019",
+    "sha": "a7f7a84c0f938f525773ac3e1c9c60dbcb6a1006",
+    "pull_requests": [
+      535
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1048,
+    "merge_base": "4a3425b1d21813de3d04173145c8423b6b185ddc",
+    "changed_paths_since_common_ancestor": 11,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/qt6kv-isrc-ledger",
+    "sha": "4d7637afed0792489258b4ec6a2bd9d0a8829474",
+    "pull_requests": [
+      424
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1883,
+    "merge_base": "07c8ecbe5540710ea797a494b83a091668c7c350",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": [
+      "supabase/migrations/20261013180000_qt6kv_creator_isrc_ledger.sql"
+    ]
+  },
+  {
+    "branch": "feat/research-intelligence-plane-v1",
+    "sha": "3d7eece59e08fe73c463513f5d5b60f0dd67e3b1",
+    "pull_requests": [
+      414
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1901,
+    "merge_base": "a434617bc89ba0a99c915ffe11bbfe1e68e57557",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/resident-reviewed-learning-20261016",
+    "sha": "2241475df1e47e7b4d5e142042d0be279429c02d",
+    "pull_requests": [
+      476
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1090,
+    "merge_base": "ad78fb38af726a08345adedcf70a82408f30f25c",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/selfservice-commerce",
+    "sha": "4d37852a9352f15c227f31496d0b6df6125a7763",
+    "pull_requests": [
+      625
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 66,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 66,
+    "unique_relevant_paths": [
+      "css/customer-social.css",
+      "css/front-studio.css",
+      "customer-checkout.html",
+      "customer-commerce.html",
+      "customer-social.html",
+      "docs/control-plane/MANAGED-PROJECTS.md",
+      "docs/self-service/customer-social.md",
+      "front-studio.html",
+      "js/customer-checkout.js",
+      "js/customer-commerce.js",
+      "js/customer-social.js",
+      "js/front-studio.js",
+      "scripts/e2e/managed-projects.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/test-customer-social-db.mjs",
+      "scripts/test-managed-projects-db.mjs",
+      "scripts/test/creator-billing-testmode-contract.test.mjs",
+      "scripts/test/creator-checkout-reservation-db.mjs",
+      "scripts/test/creator-commerce.test.mjs",
+      "scripts/test/creator-domain-billing.test.mjs",
+      "scripts/test/creator-entitlement-contract.test.mjs",
+      "scripts/test/creator-publish-rpc-db.mjs",
+      "scripts/test/creator-store-db.mjs",
+      "scripts/test/creator-store.test.mjs",
+      "scripts/test/customer-commerce-browser.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "supabase/migrations/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+      "supabase/migrations/pending/20261026009200_creator_checkout_reservations.sql",
+      "supabase/migrations/pending/20261026009300_creator_store.sql",
+      "supabase/pending/customer_social_selfservice.sql",
+      "workers/mccluster/src/creator-billing-webhook.js",
+      "workers/mccluster/src/creator-billing.js",
+      "workers/mccluster/src/creator-commerce.js",
+      "workers/mccluster/src/creator-domain-billing.js",
+      "workers/mccluster/src/creator-entitlement.js",
+      "workers/mccluster/src/creator-store.js",
+      "workers/mccluster/src/managed-projects.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/src/social/customer.js",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/test/customer-social.test.mjs",
+      "workers/mccluster/test/managed-projects.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/selfservice-domains",
+    "sha": "f259bbb5333a80a054abc0c685b9c40f86ae63f2",
+    "pull_requests": [
+      626
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 83,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 83,
+    "unique_relevant_paths": [
+      "css/customer-social.css",
+      "css/front-studio.css",
+      "customer-checkout.html",
+      "customer-commerce.html",
+      "customer-domain-purchases.html",
+      "customer-domains.html",
+      "customer-social.html",
+      "docs/control-plane/MANAGED-PROJECTS.md",
+      "docs/self-service/customer-social.md",
+      "docs/selfservice/domains.md",
+      "front-studio.html",
+      "js/customer-checkout.js",
+      "js/customer-commerce.js",
+      "js/customer-domain-purchases.js",
+      "js/customer-domains.js",
+      "js/customer-social.js",
+      "js/front-studio.js",
+      "scripts/e2e/managed-projects.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/test-customer-social-db.mjs",
+      "scripts/test-managed-projects-db.mjs",
+      "scripts/test/creator-billing-testmode-contract.test.mjs",
+      "scripts/test/creator-checkout-reservation-db.mjs",
+      "scripts/test/creator-commerce.test.mjs",
+      "scripts/test/creator-domain-billing.test.mjs",
+      "scripts/test/creator-domain-orders.mjs",
+      "scripts/test/creator-domain-purchases-ui.mjs",
+      "scripts/test/creator-domain-schema.mjs",
+      "scripts/test/creator-domain-ui.mjs",
+      "scripts/test/creator-entitlement-contract.test.mjs",
+      "scripts/test/creator-publish-rpc-db.mjs",
+      "scripts/test/creator-store-db.mjs",
+      "scripts/test/creator-store.test.mjs",
+      "scripts/test/customer-commerce-browser.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "supabase/migrations/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+      "supabase/migrations/pending/20261026009200_creator_checkout_reservations.sql",
+      "supabase/migrations/pending/20261026009300_creator_store.sql",
+      "supabase/pending/creator_domain_orders_v1.sql",
+      "supabase/pending/creator_domains_v1.sql",
+      "supabase/pending/customer_social_selfservice.sql",
+      "workers/mccluster/src/creator-billing-webhook.js",
+      "workers/mccluster/src/creator-billing.js",
+      "workers/mccluster/src/creator-commerce.js",
+      "workers/mccluster/src/creator-domain-billing.js",
+      "workers/mccluster/src/creator-domain-host.js",
+      "workers/mccluster/src/creator-domain-orders.js",
+      "workers/mccluster/src/creator-domains.js",
+      "workers/mccluster/src/creator-entitlement.js",
+      "workers/mccluster/src/creator-store.js",
+      "workers/mccluster/src/domains/namesilo.js",
+      "workers/mccluster/src/managed-projects.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/src/social/customer.js",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/test/creator-domains.test.mjs",
+      "workers/mccluster/test/customer-social.test.mjs",
+      "workers/mccluster/test/managed-projects.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/selfservice-foundation",
+    "sha": "43f6cea99985cc1df2d2a19620233dec227e9cff",
+    "pull_requests": [
+      622
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 5,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": [
+      "js/front-studio.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/selfservice-instagram",
+    "sha": "c6dcb9a3069065222a29cb9979442fb8d57640a4",
+    "pull_requests": [
+      624
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 38,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 38,
+    "unique_relevant_paths": [
+      "css/customer-social.css",
+      "css/front-studio.css",
+      "customer-social.html",
+      "docs/control-plane/MANAGED-PROJECTS.md",
+      "docs/self-service/customer-social.md",
+      "front-studio.html",
+      "js/customer-social.js",
+      "js/front-studio.js",
+      "scripts/e2e/managed-projects.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/test-customer-social-db.mjs",
+      "scripts/test-managed-projects-db.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "supabase/pending/customer_social_selfservice.sql",
+      "workers/mccluster/src/managed-projects.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/src/social/customer.js",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/test/customer-social.test.mjs",
+      "workers/mccluster/test/managed-projects.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/selfservice-projects",
+    "sha": "ed91755a9259171ac1270c088a366eca3905c48f",
+    "pull_requests": [
+      623
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 29,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 29,
+    "unique_relevant_paths": [
+      "css/front-studio.css",
+      "docs/control-plane/MANAGED-PROJECTS.md",
+      "front-studio.html",
+      "js/front-studio.js",
+      "scripts/e2e/managed-projects.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/test-managed-projects-db.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "workers/mccluster/src/managed-projects.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/test/managed-projects.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/website-studio-foundation-20261017",
+    "sha": "9ad0503ead6c4a581e61cc529639bebd4fa64131",
+    "pull_requests": [
+      493
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1189,
+    "merge_base": "aad89c6c4ecb882c3c9ef28f6981c8a268447ce3",
+    "changed_paths_since_common_ancestor": 32,
+    "unique_relevant_paths": [
+      ".github/workflows/website-studio-ci.yml",
+      "core/src/website-studio/executor.mjs",
+      "core/src/website-studio/prepare.mjs",
+      "css/website-studio.css",
+      "data/website-studio/demo-v1.json",
+      "data/website-studio/motion-portfolio-v1.json",
+      "data/website-studio/usage-rates-v1.json",
+      "docs/website-studio/CONNECTED-PILOT.md",
+      "docs/website-studio/FOUNDATION.md",
+      "docs/website-studio/LIVE-COSTS-AND-CREDITS.md",
+      "docs/website-studio/schema-draft.sql",
+      "js/website-studio/contract.mjs",
+      "js/website-studio/cost-model.mjs",
+      "js/website-studio/editor.mjs",
+      "js/website-studio/panorama.mjs",
+      "js/website-studio/public.mjs",
+      "js/website-studio/renderer.mjs",
+      "js/website-studio/scroll-controller.mjs",
+      "js/website-studio/usage-policy.mjs",
+      "scripts/e2e/website-studio-browser.py",
+      "scripts/e2e/website-studio-fixtures.mjs",
+      "scripts/e2e/website-studio-server.mjs",
+      "scripts/test/website-studio-connected.test.mjs",
+      "scripts/test/website-studio-v1.test.mjs",
+      "website-studio-view.html",
+      "website-studio.html",
+      "workers/mccluster/src/creator-site-publish.js",
+      "workers/mccluster/src/website-studio/service.mjs"
+    ]
+  },
+  {
+    "branch": "feat/whip-owned-ride-booking-20261018",
+    "sha": "a9ef2759d807c312423384268707d78783b02fd8",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1093,
+    "merge_base": "ad78fb38af726a08345adedcf70a82408f30f25c",
+    "changed_paths_since_common_ancestor": 12,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/whip-waitlist-driver-signup",
+    "sha": "915754835b07c1e69a5e7aee84104cf8d26dcbcb",
+    "pull_requests": [
+      453
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1770,
+    "merge_base": "30725a87d9ab6b2ece88c2a005e0cca612c76500",
+    "changed_paths_since_common_ancestor": 11,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feat/world-as-feed-globe",
+    "sha": "d4c81ced4c2ceb428afaa99abeeff0e34b164f31",
+    "pull_requests": [
+      427
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1863,
+    "merge_base": "07c8ecbe5540710ea797a494b83a091668c7c350",
+    "changed_paths_since_common_ancestor": 65,
+    "unique_relevant_paths": [
+      "anti-social-mission.html",
+      "css/mnet.css",
+      "docs/action-network/CANDIDATE-LABS-NEWS-TRANSPARENCY.md",
+      "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
+      "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
+      "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
+      "docs/action-network/GLOBAL-CIVIC-SOURCE-ACTIVATION.md",
+      "docs/action-network/MISSION-ORIGINATED-PUBLISHING-CONTRACT.md",
+      "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
+      "docs/action-network/TWO-OR-MORE-REGIONAL-ACTIVATION.md",
+      "docs/action-network/WORLD-AS-FEED-V1.md",
+      "docs/action-network/WORLD-REGION-BOUNDARY-PIPELINE.md",
+      "docs/action-network/WORLD-SCREEN-UX-HANDOFF-20261014.md",
+      "mnet.html",
+      "scripts/test/action-network-live-governance.test.mjs",
+      "scripts/test/mnet-real-network.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/world-customer-discovery",
+    "sha": "c21d4d76a58ec2b54631f7b00354e35376462db9",
+    "pull_requests": [
+      628
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 113,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 113,
+    "unique_relevant_paths": [
+      "css/customer-social.css",
+      "css/front-studio.css",
+      "customer-checkout.html",
+      "customer-commerce.html",
+      "customer-domain-purchases.html",
+      "customer-domains.html",
+      "customer-social.html",
+      "docs/control-plane/MANAGED-PROJECTS.md",
+      "docs/self-service/customer-social.md",
+      "docs/selfservice/domains.md",
+      "front-studio.html",
+      "js/customer-checkout.js",
+      "js/customer-commerce.js",
+      "js/customer-domain-purchases.js",
+      "js/customer-domains.js",
+      "js/customer-social.js",
+      "js/front-studio.js",
+      "js/mnet.js",
+      "js/world-social-composer.js",
+      "mnet.html",
+      "scripts/e2e/managed-projects.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/test-customer-social-db.mjs",
+      "scripts/test-managed-projects-db.mjs",
+      "scripts/test/creator-billing-testmode-contract.test.mjs",
+      "scripts/test/creator-checkout-reservation-db.mjs",
+      "scripts/test/creator-commerce.test.mjs",
+      "scripts/test/creator-domain-billing.test.mjs",
+      "scripts/test/creator-domain-orders.mjs",
+      "scripts/test/creator-domain-purchases-ui.mjs",
+      "scripts/test/creator-domain-schema.mjs",
+      "scripts/test/creator-domain-ui.mjs",
+      "scripts/test/creator-entitlement-contract.test.mjs",
+      "scripts/test/creator-publish-rpc-db.mjs",
+      "scripts/test/creator-store-db.mjs",
+      "scripts/test/creator-store.test.mjs",
+      "scripts/test/customer-commerce-browser.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "scripts/test/world-social-composer.browser.mjs",
+      "supabase/migrations/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+      "supabase/migrations/pending/20261026009200_creator_checkout_reservations.sql",
+      "supabase/migrations/pending/20261026009300_creator_store.sql",
+      "supabase/pending/creator_domain_orders_v1.sql",
+      "supabase/pending/creator_domains_v1.sql",
+      "supabase/pending/customer_social_selfservice.sql",
+      "workers/mccluster/src/creator-billing-webhook.js",
+      "workers/mccluster/src/creator-billing.js",
+      "workers/mccluster/src/creator-commerce.js",
+      "workers/mccluster/src/creator-domain-billing.js",
+      "workers/mccluster/src/creator-domain-host.js",
+      "workers/mccluster/src/creator-domain-orders.js",
+      "workers/mccluster/src/creator-domains.js",
+      "workers/mccluster/src/creator-entitlement.js",
+      "workers/mccluster/src/creator-store.js",
+      "workers/mccluster/src/domains/namesilo.js",
+      "workers/mccluster/src/managed-projects.js",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/src/social/customer.js",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/test/creator-domains.test.mjs",
+      "workers/mccluster/test/customer-social.test.mjs",
+      "workers/mccluster/test/managed-projects.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs"
+    ]
+  },
+  {
+    "branch": "feat/world-place-region-sharing-20261021",
+    "sha": "6bda3f77eaa7e08d3b91a62ef621bfeca71e0c07",
+    "pull_requests": [
+      587
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 246,
+    "merge_base": "e957988b00bb910182466f83bc5eb4a868b68070",
+    "changed_paths_since_common_ancestor": 11,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feature/action-network-head-tracked-3d",
+    "sha": "adcecea44dce0ca95a437a4bec5c6e412e936745",
+    "pull_requests": [
+      402
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1938,
+    "merge_base": "43820c7ef59396f0638db0a45e7f68b98e5656aa",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": [
+      "action-network-immersive.html",
+      "action-network-world-studies.html",
+      "docs/action-network-immersive-release-concept.md"
+    ]
+  },
+  {
+    "branch": "feature/character-replacement-studio-spec-20261019",
+    "sha": "20fdd18c54f58ae32f4bbba8d46c7a50cc6a1ad2",
+    "pull_requests": [
+      546
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 371,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feature/character-studio-mvp-20261019",
+    "sha": "df64d61a25ddd06b63631cc041e1b5d7dd7a0d44",
+    "pull_requests": [
+      550
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1047,
+    "merge_base": "4e641b912bf688b65e556a3a86f7a203f137e3d8",
+    "changed_paths_since_common_ancestor": 28,
+    "unique_relevant_paths": [
+      "docs/action-network/HOUSE-AGENT-WORLD-V1.md"
+    ]
+  },
+  {
+    "branch": "feature/creator-payouts-test-ledger",
+    "sha": "96a62bd3f39844b366e2bad2d5dc7a4b4abca629",
+    "pull_requests": [
+      401
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1942,
+    "merge_base": "43820c7ef59396f0638db0a45e7f68b98e5656aa",
+    "changed_paths_since_common_ancestor": 19,
+    "unique_relevant_paths": [
+      ".github/workflows/creator-payout-tests.yml",
+      "control-creator-payouts.html",
+      "docs/creator-payouts-existing-schema-reconciliation.md",
+      "docs/creator-payouts-test-mode-contract.md",
+      "supabase/functions/stripe-webhook/index.ts",
+      "supabase/migrations/20261010011154_action_creator_payout_reservations.sql",
+      "supabase/migrations/20261010011201_action_creator_payout_reservation_rpc.sql",
+      "supabase/migrations/20261010011502_action_creator_connect_binding_finalize.sql",
+      "supabase/migrations/20261010011611_action_creator_stripe_event_reconciliation.sql",
+      "supabase/migrations/20261010064726_action_creator_transfer_claim_bank_events.sql",
+      "supabase/migrations/20261010070310_action_creator_partial_reversal_guard.sql",
+      "workers/mccluster/src/creator-transfers.js",
+      "workers/mccluster/test/creator-payouts-staging.integration.test.js",
+      "workers/mccluster/test/creator-transfers.test.js"
+    ]
+  },
+  {
+    "branch": "feature/dessa-voice-architecture-20261024",
+    "sha": "1e3f7b4c9410ad71e4de301a9656e052a5b7bcfc",
+    "pull_requests": [
+      619
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 46,
+    "merge_base": "4a9f6676242d832aa73dfac7089017b5d16400c5",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feature/global-infrastructure-plane",
+    "sha": "0ac3e22bf5f83af998b51950ad4b1698eac94298",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3397,
+    "merge_base": "bd4821ae02ab148234f02fd0bdff051e634cbb0b",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feature/halo-infrastructure-recovery-20261012",
+    "sha": "98f1c0f478dbd48216dd5e4327eb102252c75ec4",
+    "pull_requests": [
+      416
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1903,
+    "merge_base": "0b703c2b6bb549ad05d309f9473a8e70bf3ecc72",
+    "changed_paths_since_common_ancestor": 7,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feature/house-agent-50-state-chapters-20261019",
+    "sha": "9cc9c04e72bb5d92fd267ad220ec6011b7ada89b",
+    "pull_requests": [
+      551
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1043,
+    "merge_base": "4e641b912bf688b65e556a3a86f7a203f137e3d8",
+    "changed_paths_since_common_ancestor": 21,
+    "unique_relevant_paths": [
+      "docs/action-network/HOUSE-AGENT-WORLD-V1.md"
+    ]
+  },
+  {
+    "branch": "feature/house-agent-world-v1-20261019",
+    "sha": "0a53de4f75b7cdb82fb421fb202fa6c94d07adde",
+    "pull_requests": [
+      548
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1039,
+    "merge_base": "4e641b912bf688b65e556a3a86f7a203f137e3d8",
+    "changed_paths_since_common_ancestor": 17,
+    "unique_relevant_paths": [
+      "docs/action-network/HOUSE-AGENT-WORLD-V1.md"
+    ]
+  },
+  {
+    "branch": "feature/m-account-platform-v2",
+    "sha": "365478608cd3a35b6ad353d658a9d0092cf5b245",
+    "pull_requests": [
+      24
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3454,
+    "merge_base": "6862b21f68df32ca7ef89519026666f17a0ee8ba",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": [
+      "supabase/functions/checkout/index.ts",
+      "supabase/functions/stripe-webhook/index.ts"
+    ]
+  },
+  {
+    "branch": "feature/m-account-social-providers",
+    "sha": "aa6635071dcc10427d014d2330cad533779b586b",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3454,
+    "merge_base": "6b738c59d8d05d5dad8eee52a202ceff84e49771",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": [
+      "supabase/functions/stripe-webhook/index.ts"
+    ]
+  },
+  {
+    "branch": "feature/mnet-admissions-music-funnels-20261012",
+    "sha": "f534edb2eb225493c8f13d9a9efe19a7ea57702d",
+    "pull_requests": [
+      417
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 376,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 10,
+    "unique_relevant_paths": [
+      "anti-social-reaction-lab.html",
+      "anti-social-studio.html",
+      "docs/mnet-integrated-admissions-music-funnels.md",
+      "docs/music-videos/anti-social/IMMERSIVE-POV-TREATMENT.md"
+    ]
+  },
+  {
+    "branch": "feature/s477-smart-church",
+    "sha": "991d968b0cc6e3541305a4315747de7085834e51",
+    "pull_requests": [
+      2
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3550,
+    "merge_base": "f65afa28a14b41220952e6aca6afc4e25893f8d3",
+    "changed_paths_since_common_ancestor": 26,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "feature/social-agent-phone-worker",
+    "sha": "cf286b854ca5da3c4f44fdc61e38d62e6231ec63",
+    "pull_requests": [
+      304,
+      303
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2274,
+    "merge_base": "118d0ee30aef79dd984eac32776a382a63538037",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": [
+      "js/control-room/social-agent.js"
+    ]
+  },
+  {
+    "branch": "fix/action-network-mobile-overflow-lean",
+    "sha": "8cfc04cd1bf3aa456d3dc3b1e3d557613c209b72",
+    "pull_requests": [
+      422
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1883,
+    "merge_base": "07c8ecbe5540710ea797a494b83a091668c7c350",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": [
+      "css/mnet.css",
+      "js/mnet-clips.js",
+      "mnet.html"
+    ]
+  },
+  {
+    "branch": "fix/admin-travel-gps-and-selection",
+    "sha": "49d53960b2fbdf83d62eb1c78c6a993fd43d3d80",
+    "pull_requests": [
+      617
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 49,
+    "merge_base": "4a9f6676242d832aa73dfac7089017b5d16400c5",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/ai-context-do-delimiter-ci-20261019",
+    "sha": "7ab75048cd16cdae7dce3bc7f38eb20a1c9c4626",
+    "pull_requests": [
+      536
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1037,
+    "merge_base": "4a3425b1d21813de3d04173145c8423b6b185ddc",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/ai-spend-view-replay",
+    "sha": "e0ace874a1bf5422ccd9501d52b2fbdb95cd7f7a",
+    "pull_requests": [
+      135
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2950,
+    "merge_base": "1bf9f4b9c6e26904027cb53c1f293aac0f246bd4",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/audit-bounty-claim-found-20261014",
+    "sha": "fc973ddb2a85cbd9e5a3b89e5821c17967c2a2bf",
+    "pull_requests": [
+      428
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1872,
+    "merge_base": "07c8ecbe5540710ea797a494b83a091668c7c350",
+    "changed_paths_since_common_ancestor": 71,
+    "unique_relevant_paths": [
+      "anti-social-mission.html",
+      "css/mnet.css",
+      "docs/action-network/CANDIDATE-LABS-NEWS-TRANSPARENCY.md",
+      "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
+      "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
+      "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
+      "docs/action-network/GLOBAL-CIVIC-SOURCE-ACTIVATION.md",
+      "docs/action-network/MISSION-ORIGINATED-PUBLISHING-CONTRACT.md",
+      "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
+      "docs/action-network/TWO-OR-MORE-REGIONAL-ACTIVATION.md",
+      "docs/action-network/WORLD-AS-FEED-V1.md",
+      "docs/action-network/WORLD-REGION-BOUNDARY-PIPELINE.md",
+      "mnet.html",
+      "scripts/test/action-network-live-governance.test.mjs",
+      "scripts/test/mnet-real-network.test.mjs",
+      "supabase/migrations/20261014131000_action_creator_payout_destination_binding_guard.sql",
+      "supabase/migrations/20261014132000_action_creator_transfer_reversal_ledger.sql",
+      "supabase/migrations/20261014133000_action_creator_transfer_failure_recovery.sql",
+      "supabase/migrations/20261014134000_action_creator_bank_payout_review.sql",
+      "supabase/tests/action_creator_payout_state_machine.behaviour.sql",
+      "supabase/tests/action_creator_transfer_failure_recovery.sql",
+      "supabase/tests/action_creator_transfer_reversal_ledger.sql"
+    ]
+  },
+  {
+    "branch": "fix/control-observability-v2-20261005",
+    "sha": "3e5a2e86b98b4028657a07a8bfaa02c1538066e7",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2141,
+    "merge_base": "6163f8fb7f5c4079ee7df99cadee61303223baf7",
+    "changed_paths_since_common_ancestor": 10,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/create-lifecycle-current-20261005",
+    "sha": "62b25bd606619aee674dc9063cd2ba211644f5b1",
+    "pull_requests": [
+      347
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2168,
+    "merge_base": "1565cbb08ad6e73f50227065f47e7fc2bc52e9c5",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/equity-generated-artifacts-and-pr-guard-20260926",
+    "sha": "e3dc63447dd5822a1c1df09c9a2f1d0149ff31cb",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2358,
+    "merge_base": "5d5753449327a020f81255d48993af7678d67937",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/equity-uprise-brand-consolidation-20261020",
+    "sha": "74d79056f3439e549f84533efb9aedfa9c4bdc65",
+    "pull_requests": [
+      553
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1078,
+    "merge_base": "2463c71f0922d8b0220e1e956950b46a1f0d0e1f",
+    "changed_paths_since_common_ancestor": 138,
+    "unique_relevant_paths": [
+      "action-network-artist.html",
+      "action-network-audio-engineer.html",
+      "action-network-clippers.html",
+      "action-network-cohorts.html",
+      "action-network-discovery.html",
+      "action-network-hire.html",
+      "action-network-influencers.html",
+      "action-network-producer.html",
+      "action-network-video-editor.html",
+      "action-network-videographer.html",
+      "anti-social-mission.html",
+      "creator-selection-desk.html",
+      "creator.html",
+      "css/mnet.css",
+      "data/seo/domain-architecture.json",
+      "docs/action-network/EDITORIAL-WORLD-REFERENCE-20261016.md",
+      "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
+      "docs/action-network/HUMAN-UPRISE-PRODUCTION-MIGRATION-RECONCILIATION-20261014.md",
+      "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
+      "docs/control-plane/DOMAINS-AND-ENTITIES.md",
+      "docs/control-plane/LIVE-MISSIONS.md",
+      "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
+      "js/control-room/action-network.js",
+      "js/control-room/profile-edit-review.js",
+      "js/control-room/social-compose.js",
+      "js/mccluster-creator-account.js",
+      "js/mnet-live.js",
+      "js/music-creator-profile.js",
+      "js/socials-room.js",
+      "live-mission.html",
+      "native/app/(tabs)/profile.tsx",
+      "native/app/mission/[id].tsx",
+      "scripts/action-network-creator-pilot.mjs",
+      "scripts/test/action-network-redesign.test.mjs",
+      "scripts/test/creator-action-distribution.test.mjs",
+      "scripts/test/mnet-real-network.test.mjs",
+      "scripts/test/native-action-network.test.mjs",
+      "workers/mccluster/src/social/router.js",
+      "workers/mccluster/test/mnet-live.test.mjs",
+      "workers/mccluster/test/mnet-post-limits.test.mjs",
+      "workers/mccluster/test/mnet-scheduled.test.mjs",
+      "workers/mccluster/test/social-outbox.test.mjs"
+    ]
+  },
+  {
+    "branch": "fix/equity-uprise-pathway-first-current-20260925",
+    "sha": "5ef4e3d1d541e0df5866e02276fe0484c4400c85",
+    "pull_requests": [
+      235
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2370,
+    "merge_base": "0880da8c3a53972337bc1686efe85ca1ba7a70b0",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/equity-uprise-viewer-demand-rendering",
+    "sha": "94adf50408413701c1f1254651c7fe8a69cda74e",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2468,
+    "merge_base": "762cb620bdc4152ccaa63e0f559ccc1084157437",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/equity-uprise-viewer-interaction-performance",
+    "sha": "d0a9cdb9200c2a7bc1c9a2de4e6a489be040016e",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2466,
+    "merge_base": "4910de1c66f333ef95af1732b333b1f6667402a4",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/floor-native-curriculum-current-20260925",
+    "sha": "efebc684a8c1e94fbd3e4dcbc1763644f3da000a",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2379,
+    "merge_base": "0880da8c3a53972337bc1686efe85ca1ba7a70b0",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/intentional-control-entry",
+    "sha": "30e953846ef6d47f4dd5ced7b7bb2c0c70fd69b6",
+    "pull_requests": [
+      391
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2042,
+    "merge_base": "701e4448401a47d3e3a531106a38d35e792c3921",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/media-input-contract-20260927",
+    "sha": "98f939a81a1ef7e82ee3aaabe6958d8f6e2a1636",
+    "pull_requests": [
+      268
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2322,
+    "merge_base": "9726313b072dab0d319cc0b5058911d05618acd0",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/media-input-contract-strict-20261005",
+    "sha": "fa277326dd9956a2d3801393459aa41c0508cc33",
+    "pull_requests": [
+      359
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2150,
+    "merge_base": "690bf7ad3dbc7aba13e454eef3439f78b76b69bc",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/mnet-profile-password-20260925",
+    "sha": "f2bae4255e84e528b612262695855bcf3cec0b93",
+    "pull_requests": [
+      236
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2374,
+    "merge_base": "0880da8c3a53972337bc1686efe85ca1ba7a70b0",
+    "changed_paths_since_common_ancestor": 5,
+    "unique_relevant_paths": [
+      "css/mnet.css",
+      "js/mnet.js",
+      "mnet.html",
+      "scripts/test/mnet-real-network.test.mjs"
+    ]
+  },
+  {
+    "branch": "fix/reconcile-production-music-commerce",
+    "sha": "66ab6a509be85f791c31fb4b75cb3468b231cfa7",
+    "pull_requests": [
+      397
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2014,
+    "merge_base": "1b80344bef37083caf549c3250a3a08a8c0b0311",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": [
+      "supabase/functions/music-direct-checkout/index.ts"
+    ]
+  },
+  {
+    "branch": "fix/reconciler-sandbox-writes",
+    "sha": "7537e0be798ace84d679f09cb4afebbf8adbaa50",
+    "pull_requests": [
+      117
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3093,
+    "merge_base": "ec82df3da32cde58c1f17810edfa9fd43bc31143",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/replay-ai-spend-view-current-20260926",
+    "sha": "cdcfac90e5e2b2e19b756763708bb5bd70634cb9",
+    "pull_requests": [
+      237
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2373,
+    "merge_base": "0880da8c3a53972337bc1686efe85ca1ba7a70b0",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/resident-ai-grounding-20260927",
+    "sha": "a150fc1c2200fb4f987b34a385d698a32e7fb4a1",
+    "pull_requests": [
+      267
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2324,
+    "merge_base": "9726313b072dab0d319cc0b5058911d05618acd0",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/resident-ai-grounding-current-20261005",
+    "sha": "6908a8d58294a36274b7bcd3c75afadaec4707b3",
+    "pull_requests": [
+      346
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2168,
+    "merge_base": "1565cbb08ad6e73f50227065f47e7fc2bc52e9c5",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/resident-ai-grounding-final3-20261005",
+    "sha": "0163ea25da9c1fcb3c99d4a32d75a82ccc27b97a",
+    "pull_requests": [
+      350
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2165,
+    "merge_base": "c84b0728feeb38323354cf5437f495413abfa41a",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/resident-ai-grounding-reliability-20261005",
+    "sha": "c060fe9ca0a128e2fdce60c393da5ac8987991b8",
+    "pull_requests": [
+      358
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2150,
+    "merge_base": "690bf7ad3dbc7aba13e454eef3439f78b76b69bc",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/resident-ai-grounding-reliability-v2-20261005",
+    "sha": "d2465862cd35c4f6a15e2b024ae303fd5ecf07a4",
+    "pull_requests": [
+      361
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2146,
+    "merge_base": "ca161e4881c56183b715af1bd27d0eb152b69fc3",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/resident-ai-grounding-reliability-v4-20261005",
+    "sha": "8fa094400b659da9b1f4c91e38291a95fc8c81a1",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2142,
+    "merge_base": "ec447462006f8aec2841fb79694db434b2713cbd",
+    "changed_paths_since_common_ancestor": 6,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/three-tab-contract-20260925",
+    "sha": "22a9d3b00a2f3dead05eacacd257d3e1137c5190",
+    "pull_requests": [
+      230
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2377,
+    "merge_base": "fccb88ca64e9e9549170bfa1f0c7ffc0daee1f1e",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "fix/unified-artist-profile-identity",
+    "sha": "70380ab1e3752e220f994145c41fe7fbcb8e7126",
+    "pull_requests": [
+      425
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1884,
+    "merge_base": "07c8ecbe5540710ea797a494b83a091668c7c350",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": [
+      "creator.html",
+      "js/music-creator-studio.js"
+    ]
+  },
+  {
+    "branch": "gh-pages",
+    "sha": "04a4b5001b257472c82f3bcd700ca2aaaf45f8e4",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2375,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 2375,
+    "unique_relevant_paths": [
+      ".github/workflows/native-action-network-ci.yml",
+      ".github/workflows/profile-project-preview.yml",
+      ".github/workflows/social-hardening-test.yml",
+      "_unfinished/equity-uprise/profile.html",
+      "_unfinished/site0-game/vendor/spark.module.js",
+      "_unfinished/socials-gallery-carousel.html",
+      "action-network-artist.html",
+      "action-network-audio-engineer.html",
+      "action-network-clippers.html",
+      "action-network-cohorts.html",
+      "action-network-discovery.html",
+      "action-network-hire.html",
+      "action-network-influencers.html",
+      "action-network-producer.html",
+      "action-network-video-editor.html",
+      "action-network-videographer.html",
+      "anti-social-mission.html",
+      "cohort-profile.html",
+      "creator-capture.html",
+      "creator-landing-analytics.html",
+      "creator-selection-desk.html",
+      "creator-template-motion-preview.html",
+      "creator.html",
+      "docs/ACTION-NETWORK-CLIPPER-ACCELERATOR.md",
+      "docs/ACTION-NETWORK-CLIPPER-WORKFORCE.md",
+      "docs/ACTION-NETWORK-CREATOR-BRANDED-MEDIA-GRAPH.md",
+      "docs/ACTION-NETWORK-CREATOR-ROLE-WORKSPACES.md",
+      "docs/ACTION-NETWORK-CREATOR-THREE-DAY-TRIAL.md",
+      "docs/ACTION-NETWORK-ENTERPRISE.md",
+      "docs/ACTION-NETWORK-FOUNDER-40-CURRICULUM.md",
+      "docs/ACTION-NETWORK-INFLUENCER-FOUNDERS.md",
+      "docs/ACTION-NETWORK-LIVE-GOVERNANCE.md",
+      "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
+      "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md",
+      "docs/ACTION-NETWORK-SIGNED-CREATOR-PROGRAM.md",
+      "docs/ACTION-NETWORK-THREE-DAY-CREATOR-SELECTION.md",
+      "docs/CREATOR-ATTRIBUTION-AND-REPORT-CARD-METRICS.md",
+      "docs/CREATOR-BILLING-DB-CHECKPOINT-2026-10-09.md",
+      "docs/CREATOR-STRIPE-SANDBOX-CATALOG-2026-10-09.md",
+      "docs/END-RACISM-TWO-PATH-CAMPAIGN.md",
+      "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md",
+      "docs/action-network-creator-economy-contract.md",
+      "docs/action-network-financial-architecture-decision.md",
+      "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md",
+      "docs/action-network/AUDIO-SFU-ROOMS-RELEASE.md",
+      "docs/action-network/CANDIDATE-LABS-NEWS-TRANSPARENCY.md",
+      "docs/action-network/CT-2026-PARTNER-FUNDING-EXECUTION.md",
+      "docs/action-network/EDITORIAL-WORLD-REFERENCE-20261016.md",
+      "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
+      "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
+      "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
+      "docs/action-network/FOLLOW-THE-MONEY-BACKLOG.md",
+      "docs/action-network/GLOBAL-CIVIC-SOURCE-ACTIVATION.md",
+      "docs/action-network/HUMAN-UPRISE-PRODUCTION-MIGRATION-RECONCILIATION-20261014.md",
+      "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
+      "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
+      "docs/action-network/MISSION-LOOP-RETURN.md",
+      "docs/action-network/MISSION-ORIGINATED-PUBLISHING-CONTRACT.md",
+      "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md",
+      "docs/action-network/MORNING-BRIEF.md",
+      "docs/action-network/NEWSROOM.md",
+      "docs/action-network/PUBLIC-COMMENT-ADAPTER.md",
+      "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
+      "docs/action-network/TWO-OR-MORE-REGIONAL-ACTIVATION.md",
+      "docs/action-network/WORLD-AS-FEED-V1.md",
+      "docs/action-network/WORLD-NEWS-GLOBE-EVENT-FEED.md",
+      "docs/action-network/WORLD-REGION-BOUNDARY-PIPELINE.md",
+      "docs/action-network/WORLD-REGION-FEED-RELEASE.md",
+      "docs/action-network/WORLD-SCREEN-UX-HANDOFF-20261014.md",
+      "docs/architecture/ACTION-NETWORK-SECURITY-ARCHITECTURE.md",
+      "docs/architecture/ACTION-NETWORK-THREAT-MODEL.md",
+      "docs/architecture/subdomain-split.md",
+      "docs/control-plane/COMMERCE-RECONCILER.md",
+      "docs/control-plane/DOMAINS-AND-ENTITIES.md",
+      "docs/control-plane/EQUITY-UPRISE-MISSION-SERIES-AND-SONG-CTA.md",
+      "docs/control-plane/INTEL-TO-MISSION-CANON.md",
+      "docs/control-plane/LIVE-MISSIONS.md",
+      "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
+      "docs/control-plane/MEMBER-FRONT-PAGES.md",
+      "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
+      "docs/control-plane/MISSION-RESET-DOCKET-516R.md",
+      "docs/control-plane/SOCIAL-AGENT-PHONE-WORKER.md",
+      "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
+      "docs/control-plane/specs/TEST_MISSION_000.json",
+      "docs/creator-cuts.sql",
+      "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
+      "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
+      "docs/design/halo/reference/halo-view-02-missions.jpg",
+      "docs/domain-cutover.md",
+      "docs/domain-search.md",
+      "docs/music/creator-onboarding/screenshots/after-1280-one-click.png",
+      "docs/music/creator-onboarding/screenshots/after-390-one-click.png",
+      "docs/music/creator-onboarding/screenshots/after-390-only-missing.png",
+      "docs/music/creator-onboarding/screenshots/after-390-studio.png",
+      "docs/music/creator-onboarding/screenshots/before-390-existing-creator.png",
+      "docs/products/MISSION-APPLICATIONS-AND-MODULAR-PRODUCTS.md",
+      "docs/sales-redesign/screenshots/chapter-anti-social-equity.png",
+      "docs/sales-redesign/screenshots/chapter-anti-social-m.png",
+      "docs/sales-redesign/screenshots/onboard-anti-social-mode-1440.png",
+      "docs/social-connections.md",
+      "docs/social-desk-setup.md",
+      "docs/social-platform.md",
+      "docs/spatial-commerce.md",
+      "docs/square-checkout.md",
+      "docs/stripe-webhook.md",
+      "docs/the-mission-fund.md",
+      "equity-uprise-preview/facade-module-inventory.json",
+      "front-studio.html",
+      "live-mission.html",
+      "mccluster-creator-studio.html",
+      "mccluster-creator.html",
+      "member-front.html",
+      "mnet.html",
+      "music-creator-terms.html",
+      "music-creator.html",
+      "packages/commerce/package-lock.json",
+      "packages/commerce/package.json",
+      "packages/commerce/src/fulfillment.ts",
+      "packages/commerce/src/index.ts",
+      "packages/commerce/src/payments.ts",
+      "packages/commerce/tsconfig.json",
+      "redirects/closet/commission.html",
+      "redirects/profile.html",
+      "redirects/tracks/antisocial.html",
+      "scripts/action-network-creator-pilot.mjs",
+      "scripts/creator-selection-score.mjs",
+      "scripts/creator-trial-milestones.mjs",
+      "scripts/e2e/anti-social.e2e.mjs",
+      "scripts/e2e/creator-onboarding.e2e.mjs",
+      "scripts/e2e/live-mission-capture.e2e.mjs",
+      "scripts/e2e/member-front.e2e.mjs",
+      "scripts/e2e/mission-pins.e2e.mjs",
+      "scripts/e2e/mission-swipe.e2e.mjs",
+      "scripts/mail/multi-tenant/postfix-pgsql-domains.cf",
+      "scripts/stripe-test/replay.mjs",
+      "scripts/stripe-test/stripe-test-mode.mjs",
+      "scripts/test-antisocial-db.sh",
+      "scripts/test-live-missions-db.sh",
+      "scripts/test-member-fronts-db.sh",
+      "scripts/test-mission-admin-approval-db.sh",
+      "scripts/test-mission-engine-db.sh",
+      "scripts/test-mission-pins-db.sh",
+      "scripts/test-music-creator-db.sh",
+      "scripts/test-profile-edit-gate-db.sh",
+      "scripts/test/action-mission-curation.test.mjs",
+      "scripts/test/action-mission-funnel.test.mjs",
+      "scripts/test/action-network-creator-pilot.test.mjs",
+      "scripts/test/action-network-live-governance.test.mjs",
+      "scripts/test/action-network-redesign.test.mjs",
+      "scripts/test/action-network.test.mjs",
+      "scripts/test/antisocial-get-social-completion.test.mjs",
+      "scripts/test/antisocial-three-levels.test.mjs",
+      "scripts/test/completed-mission-globe.test.mjs",
+      "scripts/test/creator-action-distribution.test.mjs",
+      "scripts/test/creator-billing-testmode-contract.test.mjs",
+      "scripts/test/creator-billing-webhook-contract.test.mjs",
+      "scripts/test/creator-checkout-contract.test.mjs",
+      "scripts/test/creator-clip-lifecycle-schema.test.mjs",
+      "scripts/test/creator-entitlement-contract.test.mjs",
+      "scripts/test/creator-onboarding.test.mjs",
+      "scripts/test/creator-profile-publishing.test.mjs",
+      "scripts/test/creator-selection-pool-contract.test.mjs",
+      "scripts/test/creator-site-publish-contract.test.mjs",
+      "scripts/test/creator-site-storage-contract.test.mjs",
+      "scripts/test/creator-studio-paid-publish.test.mjs",
+      "scripts/test/creator-trial-milestones.test.mjs",
+      "scripts/test/creator-trial-persistence-contract.test.mjs",
+      "scripts/test/domain-architecture.test.mjs",
+      "scripts/test/gated-track-mission-identity.test.mjs",
+      "scripts/test/here-album-commerce.test.mjs",
+      "scripts/test/live-missions-client.test.mjs",
+      "scripts/test/member-front-pages.test.mjs",
+      "scripts/test/mission-next.test.mjs",
+      "scripts/test/mission-pins-arcs-business.test.mjs",
+      "scripts/test/mission-swipe-deck.test.mjs",
+      "scripts/test/mnet-media-storage-boundary.test.mjs",
+      "scripts/test/mnet-real-network.test.mjs",
+      "scripts/test/mnet-thumb-status.test.mjs",
+      "scripts/test/music-creator-page.test.mjs",
+      "scripts/test/native-action-network.test.mjs",
+      "scripts/test/stripe-commerce-reconciler.test.mjs",
+      "scripts/test/stripe-test-workflow.test.mjs",
+      "scripts/test/wave1-unified-feed-profile.test.mjs",
+      "site0/vendor/three/addons/libs/meshopt_decoder.module.js",
+      "site0/vendor/three/three.module.js",
+      "supabase/functions/checkout/index.ts",
+      "supabase/functions/domain-check/domain.ts",
+      "supabase/functions/domain-check/index.ts",
+      "supabase/functions/l3-checkout/index.ts",
+      "supabase/functions/mnet-activity/index.ts",
+      "supabase/functions/mnet-media/index.ts",
+      "supabase/functions/mnet-media/storage-path.mjs",
+      "supabase/functions/mnet-track/index.ts",
+      "supabase/functions/music-checkout/index.ts",
+      "supabase/functions/social-agent/index.ts",
+      "supabase/functions/social/index.ts",
+      "supabase/functions/stripe-webhook/commerce.ts",
+      "supabase/functions/stripe-webhook/index.ts",
+      "supabase/migrations/0003_creator_cuts.sql",
+      "supabase/migrations/0010_domain_hosting_offerings.sql",
+      "supabase/migrations/20260722212010_creator_cuts.sql",
+      "supabase/migrations/20260812011734_domain_hosting_offerings.sql",
+      "supabase/migrations/20260823194912_hosting_year.sql",
+      "supabase/migrations/20260829141551_domains.sql",
+      "supabase/migrations/20260904210053_enforce_unique_gmail_campaign_message.sql",
+      "supabase/migrations/20260906174445_social_growth_engine.sql",
+      "supabase/migrations/20260907073345_social_publish_lease_and_connect.sql",
+      "supabase/migrations/20260907090014_social_hardening_p0.sql",
+      "supabase/migrations/20260908233303_reconcile_social_credential_and_lease.sql",
+      "supabase/migrations/20260909235047_level_3_media_social_channels.sql",
+      "supabase/migrations/20260913014855_level3_media_self_service_commerce.sql",
+      "supabase/migrations/20260913015458_level3_public_storefront_profile.sql",
+      "supabase/migrations/20260913022344_mnet_phase1_social_data_plane.sql",
+      "supabase/migrations/20260913022505_mnet_phase1_outbox_and_features.sql",
+      "supabase/migrations/20260913022547_mnet_phase1_security_hardening.sql",
+      "supabase/migrations/20260913023331_mnet_surface_onboarding_and_scoped_feed.sql",
+      "supabase/migrations/20260913023354_mnet_scaffold_registered_product_client_surfaces.sql",
+      "supabase/migrations/20260913023410_mnet_global_feed_for_main_network_surfaces.sql",
+      "supabase/migrations/20260913023845_mnet_platform_api_commercial_layer.sql",
+      "supabase/migrations/20260913024201_mnet_notifications_and_api_catalog_expansion.sql",
+      "supabase/migrations/20260919042036_fan_profiles.sql",
+      "supabase/migrations/20260920041011_music_creator_platform_v1.sql",
+      "supabase/migrations/20260920041250_music_commerce_v1.sql",
+      "supabase/migrations/20260920045944_fix_mnet_bootstrap_trigger_call.sql",
+      "supabase/migrations/20260920071811_mnet_real_network_v1.sql",
+      "supabase/migrations/20260920071931_mnet_conversation_rls_fix.sql",
+      "supabase/migrations/20260920072949_mnet_privacy_and_request_guards.sql",
+      "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql",
+      "supabase/migrations/20260921051000_mnet_avatar_bucket.sql",
+      "supabase/migrations/20260921071622_mnet_music_seam_and_pinning.sql",
+      "supabase/migrations/20260925040000_mnet_handles_groups_and_welcome.sql",
+      "supabase/migrations/20260925121408_mnet_handles_groups_and_welcome.sql",
+      "supabase/migrations/20260927195014_mnet_welcome_every_new_member.sql",
+      "supabase/migrations/20261002014251_end_racism_campaign.sql",
+      "supabase/migrations/20261002023107_mnet_scheduled_posts.sql",
+      "supabase/migrations/20261002024701_mnet_scheduled_publish_idempotency.sql",
+      "supabase/migrations/20261002134705_mnet_tour_seen.sql",
+      "supabase/migrations/20261002183039_social_agent_phone_worker.sql",
+      "supabase/migrations/20261002183221_social_agent_phone_worker.sql",
+      "supabase/migrations/20261002184158_social_outbox_v1.sql",
+      "supabase/migrations/20261003022730_action_mission_camera_loop_v1.sql",
+      "supabase/migrations/20261003023055_action_mission_camera_loop_v1.sql",
+      "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql",
+      "supabase/migrations/20261003230844_creator_action_distribution_v1.sql",
+      "supabase/migrations/20261003231454_creator_action_distribution_network_post_guard_v1.sql",
+      "supabase/migrations/20261003232119_creator_action_distribution_rls_indexes_v1.sql",
+      "supabase/migrations/20261003232339_creator_action_first_touch_attribution_v1.sql",
+      "supabase/migrations/20261003232607_creator_action_conversion_semantics_v1.sql",
+      "supabase/migrations/20261004004111_cobalt_action_missions_open_v1.sql",
+      "supabase/migrations/20261005054040_action_cohort_admission_v1.sql",
+      "supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql",
+      "supabase/migrations/20261006023453_commerce_stripe_reconciler_v2.sql",
+      "supabase/migrations/20261006233518_here_album_commerce_v1_reconcile.sql",
+      "supabase/migrations/20261009204152_creator_billing_subscriptions_v1.sql",
+      "supabase/migrations/20261009204158_creator_published_sites_v1.sql",
+      "supabase/migrations/20261009222933_creator_free_service_offers_v1.sql",
+      "supabase/migrations/20261009222938_creator_trial_reports_consultations_v1.sql",
+      "supabase/migrations/20261009222941_creator_selection_pool_v1.sql",
+      "supabase/migrations/20261010011154_action_creator_payout_reservations.sql",
+      "supabase/migrations/20261010011201_action_creator_payout_reservation_rpc.sql",
+      "supabase/migrations/20261010011502_action_creator_connect_binding_finalize.sql",
+      "supabase/migrations/20261010011611_action_creator_stripe_event_reconciliation.sql",
+      "supabase/migrations/20261010064726_action_creator_transfer_claim_bank_events.sql",
+      "supabase/migrations/20261010070310_action_creator_partial_reversal_guard.sql",
+      "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql",
+      "supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql",
+      "supabase/migrations/20261015001022_antisocial_action_record_civic_scope.sql",
+      "supabase/migrations/20261017030617_intel_mission_canon_v1.sql",
+      "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
+      "supabase/migrations/20261021014027_connected_graph_read_permissions.sql",
+      "supabase/migrations/20261021050105_music_creator_one_click_v1.sql",
+      "supabase/migrations/pending/20261009170000_creator_billing_subscriptions.sql",
+      "supabase/migrations/pending/20261009173000_creator_published_sites.sql",
+      "supabase/migrations/pending/20261009233000_creator_lifecycle_events.sql",
+      "supabase/migrations/pending/20261009234500_creator_clip_lifecycle_reporting.sql",
+      "supabase/migrations/pending/20261009235500_creator_free_service_offers.sql",
+      "supabase/migrations/pending/20261009235900_creator_team_decision_matrix.sql",
+      "supabase/migrations/pending/20261010001000_creator_trial_reports_consultations.sql",
+      "supabase/migrations/pending/20261010003000_creator_selection_pool.sql",
+      "supabase/migrations/pending/20261010004000_creator_super_verification_rewards.sql",
+      "supabase/migrations/pending/20261010005000_creator_selection_api_draft.sql",
+      "supabase/migrations/pending/20261010006000_creator_fan_payment_evidence.sql",
+      "supabase/migrations/pending/20261010009000_creator_site_cohort_grants.sql",
+      "supabase/migrations/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+      "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
+      "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
+      "supabase/pending/20261015210000_intel_mission_canon_v1.rollback.sql",
+      "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
+      "supabase/pending/20261016010000_profile_edit_gate_v1.rollback.sql",
+      "supabase/pending/20261016010000_profile_edit_gate_v1.sql",
+      "supabase/pending/commerce_stripe_reconciler_v3.sql",
+      "supabase/pending/gated_track_mission_identity_v1.rollback.sql",
+      "supabase/pending/gated_track_mission_identity_v1.sql",
+      "supabase/pending/live_missions_v1.rollback.sql",
+      "supabase/pending/live_missions_v1.sql",
+      "supabase/pending/mission_admin_approval_v1.rollback.sql",
+      "supabase/pending/mission_admin_approval_v1.sql",
+      "supabase/replay_migrations/0003_creator_cuts.sql",
+      "supabase/replay_migrations/0010_domain_hosting_offerings.sql",
+      "supabase/replay_migrations/0030_hosting_year.sql",
+      "supabase/replay_migrations/0032_domains.sql",
+      "supabase/replay_migrations/0036_control_plane_social.sql",
+      "supabase/replay_migrations/0046_social_growth_core_compat.sql",
+      "supabase/replay_migrations/0060_social_publish_lease_and_connect.sql",
+      "supabase/replay_migrations/0068_mnet_replay_foundation.sql",
+      "supabase/replay_migrations/20260907040300_social_hardening.sql",
+      "supabase/replay_migrations/20260908220000_reconcile_social_credential_and_lease.sql",
+      "supabase/tests/action_mission_engine.behaviour.sql",
+      "supabase/tests/action_mission_pins.stub.sql",
+      "supabase/tests/action_mission_pins_arcs_business.behaviour.sql",
+      "supabase/tests/action_mission_reset.behaviour.sql",
+      "supabase/tests/action_mission_reset.stub.sql",
+      "supabase/tests/antisocial_connections.behaviour.sql",
+      "supabase/tests/antisocial_levels.behaviour.sql",
+      "supabase/tests/commerce_stripe_concurrency.sh",
+      "supabase/tests/commerce_stripe_reconciler_regression.sql",
+      "supabase/tests/commerce_stripe_reconciler_v3_regression.sql",
+      "supabase/tests/domain.test.mjs",
+      "supabase/tests/gated_track_mission_identity.behaviour.sql",
+      "supabase/tests/intel_mission_canon.behaviour.sql",
+      "supabase/tests/live_missions.behaviour.sql",
+      "supabase/tests/mission_admin_approval.behaviour.sql",
+      "supabase/tests/mission_admin_approval.control.sql",
+      "supabase/tests/mnet_network_tables.stub.sql",
+      "supabase/tests/music_creator_onboarding.stub.sql",
+      "supabase/tests/music_creator_one_click.behaviour.sql",
+      "supabase/tests/profile_edit_gate.behaviour.sql",
+      "tools/build-profile-entity.mjs",
+      "tools/rename-domain.mjs",
+      "workers/mccluster/src/commerce/receipt.js",
+      "workers/mccluster/src/commerce/summary.js",
+      "workers/mccluster/src/creator-billing-webhook.js",
+      "workers/mccluster/src/creator-billing.js",
+      "workers/mccluster/src/creator-entitlement.js",
+      "workers/mccluster/src/creator-site-publish.js",
+      "workers/mccluster/src/creator-site-view.js",
+      "workers/mccluster/src/marketplace/commission-contract.mjs",
+      "workers/mccluster/src/marketplace/commission-contract.test.mjs",
+      "workers/mccluster/src/member-fronts.js",
+      "workers/mccluster/src/prim3/mission-variant.js",
+      "workers/mccluster/src/social/meta.js",
+      "workers/mccluster/src/social/router.js",
+      "workers/mccluster/src/social/security.js",
+      "workers/mccluster/src/social/webhook.js",
+      "workers/mccluster/src/whip/stripe.js",
+      "workers/mccluster/test/analytics-creator-attribution.test.mjs",
+      "workers/mccluster/test/commerce-receipt-route.test.mjs",
+      "workers/mccluster/test/commerce-receipt-summary.test.mjs",
+      "workers/mccluster/test/intel-mission-loop.test.mjs",
+      "workers/mccluster/test/live-missions.test.mjs",
+      "workers/mccluster/test/member-fronts.test.mjs",
+      "workers/mccluster/test/mission-proof-media.test.mjs",
+      "workers/mccluster/test/mnet-comment-notify.test.mjs",
+      "workers/mccluster/test/mnet-live.test.mjs",
+      "workers/mccluster/test/mnet-mission-flow.test.mjs",
+      "workers/mccluster/test/mnet-post-limits.test.mjs",
+      "workers/mccluster/test/mnet-post-thumbnail.test.mjs",
+      "workers/mccluster/test/mnet-profile-save.test.mjs",
+      "workers/mccluster/test/mnet-public-feed.test.mjs",
+      "workers/mccluster/test/mnet-scheduled.test.mjs",
+      "workers/mccluster/test/mnet-uprise.test.mjs",
+      "workers/mccluster/test/prim3-mission-compiler.test.mjs",
+      "workers/mccluster/test/profile-edit-gate.test.mjs",
+      "workers/mccluster/test/social-hardening.test.mjs",
+      "workers/mccluster/test/social-outbox.test.mjs",
+      "workers/mccluster/test/social-runtime.test.mjs"
+    ]
+  },
+  {
+    "branch": "grok/ai-harness-plane",
+    "sha": "0e2f2190ce90b3bc0822cc06671bae434f681430",
+    "pull_requests": [
+      35
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3440,
+    "merge_base": "33ba69b67c130d5ee3109732b773de02083be541",
+    "changed_paths_since_common_ancestor": 15,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "grok/spatial-plane",
+    "sha": "c4d2c30b79b7f1fac0f0a6b3e9c108cc792e2989",
+    "pull_requests": [
+      43
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3424,
+    "merge_base": "5a447b6b1d444b143b51114dd2a609dcb33f86b1",
+    "changed_paths_since_common_ancestor": 24,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "hardening/control-plane-authority",
+    "sha": "16e73783ab34d8ca62ff2778649aa32733e202b4",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3452,
+    "merge_base": "3913493ad29af1f7db3e170d07865b662820a98f",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "main",
+    "sha": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 0,
+    "merge_base": "396760eb72121e9673c6fc3df062f3af29660c10",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "maintenance/equity-uprise-authority-generated-refresh",
+    "sha": "573f2b0de1b2c72db2e01c5bfd27086af8fe7a62",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2544,
+    "merge_base": "755335fada6c4d29eaac7a72baeb9feb159ed235",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "oauth/mcp-owner-auth-v1",
+    "sha": "e0c1d657d3bb6aa24a6544fd5310103237ab60b7",
+    "pull_requests": [
+      105
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3163,
+    "merge_base": "6d0e985357b9e106e831c20e64ab1d394f752777",
+    "changed_paths_since_common_ancestor": 17,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "openai/conversation-objective-synthesis-v1",
+    "sha": "4baba048ee2126f8b6f4fa6d4e07ce5a307dd518",
+    "pull_requests": [
+      76
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3272,
+    "merge_base": "b3c5328f530ce27c65655a47b902599e66078e1c",
+    "changed_paths_since_common_ancestor": 18,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "openai/dependency-aware-plans-v1",
+    "sha": "bfced899ebedd121031f62cd85296fc8514e66b8",
+    "pull_requests": [
+      74
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3272,
+    "merge_base": "b3c5328f530ce27c65655a47b902599e66078e1c",
+    "changed_paths_since_common_ancestor": 11,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "openai/three-node-event-mesh-v1",
+    "sha": "c19cec1fed16ae82cec4ff17289db02ce16a346d",
+    "pull_requests": [
+      77
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3277,
+    "merge_base": "b3c5328f530ce27c65655a47b902599e66078e1c",
+    "changed_paths_since_common_ancestor": 27,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ops/bootstrap-ovh-now",
+    "sha": "4ef83de7d2d5cca7b1cbf4875648e879d95ab3a8",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3184,
+    "merge_base": "8157efd0ce3696c9fb887c29400e20cf32040862",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ops/deploy-ovh-c34d5d12-one-shot",
+    "sha": "0b75eacc42e1732c12a8a29c334bcc571ad2dcb0",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2337,
+    "merge_base": "eae13958222d8afeede34f685a953670cac66648",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ops/deploy-ovh-durable-turn-20260927",
+    "sha": "b345e1850e31f88d5aaa2e4e6946a94042edb72c",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2325,
+    "merge_base": "c0177ae8cd03cfd8a9eaaf69b1313a39ff00de4c",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ops/deploy-ovh-machine-roots-20260927",
+    "sha": "6fb7ed3230516fcc26dead975bd185243d0ea0ad",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2325,
+    "merge_base": "c0177ae8cd03cfd8a9eaaf69b1313a39ff00de4c",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ops/ovh-repo-sync",
+    "sha": "9fd3d73dab4315d7d0cf57a374f5a4c3ec14edc4",
+    "pull_requests": [
+      89
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3234,
+    "merge_base": "1286eba5fbd0846f4090e102bd57e6551401ddfe",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ops/validate-ovh-durable-turn-20260927",
+    "sha": "c3cafa7a6172cee31d2e91a7d69d1338257d6335",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2325,
+    "merge_base": "c0177ae8cd03cfd8a9eaaf69b1313a39ff00de4c",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ops/validate-ovh-machine-roots-20260927",
+    "sha": "0243b58cb70834bcad3ac0638e8969d511fe52ca",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2325,
+    "merge_base": "c0177ae8cd03cfd8a9eaaf69b1313a39ff00de4c",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "prim3-episode1-lessons",
+    "sha": "c57b2537a4143801c8cf7598279b090f7c31d720",
+    "pull_requests": [
+      53
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3383,
+    "merge_base": "d52788a3342f5fa1cc8ce19457d665baca6501b7",
+    "changed_paths_since_common_ancestor": 3,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "prim3-lms-foundation",
+    "sha": "abaa8d75ee1218ee14c1d5d835bc0364890fa866",
+    "pull_requests": [
+      51,
+      50
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3392,
+    "merge_base": "c51dd782dc4c19e1e3afe437232ced5f283c0655",
+    "changed_paths_since_common_ancestor": 2,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "product/mccluster-console-v1",
+    "sha": "e2376202af92000955bea78073cc0a5f70053484",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3176,
+    "merge_base": "6d0e985357b9e106e831c20e64ab1d394f752777",
+    "changed_paths_since_common_ancestor": 39,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/autonomy-fabric-stack-v1",
+    "sha": "d0a1d523a4a6ff689b5a3cd7083ba7da55e05804",
+    "pull_requests": [
+      81
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3271,
+    "merge_base": "7f958bcdc13a9163fdf200763527ca3015160c67",
+    "changed_paths_since_common_ancestor": 52,
+    "unique_relevant_paths": [
+      "supabase/migrations/20260913000900_mnet_notifications_and_api_catalog_expansion.sql"
+    ]
+  },
+  {
+    "branch": "reconcile/autonomy-fabric-stack-v1-clean",
+    "sha": "df617e43cab5355770d9596f9bdc617a68527c57",
+    "pull_requests": [],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 3234,
+    "merge_base": "df617e43cab5355770d9596f9bdc617a68527c57",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/autonomy-fabric-stack-v2",
+    "sha": "93dbb5d260463a600faf5c99b24f42580f98e5d1",
+    "pull_requests": [
+      80
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3266,
+    "merge_base": "8da0af1614eca5fb8749db828fda56799aa48858",
+    "changed_paths_since_common_ancestor": 13,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/core-harness-20260912",
+    "sha": "cc66675f03d2bf0ab5fa03ac9fd69286e6aaf74c",
+    "pull_requests": [
+      54
+    ],
+    "ancestor_of_released_main": true,
+    "changed_paths_vs_released_main": 3375,
+    "merge_base": "cc66675f03d2bf0ab5fa03ac9fd69286e6aaf74c",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-core-v2-floor2-lock",
+    "sha": "95f8daa43bf0207e1c4c3c8679949637bfbcaa42",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2671,
+    "merge_base": "b1824777ba340d7c93ea04031eee2391b1d03348",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-core-v2-floor6-halo-placement",
+    "sha": "74426ed46861f4a65d9f9eab8d67391fa0658fb9",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2628,
+    "merge_base": "8d57f8dc7e3ea16e26bb6faadc49708bd40cd6fc",
+    "changed_paths_since_common_ancestor": 17,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-core-v2-floor6-halo-position",
+    "sha": "157609e86f29fb5138b3b0d245f5dbb1c270a25b",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2624,
+    "merge_base": "2619a55bde44bd404cac40002fb5ba80f7e605f6",
+    "changed_paths_since_common_ancestor": 17,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-core-v2-services-step3-b1-plant-connections",
+    "sha": "e4ba86273ea16f098c5b62ce35bccd56c0663a5b",
+    "pull_requests": [
+      165
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2514,
+    "merge_base": "3b2ab77110d6c5638096630cf44bbedd85040e19",
+    "changed_paths_since_common_ancestor": 12,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-core-v2-step-c-av-life-safety",
+    "sha": "1ea2c9b2776e05d161d1195040cc2805ebe348bf",
+    "pull_requests": [
+      224
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2414,
+    "merge_base": "ad581523b53e54e80df25bc496810a4f2aae1ff7",
+    "changed_paths_since_common_ancestor": 8,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-core-v2-step4-pathway-first-routing",
+    "sha": "b1a688230bc605cb2b5dc2bc9fd4e457c99b596a",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2405,
+    "merge_base": "f519f280708e26f7ed0624de996bc9dc7b214544",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-federal-training-catalog-v1",
+    "sha": "d0897fcd2466b7c84f37b822fc36ffced4497ff3",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2500,
+    "merge_base": "b1f4d77ceb2b06b1e77b82620a22c50903e4bd3c",
+    "changed_paths_since_common_ancestor": 16,
+    "unique_relevant_paths": [
+      "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+    ]
+  },
+  {
+    "branch": "reconcile/equity-uprise-floor6-halo-placement",
+    "sha": "88e28334c88357f2a4c3b5be7aebb44bb67d1d24",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2628,
+    "merge_base": "8d57f8dc7e3ea16e26bb6faadc49708bd40cd6fc",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-floor6-halo-position-generated",
+    "sha": "fc3588dca5c661ac19213b758de5536a0fcdc60a",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2624,
+    "merge_base": "2619a55bde44bd404cac40002fb5ba80f7e605f6",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-floor6-halo-southwest",
+    "sha": "a382f7ae609aa07df016878626a21f37c6f234f1",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2613,
+    "merge_base": "c0d8d704f72cd6dc79ac0cb5a727a87151c72adf",
+    "changed_paths_since_common_ancestor": 0,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-services-step3-b1-plant-connections",
+    "sha": "431ca8eec52b314a3434414c1a9c4a2885503628",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2514,
+    "merge_base": "3b2ab77110d6c5638096630cf44bbedd85040e19",
+    "changed_paths_since_common_ancestor": 9,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "reconcile/equity-uprise-step4-pathway-first-routing",
+    "sha": "cd9a28e90d432a93842230592aaeddc6cb94f16c",
+    "pull_requests": [
+      227
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 2409,
+    "merge_base": "f519f280708e26f7ed0624de996bc9dc7b214544",
+    "changed_paths_since_common_ancestor": 4,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "recovery/news-policy-f8021df-20261017",
+    "sha": "509bf4faea58b874a59f54861bcc8611053c01d2",
+    "pull_requests": [
+      497
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 375,
+    "merge_base": "a2d8db1e77dbea1bed320bab6ebb6cce5ba0bdc3",
+    "changed_paths_since_common_ancestor": 19,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "security/identity-spine-whip-p0-20260907",
+    "sha": "446bbdcb94673995e7c63c6bfb82751618c6ce9f",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3437,
+    "merge_base": "3d9126ac1669bf01a9ec3eb8cdf290394063dc7d",
+    "changed_paths_since_common_ancestor": 7,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "security/second-pass-hardening-20261020",
+    "sha": "2f5c2c9330387643b1d722072f987e2a52a20b71",
+    "pull_requests": [
+      554
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 414,
+    "merge_base": "e25179a74247ff5fb474689bb4325b30d1e631b4",
+    "changed_paths_since_common_ancestor": 52,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "selfhost/preview-runtime-v1",
+    "sha": "fcb3a64789ff3987a427c19533e045c25fa92292",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3163,
+    "merge_base": "6d0e985357b9e106e831c20e64ab1d394f752777",
+    "changed_paths_since_common_ancestor": 26,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "selfhost/sovereign-media-fabric-v1",
+    "sha": "f1baa11bd92ccf9255e0e59e5ae445c564956296",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3175,
+    "merge_base": "6d0e985357b9e106e831c20e64ab1d394f752777",
+    "changed_paths_since_common_ancestor": 38,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "ui/claude-operator-os",
+    "sha": "a213940b1ee6febfec59d04467d19e889463ddcc",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3148,
+    "merge_base": "b3e21decb750ce2185d4adaad1468c3de96466b9",
+    "changed_paths_since_common_ancestor": 22,
+    "unique_relevant_paths": [
+      "js/operator/modules/backoffice.js",
+      "js/operator/modules/comms.js",
+      "js/operator/modules/core.js",
+      "js/operator/modules/crm.js",
+      "js/operator/modules/developer.js",
+      "js/operator/modules/integrations.js",
+      "js/operator/modules/mission-control.js",
+      "js/operator/modules/prim3.js",
+      "js/operator/modules/sites.js",
+      "js/operator/modules/social.js",
+      "js/operator/modules/spatial.js",
+      "js/operator/modules/studio.js",
+      "js/operator/modules/system.js",
+      "js/operator/modules/usage.js",
+      "js/operator/modules/whip.js"
+    ]
+  },
+  {
+    "branch": "verify-ovh-ssh-secrets",
+    "sha": "e8dedec3e6344eb48be86ac8651fd2e360899ff1",
+    "pull_requests": [
+      122
+    ],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 3090,
+    "merge_base": "dfe911e7659e56fb786b8b89f52cb45666906c3a",
+    "changed_paths_since_common_ancestor": 1,
+    "unique_relevant_paths": []
+  },
+  {
+    "branch": "wip/world-gdelt-news-globe-layer-draft",
+    "sha": "12799f3b3afdcd771aaf033bb362962cf8bd7f88",
+    "pull_requests": [],
+    "ancestor_of_released_main": false,
+    "changed_paths_vs_released_main": 1763,
+    "merge_base": "30725a87d9ab6b2ece88c2a005e0cca612c76500",
+    "changed_paths_since_common_ancestor": 19,
+    "unique_relevant_paths": [
+      "css/mnet.css",
+      "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
+      "js/mnet.js",
+      "mnet.html",
+      "scripts/e2e/anti-social.e2e.mjs",
+      "workers/mccluster/test/mnet-public-feed.test.mjs"
+    ]
+  }
+]
