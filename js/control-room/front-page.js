@@ -25,7 +25,7 @@
   window.CR=window.CR||{};
   var PAGE="index.html",SLOT="@front";
   var DEVICES={phone:{w:390,h:844,label:"Phone"},desktop:{w:1280,h:800,label:"Desktop"}};
-  var JUMPS=[["top","Top"],["vaunt","Vaunt"],["cabin","360 cabin"],["night","Night"],["world","World"]];
+  var JUMPS=[["top","Top"],["vaunt","Project tile"],["night","Night"],["world","World"]];
   var FEEL={smooth:{duration:1.2,touchLerp:0.1,label:"Smooth"},standard:{duration:0.85,touchLerp:0.14,label:"Standard (as shipped)"},quick:{duration:0.55,touchLerp:0.22,label:"Quick"}};
   var S={request:null,rerender:null,device:"phone",saved:null,savedAt:null,loaded:false,loading:false,loadError:null,
     draft:null,applied:null,seq:0,acked:0,waiters:[],ready:false,dirty:false,saving:false,message:"",bad:false,frame:null,observer:null};
@@ -107,25 +107,15 @@
     return''+
       '<fieldset class="cfp-group"><legend>Scenes</legend>'+
         check("scenes.doors","The hero's two doors",f.scenes.doors,"“Want a website like this?” and “Resume/CV”")+
-        check("scenes.vaunt","The Vaunt scene",f.scenes.vaunt,"The runway films and the 360 cabin inside them")+
+
         check("scenes.night","The night descent",f.scenes.night,"The night film and the LOCK IN room")+
-        check("scenes.world","The World at the end",f.scenes.world,"The globe guests see before they join")+
+        '<p>The World entry is shared by every public front page.</p>'+
       '</fieldset>'+
       '<fieldset class="cfp-group"><legend>Scroll feel</legend>'+
         '<label>How the page scrolls<select name="feel">'+Object.keys(FEEL).map(function(k){return'<option value="'+k+'"'+(feel===k?" selected":"")+'>'+e(FEEL[k].label)+'</option>';}).join("")+(feel==="custom"?'<option value="custom" selected>Custom</option>':"")+'</select></label>'+
         '<div class="cfp-pair">'+num("scroll.duration","Glide (seconds)",f.scroll.duration,0.3,1.8,0.05)+num("scroll.touchLerp","Finger follow (0.05–0.4)",f.scroll.touchLerp,0.05,0.4,0.01)+'</div>'+
       '</fieldset>'+
-      '<fieldset class="cfp-group"'+(f.scenes.vaunt?"":" disabled")+'><legend>360 cabin</legend>'+
-        check("vr.enabled","The cabin",f.vr.enabled,"The inside-the-jet film between the runway and the fly-through")+
-        check("vr.hold","Hold the page in the cabin",f.vr.hold,"On: the page stops until Land or Back to the card. Off: scrolling carries on through it")+
-        '<div class="cfp-pair">'+num("vr.band0","Opens at (% of the Vaunt scene)",pct(f.vr.band[0]),15,81,1)+num("vr.band1","Ends at (%)",pct(f.vr.band[1]),19,85,1)+'</div>'+
-        '<div class="cfp-pair">'+num("vr.yaw","Opening view: turn (°)",f.vr.yaw,-180,180,1)+num("vr.pitch","Opening view: tilt (°)",f.vr.pitch,-85,85,1)+'</div>'+
-        '<div class="cro-actions"><button type="button" class="cr-btn cr-btn--ghost" data-cfp="view">Use the preview’s view</button></div>'+
-        '<div class="cfp-spots">'+f.vr.spots.map(function(s,i){var bad=spotProblem(s);return'<div class="cfp-spot'+(bad?" is-bad":"")+'"><b>Tag '+(i+1)+(s.urgent?' · flashing':'')+'</b>'+(bad?'<p class="cfp-spot__bad" role="alert">This tag '+e(bad)+'. It is left out of the preview until it is fixed.</p>':"")+
-          '<label>Label<input name="spot.'+i+'.label" value="'+e(s.label)+'" maxlength="60"></label>'+
-          '<label>Link (a page here, or https://…)<input name="spot.'+i+'.href" value="'+e(s.href)+'" maxlength="300" inputmode="url"></label>'+
-          '<div class="cro-actions"><button type="button" class="cr-btn cr-btn--ghost" data-cfp="spot" data-i="'+i+'">Pin where the preview looks</button></div></div>';}).join("")+'</div>'+
-      '</fieldset>'+
+      '<p class="cro-note">Vaunt now has its own <a href="front.html?project=vaunt" target="_blank" rel="noopener">project page</a>, managed by Matthew through the repository. Its original cabin settings remain stored for recovery; this editor changes Matthew’s front page.</p>'+
       '<fieldset class="cfp-group"'+(f.scenes.night?"":" disabled")+'><legend>Night room</legend>'+
         num("night.arrive","LOCK IN arrives at (% of the descent)",pct(f.night.arrive),50,86,1)+
       '</fieldset>';
@@ -153,7 +143,7 @@
           '<a class="cr-btn cr-btn--ghost" href="index.html" target="_blank" rel="noopener">Open the site ↗</a>'+
         '</div>'+
         '<div class="cfp-viewport"><div class="cfp-device" style="--cfp-w:'+d.w+'px;--cfp-h:'+d.h+'px"><iframe title="Your front page, as visitors get it" src="index.html" data-cfp-frame></iframe></div></div>'+
-        '<p class="cro-meta">This is index.html itself, the page every visitor gets. Scroll it, look around the cabin, tap through. To change its words, use the pencil on the page.</p>'+
+        '<p class="cro-meta">This is index.html itself, the page every visitor gets. Scroll it and open the project tile. To change its words, use the pencil on the page.</p>'+
       '</section>'+
       '<section class="cro-card cfp-panel" aria-label="Front page settings">'+
         '<div data-cfp-status>'+statusHtml()+'</div>'+

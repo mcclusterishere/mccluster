@@ -40,7 +40,7 @@
       nightKicker: wd.nightKicker || "Thanks for coming through",
       nightTitle1: wd.nightTitle1 || "STAY", nightTitle2: wd.nightTitle2 || (wd.nightTitle1 ? "" : "CLOSE"),
       links: Array.isArray(c.links) && c.links.length ? c.links : [{ label: "Follow me on the World", href: profile }],
-      profile: profile
+      profile: safeHref(page.ownerHref) || profile
     };
   }
   /* a link stays on this site or is https (the same rule the Worker and js/main.js apply) */
@@ -91,15 +91,26 @@
     c.scenes = c.scenes || {};
     if (!m.scene1 && !m.scene2 && !m.cabin) c.scenes.vaunt = false;
     if (!m.night) c.scenes.night = false;
-    c.scenes.world = false;
+    c.scenes.world = true; // the shared World entry belongs to every public page
     return c;
   }
   function start(page) {
     fill(page);
     var config = settings(page);
+    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
+    var isProject = !inStudio && project === page;
+    if (isProject) {
+      d.documentElement.setAttribute("data-front-project", params.get("project"));
+      d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });
+      var note = d.createElement('p'); note.className = 'front-project-note';
+      note.textContent = 'Managed by ' + project.owner + '. ' + project.attribution;
+      d.querySelector('.hero__content').appendChild(note);
+      var profile = d.getElementById('frontProfile');
+      profile.textContent = 'About ' + project.owner;
+    }
     /* without the night film the close moves to the foot of the page */
     if (config.scenes.night === false) Array.prototype.forEach.call(d.querySelectorAll("[data-fw-foot]"), function (el) { el.hidden = false; });
-    w.MCC_FRONT_SOURCE = { handle: page.handle, name: page.name || page.handle, config: config, studio: inStudio };
+    w.MCC_FRONT_SOURCE = { handle: page.handle, name: page.name || page.handle, config: config, studio: inStudio, project: isProject ? params.get("project") : null };
     d.documentElement.setAttribute("data-front-state", "ready");
     var s = d.createElement("script");
     s.src = "js/main.js" + (V ? "?v=" + encodeURIComponent(V) : "");
@@ -127,6 +138,12 @@
       else empty("Nothing to preview yet", "Your editor did not send a page.", []);
     });
     w.parent.postMessage({ type: "mcc:front-need-draft" }, location.origin);
+    return;
+  }
+  if (params.has("project")) {
+    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
+    if (project) start(project);
+    else empty("No project here", "This link does not name a published project.", [{ label: "Matthew’s portfolio", href: "index.html" }]);
     return;
   }
   if (!HANDLE.test(handle)) { empty("No front page here", "This link does not name an account.", [{ label: "Make your own front page", href: "front-studio.html" }]); return; }

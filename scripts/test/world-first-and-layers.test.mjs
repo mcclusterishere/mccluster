@@ -84,7 +84,7 @@ test('the page writes the layers\' line over the Earth, and Flights carries the 
   const js = await read('js/mnet.js'), html = await read('mnet.html'), css = await read('css/mnet.css');
   assert.match(html, /<p class="mn__world-layers" id="mnWorldLayers" aria-live="polite" hidden><\/p>/);
   assert.match(js, /var VAUNT_LEAD = "https:\/\/vauntapi\.flyvaunt\.com\/referral\/nuao1K";/, 'the referral link the front page\'s VR wall already carries');
-  assert.equal((await read('index.html')).includes('https://vauntapi.flyvaunt.com/referral/nuao1K'), true, 'the same link, not a new one');
+  assert.equal((await read('js/front-projects.js')).includes('https://vauntapi.flyvaunt.com/referral/nuao1K'), true, 'the same link, not a new one');
   assert.match(js, /aircraft in the air right now/);
   assert.match(js, /<a class="mn__world-lead" href="' \+ VAUNT_LEAD \+ '" target="_blank" rel="noopener sponsored">Fly Vaunt \\u2192<\/a>/, 'simple and shorter (owner, 2026-10-15)');
   assert.match(js, /satellites · calculated positions/);

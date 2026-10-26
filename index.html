@@ -204,6 +204,7 @@
   <meta name="rights" content="Intellectual property of McCluster Corp. All rights reserved.">
   <link rel="license" href="LICENSE">
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/profile-shell.css?v=__STAMP__">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <link rel="stylesheet" href="css/lockroom.css?v=__STAMP__">
@@ -333,97 +334,14 @@
          their own rooms on the bar and in its wings. -->
 
     <!-- ============ BRAND COLLABS: mini scroll (selected work as scenes) ============ -->
-    <section class="command" id="work">
-      <div class="command__sticky">
-        <canvas class="bg-canvas command__canvas" id="cmdCanvas5" aria-label="Vaunt: Matthew singing and Zakir on guitar on the runway, the camera lifting to the jet in flight"></canvas>
-        <canvas class="bg-canvas command__canvas" id="cmdCanvas4" aria-label="Vaunt: fly-through from open sky past Matthew into the cockpit"></canvas>
-        <div class="scrim scrim--deep" aria-hidden="true"></div>
-
-        <!-- the 360 band: between the runway performance and the fly-through,
-             the real inside-the-jet film takes over and you can look anywhere -->
-        <div class="workvr" id="workVR" aria-label="Inside the jet. The page is held here: drag in any direction to look around, and use Land or Back to the card to leave">
-          <canvas class="workvr__canvas" id="workVRCanvas"></canvas>
-          <!-- THE GATE. Not a briefing and not a countdown: the film itself
-               is blurred, in the canvas, and it stays blurred until Allow is
-               pressed. Clicking away does not open it, waiting does not open
-               it, dragging the pane does not open it. Cancel is a real answer
-               too and hands the scroll straight back. -->
-          <div class="vrbrief vrbrief--gate" id="workVRCompass" role="dialog" aria-modal="true"
-               aria-labelledby="vrGateTitle">
-            <div class="vrbrief__card">
-              <img class="vrbrief__logo" src="assets/img/vaunt-logo.webp" alt="Vaunt"
-                   width="200" height="200" loading="lazy" decoding="async">
-              <p class="vrbrief__k">Vaunt &middot; inside the jet</p>
-              <h3 class="vrbrief__title" id="vrGateTitle"><span>Blurred until</span><span>you allow it.</span></h3>
-              <p class="vrbrief__lede">Real 360 footage, shot inside the jet. It takes the page
-                and your thumb while it plays, so it does not start until you say so.</p>
-              <div class="vrgate__acts" id="vrGateActs">
-                <button class="vrgate__btn vrgate__allow" id="vrGateAllow" type="button">Allow to see</button>
-                <button class="vrgate__btn vrgate__deny" id="vrGateDeny" type="button">Cancel</button>
-              </div>
-              <p class="vrgate__note" id="vrGateNote">Allow and the cabin is yours &mdash; drag
-                anywhere to look around, <b>Land</b> is the way out. Cancel and you scroll
-                straight on.</p>
-              <div class="vrgate__after" id="vrGateAfter" hidden>
-                <p class="vrgate__afterh">Cancelled &middot; the cabin stays blurred</p>
-                <p class="vrgate__afterp"><b>Reload the page</b> and press Allow if you want to
-                  see inside &mdash; or <b>scroll on</b> to continue.</p>
-              </div>
-            </div>
-          </div>
-          <!-- the cabin announcement: thrown across the whole screen the moment
-               the count clears, the way the seatbelt sign going off is announced -->
-          <p class="vrsign" id="workVRSign" aria-hidden="true"><b>You are now free to<br>move around the cabin</b></p>
-          <!-- Motion is no longer a card to find and press: the phone's own
-               tilt is armed on the way in. What is left is where you came
-               from, and the way out. -->
-          <div class="workvr__side">
-            <button class="workvr__btn workvr__btn--top" id="workVRTop" type="button">
-              <svg class="workvr__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg>
-              <span>Back to the card</span>
-            </button>
-            <button class="workvr__btn workvr__btn--land" id="workVRSkip" type="button">
-              <svg class="workvr__icon workvr__icon--jet" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 22h20"/><path d="M3.77 10.77 2 9l2-4.5 1.1.55c.55.28.9.84.9 1.45s.35 1.17.9 1.45L8 8.5l3-6 1.05.53a2 2 0 0 0 1.09 1.52l.72 5.4a2 2 0 0 0 1.09 1.52l4.4 2.2c.42.22.78.55 1.01.96l.6 1.03c.49.88-.06 1.98-1.06 2.1l-1.18.15c-.47.06-.95-.02-1.37-.24L4.29 11.15a2 2 0 0 1-.52-.38Z"/></svg>
-              <span>Land</span>
-            </button>
-          </div>
-          <p class="workvr__tag">Inside the jet &middot; 360 &middot; live footage</p>
+    <section class="project-feature" id="work" aria-labelledby="vauntProjectTitle">
+      <a class="project-feature__link" href="front.html?project=vaunt" data-cta="vaunt-project">
+        <img src="assets/frames/vauntlive_0001.jpg" alt="Matthew and Zakir performing on the runway" loading="lazy" decoding="async">
+        <div><p>Selected project · Film / 360 / Music</p><h2 id="vauntProjectTitle">Vaunt</h2>
+          <p>The runway performance, a look inside the jet, and the music.</p>
+          <span>Enter the experience →</span>
         </div>
-        <!-- the booking pill rides between the Brand Collabs head and the slow-hand ask -->
-        <div class="work__flypill" id="workFlyPill" aria-hidden="true">
-          <a class="wordpill wordpill--vaunt" href="https://vauntapi.flyvaunt.com/referral/nuao1K" target="_blank" rel="noopener" data-cta="vaunt-referral" title="Fly with Vaunt, through McCluster's link">
-            <span class="wordpill__seal wordpill__seal--logo"><img src="assets/img/vaunt-logo.jpeg" alt="Vaunt logo"></span>
-            <span>Fly with Vaunt</span>
-          </a>
-        </div>
-        <!-- after touchdown: the fly-through asks for a slow hand -->
-        <div class="work__slowhint" id="workSlowHint" aria-hidden="true">
-          <p class="work__slowhint-big">Scroll<br>Slow</p>
-          <svg class="work__slowhint-phone" viewBox="0 0 48 84">
-            <rect x="7" y="4" width="34" height="76" rx="8"/>
-            <g class="work__slowhint-swipe"><path d="M24 30v24"/><path d="M19 35l5-5 5 5"/><path d="M19 49l5 5 5-5"/></g>
-          </svg>
-          <p class="work__slowhint-tiny">scroll slow &middot; homie</p>
-        </div>
-        <!-- THE TAKEOFF: runway rails on both edges warn the cabin is coming -->
-        <div class="work__runway" id="workRunway" aria-hidden="true">
-          <div class="work__runway-rail work__runway-rail--l">
-            <b>RWY 01</b>
-            <svg viewBox="0 0 24 36"><path d="M5 6l7 8 7-8"/><path d="M5 18l7 8 7-8"/></svg>
-          </div>
-          <div class="work__runway-rail work__runway-rail--r">
-            <b>RWY 01</b>
-            <svg viewBox="0 0 24 36"><path d="M5 6l7 8 7-8"/><path d="M5 18l7 8 7-8"/></svg>
-          </div>
-          <p class="work__runway-note"><span>Taking off!</span><b>Scroll slow!</b></p>
-        </div>
-        <!-- the panels stay as the scene engine's checkpoints. The words are gone,
-             the picture does the talking -->
-        <div class="command__panels">
-          <article class="command__panel" data-scene="0"></article>
-          <article class="command__panel" data-scene="1"></article>
-        </div>
-      </div>
+      </a>
     </section>
 
 
@@ -532,17 +450,11 @@
        ============================================================ -->
 
   <!-- Guest-only, data-free Earth preview. Reusable on other public landing pages. -->
-  <section id="guestWorld" class="guest-world" aria-label="Explore the globe before joining" hidden>
-    <div class="guest-world__frame"><iframe title="Interactive globe preview" data-src="guest-globe.html" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-      <div class="guest-world__cta"><a href="account.html">Sign in to unlock the world →</a><span>Explore the globe freely. Member activity requires an account.</span></div>
-    </div>
+  <section id="guestWorld" class="guest-world" aria-label="Explore the World" data-profile-world>
+    <div class="guest-world__frame"><iframe title="Interactive globe preview" data-src="guest-globe.html?entry=parent" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <div class="guest-world__cta"><a href="account.html" data-world-entry>Sign in / Join the World →</a><span>Explore freely. An account is needed for member activity.</span></div>
   </section>
-  <style>
-  .guest-world{position:relative;margin:0 auto 7rem;max-width:1100px;padding:0 16px}.guest-world[hidden]{display:none!important}
-  .guest-world__frame{height:clamp(360px,65vh,690px);position:relative;border:1px solid rgba(255,255,255,.15);border-radius:22px;overflow:hidden;background:#080d17}
-  .guest-world iframe{display:block;width:100%;height:100%;border:0}.guest-world__cta{position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:9px;flex-direction:column;text-align:center;pointer-events:none;width:min(88%,360px)}
-  .guest-world__cta a{pointer-events:auto;background:rgba(7,11,20,.92);color:#fff;border:1px solid rgba(255,255,255,.4);padding:13px 20px;border-radius:999px;text-decoration:none;font:700 14px system-ui}.guest-world__cta span{background:rgba(7,11,20,.68);color:#d8dce6;padding:7px;border-radius:8px;font:12px system-ui}
-  </style>
+
   <script defer src="js/guest-world.js?v=__STAMP__"></script>
   <footer class="site-foot site-foot--doors">
     <div class="foot__inner">

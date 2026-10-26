@@ -87,10 +87,7 @@ try{
     const f=await page.evaluate(()=>({source:window.MCC_FRONT.source,c:window.MCC_FRONT.config,d:window.MCC_FRONT_DEFAULT}));
     check(scope,'no row: the shipped settings, the cabin on and holding, the night room at 0.74',f.source==='shipped'&&f.c.vr.enabled&&f.c.vr.hold&&f.c.night.arrive===0.74&&JSON.stringify(f.c.vr.band)==='[0.4,0.5]'&&f.c.scroll.duration===0.85&&f.c.vr.spots.length===3&&JSON.stringify(f.c)===JSON.stringify(f.d),f);
     check(scope,'every scene is on the page',await page.evaluate(()=>!document.querySelector('[data-front-off]')&&getComputedStyle(document.querySelector('.hero__doors')).display!=='none'&&getComputedStyle(document.getElementById('pillars')).display!=='none'));
-    await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
-    await page.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.held,null,{timeout:15000}).catch(()=>{});
-    const held=await wheelFrom(page);
-    check(scope,'the cabin still holds the page, as shipped',held.held&&held.moved<=2,held);
+    check(scope,'the three scenes have moved; the portfolio tile links to the reusable project page',await page.locator('#work.project-feature a').getAttribute('href')==='front.html?project=vaunt'&&await page.locator('#workVR').count()===0);
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await app.ctx.close();
   }
@@ -103,12 +100,6 @@ try{
     check(scope,'the saved row is applied: the doors and the night descent are off, the Vaunt scene stays',f.source==='saved'&&f.doors==='none'&&f.night==='none'&&f.work!=='none',f);
     check(scope,'the scroll feel and the night room are the saved ones',f.c.scroll.duration===1.2&&f.c.scroll.touchLerp===0.1&&f.c.night.arrive===0.8,f.c);
     check(scope,'a tag with a script link is dropped; the other keeps its label as text',f.c.vr.spots.length===1&&f.c.vr.spots[0].href==='hire.html',f.c.vr.spots);
-    await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
-    await page.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
-    const spot=await page.evaluate(()=>{const l=document.querySelector('#workVR .vr360-spots');return {html:l?l.innerHTML:'',imgs:l?l.querySelectorAll('img,b').length:-1,text:l?l.textContent:'',pwned:!!window.__pwned};});
-    check(scope,'the tag label reaches the cabin as text, never as markup',spot.imgs===0&&/<b>Book<\/b> me/.test(spot.text)&&!spot.pwned,spot);
-    const free=await wheelFrom(page);
-    check(scope,'with the hold off, scrolling carries on through the cabin',free.moved>100,free);
     check(scope,'no horizontal overflow at 390',(await overflow(page))===0,await overflow(page));
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await page.screenshot({path:join(OUT,'visitor-saved-390.png')});
@@ -127,7 +118,7 @@ try{
     const frame=()=>page.frames().find(f=>/\/index\.html$/.test(new URL(f.url()).pathname));
     await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="scenes.night"]'),null,{timeout:40000});
     let fr=frame();
-    check(scope,'the preview is the real index.html, running its own scroll engine',!!fr&&await fr.evaluate(()=>!!(window.MCC_FRONT&&document.getElementById('workVR')&&document.getElementById('pillars'))));
+    check(scope,'the preview is the real index.html, running its own scroll engine',!!fr&&await fr.evaluate(()=>!!(window.MCC_FRONT&&document.querySelector('#work.project-feature')&&document.getElementById('pillars'))));
     check(scope,'it says the live page is as shipped',/Live: the page as shipped/.test(await page.textContent('[data-cfp-status]')));
     await page.waitForTimeout(1500);await page.screenshot({path:join(OUT,`front-page-open-${vp.width}.png`)});
     if(vp.width>=1100){
@@ -161,42 +152,13 @@ try{
     await page.selectOption('[data-cfp-form] [name="feel"]','quick');
     await fr.waitForFunction(()=>window.MCC_FRONT.config.scroll.duration===0.55,null,{timeout:8000}).catch(()=>{});
     check(scope,'a Quick scroll feel reaches the preview\'s scroll engine',await fr.evaluate(()=>window.MCC_FRONT.config.scroll.duration===0.55&&window.MCC_FRONT.config.scroll.touchLerp===0.22));
-    /* the cabin: open it in the preview, take its view, and a bad link is refused by the page */
-    await page.click('[data-cfp-go="cabin"]');
-    await fr.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
-    await fr.evaluate(()=>{const v=window.__MCC_VR.viewer;v.state.yaw=30*Math.PI/180;v.state.pitch=-10*Math.PI/180;});
-    await page.click('[data-cfp="view"]');
-    await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="vr.yaw"]').value==='30',null,{timeout:8000}).catch(()=>{});
-    check(scope,'"Use the preview\'s view" takes the cabin\'s current view as its opening view',await page.inputValue('[data-cfp-form] [name="vr.yaw"]')==='30'&&await page.inputValue('[data-cfp-form] [name="vr.pitch"]')==='-10');
-    /* the cabin holds the preview; turning the hold off hands the page back at once (Codex #591) */
-    await fr.waitForFunction(()=>window.__MCC_FRONT_HOLDING&&window.__MCC_FRONT_HOLDING(),null,{timeout:8000}).catch(()=>{});
-    const heldBefore=await fr.evaluate(()=>window.__MCC_FRONT_HOLDING());
-    await page.click('[data-cfp-form] [name="vr.hold"]');
-    await fr.waitForFunction(()=>!window.__MCC_FRONT_HOLDING(),null,{timeout:8000}).catch(()=>{});
-    check(scope,'turning the hold off while inside the cabin lets the page go at once',heldBefore===true&&await fr.evaluate(()=>!window.__MCC_FRONT_HOLDING()&&window.MCC_FRONT.config.vr.hold===false),{heldBefore});
-    await page.click('[data-cfp-form] [name="vr.hold"]');
-    await fr.waitForFunction(()=>window.MCC_FRONT.config.vr.hold===true,null,{timeout:8000}).catch(()=>{});
+    check(scope,'the editor names the new project destination instead of offering obsolete cabin controls',await page.locator('[data-cfp-form] a[href="front.html?project=vaunt"]').count()===1&&await page.locator('[data-cfp-form] [name="vr.yaw"]').count()===0);
     /* the World at the end is a guests' scene: the preview shows it as a guest would, and its button goes there */
     await fr.waitForFunction(()=>!document.getElementById('guestWorld').hidden,null,{timeout:8000}).catch(()=>{});
     await page.click('[data-cfp-go="world"]');
     await page.waitForTimeout(600);
     const world=await fr.evaluate(()=>{const g=document.getElementById('guestWorld');return {hidden:g.hidden,h:g.offsetHeight,top:Math.round(g.getBoundingClientRect().top)};});
     check(scope,'the preview shows the guests\' World, and the World button goes to it',!world.hidden&&world.h>0&&Math.abs(world.top)<=4,world);
-    await page.click('[data-cfp-go="cabin"]');
-    await fr.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
-    await page.fill('[data-cfp-form] [name="spot.0.href"]','javascript:alert(1)');
-    await page.dispatchEvent('[data-cfp-form] [name="spot.0.href"]','change');
-    await page.waitForFunction(()=>document.querySelector('.cfp-spot.is-bad'),null,{timeout:8000}).catch(()=>{});
-    await fr.waitForFunction(()=>window.MCC_FRONT.config.vr.spots.length===2,null,{timeout:8000}).catch(()=>{});
-    const refused=await page.evaluate(()=>({tags:document.querySelectorAll('.cfp-spot').length,bad:[...document.querySelectorAll('.cfp-spot.is-bad')].map(x=>x.textContent),save:document.querySelector('[data-cfp="save"]').disabled,draft:window.CR.frontPage.state.draft.vr.spots.map(s=>s.href)}));
-    const shown=await fr.evaluate(()=>window.MCC_FRONT.config.vr.spots.map(s=>s.href));
-    check(scope,'a script link is refused: the tag stays in the form, says why, and Save waits',refused.tags===3&&refused.bad.length===1&&/link must be a page on this site/.test(refused.bad[0])&&refused.save===true&&refused.draft[0]==='javascript:alert(1)',refused);
-    check(scope,'and the preview leaves that tag out, keeping the other two',JSON.stringify(shown)==='["hire.html","matthew-mccluster.html"]',shown);
-    await page.fill('[data-cfp-form] [name="spot.0.href"]','sites.html');
-    await page.dispatchEvent('[data-cfp-form] [name="spot.0.href"]','change');
-    await page.waitForFunction(()=>!document.querySelector('.cfp-spot.is-bad')&&!document.querySelector('[data-cfp="save"]').disabled,null,{timeout:8000}).catch(()=>{});
-    await fr.waitForFunction(()=>window.MCC_FRONT.config.vr.spots.length===3,null,{timeout:8000}).catch(()=>{});
-    check(scope,'fixed, the tag is back in the preview and Save is open',await fr.evaluate(()=>window.MCC_FRONT.config.vr.spots[0].href==='sites.html')&&!(await page.locator('[data-cfp="save"]').isDisabled()));
     check(scope,'no horizontal overflow',(await overflow(page))===0,await overflow(page));
     await page.screenshot({path:join(OUT,`front-page-${vp.width}.png`),fullPage:vp.width<1000});
     /* save: what the page applied goes to site_content, with the owner's session */
@@ -204,7 +166,7 @@ try{
     await page.waitForFunction(()=>/Saved\./.test(document.querySelector('[data-cfp-status]').textContent),null,{timeout:10000}).catch(()=>{});
     const set=db.sets[0],v=set?JSON.parse(set.body.p_value):null;
     check(scope,'Save writes one row, index.html @front, with the owner\'s session',db.sets.length===1&&set.body.p_page==='index.html'&&set.body.p_slot==='@front'&&set.body.p_kind==='text'&&/^Bearer x\./.test(set.auth),set&&set.body);
-    check(scope,'what is saved is what the page applied: night off, Quick, the taken view, the three tags with the fixed link',!!v&&v.scenes.night===false&&v.scroll.duration===0.55&&v.vr.yaw===30&&v.vr.pitch===-10&&JSON.stringify(v.vr.spots.map(s=>s.href))==='["sites.html","hire.html","matthew-mccluster.html"]',v);
+    check(scope,'save changes the retained scenes and keeps the original cabin settings recoverable',!!v&&v.scenes.night===false&&v.scroll.duration===0.55&&v.vr.yaw===-140&&v.vr.pitch===-32&&v.vr.spots.length===3,v);
     check(scope,'the status says it is live',/Live: your settings, saved/.test(await page.textContent('[data-cfp-status]')));
     /* the analytics of the page in the frame stay off: the owner's look is not a visit */
     /* inside the frame the recorder is the do-nothing one (js/analytics.js mccControlPreview), and nothing was sent from it */
