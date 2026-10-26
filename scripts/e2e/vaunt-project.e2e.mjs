@@ -94,14 +94,14 @@ try {
   await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click();
   await page.waitForURL('**/album.html?album=vaunt-ep');
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
-  await page.goBack();
+  await page.goBack({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   assert.ok((await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt-logo'));
   await page.locator('#work .scene-intro a[href="index.html#work"]').click();
   await page.waitForURL('**/index.html#work');
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
-  await page.goBack();
+  await page.goBack({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   // The shell's existing verified auth contract drives the CTA; no permissions are fabricated.

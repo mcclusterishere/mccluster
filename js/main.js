@@ -1868,7 +1868,12 @@
   }
   // Hash entry can arrive before the project has removed its old hero height.
   // Resolve opening-scene aliases after the cinematic scroll engine is ready.
-  if (document.documentElement.getAttribute("data-front-entry") === "scene" && /^(#work|#hero)$/.test(location.hash)) frontGoto("top");
+  if (document.documentElement.getAttribute("data-front-entry") === "scene") {
+    var resolveProjectAnchor = function () { if (/^(#work|#hero)$/.test(location.hash)) frontGoto("top"); };
+    resolveProjectAnchor();
+    // A same-document deep link can also cross the cabin's capture band.
+    window.addEventListener("hashchange", resolveProjectAnchor);
+  }
   window.__MCC_FRONT_GOTO = frontGoto; // verification handles
   window.__MCC_FRONT_HOLDING = function () { return holding; };
   } catch (err) {
