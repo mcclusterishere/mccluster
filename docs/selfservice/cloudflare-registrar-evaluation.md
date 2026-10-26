@@ -33,3 +33,7 @@ The legacy domains list documentation marks that API deprecated with a 2026-09-2
 A missing zone for a particular domain is a separate hosting configuration fact, not proof of availability, registration ownership or reseller readiness. This evaluation did not infer those properties from the parent's account observations.
 
 **Remaining action:** keep domain sales disabled and retain the NameSilo verification gate unless a complete provider contract is verified, or explicitly scope a separate Cloudflare registration-only product with honest renewal limitations and reviewed inline-contact handling. No runtime factory, environment flags or permissions were added by this investigation.
+
+## Subsequent bounded implementation
+
+A separate registration-only sandbox adapter and durable attempt bridge now exist; see `cloudflare-registration-adapter.md`. This supersedes only the earlier statement that no factory was added. The full legacy purchase/renewal interface remains unsupported and customer purchasing remains disabled.
