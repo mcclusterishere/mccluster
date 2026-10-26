@@ -48,10 +48,12 @@ try {
   assert.equal(await page.locator('#work .scene-intro h1').isVisible(),true);
   assert.doesNotMatch(await page.locator('#work .scene-intro').textContent(),/independent|official|endorse/i);
   assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),BASE+'/front.html?project=vaunt');
-  const firstFrame=await page.locator('#cmdCanvas5').evaluate(c=>c.toDataURL());
-  await page.evaluate(()=>window.scrollTo(0,160));
-  await page.waitForTimeout(1200);
-  assert.notEqual(await page.locator('#cmdCanvas5').evaluate(c=>c.toDataURL()),firstFrame,'first tile scrubs without an entry click');
+  await page.evaluate(()=>window.__previewReveal);
+  await page.waitForFunction(()=>window.__MCC.ready('vauntlive')&&window.__MCC.loadedMax('vauntlive')>=30);
+  await page.locator('#cmdCanvas5').evaluate(c=>{window.__firstRunwayFrame=c.toDataURL();});
+  await page.mouse.wheel(0,160);
+  await page.waitForFunction(()=>scrollY>50&&document.querySelector('#cmdCanvas5').toDataURL()!==window.__firstRunwayFrame);
+  await page.evaluate(()=>delete window.__firstRunwayFrame);
   await page.locator('[data-appnav="home"]').click();
   await page.waitForTimeout(400);
   assert.ok(await page.evaluate(()=>window.scrollY)<4);
