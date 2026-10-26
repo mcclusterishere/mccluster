@@ -1,7 +1,9 @@
 # Vaunt creator project and public profile shell
 
 This is a local implementation proposed for review, not a deployed profile or a
-company account. The route is `front.html?project=vaunt` on Matthew's property.
+company account. **This is interim partial fulfillment of the requested named
+Vaunt user/profile. A static Matthew-managed project is not equivalent to an
+independently managed database profile.** The route is `front.html?project=vaunt` on Matthew's property.
 Matthew McCluster manages its repository content. No auth identity, company
 ownership, membership, grant, endorsement, database profile or access is created.
 
@@ -122,3 +124,12 @@ This branch does not change `front-studio.html`, `js/front-studio.js`,
 `packages/front-config/index.mjs`, `workers/mccluster/src/member-fronts.js`, any SQL,
 member editor persistence, onboarding, billing, domains or social infrastructure.
 The broader task owns those contracts and their production review.
+
+The self-service task must provide the missing database-managed project/profile
+capability before that part of the user's request can be considered complete:
+a stable named Vaunt record, explicit Matthew ownership, owner-scoped editing and
+publishing, public read/private draft separation, and compatible routing from
+`front.html?project=vaunt`. It must not create third-party credentials or imply
+company representation. Existing scene media/order, album links and footer hooks
+are the presentation contract to preserve. Any eventual seed remains pending
+separate production approval; no profile row is provisioned by this PR.
