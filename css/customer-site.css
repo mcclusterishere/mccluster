@@ -14,5 +14,6 @@ body.customer-site { margin:0; background:var(--ink,#0a0807); color:var(--cream,
 .site-action--primary { background:var(--ruby,#c1121f); border-color:var(--ruby,#c1121f); color:#fff; }
 .site-hub :focus-visible { outline:3px solid #fff; outline-offset:4px; }
 .site-status { font-weight:700; }
+#projectCreate input,#artistBindings select { display:block; min-height:44px; width:100%; padding:10px 12px; margin-top:6px; border:1px solid #ffffff55; border-radius:6px; background:#171412; color:inherit; font:inherit; font-size:16px; }
 .site-hub ul { padding-left:20px; overflow-wrap:anywhere; }
 @media(min-width:720px) { .site-hub { padding-top:48px; } .site-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }

@@ -1,5 +1,11 @@
 # First website offer — implementation checkpoint, not production activation
 
+**Current minimal release sequence:** [Identity/domain binding checkpoint](IDENTITY-DOMAIN-BINDINGS.md#smallest-free-website-release)
+extracts free project UUIDs from paid-domain SQL and proves offers/cinematic
+publishing without unrelated paid, registrar, music or Studio schemas. Its
+canonical-artist and domain-provider requirements supersede the older adapter
+limitations below. These are stacked source drafts, not independent deployment.
+
 ## Reconciliation on 2026-10-26
 
 All remote heads were fetched and compared with the saved branch inventory before

@@ -41,6 +41,7 @@ on:
       - 'workers/mccluster/src/preflight.js'
       - 'workers/mccluster/src/social/**'
       - 'workers/mccluster/src/managed-projects.js'
+      - 'workers/mccluster/src/canonical-artists.js'
       - 'scripts/e2e/**'
       - 'customer-*.html'
       - 'js/front-*.js'
@@ -120,6 +121,7 @@ jobs:
         run: |
           node scripts/test-managed-projects-db.mjs
           node scripts/test/customer-site-storage-db.mjs
+          node scripts/test/free-site-minimum-db.mjs
           node scripts/test/customer-site-addresses-db.mjs
           node scripts/test-world-directory-db.mjs
           node scripts/test-customer-social-db.mjs
@@ -132,6 +134,7 @@ jobs:
           node scripts/test/music-workspace-worker.mjs
           node scripts/test/creator-store-commerce-db.mjs
           node scripts/test/creator-domain-target-schema.mjs
+          node scripts/test/creator-domain-provider-db.mjs
           node scripts/test/creator-cf-registration-schema.mjs
           node scripts/test/creator-inline-domain-contacts.mjs
           node scripts/test-world-social-delivery-db.mjs
@@ -177,6 +180,8 @@ jobs:
           node scripts/e2e/managed-projects.e2e.mjs
           node scripts/test/platform-center-nav.browser.mjs
           node scripts/e2e/equity-offers-artist.e2e.mjs
+          node scripts/e2e/canonical-artist-owner.e2e.mjs
+          node scripts/e2e/customer-domain-recovery.e2e.mjs
           node scripts/e2e/platform-home.e2e.mjs
           node scripts/e2e/platform-home-transition.e2e.mjs
           node scripts/e2e/world-directory.e2e.mjs

@@ -5,7 +5,7 @@ const {PGlite}=await import(process.env.PGLITE_MODULE || '@electric-sql/pglite')
 const db=new PGlite();
 const A='11111111-1111-4111-8111-111111111111',B='22222222-2222-4222-8222-222222222222';
 await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('${A}'),('${B}');`);
-for(const file of ['managed_projects_v1.sql','creator_domains_v1.sql','creator_domain_targets_v1.sql'])await db.exec(fs.readFileSync(new URL('../../supabase/pending/'+file,import.meta.url),'utf8'));
+for(const file of ['managed_projects_v1.sql','managed_project_identity_v1.sql','creator_domains_v1.sql','creator_domain_targets_v1.sql'])await db.exec(fs.readFileSync(new URL('../../supabase/pending/'+file,import.meta.url),'utf8'));
 await db.exec(`set role service_role;insert into managed_projects(slug,owner_user_id,m_uid,name) values('portfolio','${A}','${A}','Portfolio');`);
 const row=(await db.query('select id from managed_projects')).rows[0];
 await db.exec(`insert into creator_domains(auth_user_id,handle,hostname,verification_token,target_type,target_id) values('${A}','portfolio','www.customer.org','proof','managed_project','${row.id}');`);

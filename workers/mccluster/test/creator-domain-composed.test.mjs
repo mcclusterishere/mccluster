@@ -12,9 +12,9 @@ test('custom host composes real project/tiles authorities over pending SQL; owne
   // The shared fixture models id alone. Replace that model with the real pending
   // domain migrations so this composed check exercises their identity guards.
   await f.sql.exec('alter table managed_projects drop column id');
-  for(const file of ['creator_domains_v1.sql','creator_domain_targets_v1.sql'])await f.sql.exec(await readFile(new URL('../../../supabase/pending/'+file,import.meta.url),'utf8'));
+  for(const file of ['creator_domains_v1.sql','creator_domain_targets_v1.sql','creator_domain_provider_bindings_v1.sql'])await f.sql.exec(await readFile(new URL('../../../supabase/pending/'+file,import.meta.url),'utf8'));
   const id=(await f.db.select('managed_projects',{slug:'eq.alpha'}))[0].id;
-  await f.sql.query("insert into creator_domains(auth_user_id,handle,hostname,verification_token,target_type,target_id,status,ssl_status,ownership_verified_at) values($1,'alpha','www.customer.org','fixture-proof','managed_project',$2,'active','active',now())",[A,id]);
+  await f.sql.query("insert into creator_domains(auth_user_id,handle,hostname,verification_token,target_type,target_id,status,ssl_status,ownership_verified_at,provider_id,provider_zone_id,provider_state,last_checked_at) values($1,'alpha','www.customer.org','fixture-proof','managed_project',$2,'active','active',now(),'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','fixture','bound',now())",[A,id]);
   const document=structuredClone((await f.call('/templates')).body.templates[0].definition);
   const assets=['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','cccccccc-cccc-4ccc-8ccc-cccccccccccc'];
   for(let i=0;i<3;i++){await f.prepare(assets[i],document.tiles[i].kind);document.tiles[i].source_ref={type:'media_asset',key:assets[i]};}

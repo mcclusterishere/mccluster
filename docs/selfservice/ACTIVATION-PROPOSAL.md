@@ -1,5 +1,10 @@
 # Self-service activation proposal — not authorization
 
+For the latest tested free-site subset and optional canonical-artist/provider
+extensions, use [the minimal release sequence](IDENTITY-DOMAIN-BINDINGS.md#smallest-free-website-release).
+It includes independent immutable project identity; no paid-domain schema is
+required merely to edit and publish a free offers or cinematic page.
+
 **Updated first-offer candidate:** the two-file minimum below describes the
 earlier PR637 baseline only. PR638 now routes website uploads through authoritative
 quota reservations and adds owned aliases/modules/free tile publication. Do not
@@ -27,7 +32,7 @@ Target: canonical Supabase `zmnhbrjyhxzhkxmhkexs`, Worker `mccluster`, existing 
 
 - **Paid plans and selling:** inspect existing cohort grants/publisher signature, promote only missing checkout/store/commerce adapters in documented dependency order; verify configured sandbox price IDs, webhook identity/mode and Connect return URLs. Existing canonical commerce v3 precedes storefront093 and adapter095. Worker plus legacy Edge guards release together. No charges, financial-account creation or live flags are covered by the free-site approval.
 - **Tile Studio:** existing media/billing/compute prerequisites → `website_studio_v2.sql` → `project_tiles_v1.sql`; reviewed executor registration, allowance and feature configuration are required. Test real configured sandbox processing before claiming cloud upload works. Do not manufacture customer allowances or execute unapproved models.
-- **Custom-domain connection:** domain base schema → `creator_domain_targets_v1.sql`; approve exact zone/hostname/route/fallback origin/CNAME and scoped existing-or-new credential separately. DNS control and TLS readiness require actual verification. EquityUprise.com ownership/routing remains unverified.
+- **Custom-domain connection:** `creator_domains_v1.sql` → `creator_domain_targets_v1.sql` → `creator_domain_provider_bindings_v1.sql`, separately from the free-site subset. The parent verified EquityUprise.com ownership and WordPress technical control; no DNS changes were made. The target application, approved provider entitlement, exact host binding and TLS/cutover remain unverified. The current adapter supports public CNAME routing; a supported apex adapter and scheduled provider refresh are remaining engineering before unattended hosting (the current verified snapshot expires after 24 hours). Approve exact zone/hostname/route/fallback target and scoped credential separately; never infer DNS targets or transfer authority from ownership evidence.
 - **Domain purchase:** domain order schema → registration attempt/contact extensions only after completed review. Provider sandbox credentials/access, supported extension policy, registrant acknowledgements, price/contact reconciliation and operational terms remain gates. No live purchase or renewal authorization is implied; renewals are unsupported.
 - **Customer external publishing:** customer-social schema → World delivery identity after existing Action schema; approve exact app/scopes/callback and encrypted credential configuration, then verify authorized provider test accounts. Instagram Professional Reels is the supported adapter; do not advertise arbitrary networks/scheduling.
 - **Music:** workspace/creator schema → release handoff → repaired research queue → bridge. Verify actual PGMQ signature, private artifact policies and rights/stage review. Enqueue/execution flags remain independently off until authorized; model binaries/licenses/resources are separate from deploying review UI.
