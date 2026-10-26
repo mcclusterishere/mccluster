@@ -27,7 +27,7 @@ performed for this work. Current membership policy has not been changed.
 | World directory | `world-directory.js`, `world-discover.html`; explicit owner listings, strict visibility/discoverability/source checks, category/locality/search | Business/service/project only; no invented coordinates or event/campaign listing support |
 | Music collaboration | `music-workspace.js`, private projects/invites/roles, originals/credits, microphone review, ordered versions/comments/release-ready snapshot | Async collaboration, not DAW; no waveform editing/mixing/export/video editing/stem or MIDI/MusicXML analysis |
 | External social | `social/customer.js` + existing queue; owner OAuth/account selection, uploads, status/retry/cancel/disconnect | Instagram Professional Reels only; Meta app approval/configuration and live callback/Vault encryption unverified |
-| Platform navigation | `platform-home.html`, `js/tabbar.js`; verified supplied E=Up mark, separate personal/artist destination | New public-domain hosting not configured; no blind technical rename |
+| Platform navigation | `platform-home.html`, `js/tabbar.js`; supplied E=Up mark for platform default, separate personal/artist destination | Latest profile-specific center-tab requirement is pending the coordinated Vaunt follow-up; do not merge the earlier global E=Up behavior. New public-domain hosting not configured |
 | Campaign participation | Existing clipping screen linked; sponsor launch honestly assisted | General mission marketplace/payment automation not completed by this change |
 | Backing / apps / streaming | Explicit roadmap and availability states; no fake purchase/install controls | Backing processor/terms/release gates; tenant module installer and RTMP multi-destination remain future work |
 
@@ -68,9 +68,14 @@ Public RDAP and DNS requests were blocked by the execution environment's proxy
 (403), so ownership and current public routing remain unverified. No registration,
 transfer, DNS, security or hosting change was attempted.
 
-The platform landing is a separate product destination and the center navigation
-links there on the existing working property. Matthew's personal pages and the
-Vaunt draft remain separate. Switching the public root/domain requires the verified
+The platform landing is a separate product destination. The latest owner direction
+supersedes the draft's global center-tab replacement: use the active profile's
+verified logo and destination on branded profiles (Vaunt on Vaunt, Matthew's mark
+on Matthew), and E=Up only for platform/default context. Preserve that context
+through navigation and clear stale branding on owner switches. The separate Vaunt
+follow-up owns this correction; reconcile its tabbar/brand contract before merging
+the audience landing changes. Matthew's personal pages and Vaunt remain separate.
+Switching the public root/domain requires the verified
 ownership/routing work above; the draft does not silently replace a personal route.
 
 ## Evidence limits
