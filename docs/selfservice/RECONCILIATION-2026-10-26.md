@@ -67,6 +67,23 @@ move in later revisions. Every PR link resolves the exact historical context.
 | Three-path missions/admission | Open #426 `886d09d5fcce`, #417 `f534edb2eb22`; #473 contract | #426 has proposal docs/pending SQL; #417 prototype apply/studios; #444 completion approval is not pre-assignment admission | Distinguish reviewed completion/publication from candidate admission and sponsor funded work |
 | Modules/apps | Main `docs/products/MCCLUSTER-OS-REUSE-AUDIT.md`, #518 | Capability/app registries exist; sellable tenant module installer remains a proposed layer | Reuse registry authority; do not call existing operator modules a working customer installation lifecycle |
 
+Social integration must also preserve existing attribution. Main `08a251f0` and
+`social/router.js:335–360` bind social content to campaigns/missions and network
+posts. #624's customer enqueue currently has no `content_id`; #628's combined
+composer holds its confirmed `worldId` in browser memory. Independent retry is
+fixture-tested within that session, but durable combined delivery/reload recovery
+and Action conversion linkage are missing. Extend the canonical content/queue and
+existing World scheduler rather than create another scheduler or promise exactly
+once cross-platform publication.
+
+Mission completion approval in pending `mission_admin_approval_v1.sql` (#444) must
+not be represented as pre-assignment admission. #473's application/video/résumé
+contract and #417 prototype are separate. Existing app/identity registries
+(`platform_apps`, `platform_user_apps`, `platform_oauth_clients`), enabled API
+catalog, developer keys and `core/src/capabilities/registry.mjs` are reusable, but
+do not implement tenant module dependency/entitlement/install/upgrade/withdrawal.
+The existing `MCCLUSTER-OS-PRODUCTION-PLAN-20261019.md:32–48` calls that design only.
+
 ## Related repository: mccluster-we-trust
 
 Main `4c72de610e8b9aa81c1f02fcaf635281e3e4189a` (merged #8 after #1/#5)
@@ -169,6 +186,9 @@ No payment-provider, registrar, Meta or production approval is implied here.
 4. Preserve music originals/credits and connect private collaboration to existing
    creator review. Recover #278 capture/trim and #541/#543 runtime/analysis rather
    than implementing replacements. Do not expose the internal Helix prototype.
+   Likewise connect customer social jobs to durable content/World delivery identity
+   and existing campaign attribution before presenting robust reload-safe combined
+   delivery or scheduling.
 5. Coordinate latest profile-brand navigation before #627 merge: verified active
    profile logo/route, E=Up only platform/default, no stale logo on owner switch.
 6. Minimum external decisions remain explicit: approved site plan price IDs and
