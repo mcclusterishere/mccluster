@@ -32,6 +32,9 @@ import { handleManagedProjects } from './managed-projects.js';
 
 import { handleCustomerSocial } from './social/customer.js';
 
+import { handleCreatorCommerce } from './creator-commerce.js';
+import { handleCreatorStore, recordCreatorStorePayment, recordCreatorStoreRefund } from './creator-store.js';
+
 export { HereTenantAgent } from './here-tenant-agent.js';
 
 function healthResponse(request, env) {
@@ -86,7 +89,7 @@ export default {
       const regional = await handleRegionScope(request, env);
       if (regional) return regional;
 
-      const billingWebhook = await handleCreatorBillingWebhook(request, env);
+      const billingWebhook = await handleCreatorBillingWebhook(request, env, { onStorePaid: recordCreatorStorePayment, onStoreRefunded: recordCreatorStoreRefund });
       if (billingWebhook) return billingWebhook;
       /* live missions (./live/index.js): flagged off with LIVE_MISSIONS_ENABLED;
          its Cloudflare webhooks authenticate themselves, so it sits before the key gate */
@@ -121,6 +124,10 @@ export default {
       if (creatorEntitlement) return creatorEntitlement;
       const actionConnect = await handleActionConnect(request, env);
       if (actionConnect) return actionConnect;
+      const creatorStore = await handleCreatorStore(request, env);
+      if (creatorStore) return creatorStore;
+      const creatorCommerce = await handleCreatorCommerce(request, env);
+      if (creatorCommerce) return creatorCommerce;
       const creatorCheckout = await handleCreatorCheckout(request, env);
       if (creatorCheckout) return creatorCheckout;
       const computeResponse = await handleComputeApi(request, env);

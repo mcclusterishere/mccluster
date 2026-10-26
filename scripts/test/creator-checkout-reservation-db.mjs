@@ -1,0 +1,28 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const {PGlite}=await import(process.env.PGLITE_MODULE||'/tmp/selfservice-tools/node_modules/@electric-sql/pglite/dist/index.js');
+test('SQL reservation serializes owner checkout and keeps tenant reservations independent',async()=>{
+ const db=new PGlite();
+ await db.exec(`create role anon; create role authenticated; create role service_role bypassrls; create schema auth; create table auth.users(id uuid primary key);create table public.creator_billing_subscriptions(owner_user_id uuid,status text);grant select on public.creator_billing_subscriptions to service_role;insert into auth.users values('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');`);
+ await db.exec(await readFile(new URL('../../supabase/migrations/pending/20261026009200_creator_checkout_reservations.sql',import.meta.url),'utf8'));
+ await db.exec('set role service_role');
+ const reserve=async(owner,key,price='price_fixture')=>(await db.query('select reserve_creator_checkout($1,$2,$3) result',[owner,key,price])).rows[0].result;
+ const alice='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',bob='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+ const first=await reserve(alice,'fixture-request-0001');assert.equal(first.blocked,false);
+ assert.deepEqual(await reserve(alice,'fixture-request-0001'),first);
+ assert.equal((await reserve(alice,'fixture-request-0002')).blocked,true);
+ assert.equal((await reserve(alice,'fixture-request-0001','price_other')).blocked,true);
+ assert.equal((await reserve(bob,'fixture-request-0002')).blocked,false);
+ assert.equal((await db.query('select bind_creator_checkout($1,$2,$3) result',[alice,'fixture-request-0001','cs_fixture'])).rows[0].result,true);
+ assert.equal((await db.query('select bind_creator_checkout($1,$2,$3) result',[alice,'fixture-request-0001','cs_other'])).rows[0].result,false);
+ assert.equal((await db.query('select release_expired_creator_checkout($1,$2) result',[alice,'cs_fixture'])).rows[0].result,false);
+ await db.exec("update creator_checkout_reservations set expires_at=now()-interval '1 hour'");
+ assert.equal((await reserve(alice,'fixture-request-0001')).reason,'checkout_reconciliation_required');
+ assert.equal((await db.query('select release_expired_creator_checkout($1,$2) result',[bob,'cs_fixture'])).rows[0].result,false);
+ assert.equal((await db.query('select release_expired_creator_checkout($1,$2) result',[alice,'cs_fixture'])).rows[0].result,true);
+ assert.equal((await reserve(alice,'fixture-request-0003')).blocked,false);
+ await db.exec('reset role');await db.query('insert into creator_billing_subscriptions values($1,$2)',[bob,'active']);await db.exec('set role service_role');assert.equal((await reserve(bob,'fixture-request-0002')).reason,'existing_subscription');
+ await db.exec('set role authenticated');await assert.rejects(reserve(alice,'fixture-request-0001'),/permission denied/);
+ await db.close();
+});

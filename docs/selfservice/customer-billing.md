@@ -1,0 +1,45 @@
+# Customer billing staged integration
+
+Customer destination: `customer-commerce.html`. The existing `handleCreatorCheckout` now also handles authenticated GET `/v1/creator-billing/plans`, GET `/status`, POST `/portal` and POST `/resume`. Keep entitlement and webhook routing before this handler. Add those paths to any route/preflight allowlist.
+
+`hasActiveSitePlan(userId, env, fetchImpl)` is exported from creator-entitlement.js. It fails closed, requires an owned active subscription with a provisioned org and an unexpired period. It is a billing entitlement, not an organization membership or permission substitute. The actual page builder remains the member front reached through customer-site.html.
+
+Checkout takes `{plan,period,request_id}`. Reuse the same request ID when retrying the same attempt; Stripe receives a user-bound idempotency key. Billing portal accepts only a subscription ID and resolves its customer from the authenticated user's records. Returned checkout URL/query parameters never activate entitlement. Existing verified webhook provisions the workspace.
+
+## Deployment requirements (not executed)
+
+- Review/apply pending `20261010009000_creator_site_cohort_grants.sql` followed by `20261010009100_creator_publish_cohort_entitlement.sql`. The latter supplies the identity-bound five-argument RPC already used by main. The previously deployed four-argument RPC cannot accept the Worker's authenticated-user parameter; do not remove that parameter or fall back around ownership checks.
+- Review/apply pending `20261026009200_creator_checkout_reservations.sql` before enabling checkout.
+- Configure sandbox Stripe key (sk_test or rk_test), the existing CREATOR_*_PRICE_ID bindings, CREATOR_STRIPE_WEBHOOK_SECRET and a Stripe billing portal configuration. Verify price recurrence matches the mapped month/year period. No provider object or credential was created by this change.
+- Configure and verify signed webhook delivery, including replay, before enabling purchases. Live billing still requires separate approval and CREATOR_BILLING_ALLOW_LIVE=true. Supabase service-role binding is required.
+- Apply paid-site migrations already in repository before serving these routes. Local fixture tests do not establish live schema readiness.
+
+## Limits
+
+This milestone provides plan checkout, own subscription status, hosted billing recovery/cancellation/invoices and a shared entitlement helper. It does not implement seller products, order fulfillment or registrar purchases. The pending checkout reservation RPC serializes all attempts by authenticated owner. The resume action verifies the saved Stripe session belongs to the caller, returns an open session URL or releases a provider-confirmed expired session. Completed sessions await webhook confirmation; ambiguous attempts without a persisted provider session remain blocked and can retry the original request ID. Never free reservations merely because their expiration time passed, since a paid webhook may be delayed. The UI explicitly states seller tooling is unavailable at this milestone.
+
+Stripe references reviewed: https://docs.stripe.com/api/customer_portal/sessions/create and https://docs.stripe.com/billing/subscriptions/build-subscriptions . Existing Checkout Sessions and Connect integration are retained.
+
+## Seller onboarding milestone
+
+Mount `handleCreatorCommerce(request,env)` from creator-commerce.js with `/v1/creator-commerce/*` preflight. It exposes owner-scoped workspaces, refreshed seller readiness, seller-onboarding and seller-dashboard. It provisions the existing org_stripe_accounts rail for an owned paid org and reuses existing Connect Express/account-link helpers. Account creation has an org/mode idempotency key. Onboarding requires an active plan; an owner retains dashboard access after subscription cancellation. Stripe hosts identity/terms/bank collection; this code never accepts terms or stores those details.
+
+Only Stripe test keys work by default. Live seller activation separately requires CREATOR_COMMERCE_ALLOW_LIVE=true and approved Connect configuration. No provider account was created during development. Existing org_stripe_accounts migration and organization owner membership must exist. The existing Connect webhook remains necessary for asynchronous changes, while status refresh retrieves Stripe truth. Product catalog, customer order checkout and fulfillment are still not implemented by this screen. Dashboard access covers Stripe payment/payout records, not physical fulfillment.
+
+## Domain billing bridge
+
+`createCreatorDomainCheckout(order,env,{registrarReady:false})` defaults deny. Inject it into the domain-order handler only after its complete provider gate passes, with registrarReady true. It still requires CREATOR_DOMAIN_SALES_ENABLED, sandbox/live authorization, immutable USD cents and at least 31 minutes remaining on the quote; it uses fixed quote expiration and `domain-order-<id>` idempotency.
+
+`handleCreatorBillingWebhook(request,env,{onDomainPaid})` recognizes domain session metadata only after signature verification. It retrieves the current session, checks owner/order/payment mode and paid status, then calls onDomainPaid with the domain agent's recordDomainFunding contract. The integration callback should call recordDomainFunding and then fulfillStoredDomainOrder only for funded state. Missing callback returns 503 so Stripe can retry; it never acknowledges an unrecorded paid domain event. Keep the provider unavailable/default denied until registrar integration is genuinely complete. Domain DB tests own event/session uniqueness and amount matching; billing fixtures prove the signature and provider truth boundary.
+
+## Storefront milestone
+
+Apply pending `20261026009300_creator_store.sql` after existing org/Connect/subscription tables. Mount `handleCreatorStore` and `/v1/creator-store/*` preflight. Set `CREATOR_STORE_ENABLED=true` only after signed connected-account events are configured for the creator billing webhook. Pass `{onStorePaid:recordCreatorStorePayment,onStoreRefunded:recordCreatorStoreRefund}` to that webhook alongside any domain callback. Stripe must deliver connected-account `checkout.session.completed`, `checkout.session.async_payment_succeeded` and `charge.refunded` events to this endpoint using CREATOR_STRIPE_WEBHOOK_SECRET. Live use additionally requires the existing billing and commerce live flags and separate approval.
+
+Customer commerce now includes tenant-scoped fixed-price USD product/service listing create/edit/draft/live/archive and recent orders. Listing requires an active owned plan and current Stripe readiness. Every live product has a shareable `customer-checkout.html?product=<uuid>` link that a creator can place in a site tile. Physical shipping is US only and shipping costs must be included in price. This is an explicit limited storefront, not automatic inventory/tax/digital-download support.
+
+Public checkout reserves an immutable order amount and connected account in SQL. Provider Checkout uses that snapshot, never a browser price; retries use order idempotency. Signed webhook retrieves the connected account's current session and commits only matching account/currency/total/session. A return URL never marks an order paid. Buyers get a random private order-status link (only its hash is stored); the page sets no-referrer. Owners see buyer email/shipping from paid Stripe sessions and mark only their own paid orders fulfilled with tracking/service details. Refund webhooks reconcile dashboard-issued refunds; this integration does not initiate refunds. Existing orders and payment dashboard remain available after plan cancellation.
+
+Known release limits: no stock reservation, shipping rates, tax calculation, digital file delivery, automated service scheduling or dispute lifecycle synchronization. Payment disputes remain in Stripe; review them before fulfillment. Expired purchase attempts can require starting a new order; old attempts never grant access. Connect account creation retries beyond Stripe's idempotency retention after an ambiguous database failure need provider reconciliation. No sandbox provider or live end-to-end run was performed; all automated payment events are local signed fixtures.
+
+Security review follow-up: paid Checkout records now persist the immutable Stripe payment intent; refund reconciliation requires the retrieved charge to reference that exact intent, preventing same-price order substitution through editable metadata. Refund events delivered before the paid order intent is recorded fail closed and retry. Every pending-order retry rechecks live product status, active seller plan and the same ready payment account before any provider checkout call. Existing hosted Stripe sessions are not automatically revoked when a listing is archived; their eventual payments still reconcile to the original order. Private order capabilities use a URL fragment and an Authorization header for order lookup, avoiding page/API request query strings; legacy query links are scrubbed in the page before the shared tabbar loads.
