@@ -113,10 +113,10 @@ try {
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   // The shell's existing verified auth contract drives the CTA; no permissions are fabricated.
-  await page.evaluate(()=>{window.MCC_BAR={refreshAuth:()=>Promise.resolve({verified:true,signed_in:true})};window.dispatchEvent(new Event('mcc:auth-changed'));});
+  await page.evaluate(()=>{window.MCC_BAR=Object.assign({},window.MCC_BAR,{refreshAuth:()=>Promise.resolve({verified:true,signed_in:true})});window.dispatchEvent(new Event('mcc:auth-changed'));});
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').textContent==='Enter the World →');
   assert.equal(await page.locator('#guestWorld').isVisible(),true);
-  await page.evaluate(()=>{window.MCC_BAR={refreshAuth:()=>Promise.resolve({verified:true,signed_in:false})};window.dispatchEvent(new Event('mcc:auth-changed'));});
+  await page.evaluate(()=>{window.MCC_BAR=Object.assign({},window.MCC_BAR,{refreshAuth:()=>Promise.resolve({verified:true,signed_in:false})});window.dispatchEvent(new Event('mcc:auth-changed'));});
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').getAttribute('href')==='account.html');
   assert.equal(await page.evaluate(()=>window.__MCC_ERR||null),null);
   if(width===820){
