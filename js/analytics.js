@@ -121,11 +121,17 @@ function mccCreateEventOutbox(area, clock, allowed) {
    A gap over 2.5s cannot be reconstructed reliably from two positions: expose
    it as unmeasured, rather than crediting a suspended callback or a seek.
    Background audio with regular progress callbacks is measured normally. */
-function mccCreatePlaybackMeasurement(audio, uuid, clock) {
+function mccCreatePlaybackMeasurement(audio, uuid, clock, allowed) {
   var id = uuid(), began = clock(), last = began, position = Number(audio.currentTime);
   var active = false, started = false, done = false, sequence = 0;
   var played = 0, gaps = 0, jumps = 0, rate = Number(audio.playbackRate) || 1;
+  var invalid = false;
+  function valid() {
+    if (allowed && !allowed()) { invalid = true; active = false; }
+    return !invalid;
+  }
   function sample(boundary) {
+    if (!valid()) return;
     var now = clock(), next = Number(audio.currentTime), dt = now - last, delta = next - position;
     if (!done && active && Number.isFinite(dt) && dt > 0) {
       if (dt > 2500) gaps += dt;
@@ -141,7 +147,7 @@ function mccCreatePlaybackMeasurement(audio, uuid, clock) {
   }
   return {
     playing: function () {
-      if (done) return false;
+      if (done || !valid()) return false;
       sample(false); active = !audio.paused && !audio.seeking && audio.readyState >= 3;
       var first = !started && active; if (active) started = true;
       return first;
@@ -150,12 +156,15 @@ function mccCreatePlaybackMeasurement(audio, uuid, clock) {
     pause: function () { suspend(false); },
     waiting: function () { suspend(false); },
     seeking: function () { suspend(true); },
-    resumeAfterSeek: function () { sample(false); active = started && !done && !audio.paused && !audio.seeking && audio.readyState >= 3; },
-    finish: function () { if (done || !started) return false; sample(true); done = true; active = false; return true; },
+    resumeAfterSeek: function () { sample(false); active = valid() && started && !done && !audio.paused && !audio.seeking && audio.readyState >= 3; },
+    finish: function () { if (done || !started || !valid()) return false; sample(true); done = true; active = false; return true; },
     finished: function () { return done; },
-    seconds: function () { sample(false); return Math.round(played * 1000) / 1000; },
+    valid: valid,
+    seconds: function () { sample(false); return valid() ? Math.round(played * 1000) / 1000 : null; },
     report: function () {
       sample(false);
+      if (!valid()) return { measurement_version: "browser-progress/v1",
+        measurement_status: "unavailable_consent_boundary", validated_played_seconds: null };
       return { measurement_version: "browser-progress/v1", playback_attempt_id: id,
         playback_sequence: ++sequence, playback_elapsed_ms: Math.max(0, Math.round(clock() - began)),
         validated_played_seconds: Math.round(played * 1000) / 1000,
@@ -331,9 +340,12 @@ window.MCC_TRACK = (function () {
     return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
   }
 
+  var playbackConsentEpoch = 0;
   window.MCC_PLAYBACK = { create: function (audio) {
-    if (!consentNow() || !window.performance || typeof window.performance.now !== "function") return null;
-    return mccCreatePlaybackMeasurement(audio, uuid, function () { return window.performance.now(); });
+    if (!consentNow() || privacySignal() || !window.performance || typeof window.performance.now !== "function") return null;
+    var epoch = playbackConsentEpoch;
+    return mccCreatePlaybackMeasurement(audio, uuid, function () { return window.performance.now(); },
+      function () { return epoch === playbackConsentEpoch && mccPrivacyAcknowledged() && !mccControlPreview() && !privacySignal(); });
   } };
 
   /* ---- the device ----
@@ -609,7 +621,8 @@ window.MCC_TRACK = (function () {
   window.addEventListener("online",function(){retryOutbox();});
   window.addEventListener("focus",function(){retryOutbox();});
   window.addEventListener("storage",function(ev){
-    if (ev.key === "mcc_privacy_ack" && !ev.newValue) {
+    if ((ev.key === "mcc_privacy_ack" && !ev.newValue) || ev.key === null) {
+      playbackConsentEpoch++;
       eventOutbox.purge();queue=[];
     } else if (ev.key && ev.key.indexOf("mcc_event_outbox_v1:")===0 && ev.newValue) {
       if (document.visibilityState !== "hidden") retryOutbox();

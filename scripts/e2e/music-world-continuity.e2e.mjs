@@ -144,6 +144,10 @@ try{
     await page.waitForFunction(()=>__measurement.filter(x=>x.name==='song_start').length>=2);
     const songs=await page.evaluate(()=>__measurement.filter(x=>/^song_(start|end)$/.test(x.name))),first=songs.find(x=>x.name==='song_start'),end=songs.find(x=>x.name==='song_end'),next=songs.filter(x=>x.name==='song_start')[1];
     check('World automatic advance ends one measured attempt and starts a distinct one',first.playback_attempt_id===end.playback_attempt_id&&next.playback_attempt_id!==first.playback_attempt_id&&end.validated_played_seconds<3,songs);
+    await page.evaluate(()=>{const a=__audioObjects.find(a=>!a.paused);a.pause();window.dispatchEvent(new StorageEvent('storage',{key:'mcc_privacy_ack',newValue:null}));return a.play();});
+    await page.waitForFunction(()=>__measurement.filter(x=>x.name==='song_start').length>=3);
+    const restarted=await page.evaluate(()=>__measurement.filter(x=>x.name==='song_start').at(-1));
+    check('World consent boundary starts a fresh attempt with no inherited progress',restarted.playback_attempt_id!==next.playback_attempt_id&&restarted.playback_sequence===1&&restarted.validated_played_seconds<.2,restarted);
     await context.close();
   }
   {

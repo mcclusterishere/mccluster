@@ -58,3 +58,15 @@ test('non-monotonic time and non-finite positions cannot manufacture progress',(
  const f=fixture();f.play();f.advance(-1000,1);f.m.sample();f.advance(1000,NaN);f.m.sample();
  assert.equal(f.m.seconds(),0);
 });
+test('withdrawal invalidates cumulative progress permanently; re-acceptance starts fresh',()=>{
+ let allowed=true,time=0,id=0;const audio={currentTime:0,playbackRate:1,paused:false,seeking:false,readyState:4};
+ const make=()=>scope.mccCreatePlaybackMeasurement(audio,()=>String(++id),()=>time,()=>allowed);
+ const before=make();before.playing();time=1000;audio.currentTime=1;assert.equal(before.seconds(),1);
+ const original=before.report().playback_attempt_id;
+ allowed=false;time=2000;audio.currentTime=2;before.sample();allowed=true;
+ assert.equal(before.valid(),false);assert.equal(before.seconds(),null);assert.equal(before.finish(),false);
+ assert.equal(before.report().playback_attempt_id,undefined);
+ assert.equal(before.report().measurement_status,'unavailable_consent_boundary');
+ const after=make();after.playing();time=3000;audio.currentTime=3;
+ assert.equal(after.seconds(),1);assert.notEqual(after.report().playback_attempt_id,original);
+});

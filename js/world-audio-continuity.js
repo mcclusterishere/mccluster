@@ -234,9 +234,9 @@
   }
   function reactions(audio) {
     audio.addEventListener("playing", function () {
-      if (!songMeasurement && root.MCC_PLAYBACK) songMeasurement = root.MCC_PLAYBACK.create(audio);
-      if (songMeasurement) songMeasurement.playing();
-      if (!songBegun) { songBegun = true; songStarted = Date.now(); songEvent("song_start", {trigger:songOrd === 1 ? "first_tap" : "next"}); }
+      if ((!songMeasurement || !songMeasurement.valid()) && root.MCC_PLAYBACK) songMeasurement = root.MCC_PLAYBACK.create(audio);
+      var measuredStart = songMeasurement && songMeasurement.playing();
+      if (!songBegun || measuredStart) { songBegun = true; songStarted = Date.now(); songEvent("song_start", {trigger:songOrd === 1 ? "first_tap" : "next"}); }
       else songEvent("song_resume");
     });
     audio.addEventListener("pause", function () {

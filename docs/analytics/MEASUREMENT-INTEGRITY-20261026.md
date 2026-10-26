@@ -148,3 +148,14 @@ No production DB/schema mutation, deployment, security-setting change or new
 collection purpose is included. Future schema proposals remain pending until
 exact approval; thresholds/short-track policy, rights and retention decisions
 must not be invented as product facts.
+
+## Checkpoint 6: playback consent boundaries
+
+An observed consent withdrawal permanently invalidates a cumulative playback
+counter. It cannot regain its prior attempt ID or measured seconds when consent
+is accepted again. Cross-tab removal/clearing invalidates attempts even if the
+next sample already sees re-acceptance. Playback can continue; a later `playing`
+report creates a fresh measurement attempt. This does not change the site's
+existing acknowledgement policy, add tracking to embeds or infer a listening
+qualification. Tests cover counter invalidation, cross-tab storage events and
+World restart behavior using real HTMLAudioElement playback.

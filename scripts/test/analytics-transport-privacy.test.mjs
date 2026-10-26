@@ -15,13 +15,14 @@ function tracker({failFirst=false, consent=true}={}) {
     crypto:{randomUUID},setTimeout:()=>1,setInterval:()=>1,clearTimeout(){},
     mccPrivacyAcknowledged:()=>allowed,mccControlPreview:()=>false,
     fetch:async(url,init)=>{sent.push({url,init,body:JSON.parse(init.body)});return {ok:!(failFirst && sent.length===1),clone:()=>({json:async()=>({ok:true})})};}};
-  context.window={crypto:context.crypto,navigator:context.navigator,addEventListener:(n,f)=>(listeners[n]??=[]).push(f)};
+  context.window={performance:{now:()=>0},crypto:context.crypto,navigator:context.navigator,addEventListener:(n,f)=>(listeners[n]??=[]).push(f)};
   const factoryStart=source.indexOf('/* EVENT_OUTBOX_FACTORY_BEGIN */'), factoryEnd=source.indexOf('/* EVENT_OUTBOX_FACTORY_END */');
   vm.runInNewContext(source.slice(factoryStart,factoryEnd),context);
+  vm.runInNewContext(source.slice(source.indexOf('/* PLAYBACK_MEASUREMENT_FACTORY_BEGIN */'),source.indexOf('/* PLAYBACK_MEASUREMENT_FACTORY_END */')),context);
   const start=source.indexOf('window.MCC_TRACK = (function () {'),end=source.indexOf('\n})();',start)+6;
   vm.runInNewContext(source.slice(start,end),context);
-  return {sent,values,document,track:context.window.MCC_TRACK,revoke(){allowed=false;},
-    fire(name){for(const fn of (listeners[name]||[]))fn({});},
+  return {sent,values,document,track:context.window.MCC_TRACK,playback:context.window.MCC_PLAYBACK,revoke(){allowed=false;},
+    fire(name,event={}){for(const fn of (listeners[name]||[]))fn(event);},
     hide(){document.visibilityState='hidden';for(const fn of docListeners.visibilitychange||[])fn({});}};
 }
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
@@ -70,4 +71,17 @@ test('fallback retries reuse minimized event IDs and consent revocation blocks l
   assert.match(t.sent[0].body.events[0].id,/^[a-f0-9-]{36}$/);assert.doesNotMatch(JSON.stringify(t.sent),/SECRET|visitor@example/);
   t.revoke();t.track('page_leave',{});await settle();assert.equal(t.sent.length,2);
   const no=tracker({consent:false});no.track('page_view',{});no.fire('pagehide');await settle();assert.equal(no.sent.length,0);
+});
+
+// The storage event may arrive after consent was accepted again in another tab.
+// Invalidate the old counter even when the next sample sees current consent.
+test('cross-tab withdrawal or storage clear ends playback attempts before re-acceptance',()=>{
+  const t=tracker(), audio={currentTime:0,playbackRate:1,paused:false,seeking:false,readyState:4};
+  for(const key of ['mcc_privacy_ack',null]) {
+    const old=t.playback.create(audio);assert.ok(old);old.playing();
+    t.fire('storage',{key,newValue:null});
+    assert.equal(old.valid(),false);assert.equal(old.seconds(),null);
+    assert.equal(old.report().playback_attempt_id,undefined);
+    const fresh=t.playback.create(audio);assert.ok(fresh);assert.equal(fresh.valid(),true);
+  }
 });

@@ -648,7 +648,7 @@
   // rejected play promise. `playing` is the browser's playback report.
   audio.addEventListener("playing", function () {
     if (!current || (currentAccess !== "full" && currentAccess !== "preview")) return;
-    if (playbackFinished) beginMeasurement();
+    if (playbackFinished || (measurement && !measurement.valid())) beginMeasurement();
     if (!measurement && root.MCC_PLAYBACK) measurement = root.MCC_PLAYBACK.create(audio);
     if (measurement) measurement.playing();
     if (!playbackStarted) {
