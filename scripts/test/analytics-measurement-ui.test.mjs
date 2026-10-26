@@ -115,3 +115,12 @@ test('page score labels expose weights and undefined denominators instead of con
  assert.match(html,/Exit reports: 0 \/ 100/);
  assert.doesNotMatch(html,/Measurement confidence|500<[^>]+>recorded events/);
 });
+
+test('signup journeys show unknown attribution without claiming a listen or a known source',async()=>{
+ const {A}=await panel();A.state.section='identity';A.state.completed={identity:true};
+ A.state.data.identity={coverage:{accounts:1,bridged_accounts:1,attributed_accounts:0},journeys:[{source:'unknown',last_track:null}]};
+ const html=A.render();assert.match(html,/Music attribution is unknown/);
+ assert.match(html,/Anonymous\/shared-device history stays unattributed/);
+ assert.match(html,/Came from a known source<\/b><strong>0<\/strong>/);
+ assert.doesNotMatch(html,/That device played a song|>no song</);
+});

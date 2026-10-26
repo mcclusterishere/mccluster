@@ -25,7 +25,8 @@ test('audience science measures concentration, entropy, effective catalog and re
     { device_id: 'd1', session_id: 's2', at: t(2, 6), name: 'mission_join', is_bot: false },
     { device_id: 'd1', session_id: 's2', at: t(2, 7), name: 'music_complete', track: 'shock song', is_bot: false }
   ];
-  const out = summarizeAudienceScience(rows, [{ device_id: 'd1', uid: 'u1', at: t(2, 9) }]);
+  rows.forEach((row, i) => { row.id = 'event-' + i; });
+  const out = summarizeAudienceScience(rows, rows.map(row => ({ id:row.id, device_id:'d1', uid:'u1', at:row.at })));
   assert.equal(out.profiles.length, 1);
   const p = out.profiles[0];
   assert.equal(p.visitor_key, 'u:u1');
@@ -92,7 +93,8 @@ test('audience science route is owner-only and reads no telemetry before the gat
 
 test('audience science route clamps to 31 days and reads narrow first-party evidence', async () => {
   const lean = [start('d4', 's1', 'x', 6, 1)];
-  const { handler, calls } = backend({ lean, events: [{ device_id: 'd4', uid: 'u4', session_id: 's1', at: t(6, 2) }] });
+  lean[0].id = 'event-1';
+  const { handler, calls } = backend({ lean, events: [{ id:'event-1', device_id: 'd4', uid: 'u4', session_id: 's1', at: t(6, 1) }] });
   await withFetch(handler, async () => {
     const res = await get('/v1/analytics/audience-science?since=2026-01-01T00:00:00Z&until=2026-10-06T20:00:00Z');
     const out = await res.json();
@@ -132,4 +134,23 @@ test('shared-device ambiguity remains unlinked regardless of latest account orde
     assert.equal(out.profiles[0].uid,null);
     assert.equal(out.methodology.ambiguous_identity_devices,1);
   }
+});
+
+test('account history requires event-bound evidence, never a later login on the device', () => {
+  const rows = ['anonymous','A','B','after_logout'].map((id,i)=>({...start('shared','s','song',1,i),id}));
+  const identity = [{id:'A',device_id:'shared',uid:'account-a'},{id:'B',device_id:'shared',uid:'account-b'}];
+  for (const evidence of [identity,identity.slice().reverse()]) {
+    const out = summarizeAudienceScience(rows,evidence);
+    const byKey = new Map(out.profiles.map(p=>[p.visitor_key,p]));
+    assert.equal(byKey.get('d:shared').music_starts,2);
+    assert.equal(byKey.get('u:account-a').music_starts,1);
+    assert.equal(byKey.get('u:account-b').music_starts,1);
+    assert.equal(out.methodology.ambiguous_identity_devices,1);
+  }
+  const single = summarizeAudienceScience(rows,[identity[0]]);
+  assert.equal(single.profiles.find(p=>p.uid===null).music_starts,3,'single observed account also cannot claim history');
+  const conflict = summarizeAudienceScience(rows,[identity[0],{...identity[0],uid:'other'}]);
+  assert.equal(conflict.profiles.length,1,'conflicting event identity stays unknown');
+  assert.equal(conflict.profiles[0].uid,null);
+  assert.equal(summarizeAudienceScience(rows,[{...identity[0],device_id:'other-device'}]).profiles[0].uid,null);
 });

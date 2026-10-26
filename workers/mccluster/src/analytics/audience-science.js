@@ -153,7 +153,7 @@ function modelReadiness(profiles) {
 }
 
 export function summarizeAudienceScience(leanRows = [], identityRows = []) {
-  const identityByDevice = new Map();
+  const identityByEvent = new Map();
   const candidatesByDevice = new Map();
   for (const row of identityRows) {
     if (!row?.device_id || !row?.uid) continue;
@@ -161,10 +161,15 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
     const candidates = candidatesByDevice.get(device) || new Set();
     candidates.add(String(row.uid));
     candidatesByDevice.set(device, candidates);
-  }
-  for (const [device, candidates] of candidatesByDevice) {
-    // Shared devices are not evidence that all their visitors are one account.
-    if (candidates.size === 1) identityByDevice.set(device, [...candidates][0]);
+    // The lean row and raw row share an immutable event ID. A login elsewhere
+    // in this window is not evidence about who performed an earlier action.
+    if (row.id) {
+      const key = String(row.id);
+      const prior = identityByEvent.get(key);
+      const evidence = { device, uid: String(row.uid) };
+      identityByEvent.set(key, prior === null || (prior &&
+        (prior.device !== device || prior.uid !== evidence.uid)) ? null : evidence);
+    }
   }
 
   const buckets = new Map();
@@ -172,7 +177,8 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
   function getBucket(row) {
     const device = String(row?.device_id || '').trim();
     if (!device) return null;
-    const uid = identityByDevice.get(device) || null;
+    const identity = row.id ? identityByEvent.get(String(row.id)) : null;
+    const uid = identity?.device === device ? identity.uid : null;
     const key = uid ? 'u:' + uid : 'd:' + device;
     let b = buckets.get(key);
     if (!b) {
@@ -328,7 +334,7 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
       exposure_warning: 'Observed attention is not the same as preference. The current event schema does not fully record every track a visitor was shown, so exposure-adjusted preference is not claimed.',
       completion_policy: 'Separate preview and full completion report counts. Completion rate is unavailable without paired eligible playback attempts; counts do not prove listening or attention.',
       outcome_policy: 'Checkout events measure intent. account_created and action_complete are client-reported completions. Verified accounts, payments and action outcomes require their canonical backend records and are not measured here.',
-      identity_basis: 'Device IDs, linked only where exactly one account is observed for the device in the queried window; not a count of distinct people.',
+      identity_basis: 'Account only when the same event ID and device have a verified raw-row account. All other events remain device-only, including before login; profiles are not distinct people.',
       ambiguous_identity_devices: [...candidatesByDevice.values()].filter((x) => x.size > 1).length
     },
     totals: {
@@ -393,7 +399,7 @@ export function createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, req
         measurement: measurementContext({ metricVersion: AUDIENCE_SCIENCE_VERSION,
           since: since.toISOString(), until: until.toISOString(), clamped,
           datasets: { events: lean, identity }, unit: 'observed_profiles',
-          identityBasis: 'device_or_unambiguous_observed_account' }),
+          identityBasis: 'device_or_event_bound_account' }),
         ...summarizeAudienceScience(lean, identity)
       });
     }

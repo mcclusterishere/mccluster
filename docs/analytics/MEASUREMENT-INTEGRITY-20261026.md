@@ -36,11 +36,26 @@ Synthetic transport tests cover redaction, genuine failures, fallback retries,
 late lifecycle producers, BFCache and consent revocation. No observed leak is
 claimed, and no production payload was fetched for these tests.
 
+## Checkpoint 3: event-bound account evidence
+
+Audience Science joins raw identity to lean behavior by event ID and device,
+never by a later device login. Anonymous history stays device-only even when
+only one account has been observed. Shared-device ambiguity remains visible;
+conflicting identity evidence stays unknown. Profiles are not distinct people.
+
+Signup Journeys v3 scopes every raw read to first-party rows. Only each event's
+collector-verified uid can contribute account/music/source attribution. Client
+signup context and anonymous or other-account history cannot establish a music
+touch. The UI calls absent attribution unknown and excludes unknown sources
+from known-source counts. This deliberately reduces speculative attribution;
+it does not backfill missing signals. Owner checks and failed-read behavior stay.
+
 ## Remaining work
 
 - Replace latest-UID visitor attribution with event-bound account evidence and
-  explicit ambiguous/unattributed history. Audience Science's existing ambiguity
-  guard is retained/tested, but is not a repair of the Visitors RPC.
+  explicit ambiguous/unattributed history. The account-evidence repairs above
+  do not change the existing Visitors RPC; its replacement still needs isolated
+  SQL validation and explicit activation approval.
 - Extend purpose-specific allowlists to remaining producers/tenant SDK and enforce
   at ingestion; add minimized occurrence metadata. Preserve current consent and
   intentional untracked embeds. Keep recovery outbox payloads minimal.
