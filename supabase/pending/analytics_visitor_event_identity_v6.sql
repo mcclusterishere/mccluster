@@ -1,9 +1,10 @@
--- PENDING: not applied and not selected by the Worker. No historical backfill.
+-- PENDING: not applied. Required by the coordinated Visitor evidence Worker update.
+-- No historical backfill; do not deploy that Worker before approving these RPCs.
 -- Dependency: current events/lean UUID parity, v5 visitor columns and profiles.
 -- Partitions behavior by the raw uid on the SAME event, never latest device uid.
 -- Anonymous periods remain device buckets; a session can span multiple buckets.
 -- Counts are observed profiles/session memberships, not distinct people.
--- Before activation: coordinate visitor-detail/history semantics and validate
+-- Before activation: deploy with analytics_session_evidence_v6 and validate
 -- production EXPLAIN with representative bounded windows; then exact approval.
 -- Rollback of this dormant proposal: DROP FUNCTION public.analytics_visitor_list_v6
 -- (timestamptz,timestamptz,integer,integer,text,text,text). No row changes.
@@ -42,6 +43,7 @@ sess as (
   select l.session_id, l.device_id, e.uid,
          min(l.at) as started_at, max(l.at) as ended_at,
          count(*) as events,
+         count(*) filter (where e.id is null) as identity_missing_events,
          count(*) filter (where l.name = 'page_view') as page_views,
          coalesce(sum(l.visible_s) filter (where l.name = 'page_leave'), 0) as engaged_s,
          count(*) filter (where l.name in ('album_play', 'music_play', 'song_start', 'track_start')) as plays,
@@ -66,6 +68,7 @@ vis as (
          max(s.ended_at) as last_seen,
          count(distinct (s.started_at at time zone 'UTC')::date) as active_days,
          sum(s.events) as events,
+         sum(s.identity_missing_events) as identity_missing_events,
          sum(s.page_views) as page_views,
          round(sum(s.engaged_s))::int as engaged_s,
          sum(s.plays) as plays,
@@ -169,7 +172,8 @@ select jsonb_build_object(
   'visitors', coalesce((select jsonb_agg(jsonb_build_object(
       'visitor_key', p.visitor_key,
       'uid', p.uid,
-      'identity_status', case when p.uid is null then 'device_only' else 'event_bound_account' end,
+      'identity_status', case when p.identity_missing_events>0 then 'partial_identity' when p.uid is null then 'device_only' else 'event_bound_account' end,
+      'identity_missing_events', p.identity_missing_events,
       'devices', to_jsonb(p.devices),
       'sessions', p.sessions,
       'first_seen', p.first_seen,

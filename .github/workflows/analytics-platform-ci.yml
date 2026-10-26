@@ -16,6 +16,9 @@ on:
       - 'supabase/functions/collect/**'
       - 'supabase/migrations/**'
       - 'supabase/pending/analytics_visitor_event_identity_v6.sql'
+      - 'supabase/pending/analytics_session_evidence_v6.sql'
+      - 'scripts/test/collect-gpc-sanitization.test.mjs'
+      - 'scripts/test/collect-idempotency.test.mjs'
       - 'supabase/pending/analytics_tenant_history_restrict_v1.sql'
       - 'scripts/test-analytics-identity-db.mjs'
       - 'scripts/test/analytics-transport-privacy.test.mjs'
@@ -56,7 +59,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test event privacy, lifecycle, progress and account evidence
-        run: node --test scripts/test/analytics-transport-privacy.test.mjs scripts/test/analytics-outbox.test.mjs scripts/test/playback-measurement.test.mjs workers/mccluster/test/audience-science.test.mjs workers/mccluster/test/analytics-identity-evidence.test.mjs
+        run: node --test scripts/test/analytics-transport-privacy.test.mjs scripts/test/analytics-outbox.test.mjs scripts/test/playback-measurement.test.mjs workers/mccluster/test/audience-science.test.mjs workers/mccluster/test/analytics-identity-evidence.test.mjs workers/mccluster/test/analytics-forensics.test.mjs scripts/test/collect-gpc-sanitization.test.mjs scripts/test/collect-idempotency.test.mjs
       - name: Prepare isolated PostgreSQL engine
         run: npm install --prefix /tmp/analytics-db-qa --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.5.10
       - name: Validate dormant identity and tenant proposals with synthetic data
