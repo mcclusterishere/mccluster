@@ -3,6 +3,7 @@ import { createIdentitySession, retrieveIdentitySession } from './identity.js';
 import { verifyStripeWebhook } from './stripe.js';
 
 const JSON_HEADERS={'content-type':'application/json; charset=utf-8'};
+const CHECKIN_FLAGS=['license_verified','pretrip_photos_complete','pickup_instructions_seen'];
 function cors(env){return{'access-control-allow-origin':env.ALLOWED_ORIGIN||'*','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS','access-control-allow-headers':'content-type,authorization,x-we-user-id,x-we-role','access-control-max-age':'86400'}}
 function reply(env,data,status=200){return new Response(JSON.stringify(data),{status,headers:{...JSON_HEADERS,...cors(env)}})}
 function fail(env,message,status=400){return reply(env,{error:message},status)}
@@ -54,6 +55,9 @@ export default{async fetch(req,env,ctx){
     if(rentalCheckin&&req.method==='PATCH'){
       const u=await requireUser(req,env),booking=await rental(env,rentalCheckin[1]);if(!booking)return fail(env,'Rental booking not found',404);if(booking.renter_id!==u.id)return fail(env,'Only the renter can complete identity check-in',403);
       const body=await req.clone().json();
+      // Only a real boolean is stored: "true", 1 or "yes" must not slip past the identity check below.
+      if(!body||typeof body!=='object'||Array.isArray(body))return fail(env,'Check-in body must be an object',400);
+      const invalid=CHECKIN_FLAGS.find(key=>key in body&&typeof body[key]!=='boolean');if(invalid)return fail(env,`${invalid} must be true or false`,400);
       if(body.license_verified===true){
         if(!(await verified(env,u.id,'renter')))return fail(env,'Complete Stripe Identity driver-license verification first',409);
         body.license_verified=true;
@@ -65,14 +69,17 @@ export default{async fetch(req,env,ctx){
 
     const rentalStatus=path.match(/^\/api\/rentals\/bookings\/([^/]+)\/status$/);
     if(rentalStatus&&req.method==='PATCH'){
+      // Pickup requires the booking's renter to be verified, whoever (renter or operator) starts it.
       const u=await requireUser(req,env),body=await req.clone().json();
-      if(String(body.status||'').toUpperCase()==='ACTIVE'&&!(await verified(env,u.id,'renter')))return fail(env,'Verified renter identity is required before vehicle pickup',409)
+      if(String(body?.status||'').toUpperCase()==='ACTIVE'){const booking=await rental(env,rentalStatus[1]);if(!booking)return fail(env,'Rental booking not found',404);
+        if(booking.renter_id!==u.id){const m=await sb(env,`operator_members?tenant_id=eq.${encodeURIComponent(booking.tenant_id)}&auth_user_id=eq.${encodeURIComponent(u.id)}&select=role&limit=1`);if(!['owner','admin','dispatcher'].includes(m?.[0]?.role))return fail(env,'Rental access denied',403)}
+        if(!(await verified(env,booking.renter_id,'renter')))return fail(env,'Verified renter identity is required before vehicle pickup',409)}
     }
 
     // Drivers cannot advertise availability or consume paid dispatch unless verified.
     const driverPresence=path.match(/^\/api\/drivers\/([^/]+)\/presence$/);
     if(driverPresence&&req.method==='PATCH'){
-      const u=await requireUser(req,env),d=await driver(env,driverPresence[1]);if(!d||d.auth_user_id!==u.id)return fail(env,'Driver access denied',403);const body=await req.clone().json();if(body.online===true&&!(await verified(env,u.id,'driver')))return fail(env,'Complete driver identity verification before going online',409)
+      const u=await requireUser(req,env),d=await driver(env,driverPresence[1]);if(!d||d.auth_user_id!==u.id)return fail(env,'Driver access denied',403);const body=await req.clone().json();if(typeof body?.online!=='boolean')return fail(env,'online must be true or false',400);if(body.online===true&&!(await verified(env,u.id,'driver')))return fail(env,'Complete driver identity verification before going online',409)
     }
     if(path==='/api/offers'&&req.method==='GET'){
       const u=await requireUser(req,env);if(!(await verified(env,u.id,'driver')))return fail(env,'Complete driver identity verification before receiving offers',409)

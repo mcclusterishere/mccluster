@@ -43,6 +43,33 @@ const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
+/* supabase/functions/collect/index.ts MAX_BODY_BYTES. */
+export const COLLECT_MAX_BODY_BYTES = 64 * 1024;
+
+/* The request body as text, or null once it passes the ceiling. */
+async function readCollectBody(request, limit = COLLECT_MAX_BODY_BYTES) {
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let bytes = 0;
+  let text = '';
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      bytes += chunk.value.byteLength;
+      if (bytes > limit) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      text += decoder.decode(chunk.value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 async function dispatchRequest(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -125,6 +152,13 @@ async function dispatchRequest(request, env, ctx) {
        place that validates, and no second copy to drift.
        ============================================================ */
     if (path === '/v1/collect') {
+      /* ORIGIN IS REFLECTED ON PURPOSE. Customer sites embed the pixel with a
+         public site_key and post here from their own verified domains, which
+         no static allowlist can name; the collector proves the key belongs
+         to the posting origin (see the origin header forwarded below). The
+         route carries no cookie-backed authority, so reflecting is not a
+         credential leak — but it does mean anyone can post, so the body is
+         bounded before the service-role hop. */
       const origin = request.headers.get('origin') || '*';
       const cors = {
         'access-control-allow-origin': origin,
@@ -139,6 +173,16 @@ async function dispatchRequest(request, env, ctx) {
           status: 405, headers: { ...cors, 'content-type': 'application/json' }
         });
       }
+      const tooLarge = () => new Response(JSON.stringify({ ok: false, reason: 'too large' }), {
+        status: 413, headers: { ...cors, 'content-type': 'application/json' }
+      });
+      /* Same ceiling as the collector's MAX_BODY_BYTES; it would refuse a
+         larger body anyway, but only after this Worker had buffered it and
+         spent a service-role subrequest on it. Content-Length is checked
+         first and then enforced while reading, since it can be absent. */
+      if (Number(request.headers.get('content-length') || 0) > COLLECT_MAX_BODY_BYTES) return tooLarge();
+      const body = await readCollectBody(request);
+      if (body === null) return tooLarge();
 
       const cf = request.cf || {};
       const headers = {
@@ -214,7 +258,7 @@ async function dispatchRequest(request, env, ctx) {
         const upstream = await fetch(`${env.SUPABASE_URL}/functions/v1/collect`, {
           method: 'POST',
           headers,
-          body: await request.text()
+          body
         });
         return new Response(await upstream.text(), {
           status: upstream.status,

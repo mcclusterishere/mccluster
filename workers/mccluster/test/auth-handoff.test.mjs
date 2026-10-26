@@ -31,57 +31,21 @@ test('the route answers only its own path, and preflights with the ecosystem COR
   assert.equal(get.status, 405);
 });
 
-test('only the ecosystem\'s own origins may carry a sign-in across', async () => {
+test('retired handoff fails closed even for a valid bearer on an allowed origin', async () => {
   const { fetchImpl, asked } = supabase();
-  for (const origin of ['', 'https://evil.example', 'https://humanuprise.com.evil.example', 'http://humanuprise.com']) {
+  for (const origin of ['https://humanuprise.com', 'https://www.humanuprise.com', 'https://matthew.mccluster.org']) {
     const r = await handleAuthHandoff(req('POST', { origin, authorization: 'Bearer tok' }), ENV, fetchImpl);
-    assert.equal(r.status, 403, origin || '(no origin)');
+    assert.equal(r.status, 410);
+    assert.equal(r.headers.get('cache-control'), 'no-store');
   }
-  assert.equal(asked.length, 0, 'nothing is asked of Supabase for a foreign origin');
-  for (const origin of ['https://humanuprise.com', 'https://www.humanuprise.com', 'https://matthew.mccluster.org', 'http://127.0.0.1:4173']) {
-    const r = await handleAuthHandoff(req('POST', { origin, authorization: 'Bearer tok' }), ENV, fetchImpl);
-    assert.equal(r.status, 200, origin);
-    assert.equal(r.headers.get('access-control-allow-origin'), origin);
-  }
+  assert.equal(asked.length, 0, 'no user lookup or admin link generation');
 });
-
-test('the bearer is the arriving page\'s proof, checked live; an API key or no token is refused', async () => {
-  const { fetchImpl } = supabase();
-  assert.equal((await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com' }), ENV, fetchImpl)).status, 401);
-  assert.equal((await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com', authorization: 'Bearer mcc_apikey' }), ENV, fetchImpl)).status, 401);
-  const bad = supabase({ userOk: false });
-  const r = await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com', authorization: 'Bearer expired' }), ENV, bad.fetchImpl);
-  assert.equal(r.status, 401);
-  assert.equal(bad.asked.length, 1, 'no link is minted for a token Supabase rejects');
-  assert.equal(bad.asked[0].headers.authorization, 'Bearer expired', 'the page\'s own token is what Supabase checks');
-  assert.equal(bad.asked[0].headers.apikey, ENV.SUPABASE_SERVICE_ROLE_KEY);
-});
-
-test('a magic-link token for the same account comes back, and nothing else', async () => {
+test('foreign and absent origins remain refused without upstream calls', async () => {
   const { fetchImpl, asked } = supabase();
-  const r = await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com', authorization: 'Bearer good', 'content-type': 'application/json' }, '{}'), ENV, fetchImpl);
-  assert.equal(r.status, 200);
-  assert.equal(r.headers.get('cache-control'), 'no-store');
-  const body = await r.json();
-  assert.deepEqual(body, { token_hash: 'hash-fixture', type: 'magiclink', origin: 'https://humanuprise.com' });
-  assert.ok(!('refresh_token' in body) && !('access_token' in body) && !('action_link' in body), 'no session material and no clickable link leaves the route');
-  const link = asked[1];
-  assert.equal(link.url, ENV.SUPABASE_URL + '/auth/v1/admin/generate_link');
-  assert.equal(link.method, 'POST');
-  assert.deepEqual(link.body, { type: 'magiclink', email: 'ana@example.org' });
-  assert.equal(link.headers.authorization, 'Bearer ' + ENV.SUPABASE_SERVICE_ROLE_KEY, 'the admin API takes the service role');
-});
-
-test('the supabase-js shape (properties.hashed_token) is read too; a failed link is a 502; no email is a 409; no config is a 503', async () => {
-  const shaped = supabase({ linkBody: { properties: { hashed_token: 'nested-hash' } } });
-  assert.equal((await (await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com', authorization: 'Bearer good' }), ENV, shaped.fetchImpl)).json()).token_hash, 'nested-hash');
-  const failed = supabase({ linkOk: false });
-  assert.equal((await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com', authorization: 'Bearer good' }), ENV, failed.fetchImpl)).status, 502);
-  const noEmail = supabase({ user: { id: 'u-2', email: '' } });
-  const r = await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com', authorization: 'Bearer good' }), ENV, noEmail.fetchImpl);
-  assert.equal(r.status, 409);
-  assert.equal(noEmail.asked.length, 1, 'no link is minted without an email');
-  assert.equal((await handleAuthHandoff(req('POST', { origin: 'https://humanuprise.com', authorization: 'Bearer good' }), {}, supabase().fetchImpl)).status, 503);
+  for (const origin of ['', 'https://evil.example', 'https://humanuprise.com.evil.example']) {
+    assert.equal((await handleAuthHandoff(req('POST', { origin }), ENV, fetchImpl)).status, 403);
+  }
+  assert.equal(asked.length, 0);
 });
 
 test('the platform entry consults the handoff after the rate limit and before the creator routes', async () => {

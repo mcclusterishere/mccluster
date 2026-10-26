@@ -1889,6 +1889,13 @@
       "rationale": "Tests that keep the company and personal properties and entities separate; checks Equity Uprise's parent organization. Not a building capability."
     },
     {
+      "path": "scripts/test/eu-intake-email-match.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Regression tests that the Equity Uprise intake's stakeholder and fellowship email lookups are exact case-insensitive matches (no ilike wildcards); test support, not a building capability."
+    },
+    {
       "path": "scripts/test/homelessness-action.test.mjs",
       "classification": "test_support",
       "capability_ids": [],

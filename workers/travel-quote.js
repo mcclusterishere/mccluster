@@ -536,13 +536,33 @@ export default {
         "access-control-allow-methods": "GET,POST",
         "access-control-allow-headers": "content-type" } });
 
+    /* the owner key rides in a header (or a POST body) — never a query
+       string, which lands in every log between here and the phone */
+    const ownerKeyOf = (b) => (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "")
+      || req.headers.get("x-owner-key") || (b && b.key) || "";
+    const keyOk = (given) => {
+      /* no configured key is no owner, never "the empty string matches" */
+      if (!env.OWNER_KEY) return false;
+      const a = new TextEncoder().encode(String(given || ""));
+      const b2 = new TextEncoder().encode(env.OWNER_KEY);
+      if (a.length !== b2.length) return false;
+      let diff = 0;
+      for (let i = 0; i < a.length; i++) diff |= a[i] ^ b2[i];
+      return diff === 0;
+    };
+    /* null when the caller is the owner; otherwise the refusal to send */
+    const ownerRefusal = (b) => {
+      if (!env.OWNER_KEY) return json({ error: "owner key not configured" }, 503);
+      return keyOk(ownerKeyOf(b)) ? null : json({ error: "no" }, 403);
+    };
+
     if (url.pathname === "/api/travel/base" && req.method === "GET") {
       const base = (await env.TRAVEL.get("base")) || "ct";
       return json({ base });
     }
     if (url.pathname === "/api/travel/base" && req.method === "POST") {
       const b = await req.json().catch(() => ({}));
-      if (!keyOk(ownerKeyOf(b))) return json({ error: "no" }, 403);
+      const refused = ownerRefusal(b); if (refused) return refused;
       if (b.base !== "ct" && b.base !== "ga") return json({ error: "ct or ga" }, 422);
       await env.TRAVEL.put("base", b.base);
       return json({ base: b.base });
@@ -558,30 +578,18 @@ export default {
       await env.TRAVEL.put(rk, String(n + 1), { expirationTtl: 7200 });
       return true;
     };
-    /* the owner key rides in a header (or a POST body) — never a query
-       string, which lands in every log between here and the phone */
-    const ownerKeyOf = (b) => (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "")
-      || req.headers.get("x-owner-key") || (b && b.key) || "";
-    const keyOk = (given) => {
-      const a = new TextEncoder().encode(String(given || ""));
-      const b2 = new TextEncoder().encode(env.OWNER_KEY || "");
-      if (a.length !== b2.length) return false;
-      let diff = 0;
-      for (let i = 0; i < a.length; i++) diff |= a[i] ^ b2[i];
-      return diff === 0;
-    };
 
     if (url.pathname === "/api/travel/request" && req.method === "POST") {
       if (!(await bucket("rlq", 10))) return json({ error: "slow down" }, 429);
       return fileRequest(env, await req.json().catch(() => ({})));
     }
     if (url.pathname === "/api/travel/requests" && req.method === "GET") {
-      if (!keyOk(ownerKeyOf(null))) return json({ error: "no" }, 403);
+      const refused = ownerRefusal(null); if (refused) return refused;
       return listRequests(env);
     }
     if (url.pathname === "/api/travel/profile" && req.method === "POST") {
       const b = await req.json().catch(() => ({}));
-      if (!keyOk(ownerKeyOf(b))) return json({ error: "no" }, 403);
+      const refused = ownerRefusal(b); if (refused) return refused;
       const need = ["given_name", "family_name", "born_on", "gender", "email", "phone_number"];
       const missing = need.filter((k) => !b[k]);
       if (missing.length) return json({ error: "missing: " + missing.join(", ") }, 422);
@@ -592,7 +600,7 @@ export default {
     for (const [path, fn] of [["approve", approveTrip], ["purchase", purchaseTrip], ["pay", payTrip]]) {
       if (url.pathname === "/api/travel/" + path && req.method === "POST") {
         const b = await req.json().catch(() => ({}));
-        if (!keyOk(ownerKeyOf(b))) return json({ error: "no" }, 403);
+        const refused = ownerRefusal(b); if (refused) return refused;
         try { return await fn(env, b); }
         catch (e) { return json({ error: path + " failed: " + String(e.message || e).slice(0, 160) }, 502); }
       }

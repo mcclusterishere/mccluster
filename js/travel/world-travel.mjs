@@ -50,6 +50,9 @@ const searchClosers = [];
 let route = null, routeState = 'idle', routeError = '', routeController, routeSequence = 0, retryOrigin = null;
 let navigating = false, navigationWatch = null, navigationSequence = 0, navigationFollow = true;
 let liveFix = null, progress = null, navigationNotice = '', offRouteFixes = 0, lastRerouteAt = 0;
+// A screen wake lock keeps turn-by-turn directions on screen while navigating.
+// Feature-detected and failure-tolerant: without it navigation works as before.
+let wakeLock = null, wakeLockPending = false;
 let locating = false, autoLocated = false, locationSequence = 0, originRevision = 0;
 // Selecting a place on the existing Cesium globe is optional; GPS, typed
 // addresses and the public routing provider remain separate concerns.
@@ -174,8 +177,23 @@ function cancelRideRefresh() {
   rideLocationSequence++; rideLocating = false; clearTimeout(rideExpiryTimer);
   $('wtRideLocate').disabled = false; $('wtRideLocationStatus').textContent = '';
 }
+async function acquireWakeLock() {
+  if (wakeLock || wakeLockPending || !navigating || document.hidden || typeof navigator.wakeLock?.request !== 'function') return;
+  wakeLockPending = true;
+  try {
+    const lock = await navigator.wakeLock.request('screen');
+    if (!navigating || document.hidden) { lock.release?.().catch?.(() => {}); return; }
+    wakeLock = lock;
+    lock.addEventListener?.('release', () => { if (wakeLock === lock) wakeLock = null; });
+  } catch { /* Denied or unsupported: the screen may sleep; directions still work. */ }
+  finally { wakeLockPending = false; }
+}
+function releaseWakeLock() {
+  const lock = wakeLock; wakeLock = null;
+  try { lock?.release?.()?.catch?.(() => {}); } catch { /* Already released by the browser. */ }
+}
 function stopNavigation(message = '', { resetProgress = false } = {}) {
-  navigationSequence++;
+  navigationSequence++; releaseWakeLock();
   if (navigationWatch !== null) navigator.geolocation?.clearWatch(navigationWatch);
   navigationWatch = null; navigating = false; offRouteFixes = 0;
   if (routeState === 'rerouting') {
@@ -473,6 +491,14 @@ async function requestRoute({ reroute = false, originOverride = null, reveal = f
     if (navigating && liveFix) applyFix(liveFix, false);
   } catch (error) {
     if (controller.signal.aborted || request !== routeSequence || version !== revision || epoch !== tripEpoch) return;
+    if (reroute && route && navigating) {
+      // A failed off-route recalculation never takes directions away from a
+      // driver: keep the current route and live guidance, warn, and let the
+      // next off-route fixes retry once the reroute throttle allows.
+      routeState = 'ready'; routeError = ''; retryOrigin = null; lastRerouteAt = Date.now();
+      navigationNotice = `${error?.message || 'Your route could not be recalculated.'} Keep following the current directions; we will try again shortly.`;
+      renderDirections(); return;
+    }
     stopNavigation('', { resetProgress:true }); route = null; routeState = 'error';
     routeError = error?.message || 'Directions could not be loaded. Try again or choose another starting point.';
     send({ type:'hu:route', route:null }); renderSteps(); renderDirections();
@@ -588,7 +614,7 @@ function startNavigation() {
   // fix refines them; a missing or denied location never blocks Go.
   try { progress = navigationProgress(route, route.origin, { accuracy:0, previousProgressMeters:0 }); } catch { progress = null; }
   const request = ++navigationSequence; let lastWatchTimestamp = 0, watchId = null;
-  root.classList.add('wt-navigating');
+  root.classList.add('wt-navigating'); void acquireWakeLock();
   const stepsOnly = message => { navigationWatch = null; if (watchId !== null) { try { navigator.geolocation.clearWatch(watchId); } catch {} watchId = null; } navigationNotice = message; renderDirections(); };
   if (!navigator.geolocation) { stepsOnly('Live location is unavailable here. Follow the steps below from your starting point.'); $('wtNavigation').scrollIntoView({ block:'start', behavior:'auto' }); return; }
   navigationNotice = 'Finding your location. Keep this page open for live directions.';
@@ -887,7 +913,7 @@ function suspendTravel(message) {
   if (routeState === 'rerouting') { route = null; send({ type:'hu:route', route:null }); } routeState = route ? 'ready' : 'idle';
   if (navigating) stopNavigation(message, { resetProgress:true }); renderDirections();
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) suspendTravel('Navigation paused. Tap Go when you return.'); else renderRide(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) suspendTravel('Navigation paused. Tap Go when you return.'); else { renderRide(); if (navigating) void acquireWakeLock(); } });
 window.addEventListener('pagehide', () => suspendTravel('Navigation paused. Tap Go when you return.'));
 window.addEventListener('mcc:world-audio-visibility', e => {
   hostVisible = e.detail?.visible !== false;

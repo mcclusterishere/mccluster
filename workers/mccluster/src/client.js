@@ -1,5 +1,6 @@
 import { corsHeaders, fail, reply } from './lib/http.js';
 import { upsertConversation, notifyOwners } from './inquiries.js';
+import { createLimiter } from './world-ion.js';
 
 const MAX_BODY_BYTES = 16 * 1024;
 const BOOKING_STATES = new Set([
@@ -12,6 +13,41 @@ const BOOKING_STATES = new Set([
   'archived',
   'declined'
 ]);
+
+/* Unauthenticated writes that cost something: /v1/account/start asks
+   Supabase (as the service role, create_user:true) to mail a sign-in link,
+   and /v1/inquiries saves a lead and emails the tenant's owners. There is no
+   Cloudflare rate-limit binding on this Worker and api_enforce_rate_limit is
+   keyed to API keys, so these use the in-isolate sliding window the World
+   routes already use (world-ion.js createLimiter). It is per data centre and
+   per isolate and resets with the isolate: a brake on scripted abuse, not an
+   exact quota. Supabase Auth's own email limits remain the hard ceiling for
+   sign-in links. Per address too, so one inbox cannot be flooded from many
+   IPs. */
+export const PUBLIC_WRITE_LIMITS = Object.freeze({
+  windowMs: 10 * 60 * 1000,
+  accountStartPerIp: 5,
+  accountStartPerEmail: 3,
+  inquiriesPerIp: 10
+});
+const LIMITERS = {
+  accountIp: createLimiter({ windowMs: PUBLIC_WRITE_LIMITS.windowMs, max: PUBLIC_WRITE_LIMITS.accountStartPerIp }),
+  accountEmail: createLimiter({ windowMs: PUBLIC_WRITE_LIMITS.windowMs, max: PUBLIC_WRITE_LIMITS.accountStartPerEmail }),
+  inquiryIp: createLimiter({ windowMs: PUBLIC_WRITE_LIMITS.windowMs, max: PUBLIC_WRITE_LIMITS.inquiriesPerIp })
+};
+export function resetPublicWriteLimits() {
+  for (const limiter of Object.values(LIMITERS)) limiter.reset();
+}
+
+function clientIp(request) {
+  return request.headers.get('cf-connecting-ip') || 'unknown';
+}
+
+function tooMany(request, env, retryAfter) {
+  const res = fail(request, env, 'Too many requests; try again shortly', 429, { retry_after: retryAfter });
+  res.headers.set('retry-after', String(retryAfter));
+  return res;
+}
 
 function configured(env) {
   return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
@@ -162,6 +198,8 @@ function publishedContent(org) {
 }
 
 async function publicInquiry(request, env) {
+  const ipLimit = LIMITERS.inquiryIp.take(clientIp(request), Date.now());
+  if (!ipLimit.ok) return tooMany(request, env, ipLimit.retryAfter);
   const body = await jsonBody(request);
   const org = await orgBySlug(env, body.org);
   if (!org || org.kind !== 'client') return fail(request, env, 'Unknown client', 404);
@@ -223,11 +261,16 @@ function authRedirectFor(request) {
 }
 
 async function accountStart(request, env) {
+  const now = Date.now();
+  const ipLimit = LIMITERS.accountIp.take(clientIp(request), now);
+  if (!ipLimit.ok) return tooMany(request, env, ipLimit.retryAfter);
   const body = await jsonBody(request);
   const org = await orgBySlug(env, body.org);
   if (!org || org.kind !== 'client') return fail(request, env, 'Unknown client', 404);
   const email = validEmail(body.email);
   if (!email) return fail(request, env, 'A valid email is required', 400);
+  const emailLimit = LIMITERS.accountEmail.take(email, now);
+  if (!emailLimit.ok) return tooMany(request, env, emailLimit.retryAfter);
 
   const redirect = authRedirectFor(request);
   const payload = { email, create_user: true };
@@ -239,8 +282,9 @@ async function accountStart(request, env) {
     body: JSON.stringify(payload)
   });
   if (!res.ok) {
-    const detail = await res.text();
-    throw Object.assign(new Error('Could not send sign-in link'), { status: res.status, detail });
+    /* Supabase Auth's body is not for an anonymous caller; the status is. */
+    await res.text().catch(() => '');
+    throw Object.assign(new Error('Could not send sign-in link'), { status: res.status });
   }
   return reply(request, env, { ok: true }, 202);
 }
