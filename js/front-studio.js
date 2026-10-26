@@ -12,6 +12,13 @@
 (function (w, d) {
   "use strict";
   var API = "https://api.mccluster.org";
+  var projectMode = w.__MCC_PROJECT_STUDIO === true;
+  var projectSlug = projectMode ? w.__MCC_PROJECT_STUDIO_SLUG : null;
+  var ownPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/edit" : "/v1/fronts/me";
+  var publishedPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/published" : "/v1/fronts/me/published";
+  var editorReturn = projectMode ? "project-studio.html?project=" + encodeURIComponent(projectSlug || "") : "front-studio.html";
+  function publicUrl(handle) { return projectMode ? "front.html?project=" + encodeURIComponent(projectSlug) : "front.html?u=" + encodeURIComponent(handle); }
+
   var FILMS = [
     ["hero", "Opening film", "Plays as the page scrolls from the top: the first thing anyone sees."],
     ["scene1", "Scene film 1", "The first film after the opening, before the 360 room."],
@@ -26,13 +33,38 @@
   function clone(v) { return v == null ? v : JSON.parse(JSON.stringify(v)); }
   function sb() { return w.MCC_SUPA || {}; }
   function token() { return Promise.resolve(sb().token ? sb().token() : null); }
+  var boundSession, authEpoch = 0;
+  function sessionIdentity(t) {
+    if (!t) return "signed-out";
+    try { return JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).sub || t; } catch (_) { return t; }
+  }
+  function guardSession(t) {
+    var id = sessionIdentity(t);
+    if (boundSession === undefined) boundSession = id;
+    if (id !== boundSession) {
+      // A pending upload/save must never move the previous account's draft into
+      // a newly signed-in account. A fresh document also cancels its callbacks.
+      S.dirty = false; S.busy = {}; S.me = null; S.draft = null; S.state = "loading";
+      clearTimeout(S.reloadTimer); paint(); location.reload();
+      throw new Error("Account changed. Reopening the editor.");
+    }
+  }
+  w.addEventListener("mcc:auth-changed", function () {
+    // Hide private state synchronously even if the next token read fails.
+    authEpoch++; S.dirty = false; S.busy = {}; S.me = null; S.draft = null; S.frame = null;
+    S.state = "loading"; clearTimeout(S.reloadTimer); paint(); location.reload();
+  });
   function api(path, opts) {
     opts = opts || {};
+    var epoch = authEpoch;
     return token().then(function (t) {
+      if (epoch !== authEpoch) throw new Error("Account changed.");
+      guardSession(t);
       if (!t) throw Object.assign(new Error("signed out"), { status: 401 });
       return fetch(API + path, { method: opts.method || "GET", headers: Object.assign({ authorization: "Bearer " + t, accept: "application/json" }, opts.body ? { "content-type": "application/json" } : {}), body: opts.body ? JSON.stringify(opts.body) : undefined, cache: "no-store" });
     }).then(function (r) {
       return r.json().catch(function () { return null; }).then(function (b) {
+        if (epoch !== authEpoch) throw new Error("Account changed.");
         if (!r.ok) throw Object.assign(new Error((b && (b.error || b.message)) || ("HTTP " + r.status)), { status: r.status, body: b });
         return b;
       });
@@ -50,7 +82,7 @@
   }
   function ensure(o, k) { o[k] = o[k] && typeof o[k] === "object" ? o[k] : {}; return o[k]; }
   /* the page the preview gets: the same scene rules the published page uses (js/front-member.js) */
-  function page() { return { handle: S.me.handle, name: S.me.name, avatar: S.me.avatar, headline: "", config: clone(S.draft) }; }
+  function page() { return { handle: S.me.handle, name: S.me.name, avatar: S.me.avatar, headline: "", registry_key: S.me.registry_key || null, config: clone(S.draft) }; }
   function linkProblem(h) {
     h = String(h || "").trim();
     if (!h) return "needs a link";
@@ -63,7 +95,7 @@
   function post(msg) { var f = frameWin(); if (f) try { f.postMessage(msg, location.origin); } catch (_) {} }
   function reloadPreview(now) {
     clearTimeout(S.reloadTimer);
-    var go = function () { if (S.frame) S.frame.src = "front.html?u=" + encodeURIComponent(S.me.handle) + "&studio=" + (++S.seq); };
+    var go = function () { if (S.frame) S.frame.src = publicUrl(S.me.handle) + "&studio=" + (++S.seq); };
     if (now) go(); else S.reloadTimer = setTimeout(go, 800);
   }
   /* settings that the engine can take live go to the frame at once; words and media reload it */
@@ -168,12 +200,12 @@
     var root = $("fsRoot"); if (!root) return;
     if (S.state !== "ready") {
       var t = { loading: ["Opening your editor…", ""], signin: ["Sign in to build your front page", "Your front page is yours: sign in and it opens here."], handle: ["Choose your handle first", "Your front page lives at your handle (front.html?u=you). Finish your account, then come back."], off: ["Front pages are not switched on yet", S.error || "The editor will open here as soon as they are."], error: ["The editor could not open", S.error] }[S.state] || ["", ""];
-      var act = S.state === "signin" ? '<a class="fs-btn" href="account.html?next=front-studio.html">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html?next=front-studio.html">Finish my account</a>' : S.state === "loading" ? "" : '<button type="button" class="fs-btn" id="fsRetry">Try again</button>';
+      var act = S.state === "signin" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Finish my account</a>' : S.state === "loading" ? "" : '<button type="button" class="fs-btn" id="fsRetry">Try again</button>';
       root.innerHTML = '<section class="fs-gate"><h1>' + e(t[0]) + '</h1><p>' + e(t[1]) + '</p>' + act + '</section>';
       if ($("fsRetry")) $("fsRetry").onclick = function () { S.state = "loading"; paint(); boot(); };
       return;
     }
-    var me = S.me, live = me.published && !me.publish_blocker ? "Live at front.html?u=" + me.handle + (me.published_at ? " since " + new Date(me.published_at).toLocaleString() : "") : me.published ? "Your saved page is not publicly available." : "Not published yet";
+    var me = S.me, live = me.published && !me.publish_blocker ? "Live at " + publicUrl(me.handle) + (me.published_at ? " since " + new Date(me.published_at).toLocaleString() : "") : me.published ? "Your saved page is not publicly available." : "Not published yet";
     if (!root.querySelector("#fsForm")) {
       root.innerHTML =
         '<header class="fs-head"><div><p class="fs-k">Your front page</p><h1>' + e(me.name || me.handle) + '</h1><p class="fs-live" id="fsLive"></p></div>' +
@@ -192,7 +224,7 @@
       fit();
     }
     $("fsLive").textContent = live;
-    $("fsOpen").href = "front.html?u=" + encodeURIComponent(me.handle);
+    $("fsOpen").href = publicUrl(me.handle);
     $("fsOpen").hidden = !me.published || !!me.publish_blocker;
     $("fsUnpublish").hidden = !me.published;
     var problems = bad();
@@ -228,7 +260,7 @@
     if (a === "refresh-access") {
       if (S.saving) return;
       S.saving = true; paint();
-      api("/v1/fronts/me").then(function (me) {
+      api(ownPath).then(function (me) {
         S.me = me; // Keep the local draft and dirty flag: checking access is not a reload.
         S.msg = me.publish_blocker ? "Publishing is still unavailable. Your draft is kept." : "Ready to publish.";
         S.bad = !!me.publish_blocker;
@@ -255,19 +287,19 @@
     if (a === "save" || a === "publish") return save(a === "publish");
     if (a === "unpublish") {
       S.saving = true; paint();
-      api("/v1/fronts/me/published", { method: "DELETE" }).then(function () { S.me.published = null; S.me.published_at = null; S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
+      api(publishedPath, { method: "DELETE" }).then(function () { S.me.published = null; S.me.published_at = null; S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
         .catch(function (err) { S.msg = "Not taken down: " + err.message; S.bad = true; }).then(function () { S.saving = false; paint(); });
     }
   }
   function save(publish) {
     if (bad().length || busy()) return;
     S.saving = true; S.msg = publish ? "Publishing…" : "Saving…"; S.bad = false; paint();
-    api("/v1/fronts/me", { method: "POST", body: { config: S.draft, publish: publish } }).then(function (b) {
+    api(ownPath, { method: "POST", body: { config: S.draft, publish: publish } }).then(function (b) {
       S.draft = clone(b.draft) || {}; S.me.draft = b.draft; S.dirty = false;
       S.me.publish_blocker = b.publish_blocker || null; S.me.profile_visibility = b.profile_visibility;
       if (publish) { S.me.published = b.published; S.me.published_at = b.published_at; }
       var dropped = (b.dropped || []).length ? " Not kept: " + b.dropped.join(", ") + "." : "";
-      S.msg = (publish ? "Published. Everyone sees it at front.html?u=" + b.handle + "." : "Draft saved.") + dropped; S.bad = !!dropped;
+      S.msg = (publish ? "Published. Everyone sees it at " + publicUrl(b.handle) + "." : "Draft saved.") + dropped; S.bad = !!dropped;
       paintForm(); reloadPreview(true); sweep();
     }).catch(function (err) {
       var code = err.body && err.body.detail && err.body.detail.code;
@@ -322,7 +354,7 @@
   w.addEventListener("beforeunload", function (ev) { if (S.dirty || busy()) { ev.preventDefault(); ev.returnValue = ""; } });
 
   function boot() {
-    api("/v1/fronts/me").then(function (me) {
+    api(ownPath).then(function (me) {
       S.me = me; S.draft = clone(me.draft || me.published) || {}; S.state = "ready";
       if (me.removed) { S.msg = "McCluster took your published page down. You can keep editing your draft."; S.bad = true; }
       paintForm();
@@ -333,7 +365,7 @@
       paint();
     });
   }
-  function whenReady() { if (w.MCC_SUPA && w.MCC_SUPA.token) boot(); else setTimeout(whenReady, 50); }
+  function whenReady() { if (projectMode && !projectSlug) { S.state = "error"; S.error = "Choose a project from your project dashboard first."; paint(); return; } if (w.MCC_SUPA && w.MCC_SUPA.token) boot(); else setTimeout(whenReady, 50); }
   paint();
   whenReady();
   w.__MCC_FRONT_STUDIO = S; // verification handle

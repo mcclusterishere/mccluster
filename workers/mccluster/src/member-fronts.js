@@ -65,7 +65,7 @@ function refuse(request, env, message, status, detail) {
   return res;
 }
 
-export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {}) {
+export async function handleMemberFronts(request, env, { fetchImpl = fetch, expectedAuthUserId = null } = {}) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
   if (path !== FRONTS_PREFIX && !path.startsWith(FRONTS_PREFIX + '/')) return null;
@@ -85,7 +85,7 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
     // Never change the member's profile visibility as a side effect of publishing.
     const profiles = await service(env, `network_profiles?m_uid=eq.${acct.m_uid}&select=visibility&limit=1`, {}, fetchImpl);
     const profile = profiles && profiles[0];
-    const publishBlocker = row?.removed_at ? 'removed' : !profile ? 'profile_required' : profile.visibility === 'private' ? 'private_profile' : null;
+    const publishBlocker = row?.removed_at ? 'removed' : !profile ? 'profile_required' : profile.visibility !== 'public' ? 'private_profile' : null;
     const availability = { profile_visibility: profile?.visibility || null, publish_blocker: publishBlocker,
       publicly_available: Boolean(row?.published && !publishBlocker) };
 
@@ -98,7 +98,7 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
       let body;
       try { body = await request.json(); } catch { return refuse(request, env, 'The front page must be JSON', 400); }
       if (!body || typeof body !== 'object') return refuse(request, env, 'The front page must be JSON', 400);
-      const checked = validateFront(body.config, { mediaPrefix: prefix });
+      const checked = validateFront(body.config, { mediaPrefix: prefix, blockedMediaPrefixes: [prefix + "projects/"] });
       if (!checked.ok) return refuse(request, env, 'The front page is too large', 413, { size: checked.size, max: FRONT_MAX_BYTES });
       const publish = body.publish === true;
       if (publish && row && row.removed_at) return refuse(request, env, 'This front page was taken down by McCluster and cannot be published', 403, { code: 'removed' });
@@ -137,15 +137,15 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
   /* ---------- anyone: a published page ---------- */
   if (HANDLE.test(rest)) {
     if (request.method !== 'GET' && request.method !== 'HEAD') return refuse(request, env, 'Method not allowed', 405);
-    const rows = await service(env, `member_fronts?handle=eq.${rest}&removed_at=is.null&published=not.is.null&select=m_uid,auth_user_id,handle,published,published_at&limit=1`, {}, fetchImpl);
+    const rows = await service(env, `member_fronts?handle=eq.${rest}${expectedAuthUserId ? `&auth_user_id=eq.${encodeURIComponent(expectedAuthUserId)}` : ""}&removed_at=is.null&published=not.is.null&select=m_uid,auth_user_id,handle,published,published_at&limit=1`, {}, fetchImpl);
     const row = rows && rows[0];
-    if (!row) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
+    if (!row || (expectedAuthUserId && row.auth_user_id !== expectedAuthUserId)) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
     /* a private profile has no public front page either */
     const prof = await service(env, `network_profiles?m_uid=eq.${row.m_uid}&select=display_name,avatar_url,headline,visibility&limit=1`, {}, fetchImpl);
     const p = (prof && prof[0]) || {};
-    if (!prof?.length || p.visibility === 'private') return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
+    if (!prof?.length || p.visibility !== 'public') return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
     /* checked again on the way out: a row can only ever show its own account's media */
-    const checked = validateFront(row.published, { mediaPrefix: mediaPrefix(env.SUPABASE_URL, row.auth_user_id) });
+    const checked = validateFront(row.published, { mediaPrefix: mediaPrefix(env.SUPABASE_URL, row.auth_user_id), blockedMediaPrefixes: [mediaPrefix(env.SUPABASE_URL, row.auth_user_id) + "projects/"] });
     if (!checked.ok) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
     return send(request, env, { ok: true, handle: row.handle, name: p.display_name || row.handle, avatar: p.avatar_url || '', headline: p.headline || '',
       config: checked.config, published_at: row.published_at }, 200, 'public, max-age=60');

@@ -15,9 +15,10 @@
   var V = (function () { try { return new URL(me.src).searchParams.get("v") || ""; } catch (e) { return ""; } })();
   var params = new URLSearchParams(location.search);
   var handle = String(params.get("u") || "").toLowerCase();
+  var projectSlug = String(params.get("project") || "").toLowerCase();
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var inStudio = false;
-  try { inStudio = w.parent !== w && w.parent.location.origin === location.origin && /front-studio\.html$/.test(w.parent.location.pathname); } catch (e) {}
+  try { inStudio = w.parent !== w && w.parent.location.origin === location.origin && /(?:front|project)-studio\.html$/.test(w.parent.location.pathname); } catch (e) {}
   // The editor replaces this frame whenever words/media change. Cross-document
   // page transitions can still be running when that replacement happens.
   if (inStudio) {
@@ -102,10 +103,19 @@
     return c;
   }
   function start(page) {
+    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(projectSlug);
+    var isProject = !!project && (project === page || page.registry_key === projectSlug);
+    if (isProject && project !== page) {
+      // The server alone binds a managed record to this immutable registry.
+      // Owners edit words/settings; original project assets never become a
+      // broader permission to load another member's files.
+      var merged = JSON.parse(JSON.stringify(project.config));
+      ["words", "scenes", "scroll", "vr"].forEach(function (key) { if (page.config && page.config[key]) merged[key] = Object.assign({}, merged[key], page.config[key]); });
+      if (page.config && page.config.links) merged.links = page.config.links;
+      page = Object.assign({}, page, { config: merged, ownerHref: project.ownerHref });
+    }
     fill(page);
     var config = settings(page);
-    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
-    var isProject = !inStudio && project === page;
     if (isProject) {
       d.documentElement.setAttribute("data-front-project", params.get("project"));
       d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });
@@ -141,16 +151,22 @@
       if (e.origin !== location.origin || e.source !== w.parent || !e.data || e.data.type !== "mcc:front-draft" || asked) return;
       asked = true;
       var p = e.data.page;
-      if (p && HANDLE.test(String(p.handle || ""))) start({ handle: p.handle, name: p.name, avatar: p.avatar, headline: p.headline, config: p.config || {} });
+      if (p && HANDLE.test(String(p.handle || ""))) start({ handle: p.handle, name: p.name, avatar: p.avatar, headline: p.headline, registry_key: p.registry_key || null, config: p.config || {} });
       else empty("Nothing to preview yet", "Your editor did not send a page.", []);
     });
     w.parent.postMessage({ type: "mcc:front-need-draft" }, location.origin);
     return;
   }
-  if (params.has("project")) {
-    var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
-    if (project) start(project);
-    else empty("No project here", "This link does not name a published project.", [{ label: "Matthew’s portfolio", href: "index.html" }]);
+  if (projectSlug) {
+    if (!/^[a-z0-9][a-z0-9-]{2,39}$/.test(projectSlug)) { empty("No project here", "Choose a valid project address.", []); return; }
+    fetch(API + "/v1/projects/" + encodeURIComponent(projectSlug), { credentials: "omit", headers: { accept: "application/json" } })
+      .then(function (r) { return r.json().then(function (b) { return { status: r.status, body: b }; }); })
+      .then(function (r) {
+        var registry = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(projectSlug);
+        if (r.status === 200 && r.body && r.body.ok && r.body.config && (!r.body.registry_key || registry && r.body.registry_key === projectSlug)) { start(r.body); return; }
+        if (r.status === 404 && r.body && r.body.code === "project_not_found" && registry) { start(registry); return; }
+        empty(r.status === 404 ? "No public project here" : "This project cannot be read right now", "The project may be unpublished or temporarily unavailable.", [{ label: "Your projects", href: "customer-projects.html" }]);
+      }).catch(function () { empty("This project cannot be read right now", "Try again in a moment.", []); });
     return;
   }
   if (!HANDLE.test(handle)) { empty("No front page here", "This link does not name an account.", [{ label: "Make your own front page", href: "front-studio.html" }]); return; }

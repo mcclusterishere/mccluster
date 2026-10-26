@@ -16,6 +16,7 @@ try {
   await context.addInitScript(()=>localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()})));
   await context.route('**/*',async route=>{
    const u=new URL(route.request().url());
+   if(u.origin==='https://api.mccluster.org'&&u.pathname==='/v1/projects/vaunt')return route.fulfill({status:404,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:false,code:'project_not_found'})});
    if(u.origin!==BASE)return route.fulfill({status:200,contentType:'application/json',body:'{}'});
    const file=resolve(ROOT,'.'+u.pathname);
    if(!file.startsWith(ROOT+'/'))return route.abort();

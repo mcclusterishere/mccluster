@@ -108,7 +108,7 @@
   var MEMBER = window.MCC_FRONT_SOURCE && typeof window.MCC_FRONT_SOURCE === "object" ? window.MCC_FRONT_SOURCE : null;
   var FRONT = frontConfig(MEMBER ? MEMBER.config : null, !!MEMBER);
   // Repository-managed project assets are separate from member-upload validation.
-  var PROJECT = MEMBER && !MEMBER.studio && window.MCC_FRONT_PROJECTS && window.MCC_FRONT_PROJECTS.get(MEMBER.project);
+  var PROJECT = MEMBER && window.MCC_FRONT_PROJECTS && window.MCC_FRONT_PROJECTS.get(MEMBER.project);
   if (PROJECT) FRONT.media = PROJECT.config.media;
   window.MCC_FRONT_DEFAULT = frontConfig(null);   // what the page does with no row: the Control Room's starting point
   var frontHooks = [];

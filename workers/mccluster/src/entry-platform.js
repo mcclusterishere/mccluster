@@ -28,6 +28,8 @@ import { handleAudioRooms } from './audio-sfu-rooms.js';
 import { handleRegionScope } from './world-region-feed.js';
 import { handleMemberFronts } from './member-fronts.js';
 
+import { handleManagedProjects } from './managed-projects.js';
+
 export { HereTenantAgent } from './here-tenant-agent.js';
 
 function healthResponse(request, env) {
@@ -102,6 +104,8 @@ export default {
       const archive = await handleActionArchive(request, env);
       if (archive) return archive;
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
+      const projects = await handleManagedProjects(request, env);
+      if (projects) return projects;
       const fronts = await handleMemberFronts(request, env);
       if (fronts) return fronts;
 
