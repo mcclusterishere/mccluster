@@ -32,7 +32,7 @@ export async function handleCreatorBillingWebhook(request,env,{onDomainPaid,onSt
  let event;
  try{event=await verifyStripeWebhook(await request.text(),request.headers.get('stripe-signature'),env.CREATOR_STRIPE_WEBHOOK_SECRET)}
  catch{return fail(request,env,'Invalid Stripe webhook signature',400)}
- if(!event?.id||!event?.type||!Number.isInteger(event.created))return fail(request,env,'Malformed Stripe event',400);
+ if(!event?.id||!event?.type||!Number.isInteger(event.created)||typeof event.livemode!=='boolean')return fail(request,env,'Malformed Stripe event',400);
  if(event.livemode!==false && env.CREATOR_BILLING_ALLOW_LIVE!=='true')return fail(request,env,'Live creator billing is disabled',503);
  if(!EVENTS.has(event.type))return reply(request,env,{received:true,ignored:true});
  if(event.type==='charge.refunded'&&event.data?.object?.metadata?.creator_store_order_id){
@@ -62,10 +62,10 @@ export async function handleCreatorBillingWebhook(request,env,{onDomainPaid,onSt
   if(!/^cs_[A-Za-z0-9_]+$/.test(source.id||''))return fail(request,env,'Invalid domain checkout',400);
   const session=await stripeRequest(env,'checkout/sessions/'+encodeURIComponent(source.id),{},{method:'GET'});
   const owner=session.metadata?.mccluster_user_id;
-  if(session.metadata?.creator_domain_order_id!==domainOrderId||!/^[0-9a-f-]{36}$/i.test(domainOrderId)||!/^[0-9a-f-]{36}$/i.test(owner||'')||session.client_reference_id!==owner||session.mode!=='payment')return fail(request,env,'Domain checkout ownership mismatch',409);
+  if(session.id!==source.id||session.livemode!==event.livemode||session.metadata?.creator_domain_order_id!==domainOrderId||!/^[0-9a-f-]{36}$/i.test(domainOrderId)||!/^[0-9a-f-]{36}$/i.test(owner||'')||session.client_reference_id!==owner||session.mode!=='payment')return fail(request,env,'Domain checkout ownership mismatch',409);
   if(session.payment_status!=='paid')return reply(request,env,{received:true,pending:true});
   if(!Number.isSafeInteger(session.amount_total)||session.amount_total<=0)return fail(request,env,'Invalid domain payment amount',400);
-  await onDomainPaid({orderId:domainOrderId,ownerUserId:owner,eventId:event.id,sessionId:session.id,amountTotal:session.amount_total,currency:session.currency,paymentStatus:session.payment_status,paidAt:new Date(event.created*1000).toISOString()},env);
+  await onDomainPaid({orderId:domainOrderId,livemode:event.livemode,ownerUserId:owner,eventId:event.id,sessionId:session.id,amountTotal:session.amount_total,currency:session.currency,paymentStatus:session.payment_status,paidAt:new Date(event.created*1000).toISOString()},env);
   return reply(request,env,{received:true});
  }
  const id=subscriptionId(event);
