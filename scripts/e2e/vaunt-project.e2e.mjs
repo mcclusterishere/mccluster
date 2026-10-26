@@ -39,7 +39,7 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({path:join(OUT,`portfolio-${width}.png`)});
   if(width===820){await page.locator('[data-cta="vaunt-project"]').focus();await page.keyboard.press('Enter');}
-  else await page.locator('[data-cta="vaunt-project"]').click();
+  else await page.locator('[data-cta="vaunt-project"]').click({noWaitAfter:true});
   await page.waitForFunction(()=>document.documentElement.dataset.frontState==='ready'&&!!window.__MCC_FRONT_GOTO);
   assert.match(await page.title(),/Vaunt/);
   await page.waitForFunction(()=>document.querySelector('[data-appnav="home"] img')?.src.includes('vaunt-logo.webp'));
@@ -93,15 +93,15 @@ try {
   assert.equal(await page.locator('[data-appnav="music"]').getAttribute('href'),musicHref);
   await page.goto(BASE+'/front.html?project=vaunt#work',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
-  await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click();
-  await page.waitForURL('**/album.html?album=vaunt-ep');
+  await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click({noWaitAfter:true});
+  await page.waitForURL('**/album.html?album=vaunt-ep',{waitUntil:'domcontentloaded'});
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   await page.goBack({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
   await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   assert.ok((await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt-logo'));
-  await page.locator('#work .scene-intro a[href="index.html#work"]').click();
-  await page.waitForURL('**/index.html#work');
+  await page.locator('#work .scene-intro a[href="index.html#work"]').click({noWaitAfter:true});
+  await page.waitForURL('**/index.html#work',{waitUntil:'domcontentloaded'});
   assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
   await page.goBack({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.__previewReveal);
