@@ -43,7 +43,7 @@ test('the platform entry asks before any gated handler, right after health', asy
   assert.match(src, /import \{ preflightResponse \} from '\.\/preflight\.js';/);
   const at = src.indexOf('const preflight = preflightResponse(request, env);');
   assert.ok(at > src.indexOf("url.pathname === '/v1/health'"), 'after health');
-  for (const gate of ['handleCreatorBillingWebhook(request, env)', 'enforceApiRateLimit(request, env)', 'handleAuthHandoff(request, env)', 'handleCreatorPublish(request, env)', 'handleCreatorEntitlement(request, env)', 'handleComputeApi(request, env)', 'handlePlatformApi(request, env)']) {
+  for (const gate of ['handleCreatorBillingWebhook(request, env,', 'enforceApiRateLimit(request, env)', 'handleAuthHandoff(request, env)', 'handleCreatorPublish(request, env)', 'handleCreatorEntitlement(request, env)', 'handleComputeApi(request, env)', 'handlePlatformApi(request, env)']) {
     assert.ok(at < src.indexOf(gate), 'before ' + gate);
   }
   assert.ok(at > src.indexOf('humanUpriseResponse(request, env)'), 'the World hosts answer their own requests first');
