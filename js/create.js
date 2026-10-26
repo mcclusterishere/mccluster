@@ -21,12 +21,13 @@
   var MIN_CLIP = 1; // seconds
   var MAX_IMAGE_BYTES = 25 * 1024 * 1024;
   var MAX_VIDEO_BYTES = 500 * 1024 * 1024;
-  var DRAFT_KEY = "mnet_create_draft_v1";
-  var DRAFT_TTL = 7 * 86400000;
+  var draftStore = window.MCCCompositionDraft.browser("advanced");
+  var ownerEpoch = 0;
+  // The legacy unowned draft is intentionally never adopted by an account.
   var OK_TYPES = /^(image\/(jpeg|png|webp|avif|gif)|video\/(mp4|webm|quicktime))$/;
 
   var S = {
-    file: null, kind: "", url: "", dur: 0, start: 0, end: 0, muted: false,
+    owner: "", file: null, kind: "", url: "", dur: 0, start: 0, end: 0, muted: false,
     upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false, xhr: null, uploadGrantAsset: null, uploadCancelled: false, completed: false, uploadPhase: "idle",
     /* the cover: { at, chosen, file, preview, asset, up, dropped, sent }; coverWork settles to the newest one */
     cover: null, coverSeq: 0, coverWork: null, coverPick: null, frameCount: 0
@@ -58,18 +59,18 @@
     };
   }
   function saveDraft() {
-    if (S.busy || S.completed) return;
+    if (!S.owner || S.busy || S.completed) return;
     try {
       var d = draftData(), useful = d.body.trim() || d.track || d.when === "later";
-      if (useful) localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
-      else localStorage.removeItem(DRAFT_KEY);
+      if (useful) draftStore.write(S.owner, d);
+      else draftStore.clear(S.owner);
     } catch (e) {}
   }
-  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+  function clearDraft() { draftStore.clear(S.owner); }
   function restoreDraft() {
     var d = null;
-    try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) {}
-    if (!d || !d.saved_at || Date.now() - d.saved_at > DRAFT_TTL) { clearDraft(); return false; }
+    try { d = draftStore.read(S.owner); } catch (e) {}
+    if (!d) { clearDraft(); return false; }
     $("crCaption").value = String(d.body || "").slice(0, 5000);
     $("crCount").textContent = $("crCaption").value.length.toLocaleString();
     $("crVisibility").value = /^(public|network|private)$/.test(d.visibility) ? d.visibility : "public";
@@ -85,9 +86,13 @@
       x.classList.toggle("is-on", on); x.setAttribute("aria-checked", on ? "true" : "false");
     });
   }
+  function assertOwner(epoch,owner){if(epoch!==ownerEpoch||owner!==S.owner)throw Object.assign(new Error("Account changed. Reopen this account's draft."),{stale:true});}
   function api(path, init) {
+    var epoch=ownerEpoch,owner=S.owner;
     return window.MCC.api(path, init).then(function (res) {
+      if(epoch!==ownerEpoch)throw new Error("Account changed. Reopen this account's draft.");
       return res.text().then(function (t) {
+        assertOwner(epoch,owner);
         var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { d = t; }
         if (!res.ok) throw Object.assign(new Error((d && (d.error || d.message)) || ("Request failed (" + res.status + ")")), { status: res.status });
         return d;
@@ -109,7 +114,7 @@
 
   /* ---------- start ---------- */
   function paintGate() {
-    var on = signedIn();
+    var on = signedIn() && !!S.owner;
     $("crSignedOut").hidden = on;
     $("crMake").hidden = !on;
     if (on) loadQueue();
@@ -195,6 +200,7 @@
     });
   }
   function put(url, file, token, signed) {
+    var epoch=ownerEpoch;
     return new Promise(function (resolve, reject) {
       var x = new XMLHttpRequest();
       S.xhr = x;
@@ -204,16 +210,16 @@
       x.setRequestHeader("content-type", file.type || "application/octet-stream");
       x.setRequestHeader("x-upsert", "false");
       x.upload.onprogress = function (e) {
-        if (e.lengthComputable) uploadLine("Uploading… " + Math.round(e.loaded / e.total * 100) + "%", "", Math.round(e.loaded / e.total * 100));
+        if (epoch===ownerEpoch && e.lengthComputable) uploadLine("Uploading… " + Math.round(e.loaded / e.total * 100) + "%", "", Math.round(e.loaded / e.total * 100));
       };
-      x.onload = function () { S.xhr = null; x.status >= 200 && x.status < 300 ? resolve() : reject(new Error("Upload rejected (" + x.status + ")")); };
-      x.onerror = function () { S.xhr = null; reject(new Error("The upload was interrupted. Check your connection.")); };
-      x.onabort = function () { S.xhr = null; reject(Object.assign(new Error("Upload cancelled."), { cancelled: true })); };
+      x.onload = function () { if(S.xhr===x)S.xhr = null; x.status >= 200 && x.status < 300 ? resolve() : reject(new Error("Upload rejected (" + x.status + ")")); };
+      x.onerror = function () { if(S.xhr===x)S.xhr = null; reject(new Error("The upload was interrupted. Check your connection.")); };
+      x.onabort = function () { if(S.xhr===x)S.xhr = null; reject(Object.assign(new Error("Upload cancelled."), { cancelled: true })); };
       x.send(file);
     });
   }
   function startUpload() {
-    var file = S.file, mine = {};
+    var file = S.file, mine = {epoch:ownerEpoch,owner:S.owner};
     if (!file) return;
     if (navigator.onLine === false) {
       S.uploadError = Object.assign(new Error("Waiting for a connection."), { offline: true });
@@ -226,6 +232,7 @@
     S.upload = mine.p = api("/v1/mnet/media/upload-url", {
       method: "POST", body: { file_name: file.name || (S.kind + ".bin"), mime_type: file.type, byte_size: file.size }
     }).then(function (grant) {
+      assertOwner(mine.epoch,mine.owner);
       var path = grant && grant.upload && grant.upload.path, asset = grant && grant.asset;
       if (!path || !asset) throw new Error("The upload slot was not created.");
       S.uploadGrantAsset = asset;
@@ -239,10 +246,12 @@
       var url = tok
         ? SB_URL + "/storage/v1/object/upload/sign/mnet-media/" + storagePath(path) + "?token=" + encodeURIComponent(tok)
         : SB_URL + "/storage/v1/object/mnet-media/" + storagePath(path);
-      return put(url, file, s && s.access_token, !!tok).then(measure).then(function (m) {
+      return put(url, file, s && s.access_token, !!tok).then(function(){assertOwner(mine.epoch,mine.owner);return measure();}).then(function (m) {
+        assertOwner(mine.epoch,mine.owner);
         return api("/v1/mnet/media/finalize", { method: "POST", body: { asset_id: asset.id, width: m.width, height: m.height, duration_ms: m.duration_ms } });
       }).then(function (fin) { return (fin && fin.asset) || asset; });
     }).then(function (asset) {
+      assertOwner(mine.epoch,mine.owner);
       if (S.upload !== mine.p || S.uploadCancelled) {
         discardUploadAsset(asset);
         return asset;
@@ -384,11 +393,13 @@
      the strip, or pause on one and tap Cover. It goes up as soon as it is taken, beside the video, through the same
      upload-url, PUT and finalize; a cover that is replaced, cancelled or never posted is discarded. */
   function uploadCover(file, meta) {
+    var epoch=ownerEpoch,owner=S.owner;
     var s = session(), token = s && s.access_token;
     if (!token) return Promise.reject(new Error("Sign in first."));
     return api("/v1/mnet/media/upload-url", {
       method: "POST", body: { file_name: file.name || "cover.jpg", mime_type: "image/jpeg", byte_size: file.size }
     }).then(function (grant) {
+      assertOwner(epoch,owner);
       var path = grant && grant.upload && grant.upload.path, asset = grant && grant.asset, tok = grant && grant.upload && grant.upload.token;
       if (!path || !asset) throw new Error("The upload slot was not created.");
       var url = tok
@@ -396,6 +407,7 @@
         : SB_URL + "/storage/v1/object/mnet-media/" + storagePath(path);
       return fetch(url, { method: tok ? "PUT" : "POST", headers: { apikey: SB_KEY, authorization: "Bearer " + token, "content-type": "image/jpeg", "x-upsert": "false" }, body: file })
         .then(function (res) {
+          assertOwner(epoch,owner);
           if (!res.ok) { discardUploadAsset(asset); throw new Error("Upload rejected (" + res.status + ")"); }
           return api("/v1/mnet/media/finalize", { method: "POST", body: { asset_id: asset.id, width: meta.width, height: meta.height } });
         }).then(function (fin) { return (fin && fin.asset) || asset; });
@@ -404,7 +416,7 @@
   /* at: the moment the person chose (chosen), or ignored (the kept stretch is searched) */
   function setCover(at, chosen) {
     if (S.kind !== "video" || !S.url || !window.MCCVideoPoster) return Promise.resolve(S.cover);
-    var seq = ++S.coverSeq, url = S.url, name = S.file && S.file.name;
+    var seq = ++S.coverSeq, url = S.url, name = S.file && S.file.name, epoch=ownerEpoch, owner=S.owner;
     S.coverPick = { at: chosen ? at : null, chosen: !!chosen };
     $("crCover").setAttribute("aria-busy", "true");
     var work = window.MCCVideoPoster.capture(url, chosen ? { at: at, name: name } : { start: S.start, end: S.end, name: name })
@@ -415,6 +427,7 @@
           /* the cover before stays until this one is up: a new picture that fails to go up gives the old one back */
           var next = { at: shot.at, chosen: !!chosen, file: shot.file, preview: URL.createObjectURL(shot.file), prev: S.cover };
           next.up = uploadCover(shot.file, { width: shot.width, height: shot.height }).then(function (asset) {
+            assertOwner(epoch,owner);
             next.asset = asset;
             if (next.dropped) discardUploadAsset(asset);
             else { retireCover(next.prev, false); next.prev = null; }
@@ -436,18 +449,18 @@
     return work;
   }
   /* keep: the post went out with it, so it is the post's now */
-  function dropCover(keep) {
+  function dropCover(keep,accountChanged) {
     var c = S.cover;
     S.cover = null;
-    retireCover(c, keep);
+    retireCover(c, keep,accountChanged);
   }
   /* a cover, and any it was holding on to until it went up */
-  function retireCover(c, keep) {
+  function retireCover(c, keep,accountChanged) {
     if (!c) return;
     c.dropped = true;
     if (c.preview) try { URL.revokeObjectURL(c.preview); } catch (e) {}
-    if (c.asset && !(keep && c.sent)) discardUploadAsset(c.asset);
-    if (c.prev) { retireCover(c.prev, keep); c.prev = null; }
+    if (!accountChanged && c.asset && !(keep && c.sent)) discardUploadAsset(c.asset);
+    if (c.prev) { retireCover(c.prev, keep,accountChanged); c.prev = null; }
   }
   var coverTimer = 0;
   function coverAfterTrim() {
@@ -620,7 +633,8 @@
   }
 
   $("crPost").addEventListener("click", function () {
-    if (S.busy) return;
+    if (S.busy || !S.owner) return;
+    var postEpoch=ownerEpoch,postOwner=S.owner;
     var body = $("crCaption").value.trim();
     var song = $("crTrack").value ? S.catalogue[Number($("crTrack").value)] : null;
     if (!body && !S.file && !song) { status("Write something first.", true); return; }
@@ -640,8 +654,10 @@
     status(S.file && !S.asset ? "Finishing the upload…" : (at ? "Scheduling…" : "Posting…"));
     var ready = S.file ? S.upload : Promise.resolve(null);
     ready.then(function (asset) {
+      assertOwner(postEpoch,postOwner);
       return (asset ? coverForPost() : Promise.resolve(null)).then(function (poster) { return { asset: asset, poster: poster }; });
     }).then(function (up) {
+      assertOwner(postEpoch,postOwner);
       var asset = up.asset;
       status(at ? "Scheduling…" : "Posting…");
       var payload = { body: body, visibility: $("crVisibility").value, track: song };
@@ -658,6 +674,7 @@
       if (at) payload.publish_at = at.toISOString();
       return api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), { method: "POST", body: payload });
     }).then(function (out) {
+      assertOwner(postEpoch,postOwner);
       track(at ? "create_scheduled" : "create_posted", { kind: S.kind || "text", trimmed: !!(S.kind === "video" && (S.start > 0.05 || S.end < S.dur - 0.05)) });
       $("crDoneH").textContent = at ? "Scheduled" : "Posted";
       $("crDoneP").textContent = at
@@ -667,8 +684,9 @@
       clearDraft(); $("crDraftNotice").hidden = true;
       go("done");
     }).catch(function (e) {
-      status(e.message || "That did not go through. Try again.", true);
+      if(postEpoch===ownerEpoch)status(e.message || "That did not go through. Try again.", true);
     }).finally(function () {
+      if(postEpoch!==ownerEpoch)return;
       S.busy = false;
       btn.disabled = false;
     });
@@ -708,16 +726,17 @@
   function reset(opts) {
     opts = opts || {};
     pause();
-    var abandoned = S.completed ? null : (S.uploadGrantAsset || (S.asset && !S.busy ? S.asset : null));
+    var abandoned = S.completed || opts.accountChanged ? null : (S.uploadGrantAsset || (S.asset && !S.busy ? S.asset : null));
     if (S.xhr) try { S.xhr.abort(); } catch (e) {}
     if (abandoned) discardUploadAsset(abandoned);
     /* a cover that went out with the post is the post's; any other is discarded */
     clearTimeout(coverTimer);
-    S.coverSeq++; dropCover(S.completed); S.coverWork = null; S.coverPick = null; S.frameCount = 0;
+    S.coverSeq++; dropCover(S.completed,opts.accountChanged); S.coverWork = null; S.coverPick = null; S.frameCount = 0;
     $("crCover").removeAttribute("aria-busy");
     if (S.url) try { URL.revokeObjectURL(S.url); } catch (e) {}
     v.removeAttribute("src"); try { v.load(); } catch (e) {}
     $("crImage").removeAttribute("src");
+    S.busy=false;$("crPost").disabled=false;
     S.file = null; S.kind = ""; S.url = ""; S.dur = 0; S.start = 0; S.end = 0; S.muted = false;
     S.upload = null; S.asset = null; S.uploadError = null; S.xhr = null; S.uploadGrantAsset = null; S.uploadCancelled = false; S.uploadPhase = "idle"; S.completed = false;
     if (!opts.preserveComposition) S.when = "now";
@@ -746,16 +765,19 @@
   window.addEventListener("beforeunload", saveDraft);
   document.addEventListener("visibilitychange", function () { if (document.hidden) saveDraft(); });
   window.addEventListener("resize", function () { if (S.kind === "video" && !$("crEdit").hidden) drawFrames(); });
-  window.addEventListener("mcc:auth-state", paintGate);
-  window.addEventListener("storage", function (e) { if (e.key === "mccdb_session") paintGate(); });
   var catalogueReady = loadCatalogue();
-  paintGate();
-  if (signedIn() && restoreDraft()) {
-    toDetails();
-    catalogueReady.then(function () {
-      var d = null; try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) {}
-      if (d && d.track && $("crTrack").options[Number(d.track)]) $("crTrack").value = d.track;
-    });
+  function refreshDraftOwner() {
+    saveDraft();var epoch=++ownerEpoch;S.owner="";reset({accountChanged:true});go("start");paintGate();
+    Promise.resolve(window.MCC.user()).then(function(user){
+      if(epoch!==ownerEpoch)return;S.owner=user&&user.id||"";paintGate();
+      if(S.owner&&restoreDraft()){
+        toDetails();catalogueReady.then(function(){if(epoch!==ownerEpoch)return;var draft=draftStore.read(S.owner);if(draft&&draft.track)$("crTrack").value=draft.track;});
+      }
+    }).catch(function(){if(epoch===ownerEpoch)paintGate();});
   }
+  window.addEventListener("mcc:auth-changed",refreshDraftOwner);
+  window.addEventListener("mcc:auth-state",function(e){var auth=e.detail||{};if(auth.verified&&(auth.signed_in?auth.user?.id:"")!==S.owner)refreshDraftOwner();});
+  window.addEventListener("storage",function(e){if(!e.key||e.key==="mccdb_session")refreshDraftOwner();});
+  refreshDraftOwner();
   track("create_open", {});
 })();

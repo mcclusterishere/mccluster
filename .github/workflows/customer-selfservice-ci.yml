@@ -13,6 +13,11 @@ on:
       - 'website-studio*.html'
       - 'music*.html'
       - 'mnet.html'
+      - 'create.html'
+      - 'js/create.js'
+      - 'js/composition-draft.js'
+      - 'css/create.css'
+      - 'css/world-composer-overlay.css'
       - 'js/website-studio/**'
       - 'css/website-studio.css'
       - 'data/website-studio/**'
@@ -183,12 +188,14 @@ jobs:
           STUDIO_PROCESS_UPLOADS=1 STUDIO_QUOTA_FAILURE=1 FREE_SITE_PILOT=1 node scripts/e2e/project-tiles.e2e.mjs
           node scripts/e2e/project-tiles-redirect.e2e.mjs
           node scripts/test/world-social-composer.browser.mjs
+          node scripts/e2e/composer-overlay.e2e.mjs
           node scripts/test/creator-domain-purchases-ui.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: customer-selfservice-browser-proof
           path: |
+            /tmp/composer-overlay-proof
             /tmp/equity-offers-proof
             /tmp/managed-project-proof
             /tmp/platform-audiences-proof

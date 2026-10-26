@@ -3197,11 +3197,11 @@
     /* the composer is one line until it is used */
     var composer = $("mnComposer"), body = $("mnPostBody");
     if (composer && body) {
-      body.addEventListener("focus", function () { composer.classList.add("is-open"); });
+      body.addEventListener("focus", function () { composer.classList.add("is-open"); if(window.MCC_WORLD_OVERLAY)window.MCC_WORLD_OVERLAY.open(body); });
       body.addEventListener("input", function () { if (window.MCC_WORLD_COMPOSER) window.MCC_WORLD_COMPOSER.preview({caption: body.value.trim(), media: state.mediaAssets}); });
       composer.addEventListener("focusout", function () {
         setTimeout(function () {
-          if (!composer.contains(document.activeElement) && !body.value.trim() && !state.mediaAssets.length && !$("mnTrackPick").value) composer.classList.remove("is-open");
+          if (!window.MCC_WORLD_OVERLAY?.isOpen() && !composer.contains(document.activeElement) && !body.value.trim() && !state.mediaAssets.length && !$("mnTrackPick").value) composer.classList.remove("is-open");
         }, 150);
       });
     }
