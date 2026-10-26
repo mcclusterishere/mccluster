@@ -19,6 +19,7 @@ await context.route('**/*',async route=>{
  const req=route.request(),u=new URL(req.url());
  if(req.method()==='OPTIONS')return route.fulfill({status:204,headers:{'access-control-allow-origin':BASE,'access-control-allow-headers':'*','access-control-allow-methods':'*'}});
  if(u.origin==='https://api.mccluster.org'||u.origin===CUSTOM&&u.pathname.startsWith('/v1/')){
+  if(processingFlow&&u.pathname==='/v1/customer-site/media'){const r=await f.fetcher(u.href,{method:req.method(),headers:req.headers(),body:req.postDataBuffer()});return route.fulfill({status:r.status,headers:{'access-control-allow-origin':BASE},body:await r.text()});}
   if(u.pathname==='/v1/creator-billing/entitlement')return route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':BASE},body:JSON.stringify({paid:true,workspaces:[{org_id:ORG}]})});
   const r=await handleProjectTiles(new Request(req.url(),{method:req.method(),headers:req.headers(),body:['GET','HEAD'].includes(req.method())?undefined:req.postData()}),f.env,{db:f.db,fetchImpl:f.fetchImpl});
   if(processingFlow&&r?.ok&&u.pathname.endsWith('/complete')){const jobs=(await f.sql.query("select input from ops_compute_tasks where status='queued' order by created_at desc limit 1")).rows;if(jobs[0])await executeStudioTask(jobs[0].input,{fetcher:f.fetcher});}

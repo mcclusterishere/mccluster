@@ -29,18 +29,15 @@
       if (!token) throw new Error("Sign in to upload.");
       return new Promise(function (resolve, reject) {
         var x = new XMLHttpRequest();
-        x.open("POST", sb().url + "/storage/v1/object/" + BUCKET + "/" + path);
+        x.open("POST", "https://api.mccluster.org/v1/customer-site/media?path=" + encodeURIComponent(path));
         x.setRequestHeader("authorization", "Bearer " + token);
-        x.setRequestHeader("apikey", sb().key);
+        x.setRequestHeader("x-site-bytes", String(blob.size));
         x.setRequestHeader("content-type", type);
-        x.setRequestHeader("x-upsert", "true");
-        x.setRequestHeader("cache-control", "max-age=31536000");
         if (onProgress && x.upload) x.upload.onprogress = function (e) { if (e.lengthComputable) onProgress(e.loaded / e.total); };
         x.onload = function () {
           if (x.status >= 200 && x.status < 300) return resolve(publicUrl(path));
-          /* the bucket's policy refuses a write past the account's room (2,500 files, 1 GiB: member_fronts_v1.sql) */
-          reject(new Error((x.status === 403 || x.status === 400) && /row-level security|violates/i.test(x.responseText || "")
-            ? "Your front page storage is full. Remove a film or your 360, save, and try again."
+          reject(new Error(x.status === 429 || x.status === 413
+            ? "Your website storage is full. Remove unused media, save, then refresh storage in Your site before retrying."
             : "Upload refused (" + x.status + ")"));
         };
         x.onerror = function () { reject(new Error("Upload failed: check the connection")); };

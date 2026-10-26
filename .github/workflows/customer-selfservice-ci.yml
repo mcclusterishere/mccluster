@@ -80,7 +80,9 @@ jobs:
         with:
           node-version: '22'
       - name: Test real storage policies with isolated accounts
-        run: bash scripts/test-member-fronts-db.sh
+        run: |
+          bash scripts/test-member-fronts-db.sh
+          bash scripts/test-customer-site-storage-db.sh
       - name: Test publish, privacy, recovery and tenant boundaries without network
         run: >-
           node --import ./workers/mccluster/test/support/offline-network.mjs --test
@@ -111,6 +113,7 @@ jobs:
           PGLITE_MODULE_PATH: /tmp/selfservice-tools/node_modules/@electric-sql/pglite/dist/index.js
         run: |
           node scripts/test-managed-projects-db.mjs
+          node scripts/test/customer-site-storage-db.mjs
           node scripts/test-world-directory-db.mjs
           node scripts/test-customer-social-db.mjs
           node scripts/test/creator-domain-schema.mjs

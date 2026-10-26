@@ -128,6 +128,16 @@
     });
     action(actions(c),'Manage World listings','world-discover.html');
   }
+  function renderStorage(result,token,id) {
+    var c=card(root,'Website storage');
+    if(!result.ok||!result.data||result.data.ok!==true||!Number.isFinite(result.data.quota_bytes)){
+      c.appendChild(el('p','Storage usage could not be verified. Uploads stay unavailable until the service can confirm your allowance.'));return;
+    }
+    var d=result.data;c.appendChild(el('p',(d.used_bytes/1000000).toFixed(1)+' MB used · '+(d.reserved_bytes/1000000).toFixed(1)+' MB reserved · '+(d.quota_bytes/1000000).toFixed(0)+' MB allowance','site-status'));
+    c.appendChild(el('p','Shared across your websites, including retained originals and prepared media. Delivery bandwidth and media processing have separate limits.'));
+    var b=el('button','Recover interrupted uploads','site-action');b.type='button';c.appendChild(b);
+    b.onclick=async function(){b.disabled=true;try{var r=await fetch('https://api.mccluster.org/v1/customer-site/storage',{method:'POST',headers:{Authorization:'Bearer '+token},signal:controller.signal});if(!r.ok)throw Error();if(id===generation)load();}catch(e){if(id===generation){b.disabled=false;c.appendChild(el('p','Recovery could not be confirmed. Pending uploads retain their reservation; retry later.'));}}};
+  }
   async function load() {
     var id = ++generation;
     if (controller) controller.abort();
@@ -147,11 +157,11 @@
       } catch (_) { return {ok:false, status:0}; }
     }
     var project=new URLSearchParams(location.search).get('project');
-    var results = await Promise.all([get('/v1/fronts/me'), get('/v1/creator-billing/entitlement'), get('/v1/customer-site/modules'+(project?'?project='+encodeURIComponent(project):''))]);
+    var results = await Promise.all([get('/v1/fronts/me'), get('/v1/creator-billing/entitlement'), get('/v1/customer-site/modules'+(project?'?project='+encodeURIComponent(project):'')),get('/v1/customer-site/storage')]);
     clearTimeout(timeout);
     if (id !== generation) return;
     if (!window.MCC.session() || window.MCC.session().access_token !== token) { load(); return; }
-    root.replaceChildren(); renderFront(results[0]); renderModules(results[2],token,id); renderBilling(results[1]); retry(actions(root));
+    root.replaceChildren(); renderFront(results[0]); renderStorage(results[3],token,id); renderModules(results[2],token,id); renderBilling(results[1]); retry(actions(root));
     root.setAttribute('aria-busy', 'false');
   }
   window.addEventListener('mcc:auth-changed', load);

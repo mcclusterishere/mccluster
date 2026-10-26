@@ -32,6 +32,7 @@ import { handleWorldDirectory } from './world-directory.js';
 import { handleMusicWorkspace } from './music-workspace.js';
 import { handleMemberFronts } from './member-fronts.js';
 import { handleCustomerSiteModules } from './customer-site-modules.js';
+import { handleCustomerSiteStorage } from './customer-site-storage.js';
 import { handleManagedProjects } from './managed-projects.js';
 import { handleProjectTiles } from './project-tiles.js';
 import { handleCreatorDomains } from './creator-domains.js';
@@ -114,6 +115,8 @@ export default {
       if (rateLimitResponse) return rateLimitResponse;
       const siteModules = await handleCustomerSiteModules(request, env);
       if (siteModules) return siteModules;
+      const siteStorage = await handleCustomerSiteStorage(request, env);
+      if (siteStorage) return siteStorage;
       /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
       const handoff = await handleAuthHandoff(request, env);
       if (handoff) return handoff;

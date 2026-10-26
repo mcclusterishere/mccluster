@@ -74,3 +74,52 @@ Legacy [AdSense for Video ended May 31, 2026](https://support.google.com/adsense
 future tenant revenue sharing, subject to platform onboarding/eligibility. A
 standard AdSense account is not evidence of that permission. No direct advertiser
 marketplace is in this first-offer scope.
+
+## Proposed 500 MB storage boundary
+
+`customer_site_storage_v1.sql` remains pending. 500 MB means 500,000,000 bytes
+shared by one account's personal front and managed websites, including private
+Studio originals and prepared outputs. This is a proposed initial allowance,
+not an activated plan or a bandwidth/processing price. Existing over-quota files
+remain readable and deletable. Storage metadata supplies used bytes; missing or
+invalid size metadata blocks new reservations for reconciliation.
+
+The Worker reserves under an account row lock, streams a bounded upload, rejects
+short/oversized bodies, verifies Storage HEAD size and settles the reservation.
+Replacement reserves positive growth; deletes use the Storage API and the next
+usage query observes actual metadata. No storage schema triggers, direct object
+row writes or automatic deletion are introduced. Old browser writes are denied
+by restrictive Storage RLS. Studio no longer issues signed upload URLs; it uses
+the same authenticated stream boundary. Prepared media also uses that boundary.
+
+A lost response keeps its reservation. Recovery settles matching provider bytes;
+confirmed absence releases only after 24 hours, beyond the upload's 120-second
+deadline. Provider outages or mismatched sizes do not release reserved bytes.
+Recovery processes at most 100 reservations per request; retry to continue.
+Any previously issued signed upload URLs must expire before activation, and
+existing service-role upload paths must be audited at the reviewed release SHA.
+Service-role credentials remain privileged and must never be issued to clients.
+
+Local proof uses real pending PostgreSQL functions/RLS in PGlite with fixture
+Storage/auth. Native two-session reservation contention is wired into CI.
+Real managed Supabase Storage upload/overwrite/HEAD/delete semantics and gateway
+streaming limits still require an authorized sandbox check before activation.
+Fixtures are not that evidence. Files continue to disclose public front-media
+versus private Studio media; a draft is not a promise that front-media is private.
+
+## Deferred additions from the continuing owner request
+
+Complete the first offer before expanding the existing composer and Stories.
+Composer work must reconcile #624/#628/#634's durable World/Instagram delivery
+identity, use server-verified creator/business and owned-account capabilities,
+preserve regular native posting, and implement an overlay/bottom sheet with
+draft/back/focus recovery. Do not create a second queue or unsupported networks.
+Stories require an audit of current storage/audience/expiry/reporting and actual
+media access after expiration; a timestamp alone does not revoke public bytes.
+Research the exact requested REA repository before installing or running it.
+
+Future advertising economics remain inactive and configurable. Free eligible
+creators need not buy a domain. A 50/50 split is a consideration, not a decision;
+track settled network receipts, attribution, reversals, platform share and
+rights-holder obligations separately. No post is promised earnings and no
+royalty distribution or payout account is activated.
