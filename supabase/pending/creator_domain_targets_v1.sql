@@ -1,8 +1,13 @@
 -- PENDING ONLY. Apply after managed_projects_v1 and creator_domains_v1.
 -- UUID survives content updates, never slug reuse or a new installation.
 begin;
-alter table public.managed_projects add column id uuid not null default gen_random_uuid();
-alter table public.managed_projects add constraint managed_projects_id_key unique(id);
+-- Free sites may already have acquired immutable identity independently.
+alter table public.managed_projects add column if not exists id uuid not null default gen_random_uuid();
+do $$ begin
+ if not exists(select 1 from pg_constraint where conrelid='public.managed_projects'::regclass and conname='managed_projects_id_key') then
+  alter table public.managed_projects add constraint managed_projects_id_key unique(id);
+ end if;
+end $$;
 alter table public.creator_domains add column target_type text not null default 'member_front'
  check(target_type in ('member_front','managed_project'));
 alter table public.creator_domains add column target_id uuid;

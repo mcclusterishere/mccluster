@@ -37,6 +37,7 @@ import { handleCustomerSiteWorld } from './customer-site-world.js';
 import { handleCustomerSiteAddress } from './customer-site-addresses.js';
 import { handleCustomerSiteAdvertising } from './customer-site-advertising.js';
 import { handleManagedProjects } from './managed-projects.js';
+import { handleCanonicalArtists } from './canonical-artists.js';
 import { handleProjectTiles } from './project-tiles.js';
 import { handleCreatorDomains } from './creator-domains.js';
 import { handleCreatorDomainOrders, handleVerifiedCloudflareDomainFunding } from './creator-domain-orders.js';
@@ -140,6 +141,8 @@ export default {
       if (domainOrders) return domainOrders;
       const domains = await handleCreatorDomains(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
       if (domains) return domains;
+      const artists = await handleCanonicalArtists(request, env);
+      if (artists) return artists;
       const projects = await handleManagedProjects(request, env);
       if (projects) return projects;
       const social = await handleCustomerSocial(request, env);

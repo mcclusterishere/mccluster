@@ -41,6 +41,7 @@ on:
       - 'workers/mccluster/src/preflight.js'
       - 'workers/mccluster/src/social/**'
       - 'workers/mccluster/src/managed-projects.js'
+      - 'workers/mccluster/src/canonical-artists.js'
       - 'scripts/e2e/**'
       - 'customer-*.html'
       - 'js/front-*.js'
@@ -120,6 +121,7 @@ jobs:
         run: |
           node scripts/test-managed-projects-db.mjs
           node scripts/test/customer-site-storage-db.mjs
+          node scripts/test/free-site-minimum-db.mjs
           node scripts/test/customer-site-addresses-db.mjs
           node scripts/test-world-directory-db.mjs
           node scripts/test-customer-social-db.mjs
