@@ -341,17 +341,17 @@
     /* "/" and "/index.html" are the same page (the HERE tab links the
        latter; the canonical home URL is the former) */
     var same = function (p) { return p.replace(/\/index\.html$/, "/"); };
-    if (to.origin !== location.origin || same(to.pathname) !== same(location.pathname)) return;
+    if (to.origin !== location.origin || same(to.pathname) !== same(location.pathname) || to.search !== location.search) return;
     e.preventDefault();
+    if (PAGE_PROFILE && window.__MCC_FRONT_GOTO) { window.__MCC_FRONT_GOTO("top"); return; }
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
   });
   var HOME_BAR = dock.innerHTML;
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
 
-  /* Creator perspective remains available to profile navigation and the
-     held home wing. The center emblem always opens the platform home,
-     regardless of the current member, artist, or owner perspective. */
+  /* Account perspective stays in the held home wing. The center follows the
+     current public profile only; other pages open the platform home. */
   var PERSPECTIVE_KEY = "mcc_perspective";
   var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";
   var SELF_PROFILE = null, selfProfileEpoch = 0, lastVerifiedSubject = "";
@@ -406,6 +406,33 @@
   }
   function initialOf(name) { var m = String(name).match(/[A-Za-z0-9\u00C0-\u024F]/); return m ? m[0].toUpperCase() : "@"; }
   function shortName(name) { var w = String(name).split(" ")[0]; return w.length > 12 ? w.slice(0, 11) + "\u2026" : w; }
+  /* A public profile may brand its own page for guests and members alike.
+     This context is document-local: never saved as an account perspective. */
+  function cleanPageProfile(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var name = String(raw.name || "").trim().slice(0, 60), home, logo = "";
+    try { home = new URL(raw.home, location.href); } catch (e) { return null; }
+    if (!name || !raw.home || home.origin !== location.origin || !/^https?:$/.test(home.protocol)) return null;
+    if (raw.logo) try {
+      var image = new URL(raw.logo, document.baseURI), assets = new URL(ROOT, location.href);
+      // Custom-domain HTML uses the canonical static base. Permit only that
+      // asset directory in addition to same-origin logos, never arbitrary hosts.
+      var suppliedAsset = image.origin === assets.origin && image.pathname.indexOf(assets.pathname + "assets/") === 0;
+      if ((image.origin === location.origin || suppliedAsset) && /^https?:$/.test(image.protocol)) logo = image.href;
+    } catch (e) {}
+    return { kind: "page", handle: "page-profile", name: name, home: home.href, avatar: logo };
+  }
+  var PAGE_PROFILE = cleanPageProfile(window.MCC_PAGE_PROFILE);
+  if (!PAGE_PROFILE && location.hostname === "matthew.mccluster.org" && (/^(index\.html)?$/.test(PAGE_KEY) || PAGE_KEY === "matthew-mccluster.html")) {
+    PAGE_PROFILE = cleanPageProfile({name:"Matthew McCluster", home:HOUSE+"index.html", logo:ROOT+"assets/img/m-mark.png"});
+  }
+  function setPageProfile(raw) {
+    PAGE_PROFILE = cleanPageProfile(raw);
+    if (wingOn) revert();
+    paintPerspective();
+    HOME_BAR = dock.innerHTML;
+    return !!PAGE_PROFILE;
+  }
   function paintPerspective() {
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
@@ -420,6 +447,21 @@
     WINGS.home.home = HOUSE + "platform-home.html";
     WINGS.home.slots[0] = HOUSE_ROOM;
     WINGS.home.slots[1] = EVERYTHING_ROOM;
+    if (PAGE_PROFILE) {
+      var profile = PAGE_PROFILE;
+      homeTab.href = profile.home;
+      homeTab.setAttribute("aria-label", "Open " + profile.name + "’s front page");
+      homeTab.setAttribute("data-perspective", "page-profile");
+      homeTab.innerHTML = (profile.avatar
+        ? '<img class="appbar__m appbar__m--creator appbar__m--brand" src="' + attrOf(profile.avatar) + '" alt="">'
+        : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(profile.name)) + '</span>') +
+        '<span class="appbar__sr">' + textOf(profile.name) + '</span>';
+      var destination = new URL(profile.home);
+      var current = destination.origin === location.origin && destination.pathname === location.pathname && destination.search === location.search;
+      homeTab.classList.toggle("is-here", current);
+      if (current) homeTab.setAttribute("aria-current", "page"); else homeTab.removeAttribute("aria-current");
+      WINGS.home.home = profile.home;
+    }
     var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null);
     if (p && p.kind !== "house") {
       var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
@@ -1046,6 +1088,7 @@
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
       veilOff(); revert();
       if (url.hash) location.hash = url.hash;
+      else if (PAGE_PROFILE && window.__MCC_FRONT_GOTO) window.__MCC_FRONT_GOTO("top");
       else window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -1243,6 +1286,7 @@
     wing: function () { return wingOn; },
     refreshAuth: refreshAuthState,
     auth: function () { return AUTH_STATE; },
+    pageProfile: function (p) { return arguments.length ? setPageProfile(p) : PAGE_PROFILE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
     ownPerspective: function(){return SELF_PROFILE;},

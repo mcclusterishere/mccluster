@@ -77,7 +77,15 @@ test('creator perspective stays available in the home wing while the center open
 
   const page = await read('js/music-creator-profile.js');
   assert.match(page, /var perspective = \{ kind: "artist", handle: p\.handle, name: p\.artist_name, avatar: avatar \|\| "" \};/);
-  assert.match(page, /root\.sessionStorage\.setItem\("mcc_perspective", JSON\.stringify\(perspective\)\)/);
+  assert.doesNotMatch(page, /(?:sessionStorage|localStorage)\s*\.\s*setItem\s*\(/,
+    'the artist page must not persist perspective directly or bypass the shared bar account scope');
+  assert.match(bar, /var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";/);
+  assert.match(bar, /sub && sessionStorage\.getItem\(PERSPECTIVE_SUB_KEY\)===sub/,
+    'a stored perspective is restored only for the current account');
+  assert.match(bar, /sessionStorage\.setItem\(PERSPECTIVE_SUB_KEY,sub\)/,
+    'the shared bar persists the perspective with its account owner');
+  assert.match(bar, /if \(!p \|\| !AUTH_STATE\.signed_in\) return false;/,
+    'the shared setter rejects perspective changes without a signed-in account');
   assert.match(page, /root\.dispatchEvent\(new CustomEvent\("mcc:perspective", \{ detail: perspective \}\)\)/);
   const i = page.indexOf('var avatar = PAGE.safeArtwork(p.avatar_url);'), j = page.indexOf('var perspective = {');
   assert.ok(i > 0 && j > i, 'the picture the bar gets is the one the page already vetted');

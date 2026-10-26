@@ -8,6 +8,10 @@ const query=new URLSearchParams(location.search);
 const requested=String(query.get('handle')||'').trim().toLowerCase();
 const form=$('mfEditForm'),editor=$('mfEditor');
 let self=null,identity=null,record=null,handle=requested,sessionEpoch=0;
+function sessionToken(){return window.MCC?.session?.()?.access_token||'';}
+function context(){return {epoch:sessionEpoch,token:sessionToken()};}
+function current(ctx){return ctx.epoch===sessionEpoch&&ctx.token===sessionToken();}
+function assertCurrent(ctx){if(!current(ctx))throw Error('Account changed.');}
 function message(text){$('mfStatus').textContent=text||'';}
 function safeImage(value){
   try{const u=new URL(String(value||''));return u.protocol==='https:'&&u.username===''&&u.password===''&&u.href.length<=2000?u.href:'';}catch{return'';}
@@ -15,10 +19,12 @@ function safeImage(value){
 function safeLink(value){
   try{const u=new URL(String(value||''));return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password&&u.href.length<=2000?u.href:'';}catch{return'';}
 }
-const api=async(path,init)=>{
+const api=async(path,init,ctx=context())=>{
+  assertCurrent(ctx);
   if(!window.MCC?.api)throw Error('Sign in with your M Account to view this page.');
-  const response=await window.MCC.api(path,init);
+  const response=await window.MCC.api(path,{...init,headers:{...init?.headers,authorization:'Bearer '+ctx.token}});
   const data=await response.json().catch(()=>({}));
+  assertCurrent(ctx);
   if(!response.ok)throw Error(data.error||data.message||'This profile is unavailable.');
   return data;
 };
@@ -75,16 +81,20 @@ function render(data){
   if(window.MCC_BAR?.perspective)window.MCC_BAR.perspective({
     kind:'member',handle:personId,name,avatar:safeImage(p.avatar_url)
   });
+  const pageBrand={name,home:'member-front.html?handle='+encodeURIComponent(personId)+'&card=1',logo:safeImage(p.avatar_url)};
+  window.MCC_PAGE_PROFILE=pageBrand;
+  window.MCC_BAR?.pageProfile?.(pageBrand);
   if(mine){void driverWorkspace();void operatorWorkspace();}
 }
 
 /* the published front page of this person, if there is one (GET /v1/fronts/:handle is public) */
 async function frontPage(personId,name,mine){
+  const ctx=context();
   $('mfFront').hidden=true;
   try{
     const r=await fetch('https://api.mccluster.org/v1/fronts/'+encodeURIComponent(personId),{headers:{accept:'application/json'},credentials:'omit'});
     const b=r.ok?await r.json().catch(()=>null):null;
-    if(!b||b.ok!==true||!b.config||b.handle!==personId||personId!==handle)return;
+    if(!current(ctx)||!b||b.ok!==true||!b.config||b.handle!==personId||personId!==handle)return;
     const url='front.html?u='+encodeURIComponent(personId);
     $('mfFront').href=url;$('mfFront').textContent=(mine?'My front page':'Enter '+name+'\u2019s front page')+' \u2197';$('mfFront').hidden=false;
     if(mine)$('mfBuild').textContent='Edit my front page';
@@ -98,8 +108,9 @@ $('mfBack').onclick=()=>{
 };
 
 async function operatorWorkspace(){
+  const ctx=context();
   try{
-    const data=await api('/api/operators/mine'),tenants=(Array.isArray(data.tenants)?data.tenants:[]);
+    const data=await api('/api/operators/mine',undefined,ctx),tenants=(Array.isArray(data.tenants)?data.tenants:[]);
     const owned=tenants.filter(t=>['owner','admin','manager'].includes(String(t.role||'').toLowerCase())&&t.id&&t.name);
     if(!owned.length||!self)return;
     const list=$('mfOperatorList');list.replaceChildren();
@@ -121,14 +132,16 @@ async function operatorWorkspace(){
 }
 
 async function driverWorkspace(){
+  const ctx=context();
   try{
-    const data=await api('/api/drivers/me');
+    const data=await api('/api/drivers/me',undefined,ctx);
     const driver=data.driver;
     if(!driver)return;
     $('mfDriverPanel').hidden=false;$('mfWhip').hidden=false;
     // /api/drivers/me describes the person's vehicle, not their regulatory
     // clearance. Only the operator-owned clearance API may authorize driving.
-    const clearance=await api('/api/drivers/clearance').catch(()=>null);
+    const clearance=await api('/api/drivers/clearance',undefined,ctx).catch(()=>null);
+    if(!current(ctx))return;
     const approved=clearance?.approval_status==='approved'&&clearance?.can_drive===true;
     $('mfDriverStatus').textContent=approved
       ? 'Whip Equipped confirms your operating clearance. Open your driver workspace to manage authorized rides.'
@@ -138,6 +151,7 @@ async function driverWorkspace(){
   }catch{/* Whip is independent; failure never blocks a member-owned page. */}
 }
 async function start(){
+  const ctx=context();
   if(!window.MCC?.session?.()?.access_token){
     $('mfName').textContent='Make this space yours.';
     message('Sign in with an M Account to view public member profiles and create your own page.');
@@ -147,12 +161,16 @@ async function start(){
     return;
   }
   try{
-    self=await api('/v1/mnet/bootstrap?app_key=mccluster-web');
+    const bootstrap=await api('/v1/mnet/bootstrap?app_key=mccluster-web',undefined,ctx);
+    if(!current(ctx))return;
+    self=bootstrap;
     if(!handle)handle=String(self.identity?.mccluster_id||'').toLowerCase();
     if(!handleRE.test(handle))throw Error('Finish choosing your M Account handle in your profile.');
-    const data=await api('/v1/mnet/people/'+encodeURIComponent(handle));
+    const data=await api('/v1/mnet/people/'+encodeURIComponent(handle),undefined,ctx);
     render(data);message('');
   }catch(error){
+    if(!current(ctx))return;
+    window.MCC_PAGE_PROFILE=null;window.MCC_BAR?.pageProfile?.(null);
     $('mfName').textContent='Profile unavailable.';
     message(error?.message||'Could not load this member.');
     $('mfNetwork').href='mnet.html?view=profile';
@@ -163,6 +181,7 @@ $('mfCancel').onclick=()=>editor.close();
 form.addEventListener('submit',async event=>{
   event.preventDefault();
   if(!self||!record||identity?.mccluster_id!==self.identity?.mccluster_id)return;
+  const ctx=context(),savedHandle=handle;
   const data={};
   for(const key of ['display_name','headline','bio','avatar_url','banner_url','website_url']){
     data[key]=String(form.elements.namedItem(key)?.value||'').trim();
@@ -175,21 +194,30 @@ form.addEventListener('submit',async event=>{
   const save=form.querySelector('button[type=submit]');save.disabled=true;
   $('mfEditStatus').textContent='Saving through your M Account…';
   try{
-    await api('/v1/mnet/profile?app_key=mccluster-web',{method:'PATCH',body:data});
-    const fresh=await api('/v1/mnet/people/'+encodeURIComponent(handle));
+    await api('/v1/mnet/profile?app_key=mccluster-web',{method:'PATCH',body:data},ctx);
+    const fresh=await api('/v1/mnet/people/'+encodeURIComponent(savedHandle),undefined,ctx);
     render(fresh);editor.close();message('Your public page was updated.');
-  }catch(error){$('mfEditStatus').textContent=error.message||'Save failed. Your original profile is unchanged.';}
-  finally{save.disabled=false;}
+  }catch(error){if(!current(ctx))return;$('mfEditStatus').textContent=error.message||'Save failed. Your original profile is unchanged.';}
+  finally{if(current(ctx))save.disabled=false;}
 });
-window.addEventListener('mcc:auth-changed',()=>{
-  if(!window.MCC?.session?.()?.access_token) {
-    ++sessionEpoch;
-    self=null;identity=null;record=null;
-    $('mfCustomize').hidden=true;$('mfOwnerPanel').hidden=true;$('mfDriverPanel').hidden=true;$('mfWhip').hidden=true;$('mfOperatorPanel').hidden=true;
+function accountChanged(){
+  ++sessionEpoch;
+  self=null;identity=null;record=null;
+  window.MCC_PAGE_PROFILE=null;window.MCC_BAR?.pageProfile?.(null);
+  if(editor.open)editor.close();
+  form.reset();
+  $('mfEditStatus').textContent='';
+  form.querySelector('button[type=submit]').disabled=false;
+  for(const id of ['mfCustomize','mfOwnerPanel','mfDriverPanel','mfWhip','mfOperatorPanel','mfBuild','mfBack','mfFront'])$(id).hidden=true;
+  $('mfOperatorList').replaceChildren();
+  $('mfDriverStatus').textContent='';
+  if(!sessionToken()) {
     message('Signed out. Your private editing controls are no longer available.');
     return;
   }
   location.reload();
-});
+}
+window.addEventListener('mcc:auth-changed',accountChanged);
+window.addEventListener('storage',event=>{if(!event.key||['mccdb_session','mcc_sess_keep'].includes(event.key))accountChanged();});
 start();
 })();
