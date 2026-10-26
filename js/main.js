@@ -548,6 +548,8 @@
       finishPreloader();
     });
 
+  /* Scroll-first projects put their title on the first command film instead. */
+  if (document.documentElement.getAttribute("data-front-entry") !== "scene") {
   /* ---------------- hero scrub ---------------- */
   var hudDeg = document.getElementById("hudDeg");
   var heroOffer = document.getElementById("heroOffer");
@@ -585,6 +587,8 @@
     })
     .to(".hero__sub, .hero__eyebrow", { opacity: 0, yPercent: -60 }, 0)
     .to(".hud__scroll", { opacity: 0 }, 0);
+
+  }
 
   /* ---------------- the loadout: 360 studio pan, three corners ----------------
      (lives on its own page when absent from this one, so guard and move on) */
@@ -819,6 +823,7 @@
 
   function applyCommand(p) {
     if (!cmdScenes.length) return;
+    if (window.MCC_PROJECT_ENTRY) window.MCC_PROJECT_ENTRY.update(p);
     var n = cmdScenes.length;
     var active = Math.min(n - 1, Math.floor(p * n));
     cmdScenes.forEach(function (sc, i) {
@@ -1860,6 +1865,14 @@
     if (holding) leaveCabinQuietly();
     lenis.scrollTo(y, { immediate: true, force: true });
     try { ScrollTrigger.update(); } catch (e) {}
+  }
+  // Hash entry can arrive before the project has removed its old hero height.
+  // Resolve opening-scene aliases after the cinematic scroll engine is ready.
+  if (document.documentElement.getAttribute("data-front-entry") === "scene") {
+    var resolveProjectAnchor = function () { if (/^(#work|#hero)$/.test(location.hash)) frontGoto("top"); };
+    resolveProjectAnchor();
+    // A same-document deep link can also cross the cabin's capture band.
+    window.addEventListener("hashchange", resolveProjectAnchor);
   }
   window.__MCC_FRONT_GOTO = frontGoto; // verification handles
   window.__MCC_FRONT_HOLDING = function () { return holding; };

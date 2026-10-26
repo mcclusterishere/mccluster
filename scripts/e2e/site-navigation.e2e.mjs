@@ -16,6 +16,11 @@ function check(name,ok,detail){results.push({name,pass:!!ok});console.log((ok?'P
 await mkdir(OUT,{recursive:true});
 async function setup(width,persona='owner'){
   const ctx=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
+  await ctx.addInitScript(()=>addEventListener('pagereveal',event=>{
+    // A cross-origin hop can legitimately skip the native transition. Consume
+    // both promises created by this fixture's observer, not application errors.
+    window.__navReveal=event.viewTransition ? Promise.allSettled([event.viewTransition.ready,event.viewTransition.finished]) : Promise.resolve();
+  }));
   const auth={status:persona==='owner'?200:403,signed:persona!=='guest',delay:false,release:null},calls=[],errors=[];
   await ctx.addInitScript(({signed,USER})=>{
     window.__navFrames=[];const sample=()=>{const b=document.querySelector('.appbar');if(b){const c=getComputedStyle(b);if(c.visibility==='visible'&&c.display!=='none')window.__navFrames.push(b.querySelectorAll('[data-appnav]').length);}requestAnimationFrame(sample);};requestAnimationFrame(sample);
@@ -110,21 +115,22 @@ try{
     check(width+' navigation has no script errors',errors.length===0,errors);
     await ctx.close();
   }
-  /* Universal perspective: guests get the house, signed-in people get their
-     own front, public profile selection switches center, and exit clears it. */
+  /* Account perspective stays in the wing; the center follows the document's
+     public profile, otherwise the platform. Neither grants editing authority. */
   {
     const {ctx,page,errors}=await setup(390,'member');
     await page.goto(BASE+'/license.html');
     await page.waitForFunction(()=>MCC_BAR.ownPerspective()?.handle==='qa-member');
-    check('signed-in center defaults to this member front page',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=qa-member');
+    check('non-profile center defaults to platform home',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
     await page.evaluate(()=>dispatchEvent(new CustomEvent('mcc:perspective',{detail:{kind:'member',handle:'other-member',name:'Other member'}})));
-    check('opening another member changes the center destination',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+    check('account perspective does not replace a non-profile platform destination',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
     await page.reload();
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
-    check('chosen center perspective survives reloading within account',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+    check('account perspective survives reload without leaking into center branding',
+      await page.evaluate(()=>MCC_BAR.perspective()?.handle==='other-member') &&
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
     await page.goto(BASE+'/index.html?front=house');
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
     check('visiting founder switches center back to original house',
@@ -133,6 +139,8 @@ try{
     await page.waitForSelector('#mfCustomize:not([hidden])');
     check('self profile has its own editable page without a duplicate identity',
       await page.textContent('#mfName')==='QA member'&&await page.locator('.mf__avatar').count()===1);
+    check('viewed member owns center destination',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=qa-member&card=1');
     await page.click('#mfCustomize');
     check('only the actual owner sees the customize editor',await page.locator('#mfEditor').isVisible());
     await page.locator('#mfCancel').click();
@@ -141,8 +149,8 @@ try{
     check('other member front has no profile editor controls',await page.isHidden('#mfCustomize'));
     await page.evaluate(async()=>{await window.MCC.signOut();});
     await page.waitForFunction(()=>MCC_BAR.auth().signed_in===false);
-    check('signing out clears selected identity and restores house',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/index.html');
+    check('signing out clears selected identity and unavailable profile branding',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
     check('member front and bar have no page exceptions',errors.length===0,errors);
     await ctx.close();
   }
@@ -150,8 +158,8 @@ try{
     const {ctx,page}=await setup(390,'guest');
     await page.goto(BASE+'/license.html');
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
-    check('guest always starts with Matthews supplied M and house',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/index.html');
+    check('guest non-profile page uses platform home',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/platform-home.html');
     await ctx.close();
   }
   for(const persona of ['guest','member']){
@@ -227,10 +235,12 @@ try{
     await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_BAR.auth().verified);
     await page.evaluate(()=>{navigation.addEventListener('navigate',()=>sessionStorage.setItem('__navDelay',String(Math.round(performance.now()-window.__clickAt))));
       window.__clickAt=performance.now();document.querySelector('.appbar [data-appnav="home"]').click();});
-    await page.waitForURL(/\/index\.html$/,{timeout:15000});
+    await page.waitForURL(/\/platform-home\.html$/,{timeout:15000,waitUntil:'domcontentloaded'});
+    await page.evaluate(()=>window.__navReveal);
     const delay=Number(await page.evaluate(()=>sessionStorage.getItem('__navDelay')));
     check('a bar tab asks for the next page at once, with no hold before it',Number.isFinite(delay)&&delay<200,delay);
     await page.goto(BASE+'/license.html');
+    await page.evaluate(()=>window.__navReveal);
     await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_DAYLIGHT_CORE);
     const veil=await page.evaluate(()=>{const h=document.documentElement;document.querySelector('.appbar [data-appnav="world"]').click();
       return {out:h.classList.contains('pt-out'),day:h.classList.contains('pt-to-day'),night:h.classList.contains('pt-to-night'),want:MCC_DAYLIGHT_CORE.estimate(new Date()),house:!h.dataset.daylight};});

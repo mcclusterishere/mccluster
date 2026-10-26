@@ -22,7 +22,8 @@
   var hostBinding = w.MCC_FRONT_HOST;
   if (hostBinding && hostBinding.api === location.origin && HANDLE.test(hostBinding.handle || "")) {
     handle = hostBinding.handle;
-    projectSlug = "";
+    projectSlug = /^[a-z0-9][a-z0-9-]{2,39}$/.test(hostBinding.project || "") ? hostBinding.project : "";
+    if (projectSlug) params.set("project", projectSlug); else params.delete("project");
     API = location.origin;
   }
   var inStudio = false;
@@ -123,15 +124,24 @@
       page = Object.assign({}, page, { config: merged, ownerHref: project.ownerHref });
     }
     fill(page);
+    // Public presentation belongs to the viewed page, not the signed-in viewer.
+    // The shared bar validates the same-origin destination/logo independently.
+    if (!isProject && !inStudio) {
+      var pageProfile = {name: page.name || page.handle, logo: page.avatar || "",
+        home: hostBinding ? location.pathname : "front.html?" + (projectSlug ? "project=" + encodeURIComponent(projectSlug) : "u=" + encodeURIComponent(page.handle))};
+      w.MCC_PAGE_PROFILE = pageProfile;
+      if (w.MCC_BAR && w.MCC_BAR.pageProfile) w.MCC_BAR.pageProfile(pageProfile);
+    }
     var config = settings(page);
     if (isProject) {
       d.documentElement.setAttribute("data-front-project", params.get("project"));
       d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });
       var note = d.createElement('p'); note.className = 'front-project-note';
-      note.textContent = 'Managed by ' + project.owner + '. ' + project.attribution;
+      note.textContent = 'Managed by ' + project.owner;
       d.querySelector('.hero__content').appendChild(note);
       var profile = d.getElementById('frontProfile');
       profile.textContent = 'About ' + project.owner;
+      if (w.MCC_PROJECT_ENTRY) w.MCC_PROJECT_ENTRY.mount(project);
     }
     /* without the night film the close moves to the foot of the page */
     if (config.scenes.night === false) Array.prototype.forEach.call(d.querySelectorAll("[data-fw-foot]"), function (el) { el.hidden = false; });
@@ -142,6 +152,8 @@
     d.body.appendChild(s);
   }
   function empty(title, why, links) {
+    w.MCC_PAGE_PROFILE = null;
+    if (w.MCC_BAR && w.MCC_BAR.pageProfile) w.MCC_BAR.pageProfile(null);
     d.documentElement.setAttribute("data-front-state", "empty");
     var main = d.getElementById("top"); if (main) main.hidden = true;
     var foot = d.getElementById("frontFoot"); if (foot) foot.hidden = true;
