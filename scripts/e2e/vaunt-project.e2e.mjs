@@ -37,10 +37,13 @@ try {
   const page=await context.newPage(); const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('framenavigated',frame=>historyEvents.push({type:'framenavigated',main:frame===page.mainFrame(),url:frame.url(),at:Date.now()}));
+  page.on('request',request=>{if(request.isNavigationRequest())historyEvents.push({type:'navigation-request',url:request.url(),main:request.frame()===page.mainFrame(),at:Date.now()});});
+  page.on('requestfailed',request=>{if(request.isNavigationRequest())historyEvents.push({type:'navigation-failed',url:request.url(),error:request.failure(),at:Date.now()});});
   const cdp=await context.newCDPSession(page);
   async function historySnapshot(label){
     const history=await cdp.send('Page.getNavigationHistory');
-    const proof={label,url:page.url(),history,events:historyEvents.slice(-40)};
+    const runtime=await Promise.race([page.evaluate(()=>({url:location.href,ready:document.readyState,scrollY,holding:window.__MCC_FRONT_HOLDING?.(),transition:!!document.activeViewTransition,frames:[...document.querySelectorAll('iframe')].map(f=>({src:f.src,url:f.contentWindow?.location.href}))})).catch(error=>({error:error.message})),new Promise(resolve=>setTimeout(()=>resolve({evaluation:'timed out'}),2000))]);
+    const proof={label,url:page.url(),runtime,history,events:historyEvents.slice(-40)};
     await writeFile(join(OUT,`history-${width}-${label}.json`),JSON.stringify(proof,null,2));
     console.log('HISTORY',width,label,JSON.stringify(proof));
   }
@@ -52,6 +55,7 @@ try {
     finally{clearTimeout(timer);}
     await historySnapshot(label+'-after');
   }
+  try {
   await page.goto(BASE+'/index.html?front=house',{waitUntil:'domcontentloaded'});
   await page.waitForTimeout(3000);
   assert.equal(await page.locator('#work.project-feature').count(),1);
@@ -156,6 +160,7 @@ try {
   assert.deepEqual(errors,[]);
   results.push({width,height,pass:true,checks:'scroll-first arrival/scrubbing, portfolio, ordering, deep entry, album/back, cabin consent/Escape/home, contextual branding/fallback/cross-profile reset, auth transition, overflow, JS errors'});
   console.log('PASS',width,height);
+  } catch(error) { await historySnapshot('failure'); throw error; }
   await context.close();
  }
 } finally {await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}
