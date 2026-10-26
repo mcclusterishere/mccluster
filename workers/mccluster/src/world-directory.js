@@ -30,8 +30,13 @@ export async function handleWorldDirectory(request,env,{fetchImpl=fetch}={}){
    projects.length?db(`managed_projects?slug=in.(${projects.join(',')})&removed_at=is.null&published=not.is.null&select=slug,owner_user_id,m_uid,published_at`):[],
    frontIds.length?db(`member_fronts?m_uid=in.(${frontIds.join(',')})&removed_at=is.null&published=not.is.null&select=m_uid,auth_user_id,handle,published_at`):[]
   ]);
+  // A tenant switch does not change the account's global World membership.
+  // Missing preferences/schema never make an opted-out website discoverable.
+  const owners=[...new Set(rows.map(r=>r.owner_user_id).filter(x=>UUID.test(x)))];
+  const modules=env.CUSTOMER_SITE_OFFER_ENABLED==='true'&&owners.length?await db(`customer_site_modules?owner_user_id=in.(${owners.join(',')})&module_key=eq.world_discovery&enabled=eq.true&select=owner_user_id,source_kind,source_key`):null;
   return rows.flatMap(r=>{
    if(!open.has(r.m_uid))return [];
+   if(modules&&!modules.some(m=>m.owner_user_id===r.owner_user_id&&m.source_kind===r.source_kind&&m.source_key===r.source_key))return [];
    const source=r.source_kind==='project'?p.find(p=>p.slug===r.source_key&&p.owner_user_id===r.owner_user_id&&p.m_uid===r.m_uid):f.find(f=>f.m_uid===r.m_uid&&f.auth_user_id===r.owner_user_id);
    if(!source?.published_at)return [];
    const href=r.source_kind==='project'?'front.html?project='+encodeURIComponent(r.source_key):'front.html?u='+encodeURIComponent(source.handle);
@@ -86,6 +91,10 @@ export async function handleWorldDirectory(request,env,{fetchImpl=fetch}={}){
   const title=clean(b.title,100),description=clean(b.description,500),location=clean(b.location_label,100),area=clean(b.service_area,160);
   if(!title||typeof b.online_only!=='boolean'||typeof b.is_listed!=='boolean'||(!b.online_only&&!location))return err('Provide a title and either online-only or a public locality',400,'invalid');
   if(b.is_listed&&b.location_consent!==true)return err('Confirm that your listing details are intended for public display',400,'consent_required');
+  if(b.is_listed&&env.CUSTOMER_SITE_OFFER_ENABLED==='true'){
+   const modules=await db(`customer_site_modules?owner_user_id=eq.${user.id}&source_kind=eq.${b.source_kind}&source_key=eq.${b.source_key}&module_key=eq.world_discovery&enabled=eq.true&select=enabled&limit=1`);
+   if(!modules.some(m=>m.enabled===true))return err('Enable World discovery for this website before listing it',403,'module_disabled');
+  }
   const record={owner_user_id:user.id,m_uid:muid,source_kind:b.source_kind,source_key:b.source_key,entity_type:b.entity_type,title,description,category:b.category,online_only:b.online_only,location_label:b.online_only?'':location,service_area:b.online_only?'':area,is_listed:b.is_listed,updated_at:new Date().toISOString()};
   let saved;
   if(b.id){if(!UUID.test(b.id))return err('Invalid listing ID',400,'invalid');saved=await db(`world_directory_listings?${owner}&id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify(record)});if(!saved.length)return err('Listing not found in your account',404,'not_found');}

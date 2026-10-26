@@ -25,6 +25,7 @@
         c.appendChild(node('p',p.removed_at ? 'Removed · address retained' : p.published_at ? 'Publication saved · check public availability in editor' : 'Private draft'));
         if(!p.removed_at){var a=node('a','Edit project');a.className='site-action';a.href='project-studio.html?project='+encodeURIComponent(p.slug);c.appendChild(a);
           var tile=node('a','Edit three-tile template');tile.className='site-action';tile.href='website-studio.html?project='+encodeURIComponent(p.slug);c.appendChild(tile);
+          var modules=node('a','Website modules');modules.className='site-action';modules.href='customer-site.html?project='+encodeURIComponent(p.slug);c.appendChild(modules);
           var remove=node('button','Remove project');remove.type='button';remove.className='site-action';
           remove.addEventListener('click',async function(){
             if(!window.confirm('Remove '+p.name+'? Its page will stop being public and its address cannot be reused.'))return;

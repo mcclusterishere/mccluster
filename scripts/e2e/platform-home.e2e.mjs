@@ -19,11 +19,11 @@ try {
   for(const width of [390,1440]){
     await page.setViewportSize({width,height:900}); await page.goto('https://fixture.invalid/platform-home.html');
     assert.deepEqual(await page.locator('.offer-index a').allTextContents(),['01 Builders','02 Contributors','03 Backers']);
-    assert.equal(await page.getByRole('link',{name:'Build my brand',exact:true}).getAttribute('href'),'#builders');
+    assert.equal(await page.locator('.hero-actions').getByRole('link',{name:'Build your website',exact:true}).getAttribute('href'),'customer-site.html');
     assert.equal(await page.getByRole('link',{name:'Find opportunities',exact:true}).getAttribute('href'),'#contributors');
     assert.equal(await page.getByRole('link',{name:'Back a project',exact:true}).getAttribute('href'),'#backers');
     assert.match(await page.locator('#backing-note').innerText(),/planned/);
-    assert.match(await page.locator('.shared-account').innerText(),/same account across roles/);
+    assert.match(await page.locator('.shared-account').innerText(),/existing M Account/);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
     const mark=page.locator('.brand img'); assert.equal(await mark.evaluate(img=>img.complete&&img.naturalWidth>0),true);
     await page.getByRole('button',{name:'Business'}).click();
