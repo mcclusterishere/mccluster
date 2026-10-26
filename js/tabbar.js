@@ -435,9 +435,11 @@
   }
   function setSitePolicy(policy) {
     SITE_POLICY=policy&&typeof policy.world==='boolean'?policy:null;
+    window.MCC_SITE_POLICY=SITE_POLICY;
     if(wingOn)revert();
     var tab=dock.querySelector('[data-appnav="world"]');if(tab)tab.href=worldAt('?view=feed');WINGS.world.home=worldAt('?view=feed');
     paintSitePolicy();HOME_BAR=dock.innerHTML;
+    window.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
   }
   if (!PAGE_PROFILE && location.hostname === "matthew.mccluster.org" && (/^(index\.html)?$/.test(PAGE_KEY) || PAGE_KEY === "matthew-mccluster.html")) {
     PAGE_PROFILE = cleanPageProfile({name:"Matthew McCluster", home:HOUSE+"index.html", logo:ROOT+"assets/img/m-mark.png"});

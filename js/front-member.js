@@ -75,6 +75,7 @@
   function fill(page) {
     w.MCC_SITE_POLICY=page.site_modules||null;
     if(w.MCC_BAR&&w.MCC_BAR.sitePolicy)w.MCC_BAR.sitePolicy(w.MCC_SITE_POLICY);
+    else w.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
     var t = words(page), c = page.config || {}, m = c.media || {};
     Array.prototype.forEach.call(d.querySelectorAll("[data-fw]"), function (el) { text(el, t[el.getAttribute("data-fw")]); });
     /* the hero's and the close's letters are built by the engine from data-word */
@@ -110,7 +111,7 @@
     c.scenes = c.scenes || {};
     if (!m.scene1 && !m.scene2 && !m.cabin) c.scenes.vaunt = false;
     if (!m.night) c.scenes.night = false;
-    c.scenes.world = true; // the shared World entry belongs to every public page
+    c.scenes.world = !w.MCC_SITE_POLICY || w.MCC_SITE_POLICY.world === true;
     return c;
   }
   function start(page) {

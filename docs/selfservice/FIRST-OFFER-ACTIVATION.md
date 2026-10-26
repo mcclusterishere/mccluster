@@ -27,7 +27,9 @@ mean discovery off; missing schema fails closed. Existing listing records are
 retained when disabled, but publication requests are refused and directory reads
 exclude them. Private profiles and unpublished/removed sources remain excluded.
 The independent `world` switch also controls the shared bottom-bar World tab and
-the tenant World endpoint. A disabled tenant endpoint rejects direct reads.
+the tenant World endpoint and footer globe. Unknown/loading tenant fronts keep
+the footer dormant; a disabled module hides it and stops its existing iframe.
+A disabled tenant endpoint rejects direct reads.
 Personal websites project their owner's public top-level native posts; project
 feeds require explicit `metadata.site_project` attribution by the same owner.
 Neither includes private, group, reply, deleted or removed posts. This is a view
