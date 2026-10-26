@@ -101,7 +101,7 @@ test('publishing makes the page public at its handle; visitors never see a draft
 });
 
 test('private and missing profiles can save drafts, but cannot claim a public publication', async () => {
-  for (const profiles of [[], [{ m_uid: BENJI_M, visibility: 'private' }]]) {
+  for (const profiles of [[], [{ m_uid: BENJI_M, visibility: 'private' }], [{ m_uid: BENJI_M, visibility: 'network' }]]) {
     const d = db({ profiles });
     const code = profiles.length ? 'private_profile' : 'profile_required';
     const me = await (await call(d, '/v1/fronts/me', { token: 'benji' })).json();
@@ -119,6 +119,8 @@ test('private and missing profiles can save drafts, but cannot claim a public pu
     const recovered = await (await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } })).json();
     assert.equal(recovered.publicly_available, true);
     assert.equal((await call(d, '/v1/fronts/benji.chase')).status, 200);
+    d.t.profiles = [{m_uid: BENJI_M, visibility: 'network'}];
+    assert.equal((await call(d, '/v1/fronts/benji.chase')).status, 404, 'network visibility is not public');
     d.t.profiles = [];
     assert.equal((await call(d, '/v1/fronts/benji.chase')).status, 404, 'a missing profile must fail closed');
   }
@@ -205,4 +207,15 @@ test('before the table exists, the routes say front pages are not on yet, never 
   for (const [path, opts] of [['/v1/fronts/me', { token: 'benji' }], ['/v1/fronts/benji.chase', {}]]) {
     await assert.rejects(handleMemberFronts(req(path, opts), ENV, { fetchImpl: missing }), (e) => e.status === 503 && e.message === 'Front pages are not switched on yet');
   }
+});
+
+
+test('personal page cannot borrow project media and custom-host reads bind the immutable owner', async () => {
+  const d = db();
+  const saved = await (await call(d, '/v1/fronts/me', {method:'POST',token:'benji',body:{config:{media:{cabin:{kind:'image',src:PREFIX+'projects/project-one/cabin.jpg'}}},publish:true}})).json();
+  assert.equal(saved.draft.media?.cabin, undefined);
+  assert.ok(saved.dropped.includes('media.cabin'));
+  const denied = await handleMemberFronts(req('/v1/fronts/benji.chase'),ENV,{fetchImpl:d.fetchImpl,expectedAuthUserId:OWNER});
+  assert.equal(denied.status,404);
+  assert.ok(d.calls.some(c=>c.path.endsWith('/member_fronts')&&c.search.includes('auth_user_id=eq.'+OWNER)));
 });
