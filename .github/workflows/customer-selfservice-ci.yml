@@ -166,6 +166,7 @@ jobs:
         run: |
           node scripts/e2e/customer-site.e2e.mjs
           node scripts/e2e/customer-site-policy.e2e.mjs
+          node scripts/e2e/first-offer-acceptance.e2e.mjs
           node scripts/e2e/managed-projects.e2e.mjs
           node scripts/e2e/platform-home.e2e.mjs
           node scripts/e2e/platform-home-transition.e2e.mjs
@@ -176,7 +177,7 @@ jobs:
           node scripts/test/music-research-review-browser.mjs
           node scripts/test/studio-processing-integration.mjs
           node scripts/e2e/project-tiles.e2e.mjs
-          STUDIO_PROCESS_UPLOADS=1 node scripts/e2e/project-tiles.e2e.mjs
+          STUDIO_PROCESS_UPLOADS=1 STUDIO_QUOTA_FAILURE=1 FREE_SITE_PILOT=1 node scripts/e2e/project-tiles.e2e.mjs
           node scripts/e2e/project-tiles-redirect.e2e.mjs
           node scripts/test/world-social-composer.browser.mjs
           node scripts/test/creator-domain-purchases-ui.mjs

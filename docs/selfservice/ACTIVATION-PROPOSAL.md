@@ -1,5 +1,12 @@
 # Self-service activation proposal — not authorization
 
+**Updated first-offer candidate:** the two-file minimum below describes the
+earlier PR637 baseline only. PR638 now routes website uploads through authoritative
+quota reservations and adds owned aliases/modules/free tile publication. Do not
+deploy its assets/Worker using only those two SQL files. Use the ordered current
+candidate and evidence in [FIRST-OFFER-ACTIVATION.md](FIRST-OFFER-ACTIVATION.md).
+All definitions remain pending and no production activation is authorized.
+
 No production action in this proposal has been performed. All release candidates remain draft. Recheck exact commit, migration ledger, object definitions, provider configuration and terminal CI before asking for approval. Never apply every file in either pending directory.
 
 ## Smallest useful release: existing approved account → owned site

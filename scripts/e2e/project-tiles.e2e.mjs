@@ -12,6 +12,7 @@ const prepared=await mkdtemp('/tmp/project-tiles-native-');
 for(const [kind,file] of [['music','beat.wav'],['native_video','film.webm'],['immersive360','room360.jpg']])await prepareMedia(resolve(ROOT,'scripts/e2e/fixtures/front-media',file),resolve(prepared,kind),{kind});
 const processingFlow=process.env.STUDIO_PROCESS_UPLOADS==='1';
 const f=await (processingFlow?studioProcessingFixture():projectTilesFixture()),ids=['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','cccccccc-cccc-4ccc-8ccc-cccccccccccc'];
+if(process.env.FREE_SITE_PILOT==='1'){f.env.CUSTOMER_SITE_OFFER_ENABLED='true';f.providerActive=false;await f.sql.exec('delete from creator_billing_subscriptions;');}
 if(!processingFlow)for(let i=0;i<3;i++)await f.prepare(ids[i],['music','native_video','immersive360'][i],A,false);
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||'/usr/bin/chromium',args:['--no-sandbox']});const context=await browser.newContext({viewport:{width:390,height:844}}),errors=[];
 await context.addInitScript(()=>{window.profileCalls=[];window.MCC_BAR={pageProfile:p=>window.profileCalls.push(p)};});
@@ -36,8 +37,17 @@ try{
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
  await page.goto(BASE+'/website-studio.html?project=alpha');await page.click('#useTemplate');await page.getByText('Template ready. This draft is not saved yet.').waitFor();
  assert.equal(await page.locator('#tiles .ws-card').count(),3);
+ if(process.env.FREE_SITE_PILOT==='1')assert.equal(await page.locator('#workspace').isVisible(),false);
  await page.fill('#title','Consolidated owner site');
- for(let i=0;i<3;i++){if(processingFlow){await page.getByLabel('Upload your content',{exact:true}).nth(i).setInputFiles(resolve(ROOT,'scripts/e2e/fixtures/front-media',['beat.wav','film.webm','room360.jpg'][i]));await page.getByText('Upload saved; media queued. Save your draft and refresh media status to see the result.').waitFor();ids[i]=(await f.db.select('creator_site_media_state',{kind:'eq.'+['music','native_video','immersive360'][i]}))[0].asset_id;}else await page.getByLabel('Your uploaded media',{exact:true}).nth(i).selectOption(ids[i]);await page.getByRole('button',{name:'Approve selected media for public use'}).nth(i).click();await page.getByText('Media approval saved. Publish remains a separate step.').waitFor();}
+ if(processingFlow&&process.env.STUDIO_QUOTA_FAILURE==='1'){
+  await f.sql.query('insert into customer_site_storage_accounts(owner_user_id,quota_bytes) values($1,0) on conflict(owner_user_id) do update set quota_bytes=0',[A]);
+  await page.getByLabel('Upload your content',{exact:true}).first().setInputFiles(resolve(ROOT,'scripts/e2e/fixtures/front-media/beat.wav'));
+  await page.getByText('Upload was not confirmed. Refresh storage in Your site before retrying. Your saved draft has not changed.').waitFor();
+  assert.equal(f.objects.size,0);assert.equal((await f.sql.query('select count(*)::int n from customer_site_storage_reservations')).rows[0].n,0);
+  await f.sql.query('update customer_site_storage_accounts set quota_bytes=500000000 where owner_user_id=$1',[A]);
+  await page.getByLabel('Upload your content',{exact:true}).first().setInputFiles([]);
+ }
+ for(let i=0;i<3;i++){if(processingFlow){await page.getByLabel('Upload your content',{exact:true}).nth(i).setInputFiles(resolve(ROOT,'scripts/e2e/fixtures/front-media',['beat.wav','film.webm','room360.jpg'][i]));await page.getByText('Upload saved; media queued. Save your draft and refresh media status to see the result.').waitFor();ids[i]=(await f.db.select('creator_site_media_state',{kind:'eq.'+['music','native_video','immersive360'][i],state:'eq.ready'}))[0].asset_id;}else await page.getByLabel('Your uploaded media',{exact:true}).nth(i).selectOption(ids[i]);await page.getByRole('button',{name:'Approve selected media for public use'}).nth(i).click();await page.getByText('Media approval saved. Publish remains a separate step.').waitFor();}
  await page.click('#save');await page.getByText('Saved to your account · revision 1').waitFor();
  await page.click('#preview');await page.locator('#previewPanel:not([hidden])').waitFor();assert.equal(await page.locator('#previewHost audio').count(),1);assert.equal(await page.locator('#previewHost video').count(),1);assert.equal(await page.getByRole('button',{name:'Enter 360 experience'}).count(),1);
  await page.click('#back');await page.click('#publish');await page.getByText('Published revision 1').waitFor();
@@ -57,5 +67,5 @@ try{
  }
  await f.sql.query("update creator_site_media_state set state='withdrawn' where asset_id=$1",[ids[0]]);await visitor.reload();await visitor.getByText('This project could not load. Try again.').waitFor();assert.equal(await visitor.locator('audio').count(),0);assert.equal(await visitor.evaluate(()=>window.MCC_PAGE_PROFILE),null);assert.equal(await visitor.evaluate(()=>window.profileCalls.at(-1)),null);await tenant.reload();await tenant.getByText('This project could not load. Try again.').waitFor();assert.equal(await tenant.evaluate(()=>window.MCC_PAGE_PROFILE),null);assert.equal(await tenant.evaluate(()=>window.profileCalls.at(-1)),null);
  await page.setViewportSize({width:1440,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
- assert.deepEqual(errors,[]);console.log('PASS real SQL/browser: existing nonadmin paid account → template → owned private media approval → revision save/preview/publish → public playback; saved revision stays private; withdrawn media hidden; cinematic snapshots preserved; 390/1440 overflow; no JS errors');
+ assert.deepEqual(errors,[]);console.log('PASS real SQL/browser: existing nonadmin '+(process.env.FREE_SITE_PILOT==='1'?'free account (quota failure + recovery)':'paid account')+' → template → owned private media approval → revision save/preview/publish → public playback; saved revision stays private; withdrawn media hidden; cinematic snapshots preserved; 390/1440 overflow; no JS errors');
 }finally{await context.close();await browser.close();await f.close();await rm(prepared,{recursive:true,force:true});}

@@ -26,6 +26,13 @@ World directory opt-in by owner and website. Default is off. Missing preferences
 mean discovery off; missing schema fails closed. Existing listing records are
 retained when disabled, but publication requests are refused and directory reads
 exclude them. Private profiles and unpublished/removed sources remain excluded.
+The independent `world` switch also controls the shared bottom-bar World tab and
+the tenant World endpoint. A disabled tenant endpoint rejects direct reads.
+Personal websites project their owner's public top-level native posts; project
+feeds require explicit `metadata.site_project` attribution by the same owner.
+Neither includes private, group, reply, deleted or removed posts. This is a view
+over canonical posts, not a second queue. Project composer attribution is still
+a subsequent milestone; untagged posts do not silently become project updates.
 The member's independent global World membership is unchanged. Hosting/domain
 entitlement remains with the existing billing/domain services. Advertising is
 unavailable and cannot be enabled through this registry.
@@ -75,6 +82,12 @@ future tenant revenue sharing, subject to platform onboarding/eligibility. A
 standard AdSense account is not evidence of that permission. No direct advertiser
 marketplace is in this first-offer scope.
 
+`data/site-advertising-contract.json` is an inert architecture artifact, not a
+runtime eligibility engine. Provider/tenant/property/format approval, consent,
+rights, exclusivity, revenue and no-fill fields describe future controls; those
+controls and slots are **not yet implemented**. Every placement and provider is
+disabled. No script imports this contract to serve ads or make network requests.
+
 ## Proposed 500 MB storage boundary
 
 `customer_site_storage_v1.sql` remains pending. 500 MB means 500,000,000 bytes
@@ -107,6 +120,88 @@ streaming limits still require an authorized sandbox check before activation.
 Fixtures are not that evidence. Files continue to disclose public front-media
 versus private Studio media; a draft is not a promise that front-media is private.
 
+Cloudflare request-size limits and the actual configured plan must be checked
+before advertising large individual uploads. The total 500 MB allowance does not
+promise that a single 300 MB upload will pass the configured ingress. Studio's
+existing 64 MiB input limit and separate compute allowance remain in force.
+
+## Exact current candidate order and flags
+
+This supersedes the old two-file minimum in ACTIVATION-PROPOSAL.md for PR638.
+Recheck live ledger/object definitions immediately before proposing application.
+Do not apply the whole pending directory or create artificial production ledger
+entries. Supabase's pending-file promotion procedure still governs actual release.
+
+1. Existing identity/auth/network profile authority first: `auth.users`,
+   `m_people`, `m_auth_user_links`, `network_profiles`, current membership policy.
+2. `member_fronts_v1.sql` then `managed_projects_v1.sql`, if still absent. Existing
+   front-media owner listing/deletion and public-byte disclosure stay in force.
+3. `customer_site_storage_v1.sql` after that storage/identity authority. It denies
+   direct member site writes, so coordinate with quota-aware Worker and editor
+   assets. Let previously-issued signed uploads expire first. Read/reconcile
+   existing bytes and unknown size metadata; never delete over-quota data.
+4. `customer_site_modules_v1.sql` and `customer_site_addresses_v1.sql` after
+   managed-project ownership. No production tenant, alias or module is seeded.
+5. For tiles only: existing canonical media/billing/compute prerequisites →
+   `website_studio_v2.sql` → `project_tiles_v1.sql` → `project_tiles_free_v1.sql`.
+   The new free publisher verifies owner, active identity, public profile and
+   exact saved revision. Existing API/public-read media approval checks remain.
+   It grants no processing allowance or custom-domain entitlement.
+6. Review one exact combined Worker/assets SHA and require terminal CI. Proposed
+   flags: `CUSTOMER_SITE_OFFER_ENABLED=true` enables modules/aliases/free tile
+   publication; `WEBSITE_STUDIO_ENABLED=true` enables the recovered tile editor.
+   `WEBSITE_STUDIO_PROCESSOR_ENABLED` is separate and remains off absent approved
+   native model, executor and existing preparation allowance. Quota routes require
+   their schema; there is no insecure direct-upload fallback if it is absent.
+   All registrar/payment/provider/live-execution flags stay under their prior
+   separate gates; no ad activation flag is introduced.
+7. Company-host routing must be read-only verified before describing free URLs as
+   live. Assigned `mccluster.org/<slug>` uses canonical renderers and immutable
+   owner/source binding. Known company/World/static/API roots retain priority;
+   unassigned paths retain the legacy redirect. Hidden sources return 404 rather
+   than falling back to another owner. WWW aliases redirect to canonical apex.
+   Real custom DNS/TLS and both BYOD/platform-purchase fulfillment remain separate.
+
+New pending file hashes at this checkpoint:
+
+| File | SHA256 |
+| --- | --- |
+| `customer_site_storage_v1.sql` | `f1ab68dfd9bc73602d283441e70f4eb2ccce95e1f7680c3134e0a88901f561d3` |
+| `customer_site_modules_v1.sql` | `950add4d0d05a7476def1cfb70c8f70f2bb95c424773e1090589d3699d84ae74` |
+| `customer_site_addresses_v1.sql` | `0ba2475b8eeb56b5329819c530e7393b3968cb8db9acfeafbf04f16bfc17f59c` |
+| `project_tiles_free_v1.sql` | `cbe6dc9ebc5ee27ea7de53677793d054198fe6f2240b9c1d4e0f3212109f78b1` |
+
+Rollback disables entry points/feature flags and reverts application behavior
+while retaining customer data. Re-enabling legacy unrestricted uploads is not a
+safe rollback of quota enforcement. Application/schema cutover needs its own
+reviewed operational plan; this document does not authorize it.
+
+## Acceptance evidence and remaining gates
+
+| Requirement | Local/CI evidence | Limit |
+| --- | --- | --- |
+| Landing → existing membership → saved draft | `first-offer-acceptance.e2e.mjs`, customer-site fixture | Synthetic sessions; real signup/mail/approval unchanged and unverified |
+| Repeated/interrupted checkout | Browser reuses request ID after retry/reload; existing checkout reservation SQL/Worker fixtures | No Stripe request, money or provider webhook delivery |
+| Media quota | Actual SQL/RLS, streamed over/under-size checks, durable HEAD/recovery, replacement/deletion; native CI two-session race | Managed Storage and ingress cutover still need authorized verification |
+| Tile edit/preview/publish | Free-publisher SQL/Worker cases plus actual browser/native FFmpeg approval/revision path | Compute allowance/executor stay separate; no paid plan silently granted |
+| Module off/on | Owner settings, direct API rejection, real shared bottom-tab browser hide/restore | Project-native post attribution composer remains subsequent work |
+| Tenant switching/unauthorized access | Account-switch browser suites, owner filters, direct table/function denial | No production account created or impersonated |
+| Four pilot fixtures/free addresses | Equity Uprise, Whip Equipped, Zone Five Fitness, Benji Chase isolated SQL aliases; collision/WWW/private-source tests | Fixture-only suffixes; no real namespace/DNS/BenjiChase.com ownership or availability claim |
+| Existing identities/navigation | Existing personal/Vaunt source and browser suites | Uploaded remote logos retain prior validation/fallback; no arbitrary image-host trust |
+| Advertising | Inert disabled contract and researched provider constraints | Runtime eligibility, actual placements/revenue/payouts are not implemented |
+
+Production read-only audit on 2026-10-26 found `member_fronts`, `managed_projects`
+and `customer_site_addresses` absent (`to_regclass` null) in canonical project
+`zmnhbrjyhxzhkxmhkexs`; no schema was applied. The civic Equity Uprise organization
+exists as `dce185c3-5837-4863-ba47-7337618fdc37`, slug `equity-uprise`, type project,
+verified, with website `https://matthew.mccluster.org/docket-516.html` and null
+`created_by`. No matching network group or music creator profile established an
+owned artist destination. Docket 516R's album credit is already Equity Uprise;
+its stable act ID `catalogue.html#artist-equity-uprise` is distinct from the civic
+`#equity-uprise`. Do not map it to the docket civic page, invent a member handle,
+seed an owner or change credits/ISRCs. The artist-link correction needs a verified
+act-to-owned-profile mapping; that production migration is not performed here.
+
 ## Deferred additions from the continuing owner request
 
 Complete the first offer before expanding the existing composer and Stories.
@@ -117,9 +212,21 @@ draft/back/focus recovery. Do not create a second queue or unsupported networks.
 Stories require an audit of current storage/audience/expiry/reporting and actual
 media access after expiration; a timestamp alone does not revoke public bytes.
 Research the exact requested REA repository before installing or running it.
+Read-only research identified `https://github.com/morluto/rea`, cross-linked by
+rea.tools. Its MIT license covers its own code, not observed third-party code or
+assets. No REA installation/execution is part of this checkpoint.
 
 Future advertising economics remain inactive and configurable. Free eligible
 creators need not buy a domain. A 50/50 split is a consideration, not a decision;
 track settled network receipts, attribution, reversals, platform share and
 rights-holder obligations separately. No post is promised earnings and no
 royalty distribution or payout account is activated.
+
+The subsequent Equity Uprise on-demand streaming milestone should audit/reuse
+existing player, release, listener-state and commerce code before building:
+US-first direct-authorized indie catalog, per-track territory/use/term rights,
+private original/signed playback enforcement, validated usage records and
+estimated/earned/payable/paid reporting. Master and composition permissions are
+distinct; public full-track URLs and missing usage-ledger controls are gaps.
+No commercial catalog import, license acceptance, paid streaming subscription,
+per-stream guarantee or royalty payment is authorized by this website checkpoint.
