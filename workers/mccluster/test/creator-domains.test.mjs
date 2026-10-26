@@ -5,7 +5,7 @@ import {fulfillDomainOrder,nameSiloAdapter} from '../src/domains/namesilo.js';
 const A='11111111-1111-4111-8111-111111111111',B='22222222-2222-4222-8222-222222222222';
 const env={SUPABASE_URL:'https://db.invalid',SUPABASE_SERVICE_ROLE_KEY:'fixture',CREATOR_DOMAINS_ENABLED:'true',CREATOR_DOMAINS_ZONE_ID:'zone',CREATOR_DOMAINS_API_TOKEN:'fixture',CREATOR_DOMAINS_CNAME:'sites.mccluster.org'};
 function fixture(){
- const rows=[],providers=[];let txt=[],cnames=[],failure=false,entitled=true,creates=0;
+ const rows=[],providers=[];let txt=[],cnames=[],failure=false,entitled=true,creates=0,frontAvailable=true,removeDuringProvider=false;
  const json=(v,status=200)=>Response.json(v,{status});
  async function fetchImpl(input,init={}){
   const u=new URL(input),method=init.method||'GET';
@@ -13,11 +13,12 @@ function fixture(){
   if(u.hostname==='cloudflare-dns.com')return json({Status:0,Answer:(u.searchParams.get('type')==='TXT'?txt:cnames).map(data=>({type:u.searchParams.get('type')==='TXT'?16:5,data}))});
   if(u.hostname==='api.cloudflare.com'){
    if(failure)return json({success:false},503);
-   if(method==='POST'){creates++;const p={...JSON.parse(init.body),id:'provider',status:'active',ssl:{status:'active'}};providers.push(p);return json({success:true,result:p});}
+   if(method==='POST'){creates++;if(removeDuringProvider)frontAvailable=false;const p={...JSON.parse(init.body),id:'provider',status:'active',ssl:{status:'active'}};providers.push(p);return json({success:true,result:p});}
    if(method==='DELETE'){providers.length=0;return json({success:true,result:null});}
    return json({success:true,result:u.searchParams.has('hostname')?providers:providers[0]});
   }
-  if(u.pathname.endsWith('/member_fronts'))return json([{handle:'creator'}]);
+  if(u.pathname.endsWith('/managed_projects'))return json([]);
+  if(u.pathname.endsWith('/member_fronts'))return json(frontAvailable?[{auth_user_id:u.searchParams.get('auth_user_id')?.slice(3) || A,handle:'creator'}]:[]);
   if(u.pathname.endsWith('/rpc/claim_creator_domain')){const b=JSON.parse(init.body),r=rows.find(r=>r.id===b.domain_id&&r.auth_user_id===b.owner_id);if(!r||r.lease_until)return json(false);r.lease_until='busy';return json(true);}
   if(u.pathname.endsWith('/creator_domains')){
    const found=rows.filter(r=>[...u.searchParams].every(([k,v])=>!v.startsWith('eq.')||String(r[k])===v.slice(3)));
@@ -26,7 +27,7 @@ function fixture(){
    if(method==='DELETE'){found.forEach(r=>rows.splice(rows.indexOf(r),1));return json([]);}return json(found);
   }throw Error('Unexpected fixture '+u.pathname);
  }
- return{rows,get creates(){return creates;},setTxt:v=>txt=v,setCname:v=>cnames=v,setFail:v=>failure=v,setEntitled:v=>entitled=v,
+ return{rows,removeDuringProvider:()=>removeDuringProvider=true,get creates(){return creates;},setTxt:v=>txt=v,setCname:v=>cnames=v,setFail:v=>failure=v,setEntitled:v=>entitled=v,
  call:(user,method='GET',path='',body)=>handleCreatorDomains(new Request('https://api.mccluster.org/v1/creator-domains'+path,{method,headers:{authorization:'Bearer '+user},body:body?JSON.stringify(body):undefined}),env,{fetchImpl,authorizeEntitlement:async()=>entitled})};
 }
 test('rejects unsafe hostnames and defaults configuration off',()=>{assert.equal(hostname(' WWW.Customer.org '),'www.customer.org');for(const h of ['api.mccluster.org','https://foo.org','foo.org/x','127.0.0.1','*.foo.org','foo.org:443'])assert.throws(()=>hostname(h));assert.equal(domainCapabilities({}).connect,false);});
@@ -57,3 +58,5 @@ test('disabled custom hosting fails closed on tenant hosts while canonical and e
  for(const host of ['www.customer.org','unknown.org','evil-workers.dev.example.org'])assert.equal((await handleCreatorDomainHost(new Request('https://'+host+'/v1/fronts/other'),{},options)).status,404);
  for(const host of ['api.mccluster.org','mccluster.org','matthew.mccluster.org','preview.mccluster.workers.dev'])assert.equal(await handleCreatorDomainHost(new Request('https://'+host+'/healthz'),{},options),null);
 });
+
+test('late provider completion cannot activate a removed publication target',async()=>{const f=fixture();await f.call('A','POST','',{hostname:'www.customer.org'});const r=f.rows[0];f.setTxt([r.verification_token]);f.setCname(['sites.mccluster.org.']);f.removeDuringProvider();assert.equal((await f.call('A','POST','/'+r.id+'/verify')).status,409);assert.notEqual(r.status,'active');assert.equal(f.creates,1);});

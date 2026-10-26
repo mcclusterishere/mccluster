@@ -1,3 +1,4 @@
+import { resolveDomainTarget, storedDomainTarget } from './creator-domain-targets.js';
 import { reply } from './lib/http.js';
 export const DOMAINS_PREFIX = '/v1/creator-domains';
 const bad = (message, status = 409) => Object.assign(new Error(message), { status });
@@ -30,7 +31,7 @@ export async function dnsRecords(name, type, fetchImpl = fetch) {
   return (b.Answer || []).filter(a => a.type === (type === 'TXT' ? 16 : 5)).map(a => type === 'TXT' ? a.data.replace(/^"|"$/g, '').replace(/"\s+"/g, '') : a.data.toLowerCase().replace(/\.$/, ''));
 }
 export function presentDomain(row, env) {
-  return { id: row.id, hostname: row.hostname, handle: row.handle, status: row.status, ssl_status: row.ssl_status, last_checked_at: row.last_checked_at, last_error: row.last_error,
+  return { id: row.id, hostname: row.hostname, handle: row.handle, target: storedDomainTarget(row), status: row.status, ssl_status: row.ssl_status, last_checked_at: row.last_checked_at, last_error: row.last_error,
     records: [{ type: 'TXT', name: `_mccluster.${row.hostname}`, value: row.verification_token }, { type: 'CNAME', name: row.hostname, value: env.CREATOR_DOMAINS_CNAME || '' }], provider_records: row.provider_records || [] };
 }
 export async function handleCreatorDomains(request, env, { fetchImpl = fetch, authorizeEntitlement = async () => false } = {}) {
@@ -47,21 +48,33 @@ export async function handleCreatorDomains(request, env, { fetchImpl = fetch, au
     const owner = `auth_user_id=eq.${user.id}`;
     const db = (path, init) => domainStore(env, path, init, fetchImpl);
     const caps = domainCapabilities(env);
-    if (p === DOMAINS_PREFIX && request.method === 'GET') return send({ domains: (await db(`creator_domains?${owner}&order=created_at.desc`)).map(r => presentDomain(r, env)), capabilities: caps, cname_target: env.CREATOR_DOMAINS_CNAME || null });
+    if (p === DOMAINS_PREFIX && request.method === 'GET') {
+      const fronts = await db(`member_fronts?${owner}&removed_at=is.null&select=auth_user_id,handle&limit=1`);
+      const projects = await db(`managed_projects?owner_user_id=eq.${user.id}&removed_at=is.null&select=id,owner_user_id,slug,name&order=slug.asc`);
+      const targets = [
+        ...fronts.filter(r=>r.auth_user_id===user.id).map(r=>({type:'member_front',id:user.id,slug:r.handle,label:'Personal site: '+r.handle})),
+        ...projects.filter(r=>r.owner_user_id===user.id).map(r=>({type:'managed_project',id:r.id,slug:r.slug,label:r.name || r.slug}))
+      ];
+      return send({ domains: (await db(`creator_domains?${owner}&order=created_at.desc`)).map(r => presentDomain(r, env)), targets, capabilities: caps, cname_target: env.CREATOR_DOMAINS_CNAME || null });
+    }
     if (!caps.connect) throw bad(caps.reason, 503);
     const rest = p.slice(DOMAINS_PREFIX.length).split('/').filter(Boolean);
     if (!rest.length && request.method === 'POST') {
       if (!await authorizeEntitlement(user.id, env, fetchImpl)) throw bad('An active site plan with custom domains is required', 402);
-      const fronts = await db(`member_fronts?${owner}&removed_at=is.null&select=handle&limit=1`);
-      if (!fronts[0]?.handle) throw bad('Save your site before connecting a domain');
       if (Number(request.headers.get('content-length') || 0) > 2048) throw bad('Request too large', 413);
       const input = await request.text(); if (input.length > 2048) throw bad('Request too large', 413);
-      const h = hostname(JSON.parse(input).hostname);
+      const body = JSON.parse(input);
+      const h = hostname(body.hostname);
+      const target = await resolveDomainTarget(user.id, body.target, db);
       const existing = await db(`creator_domains?${owner}&hostname=eq.${h}&limit=1`);
-      if (existing[0]) return send({ domain: presentDomain(existing[0], env) });
+      if (existing[0]) {
+        const old = storedDomainTarget(existing[0]);
+        if (old.type !== target.type || old.id !== target.id || old.slug !== target.slug) throw bad('Disconnect this domain before changing its site target');
+        return send({ domain: presentDomain(existing[0], env) });
+      }
       const own = await db(`creator_domains?${owner}&select=id&limit=10`);
       if (own.length >= 10) throw bad('Remove an unused domain before adding another');
-      const rows = await db('creator_domains', { method: 'POST', body: JSON.stringify({ auth_user_id: user.id, handle: fronts[0].handle, hostname: h, verification_token: `mccluster=${crypto.randomUUID()}` }) });
+      const rows = await db('creator_domains', { method: 'POST', body: JSON.stringify({ auth_user_id: user.id, handle: target.slug, target_type: target.type, target_id: target.id, hostname: h, verification_token: `mccluster=${crypto.randomUUID()}` }) });
       return send({ domain: presentDomain(rows[0], env) }, 201);
     }
     if (!/^[a-f0-9-]{36}$/i.test(rest[0] || '')) throw bad('Domain not found', 404);
@@ -87,6 +100,7 @@ export async function handleCreatorDomains(request, env, { fetchImpl = fetch, au
     if (rest.length !== 2 || rest[1] !== 'verify' || request.method !== 'POST') throw bad('Route not found', 404);
     if (row.status === 'detached') throw bad('Retry removing this domain before reconnecting it');
     if (!await authorizeEntitlement(user.id, env, fetchImpl)) { await patch({ status: 'plan_required' }); throw bad('An active site plan with custom domains is required', 402); }
+    await resolveDomainTarget(user.id, storedDomainTarget(row), db);
     const txt = await dnsRecords(`_mccluster.${row.hostname}`, 'TXT', fetchImpl);
     if (!txt.includes(row.verification_token)) {
       const result = await patch({ status: 'ownership_pending', last_checked_at: new Date().toISOString(), last_error: 'Add the TXT ownership record, then retry.' });
@@ -107,6 +121,8 @@ export async function handleCreatorDomains(request, env, { fetchImpl = fetch, au
       if (provider.hostname !== row.hostname) throw bad('Hosting provider returned an unexpected domain', 503);
       const cname = await dnsRecords(row.hostname, 'CNAME', fetchImpl);
       const status = !cname.includes(env.CREATOR_DOMAINS_CNAME.toLowerCase().replace(/\.$/, '')) ? 'dns_pending' : provider.status === 'active' && provider.ssl?.status === 'active' ? 'active' : 'tls_pending';
+      // A delayed provider result cannot resurrect a deleted/reassigned site.
+      await resolveDomainTarget(user.id, storedDomainTarget(row), db);
       const result = await patch({ status, provider_id: provider.id, ssl_status: provider.ssl?.status || 'pending', provider_records: [provider.ownership_verification, ...(provider.ssl?.validation_records || [])].filter(Boolean), last_checked_at: new Date().toISOString(), last_error: null, lease_until: null });
       return send({ domain: presentDomain(result[0], env) });
     } catch (e) { await patch({ status: 'error', last_error: e.message, lease_until: null }); throw e; }
