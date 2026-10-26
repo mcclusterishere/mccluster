@@ -1,65 +1,54 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { readFile } from 'node:fs/promises';
-const require=createRequire(import.meta.url);
-const {create}=require('../../js/world-publish-core.js');
-function fixture() {
- let user='alice', configured=true, account='account-a', fail=true, uploads=0, creates=0, keys=[];
- const jobs=new Map(), calls=[];
- const core=create({currentUser:()=>user,randomKey:()=> 'stable-fixture-key',onChange:()=>{},uploadFile:async()=>{uploads++;},api:async(path,init)=>{
-  calls.push([path,init]);
-  if(path.includes('/status?'))return {configured,connection:{status:'connected',account_id:account}};
-  if(path.endsWith('/uploads'))return {upload_url:'https://fixture.invalid/upload',storage_path:'org-a/file.mp4'};
-  if(path.endsWith('/publish')){const key=init.body.idempotency_key;keys.push(key);if(!jobs.has(key)){creates++;jobs.set(key,{id:'job-one',state:'queued'});}if(fail){fail=false;throw Error('Response lost after accepted');}return {publish_job:jobs.get(key)};}
-  if(path.includes('/jobs?'))return {jobs:[{id:'job-one',state:'published'}]};
-  if(path.endsWith('/retry'))return {publish_job:{id:'job-one',state:'queued'}};
-  throw Error('Unexpected '+path);
- }});
- return {core,calls,get uploads(){return uploads;},get creates(){return creates;},get keys(){return keys;},set user(v){user=v;},set configured(v){configured=v;},set account(v){account=v;},set fail(v){fail=v;}};
+import {createRequire} from 'node:module';
+import {readFile} from 'node:fs/promises';
+const {create}=createRequire(import.meta.url)('../../js/world-publish-core.js');
+const input={org:'org-a',account:'account-a',caption:'Hello',visibility:'public',media:[{id:'video',file:{type:'video/mp4',size:123}}]};
+function fixture(){
+ let user='alice',fail=true,version=0,held=null;
+ const saved={id:'delivery',user:'alice',org:'org-a',account:'account-a',worldId:'world',jobId:'job',state:'draft'};
+ const calls=[];
+ const api=async(path,init)=>{calls.push([path,init]);if(path==='/v1/mnet/deliveries'){const result={deliveries:user==='alice'?[{...saved}]:[]};if(held)return new Promise(resolve=>{held.resolve=()=>resolve(result);});return result;}
+ if(path.endsWith('/submit')){saved.state='queued';if(fail){fail=false;throw Error('Lost response');}return {publish_job:{id:'job',state:saved.state}};}throw Error('Unexpected '+path);};
+ const make=()=>create({api,currentUser:()=>user,randomKey:()=>`key-${++version}`,onChange:()=>{}});
+ return {make,saved,calls,set user(v){user=v;},hold(){held={};return ()=>{held.resolve();held=null;};}};
 }
-const input={org:'org-a',account:'account-a',handle:'alice',caption:'Hello',visibility:'public',media:[{file:{name:'video.mp4',type:'video/mp4',size:100}}]};
-test('World succeeds once; ambiguous Instagram failure retries same key and creates one external job',async()=>{
- const f=fixture();let worldPosts=0;
- async function post(){const delivery=f.core.snapshot(input);worldPosts++;await f.core.worldSucceeded(delivery,'world-one');return delivery;}
- const delivery=await post();assert.equal(delivery.state,'failed');
- await f.core.retry(delivery);
- assert.equal(worldPosts,1);assert.equal(f.creates,1);assert.equal(f.uploads,1);assert.deepEqual(f.keys,['stable-fixture-key','stable-fixture-key']);
- assert.equal(delivery.state,'queued');await f.core.refresh(delivery);assert.equal(delivery.state,'published');
- assert.ok(f.calls.every(([path])=>!path.includes('/mnet/posts')));
+test('stable operation binds complete World payload across ambiguous retries',()=>{
+ const f=fixture(),c=f.make(),r=c.snapshot(input),draft={body:'Hello',media_asset_ids:['video']};
+ const a=c.request(r,draft),b=c.request(c.snapshot(input),draft);assert.equal(a.operation_key,b.operation_key);
+ assert.notEqual(c.request(c.snapshot(input),{...draft,body:'Edited'}).operation_key,a.operation_key);
 });
-test('World default has no external request; missing video/private content fails only opt-in validation',()=>{
- const f=fixture();assert.equal(f.core.snapshot({...input,org:null}),null);assert.equal(f.calls.length,0);
- assert.throws(()=>f.core.snapshot({...input,visibility:'private'}),/Instagram is public/);
- assert.throws(()=>f.core.snapshot({...input,media:[]}),/exactly one/);
- assert.throws(()=>f.core.snapshot({...input,media:[{file:{type:'image/png',size:100}}]}),/exactly one/);
+test('reload after World commit and lost external response recovers same job without another World request',async()=>{
+ const f=fixture(),c=f.make(),r=c.snapshot(input);
+ await c.worldSucceeded(r,{post:{id:'world'},delivery:{...f.saved}});
+ assert.equal(c.records()[0].error,'Lost response');
+ const reloaded=f.make();await reloaded.recover();assert.equal(reloaded.records()[0].state,'queued');
+ await reloaded.retry(reloaded.records()[0]);assert.equal(f.calls.filter(([p])=>p.endsWith('/submit')).length,2);
+ assert.ok(f.calls.every(([p])=>!p.includes('/posts')&&!p.includes('/uploads')));
+ assert.equal(reloaded.records()[0].jobId,'job');
 });
-test('provider disconnected after selection leaves World success intact and can retry after reconnect',async()=>{
- const f=fixture();f.configured=false;f.fail=false;
- const r=f.core.snapshot(input);await f.core.worldSucceeded(r,'world-one');
- assert.equal(r.worldId,'world-one');assert.equal(r.state,'failed');assert.equal(f.uploads,0);
- f.configured=true;await f.core.retry(r);assert.equal(r.state,'queued');assert.equal(f.creates,1);
+test('stale history response cannot overwrite newer submit status',async()=>{
+ const f=fixture(),c=f.make();await c.recover();await c.retry(c.records()[0]);
+ f.saved.state='failed';const release=f.hold();const older=c.recover();
+ await c.retry(c.records()[0]);release();await older;
+ assert.equal(c.records()[0].state,'queued'); // late failed response cannot roll back acknowledged queue state
 });
-test('switching accounts cannot retry or refresh another account’s delivery',async()=>{
- const f=fixture();const r=f.core.snapshot(input);await f.core.worldSucceeded(r,'world-one');
- f.user='bob';const count=f.calls.length;
- await assert.rejects(f.core.retry(r),/original account/);await assert.rejects(f.core.refresh(r),/original account/);
- assert.equal(f.calls.length,count);f.core.reset();assert.equal(f.core.records().length,0);assert.equal(r.file,null);
+test('two accounts cannot recover/manage one another, including in-flight auth changes',async()=>{
+ const f=fixture(),c=f.make();await c.recover();const r=c.records()[0];f.user='bob';
+ await assert.rejects(c.retry(r),/original account/);await assert.rejects(c.refresh(r),/original account/);
+ c.reset();await c.recover();assert.equal(c.records().length,0);
 });
-test('reconnecting a different Instagram account never silently redirects retained delivery',async()=>{
- const f=fixture();const r=f.core.snapshot(input);f.account='account-b';await f.core.worldSucceeded(r,'world-one');
- assert.equal(r.state,'failed');assert.match(r.error,/account changed/);assert.equal(f.creates,0);
+test('World default no external request; opt-in validation and confirmation required',()=>{
+ const f=fixture(),c=f.make();assert.equal(c.snapshot({...input,org:null}),null);
+ assert.throws(()=>c.snapshot({...input,visibility:'private'}),/Instagram is public/);
+ assert.throws(()=>c.snapshot({...input,media:[]}),/exactly one/);
+ assert.throws(()=>c.worldSucceeded(c.snapshot(input),{post:{id:'world'}}),/confirmation missing/);
+ assert.equal(f.calls.length,0);
 });
-test('external starts only after confirmed World id and repeated success notification cannot duplicate it',async()=>{
- const f=fixture();f.fail=false;const r=f.core.snapshot(input);
- assert.throws(()=>f.core.worldSucceeded(r,null),/post identifier/);assert.equal(f.calls.length,0);
- await f.core.worldSucceeded(r,'world-one');await f.core.worldSucceeded(r,'world-one');assert.equal(f.creates,1);
-});
-test('mnet preserves its existing post path and starts external work only inside World success',async()=>{
+test('mnet keeps one World post path and adds explicit delivery before posting',async()=>{
  const source=await readFile(new URL('../../js/mnet.js',import.meta.url),'utf8');
  const block=source.slice(source.indexOf('  function createPost()'),source.indexOf('  // a post can be'));
  assert.equal((block.match(/api\("\/v1\/mnet\/posts/g)||[]).length,1);
- assert.match(block,/\.then\(function \(out\) \{\s*if \(window\.MCC_WORLD_COMPOSER && externalDelivery\)/);
+ assert.match(block,/if \(externalDelivery\) draft.delivery = window.MCC_WORLD_COMPOSER.request/);
  assert.ok(block.indexOf('worldSucceeded(externalDelivery')<block.indexOf('clearMediaQueue()'));
- assert.match(block,/if \(button.disabled\) return;/);
 });

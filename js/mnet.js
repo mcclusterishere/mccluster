@@ -2057,12 +2057,13 @@
                $("mnPostPlaceOptIn").checked && $("mnVisibility").value === "public" &&
                state.world.country ? state.world.country.code : undefined };
     if (news) draft.newsroom = true;
+    if (externalDelivery) draft.delivery = window.MCC_WORLD_COMPOSER.request(externalDelivery, draft);
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
       body:draft
     }).then(function (out) {
       if (window.MCC_WORLD_COMPOSER && externalDelivery) {
-        window.MCC_WORLD_COMPOSER.worldSucceeded(externalDelivery, out && out.post && out.post.id);
+        window.MCC_WORLD_COMPOSER.worldSucceeded(externalDelivery, out);
       }
       $("mnPostBody").value = "";
       if ($("mnTrackPick")) $("mnTrackPick").value = "";

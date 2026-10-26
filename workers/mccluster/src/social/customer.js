@@ -1,3 +1,4 @@
+import { worldDelivery } from './world-delivery.js';
 import { reply, fail } from '../lib/http.js';
 import { requireOrgId, requireOrgRole } from './security.js';
 import { handleSocialRequest } from './router.js';
@@ -89,6 +90,19 @@ export async function handleCustomerSocialRequest(request, env, user) {
     if (!paid?.some(row => Date.parse(row.current_period_end) > Date.now())) throw error('An active site plan is required for Instagram publishing.', 402);
   }
   if (blockers.length && !cancelling && suffix !== 'jobs') throw error(blockers.join(' '), 503);
+  if (suffix === 'action-targets' && request.method === 'GET') {
+    return handleSocialRequest(new Request(`${url.origin}/v1/social/action-targets?org_id=${org}`), env, user);
+  }
+  const delivery = suffix.match(/^deliveries\/([a-f0-9-]{36})\/submit$/i);
+  if (delivery && request.method === 'POST') {
+    const record = await worldDelivery(env, user.id, 'get', { id:delivery[1] });
+    if (record.org !== org) throw error('Delivery not found.',403);
+    await rpc('ready');
+    const job = await worldDelivery(env,user.id,'submit',{id:record.id});
+    if (job.state !== 'failed') return { publish_job:publicJob(job) };
+    const result = await handleSocialRequest(new Request(`${url.origin}/v1/social/publish/${job.id}/retry`, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({org_id:org}) }),env,user);
+    return { publish_job:publicJob(result.publish_job) };
+  }
   if (suffix === 'connect' && request.method === 'POST') {
     const state = crypto.randomUUID() + crypto.randomUUID();
     await rpc('begin', { state_hash: await digest(state) });

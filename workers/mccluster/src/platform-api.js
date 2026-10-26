@@ -1,3 +1,4 @@
+import { worldDelivery, deliveryRequest } from './social/world-delivery.js';
 import { fail, reply } from './lib/http.js';
 import { approveNewsroomRevision, hasNewsroomApproval, newsroomPostId } from './newsroom-review.js';
 import { isCountry } from './intel/news-country-codes.js';
@@ -675,9 +676,21 @@ async function handleMnet(req,env,path,url){
     const field=(k)=>b[k]!==undefined&&b[k]!==null?String(b[k]):String(stored[k]??'');
     const data=await userRpc(req,env,'mnet_complete_surface_profile',{p_app_key:appKey,p_display_name:field('display_name'),p_headline:field('headline'),p_bio:field('bio'),p_avatar_url:field('avatar_url'),p_banner_url:field('banner_url'),p_website_url:field('website_url')}); return reply(req,env,data);
   }
+  if(path==='/v1/mnet/deliveries'&&req.method==='GET'){
+    if(external)return fail(req,env,'Deliveries require a McCluster user session',403);
+    const response=reply(req,env,await worldDelivery(env,user.id,'list'));
+    response.headers.set('cache-control','private, no-store');
+    response.headers.set('vary','Origin, Authorization');
+    return response;
+  }
   if(path==='/v1/mnet/posts'&&req.method==='POST'){
     if(external)return fail(req,env,'Post creation currently requires a McCluster user session',403);
     const b=await json(req),muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
+    const combined=b.delivery?deliveryRequest(b,appKey):null;
+    if(combined){
+      const prior=await worldDelivery(env,user.id,'lookup',combined);
+      if(prior)return reply(req,env,prior); // Media is attached after commit; replay precedes ready/staged validation.
+    }
     const prepared=await prepareNetworkPost(env,muid,b,appKey);
     if(prepared.error)return fail(req,env,prepared.error,prepared.status||400);
     /* POST NOW, OR LATER. A publish_at in the future holds the post in
@@ -702,6 +715,10 @@ async function handleMnet(req,env,path,url){
         if(e?.detail?.code==='PGRST205'||e?.status===404)return fail(req,env,'Scheduling is not switched on yet. Post now, or try again later.',503);
         throw e;
       }
+    }
+    if(combined){
+      const out=await worldDelivery(env,user.id,'create',{...combined,post:prepared.draft});
+      return reply(req,env,out,201);
     }
     const rows=await insertNetworkPost(env,muid,prepared.draft,prepared.assets);
     const created=rows?.[0];

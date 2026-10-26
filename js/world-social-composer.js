@@ -14,14 +14,14 @@
     host.replaceChildren(); host.hidden = !records.length;
     records.forEach(function (r) {
       var item = document.createElement('article'), status = document.createElement('p');
-      status.textContent = 'World: published. Instagram ' + (r.handle || '') + ': ' + r.state + (r.error ? '. ' + r.error : '.');
+      status.textContent = 'World: ' + (r.worldState || 'published') + '. Instagram ' + (r.handle || '') + ': ' + r.state + (r.error ? '. ' + r.error : '.');
       status.setAttribute('role','status'); item.append(status);
-      if (r.state === 'failed' || r.jobId && !['published','cancelled'].includes(r.state)) {
+      if (r.state === 'draft' || r.error || r.state === 'failed' || r.jobId && !['published','cancelled'].includes(r.state)) {
         var button = document.createElement('button'); button.type = 'button'; button.className = 'mn__attach';
-        button.textContent = r.state === 'failed' ? 'Retry Instagram only' : 'Refresh Instagram status'; button.disabled = r.busy;
+        button.textContent = (r.state === 'draft' || r.error || r.state === 'failed') ? 'Retry Instagram only' : 'Refresh Instagram status'; button.disabled = r.busy;
         button.onclick = function () {
           button.disabled = true;
-          Promise.resolve(r.state === 'failed' ? controller.retry(r) : controller.refresh(r)).catch(function (e) { message(e.message); }).finally(function () { button.disabled = false; });
+          Promise.resolve((r.state === 'draft' || r.error || r.state === 'failed') ? controller.retry(r) : controller.refresh(r)).catch(function (e) { message(e.message); }).finally(function () { button.disabled = false; });
         }; item.append(button);
       }
       var link = document.createElement('a'); link.className = 'mn__attach';
@@ -34,22 +34,38 @@
     $('mnExternalOptIn').checked = false;
     $('mnExternalOptIn').disabled = !selected;
     paintPreview();
+    loadActionTargets();
+  }
+  async function loadActionTargets() {
+    var select=$('mnExternalMission'), site=selected;
+    if(!select)return;
+    select.replaceChildren(new Option('No Action attribution','')); select.disabled=true;
+    if(!site)return;
+    try {
+      var result=await api('/v1/customer-social/action-targets?org_id='+encodeURIComponent(site.org));
+      if(selected!==site)return;
+      (result.missions||[]).filter(function(m){return result.campaigns.some(function(c){return c.id===m.campaign_id;});}).forEach(function(m){
+        var option=new Option(m.title,m.id);option.dataset.campaign=m.campaign_id;select.append(option);
+      });select.disabled=false;
+    } catch(_) { /* Optional attribution never blocks ordinary World posting. */ }
   }
   function paintPreview() {
     if (!$('mnExternalPreview')) return;
     var file = preview?.media?.[0]?.file;
     $('mnExternalPreview').textContent = selected ? 'Instagram preview · @' + selected.handle + ' · Public Reel · ' +
-      (file ? file.name : 'Choose one MP4 or MOV video') + '\nCaption: ' + (preview?.caption || '(no caption)') + '\nAttached music selections are World-only.' : '';
+      (file ? file.name : 'Choose one MP4 or MOV video') + '\nCaption: ' + (preview?.caption || '(no caption)') + '\nAttached music selections are World-only.' + ($('mnExternalMission')?.value ? '\nAn attributed Take action link will be added for the selected mission.' : '') : '';
   }
   async function discover(user) {
     var mine = ++discovery;
     if (viewer !== user) { viewer = user; preview = null; controller?.reset(); }
     choices = []; selected = null;
+    loadActionTargets();
     if (!$('mnExternalSite')) return;
     $('mnExternalSite').replaceChildren(); $('mnExternalOptIn').checked = false; $('mnExternalOptIn').disabled = true;
     $('mnExternalPreview').textContent = '';
     if (!user) { message('Sign in to choose your connected Instagram account. World remains the default destination.'); return; }
     message('Checking your connected sites…');
+    controller.recover().catch(function(){ message('Delivery history is unavailable. Refresh it before retrying an interrupted post.'); });
     try {
       var entitlement = await api('/v1/creator-billing/entitlement');
       var workspaces = entitlement.workspaces || [];
@@ -70,14 +86,18 @@
     controller = root.MCCWorldPublish.create({ api: api, currentUser: function () { return viewer; }, randomKey: function () { return crypto.randomUUID(); }, onChange: render,
       uploadFile: async function (url, file) { var response = await fetch(url, { method: 'PUT', headers: { 'content-type': file.type }, body: file }); if (!response.ok) throw new Error('Instagram video upload failed. Retry Instagram only.'); } });
     $('mnExternalSite').onchange = selectionChanged;
+    if($('mnExternalMission')) $('mnExternalMission').onchange=paintPreview;
     $('mnExternalRefresh').onclick = function () { discover(viewer); };
     root.MCC_WORLD_COMPOSER = {
       preview: function (input) { preview = input; paintPreview(); },
       capture: function (input) {
         if (!$('mnExternalOptIn').checked || !selected) return null;
         var preview = Object.assign({},input,{org:selected.org,account:selected.account,handle:selected.handle});
+        var mission=$('mnExternalMission');
+        if(mission?.value){preview.action_mission_id=mission.value;preview.action_campaign_id=mission.selectedOptions[0].dataset.campaign;}
         return controller.snapshot(preview);
       },
+      request: function(record,draft){return controller.request(record,draft);},
       worldSucceeded: function (record, id) {
         if (!record) return;
         $('mnExternalOptIn').checked = false;
@@ -91,7 +111,7 @@
       var state = event.detail || {};
       if (state.verified) discover(state.signed_in ? state.user?.id || '' : '');
     });
-    root.addEventListener('mcc:auth-changed', function () { discovery++; viewer = ''; choices = []; selected = null; controller.reset(); preview = null; $('mnExternalSite').replaceChildren(); paintPreview(); $('mnExternalOptIn').checked = false; $('mnExternalOptIn').disabled = true; message('Refreshing your account connections…'); });
+    root.addEventListener('mcc:auth-changed', function () { discovery++; viewer = ''; choices = []; selected = null; loadActionTargets(); controller.reset(); preview = null; $('mnExternalSite').replaceChildren(); paintPreview(); $('mnExternalOptIn').checked = false; $('mnExternalOptIn').disabled = true; message('Refreshing your account connections…'); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',init); else init();
 })(window);
