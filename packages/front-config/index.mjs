@@ -68,6 +68,7 @@ export function validateFront(raw, { mediaPrefix: prefix = '', blockedMediaPrefi
       return label&&href?{label,href}:note(key,undefined);
     };
     out.offer_page=clean({
+      logo:p.logo?note('offer_page.logo',allowedMedia(p.logo)):undefined,
       title:note('offer_page.title',text(p.title,100)),
       intro:note('offer_page.intro',text(p.intro,600)),
       primary:button(p.primary,'offer_page.primary'),

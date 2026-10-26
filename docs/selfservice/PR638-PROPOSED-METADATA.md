@@ -35,13 +35,13 @@ Validation includes Worker/source suites, isolated SQL/RLS and concurrent quota
 checks, four synthetic pilot identities, browser onboarding/retry/account-switch
 journeys, module navigation, tile quota rejection/recovery, and native FFmpeg
 fixtures. Local Vaunt navigation passes at four widths with Chromium 154;
-required pinned-browser CI must pass independently. Economic Core CI has been
-blocked before tests by Supabase image pulls returning GHCR rate limits. Consult
+pinned Chromium 145 preview and Economic Core CI passed on checkpoint
+448585cb. The subsequent logo change still needs its own final-head CI. Consult
 the exact head's terminal checks; local fixtures are not production verification.
 
-New local proof includes1174 source tests,43 integrated owner-editor browser
-checks, and390/1440 real-audio artist/Back/contextual-mark fixtures. These browser
-checks use Chromium154 and intercepted services; final CI remains separate.
+New local proof includes 1174 source tests, 47 integrated owner-editor browser
+checks, and 390/1440 real-audio artist/Back/contextual-mark fixtures. These browser
+checks use Chromium 154 and intercepted services; final CI remains separate.
 
 Activation remains blocked on the pending schema/flag/cutover prerequisites in
 `docs/selfservice/FIRST-OFFER-ACTIVATION.md`. Production site tables remain absent.

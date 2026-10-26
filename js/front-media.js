@@ -72,6 +72,7 @@
       var m = c && c.media || {};
       ["hero", "scene1", "scene2", "night"].forEach(function (k) { var d = m[k] && pathOf(m[k].base); if (d) keep.dirs[d] = true; });
       [m.cabin && m.cabin.src, m.cabin && m.cabin.poster, m.still && m.still.src, m.sound && m.sound.src].forEach(function (u) { var f = pathOf(u); if (f) keep.files[f] = true; });
+      var logo=pathOf(c&&c.offer_page&&c.offer_page.logo);if(logo)keep.files[logo]=true;
       (c&&c.offer_page&&c.offer_page.cards||[]).forEach(function(card){var f=pathOf(card.image);if(f)keep.files[f]=true;});
     });
     return keep;

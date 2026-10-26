@@ -78,7 +78,7 @@ async function setup(viewport,account,{holdReload=false}={}){
         // Browser transport fixture only; authoritative quota/concurrency is tested in Worker/SQL suites.
         const a=who(req.headers().authorization),path=u.searchParams.get('path')||'';
         if(!a||!path.startsWith(a.id+'/projects/second-project/'))return json(route,{error:'Not your upload'},403);
-        const body=req.postDataBuffer()||await readFile(join(FIX,'notround.jpg'));
+        const body=req.postDataBuffer()||world.pickedImage||await readFile(join(FIX,'notround.jpg'));
         world.objects.set(path,{type:req.headers()['content-type'],body});world.uploads.push(path);
         return json(route,{ok:true});
       }
@@ -229,7 +229,20 @@ try {
  await offerEditor.click('[data-act="offer-example"]');await offerEditor.waitForFunction(()=>!window.__MCC_FRONT_STUDIO.saving&&window.__MCC_FRONT_STUDIO.draft.offer_page.title==='Build something people belong to.');
  await offerEditor.click('[data-act="publish"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO.msg.startsWith('Published.'));
  world.projects[1].name='Equity Uprise fixture';
+ world.pickedImage=await readFile(join(ROOT,'assets/img/equity-uprise-mark-white.png'));
+ await offerEditor.setInputFiles('[data-upload="offer-logo"]',{name:'equity-uprise-mark-white.png',mimeType:'image/png',buffer:world.pickedImage});
+ await offerEditor.waitForFunction(()=>!window.__MCC_FRONT_STUDIO.busy['offer-logo']&&!!window.__MCC_FRONT_STUDIO.draft.offer_page.logo);
+ await offerEditor.waitForFunction(()=>document.getElementById('fsFrame')?.contentDocument?.querySelector('.so-logo')?.complete);
+ check('offers-logo','owner preview loads the actual supplied logo upload',await previewFrame(offerEditor).locator('.so-logo').evaluate(img=>img.naturalWidth>0));
+ await offerEditor.click('[data-act="publish"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO.msg.startsWith('Published.'));
+ const logoUrl=world.projects[1].published.offer_page.logo;
+ check('offers-logo','published logo bytes survive owner cleanup',world.objects.has(logoUrl.split('/front-media/')[1]));
  await offerPublic.reload({waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontLayout==='offers');
+ await offerPublic.waitForFunction(()=>document.querySelector('.so-logo')?.complete&&document.querySelector('[data-appnav="home"] img')?.complete);
+ check('offers-logo','published page and contextual navigation use the owned logo',await offerPublic.locator('.so-logo').getAttribute('src')===logoUrl&&await offerPublic.locator('[data-appnav="home"] img').getAttribute('src')===logoUrl);
+ await offerPublic.goto(BASE+'/front.html?project=first-project',{waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontState==='ready');
+ check('offers-logo','switching tenant clears previous logo',await offerPublic.locator('[data-appnav="home"] img').count()===0);
+ await offerPublic.goto(BASE+'/front.html?project=second-project',{waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontLayout==='offers');
  for(const width of [390,1440]){
   await offerPublic.setViewportSize({width,height:900});
   const cards=offerPublic.locator('.so-card');
@@ -244,6 +257,7 @@ try {
   await offerPublic.screenshot({path:join(OUT,'equity-middle-'+width+'.png')});
   await writeFile(join(OUT,'equity-layout-'+width+'.json'),JSON.stringify(await offerPublic.evaluate(()=>({transition:!!document.activeViewTransition,at:scrollY,hit:document.elementFromPoint(100,100)?.outerHTML,root:{rect:document.documentElement.getBoundingClientRect().toJSON(),height:getComputedStyle(document.documentElement).height,background:getComputedStyle(document.documentElement).backgroundColor},body:{rect:document.body.getBoundingClientRect().toJSON(),height:getComputedStyle(document.body).height},cards:[...document.querySelectorAll('.so-card')].map(c=>({rect:c.getBoundingClientRect().toJSON(),visibility:getComputedStyle(c).visibility}))})),null,2));
   await offerPublic.evaluate(()=>window.scrollTo(0,0));await offerPublic.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  await offerPublic.screenshot({path:join(OUT,'equity-top-'+width+'.png')});
   await offerPublic.screenshot({path:join(OUT,'equity-owned-'+width+'.png'),fullPage:true});
  }
  await offerEditor.screenshot({path:join(OUT,'offers-editor-phone.png'),fullPage:true});

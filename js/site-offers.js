@@ -6,7 +6,7 @@
  function defaults(name){return {title:name||'Your work, in one place',intro:'Introduce what you do and how people can take part.',cards:[{title:'What I offer',body:'Describe your work, who it is for, and the next step.'}]};}
  function render(page,host){
   var p=page.config.offer_page||{},root=host||node('main',null,'site-offers');root.classList.add('site-offers');root.replaceChildren();
-  var hero=node('header',null,'so-hero');hero.append(node('p',page.name||page.handle,'so-name'),node('h1',p.title||page.name),node('p',p.intro,'so-intro'));
+  var hero=node('header',null,'so-hero');if(p.logo&&/^https:\/\//.test(p.logo)){var logo=node('img',null,'so-logo');logo.src=p.logo;logo.alt='';hero.append(logo);}hero.append(node('p',page.name||page.handle,'so-name'),node('h1',p.title||page.name),node('p',p.intro,'so-intro'));
   var buttons=node('div',null,'so-actions');[p.primary,p.secondary].forEach(function(x){var a=link(x);if(a)buttons.append(a);});hero.append(buttons);root.append(hero);
   var grid=node('div',null,'so-grid');(p.cards||[]).slice(0,6).forEach(function(card){var section=node('section',null,'so-card');
    if(card.image&&/^https:\/\//.test(card.image)){var image=node('img');image.src=card.image;image.alt='';image.loading='lazy';section.append(image);}

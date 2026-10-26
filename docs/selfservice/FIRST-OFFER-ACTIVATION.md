@@ -202,7 +202,7 @@ reviewed operational plan; this document does not authorize it.
 | Module off/on | Owner settings, direct API rejection, real shared bottom-tab browser hide/restore | Project-native post attribution composer remains subsequent work |
 | Tenant switching/unauthorized access | Account-switch browser suites, owner filters, direct table/function denial | No production account created or impersonated |
 | Four pilot fixtures/free addresses | Equity Uprise, Whip Equipped, Zone Five Fitness, Benji Chase isolated SQL aliases; collision/WWW/private-source tests | Fixture-only suffixes; no real namespace/DNS/BenjiChase.com ownership or availability claim |
-| Existing identities/navigation | Existing personal/Vaunt source and browser suites | Uploaded remote logos retain prior validation/fallback; no arbitrary image-host trust |
+| Existing identities/navigation | Existing personal/Vaunt source and browser suites | Owned logo uploads use canonical front-media validation; arbitrary image hosts remain rejected |
 | Advertising | Tested owner/placement-bound server resolver always disabled/no-fill with zero provider requests | Real eligibility, actual placements/revenue/payouts are not implemented |
 
 Production read-only audit on 2026-10-26 found `member_fronts`, `managed_projects`
@@ -219,6 +219,9 @@ instruction authorizes the code-owned `platform-home.html` bootstrap preview as
 the stable act's destination. `data/albums.json` maps explicit artist IDs to that
 page or Matthew's existing personal page; it never matches a tenant display name.
 Production act-to-owned-project provisioning is still not performed here.
+The current artist resolver deliberately accepts the two reviewed static pages
+only. A later owned-project binding requires an explicit reviewed mapping/adapter
+change; provisioning a same-name tenant does not automatically redirect the artist.
 
 ## Editable Equity Uprise preview and concrete domain target
 
@@ -227,8 +230,13 @@ preview**, not a claim that an owned production tenant exists. It retains three
 audiences and nine experiences. Its editable example content lives in
 `data/equity-uprise-offers-template.json`; the same content can be copied into any
 ordinary owner's draft from the front editor. The `offers` layout stores words,
-links, three experiences per card and optional images in the existing front
+links, three experiences per card, optional images and an owner-uploaded logo in the existing front
 configuration. There is no new table, registry, account type or payment gate.
+The logo uses the same owner/project media-prefix validation, quota upload and
+draft/published retention scan. The shared bar additionally permits only image
+files in the canonical Supabase public front-media bucket; arbitrary hosts,
+private buckets and URL queries are rejected. The supplied E=Up PNG is uploaded
+as actual fixture bytes in the browser proof; no production owner is assigned.
 The ordinary owner can save, reload, preview, publish and take down this layout.
 Images use the existing quota-aware website upload endpoint; the editor discloses
 that these are **public bytes**, including before page publication. This is not a
@@ -284,7 +292,7 @@ is coordinating provider/DNS approval. None is authorized or performed by this
 code checkpoint. Existing WordPress service stays in place while those gates are
 unresolved.
 
-Local proof for this layout: 43 integrated managed-project browser checks include
+Local proof for this layout: 47 integrated managed-project browser checks include
 owner editing, nine experiences, an intercepted website image upload, save/reload,
 publication, public text-injection safety, image retention and 390/1440 layout.
 Clean viewport/card captures include all three audience sections at both widths.

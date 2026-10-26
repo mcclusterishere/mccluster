@@ -24,11 +24,11 @@ function fixture(){
 test('ordinary owner publishes text/image offers without a paid or processing entitlement; ownership and media remain enforced',async()=>{
  const {call,rows,visibility}=fixture();await call('','POST',{slug:'free-offers',name:'Equity Uprise example'});
  const prefix='https://db.test/storage/v1/object/public/front-media/'+alice+'/projects/free-offers/';
- const config={layout:'offers',offer_page:{title:'Our work',intro:'Come take part.',cards:[{title:'Build',body:'Words and images.',image:prefix+'photo.jpg'}]}};
+ const config={layout:'offers',offer_page:{logo:prefix+'logo.png',title:'Our work',intro:'Come take part.',cards:[{title:'Build',body:'Words and images.',image:prefix+'photo.jpg'}]}};
  assert.equal((await call('/free-offers/edit','POST',{config,publish:true})).status,200);
  assert.equal((await call('/free-offers','GET',null,null)).body.config.offer_page.cards[0].image,prefix+'photo.jpg');
  assert.equal((await call('/free-offers/edit','POST',{config,publish:true},'bob')).status,404);
- const bad=structuredClone(config);bad.offer_page.cards[0].image=prefix.replace('free-offers','other-project')+'photo.jpg';
+ const bad=structuredClone(config);bad.offer_page.logo=prefix.replace('free-offers','other-project')+'logo.png';assert.equal((await call('/free-offers/edit','POST',{config:bad})).status,400);bad.offer_page.logo=config.offer_page.logo;bad.offer_page.cards[0].image=prefix.replace('free-offers','other-project')+'photo.jpg';
  assert.equal((await call('/free-offers/edit','POST',{config:bad})).status,400);
  bad.offer_page.cards[0].image=prefix+'photo.jpg';bad.offer_page.primary={label:'Bad',href:'javascript:alert(1)'};
  assert.equal((await call('/free-offers/edit','POST',{config:bad})).status,400);

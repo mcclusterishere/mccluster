@@ -151,7 +151,7 @@
     var picker=S.me.registry_key?'':'<fieldset class="fs-group"><legend>Page layout</legend><label class="fs-field"><span>Template</span><select name="layout"><option value="cinematic"'+(c.layout!=='offers'?' selected':'')+'>Cinematic front</option><option value="offers"'+(c.layout==='offers'?' selected':'')+'>Words, images and offers</option></select></label><p class="fs-help">The offers layout needs no paid plan or media preparation allowance. Uploaded images are public bytes; publish only images you may share.</p></fieldset>';
     if(c.layout==='offers'&&!S.me.registry_key){
       var offer=c.offer_page||{},cards=offer.cards||[];
-      return picker+'<fieldset class="fs-group"><legend>Your introduction</legend>'+field('offer_page.title','Page headline',offer.title,100)+field('offer_page.intro','Introduction',offer.intro,600)+linkRow('offer_page.primary',offer.primary,0,60)+linkRow('offer_page.secondary',offer.secondary,1,60)+'<button type="button" class="fs-btn" data-act="offer-example">Use Equity Uprise example content</button><p class="fs-help">Copies editable example words and links into this draft. It does not assign an identity, domain or account.</p></fieldset>'+cards.map(function(card,i){return '<fieldset class="fs-group"><legend>Offer '+(i+1)+'</legend>'+field('offer_page.cards.'+i+'.title','Offer title',card.title,80)+field('offer_page.cards.'+i+'.body','Description',card.body,600)+field('offer_page.cards.'+i+'.status','Availability note',card.status,120)+linkRow('offer_page.cards.'+i+'.action',card.action,i,60)+(card.experiences||[]).map(function(item,j){return field('offer_page.cards.'+i+'.experiences.'+j+'.title','Experience '+(j+1),item.title,60)+field('offer_page.cards.'+i+'.experiences.'+j+'.body','Experience description',item.body,300);}).join('')+mediaRow('offer'+i,'Offer image','Optional JPEG, PNG or WebP. Uploaded through your website storage allowance.','image/jpeg,image/png,image/webp',card.image,function(){return 'Your image';})+'<button type="button" class="fs-btn fs-btn--ghost" data-act="offer-remove" data-i="'+i+'">Remove offer</button></fieldset>';}).join('')+(cards.length<6?'<button type="button" class="fs-btn" data-act="offer-add">Add an offer</button>':'');
+      return picker+'<fieldset class="fs-group"><legend>Your introduction</legend>'+mediaRow('offer-logo','Your logo','Upload your complete logo as a PNG, JPEG or WebP. It remains in your website storage.','image/jpeg,image/png,image/webp',offer.logo,function(){return 'Your logo';})+field('offer_page.title','Page headline',offer.title,100)+field('offer_page.intro','Introduction',offer.intro,600)+linkRow('offer_page.primary',offer.primary,0,60)+linkRow('offer_page.secondary',offer.secondary,1,60)+'<button type="button" class="fs-btn" data-act="offer-example">Use Equity Uprise example content</button><p class="fs-help">Copies editable example words and links into this draft. It does not assign an identity, domain or account.</p></fieldset>'+cards.map(function(card,i){return '<fieldset class="fs-group"><legend>Offer '+(i+1)+'</legend>'+field('offer_page.cards.'+i+'.title','Offer title',card.title,80)+field('offer_page.cards.'+i+'.body','Description',card.body,600)+field('offer_page.cards.'+i+'.status','Availability note',card.status,120)+linkRow('offer_page.cards.'+i+'.action',card.action,i,60)+(card.experiences||[]).map(function(item,j){return field('offer_page.cards.'+i+'.experiences.'+j+'.title','Experience '+(j+1),item.title,60)+field('offer_page.cards.'+i+'.experiences.'+j+'.body','Experience description',item.body,300);}).join('')+mediaRow('offer'+i,'Offer image','Optional JPEG, PNG or WebP. Uploaded through your website storage allowance.','image/jpeg,image/png,image/webp',card.image,function(){return 'Your image';})+'<button type="button" class="fs-btn fs-btn--ghost" data-act="offer-remove" data-i="'+i+'">Remove offer</button></fieldset>';}).join('')+(cards.length<6?'<button type="button" class="fs-btn" data-act="offer-add">Add an offer</button>':'');
     }
     var feel = "standard";
     Object.keys(FEEL).forEach(function (k) { if (sc.duration === FEEL[k][0] && sc.touchLerp === FEEL[k][1]) feel = k; });
@@ -274,6 +274,7 @@
   function viewer() { var f = frameWin(); try { return f && f.__MCC_VR && f.__MCC_VR.live ? f.__MCC_VR.viewer : null; } catch (_) { return null; } }
   function act(a, btn) {
     var c = S.draft, i = Number(btn && btn.getAttribute("data-i"));
+    if(/^offer-/.test(a)&&(busy()||S.saving))return;
     if(a==='offer-add'){c.offer_page.cards=c.offer_page.cards||[];if(c.offer_page.cards.length<6)c.offer_page.cards.push({title:'New offer',body:'Describe what is available.'});S.dirty=true;paintForm();reloadPreview(true);return;}
     if(a==='offer-remove'){c.offer_page.cards.splice(i,1);S.dirty=true;paintForm();reloadPreview(true);return;}
     if(a==='offer-example'){
@@ -339,11 +340,12 @@
     var start = S.sweeping || Promise.resolve();
     var pct = function (x) { if(uploadEpoch!==authEpoch)return;S.progress[key] = "Uploading " + Math.round(x * 100) + "%"; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; };
     var job = start.then(function () {
-      return key === "cabin" ? M.cabin(file, dir, pct) : key === "still"||/^offer[0-5]$/.test(key) ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
+      return key === "cabin" ? M.cabin(file, dir, pct) : key === "still"||/^offer(?:[0-5]|-logo)$/.test(key) ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
         : M.film(file, dir, function (p) { S.progress[key] = "Cutting frames " + p.cut + " of " + p.of + " · uploaded " + p.sent + " of " + p.total; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; });
     });
     job.then(function (res) {
       if(uploadEpoch!==authEpoch||!S.draft)return;
+      if(key==='offer-logo'){S.draft.offer_page.logo=res.src;S.dirty=true;S.msg='Logo added. Review before publishing.';S.bad=false;return;}
       if(offerCard){if((S.draft.offer_page.cards||[]).includes(offerCard)){offerCard.image=res.src;S.dirty=true;S.msg='Image added. Review before publishing.';S.bad=false;}return;}
       var m = ensure(S.draft, "media");
       m[key] = key === "hero" || key === "scene1" || key === "scene2" || key === "night" ? { base: res.base, count: res.count, ext: res.ext, sm: res.sm } : res;
@@ -358,7 +360,7 @@
       if (b.hasAttribute("data-act")) { ev.preventDefault(); act(b.getAttribute("data-act"), b); }
       else if (b.hasAttribute("data-device")) { S.device = b.getAttribute("data-device"); fit(); paint(); }
       else if (b.hasAttribute("data-go")) post({ type: "mcc:front-goto", to: b.getAttribute("data-go") });
-      else if (b.hasAttribute("data-remove")) { var key=b.getAttribute('data-remove');if(/^offer[0-5]$/.test(key))delete S.draft.offer_page.cards[Number(key.slice(5))].image;else{var m = ensure(S.draft, "media"); delete m[key];} S.dirty = true; paintForm(); reloadPreview(true); }
+      else if (b.hasAttribute("data-remove")) { var key=b.getAttribute('data-remove');if(key==='offer-logo')delete S.draft.offer_page.logo;else if(/^offer[0-5]$/.test(key))delete S.draft.offer_page.cards[Number(key.slice(5))].image;else{var m = ensure(S.draft, "media"); delete m[key];} S.dirty = true; paintForm(); reloadPreview(true); }
     });
     /* A field is never redrawn under the hand typing in it: leaving one for the next must not replace the next (that
        lost what was typed there, and the tap on a button after it). Text applies as it is typed; a link row says what

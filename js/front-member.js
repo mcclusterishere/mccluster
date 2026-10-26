@@ -130,7 +130,7 @@
     // Public presentation belongs to the viewed page, not the signed-in viewer.
     // The shared bar validates the same-origin destination/logo independently.
     if (!isProject && !inStudio) {
-      var pageProfile = {name: page.name || page.handle, logo: page.avatar || "",
+      var pageProfile = {name: page.name || page.handle, logo: page.config?.offer_page?.logo || page.avatar || "",
         home: hostBinding ? location.pathname : "front.html?" + (projectSlug ? "project=" + encodeURIComponent(projectSlug) : "u=" + encodeURIComponent(page.handle))};
       w.MCC_PAGE_PROFILE = pageProfile;
       if (w.MCC_BAR && w.MCC_BAR.pageProfile) w.MCC_BAR.pageProfile(pageProfile);
