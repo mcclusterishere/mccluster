@@ -1,0 +1,32 @@
+{
+  "schema": "mccluster-site-advertising-architecture/v1",
+  "status": "architecture_only",
+  "enabled": false,
+  "external_requests": false,
+  "provider": null,
+  "publisher_account": null,
+  "direct_advertiser_marketplace": false,
+  "domain_purchase_required_for_creator_eligibility": false,
+  "inventory": [
+    {"placement": "profile_footer", "format": "display", "enabled": false, "no_fill": "collapse"},
+    {"placement": "project_inline", "format": "display", "enabled": false, "no_fill": "collapse"},
+    {"placement": "music_between_tracks", "format": "audio", "enabled": false, "no_fill": "continue_playback", "arbitrary_track_interruption": false}
+  ],
+  "required_approvals": ["platform", "tenant", "property", "format", "provider_demand", "publisher_of_record", "payment_authority"],
+  "eligibility_inputs": ["content_rights", "audio_rights", "audience", "territory", "consent", "provider_policy", "exclusivity", "frequency_limit"],
+  "economics": {
+    "active": false,
+    "creator_share": null,
+    "platform_share": null,
+    "basis": "settled_network_receipts_after_attributed_reversals",
+    "rights_holder_obligations_separate": true,
+    "every_post_earns": false,
+    "per_stream_guarantee": null
+  },
+  "notes": [
+    "Network demand and any future direct sales are separate contracts.",
+    "50/50 and 70/30 are undecided proposals, not activated economics.",
+    "Do not load provider scripts, SDKs, VAST, pixels or live identifiers from this architecture contract.",
+    "No-fill must leave content and playback usable. A tenant switch never overrides platform or provider ineligibility."
+  ]
+}

@@ -114,6 +114,7 @@ jobs:
         run: |
           node scripts/test-managed-projects-db.mjs
           node scripts/test/customer-site-storage-db.mjs
+          node scripts/test/customer-site-addresses-db.mjs
           node scripts/test-world-directory-db.mjs
           node scripts/test-customer-social-db.mjs
           node scripts/test/creator-domain-schema.mjs
