@@ -34,9 +34,20 @@ jobs:
 
       - name: Stamp asset versions so every deploy busts browser caches
         run: |
-          find . -path ./node_modules -prune -o -path ./apps -prune -o \
-            \( -name '*.html' -o -name 'sw.js' \) -print0 \
+          # Pages, scripts and stylesheets all carry ?v=__STAMP__ asset URLs:
+          # js/tabbar.js alone loads five, js/travel/world-travel.mjs one, and
+          # sw.js keys its cache on the stamp. vendor/ is third-party and is
+          # never stamped. Directories stripped below are stamped too; that
+          # is harmless, and keeps the rule one line.
+          find . -path ./node_modules -prune -o -path ./apps -prune -o -path ./vendor -prune -o \
+            \( -name '*.html' -o -name '*.js' -o -name '*.mjs' -o -name '*.css' \) -print0 \
             | xargs -0 sed -i "s/__STAMP__/${GITHUB_SHA::12}/g"
+          if grep -rl --include='*.html' --include='*.js' --include='*.mjs' --include='*.css' \
+               --exclude-dir=node_modules --exclude-dir=apps --exclude-dir=vendor --exclude-dir=.git \
+               '__STAMP__' . ; then
+            echo "::error::__STAMP__ survived the stamp step"
+            exit 1
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
@@ -184,8 +195,17 @@ jobs:
 
       - name: Strip the internals out of the published tree
         run: |
-          rm -rf docs packages apps scripts supabase .github tests node_modules redirects tools _unfinished workers
-          rm -f README.md capacitor.config.json wrangler.toml wrangler.jsonc AGENTS.md CLAUDE.md CODEX.md GEMINI.md
+          # Everything on these two lines is source, infrastructure, tooling or
+          # agent instruction that no published page loads. The directory line
+          # must agree with the Cloudflare export allowlist in
+          # scripts/stage-cloudflare-pages.mjs; scripts/test/publish-strip-parity.test.mjs
+          # derives the expectation from that allowlist and fails when the two
+          # drift. Keep each rm on ONE line: the test parses them. data/ stays
+          # whole: control.html fetches data/analytics/application-schema-inventory.json
+          # at runtime. assets/3d/prim3-site0 is Site 0 authoring geometry;
+          # tools/publish-site0.sh promotes the runtime build into site0/ instead.
+          rm -rf docs packages apps scripts supabase .github tests node_modules redirects tools _unfinished workers platform core native PRIM3 dns audit .cursor assets/3d/prim3-site0
+          rm -f README.md wrangler.toml wrangler.jsonc package.json package-lock.json AGENTS.md CLAUDE.md CODEX.md GEMINI.md .cursorrules .mcp.json CITATION.cff
           git add -A
           git commit -m "Publish: web root only, internals stripped" --allow-empty
 
@@ -204,3 +224,72 @@ jobs:
 
       - name: Push to gh-pages
         run: git push origin HEAD:refs/heads/gh-pages --force
+
+  # Reports on the live site after the publish; it never gates the publish.
+  # GitHub Pages builds gh-pages asynchronously and its CDN caches for ten
+  # minutes, so the first step waits for this commit's stamp to go live.
+  verify-live:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      SITE: https://matthew.mccluster.org
+    steps:
+      - name: Wait for the live site to serve this deploy
+        run: |
+          stamp="${GITHUB_SHA::12}"
+          for attempt in $(seq 1 40); do
+            if curl -fsSL --max-time 30 "$SITE/index.html?verify=$stamp-$attempt" | grep -q "$stamp"; then
+              echo "index.html serves stamp $stamp (attempt $attempt)"
+              exit 0
+            fi
+            echo "attempt $attempt: stamp $stamp is not live yet"
+            sleep 15
+          done
+          echo "::error::$SITE did not serve stamp $stamp within ten minutes"
+          exit 1
+
+      - name: Published JavaScript is stamped
+        run: |
+          stamp="${GITHUB_SHA::12}"
+          body="$(curl -fsSL --max-time 30 "$SITE/js/tabbar.js?verify=$stamp")"
+          if printf '%s' "$body" | grep -q '__STAMP__'; then
+            echo "::error::js/tabbar.js still carries a literal __STAMP__"
+            exit 1
+          fi
+          if ! printf '%s' "$body" | grep -q "$stamp"; then
+            echo "::error::js/tabbar.js does not carry stamp $stamp"
+            exit 1
+          fi
+          echo "js/tabbar.js is stamped $stamp"
+
+      - name: Private paths answer 404
+        run: |
+          stamp="${GITHUB_SHA::12}"
+          fail=0
+          for path in \
+            /platform/package.json \
+            /core/package.json \
+            /.mcp.json \
+            /dns/mccluster.org.zone \
+            /native/package.json \
+            /PRIM3/game/halo/README.md \
+            /.cursorrules \
+            /.cursor/rules/mccluster.mdc \
+            /apps/api/package.json \
+            /docs/control-plane/ECOSYSTEM.md \
+            /assets/3d/prim3-site0/PRIM3_Site0_CANONICAL_ARCHITECTURE_v03.json \
+            /package.json \
+            /CLAUDE.md
+          do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$SITE$path?verify=$stamp")"
+            if [ "$code" = "404" ]; then
+              echo "$path -> 404"
+            else
+              echo "::error::$path answered $code, expected 404"
+              fail=1
+            fi
+          done
+          [ "$fail" = 0 ] || exit 1
