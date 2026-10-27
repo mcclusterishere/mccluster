@@ -697,7 +697,6 @@ html[data-theme="light"] .footreach { border-color: rgba(26,20,13,.3); }
 .vform label{font-size:0.9rem;color:var(--cream-dim)}
 .vform label .req{color:var(--ruby-hot)}
 .vform label a{color:var(--ruby-hot);border-bottom:1px solid var(--ruby)}
-.vform input,.vform select,.vform textarea{background:var(--ink);color:var(--cream);border:1px solid rgba(244,239,230,0.18);border-radius:8px;padding:0.65em 0.8em;font-family:var(--body);font-size:0.95rem}
 .vform input:focus,.vform select:focus,.vform textarea:focus{outline:2px solid var(--ruby);outline-offset:1px}
 .vform input:invalid:not(:placeholder-shown){border-color:var(--ruby-hot)}
 .vform__hint{font-size:0.84rem;color:var(--cream-dim)}
@@ -1339,7 +1338,7 @@ html.psy-locked,html.psy-locked body{overflow:hidden}
 .dkt__jump{margin-top:1.6rem;justify-content:flex-start}
 .dkt__note{margin:0.8rem 0 1rem;font-size:0.84rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--cream-dim)}
 .dkt__toolbar{display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1.4rem}
-.dkt__toolbar input,.dkt__toolbar select{background:var(--ink-2);color:var(--cream);border:1px solid rgba(244,239,230,0.2);border-radius:8px;font-family:var(--body);font-size:0.9rem;padding:0.55em 0.9em;min-width:0}
+.dkt__toolbar input,.dkt__toolbar select{background:var(--ink-2);color:var(--cream);border:1px solid rgba(244,239,230,0.2);border-radius:8px;font-family:var(--body);font-size:max(16px,.9rem);padding:0.55em 0.9em;min-width:0}
 .dkt__toolbar input{flex:2 1 12rem}
 .dkt__toolbar select{flex:1 1 9rem}
 .dkt__toolbar input:focus,.dkt__toolbar select:focus{outline:none;border-color:var(--ruby)}
