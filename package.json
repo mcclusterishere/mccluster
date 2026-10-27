@@ -2,14 +2,12 @@
   "name": "mccluster",
   "private": true,
   "version": "1.0.0",
-  "description": "HERE. A McCluster Production. The native shell around the platform.",
+  "description": "McCluster control plane: root tooling dependencies and the test runner. The app is native/ (Expo); the site is flat HTML published by .github/workflows/deploy-pages.yml.",
+  "scripts": {
+    "test": "node --test scripts/test/*.test.mjs && python3 -m unittest discover -s scripts/test -p 'test_*.py'"
+  },
   "dependencies": {
-    "@capacitor/android": "^6.1.0",
-    "@capacitor/core": "^6.1.0",
     "@fal-ai/client": "1.10.1",
     "docx": "^9.7.1"
-  },
-  "devDependencies": {
-    "@capacitor/cli": "^6.1.0"
   }
 }
