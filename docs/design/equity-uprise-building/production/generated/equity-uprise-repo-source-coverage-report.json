@@ -125,6 +125,7 @@
     "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
     "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
+    "docs/control-plane/PRIM3-CHARACTER-RECHARACTERIZATION-V1.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
     "docs/control-plane/SECURITY-POSTURE.md",
@@ -613,6 +614,26 @@
     },
     {
       "name": "CODEX.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PRIM3-CHARACTER-RECHARACTERIZATION-V1.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PRIM3-CHARACTER-RECHARACTERIZATION-V1.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/PRIM3-CHARACTER-RECHARACTERIZATION-V1.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/PRIM3-CHARACTER-RECHARACTERIZATION-V1.md support rationale present",
       "passed": true,
       "detail": ""
     },
