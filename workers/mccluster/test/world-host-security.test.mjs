@@ -61,8 +61,10 @@ test('the report-only policy is a dry run of what the World loads: every third-p
   for (const page of ['mnet.html', 'action-globe.html', 'world-news.html', 'login.html', 'account.html', 'create.html', 'give.html']) {
     const html = await site(page);
     for (const [, origin] of html.matchAll(/<script\b[^>]*\bsrc="(https:\/\/[^/"]+)/g)) assert.ok(d['script-src'].includes(origin), `${page}: script from ${origin}`);
-    for (const [, origin] of html.matchAll(/<link\b[^>]*\bhref="(https:\/\/[^/"]+)[^>]*>/g)) {
-      if (!/rel="stylesheet"/.test(html.slice(html.indexOf(origin) - 200, html.indexOf(origin) + 200))) continue;
+    /* each <link> tag on its own: a canonical beside a stylesheet is not a stylesheet */
+    for (const [tag] of html.matchAll(/<link\b[^>]*>/g)) {
+      const origin = (tag.match(/\bhref="(https:\/\/[^/"]+)/) || [])[1];
+      if (!origin || !/\brel="stylesheet"/.test(tag)) continue;
       assert.ok(d['style-src'].includes(origin), `${page}: stylesheet from ${origin}`);
     }
   }

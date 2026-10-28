@@ -1,6 +1,6 @@
 {
   "schema_version": "mccluster-domain-architecture/v1",
-  "updated_at": "2026-10-14",
+  "updated_at": "2026-10-28",
   "authority": "Owner instruction, 2026-10-03. Human-readable companion: docs/control-plane/DOMAINS-AND-ENTITIES.md. Tests: scripts/test/domain-architecture.test.mjs.",
   "rule": "Two related but distinct canonical web properties. mccluster.org is McCluster Corp's house; matthew.mccluster.org is Matthew McCluster's house. Do not collapse them, do not make the two entities interchangeable, and do not move a working URL merely for tidiness.",
   "properties": {
@@ -173,6 +173,7 @@
       "/prim3.html",
       "/prim3-range.html",
       "/hitman-facility.html",
+      "/site0/",
       "/sites.html",
       "/sites-details.html",
       "/services.html",
@@ -183,7 +184,11 @@
       "/privacy.html"
     ],
     "separate_company_hosted_on_personal": [
-      "/whip.html"
+      "/whip.html",
+      "/whip/",
+      "/whip/driver/",
+      "/whip/rentals/",
+      "/whip/rider/"
     ],
     "owner_decision": [
       "/prayer-closet.html",
@@ -200,7 +205,8 @@
       "Merge the PR; confirm https://api.mccluster.org/v1/health reports the merged SHA.",
       "Cloudflare -> Workers Routes: add mccluster.org/* and www.mccluster.org/* -> Worker mccluster.",
       "Cloudflare -> Rules -> Redirect Rules: narrow the redirect rule to here.mccluster.org only (redirect rules run before Workers, so the Worker sees nothing until this changes). Rollback is re-widening the rule.",
-      "Verify: curl -I https://mccluster.org/ -> 200 company page; curl -I 'https://mccluster.org/action/?c=end-racism' -> 301 to https://matthew.mccluster.org/action/?c=end-racism; curl -I https://www.mccluster.org/ -> 301 to https://mccluster.org/.",
+      "Supabase -> Authentication -> URL Configuration -> Redirect URLs: add https://mccluster.org/** so ordinary sign-in on the host may return to it (the bar's handoff needs nothing).",
+      "Verify (owner, 2026-10-15: the root is the World): curl -I https://mccluster.org/ -> 200, the World (mnet.html) with this host's head: title Human Uprise · McCluster, canonical https://mccluster.org/, og:site_name McCluster Corp, no noindex; curl -I https://mccluster.org/company -> 200 company page; curl -I 'https://mccluster.org/action/?c=end-racism' -> 200, a World room with x-robots-tag noindex; curl -I https://mccluster.org/docket-516.html -> 301 to https://matthew.mccluster.org/docket-516.html; curl -I https://www.mccluster.org/ -> 301 to https://mccluster.org/; curl -I http://mccluster.org/ -> 301 to https://mccluster.org/ (the Worker answers it; Cloudflare SSL/TLS -> Edge Certificates -> Always Use HTTPS covers the zone as well).",
       "Search Console: add the mccluster.org URL-prefix property (DNS TXT verification records already exist), submit https://mccluster.org/sitemap.xml.",
       "Supply a 1200x630 McCluster Corp share card; until then the company preview uses the supplied M mark (assets/img/m-mark.png), unaltered."
     ],

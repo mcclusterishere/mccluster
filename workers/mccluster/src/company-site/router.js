@@ -47,19 +47,35 @@ const PAGE_HEADERS = {
 /* The World's head on the company host: company-first, stable @ids
    (data/seo/domain-architecture.json). The WebSite node itself is declared
    on /company with the Organization; the root only belongs to it. */
+const WORLD_NAME = 'Human Uprise · McCluster';
+const WORLD_DESCRIPTION = 'Human Uprise is McCluster Corp\'s movement platform: the World\'s globe, live context and member feed, where people find the movement and turn what they care about into verified action.';
 const WORLD_NODE = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   '@id': `${COMPANY_ORIGIN}/`,
   url: `${COMPANY_ORIGIN}/`,
-  name: 'Human Uprise · McCluster',
+  name: WORLD_NAME,
+  description: WORLD_DESCRIPTION,
   isPartOf: { '@id': `${COMPANY_ORIGIN}/#website` },
   about: { '@id': 'https://matthew.mccluster.org/#mccluster-corp' },
   publisher: { '@id': 'https://matthew.mccluster.org/#mccluster-corp' }
 });
+/* properties.company.share_preview: "The root shares as Human Uprise ·
+   McCluster, site name McCluster Corp." The image is the supplied M mark,
+   unaltered, until the owner supplies a 1200x630 company card
+   (edge.activation_owner_steps). */
+export const WORLD_SHARE = {
+  title: WORLD_NAME,
+  description: WORLD_DESCRIPTION,
+  image: 'https://matthew.mccluster.org/assets/img/m-mark.png',
+  imageWidth: 256,
+  imageHeight: 256,
+  imageAlt: 'The McCluster M mark'
+};
 export const WORLD_HEAD = {
   origin: COMPANY_ORIGIN,
   siteName: 'McCluster Corp',
+  share: WORLD_SHARE,
   extra: `<script type="application/ld+json">${WORLD_NODE}</script>`
 };
 
@@ -71,6 +87,10 @@ export async function companySiteResponse(request, env = {}, fetchImpl = fetch) 
   const url = new URL(request.url);
   const host = url.hostname.toLowerCase();
   if (host !== APEX && host !== WWW) return null;
+  /* never plain http on the apex: one hop to https (www already answers with https targets) */
+  if (host === APEX && url.protocol === 'http:') return moved(`${COMPANY_ORIGIN}${url.pathname}${url.search}`);
+  /* the company page has one address; with a trailing slash it is the same page, not a path on Matthew's site */
+  if (url.pathname === `${COMPANY_PAGE_PATH}/`) return moved(`${COMPANY_ORIGIN}${COMPANY_PAGE_PATH}${url.search}`);
 
   /* the old root document name is the root here, not the album */
   const path = url.pathname === '/index.html' ? '/' : url.pathname;

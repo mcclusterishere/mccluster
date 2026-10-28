@@ -140,8 +140,13 @@ depends on the old origin.
 5. Verify:
    - `curl -I https://mccluster.org/` returns 200, the World (its body is
      `mnet.html`; its head names `https://mccluster.org/` as canonical and
-     McCluster Corp as the site; no `noindex`).
-   - `curl -I https://mccluster.org/company` returns 200, the company page.
+     McCluster Corp as the site; its title and share card "Human Uprise ·
+     McCluster" with the M mark; no `noindex`).
+   - `curl -I https://mccluster.org/company` returns 200, the company page;
+     `https://mccluster.org/company/` is a 301 to it.
+   - `curl -I http://mccluster.org/` returns a 301 to `https://mccluster.org/`
+     (the Worker answers plain http on the apex; Cloudflare's "Always Use
+     HTTPS" on the zone does the same at the edge).
    - `curl -I 'https://mccluster.org/mnet.html?view=feed'` returns a 301 to `https://mccluster.org/?view=feed`.
    - `curl -I https://mccluster.org/docket-516.html` returns a 301 to the same path on `matthew.mccluster.org`.
    - `curl -I https://www.mccluster.org/` returns a 301 to `https://mccluster.org/`.

@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 443,
+  "candidate_count": 444,
   "capability_source_count": 102,
-  "support_only_count": 341,
+  "support_only_count": 342,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1782,7 +1782,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3285,6 +3285,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the Halo projection role boundary so an Equity Uprise admin cannot become a McCluster house owner."
+    },
+    {
+      "path": "workers/mccluster/test/company-site.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests of the mccluster.org host router: the World served at the company root with a company-first head (it asserts the World's old Equity Uprise title and description do not leak), /company, and every other path sent to Matthew's property. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/human-uprise-site.test.mjs",

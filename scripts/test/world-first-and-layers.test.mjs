@@ -115,9 +115,9 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
   assert.match(html, /<ol class="mn__steps" id="mnSteps" aria-label="Three steps"><li data-step="1" class="is-current"><\/li><li data-step="2"><\/li><li data-step="3"><\/li><\/ol>/);
   /* the copy names the thing (owner, 2026-10-20: "instead of saying make it yours, it should be like make a profile"), in order:
      the public profile, where we can reach you (private), phone and sign-in */
-  assert.match(html, /id="mnStep1" data-step="1">\s*<h1 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>\.<\/em><\/h1>\s*<p class="mn__lede" id="mnProfileLede">Your username and name\. It's how people find you\.<\/p>/);
-  assert.match(html, /id="mnStep2" data-step="2" hidden>\s*<h1 class="mn__onboard-h">Where we can reach you<em>\.<\/em><\/h1>\s*<p class="mn__lede">Your legal name and mailing address\. Private, never on your profile\.<\/p>/);
-  assert.match(html, /id="mnStep3" data-step="3" hidden>\s*<h1 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>\.<\/em><\/h1>/);
+  assert.match(html, /id="mnStep1" data-step="1">\s*<h2 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>\.<\/em><\/h2>\s*<p class="mn__lede" id="mnProfileLede">Your username and name\. It's how people find you\.<\/p>/);
+  assert.match(html, /id="mnStep2" data-step="2" hidden>\s*<h2 class="mn__onboard-h">Where we can reach you<em>\.<\/em><\/h2>\s*<p class="mn__lede">Your legal name and mailing address\. Private, never on your profile\.<\/p>/);
+  assert.match(html, /id="mnStep3" data-step="3" hidden>\s*<h2 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>\.<\/em><\/h2>/);
   for (const src of [html, js, await read('js/mnet-tour.js')]) assert.doesNotMatch(src, /Make it yours|Lock it in|Your place in the movement/, 'the old copy is gone everywhere');
   assert.match(html, /<details class="mn__about" id="mnAbout">[\s\S]*?<strong>About you<\/strong><small>Optional · Private<\/small>/, 'the demographics ride along, collapsed, optional, private');
   assert.doesNotMatch(html, /A response is required/, 'the demographics are optional and say so');

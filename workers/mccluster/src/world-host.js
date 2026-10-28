@@ -29,18 +29,51 @@ export const WORLD_PREFIXES = ['/action-network-', '/action/', '/auth/', '/js/',
 
 const NOINDEX_META = /<meta name="robots" content="noindex">/;
 
+const TITLE = /<title>[^<]*<\/title>/;
+const DESCRIPTION_META = /<meta name="description" content="[^"]*">/;
+const attr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 /* The World's head on a host of its own. On Matthew's site mnet.html is
    noindex (the member network is not a search landing there); on its own
    host it is the front door, so the noindex gives way to that host's
-   canonical, og:url and site name, plus any node the host adds. */
-export function worldHeadFor(html, { origin, siteName, extra = '' }) {
-  const head = [
+   canonical, og:url and site name, plus any node the host adds.
+
+   A host that names its own share preview (`share`) also gets its own
+   <title> and description in place of mnet.html's, which were written for
+   a noindex page on Matthew's site, and the Open Graph and Twitter tags a
+   link preview reads. The image is the owner's supplied artwork, named by
+   URL and never altered. */
+export function worldHeadFor(html, { origin, siteName, extra = '', share = null }) {
+  const tags = [
     `<link rel="canonical" href="${origin}/">`,
     `<meta property="og:url" content="${origin}/">`,
-    `<meta property="og:site_name" content="${siteName}">`
-  ].concat(extra ? [extra] : []).join('\n  ');
-  if (NOINDEX_META.test(html)) return html.replace(NOINDEX_META, head);
-  return html.replace('</title>', '</title>\n  ' + head);
+    `<meta property="og:site_name" content="${attr(siteName)}">`
+  ];
+  let out = html;
+  if (share) {
+    out = out.replace(TITLE, `<title>${attr(share.title)}</title>`);
+    const desc = `<meta name="description" content="${attr(share.description)}">`;
+    if (DESCRIPTION_META.test(out)) out = out.replace(DESCRIPTION_META, desc);
+    else tags.unshift(desc);
+    tags.push(
+      `<meta property="og:type" content="website">`,
+      `<meta property="og:title" content="${attr(share.title)}">`,
+      `<meta property="og:description" content="${attr(share.description)}">`,
+      `<meta property="og:image" content="${attr(share.image)}">`
+    );
+    if (share.imageWidth) tags.push(`<meta property="og:image:width" content="${share.imageWidth}">`);
+    if (share.imageHeight) tags.push(`<meta property="og:image:height" content="${share.imageHeight}">`);
+    if (share.imageAlt) tags.push(`<meta property="og:image:alt" content="${attr(share.imageAlt)}">`);
+    tags.push(
+      `<meta name="twitter:card" content="summary">`,
+      `<meta name="twitter:title" content="${attr(share.title)}">`,
+      `<meta name="twitter:description" content="${attr(share.description)}">`,
+      `<meta name="twitter:image" content="${attr(share.image)}">`
+    );
+  }
+  const head = tags.concat(extra ? [extra] : []).join('\n  ');
+  if (NOINDEX_META.test(out)) return out.replace(NOINDEX_META, head);
+  return out.replace('</title>', '</title>\n  ' + head);
 }
 
 /* THE HOST'S OWN HEADERS, on every answer.

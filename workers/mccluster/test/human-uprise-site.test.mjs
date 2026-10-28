@@ -174,3 +174,15 @@ test('the API answers the Human Uprise host: its origins are on the CORS allowli
   assert.ok(list.includes('https://www.humanuprise.com'));
   assert.ok(list.includes('https://matthew.mccluster.org'), 'and the personal property keeps its place');
 });
+
+test('plain http on the apex is one 301 to https, same path and query', async () => {
+  for (const [from, to] of [
+    ['http://humanuprise.com/', 'https://humanuprise.com/'],
+    ['http://humanuprise.com/?view=missions', 'https://humanuprise.com/?view=missions'],
+    ['http://www.humanuprise.com/account.html', 'https://humanuprise.com/account.html']
+  ]) {
+    const r = await humanUpriseResponse(req(from), {}, () => { throw new Error('must not fetch'); });
+    assert.equal(r.status, 301, from);
+    assert.equal(r.headers.get('location'), to, from);
+  }
+});

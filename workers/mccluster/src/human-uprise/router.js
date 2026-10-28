@@ -58,6 +58,8 @@ export async function humanUpriseResponse(request, env = {}, fetchImpl = fetch) 
   const url = new URL(request.url);
   const host = url.hostname.toLowerCase();
   if (host !== APEX && host !== WWW) return null;
+  /* never plain http on the apex: one hop to https (www already answers with https targets) */
+  if (host === APEX && url.protocol === 'http:') return moved(`${HUMAN_UPRISE_ORIGIN}${url.pathname}${url.search}`);
   if (host === WWW) return moved(`${HUMAN_UPRISE_ORIGIN}${url.pathname}${url.search}`);
 
   const path = url.pathname;
