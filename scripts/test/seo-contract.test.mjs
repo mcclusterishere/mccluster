@@ -67,6 +67,7 @@ const ENGINEERING = ["engineering/index.html", "engineering/it-support-systems.h
 test("the music catalogue markup matches its data, and llms.txt says only what is true", () => {
   /* profile, hire, newsroom and sitemap generators are checked by seo-authority.test.mjs */
   execFileSync("node", ["tools/build-catalogue.mjs", "--check"], { cwd: ROOT, stdio: "pipe" });
+  execFileSync("node", ["tools/build-walls.mjs", "--check"], { cwd: ROOT, stdio: "pipe" });
   execFileSync("python3", ["tools/verify-llms.py"], { cwd: ROOT, stdio: "pipe" });
 });
 
