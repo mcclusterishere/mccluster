@@ -1,5 +1,31 @@
 # Pending migrations
 
+Read `PROMOTION-ORDER.md` (in this folder) for the order in which the files here
+are meant to be applied, what each needs first, and how each is tested.
+
+`live-callers.json` lists every RPC, table and bucket that shipped code (`js/`,
+root pages, `workers/mccluster/src`, `workers/mccluster-mcp/src`) calls but the
+applied history (`supabase/migrations/` + `supabase/replay_migrations/`) does
+not define: `pending_only` names are defined by a file here and fail in
+production until it is promoted; `missing_everywhere` names have no SQL at all.
+`scripts/test/rpc-names-exist.test.mjs` fails on any such name missing from the
+list and on any entry that is stale, so the list only shrinks: promoting a file
+means removing its names. Regenerate the view with
+`RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
+
+Hygiene, 2026-10-27: `supabase/migrations/pending/` (a second staging folder
+that the drift check could not see) was retired; its twelve unapplied files
+moved here unchanged, and its five byte-identical copies of applied creator
+migrations were deleted. `scripts/control-plane-drift-contract-check.mjs` now
+fails if `supabase/migrations/` holds a subdirectory or a non-`.sql` file.
+Removed as already applied: `20261019222500_world_place_scope_v1.sql`
+(promoted as `20261021173729_world_place_scope_v1`) and
+`world_news_discussions_v1.sql` with its rollback (`media_news_comments`, its
+rate guard and RLS were created in production by
+`20261021011443_royce_platform_actor`; the tests that read the pending file
+now read that migration).
+
+
 Promoted 2026-10-21: `listener_state_v1.sql` is applied in production as `20261021125121_listener_state_v1.sql`. The Pocket cross-device state table now exists, with authenticated ownership RLS, forced RLS, a 4 KiB JSON cap, and no anon read. Exact stored production SQL matches the reviewed pending source. Test: `bash scripts/test-listener-state-db.sh`. Do not replay the pending file.
 
 
@@ -78,12 +104,14 @@ Worker only. `WORLD_NEWS_INGEST_ENABLED = "true"` in
 `workers/mccluster/wrangler.toml`; `"false"` stops the ingest. Tested by
 `scripts/test-world-news-db.sh`.
 
-Pending: `action_globe_demo_pins_v1.sql` puts the first pins on the World
-(owner, 2026-10-15: "we need to have it populated with missions"). It inserts
-three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
-every open mission in one by its campaign, published. Idempotent; apply as the
-service role, then promote with the steps above. Regional impact totals still
-need five consenting members per region and are not seeded.
+Applied as data, file removed 2026-10-27: `action_globe_demo_pins_v1.sql` put the
+first pins on the World (owner, 2026-10-15: "we need to have it populated with
+missions"). Production holds its three regions (US-CT, US-GA, CD-HK, written
+2026-10-15) and the mission-region rows; it was run as the service role, not
+recorded as a migration, and had nothing left to promote. The SQL lives on as
+`supabase/tests/action_globe_demo_pins_v1.applied.sql`, the fixture
+`scripts/test-mission-pins-db.sh` applies before the pins migration. Regional impact totals
+still need five consenting members per region and are not seeded.
 
 Pending: `20261015210000_intel_mission_canon_v1.sql` is the one evidence ->
 claim -> briefing -> decision -> mission -> outcome schema for Halo and the
@@ -98,9 +126,10 @@ steps above. The Worker's intel routes answer `intel_schema_not_ready` until
 then, and its USGS collector stays off until `INTEL_USGS_COLLECTOR_ENABLED`
 is `"true"`.
 
-Superseded, do not apply: `20261011190000_decision_intelligence_evidence_v1.sql`
+Superseded and removed 2026-10-27: `20261011190000_decision_intelligence_evidence_v1.sql`
 (a private schema with no grants that nothing can reach, and a second source
-registry beside `ops_ingest_*`). The intel canon replaces it.
+registry beside `ops_ingest_*`). The intel canon replaced it; the file is in
+Git history only.
 
 Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
 (owner, 2026-10-15): every unlock as a data row (`action_unlock_rules`: the
@@ -215,8 +244,8 @@ v5.1.2 references; a "first world" list from the World Bank FY27 high-income cla
 data), a display-only origin ("Started by the Connecticut cohort"), the policy arc (memo → reform
 paper, unlocked by an admin-verified memo), and Black business listings reviewed by the desk. It
 also makes existing pins display-only (`join_scope` 'anywhere'): today every pinned open mission is
-unjoinable because no member has a region. Promote `action_globe_demo_pins_v1.sql` (already
-applied) first. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
+unjoinable because no member has a region. Its regions (the former `action_globe_demo_pins_v1.sql`) are already in
+production. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
 `docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.
 
 Reconciled from production on 2026-10-16 (SQL was already applied; not re-executed):

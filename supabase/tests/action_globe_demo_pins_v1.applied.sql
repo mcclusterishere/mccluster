@@ -1,3 +1,4 @@
+-- APPLIED IN PRODUCTION as service-role data on 2026-10-15 (three regions, the mission pins). Kept as the scratch-database fixture for scripts/test-mission-pins-db.sh; never re-run against production. Moved from supabase/pending/ on 2026-10-27.
 -- THE GLOBE'S FIRST PINS (owner, 2026-10-15: "we need to have it populated
 -- with missions. Don't we already have missions?").
 --

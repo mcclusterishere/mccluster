@@ -94,18 +94,19 @@ test('the page writes the layers\' line over the Earth, and Flights carries the 
   assert.match(css, /\.mn__world-layers \{ position: absolute; z-index: 4; left: 12px; bottom: 82px;/);
 });
 
-test('the Worker serves the three layers, members only for two, and the pins SQL waits for the owner', async () => {
+test('the Worker serves the three layers, members only for two, and the demo pins SQL is the applied fixture', async () => {
   const w = await read('workers/mccluster/src/world-layers.js');
   assert.match(w, /flights: \{ public: true, ttl: 600/); assert.match(w, /satellites: \{ public: false, ttl: 7200/); assert.match(w, /launches: \{ public: false, ttl: 1800/);
   assert.match(w, /const user = await bearerUser\(request, env, fetchImpl\);\n    if \(!user\) return fail\(/);
   assert.match(w, /OpenSky's data is for non-commercial research/, 'the licence caveat is written where the code is');
   await access(join(ROOT, 'workers/mccluster/test/world-layers.test.mjs'));
-  const sql = await read('supabase/pending/action_globe_demo_pins_v1.sql');
+  const sql = await read('supabase/tests/action_globe_demo_pins_v1.applied.sql');
+  assert.match(sql, /APPLIED IN PRODUCTION/);
   assert.match(sql, /insert into public\.action_globe_regions \(region_key, country_code, subdivision_code, region_label, centroid_lat, centroid_lon\)/);
   assert.match(sql, /\('US-CT', 'US', 'CT', 'Connecticut', 41\.6032, -73\.0877\)/);
   assert.match(sql, /when m\.campaign_id = 'critical-minerals-drc-001' then 'CD-HK'/);
   assert.match(sql, /on conflict \(mission_id\) do update/);
-  assert.match(await read('supabase/pending/README.md'), /action_globe_demo_pins_v1\.sql/);
+  assert.match(await read('supabase/pending/README.md'), /Applied as data, file removed 2026-10-27: `action_globe_demo_pins_v1\.sql`/);
 });
 
 test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)', async () => {

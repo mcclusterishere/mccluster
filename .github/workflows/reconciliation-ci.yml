@@ -1,3 +1,5 @@
+          # compute_lease_authority_v2 (20261020210718) and intel_decision_integrity_v2 (20261020211313)
+          # were promoted; the reset above applies them from supabase/migrations/.
 name: Reconciliation CI
 
 on:
@@ -248,12 +250,8 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/native-admin-tools" --ignore-scripts --no-audit --no-fund --package-lock=false postgres@3.4.5
           export POSTGRES_MODULE_PATH="$RUNNER_TEMP/native-admin-tools/node_modules/postgres/src/index.js"
           export NATIVE_TEST_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
-          # Exercise pending DDL on the complete reset schema as well as the isolated fixtures.
-          # Promoted files have already been applied by the reset and are skipped here.
-          for migration in supabase/pending/*_compute_lease_authority_v2.sql supabase/pending/*_intel_decision_integrity_v2.sql; do
-            [ -f "$migration" ] || continue
-            psql "$NATIVE_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
-          done
+          # compute_lease_authority_v2 (20261020210718) and intel_decision_integrity_v2 (20261020211313)
+          # were promoted; the reset above applies them from supabase/migrations/.
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
       - name: Stop isolated stack

@@ -46,7 +46,7 @@ Production counts come from SELECT-only aggregate queries against Supabase
 
 - `supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql`
   (mission curation; production still shows the retired missions open).
-- `supabase/pending/20261011190000_decision_intelligence_evidence_v1.sql`
+- `20261011190000_decision_intelligence_evidence_v1.sql` (removed from `supabase/pending/` 2026-10-27 as superseded)
   (private `decision_intelligence.sources/claims/evidence_links`; schema not
   present in production). Superseded by the evidence canon below; do not
   apply both.

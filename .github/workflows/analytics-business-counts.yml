@@ -6,8 +6,6 @@ on:
       - 'supabase/tests/analytics_business_event_counts.behaviour.sql'
       - 'supabase/migrations/*_analytics_read_hotpaths_v2.sql'
       - 'supabase/migrations/*_analytics_region_covering_v3.sql'
-      - 'supabase/pending/analytics_read_hotpaths_v2.sql'
-      - 'supabase/pending/analytics_region_covering_v3.sql'
       - 'supabase/ops/*_v2_idx.sql'
       - 'supabase/ops/*_v3_idx.sql'
       - 'scripts/test-analytics-hotpaths-db.mjs'
