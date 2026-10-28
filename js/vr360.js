@@ -282,6 +282,15 @@
     spotLayer.className = "vr360-spots";
     canvas.parentNode.insertBefore(spotLayer, canvas.nextSibling);
 
+    /* a tag's label is text, whoever typed it: escaped here, on its way into
+       the DOM, so no caller has to remember. A caller that already escaped
+       its labels (js/main.js vrSpots) is not escaped twice: an entity this
+       helper itself emits passes through unchanged. */
+    function esc(t) {
+      return String(t == null ? "" : t).replace(/&(?!(?:amp|lt|gt|quot|#39);)|[<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
     function setSpots(list) {
       spots = (list || []).map(function (s) {
         var el = document.createElement("a");
@@ -290,7 +299,7 @@
         el.className = "vr360-spot" + (s.urgent ? " is-urgent" : "");
         el.href = s.href || "#";
         if (s.blank) { el.target = "_blank"; el.rel = "noopener"; }
-        el.innerHTML = "<i></i><span>" + s.label + "</span>";
+        el.innerHTML = "<i></i><span>" + esc(s.label) + "</span>";
         el.addEventListener("click", function () {
           if (window.MCC_TRACK) window.MCC_TRACK("vr_spot_click", { label: s.label });
         });
