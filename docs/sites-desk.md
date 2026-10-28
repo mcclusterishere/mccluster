@@ -1,3 +1,5 @@
+> Superseded 2026-10 by `docs/control-plane/CANONICAL-ARCHITECTURE.md`: `apps/api` is an archive; the one API is Worker `mccluster`.
+
 # MCCLUSTER SITES: the desk's runbook
 
 Free build. Recurring monthly. The studio makes the changes. The client

@@ -55,10 +55,19 @@ stable `@id`s across the whole property; see
 
 ## Deploy
 
-Push to `main` → `.github/workflows/deploy-pages.yml` stamps asset versions
-and mirrors to `gh-pages`. In repo **Settings → Pages**, set the source to
-the `gh-pages` branch (one-time). Payments ride the Supabase + Stripe rail
-(`checkout` edge function).
+Push to `main` → `.github/workflows/deploy-pages.yml` publishes the web
+root to `gh-pages`, and GitHub Pages serves that branch (one-time setup in
+**Settings → Pages**). The pages themselves have no build step; the
+workflow does: it dates `sitemap.xml` from each page's last commit, stamps
+`?v=__STAMP__` asset URLs in HTML, JS, CSS and `sw.js` with the commit so
+every deploy busts browser caches, promotes the Site 0 build into `site0/`
+(`tools/publish-site0.sh`), builds the Equity Uprise GLBs and checks their
+deploy contract before copying the preview set into `equity-uprise-preview/`,
+strips the internals (`docs/`, `scripts/`, `workers/`, `platform/`, `core/`,
+`native/`, agent files, package manifests and the rest of the private
+tree), then force-pushes the result to `gh-pages`. A final job waits for
+the live site to serve the new stamp and asserts the private paths answer
+404. Payments ride the Supabase + Stripe rail (`checkout` edge function).
 
 Release gate: `node scripts/smoke.mjs` walks the key rooms in a real
 headless browser at phone and desktop widths and fails on any page error.
