@@ -16,6 +16,7 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | McCluster Corp's property (company) | `https://mccluster.org`: a different site about a different entity, served by Worker `mccluster` by host once routed. See `docs/control-plane/DOMAINS-AND-ENTITIES.md` |
 | API | `https://api.mccluster.org` |
 | Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
+| Persistent execution | OVH McCluster Core from `core/`, promoted through `deploy/ovh-production`: not a Worker and not a second backend. See `docs/control-plane/ECOSYSTEM.md` and `docs/control-plane/MCCLUSTER-CORE.md` |
 | Durable Object class that MUST stay exported | `HereTenantAgent` |
 
 **There is no Worker named `mccluster-core`. Do not create one.**
@@ -48,6 +49,34 @@ The canonical API Worker is `mccluster`. The approved `mccluster-mcp` extraction
     - SVG text is sized in USER UNITS and shrinks with the viewBox, so a chart that is legible at 1440 can render 4px type on a phone. Size it for the phone and scale down at a breakpoint, not the reverse.
     - Verify by rendering at 390px and measuring `scrollWidth` against `clientWidth`. They must be equal. Eyeballing a screenshot does not catch a 25px overflow.
 15. **Two properties, two entities. Never collapse them.** `https://mccluster.org/` is **McCluster Corp's** house: it answers "what is McCluster Corp?", and its metadata, share cards, Organization data and navigation are company-first. `https://matthew.mccluster.org/` is **Matthew McCluster's** house: person, résumé, engineering, portfolio, photography, music. The I AM HERE album is a front door to Matthew's house, not its identity and never the company's homepage. Hierarchy: Matthew McCluster founded McCluster Corp; McCluster Corp operates Equity Uprise (public-interest project), Human Uprise (software product: the movement-creation social platform, formerly the Uprise Action Network; Equity Uprise runs on it as a program), PRIM3 (learning product, not a recording alias) and the McCluster Platform; **Whip Equipped LLC is Matthew's separate company, never a McCluster Corp sub-brand**; I AM HERE is Matthew's album, published through the ecosystem. Stable `@id`s do not move: Person `https://matthew.mccluster.org/#matthew-mccluster`; Organization `https://matthew.mccluster.org/#mccluster-corp`, whose `url` is `https://mccluster.org/`. Company *apps* (Human Uprise, accounts, checkout, campaigns) stay on their working URLs because sessions and returns are origin-bound; ownership changes navigation and metadata, not URLs. Authority: `data/seo/domain-architecture.json` and `docs/control-plane/DOMAINS-AND-ENTITIES.md`; tests enforce it. **Three hosts, still two entities:** the World's door today is `https://mccluster.org/` (owner, 2026-10-15: the company host's root serves the World, `workers/mccluster/src/company-site/router.js` on the shared `workers/mccluster/src/world-host.js`; the company page is `/company`; the bar's Globe goes there from Matthew's site). Human Uprise's World also has its own door, `https://humanuprise.com/` (owner, 2026-10-14), a McCluster Corp host served by the one Worker by host (`workers/mccluster/src/human-uprise/router.js`), inert until the owner routes it; on either World host, Music, the M and every creator page send to Matthew's property. Sessions are per origin, and one M Account works on every host because the bar carries a member's sign-in across (`js/tabbar.js` → `POST /v1/auth/handoff`, `workers/mccluster/src/auth-handoff.js`; the arriving host earns its own session, no refresh token crosses).
+
+## AI work: read the harness first
+
+Read `docs/control-plane/AI-HARNESS.md` before any AI, agent, memory, RAG, conversation-history, provider-routing, or autonomous-company work. Private cross-model context lives in Supabase schema `ai_context`, not in public Git: never commit raw ChatGPT, Claude, Grok, Gemini, Copilot, local-model or other provider transcripts to this repository. Every provider is a replaceable adapter that normalizes into the authenticated `context-ingest` contract and retrieves from the one McCluster context plane. No AI provider owns memory: do not create a shadow vector store, a second conversation database, a raw-chat directory, a separate memory service or a competing context source. Git holds schemas, adapters, policies, tests and intentionally public-safe summaries; Supabase holds the private corpus and its provenance.
+
+## Autonomous operations contract
+
+This contract applies to every agent that runs unattended here, whatever vendor it comes from.
+
+McCluster is an event-driven operating system, not a collection of disconnected assistants.
+
+Canonical operational state lives in Supabase project `zmnhbrjyhxzhkxmhkexs`. Existing outreach CRM tables include `out_companies`, `out_contacts`, `out_campaigns`, `out_recipients`, and `out_events`. The autonomous operations layer includes `ops_objectives`, `ops_signals`, `ops_lead_scores`, `ops_agent_jobs`, `ops_recommendations`, and `ops_repo_events`.
+
+When working in this repository:
+
+- Reuse the canonical backend and schemas; do not create parallel CRM databases, shadow lead lists, or competing sources of truth.
+- Treat repository changes, tests, deployment results, CRM engagement, research findings, and campaign outcomes as signals that should feed the operating layer.
+- Prefer event-driven jobs plus scheduled reconciliation over one-off scripts.
+- Keep lead/account scoring adaptive: engagement, urgency, fit, and momentum may expand or shrink campaign scope.
+- New objectives and campaigns may be proposed automatically from evidence, but proposals must be written as recommendations before external execution.
+- Autonomous agents MAY research, classify, score, reconcile, test, lint, analyze, draft, queue jobs, and propose next actions.
+- Autonomous agents MUST NOT send external communications, merge/deploy production code, spend money, delete production data, change authentication/authorization, or perform destructive migrations without explicit human approval.
+- Every organized outbound message must obey `docs/control-plane/OUTREACH-CRM-INVARIANT.md`; the CRM/database is the source of truth and Gmail `CRM Linked` is only an audit marker after successful database linkage.
+- Never invent contact metadata, consent, replies, opens, clicks, titles, or company facts. Unknown is a valid value.
+- Make jobs idempotent where possible and record enough provenance to explain why a score, recommendation, or scope change happened.
+- Tests are part of the product. Code-changing agents should run the relevant tests and record outcomes before proposing or completing a change.
+
+The desired steady state is continuous maintenance: ingest signals, reconcile state, score priorities, run safe checks, surface anomalies, and prepare high-value next actions while the owner is offline. Human approval gates remain mandatory for consequential external or production actions.
 
 ## THE LOGOS ARE NOT YOURS TO DRAW
 
@@ -150,11 +179,11 @@ On the control repo:
 - `AGENTS.md` (this law + local product gates)
 - `docs/PRODUCT-ARCHITECTURE-ROADMAP.md` (canonical cross-product context; authority + Action Network + Control + commercial completion order)
 - `data/product-context.json` (public machine-readable product map)
-- `CLAUDE.md` / `CODEX.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md` / `.github/instructions/mccluster.instructions.md`
+- the seven thin agent adapters, which point here and copy no rule: `CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/mccluster.mdc`, `.github/copilot-instructions.md`, `.github/instructions/mccluster.instructions.md` (`scripts/test/domain-architecture.test.mjs` holds them to this)
 - `docs/control-plane/ECOSYSTEM.md`
 - `docs/control-plane/registry.json`
 
-On every satellite: the same four agent files, pointing here.
+On every satellite, the satellite kit and nothing more: `docs/control-plane/SATELLITE.md` as the head of the satellite's `AGENTS.md`, plus the same seven adapters copied unchanged, pointing here. Satellites never copy this file's local product gates (the Equity Uprise building, Uprise World, PRIM3 Site 0 and Universe sections below): those belong to this repo, not to the plane. `docs/control-plane/ECOSYSTEM.md` → "Adding a satellite" is the procedure.
 
 ## Owner
 
@@ -266,137 +295,22 @@ python docs/design/equity-uprise-building/production/audit_building_context.py
 
 That local contract, master index, project-state ledger, historical-build register, and build pipeline exist specifically to prevent agents from missing completed work or rebuilding the project from partial context. If the audit fails, fix the context/index before implementation.
 
-## EQUITY UPRISE BUILDING / 360 / SPATIAL AUTHORITY — MANDATORY
+## EQUITY UPRISE BUILDING — SPATIAL AUTHORITY POINTER
 
-For **any Equity Uprise task involving geometry, architecture, floors, rooms, building imagery, 360 panoramas, environmental rendering, physical navigation, spatial transitions, or spatial lore/worldbuilding**, you MUST read:
+The local contract above is the front door. For **any** Equity Uprise task involving geometry, architecture, floors, rooms, B1, the roof, building imagery, 360 panoramas, 3D environments, physical navigation, spatial transitions or spatial lore, read and obey, in this order, before designing, generating, rendering, coding or describing the environment:
 
-`docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
+1. `docs/design/equity-uprise-building/AGENTS.md` — the local contract and its mandatory preflight (`README.md`, `PROJECT-STATE.md`, `MASTER-INDEX.md`, the context audit above).
+2. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md` — the mandatory authority order: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`, `production/equity-uprise-capability-map-v2.json`, `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`, `BUILDING-CORE-V2-SPEC.md` with `production/building-core-v2.json` and `production/building-v2-validation.json`, `production/core-v2-floor-programs.json`, then the floor's own written spec, schematic-plan basis, Core V2 DXF/SVG and deterministic production package (`production/floor-0X/`, read after the spec and never above it). It names every current floor, B1 and Level 7 file, so no floor list is copied here.
 
-before designing, generating, rendering, coding, or describing the environment.
+Program status (what is reconciled, provisional or next), per-floor file lists and the B1 / Level 7 boundaries live in those files and in `PROJECT-STATE.md`, never in this file or in a vendor adapter. This file does not restate them.
 
-That authority file points to the required repo audit, locked six-floor building inventory, floor-specific builder/360 specs, schematic-plan basis, and canonical PNG/SVG/DXF plan references.
+What is law everywhere, each already stated by the targets above:
 
-Non-negotiable:
-- generated images are never geometry authority;
-- floor/core geometry may not drift between renders;
-- Floor 1 establishes the fixed 72' × 72' shell/core datum currently used for building coordination;
-- elevator, stairs, risers and structural coordination remain vertically aligned;
-- Floor 1 is the only public exterior entrance under the current locked scheme;
-- do not invent rooms/floors/departments as canonical lore when they are not supported by the audited Equity Uprise program;
-- if a floor does not yet have a reviewed floor-specific builder/360 spec, write/review that spec before generating its production imagery.
-
-Do not confuse the six-floor Equity Uprise building with the separate `docs/uprise-world/` Living Sketch / Uprise World project. Each retains its own authority unless the owner explicitly requests a crossover.
-
-## Equity Uprise spatial / geometry authority
-
-**Mandatory:** before generating, editing, describing, implementing, or reasoning about any Equity Uprise building geometry, architecture, floor plan, 360 environment, 3D environment, room image, building cutaway, exterior, transition animation, spatial lore, or location continuity, read and obey:
-
-1. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
-2. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
-3. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
-4. the relevant floor's canonical written spec and schematic-plan basis;
-5. the relevant canonical assets under `docs/design/equity-uprise-building/references/`.
-
-For Floor 1 specifically, the canonical asset set is:
-- `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png`
-
-For Floor 2 specifically, the canonical asset set is:
-- `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png`
-
-For Floor 3, also read:
-- `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-03/README.md`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg`
-
-For Floor 4, also read:
-- `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-04/README.md`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png`
-
-For Floor 5, also read:
-- `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-05/README.md`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png`
-
-Before any Floor 6, roof, exterior-master, rooftop 3D, cross-site-flight, helicopter/VTOL, or building-crown work, also read `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`.
-
-For Floor 6 specifically, also read and obey:
-- `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-06/README.md`
-- the canonical Floor 6 DXF/SVG/PNG under `docs/design/equity-uprise-building/references/floor-06/`.
-
-Floor 6 is the last enclosed level; its core/roof-service continuity to Level 7 is non-negotiable. The building has six enclosed occupied floors plus **Level 7 — Roof / Mobility Portal**. Floor 6 must preserve vertical access/core/service continuity to the roof. The rooftop helipad/mobility zone is conceptual until site/aircraft/regulatory/structural feasibility is established.
-
-These files are geometry authority. **Generative images are not geometry authority.** Never move the elevator, stairs, risers, structural grid, building footprint, entrances, floor program, or 360 datum merely to improve a render. Never invent spatial lore that conflicts with the canonical geometry.
-
-Before any Floor 6 roof-interface, Level 7 roof, exterior-master, rooftop 3D, cross-site-flight, helicopter/VTOL, ecosystem-navigation, destination-building, or building-crown work, read and obey: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`, `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`, and `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`, plus canonical assets under `docs/design/equity-uprise-building/references/floor-07/`. Level 7 is the **ecosystem plane**: the roof is permanent portal infrastructure and website destinations are dynamic routing data, never permanent roof geometry. The helicopter/vertical-lift interaction is the canonical cross-site travel metaphor. The candidate mobility zone is conceptual and is not an approved helipad/vertiport until site/aircraft/regulatory/structural feasibility is established.
-
-### Equity Uprise deterministic Floor 1 implementation
-For any Floor 1 3D reconstruction, GLB/glTF export, Three.js/browser scene, hotspot implementation, lighting/material setup, or scene-state work, read `docs/design/equity-uprise-building/production/floor-01/floor-01-scene-manifest.json` and its companion files **after** the canonical Floor 1 written spec, schematic basis, and DXF/SVG. The production package cannot override architectural authority.
-
-## Equity Uprise Core V2 migration authority
-
-When working on branch `architecture/equity-uprise-core-v2` or on artifacts explicitly labeled Core V2, read these **before any floor-specific production file**:
-
-1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
-2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
-3. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
-4. `docs/design/equity-uprise-building/production/building-core-v2.json`
-5. `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
-6. `docs/design/equity-uprise-building/production/building-v2-validation.json`
-7. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
-8. the floor-specific spec, schematic basis, Core V2 DXF/SVG, and production package.
-
-Core V2 shared geometry is not floor-local:
-
-- passenger elevator: X54–62 / Y34–44;
-- service/freight elevator: X0–8 / Y60–72;
-- revised Stair B: X8–18 / Y54–72;
-- Stair A: X60–72 / Y54–72;
-- MEP/riser: approximately X50–60 / Y66–72;
-- floor elevations: 0 / 13.5 / 27 / 40.5 / 54 / 67.5 / 81 ft.
-
-Rules:
-
-- Floor-specific files may add program but may not redefine shared vertical systems.
-- Every Equity Uprise capability must remain mapped through `equity-uprise-capability-map-v2.json`; do not silently add, remove, relocate, or publicize a capability in spatial work.
-- Preserve each capability's declared implementation status and public/private/approval boundary.
-- Both stairs must span the full 13'-6" between finished floors in combined geometry.
-- Do not use the old X0–12/Y54–72 Stair B assumption for new Core V2 work.
-- Do not treat the service/freight elevator as a substitute for a required exit.
-- Do not use Core V1 DXF/SVG/PNG files for new Core V2 modeling.
-- Per-floor viewers are derived isolated views; the combined stacked building is the vertical-continuity authority.
-- Generated images/renders never override the written/shared geometry.
-- All architecture remains schematic and NOT FOR CONSTRUCTION pending licensed professional review.
-
-### Equity Uprise repo-to-building program authority
-
-For any Equity Uprise building, floor, room, 3D, 360, hotspot, navigation or spatial-program task on the Core V2 branch, read these before floor-local artifacts:
-
-1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
-2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
-3. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
-4. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
-5. `docs/design/equity-uprise-building/production/building-core-v2.json`
-6. `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
-
-The capability map controls **what the building represents**. The Core V2 spec/JSON control **shared geometry and vertical continuity**. Floor-local files may refine their level but may not silently remove/rename repo-backed capabilities, expose private or approval-gated systems publicly, restore archived Core V1 plans, or imply passenger-elevator service to Level 7.
-
-Run `production/verify_equity_uprise_program_coverage.py` after program/routing changes.
+- **Generated images and renders are never geometry authority** (`REFERENCE-AUTHORITY.md`). Never move the elevator, stairs, risers, structural grid, footprint, entrances, floor program or 360 datum to improve a render, never invent spatial lore that conflicts with the canonical geometry, and never invent rooms, floors or departments the audited Equity Uprise program does not support.
+- **Core V2 shared geometry is not floor-local** (`BUILDING-CORE-V2-SPEC.md`, `production/building-core-v2.json`): passenger elevator X54–62 / Y34–44; service/freight elevator X0–8 / Y60–72; Stair B X8–18 / Y54–72 (never the old X0–12 assumption); Stair A X60–72 / Y54–72; MEP/riser approximately X50–60 / Y66–72; finished-floor elevations 0 / 13.5 / 27 / 40.5 / 54 / 67.5 / 81 ft on the fixed 72' × 72' plate, both stairs spanning the full 13'-6" between finished floors. Floor-local files may add program but may not redefine shared vertical systems; the combined stacked building is the vertical-continuity authority and per-floor viewers are derived views. The service/freight elevator is not a substitute for a required exit, and nothing implies passenger-elevator service to Level 7.
+- **Floor 1 is the building datum and the only normal public entrance** (`REFERENCE-AUTHORITY.md`, `BUILDING-CORE-V2-SPEC.md`): protected-stair discharge doors and the secure west service entrance/apron are not public entrances, and no upper floor gets an exterior door because a generated image wants one.
+- **Never use the archived Core V1 DXF/SVG/PNG files for new work** (`REFERENCE-AUTHORITY.md` → Core V1 archive rule): `references/archive/core-v1/` is history and traceability only.
+- **Every capability stays mapped** through `production/equity-uprise-capability-map-v2.json` with its implementation status and public/private/approval boundary; do not silently add, remove, relocate or publicize one in spatial work, and never expose a private or approval-gated system publicly. Run `python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py` after program or routing changes.
+- **B1 is restricted live infrastructure** (`BUILDING-CORE-V2-SPEC.md`, `EQUITY-UPRISE-BUILDING-INVENTORY.md`): learner/instructor work uses a sandboxed clone, and ordinary Equity Uprise admin does not inherit underground access.
+- **All architecture remains schematic and NOT FOR CONSTRUCTION** pending licensed professional review.
+- Do not confuse the Equity Uprise building with the separate `docs/uprise-world/` Living Sketch / Uprise World project; each keeps its own authority unless the owner explicitly requests a crossover.
