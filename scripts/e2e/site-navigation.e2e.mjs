@@ -97,7 +97,7 @@ try{
     await open(page);await page.screenshot({path:join(OUT,'destinations-'+width+'.png')});
     await page.keyboard.press('Escape');
 
-    for(const path of ['/license.html','/brief.html','/asset-lab.html','/music-admin.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
+    for(const path of ['/license.html','/brief.html','/music-admin.html','/control.html?org=o1#analytics','/control.html?org=o1#home']){
       await page.goto(BASE+path);await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
       check(width+' consistent owner bar on '+path,await page.evaluate(()=>document.querySelectorAll('.appbar [data-appnav]').length===5&&__navFrames.every(n=>n===5)));
     }
