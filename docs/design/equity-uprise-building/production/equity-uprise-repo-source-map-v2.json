@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 435,
+  "candidate_count": 436,
   "capability_source_count": 104,
-  "support_only_count": 331,
+  "support_only_count": 332,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1957,6 +1957,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "SEO contract tests covering the newsroom and Docket 516R page metadata; not a program capability."
+    },
+    {
+      "path": "scripts/test/mobile-rule.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Repo-wide mobile-rule tests (zoomable viewports, min-width-only breakpoints, minmax(0,1fr) grid tracks); names Equity Uprise pages only in its allowlist; not a program capability."
     },
     {
       "path": "scripts/test/signup-authority.test.mjs",
