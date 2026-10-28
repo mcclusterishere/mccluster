@@ -81,3 +81,25 @@ Moved intact: the two pages, the seven scripts and the data file. They are
 preservation material, not a release candidate. Do NOT simply un-strip the
 directory — pages here have no cache-busting stamp applied and no smoke
 coverage, because the release gate does not walk them either.
+
+## travel-desk.html, asset-lab.html (and the lab-landmark / lab-props aliases)
+
+Shelved 2026-10-27 by the ghost-backend audit. Both pages were on the
+live site and both spoke to backends that do not exist:
+
+- `travel-desk.html` is the owner console for `/api/travel/*`, the
+  Roadshow Worker that was sketched as a loose `workers/travel-quote.js`
+  and never deployed (no wrangler config, no route; relative `/api/...`
+  cannot exist on GitHub Pages). The sketch is deleted from the tree (it
+  is in git history), and `js/roadshow.js` on hire.html is the door only:
+  it no longer fetches a quote that always 404'd.
+- `asset-lab.html` is the HERE 3D Asset Lab client for the archived
+  `apps/api` origin (`/api/v1/status`, `/api/v1/3d/*`). `lab-landmark.html`
+  and `lab-props.html` were legacy aliases whose only destination was that
+  page, so they came along and their rows left `data/legacy-page-routes.json`.
+
+To bring either back: move the page to the repo root, deploy the backend it
+talks to (or point it at a route the `mccluster` Worker actually serves),
+restore the Studio entry in `js/site-navigation.js` and the `assetLab`
+bridge in `js/control-room-v2.js`, and regenerate `redirects/` with
+`node tools/build-redirects.mjs`.
