@@ -105,6 +105,7 @@
     {
      "title": "Here",
      "sub": "the title track",
+     "credit": "",
      "src": "assets/audio/here.mp3",
      "poster": "assets/frames/keynote_0001.jpg",
      "pulse": "#ff3040",
@@ -226,6 +227,7 @@
    "tracks": [
     {
      "title": "Got WiFi?",
+     "credit": "The PRIM3 blue-team anthem",
      "src": "assets/audio/got-wifi.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/got-wifi.json",
@@ -245,6 +247,7 @@
     {
      "title": "Environmental Injustice",
      "sub": "McCluster ft. Angel Kastro & Ocho",
+     "credit": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem",
      "src": "assets/audio/environmental-injustice.mp3",
      "poster": "assets/frames/uprise_0001.jpg",
      "reel": "data/reels/environmental-injustice.json",
@@ -314,6 +317,7 @@
    "tracks": [
     {
      "title": "Vaunt (Acoustic)",
+     "credit": "The Vaunt Private Flights jingle · guitar by Zakir · from the Vaunt EP (with \"Jet Pass\")",
      "src": "assets/audio/vaunt.mp3",
      "poster": "assets/frames/vauntlive_0001.jpg",
      "music_video": "assets/video/vauntlive.mp4"
@@ -329,6 +333,7 @@
    "tracks": [
     {
      "title": "Dealer Plates (A-Side)",
+     "credit": "Prod. Zakir & McCluster",
      "src": "assets/audio/dealer-plates.mp3",
      "poster": "assets/frames/whip_0001.jpg",
      "lyrics": "data/lyrics/dealer-plates.json",
@@ -337,6 +342,7 @@
     },
     {
      "title": "Dealer Plates (B-Side)",
+     "credit": "Prod. Zakir & McCluster",
      "src": "assets/audio/dealer-plates-b.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "music_video": "assets/video/dealer-plates-b-video.mp4"
@@ -352,6 +358,7 @@
    "tracks": [
     {
      "title": "Upset",
+     "credit": "Hitman Halo × Raheem × Rahndrx",
      "src": "assets/audio/upset.mp3",
      "poster": "assets/frames/coffeecam_0001.jpg",
      "lyrics": "data/lyrics/upset.json",

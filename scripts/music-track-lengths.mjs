@@ -100,6 +100,16 @@ export function m4aSeconds(buf) {
   return found;
 }
 
+/* The container decides, not the file name: dealer-plates-b.mp3 is an MP4
+   (AAC) file with an .mp3 name, and reading it as MPEG frames found false
+   syncs and called a 97-second record 23 seconds long. An ISO media file
+   says so at byte 4 ('ftyp'); anything else goes by its extension. */
+export function audioSeconds(buf, ext) {
+  if (buf.length > 12 && buf.toString('latin1', 4, 8) === 'ftyp') return m4aSeconds(buf);
+  const e = String(ext || '').toLowerCase();
+  return e === '.mp3' ? mp3Seconds(buf) : e === '.m4a' ? m4aSeconds(buf) : null;
+}
+
 export function trackKey(track) {
   if (track.gated && track.gated.object) return String(track.gated.object).split('/')[0];
   return basename(String(track.src || ''), extname(String(track.src || '')));
@@ -121,9 +131,8 @@ export function build() {
       }
       const file = resolve(root, t.src);
       const buf = readFileSync(file);
-      const ext = extname(file).toLowerCase();
-      const seconds = ext === '.mp3' ? mp3Seconds(buf) : ext === '.m4a' ? m4aSeconds(buf) : null;
-      if (!seconds) throw new Error(`${t.src}: unsupported audio type ${ext}`);
+      const seconds = audioSeconds(buf, extname(file));
+      if (!seconds) throw new Error(`${t.src}: unsupported audio type ${extname(file)}`);
       tracks[key] = { title: t.title, album: album.slug, seconds: Math.round(seconds * 10) / 10 };
     }
   }

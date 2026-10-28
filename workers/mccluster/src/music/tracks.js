@@ -79,7 +79,7 @@ export const TRACKS = {
   "dealer-plates-b": {
     "title": "Dealer Plates (B-Side)",
     "album": "whip-equipped",
-    "seconds": 22.8
+    "seconds": 97.4
   },
   "upset": {
     "title": "Upset",
