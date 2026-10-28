@@ -38,7 +38,7 @@ Sources:
 
 ## Implementation status / gates
 - Staged: creator_team_decision_matrix migration and creator_super_verification_rewards migration.
-- UI scaffold: creator-selection-desk.html (requires real authenticated API).
+- UI scaffold: _unfinished/creator-selection-desk.html (shelved; requires a real authenticated Worker route).
 - NOT IMPLEMENTED: authenticated API handlers, admin appointment workflow, payment webhook qualifications, gift checkout, streaming infrastructure, live discovery, reward settlement, production migration and rollout.
 - Campaign authorization refactor required: existing clip_campaign_create requires org ownership, while staged trigger requires verified Super Creator. Must support explicit platform-admin authorization and properly scoped delegated creators; do not deploy until all paths are tested.
 - Before deployment test: ordinary creator denied create; purchaser denied create; admin allowed; approved Super Creator allowed only scoped campaigns; revoked denied; forged reviewer denied; cross-cohort peer votes denied; refunded gift denied qualification; 51st reward denied; concurrent rewards capped; replay events idempotent; self-referrals denied; anonymous reads private by default.
