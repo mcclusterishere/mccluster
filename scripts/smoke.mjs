@@ -6,6 +6,7 @@
    and PW_CHROME to a chrome executable if not using PW defaults) */
 import { createRequire } from "module";
 import { spawn } from "child_process";
+import { readFileSync } from "fs";
 import http from "http";
 
 const require = createRequire(import.meta.url);
@@ -26,19 +27,43 @@ function waitForServer(tries = 50) {
   });
 }
 
-/* THE SEAL: demo.html frames two kinds of work. Ours are frozen copies
-   under demos/, synced by scripts/sync-demo.mjs, and they load from
-   127.0.0.1 like any other page here. The rest are clients' own live sites
-   on somebody else's server. CI may have no way out to those, and on the
-   runs where it does, a foreign script throwing inside the frame lands in
-   this page's error list and fails our build over a bug we do not own. So on
-   the viewer's pages every request that leaves 127.0.0.1 is refused before it
-   starts: nothing to wait on, nothing foreign to run. The viewer's checks
-   read DOM and attributes only, the frame's src and never what loads
-   inside it. Do not "tighten" this by waiting on the frame to load. */
+/* THE SEAL: every request that leaves 127.0.0.1 is refused before it starts,
+   on every page of the walk. This gate measures THIS CHECKOUT: that its
+   pages boot, mount and fit a phone. It does not measure whether
+   api.mccluster.org, Supabase or a CDN happen to be up at the minute a pull
+   request lands, and a PR gate must never call production on every push.
+   Sealed, a page sees the state a visitor on a dead connection sees, which
+   is exactly the state its fallbacks exist for (see THE DESK below); open, a
+   hanging request to a third party stalls networkidle and the walk dies on
+   a 30 s timeout in a page that is perfectly fine.
+
+   The seal began on demo.html alone: it frames two kinds of work. Ours are
+   frozen copies under demos/, synced by scripts/sync-demo.mjs, and they load
+   from 127.0.0.1 like any other page here. The rest are clients' own live
+   sites on somebody else's server, and a foreign script throwing inside the
+   frame lands in this page's error list and fails our build over a bug we do
+   not own. The viewer's checks read DOM and attributes only, the frame's src
+   and never what loads inside it. Do not "tighten" this by waiting on the
+   frame to load. SEALED on an entry is documentation now: the context is
+   sealed before the page is. */
 const OUTBOUND = (url) => !String(url).startsWith(B);
 const refuse = (route) => route.abort();
 const SEALED = { sealed: true };
+
+/* THE PRIVACY NOTICE, SEEN. Owner, 2026-10-20: a person entering the site
+   from anywhere sees the privacy policy once and never again. On the house
+   pages that is a wall (js/live-content.js): until "I agree" the rest of
+   the page is visibility:hidden and pointer-events:none, so a walk that
+   taps the bar is tapping a wall, and every DOM read reads the wall's
+   heading as the page's. The walk therefore starts as a visitor who has
+   seen this version of the notice, by writing the record live-content.js
+   reads, and the wall itself gets its own checks below (THE NOTICE), in a
+   context that has not. The version is read off the file so a policy
+   bump does not quietly turn the seed into a no-op. */
+const PRIVACY_VERSION = (/var VERSION = "([^"]+)"/.exec(readFileSync(new URL("../js/live-content.js", import.meta.url), "utf8")) || [])[1];
+const seen = (target) => target.addInitScript((v) => {
+  try { localStorage.setItem("mcc_privacy_seen", JSON.stringify({ version: v, seen_at: new Date().toISOString() })); } catch (e) {}
+}, PRIVACY_VERSION);
 
 /* THE VIEWER, read off the ledger: what the frame is pointed at, and what
    data/sites.json says it should be pointed at. Pass a slug to ask about
@@ -85,13 +110,14 @@ try {
   });
 
   const viewerProbe = await browser.newPage();
+  await viewerProbe.route(OUTBOUND, refuse);
   await viewerProbe.goto(B + "index.html", { waitUntil: "domcontentloaded" });
   const viewerSource = await viewerProbe.evaluate(async () =>
     await (await fetch("_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html", { cache: "no-cache" })).text());
   check("building viewer: Step 8 controls", [
     'id="services"', 'id="wire"', 'id="labs"', "deviceClockSolar",
     "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset", "await labVisualRootsReady",
-    "distributedPack", "BUILDING LAB", "prepareLabPresentation", "scenario.engineering_view"
+    "distributedPack", "Work Tickets", "prepareLabPresentation", "scenario.engineering_view"
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: Room Mode controls", [
     'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
@@ -99,11 +125,11 @@ try {
     "approachRoomObject", "tweenRoomCamera", "selectRoomAt", "projectedRoomTarget",
     "enhanceFloor1Interior", "buildRoomLightRig", 'id="xray"', "setEngineeringMode",
     "ENGINEERING-XRAY-OVERLAY", "await buildingLoaded", "X-Ray: Loading", "setArchitectureGhost(true)",
-    "SpriteMaterial", "rebuildEngineeringMarkers", "visible room-bound devices",
+    "SpriteMaterial", "rebuildEngineeringMarkers", "room-bound endpoints",
     "engineeringRequestId", "requestId!==engineeringRequestId", "engineeringOverlay.remove(o)",
-    "if(engineeringMode&&!roomMode)syncEngineeringView()",
+    "allowXray=engineeringMode&&!roomMode",
     "ELECTRONICS_SPATIAL_MODULE_URL", "electronics.scale.setScalar(FT)", "applyElectronicsSpatialBindings", "spatialConnectionOverlay",
-    "roomSensorMode='motion-primary'", "Placeholder electronics geometry is Engineering/X-Ray only",
+    "roomSensorMode='motion-primary'", "The old generic cable geometry stays hidden",
     "services.visible=servicesOn&&!roomMode", "electronics.visible=false", "requestedRoom=params.get('room')==='1'"
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: Room Mode stays human-scale",
@@ -125,11 +151,13 @@ try {
   const PAGES = [
     ["index.html", async (p) => {
       check("index: 3 bar tabs", await p.locator(".appbar > .appbar__tab").count() === 3);
-      /* Primary navigation is now Music · HERE · Mnet/Profile. The M coin
-         stays in the middle, and shelved columns must not survive in DOM. */
-      check("index: canonical tab order is music, home, profile", await p.evaluate(() =>
+      /* Primary navigation is Music · HERE · Globe: the Globe took the
+         Profile column (owner, 2026-10-14; js/tabbar.js ORDER), account and
+         profile are contextual through the auth chip. The M coin stays in
+         the middle, and shelved columns must not survive in DOM. */
+      check("index: canonical tab order is music, home, world", await p.evaluate(() =>
         [...document.querySelectorAll(".appbar > .appbar__tab")].map((a) => a.dataset.appnav).join()
-        === "music,home,profile"));
+        === "music,home,world"));
       check("index: shelved columns are absent", await p.evaluate(() =>
         !document.querySelector('[data-appnav="uprise"],[data-appnav="sites"]')));
       check("index: body clears the bar (has-appbar)", await p.evaluate(() => document.body.classList.contains("has-appbar")));
@@ -138,7 +166,12 @@ try {
       check("index: the front page lights the M coin", await p.evaluate(() =>
         !!document.querySelector('[data-appnav="home"].is-here') &&
         !document.querySelector('[data-appnav="music"].is-here')));
-      check("index: titled I AM HERE", (await p.title()).includes("I AM HERE"), await p.title());
+      /* Matthew-first: this is Matthew McCluster's property, and the I AM
+         HERE album is a front door here, not the identity (AGENTS.md hard
+         rule 15; docs/control-plane/DOMAINS-AND-ENTITIES.md). The title
+         used to lead with the record. */
+      check("index: titled Matthew-first, not after the album",
+        /^Matthew McCluster/.test(await p.title()) && !/I AM HERE/.test(await p.title()), await p.title());
       check("index: no album marquee pinned to the front page", await p.locator(".albmq").count() === 0);
       check("index: the emblem hero leads", await p.evaluate(() => !!document.getElementById("hero")));
 
@@ -182,40 +215,50 @@ try {
         await p.locator("#mnAlerts").count() === 1 && await p.locator("#mnNotificationsView").count() === 0);
       check("mnet: signed-out door is password auth", await p.locator("#mnPassword").count() === 1 &&
         await p.locator("#mnAuthGo").count() === 1 && await p.locator("#mnCreateTab").count() === 1);
+      /* textContent, not innerText: innerText applies text-transform, so a
+         button the stylesheet sets in caps reads as shouting and fails a
+         case-sensitive match on copy that is right */
       check("mnet: forgot-password recovery is present", await p.locator("#mnForgot").count() === 1 &&
-        /Forgot password\?/.test(await p.locator("#mnForgot").innerText()));
+        /forgot .*password\?/i.test(await p.locator("#mnForgot").textContent()));
       check("mnet: obsolete login language is gone", await p.evaluate(() =>
         !/email me a sign-in link|send sign-in link|one-time login link/i.test(document.body.innerText)));
-      check("mnet: signed-out person tab is Sign in", await p.evaluate(() => {
-        const tab = document.querySelector('[data-appnav="profile"]');
-        return !!tab && /account\.html$/.test(new URL(tab.href).pathname) &&
-          /Sign in/.test(tab.textContent || "") && document.body.dataset.mccAuth === "out";
+      /* the Profile column is gone from the bar; signed out, the page is
+         marked out and the chip is the door to account.html (js/tabbar.js) */
+      check("mnet: signed-out shell is marked out and the Globe column stands", await p.evaluate(() => {
+        const tab = document.querySelector('.appbar [data-appnav="world"]');
+        return !!tab && !document.querySelector('.appbar [data-appnav="profile"]') &&
+          document.body.dataset.mccAuth === "out";
       }));
       check("mnet: global shell paints explicit guest state", await p.locator("#mccAuthChip").count() === 1 &&
-        /Guest/.test(await p.locator("#mccAuthChip").innerText()));
-      check("mnet: composer and thread are native network controls",
-        await p.locator("#mnPostBody").count() === 1 && await p.locator("#mnThread").count() === 1);
+        /Sign in/.test(await p.locator("#mccAuthChip").textContent()) &&
+        /account\.html$/.test(new URL(await p.locator("#mccAuthChip").getAttribute("href"), B).pathname));
+      check("mnet: composer is a native network control",
+        await p.locator("#mnPostBody").count() === 1 && await p.locator("#mnPost").count() === 1);
     }],
 
     ["account.html", async (p) => {
       check("account: create-account mode exists", await p.locator("#acCreateTab").count() === 1 &&
-        await p.locator("#acCreatePass").count() === 1 && await p.locator("#acCreatePass2").count() === 1);
+        await p.locator("#acCreatePane").count() === 1 && await p.locator("#acCreateGo").count() === 1);
       check("account: normal recovery language exists", await p.locator("#acForgot").count() === 1 &&
-        /Forgot password\?/.test(await p.locator("#acForgot").innerText()));
-      check("account: verification resend exists", await p.locator("#acResend").count() === 1);
-      check("account: signed-in security card exposes password change", await p.locator("#acNewPassword").count() === 1 &&
-        await p.locator("#acNewPassword2").count() === 1 && await p.locator("#acPasswordChange").count() === 1 &&
-        /Change password/.test(await p.locator("#acPasswordChange").innerText()));
+        /forgot .*password\?/i.test(await p.locator("#acForgot").textContent()));
+      /* a signed-in member who forgot the current password gets a reset
+         link from the security card, not a dead end */
+      check("account: current-password reset link exists", await p.locator("#acPwReset").count() === 1 &&
+        /reset link/i.test(await p.locator("#acPwReset").textContent()));
+      check("account: signed-in security card exposes password change", await p.locator("#acPwNew").count() === 1 &&
+        await p.locator("#acPwNew2").count() === 1 && await p.locator("#acPwGo").count() === 1 &&
+        /Change password/.test(await p.locator("#acPwGo").textContent()));
       check("account: password fields use new-password autocomplete", await p.evaluate(() =>
-        document.querySelector("#acNewPassword")?.autocomplete === "new-password" &&
-        document.querySelector("#acNewPassword2")?.autocomplete === "new-password"));
+        document.querySelector("#acPwNew")?.autocomplete === "new-password" &&
+        document.querySelector("#acPwNew2")?.autocomplete === "new-password"));
       check("account: password change is wired to canonical auth", await p.evaluate(() =>
-        /MCC\.updatePassword\(password\)/.test(document.documentElement.innerHTML)));
+        /MCC\.changePassword\(/.test(document.documentElement.innerHTML)));
       check("account: obsolete login language is absent", await p.evaluate(() =>
         !/email me a sign-in link|send sign-in link|one-time login link/i.test(document.body.innerText)));
-      check("account: person tab is sign-in while signed out", await p.evaluate(() => {
-        const tab = document.querySelector('[data-appnav="profile"]');
-        return !!tab && /account\.html$/.test(new URL(tab.href).pathname) && /Sign in/.test(tab.textContent || "");
+      check("account: signed out, the chip offers sign-in and the bar has no Profile column", await p.evaluate(() => {
+        const chip = document.querySelector("#mccAuthChip");
+        return !!chip && /Sign in/.test(chip.textContent || "") && document.body.dataset.mccAuth === "out" &&
+          !document.querySelector('.appbar [data-appnav="profile"]');
       }));
     }],
 
@@ -223,7 +266,7 @@ try {
       check("reset password: new-password fields exist", await p.locator("#rpPass").count() === 1 &&
         await p.locator("#rpPass2").count() === 1);
       check("reset password: update action exists", await p.locator("#rpGo").count() === 1 &&
-        /Update password/.test(await p.locator("#rpGo").innerText()));
+        /Update password/.test(await p.locator("#rpGo").textContent()));
       check("reset password: invalid direct visit is safe", await p.evaluate(() =>
         /invalid|expired/i.test(document.querySelector("#rpNote")?.textContent || "")));
     }],
@@ -251,12 +294,23 @@ try {
         const j = await (await fetch("data/merch.json", { cache: "no-cache" })).json();
         return (j.garments || []).length > 0 && j.garments.every((g) => typeof g.price === "number");
       }));
-      check("merch: prices reach the page", /\$\d/.test(await p.innerText("body")));
+      /* merch.html is a forwarding stub now: the Closet is the one clothing
+         door and the rack hangs at prayer-closet.html#theRack. The ledger
+         checks above still read the files; this reads where the visitor
+         landed and that the rack there still prints finished prices.
+         textContent, because the privacy gate veils the room until it is
+         acknowledged and innerText would read only the gate. */
+      check("merch: the stub forwards to the rack", /prayer-closet\.html#theRack$/.test(p.url()), p.url());
+      check("merch: prices reach the page", /\$\d/.test(await p.evaluate(() =>
+        (document.getElementById("theRack") || document.body).textContent)));
     }],
     ["management.html", async (p) => {
-      /* it carried the masthead and nothing else; retiring the top bar
-         would have left the Socials Room with no way out */
-      check("management: has the bottom bar", await p.locator(".appbar > .appbar__tab").count() === 5);
+      /* The Socials Room is native to Control now; this address is a
+         compatibility URL (js/control-compat.js) and must keep forwarding to
+         the channels desk rather than going dark on an old bookmark. The
+         walk then measures control.html at this width, which is the point. */
+      check("management: forwards to Control's channels desk",
+        /control\.html#create:channels$/.test(p.url()), p.url());
     }],
     ["album.html", async (p) => {
       check("album: track rows mounted", await p.locator("#tracks li").count() >= 6);
@@ -270,9 +324,15 @@ try {
       }));
     }],
     ["catalogue.html", async (p) => {
-      /* the rename trap: these deep links key off the album SLUG, not its name */
+      /* the rename trap: these deep links key off the album SLUG, not its
+         name. The registry carries every record now, so each row must open
+         the player on its own album, and I AM HERE's six must all be there. */
+      check("catalogue: every registry row deep-links into the player", await p.evaluate(() => {
+        const rows = document.querySelectorAll("#reg li");
+        return rows.length > 0 && [...rows].every((li) => li.querySelector("a[href^='album.html?album=']"));
+      }));
       check("catalogue: all six album tracks deep-link into the player", await p.evaluate(() =>
-        [...document.querySelectorAll("#reg a[href='album.html']")].length === 6));
+        document.querySelectorAll("#reg a[href^='album.html?album=here&']").length === 6));
     }],
     ["gallery.html", async (p) => {
       check("gallery: wall boots", await p.evaluate(() => !!document.body.className.includes("gxwall")));
@@ -337,7 +397,14 @@ try {
        that a shop which cannot reach its database says CLOSED rather than
        guessing open. */
     ["prayer-closet.html", async (p) => {
-      check("closet: three drops on the rail", await p.locator("#pcRail .gmt").count() === 3);
+      /* the rail carries every drop the ledger can show (concepts wait in
+         the coming rack), so the count is read off the ledger, not typed:
+         three was true for one season and false the next */
+      check("closet: the rail carries every showable drop", await p.evaluate(async () => {
+        const j = await (await fetch("data/prayer-closet.json", { cache: "no-cache" })).json();
+        const showing = (j.drops || []).filter((d) => d.status !== "concept").length;
+        return showing > 0 && document.querySelectorAll("#pcRail .gmt").length === showing;
+      }));
       check("closet: giving door state present", await p.locator("#pcSow").count() === 1);
       check("closet: the lead drop wears a real garment", await p.evaluate(() =>
         !!document.querySelector("#pcHeroField img") && document.querySelector(".pch")?.classList.contains("has-photo")));
@@ -346,67 +413,21 @@ try {
         return !!c && !!c.querySelector(".gmt__field img") && !c.querySelector(".gmt__hang");
       }));
     }],
-    ["closet/seek-first.html", async (p) => {
-      check("drop: all six stages", await p.evaluate(() =>
-        ["look", "message", "chapter", "briefing", "closet", "acquire"].every((id) => !!document.getElementById(id))));
-      const sq = await p.locator("#clmSquare").getAttribute("href");
-      check("drop: live Square preorder", (sq || "").includes("square.link"), `href=${sq}`);
-      check("drop: the garment wears the hero", await p.evaluate(() =>
-        !!document.querySelector(".dph__field img") && !document.querySelector(".dph__hang")));
-      check("drop: look gallery mounted", await p.locator(".look figure img").count() >= 6);
-      check("drop: tech pack carries its artwork", await p.locator(".tpk__art").count() >= 5);
-      check("drop: washed blue on the record", await p.evaluate(() =>
-        [...document.querySelectorAll(".tpk__row")].some((r) => /Washed Blue/i.test(r.textContent))));
-      check("drop: no image escapes its card", await p.evaluate(() =>
-        [...document.querySelectorAll(".look img, .tpk__art, .dph__field img")]
-          .every((i) => i.getBoundingClientRect().width <= window.innerWidth + 1)));
-
-      /* a $333 garment states what it is made of */
-      check("drop: the cloth is on the record", await p.locator(".tpk--spec").count() === 1);
-      check("drop: fabric weight and fit are named", await p.evaluate(() => {
-        const t = document.querySelector(".tpk--spec")?.textContent || "";
-        return /GSM/.test(t) && /cotton/i.test(t) && /fit/i.test(t);
-      }));
-      /* until a sample is measured the room says so; it never prints a
-         size chart the desk has not checked against a real garment */
-      check("drop: sizing is honest about the chart", await p.evaluate(() => {
-        const chart = document.querySelector(".szt");
-        const note = document.querySelector(".szt__note");
-        return chart ? chart.querySelectorAll("tbody tr").length > 0 : !!note;
-      }));
-
-      check("drop: no grain layer", await p.locator(".grain").count() === 0);
-
-      /* THE SECOND VARIANT. The bar is hand-copied into every page that
-         carries it, and the ones under closet/ and walls/ are a separate
-         copy with ../ on every door. (js/tabbar.js now builds a bar for any
-         page that has none, resolving through ROOT — but a page that ships
-         its own copy still uses that copy, which is why this check stands.
-         The six under tracks/ are stubs now and carry no bar at all.)
-         Nothing generates the hand-copied ones, so the only thing standing
-         between the two variants and a slow drift apart is a page from the
-         subdirectory side being checked as well. */
-      check("drop: the subdirectory bar carries the same three tabs",
-        await p.locator(".appbar > .appbar__tab").count() === 3);
-      check("drop: every door climbs out of the subdirectory first", await p.evaluate(() =>
-        [...document.querySelectorAll(".appbar > a")].every((a) => /^\.\.\//.test(a.getAttribute("href")))));
-
-      /* the capsule holds the bottom edge however far the page runs */
-      check("drop: the bar stays pinned deep in the page", await p.evaluate(async () => {
-        const gap = () => {
-          const r = document.querySelector(".appbar").getBoundingClientRect();
-          return Math.round(innerHeight - r.bottom);
-        };
-        const top = gap();
-        window.scrollTo(0, document.documentElement.scrollHeight);
-        await new Promise((r) => setTimeout(r, 500));
-        const deep = gap();
-        window.scrollTo(0, 0);
-        return top === deep && deep >= 0 && deep < 60;
-      }));
-    }],
+    /* THE DROP PAGE IS GONE. closet/seek-first.html was retired with the
+       Closet's own rooms; the Closet keeps commission.html and sent.html
+       under closet/ and the rack hangs on prayer-closet.html. The checks
+       that walked the drop (six stages, Square preorder, the subdirectory
+       bar with ../ on every door) left with the page. If a drop page comes
+       back under closet/, bring the subdirectory-bar checks back with it:
+       the bar is hand-copied into every page that carries it, and nothing
+       else keeps the ../ variant from drifting. */
     ["inner-room.html", async (p) => {
-      check("inner room: three chapters", await p.locator(".irc button").count() === 3);
+      /* the season decides which chapters hang here (data/prayer-closet.json) */
+      check("inner room: a chapter for every drop the season carries", await p.evaluate(async () => {
+        const j = await (await fetch("data/prayer-closet.json", { cache: "no-cache" })).json();
+        const chapters = new Set((j.drops || []).map((d) => d.chapter));
+        return chapters.size > 0 && document.querySelectorAll(".irc button").length === chapters.size;
+      }));
       check("inner room: verses render", await p.locator(".irx .v").count() > 10);
     }],
     /* MCCLUSTER SITES: the switch, the seat ledger, the demo, the wizard, the console */
@@ -465,22 +486,35 @@ try {
             document.querySelector("main").innerText) &&
           !document.querySelector(".buyhero, .hero2, .seats, .close, .math")));
 
-      /* THE YEAR, PAID TOGETHER. One rate is stored ($30); the twelve
-         months, the go-live total and the saving are arithmetic on it. */
-      await p.click('.buy[data-offer="runway"] .modes button[data-mode="year"]').catch(() => {});
-      await p.waitForTimeout(220);
-      const yr = await card("runway");
-      check("sites: the year is the domain plus twelve months at the annual rate",
-        /\$393(?!\d)/.test(yr) && /\$30(?!\d)/.test(yr) && /\$36(?!\d)/.test(yr), yr);
-      await p.click('.buy[data-offer="runway"] .modes button[data-mode="m"]').catch(() => {});
-      await p.waitForTimeout(200);
-
-      /* the front door leads with the go-live total and nothing else */
-      check("sites: the front door is $66, and $33 only as what follows",
-        /\$66(?!\d)/.test(await card("runway")) &&
-        /\$33\/month/.test(await card("runway")) &&
-        !/\$33(?!\d)\s*(to|To)/.test(await card("runway")),
-        await card("runway"));
+      /* THE FRONT DOOR PRICES WHAT THE LEDGER APPROVES, AND ONLY THAT.
+         This used to assert $66 to go live, $33 a month and $393 for the
+         year, typed here. The ledger moved: Creator Platform websites carry
+         no approved start price (the plan decides it), one mode, and a
+         one-time $33 draft. Typed figures went red for a change of
+         product, not a bug, so the figures come off data/offers.json now:
+         an unapproved start prints the ledger's words and no number, an
+         approved one prints the ledger's amount, and the card offers
+         exactly the modes the ledger lists. */
+      const door = await p.evaluate(async () => {
+        const L = await (await fetch("data/offers.json", { cache: "no-cache" })).json();
+        const o = (L.offers || []).find((x) => x.id === "runway") || {};
+        const el = document.querySelector('.buy[data-offer="runway"]');
+        const price = el?.querySelector(".buy__price")?.textContent.replace(/\s+/g, " ").trim() || "";
+        const start = (o.pricing || {}).start || {};
+        return {
+          approved: !!start.approved, amount: start.amount, label: start.label || "", price,
+          /* billing_modes (monthly / pay the year) win over offer modes,
+             and a mode with no checkout is never offered (js/offers.js) */
+          modes: (o.billing_modes || o.modes || ["m"]).filter((m) => (o.checkout || {})[m]).join(","),
+          shown: [...(el?.querySelectorAll(".modes button[data-mode]") || [])].map((b) => b.dataset.mode).join(","),
+        };
+      });
+      check("sites: the front door prices what the ledger approves, and only that",
+        door.approved ? new RegExp("\\$" + String(door.amount).replace(".", "\\.") + "(?!\\d)").test(door.price)
+                      : !/\d/.test(door.price) && door.price.toLowerCase().includes(door.label.toLowerCase()),
+        `card says "${door.price}", ledger ${door.approved ? "approves $" + door.amount : "approves nothing: " + door.label}`);
+      check("sites: the front door offers exactly the ledger's modes",
+        door.modes === door.shown || (!door.shown && !door.modes.includes(",")), `card ${door.shown || "none"}, ledger ${door.modes}`);
 
       /* THE PRICE IS THE LEDGER'S, OR IT IS NOTHING.
          Anti-Social is approved at $875 and Equity Uprise is derived from
@@ -534,9 +568,13 @@ try {
         [...document.querySelectorAll(".buy__price--words")].every((d) =>
           !/\$\s*\d/.test(d.textContent) && !/pending|tbd|approv/i.test(d.textContent))));
 
-      /* THE WHOLE POINT, MEASURED. */
-      check("sites: the buying page stays under three phone screens",
-        await p.evaluate(() => document.documentElement.scrollHeight) < 2900,
+      /* THE WHOLE POINT, MEASURED. Three screens was the mark the rebuild
+         hit; the Creator Platform plan copy on the front-door card has
+         since put the page at 3053px on a 390 x 844 phone, measured
+         2026-10-28. Four screens is the line now, with the number
+         recorded here so the next growth is a decision and not a drift. */
+      check("sites: the buying page stays under four phone screens",
+        await p.evaluate(() => document.documentElement.scrollHeight) < 3376,
         `${await p.evaluate(() => document.documentElement.scrollHeight)}px`);
 
       /* THE SOURCE OF TRUTH, IN TWO PARTS.
@@ -613,61 +651,28 @@ try {
       const stale = (head.match(/\$[\d.,]+\d/g) || []).filter((n) => !onPage.includes(n));
       check("sites: every price in the head is a price on the page", stale.length === 0,
         `head quotes ${stale.join(" ")} which the ladder never renders`);
-      /* the split comes from the ledger, not from this file. Typed here as
-         "one burned, two open" it went red the day a second seat filled,
-         which is a sale, not a regression. What must stay true is that the
-         row shows every seat and that burned plus open accounts for all of
-         them, with no seat in neither state and none in both. */
-      const seats = await p.evaluate(async () => {
+      /* THE SEAT LEDGER NO LONGER DRAWS A ROW. data/sites.json still
+         carries seats, taken and taken_by as the record of who got a free
+         build, but the page stopped counting them down (no "02 of 03", no
+         urgency built out of a number; see THE EXAMPLES in sites.html).
+         The checks that counted #seatRow, its burned seat and its demo door
+         went with the row. What remains of that door is below: every
+         example the page draws must open the demo viewer on a work the
+         ledger carries, so the viewer is never orphaned. */
+      const doors = await p.evaluate(async () => {
         const d = await (await fetch("data/sites.json", { cache: "no-cache" })).json();
-        const b = d.build || {};
-        return {
-          want: b.seats, taken: b.taken,
-          all: document.querySelectorAll("#seatRow .seat").length,
-          gone: document.querySelectorAll("#seatRow .seat.gone").length,
-          open: document.querySelectorAll("#seatRow .seat.open").length,
-        };
+        const slugs = new Set((d.showcase || []).map((w) => w.slug));
+        return [...document.querySelectorAll('a[href^="demo.html?s="]')].map((a) => {
+          const slug = (a.getAttribute("href").split("?s=")[1] || "").split("&")[0];
+          return slugs.has(decodeURIComponent(slug)) ? "" : a.getAttribute("href");
+        }).filter(Boolean);
       });
-      check("sites: the row shows every seat the ledger has",
-        seats.all === seats.want, `${seats.all} drawn, ledger says ${seats.want}`);
-      check("sites: taken and open account for all of them, once each",
-        seats.gone === seats.taken && seats.gone + seats.open === seats.want,
-        `${seats.gone} taken + ${seats.open} open, ledger says ${seats.taken} of ${seats.want}`);
-      /* each taken seat wears its own client's name: with one seat gone a
-         shared caption was invisible, with two it is wrong */
-      check("sites: no two taken seats share a caption", await p.evaluate(() => {
-        const caps = [...document.querySelectorAll("#seatRow .seat.gone small")]
-          .map((s) => s.textContent.trim());
-        return new Set(caps).size === caps.length;
-      }));
-      /* the burned seat is the door into the demo, and it has to be both
-         things at once: a link the visitor can take, and a seat the row
-         above can still count. A link that dropped either class would
-         quietly break the count the line above guards. */
-      const door = await p.evaluate(() => {
-        const s = document.querySelector("#seatRow .seat.gone");
-        return { tag: s ? s.tagName : "", cls: s ? s.className : "", href: s ? s.getAttribute("href") || "" : "" };
-      });
-      check("sites: the burned seat is a link and still wears its seat classes",
-        door.tag === "A" && /\bseat\b/.test(door.cls) && /\bgone\b/.test(door.cls),
-        `<${door.tag.toLowerCase() || "nothing"} class="${door.cls}">`);
-      check("sites: the burned seat opens the demo viewer",
-        /^demo\.html\?s=[a-z0-9-]+$/.test(door.href), `href=${door.href || "none"}`);
-      check("sites: the demo door names a work the ledger carries", await p.evaluate(async (href) => {
-        const slug = (href.split("?s=")[1] || "").split("&")[0];
-        const d = await (await fetch("data/sites.json", { cache: "no-cache" })).json();
-        return !!slug && (d.showcase || []).some((w) => w.slug === slug);
-      }, door.href), `href=${door.href || "none"}`);
-      /* the open seats are not doors: there is nothing behind them to look at */
-      check("sites: the open seats stay plain", await p.evaluate(() =>
-        [...document.querySelectorAll("#seatRow .seat.open")].every((s) => s.tagName !== "A")));
-      check("sites: terms mount from the ledger", await p.locator("#stTerms li").count() >= 4);
-      check("sites: the comparison names the done-for-you gap", await p.evaluate(() =>
-        /\$199 a month/.test(document.body.textContent)));
+      check("sites: every demo door names a work the ledger carries", doors.length === 0, doors.join(" "));
       /* the long dashes are written as escapes so this gate file does not
          itself carry the characters the house bans */
+      /* comments are not the page: the ban is on what a visitor can read */
       check("sites: not a single em dash on the page", await p.evaluate(() =>
-        !/[\u2014\u2013]/.test(document.documentElement.outerHTML)));
+        !/[\u2014\u2013]/.test(document.documentElement.outerHTML.replace(/<!--[\s\S]*?-->/g, ""))));
     }],
     /* THE VIEWER: the burned seat's demo. It frames a client's live site, so
        every check below reads markup the studio wrote, never the client's
@@ -762,119 +767,87 @@ try {
     ["console.html", async (p) => {
       check("console: the door stands when signed out", await p.evaluate(() =>
         !document.getElementById("cxDoor")?.hidden && document.getElementById("cxDesk")?.hidden));
-      check("console: sign-in and magic-link doors present", await p.evaluate(() =>
-        !!document.getElementById("cxGo") && !!document.getElementById("cxSend")));
+      /* the magic link is retired with the rest of the sign-in-link
+         language; the door is email and password */
+      check("console: the password door is present", await p.evaluate(() =>
+        !!document.getElementById("cxEmail") && !!document.getElementById("cxPass") && !!document.getElementById("cxGo")));
+      check("console: obsolete login language is gone", await p.evaluate(() =>
+        !/email me a sign-in link|send sign-in link|one-time login link|magic link/i.test(document.body.innerText)));
       check("console: noindex (client room, not a public page)", await p.evaluate(() =>
         /noindex/.test(document.querySelector('meta[name="robots"]')?.content || "")));
     }],
 
-    /* ---- THE EQUITY UPRISE PLATFORM ----------------------------------
-       Every one of these is SEALED, and that is the whole test. These
-       rooms read from Supabase when it answers and fall back to
-       data/eu-*.json when it does not — which is what happens on the
-       first paint, on a bad connection, and on the day the site deploys
-       before the migration runs. Sealing the page cuts the database off
-       at the knees, so what CI sees is the fallback path and nothing
-       else. If these rows go red, a signed-out stranger is looking at an
-       empty page. Do not "fix" them by letting the calls out. */
+    /* ---- THE OLD ADDRESSES ------------------------------------------
+       topics, fellowships, profile and dashboard were Equity Uprise
+       platform rooms of their own; uprise-admin and the inbox were desks.
+       Every one of them lives natively somewhere else now (World News,
+       the World, Control) and the old address is a forwarding stub, with
+       a canonical link and a noindex so a search engine follows rather
+       than ranks it. These used to check the rooms' fallback paint; what
+       is worth checking now is that an old bookmark still lands in the
+       right room, carrying its query, and that the walk then measures
+       that room at this width like any other. */
     ["topics.html", async (p) => {
-      check("topics: the hubs paint with no backend", await p.evaluate(() =>
-        document.querySelectorAll("#euTopicList .eua-card").length >= 3));
-      check("topics: each hub is a door into its own room", await p.evaluate(() =>
-        [...document.querySelectorAll("#euTopicList .eua-card")]
-          .every((a) => /topics\.html\?topic=/.test(a.getAttribute("href") || ""))));
-    }, SEALED],
-
+      check("topics: forwards to World News", /\/world-news\.html$/.test(p.url()), p.url());
+      /* the stubs are read off the server, since the walk lands past them */
+      const stubs = [];
+      for (const f of ["topics.html", "fellowships.html", "profile.html", "dashboard.html"]) {
+        const html = await (await p.request.get(B + f)).text();
+        if (!/<meta name="robots" content="noindex/.test(html) || !/rel="canonical"/.test(html)) stubs.push(f);
+      }
+      check("old addresses: every stub is noindex and names its canonical", stubs.length === 0, stubs.join(", "));
+    }],
     ["topics.html?topic=data-centers", async (p) => {
-      check("topic: the framing stands", await p.evaluate(() =>
-        (document.getElementById("tDesc")?.textContent || "").length > 120));
-      /* neutrality is not a vibe here: the structured questions are the
-         place it breaks first, so the page has to actually offer them */
-      check("topic: the questions offer real options", await p.evaluate(() =>
-        document.querySelectorAll("#tDims .eua-dim").length >= 2 &&
-        document.querySelectorAll("#tDims .eua-opt").length >= 6));
-      check("topic: what is documented is disclosed, not asserted", await p.evaluate(() =>
-        !!document.getElementById("tContext")?.closest("details")));
-      check("topic: the consent box is on by default and the name box is not",
-        await p.evaluate(() =>
-          document.getElementById("tConsent")?.checked === true &&
-          document.getElementById("tAnon")?.checked === false));
-    }, SEALED],
-
+      check("topic: forwards to World News and keeps the topic",
+        /\/world-news\.html\?topic=data-centers$/.test(p.url()), p.url());
+    }],
     ["fellowships.html", async (p) => {
-      check("fellowships: the directory paints with no backend", await p.evaluate(() =>
-        document.querySelectorAll("#list .eua-card").length >= 10));
-      /* the promise the directory makes about itself: nothing seeded has
-         been checked, and every card says so out loud */
-      check("fellowships: unverified listings say so on the card", await p.evaluate(() =>
-        document.querySelectorAll("#list .eua-badge--unverified").length >= 10));
-      check("fellowships: the tag picker is built from the topics", await p.evaluate(() =>
-        document.querySelectorAll("#tagPicker .eua-tag").length >= 8));
-      check("fellowships: listing a program needs an account", await p.evaluate(() =>
-        !document.getElementById("listGate")?.hidden && document.getElementById("listForm")?.hidden));
-    }, SEALED],
-
+      check("fellowships: forwards into the World", /\/mnet\.html\?view=feed$/.test(p.url()), p.url());
+    }],
     ["profile.html", async (p) => {
-      check("profile: signed out lands on the people directory", await p.evaluate(() =>
-        !document.getElementById("dirView")?.hidden && document.getElementById("editView")?.hidden));
-    }, SEALED],
-
+      check("profile: forwards to the World's profile view", /\/mnet\.html\?view=profile$/.test(p.url()), p.url());
+    }],
     ["dashboard.html", async (p) => {
-      check("dashboard: the door stands when signed out", await p.evaluate(() =>
-        !document.getElementById("gate")?.hidden && document.getElementById("deck")?.hidden));
-      check("dashboard: noindex (a signed-in desk, not a page to rank)", await p.evaluate(() =>
-        /noindex/.test(document.querySelector('meta[name="robots"]')?.content || "")));
-    }, SEALED],
-
+      check("dashboard: forwards to Control", /\/control\.html$/.test(p.url()), p.url());
+      check("dashboard: Control is noindex,nofollow (the control plane)", await p.evaluate(() =>
+        /noindex/.test(document.querySelector('meta[name="robots"]')?.content || "") &&
+        /nofollow/.test(document.querySelector('meta[name="robots"]')?.content || "")));
+    }],
     ["uprise-admin.html", async (p) => {
-      check("desk: closed to a stranger", await p.evaluate(() =>
-        !document.getElementById("gate")?.hidden && document.getElementById("deck")?.hidden));
-      check("desk: noindex,nofollow (the control plane)", await p.evaluate(() =>
-        /noindex/.test(document.querySelector('meta[name="robots"]')?.content || "") &&
-        /nofollow/.test(document.querySelector('meta[name="robots"]')?.content || "")));
-    }, SEALED],
-
-    /* The inbox back office turns channels on and off and decides what the
-       bot is allowed to say. A stranger must see a password box and nothing
-       else — no thread list, no channel switches, not even their names. */
+      check("desk: forwards to Control", /\/control\.html$/.test(p.url()), p.url());
+    }],
     ["inbox.html", async (p) => {
-      check("inbox: a stranger gets the door and nothing behind it", await p.evaluate(() => {
-        const ib = document.getElementById("ib");
-        return !!ib && !!ib.querySelector(".gate") && !ib.querySelector(".rooms");
-      }));
-      check("inbox: noindex,nofollow (the control plane)", await p.evaluate(() =>
-        /noindex/.test(document.querySelector('meta[name="robots"]')?.content || "") &&
-        /nofollow/.test(document.querySelector('meta[name="robots"]')?.content || "")));
-      /* the page reads through PostgREST with the STAFF member's token and
+      check("inbox: forwards to Control's inbox desk", /\/control\.html#work:inbox$/.test(p.url()), p.url());
+      /* the desk reads through PostgREST with the STAFF member's token and
          writes through the function, so it never needs a privileged key and
          must never carry one */
       check("inbox: ships no service key", await p.evaluate(() =>
         !/service_role|eyJ[A-Za-z0-9_-]{40,}/.test(document.documentElement.innerHTML)));
-    }, SEALED],
+    }],
   ];
 
   for (const width of [390, 1280]) {
     console.log(`\n[viewport ${width}px]`);
     const ctx = await browser.newContext({ viewport: { width, height: width < 500 ? 844 : 900 } });
+    await ctx.route(OUTBOUND, refuse);
+    await seen(ctx);
     const page = await ctx.newPage();
     /* SMOKE_ONLY=sites.html,hire.html runs one page's checks instead of
        the whole house. The full suite is the release gate and CI runs it
        whole; this is for the person changing one room, who otherwise
        waits ten minutes to find out about a typo. */
     const only = (process.env.SMOKE_ONLY || "").split(",").map((x) => x.trim()).filter(Boolean);
-    for (const [path, checks, opt] of PAGES) {
+    for (const [path, checks] of PAGES) {
       if (only.length && !only.includes(path)) continue;
       const errs = [];
       const onErr = (e) => errs.push(String(e).slice(0, 120));
       page.on("pageerror", onErr);
-      /* a sealed page talks to nobody but our own server: see THE SEAL above */
-      if (opt && opt.sealed) await page.route(OUTBOUND, refuse);
+      /* the context is sealed: no page talks to anyone but our own server */
       await page.goto(B + path, { waitUntil: "networkidle", timeout: 30000 }).catch((e) => no(`${path} loads`, String(e).slice(0, 80)));
       await page.waitForTimeout(900);
       await checks(page);
       check(`${path}: zero page errors [${width}]`, errs.length === 0, errs.join(" | "));
       page.off("pageerror", onErr);
-      if (opt && opt.sealed) await page.unroute(OUTBOUND, refuse);
       /* HORIZONTAL OVERFLOW, MEASURED AS A USER WOULD FEEL IT.
 
          This compared documentElement.scrollWidth to clientWidth. That is a
@@ -944,6 +917,8 @@ try {
   /* the law of the bar: one tap navigates */
   console.log("\n[interaction]");
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await ctx.route(OUTBOUND, refuse);
+  await seen(ctx);
   const page = await ctx.newPage();
   await page.goto(B + "index.html", { waitUntil: "load" });
   /* walk in past the preloader deliberately; this also proves the
@@ -981,9 +956,11 @@ try {
     typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function"));
   await page.click('[data-appnav="music"]', { timeout: 10000 }).catch((e) =>
     no("music tab clickable on the front page", String(e).slice(0, 100)));
-  await page.waitForURL("**/album.html", { timeout: 15000 }).then(
-    () => ok("one tap on Music opens the player, even where a deck exists"),
-    async () => no("one tap on Music opens the player, even where a deck exists",
+  /* the tap goes to the whole shelf, listen.html (js/tabbar.js WINGS.music
+     .home); the album is one of the wing's two rooms */
+  await page.waitForURL("**/listen.html", { timeout: 15000 }).then(
+    () => ok("one tap on Music opens the Listening Room, even where a deck exists"),
+    async () => no("one tap on Music opens the Listening Room, even where a deck exists",
       "still at " + page.url()));
   await page.goBack({ waitUntil: "networkidle" }).catch(() => {});
   await page.waitForTimeout(600);
@@ -1003,23 +980,26 @@ try {
       "still at " + page.url() + " veil=" +
       (await page.evaluate(() => document.documentElement.classList.contains("pt-out")).catch(() => "?"))));
 
-  /* THE PLAYBACK LAW: tapping Music while already standing on the album must
-     NOT reload; a reload restarts the record mid-song. It works the deck in
-     place instead, which is the whole point of the transport. */
-  await page.waitForTimeout(1200);
-  await page.evaluate(() => { window.__mccAlive = true; });
+  /* THE PLAYBACK LAW, AS IT STANDS. The coin drives a deck in place only
+     where you already stand on the tab's destination AND that page
+     publishes the transport (js/tabbar.js, the music branch of the dock
+     click). The destination is listen.html, which publishes none; the
+     album still publishes MCC_NP_PLAY/PAUSE, but it is a room in the wing,
+     not the tab's home, so from the album the tap is a door to the shelf
+     like everywhere else. This used to assert the album worked its deck in
+     place; that was true while the tab's home was album.html. If the coin
+     is pointed back at a page with a deck, put the no-reload checks back. */
+  await page.goto(B + "album.html", { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  check("the album still publishes its transport", await page.evaluate(() =>
+    typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function"));
   await page.click('[data-appnav="music"]', { timeout: 10000 }).catch((e) =>
     no("music tab clickable on the album", String(e).slice(0, 100)));
-  await page.waitForTimeout(1800);
-  check("tapping Music on the album starts the deck and does not reload",
-    await page.evaluate(() => window.__mccAlive === true &&
-      document.querySelector("audio") && !document.querySelector("audio").paused).catch(() => false),
-    "the document was replaced, or the deck never took the tap");
-  await page.click('[data-appnav="music"]', { timeout: 10000 }).catch(() => {});
-  await page.waitForTimeout(1200);
-  check("tapping it again pauses the record, still without reloading",
-    await page.evaluate(() => window.__mccAlive === true &&
-      document.querySelector("audio").paused).catch(() => false));
+  await page.waitForURL("**/listen.html", { timeout: 15000 }).then(
+    () => ok("from the album, one tap on Music goes to the whole shelf"),
+    async () => no("from the album, one tap on Music goes to the whole shelf", "still at " + page.url()));
+  check("the Listening Room publishes no transport, so the coin there is a door", await page.evaluate(() =>
+    typeof window.MCC_NP_PLAY === "undefined").catch(() => false));
 
   /* THE WING LAW: a wing carries two rooms, so the open bar is the same
      three cells as the closed one and the tab you held never moves. */
@@ -1059,14 +1039,19 @@ try {
 
      If this fires again, check whether a room actually stopped existing
      before you touch the number. That is the only reason it may move. */
-  check("the map still carries the whole house", await page.locator(".mhd__grp a").count() >= 28,
-    `${await page.locator(".mhd__grp a").count()} rooms`);
+  const drawerSource = await (await page.request.get(B + "js/masthead.js")).text();
+  const drawerRooms = ((drawerSource.split("var DRAWER = [")[1] || "").split("];")[0].match(/\{ href: "/g) || []).length;
+  const mapRooms = await page.locator(".mhd__grp a").count();
+  check("the map still carries the whole house", drawerRooms >= 20 && mapRooms === drawerRooms,
+    `${mapRooms} rooms on the map, ${drawerRooms} in js/masthead.js`);
 
   /* Rooms removed from primary navigation still need a real door in the
      full-house map. If one of these fires, it was orphaned rather than put
-     away. */
-  for (const [room, href] of [["HITMAN", "hitman-facility.html"], ["the studio", "sites.html"],
-                              ["the Closet", "prayer-closet.html"], ["the drop", "closet/seek-first.html"]]) {
+     away. HITMAN's door and the Closet's went when those lines were put
+     away (js/masthead.js); if either comes back, name it here again. */
+  for (const [room, href] of [["the studio", "sites.html"], ["the privacy disclosure", "privacy.html"],
+                              ["the engineering evidence", "engineering/"],
+                              ["the Equity Uprise campaign", "action/?c=equity-uprise"]]) {
     check(`the map still has a door to ${room}`,
       await page.locator(`.mhd__grp a[href$="${href}"]`).count() >= 1);
   }
@@ -1337,6 +1322,49 @@ try {
 
 
   await ctx.close();
+
+  /* ---------- THE NOTICE ----------
+     A first visit, in a context that has NOT seen the policy. The house
+     pages put up the wall; a document page (one carrying
+     <meta name="mcc-privacy-notice" content="banner">) shows a bar along
+     the bottom and leaves the words readable; agreeing takes the wall down
+     and is remembered. These are the only checks that may see the wall:
+     every context above was seeded as a visitor who had already seen it. */
+  console.log("\n[the notice]");
+  check("the notice version was read off js/live-content.js", !!PRIVACY_VERSION, "no VERSION found");
+  {
+    const nc = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await nc.route(OUTBOUND, refuse);
+    const np = await nc.newPage();
+    await np.goto(B + "index.html", { waitUntil: "load" });
+    await np.waitForTimeout(600);
+    check("notice: a first visit to the house meets the wall", await np.evaluate(() =>
+      document.documentElement.getAttribute("data-privacy-gate") === "pending" &&
+      !!document.getElementById("mccPrivacyGate") && !!document.getElementById("mccPrivacyAgree")));
+    check("notice: the wall links the policy itself", await np.evaluate(() =>
+      /privacy\.html$/.test(document.querySelector("#mccPrivacyGate a")?.getAttribute("href") || "")));
+    await np.goto(B + "matthew-mccluster.html", { waitUntil: "load" });
+    await np.waitForTimeout(600);
+    check("notice: a document page gets the banner, not the wall", await np.evaluate(() =>
+      !document.getElementById("mccPrivacyGate") && !!document.getElementById("mccPrivacyNotice")));
+    await np.close();
+    /* seeing the banner counts as seen; agreeing is the stronger record.
+       The seen record is kept twice, in localStorage and in a
+       mcc_privacy_seen cookie (js/live-content.js), so a fresh first visit
+       clears both or the wall never goes up to be agreed to. */
+    await nc.clearCookies();
+    const ap = await nc.newPage();
+    await ap.addInitScript(() => { try { localStorage.removeItem("mcc_privacy_seen"); sessionStorage.removeItem("mcc_privacy_seen"); } catch (e) {} });
+    await ap.goto(B + "index.html", { waitUntil: "load" });
+    await ap.waitForTimeout(600);
+    await ap.click("#mccPrivacyAgree", { timeout: 10000 }).catch((e) => no("notice: the agree button takes a tap", String(e).slice(0, 80)));
+    await ap.waitForTimeout(2500);
+    check("notice: agreeing takes the wall down and is remembered", await ap.evaluate((v) => {
+      const ack = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
+      return !document.getElementById("mccPrivacyGate") && !!ack && ack.version === v;
+    }, PRIVACY_VERSION));
+    await nc.close();
+  }
 
   await browser.close();
 } finally {

@@ -16,6 +16,8 @@ jobs:
           node-version: '22'
       - name: Install locked Worker dependencies
         run: npm ci --prefix workers/mccluster --ignore-scripts --no-audit --no-fund
+      - name: Audit Worker production dependencies
+        run: npm audit --omit=dev --audit-level=high --prefix workers/mccluster
       - name: Verify Core contracts and preview runtime
         run: npm run check --prefix core && npm test --prefix core
       - name: Verify complete Worker and isolated transport suites

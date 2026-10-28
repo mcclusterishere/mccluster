@@ -114,31 +114,29 @@ jobs:
           grep -q 'Invalid Godot version' "$workflow"
           grep -q 'Invalid Blender version' "$workflow"
 
-      - name: Reject obvious committed production secrets
+      - name: Lint every workflow with pinned actionlint
         shell: bash
+        # Release binary pinned by version and SHA-256, verified before it
+        # runs. shellcheck/pyflakes integration is off: this gate is about
+        # workflow syntax, expressions, action inputs and untrusted-input
+        # use, not shell style. No ignores: a finding is fixed in the
+        # workflow, not suppressed here.
         run: |
           set -euo pipefail
-          patterns=(
-            '-----BEGIN [A-Z ]*PRIVATE KEY-----'
-            'gh[pousr]_[A-Za-z0-9_]{20,}'
-            'sk_live_[A-Za-z0-9]{16,}'
-            'AKIA[0-9A-Z]{16}'
-          )
-          for pattern in "${patterns[@]}"; do
-            # -e is essential: private-key BEGIN markers start with hyphens.
-            # Exit 1 means no match; every other nonzero status is a scanner
-            # failure, NOT a clean result.
-            if git grep -n -E -e "$pattern" -- ':!*.md' ':!*.example' ':!*.example.*'; then
-              echo "Potential committed production secret matched: $pattern" >&2
-              exit 1
-            else
-              result=$?
-              if [ "$result" -ne 1 ]; then
-                echo "Secret scanner failed (exit $result); refusing green CI." >&2
-                exit "$result"
-              fi
-            fi
-          done
+          version=1.7.12
+          sha256=8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+          dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$dir"
+          curl --fail --silent --show-error --location --max-time 120 \
+            --output "$dir/actionlint.tar.gz" \
+            "https://github.com/rhysd/actionlint/releases/download/v${version}/actionlint_${version}_linux_amd64.tar.gz"
+          echo "${sha256}  $dir/actionlint.tar.gz" | sha256sum --check --strict
+          tar -xzf "$dir/actionlint.tar.gz" -C "$dir" actionlint
+          "$dir/actionlint" -version
+          "$dir/actionlint" -no-color -shellcheck= -pyflakes= .github/workflows/*.yml
+
+      - name: Pin the Core runner/agent split and the draft-only PR path
+        run: node --test scripts/test/core-identity-contract.test.mjs
 
       - name: Validate Supabase function auth manifest
         run: node scripts/supabase-function-config-check.mjs
@@ -153,4 +151,6 @@ jobs:
           echo '- pinned OVH SSH host identity; no live ssh-keyscan TOFU' >> "$GITHUB_STEP_SUMMARY"
           echo '- direct OVH mutations require an exact commit already in main' >> "$GITHUB_STEP_SUMMARY"
           echo '- privileged game bootstrap versions are validated before remote shell interpolation' >> "$GITHUB_STEP_SUMMARY"
-          echo '- obvious high-risk production secret formats are rejected from tracked source' >> "$GITHUB_STEP_SUMMARY"
+          echo '- every workflow passes pinned actionlint' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Core runner/agent identity split and draft-only PR path pinned by test' >> "$GITHUB_STEP_SUMMARY"
+          echo '- committed secret formats are rejected by the always-on Secret scan workflow (secret-scan.yml)' >> "$GITHUB_STEP_SUMMARY"
