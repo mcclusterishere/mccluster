@@ -129,7 +129,8 @@ test('the authorities name the host: three hosts, still two entities, one Worker
   assert.match(entry, /set `WORLD_ORIGIN = "https:\/\/humanuprise\.com\/"` in `js\/tabbar\.js`/, 'the flip is the last step, after routing');
   assert.match(entry, /\*\*One M Account, every host\.\*\* A session is per origin/);
   const domains = await read('docs/control-plane/DOMAINS-AND-ENTITIES.md');
-  assert.match(domains, /## Human Uprise's host: `humanuprise\.com`/);
+  assert.match(domains, /## The legacy-named host: `humanuprise\.com`/);
+  assert.match(domains, /## The public brand is Equity Uprise \(owner, 2026-10-28\)/);
   assert.match(domains, /Three hosts, still two entities\./);
   const arch = JSON.parse(await read('data/seo/domain-architecture.json'));
   assert.equal(arch.properties.human_uprise.origin, 'https://humanuprise.com');
@@ -142,7 +143,8 @@ test('the authorities name the host: three hosts, still two entities, one Worker
   assert.equal(canon.public_properties.human_uprise.served_by, 'worker:mccluster', 'no second Worker');
   assert.equal(canon.public_properties.human_uprise.entity, canon.public_properties.company.entity);
   assert.match(await read('AGENTS.md'), /Three hosts, still two entities:/);
-  assert.match(await read('CLAUDE.md'), /`https:\/\/humanuprise\.com` is Human Uprise's own door to the World, a \*\*McCluster Corp\*\* host/);
+  assert.match(await read('CLAUDE.md'), /`https:\/\/humanuprise\.com` is a legacy-named door to the World, a \*\*McCluster Corp\*\* host/);
+  assert.match(await read('CLAUDE.md'), /\*\*the public brand is Equity Uprise, not Human Uprise\*\* \(owner, 2026-10-28\)/);
   assert.match(await read('docs/action-network/HUMAN-UPRISE-WORLD-FEED.md'), /### The World's own door: `humanuprise\.com`[\s\S]*### A creator's perspective/);
 });
 

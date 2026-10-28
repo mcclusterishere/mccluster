@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 444,
+  "candidate_count": 506,
   "capability_source_count": 102,
-  "support_only_count": 342,
+  "support_only_count": 404,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3217,7 +3217,7 @@
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Human Uprise's host router: serves the World on humanuprise.com by host and sends every other path to Matthew's property. Names the public globe entry contract; not a building capability."
+      "rationale": "Router for the legacy-named humanuprise.com host: serves the World by host (og:site_name Equity Uprise, the public brand since 2026-10-28) and sends every other path to Matthew's property. Names the public globe entry contract; not a building capability."
     },
     {
       "path": "workers/mccluster/src/index.js",
@@ -3291,7 +3291,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Tests of the mccluster.org host router: the World served at the company root with a company-first head (it asserts the World's old Equity Uprise title and description do not leak), /company, and every other path sent to Matthew's property. Not a building capability."
+      "rationale": "Tests of the mccluster.org host router: the World served at the company root with a company-first head named for the public brand, Equity Uprise (owner, 2026-10-28; it asserts the World page's own noindex description does not leak and no Human Uprise name is served), /company, and every other path sent to Matthew's property. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/human-uprise-site.test.mjs",
@@ -3376,6 +3376,440 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Satellite kit head; names the Equity Uprise building block only to say satellites never copy it. Defines no program capability."
+    },
+    {
+      "path": "account.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-artist.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-audio-engineer.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-clippers.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-cohorts.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-discovery.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-hire.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-influencers.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-producer.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-video-editor.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-network-videographer.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "action-policy.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "album.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "analytics.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "anti-social-mission.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "control.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "create.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "creator-selection-desk.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "docs/control-plane/CANONICAL-ARCHITECTURE.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; an operator/architecture document; defines no building capability."
+    },
+    {
+      "path": "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; an operator/architecture document; defines no building capability."
+    },
+    {
+      "path": "docs/control-plane/LIVE-MISSIONS.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; an operator/architecture document; defines no building capability."
+    },
+    {
+      "path": "fbi.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "help.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "identity-verify.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "js/action-globe.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/action.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/analytics-suite.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-palette.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room-v2.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room/action-network.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room/identity-review.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room/instagram.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room/profile-edit-review.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room/social-compose.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/create.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/fbi.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/gateway.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/mccluster-creator-account.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/music-creator-profile.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/socials-room.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "live-mission.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "management.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "mccluster-platform.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "music-videos.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "native/app/(tabs)/create.tsx",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "native/app/(tabs)/profile.tsx",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "native/app/group/[slug].tsx",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "native/app/mission/[id].tsx",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "native/src/ActionNetworkScreen.tsx",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "native/src/actionNetwork.ts",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "native/src/mcc.tsx",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "native/src/proofMedia.ts",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "receipt.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "scripts/test/analytics-platform.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "scripts/test/creator-action-distribution.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "scripts/test/mnet-real-network.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "scripts/test/native-action-network.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "tools/build-company-site.mjs",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; a generator comment for the company property; not a building capability."
+    },
+    {
+      "path": "wigger-recovery.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "workers/mccluster/src/company-site/router.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; Worker strings only; not a building capability."
+    },
+    {
+      "path": "workers/mccluster/src/social/router.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; Worker strings only; not a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/mnet-post-limits.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

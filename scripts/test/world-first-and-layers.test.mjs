@@ -174,7 +174,7 @@ test('a member whose World did not load still gets the World (owner, 2026-10-15:
   const fn = js.slice(js.indexOf('function showSignedInLoadError(error)'), js.indexOf('function letSessionGo()'));
   assert.match(fn, /if \(error && error\.status === 401\) return letSessionGo\(\);/, 'a session the API refuses is let go');
   assert.match(fn, /state\.stall = "retry";\n    showGate\("app"\);\n    setView\("feed"\);/, 'anything else opens the World: the feed view, the Earth');
-  assert.doesNotMatch(fn, /You are signed in\. Human Uprise could not load the feed/, 'no message hidden inside a hidden view');
+  assert.doesNotMatch(fn, /You are signed in\. (?:Human|Equity) Uprise could not load the feed/, 'no message hidden inside a hidden view');
   assert.match(js, /function letSessionGo\(\) \{\n    var done = function \(\) \{ state\.stall = "signin"; enterGuestWorld\(\); paintFinishCard\(\); \};/);
   assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\) \|\| !!state\.stall;/, 'the public posts while the member\'s own feed is not there');
   assert.match(js, /\$\("mnFinishTitle"\)\.textContent = stall === "signin" \? "Your sign-in ended\." : "Your feed didn\\u2019t load\.";/);

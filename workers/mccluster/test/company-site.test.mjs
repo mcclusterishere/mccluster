@@ -6,7 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { companySiteResponse, COMPANY_PAGE_PATH, WORLD_HEAD } from '../src/company-site/router.js';
+import { companySiteResponse, COMPANY_PAGE_PATH, WORLD_HEAD, WORLD_SHARE } from '../src/company-site/router.js';
+import { worldHeadFor } from '../src/world-host.js';
 import { PAGES } from '../src/company-site/pages.generated.js';
 
 const req = (url, method = 'GET', headers = {}) => new Request(url, { method, headers });
@@ -49,16 +50,19 @@ test('the apex root is the World, company-first: this host\'s canonical, McClust
   assert.match(html, /<section class="mn__world-home" id="mnWorld"/, 'it is mnet.html, the World');
   /* company-first share preview (domain-architecture.json -> properties.company.share_preview), on the real head */
   const titles = html.match(/<title>[^<]*<\/title>/g);
-  assert.deepEqual(titles, ['<title>Human Uprise · McCluster</title>'], 'one title, and it is the World\'s on the company host');
-  assert.doesNotMatch(html, /Equity Uprise · McCluster|Equity Uprise is the McCluster social network/, 'the noindex page\'s own title and description do not leak');
+  /* owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise */
+  assert.deepEqual(titles, ['<title>Equity Uprise · McCluster</title>'], 'one title, and it is the World\'s on the company host');
+  assert.doesNotMatch(html, /Human Uprise/, 'the public brand is Equity Uprise: no Human Uprise anywhere in the served World');
+  assert.doesNotMatch(html, /Equity Uprise is the McCluster social network/, 'the noindex page\'s own description does not leak');
   assert.equal(html.match(/<meta name="description"/g).length, 1);
-  assert.match(html, /<meta name="description" content="Human Uprise is McCluster Corp's movement platform/);
+  assert.match(html, /<meta name="description" content="Equity Uprise is McCluster Corp's movement platform/);
   assert.match(html, /<meta property="og:type" content="website">/);
-  assert.match(html, /<meta property="og:title" content="Human Uprise · McCluster">/);
-  assert.match(html, /<meta property="og:description" content="Human Uprise is McCluster Corp's movement platform/);
+  assert.match(html, /<meta property="og:title" content="Equity Uprise · McCluster">/);
+  assert.match(html, /<meta property="og:description" content="Equity Uprise is McCluster Corp's movement platform/);
   assert.match(html, /<meta property="og:image" content="https:\/\/matthew\.mccluster\.org\/assets\/img\/m-mark\.png">/, 'the supplied M mark, unaltered, until an owner card exists');
   assert.match(html, /<meta name="twitter:card" content="summary">/);
-  assert.match(html, /<meta name="twitter:title" content="Human Uprise · McCluster">/);
+  assert.match(html, /<meta name="twitter:title" content="Equity Uprise · McCluster">/);
+  assert.match(html, /<meta name="twitter:description" content="Equity Uprise is McCluster Corp's movement platform/);
   assert.match(html, /<meta name="twitter:image" content="https:\/\/matthew\.mccluster\.org\/assets\/img\/m-mark\.png">/);
   assert.doesNotMatch(html, /I AM HERE/, 'never the album');
   assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, 'one <h1> on the root');
@@ -66,6 +70,7 @@ test('the apex root is the World, company-first: this host\'s canonical, McClust
   assert.equal(ld['@id'], 'https://mccluster.org/');
   assert.equal(ld.isPartOf['@id'], 'https://mccluster.org/#website', 'the root belongs to the company WebSite');
   assert.equal(ld.about['@id'], 'https://matthew.mccluster.org/#mccluster-corp', 'stable Organization @id');
+  assert.equal(ld.name, 'Equity Uprise · McCluster', 'the WebPage node names the public brand');
   assert.equal(WORLD_HEAD.siteName, 'McCluster Corp');
   assert.equal(upstream.at(-1).url, 'http://pages.test/mnet.html?view=feed', 'fetched from the personal origin the Worker names, query and all');
   assert.equal((await ask('https://mccluster.org/', 'HEAD')).status, 200);
@@ -153,7 +158,8 @@ test('robots, sitemap and llms belong to the company property and map the World 
   const llms = await (await ask('https://mccluster.org/llms.txt')).text();
   assert.match(llms, /^# McCluster Corp/);
   assert.match(llms, /do not merge them/);
-  assert.match(llms, /https:\/\/mccluster\.org\/ is the Human Uprise World/);
+  assert.match(llms, /https:\/\/mccluster\.org\/ is the Equity Uprise World/);
+  assert.doesNotMatch(llms, /Human Uprise/, 'the public brand is Equity Uprise');
   assert.deepEqual(Object.keys(PAGES).sort(), ['/company', '/llms.txt', '/robots.txt', '/sitemap.xml']);
 });
 
@@ -179,4 +185,15 @@ test('plain http on the apex is one 301 to https; /company/ is the company page,
     assert.equal(r.headers.get('location'), to, from);
   }
   assert.equal((await ask('https://mccluster.org/company')).status, 200, 'https itself is untouched');
+});
+
+test('the host\'s share preview replaces whatever title and description the upstream page carries', () => {
+  /* mnet.html's own title happens to match the host's now (both say Equity Uprise), so prove the swap on a page that does not */
+  const upstream = '<!doctype html><html><head><title>Some other page</title>\n  <meta name="description" content="Some other description.">\n  <meta name="robots" content="noindex"></head><body></body></html>';
+  const out = worldHeadFor(upstream, WORLD_HEAD);
+  assert.deepEqual(out.match(/<title>[^<]*<\/title>/g), [`<title>${WORLD_SHARE.title}</title>`]);
+  assert.equal(WORLD_SHARE.title, 'Equity Uprise · McCluster');
+  assert.doesNotMatch(out, /Some other/);
+  assert.doesNotMatch(out, /noindex/);
+  assert.match(out, /<meta property="og:site_name" content="McCluster Corp">/, 'the site is the company');
 });

@@ -2,24 +2,25 @@
   "schema_version": "mccluster-domain-architecture/v1",
   "updated_at": "2026-10-28",
   "authority": "Owner instruction, 2026-10-03. Human-readable companion: docs/control-plane/DOMAINS-AND-ENTITIES.md. Tests: scripts/test/domain-architecture.test.mjs.",
+  "public_brand": "Owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise. Every public-facing name (titles, descriptions, Open Graph and Twitter tags, JSON-LD names, headings, product copy, llms.txt) says Equity Uprise; the mccluster.org root shares as Equity Uprise · McCluster with site name McCluster Corp. Human Uprise survives only as a legacy technical identifier where compatibility needs it: the humanuprise.com host and its routing, this file's human_uprise key, file names, function and variable names, CSS classes, storage keys, event names, URL paths and @ids. docs/control-plane/DOMAINS-AND-ENTITIES.md -> The public brand is Equity Uprise.",
   "rule": "Two related but distinct canonical web properties. mccluster.org is McCluster Corp's house; matthew.mccluster.org is Matthew McCluster's house. Do not collapse them, do not make the two entities interchangeable, and do not move a working URL merely for tidiness.",
   "properties": {
     "company": {
       "host": "mccluster.org",
       "origin": "https://mccluster.org",
       "entity": "https://matthew.mccluster.org/#mccluster-corp",
-      "answers": "At its root, the Human Uprise World (the company's platform): where is the movement, what can I do today? At /company: what is McCluster Corp?",
-      "share_preview": "The root shares as Human Uprise · McCluster, site name McCluster Corp. /company identifies McCluster Corp and explains the company. Never the album, never Matthew's personal portfolio.",
+      "answers": "At its root, the Equity Uprise World (the company's platform): where is the movement, what can I do today? At /company: what is McCluster Corp?",
+      "share_preview": "The root shares as Equity Uprise · McCluster (the public brand, owner 2026-10-28), site name McCluster Corp. /company identifies McCluster Corp and explains the company. Never the album, never Matthew's personal portfolio.",
       "website_id": "https://mccluster.org/#website",
       "source": "data/seo/company-site.json -> tools/build-company-site.mjs -> workers/mccluster/src/company-site/pages.generated.js",
       "served_by": "Worker mccluster, host-routed (workers/mccluster/src/company-site/router.js) once the owner routes mccluster.org/* to it; the World at /, the company page at /company, everything else a 301 to matthew.mccluster.org",
       "journeys": [
         "business or institution: understand McCluster Corp -> capabilities/products -> engage, buy, partner, contact",
-        "participant: initiative -> campaign -> Human Uprise -> mission -> proof -> verified action",
+        "participant: initiative -> campaign -> Equity Uprise -> mission -> proof -> verified action",
         "client: service or product -> scope -> booking / relationship",
         "researcher or media: company -> projects -> public evidence -> press / contact"
       ],
-      "root": "the Human Uprise World (mnet.html) passed through from the personal property with this host's head (owner, 2026-10-15); workers/mccluster/src/world-host.js",
+      "root": "the Equity Uprise World (mnet.html) passed through from the personal property with this host's head (owner, 2026-10-15); workers/mccluster/src/world-host.js",
       "company_page": "/company",
       "news": "/news/ (owner, 2026-10-20): the house owner's posts marked 'Publish to the newsroom', server-rendered as NewsArticle pages by workers/mccluster/src/company-site/news.js, with /news/feed.xml (RSS) and /news/sitemap.xml (Google News tags for the last two days, listed in robots.txt). Publisher: the Organization by its @id; author: Matthew McCluster by his @id. Distinct from the evidence newsroom on the personal property (/newsroom.html), which stays where it is."
     },
@@ -56,7 +57,7 @@
       "entity": "https://matthew.mccluster.org/#mccluster-corp",
       "owner": "mccluster_corp",
       "answers": "Where is the movement, and what can I do today? The World: the globe, the context strip, the feed.",
-      "share_preview": "Human Uprise, the World. McCluster Corp's platform; a company host, never a third entity and never Matthew's site.",
+      "share_preview": "Equity Uprise, the World (og:site_name Equity Uprise: the public brand, owner 2026-10-28; the host keeps its legacy name). McCluster Corp's platform; a company host, never a third entity and never Matthew's site.",
       "source": "the World (mnet.html) as published on the personal property, passed through by workers/mccluster/src/human-uprise/router.js with this host's own canonical; nothing is duplicated",
       "served_by": "Worker mccluster, host-routed (workers/mccluster/src/human-uprise/router.js) once the owner routes humanuprise.com/* to it",
       "state": "built 2026-10-14; inert until routed (owner instruction, 2026-10-14)",
@@ -68,7 +69,8 @@
       ],
       "everything_else": "301 to the same path on https://matthew.mccluster.org: Music, the M, creators, records, checkout",
       "sessions": "per origin; the bar carries a member's sign-in across hosts (js/tabbar.js -> POST /v1/auth/handoff, workers/mccluster/src/auth-handoff.js: bearer checked live, Origin on the CORS allowlist, Supabase admin generate_link magiclink) and the arriving host earns its own session; no refresh token crosses",
-      "door_today": "https://mccluster.org/ serves the World until the owner routes humanuprise.com (owner, 2026-10-15)"
+      "door_today": "https://mccluster.org/ serves the World until the owner routes humanuprise.com (owner, 2026-10-15)",
+      "open_question": "Since the public brand became Equity Uprise (owner, 2026-10-28), whether humanuprise.com should stay a door to the World, redirect to https://mccluster.org/, or be dropped is the owner's call. Routing is unchanged until the owner decides."
     }
   },
   "entities": {
@@ -91,7 +93,7 @@
       "type": "Project",
       "id": "https://matthew.mccluster.org/#equity-uprise",
       "owner": "mccluster_corp",
-      "relation": "McCluster Corp public-interest project. On Human Uprise: the cohort group for people who want to become Equity Uprise cohort policy writers. Its music act is a separate MusicGroup node.",
+      "relation": "McCluster Corp public-interest project. On its platform, the Equity Uprise World: the cohort group for people who want to become Equity Uprise cohort policy writers. Its music act is a separate MusicGroup node.",
       "current_url": "https://matthew.mccluster.org/docket-516.html"
     },
     "uprise_action_network": {
@@ -172,7 +174,6 @@
       "/wigger-recovery.html",
       "/prim3.html",
       "/prim3-range.html",
-      "/hitman-facility.html",
       "/site0/",
       "/sites.html",
       "/sites-details.html",
@@ -190,13 +191,17 @@
       "/whip/rentals/",
       "/whip/rider/"
     ],
+    "in_private_development_unpublished": [
+      "/hitman-facility.html"
+    ],
+    "_in_private_development_unpublished": "Owner, 2026-10-28: hitman-facility.html is in private development, unpublished; it moves to _unfinished/ and is not an indexable page. It stays out of data/seo/sitemap-pages.json and sitemap.xml until the owner publishes it (scripts/test/seo-entity-pages.test.mjs).",
     "owner_decision": [
       "/prayer-closet.html",
       "/closet/",
       "/inner-room.html",
       "/fbi.html"
     ],
-    "why_company_apps_stay_put": "Sessions are per-origin localStorage (js/backend.js), checkout returns and the Supabase Auth redirect allowlist name matthew.mccluster.org, and printed QR codes and live campaign links point at these paths. Moving Human Uprise, accounts or checkout to mccluster.org would sign members out and break returns. The company property describes these products and links into them; it does not re-host them."
+    "why_company_apps_stay_put": "Sessions are per-origin localStorage (js/backend.js), checkout returns and the Supabase Auth redirect allowlist name matthew.mccluster.org, and printed QR codes and live campaign links point at these paths. Moving the World, accounts or checkout to mccluster.org would sign members out and break returns. The company property describes these products and links into them; it does not re-host them."
   },
   "edge": {
     "now": "Cloudflare zone redirect rule: mccluster.org/*, www.mccluster.org/* and here.mccluster.org/* -> 301 https://matthew.mccluster.org/$1 (checked 2026-10-03). Sharing mccluster.org therefore shows Matthew's album preview.",
@@ -206,13 +211,13 @@
       "Cloudflare -> Workers Routes: add mccluster.org/* and www.mccluster.org/* -> Worker mccluster.",
       "Cloudflare -> Rules -> Redirect Rules: narrow the redirect rule to here.mccluster.org only (redirect rules run before Workers, so the Worker sees nothing until this changes). Rollback is re-widening the rule.",
       "Supabase -> Authentication -> URL Configuration -> Redirect URLs: add https://mccluster.org/** so ordinary sign-in on the host may return to it (the bar's handoff needs nothing).",
-      "Verify (owner, 2026-10-15: the root is the World): curl -I https://mccluster.org/ -> 200, the World (mnet.html) with this host's head: title Human Uprise · McCluster, canonical https://mccluster.org/, og:site_name McCluster Corp, no noindex; curl -I https://mccluster.org/company -> 200 company page; curl -I 'https://mccluster.org/action/?c=end-racism' -> 200, a World room with x-robots-tag noindex; curl -I https://mccluster.org/docket-516.html -> 301 to https://matthew.mccluster.org/docket-516.html; curl -I https://www.mccluster.org/ -> 301 to https://mccluster.org/; curl -I http://mccluster.org/ -> 301 to https://mccluster.org/ (the Worker answers it; Cloudflare SSL/TLS -> Edge Certificates -> Always Use HTTPS covers the zone as well).",
+      "Verify (owner, 2026-10-15: the root is the World): curl -I https://mccluster.org/ -> 200, the World (mnet.html) with this host's head: title Equity Uprise · McCluster, canonical https://mccluster.org/, og:site_name McCluster Corp, no noindex; curl -I https://mccluster.org/company -> 200 company page; curl -I 'https://mccluster.org/action/?c=end-racism' -> 200, a World room with x-robots-tag noindex; curl -I https://mccluster.org/docket-516.html -> 301 to https://matthew.mccluster.org/docket-516.html; curl -I https://www.mccluster.org/ -> 301 to https://mccluster.org/; curl -I http://mccluster.org/ -> 301 to https://mccluster.org/ (the Worker answers it; Cloudflare SSL/TLS -> Edge Certificates -> Always Use HTTPS covers the zone as well).",
       "Search Console: add the mccluster.org URL-prefix property (DNS TXT verification records already exist), submit https://mccluster.org/sitemap.xml.",
       "Supply a 1200x630 McCluster Corp share card; until then the company preview uses the supplied M mark (assets/img/m-mark.png), unaltered."
     ],
     "mx_note": "mccluster.org mail is Google Workspace MX. Routing HTTP to a Worker does not touch MX; do not replace the apex DNS record with a Worker custom domain without checking the MX and TXT records survive.",
     "human_uprise": {
-      "target": "humanuprise.com/* and www.humanuprise.com/* routed to Worker mccluster. The Human Uprise router serves the World at / and the World's rooms and files from the personal origin, and answers every other path with a 301 to https://matthew.mccluster.org/$1.",
+      "target": "humanuprise.com/* and www.humanuprise.com/* routed to Worker mccluster. The humanuprise.com router (workers/mccluster/src/human-uprise/router.js) serves the World at / and the World's rooms and files from the personal origin, and answers every other path with a 301 to https://matthew.mccluster.org/$1.",
       "activation_owner_steps": [
         "Merge and deploy; confirm https://api.mccluster.org/v1/health reports the merged SHA.",
         "Cloudflare -> humanuprise.com zone -> Workers Routes: humanuprise.com/* and www.humanuprise.com/* -> Worker mccluster, with proxied DNS records and no redirect rule in front.",

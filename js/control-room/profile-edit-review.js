@@ -1,4 +1,4 @@
-/* Native Control · Human Uprise · Identity · Profile edits.
+/* Native Control · Equity Uprise · Identity · Profile edits.
 
    The owner's half of the profile edit gate
    (docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md). A member asks

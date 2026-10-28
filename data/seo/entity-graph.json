@@ -417,15 +417,17 @@
       "founder": {
         "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },
-      "description": "Music-and-action gateway connecting the Heal the 3 project to campaigns in Human Uprise."
+      "description": "Music-and-action gateway connecting the Heal the 3 project to campaigns in Equity Uprise."
     }
   },
   "software": {
     "action_network": {
       "@type": "SoftwareApplication",
       "@id": "https://matthew.mccluster.org/mnet.html#uprise-action-network",
-      "name": "Human Uprise",
+      "name": "Equity Uprise World",
       "alternateName": [
+        "Equity Uprise",
+        "Human Uprise",
         "Uprise Action Network",
         "Action Network"
       ],

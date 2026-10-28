@@ -25,7 +25,7 @@ It is one operating organization with several deliberately distinct surfaces:
 - **platform:** shared identity, database, API, automation, analytics, payments and release infrastructure;
 - **Control:** the owner/operator plane;
 - **Equity Uprise:** public-interest research, education, campaigns, culture and community action;
-- **Human Uprise** (formerly the Uprise Action Network): the member participation product;
+- **Equity Uprise** (formerly the Uprise Action Network): the member participation product;
 - **PRIM3:** applied technology/cybersecurity learning;
 - **studio/services/media:** commercial work, catalogue, licensing and production.
 
@@ -68,9 +68,9 @@ Do not make the album homepage carry the entire corporate explanation. The HERE/
 
 Equity Uprise is the public-interest program layer. It can own campaigns, research, evidence, public education and community action. It is not an alternate name for McCluster Corp and it is not the member application itself.
 
-### Human Uprise (formerly the Uprise Action Network)
+### Equity Uprise (formerly the Uprise Action Network)
 
-**Public product name: Human Uprise.** Renamed from Uprise Action Network / Action Network by the owner on 2026-10-14. The world globe is its home surface: the World tab puts the live Earth over the member feed (`docs/action-network/HUMAN-UPRISE-WORLD-FEED.md`). Older names below are historical; routes, tables and file names that carry `action`, `action-network` or `mnet` stay for compatibility.
+**Public product name: Equity Uprise.** Renamed from Uprise Action Network / Action Network by the owner on 2026-10-14. The world globe is its home surface: the World tab puts the live Earth over the member feed (`docs/action-network/HUMAN-UPRISE-WORLD-FEED.md`). Older names below are historical; routes, tables and file names that carry `action`, `action-network` or `mnet` stay for compatibility.
 
 Legacy `mnet.html`, Mnet database names, URL parameters or compatibility identifiers may remain where changing them would break deployed links or schemas. Do not reintroduce **Mnet / M Network** as the public product brand merely because an implementation route still carries that name.
 
