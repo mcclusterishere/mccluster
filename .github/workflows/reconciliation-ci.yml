@@ -258,6 +258,35 @@ jobs:
         run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
         run: bash scripts/supabase-local-reset-with-replay.sh
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Compare the rebuilt schema with supabase/schema-manifest.json
+        # The manifest is what supabase/migrations/ + supabase/replay_migrations/ build:
+        # tables, columns, RLS, policies, functions (SECURITY DEFINER, EXECUTE grants),
+        # triggers, buckets and views' security_invoker, by the same read-only SQL
+        # scripts/db/verify-production-schema.mjs runs against production. No production
+        # credentials here: this is the disposable stack. When a migration changes the
+        # schema on purpose, refresh the manifest from the uploaded artifact
+        # (reset-schema/schema-manifest.json). Runs before the behaviour tests write rows.
+        env:
+          RESET_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          mkdir -p "$RUNNER_TEMP/reset-schema"
+          node scripts/db/verify-production-schema.mjs --database-url-env RESET_DB_URL --mode reset \
+            --snapshot-out "$RUNNER_TEMP/reset-schema/reset-schema-snapshot.json" \
+            --write-manifest --manifest "$RUNNER_TEMP/reset-schema/schema-manifest.json" \
+            --report-json "$RUNNER_TEMP/reset-schema/report.json" --no-fail
+          node scripts/db/verify-production-schema.mjs --snapshot "$RUNNER_TEMP/reset-schema/reset-schema-snapshot.json" --mode reset \
+            --report-json "$RUNNER_TEMP/reset-schema/manifest-diff.json"
+      - name: Upload the rebuilt schema snapshot
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reset-schema
+          path: ${{ runner.temp }}/reset-schema/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Verify analytics funnel exact-window boundaries
         env:
           PGPASSWORD: postgres
