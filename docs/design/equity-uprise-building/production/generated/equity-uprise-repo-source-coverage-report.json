@@ -69,6 +69,7 @@
     "css/onboard.css",
     "css/style.css",
     "css/world-audio-continuity.css",
+    "data/README.md",
     "data/action/docket-516r-archive.json",
     "data/albums.json",
     "data/analytics/application-schema-inventory.json",
@@ -1565,6 +1566,26 @@
     },
     {
       "name": "css/world-audio-continuity.css support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/README.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/README.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "data/README.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/README.md support rationale present",
       "passed": true,
       "detail": ""
     },

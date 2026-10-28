@@ -479,6 +479,13 @@
       "rationale": "Music and World transport styling; shared product UI rather than building capability."
     },
     {
+      "path": "data/README.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Index of which data/ files are source, derived or Supabase mirrors and who writes each; names Equity Uprise data files only to route edits. No spatial or program capability is added."
+    },
+    {
       "path": "data/action/docket-516r-archive.json",
       "classification": "capability_source",
       "capability_ids": [

@@ -144,9 +144,11 @@ test('the field does not file an event for every keystroke', async () => {
    --------------------------------------------------------------- */
 
 test('every playable track reaches the index', async () => {
-  /* data/albums.json is what can actually be played; data/catalogue.json is
-     the registry and is three tracks short of it. Joining on the registry
-     would have silently dropped those three from the room. */
+  /* data/albums.json is what can actually be played. data/catalogue.json
+     used to be a hand-kept registry three tracks short of it, and joining on
+     it would have silently dropped those three from the room. It is now
+     generated from the shelf (tools/build-music-registry.mjs), so the two
+     agree; the room still walks the shelf, because that is what plays. */
   const albums = await json('data/albums.json');
   const cat = await json('data/catalogue.json');
   const playable = albums.albums.flatMap((a) => a.tracks.map((t) => t.title));
@@ -155,9 +157,7 @@ test('every playable track reaches the index', async () => {
   const key = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const registered = new Set(cat.tracks.map((t) => key(t.title)));
   const unregistered = playable.filter((t) => !registered.has(key(t)));
-  assert.ok(unregistered.length > 0,
-    'this test is only meaningful while the two files disagree; if they now ' +
-    'agree, the join below stops being load-bearing and this can relax');
+  assert.deepEqual(unregistered, [], 'the registry is generated from the shelf: run node tools/build-music-registry.mjs');
 
   const js = await read('js/listen.js');
   assert.match(js, /ALBUMS\.forEach\(function \(a, ai\) \{/,

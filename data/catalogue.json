@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-09-27T21:42:16Z",
+ "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 17,
+ "count": 20,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -12,7 +12,6 @@
    "page": "album.html",
    "length": "2:10",
    "available": true,
-   "order": 1,
    "no": 1,
    "isrc": "QT6KV2600001"
   },
@@ -25,7 +24,6 @@
    "page": "album.html",
    "length": "1:55",
    "available": true,
-   "order": 2,
    "no": 2,
    "isrc": "QT6KV2600002"
   },
@@ -38,7 +36,6 @@
    "page": "album.html",
    "length": "2:17",
    "available": true,
-   "order": 3,
    "no": 3,
    "isrc": "QT6KV2600003"
   },
@@ -51,7 +48,6 @@
    "page": "album.html",
    "length": "1:36",
    "available": true,
-   "order": 4,
    "no": 4,
    "isrc": "QT6KV2600004"
   },
@@ -64,7 +60,6 @@
    "page": "album.html",
    "length": "2:57",
    "available": true,
-   "order": 5,
    "no": 5,
    "isrc": "QT6KV2600005"
   },
@@ -77,7 +72,6 @@
    "page": "album.html",
    "length": "2:12",
    "available": true,
-   "order": 6,
    "no": 6,
    "isrc": "QT6KV2600006"
   },
@@ -86,10 +80,10 @@
    "title": "Got WiFi?",
    "credit": "The PRIM3 blue-team anthem",
    "album": "PRIM3",
-   "page": "album.html",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
    "length": "1:32",
    "available": true,
-   "order": 6,
    "no": 7,
    "isrc": "QT6KV2600007"
   },
@@ -99,12 +93,23 @@
    "credit": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem",
    "album": "Docket 516R",
    "albumSlug": "equity-uprise",
-   "page": "album.html",
+   "page": "album.html?album=equity-uprise",
    "length": "2:43",
    "available": true,
-   "order": 7,
    "no": 8,
    "isrc": "QT6KV2600008"
+  },
+  {
+   "slug": "environmental-injustice-brave",
+   "title": "Environmental Injustice (Brave mix)",
+   "credit": "McCluster ft. Angel Kastro & Ocho · the GA edition",
+   "album": "Docket 516R",
+   "albumSlug": "equity-uprise",
+   "page": "album.html?album=equity-uprise",
+   "length": "4:15",
+   "available": true,
+   "no": 9,
+   "isrc": "QT6KV2600009"
   },
   {
    "slug": "please-set-me-free",
@@ -112,10 +117,10 @@
    "credit": "Los Fidel · beat by McCluster",
    "album": "Docket 516R",
    "albumSlug": "equity-uprise",
-   "page": "album.html",
-   "length": "3:22",
+   "page": "album.html?album=equity-uprise",
+   "length": "3:23",
    "available": true,
-   "no": 9,
+   "no": 10,
    "isrc": "QT6KV2600010"
   },
   {
@@ -124,22 +129,46 @@
    "credit": "ft. Ocho, McCluster & Old Jay · prod. PAX",
    "album": "Docket 516R",
    "albumSlug": "equity-uprise",
-   "page": "album.html",
-   "length": "",
+   "page": "album.html?album=equity-uprise",
+   "length": "3:36",
    "available": true,
-   "no": 10,
+   "no": 11,
    "isrc": "QT6KV2600011"
+  },
+  {
+   "slug": "deep-end",
+   "title": "Deep End",
+   "credit": "the dark side · McCluster × VVS Madè",
+   "album": "Heal the 3",
+   "albumSlug": "heal-the-3",
+   "page": "album.html?album=heal-the-3",
+   "length": "2:46",
+   "available": true,
+   "no": 12,
+   "isrc": "QT6KV2600012"
+  },
+  {
+   "slug": "heal-the-3rd-world",
+   "title": "Heal the 3rd World",
+   "credit": "the light side · McCluster × VVS Madè",
+   "album": "Heal the 3",
+   "albumSlug": "heal-the-3",
+   "page": "album.html?album=heal-the-3",
+   "length": "2:26",
+   "available": true,
+   "no": 13,
+   "isrc": "QT6KV2600013"
   },
   {
    "slug": "vaunt",
    "title": "Vaunt (Acoustic)",
    "credit": "The Vaunt Private Flights jingle · guitar by Zakir · from the Vaunt EP (with \"Jet Pass\")",
-   "album": "Vaunt · EP",
-   "page": "album.html",
+   "album": "Vaunt EP",
+   "albumSlug": "vaunt-ep",
+   "page": "album.html?album=vaunt-ep",
    "length": "1:32",
    "available": true,
-   "order": 8,
-   "no": 11,
+   "no": 14,
    "isrc": "QT6KV2600014"
   },
   {
@@ -147,11 +176,11 @@
    "title": "Dealer Plates (A-Side)",
    "credit": "Prod. Zakir & McCluster",
    "album": "Whip Equipped",
-   "page": "album.html",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
    "length": "1:37",
    "available": true,
-   "order": 9,
-   "no": 12,
+   "no": 15,
    "isrc": "QT6KV2600015"
   },
   {
@@ -159,11 +188,11 @@
    "title": "Dealer Plates (B-Side)",
    "credit": "Prod. Zakir & McCluster",
    "album": "Whip Equipped",
-   "page": "album.html",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
    "length": "1:37",
    "available": true,
-   "order": 10,
-   "no": 13,
+   "no": 16,
    "isrc": "QT6KV2600016"
   },
   {
@@ -171,50 +200,47 @@
    "title": "Upset",
    "credit": "Hitman Halo × Raheem × Rahndrx",
    "album": "Singles",
-   "page": "album.html",
+   "albumSlug": "singles",
+   "page": "album.html?album=singles",
    "length": "3:04",
    "available": true,
-   "order": 11,
-   "no": 14,
-   "isrc": "QT6KV2600017"
-  },
-  {
-   "slug": "pull-up",
-   "title": "Pull Up",
-   "credit": "KKK",
-   "album": "CIA Mind Control",
-   "page": "album.html?album=cia-mind-control",
-   "length": "2:30",
-   "available": true,
-   "order": 12,
    "no": 17,
-   "albumSlug": "cia-mind-control"
-  },
-  {
-   "slug": "niggy-nigg",
-   "title": "Niggy Nigg Niggr",
-   "credit": "KKK",
-   "album": "CIA Mind Control",
-   "page": "album.html?album=cia-mind-control",
-   "length": "0:25",
-   "available": true,
-   "gated": true,
-   "order": 13,
-   "no": 15,
-   "isrc": "QT6KV2600018",
-   "albumSlug": "cia-mind-control"
+   "isrc": "QT6KV2600017"
   },
   {
    "slug": "you-the-feds",
    "title": "You the Feds",
    "credit": "KKK",
    "album": "CIA Mind Control",
+   "albumSlug": "cia-mind-control",
    "page": "album.html?album=cia-mind-control",
    "length": "3:53",
    "available": true,
-   "order": 14,
-   "no": 16,
-   "albumSlug": "cia-mind-control"
+   "no": 19
+  },
+  {
+   "slug": "pull-up",
+   "title": "Pull Up",
+   "credit": "KKK",
+   "album": "CIA Mind Control",
+   "albumSlug": "cia-mind-control",
+   "page": "album.html?album=cia-mind-control",
+   "length": "2:30",
+   "available": true,
+   "no": 20
+  },
+  {
+   "slug": "niggy-nigg",
+   "title": "Niggy Nigg Niggr",
+   "credit": "KKK",
+   "album": "CIA Mind Control",
+   "albumSlug": "cia-mind-control",
+   "page": "album.html?album=cia-mind-control",
+   "length": "",
+   "available": true,
+   "no": 18,
+   "gated": true,
+   "isrc": "QT6KV2600018"
   }
  ]
 }
