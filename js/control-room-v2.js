@@ -8,7 +8,7 @@
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
+  var WORK_VIEWS = ["inbox", "desk-bot", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
   var CREATE_VIEWS = ["projects", "front-page", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
@@ -1565,6 +1565,10 @@
       return window.CR.workTools ? window.CR.workTools.render(view) : empty("Work tool unavailable", "The native Control module did not load.");
     }
     if (view === "inbox") return renderWorkInbox();
+    if (view === "desk-bot") {
+      return derivedNote("The desk bot's back office: what it may say (the knowledge base), what it cost today, every message a platform refused, its channels and its tools. Each action is the inbox edge function, with your session.") +
+        (window.CR.deskBot ? window.CR.deskBot.render() : empty("Desk bot unavailable", "The native Control module did not load."));
+    }
     if (view === "pipeline") return renderPipeline();
     if (view === "people") return renderPeople();
     if (view === "companies") return renderCompanies();
@@ -2795,6 +2799,7 @@
       [/\b(outreach|outreach desk|email campaign|follow[- ]?up)\b/i, function () { setSurface("work", "outreach"); }],
       [/\b(back office|merch operations|operations desk)\b/i, function () { setSurface("work", "operations"); }],
       [/\b(client console|business console)\b/i, function () { setSurface("work", "clients"); }],
+      [/\b(desk bot|knowledge( base)?|kb|refusals?|refused|bot spend)\b/i, function () { setSurface("work", "desk-bot"); }],
       [/\b(inbox|messages?|conversations?)\b/i, function () { setSurface("work", "inbox"); }],
       [/\b(pipeline|leads?|deals?|opportunit)/i, function () { setSurface("work", "pipeline"); }],
       [/\b(people|person|contacts?)\b/i, function () { setSurface("work", "people"); }],
@@ -2838,6 +2843,7 @@
       ["Home", "Attention, signals, current work", "home"],
       ["McCluster AI", "Persistent chat with your self-hosted model", "ai"],
       ["Work · Inbox", "Unified incoming conversations", "work-inbox"],
+      ["Work · Desk bot", "Knowledge base, spend, refusals, channels and tools", "work-desk-bot"],
       ["Work · Pipeline", "Leads and opportunities", "work-pipeline"],
       ["Work · People", "Canonical people", "work-people"],
       ["Work · Clients", "Client work and site requests", "work-clients"],
@@ -2884,6 +2890,7 @@
     else if (action === "ai-stop-speaking") { stopAiVoiceSpeech(); render(); }
     else if (action === "ai-speak-message") { var voiceMessage = aiMessageById(el && el.getAttribute("data-id")); if (voiceMessage && voiceMessage.role === "assistant") speakAiText(voiceMessage.content); }
     else if (action === "work-inbox") setSurface("work", "inbox");
+    else if (action === "work-desk-bot") setSurface("work", "desk-bot");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
     else if (action === "work-people") setSurface("work", "people");
     else if (action === "work-clients") setSurface("work", "clients");
@@ -3377,6 +3384,7 @@
     bindActions($("crSurface"));
     window.CR.media.bind($("crSurface"));
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
+    if (window.CR.deskBot) window.CR.deskBot.bind($("crSurface"));
     if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
     if (window.CR.instagram) window.CR.instagram.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
@@ -3675,6 +3683,7 @@
     refresh: function () { return load(true); },
     getState: function () { return state; }
   });
+  if (window.CR.deskBot) window.CR.deskBot.init({ render: render, workspace: function () { return state.org; }, ready: function () { return Boolean(state.refreshedAt || state.error); } });
   if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
   if (window.CR.instagram) window.CR.instagram.init({ request: request, render: render, org: function () { return state.org; } });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });

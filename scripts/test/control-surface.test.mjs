@@ -32,7 +32,7 @@ test('Control owns native Work Create Analytics and System navigation',async()=>
     assert.ok(html.includes('data-surface="'+key+'"'),key+' is missing from the desktop Control rail');
   }
   assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
-  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"\]/);
+  assert.match(js,/WORK_VIEWS = \["inbox", "desk-bot", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"\]/);
   assert.match(js,/CREATE_VIEWS = \["projects", "front-page", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"\]/);
 });
 

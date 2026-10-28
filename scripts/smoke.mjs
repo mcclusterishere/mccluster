@@ -834,23 +834,6 @@ try {
         /nofollow/.test(document.querySelector('meta[name="robots"]')?.content || "")));
     }, SEALED],
 
-    /* The inbox back office turns channels on and off and decides what the
-       bot is allowed to say. A stranger must see a password box and nothing
-       else — no thread list, no channel switches, not even their names. */
-    ["inbox.html", async (p) => {
-      check("inbox: a stranger gets the door and nothing behind it", await p.evaluate(() => {
-        const ib = document.getElementById("ib");
-        return !!ib && !!ib.querySelector(".gate") && !ib.querySelector(".rooms");
-      }));
-      check("inbox: noindex,nofollow (the control plane)", await p.evaluate(() =>
-        /noindex/.test(document.querySelector('meta[name="robots"]')?.content || "") &&
-        /nofollow/.test(document.querySelector('meta[name="robots"]')?.content || "")));
-      /* the page reads through PostgREST with the STAFF member's token and
-         writes through the function, so it never needs a privileged key and
-         must never carry one */
-      check("inbox: ships no service key", await p.evaluate(() =>
-        !/service_role|eyJ[A-Za-z0-9_-]{40,}/.test(document.documentElement.innerHTML)));
-    }, SEALED],
   ];
 
   for (const width of [390, 1280]) {

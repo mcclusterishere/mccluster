@@ -61,7 +61,7 @@ const BARE_FR = /(?<!minmax\([^)]*)\b1fr\b/;
 const bareTracks = (css) => [...css.matchAll(GRID_DECL)].filter((m) => BARE_FR.test(m[1])).length;
 
 /* ---- the allowlists: seeded 2026-10-27, and they may only shrink ---- */
-/* @media (…max-width…) queries per file: 110 in 43 files */
+/* @media (…max-width…) queries per file: 109 in 42 files */
 const MAX_WIDTH_ALLOWED = {
   "catalogue.html": 1,
   "css/control-room-v2.css": 9,
@@ -90,7 +90,6 @@ const MAX_WIDTH_ALLOWED = {
   "docs/design/redesign-before-after.html": 2,
   "equity-uprise.html": 1,
   "gallery.html": 4,
-  "inbox.html": 1,
   "license.html": 1,
   "management.html": 1,
   "mccluster-creator-studio.html": 1,
@@ -105,7 +104,7 @@ const MAX_WIDTH_ALLOWED = {
   "workers/mccluster/src/seek-first/console.html": 1,
   "world-news.html": 2,
 };
-/* grid-template declarations with a bare 1fr per file: 279 in 59 files */
+/* grid-template declarations with a bare 1fr per file: 277 in 58 files */
 const BARE_FR_ALLOWED = {
   "account.html": 2,
   "admin.html": 1,
@@ -142,7 +141,6 @@ const BARE_FR_ALLOWED = {
   "docs/design/native-identity-comparison.html": 3,
   "gallery.html": 11,
   "help.html": 1,
-  "inbox.html": 2,
   "lanes.html": 3,
   "license.html": 2,
   "management.html": 3,

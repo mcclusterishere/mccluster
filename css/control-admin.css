@@ -124,3 +124,14 @@
 @media (min-width:1100px){.cfp{grid-template-columns:minmax(0,1fr) minmax(320px,400px);align-items:start;padding-bottom:110px}.cfp-panel{max-height:var(--cfp-room,none);overflow:auto;overscroll-behavior:contain}}
 .cfp-spot.is-bad{border-color:rgba(239,90,99,.5)}
 .cfp-spot__bad{margin:0;color:#ffb7bb;font-size:11px;line-height:1.45}
+/* Control · Work · Desk bot (js/control-room/desk-bot.js). Phone first: every tab, chip and
+   button is a 44px target; long URLs and errors wrap instead of widening the page. */
+.crd .cro-tab,.crd .cro-chip,.crd .cr-btn{min-height:44px}
+.crd .cro-pill{margin:0 2px 2px 0}
+.crd-url,.crd .cro-item,.crd .cro-row{overflow-wrap:anywhere;min-width:0}
+.crd .cro-pill.crd-ok{color:#8ad9a0;border-color:rgba(138,217,160,.5)}
+.crd .cro-pill.crd-warn{color:#f0c674;border-color:rgba(240,198,116,.45)}
+.crd .cro-pill.crd-bad{color:#ff8a8c;border-color:rgba(255,138,140,.4)}
+.crd .cro-meta.crd-bad{color:#ffb7bb}
+.crd-waiting{border-color:rgba(240,198,116,.45)}
+.crd code{font-size:inherit;overflow-wrap:anywhere}
