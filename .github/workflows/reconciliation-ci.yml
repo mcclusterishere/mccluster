@@ -217,6 +217,32 @@ jobs:
           node scripts/test-intel-integrity-db.mjs
           node scripts/funding/validate-register-db.mjs
 
+  equity-uprise-rls:
+    name: Equity Uprise RLS wall and offline function contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL 16 server binaries
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends postgresql-16
+      - name: Stand up a throwaway cluster and try to break into the Equity Uprise tables
+        # supabase/tests/run-eu-tests.sh creates its own cluster in a temp
+        # directory from /usr/lib/postgresql/16/bin and destroys it on exit;
+        # nothing here touches the live project.
+        run: bash supabase/tests/run-eu-tests.sh
+      - name: Run the offline Supabase function contracts
+        # Pure unit suites over the edge-function sources (TypeScript via
+        # --experimental-strip-types); no Supabase, no network. Suites that
+        # need a live stack stay in the `database` job above.
+        run: |
+          for suite in brain desk-flows domain flows inbox-auth mcp platforms price; do
+            echo "== supabase/tests/$suite.test.mjs"
+            node --experimental-strip-types "supabase/tests/$suite.test.mjs"
+          done
+
   database:
     name: Supabase migration reset
     runs-on: ubuntu-latest
