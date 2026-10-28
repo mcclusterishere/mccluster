@@ -10,7 +10,7 @@ on:
       - 'css/mnet.css'
       - 'css/world-news-globe.css'
       - 'workers/mccluster/src/platform-api.js'
-      - 'supabase/pending/world_news_discussions_v1.sql'
+      - 'supabase/migrations/20261021011443_royce_platform_actor.sql'
       - 'scripts/test/world-news-globe-source.test.mjs'
       - 'scripts/test/world-unified-feed.test.mjs'
       - 'scripts/test/world-news-comments.*.sql'
@@ -60,7 +60,7 @@ jobs:
           persist-credentials: false
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Verify pending schema in disposable PostgreSQL only
+      - name: Verify the applied news-discussion schema in disposable PostgreSQL only
         env:
           PGHOST: 127.0.0.1
           PGPORT: '5432'
@@ -70,5 +70,5 @@ jobs:
         run: |
           set -euo pipefail
           psql -v ON_ERROR_STOP=1 -f scripts/test/world-news-comments.stub.sql
-          psql -v ON_ERROR_STOP=1 -f supabase/pending/world_news_discussions_v1.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261021011443_royce_platform_actor.sql
           psql -v ON_ERROR_STOP=1 -f scripts/test/world-news-comments.behavior.sql

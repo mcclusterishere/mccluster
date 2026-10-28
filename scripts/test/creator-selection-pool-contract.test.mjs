@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {creatorSelectionScore,percentileWithinPool} from '../creator-selection-score.mjs';
-const sql=readFileSync(new URL('../../supabase/migrations/pending/20261010003000_creator_selection_pool.sql',import.meta.url),'utf8');
+const sql=readFileSync(new URL('../../supabase/migrations/20261009222941_creator_selection_pool_v1.sql',import.meta.url),'utf8');
 test('three equally weighted pillars',()=>{
  const r=creatorSelectionScore({market:30,talent:90,execution:60,reviewers:2,marketSample:20});
  assert.equal(r.score,60);assert.equal(r.reviewStatus,'ready_for_human_selection');
