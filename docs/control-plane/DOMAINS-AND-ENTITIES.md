@@ -238,3 +238,6 @@ interconnected with the rest.
   `node tools/build-profile-entity.mjs` and `node tools/build-company-site.mjs`.
 - Personal root metadata (`index.html` `<head>`): Matthew-first. Change the
   metadata only; the album UI is not rewritten (AGENTS.md).
+- Which file under `data/` is the record for a fact, which is generated from
+  it (and by which `tools/build-*.mjs`, each with `--check`), and which is a
+  display mirror of a Supabase table: `data/README.md`.

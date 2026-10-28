@@ -136,7 +136,7 @@ either into a verdict.
 
 ## Optional
 
-- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 17 tracks with ISRCs; [as a page](https://matthew.mccluster.org/catalogue.html). Credit only the artist the catalogue names; "Written & performed by Matthew McCluster unless credited otherwise."
+- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 20 registered tracks, 18 with ISRCs; [as a page](https://matthew.mccluster.org/catalogue.html). Credit only the artist the catalogue names; "Written & performed by Matthew McCluster unless credited otherwise."
 - [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 21 items
 - [Sitemap](https://matthew.mccluster.org/sitemap.xml) · [video sitemap](https://matthew.mccluster.org/sitemap-video.xml)
 - [Crawl policy](https://matthew.mccluster.org/robots.txt)

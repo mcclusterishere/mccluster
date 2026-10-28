@@ -93,9 +93,21 @@
     var src = audio && (audio.currentSrc || audio.src) || "", m = /\/([^\/?#]+)\.[a-z0-9]+(?:[?#]|$)/i.exec(src);
     return m ? m[1].toLowerCase() : "";
   }
+  /* WHICH WORDS BELONG TO A FILE is data/albums.json's to say (its track.lyrics), not a
+     guess from the file name: Money or the Power's audio is money-or-the-power.mp3 and its
+     words are data/lyrics/money-or-the-power.dk.json. The shelf is read once, for the
+     rotation below; until it has arrived, and for a file the shelf does not name, the
+     slug's own file under data/lyrics/ is tried as before. */
+  var lyricsBySlug = null;
+  function lyricsPath(slug) {
+    var named = lyricsBySlug && Object.prototype.hasOwnProperty.call(lyricsBySlug, slug) ? lyricsBySlug[slug] : null;
+    if (named === "") return null; // the shelf lists the track and names no words for it
+    return named ? ROOT + named : ROOT + "data/lyrics/" + encodeURIComponent(slug) + ".json";
+  }
   function loadLyrics(slug) {
     if (!slug) return Promise.resolve(null);
-    if (!lyricCache[slug]) lyricCache[slug] = fetch(ROOT + "data/lyrics/" + encodeURIComponent(slug) + ".json", {credentials:"omit"})
+    var path = lyricsPath(slug); if (!path) return Promise.resolve(null);
+    if (!lyricCache[slug]) lyricCache[slug] = fetch(path, {credentials:"omit"})
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         var lines = d && Array.isArray(d.lines) ? d.lines.filter(function (l) { return l && typeof l.text === "string" && Number.isFinite(l.t); }) : [];
@@ -189,16 +201,21 @@
   function loadRotation() {
     if (rotationLoad) return rotationLoad;
     rotationLoad = fetch(ROOT + "data/albums.json", {credentials:"omit"}).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      var list = [];
+      var list = [], words = {};
       (d && Array.isArray(d.albums) ? d.albums : []).forEach(function (a) {
         (a && Array.isArray(a.tracks) ? a.tracks : []).forEach(function (t) {
           var src = t && typeof t.src === "string" ? t.src : "";
+          // every track on the shelf, gated or not, names its own lyrics file (or none): same-origin data/ paths only
+          var fileSlug = src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase();
+          if (t && fileSlug) words[fileSlug] = typeof t.lyrics === "string" && /^data\/lyrics\/[a-z0-9._-]+\.json$/i.test(t.lyrics) ? t.lyrics : "";
           // public catalog files only: never a gated master, a preview or anything off the house's audio folder
           if (!t || t.gated || /preview/i.test(src) || !/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(src)) return;
           list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60)});
         });
       });
       rotation = list.length ? list : [FALLBACK_SONG];
+      // a lyric file guessed before the shelf arrived is forgotten, so the shelf's answer is the one used
+      lyricsBySlug = words; lyricCache = {};
       return rotation;
     }).catch(function () { rotation = [FALLBACK_SONG]; return rotation; });
     return rotationLoad;
