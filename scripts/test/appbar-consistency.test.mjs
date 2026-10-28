@@ -42,8 +42,6 @@ const EXEMPT = {
   'feed.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'fellowship.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'fellowships.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
-  'lab-landmark.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
-  'lab-props.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'lb-harness.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'profile.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'topics.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',

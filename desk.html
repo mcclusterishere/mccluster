@@ -252,15 +252,11 @@
         var to = sd.getAttribute("data-to");
         sd.disabled = true; sd.textContent = "Sending…";
 
-        /* The send itself goes through the send-mail edge function, which
-           holds the API key. No key ever reaches this page. If it is not
-           deployed yet, the touch is still recorded and the mail client
-           opens; the record stays complete either way. */
-        fetch(MCC_SUPA.url + "/functions/v1/send-mail", {
-          method: "POST", headers: hdr(),
-          body: JSON.stringify({ to: c.email, subject: subject, text: body, contact_id: id }),
-        }).then(function (r) { return r.ok ? "sent" : "manual"; })
-          .catch(function () { return "manual"; })
+        /* No send-mail edge function is deployed (the call only ever 404'd
+           and every send fell through to the mail client), so the desk goes
+           straight there: the touch is recorded as a draft, the stage moves,
+           and the composed message opens in the mail client to be sent. */
+        Promise.resolve("manual")
           .then(function (how) {
             var due = new Date(); due.setDate(due.getDate() + wait);
             return Promise.all([

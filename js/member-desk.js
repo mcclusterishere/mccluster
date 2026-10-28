@@ -353,7 +353,7 @@
     if (t.closest("[data-hu-desk-close]")) { close(); return; }
     var sec = t.closest("[data-hu-desk-section]");
     if (sec) { S.section = sec.getAttribute("data-hu-desk-section"); setParam(S.section); paintTabs(); paintBody(); return; }
-    if (t.closest("[data-hu-desk-signin]")) { var g = $("mnGuestSignIn"); close(); if (g) g.click(); else location.href = "login.html"; return; }
+    if (t.closest("[data-hu-desk-signin]")) { var g = $("mnGuestSignIn"); close(); if (g) g.click(); else location.href = "account.html"; return; }
     var view = t.closest("[data-hu-desk-view]");
     if (view && mnet() && mnet().setView) { close(); mnet().setView(view.getAttribute("data-hu-desk-view")); return; }
     if (t.closest("[data-hu-desk-edit]")) { var m = mnet(); close(); if (m && m.editProfile) m.editProfile(); return; }

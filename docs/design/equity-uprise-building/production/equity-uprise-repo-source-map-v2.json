@@ -15,8 +15,8 @@
     ]
   },
   "candidate_count": 436,
-  "capability_source_count": 104,
-  "support_only_count": 332,
+  "capability_source_count": 102,
+  "support_only_count": 334,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1693,21 +1693,17 @@
     },
     {
       "path": "platform/sql/001_init.sql",
-      "classification": "capability_source",
-      "capability_ids": [
-        "enterprise-development"
-      ],
-      "support_only": false,
-      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+      "classification": "archived_backend_evidence",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived, fail-closed second backend (platform/DISABLED.md); nothing deploys it. Only its `platform_payment_accounts.deal_mode` check constraint names an equity_uprise revenue-share deal mode. The live enterprise-development sources are workers/mccluster/src/connect.js and supabase/replay_migrations/0055_client_connect.sql."
     },
     {
       "path": "platform/src/server.mjs",
-      "classification": "capability_source",
-      "capability_ids": [
-        "enterprise-development"
-      ],
-      "support_only": false,
-      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+      "classification": "archived_backend_evidence",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Archived, fail-closed second backend (platform/DISABLED.md); nothing deploys it. Only its Stripe onboarding route names an equity_uprise revenue-share deal mode. The live enterprise-development sources are workers/mccluster/src/connect.js and supabase/replay_migrations/0055_client_connect.sql."
     },
     {
       "path": "policy-memo-dna.html",

@@ -63,7 +63,6 @@ const bareTracks = (css) => [...css.matchAll(GRID_DECL)].filter((m) => BARE_FR.t
 /* ---- the allowlists: seeded 2026-10-27, and they may only shrink ---- */
 /* @media (…max-width…) queries per file: 110 in 43 files */
 const MAX_WIDTH_ALLOWED = {
-  "asset-lab.html": 2,
   "catalogue.html": 1,
   "css/control-room-v2.css": 9,
   "css/control-room.css": 3,
@@ -102,7 +101,6 @@ const MAX_WIDTH_ALLOWED = {
   "research.html": 1,
   "sites-details.html": 2,
   "sites.html": 2,
-  "travel-desk.html": 1,
   "whip/index.html": 2,
   "workers/mccluster/src/seek-first/console.html": 1,
   "world-news.html": 2,
@@ -112,7 +110,6 @@ const BARE_FR_ALLOWED = {
   "account.html": 2,
   "admin.html": 1,
   "analytics.html": 1,
-  "asset-lab.html": 6,
   "card.html": 2,
   "crm.html": 1,
   "css/control-analytics-deck.css": 4,
@@ -158,7 +155,6 @@ const BARE_FR_ALLOWED = {
   "shots.html": 2,
   "sites-details.html": 5,
   "sites.html": 5,
-  "travel-desk.html": 2,
   "vault.html": 2,
   "walls/brunch-and-beats.html": 1,
   "walls/candler-crossing.html": 1,
