@@ -735,7 +735,23 @@
      auth.uid()::text`. Getting this wrong is a 403, not a silent
      mis-file. */
   var AVATAR_BUCKET = "mnet-avatars";
-  var AVATAR_MAX = 5 * 1024 * 1024;
+  var AVATAR_MAX = 5 * 1024 * 1024;        // what the bucket accepts, and the most a phone is asked to decode
+  /* THE PICTURE IS MADE SMALL HERE, NOT SHOWN SMALL THERE (js/image-resize.js).
+     A face is painted into 42px circles on every row its owner appears in,
+     and the World was loading a 1.6 MB PNG into each of them. So a face goes
+     up as a 512px square WebP (around 30 KB), and a post picture no longer
+     than 1600px on its long edge. The caps stay on both sides of the resize:
+     before it, what the bucket enforces anyway; after it, a catch for a
+     resize that did not happen. A GIF is left alone and keeps its animation.
+     Without the helper the picture goes up as it did before. */
+  var AVATAR_OUT_MAX = 1024 * 1024;
+  var PICTURE_OUT_MAX = 5 * 1024 * 1024;
+  var AVATAR_FIT = { maxEdge: 512, square: true, maxBytes: AVATAR_OUT_MAX };
+  var PICTURE_FIT = { maxEdge: 1600, square: false, maxBytes: PICTURE_OUT_MAX };
+  function shrinkForUpload(file, fit) {
+    if (!window.MCCImageResize) return Promise.resolve(file);
+    return window.MCCImageResize.resize(file, fit).then(function (r) { return r.file; });
+  }
 
   function uploadAvatar(file) {
     var token = sessionToken();
@@ -745,20 +761,25 @@
     if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type || "")) {
       return Promise.reject(new Error("Use a PNG, JPEG, WebP or GIF."));
     }
-    /* A fresh name every time: same-name overwrites are what make a new
-       photo show the old one until the cache gives up. */
-    var ext = (file.type.split("/")[1] || "png").replace("jpeg", "jpg");
-    var path = uid + "/avatar-" + Date.now() + "." + ext;
     setStatus($("mnAvatarStatus"), "Uploading…");
-    return fetch(SB_URL + "/storage/v1/object/" + AVATAR_BUCKET + "/" + path, {
-      method: "POST",
-      headers: {
-        apikey: SB_KEY,
-        authorization: "Bearer " + token,
-        "content-type": file.type,
-        "x-upsert": "true"
-      },
-      body: file
+    var path;
+    return shrinkForUpload(file, AVATAR_FIT).then(function (pic) {
+      /* A fresh name every time: same-name overwrites are what make a new
+         photo show the old one until the cache gives up. The extension is
+         the picture actually being sent (a PNG usually leaves here as WebP). */
+      var type = pic.type || file.type;
+      var ext = (type.split("/")[1] || "png").replace("jpeg", "jpg");
+      path = uid + "/avatar-" + Date.now() + "." + ext;
+      return fetch(SB_URL + "/storage/v1/object/" + AVATAR_BUCKET + "/" + path, {
+        method: "POST",
+        headers: {
+          apikey: SB_KEY,
+          authorization: "Bearer " + token,
+          "content-type": type,
+          "x-upsert": "true"
+        },
+        body: pic
+      });
     }).then(function (res) {
       if (!res.ok) return res.text().then(function (t) { throw new Error(t || "Upload failed."); });
       var url = SB_URL + "/storage/v1/object/public/" + AVATAR_BUCKET + "/" + path;
@@ -2324,7 +2345,8 @@
     var chain=Promise.resolve();
     files.forEach(function(file){
       chain=chain.then(function(){
-        return uploadMediaWithPoster(file).then(function(out){
+        /* a picture goes up at the size it is shown (js/image-resize.js); a video or a sound file goes as it is */
+        return shrinkForUpload(file,PICTURE_FIT).then(function(pic){return uploadMediaWithPoster(pic);}).then(function(out){
           var ready=out.asset;
           state.mediaAssets.push({
             id:ready.id,
@@ -2575,8 +2597,12 @@
       if (!THUMB_TYPES.test(String(f.type || "").toLowerCase())) { thumbStatus("Use a JPEG, PNG or WebP picture.", "error"); return; }
       if (f.size > 25 * 1024 * 1024) { thumbStatus("That picture is over 25 MB. Choose a smaller one.", "error"); return; }
       thumbBusy(true); thumbStatus("Saving the thumbnail…");
-      (window.MCCVideoPoster ? window.MCCVideoPoster.imageSize(f) : Promise.resolve({}))
-        .then(function (meta) { return saveThumbnail(f, meta); })
+      /* a thumbnail is shown no larger than a post picture, so it goes up at that size (js/image-resize.js) */
+      shrinkForUpload(f, PICTURE_FIT)
+        .then(function (pic) {
+          return (window.MCCVideoPoster ? window.MCCVideoPoster.imageSize(pic) : Promise.resolve({}))
+            .then(function (meta) { return saveThumbnail(pic, meta); });
+        })
         .catch(function (e) { thumbStatus(e.message || "The thumbnail did not save.", "error"); })
         .then(function () { thumbBusy(false); });
     });
