@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 436,
+  "candidate_count": 439,
   "capability_source_count": 102,
-  "support_only_count": 334,
+  "support_only_count": 337,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3320,6 +3320,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared navigation names the existing World product door; it adds no building program or physical capability."
+    },
+    {
+      "path": ".github/instructions/mccluster.instructions.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "docs/control-plane/ECOSYSTEM.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane ecosystem map; names the Equity Uprise building block only to say satellites never copy it. Defines no program capability."
+    },
+    {
+      "path": "docs/control-plane/SATELLITE.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Satellite kit head; names the Equity Uprise building block only to say satellites never copy it. Defines no program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

@@ -1,16 +1,17 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 436,
+  "candidate_count": 439,
   "capability_source_count": 102,
-  "support_only_count": 334,
-  "checks_total": 1644,
-  "checks_passed": 1644,
+  "support_only_count": 337,
+  "checks_total": 1656,
+  "checks_passed": 1656,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
     ".cursorrules",
     ".github/copilot-instructions.md",
+    ".github/instructions/mccluster.instructions.md",
     ".github/workflows/api-economic-core-ci.yml",
     ".github/workflows/equity-uprise-core-v2-ci.yml",
     ".github/workflows/reconciliation-ci.yml",
@@ -117,6 +118,7 @@
     "docs/analytics/application-schema-inventory.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
+    "docs/control-plane/ECOSYSTEM.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
     "docs/control-plane/EQUITY-UPRISE-MISSION-SERIES-AND-SONG-CTA.md",
     "docs/control-plane/GMAIL-CONNECT.md",
@@ -128,6 +130,7 @@
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
+    "docs/control-plane/SATELLITE.md",
     "docs/control-plane/SECURITY-POSTURE.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
@@ -450,7 +453,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "436 entries"
+      "detail": "439 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8664,6 +8667,66 @@
     },
     {
       "name": "js/site-navigation.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/ECOSYSTEM.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/ECOSYSTEM.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/ECOSYSTEM.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/ECOSYSTEM.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/SATELLITE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/SATELLITE.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/SATELLITE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/SATELLITE.md support rationale present",
       "passed": true,
       "detail": ""
     }
