@@ -124,12 +124,12 @@
 .lockroom__bar[hidden] { display: none; }
 .lockroom__in { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none;
   border: 1px solid rgba(244,239,230,.2); background: rgba(244,239,230,.05);
-  color: var(--cream); border-radius: 99px; padding: .75em 1.1em;
+  color: var(--cream); border-radius: 99px; padding: .75em 1.1em; min-height: 44px;
   font: 500 1rem var(--body); transition: border-color .22s; }
 .lockroom__in::placeholder { color: rgba(244,239,230,.42); }
 .lockroom__in:focus { outline: none; border-color: var(--ruby-hot); }
 .lockroom__bar.is-required .lockroom__in { border-color: rgba(229,56,59,.5); }
-.lockroom__go { flex: none; width: 46px; -webkit-appearance: none; appearance: none;
+.lockroom__go { flex: none; width: 46px; min-height: 46px; -webkit-appearance: none; appearance: none;
   cursor: pointer; border: 0; border-radius: 50%; display: grid; place-items: center;
   background: linear-gradient(120deg, var(--ruby), var(--ruby-hot));
   box-shadow: 0 10px 24px -12px rgba(229,56,59,.95); }

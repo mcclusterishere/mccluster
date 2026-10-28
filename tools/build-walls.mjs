@@ -1,6 +1,7 @@
 /* THE WALL PAGES — one real, crawlable page per event.
 
      node tools/build-walls.mjs
+     node tools/build-walls.mjs --check   # exit 1 if the committed pages drifted
 
    Why this exists: the gallery routes events on a hash
    (gallery.html#/candler-crossing). Everything after a # is the same URL to
@@ -15,7 +16,7 @@
    up the person who covered them.
 
    Everything comes out of data/gallery.json. Nothing is written twice.  */
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -84,6 +85,16 @@ function ldFor(ev) {
 
   const graph = [];
 
+  /* The photographer as a node of his own, first, so the creator and
+     copyrightHolder references below resolve inside the page as well as
+     against the site graph (seo-contract: one person, one node). */
+  graph.push({
+    "@type": "Person",
+    "@id": `${SITE}/#matthew-mccluster`,
+    name: ME.name,
+    url: ME.page,
+  });
+
   /* The client as its own entity, cited by the coverage. This is the join:
      the client is the subject, the photographer is the creator, and both
      hang off the same event. */
@@ -135,7 +146,7 @@ function ldFor(ev) {
       copyrightHolder: { "@id": `${SITE}/#matthew-mccluster` },
       creditText: `${ME.name} / ${ME.org}`,
       representativeOfPage: ev.cover === m.src,
-      about: clientNode ? { "@id": `${url}#client` } : undefined,
+      about: clientNode ? { "@id": clientNode["@id"] } : undefined,
       isPartOf: { "@id": `${url}#event` },
     });
   });
@@ -145,7 +156,7 @@ function ldFor(ev) {
     "@id": `${url}#gallery`,
     name: `${ev.title}${ev.client ? " — " + ev.client : ""}`,
     url,
-    about: clientNode ? [{ "@id": `${url}#event` }, { "@id": `${url}#client` }] : { "@id": `${url}#event` },
+    about: clientNode ? [{ "@id": `${url}#event` }, { "@id": clientNode["@id"] }] : { "@id": `${url}#event` },
     author: { "@id": `${SITE}/#matthew-mccluster` },
     copyrightHolder: { "@id": `${SITE}/#matthew-mccluster` },
     ...(ev.about ? { description: ev.about } : {}),
@@ -202,7 +213,7 @@ ${ev.sources.map((u) => `        <li><a href="${esc(u)}" rel="noopener">${esc(u.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}">
   <link rel="canonical" href="${url}">
@@ -336,35 +347,52 @@ ${sources}
 `;
 }
 
-/* ---- write it all ---- */
+/* ---- build it all ---- */
 const live = (gallery.events || []).filter((e) => (e.media || []).length);
-mkdirSync(join(ROOT, "walls"), { recursive: true });
-
-live.forEach((ev) => {
-  writeFileSync(join(ROOT, "walls", `${ev.id}.html`), pageFor(ev));
-  console.log(`walls/${ev.id}.html  ${(ev.media || []).length} frames  ${ev.client || "—"}`);
-});
+const pages = new Map(live.map((ev) => [`walls/${ev.id}.html`, pageFor(ev)]));
 
 /* The index is consolidated: the Gallery is the one door for the work
    (owner's call — too many doors). walls.html forwards; the wall pages
    keep their own SEO and are linked from the gallery's case view. */
-writeFileSync(join(ROOT, "walls.html"), `<!doctype html>
+pages.set("walls.html", `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>This door moved into the Gallery · McCluster</title>
   <meta name="robots" content="noindex">
   <link rel="canonical" href="${SITE}/gallery.html">
   <script>location.replace("gallery.html");<\/script>
   <meta http-equiv="refresh" content="0;url=gallery.html">
+  <script src="js/live-content.js?v=__STAMP__"><\/script>
 </head>
 <body>
   <p style="font-family:sans-serif;padding:2rem">The walls hang in the Gallery now.
     <a href="gallery.html">Continue</a>.</p>
+  <script defer src="js/pip.js?v=__STAMP__"><\/script>
+  <script src="js/site-editor.js?v=__STAMP__" defer><\/script>
 </body>
 </html>
 `);
-console.log(`walls.html  -> gallery.html (consolidated stub)`);
+
+/* ---- write it, or prove it ----
+   --check: the committed pages are the truth. If this generator would
+   write anything different, say which and exit 1, so drift is caught by
+   scripts/test/seo-contract.test.mjs instead of by a surprise rewrite. */
+if (process.argv.includes("--check")) {
+  const drifted = [...pages]
+    .filter(([rel, html]) => !existsSync(join(ROOT, rel)) || readFileSync(join(ROOT, rel), "utf8") !== html)
+    .map(([rel]) => rel);
+  if (drifted.length) {
+    console.error(`walls drifted from data/gallery.json + tools/build-walls.mjs: ${drifted.join(", ")} — run node tools/build-walls.mjs`);
+    process.exit(1);
+  }
+  console.log(`walls: current (${pages.size} pages)`);
+} else {
+  mkdirSync(join(ROOT, "walls"), { recursive: true });
+  for (const [rel, html] of pages) writeFileSync(join(ROOT, rel), html);
+  live.forEach((ev) => console.log(`walls/${ev.id}.html  ${(ev.media || []).length} frames  ${ev.client || "—"}`));
+  console.log(`walls.html  -> gallery.html (consolidated stub)`);
+}
 
 /* Sitemap ownership moved to tools/build-sitemap.mjs. This generator writes wall pages only. */
