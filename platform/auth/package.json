@@ -2,9 +2,10 @@
   "name": "@mccluster/platform-auth",
   "private": true,
   "version": "0.1.0",
+  "description": "Archived. The only auth stack is the M Account on Supabase zmnhbrjyhxzhkxmhkexs behind workers/mccluster. See ../DISABLED.md.",
   "type": "module",
   "engines": { "node": ">=22" },
-  "scripts": { "start": "node server.mjs" },
+  "scripts": { "start": "node -e \"console.error('DISABLED: canonical auth is workers/mccluster + Supabase; see platform/DISABLED.md'); process.exit(1)\"" },
   "dependencies": {
     "express": "^5.2.1",
     "google-auth-library": "^10.3.0",
