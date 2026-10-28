@@ -1,0 +1,36 @@
+name: Site smoke gate
+# The site's own phone/desktop release gate (scripts/smoke.mjs): boots a
+# local server, walks the public rooms headless at 390 and 1280 px, and
+# fails on any page error, sideways scroll, missing mount or orphaned
+# door. It runs sealed (no request leaves 127.0.0.1), so it measures this
+# checkout and never production. Always on for main, never on a feature
+# branch push (AGENTS.md hard rule 2).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: site-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser runtime outside the repository
+        run: |
+          npm install --prefix /tmp/smoke-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/smoke-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Walk the house at phone and desktop width
+        env:
+          PW_MODULE: /tmp/smoke-qa/node_modules/playwright
+        run: node scripts/smoke.mjs

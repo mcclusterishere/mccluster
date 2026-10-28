@@ -29,6 +29,10 @@ on:
       - 'scripts/e2e/member-desk.e2e.mjs'
       - 'scripts/e2e/world-travel-guest.e2e.mjs'
       - 'scripts/e2e/music-world-continuity.e2e.mjs'
+      - 'creator.html'
+      - 'js/creator-onboarding.js'
+      - 'scripts/e2e/creator-onboarding.e2e.mjs'
+      - 'scripts/e2e/mission-pins.e2e.mjs'
       - '.github/workflows/human-uprise-editorial.yml'
   workflow_dispatch:
 permissions:
@@ -44,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation]
+        suite: [database, editorial, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -78,6 +82,8 @@ jobs:
             music-world) node scripts/e2e/music-world-continuity.e2e.mjs /tmp/hu-proof/music-world ;;
             news-guest) E2E_ONLY=news-guest node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/news-guest ;;
             navigation) node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation ;;
+            creator-onboarding) node scripts/e2e/creator-onboarding.e2e.mjs /tmp/hu-proof/creator-onboarding ;;
+            mission-pins) node scripts/e2e/mission-pins.e2e.mjs /tmp/hu-proof/mission-pins ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
