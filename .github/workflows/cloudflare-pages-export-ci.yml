@@ -55,6 +55,11 @@ jobs:
           ])if(existsSync(join(root,path)))throw Error('Private path escaped sanitizer: '+path);
           if(!existsSync(join(root,'data/environments.json')))throw Error('Album presentation environment was incorrectly removed');
           const report=JSON.parse(readFileSync(root+'.excluded.json','utf8'));
-          if(!report.excluded_paths.some(path=>path.startsWith('assets/3d/prim3-site0/')))throw Error('Authoring geometry missing from private exclusion report');
+          /* deploy-pages.yml strips assets/3d/prim3-site0 before gh-pages (PR #643), so the
+             published tree normally holds none of it. If any of it ever reaches the tree again,
+             the sanitizer must be what keeps it out of the artifact. */
+          const source=process.env.RUNNER_TEMP+'/mccluster-published-export/assets/3d/prim3-site0';
+          if(existsSync(source)&&!report.excluded_paths.some(path=>path.startsWith('assets/3d/prim3-site0/')))throw Error('Authoring geometry reached the published tree and is missing from the private exclusion report');
+          if(existsSync(join(root,'assets/3d/prim3-site0')))throw Error('Authoring geometry escaped sanitizer');
           console.log('Public-only artifact validated:',m.asset_count,'files, digest',m.manifest_sha256);
           NODE
