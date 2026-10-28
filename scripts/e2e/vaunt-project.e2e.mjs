@@ -12,7 +12,8 @@ const browser = await chromium.launch({executablePath:process.env.CHROMIUM_EXECU
 const results=[];
 try {
  for (const [width,height] of [[390,844],[820,1180],[1180,820],[1440,1000]]) {
-  const context=await browser.newContext({viewport:{width,height},reducedMotion:'reduce'});
+  /* the site's service worker would answer the reload itself, past this test's routing, and wait on the real network */
+  const context=await browser.newContext({viewport:{width,height},reducedMotion:'reduce',serviceWorkers:'block'});
   await context.addInitScript(()=>localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()})));
   await context.route('**/*',async route=>{
    const u=new URL(route.request().url());
@@ -64,8 +65,7 @@ try {
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').getAttribute('href')==='account.html');
   assert.equal(await page.evaluate(()=>window.__MCC_ERR||null),null);
   if(width===820){
-    /* the reload waits for the DOM, not every streamed film: the next line waits for the page itself */
-    await page.reload({waitUntil:'domcontentloaded'});
+    await page.reload();
     await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
     await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
     await page.waitForTimeout(1000);
