@@ -64,7 +64,8 @@ try {
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').getAttribute('href')==='account.html');
   assert.equal(await page.evaluate(()=>window.__MCC_ERR||null),null);
   if(width===820){
-    await page.reload();
+    /* the reload waits for the DOM, not every streamed film: the next line waits for the page itself */
+    await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
     await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
     await page.waitForTimeout(1000);
