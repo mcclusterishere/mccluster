@@ -55,7 +55,7 @@ test('World geolocations retain validated article mentions and premium marker id
 test('Native post and news comments share one UI; new news writes are flag gated and private', async () => {
   const [client,api,sql,html] = await Promise.all([
     get('js/mnet.js'), get('workers/mccluster/src/platform-api.js'),
-    get('supabase/pending/world_news_discussions_v1.sql'), get('mnet.html')
+    get('supabase/migrations/20261021011443_royce_platform_actor.sql'), get('mnet.html')
   ]);
   assert.match(client,/function discussionHtml\(/);
   assert.match(client,/function bindDiscussions\(/);

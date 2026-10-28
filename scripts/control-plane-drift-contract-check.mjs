@@ -7,10 +7,18 @@ const contract = JSON.parse(await readFile(path.join(root, 'core', 'drift-contra
 const ledger = JSON.parse(await readFile(path.join(root, 'supabase', 'production-ledger.json'), 'utf8'));
 const migrationDir = path.join(root, 'supabase', 'migrations');
 const replayDir = path.join(root, 'supabase', 'replay_migrations');
-const files = await readdir(migrationDir);
+const migrationEntries = await readdir(migrationDir, { withFileTypes: true });
+const files = migrationEntries.map((entry) => entry.name);
 const replayFiles = await readdir(replayDir);
 const sqlFiles = files.filter((file) => file.endsWith('.sql')).sort();
 const failures = [];
+
+// supabase/migrations/ is production-only and flat. A subdirectory (a second "pending"
+// folder) or a non-.sql file is invisible to the ledger checks below, so either fails here.
+for (const entry of migrationEntries) {
+  if (entry.isDirectory()) failures.push(`supabase/migrations/ must not contain a subdirectory: ${entry.name}/ (staged SQL lives in supabase/pending/)`);
+  else if (!entry.isFile() || !entry.name.endsWith('.sql')) failures.push(`supabase/migrations/ must contain only .sql files: ${entry.name}`);
+}
 
 const expected = contract?.supabase;
 if (!expected) failures.push('core/drift-contract.json has no supabase contract');

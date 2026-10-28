@@ -20,9 +20,9 @@ source snapshot ─▶ evidence ─▶ claim ─▶ briefing ─▶ decision ─
 | Model | Where | State | Strength | Why it is not the canon on its own |
 |---|---|---|---|---|
 | #408 `decision-intelligence/graph.js` | open PR, head `853ecdc` | code only | refuses to invent decision nodes; bounded graph | a projection, not storage |
-| #414 `research_evidence_snapshots / research_claims / research_claim_evidence` | open PR, head `3d7eece` | pending SQL in the wrong folder (`supabase/migrations/pending/`) | supports/contradicts/context; aggregate-only privacy flags | scoped to `research_projects`; no review history, briefing, decision or outcome |
+| #414 `research_evidence_snapshots / research_claims / research_claim_evidence` | open PR, head `3d7eece` | pending SQL in the wrong folder (`supabase/migrations/pending/`, retired 2026-10-27; staged SQL lives only in `supabase/pending/`) | supports/contradicts/context; aggregate-only privacy flags | scoped to `research_projects`; no review history, briefing, decision or outcome |
 | #416 `halo-evidence-graph.js` | open PR, head `98f1c0f` | code only | "no link without a source URL" | a projection, not storage |
-| `decision_intelligence.*` | `supabase/pending/20261011190000_…` on `main` | unapplied | org-scoped composite FKs; same stance vocabulary | private schema with **no grants at all**, so nothing (not even the Worker) can reach it without a new Edge Function; `sources` duplicates `ops_ingest_records`; no review, briefing or outcome |
+| `decision_intelligence.*` | `20261011190000_…`, removed from `supabase/pending/` 2026-10-27 | never applied | org-scoped composite FKs; same stance vocabulary | private schema with **no grants at all**, so nothing (not even the Worker) can reach it without a new Edge Function; `sources` duplicates `ops_ingest_records`; no review, briefing or outcome |
 | `ops_ingest_connectors / runs / records` | applied | 16 connectors, 36 records, 0 runs | registry, cursor checkpoint, run status, idempotent records, content hash, licence + retention policy | records are snapshots, not reviewed evidence |
 | `ops_fact_claims` | applied | 0 rows | org-scoped machine facts | one predicate/value per record; no stance, no multi-evidence, no review |
 | `eu_claims / eu_claim_evidence / eu_sources` | applied | 0 rows | publication-grade claims | bound to `eu_research_projects` and the Equity Uprise publishing pipeline; bibliographic sources only; members of a research project can read |
@@ -177,7 +177,7 @@ globe should draw buckets as cells (never as points), show
 1. Read this document, the migration and its rollback.
 2. Run `PGHOST=… PGPORT=… PGUSER=… scripts/test-intel-canon-db.sh` against a scratch Postgres 16 (it builds the dependent tables, applies the canon, runs the behaviour test, applies the rollback, and re-applies the canon).
 3. Apply `20261015210000_intel_mission_canon_v1.sql` with Supabase `apply_migration` under the name `intel_mission_canon_v1`, then promote it per `supabase/pending/README.md` (ledger, drift contract).
-4. Do **not** apply `20261011190000_decision_intelligence_evidence_v1.sql`.
+4. `20261011190000_decision_intelligence_evidence_v1.sql` was superseded and removed from `supabase/pending/` on 2026-10-27; never apply it from history.
 5. Rollback: `20261015210000_intel_mission_canon_v1.rollback.sql` (drops only the canon's objects; see its data note).
 
 ## 9. Vertical slice (Worker `mccluster`, `src/intel/`)
