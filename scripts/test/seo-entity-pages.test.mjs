@@ -32,6 +32,9 @@ const NOT_A_PAGE_HERE = {
   "/closet/": "a folder: its indexable pages are listed on their own",
   "/site0/": "promoted from _unfinished/site0-game at deploy by tools/publish-site0.sh; not in the tree the sitemap builder checks"
 };
+/* Owned paths the owner keeps in private development, unpublished (owner, 2026-10-28: hitman-facility.html moves to _unfinished/):
+   not indexable pages, so they must stay out of the sitemap whether or not the file is still in the tree. */
+const UNPUBLISHED = "in_private_development_unpublished";
 /* A per-record page addressed by query (?handle=): the bare URL is not a page to rank, and a static canonical would fold every record into it. */
 const QUERY_TEMPLATES = new Set(["/music-creator.html"]);
 
@@ -41,6 +44,10 @@ test("every indexable owned page is in the sitemap", () => {
   const missing = [];
   for (const [group, paths] of Object.entries(own)) {
     if (!Array.isArray(paths)) continue;
+    if (group === UNPUBLISHED) {
+      for (const path of paths) assert.ok(!listed.has(path), `${path} is in private development, unpublished: it is not in the sitemap`);
+      continue;
+    }
     for (const path of paths) {
       if (!/(\.html|\/)$/.test(path)) continue; // a data file, not a page
       if (Object.prototype.hasOwnProperty.call(NOT_A_PAGE_HERE, path) || QUERY_TEMPLATES.has(path)) continue;
@@ -51,6 +58,7 @@ test("every indexable owned page is in the sitemap", () => {
     }
   }
   assert.deepEqual(missing, [], "indexable owned pages missing from data/seo/sitemap-pages.json");
+  assert.ok(Array.isArray(own[UNPUBLISHED]) && own[UNPUBLISHED].includes("/hitman-facility.html"), "hitman-facility.html is recorded as in private development, unpublished");
   for (const path of Object.keys(NOT_A_PAGE_HERE)) assert.ok(!existsSync(join(ROOT, fileFor(path))), `${path} is a page now: list it or drop the exception`);
 });
 
