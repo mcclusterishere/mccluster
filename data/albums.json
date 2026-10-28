@@ -58,7 +58,8 @@
         "offer_id": "who-did-the-shoot"
        }
       ]
-     }
+     },
+     "seconds": 129.8
     },
     {
      "title": "Runway Walk",
@@ -79,7 +80,8 @@
        "surface": "#1b0f12"
       },
       "lyric_ctas": []
-     }
+     },
+     "seconds": 115.4
     },
     {
      "title": "Write a Song",
@@ -100,7 +102,8 @@
        "surface": "#190c0e"
       },
       "lyric_ctas": []
-     }
+     },
+     "seconds": 137.4
     },
     {
      "title": "Here",
@@ -123,7 +126,8 @@
        "surface": "#170c10"
       },
       "lyric_ctas": []
-     }
+     },
+     "seconds": 96.1
     },
     {
      "title": "Antisocial",
@@ -183,7 +187,8 @@
         "offer_id": "social"
        }
       ]
-     }
+     },
+     "seconds": 176.9
     },
     {
      "title": "Lightroom",
@@ -204,7 +209,8 @@
        "surface": "#121417"
       },
       "lyric_ctas": []
-     }
+     },
+     "seconds": 132.3
     }
    ],
    "experience": {
@@ -232,7 +238,8 @@
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/got-wifi.json",
      "reel": "data/reels/got-wifi.json",
-     "music_video": "assets/video/prim3.mp4"
+     "music_video": "assets/video/prim3.mp4",
+     "seconds": 92.4
     }
    ]
   },
@@ -252,7 +259,8 @@
      "poster": "assets/frames/uprise_0001.jpg",
      "reel": "data/reels/environmental-injustice.json",
      "lyrics": "data/lyrics/environmental-injustice.json",
-     "music_video": "assets/video/uprise.mp4"
+     "music_video": "assets/video/uprise.mp4",
+     "seconds": 162.9
     },
     {
      "title": "Environmental Injustice (Brave mix)",
@@ -261,7 +269,8 @@
      "poster": "assets/frames/uprise_0001.jpg",
      "lyrics": "data/lyrics/environmental-injustice-brave.dk.json",
      "reel": "data/reels/environmental-injustice-brave.json",
-     "music_video": "assets/video/uprise.mp4"
+     "music_video": "assets/video/uprise.mp4",
+     "seconds": 254.8
     },
     {
      "title": "Please Set Me Free",
@@ -270,7 +279,8 @@
      "poster": "assets/frames/church_0001.jpg",
      "lyrics": "data/lyrics/please-set-me-free.json",
      "reel": "data/reels/please-set-me-free.json",
-     "music_video": "assets/video/church.mp4"
+     "music_video": "assets/video/church.mp4",
+     "seconds": 202.5
     },
     {
      "title": "Money or the Power",
@@ -279,7 +289,8 @@
      "poster": "assets/frames/moneyglitch_0001.jpg",
      "lyrics": "data/lyrics/money-or-the-power.dk.json",
      "reel": "data/reels/money-or-the-power.json",
-     "music_video": "assets/video/moneyglitch.mp4"
+     "music_video": "assets/video/moneyglitch.mp4",
+     "seconds": 216.1
     }
    ]
   },
@@ -297,14 +308,16 @@
      "poster": "assets/frames/warroom_0001.jpg",
      "lyrics": "data/lyrics/deep-end.json",
      "reel": "data/reels/deep-end.json",
-     "music_video": "assets/video/warroom.mp4"
+     "music_video": "assets/video/warroom.mp4",
+     "seconds": 165.6
     },
     {
      "title": "Heal the 3rd World",
      "sub": "the light side · McCluster × VVS Madè",
      "src": "assets/audio/heal-the-3rd-world.m4a",
      "poster": "assets/frames/angel_0001.jpg",
-     "music_video": "assets/video/angel.mp4"
+     "music_video": "assets/video/angel.mp4",
+     "seconds": 146
     }
    ]
   },
@@ -320,7 +333,8 @@
      "credit": "The Vaunt Private Flights jingle · guitar by Zakir · from the Vaunt EP (with \"Jet Pass\")",
      "src": "assets/audio/vaunt.mp3",
      "poster": "assets/frames/vauntlive_0001.jpg",
-     "music_video": "assets/video/vauntlive.mp4"
+     "music_video": "assets/video/vauntlive.mp4",
+     "seconds": 92.4
     }
    ]
   },
@@ -338,14 +352,16 @@
      "poster": "assets/frames/whip_0001.jpg",
      "lyrics": "data/lyrics/dealer-plates.json",
      "reel": "data/reels/dealer-plates.json",
-     "music_video": "assets/video/whip.mp4"
+     "music_video": "assets/video/whip.mp4",
+     "seconds": 97.4
     },
     {
      "title": "Dealer Plates (B-Side)",
      "credit": "Prod. Zakir & McCluster",
      "src": "assets/audio/dealer-plates-b.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
-     "music_video": "assets/video/dealer-plates-b-video.mp4"
+     "music_video": "assets/video/dealer-plates-b-video.mp4",
+     "seconds": 97.4
     }
    ]
   },
@@ -363,7 +379,8 @@
      "poster": "assets/frames/coffeecam_0001.jpg",
      "lyrics": "data/lyrics/upset.json",
      "reel": "data/reels/upset.json",
-     "music_video": "assets/video/coffeecam.mp4"
+     "music_video": "assets/video/coffeecam.mp4",
+     "seconds": 184.2
     }
    ]
   },
@@ -378,12 +395,14 @@
     {
      "title": "You the Feds",
      "src": "assets/audio/you-the-feds.m4a",
-     "poster": "assets/img/cia-mind-control-cover.jpg"
+     "poster": "assets/img/cia-mind-control-cover.jpg",
+     "seconds": 232.9
     },
     {
      "title": "Pull Up",
      "src": "assets/audio/pull-up.mp3",
-     "poster": "assets/img/cia-mind-control-cover.jpg"
+     "poster": "assets/img/cia-mind-control-cover.jpg",
+     "seconds": 150.4
     },
     {
      "title": "Niggy Nigg Niggr",
