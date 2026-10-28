@@ -55,6 +55,29 @@ async function uploadGrant(bucket: string, path: string) {
   if (error || !data?.token) throw new Error(error?.message || "could_not_create_upload_url");
   return { bucket, path: data.path || path, token: data.token, signed_url: data.signedUrl || null };
 }
+/* PostgREST says the table/function is not there: the pending SQL
+   (supabase/pending/music_release_payment_integrity_v1.sql) is not applied yet. */
+function notApplied(error: { code?: string } | null | undefined) {
+  return !!error && ["PGRST202", "PGRST205", "42P01", "42883"].includes(String(error.code || ""));
+}
+/* (a) Who uploaded an object is the server's record, written here when the
+   grant is issued to the authenticated caller, never read from its path. */
+async function recordUpload(bucket: string, path: string, userId: string, mUid: string) {
+  const { error } = await admin.from("music_creator_assets")
+    .insert({ bucket_id: bucket, object_name: path, owner_user_id: userId, owner_m_uid: mUid, source: "upload_grant" });
+  if (error && !notApplied(error)) throw new Error("could_not_record_upload");
+}
+/* (a) Are this release's audio and artwork its creator's own, by that
+   record? Asked before any master is signed, for its owner too: a creator
+   pointing a draft at another creator's master is the attack. */
+async function assetsVerified(trackId: string) {
+  const { data, error } = await admin.rpc("music_track_assets_verified", { p_track: trackId });
+  if (error) {
+    if (notApplied(error)) return true; // the database guard is not there yet either; behaviour as before
+    throw new Error("could_not_verify_assets");
+  }
+  return data === true;
+}
 async function hasMusicEntitlement(trackId: string, userId: string, email: string) {
   const { count: byUser } = await admin.from("music_entitlements").select("id", { count: "exact", head: true })
     .eq("track_id", trackId).eq("user_id", userId).is("revoked_at", null);
@@ -102,6 +125,7 @@ Deno.serve(async (req) => {
       const fileName = clean(body.file_name, 180).replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
       if (!fileName || fileName.includes("..")) return json({ error: "invalid file name" }, 400);
       const path = `${who.user.id}/${crypto.randomUUID()}-${fileName}`;
+      await recordUpload(bucket, path, who.user.id, who.mUid);
       return json({ ok: true, ...(await uploadGrant(bucket, path)) });
     }
 
@@ -119,6 +143,9 @@ Deno.serve(async (req) => {
         entitled = await hasMusicEntitlement(track.id, who.user.id, who.user.email || "");
       }
       if (!entitled) return json({ error: "purchase required", purchase_required: true }, 402);
+      if (track.master_bucket !== "creator-masters" || !(await assetsVerified(track.id))) {
+        return json({ error: "release assets are not verified" }, 409);
+      }
       const url = await signDownload(track.master_bucket, track.master_path);
       return json({ ok: true, track_id: track.id, state: "full", url, expires_in: 3600 });
     }
@@ -139,8 +166,11 @@ Deno.serve(async (req) => {
         entitlement = byEmail || null;
       }
       if (!entitlement || entitlement.offer_id !== offerId) return json({ error: "purchase required", purchase_required: true }, 402);
-      const { data: track } = await admin.from("creator_tracks").select("master_bucket,master_path,title").eq("id", trackId).limit(1).maybeSingle();
+      const { data: track } = await admin.from("creator_tracks").select("id,status,master_bucket,master_path,title").eq("id", trackId).limit(1).maybeSingle();
       if (!track?.master_path) return json({ error: "master unavailable" }, 409);
+      if (track.master_bucket !== "creator-masters" || !(await assetsVerified(track.id))) {
+        return json({ error: "release assets are not verified" }, 409);
+      }
       const url = await signDownload(track.master_bucket, track.master_path, `${track.title || "track"}.mp3`);
       await admin.from("music_entitlements").update({
         download_count: Number(entitlement.download_count || 0) + 1,
@@ -152,7 +182,7 @@ Deno.serve(async (req) => {
     if (action === "operator-dashboard") {
       if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
       const { data: tracks, error: trackError } = await admin.from("creator_tracks")
-        .select("id,m_uid,title,artist,status,rights_status,access_mode,genre,music_video_url,lyrics_url,experience,created_at,published_at,moderation_note")
+        .select("id,m_uid,title,artist,status,rights_status,access_mode,genre,music_video_url,lyrics_url,experience,created_at,updated_at,published_at,moderation_note")
         .in("status", ["pending_review", "approved", "published", "rejected"])
         .order("created_at", { ascending: false }).limit(100);
       if (trackError) throw trackError;
@@ -169,8 +199,15 @@ Deno.serve(async (req) => {
       const trackId = clean(body.track_id, 80);
       const decision = clean(body.decision, 30);
       const note = clean(body.note, 1200);
+      /* (b) The decision is about the version the operator looked at. A
+         release that changed since then (updated_at moves on every write) is
+         not published or cleared on an old look. */
+      const expected = clean(body.expected_updated_at, 64);
       if (!trackId || !["publish", "approve", "reject", "review"].includes(decision)) {
         return json({ error: "invalid review request" }, 400);
+      }
+      if ((decision === "publish" || decision === "approve") && !expected) {
+        return json({ error: "expected_updated_at required: reload the queue and review again" }, 400);
       }
       const patch: Record<string, unknown> = { moderation_note: note, updated_at: new Date().toISOString() };
       if (decision === "publish") {
@@ -187,11 +224,18 @@ Deno.serve(async (req) => {
         patch.status = "pending_review";
         patch.rights_status = "review";
       }
-      const { data: updated, error } = await admin.from("creator_tracks")
-        .update(patch).eq("id", trackId)
-        .select("id,title,status,rights_status,published_at,moderation_note").single();
-      if (error) throw error;
-      return json({ ok: true, track: updated });
+      let query = admin.from("creator_tracks").update(patch).eq("id", trackId);
+      if (expected) query = query.eq("updated_at", expected);
+      const { data: rows, error } = await query
+        .select("id,title,status,rights_status,published_at,moderation_note,updated_at");
+      if (error) {
+        if (/release_asset_not_owned/.test(error.message || "")) {
+          return json({ error: "this release points at audio or artwork its creator did not upload" }, 409);
+        }
+        throw error;
+      }
+      if (!rows?.length) return json({ error: "the release changed since you loaded it: reload and review it again" }, 409);
+      return json({ ok: true, track: rows[0] });
     }
 
     if (action === "operator-license") {

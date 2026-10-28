@@ -19,6 +19,7 @@
 // flag changes because of a test. With neither variable set nothing changes.
 import Stripe from "npm:stripe@14";
 import { checkoutRecord, invoicePaymentIntent, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
+import { MUSIC_PAYABLE, musicFulfilmentRefusal } from "./music.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SK_TEST = Deno.env.get("STRIPE_SK_TEST") || "";
@@ -123,38 +124,72 @@ async function refundedAtStripe(paymentIntent: string, event: Stripe.Event) {
   return !!charge && typeof charge === "object" && Number(charge.amount_refunded || 0) > 0;
 }
 
+/* A music licence is fulfilled only by the checkout session music-checkout
+   created for that order (./music.ts): the platform account, the session id
+   stored on the order, its amount and currency, paid. The order moves to paid
+   with a conditional write (only from pending/failed, only under that
+   session), so a replayed or concurrent delivery fulfils it once; the
+   entitlement is unique per order. A session that is not this order's
+   payment grants nothing and is not retried. */
 async function grantMusicOrder(session: Stripe.Checkout.Session, event: Stripe.Event) {
   const orderId = session.metadata?.music_order_id || "";
-  if (!orderId || session.metadata?.kind !== "music_license_sale" || session.payment_status !== "paid") return;
-  const rows = await db(`music_orders?id=eq.${encodeURIComponent(orderId)}&select=id,offer_id,track_id,customer_user_id,customer_email,status&limit=1`);
+  if (!orderId || session.metadata?.kind !== "music_license_sale") return;
+  if (!/^[0-9a-f-]{36}$/i.test(orderId)) {
+    console.error("music fulfilment refused", { event: event.id, reason: "bad_order_id" });
+    return;
+  }
+  const select = "id,offer_id,track_id,customer_user_id,customer_email,status,stripe_checkout_session_id,amount_cents,currency";
+  const rows = await db(`music_orders?id=eq.${encodeURIComponent(orderId)}&select=${select}&limit=1`);
   const order = rows?.[0];
+  /* music-checkout writes the order right after Stripe creates the session,
+     so a fast webhook can arrive first: retry. */
   if (!order) throw new Error(`music order ${orderId} not found`);
+  const refusal = musicFulfilmentRefusal(session as any, event as any, order);
+  if (refusal) {
+    console.error("music fulfilment refused", { event: event.id, order: orderId, session: session.id, reason: refusal });
+    return;
+  }
   const email = String(session.customer_details?.email || session.customer_email || order.customer_email || "").toLowerCase();
-  await db(`music_orders?id=eq.${encodeURIComponent(orderId)}`, {
-    method: "PATCH",
+  const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : "";
+  if (order.status !== "paid") {
+    const now = new Date().toISOString();
+    const moved = await db(
+      `music_orders?id=eq.${encodeURIComponent(orderId)}` +
+      `&stripe_checkout_session_id=eq.${encodeURIComponent(String(session.id))}` +
+      `&status=in.(${MUSIC_PAYABLE.join(",")})`,
+      {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
+          status: "paid",
+          stripe_payment_intent_id: paymentIntent || null,
+          customer_email: email,
+          paid_at: now,
+          updated_at: now,
+        }),
+      },
+    );
+    if (!Array.isArray(moved) || !moved.length) {
+      /* someone else moved it: fulfil only if it is now paid under this session */
+      const again = (await db(`music_orders?id=eq.${encodeURIComponent(orderId)}&select=${select}&limit=1`))?.[0];
+      if (!again || again.status !== "paid" || again.stripe_checkout_session_id !== session.id) {
+        console.error("music fulfilment refused", { event: event.id, order: orderId, reason: "order_not_payable" });
+        return;
+      }
+    }
+  }
+  /* once per order: order_id is unique, a replay is ignored */
+  await db("music_entitlements?on_conflict=order_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
     body: JSON.stringify({
-      status: "paid",
-      stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      order_id: orderId,
+      offer_id: order.offer_id,
+      track_id: order.track_id,
+      user_id: order.customer_user_id || null,
       customer_email: email,
-      paid_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     }),
   });
-  const existing = await db(`music_entitlements?order_id=eq.${encodeURIComponent(orderId)}&select=id&limit=1`);
-  if (!existing?.length) {
-    await db("music_entitlements", {
-      method: "POST",
-      headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({
-        order_id: orderId,
-        offer_id: order.offer_id,
-        track_id: order.track_id,
-        user_id: order.customer_user_id || session.metadata?.customer_user_id || null,
-        customer_email: email,
-      }),
-    });
-  }
-  const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : "";
   if (paymentIntent && await refundedAtStripe(paymentIntent, event)) await revokeMusicByPaymentIntent(paymentIntent);
 }
 
@@ -215,8 +250,9 @@ Deno.serve(async (req) => {
 
     if (event.type === "checkout.session.expired") {
       const s = event.data.object as Stripe.Checkout.Session;
-      if (effects && s.metadata?.kind === "music_license_sale" && s.metadata.music_order_id) {
-        await db(`music_orders?id=eq.${encodeURIComponent(s.metadata.music_order_id)}&status=eq.pending`, {
+      if (effects && !event.account && s.metadata?.kind === "music_license_sale" && s.metadata.music_order_id) {
+        /* only the session stored on the order can expire it */
+        await db(`music_orders?id=eq.${encodeURIComponent(s.metadata.music_order_id)}&stripe_checkout_session_id=eq.${encodeURIComponent(s.id)}&status=in.(pending,failed)`, {
           method: "PATCH",
           body: JSON.stringify({ status: "canceled", updated_at: new Date().toISOString() }),
         });
@@ -225,17 +261,19 @@ Deno.serve(async (req) => {
 
     if (event.type === "payment_intent.payment_failed") {
       const p = event.data.object as Stripe.PaymentIntent;
-      if (effects && p.metadata?.kind === "music_license_sale" && p.metadata.music_order_id) {
-        await db(`music_orders?id=eq.${encodeURIComponent(p.metadata.music_order_id)}`, {
+      if (effects && !event.account && p.metadata?.kind === "music_license_sale" && p.metadata.music_order_id) {
+        /* a failed attempt never touches a paid, refunded or canceled order */
+        await db(`music_orders?id=eq.${encodeURIComponent(p.metadata.music_order_id)}&status=eq.pending`, {
           method: "PATCH",
-          body: JSON.stringify({ status: "failed", stripe_payment_intent_id: p.id, updated_at: new Date().toISOString() }),
+          body: JSON.stringify({ status: "failed", updated_at: new Date().toISOString() }),
         });
       }
     }
 
     if (event.type === "charge.refunded") {
       const c = event.data.object as Stripe.Charge;
-      if (effects) await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
+      /* music is sold on the platform account; a connected account's refund names none of its payments */
+      if (effects && !event.account) await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
       const refund = refundRecord(c as any, event as any);
       if (refund) await rpc("commerce_record_stripe_refund", refund);
     }

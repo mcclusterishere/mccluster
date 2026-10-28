@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { musicPlatformFee } from "../_shared/music-commission.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SB = Deno.env.get("SUPABASE_URL")!;
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
   if (!/^[0-9a-f-]{36}$/i.test(offerId)) return json({ error: "invalid offer" }, 400);
 
   const { data: offer, error } = await admin.from("music_license_offers")
-    .select("id,track_id,creator_m_uid,title,license_type,price_cents,currency,terms_text,platform_fee_bps,active,checkout_enabled,creator_tracks!inner(id,title,artist,status,rights_status,slug)")
+    .select("id,track_id,creator_m_uid,title,license_type,price_cents,currency,terms_text,active,checkout_enabled,creator_tracks!inner(id,title,artist,status,rights_status,slug)")
     .eq("id", offerId).eq("active", true).eq("checkout_enabled", true).limit(1).maybeSingle();
   if (error || !offer) return json({ error: "offer unavailable" }, 404);
   const track = Array.isArray(offer.creator_tracks) ? offer.creator_tracks[0] : offer.creator_tracks;
@@ -39,8 +40,12 @@ Deno.serve(async (req) => {
   if (!Number.isInteger(offer.price_cents) || offer.price_cents < 1) return json({ error: "offer has no checkout price" }, 409);
 
   const orderId = crypto.randomUUID();
-  const fee = Math.round(offer.price_cents * Number(offer.platform_fee_bps || 1500) / 10000);
-  const creatorNet = offer.price_cents - fee;
+  /* The commission is the server's (../_shared/music-commission.ts), never
+     the offer row's own fee column, which a creator could write, and never
+     anything in the request: the request names an offer and nothing else. */
+  const { platformFeeCents: fee, creatorNetCents: creatorNet } = musicPlatformFee(offer.price_cents);
+  const currency = String(offer.currency || "usd").toLowerCase();
+  if (!/^[a-z]{3}$/.test(currency)) return json({ error: "offer has no checkout currency" }, 409);
   const metadata = {
     kind: "music_license_sale",
     music_order_id: orderId,
@@ -61,7 +66,7 @@ Deno.serve(async (req) => {
       billing_address_collection: "auto",
       line_items: [{
         price_data: {
-          currency: offer.currency || "usd",
+          currency,
           unit_amount: offer.price_cents,
           product_data: {
             name: `${track.title} — ${offer.title}`,
@@ -92,7 +97,7 @@ Deno.serve(async (req) => {
     amount_cents: offer.price_cents,
     platform_fee_cents: fee,
     creator_net_cents: creatorNet,
-    currency: offer.currency || "usd",
+    currency,
     status: "pending",
     metadata,
   });

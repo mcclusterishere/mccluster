@@ -21,9 +21,9 @@
         ' · '+esc(t.access_mode)+' · '+esc(t.status)+' · rights '+esc(t.rights_status)+
         (t.moderation_note?'<br>'+esc(t.moderation_note):'')+'</small></div>'+
         '<div class="creator-actions">'+
-          '<button class="creator-btn good" data-review="publish" data-track="'+esc(t.id)+'">Publish + clear</button>'+
-          '<button class="creator-btn quiet" data-review="review" data-track="'+esc(t.id)+'">Needs review</button>'+
-          '<button class="creator-btn quiet" data-review="reject" data-track="'+esc(t.id)+'">Reject</button>'+
+          '<button class="creator-btn good" data-review="publish" data-track="'+esc(t.id)+'" data-version="'+esc(t.updated_at||"")+'">Publish + clear</button>'+
+          '<button class="creator-btn quiet" data-review="review" data-track="'+esc(t.id)+'" data-version="'+esc(t.updated_at||"")+'">Needs review</button>'+
+          '<button class="creator-btn quiet" data-review="reject" data-track="'+esc(t.id)+'" data-version="'+esc(t.updated_at||"")+'">Reject</button>'+
         '</div></div>';
     }).join(""):'<div class="creator-status">No creator releases in the queue.</div>';
 
@@ -49,7 +49,8 @@
       var decision=b.getAttribute("data-review"),note="";
       if(decision!=="publish")note=prompt(decision==="reject"?"Why is this release rejected?":"What documentation/review is needed?","")||"";
       b.disabled=true;
-      try{await call("operator-review",{track_id:b.getAttribute("data-track"),decision:decision,note:note});await load();}
+      try{/* the version this desk shows: the server refuses a decision on a release that changed since */
+      await call("operator-review",{track_id:b.getAttribute("data-track"),expected_updated_at:b.getAttribute("data-version")||"",decision:decision,note:note});await load();}
       catch(err){alert(err.message||"Review failed");}
       finally{b.disabled=false;}
       return;

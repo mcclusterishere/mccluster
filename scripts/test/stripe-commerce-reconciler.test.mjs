@@ -167,9 +167,9 @@ test('a test-endpoint event writes TEST commerce rows and changes nothing a real
     ['a premium plan', /if \(effects && s\.mode === "subscription" && s\.metadata\?\.uid\) \{\s+await patchBy\("providers", "uid", s\.metadata\.uid, \{ plan: "premium" \}\);/],
     ['a plan downgrade', /if \(effects && sub\.metadata\?\.uid\) await patchBy\("providers", "uid", sub\.metadata\.uid, \{ plan: "free" \}\);/],
     ['a provider flag', /if \(effects\) await patchBy\("providers", "stripe_acct", a\.id,/],
-    ['a music refund', /if \(effects\) await revokeMusicByPaymentIntent\(/],
-    ['an expired music order', /if \(effects && s\.metadata\?\.kind === "music_license_sale"/],
-    ['a failed music payment', /if \(effects && p\.metadata\?\.kind === "music_license_sale"/]
+    ['a music refund', /if \(effects && !event\.account\) await revokeMusicByPaymentIntent\(/],
+    ['an expired music order', /if \(effects && !event\.account && s\.metadata\?\.kind === "music_license_sale"/],
+    ['a failed music payment', /if \(effects && !event\.account && p\.metadata\?\.kind === "music_license_sale"/]
   ]) assert.match(body, line, `a test changes no ${what}`);
   assert.equal(body.match(/await grantMusicOrder\(s, event\);/g).length, 2);
   assert.equal(body.match(/if \(effects\) await grantMusicOrder\(s, event\);/g).length, 2, 'a test grants no music licence');

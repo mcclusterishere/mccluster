@@ -72,6 +72,7 @@ Rollback files sit beside the ones that have them.
 | `commerce_stripe_reconciler_v3.sql` | serialises concurrent Stripe deliveries, partial refunds as money; production has v1 and v2 | API Economic Core CI: `supabase/tests/commerce_stripe_reconciler_v3_regression.sql` and `commerce_stripe_concurrency.sh` |
 | `public_music_reads_lean_v1.sql` | `play_counts()` and the `v_track_*` views read the lean events copy | `scripts/test/journey-errors.test.mjs`; compare timings on the album pages after apply |
 | `world_publisher_verified_geo_v1.sql` | nullable publisher/HQ columns on `media_news_sources`, no grants | additive `alter table ... add column if not exists`; check the ingest still runs |
+| `music_release_payment_integrity_v1.sql` (+ rollback) | security: creator asset ownership from the server's record (`music_creator_assets`, `music_track_assets_verified()`), reviewed releases return to review on any change (`reviewed_snapshot`), server-only commission (`music_platform_fee_bps()`), and order/entitlement guards for Stripe fulfilment. Deploy `music-access`, `music-checkout` and `stripe-webhook` first (they tolerate its absence), then apply; it backfills the registry from `storage.objects` and sends any published release with a foreign asset back to review | `scripts/test-music-release-integrity-db.sh` (also `.github/workflows/music-release-integrity-db.yml`) and `scripts/test/music-payment-integrity.test.mjs` |
 
 ## 4. Review before anything else: moved from `supabase/migrations/pending/` on 2026-10-27
 
