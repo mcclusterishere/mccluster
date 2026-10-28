@@ -1,4 +1,4 @@
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+import {createClient} from '../vendor/supabase-js-2.57.0.mjs';
 const db=createClient('https://zmnhbrjyhxzhkxmhkexs.supabase.co','sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4');
 const id=new URLSearchParams(location.search).get('id');
 const state=document.getElementById('state');

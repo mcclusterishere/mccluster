@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 442,
+  "candidate_count": 443,
   "capability_source_count": 102,
-  "support_only_count": 340,
+  "support_only_count": 341,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3145,6 +3145,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Current music-rights operator surface references Equity Uprise context but does not define an independent program capability."
+    },
+    {
+      "path": "vendor/supabase-js-2.57.0.mjs",
+      "classification": "incidental_text_match",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Self-hosted, pinned @supabase/supabase-js 2.57.0 bundle; its AWS region names (eu-west-1 and kin) trip the eu- marker. Third-party library, not Equity Uprise program material."
     },
     {
       "path": "walls/eu-rally.html",

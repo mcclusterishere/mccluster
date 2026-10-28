@@ -43,11 +43,54 @@ export function worldHeadFor(html, { origin, siteName, extra = '' }) {
   return html.replace('</title>', '</title>\n  ' + head);
 }
 
+/* THE HOST'S OWN HEADERS, on every answer.
+
+   FRAMING. The World is framed on purpose: cross-origin by Matthew's
+   property (js/world-audio-continuity.js keeps the playing music alive in
+   the parent and opens https://mccluster.org/ in a frame), and by itself
+   (mnet.html frames action-globe.html for the postMessage bridge). Those
+   are the ancestors, exactly the origins that script trusts, and nobody
+   else. frame-ancestors carries the list; the legacy x-frame-options is
+   SAMEORIGIN, which a browser with CSP2 ignores once frame-ancestors is
+   present. CAMERA, MICROPHONE, GEOLOCATION are the World's own (live
+   missions, audio rooms, identity capture, the globe's Near me): this
+   origin may ask, a cross-origin frame the World opens (a member's front
+   page, a sign-in widget) may not. */
+export const FRAME_ANCESTORS = ["'self'", 'https://matthew.mccluster.org', 'https://mccluster.org', 'https://www.mccluster.org', 'https://humanuprise.com', 'https://www.humanuprise.com'];
 export const SECURITY = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
-  'strict-transport-security': 'max-age=31536000'
+  'strict-transport-security': 'max-age=31536000',
+  'x-frame-options': 'SAMEORIGIN',
+  'content-security-policy': `frame-ancestors ${FRAME_ANCESTORS.join(' ')}`,
+  'permissions-policy': 'camera=(self), microphone=(self), geolocation=(self)'
 };
+/* THE WORLD'S CONTENT POLICY, REPORT-ONLY: what the World's documents
+   actually load, seeded from the /internal/seek-first allowlist (index.js)
+   and widened for the World. The browser logs what strays and enforces
+   nothing; an enforced policy is a later, measured step. Cesium compiles
+   WebAssembly and evaluates generated shader code, boots its workers from
+   blob: and requests imagery (its own, NASA GIBS, OpenStreetMap) by XHR,
+   so each tile host is in connect-src as well as img-src. Members' photos,
+   post media and front pages come from anywhere over https. Sign-in is
+   Google Identity on login.html; the bar's handoff and the feed talk to
+   the API and to Supabase (REST, storage, realtime over wss). */
+export const WORLD_CSP_REPORT_ONLY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  `frame-ancestors ${FRAME_ANCESTORS.join(' ')}`,
+  "form-action 'self' https://api.mccluster.org https://zmnhbrjyhxzhkxmhkexs.supabase.co",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://cesium.com https://accounts.google.com",
+  "worker-src 'self' blob: https://cesium.com",
+  "style-src 'self' 'unsafe-inline' https://cesium.com https://accounts.google.com",
+  "font-src 'self' data:",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' data: blob: https:",
+  "frame-src 'self' https:",
+  "connect-src 'self' data: blob: https://api.mccluster.org https://matthew.mccluster.org https://mccluster.org https://humanuprise.com https://zmnhbrjyhxzhkxmhkexs.supabase.co wss://zmnhbrjyhxzhkxmhkexs.supabase.co https://accounts.google.com https://cesium.com https://*.cesium.com https://gibs.earthdata.nasa.gov https://tile.openstreetmap.org https://script.google.com https://vauntapi.flyvaunt.com",
+  "manifest-src 'self'"
+].join('; ');
 /* headers the client may send upstream, and headers upstream may send back.
    content-encoding and content-length never pass: the runtime decodes the
    upstream body and sizes the one it sends. */
@@ -89,6 +132,8 @@ export async function passThrough(request, upstream, fetchImpl, { root, noindex,
     const v = res.headers.get(h);
     if (v) out.set(h, v);
   }
+  /* the World's content policy, report-only, on its documents alone */
+  if (/^text\/html/i.test(out.get('content-type') || '')) out.set('content-security-policy-report-only', WORLD_CSP_REPORT_ONLY);
   if (noindex) out.set('x-robots-tag', 'noindex');
   if (root && res.status === 200) {
     /* the body changes here, so the upstream validator does not describe it */

@@ -40,9 +40,27 @@ export function corsHeaders(request, env) {
   };
 }
 
+/* Every JSON answer from this API carries these. applyCors adds the ones a
+   bare response is missing and never clobbers a header a route chose; a
+   response that is not JSON (a document with a framing answer of its own)
+   is not told it may not be framed. */
+const SECURITY_HEADERS = {
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY'
+};
+function isJson(headers) {
+  return /^application\/json/i.test(headers.get('content-type') || '');
+}
+
 export function applyCors(request, env, response) {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(corsHeaders(request, env))) headers.set(key, value);
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (headers.has(key)) continue;
+    if (key === 'x-frame-options' && !isJson(headers)) continue;
+    headers.set(key, value);
+  }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -53,7 +71,7 @@ export function applyCors(request, env, response) {
 export function reply(request, env, data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...JSON_HEADERS, ...corsHeaders(request, env) }
+    headers: { ...JSON_HEADERS, ...SECURITY_HEADERS, ...corsHeaders(request, env) }
   });
 }
 
