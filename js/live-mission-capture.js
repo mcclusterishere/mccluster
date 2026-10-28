@@ -212,7 +212,7 @@
     if (!w.MCC_SUPA || !w.MCC_SUPA.uid || !w.MCC_SUPA.uid()) {
       say("Sign in to go live.", "warn");
       $("lmCamera").textContent = "Sign in";
-      $("lmCamera").addEventListener("click", function () { w.location.href = "login.html?next=" + encodeURIComponent(w.location.pathname.replace(/^\//, "") + w.location.search); });
+      $("lmCamera").addEventListener("click", function () { w.location.href = "account.html?next=" + encodeURIComponent(w.location.pathname.replace(/^\//, "") + w.location.search); });
       return;
     }
     $("lmCamera").addEventListener("click", allowCamera);
