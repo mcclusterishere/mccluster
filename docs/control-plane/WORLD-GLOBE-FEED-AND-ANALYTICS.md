@@ -445,7 +445,7 @@ on the map.")
     - **Posts**: public, top-level member posts placed in the country
       (`network_posts.country_code`), counted by the same `news-heat` call as
       `posts`. It is `null`, so a dash, until place scope is on
-      (`supabase/pending/20261019222500_world_place_scope_v1.sql` applied and
+      (`supabase/migrations/20261021173729_world_place_scope_v1.sql`, applied, and
       `WORLD_PLACE_SCOPE_ENABLED=true`). It reads up to 5,000 placed posts; more
       than that answers `null` too, never a part passed off as the count (an
       aggregate in the database is the next step at that size). A day with no

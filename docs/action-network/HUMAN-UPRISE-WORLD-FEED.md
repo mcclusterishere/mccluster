@@ -721,9 +721,10 @@ credit. Proof: `workers/mccluster/test/world-layers.test.mjs`,
 `scripts/test/world-first-and-layers.test.mjs`, and the browser run below.
 
 **The missions themselves** are already on production (27 open), but the
-Earth pins only the ones a region places: `supabase/pending/
-action_globe_demo_pins_v1.sql` inserts three regions and places every open
-mission by its campaign, published. It waits for the owner to apply it.
+Earth pins only the ones a region places: `action_globe_demo_pins_v1.sql`
+(applied in production as data on 2026-10-15; the SQL is now
+`supabase/tests/action_globe_demo_pins_v1.applied.sql`) inserted three regions
+and placed every open mission by its campaign, published.
 
 ### A creator's perspective (owner, 2026-10-14)
 
