@@ -15,6 +15,9 @@ on:
       - 'scripts/e2e/cohort-claim.e2e.mjs'
       - 'scripts/e2e/docket-cohort-showcase.e2e.mjs'
       - 'scripts/e2e/mission-swipe.e2e.mjs'
+      - 'live-mission.html'
+      - 'js/live-mission-capture.js'
+      - 'scripts/e2e/live-mission-capture.e2e.mjs'
       - 'workers/mccluster/src/preflight.js'
       - 'workers/mccluster/src/action-archive.js'
       - '.github/workflows/archive-browser-acceptance.yml'
@@ -45,6 +48,7 @@ jobs:
           node scripts/e2e/cohort-claim.e2e.mjs /tmp/archive-proof/claim
           node scripts/e2e/docket-cohort-showcase.e2e.mjs /tmp/archive-proof/showcase
           node scripts/e2e/mission-swipe.e2e.mjs /tmp/archive-proof/mission
+          node scripts/e2e/live-mission-capture.e2e.mjs /tmp/archive-proof/live-mission
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

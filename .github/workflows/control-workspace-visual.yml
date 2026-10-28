@@ -30,6 +30,11 @@ on:
       - 'scripts/e2e/analytics-tabs.e2e.mjs'
       - 'css/control-workspace.css'
       - 'scripts/e2e/control-workspace.e2e.mjs'
+      - 'js/control-room/build-code.js'
+      - 'scripts/e2e/control-build-code.e2e.mjs'
+      - 'js/control-room/funding-intelligence.js'
+      - 'scripts/e2e/funding-register.e2e.mjs'
+      - 'scripts/e2e/analytics-measurement.e2e.mjs'
       - 'scripts/test/control-workspace.test.mjs'
       - '.github/workflows/control-workspace-visual.yml'
   workflow_dispatch:
@@ -75,6 +80,9 @@ jobs:
           node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
           node scripts/e2e/connections.e2e.mjs /tmp/control-proof/connections
           node scripts/e2e/live-actors.e2e.mjs
+          node scripts/e2e/control-build-code.e2e.mjs /tmp/control-proof/build-code
+          node scripts/e2e/funding-register.e2e.mjs /tmp/control-proof/funding
+          node scripts/e2e/analytics-measurement.e2e.mjs /tmp/control-proof/analytics-measurement
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
