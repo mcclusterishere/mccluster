@@ -46,7 +46,7 @@ test('the person sheet paints a member\'s banner and avatar through a quoted CSS
 
 test('the Cesium and model-viewer tags are pinned by hash and fetched with CORS, the same hash for the same file on every page', async () => {
   const seen = new Map();
-  for (const page of ['action-globe.html', 'guest-globe.html', 'world-news.html', 'asset-lab.html']) {
+  for (const page of ['action-globe.html', 'guest-globe.html', 'world-news.html', '_unfinished/asset-lab.html']) {
     const html = await read(page);
     const tags = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="(https:\/\/(?:cesium\.com|ajax\.googleapis\.com)[^"]+)"[^>]*>/g)];
     assert.ok(tags.length, `${page} loads a third-party file`);
