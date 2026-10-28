@@ -475,7 +475,7 @@
       // streamed in behind them. loadSequence keeps loading all frames; the
       // ticker's loadedMax clamp holds the newest decoded frame until each one
       // arrives, so the scrub never shows black. This drops the blocking load
-      // from ~161 frames (~7.4 MB) to ~48 (~1.4 MB) without a half-loaded feel.
+      // from all 161 frames (4.28 MB of webp) to 48 (1.35 MB) without a half-loaded feel.
       var full = m.hero ? m.hero.count : 0;
       var heroGate = Math.min(48, full);
       var opened = false;

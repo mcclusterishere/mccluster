@@ -1021,6 +1021,7 @@
       init();
     }
     var CRED = {}; /* title → credit line, from the QT6KV registry */
+    var LEN = {};  /* listen key → seconds, the catalogue's stored lengths */
     Promise.all([
       fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }),
       fetch("data/playlists.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
@@ -1034,7 +1035,11 @@
           .catch(function () { return null; });
       }),
     ]).then(function (all) {
-      ((all[2] && all[2].tracks) || []).forEach(function (t) { if (t.credit) CRED[t.title.toLowerCase()] = t.credit; });
+      ((all[2] && all[2].tracks) || []).forEach(function (t) {
+        if (t.credit) CRED[t.title.toLowerCase()] = t.credit;
+        var s = storedSeconds(t.length);
+        if (s && t.slug) LEN[String(t.slug).toLowerCase()] = s;
+      });
       boot(all[0], all[1], all[3]);
     }).catch(function () {
         document.getElementById("tracks").innerHTML = "<li><span class='t'>The shelf is warming up. Refresh in a moment.</span></li>";
@@ -1104,6 +1109,26 @@
         if (cell) cell.textContent = rowTime(probe.duration);
         probe.src = "";
       });
+    }
+    /* "2:10" as data/catalogue.json stores it → 130; anything else → 0 */
+    function storedSeconds(len) {
+      var m = /^(\d+):([0-5]\d)$/.exec(String(len == null ? "" : len).trim());
+      return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+    }
+    /* THE CLOCK COMES OFF THE SHELF, NOT OFF THE WIRE. Probing every row for
+       its metadata opened one audio request per track on every visit, each
+       cut off as soon as the header arrived: fifteen aborted loads before a
+       single play. The catalogue already stores every committed song's
+       length, so a row is painted from that and asks nothing of the server
+       until the listener presses play. A gated row is still probed: its
+       clock is the length of whatever it points at right now, the public
+       preview or the signed master, and the catalogue knows neither. So is
+       a row the catalogue has no length for. */
+    function paintDuration(row) {
+      var s = row.getAttribute("data-gated-bucket") ? 0 : LEN[String(row.getAttribute("data-key") || "").toLowerCase()];
+      if (!s) return probeDuration(row);
+      var cell = row.querySelector(".d");
+      if (cell) cell.textContent = rowTime(s);
     }
     function gatedRows() {
       return rows.filter(function (r) { return r.getAttribute("data-gated-bucket"); });
@@ -1353,8 +1378,8 @@
     var fmt = function (s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     var el = function (id) { return document.getElementById(id); };
 
-    /* durations on the rows: metadata only, one probe per track */
-    rows.forEach(probeDuration);
+    /* durations on the rows: off the catalogue; a probe only where it has none */
+    rows.forEach(paintDuration);
 
     function announce(playing) {
       window.dispatchEvent(new CustomEvent("mcc:nowplaying", {
