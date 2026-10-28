@@ -84,7 +84,6 @@
   var bridge = {
     /* Specialized products are Apps. Operator administration does not leave
        Control; former back-office room names are only routing aliases. */
-    assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
     /* HITMAN'S HALO ON THE GLOBE (owner, 2026-10-21: "fix the fact that the control room points to seek first"): the
@@ -1653,8 +1652,7 @@
         state.sources.mediaAssets && state.sources.mediaAssets.ok ? "Library is empty" : "Library not readable",
         state.sources.mediaAssets && state.sources.mediaAssets.ok
           ? "media_assets returned no rows for this operator session."
-          : "The asset query did not succeed, so this is not a statement that no assets exist.",
-        "Open Asset Lab", "open-bridge:assetLab") + '</div>';
+          : "The asset query did not succeed, so this is not a statement that no assets exist.") + '</div>';
     }
     return banner + '<div class="cr-asset-grid">' + state.mediaAssets.slice(0, 120).map(function (a) {
       var url = a.url || a.public_url || a.storage_url || a.signed_url || "";

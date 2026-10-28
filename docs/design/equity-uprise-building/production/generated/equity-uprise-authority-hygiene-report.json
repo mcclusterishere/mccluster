@@ -1,88 +1,393 @@
 {
   "schema_version": "1.0.0",
   "scope": "Equity Uprise active authority hygiene",
-  "checks_total": 471,
-  "checks_passed": 471,
+  "checks_total": 532,
+  "checks_passed": 532,
   "checks_failed": 0,
   "passed": true,
   "checks": [
     {
       "name": "canonical Floor 1 authority exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md"
+      "detail": "docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md"
     },
     {
       "name": "canonical B1 authority exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md"
+      "detail": "docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md"
     },
     {
       "name": "deprecated Floor 1 path is stub",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+      "detail": "docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
     },
     {
       "name": "deprecated B1 path is stub",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+      "detail": "docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
     {
-      "name": "CLAUDE.md no locked six-floor wording",
+      "name": ".cursor/rules/mccluster.mdc no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": ".cursor/rules/mccluster.mdc no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": ".cursor/rules/mccluster.mdc no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": ".cursor/rules/mccluster.mdc no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": ".cursor/rules/mccluster.mdc no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": ".cursor/rules/mccluster.mdc no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": ".cursor/rules/mccluster.mdc points to REFERENCE-AUTHORITY.md",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "CLAUDE.md no old migration branch",
+      "name": ".cursor/rules/mccluster.mdc points to the local building contract",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "CLAUDE.md current Floor 1 authority",
+      "name": ".cursor/rules/mccluster.mdc carries no per-floor file list",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "CLAUDE.md B1 sandbox boundary",
+      "name": ".cursorrules no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": ".cursorrules no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": ".cursorrules no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": ".cursorrules no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": ".cursorrules no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": ".cursorrules no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": ".cursorrules points to REFERENCE-AUTHORITY.md",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "CODEX.md no locked six-floor wording",
+      "name": ".cursorrules points to the local building contract",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "CODEX.md no old migration branch",
+      "name": ".cursorrules carries no per-floor file list",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "CODEX.md current Floor 1 authority",
+      "name": ".github/copilot-instructions.md no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": ".github/copilot-instructions.md no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": ".github/copilot-instructions.md no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": ".github/copilot-instructions.md no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": ".github/copilot-instructions.md no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": ".github/copilot-instructions.md no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": ".github/copilot-instructions.md points to REFERENCE-AUTHORITY.md",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "CODEX.md B1 sandbox boundary",
+      "name": ".github/copilot-instructions.md points to the local building contract",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "GEMINI.md no locked six-floor wording",
+      "name": ".github/copilot-instructions.md carries no per-floor file list",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "GEMINI.md no old migration branch",
+      "name": ".github/instructions/mccluster.instructions.md no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": ".github/instructions/mccluster.instructions.md points to REFERENCE-AUTHORITY.md",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "GEMINI.md current Floor 1 authority",
+      "name": ".github/instructions/mccluster.instructions.md points to the local building contract",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "GEMINI.md B1 sandbox boundary",
+      "name": ".github/instructions/mccluster.instructions.md carries no per-floor file list",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "AGENTS.md no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": "AGENTS.md no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": "AGENTS.md no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": "AGENTS.md no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": "AGENTS.md no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "AGENTS.md no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "AGENTS.md points to REFERENCE-AUTHORITY.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "AGENTS.md points to the local building contract",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "AGENTS.md Floor 1 citation is the canonical authority",
+      "passed": true,
+      "detail": "none"
+    },
+    {
+      "name": "AGENTS.md B1 sandbox boundary",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "CLAUDE.md no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": "CLAUDE.md no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": "CLAUDE.md no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": "CLAUDE.md no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": "CLAUDE.md no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "CLAUDE.md no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "CLAUDE.md points to REFERENCE-AUTHORITY.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "CLAUDE.md points to the local building contract",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "CLAUDE.md carries no per-floor file list",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "CODEX.md no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": "CODEX.md no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": "CODEX.md no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": "CODEX.md no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": "CODEX.md no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "CODEX.md no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "CODEX.md points to REFERENCE-AUTHORITY.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "CODEX.md points to the local building contract",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "CODEX.md carries no per-floor file list",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "GEMINI.md no stale authority wording :: locked six-floor",
+      "passed": true,
+      "detail": "locked six-floor"
+    },
+    {
+      "name": "GEMINI.md no stale authority wording :: architecture/equity-uprise-core-v2",
+      "passed": true,
+      "detail": "architecture/equity-uprise-core-v2"
+    },
+    {
+      "name": "GEMINI.md no stale authority wording :: only Floor 1 is currently program-reconciled",
+      "passed": true,
+      "detail": "only Floor 1 is currently program-reconciled"
+    },
+    {
+      "name": "GEMINI.md no stale authority wording :: remain provisional until",
+      "passed": true,
+      "detail": "remain provisional until"
+    },
+    {
+      "name": "GEMINI.md no stale authority wording :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "GEMINI.md no stale authority wording :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "GEMINI.md points to REFERENCE-AUTHORITY.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "GEMINI.md points to the local building contract",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "GEMINI.md carries no per-floor file list",
       "passed": true,
       "detail": ""
     },
