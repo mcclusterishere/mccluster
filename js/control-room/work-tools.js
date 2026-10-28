@@ -75,8 +75,8 @@
   }
   function sendMail(c,subject,body,template,stageTo,wait,btn){
     btn.disabled=true;btn.textContent="Sending…";
-    return window.MCC_SUPA.token().then(function(t){return fetch(window.MCC_SUPA.url+"/functions/v1/send-mail",{method:"POST",headers:{apikey:window.MCC_SUPA.key,Authorization:"Bearer "+t,"content-type":"application/json"},body:JSON.stringify({to:c.email,subject:subject,text:body,contact_id:c.id})});})
-      .then(function(r){return r.ok?"sent":"manual";}).catch(function(){return"manual";})
+    /* no send-mail edge function is deployed: the touch is recorded as a draft and the composed message opens in the mail client */
+    return Promise.resolve("manual")
       .then(function(how){var due=new Date();due.setDate(due.getDate()+(Number(wait)||4));return Promise.all([O.supa("crm_touches",{method:"POST",body:{contact_id:c.id,direction:"out",channel:"email",subject:subject,body:body,template_id:template,status:how==="sent"?"sent":"draft"}}),O.supa("crm_contacts?id=eq."+encodeURIComponent(c.id),{method:"PATCH",body:{stage:stageTo,last_touch:new Date().toISOString(),next_at:due.toISOString().slice(0,10)}})]).then(function(){if(how==="manual")location.href="mailto:"+encodeURIComponent(c.email)+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);O.outreach.index=0;O.outreach.pick=null;return loadOutreach();});})
       .catch(function(err){btn.disabled=false;btn.textContent="Retry";throw err;});
   }
