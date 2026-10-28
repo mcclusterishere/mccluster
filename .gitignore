@@ -9,6 +9,7 @@ dist/
 !.env.example
 !**/.env.example
 # the services pin their dependencies — CI runs npm ci against these
+!/package-lock.json
 !apps/*/package-lock.json
 !packages/*/package-lock.json
 !workers/mccluster/package-lock.json

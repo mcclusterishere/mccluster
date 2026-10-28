@@ -787,16 +787,6 @@
       "detail": "/home/runner/work/mccluster/mccluster/js/onboard.js"
     },
     {
-      "name": "capability source exists: enterprise-development -> platform/sql/001_init.sql",
-      "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/platform/sql/001_init.sql"
-    },
-    {
-      "name": "capability source exists: enterprise-development -> platform/src/server.mjs",
-      "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/platform/src/server.mjs"
-    },
-    {
       "name": "capability source exists: enterprise-development -> supabase/replay_migrations/0009_offer_configurations.sql",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0009_offer_configurations.sql"
@@ -812,6 +802,11 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0033_knowledge_base.sql"
     },
     {
+      "name": "capability source exists: enterprise-development -> supabase/replay_migrations/0055_client_connect.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0055_client_connect.sql"
+    },
+    {
       "name": "capability source exists: enterprise-development -> scripts/kb-build.mjs",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/scripts/kb-build.mjs"
@@ -820,6 +815,11 @@
       "name": "capability source exists: enterprise-development -> native/app/(tabs)/uprise.tsx",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/native/app/(tabs)/uprise.tsx"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> workers/mccluster/src/connect.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/workers/mccluster/src/connect.js"
     },
     {
       "name": "capability source exists: halo-spatial-intelligence -> docs/control-plane/SPATIAL-INTELLIGENCE.md",
