@@ -105,7 +105,7 @@
     return named ? ROOT + named : ROOT + "data/lyrics/" + encodeURIComponent(slug) + ".json";
   }
   /* THE SHAPE OF A LYRICS FILE is album.html's rule (paintLyrics): the files the shelf names keep
-     their lines as timed.line[] with begin/content (every committed file, the .dk.json ones among
+     their lines as timed.line[] with begin/content (most committed files, the .dk.json ones among
      them); a file written as lines[] with t/text is read too. Either way the World gets a sorted
      list of {t, text}, or null when the file has no timed line to show. */
   function lyricLines(d) {

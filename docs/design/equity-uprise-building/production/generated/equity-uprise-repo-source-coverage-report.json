@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 435,
+  "candidate_count": 436,
   "capability_source_count": 102,
-  "support_only_count": 333,
-  "checks_total": 1640,
-  "checks_passed": 1640,
+  "support_only_count": 334,
+  "checks_total": 1644,
+  "checks_passed": 1644,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -68,6 +68,7 @@
     "css/onboard.css",
     "css/style.css",
     "css/world-audio-continuity.css",
+    "data/README.md",
     "data/action/docket-516r-archive.json",
     "data/albums.json",
     "data/analytics/application-schema-inventory.json",
@@ -449,7 +450,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "435 entries"
+      "detail": "436 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1558,6 +1559,26 @@
     },
     {
       "name": "css/world-audio-continuity.css support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/README.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/README.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "data/README.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/README.md support rationale present",
       "passed": true,
       "detail": ""
     },
