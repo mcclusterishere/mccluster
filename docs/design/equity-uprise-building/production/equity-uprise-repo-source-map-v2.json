@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 435,
+  "candidate_count": 437,
   "capability_source_count": 102,
-  "support_only_count": 333,
+  "support_only_count": 335,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2637,7 +2637,21 @@
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+      "rationale": "Index of staged, unapplied SQL and its promotion record; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/PROMOTION-ORDER.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Apply order, prerequisites, callers and proof for every staged SQL file in supabase/pending/; names Equity Uprise rules only as pending data. No spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/live-callers.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Allowlist read by scripts/test/rpc-names-exist.test.mjs: RPC, table and bucket names shipped code calls that the applied migration history does not define. Names the pending Equity Uprise rule objects as data; not a building capability."
     },
     {
       "path": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
@@ -2647,11 +2661,11 @@
       "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
     },
     {
-      "path": "supabase/pending/action_globe_demo_pins_v1.sql",
+      "path": "supabase/tests/action_globe_demo_pins_v1.applied.sql",
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending SQL that places every open mission at a regional centroid so the Human Uprise globe has pins; names the globe's regions. Not a building capability."
+      "rationale": "The former supabase/pending/action_globe_demo_pins_v1.sql, applied in production as service-role data on 2026-10-15 (three regions, the mission pins) and kept only as the scratch-database fixture scripts/test-mission-pins-db.sh applies before the pins migration. Names the globe's regions; not a building capability."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",
