@@ -6,7 +6,7 @@ the same move and they do not carry the same risk.
 | | Verdict | Why |
 | --- | --- | --- |
 | **DNS** → Cloudflare | **Do it.** | Free, faster, better tooling than WordPress.com. Unlocks the rest. |
-| **Hosting** → Cloudflare Pages | Later, optional | Would replace the 79 redirect stubs in `redirects/` with one `_redirects` file. GitHub Pages works fine today. |
+| **Hosting** → Cloudflare Pages | Later, optional | The old `redirects/` stubs are gone; a Cloudflare redirect rule 301s `here.mccluster.org`. GitHub Pages works fine today. |
 | **Database** → Cloudflare D1 | **No.** | D1 is SQLite with no row-level security, no auth, no PostgREST. Every wall in `supabase/migrations/` would have to be rebuilt by hand in application code. Keep Supabase. Cloudflare in front of Supabase is a normal, good setup. |
 
 ---
