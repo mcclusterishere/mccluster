@@ -217,9 +217,10 @@
       (d && Array.isArray(d.albums) ? d.albums : []).forEach(function (a) {
         (a && Array.isArray(a.tracks) ? a.tracks : []).forEach(function (t) {
           var src = t && typeof t.src === "string" ? t.src : "";
-          // every track on the shelf, gated or not, names its own lyrics file (or none): same-origin data/ paths only
+          // every track on the shelf, gated or not, that names a lyrics file (or names none with "") is taken at its word: same-origin data/ paths only
           var fileSlug = src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase();
-          if (t && fileSlug) words[fileSlug] = typeof t.lyrics === "string" && /^data\/lyrics\/[a-z0-9._-]+\.json$/i.test(t.lyrics) ? t.lyrics : "";
+          // a track that carries no lyrics key is not named, so its slug's own file is still tried
+          if (t && fileSlug && Object.prototype.hasOwnProperty.call(t, "lyrics")) words[fileSlug] = typeof t.lyrics === "string" && /^data\/lyrics\/[a-z0-9._-]+\.json$/i.test(t.lyrics) ? t.lyrics : "";
           // public catalog files only: never a gated master, a preview or anything off the house's audio folder
           if (!t || t.gated || /preview/i.test(src) || !/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(src)) return;
           list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60)});
