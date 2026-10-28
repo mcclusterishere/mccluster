@@ -133,7 +133,7 @@
     else if (s.error) html = "<p>Your ladder could not load: " + esc(s.error) + "</p>";
     else {
       var step = s.next_step || L.nextStep(s);
-      html = '<p class="ladder-next"><b>Next:</b> ' + esc(NEXT[step] || step) + (step === "sign_in" ? ' <a href="login.html">Sign in</a>' : "") +
+      html = '<p class="ladder-next"><b>Next:</b> ' + esc(NEXT[step] || step) + (step === "sign_in" ? ' <a href="account.html">Sign in</a>' : "") +
         (step === "apply_for_fellowship" ? ' <a href="mnet.html">Open your Action Record</a>' : "") + "</p>" +
         (s.signed_in ? "<p><small>" + esc(s.completed) + " of " + esc(s.needed) + " missions verified.</small></p>" : "") +
         steps(s) + (step === "write_memo" ? memoDesk(s) : "");
