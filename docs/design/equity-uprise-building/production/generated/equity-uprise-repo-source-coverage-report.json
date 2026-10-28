@@ -2,10 +2,10 @@
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
   "candidate_count": 435,
-  "capability_source_count": 104,
-  "support_only_count": 331,
-  "checks_total": 1638,
-  "checks_passed": 1638,
+  "capability_source_count": 102,
+  "support_only_count": 333,
+  "checks_total": 1640,
+  "checks_passed": 1640,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -4529,12 +4529,17 @@
     {
       "name": "platform/sql/001_init.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification='archived_backend_evidence'"
     },
     {
       "name": "platform/sql/001_init.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "platform/sql/001_init.sql support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "platform/src/server.mjs capability ids known",
@@ -4544,12 +4549,17 @@
     {
       "name": "platform/src/server.mjs classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification='archived_backend_evidence'"
     },
     {
       "name": "platform/src/server.mjs support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "platform/src/server.mjs support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "policy-memo-dna.html capability ids known",

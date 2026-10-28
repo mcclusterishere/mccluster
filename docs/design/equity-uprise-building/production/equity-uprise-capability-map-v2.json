@@ -1078,13 +1078,13 @@
         "js/crm.js",
         "js/offers.js",
         "js/onboard.js",
-        "platform/sql/001_init.sql",
-        "platform/src/server.mjs",
         "supabase/replay_migrations/0009_offer_configurations.sql",
         "supabase/replay_migrations/0012_management_upgrade_offerings.sql",
         "supabase/replay_migrations/0033_knowledge_base.sql",
+        "supabase/replay_migrations/0055_client_connect.sql",
         "scripts/kb-build.mjs",
-        "native/app/(tabs)/uprise.tsx"
+        "native/app/(tabs)/uprise.tsx",
+        "workers/mccluster/src/connect.js"
       ],
       "expression": "Opportunity Exchange includes a business/workforce/digital-capacity program lane. Program fit, measurable connected revenue and signed agreements are reviewed in meeting/briefing spaces; the building does not hardcode prices or imply automatic approval."
     },
