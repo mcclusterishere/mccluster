@@ -104,16 +104,28 @@
     if (named === "") return null; // the shelf lists the track and names no words for it
     return named ? ROOT + named : ROOT + "data/lyrics/" + encodeURIComponent(slug) + ".json";
   }
+  /* THE SHAPE OF A LYRICS FILE is album.html's rule (paintLyrics): the files the shelf names keep
+     their lines as timed.line[] with begin/content (every committed file, the .dk.json ones among
+     them); a file written as lines[] with t/text is read too. Either way the World gets a sorted
+     list of {t, text}, or null when the file has no timed line to show. */
+  function lyricLines(d) {
+    var raw = d && d.timed && Array.isArray(d.timed.line) && d.timed.line.length ? d.timed.line
+      : d && Array.isArray(d.lines) ? d.lines : [];
+    var lines = [];
+    raw.forEach(function (l) {
+      if (!l || typeof l !== "object") return;
+      var t = Number.isFinite(l.begin) ? l.begin : l.t, text = typeof l.content === "string" ? l.content : typeof l.text === "string" ? l.text : l.line;
+      if (Number.isFinite(t) && typeof text === "string") lines.push({t:t, text:text});
+    });
+    lines.sort(function (a, b) { return a.t - b.t; });
+    return lines.length ? lines : null;
+  }
   function loadLyrics(slug) {
     if (!slug) return Promise.resolve(null);
     var path = lyricsPath(slug); if (!path) return Promise.resolve(null);
     if (!lyricCache[slug]) lyricCache[slug] = fetch(path, {credentials:"omit"})
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        var lines = d && Array.isArray(d.lines) ? d.lines.filter(function (l) { return l && typeof l.text === "string" && Number.isFinite(l.t); }) : [];
-        lines.sort(function (a, b) { return a.t - b.t; });
-        return lines.length ? lines : null;
-      })
+      .then(lyricLines)
       .catch(function () { return null; });
     return lyricCache[slug];
   }
