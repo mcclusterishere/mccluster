@@ -508,6 +508,8 @@ html[data-theme="light"] .modes button[data-mode="m"] .modes__mark {
 .lic__state { display: inline-block; font-size: 0.56rem; letter-spacing: 0.2em;
   text-transform: uppercase; font-weight: 800; padding: 0.24rem 0.55rem; border-radius: 100px; }
 .lic.is-open .lic__state { color: #0a0807; background: var(--offer-gold); }
+/* daylight gold is dark (#6a4f0e), so the state word on it goes light */
+html[data-theme="light"] .lic.is-open .lic__state { color: #fbf6ea; }
 .lic.is-arranged .lic__state { color: var(--cream-dim);
   box-shadow: inset 0 0 0 1px rgba(244,239,230,0.28); }
 .lic b { display: block; margin-top: 0.6rem; font-family: var(--sig); text-transform: uppercase;
@@ -716,6 +718,12 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
   letter-spacing: .045em; color: var(--cream-dim); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; }
 .buy .modes button[aria-selected="true"] .modes__word { color: var(--cream); }
+/* daylight: the .modes wells are dark veils (55% / 34%), which on bone read as a mid grey
+   that the flipped (dark) cream-dim word cannot read against (2.7:1). The
+   well goes pale instead, the same way .licgrant and .redraw do. */
+html[data-theme="light"] .modes,
+html[data-theme="light"] .buy .modes { background: rgba(20,16,12,0.06);
+  box-shadow: inset 0 0 0 1px rgba(26,20,13,0.16); }
 
 /* WHAT YOU GET — pushed to the foot of the card, which is what makes
    four cards of different lengths end on one line. */
