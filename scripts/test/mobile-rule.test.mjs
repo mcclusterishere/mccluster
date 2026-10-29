@@ -72,19 +72,13 @@ const hasBareFr = (value) => {
 const bareTracks = (css) => [...css.matchAll(GRID_DECL)].filter((m) => hasBareFr(m[1])).length;
 
 /* ---- the allowlists: seeded 2026-10-27, and they may only shrink ---- */
-/* @media (…max-width…) queries per file: 79 in 21 files */
+/* @media (…max-width…) queries per file: 71 in 14 files */
 const MAX_WIDTH_ALLOWED = {
-  "css/control-room-v2.css": 9,
+  "css/control-room-v2.css": 8,
   "css/control-room.css": 3,
-  "css/control-system.css": 1,
-  "css/deskchat.css": 1,
-  "css/equity-uprise-app.css": 1,
   "css/equity-uprise-institutional.css": 2,
-  "css/lockroom.css": 1,
-  "css/music-creator.css": 1,
   "css/music-director-base.css": 1,
   "css/music-director.css": 1,
-  "css/music-engine.css": 1,
   "css/music-lounge.css": 2,
   "css/music-luxury.css": 2,
   "css/music-private-listening.css": 2,
@@ -92,7 +86,6 @@ const MAX_WIDTH_ALLOWED = {
   "css/prim3-range.css": 2,
   "css/prim3-tracking.css": 2,
   "css/prim3.css": 2,
-  "css/professional.css": 1,
   "css/style.css": 38,
   "whip/index.html": 2,
 };

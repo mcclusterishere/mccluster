@@ -53,7 +53,7 @@
 .eua__rule { border: 0; border-top: 1px solid var(--edge); margin: 2.2rem 0; }
 
 /* ---------- cards ---------- */
-.eua-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+.eua-grid { display: grid; gap: 0.9rem; grid-template-columns: minmax(0,1fr); }
 
 .eua-card {
   border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-lo);
@@ -162,10 +162,10 @@ html[data-theme="light"] .eua-badge--live { color: #1f6b31; }
   display: flex; flex-direction: column; min-height: 22rem; overflow: hidden;
 }
 .eua-chat__log { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; overflow-y: auto; max-height: 28rem; }
-.eua-msg { max-width: 44ch; padding: 0.7rem 0.9rem; border-radius: 14px; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
+.eua-msg { max-width: 86%; padding: 0.7rem 0.9rem; border-radius: 14px; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
 .eua-msg--agent { background: var(--glass-hi); border: 1px solid var(--edge); align-self: flex-start; }
 .eua-msg--person { background: var(--ruby); color: var(--on-ruby); align-self: flex-end; }
-.eua-msg--system { align-self: center; text-align: center; color: var(--cream-dim); font-size: 0.8rem; max-width: 38ch; }
+.eua-msg--system { align-self: center; text-align: center; color: var(--cream-dim); font-size: 0.8rem; }
 .eua-chat__bar { display: flex; gap: 0.5rem; padding: 0.7rem; border-top: 1px solid var(--edge); }
 .eua-chat__bar input { flex: 1; }
 .eua-chat__bar button { flex: none; padding: 0.8em 1.4em; }
@@ -228,7 +228,9 @@ html[data-theme="light"] .eua-field input,
 html[data-theme="light"] .eua-field textarea,
 html[data-theme="light"] .eua-field select { background: #fff; }
 
-@media (max-width: 34rem) {
-  .eua-grid { grid-template-columns: minmax(0,1fr); }
-  .eua-msg { max-width: 86%; }
+
+@media (min-width: 34.001rem) {
+  .eua-grid { grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+  .eua-msg { max-width: 44ch; }
+  .eua-msg--system { max-width: 38ch; }
 }
