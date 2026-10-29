@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 443,
+  "candidate_count": 442,
   "capability_source_count": 102,
-  "support_only_count": 341,
+  "support_only_count": 340,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1418,12 +1418,20 @@
       "rationale": "Renders the Docket 516R contributor webpages, completed song recordings and archived capstone, including its historical event map marker. Binds existing people, cohort, listening and rally media capabilities to the Action Network archive without creating new building geometry or mission awards."
     },
     {
-      "path": "js/equity-uprise-fellowship-live.js",
+      "path": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js",
       "classification": "capability_source",
       "capability_ids": [
         "fellowship-applications"
       ],
-      "support_only": false
+      "support_only": false,
+      "rationale": "Policy Fellowship live intake client (eu-intake / eu-calendar). Retired from the live site by the owner on 2026-10-28 for further development; preserved intact under _unfinished/ (stripped at publish). Still the capability source for fellowship-applications."
+    },
+    {
+      "path": "_unfinished/equity-uprise/js/here-material.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Preserved legacy bridge that loads the Fellowship live intake on the unpublished fellowship.html; moved out of the public js/here-material.js on 2026-10-28. Loader only; the capability is mapped on equity-uprise-fellowship-live.js."
     },
     {
       "path": "js/equity-uprise-institutional.js",
@@ -1452,13 +1460,6 @@
     },
     {
       "path": "js/fan-intake.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
-    },
-    {
-      "path": "js/here-material.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
@@ -1764,25 +1765,11 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
-      "path": "redirects/equity-uprise.html",
-      "classification": "redirect_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
-    },
-    {
-      "path": "redirects/walls/eu-rally.html",
-      "classification": "redirect_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
-    },
-    {
       "path": "resume-it-support.html",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3369,6 +3356,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Satellite kit head; names the Equity Uprise building block only to say satellites never copy it. Defines no program capability."
+    },
+    {
+      "path": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Deployment-controls proposal names Equity Uprise only as CI check names, Edge Function contract jobs and the GitHub Pages building-artifact publish step; it defines no building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

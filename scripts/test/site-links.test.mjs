@@ -88,15 +88,7 @@ function resolve(page, value, baseHref) {
 /* KNOWN DEAD DOORS, NAMED. A line here is a bug the house knows about, not
    a pass: each names the page, the reference and why, and goes when the
    door is fixed. Add to it only with the reason written out. */
-const KNOWN_DEAD = new Map([
-  /* The Site 0 game shipped at /site0/ and was put away under
-     _unfinished/site0-game/ (commit 66519043, "web root only, internals
-     stripped"); _unfinished/ is stripped at publish, so the facility's
-     ENTER door points at nothing live. js/hitman-facility.js writes the
-     same path. Restoring the HITMAN door is its own task; this line goes
-     with it. */
-  ['hitman-facility.html site0/index.html', 'Site 0 game put away under _unfinished/site0-game/'],
-]);
+const KNOWN_DEAD = new Map([]);
 
 const PAGES = pages();
 

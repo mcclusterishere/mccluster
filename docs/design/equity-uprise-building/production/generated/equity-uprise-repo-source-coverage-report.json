@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 443,
+  "candidate_count": 442,
   "capability_source_count": 102,
-  "support_only_count": 341,
-  "checks_total": 1672,
-  "checks_passed": 1672,
+  "support_only_count": 340,
+  "checks_total": 1668,
+  "checks_passed": 1668,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -37,6 +37,8 @@
     "_unfinished/equity-uprise/feed.html",
     "_unfinished/equity-uprise/fellowship.html",
     "_unfinished/equity-uprise/fellowships.html",
+    "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js",
+    "_unfinished/equity-uprise/js/here-material.js",
     "_unfinished/equity-uprise/profile.html",
     "_unfinished/equity-uprise/topics.html",
     "_unfinished/equity-uprise/uprise-admin.html",
@@ -117,6 +119,7 @@
     "docs/agent-web.md",
     "docs/analytics/application-schema-inventory.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
+    "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/ECOSYSTEM.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
@@ -194,11 +197,9 @@
     "js/control-room/clipping.js",
     "js/crm.js",
     "js/docket-cohort-showcase.js",
-    "js/equity-uprise-fellowship-live.js",
     "js/equity-uprise-institutional.js",
     "js/eu-api.js",
     "js/fan-intake.js",
-    "js/here-material.js",
     "js/hire-offers.js",
     "js/insights.js",
     "js/lockroom.js",
@@ -239,8 +240,6 @@
     "press.html",
     "privacy.html",
     "production.html",
-    "redirects/equity-uprise.html",
-    "redirects/walls/eu-rally.html",
     "resume-it-support.html",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
@@ -457,7 +456,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "443 entries"
+      "detail": "442 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3880,19 +3879,39 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js capability ids known",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js classified",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js classified",
       "passed": true,
       "detail": "classification='capability_source'"
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js support-only semantics coherent",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "js/equity-uprise-institutional.js capability ids known",
@@ -3941,26 +3960,6 @@
     },
     {
       "name": "js/fan-intake.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/here-material.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/here-material.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "js/here-material.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "js/here-material.js support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4691,46 +4690,6 @@
     },
     {
       "name": "production.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/equity-uprise.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/equity-uprise.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8811,6 +8770,26 @@
     },
     {
       "name": "docs/control-plane/SATELLITE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support rationale present",
       "passed": true,
       "detail": ""
     }
