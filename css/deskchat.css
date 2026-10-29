@@ -44,17 +44,18 @@ body.has-appbar .dsk-launch { bottom: calc(6.2rem + env(safe-area-inset-bottom, 
 
 .dsk {
   position: fixed;
-  right: clamp(0.6rem, 3vw, 1.4rem);
+  right: 0.5rem;
   bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
   z-index: 191;
-  width: min(23rem, calc(100vw - 1.2rem));
-  max-height: min(30rem, calc(100vh - 12rem));
+  width: auto;
+  max-height: min(26rem, calc(100vh - 10rem));
   display: flex; flex-direction: column; overflow: hidden;
   border-radius: 20px;
   background: linear-gradient(180deg, rgba(32, 26, 21, 0.98), rgba(14, 11, 9, 0.99));
   box-shadow: 0 30px 80px -18px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.13);
   font-family: var(--body, "Archivo", system-ui, sans-serif);
   animation: dskIn 0.26s cubic-bezier(0.2, 0.9, 0.2, 1);
+  left: 0.5rem;
 }
 body.has-appbar .dsk { bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
 @keyframes dskIn { from { opacity: 0; transform: translateY(14px); } }
@@ -143,13 +144,11 @@ html[data-theme="light"] .dsk__in::placeholder { color: rgba(26, 20, 13, 0.5); }
 .dsk__go svg { width: 1.05rem; height: 1.05rem; fill: #fff; }
 .dsk__go:focus-visible { outline: 2px solid var(--cream, #f4efe6); outline-offset: 2px; }
 
-/* On a small phone the panel takes the screen rather than floating in a
-   corner where the keyboard would cover it entirely. */
-@media (max-width: 30rem) {
-  .dsk {
-    right: 0.5rem; left: 0.5rem; width: auto;
-    max-height: min(26rem, calc(100vh - 10rem));
-  }
+/* On a small phone the panel takes the screen (the base rule) rather than
+   floating in a corner where the keyboard would cover it entirely; from
+   30rem up it floats in the corner. */
+@media (min-width: 30.001rem) {
+  .dsk { right: clamp(0.6rem, 3vw, 1.4rem); left: auto; width: min(23rem, calc(100vw - 1.2rem)); max-height: min(30rem, calc(100vh - 12rem)); }
 }
 
 /* ============================================================

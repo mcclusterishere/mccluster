@@ -199,7 +199,7 @@ test('Music V2 is mobile-first dark by contract, not desktop-first responsive', 
   const css=await read('css/music-system-v2.css');
   const firstMedia=css.indexOf('@media(');
   const baseShell=css.indexOf('--music-shell:calc(100vw - 24px)');
-  const mobileGrid=css.indexOf('.music-v2 .creator-grid{display:grid;grid-template-columns:1fr');
+  const mobileGrid=css.indexOf('.music-v2 .creator-grid{display:grid;grid-template-columns:minmax(0,1fr)');
   const darkBg=css.indexOf('--music-bg:#050506');
   assert.ok(baseShell > -1 && baseShell < firstMedia, 'phone-width shell must be a base rule');
   assert.ok(mobileGrid > -1 && mobileGrid < firstMedia, 'one-column creator layout must be a base rule');
