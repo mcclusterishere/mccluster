@@ -48,7 +48,7 @@ Adding a song: put the file under `assets/audio/`, add the track to
 | --- | --- | --- | --- |
 | `offerings.json` | **Mirror, display only.** The authoritative offerings ledger is the Supabase table from `supabase/replay_migrations/0007_offerings.sql` and its successors; checkout reads the database row for price and seller. Change the database first, then this. | owner, in step with the database | `services.html`, `sites*.html`, `scripts/kb-build.mjs`, `scripts/smoke.mjs` |
 | `offers.json`, `merch.json`, `prayer-closet.json`, `market-rates.json`, `sites.json` | **Source** for the pages that paint them; prices that are charged come from the database, never from these. | owner | `services.html`, `sites*.html`, `prayer-closet.html`, `js/prices.js`, `js/closet.js`, the knowledge base build |
-| `clients.json`, `environments.json`, `domains.json`, `providers.json` | **Source.** Client products staged to Cloudflare Pages, the album environments, hosting domains and providers. | owner | `scripts/stage-cloudflare-pages.mjs`, `js/env.js`, `js/floorcache.js` |
+| `clients.json`, `environments.json`, `domains.json` | **Source.** Client products staged to Cloudflare Pages, the album environments and hosting domains. | owner | `scripts/stage-cloudflare-pages.mjs`, `js/env.js` |
 
 ## Entity, SEO and the two properties
 

@@ -1,6 +1,7 @@
 name: Public profile project preview
 on:
   pull_request:
+    branches: [main]
     paths:
       - 'front.html'
       - 'index.html'
@@ -11,6 +12,10 @@ on:
       - 'js/guest-world.js'
       - 'css/profile-shell.css'
       - 'scripts/e2e/vaunt-project.e2e.mjs'
+      - 'front-studio.html'
+      - 'workers/mccluster/src/member-fronts.js'
+      - 'packages/front-config/**'
+      - 'scripts/e2e/member-front.e2e.mjs'
       - '.github/workflows/profile-project-preview.yml'
   workflow_dispatch:
 permissions:
@@ -26,6 +31,9 @@ jobs:
       - run: npm install --prefix /tmp/profile-tools playwright@1.58.2 --ignore-scripts --no-audit --no-fund
       - run: /tmp/profile-tools/node_modules/.bin/playwright install --with-deps chromium
       - run: node scripts/e2e/vaunt-project.e2e.mjs /tmp/profile-proof
+        env:
+          PLAYWRIGHT_DIR: /tmp/profile-tools/node_modules
+      - run: node scripts/e2e/member-front.e2e.mjs /tmp/profile-proof/member-front
         env:
           PLAYWRIGHT_DIR: /tmp/profile-tools/node_modules
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
