@@ -208,6 +208,7 @@
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <link rel="stylesheet" href="css/lockroom.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/front-cabin.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <!-- The .case and .wings rules stood here too: the only styling for the two
        sections this page no longer has. They leave with their sections; the
@@ -220,6 +221,9 @@
     .hero__line--accent{color:var(--ruby-hot,#e5383b)}
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <!-- tucked away (Control -> Front page): this browser last saw the page hidden, so it starts on the holding screen
+       instead of flashing the page first. js/main.js settles it from the live row and the owner check. -->
+  <script>try{if(localStorage.getItem("mcc_front_tucked")==="1")document.documentElement.setAttribute("data-front-tucked","")}catch(e){}</script>
 </head>
 <!-- No data-mh-cta here on purpose. The "Deal with me" pill floated over the
      whole home page and cost a corner of every screen to shortcut #book —
@@ -272,57 +276,33 @@
          album.html behind the Music tab. No song pinned to the top of the
          front page. -->
 
-    <!-- ============ HERO ORBIT ============ -->
-    <section class="hero" id="hero">
-      <div class="hero__sticky">
-        <img class="hero__poster" src="assets/frames/hero_0001.jpg" alt="" width="1920" height="1080" decoding="async" aria-hidden="true">
-        <canvas id="orbitCanvas" aria-label="Matthew McCluster in a production studio, camera orbiting"></canvas>
-        <video id="heroFallback" class="hero__fallback" muted loop playsinline preload="metadata" poster="assets/frames/hero_0001.jpg">
-          <source src="assets/video/hero.mp4" type="video/mp4">
-          <source src="assets/video/hero.webm" type="video/webm">
-        </video>
-        <div class="hero__vignette" aria-hidden="true"></div>
+    <!-- ============ THE CABIN, FIRST ============
 
-        <div class="hero__content" data-drift style="--drift:14">
-          <p class="hero__eyebrow reveal-line"><span>Direction · Photo · Web · Music</span></p>
-          <h1 class="hero__title" id="heroTitle">
-            <span class="hero__line" data-word="McCLUSTER">McCLUSTER</span>
-            <span class="hero__line hero__line--accent" data-word="CORP">CORP</span>
-          </h1>
-          <p class="hero__sub reveal-line"><span><em class="bracket">[</em> Matthew McCluster <em class="bracket">]</em></span></p>
-
-          <!-- THE TWO DOORS, and only two.
-
-               The lead door used to read "Hire or book me", which is a menu,
-               not an ask — it named two different transactions and made the
-               visitor sort themselves before anything had been offered. And
-               the site the visitor is standing in IS the pitch: they are
-               looking at the work while they read the button.
-
-               So the lead door asks the one question the whole page is
-               already making the case for, and opens the web presentation.
-               The second door stays for the other audience — someone here
-               to find out who this is, or to hire him as a professional —
-               and that is the whole list. Two doors, two audiences.
-
-               Plain anchors, revealed by CSS rather than by the intro
-               timeline, so they are still there if the animation never runs. -->
-          <p class="hero__doors">
-            <a class="hero__door hero__door--lead" href="sites.html" data-cta="hero-web">Want a website like this? <span aria-hidden="true">&#8594;</span></a>
-            <a class="hero__door" href="matthew-mccluster.html" data-cta="hero-who">Resume/CV <span aria-hidden="true">&#8594;</span></a>
-          </p>
+         Owner, 2026-10-29: the page no longer opens on the orbiting studio
+         (the hero, its 161 frames and the degree readout are gone from the
+         flow). It opens INSIDE the Vaunt jet: the real 360 film, playing at
+         once, muted, with no Allow / Cancel to get past. Drag (or swipe
+         sideways on a phone) to look around; scroll, Escape or Continue
+         moves on to the plane. With reduced motion the cabin waits on its
+         poster until it is asked for. js/main.js runs it (CABIN_FIRST). -->
+    <section class="cabin-open" id="cabin" aria-labelledby="cabinTitle" data-lenis-prevent-touch>
+      <img class="cabin-open__poster" src="assets/img/vaunt-360-poster.jpg" alt="" width="2048" height="1024" decoding="async" aria-hidden="true">
+      <div class="workvr cabin-open__room" id="workVR" aria-label="Inside the Vaunt jet, 360 degrees. Drag to look around; scroll or press Continue to move on.">
+        <canvas class="workvr__canvas" id="workVRCanvas"></canvas>
+        <p class="vrsign" id="workVRSign" aria-hidden="true"><b>You are now free to<br>move around the cabin</b></p>
+        <p class="workvr__tag">Inside the jet &middot; 360 &middot; live footage</p>
+      </div>
+      <div class="cabin-open__copy">
+        <p class="cabin-open__k">Drag to look around &middot; scroll to fly on</p>
+        <h1 class="cabin-open__title" id="cabinTitle">Matthew McCluster</h1>
+        <p class="hero__doors">
+          <a class="hero__door hero__door--lead" href="sites.html" data-cta="hero-web">Want a website like this? <span aria-hidden="true">&#8594;</span></a>
+          <a class="hero__door" href="matthew-mccluster.html" data-cta="hero-who">Resume/CV <span aria-hidden="true">&#8594;</span></a>
+        </p>
+        <div class="cabin-open__acts">
+          <button class="cabin-open__look" id="cabinLook" type="button" hidden>Look around the cabin</button>
+          <button class="cabin-open__go" id="cabinContinue" type="button">Continue <span aria-hidden="true">&#8595;</span></button>
         </div>
-
-        <!-- The HUD said "Scroll slow, homie" bottom-left and "Scroll slow"
-             bottom-right at the same time: one instruction, printed twice,
-             in one viewport. The left cue keeps the voice; the right slot
-             keeps the orbit readout, which is the only thing over there
-             that tells the visitor something they didn't already know. -->
-        <div class="hero__hud" aria-hidden="true">
-          <div class="hud__item hud__scroll">Scroll slow, homie <span class="hud__arrow">↓</span></div>
-          <div class="hud__item hud__reel hud__deg" id="hudDeg">000°</div>
-        </div>
-
       </div>
     </section>
 
@@ -333,15 +313,24 @@
          was the dial competing with the door above it. Film and Sound keep
          their own rooms on the bar and in its wings. -->
 
-    <!-- ============ BRAND COLLABS: mini scroll (selected work as scenes) ============ -->
-    <section class="project-feature" id="work" aria-labelledby="vauntProjectTitle">
-      <a class="project-feature__link" href="front.html?project=vaunt" data-cta="vaunt-project">
-        <img src="assets/frames/vauntlive_0001.jpg" alt="Matthew and Zakir performing on the runway" loading="lazy" decoding="async">
-        <div><p>Selected project · Film / 360 / Music</p><h2 id="vauntProjectTitle">Vaunt</h2>
-          <p>The runway performance, a look inside the jet, and the music.</p>
-          <span>Enter the experience →</span>
+    <!-- ============ THE PLANE: the Vaunt fly-through ============
+
+         Restored from data/front-projects/vaunt-original.html (and
+         7cef2d3ae^:index.html), not redrawn: cmdCanvas4, the vaunt_ frames,
+         sky to cockpit. The runway performance (cmdCanvas5, vauntlive_) is
+         not here: it is the takeoff, and a page that opens already inside
+         the jet in the air would have to rewind to the ground to show it.
+         It plays in full on the Vaunt project page this section links to.
+         Old links to index.html#work still land on Vaunt. -->
+    <section class="command command--plane" id="work" aria-label="Vaunt: the fly-through">
+      <div class="command__sticky">
+        <canvas class="bg-canvas command__canvas" id="cmdCanvas4" aria-label="Vaunt: fly-through from open sky past Matthew into the cockpit"></canvas>
+        <div class="scrim scrim--deep" aria-hidden="true"></div>
+        <a class="plane__project" href="front.html?project=vaunt" data-cta="vaunt-project">The whole Vaunt project: the runway, the jet, the music <span aria-hidden="true">&#8594;</span></a>
+        <div class="command__panels">
+          <article class="command__panel" data-scene="0"></article>
         </div>
-      </a>
+      </div>
     </section>
 
 
@@ -404,6 +393,24 @@
 
 
   </main>
+
+  <!-- THE HOLDING SCREEN. Shown instead of the page above only when the
+       owner has tucked his front page away (Control -> Create -> Front page,
+       site_content index.html "@front", visible:false). The bar, the World
+       and the footer below stay, so the rest of the house still works. The
+       house owner, signed in, still gets the real page. This is a static
+       site: tucked away is hidden, not secret. -->
+  <section class="front-holding" id="frontHolding" aria-labelledby="frontHoldingTitle">
+    <p class="front-holding__k">matthew.mccluster.org</p>
+    <h2 class="front-holding__title" id="frontHoldingTitle">Matthew McCluster</h2>
+    <p class="front-holding__p">This front page is being worked on. Everything else in the house is open.</p>
+    <p class="front-holding__doors">
+      <a href="matthew-mccluster.html">About Matthew</a>
+      <a href="album.html">I AM HERE</a>
+      <a href="hire.html">Hire the agency</a>
+    </p>
+  </section>
+  <p class="front-owner-note" id="frontOwnerNote" role="status">Tucked away: only you see this page. Visitors get a holding screen. <a href="control.html#create:front-page">Front page settings</a></p>
 
   <!-- the sound ask: Motion tapped with the sound off. One tap fixes it -->
   <div class="soundask" id="soundAsk" hidden>
@@ -511,9 +518,9 @@
   </footer>
 
 
-  <!-- THE SCORE: Who Did The Shoot opens and closes the film, Antisocial
-       carries Scroll Slow, the two Vaunt versions score the commercial and
-       the jet, and the title track stands by as the OS layer fallback. -->
+  <!-- THE SCORE: one song for the whole page, and it is Antisocial (owner,
+       2026-10-29; Control -> Front page can name another of these). The
+       first tap, click or key turns it on; the Sound pill still decides. -->
   <audio id="track-whodidtheshoot" preload="none" loop>
     <source src="assets/audio/who-did-the-shoot.mp3" type="audio/mpeg">
   </audio>

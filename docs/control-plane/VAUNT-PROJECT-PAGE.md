@@ -133,3 +133,13 @@ publishing, public read/private draft separation, and compatible routing from
 company representation. Existing scene media/order, album links and footer hooks
 are the presentation contract to preserve. Any eventual seed remains pending
 separate production approval; no profile row is provisioned by this PR.
+
+## Owner decision, 2026-10-29: Matthew's front page opens in the cabin
+
+`index.html` no longer carries only a project tile. It opens inside the Vaunt 360 cabin (ungated, muted, playing at
+once), then the Vaunt fly-through (`cmdCanvas4`, `vaunt_` frames, restored from `data/front-projects/vaunt-original.html`),
+then the night descent, LOCK IN and the World. The runway performance (`cmdCanvas5`, `vauntlive_`) stays on this
+project page only: the front page opens already in the air, and the takeoff would read as a rewind. The plane links
+here ("The whole Vaunt project"), and `index.html#work` still lands on Vaunt. This project page is unchanged: its
+hero, its runway, its cabin with Allow / Cancel, and its Who Did The Shoot sound. The front page's own song is
+Antisocial. Full record: `docs/control-plane/FRONT-PAGE-CONTROL.md`.
