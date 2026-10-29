@@ -383,7 +383,7 @@ html[data-theme="light"] .chapter__no { color: var(--offer-gold); }
 .activate__prompt { margin-top: clamp(1.8rem, 5vw, 2.4rem); max-width: 40rem;
   color: var(--cream); font-weight: 700; font-size: 0.98rem; line-height: 1.7; }
 .exits { margin-top: 1.2rem; display: grid; gap: 0.9rem; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 42rem) { .exits { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 42rem) { .exits { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } }
 .exit { padding: 1.2rem 1.2rem 1.3rem; border-radius: 16px;
   background: rgba(244,239,230,0.045); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.12); }
 .exit--upgrade { box-shadow: inset 0 0 0 1px rgba(232,200,119,0.42); }
@@ -420,7 +420,7 @@ html[data-theme="light"] .exit { background: rgba(20,16,12,0.04); }
   font-size: 0.95rem; line-height: 1.75; }
 .redraw__rail { list-style: none; counter-reset: rd; margin: clamp(1.4rem, 4vw, 2rem) 0 0; padding: 0;
   display: grid; gap: 0.9rem; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 46rem) { .redraw__rail { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 46rem) { .redraw__rail { grid-template-columns: repeat(3, minmax(0,1fr)); } }
 .redraw__rail li { counter-increment: rd; padding-top: 0.9rem;
   border-top: 1px solid rgba(232,200,119,0.32); }
 .redraw__k { display: block; font-size: 0.6rem; letter-spacing: 0.24em; text-transform: uppercase;
@@ -502,7 +502,7 @@ html[data-theme="light"] .modes button[data-mode="m"] .modes__mark {
 
 .licgrant__covers { list-style: none; margin: clamp(1.4rem, 4vw, 2rem) 0 0; padding: 0;
   display: grid; gap: 0.9rem; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 46rem) { .licgrant__covers { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 46rem) { .licgrant__covers { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 .lic { padding: 1rem 1.1rem 1.1rem; border-radius: 16px;
   background: rgba(10,8,7,0.4); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.1); }
 .lic__state { display: inline-block; font-size: 0.56rem; letter-spacing: 0.2em;
@@ -516,7 +516,7 @@ html[data-theme="light"] .modes button[data-mode="m"] .modes__mark {
 
 .licgrant__foot { margin-top: clamp(1.4rem, 4vw, 2rem); display: grid; gap: 1.4rem;
   grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 46rem) { .licgrant__foot { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 46rem) { .licgrant__foot { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } }
 .licgrant__ft { font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
   font-weight: 800; color: var(--cream); }
 .licgrant__nots { list-style: none; margin: 0.6rem 0 0; padding: 0; }
@@ -662,7 +662,7 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
 /* two up once there is room for two to be read at a glance, four up once
    the whole offer can be read without scrolling past it */
 @media (min-width: 46rem) {
-  .buys { grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .buys { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .8rem; }
 }
 /* Four across was tried and taken back out. The reading column here is
    about 960px, so a fourth column leaves each card 230px wide — narrow
@@ -695,7 +695,7 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
    which does nothing when you press it. On a buy card they have to read
    as a switch: equal halves, and the selected one lifted rather than
    shouting. */
-.buy .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+.buy .modes { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 2px;
   padding: 2px; border-radius: 10px; background: rgba(0,0,0,.34);
   box-shadow: inset 0 0 0 1px var(--edge); }
 .buy .modes button { width: 100%; min-height: 2.6rem; border: 0; cursor: pointer;
@@ -771,7 +771,7 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
   font: 800 .7rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
 .madefor__see em { font-style: normal; }
 
-@media (min-width: 46rem) { .madefor__row { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 46rem) { .madefor__row { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } }
 
 /* ============================================================
    THE ADDRESS BOX
@@ -825,7 +825,7 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
 /* One answer. The name reads first, the verdict second, the price
    third — and the price only exists on a row somebody can actually
    press, so a number never appears next to a name that is taken. */
-.dom__one { display: grid; grid-template-columns: 1fr auto; align-items: center;
+.dom__one { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center;
   gap: .1rem .6rem; text-align: left; width: 100%; cursor: pointer;
   -webkit-appearance: none; appearance: none; border: 0; border-radius: 12px;
   padding: .7rem .85rem; color: var(--cream); background: rgba(255,255,255,.05);

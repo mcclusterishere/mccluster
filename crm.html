@@ -36,7 +36,7 @@
        public marketing section with `padding-bottom: clamp(3rem,7vw,6rem)`.
        This page set no padding of its own, so that rule applied unopposed:
        measured 89.6px of dead space under the tiles. */
-    .fd-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.4rem 0; }
+    .fd-stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.7rem; margin: 1.4rem 0; }
     .stat { border-radius: 18px; padding: 0.85rem 1rem;
       background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
