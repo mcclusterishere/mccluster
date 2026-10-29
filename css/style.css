@@ -4059,6 +4059,8 @@ html[data-theme="light"] .hirepage .hire__stamp { background: var(--ink); }
       onto it, and on the narrowest screens it goes full width so it
       never sits on top of live text either. -- */
 .hirepage .mh__cta { right: clamp(0.9rem, 4vw, 2rem); left:revert; bottom:calc(var(--appbar-h,4.6rem) + 1.5rem + env(safe-area-inset-bottom)); }
+html.pocket-on .hirepage .mh__cta { bottom: calc(var(--appbar-h, 4.6rem) + 1.5rem
+  + env(safe-area-inset-bottom) + var(--pocket-h)); }
 @media (max-width: 720px) {
   .hirepage .mh__cta { right: .8rem; left: auto;
     bottom: calc(var(--appbar-h, 4.6rem) + env(safe-area-inset-bottom) + 1.9rem); }
