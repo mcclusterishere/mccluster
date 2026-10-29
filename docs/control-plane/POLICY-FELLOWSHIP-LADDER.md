@@ -432,7 +432,7 @@ data.
 
 ## 7. What the UI has (this change)
 
-- **Owner:** `control.html` → Human Uprise → **Policy memos** tab
+- **Owner:** `control.html` → Equity Uprise → **Policy memos** tab
   (`js/control-room/action-network.js`): the queue (submitted, in review,
   owner-edited) and recent decisions; each memo shows the current version,
   the diff against its parent, the review log and research leads; actions

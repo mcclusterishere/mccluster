@@ -126,15 +126,15 @@ body.prim3-range-page {
   padding-bottom: 2.4rem;
 }
 
-.range-hero h1,
-.range-mission-head h1 {
+.range-hero h2,
+.range-mission-head h2 {
   margin: 0;
   font-size: clamp(2.8rem, 7vw, 6.6rem);
   line-height: .93;
   letter-spacing: -.045em;
 }
 
-.range-hero h1 span { color: var(--range-red); }
+.range-hero h2 span { color: var(--range-red); }
 .range-hero > div > p:last-child,
 .range-mission-head > div > p:last-child {
   max-width: 760px;
@@ -322,7 +322,7 @@ body.prim3-range-page {
   padding: clamp(1.3rem, 3vw, 2.2rem);
   border-bottom: 1px solid var(--range-line);
 }
-.range-mission-head h1 { font-size: clamp(2.3rem, 5vw, 4.6rem); }
+.range-mission-head h2 { font-size: clamp(2.3rem, 5vw, 4.6rem); }
 .range-clock-grid { grid-template-columns: minmax(0,1fr); margin: 0; align-self: end; margin-top: 1rem; }
 
 .range-runtime-layout {
@@ -477,7 +477,7 @@ body.prim3-range-page {
   .range-home { display: inline; }
 }
 
-.range-hero h1 { font-size: clamp(2.45rem, 14vw, 4.3rem); }
+.range-hero h2 { font-size: clamp(2.45rem, 14vw, 4.3rem); }
 
 @media (min-width: 620.02px) {
   .range-topbar { padding: .75rem clamp(1rem, 3vw, 2.5rem); }
@@ -498,7 +498,7 @@ body.prim3-range-page {
   .range-score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .range-footer { flex-direction: row; }
   .range-readiness-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .range-hero h1 { font-size: clamp(2.8rem, 7vw, 6.6rem); }
+  .range-hero h2 { font-size: clamp(2.8rem, 7vw, 6.6rem); }
 }
 @media (min-width: 900.02px) {
   .range-tool-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }

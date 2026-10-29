@@ -17,13 +17,13 @@
   "world": {
     "href": "https://mccluster.org/",
     "cta": "Open the World",
-    "line": "the Human Uprise World: the Earth, its missions and the member feed, McCluster Corp's platform, served at the company's root (humanuprise.com is its own door later)."
+    "line": "the Equity Uprise World: the Earth, its missions and the member feed, McCluster Corp's platform, served at the company's root (humanuprise.com is its own door later)."
   },
   "meta": {
     "title": "McCluster Corp · Technology, Education, Civic, Media & Creative Products and Services",
-    "description": "McCluster Corp is the operating organization behind the McCluster Platform, Equity Uprise, Human Uprise, PRIM3, McCluster Sites, and the studio's media, creative and music work. Founded in 2025 by Matthew McCluster; based in Bridgeport, Connecticut.",
+    "description": "McCluster Corp is the operating organization behind the McCluster Platform, Equity Uprise, PRIM3, McCluster Sites, and the studio's media, creative and music work. Founded in 2025 by Matthew McCluster; based in Bridgeport, Connecticut.",
     "og_title": "McCluster Corp",
-    "og_description": "The operating organization behind a growing ecosystem of technology, education, civic, media and creative products and services: the McCluster Platform, Equity Uprise, Human Uprise, PRIM3 and McCluster Sites.",
+    "og_description": "The operating organization behind a growing ecosystem of technology, education, civic, media and creative products and services: the McCluster Platform, Equity Uprise, PRIM3 and McCluster Sites.",
     "image": "https://matthew.mccluster.org/assets/img/m-mark.png",
     "image_width": 256,
     "image_height": 256,
@@ -39,7 +39,7 @@
   "product_map": {
     "href": "https://matthew.mccluster.org/mccluster-corp.html",
     "cta": "How the products fit together",
-    "line": "The product map: how the public record, the platform and Control, Equity Uprise, Human Uprise, PRIM3 and the studio connect, and the member loop from a campaign to verified action."
+    "line": "The product map: how the public record, the platform and Control, Equity Uprise, PRIM3 and the studio connect, and the member loop from a campaign to verified action."
   },
   "doors": [
     {
@@ -60,9 +60,9 @@
     },
     {
       "entity": "action_network",
-      "name": "Human Uprise",
+      "name": "Equity Uprise World",
       "kind": "Software product",
-      "line": "An action-first campaign network connected to Equity Uprise's action model: a campaign leads to a mission, the mission asks for proof, and a reviewer verifies the action.",
+      "line": "Equity Uprise's action-first campaign network: a campaign leads to a mission, the mission asks for proof, and a reviewer verifies the action.",
       "href": "https://mccluster.org/",
       "cta": "Open the World"
     },
@@ -109,7 +109,7 @@
     },
     {
       "title": "Participants",
-      "body": "Campaigns run on Human Uprise: join a campaign, take a mission, submit proof, and a reviewer verifies the action.",
+      "body": "Campaigns run on Equity Uprise: join a campaign, take a mission, submit proof, and a reviewer verifies the action.",
       "href": "https://matthew.mccluster.org/action/",
       "cta": "Join a campaign"
     },

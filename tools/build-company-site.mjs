@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* McCLUSTER CORP'S HOUSE: the company property at https://mccluster.org/.
-   The root of that host is the Human Uprise World (owner, 2026-10-15), the
+   The root of that host is the Equity Uprise World (owner, 2026-10-15), the
    company's platform, served by workers/mccluster/src/company-site/router.js;
    the page rendered here, "What is McCluster Corp?", is site.company_path
    (/company), with the host's robots.txt, sitemap.xml and llms.txt.

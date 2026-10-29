@@ -316,7 +316,7 @@ async function queuePublish(request, env, user) {
   if (actionMissionId) {
     const missions = await db(env, `action_missions?id=eq.${encodeURIComponent(actionMissionId)}&status=eq.open&select=id,campaign_id,title,description&limit=1`);
     mission = missions?.[0] || null;
-    if (!mission) throw Object.assign(new Error('Choose an open Human Uprise mission'), { status: 409 });
+    if (!mission) throw Object.assign(new Error('Choose an open Equity Uprise mission'), { status: 409 });
     if (actionCampaignId && mission.campaign_id !== actionCampaignId) {
       throw Object.assign(new Error('The selected mission does not belong to that Action campaign'), { status: 409 });
     }
@@ -326,14 +326,14 @@ async function queuePublish(request, env, user) {
   }
 
   const muid = await primaryMuid(env, user.id);
-  if (actionMissionId && !muid) throw Object.assign(new Error('Your McCluster identity is not ready for Human Uprise publishing'), { status: 409 });
+  if (actionMissionId && !muid) throw Object.assign(new Error('Your McCluster identity is not ready for Equity Uprise publishing'), { status: 409 });
 
   const contentId = crypto.randomUUID();
   const source = String(account.platform || 'instagram').toLowerCase();
   const actionUrl = actionMissionId ? actionMissionUrl(actionMissionId, actionCampaignId, contentId, source) : null;
   const finalCaption = actionUrl ? [masterCaption, `Take action: ${actionUrl}`].filter(Boolean).join('\n\n') : masterCaption;
   if (finalCaption.length > 2200) {
-    throw Object.assign(new Error('The caption plus its Human Uprise link is over Instagram\'s 2,200-character limit'), { status: 400 });
+    throw Object.assign(new Error('The caption plus its Equity Uprise link is over Instagram\'s 2,200-character limit'), { status: 400 });
   }
 
   const content = await insert(env, 'social_content_items', {

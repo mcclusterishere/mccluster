@@ -102,6 +102,7 @@
   "public_properties": {
     "authority": "docs/control-plane/DOMAINS-AND-ENTITIES.md and data/seo/domain-architecture.json",
     "rule": "Two properties, two entities; never collapse them. Serving the company host is ingress and routing inside Worker mccluster, not a new Worker, store or identity.",
+    "public_brand": "Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise). The human_uprise key below is a legacy technical identifier for the humanuprise.com host; what that host serves names Equity Uprise.",
     "personal": {
       "host": "matthew.mccluster.org",
       "entity": "https://matthew.mccluster.org/#matthew-mccluster",

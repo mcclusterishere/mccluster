@@ -24,7 +24,7 @@ export const MCC_API_URL = 'https://api.mccluster.org';
 
 /**
  * Reuse the canonical web surface. Native is another client of the same
- * Human Uprise, not a second profile/feed/onboarding universe.
+ * Equity Uprise, not a second profile/feed/onboarding universe.
  */
 export const ACTION_APP_KEY = 'mccluster-web';
 

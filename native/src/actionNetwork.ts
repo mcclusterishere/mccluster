@@ -1,5 +1,5 @@
 /**
- * Native Human Uprise data contract.
+ * Native Equity Uprise data contract.
  *
  * Reads use the same Worker / RLS-visible relations as mnet.js. Every mission,
  * proof, fellowship, deletion, and share mutation stays server-authoritative
