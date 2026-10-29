@@ -78,7 +78,7 @@
 <div class="hud" id="help">WASD move · Shift sprint · Space jump · M overview · R respawn<br/>1/2/3 switch agent · Click for mouse-look</div>
 <div class="hud" id="map"><canvas id="mmc" width="220" height="140"></canvas></div>
 <div class="hud" id="cross"></div>
-<a id="exit" href="/hitman-facility.html">&larr; FACILITY</a>
+<a id="exit" href="../../hitman-facility/hitman-facility.html">&larr; FACILITY</a>
 <div id="agents">
   <button class="abtn on" data-ag="WALK">1 · WALK</button>
   <button class="abtn" data-ag="DRIVE">2 · DRIVE</button>
@@ -510,7 +510,7 @@ document.getElementById('deploy').addEventListener('click',()=>{
   started=true; t0=performance.now();
   if(!isTouch&&!location.hash.includes('test')) ren.domElement.requestPointerLock();
 });
-// hitman-facility.html is a nine-level selector for this building, and its
+// The FACILITY selector (in private development) is a nine-level selector for this building, and its
 // level names are the same programme this model was reprogrammed to. So it can
 // hand the chosen level straight over: /site0/?level=B3 puts you on B3.
 // Placed at the landing of a shaft that actually serves that level, so the

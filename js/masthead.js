@@ -263,10 +263,6 @@ html { scroll-behavior: smooth; }
       { href: "matthew-mccluster.html", label: "Who I am" },
       { href: "press.html",     label: "Press & citations" },
       { href: "newsroom.html",  label: "Verified newsroom & public record" },
-      /* HITMAN used to be reachable only because js/theme.js rewrote the
-         fifth tab into it after boot. That override was retired when the
-         shop took the tab, so this line is now the page's only door.
-         Deleting it orphans a whole room. */
       /* The site measures every visit itself — address, network, device,
          what was clicked. This map is the only door to the page that says
          so, and a disclosure nobody can reach is not a disclosure. */

@@ -119,7 +119,6 @@ const BARE_FR_ALLOWED = {
   "css/control-room.css": 4,
   "css/equity-uprise-app.css": 1,
   "css/equity-uprise-institutional.css": 21,
-  "css/hitman-facility.css": 1,
   "css/mnet-audio.css": 1,
   "css/mnet.css": 3,
   "css/music-creator.css": 5,

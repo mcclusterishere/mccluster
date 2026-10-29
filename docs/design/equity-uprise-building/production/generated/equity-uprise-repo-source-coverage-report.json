@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 504,
+  "candidate_count": 505,
   "capability_source_count": 102,
-  "support_only_count": 402,
-  "checks_total": 1916,
-  "checks_passed": 1916,
+  "support_only_count": 403,
+  "checks_total": 1920,
+  "checks_passed": 1920,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -38,6 +38,8 @@
     "_unfinished/equity-uprise/feed.html",
     "_unfinished/equity-uprise/fellowship.html",
     "_unfinished/equity-uprise/fellowships.html",
+    "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js",
+    "_unfinished/equity-uprise/js/here-material.js",
     "_unfinished/equity-uprise/profile.html",
     "_unfinished/equity-uprise/topics.html",
     "_unfinished/equity-uprise/uprise-admin.html",
@@ -230,7 +232,6 @@
     "js/create.js",
     "js/crm.js",
     "js/docket-cohort-showcase.js",
-    "js/equity-uprise-fellowship-live.js",
     "js/equity-uprise-institutional.js",
     "js/eu-api.js",
     "js/fan-intake.js",
@@ -518,7 +519,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "504 entries"
+      "detail": "505 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3941,19 +3942,39 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js capability ids known",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js classified",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js classified",
       "passed": true,
       "detail": "classification='capability_source'"
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js support-only semantics coherent",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "js/equity-uprise-institutional.js capability ids known",
@@ -8816,6 +8837,26 @@
       "detail": ""
     },
     {
+      "name": "_unfinished/creator-selection-desk.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/creator-selection-desk.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "_unfinished/creator-selection-desk.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/creator-selection-desk.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "account.html capability ids known",
       "passed": true,
       "detail": ""
@@ -10072,26 +10113,6 @@
     },
     {
       "name": "workers/mccluster/test/mnet-post-limits.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "_unfinished/creator-selection-desk.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "_unfinished/creator-selection-desk.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "_unfinished/creator-selection-desk.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "_unfinished/creator-selection-desk.html support rationale present",
       "passed": true,
       "detail": ""
     }

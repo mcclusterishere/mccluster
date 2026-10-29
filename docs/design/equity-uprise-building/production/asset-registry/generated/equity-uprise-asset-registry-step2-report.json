@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "status": "step2-deterministic-registry-ingestion",
-  "source_revision": "sha256:29778d96e4542e0693bc89786dc4ddd75d0f4f2485a4940f846a89fa53047a1e",
+  "source_revision": "sha256:12d3aafe35926f6da8f8b3c3ac110740082e7b6d5a043692a15c81e0fefbd0ae",
   "source_records_total": 956,
   "expected_source_records_total": 956,
   "registry_assets_total": 1019,

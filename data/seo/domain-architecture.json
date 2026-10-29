@@ -191,15 +191,20 @@
       "/whip/rentals/",
       "/whip/rider/"
     ],
-    "in_private_development_unpublished": [
-      "/hitman-facility.html"
-    ],
-    "_in_private_development_unpublished": "Owner, 2026-10-28: hitman-facility.html is in private development, unpublished; it moves to _unfinished/ and is not an indexable page. It stays out of data/seo/sitemap-pages.json and sitemap.xml until the owner publishes it (scripts/test/seo-entity-pages.test.mjs).",
     "owner_decision": [
       "/prayer-closet.html",
       "/closet/",
       "/inner-room.html",
       "/fbi.html"
+    ],
+    "company_private_development_unpublished": [
+      {
+        "product": "HITMAN Facility (PRIM3 Site 0 level selector)",
+        "entity": "McCluster Corp",
+        "status": "private development, unpublished: served on no host, absent from navigation, sitemap and llms.txt",
+        "owner_decision": "2026-10-28",
+        "owner_words": "The facility must be moved to a non-visible part of the site to be developed privately."
+      }
     ],
     "why_company_apps_stay_put": "Sessions are per-origin localStorage (js/backend.js), checkout returns and the Supabase Auth redirect allowlist name matthew.mccluster.org, and printed QR codes and live campaign links point at these paths. Moving the World, accounts or checkout to mccluster.org would sign members out and break returns. The company property describes these products and links into them; it does not re-host them."
   },
