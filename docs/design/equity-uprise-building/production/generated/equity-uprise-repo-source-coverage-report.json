@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 505,
+  "candidate_count": 510,
   "capability_source_count": 102,
-  "support_only_count": 403,
-  "checks_total": 1920,
-  "checks_passed": 1920,
+  "support_only_count": 408,
+  "checks_total": 1940,
+  "checks_passed": 1940,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -139,6 +139,7 @@
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
     "docs/control-plane/CANONICAL-ARCHITECTURE.md",
     "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md",
+    "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/ECOSYSTEM.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
@@ -151,6 +152,7 @@
     "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
     "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
+    "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
     "docs/control-plane/SATELLITE.md",
@@ -164,6 +166,8 @@
     "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
     "docs/control-plane/canonical-architecture.json",
+    "docs/control-plane/evidence/production-advisors-2026-10-28.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -462,6 +466,7 @@
     "supabase/replay_migrations/20260908235000_close_view_rls_bypass.sql",
     "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
+    "supabase/schema-manifest.json",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/action_globe_demo_pins_v1.applied.sql",
     "supabase/tests/action_mission_pins.stub.sql",
@@ -519,7 +524,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "505 entries"
+      "detail": "510 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8833,6 +8838,106 @@
     },
     {
       "name": "docs/control-plane/SATELLITE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/schema-manifest.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/schema-manifest.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "supabase/schema-manifest.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/schema-manifest.json support rationale present",
       "passed": true,
       "detail": ""
     },
