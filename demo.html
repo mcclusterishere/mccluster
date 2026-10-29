@@ -41,16 +41,14 @@
     .dv__ctl--out:hover i { transform: translateX(3px); }
     .dv__ctl:focus-visible { outline: 2px solid #e8c877; outline-offset: 3px; }
 
-    .dv__title { flex: 1 1 10rem; min-width: 0; text-align: center; }
+    .dv__title { flex: 1 1 10rem; min-width: 0; text-align: left; order: 2; }
     .dv__title .kick { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .dv__title h1 { font-family: var(--sig); text-transform: uppercase; letter-spacing: 0.02em;
       line-height: 1; font-size: clamp(1.05rem, 3.4vw, 1.7rem); color: var(--cream);
       margin-top: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    /* narrow: one row of controls, then the title on its own line */
-    @media (max-width: 44rem) {
-      .dv__title { order: 2; flex: 1 1 100%; text-align: left; }
-      .dv__ctl { font-size: 0.6rem; letter-spacing: 0.14em; padding: 0.4rem 0.45rem; }
-    }
+    /* phones: one row of controls, then the title on its own line (the base
+       rules); from 44rem the title sits between the controls */
+    @media (min-width: 44.001rem) { .dv__title { order: 0; text-align: center; } }
 
     /* ============ THE HONEST LINE + THE SWITCHER ============ */
     .dv__under { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;

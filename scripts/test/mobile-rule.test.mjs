@@ -72,9 +72,8 @@ const hasBareFr = (value) => {
 const bareTracks = (css) => [...css.matchAll(GRID_DECL)].filter((m) => hasBareFr(m[1])).length;
 
 /* ---- the allowlists: seeded 2026-10-27, and they may only shrink ---- */
-/* @media (…max-width…) queries per file: 107 in 41 files */
+/* @media (…max-width…) queries per file: 79 in 21 files */
 const MAX_WIDTH_ALLOWED = {
-  "catalogue.html": 1,
   "css/control-room-v2.css": 9,
   "css/control-room.css": 3,
   "css/control-system.css": 1,
@@ -95,26 +94,7 @@ const MAX_WIDTH_ALLOWED = {
   "css/prim3.css": 2,
   "css/professional.css": 1,
   "css/style.css": 38,
-  "demo.html": 1,
-  "desk.html": 1,
-  "docs/design/native-identity-comparison.html": 1,
-  "docs/design/redesign-before-after.html": 2,
-  "equity-uprise.html": 1,
-  "gallery.html": 4,
-  "inbox.html": 1,
-  "license.html": 1,
-  "management.html": 1,
-  "mccluster-creator-studio.html": 1,
-  "mccluster-platform.html": 2,
-  "portfolio/onyx-elite.html": 1,
-  "prayer-closet.html": 1,
-  "production.html": 1,
-  "research.html": 1,
-  "sites-details.html": 2,
-  "sites.html": 2,
   "whip/index.html": 2,
-  "workers/mccluster/src/seek-first/console.html": 1,
-  "world-news.html": 2,
 };
 /* grid-template declarations with a bare 1fr per file: 0 in 0 files */
 const BARE_FR_ALLOWED = {};

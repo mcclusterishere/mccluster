@@ -39,8 +39,8 @@
     .sr-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0,1fr); align-items: start; }
     @media (min-width: 72rem) { .sr-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
     .sr-side { display: grid; gap: 1rem; grid-template-columns: minmax(0,1fr); }
-    @media (min-width: 46rem) and (max-width: 71.999rem) {
-      .sr-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 46rem) { .sr-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 72rem) { .sr-side { grid-template-columns: minmax(0,1fr); } }
 
     .sr-panel { min-width: 0; border-radius: var(--cs-r-lg); background: var(--cs-1);
       box-shadow: inset 0 0 0 1px var(--cs-edge); padding: 1rem 1.05rem 1.15rem; }
