@@ -19,6 +19,13 @@
 -- normalized key (listen.js key(); album.html paintPlays() as of this
 -- change), so the counts line up with every spelling of a title.
 
+-- Applied after supabase/pending/20261029100100_definer_views_invoker_v1.sql (2026-10-29),
+-- which turned the two track views into security_invoker views over
+-- private.track_signals_rows() / private.track_affinity_rows() (the security_definer_view
+-- advisor ERRORs). So this file replaces those two functions' bodies, not the views: the
+-- views keep their columns and security_invoker, and the functions keep their grants
+-- (create or replace keeps EXECUTE) and their empty search_path.
+
 set local lock_timeout = '5s';
 
 create or replace function public.play_counts()
@@ -35,7 +42,13 @@ as $$
    group by l.track
 $$;
 
-create or replace view public.v_track_signals as
+create or replace function private.track_signals_rows()
+returns table(track_key text, "position" bigint, keep_score integer, momentum_score integer, momentum_rank integer, deep_cut boolean)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
  with plays as (
          select l.track as k, l.device_id, l.session_id, l.at
            from public.events_lean l
@@ -101,8 +114,15 @@ create or replace view public.v_track_signals as
     keep_rank::numeric <= (total::numeric / 2.0) and play_rank::numeric > (total::numeric / 2.0) as deep_cut
    from ranked r
   where plays > 0;
+$$;
 
-create or replace view public.v_track_affinity as
+create or replace function private.track_affinity_rows()
+returns table(track_key text, other_key text, score numeric, rn bigint)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
  with plays as (
          select distinct l.track as k, l.session_id, l.device_id
            from public.events_lean l
@@ -127,3 +147,4 @@ create or replace view public.v_track_affinity as
      join totals ta on ta.k = p.k
      join totals tb on tb.k = p.other
   where p.co_devices >= 3;
+$$;

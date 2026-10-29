@@ -280,6 +280,49 @@ After each promotion: record the new ledger row, move the file with the README s
 re-take the production snapshot and the reset manifest, and confirm both agree on the
 objects the file created.
 
+## Follow-up, 2026-10-29: step 0 done, findings 1-4 written
+
+Nothing applied to production; every production query was again a read-only catalog
+SELECT.
+
+- **Step 0 / finding 1**: `supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql`
+  recreates the 17 tables, 10 functions, 6 triggers, 37 policies (seven on
+  storage.objects) and 2 buckets above from `pg_get_functiondef`, `pg_get_triggerdef`,
+  `pg_get_constraintdef`, `pg_get_indexdef`, `pg_policies`, `relacl`/`proacl` and
+  `storage.buckets`. Every block is guarded by an existence check: a no-op on production
+  and on a second run. `supabase/schema-manifest.json` is the CI reset's (Reconciliation
+  CI "reset-schema" artifact); against it this evidence has **nothing only in
+  production** (relations, functions, policies, triggers, buckets: 0), and the
+  regeneration added those 72 rows and changed no other.
+  `bash scripts/test-schema-reconcile-db.sh` checks the same 72 rows against this
+  evidence on a scratch Postgres. Still different, by design of step 0 (it brings in
+  what is missing, it does not rewrite what exists): the 31 relations, 79 functions and
+  58 policies listed as changed, and the replay-only objects below.
+- **Finding 2**: `supabase/pending/20261029100000_privilege_hygiene_v1.sql`. Not revoked,
+  on purpose: anon EXECUTE on `eu_is_admin`, `eu_is_staff`, `shake_is_crew` (anon is
+  subject to policies that call them: revoking turns public reads of `action_missions`,
+  `action_campaigns`, `eu_fellowships`, `shake_products` and others into "permission
+  denied"), on `eu_match_fellowships` (signed-out matching in `js/eu-api.js`); and
+  `leads_in`, `eu_perspectives_in` stay open to anon (public intake). The "11 policies"
+  above are 9 once those two are kept.
+- **Finding 3**: `supabase/pending/20261029100100_definer_views_invoker_v1.sql`.
+  security_invoker alone would empty the views (RLS on `events`, no grants on
+  `media_news_*`), so each becomes an invoker view over a `private.*_rows()` SECURITY
+  DEFINER function with `search_path = ''`. `public_music_reads_lean_v1.sql` was edited
+  to replace those functions' bodies, not to recreate definer views.
+- **Finding 4**: `supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql`, all
+  71 policies; unwrapped it is production's text byte for byte
+  (`scripts/test/rls-initplan-select-wrap.test.mjs`).
+- **Replay-only gap**: `supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql`
+  creates the EU worker runtime and `media_usage_rollup`. `media_usage_rollup` as written
+  in its replay file could never run (its totals read a CTE from a second statement);
+  fixed in both. The triggers `eu_events_dispatch` and
+  `eu_out_events_communication_bridge` are not created (side effects on every insert;
+  production bridges `out_events` with its own `private.eu_out_event_bridge()`), nor
+  `touch_listener_state()`; those remain rebuild-only. `scripts/test/rpc-names-exist.test.mjs`
+  now counts a name as existing only when the manifest and this evidence both have it,
+  and scans `supabase/functions/`.
+
 ## Limits
 
 - Column-default and constraint signatures mask uuid literals: `0026_tenancy` sets `org_id`
