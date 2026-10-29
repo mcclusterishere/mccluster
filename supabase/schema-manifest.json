@@ -529,7 +529,7 @@
    ["public","work_tasks","r",true,false,"",13,"2963669335e0","6159eb3b84f2","298029dd3cf8","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "d2c07787e34c5463b697d448e7e9d0f9", "rows": [
+  "functions": {"md5": "f21602ed210b71ccd342f9011324917d", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -846,7 +846,7 @@
    ["public","media_record_actual_cost","p_job_id uuid, p_actual_cost_cents integer, p_metadata jsonb","void",true,"v","search_path=public, pg_temp","33eef72e16f4",""],
    ["public","media_record_actual_cost_v2","p_job_id uuid, p_actual_cost_usd_micros bigint, p_quantity numeric, p_unit text, p_unit_price_usd_micros bigint, p_source text, p_raw_provider_usage jsonb, p_occurred_at timestamp with time zone","void",true,"v","search_path=public, pg_temp","975dd2c454c9",""],
    ["public","media_release_cost_reservation","p_job_id uuid, p_reason text","void",true,"v","search_path=public, pg_temp","4362c7e3280e",""],
-   ["public","media_usage_rollup","p_org_id uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group_by text","jsonb",true,"s","search_path=public, pg_catalog","b40ceee92749",""],
+   ["public","media_usage_rollup","p_org_id uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group_by text","jsonb",true,"s","search_path=public, pg_catalog","da05d3e499d0",""],
    ["public","media_world_news","p_before_at timestamp with time zone, p_before_id uuid, p_limit integer","TABLE(id uuid, title text, url text, domain text, seen_at timestamp with time zone, place text, lat double precision, lon double precision)",true,"s","search_path=public","4c13b0aa7664",""],
    ["public","media_world_news_places","p_hours integer, p_limit integer","TABLE(place text, lat double precision, lon double precision, count bigint, title text, url text, seen_at timestamp with time zone)",true,"s","search_path=public","da5fb31583bc",""],
    ["public","memory_note","p_contact uuid, p_key text, p_value text, p_confidence real, p_source uuid","uuid",true,"v","search_path=public, pg_temp","4b482bbbada8",""],
