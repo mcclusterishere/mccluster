@@ -177,9 +177,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/fellowship.html"
     },
     {
-      "name": "capability source exists: fellowship-applications -> js/equity-uprise-fellowship-live.js",
+      "name": "capability source exists: fellowship-applications -> _unfinished/equity-uprise/js/equity-uprise-fellowship-live.js",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/js/equity-uprise-fellowship-live.js"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js"
     },
     {
       "name": "capability source exists: fellowship-applications -> supabase/functions/eu-intake/index.ts",

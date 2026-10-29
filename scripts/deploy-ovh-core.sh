@@ -12,6 +12,13 @@ SYSTEMD_DIR="/etc/systemd/system"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_DIR="${RELEASE_ROOT}/predeploy-${STAMP}"
 DEPLOY_MANIFEST="${CORE_TARGET}/.mccluster-deploy.json"
+# Set once the live install is about to change; rollback restarts and verifies
+# only when there is something live to recover.
+LIVE_TOUCHED=0
+
+# Shared restart + health probe: the forward gate and rollback use one probe.
+# shellcheck source=scripts/ovh-core-health.sh
+source "$(dirname "${BASH_SOURCE[0]}")/ovh-core-health.sh"
 
 if [[ -z "${SOURCE_DIR}" || ! -d "${SOURCE_DIR}/core" ]]; then
   echo "usage: $0 <checked-out-repo-dir> <exact-commit-sha>" >&2
@@ -36,7 +43,7 @@ command -v systemctl >/dev/null
 mkdir -p "${RELEASE_ROOT}"
 # Only the exact checkout selected by the promotion/reconcile gate may be stamped.
 test "$(git -C "${SOURCE_DIR}" rev-parse HEAD)" = "${DEPLOY_SHA}"
-git -C "${SOURCE_DIR}" diff --quiet HEAD -- core scripts/deploy-ovh-core.sh scripts/mccluster-vps-reconcile.sh
+git -C "${SOURCE_DIR}" diff --quiet HEAD -- core scripts/deploy-ovh-core.sh scripts/ovh-core-health.sh scripts/mccluster-vps-reconcile.sh
 
 # Validate the incoming Core tree before touching the live install.
 pushd "${SOURCE_DIR}/core" >/dev/null
@@ -46,13 +53,24 @@ popd >/dev/null
 
 rollback() {
   local rc=$?
+  # Recovery is handled explicitly below: a failing step inside rollback must
+  # neither re-enter this trap nor exit silently under errexit.
+  trap - ERR
+  set +e
   if [[ ${rc} -eq 0 ]]; then
     return 0
   fi
-  echo "deploy failed (rc=${rc}); attempting rollback" >&2
+  if [[ ${LIVE_TOUCHED} -eq 0 ]]; then
+    mcc_log "deploy failed (rc=${rc}) before the live install changed; nothing to roll back"
+    exit "${rc}"
+  fi
+  mcc_log "deploy failed (rc=${rc}); rolling back to the previous release"
   if [[ -d "${BACKUP_DIR}/core" ]]; then
     mkdir -p "${CORE_TARGET}"
-    rsync -a --delete "${BACKUP_DIR}/core/" "${CORE_TARGET}/"
+    if ! rsync -a --delete "${BACKUP_DIR}/core/" "${CORE_TARGET}/"; then
+      mcc_log "ROLLBACK FAILED: could not restore Core files from ${BACKUP_DIR}/core"
+      exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+    fi
     # Restore the unit files as well as code. Otherwise a failed release leaves
     # new ExecStart paths or privileges behind while claiming code rollback.
     if [[ -d "${BACKUP_DIR}/units" ]]; then
@@ -77,12 +95,7 @@ rollback() {
     elif [[ -f "${BACKUP_DIR}/new-node-capabilities" ]]; then
       rm -f /etc/mccluster-node/capabilities.json
     fi
-    systemctl daemon-reload || true
-    for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service; do
-      if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
-        systemctl try-restart "${unit}" || true
-      fi
-    done
+    systemctl daemon-reload || mcc_log "rollback: systemctl daemon-reload failed"
   fi
   # The reconciler has its own backup marker so it can be restored even if this
   # was the first Core deployment and there was no prior Core tree to restore.
@@ -92,9 +105,23 @@ rollback() {
   elif [[ -f "${BACKUP_DIR}/new-reconcile-script" ]]; then
     rm -f "${RECONCILE_SCRIPT}"
   fi
+  if [[ ! -d "${BACKUP_DIR}/core" ]]; then
+    mcc_log "ROLLBACK FAILED: no previous Core release was captured (first deploy); there is no healthy release to restore"
+    exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+  fi
+  # Restoring files is not recovery. A release that failed to start leaves its
+  # units inactive, so restart every unit the deploy restarted and verify the
+  # restored release with the deploy's own health probe.
+  if ! mcc_recover_restored_release; then
+    mcc_log "deploy rc=${rc}; rollback restored files from ${BACKUP_DIR} but the restored release is unhealthy"
+    exit "${MCC_ROLLBACK_UNHEALTHY_RC}"
+  fi
+  mcc_log "deploy failed (rc=${rc}); previous release restored from ${BACKUP_DIR} and healthy"
   exit "${rc}"
 }
 trap rollback ERR
+
+LIVE_TOUCHED=1
 
 # Snapshot only the deploy-controlled Core tree. Secrets remain under /etc/mccluster.
 # The deployment manifest lives inside Core, so rollback restores provenance too.
@@ -189,25 +216,21 @@ done
 # Catch up the knowledge export after deployment without blocking inference.
 systemctl start --no-block mccluster-core-knowledge.service
 
-for unit in mccluster-core-tool-broker.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service mccluster-core-runner.service; do
-  if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
+for unit in "${MCC_CORE_SERVICES[@]}"; do
+  if mcc_unit_installed "${unit}"; then
     systemctl restart "${unit}"
   fi
 done
 
 # The preview file server is loopback-only and receives no Core credentials.
-systemctl enable --now mccluster-preview-gateway.service
-systemctl restart mccluster-preview-gateway.service
-curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:4799/health >/dev/null
+systemctl enable --now "${MCC_PREVIEW_SERVICE}"
+systemctl restart "${MCC_PREVIEW_SERVICE}"
 
 # The resident AI path is part of the minimum healthy Core surface.
 # A release that leaves the adapter unable to reach Ollama must roll back
 # instead of stamping a deployment where Control can queue work but never reply.
-systemctl is-active --quiet mccluster-core-runner.service
-systemctl is-active --quiet mccluster-core-tool-broker.service
-systemctl is-active --quiet mccluster-ollama-adapter.service
-systemctl is-active --quiet mccluster-compute-node.service
-curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:4790/health >/dev/null
+# Same probe rollback uses: preview /health, required units active, adapter /health.
+mcc_verify_core_health strict
 
 grep -Fq "\"commit_sha\":\"${DEPLOY_SHA}\"" "${DEPLOY_MANIFEST}"
 printf 'deployed_core=%s\ncommit_sha=%s\nmanifest=%s\nbackup=%s\n' "${CORE_TARGET}" "${DEPLOY_SHA}" "${DEPLOY_MANIFEST}" "${BACKUP_DIR}"

@@ -10,6 +10,7 @@ on:
         default: false
 permissions:
   contents: read
+  checks: read
 concurrency:
   group: deploy-mccluster-mcp-main
   cancel-in-progress: false
@@ -29,22 +30,32 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version-file: workers/mccluster/.node-version
       - name: Require production source and credentials
         run: |
           test "$GITHUB_REF" = refs/heads/main
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
+      - name: Require every deploy-gate check green on this exact commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node ../../scripts/require-green-ci.mjs --sha "$GITHUB_SHA"
+      # One Wrangler for both Workers: the exact devDependency locked in
+      # workers/mccluster/package-lock.json. `npm exec --prefix ../mccluster --no`
+      # runs that binary from this directory (so this Worker's wrangler.toml
+      # applies) and fails rather than downloading when it is absent.
+      - name: Install the locked Wrangler CLI
+        run: npm ci --prefix ../mccluster --ignore-scripts --no-audit --no-fund
       - name: Verify transport and compile without publishing
         run: |
           node --test test/*.test.mjs ../mccluster/test/core-bridge.test.mjs ../mccluster/test/core-oauth-resource.test.mjs ../../scripts/test/*.test.mjs
-          npx --yes wrangler@4.131.1 versions upload --dry-run
+          npm exec --prefix ../mccluster --no -- wrangler versions upload --dry-run
       - name: Record traffic before updating an existing transport
         id: rollback
         if: inputs.bootstrap != true
         run: |
           set -euo pipefail
-          npx --yes wrangler@4.131.1 deployments list --json > /tmp/mcp-before.json
+          npm exec --prefix ../mccluster --no -- wrangler deployments list --json > /tmp/mcp-before.json
           allocation="$(node ../../scripts/worker-deployment-state.mjs capture /tmp/mcp-before.json /tmp/mcp-rollback.json)"
           echo "allocation=$allocation" >> "$GITHUB_OUTPUT"
       - name: Bootstrap only a confirmed absent transport
@@ -68,24 +79,24 @@ jobs:
           await writeFile('/tmp/mcp-secrets.json',JSON.stringify(Object.fromEntries(keys.map(k=>[k,process.env[k]]))),{mode:0o600});
           NODE
           trap 'rm -f /tmp/mcp-secrets.json' EXIT
-          npx --yes wrangler@4.131.1 deploy --secrets-file /tmp/mcp-secrets.json \
+          npm exec --prefix ../mccluster --no -- wrangler deploy --secrets-file /tmp/mcp-secrets.json \
             --var DEPLOY_SHA:${GITHUB_SHA} --var DEPLOY_REF:${GITHUB_REF_NAME}
       - name: Upload without changing traffic
         if: inputs.bootstrap != true
         run: |
-          npx --yes wrangler@4.131.1 versions upload \
+          npm exec --prefix ../mccluster --no -- wrangler versions upload \
             --tag ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT} \
             --var DEPLOY_SHA:${GITHUB_SHA} --var DEPLOY_REF:${GITHUB_REF_NAME}
       - name: Refuse concurrent external promotion
         if: inputs.bootstrap != true
         run: |
-          npx --yes wrangler@4.131.1 deployments list --json > /tmp/mcp-pre-promote.json
+          npm exec --prefix ../mccluster --no -- wrangler deployments list --json > /tmp/mcp-pre-promote.json
           node ../../scripts/worker-deployment-state.mjs verify /tmp/mcp-pre-promote.json /tmp/mcp-rollback.json
       - name: Promote exact uploaded version
         id: promote
         if: inputs.bootstrap != true
         run: |
-          npx --yes wrangler@4.131.1 versions deploy \
+          npm exec --prefix ../mccluster --no -- wrangler versions deploy \
             --version-tag ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}@100 --yes
       - name: Verify live MCP contract and provenance
         run: node ../../scripts/mcp-contract-check.mjs --base https://mcp.mccluster.org --sha "$GITHUB_SHA"
@@ -96,6 +107,6 @@ jobs:
         run: |
           set -euo pipefail
           read -r -a versions <<< "$ALLOCATION"
-          npx --yes wrangler@4.131.1 versions deploy "${versions[@]}" --yes
-          npx --yes wrangler@4.131.1 deployments list --json > /tmp/mcp-restored.json
+          npm exec --prefix ../mccluster --no -- wrangler versions deploy "${versions[@]}" --yes
+          npm exec --prefix ../mccluster --no -- wrangler deployments list --json > /tmp/mcp-restored.json
           node ../../scripts/worker-deployment-state.mjs verify /tmp/mcp-restored.json /tmp/mcp-rollback.json
