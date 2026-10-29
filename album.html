@@ -616,7 +616,6 @@
   </style>
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <link rel="stylesheet" href="css/song-test.css?v=__STAMP__">
@@ -908,6 +907,7 @@
       var g = t.gated || null;
       return '<li data-src="' + t.src + '"' +
         ' data-key="' + escAttr(listenKey(t)) + '"' +
+        (!g && t.seconds > 0 ? ' data-seconds="' + Number(t.seconds) + '"' : "") +
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
              ' data-preview-src="' + escAttr(t.src) + '"' : "") +
@@ -1118,14 +1118,16 @@
     /* THE CLOCK COMES OFF THE SHELF, NOT OFF THE WIRE. Probing every row for
        its metadata opened one audio request per track on every visit, each
        cut off as soon as the header arrived: fifteen aborted loads before a
-       single play. The catalogue already stores every committed song's
-       length, so a row is painted from that and asks nothing of the server
-       until the listener presses play. A gated row is still probed: its
+       single play. data/albums.json carries every committed song's measured
+       length (`seconds`, stamped by scripts/music-track-lengths.mjs), and the
+       catalogue's stored length backs it up, so a row is painted from those
+       and asks nothing of the server until the listener presses play. A gated row is still probed: its
        clock is the length of whatever it points at right now, the public
        preview or the signed master, and the catalogue knows neither. So is
        a row the catalogue has no length for. */
     function paintDuration(row) {
-      var s = row.getAttribute("data-gated-bucket") ? 0 : LEN[String(row.getAttribute("data-key") || "").toLowerCase()];
+      var s = row.getAttribute("data-gated-bucket") ? 0
+        : (Number(row.getAttribute("data-seconds")) || LEN[String(row.getAttribute("data-key") || "").toLowerCase()]);
       if (!s) return probeDuration(row);
       var cell = row.querySelector(".d");
       if (cell) cell.textContent = rowTime(s);
@@ -2171,7 +2173,6 @@
   <script src="js/gyro.js?v=__STAMP__"></script>
   <script src="js/intuition.js?v=__STAMP__"></script>
   <script src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
   <!-- the gate on a record: the M session, then the signer that trades it
        for a URL to the master. Both load after the shelf paints, because a
        locked row is the correct first frame and never a spinner. -->

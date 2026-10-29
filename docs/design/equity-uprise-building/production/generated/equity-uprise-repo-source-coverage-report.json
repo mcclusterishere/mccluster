@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 507,
+  "candidate_count": 504,
   "capability_source_count": 102,
-  "support_only_count": 405,
-  "checks_total": 1928,
-  "checks_passed": 1928,
+  "support_only_count": 402,
+  "checks_total": 1916,
+  "checks_passed": 1916,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -22,6 +22,7 @@
     "LICENSE",
     "README.md",
     "_unfinished/README.md",
+    "_unfinished/creator-selection-desk.html",
     "_unfinished/equity-uprise/dashboard.html",
     "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html",
     "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html",
@@ -75,7 +76,6 @@
     "cohort-profile.html",
     "control.html",
     "create.html",
-    "creator-selection-desk.html",
     "crm.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
@@ -236,7 +236,6 @@
     "js/fan-intake.js",
     "js/fbi.js",
     "js/gateway.js",
-    "js/here-material.js",
     "js/hire-offers.js",
     "js/insights.js",
     "js/lockroom.js",
@@ -293,8 +292,6 @@
     "privacy.html",
     "production.html",
     "receipt.html",
-    "redirects/equity-uprise.html",
-    "redirects/walls/eu-rally.html",
     "resume-it-support.html",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
@@ -521,7 +518,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "507 entries"
+      "detail": "504 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4009,26 +4006,6 @@
       "detail": ""
     },
     {
-      "name": "js/here-material.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/here-material.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "js/here-material.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "js/here-material.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "js/hire-offers.js capability ids known",
       "passed": true,
       "detail": ""
@@ -4755,46 +4732,6 @@
     },
     {
       "name": "production.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/equity-uprise.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/equity-uprise.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8639,26 +8576,6 @@
       "detail": ""
     },
     {
-      "name": "workers/mccluster/test/company-site.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/test/company-site.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "workers/mccluster/test/company-site.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "workers/mccluster/test/company-site.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "workers/mccluster/test/human-uprise-site.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -9239,26 +9156,6 @@
       "detail": ""
     },
     {
-      "name": "creator-selection-desk.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "creator-selection-desk.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "creator-selection-desk.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "creator-selection-desk.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "docs/control-plane/CANONICAL-ARCHITECTURE.md capability ids known",
       "passed": true,
       "detail": ""
@@ -9315,6 +9212,26 @@
     },
     {
       "name": "docs/control-plane/LIVE-MISSIONS.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10119,6 +10036,26 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/test/company-site.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/company-site.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/company-site.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/company-site.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/test/mnet-post-limits.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -10139,22 +10076,22 @@
       "detail": ""
     },
     {
-      "name": "docs/control-plane/canonical-architecture.json capability ids known",
+      "name": "_unfinished/creator-selection-desk.html capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "docs/control-plane/canonical-architecture.json classified",
+      "name": "_unfinished/creator-selection-desk.html classified",
       "passed": true,
-      "detail": "classification='governance_support'"
+      "detail": "classification='shared_site_support'"
     },
     {
-      "name": "docs/control-plane/canonical-architecture.json support-only semantics coherent",
+      "name": "_unfinished/creator-selection-desk.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "docs/control-plane/canonical-architecture.json support rationale present",
+      "name": "_unfinished/creator-selection-desk.html support rationale present",
       "passed": true,
       "detail": ""
     }

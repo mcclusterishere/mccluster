@@ -6,12 +6,15 @@
    That needs every song's length on the server, where a listener cannot
    edit it, so this reads the lengths out of the committed audio files and
    writes them next to the Worker code (workers/mccluster/src/music/tracks.js).
+   The same lengths are stamped as `seconds` on every ungated track in
+   data/albums.json, so album.html paints each row's clock from the file it
+   already fetched instead of opening an audio request per row to probe it.
 
    No ffmpeg: MP3 length is the sum of its frames, and M4A length is the
    movie header's duration over its timescale. Both are exact.
 
-     node scripts/music-track-lengths.mjs          write the file
-     node scripts/music-track-lengths.mjs --check  exit 1 if it is stale
+     node scripts/music-track-lengths.mjs          write both files
+     node scripts/music-track-lengths.mjs --check  exit 1 if either is stale
 
    A track's key is its file name without the extension (a gated track
    uses its bucket folder), which is what the players send. */
@@ -22,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(root, 'workers/mccluster/src/music/tracks.js');
+const ALBUMS = resolve(root, 'data/albums.json');
 
 const BITRATES = {
   // [version-group][layer] in kbps; index 0 is "free", 15 is invalid
@@ -115,8 +119,26 @@ export function trackKey(track) {
   return basename(String(track.src || ''), extname(String(track.src || '')));
 }
 
+/* data/albums.json with each ungated track's `seconds` set to its measured
+   length (one decimal, the same figure as tracks.js). The file keeps its
+   one-space indentation. A gated track's master is not in the repository,
+   so it carries no `seconds` and its row is still measured in the browser. */
+export function stampAlbums() {
+  const doc = JSON.parse(readFileSync(ALBUMS, 'utf8'));
+  for (const album of doc.albums) {
+    for (const t of album.tracks || []) {
+      if (t.gated) { delete t.seconds; continue; }
+      const file = resolve(root, t.src);
+      const seconds = audioSeconds(readFileSync(file), extname(file));
+      if (!seconds) throw new Error(`${t.src}: unsupported audio type ${extname(file)}`);
+      t.seconds = Math.round(seconds * 10) / 10;
+    }
+  }
+  return JSON.stringify(doc, null, 1) + '\n';
+}
+
 export function build() {
-  const albums = JSON.parse(readFileSync(resolve(root, 'data/albums.json'), 'utf8')).albums;
+  const albums = JSON.parse(readFileSync(ALBUMS, 'utf8')).albums;
   const tracks = {};
   for (const album of albums) {
     for (const t of album.tracks || []) {
@@ -143,16 +165,19 @@ export function build() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const next = build();
+  const albums = stampAlbums();
   if (process.argv.includes('--check')) {
-    let current = '';
+    let current = '', currentAlbums = '';
     try { current = readFileSync(OUT, 'utf8'); } catch {}
-    if (current !== next) {
-      console.error('workers/mccluster/src/music/tracks.js is stale: run node scripts/music-track-lengths.mjs');
+    try { currentAlbums = readFileSync(ALBUMS, 'utf8'); } catch {}
+    if (current !== next || currentAlbums !== albums) {
+      console.error('workers/mccluster/src/music/tracks.js or data/albums.json is stale: run node scripts/music-track-lengths.mjs');
       process.exit(1);
     }
     console.log('track lengths are current');
   } else {
     writeFileSync(OUT, next);
-    console.log('wrote', OUT);
+    writeFileSync(ALBUMS, albums);
+    console.log('wrote', OUT, 'and', ALBUMS);
   }
 }

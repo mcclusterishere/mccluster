@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 507,
+  "candidate_count": 504,
   "capability_source_count": 102,
-  "support_only_count": 405,
+  "support_only_count": 402,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1458,13 +1458,6 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
-      "path": "js/here-material.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
-    },
-    {
       "path": "js/hire-offers.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -1762,20 +1755,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "redirects/equity-uprise.html",
-      "classification": "redirect_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
-    },
-    {
-      "path": "redirects/walls/eu-rally.html",
-      "classification": "redirect_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
     },
     {
       "path": "resume-it-support.html",
@@ -3287,13 +3266,6 @@
       "rationale": "Pins the Halo projection role boundary so an Equity Uprise admin cannot become a McCluster house owner."
     },
     {
-      "path": "workers/mccluster/test/company-site.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Tests of the mccluster.org host router: the World served at the company root with a company-first head named for the public brand, Equity Uprise (owner, 2026-10-28; it asserts the World page's own noindex description does not leak and no Human Uprise name is served), /company, and every other path sent to Matthew's property. Not a building capability."
-    },
-    {
       "path": "workers/mccluster/test/human-uprise-site.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3497,13 +3469,6 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
     },
     {
-      "path": "creator-selection-desk.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
-    },
-    {
       "path": "docs/control-plane/CANONICAL-ARCHITECTURE.md",
       "classification": "governance_support",
       "capability_ids": [],
@@ -3523,6 +3488,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; an operator/architecture document; defines no building capability."
+    },
+    {
+      "path": "docs/control-plane/canonical-architecture.json",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Machine architecture contract; records the public brand, Equity Uprise (owner, 2026-10-28), beside the legacy human_uprise host key. Defines no building capability."
     },
     {
       "path": "fbi.html",
@@ -3805,6 +3777,13 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; Worker strings only; not a building capability."
     },
     {
+      "path": "workers/mccluster/test/company-site.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests of the mccluster.org host router: the World served at the company root with a company-first head named for the public brand, Equity Uprise (owner, 2026-10-28; it asserts the World page's own noindex description does not leak and no Human Uprise name is served), /company, and every other path sent to Matthew's property. Not a building capability."
+    },
+    {
       "path": "workers/mccluster/test/mnet-post-limits.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3812,11 +3791,11 @@
       "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
     },
     {
-      "path": "docs/control-plane/canonical-architecture.json",
-      "classification": "governance_support",
+      "path": "_unfinished/creator-selection-desk.html",
+      "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Machine architecture contract; records the public brand, Equity Uprise (owner, 2026-10-28), beside the legacy human_uprise host key. Defines no building capability."
+      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; an unpublished page put away under _unfinished/; adds no distinct program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

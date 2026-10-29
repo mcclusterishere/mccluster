@@ -197,7 +197,7 @@ everywhere else." Navigation entries were removed; no capability was.
 | Clips | A door at the top of the feed with the real terms from `clip_campaigns_open`, shown only while campaigns are open (the tabs it used to sit under are gone). Clips are paid work, not posts, so they are not a feed filter |
 | Live | A LIVE badge over the globe while anything is on air (opens the live rooms); **Go live** in the composer for a granted host once live video is on |
 | Record or create | The composer: a visible + when folded, Record / Create when open (`create.html`) |
-| Your analytics | For a member with a music creator profile: **Your audience** on the globe (below) and **Your analytics** on their profile (`creator.html`). The old `creator-landing-analytics.html` measured nothing and is no longer linked |
+| Your analytics | For a member with a music creator profile: **Your audience** on the globe (below) and **Your analytics** on their profile (`creator.html`). The old `creator-landing-analytics.html` measured nothing and is shelved in `_unfinished/` |
 | M Account | Settings & account |
 
 - Every room has a "← World" way back. `?view=`, `?mission=`, `?group=`

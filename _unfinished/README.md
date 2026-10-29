@@ -101,5 +101,21 @@ live site and both spoke to backends that do not exist:
 To bring either back: move the page to the repo root, deploy the backend it
 talks to (or point it at a route the `mccluster` Worker actually serves),
 restore the Studio entry in `js/site-navigation.js` and the `assetLab`
-bridge in `js/control-room-v2.js`, and regenerate `redirects/` with
-`node tools/build-redirects.mjs`.
+bridge in `js/control-room-v2.js`. (The old `redirects/` forwarding site
+is gone: a Cloudflare rule now 301s every `here.mccluster.org` path.)
+
+## creator-capture.html, creator-landing-analytics.html, creator-selection-desk.html
+
+Shelved 2026-10-28 by the dead-code audit. Nothing linked any of the three
+(no page, navigation registry, sitemap or legacy route), and no test pins
+them except one that asserts the World does NOT link the first two:
+
+- `creator-capture.html` ("Record and drafts") and
+  `creator-landing-analytics.html` ("Landing page analytics") are
+  placeholders: the first records nothing, the second says no verified
+  numbers are connected. A member's real analytics are on `creator.html`.
+- `creator-selection-desk.html` posts to a same-origin
+  `/v1/creator-selection/*`, which cannot exist on GitHub Pages.
+
+To bring one back: move it to the repo root, point it at a route the
+`mccluster` Worker actually serves, and link it from the member workspace.
