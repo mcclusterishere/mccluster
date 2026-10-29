@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 465,
+  "candidate_count": 467,
   "capability_source_count": 102,
-  "support_only_count": 363,
+  "support_only_count": 365,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2704,6 +2704,13 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
+      "path": "core/drift-contract.json",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane drift contract naming the latest production migration (currently eu_runtime_and_media_rollup_v1); ledger bookkeeping, not a building capability, program or geometry."
+    },
+    {
       "path": "supabase/replay_migrations/0007_offerings.sql",
       "classification": "capability_source",
       "capability_ids": [
@@ -3386,6 +3393,13 @@
       "rationale": "Read-only production schema snapshot (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken after the 2026-10-29 group-0 promotions (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "supabase/schema-manifest.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -3414,14 +3428,14 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
-      "path": "supabase/pending/20261029100000_privilege_hygiene_v1.sql",
+      "path": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql",
       "classification": "migration_wrapper",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
-      "path": "supabase/pending/20261029100100_definer_views_invoker_v1.sql",
+      "path": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql",
       "classification": "migration_wrapper",
       "capability_ids": [],
       "support_only": true,
@@ -3435,7 +3449,7 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
-      "path": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql",
+      "path": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql",
       "classification": "migration_wrapper",
       "capability_ids": [],
       "support_only": true,
@@ -3449,7 +3463,7 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
-      "path": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "path": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql",
       "classification": "migration_wrapper",
       "capability_ids": [],
       "support_only": true,

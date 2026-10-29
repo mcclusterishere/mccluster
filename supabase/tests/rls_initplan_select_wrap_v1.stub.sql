@@ -1,4 +1,4 @@
--- Tables for the access test of supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql:
+-- Tables for the access test of supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql:
 -- a representative set of the 71 policies (every pattern it rewrites: auth.uid() alone and
 -- in EXISTS sub-queries, auth.jwt() ->> 'email', current_m_uid(), policies for anon and
 -- for the public role, INSERT/UPDATE/DELETE/SELECT/ALL). The policies are created here as
