@@ -89,7 +89,7 @@
       </nav>
     </header>
 
-    <div class="greet">Listen now.</div>
+    <h1 class="greet">Listen now.</h1>
     <p class="greet__sub">McCluster records, independent creators, and the songs people are actually reaching for &mdash; all in one player.</p>
     <p class="greet__sub"><strong>Put your music into action.</strong> Every creator is part of Human Uprise. Follow the person behind the record, then move with what the music starts.</p>
 
@@ -101,11 +101,11 @@
     </div>
     <p class="ls__count" id="count" hidden></p>
 
-    <div class="chips" id="chips" role="tablist" aria-label="Filter">
-      <button type="button" class="on" data-chip="all">All</button>
-      <button type="button" data-chip="albums">Albums</button>
-      <button type="button" data-chip="tracks">Tracks</button>
-      <button type="button" data-chip="saved">Saved</button>
+    <div class="chips" id="chips" role="group" aria-label="Filter">
+      <button type="button" class="on" data-chip="all" aria-pressed="true">All</button>
+      <button type="button" data-chip="albums" aria-pressed="false">Albums</button>
+      <button type="button" data-chip="tracks" aria-pressed="false">Tracks</button>
+      <button type="button" data-chip="saved" aria-pressed="false">Saved</button>
     </div>
 
     <!-- ONE TAP (owner, 2026-10-20): with a finished profile, Become a creator makes the artist page from it, asking

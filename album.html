@@ -654,10 +654,10 @@
 
 
     <!-- THE SHELF FRONT: the chips filter, the curated cards preview on tap -->
-    <div class="chips" id="chips" role="tablist" aria-label="Filter">
-      <button type="button" class="on" data-chip="all">All</button>
-      <button type="button" data-chip="albums">Albums</button>
-      <button type="button" data-chip="playlists">Playlists</button>
+    <div class="chips" id="chips" role="group" aria-label="Filter">
+      <button type="button" class="on" data-chip="all" aria-pressed="true">All</button>
+      <button type="button" data-chip="albums" aria-pressed="false">Albums</button>
+      <button type="button" data-chip="playlists" aria-pressed="false">Playlists</button>
     </div>
     <section id="featWrap" aria-label="Curated">
       <p class="lib__k">Curated by the house</p>
@@ -677,7 +677,7 @@
         <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
         <a class="alb__gate" id="albGate" href="heal-the-3rd-world.html" hidden>Enter Heal the 3rd World &#8594;</a>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
-        <div class="lrail" id="labelRail" aria-label="The label"></div>
+        <div class="lrail" id="labelRail" role="group" aria-label="The label"></div>
       </div>
     </header>
 
@@ -762,7 +762,7 @@
 
   <!-- the deck: the mini player that rides above the bar -->
   <div id="seekStatus" role="status" aria-live="polite" style="text-align:center;font-size:.85rem;padding:.3rem .8rem;color:#f0c8a0" hidden></div>
-  <div class="deckbar" id="deckbar" data-off="1">
+  <div class="deckbar" id="deckbar" data-off="1" role="region" aria-label="Player">
     <button class="deckbar__seek" id="seek" type="button" aria-label="Seek"><i><b id="seekFill"></b></i></button>
     <div class="deckbar__row">
       <img class="deckbar__art" src="assets/img/here-cover.jpg" alt="">
@@ -775,7 +775,7 @@
 
   <!-- THE BAR · Music · HERE · Hitman Halo · Profile. One tap goes where it says; hold a tab to open its wing. -->
   <!-- THE ROOM: fans speak under the record -->
-  <div data-comments="the-album"></div>
+  <section data-comments="the-album" aria-label="Comments"></section>
 
   <nav class="appbar" aria-label="Sections">
     <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
@@ -1361,7 +1361,7 @@
       if (chips) chips.addEventListener("click", function (e) {
         var b = e.target.closest && e.target.closest("[data-chip]");
         if (!b) return;
-        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
         var w = b.getAttribute("data-chip");
         document.getElementById("featWrap").hidden = w === "playlists";
         document.getElementById("plWrap").hidden = w === "albums";

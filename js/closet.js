@@ -273,7 +273,7 @@
       "font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.55;opacity:0.92}" +
     ".mrk__v span{display:block;margin-bottom:0.3rem;font-family:var(--ui);font-style:normal;" +
       "font-weight:800;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;opacity:0.6}" +
-    ".mrk__tr{margin-top:1.8rem;font-size:0.78rem;opacity:0.45}" +
+    ".mrk__tr{margin-top:1.8rem;font-size:0.78rem;opacity:0.56}" +
     "@media (max-width:640px){.mrk__row{grid-template-columns:1fr;gap:0.9rem}" +
       ".mrk__art{justify-items:start;min-height:0}.mrk__art img{max-height:7rem}}" +
     ".clm__alt{display:block;margin-top:1rem;font-weight:700;font-size:0.7rem;color:inherit;opacity:0.8}" +
@@ -470,7 +470,7 @@
 
     var tiers = (j.tiers || []).filter(function (t) { return (d.fulfillment || []).indexOf(t.id) !== -1; });
     var gallery = (d.media || []).length
-      ? '<div class="look">' + (d.media || []).map(function (m) {
+      ? '<div class="look" role="region" tabindex="0" aria-label="The look, photographs">' + (d.media || []).map(function (m) {
           return '<figure class="' + (m.role === "detail" ? "is-detail" : "is-" + m.role) + '">' +
             photo(m.src, (m.note || d.title)) +
             (m.note ? "<figcaption>" + esc(m.note) + "</figcaption>" : "") + "</figure>";

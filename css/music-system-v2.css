@@ -575,7 +575,7 @@ body.music-v2 .alb h1{
 body.music-v2 .alb__by{font-size:11px;color:var(--music-muted)}
 body.music-v2 .alb__play{
   margin-top:10px;padding:10px 19px;border-radius:9px;
-  background:var(--music-accent);box-shadow:none;
+  background:var(--ruby-fill, var(--music-accent));box-shadow:none;
   font-size:12px
 }
 body.music-v2 .mode{

@@ -340,7 +340,12 @@ html { scroll-behavior: smooth; }
       cta.href = ctaRaw[1].charAt(0) === "#" ? ctaRaw[1] : ROOT + ctaRaw[1];
       cta.textContent = ctaRaw[0];
       if (mode === "deferred") cta.classList.add("is-veiled");
-      document.body.appendChild(cta);
+      /* in a landmark for screen readers; the wrapper has no box (the pill is fixed) */
+      var ctaNav = document.createElement("nav");
+      ctaNav.className = "mh__cta-nav";
+      ctaNav.setAttribute("aria-label", "Page action");
+      ctaNav.appendChild(cta);
+      document.body.appendChild(ctaNav);
 
       /* ONE DOMINANT JOB OWNS THE FIRST VIEWPORT. On a page that opens with
          a hero, this pill was a third button arguing with the hero's own

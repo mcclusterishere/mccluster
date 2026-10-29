@@ -37,7 +37,7 @@ body.we-manufacturer{margin:0;background:#050505;color:#fff;overflow-x:hidden;}
 .wm__fact{scroll-snap-align:start;min-width:8.5rem;padding:1rem;border:1px solid var(--wm-line);border-radius:1.15rem;background:#101011;}
 .wm__fact small{display:block;color:var(--wm-orange);font-size:.46rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;}
 .wm__fact b{display:block;margin-top:.37rem;font-size:1.45rem;letter-spacing:-.06em;}
-.wm__fact span{display:block;margin-top:.35rem;color:rgba(255,255,255,.42);font-size:.57rem;line-height:1.35;}
+.wm__fact span{display:block;margin-top:.35rem;color:rgba(255,255,255,.45);font-size:.57rem;line-height:1.35;}
 .wm__principles{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:1.1rem;}
 .wm__principle{min-height:10.4rem;padding:1rem;border:1px solid var(--wm-line);border-radius:1.25rem;background:linear-gradient(155deg,#171719,#0b0b0c);}
 .wm__principle--hot{border:0;background:linear-gradient(145deg,#f6ad62,#f04449);color:#070707;}
@@ -46,7 +46,7 @@ body.we-manufacturer{margin:0;background:#050505;color:#fff;overflow-x:hidden;}
 .wm__principle p{margin:.5rem 0 0;color:rgba(255,255,255,.45);font-size:.58rem;line-height:1.48;}
 .wm__principle--hot p{color:rgba(5,5,5,.61);}
 .wm__phase-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:.32rem;margin-top:1rem;padding:.35rem;border:1px solid var(--wm-line);border-radius:1.05rem;background:#101011;}
-.wm__phase-tabs button{min-width:0;border:0;border-radius:.8rem;padding:.72rem .2rem;background:transparent;color:rgba(255,255,255,.42);display:grid;gap:.18rem;place-items:center;cursor:pointer;}
+.wm__phase-tabs button{min-width:0;border:0;border-radius:.8rem;padding:.72rem .2rem;background:transparent;color:rgba(255,255,255,.45);display:grid;gap:.18rem;place-items:center;cursor:pointer;}
 .wm__phase-tabs b{font-size:.72rem;}
 .wm__phase-tabs small{font-size:.4rem;font-weight:800;letter-spacing:.07em;}
 .wm__phase-tabs button.on{background:#fff;color:#080808;box-shadow:0 .7rem 1.7rem rgba(0,0,0,.24);}
@@ -59,19 +59,19 @@ body.we-manufacturer{margin:0;background:#050505;color:#fff;overflow-x:hidden;}
 .wm__stack-row{display:grid;grid-template-columns:2.6rem 1fr auto;gap:.75rem;align-items:center;padding:.85rem;border:1px solid var(--wm-line);border-radius:1.05rem;background:#101011;}
 .wm__stack-icon{display:grid;place-items:center;width:2.6rem;height:2.6rem;border-radius:.8rem;background:rgba(246,173,98,.09);color:var(--wm-orange);font-size:1.05rem;}
 .wm__stack-row b{display:block;font-size:.74rem;}
-.wm__stack-row p{margin:.18rem 0 0;color:rgba(255,255,255,.42);font-size:.54rem;line-height:1.4;}
+.wm__stack-row p{margin:.18rem 0 0;color:rgba(255,255,255,.45);font-size:.54rem;line-height:1.4;}
 .wm__stack-row>span:last-child{color:rgba(255,255,255,.2);}
 .wm__partner{position:relative;overflow:hidden;margin-top:1rem;padding:1.1rem;border:1px solid rgba(246,173,98,.2);border-radius:1.3rem;background:linear-gradient(135deg,rgba(246,173,98,.12),rgba(240,68,73,.06) 58%,#101011);}
 .wm__partner:after{content:"WE";position:absolute;right:-.1em;bottom:-.32em;font-size:7rem;font-weight:950;letter-spacing:-.12em;color:rgba(255,255,255,.025);}
 .wm__partner b{display:block;margin-top:.38rem;font-size:1.2rem;letter-spacing:-.045em;}
 .wm__partner p{position:relative;z-index:1;margin:.5rem 0 0;max-width:35rem;color:rgba(255,255,255,.5);font-size:.62rem;line-height:1.54;}
 .wm__site{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;margin-top:.55rem;padding:1rem;border-radius:1.2rem;background:#f3efe9;color:#0b0b0b;}
-.wm__site .wm__k{color:#9d6544;}
+.wm__site .wm__k{color:#966041;}
 .wm__site b{display:block;margin-top:.3rem;font-size:.88rem;letter-spacing:-.03em;}
 .wm__site p{margin:.3rem 0 0;color:#67615c;font-size:.53rem;line-height:1.45;}
 .wm__jobs{text-align:right;}
 .wm__jobs strong{display:block;font-size:1.65rem;letter-spacing:-.08em;}
-.wm__jobs small{display:block;color:#8b847e;font-size:.4rem;font-weight:800;letter-spacing:.08em;}
+.wm__jobs small{display:block;color:#726c66;font-size:.4rem;font-weight:800;letter-spacing:.08em;}
 .wm__legacy{margin-top:1rem;border:1px solid var(--wm-line);border-radius:1.25rem;background:#0f0f10;overflow:hidden;}
 .wm__legacy summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;cursor:pointer;}
 .wm__legacy summary::-webkit-details-marker{display:none;}
@@ -86,9 +86,9 @@ body.we-manufacturer{margin:0;background:#050505;color:#fff;overflow-x:hidden;}
 .wm__cta a{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;border-radius:1.1rem;text-decoration:none;font-size:.69rem;font-weight:850;}
 .wm__cta-primary{background:linear-gradient(110deg,#f6ad62,#f04449);color:#080808!important;}
 .wm__cta-secondary{border:1px solid var(--wm-line);background:#111113;}
-.wm__fine{margin:1rem 0 0;color:rgba(255,255,255,.26);font-size:.47rem;line-height:1.48;}
+.wm__fine{margin:1rem 0 0;color:rgba(255,255,255,.46);font-size:.47rem;line-height:1.48;}
 .wm__foot{padding:3rem 1rem 0;}
 .wm__foot img{width:8rem;max-width:48%;height:auto;opacity:.92;}
-.wm__foot p{margin:.7rem 0 0;color:rgba(255,255,255,.4);font-size:.56rem;line-height:1.5;}
+.wm__foot p{margin:.7rem 0 0;color:rgba(255,255,255,.46);font-size:.56rem;line-height:1.5;}
 @media(min-width:48rem){.wm__hero{min-height:48rem;padding-left:2rem;padding-right:2rem;border-radius:0 0 2.2rem 2.2rem}.wm__section,.wm__foot{padding-left:2rem;padding-right:2rem}.wm__facts{margin-left:-2rem;margin-right:-2rem;padding-left:2rem;padding-right:2rem}.wm__principles{grid-template-columns:repeat(2,minmax(0,21rem));}.wm__bike{height:12rem}.wm__bike svg{width:31rem}.wm__legacy-links{max-width:25rem}.wm__copy p,.wm__intro p,.wm__section-head p{font-size:.92rem}.wm__phase-detail p,.wm__partner p{font-size:.75rem}.wm__stack-row p{font-size:.66rem}.wm__stack-row b{font-size:.9rem}.wm__site b{font-size:1.05rem}.wm__site p{font-size:.65rem}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.wm *{scroll-behavior:auto!important}.wm__phase-tabs button{transition:none!important}}

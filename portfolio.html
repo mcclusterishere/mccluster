@@ -154,9 +154,9 @@
     .pn__hit:hover, .pn__hit.is-hot { background: rgba(229,56,59,.09);
       box-shadow: inset 0 0 0 1px rgba(229,56,59,.55); transform: translateX(4px); }
     .pn__kind { display: inline-block; font: 800 .56rem var(--body); letter-spacing: .18em;
-      text-transform: uppercase; color: var(--ruby-hot); margin-bottom: .3rem; }
-    .pn__hit h3 { margin: 0 0 .15rem; font: 800 1.02rem/1.25 var(--body); color: var(--cream); }
-    .pn__url { display: block; font: 600 .7rem var(--body); color: rgba(244,239,230,.45);
+      text-transform: uppercase; color: var(--ruby-text, var(--ruby-hot)); margin-bottom: .3rem; }
+    .pn__hit h2 { margin: 0 0 .15rem; font: 800 1.02rem/1.25 var(--body); color: var(--cream); }
+    .pn__url { display: block; font: 600 .7rem var(--body); color: rgba(244,239,230,.49);
       margin-bottom: .3rem; word-break: break-all; }
     .pn__hit p { margin: 0; font: 500 .84rem/1.5 var(--body); color: var(--cream-dim); }
     .pn__hit mark { background: none; color: var(--ruby-hot); font-weight: 800; }
@@ -197,7 +197,7 @@
 
     /* people also ask */
     .pn__ask { margin-top: 1.2rem; }
-    .pn__ask h4 { margin: 0 0 .5rem; font: 800 .62rem var(--body); letter-spacing: .22em;
+    .pn__ask h3 { margin: 0 0 .5rem; font: 800 .62rem var(--body); letter-spacing: .22em;
       text-transform: uppercase; color: var(--cream-dim); }
     .pn__ask details { border-radius: 12px; background: rgba(244,239,230,.04);
       box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); margin-bottom: .4rem; }
@@ -225,7 +225,7 @@
 <body class="songpage panel" data-mh-cta="Book a call with me|hire.html#book">
   <main class="pn">
     <header class="pn__mast">
-      <p class="pn__logo" aria-label="McCluster"><img src="assets/img/m-mark.png" alt="">c<em>Cluster</em></p>
+      <h1 class="pn__logo" aria-label="McCluster"><img src="assets/img/m-mark.png" alt="">c<em>Cluster</em></h1>
       <p class="pn__tag">The search engine with one subject</p>
     </header>
 
@@ -270,7 +270,7 @@
           <a class="pn__go" href="matthew-mccluster.html" data-cta="panel-cv">The full r&eacute;sum&eacute;</a>
 
           <div class="pn__ask">
-            <h4>People also ask</h4>
+            <h3>People also ask</h3>
             <details>
               <summary>Who is Matthew McCluster?</summary>
               <p>A creative director, photographer, web designer and songwriter across Connecticut and Georgia — founder of McCluster Corp, with <a href="hire.html">five government citations</a> on file.</p>
@@ -450,7 +450,7 @@
         var e = r[1];
         return '<a class="pn__hit' + (i === 0 && toks.length ? " is-hot" : "") + '" href="' + e.u + '" data-cta="panel-hit">'
           + '<span class="pn__kind">' + e.k + "</span>"
-          + "<h3>" + mark(e.t, toks) + "</h3>"
+          + "<h2>" + mark(e.t, toks) + "</h2>"
           + '<span class="pn__url">matthew.mccluster.org/' + esc(e.u) + "</span>"
           + (toks.length ? "<p>" + mark(e.d, toks) + "</p>" : "") + "</a>";
       }).join("");

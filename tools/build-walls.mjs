@@ -293,7 +293,7 @@ ${ev.sources.map((u) => `        <li><a href="${esc(u)}" rel="noopener">${esc(u.
       box-shadow: inset 0 0 0 1px var(--edge); }
     .wl__next a.hot { color: #fff; background: linear-gradient(165deg,#ff5a5c,#b3121b); box-shadow: none; }
     .wl__by { margin-top: 2.6rem; font-weight: 600; font-size: 0.8rem; color: var(--cream-dim); line-height: 1.7; }
-    .wl__by a { color: var(--cream); }
+    .wl__by a { color: var(--cream); text-decoration: underline; text-underline-offset: .18em; }
     @media (prefers-reduced-motion: reduce) {
       .wl__hero img { animation: none; }
       .wrv { opacity: 1; transform: none; transition: none; }
