@@ -8,7 +8,8 @@
 //
 // EXTRACTION (what counts as "shipped code calls <name>")
 //   Scanned: js/**/*.js, root *.html, workers/mccluster/src/**,
-//   workers/mccluster-mcp/src/** (.js/.mjs/.cjs/.ts/.html). Skipped: any path
+//   workers/mccluster-mcp/src/**, supabase/functions/** (the Edge Functions)
+//   (.js/.mjs/.cjs/.ts/.html). Skipped: any path
 //   with /test/, /tests/, /fixtures/, /vendor/, a .test. or .min.js name.
 //   Only string literals are read; a name built at runtime is not seen.
 //   functions (RPC):
@@ -33,7 +34,7 @@
 //     B2  an identifier containing "bucket" assigned a literal: BUCKET = 'x',
 //         bucket: "x"
 //   pending-only names, second pass:
-//     P1  for every name that pending SQL defines and the applied history does
+//     P1  for every name that pending SQL defines and is not deployed
 //         not, any quoted literal '<name>' / "<name>" / `<name>` in shipped
 //         code counts as a call (catches rpc(fn) where fn was chosen earlier,
 //         e.g. music_gate_claim_rule in workers/mccluster/src/music/router.js).
@@ -41,9 +42,15 @@
 //   (buckets); anything else (URLs, sentences, template holes) is not a name.
 //
 // DEFINITIONS (where a name counts as existing)
-//   applied history: supabase/migrations/*.sql and supabase/replay_migrations/*.sql
+//   deployed: the name is in supabase/schema-manifest.json (what the CI reset of
+//     supabase/migrations/ + supabase/replay_migrations/ actually builds) AND in the latest
+//     production evidence, docs/control-plane/evidence/production-schema-snapshot-<date>.json
+//     (what production actually has). Both, by kind: a function row, a table or view row, a
+//     bucket. A name only replay SQL defines is NOT deployed: the reset has it, production
+//     does not, and a shipped call to it fails in production (2026-10-28 reconciliation:
+//     eu-ddex-worker, eu-external-worker, eu-monitor, eu-orcid-oauth, media_usage_rollup).
 //   pending only:    supabase/pending/*.sql, excluding *.rollback.sql
-//   Recognised forms (SQL "--" comments stripped first):
+//   Recognised forms for pending SQL (SQL "--" comments stripped first):
 //     create [or replace] function|table|view|materialized view|type|schema|domain
 //       [if not exists] [schema.]name
 //     create policy … on [schema.]table      (evidence the table exists)
@@ -52,16 +59,17 @@
 //   function, a table reference a table/view, a bucket a bucket.
 //
 // RULES (supabase/pending/live-callers.json is the allowlist)
-//   1. A called name defined in the applied history passes.
+//   1. A called name that is deployed (manifest AND production evidence) passes.
 //   2. A called name defined only in supabase/pending/ must be listed under
 //      "pending_only" with the pending file that defines it. Missing there:
 //      FAIL (promote the SQL, or stop calling it).
-//   3. A called name defined nowhere in Git must be listed under
-//      "missing_everywhere" (verified absent in production when added). Missing
-//      there: FAIL. Both lists document debt; neither excuses it.
-//   4. Both lists only shrink: an entry whose name is now in the applied
-//      history, is no longer called by shipped code, or (pending_only) is not
-//      defined by the file named, FAILS until it is removed or moved.
+//   3. A called name that is not deployed and no pending file defines must be
+//      listed under "missing_everywhere" (verified absent in production when
+//      added). Missing there: FAIL. Both lists document debt; neither excuses it.
+//   4. Both lists only shrink: an entry whose name is now deployed, is no longer
+//      called by shipped code, or (pending_only) is not defined by the file
+//      named, FAILS until it is removed or moved. Promoting a pending file and
+//      committing a new production snapshot is what removes its names.
 //   RPC_NAMES_REPORT=1 prints the classification as JSON (used to seed the
 //   allowlist and to read a failure).
 
@@ -95,6 +103,7 @@ function shippedFiles() {
   walk(path.join(root, 'js'), files);
   walk(path.join(root, 'workers', 'mccluster', 'src'), files);
   walk(path.join(root, 'workers', 'mccluster-mcp', 'src'), files);
+  walk(path.join(root, 'supabase', 'functions'), files);
   return files.sort();
 }
 
@@ -174,11 +183,38 @@ function sqlFilesIn(dir, filter = () => true) {
   return readdirSync(full).filter((f) => f.endsWith('.sql') && filter(f)).sort().map((f) => path.join(full, f));
 }
 
+// What a schema snapshot (manifest or production evidence) holds, by kind and bare name.
+function namesInSnapshot(snapshot) {
+  const names = { function: new Set(), table: new Set(), bucket: new Set() };
+  for (const r of snapshot.sections.functions?.rows || []) names.function.add(r[1]);
+  for (const r of snapshot.sections.relations?.rows || []) names.table.add(r[1]);
+  for (const r of snapshot.sections.buckets?.rows || []) names.bucket.add(r[0]);
+  return names;
+}
+
+export const MANIFEST_FILE = 'supabase/schema-manifest.json';
+export function latestEvidenceFile() {
+  const dir = 'docs/control-plane/evidence';
+  const files = readdirSync(path.join(root, dir)).filter((f) => /^production-schema-snapshot-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+  assert.ok(files.length, `no production schema evidence under ${dir}`);
+  return `${dir}/${files.at(-1)}`;
+}
+
+// Deployed = in the reset's manifest AND in production's evidence. Values say where.
+export function deployedDefinitions() {
+  const evidence = latestEvidenceFile();
+  const manifest = namesInSnapshot(JSON.parse(readFileSync(path.join(root, MANIFEST_FILE), 'utf8')));
+  const production = namesInSnapshot(JSON.parse(readFileSync(path.join(root, evidence), 'utf8')));
+  const where = new Set([`${MANIFEST_FILE} + ${evidence}`]);
+  const defs = { function: new Map(), table: new Map(), bucket: new Map() };
+  for (const kind of Object.keys(defs)) {
+    for (const name of manifest[kind]) if (production[kind].has(name)) defs[kind].set(name, where);
+  }
+  return defs;
+}
+
 export function classify() {
-  const applied = definitionsIn([
-    ...sqlFilesIn('supabase/migrations'),
-    ...sqlFilesIn('supabase/replay_migrations'),
-  ]);
+  const applied = deployedDefinitions();
   const pending = definitionsIn(sqlFilesIn('supabase/pending', (f) => !f.endsWith('.rollback.sql')));
   const pendingOnly = [];
   for (const kind of ['function', 'table', 'bucket']) {
@@ -214,7 +250,7 @@ if (process.env.RPC_NAMES_REPORT) console.log(JSON.stringify(report, null, 2));
 
 test('the extraction sees the shipped call sites', () => {
   assert.ok(calls.size > 100, `only ${calls.size} names extracted; the scan or the patterns broke`);
-  assert.ok(applied.function.size > 400 && applied.table.size > 400, 'applied history index looks empty');
+  assert.ok(applied.function.size > 400 && applied.table.size > 400, 'deployed-name index (manifest AND production evidence) looks empty');
 });
 
 test('every name shipped code calls is in the applied migration history, or allowlisted as pending-only / missing', () => {
@@ -244,7 +280,7 @@ test('live-callers.json only shrinks: every entry is still unapplied, still call
   for (const [name, listed] of Object.entries(allow.pending_only)) {
     const kind = listed?.kind;
     if (!['function', 'table', 'bucket'].includes(kind)) { failures.push(`${name}: kind must be function, table or bucket`); continue; }
-    if (applied[kind].has(name)) failures.push(`${name} is now in the applied history (${[...applied[kind].get(name)].join(', ')}): remove it from pending_only`);
+    if (applied[kind].has(name)) failures.push(`${name} is now deployed (${[...applied[kind].get(name)].join(', ')}): remove it from pending_only`);
     const pendingFiles = pending[kind].get(name);
     if (!pendingFiles || !pendingFiles.has(`supabase/pending/${listed.pending}`)) failures.push(`${name}: supabase/pending/${listed.pending} does not define a ${kind} of that name`);
     if (!calls.has(`${kind}:${name}`)) failures.push(`${name} is no longer called by shipped code: remove it from pending_only`);
@@ -252,7 +288,7 @@ test('live-callers.json only shrinks: every entry is still unapplied, still call
   for (const [name, listed] of Object.entries(allow.missing_everywhere)) {
     const kind = listed?.kind;
     if (!['function', 'table', 'bucket'].includes(kind)) { failures.push(`${name}: kind must be function, table or bucket`); continue; }
-    if (applied[kind].has(name)) failures.push(`${name} is now in the applied history: remove it from missing_everywhere`);
+    if (applied[kind].has(name)) failures.push(`${name} is now deployed: remove it from missing_everywhere`);
     else if (pending[kind].has(name)) failures.push(`${name} is now defined in supabase/pending/: move it from missing_everywhere to pending_only`);
     if (!calls.has(`${kind}:${name}`)) failures.push(`${name} is no longer called by shipped code: remove it from missing_everywhere`);
   }
