@@ -119,3 +119,53 @@ them except one that asserts the World does NOT link the first two:
 
 To bring one back: move it to the repo root, point it at a route the
 `mccluster` Worker actually serves, and link it from the member workspace.
+
+## hitman-facility/
+
+**The HITMAN Facility, the PRIM3 Site 0 nine-level selector.** Moved off the
+live site on 2026-10-28 by owner decision: "The facility must be moved to a
+non-visible part of the site to be developed privately." It is McCluster
+Corp product work in private development, recorded as such in
+`data/seo/domain-architecture.json` (`url_ownership` →
+`company_private_development_unpublished`).
+
+Moved intact: the page, `js/hitman-facility.js`, `css/hitman-facility.css`
+and `assets/hitman/` (the six level images), each into this folder at the
+same relative path, so the page's own files resolve from here. Shared house
+files (`js/theme.js`, `css/style.css`, the bar, `assets/img/…`, the font)
+are referenced with `../../` back to the repo root, and ENTER now points at
+the Site 0 build beside it (`../site0-game/game/?level=…`), whose
+← FACILITY link points back here. Serve the repo root locally and open
+`/_unfinished/hitman-facility/hitman-facility.html` to work on it. The page
+carries `noindex,nofollow` and no canonical.
+
+Every public trace went with it: the redirect stub in `redirects/`, its
+`url_ownership` row, the site-links known-dead entry, the mobile-rule
+allowlist line, and the comments in `js/masthead.js`, `js/theme.js` and
+`scripts/smoke.mjs` that described its door. The old URL is simply no longer
+served; nothing redirects from it, so nothing names it.
+
+To bring it back: move the four pieces to their old places, undo the
+`../../` and Site 0 path edits, restore a door (the map drawer in
+`js/masthead.js` was the last one), and put its row back under
+`company_hosted_on_personal_for_compatibility`.
+
+## equity-uprise/js/ (the Policy Fellowship live intake)
+
+Retired from the live site on 2026-10-28 by owner decision: "Retire it —
+we'll end up using the function later; it's part of the product but it needs
+further development." No published page had loaded it since
+`fellowship.html` became a redirect stub.
+
+- `equity-uprise-fellowship-live.js` — the intake client (posts to the
+  `eu-intake` and `eu-calendar` Edge Functions, mail fallback), unchanged.
+- `here-material.js` — the narrow bridge that loaded it on `fellowship.html`,
+  lifted out of the public `js/here-material.js` (deleted from the public tree
+  with the rest of the retired Material System stubs) and kept intact. From `_unfinished/equity-uprise/fellowship.html`,
+  `js/here-material.js` resolves to this file and it loads the intake beside
+  it.
+
+The capability stays mapped: `fellowship-applications` in
+`docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+points at the new path, with status `built_not_armed_by_default` and a
+`status_note` recording the decision. The Edge Functions are untouched.

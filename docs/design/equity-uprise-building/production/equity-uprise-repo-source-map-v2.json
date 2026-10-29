@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 444,
+  "candidate_count": 445,
   "capability_source_count": 102,
-  "support_only_count": 342,
+  "support_only_count": 343,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1418,12 +1418,20 @@
       "rationale": "Renders the Docket 516R contributor webpages, completed song recordings and archived capstone, including its historical event map marker. Binds existing people, cohort, listening and rally media capabilities to the Action Network archive without creating new building geometry or mission awards."
     },
     {
-      "path": "js/equity-uprise-fellowship-live.js",
+      "path": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js",
       "classification": "capability_source",
       "capability_ids": [
         "fellowship-applications"
       ],
-      "support_only": false
+      "support_only": false,
+      "rationale": "Policy Fellowship live intake client (eu-intake / eu-calendar). Retired from the live site by the owner on 2026-10-28 for further development; preserved intact under _unfinished/ (stripped at publish). Still the capability source for fellowship-applications."
+    },
+    {
+      "path": "_unfinished/equity-uprise/js/here-material.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Preserved legacy bridge that loads the Fellowship live intake on the unpublished fellowship.html; moved out of the public js/here-material.js on 2026-10-28. Loader only; the capability is mapped on equity-uprise-fellowship-live.js."
     },
     {
       "path": "js/equity-uprise-institutional.js",
