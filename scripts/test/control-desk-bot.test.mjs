@@ -88,3 +88,59 @@ test('the old room is gone: inbox.html is a stub back to Control and loads no de
   assert.match(html,/noindex, nofollow/);
   await assert.rejects(read('js/inbox-desk.js'));
 });
+
+test('an org switch drops the old org\'s late answers: reads, retries and changes never touch the new view',async()=>{
+  const B=globalThis.CR.deskBot,D=B.state,flush=async()=>{for(let i=0;i<6;i++)await new Promise(r=>setImmediate(r));};
+  const pending=[];
+  globalThis.MCC_SUPA={url:'https://fixture.supabase.co',key:'anon',token:()=>Promise.resolve('tok')};
+  const prevFetch=globalThis.fetch;
+  globalThis.fetch=(url,init)=>new Promise(resolve=>pending.push({body:JSON.parse(init.body),answer:(status,j)=>resolve({ok:status<300,status,json:()=>Promise.resolve(j)})}));
+  const take=(action,org)=>{const i=pending.findIndex(p=>p.body.action===action&&p.body.org===org);assert.ok(i>=0,action+' for '+org+' was not asked');return pending.splice(i,1)[0];};
+  const asked=(action,org)=>pending.some(p=>p.body.action===action&&p.body.org===org);
+  try{
+    /* Control's workspace is acme: the first render asks for acme's knowledge. */
+    B.init({render:()=>{},workspace:()=>({slug:'acme'})});
+    B.render();
+    D.orgs=[{slug:'acme',name:'Acme'},{slug:'shiloh',name:'Shiloh'}];
+    /* A minimal DOM: the org picker, the teach form and the try form, wired by the real bind(). */
+    const fields={crdKbTitle:'A page',crdKbUrl:'',crdKbBody:'A body',crdTryQ:'a question'};
+    const picker={getAttribute:()=> 'shiloh'},putForm={},tryForm={};
+    const el={querySelector:sel=>sel==='[data-crd]'?{}:sel.startsWith('#')?{value:fields[sel.slice(1)]}:null,
+      querySelectorAll:sel=>({'[data-crd-org]':[picker],'[data-crd-put-form]':[putForm],'[data-crd-try-form]':[tryForm]}[sel]||[])};
+    B.bind(el);
+    B.load('spend');
+    putForm.onsubmit({preventDefault(){}});tryForm.onsubmit({preventDefault(){}});
+    await flush();
+    assert.ok(asked('kb_list','acme')&&asked('ai_spend','acme')&&asked('kb_put','acme')&&asked('kb_try','acme'));
+    assert.equal(D.loading.knowledge,true);
+
+    picker.onclick();
+    assert.equal(D.org,'shiloh');
+    assert.equal(D.loading.knowledge,undefined,'A\'s in-flight read must not suppress B\'s');
+    assert.equal(D.busy.put,undefined);assert.equal(D.form.body,'');
+    B.render();await flush();
+    assert.ok(asked('kb_list','shiloh'),'B\'s knowledge load was suppressed');
+
+    take('kb_list','acme').answer(200,{documents:[{id:'a1',title:'Acme secret'}]});await flush();
+    assert.equal(D.data.knowledge,undefined,'A\'s documents landed in B\'s view');
+    assert.equal(D.loading.knowledge,true,'A\'s completion cleared B\'s loading flag');
+    take('kb_list','shiloh').answer(200,{documents:[{id:'b1',title:'Shiloh hours'}]});await flush();
+    assert.deepEqual(D.data.knowledge.map(d=>d.title),['Shiloh hours']);
+    const html=B.render();
+    assert.match(html,/Shiloh hours/);assert.doesNotMatch(html,/Acme secret/);
+
+    /* B starts typing; A's late kb_put (which would clear the form, say "indexed" and re-read) and kb_try land. */
+    D.form={title:'B page',url:'',body:'B typing',kind:'page'};
+    take('kb_put','acme').answer(200,{indexed:true,chunks:2,embedded:true});
+    take('kb_try','acme').answer(200,{hits:[{title:'Acme hit',body:'x'}]});await flush();
+    assert.equal(D.form.body,'B typing');assert.equal(D.note,null);assert.equal(D.tryHits,null);
+    assert.ok(!asked('kb_list','acme')&&!asked('kb_list','shiloh'),'A\'s change re-read the desk');
+
+    /* A's late 403 with the org list would retry as the picker's current org: it is dropped instead. */
+    const orgsBefore=D.orgs;
+    take('ai_spend','acme').answer(403,{error:'name which org this is for',orgs:[{slug:'acme'},{slug:'shiloh'}]});await flush();
+    assert.equal(pending.length,0,'A\'s refusal was retried: '+JSON.stringify(pending.map(p=>p.body)));
+    assert.equal(D.orgs,orgsBefore);assert.equal(D.org,'shiloh');
+    assert.equal(D.errors.spend,undefined);assert.equal(D.data.spend,undefined);
+  }finally{globalThis.fetch=prevFetch;delete globalThis.MCC_SUPA;}
+});

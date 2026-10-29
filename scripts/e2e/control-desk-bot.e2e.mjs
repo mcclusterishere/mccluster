@@ -54,7 +54,7 @@ const TOOLS={servers:[{id:'sv1',name:'the church building',url:'https://shiloh.i
     {id:'t3',server_id:'sv1',name:'unlock_door',description:'Opens a door.',enabled:false,risk:'act',auto:false,rejected:null}]};
 
 /* role: what the caller is in the org; orgs: the caller's memberships (the function's org_members read) */
-function inboxFn(state,{role='owner',orgs=[{id:'o1',slug:'mccluster',name:'McCluster'}]}){
+function inboxFn(state,{role='owner',orgs=[{id:'o1',slug:'mccluster',name:'McCluster'}],tagOrg=false}){
   const OWNER_ONLY=['set_channel','send','followers','kb_put','kb_drop','shared_put','poll','set_server','set_tool','set_experiment'];
   return (body,auth)=>{
     state.calls.push({body,auth});
@@ -64,7 +64,7 @@ function inboxFn(state,{role='owner',orgs=[{id:'o1',slug:'mccluster',name:'McClu
     if(!org)return [403,{error:orgs.length>1?'name which org this is for':'staff only',orgs:orgs.map(o=>({...o,role}))}];
     if(OWNER_ONLY.includes(body.action)&&role!=='owner')return [403,{error:`${body.action} is the owner's to do, and you are ${role} here`}];
     switch(body.action){
-      case 'kb_list':return [200,{ok:true,documents:state.docs.map(d=>({...d,_org:org.slug}))}];
+      case 'kb_list':return [200,{ok:true,documents:state.docs.map(d=>({...d,_org:org.slug,title:tagOrg?org.name+': '+d.title:d.title}))}];
       case 'kb_put':{
         if(!String(body.title||'').trim()||!String(body.body||'').trim())return [400,{error:'title and body are required'}];
         const prior=state.docs.find(d=>d.kind===(body.kind||'page')&&(body.url?d.url===body.url:d.title===body.title));
@@ -108,7 +108,7 @@ async function setup(viewport,opts={}){
     }
     if(u.hostname.endsWith('supabase.co')){
       if(p==='/auth/v1/user')return json(route,{id:OWNER,email:'owner@fixture.invalid'});
-      if(p==='/functions/v1/inbox'&&req.method()==='POST'){const [status,body]=fn(req.postDataJSON()||{},req.headers().authorization);return json(route,body,status);}
+      if(p==='/functions/v1/inbox'&&req.method()==='POST'){const asked=req.postDataJSON()||{};if(opts.hold)await opts.hold(asked);const [status,body]=fn(asked,req.headers().authorization);return json(route,body,status);}
       return json(route,[]);
     }
     if(u.origin===BASE){
@@ -238,6 +238,30 @@ try{
     check('multi-org','switching org re-reads the desk for that org',calls(state,'kb_list').at(-1).body.org==='shiloh');
     check('multi-org','no horizontal overflow',(await overflow(page))===0);
     await page.screenshot({path:join(OUT,'desk-multi-org-390.png')});
+    await app.ctx.close();
+  }
+
+  {
+    /* acme's read is still in flight when the operator switches to shiloh: its late
+       answer must not land in shiloh's view, and must not hold shiloh's read back. */
+    const orgs=[{id:'oa',slug:'acme',name:'Acme'},{id:'ob',slug:'shiloh',name:'Shiloh'}];
+    let release;const held=new Promise(r=>{release=r;});let heldAsked=false;
+    const app=await setup({width:390,height:844},{orgs,tagOrg:true,hold:b=>{if(b.action==='kb_list'&&b.org==='acme'){heldAsked=true;return held;}}});const {page,state}=app;
+    await page.goto(BASE+'/control.html#work:desk-bot',{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>!!document.querySelector('[data-crd-tab="knowledge"]'),null,{timeout:30000});
+    for(let i=0;i<300&&!heldAsked;i++)await page.waitForTimeout(50);
+    await page.locator('[data-crd-tab="knowledge"]').click();
+    await page.waitForSelector('[data-crd-org="shiloh"]',{timeout:15000});
+    await page.locator('[data-crd-org="shiloh"]').click();
+    await page.waitForFunction(()=>/Shiloh: McCluster Sites/.test(document.querySelector('[data-crd]')?.textContent||''),null,{timeout:15000});
+    check('org-race','shiloh\'s read is not held back by acme\'s request still in flight',heldAsked&&calls(state,'kb_list').some(c=>c.body.org==='shiloh'));
+    release();
+    for(let i=0;i<100&&!calls(state,'kb_list').some(c=>c.body.org==='acme');i++)await page.waitForTimeout(50);
+    await page.waitForTimeout(500);
+    const t=await text(page);
+    check('org-race','acme\'s late documents never land in shiloh\'s view',/Shiloh: McCluster Sites/.test(t)&&!/Acme:/.test(t),t.slice(0,300));
+    check('org-race','the picker still says shiloh',await page.locator('[data-crd-org="shiloh"]').getAttribute('aria-pressed')==='true');
+    check('org-race','no script errors',app.errors.length===0,app.errors);
     await app.ctx.close();
   }
 

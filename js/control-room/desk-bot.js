@@ -87,7 +87,7 @@
 
   var D = {
     rerender: null, workspace: null, ready: null,
-    tab: "knowledge", org: null, orgs: [], seenWorkspace: undefined,
+    tab: "knowledge", org: null, orgs: [], seenWorkspace: undefined, gen: 0,
     data: {}, loading: {}, errors: {}, note: null, busy: {},
     form: { title: "", url: "", body: "", kind: "page" }, replacing: null, confirmDrop: null,
     tryQ: "", tryHits: null, refusalFilter: "all"
@@ -108,9 +108,22 @@
   }
   function workspaceSlug() { var w = D.workspace ? D.workspace() : null; return w && w.slug || null; }
 
+  /* Everything below is one org's: its documents, what is loading, what
+     failed, what is busy, and the page half-typed or half-replaced. A
+     workspace or org switch starts a new generation; a request carries the
+     generation it was made in, and an answer from an older one (a read, a
+     retry, a change) is dropped instead of landing in the new org's view. */
+  function resetOrg(org) {
+    D.gen++; D.org = org || null;
+    D.data = {}; D.loading = {}; D.errors = {}; D.busy = {}; D.tryHits = null; D.note = null;
+    D.form = { title: "", url: "", body: "", kind: "page" }; D.replacing = null; D.confirmDrop = null;
+  }
+  function stale() { var err = new Error("stale"); err.stale = true; return err; }
+
   /** The one door: POST {action, org, …} to the inbox function with the
    *  operator's own bearer token, exactly as the visitor desk does. */
-  function fn(action, extra, retried) {
+  function fn(action, extra, retried, gen) {
+    if (gen == null) gen = D.gen;
     var S = root.MCC_SUPA;
     if (!S || !S.url) return Promise.reject(new Error("No backend is configured on this build."));
     var body = { action: action };
@@ -126,6 +139,7 @@
       });
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
+        if (gen !== D.gen) throw stale();
         if (r.ok) return j;
         /* "name which org this is for" (or a workspace slug this operator
            is not on the desk for) arrives WITH the list of orgs: that list is
@@ -133,7 +147,7 @@
         if (r.status === 403 && Array.isArray(j.orgs) && j.orgs.length && !retried) {
           D.orgs = j.orgs;
           var chosen = pickOrg(j.orgs, D.org || workspaceSlug());
-          if (chosen && chosen.slug !== body.org) { D.org = chosen.slug; return fn(action, extra, true); }
+          if (chosen && chosen.slug !== body.org) { D.org = chosen.slug; return fn(action, extra, true, gen); }
         }
         var err = new Error(j.error || j.detail || ("HTTP " + r.status));
         err.status = r.status;
@@ -145,28 +159,32 @@
   function load(tab, force) {
     tab = tab || D.tab;
     if (D.loading[tab] || (D.data[tab] && !force)) return Promise.resolve();
+    var gen = D.gen;
     D.loading[tab] = true; D.errors[tab] = null; redraw();
     var job = tab === "knowledge" ? fn("kb_list").then(function (r) { return r.documents || []; })
       : tab === "spend" ? fn("ai_spend")
       : tab === "refusals" ? fn("outbound").then(function (r) { return r.outbound || []; })
       : tab === "channels" ? fn("channels").then(function (r) {
+          if (gen !== D.gen) throw stale();
           if (r.org && !D.orgs.length) D.orgs = [r.org];
           if (r.org && !D.org) D.org = r.org.slug;
           return r.channels || [];
         })
       : Promise.all([fn("tools"), fn("approvals")]).then(function (r) { return { servers: r[0].servers || [], tools: r[0].tools || [], approvals: r[1].approvals || [] }; });
-    return job.then(function (data) { D.data[tab] = data; })
-      .catch(function (err) { D.errors[tab] = err; })
-      .then(function () { D.loading[tab] = false; redraw(); });
+    return job.then(function (data) { if (gen === D.gen) D.data[tab] = data; })
+      .catch(function (err) { if (gen === D.gen) D.errors[tab] = err; })
+      .then(function () { if (gen === D.gen) { D.loading[tab] = false; redraw(); } });
   }
 
   function act(key, promise, ok, reloadTab) {
+    var gen = D.gen;
     D.busy[key] = true; redraw();
     return promise.then(function (r) {
+      if (gen !== D.gen) return;
       D.busy[key] = false;
       say(typeof ok === "function" ? ok(r) : ok || "");
       if (reloadTab) return load(reloadTab, true);
-    }).catch(function (err) { D.busy[key] = false; say(err.message || String(err), true); });
+    }).catch(function (err) { if (gen !== D.gen) return; D.busy[key] = false; say(err.message || String(err), true); });
   }
 
   /* ---------- tabs ---------- */
@@ -312,7 +330,7 @@
     if (D.ready && !D.ready()) return '<div class="cro crd" data-crd>' + note("Reading the desk…") + "</div>";
     /* A workspace switch in Control is a different org: start over. */
     var ws = workspaceSlug();
-    if (D.seenWorkspace !== ws) { D.seenWorkspace = ws; D.org = null; D.orgs = []; D.data = {}; D.errors = {}; D.tryHits = null; D.note = null; D.replacing = null; D.confirmDrop = null; }
+    if (D.seenWorkspace !== ws) { D.seenWorkspace = ws; D.orgs = []; resetOrg(null); }
     if (!D.data[D.tab] && !D.loading[D.tab] && !D.errors[D.tab]) load(D.tab);
     var picker = D.orgs.length > 1 ? '<div class="cro-chips" aria-label="Desk organisation">' + D.orgs.map(function (o) {
       return '<button class="cro-chip' + (o.slug === D.org ? " is-on" : "") + '" type="button" data-crd-org="' + e(o.slug) + '" aria-pressed="' + (o.slug === D.org) + '">' + e(o.name || o.slug) + (o.role ? " · " + e(o.role) : "") + "</button>";
@@ -335,7 +353,7 @@
     function each(sel, f) { rootEl.querySelectorAll(sel).forEach(f); }
     each("[data-crd-tab]", function (b) { b.onclick = function () { D.tab = b.getAttribute("data-crd-tab"); D.note = null; redraw(); }; });
     each("[data-crd-reload]", function (b) { b.onclick = function () { D.note = null; D.errors[D.tab] = null; load(D.tab, true); }; });
-    each("[data-crd-org]", function (b) { b.onclick = function () { D.org = b.getAttribute("data-crd-org"); D.data = {}; D.errors = {}; D.tryHits = null; D.note = null; redraw(); }; });
+    each("[data-crd-org]", function (b) { b.onclick = function () { resetOrg(b.getAttribute("data-crd-org")); redraw(); }; });
     each("[data-crd-rfilter]", function (b) { b.onclick = function () { D.refusalFilter = b.getAttribute("data-crd-rfilter"); redraw(); }; });
 
     /* knowledge */
@@ -376,10 +394,11 @@
         ev.preventDefault(); keep();
         D.tryQ = val(rootEl, "crdTryQ").trim();
         if (!D.tryQ) return;
+        var gen = D.gen;
         D.busy.tryq = true; redraw();
-        fn("kb_try", { q: D.tryQ }).then(function (r) { D.tryHits = r.hits || []; })
-          .catch(function (err) { say(err.message || String(err), true); })
-          .then(function () { D.busy.tryq = false; redraw(); });
+        fn("kb_try", { q: D.tryQ }).then(function (r) { if (gen === D.gen) D.tryHits = r.hits || []; })
+          .catch(function (err) { if (gen === D.gen) say(err.message || String(err), true); })
+          .then(function () { if (gen === D.gen) { D.busy.tryq = false; redraw(); } });
       };
     });
     each("[data-crd-shared-form]", function (f) {
