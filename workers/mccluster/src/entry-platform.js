@@ -25,6 +25,7 @@ import { handleIdentity } from './identity/router.js';
 import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
+import { handleVoiceRequest } from './voice/router.js';
 import { handleRegionScope } from './world-region-feed.js';
 import { handleMemberFronts } from './member-fronts.js';
 
@@ -122,6 +123,10 @@ export default {
       // Audio rooms own their member gate and are explicitly disabled by default.
       const audio = await handleAudioRooms(request, env);
       if (audio) return audio;
+      // Private, disabled-by-default speech-to-speech gateway. No model is
+      // exposed without explicit house-owner authorization and verified WSS.
+      const voice = await handleVoiceRequest(request, env);
+      if (voice) return voice;
       const response = await handlePlatformApi(request, env);
       if (response) return response;
     } catch (error) {
