@@ -107,3 +107,20 @@ test('the committed manifest, when present, was built by the current SQL', async
   const rebuilt = manifestFromSnapshot({ sections: Object.fromEntries(Object.entries(manifest.sections).map(([n, s]) => [n, { ...s, sql_sha256: manifest.sql_sha256[n] }])) });
   assert.deepEqual(Object.keys(rebuilt.sections), Object.keys(manifest.sections));
 });
+
+test('production mode refuses a snapshot without a readable ledger instead of reporting no drift', async () => {
+  const { execFile } = await import('node:child_process');
+  const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
+  const os = await import('node:os');
+  const evidence = JSON.parse(await readFile(path.join(evidenceDir, 'production-schema-snapshot-2026-10-28.json'), 'utf8'));
+  delete evidence.sections.ledger;
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'schema-noledger-'));
+  const file = path.join(dir, 'snap.json');
+  await writeFile(file, JSON.stringify(evidence));
+  const run = (args) => new Promise((resolve) => execFile(process.execPath, [path.join(root, 'scripts/db/verify-production-schema.mjs'), ...args], (err, stdout, stderr) => resolve({ code: err ? err.code : 0, stderr })));
+  try {
+    const r = await run(['--snapshot', file, '--mode', 'production']);
+    assert.equal(r.code, 2, 'a ledger-less production snapshot is an integrity error');
+    assert.match(r.stderr, /no readable ledger section/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
