@@ -116,13 +116,14 @@ test('locked pages do not offer a theme they cannot change', async () => {
   assert.match(theme, /dual: !LOCK/);
 });
 
-test('pending database fixes stay gated; applied listener state is recorded in the production ledger', async () => {
+test('applied database fixes are recorded in the production ledger, not left pending', async () => {
   const pending = await readdir('supabase/pending');
   const migrations = await readdir('supabase/migrations');
-  const stillPending = 'public_music_reads_lean_v1.sql';
-  assert.ok(pending.includes(stillPending));
-  assert.ok(!migrations.some((m) => m.endsWith(stillPending)));
-  assert.match(await read('supabase/pending/' + stillPending), /set local lock_timeout = '5s';/);
+  // Applied in production 2026-10-29 (owner-approved) as 20261029011108_public_music_reads_lean_v1.
+  const lean = '20261029011108_public_music_reads_lean_v1.sql';
+  assert.ok(!pending.includes('public_music_reads_lean_v1.sql'));
+  assert.ok(migrations.includes(lean));
+  assert.match(await read('supabase/migrations/' + lean), /set local lock_timeout = '5s';/);
 
   // Applied after the isolated RLS and cross-device upsert contract passed.
   assert.ok(!pending.includes('listener_state_v1.sql'));

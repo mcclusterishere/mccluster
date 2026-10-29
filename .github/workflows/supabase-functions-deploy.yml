@@ -51,7 +51,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version-file: workers/mccluster/.node-version
 
       # Planned from the last successful push run, not just this push: a
       # cancelled or failed run's functions roll into the next run. With no
@@ -68,6 +68,19 @@ jobs:
           else
             node scripts/supabase-functions-deploy.mjs plan --before "$BEFORE" --after HEAD --base-from-last-success true
           fi
+
+      # OPT-IN CI GATE: off until the owner sets DEPLOY_REQUIRE_GREEN_CI=true.
+      # It gates this CLI deploy only; the Supabase GitHub integration is an
+      # owner-side setting and is covered in DEPLOYMENT-CONTROLS-PROPOSAL.md.
+      # It applies to manual dispatches too: a hand-run deploy ships main's HEAD
+      # just the same, so it must pass the same checks.
+      - name: Require every deploy-gate check green on this exact commit
+        if: steps.plan.outputs.count != '0' && vars.DEPLOY_REQUIRE_GREEN_CI == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # The commit this run deploys is main's HEAD at checkout, not
+        # necessarily the pushed one; gate exactly what ships.
+        run: node scripts/require-green-ci.mjs --sha "$(git rev-parse HEAD)"
 
       - name: Wait for the Supabase integration on this commit
         if: steps.plan.outputs.count != '0' && github.event_name == 'push'

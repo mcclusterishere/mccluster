@@ -24,6 +24,8 @@
   <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
   <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <!-- Whip Equipped LLC is Matthew McCluster's separate company, never part of McCluster Corp: the node as data/seo/entity-graph.json defines it (scripts/test/seo-entity-pages.test.mjs keeps them equal) -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://matthew.mccluster.org/whip.html#whip-equipped","name":"Whip Equipped","legalName":"Whip Equipped LLC","alternateName":["WE"],"url":"https://matthew.mccluster.org/whip.html","founder":{"@id":"https://matthew.mccluster.org/#matthew-mccluster"},"foundingDate":"2024","description":"Connected-mobility and vehicle-development venture spanning fleet telematics, vehicle systems and an in-development urban motorcycle platform."}</script>
 </head>
 <body class="we-manufacturer">
   <main class="wm">
@@ -65,7 +67,7 @@
         <p>The rental network is not going away. The apps are not going away. The operator model is not going away. The expansion is simple: instead of forcing WE around somebody else&rsquo;s vehicle, we can design the vehicle around WE.</p>
       </div>
 
-      <div class="wm__facts" aria-label="Vehicle development targets">
+      <div class="wm__facts" role="region" tabindex="0" aria-label="Vehicle development targets">
         <article class="wm__fact"><small>Target</small><b>125cc</b><span>Grom-class urban mini-moto architecture</span></article>
         <article class="wm__fact"><small>Target</small><b>5-speed</b><span>Manual gearbox with a proven catalog powertrain</span></article>
         <article class="wm__fact"><small>Connected</small><b>LTE + GNSS</b><span>Electrical headroom for fleet telematics</span></article>
@@ -84,11 +86,11 @@
         <h2>Prototype → production.</h2>
         <p>We are deliberately separating mechanical proof from styling. Tap a phase to see what has to be true before the next one begins.</p>
       </div>
-      <div class="wm__phase-tabs" role="tablist" aria-label="WE vehicle development phases">
-        <button type="button" class="on" data-phase="p0"><b>P0</b><small>MULE</small></button>
-        <button type="button" data-phase="p1"><b>P1</b><small>DESIGN</small></button>
-        <button type="button" data-phase="p2"><b>P2</b><small>GOLDEN</small></button>
-        <button type="button" data-phase="scale"><b>WE</b><small>SCALE</small></button>
+      <div class="wm__phase-tabs" role="group" aria-label="WE vehicle development phases">
+        <button type="button" class="on" data-phase="p0" aria-pressed="true"><b>P0</b><small>MULE</small></button>
+        <button type="button" data-phase="p1" aria-pressed="false"><b>P1</b><small>DESIGN</small></button>
+        <button type="button" data-phase="p2" aria-pressed="false"><b>P2</b><small>GOLDEN</small></button>
+        <button type="button" data-phase="scale" aria-pressed="false"><b>WE</b><small>SCALE</small></button>
       </div>
       <div class="wm__phase-detail" aria-live="polite">
         <div class="wm__phase-line"><b id="phaseTitle">P0 &middot; ENGINEERING MULE</b><small id="phaseBadge">MECHANICAL PROOF</small></div>
@@ -180,7 +182,7 @@
     document.querySelectorAll('[data-phase]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var phase=phases[btn.getAttribute('data-phase')]; if(!phase)return;
-        document.querySelectorAll('[data-phase]').forEach(function(x){x.classList.toggle('on',x===btn);});
+        document.querySelectorAll('[data-phase]').forEach(function(x){x.classList.toggle('on',x===btn);x.setAttribute('aria-pressed',String(x===btn));});
         title.textContent=phase.title; badge.textContent=phase.badge; copy.textContent=phase.copy;
       });
     });

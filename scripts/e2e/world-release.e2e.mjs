@@ -154,7 +154,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  check(scope,'natural events have distinct visual families and finite detail budgets',await page.evaluate(()=>{const s=HaloConsole.state().events;return s.types.length>=14&&s.models<=8&&s.animated<=48}),await state());
  if(width<1100)await page.locator('.hx-grip').click();
  await page.evaluate(()=>{const v=HuGlobe.viewer();v.camera.lookAt(Cesium.Cartesian3.fromDegrees(-97.5,35.4,5000),new Cesium.HeadingPitchRange(0,Cesium.Math.toRadians(-38),180000));v.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);});
- await page.waitForTimeout(1200);
+ /* the event layer builds its models on the frames after the camera arrives: wait for that condition, not a fixed
+    1200ms that a slow software-GL runner can overrun; the assertion below is unchanged */
+ await page.waitForFunction(()=>HaloConsole.state().events.models>0,null,{timeout:15000}).catch(()=>{});
  check(scope,'nearby event builds 3D representation',await page.evaluate(()=>HaloConsole.state().events.models>0));
  const renderedEvent=()=>{const v=HuGlobe.viewer();return v.entities.values.filter(e=>e.haloObjectPick?.layer==='weather'&&e.ellipsoid).map(e=>{const p=e.position.getValue(v.clock.currentTime),s=Cesium.SceneTransforms.worldToWindowCoordinates(v.scene,p);return {screen:s&&{x:s.x,y:s.y},show:e.show,radii:e.ellipsoid.radii.getValue(v.clock.currentTime),picked:!!s&&v.scene.drillPick(s,20).some(h=>h.id===e)};});};
  await page.waitForFunction('('+renderedEvent.toString()+')().some(e=>e.picked)',null,{timeout:8000}).catch(()=>{});

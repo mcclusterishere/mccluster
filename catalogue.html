@@ -34,7 +34,7 @@
     /* One row, three columns that always keep their lanes: the ISRC code,
        the title, the album. A fixed 2.6rem code column used to be far too
        narrow for "QT6KV·01", so the code ran straight into the title. */
-    .reg li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+    .reg li { display: grid; grid-template-columns: auto minmax(0, 1fr);
       align-items: baseline; column-gap: 1.1rem; row-gap: 0.2rem;
       padding: 0.85rem 0.1rem; border-bottom: 1px solid rgba(244,239,230,0.09); }
     .reg .no { font-size: 0.72rem; color:var(--ruby-text); font-weight: 800; white-space: nowrap;
@@ -43,16 +43,17 @@
     .reg .t small { display: block; font-family: var(--body); color: var(--cream-dim); font-size: 0.74rem;
       margin-top: 0.15rem; line-height: 1.5; }
     .reg .al { font-size: 0.74rem; color: var(--cream-dim); letter-spacing: 0.06em;
-      text-transform: uppercase; white-space: nowrap; text-align: right; }
+      text-transform: uppercase; white-space: nowrap; text-align: left; grid-column: 2; }
     /* a linked title stays house cream: the red rule underneath carries the
        affordance, so half the registry no longer reads as a different colour */
     .reg .t a { color: inherit; text-decoration: underline;
       text-decoration-color: rgba(229,56,59,0.6); text-underline-offset: 4px; text-decoration-thickness: 2px; }
     .reg a { color:var(--ruby-text); text-decoration: none; }
-    /* narrow phones: the album tag drops under the title instead of squeezing it */
-    @media (max-width: 34rem) {
-      .reg li { grid-template-columns: auto minmax(0, 1fr); }
-      .reg .al { grid-column: 2; text-align: left; }
+    /* phones: the album tag sits under the title instead of squeezing it
+       (the base rules); from 34rem it gets its own column */
+    @media (min-width: 34.001rem) {
+      .reg li { grid-template-columns: auto minmax(0, 1fr) auto; }
+      .reg .al { grid-column: auto; text-align: right; }
     }
     .cg__note { margin-top: 1.6rem; color: var(--cream-dim); font-size: 0.82rem; line-height: 1.7; }
     .cg__note a { color:var(--ruby-text); text-decoration: none; }
@@ -66,7 +67,6 @@
     .shelf small { color: var(--cream-dim); font-size: 0.74rem; }
   </style>
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
@@ -127,7 +127,7 @@
       Licensing &amp; sync: <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a></p>
   </main>
 
-  <!-- THE BAR: Music · HERE · Human Uprise/Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <!-- THE BAR: Music · HERE · Equity Uprise/Profile. One tap goes where it says; hold a tab to open its wing. -->
   <nav class="appbar" aria-label="Sections">
     <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
       <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
@@ -191,7 +191,6 @@
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

@@ -21,7 +21,7 @@ There is no Worker named `mccluster-core`. Do not create one.
 
 ## Two properties, two entities
 
-`docs/control-plane/DOMAINS-AND-ENTITIES.md` is the authority. `https://matthew.mccluster.org` is **Matthew McCluster's** personal property (GitHub Pages, this repo). `https://mccluster.org` is **McCluster Corp's** company property, served by Worker `mccluster` by host once routed; its root is the Human Uprise World and the company page is `/company`. `https://humanuprise.com` is Human Uprise's own door to the World, a McCluster Corp host, never a third entity. Do not collapse the two entities or properties.
+`docs/control-plane/DOMAINS-AND-ENTITIES.md` is the authority. `https://matthew.mccluster.org` is **Matthew McCluster's** personal property (GitHub Pages, this repo). `https://mccluster.org` is **McCluster Corp's** company property, served by Worker `mccluster` by host once routed; its root is the Equity Uprise World (Equity Uprise is the public brand, owner 2026-10-28) and the company page is `/company`. `https://humanuprise.com` is a legacy-named door to the World, a McCluster Corp host, never a third entity. Do not collapse the two entities or properties.
 
 ## Hard rules — headings only; the law is `AGENTS.md` → Hard rules
 

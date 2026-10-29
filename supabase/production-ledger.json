@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 348,
-  "latest_version": "20261024014732",
-  "latest_name": "analytics_forensics_search_index_v8",
-  "ledger_sha256": "831e4c7ab8f77390573bf72269e860c47b1f113198d709ff2f0c3f724e47e3ab",
+  "migration_count": 353,
+  "latest_version": "20261029011534",
+  "latest_name": "eu_runtime_and_media_rollup_v1",
+  "ledger_sha256": "a3d8738cc98db8890dc6b287878a3b61e1c5c1fd5351f3822f73f09539fd54a8",
   "migrations": [
     {
       "version": "0001",
@@ -1398,6 +1398,26 @@
     {
       "version": "20261024014732",
       "name": "analytics_forensics_search_index_v8"
+    },
+    {
+      "version": "20261029010919",
+      "name": "privilege_hygiene_v1"
+    },
+    {
+      "version": "20261029011001",
+      "name": "definer_views_invoker_v1"
+    },
+    {
+      "version": "20261029011108",
+      "name": "public_music_reads_lean_v1"
+    },
+    {
+      "version": "20261029011314",
+      "name": "rls_initplan_select_wrap_v1"
+    },
+    {
+      "version": "20261029011534",
+      "name": "eu_runtime_and_media_rollup_v1"
     }
   ]
 }

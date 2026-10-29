@@ -121,7 +121,7 @@ body.music-room--album .deckbar button.tp{width:34px!important;height:34px!impor
 body.music-room--album .deckbar button.tp--play{border:0!important;border-radius:50%!important;background:var(--pl-bone)!important;color:#060605!important;box-shadow:none!important}
 
 /* Full now-playing becomes the private room: cinema left, record right. */
-body.music-room--album .now{display:grid!important;grid-template-columns:minmax(0,1.42fr) minmax(350px,.58fr)!important;grid-template-rows:auto 1fr!important;gap:0!important;background:#050504!important;color:var(--pl-bone)!important;transform:translateY(1.5%)!important}
+body.music-room--album .now{display:grid!important;grid-template-columns:minmax(0,1.42fr) minmax(350px,.58fr)!important;grid-template-rows:auto minmax(0,1fr)!important;gap:0!important;background:#050504!important;color:var(--pl-bone)!important;transform:translateY(1.5%)!important}
 body.music-room--album .now[data-on="1"]{transform:none!important}
 body.music-room--album .now__head{grid-column:1/-1!important;min-height:62px!important;padding:calc(env(safe-area-inset-top,0px) + 11px) 18px 11px!important;border-bottom:1px solid var(--pl-rule)!important;background:rgba(5,5,4,.82)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
 body.music-room--album .now__down{width:34px!important;height:34px!important;border:1px solid var(--pl-rule)!important;border-radius:3px!important;background:transparent!important;color:var(--pl-stone)!important}
@@ -154,7 +154,7 @@ body.music-room--album .appbar__tab.is-active,body.music-room--album .appbar__ta
 @media (max-width:900px){
   body.music-room--album .hr{padding-left:18px!important;padding-right:18px!important}
   body.music-room--album .top{margin-bottom:34px!important}
-  body.music-room--album .alb{min-height:auto!important;grid-template-columns:1fr!important;gap:34px!important;padding-bottom:62px!important}
+  body.music-room--album .alb{min-height:auto!important;grid-template-columns:minmax(0,1fr)!important;gap:34px!important;padding-bottom:62px!important}
   body.music-room--album .alb::before{display:none!important}
   body.music-room--album .alb__art{width:min(84vw,560px)!important;max-width:none!important;justify-self:center!important}
   body.music-room--album .alb h1{max-width:10ch!important;font-size:clamp(56px,15vw,92px)!important;line-height:.84!important}

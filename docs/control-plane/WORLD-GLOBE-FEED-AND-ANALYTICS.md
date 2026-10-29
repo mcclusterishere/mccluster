@@ -47,7 +47,7 @@ navigation.
 | **Control Room → Analytics** (`control.html#analytics`, `js/control-room/analytics.js`, `css/control-analytics.css`) | House owner / desk. `analytics.html` and `insights.html` send an operator here (`js/owner-control-redirect.js`, `/v1/status` 200). | Tabs Overview, Audience, Adaptive, Content, Identity, Forensics, Setup; one range (24h, 7d, 30d, 90d, All, Custom); property picker. | Supabase RPCs (security invoker over `events_lean`; RLS "only the desk reads it", plus "analytics owners read site events" for a tenant's own site) and owner-only Worker routes. |
 | `analytics.html` (`js/analytics-board.js`, `analytics-suite.js`, `analytics-product.js`, `analytics-users.js`, `insights.js`) | A signed-in analytics site owner who is not the operator (tenant websites). | Overview, Traffic, Audience, Content, Identity, Users, Setup. | The same RPCs, scoped to the tenant's `site_id` by RLS. **Unchanged by this work.** |
 | `insights.html` | — | Redirect to `control.html#analytics`. | — |
-| `creator-landing-analytics.html` | — | Says no verified numbers are connected; not linked (2026-10-14). | None. |
+| `_unfinished/creator-landing-analytics.html` | — | Said no verified numbers are connected; unlinked 2026-10-14, shelved 2026-10-28. | None. |
 | Member self-service (`js/music-self-analytics.js` on `creator.html`; Your audience on the World globe) | The member, about themselves. | Own listening; a creator's own page views, plays, shares; page views by country. | `/v1/analytics/my-listening`, `/v1/analytics/my-creator` (30 days, sampled, country only, countries under `AUDIENCE_MIN_VIEWS` folded into "elsewhere", unknown disclosed). |
 | Collector | Every page (`js/analytics.js`); other websites (`js/mc-analytics.js`, served as `api.mccluster.org/a.js`). | Events: `page_view`, `page_leave`, `scroll_depth`, `click`, `dead_click`, `rage_click`, `exit_intent`, `copy`, `form_start`, `form_submit`, `js_error`, `js_rejection`, `network_change`, `device_power`, `location_permission`, `precise_location`, plus `acquired` once per visit and the media events (`album_play`, `song_start`, `music_*`, `track_*`, …). | `POST /v1/collect` (Worker adds Cloudflare geo headers: country, region, city, latitude/longitude, colo) → `public.events`, copied to `public.events_lean`. GPC / DNT visitors are counted without identifiers. |
 
@@ -255,7 +255,7 @@ Admin first; push features down to other users later."
   | `GET /v1/analytics/flows` | sessions, bounce rate, pages per session, top way in |
   | `GET /v1/analytics/errors` | script errors (site vs injected), dead / rage clicks, blocked journeys (incl. `gated_preview_end`) |
   | `rpc/action_mission_stats` | mission joins, in progress, proof submitted, admin-verified, rejected (all time) |
-  | `/v1/analytics/business` fields already read but not shown | previews vs full listens vs completions, paid orders, sign-ups per day, confirmed and active members, Human Uprise posts / reactions / follows / profiles |
+  | `/v1/analytics/business` fields already read but not shown | previews vs full listens vs completions, paid orders, sign-ups per day, confirmed and active members, Equity Uprise posts / reactions / follows / profiles |
 
 - **Pending, not applied:** `supabase/pending/analytics_country_v1.sql`
   (`analytics_country_totals`, `analytics_country_series`; security invoker

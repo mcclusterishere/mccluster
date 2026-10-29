@@ -569,7 +569,13 @@
       chip.id = "mccAuthChip";
       chip.className = "mcc-auth-chip";
       chip.innerHTML = '<span class="mcc-auth-chip__dot" aria-hidden="true"></span><span class="mcc-auth-chip__text"></span>';
-      document.body.appendChild(chip);
+      /* inside a landmark, so a screen reader's region list reaches it; the
+         wrapper has no box of its own (the chip is fixed), so nothing moves */
+      var chipNav = document.createElement("nav");
+      chipNav.className = "mcc-auth-nav";
+      chipNav.setAttribute("aria-label", "Account");
+      chipNav.appendChild(chip);
+      document.body.appendChild(chipNav);
     }
     chip.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
     chip.querySelector(".mcc-auth-chip__text").textContent = signedIn ? "Profile" : "Sign in";

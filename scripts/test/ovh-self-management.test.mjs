@@ -63,10 +63,17 @@ test('reconciler sandbox permits only deploy-controlled configuration writes', a
   assert.doesNotMatch(source, /ProtectSystem=false/);
 });
 
-test('rollback ignores optional services that are not installed', async () => {
-  const source = await read('scripts/deploy-ovh-core.sh');
-  assert.match(source, /systemctl list-unit-files "\$\{unit\}"/);
-  assert.match(source, /systemctl try-restart "\$\{unit\}" \|\| true/);
+test('rollback ignores optional services that are not installed, and really restarts the rest', async () => {
+  const [deploy, health] = await Promise.all([
+    read('scripts/deploy-ovh-core.sh'),
+    read('scripts/ovh-core-health.sh'),
+  ]);
+  assert.match(health, /systemctl list-unit-files "\$1"/);
+  assert.match(health, /mcc_unit_installed "\$\{unit\}" \|\| continue/);
+  // try-restart is a no-op for a unit the failed release left stopped.
+  assert.doesNotMatch(deploy + health, /^\s*systemctl try-restart/m);
+  assert.match(deploy, /mcc_recover_restored_release/);
+  assert.match(deploy, /exit "\$\{MCC_ROLLBACK_UNHEALTHY_RC\}"/);
 });
 
 
@@ -99,6 +106,7 @@ test('OVH self-management shell scripts remain syntactically valid', () => {
     '-n',
     'scripts/mccluster-vps-reconcile.sh',
     'scripts/deploy-ovh-core.sh',
+    'scripts/ovh-core-health.sh',
     'scripts/bootstrap-vps-self-management.sh',
   ], { stdio: 'pipe' }));
 });

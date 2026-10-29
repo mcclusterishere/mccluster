@@ -36,11 +36,11 @@
     .sr h1 { font: 800 clamp(1.6rem,6vw,2.2rem)/1.05 var(--cs-ui); letter-spacing: -.03em; margin: .3rem 0 0; }
     .sr-lede { font: 400 .85rem/1.55 var(--body); color: var(--cs-dim); margin: .5rem 0 0; max-width: 42rem; }
 
-    .sr-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; align-items: start; }
+    .sr-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0,1fr); align-items: start; }
     @media (min-width: 72rem) { .sr-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
-    .sr-side { display: grid; gap: 1rem; grid-template-columns: 1fr; }
-    @media (min-width: 46rem) and (max-width: 71.999rem) {
-      .sr-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .sr-side { display: grid; gap: 1rem; grid-template-columns: minmax(0,1fr); }
+    @media (min-width: 46rem) { .sr-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 72rem) { .sr-side { grid-template-columns: minmax(0,1fr); } }
 
     .sr-panel { min-width: 0; border-radius: var(--cs-r-lg); background: var(--cs-1);
       box-shadow: inset 0 0 0 1px var(--cs-edge); padding: 1rem 1.05rem 1.15rem; }
@@ -58,7 +58,7 @@
       font: 600 .72rem var(--cs-ui); color: var(--cs-faint); font-variant-numeric: tabular-nums; }
     .sr-over { color: #ff8e8e; }
 
-    .sr-dests { display: grid; gap: .45rem; grid-template-columns: 1fr; margin-bottom: .9rem; }
+    .sr-dests { display: grid; gap: .45rem; grid-template-columns: minmax(0,1fr); margin-bottom: .9rem; }
     @media (min-width: 30rem) { .sr-dests { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .sr-dest { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: .1rem .5rem;
       text-align: left; min-height: 52px; padding: .55rem .7rem; border: 0; cursor: pointer;
@@ -128,7 +128,7 @@
     <div class="sr-top">
       <p class="sr-k">McCluster</p>
       <h1>Socials Room</h1>
-      <p class="sr-lede">Write it once and choose where it goes. Human Uprise is a destination
+      <p class="sr-lede">Write it once and choose where it goes. Equity Uprise is a destination
         like any other, because it is the one we own.</p>
     </div>
 

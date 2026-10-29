@@ -131,7 +131,7 @@ Three policies, set per source in the registry and enforced in `store.js`:
   `media_news_articles`, credited to GDELT as its terms require, by the
   owner's decision (2026-10-15: "we gotta ingest it so it's still from
   us"): ChatGPT's #432 DOC 2.0 path (`gdelt_doc_v2`, `public-gdelt-news`,
-  never scheduled) and the Human Uprise World's news (`gdelt_gkg_v2`, the
+  never scheduled) and the Equity Uprise World's news (`gdelt_gkg_v2`, the
   `mccluster` Worker's cron reading GDELT's 15-minute GKG files, a week
   kept; `docs/action-network/HUMAN-UPRISE-WORLD-FEED.md`).
 - `none` — provider content is never written at all (Google Maps, Cesium ion).

@@ -61,7 +61,7 @@ for the owner (§12): an RTMPS/SRT app (Larix, OBS) that Stream can record
 itself, which needs an install; or Cloudflare Realtime/RealtimeKit
 recording, whose terms and pricing were not researched (UNVERIFIED).
 
-The repo already runs Stream for the Human Uprise live rooms
+The repo already runs Stream for the Equity Uprise live rooms
 (`workers/mccluster/src/platform-api.js`, `network_live_sessions`, with
 `CF_ACCOUNT_ID` and `CF_STREAM_TOKEN`, recording off, and a WHIP/WHEP client
 inline in `js/mnet-live.js`). This slice reuses the same two secrets and the

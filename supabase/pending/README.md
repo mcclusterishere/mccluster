@@ -4,14 +4,42 @@ Read `PROMOTION-ORDER.md` (in this folder) for the order in which the files here
 are meant to be applied, what each needs first, and how each is tested.
 
 `live-callers.json` lists every RPC, table and bucket that shipped code (`js/`,
-root pages, `workers/mccluster/src`, `workers/mccluster-mcp/src`) calls but the
-applied history (`supabase/migrations/` + `supabase/replay_migrations/`) does
-not define: `pending_only` names are defined by a file here and fail in
-production until it is promoted; `missing_everywhere` names have no SQL at all.
+root pages, `workers/mccluster/src`, `workers/mccluster-mcp/src`,
+`supabase/functions/`) calls but that is not deployed. Since 2026-10-29 a name
+counts as deployed only when `supabase/schema-manifest.json` (what the CI reset
+builds) AND the latest production evidence
+(`docs/control-plane/evidence/production-schema-snapshot-<date>.json`) both have
+it; a name only replay SQL defines is not deployed. `pending_only` names
+(pending, not applied) are defined by the named file here and fail in
+production until it is promoted; `missing_everywhere` names have no pending SQL.
 `scripts/test/rpc-names-exist.test.mjs` fails on any such name missing from the
 list and on any entry that is stale, so the list only shrinks: promoting a file
-means removing its names. Regenerate the view with
-`RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
+and committing the new production snapshot means removing its names. Regenerate
+the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
+
+Promoted 2026-10-29 (owner-approved), group 0 of `PROMOTION-ORDER.md` plus
+`public_music_reads_lean_v1.sql`, from
+`docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`. Each was applied with
+`apply_migration`, and the statement production stored is the committed file byte for byte
+(md5 checked):
+
+| Pending file | Applied as |
+|---|---|
+| `20261029100000_privilege_hygiene_v1.sql` | `supabase/migrations/20261029010919_privilege_hygiene_v1.sql` |
+| `20261029100100_definer_views_invoker_v1.sql` | `supabase/migrations/20261029011001_definer_views_invoker_v1.sql` |
+| `public_music_reads_lean_v1.sql` | `supabase/migrations/20261029011108_public_music_reads_lean_v1.sql` |
+| `20261029100200_rls_initplan_select_wrap_v1.sql` | `supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql` |
+| `20261029100300_eu_runtime_and_media_rollup_v1.sql` | `supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql` |
+
+Their four `.rollback.sql` files stay here under the pending names, as
+`20261015210000_intel_mission_canon_v1.rollback.sql` does for its promoted file
+(`supabase/migrations/` holds only what production ran). Applied files' headers keep their
+original pending wording, so the bytes still match production. Test:
+`bash scripts/test-schema-hygiene-db.sh` on a scratch Postgres. Production evidence after
+the apply: `docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json`. Step 0
+before them is replay-only and changed nothing in production:
+`supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql`
+(test: `bash scripts/test-schema-reconcile-db.sh`).
 
 Hygiene, 2026-10-27: `supabase/migrations/pending/` (a second staging folder
 that the drift check could not see) was retired; its twelve unapplied files

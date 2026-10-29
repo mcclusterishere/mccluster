@@ -66,7 +66,7 @@ Use `PAGES_STAGE_ONLY=1` to stage without uploading (with a separate empty relea
 ## Acceptance before the domain cutover
 
 - The deployed Pages release manifest reports the approved exact source SHA.
-- Index, music/album (including `data/environments.json`), Human Uprise social pages, Travel, frontend JS and media all load correctly, with phone and desktop browser tests.
+- Index, music/album (including `data/environments.json`), Equity Uprise social pages, Travel, frontend JS and media all load correctly, with phone and desktop browser tests.
 - Direct GETs to `/.mcp.json`, `/core/src/*`, `/platform/config/*`, `/dns/*`, the internal schema inventory, and `/assets/3d/prim3-site0/*` return 403/404, not a source file or a successful SPA fallback.
 - Sign-in, cross-domain handoff, Stripe returns and service-worker caching still behave correctly. **Do not** alter OAuth redirect allowlists until the canonical hostname actually changes (it is not changing in this cutover).
 - Worker `mccluster` and Supabase remain their own separately verified release surfaces.
