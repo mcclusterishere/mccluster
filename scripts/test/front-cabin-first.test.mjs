@@ -55,6 +55,8 @@ test('the engine plays the cabin at once, muted, no gate; scroll, Escape and Con
   assert.doesNotMatch(block, /openGate\(|is-gated|vrGateAllow/);
   assert.match(block, /if \(prefersReduced && !cabinAsked\) return;/, 'reduced motion: the poster until asked');
   assert.match(block, /wheel: false/, 'the wheel scrolls on, it does not zoom');
+  assert.match(block, /safe: function \(\) \{ return cabinSafe \|\| measureCabinSafe\(\); \}/, 'tags stay whole on screen and clear of the words');
+  assert.match(read('js/vr360.js'), /var safe = typeof opts\.safe === "function" \? opts\.safe\(\) : null;/);
   assert.match(block, /touchAction: "pan-y"/, 'an upward swipe is the scroll that moves on');
   assert.match(HTML, /id="cabin"[^>]*data-lenis-prevent-touch/);
   assert.match(block, /e\.key !== "Escape"/);

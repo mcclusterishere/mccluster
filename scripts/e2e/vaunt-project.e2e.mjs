@@ -46,6 +46,15 @@ try {
    assert.ok(open.live&&open.playing&&open.allowed&&open.muted&&!open.gated&&open.shown==='1','the cabin plays at once, muted, ungated: '+JSON.stringify(open));
    assert.equal(open.song,'antisocial');
    assert.equal(await home.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
+   /* every tag in the cabin is whole on screen and clear of the page's own words, doors and Continue */
+   const tags=await home.evaluate(()=>{
+     const R=e=>{const r=e.getBoundingClientRect();return {l:r.left,t:r.top,r:r.right,b:r.bottom};};
+     const hit=(a,b)=>a.l<b.r&&a.r>b.l&&a.t<b.b&&a.b>b.t;
+     const words=[...document.querySelectorAll('#cabinTitle,.cabin-open__k,#cabin .hero__doors a,#cabinContinue,#cabin .workvr__tag')].filter(e=>e.offsetWidth).map(R);
+     return [...document.querySelectorAll('#workVR .vr360-spot')].filter(e=>getComputedStyle(e).display!=='none').map(e=>{const s=R(e.querySelector('span')),d=R(e.querySelector('i'));
+       return {label:e.textContent,inside:d.l>=0&&s.l>=0&&s.t>=0&&s.r<=innerWidth&&s.b<=innerHeight,clear:!words.some(w=>hit(s,w)||hit(d,w))};});});
+   assert.ok(tags.length>0,'the cabin shows its tags');
+   assert.ok(tags.every(t=>t.inside&&t.clear),'every visible tag is whole on screen and clear of the title, hint, doors and Continue: '+JSON.stringify(tags));
    await home.screenshot({path:join(OUT,`cabin-${width}.png`)});
    /* the first gesture anywhere turns on Antisocial, and only Antisocial */
    assert.equal(await home.evaluate(()=>document.getElementById('soundToggle').classList.contains('is-on')),false,'silent until a gesture');

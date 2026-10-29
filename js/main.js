@@ -1297,6 +1297,22 @@
     workVR.el.classList.toggle("is-live", !!workVR.viewer && cabinOn());
     if (workVR.viewer) { if (on) workVR.viewer.play(); else workVR.viewer.pause(); }
   }
+  var cabinSafe = null;
+  function measureCabinSafe() {
+    var box = cabinSec.getBoundingClientRect(), tag = cabinSec.querySelector(".workvr__tag"), words = cabinSec.querySelector(".cabin-open__k");
+    var t = tag ? tag.getBoundingClientRect() : null, k = words ? words.getBoundingClientRect() : null;
+    cabinSafe = {
+      left: 12, right: 12,
+      top: t && t.height ? Math.max(12, t.bottom - box.top + 10) : 12,
+      bottom: k && k.height ? Math.max(12, box.bottom - k.top + 10) : 12,
+    };
+    return cabinSafe;
+  }
+  if (CABIN_FIRST) {
+    window.addEventListener("resize", function () { cabinSafe = null; });
+    /* the display face arriving moves the words: measure again once it has */
+    try { document.fonts.ready.then(function () { cabinSafe = null; }); } catch (e) {}
+  }
   function cabinMount() {
     if (!cabinSec || workVR.viewer || !window.VR360 || !cabinOn() || frontTuckedNow) return;
     if (prefersReduced && !cabinAsked) return;
@@ -1305,6 +1321,9 @@
       src: "assets/video/vaunt-360.mp4", video: true, autoplay: false, poster: "assets/img/vaunt-360-poster.jpg",
       yaw: FRONT.vr.yaw, pitch: FRONT.vr.pitch, touchAction: "pan-y", wheel: false,
       spots: vrSpots(FRONT.vr.spots),
+      /* the tags stay whole on screen, below the cabin's own label and above its words and doors (measured on
+         mount and on resize, never per frame) */
+      safe: function () { return cabinSafe || measureCabinSafe(); },
     });
     if (!workVR.viewer) return;          // no WebGL: the poster stays, and Continue still works
     cabinView = { yaw: FRONT.vr.yaw, pitch: FRONT.vr.pitch };

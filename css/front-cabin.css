@@ -13,6 +13,8 @@
 .cabin-open .vr360-spot i{background:var(--vaunt,#f84c0a);box-shadow:0 0 12px rgba(248,76,10,.9)}
 .cabin-open .vr360-spot i::after{border-color:rgba(248,76,10,.7)}
 .cabin-open .vr360-spot span{border-color:rgba(248,76,10,.55)}
+/* a long tag wraps rather than running off a phone's edge (js/vr360.js opts.safe keeps the whole tag on screen) */
+.cabin-open .vr360-spot span{white-space:normal;max-width:min(72vw,22rem);overflow-wrap:anywhere;line-height:1.35}
 .cabin-open .vr360-spot:hover span{background:var(--vaunt,#f84c0a);border-color:var(--vaunt,#f84c0a)}
 .cabin-open .vr360-edge{border-color:var(--vaunt,#f84c0a);box-shadow:0 0 12px rgba(248,76,10,.75)}
 /* the words and the doors sit on a shade at the foot of the room, never across the middle of it */
