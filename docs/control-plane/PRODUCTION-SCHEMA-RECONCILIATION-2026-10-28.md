@@ -14,7 +14,7 @@ was a read-only catalog SELECT through the Supabase MCP `execute_sql` and `get_a
 | The queries (one SQL text, used three ways) | `scripts/db/schema-queries.mjs` |
 | Validator | `scripts/db/verify-production-schema.mjs` |
 | Expected state: what the repo's migrations build | `supabase/schema-manifest.json` |
-| Production snapshot (evidence) | `docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json` |
+| Production snapshot (evidence) | `docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json` (before group 0); latest: `production-schema-snapshot-2026-10-29.json` (after group 0, see the end of this page) |
 | Production advisors (evidence) | `docs/control-plane/evidence/production-advisors-2026-10-28.json` |
 | Offline tests | `scripts/test/production-schema-verifier.test.mjs` |
 | CI wiring | `.github/workflows/reconciliation-ci.yml`, job "Supabase migration reset" |
@@ -53,7 +53,7 @@ node scripts/db/verify-production-schema.mjs --from-mcp-dir <dir> --captured-at 
 # or with a connection string held only in the environment (psql must be installed)
 PROD_DB_URL=... node scripts/db/verify-production-schema.mjs --database-url-env PROD_DB_URL
 # verify a saved snapshot
-node scripts/db/verify-production-schema.mjs --snapshot docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json
+node scripts/db/verify-production-schema.mjs --snapshot docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json
 ```
 
 ## Result in one table
@@ -298,23 +298,23 @@ SELECT.
   evidence on a scratch Postgres. Still different, by design of step 0 (it brings in
   what is missing, it does not rewrite what exists): the 31 relations, 79 functions and
   58 policies listed as changed, and the replay-only objects below.
-- **Finding 2**: `supabase/pending/20261029100000_privilege_hygiene_v1.sql`. Not revoked,
+- **Finding 2**: `supabase/pending/20261029100000_privilege_hygiene_v1.sql` (applied 2026-10-29 as `20261029010919_privilege_hygiene_v1`). Not revoked,
   on purpose: anon EXECUTE on `eu_is_admin`, `eu_is_staff`, `shake_is_crew` (anon is
   subject to policies that call them: revoking turns public reads of `action_missions`,
   `action_campaigns`, `eu_fellowships`, `shake_products` and others into "permission
   denied"), on `eu_match_fellowships` (signed-out matching in `js/eu-api.js`); and
   `leads_in`, `eu_perspectives_in` stay open to anon (public intake). The "11 policies"
   above are 9 once those two are kept.
-- **Finding 3**: `supabase/pending/20261029100100_definer_views_invoker_v1.sql`.
+- **Finding 3**: `supabase/pending/20261029100100_definer_views_invoker_v1.sql` (applied 2026-10-29 as `20261029011001_definer_views_invoker_v1`).
   security_invoker alone would empty the views (RLS on `events`, no grants on
   `media_news_*`), so each becomes an invoker view over a `private.*_rows()` SECURITY
   DEFINER function with `search_path = ''`. `public_music_reads_lean_v1.sql` was edited
   to replace those functions' bodies, not to recreate definer views.
-- **Finding 4**: `supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql`, all
+- **Finding 4**: `supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql` (applied 2026-10-29 as `20261029011314_rls_initplan_select_wrap_v1`), all
   71 policies; unwrapped it is production's text byte for byte
   (`scripts/test/rls-initplan-select-wrap.test.mjs`).
 - **Replay-only gap**: `supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql`
-  creates the EU worker runtime and `media_usage_rollup`. `media_usage_rollup` as written
+  (applied 2026-10-29 as `20261029011534_eu_runtime_and_media_rollup_v1`) creates the EU worker runtime and `media_usage_rollup`. `media_usage_rollup` as written
   in its replay file could never run (its totals read a CTE from a second statement);
   fixed in both. The triggers `eu_events_dispatch` and
   `eu_out_events_communication_bridge` are not created (side effects on every insert;
@@ -322,6 +322,49 @@ SELECT.
   `touch_listener_state()`; those remain rebuild-only. `scripts/test/rpc-names-exist.test.mjs`
   now counts a name as existing only when the manifest and this evidence both have it,
   and scans `supabase/functions/`.
+
+## Follow-up, 2026-10-29: group 0 applied and recorded
+
+The owner approved group 0; these five were applied to production with `apply_migration`
+and are recorded here (this recording used only read-only SELECTs). For each, the
+statement `supabase_migrations.schema_migrations` stores has the same md5 as the committed
+file:
+
+| Version | Name | Was |
+|---|---|---|
+| `20261029010919` | `privilege_hygiene_v1` | `supabase/pending/20261029100000_privilege_hygiene_v1.sql` |
+| `20261029011001` | `definer_views_invoker_v1` | `supabase/pending/20261029100100_definer_views_invoker_v1.sql` |
+| `20261029011108` | `public_music_reads_lean_v1` | `supabase/pending/public_music_reads_lean_v1.sql` |
+| `20261029011314` | `rls_initplan_select_wrap_v1` | `supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql` |
+| `20261029011534` | `eu_runtime_and_media_rollup_v1` | `supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql` |
+
+The ledger is 353 rows; `supabase/production-ledger.json` and `core/drift-contract.json`
+match it (`node scripts/control-plane-drift-contract-check.mjs`). The rollbacks stay in
+`supabase/pending/`.
+
+New evidence, read-only through `execute_sql`, each section's SQL exactly as
+`--print-sql` prints it: `docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json`
+(the validator recomputes every section's md5 from its rows). Against the committed
+manifest, which predates these migrations, `--snapshot` reports:
+
+| Check | 2026-10-28 | 2026-10-29 |
+|---|---|---|
+| Ledger rows | 348 | 353, committed ledger matches live |
+| Single-statement byte-identical | 102 | 107 |
+| `definer_views_exposed` | 3 | 0 |
+| SECURITY DEFINER executable by anon or PUBLIC | 35 | 34 |
+| Policies applying to anon (public role) | 41 | 32 |
+| Functions only in the manifest (replay-only) | 20 | 1 (`touch_listener_state()`, left out on purpose) |
+| Functions only in production | 0 | 3 (`private.track_signals_rows()`, `track_affinity_rows()`, `media_public_world_feed_rows()`) |
+| Policies changed against the manifest | 58 | 121 (the 71 wrapped expressions; the manifest has the old ones) |
+
+The remaining "only in production" and "changed" rows are these migrations, which the
+committed `supabase/schema-manifest.json` does not have yet: the CI reset now applies them
+(their versions sort after the replay file `20261028230000`), so the manifest is refreshed
+from that run's `reset-schema` artifact, never by hand. Tests that prove what step 0 and the
+rollbacks restore stay pinned to the 2026-10-28 evidence (`scripts/test/schema-reconcile-db.mjs`,
+the rollback check in `scripts/test/rls-initplan-select-wrap.test.mjs`); everything that asks
+"what does production have now" reads the latest evidence.
 
 ## Limits
 

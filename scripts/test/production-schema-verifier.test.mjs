@@ -51,8 +51,9 @@ test('the dated production evidence is the database result byte for byte', async
   }
 });
 
-test('the evidence ledger reconciles with the repo and the committed production ledger', async () => {
-  const snap = JSON.parse(await readFile(path.join(evidenceDir, 'production-schema-snapshot-2026-10-28.json'), 'utf8'));
+test('the latest evidence ledger reconciles with the repo and the committed production ledger', async () => {
+  const latest = (await readdir(evidenceDir)).filter((f) => /^production-schema-snapshot-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().at(-1);
+  const snap = JSON.parse(await readFile(path.join(evidenceDir, latest), 'utf8'));
   const l = await compareLedger(snap.sections.ledger.rows, root);
   assert.equal(l.committed_ledger.matches_live, true);
   assert.deepEqual(l.missing_in_repo, []);

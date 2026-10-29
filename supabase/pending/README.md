@@ -17,14 +17,27 @@ list and on any entry that is stale, so the list only shrinks: promoting a file
 and committing the new production snapshot means removing its names. Regenerate
 the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
 
-Pending (2026-10-29), group 0 of `PROMOTION-ORDER.md`, from
-`docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`:
-`20261029100000_privilege_hygiene_v1.sql`, `20261029100100_definer_views_invoker_v1.sql`,
-`20261029100200_rls_initplan_select_wrap_v1.sql` and
-`20261029100300_eu_runtime_and_media_rollup_v1.sql`, each with a `.rollback.sql`
-and a header giving its purpose, order and what it deliberately leaves alone.
-Test: `bash scripts/test-schema-hygiene-db.sh` on a scratch Postgres. Step 0
-before them is replay-only and changes nothing in production:
+Promoted 2026-10-29 (owner-approved), group 0 of `PROMOTION-ORDER.md` plus
+`public_music_reads_lean_v1.sql`, from
+`docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`. Each was applied with
+`apply_migration`, and the statement production stored is the committed file byte for byte
+(md5 checked):
+
+| Pending file | Applied as |
+|---|---|
+| `20261029100000_privilege_hygiene_v1.sql` | `supabase/migrations/20261029010919_privilege_hygiene_v1.sql` |
+| `20261029100100_definer_views_invoker_v1.sql` | `supabase/migrations/20261029011001_definer_views_invoker_v1.sql` |
+| `public_music_reads_lean_v1.sql` | `supabase/migrations/20261029011108_public_music_reads_lean_v1.sql` |
+| `20261029100200_rls_initplan_select_wrap_v1.sql` | `supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql` |
+| `20261029100300_eu_runtime_and_media_rollup_v1.sql` | `supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql` |
+
+Their four `.rollback.sql` files stay here under the pending names, as
+`20261015210000_intel_mission_canon_v1.rollback.sql` does for its promoted file
+(`supabase/migrations/` holds only what production ran). Applied files' headers keep their
+original pending wording, so the bytes still match production. Test:
+`bash scripts/test-schema-hygiene-db.sh` on a scratch Postgres. Production evidence after
+the apply: `docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json`. Step 0
+before them is replay-only and changed nothing in production:
 `supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql`
 (test: `bash scripts/test-schema-reconcile-db.sh`).
 

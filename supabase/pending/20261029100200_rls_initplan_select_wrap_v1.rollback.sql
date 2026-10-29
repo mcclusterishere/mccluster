@@ -1,4 +1,4 @@
--- Rollback of supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql: the 71
+-- Rollback of supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql: the 71
 -- policy expressions exactly as production had them on 2026-10-29 (the forward file with
 -- the three sub-selects unwrapped; md5 prefixes equal the 2026-10-28 evidence).
 

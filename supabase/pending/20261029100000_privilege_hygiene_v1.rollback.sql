@@ -1,4 +1,4 @@
--- Rollback of supabase/pending/20261029100000_privilege_hygiene_v1.sql: every grant and
+-- Rollback of supabase/migrations/20261029010919_privilege_hygiene_v1.sql: every grant and
 -- policy role back to what production held on 2026-10-29 (read from pg_class.relacl,
 -- pg_proc.proacl and pg_policies that day).
 
