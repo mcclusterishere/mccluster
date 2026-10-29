@@ -135,6 +135,9 @@ jobs:
           "$dir/actionlint" -version
           "$dir/actionlint" -no-color -shellcheck= -pyflakes= .github/workflows/*.yml
 
+      - name: Pin deploy tooling and the CI deploy gate
+        run: node --test scripts/test/deploy-controls.test.mjs
+
       - name: Pin the Core runner/agent split and the draft-only PR path
         run: node --test scripts/test/core-identity-contract.test.mjs
 
@@ -152,5 +155,6 @@ jobs:
           echo '- direct OVH mutations require an exact commit already in main' >> "$GITHUB_STEP_SUMMARY"
           echo '- privileged game bootstrap versions are validated before remote shell interpolation' >> "$GITHUB_STEP_SUMMARY"
           echo '- every workflow passes pinned actionlint' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Wrangler is the exact lockfile devDependency; deploys never npx-download a CLI; Node pinned; deploy gate wired' >> "$GITHUB_STEP_SUMMARY"
           echo '- Core runner/agent identity split and draft-only PR path pinned by test' >> "$GITHUB_STEP_SUMMARY"
           echo '- committed secret formats are rejected by the always-on Secret scan workflow (secret-scan.yml)' >> "$GITHUB_STEP_SUMMARY"

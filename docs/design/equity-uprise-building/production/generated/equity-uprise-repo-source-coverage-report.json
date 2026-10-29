@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 445,
+  "candidate_count": 446,
   "capability_source_count": 102,
-  "support_only_count": 343,
-  "checks_total": 1680,
-  "checks_passed": 1680,
+  "support_only_count": 344,
+  "checks_total": 1684,
+  "checks_passed": 1684,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -119,6 +119,7 @@
     "docs/agent-web.md",
     "docs/analytics/application-schema-inventory.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
+    "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/ECOSYSTEM.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
@@ -459,7 +460,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "445 entries"
+      "detail": "446 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8773,6 +8774,26 @@
     },
     {
       "name": "docs/control-plane/SATELLITE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support rationale present",
       "passed": true,
       "detail": ""
     },
