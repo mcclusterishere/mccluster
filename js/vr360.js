@@ -132,6 +132,8 @@
       // per-pixel work, and a retina framebuffer quadruples it for detail
       // nobody sees mid-pan
       var dpr = Math.min(window.devicePixelRatio || 1, TOUCH ? 1.15 : 2);
+      state.cssW = canvas.clientWidth; state.cssH = canvas.clientHeight;
+      spots.forEach(function (s) { s.w = 0; s.h = 0; });   // labels are measured again at the new size
       var w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
       if (w && h && (canvas.width !== w || canvas.height !== h)) { canvas.width = w; canvas.height = h; }
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -213,7 +215,8 @@
     window.addEventListener("blur", forceRelease);
     document.addEventListener("visibilitychange", forceRelease);
     canvas.addEventListener("touchend", function (e) { if (e.touches.length === 0 && ownerId !== null) forceRelease(); }, { passive: true });
-    canvas.addEventListener("wheel", function (e) {
+    /* wheel:false leaves the wheel to the page (index.html's opening cabin: a scroll there moves on, it does not zoom) */
+    if (opts.wheel !== false) canvas.addEventListener("wheel", function (e) {
       e.preventDefault();
       setFov(state.fov + e.deltaY * 0.002);
     }, { passive: false });
@@ -310,7 +313,7 @@
         edge.className = "vr360-edge";
         edge.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>';
         spotLayer.appendChild(edge);
-        return { cfg: s, el: el, edge: edge, yaw: s.yaw * Math.PI / 180, pitch: s.pitch * Math.PI / 180 };
+        return { cfg: s, el: el, edge: edge, w: 0, h: 0, yaw: s.yaw * Math.PI / 180, pitch: s.pitch * Math.PI / 180 };
       });
     }
     if (opts.spots) setSpots(opts.spots);
@@ -322,6 +325,7 @@
     }
     function placeSpots() {
       if (!spots.length) return;
+      var safe = typeof opts.safe === "function" ? opts.safe() : null;   // {top,right,bottom,left} px, or none
       var t = Math.tan(state.fov / 2);
       var aspect = canvas.width / canvas.height;
       // inverse of the shader's world-from-camera (Ry(yaw) then Rx(pitch)):
@@ -347,6 +351,18 @@
         if (!off) {
           s.el.style.display = "";
           s.edge.style.display = "none";
+          if (safe && state.cssW) {
+            /* opts.safe: a tag is kept whole on screen and out of the caller's reserved bands (its words, its
+               controls). Near an edge the tag slides in from the point rather than being cut off. */
+            if (!s.w) { s.w = s.el.offsetWidth; s.h = s.el.offsetHeight; }
+            var W = state.cssW, H = state.cssH, x = (nx * 0.5 + 0.5) * W, y = (0.5 - ny * 0.5) * H;
+            // the box: left = x - 8 (translate), top = y - h/2 - 6 (translate and margin), bottom = y + h/2 - 6
+            x = Math.max(safe.left + 8, Math.min(x, W - safe.right - s.w + 8));
+            y = Math.max(safe.top + s.h / 2 + 6, Math.min(y, H - safe.bottom - s.h / 2 + 6));
+            s.el.style.left = x + "px";
+            s.el.style.top = y + "px";
+            return;
+          }
           s.el.style.left = ((nx * 0.5 + 0.5) * 100) + "%";
           s.el.style.top = ((0.5 - ny * 0.5) * 100) + "%";
           return;

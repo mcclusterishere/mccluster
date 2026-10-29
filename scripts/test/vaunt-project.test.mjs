@@ -24,8 +24,17 @@ test('all three exact scenes and existing links remain in order, on the original
  assert.equal(project.config.vr.spots[0].href,'https://vauntapi.flyvaunt.com/referral/nuao1K');
  const old=read('data/front-projects/vaunt-original.html');
  assert.ok(old.indexOf('cmdCanvas5')<old.indexOf('cmdCanvas4'));
- for(const id of ['cmdCanvas5','cmdCanvas4','workVR']){assert.ok(old.includes('id="'+id+'"'));assert.ok(!read('index.html').includes('id="'+id+'"'));}
- assert.match(read('index.html'),/id="work" aria-labelledby="vauntProjectTitle"/);
+ for(const id of ['cmdCanvas5','cmdCanvas4','workVR','vrGateAllow','vrGateDeny'])assert.ok(old.includes('id="'+id+'"'),id);
+ /* owner, 2026-10-29: index.html opens in the cabin, then the plane. The project page keeps the whole set, gate included. */
+ const html=read('index.html');
+ assert.ok(html.indexOf('id="cabin"')>0&&html.indexOf('id="cabin"')<html.indexOf('id="work"'),'the cabin comes first, then the plane');
+ assert.match(html,/<section class="command command--plane" id="work"/);
+ assert.ok(html.includes('id="cmdCanvas4"'),'the fly-through is restored');
+ assert.ok(!html.includes('id="cmdCanvas5"'),'the runway performance stays on the project page: the page already opens in the air');
+ for(const id of ['vrGateAllow','vrGateDeny','workVRCompass'])assert.ok(!html.includes('id="'+id+'"'),'no gate on the house page: '+id);
+ assert.match(html,/href="front\.html\?project=vaunt" data-cta="vaunt-project"/);
+ const front=read('front.html');
+ for(const id of ['cmdCanvas5','cmdCanvas4','workVR','vrGateAllow','vrGateDeny'])assert.ok(front.includes('id="'+id+'"'),'front.html?project=vaunt keeps '+id);
 });
 test('public shells share one footer outside metric containers; no account policy mutation',()=>{
  for(const file of ['index.html','front.html','member-front.html']){
