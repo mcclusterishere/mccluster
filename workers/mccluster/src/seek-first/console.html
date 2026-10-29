@@ -65,11 +65,11 @@
   .err { color: var(--bad); margin-top: 12px; min-height: 18px; }
 
   #app { display: none; height: 100%; }
-  #globe { position: absolute; inset: 0 0 0 300px; }
+  #globe { position: absolute; inset: 0 0 46% 0; }
   #panel {
-    position: absolute; inset: 0 auto 0 0; width: 300px; z-index: 10;
-    border-right: 1px solid var(--line); background: var(--panel);
-    display: flex; flex-direction: column;
+    position: absolute; inset: auto 0 0 0; width: 100%; z-index: 10;
+    border-right: 0; background: var(--panel);
+    display: flex; flex-direction: column; height: 46%; border-top: 1px solid var(--line);
   }
   #panel header { padding: 14px 16px; border-bottom: 1px solid var(--line); }
   #panel header h1 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin: 0; }
@@ -92,15 +92,15 @@
   #attrib { position: absolute; right: 10px; bottom: 8px; z-index: 10; color: var(--dim);
             font-size: 11px; text-align: right; max-width: 46vw; text-shadow: 0 1px 3px #000; }
   #toast {
-    position: absolute; left: 316px; top: 12px; z-index: 20; display: none;
+    position: absolute; left: 12px; top: 12px; z-index: 20; display: none;
     border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 8px 12px;
     max-width: 60vw;
   }
   .cesium-viewer-bottom { display: none; }
-  @media (max-width: 760px) {
-    #panel { width: 100%; inset: auto 0 0 0; height: 46%; border-right: 0; border-top: 1px solid var(--line); }
-    #globe { inset: 0 0 46% 0; }
-    #toast { left: 12px; }
+  @media (min-width: 760.02px) {
+    #globe { inset: 0 0 0 300px; }
+    #panel { width: 300px; inset: 0 auto 0 0; height: auto; border-right: 1px solid var(--line); border-top: 0; }
+    #toast { left: 316px; }
   }
 </style>
 </head>
