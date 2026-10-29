@@ -1366,6 +1366,80 @@ try {
     await nc.close();
   }
 
+  /* "NOT NOW", AS THE POLICY PROMISES (privacy.html#entry-notice). The entry
+     dialog offers both answers the policy names; "Not now" lets the visitor
+     in without a reload, records only that the notice was seen, leaves
+     analytics off, and is not asked again; the policy page can still agree.
+     Phone first, then desktop: every answer is a 44px target and the dialog
+     never scrolls the page sideways. */
+  for (const width of [390, 1280]) {
+    const lc = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 800 }, serviceWorkers: "block" });
+    await lc.route(OUTBOUND, refuse);
+    const lp = await lc.newPage();
+    await lp.goto(B + "index.html", { waitUntil: "load" });
+    await lp.waitForTimeout(600);
+    const dialog = await lp.evaluate(() => {
+      const gate = document.getElementById("mccPrivacyGate");
+      const targets = gate ? [...gate.querySelectorAll("a,button")] : [];
+      return {
+        open: !!gate,
+        answers: [...(gate?.querySelectorAll("button") || [])].map((b) => b.textContent.trim()),
+        small: targets.filter((t) => { const r = t.getBoundingClientRect(); return r.width < 44 || r.height < 44; }).map((t) => t.textContent.trim()),
+        aria: gate?.getAttribute("role") === "dialog" && gate.getAttribute("aria-modal") === "true" && !!document.getElementById(gate.getAttribute("aria-describedby") || "-"),
+        focusInside: !!gate && gate.contains(document.activeElement),
+        fits: document.documentElement.scrollWidth === document.documentElement.clientWidth
+      };
+    });
+    check(`notice ${width}: the entry dialog offers exactly "I agree & continue" and "Not now"`, dialog.open && dialog.answers.join("|") === "I agree & continue|Not now", JSON.stringify(dialog.answers));
+    check(`notice ${width}: every answer is at least 44px`, dialog.open && dialog.small.length === 0, JSON.stringify(dialog.small));
+    check(`notice ${width}: a labelled, described modal dialog with focus inside`, dialog.aria && dialog.focusInside);
+    check(`notice ${width}: no sideways scroll`, dialog.fits);
+    await lp.keyboard.press("Tab");
+    await lp.keyboard.press("Tab");
+    await lp.keyboard.press("Tab");
+    check(`notice ${width}: Tab stays inside the dialog`, await lp.evaluate(() => document.getElementById("mccPrivacyGate")?.contains(document.activeElement)));
+    let navigated = false;
+    lp.on("framenavigated", (f) => { if (f === lp.mainFrame()) navigated = true; });
+    if (width === 390) await lp.click("#mccPrivacyLater", { timeout: 10000 }).catch((e) => no("notice: Not now takes a tap", String(e).slice(0, 80)));
+    else await lp.keyboard.press("Escape");
+    await lp.waitForTimeout(800);
+    const after = await lp.evaluate((v) => {
+      const seen = JSON.parse(localStorage.getItem("mcc_privacy_seen") || "null");
+      return {
+        closed: !document.getElementById("mccPrivacyGate") && !document.documentElement.hasAttribute("data-privacy-gate"),
+        visible: [...document.body.children].some((n) => n.offsetHeight > 0 && getComputedStyle(n).visibility === "visible"),
+        seen: !!seen && seen.version === v,
+        agreed: localStorage.getItem("mcc_privacy_ack") !== null || /(?:^|; )mcc_privacy_ack=/.test(document.cookie) || window.MCC_PRIVACY.accepted(),
+        fits: document.documentElement.scrollWidth === document.documentElement.clientWidth
+      };
+    }, PRIVACY_VERSION);
+    const how = width === 390 ? "Not now" : "Escape";
+    check(`notice ${width}: ${how} lets the visitor in, without a reload`, after.closed && after.visible && !navigated, JSON.stringify(after));
+    check(`notice ${width}: ${how} records only that the notice was seen`, after.seen && !after.agreed, JSON.stringify(after));
+    check(`notice ${width}: the page fits after the dialog closes`, after.fits);
+    await lp.goto(B + "account.html", { waitUntil: "load" });
+    await lp.waitForTimeout(600);
+    check(`notice ${width}: after ${how}, the next house page does not ask again`, await lp.evaluate(() =>
+      !document.getElementById("mccPrivacyGate") && !document.getElementById("mccPrivacyNotice") && !window.MCC_PRIVACY.accepted()));
+    await lp.goto(B + "privacy.html", { waitUntil: "load" });
+    await lp.waitForTimeout(600);
+    const policy = await lp.evaluate(() => {
+      const box = document.getElementById("mccPrivacyAnswer"), agree = document.getElementById("mccPrivacyAnswerAgree");
+      const r = agree?.getBoundingClientRect();
+      return { shown: !!box && !box.hidden, label: agree?.textContent.trim(), big: !!r && r.width >= 44 && r.height >= 44,
+        fits: document.documentElement.scrollWidth === document.documentElement.clientWidth };
+    });
+    check(`notice ${width}: the policy page offers agreeing later`, policy.shown && policy.label === "I agree & continue" && policy.big, JSON.stringify(policy));
+    check(`notice ${width}: the policy page has no sideways scroll`, policy.fits);
+    await lp.click("#mccPrivacyAnswerAgree", { timeout: 10000 }).catch((e) => no("notice: agreeing on the policy page takes a tap", String(e).slice(0, 80)));
+    await lp.waitForTimeout(300);
+    check(`notice ${width}: agreeing on the policy page is recorded`, await lp.evaluate((v) => {
+      const ack = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
+      return !!ack && ack.version === v && document.getElementById("mccPrivacyAnswerAgree").hidden && document.activeElement?.id === "mccPrivacyAnswerStatus";
+    }, PRIVACY_VERSION));
+    await lc.close();
+  }
+
   await browser.close();
 } finally {
   server.kill();
