@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { DependencyMissing, purchasedDownload, recordUpload, streamTarget, type MusicDb } from "./delivery.ts";
+import { prepareReviewAudio, reviewDecisionRefusal, shortHash, type ObjectReader } from "./review-audio.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -46,8 +47,8 @@ async function houseOps(userId: string) {
   const row = Array.isArray(data) ? data[0] : data;
   return row?.allowed === true;
 }
-async function signDownload(bucket: string, path: string, download?: string) {
-  const { data, error } = await admin.storage.from(bucket).createSignedUrl(path, 3600, download ? { download } : undefined);
+async function signDownload(bucket: string, path: string, download?: string, expiresIn = 3600) {
+  const { data, error } = await admin.storage.from(bucket).createSignedUrl(path, expiresIn, download ? { download } : undefined);
   if (error || !data?.signedUrl) throw new Error(error?.message || "could_not_sign_asset");
   return data.signedUrl;
 }
@@ -60,6 +61,16 @@ async function uploadGrant(bucket: string, path: string, upsert: boolean) {
   return { bucket, path: data.path || path, token: data.token, signed_url: data.signedUrl || null };
 }
 const db = admin as unknown as MusicDb;
+/* (f) One Storage object as a stream, for hashing: the Storage API with the
+   service key, read chunk by chunk (never storage.download(), which buffers
+   the whole file into a Blob). */
+const readObject: ObjectReader = async (bucket, path) => {
+  const res = await fetch(`${SB}/storage/v1/object/${encodeURIComponent(bucket)}/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    headers: { authorization: `Bearer ${SRV}`, apikey: SRV },
+  });
+  const length = Number(res.headers.get("content-length"));
+  return { ok: res.ok, status: res.status, body: res.body, length: Number.isFinite(length) && length > 0 ? length : null };
+};
 async function hasMusicEntitlement(trackId: string, userId: string, email: string) {
   const { count: byUser } = await admin.from("music_entitlements").select("id", { count: "exact", head: true })
     .eq("track_id", trackId).eq("user_id", userId).is("revoked_at", null);
@@ -171,6 +182,27 @@ Deno.serve(async (req) => {
       return json({ ok: true, tracks: tracks || [], creators: creators || [], offers: offers || [] });
     }
 
+    /* (f) The reviewer's step before a decision: pin the master under review,
+       hash its exact bytes once (streaming, size-capped, fail closed), and
+       hand back a player URL for THAT pinned object and its hash. The
+       decision below must carry the same hash. */
+    if (action === "operator-review-prepare") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const trackId = clean(body.track_id, 80);
+      if (!trackId) return json({ error: "track_id required" }, 400);
+      const audio = await prepareReviewAudio(db, readObject, trackId, undefined, body.recheck === true);
+      if (!audio.ok) {
+        if (audio.log) console.error("music-access review prepare refused", audio.log);
+        return json({ error: audio.error }, audio.status);
+      }
+      const url = await signDownload(audio.bucket, audio.path, undefined, 900);
+      return json({
+        ok: true, track_id: audio.trackId, version_id: audio.versionId, sha256: audio.sha256,
+        sha256_short: shortHash(audio.sha256), size_bytes: audio.sizeBytes, hashed_now: audio.hashedNow,
+        expected_updated_at: audio.trackUpdatedAt, listen_url: url, expires_in: 900,
+      });
+    }
+
     if (action === "operator-review") {
       if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
       const trackId = clean(body.track_id, 80);
@@ -178,44 +210,35 @@ Deno.serve(async (req) => {
       const note = clean(body.note, 1200);
       /* (b) The decision is about the version the operator looked at. A
          release that changed since then (updated_at moves on every write) is
-         not published or cleared on an old look. */
+         not published or cleared on an old look.
+         (f) ...and about the audio bytes they listened to: approve/publish
+         carry the SHA-256 operator-review-prepare showed them, and the
+         database refuses unless it is the pinned master's recorded hash. */
       const expected = clean(body.expected_updated_at, 64);
+      const expectedSha = clean(body.expected_master_sha256, 64).toLowerCase();
       if (!trackId || !["publish", "approve", "reject", "review"].includes(decision)) {
         return json({ error: "invalid review request" }, 400);
       }
       if ((decision === "publish" || decision === "approve") && !expected) {
         return json({ error: "expected_updated_at required: reload the queue and review again" }, 400);
       }
-      const patch: Record<string, unknown> = { moderation_note: note, updated_at: new Date().toISOString() };
-      if (decision === "publish") {
-        patch.status = "published";
-        patch.rights_status = "cleared";
-        patch.published_at = new Date().toISOString();
-      } else if (decision === "approve") {
-        patch.status = "approved";
-        patch.rights_status = "cleared";
-      } else if (decision === "reject") {
-        patch.status = "rejected";
-        patch.rights_status = "disputed";
-      } else {
-        patch.status = "pending_review";
-        patch.rights_status = "review";
+      if ((decision === "publish" || decision === "approve") && !/^[0-9a-f]{64}$/.test(expectedSha)) {
+        return json({ error: "expected_master_sha256 required: verify the audio and review again" }, 400);
       }
-      let query = admin.from("creator_tracks").update(patch).eq("id", trackId);
-      if (expected) query = query.eq("updated_at", expected);
-      const { data: rows, error } = await query
-        .select("id,title,status,rights_status,published_at,moderation_note,updated_at");
+      const { data, error } = await admin.rpc("music_operator_review", {
+        p_track: trackId,
+        p_decision: decision,
+        p_note: note,
+        p_expected_updated_at: expected || null,
+        p_expected_master_sha256: expectedSha || null,
+      });
       if (error) {
-        if (/release_asset_not_owned/.test(error.message || "")) {
-          return json({ error: "this release points at audio or artwork its creator did not upload" }, 409);
-        }
-        if (/release_master_missing/.test(error.message || "")) {
-          return json({ error: "this release's master file is missing from storage" }, 409);
-        }
+        const refusal = reviewDecisionRefusal(error);
+        if (refusal) return json({ error: refusal.error }, refusal.status);
         throw error;
       }
-      if (!rows?.length) return json({ error: "the release changed since you loaded it: reload and review it again" }, 409);
-      return json({ ok: true, track: rows[0] });
+      if (!data) return json({ error: "the release changed since you loaded it: reload and review it again" }, 409);
+      return json({ ok: true, track: data });
     }
 
     if (action === "operator-license") {

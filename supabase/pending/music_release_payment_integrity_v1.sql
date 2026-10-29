@@ -79,6 +79,21 @@
 --     is later taken down or replaced, unless the entitlement is revoked
 --     (refund or operator), which refuses delivery.
 --
+-- (f) APPROVAL IS OF THE EXACT AUDIO BYTES THE REVIEWER HEARD.
+--     The pin above names a Storage object version; it now also names the
+--     bytes. music-access streams the pinned master once through an
+--     incremental SHA-256 (capped at the creator-masters bucket limit, fail
+--     closed) and records it write-once on the version
+--     (public.music_record_asset_sha256; a recompute that disagrees
+--     invalidates the version and sends its releases back to review). A
+--     release cannot enter approved/published unless its pinned master has a
+--     recorded hash AND the approval (public.music_operator_review) carries
+--     the same hash the reviewer was shown; the hash is in the reviewed
+--     snapshot/digest, and orders and entitlements record it. Preview and
+--     artwork are not hashed: they are public, are not what is sold, and are
+--     locked against overwrite once the release is approved (storage
+--     trigger); see supabase/pending/README.md for that residual window.
+--
 -- Deploy order (dependency-safe; music-access now FAILS CLOSED without this
 -- file): 1. apply this file (it backfills existing reviewed releases' pinned
 -- versions and existing orders'/entitlements' purchased version);
@@ -227,23 +242,36 @@ create table if not exists public.music_asset_versions (
   etag text,
   size_bytes bigint,
   identity jsonb not null,
-  -- byte digest, written once by a server process that has read the bytes;
-  -- not computed in the database (Postgres cannot read Storage bytes)
+  -- (f) SHA-256 of the object's exact bytes, computed by music-access
+  -- (operator-review-prepare) streaming the pinned object, and recorded once
+  -- through public.music_record_asset_sha256(); Postgres cannot read Storage
+  -- bytes. Approval requires it and the reviewer's expected copy of it.
   content_sha256 text check (content_sha256 ~ '^[0-9a-f]{64}$'),
-  pinned_via text not null check (pinned_via in ('review_approval','legacy_backfill')),
+  content_sha256_at timestamptz,
+  -- (f) a recompute that disagreed with the recorded hash, or Storage
+  -- identity that no longer matches the pin: this version is never approved,
+  -- sold or delivered again. Final.
+  invalidated_at timestamptz,
+  invalid_reason text check (invalid_reason in ('sha256_mismatch','identity_changed')),
+  pinned_via text not null check (pinned_via in ('review_candidate','review_approval','legacy_backfill')),
   created_at timestamptz not null default now()
 );
 create index if not exists music_asset_versions_object_idx on public.music_asset_versions(bucket_id, object_name);
 create index if not exists music_asset_versions_track_idx on public.music_asset_versions(track_id);
+-- one row per exact object version per track, so a hash is never split
+create unique index if not exists music_asset_versions_identity_uq
+  on public.music_asset_versions(track_id, bucket_id, object_name, identity);
 alter table public.music_asset_versions enable row level security;
 alter table public.music_asset_versions force row level security;
-revoke all on public.music_asset_versions from public, anon, authenticated;
-grant select, insert, update on public.music_asset_versions to service_role;
+revoke all on public.music_asset_versions from public, anon, authenticated, service_role;
+-- (f) read-only even to the service role: rows are written only by this
+-- file's security-definer functions (music_pin_master, music_record_asset_sha256)
+grant select on public.music_asset_versions to service_role;
 comment on table public.music_asset_versions is
-  'Exact Storage identity of each reviewed master (object id, version, eTag, size). Immutable; orders and entitlements point here, and music-access signs only these objects for purchasers.';
+  'Exact Storage identity (object id, version, eTag, size) and SHA-256 of the bytes of each reviewed master. Immutable; approval binds to content_sha256, orders and entitlements point here, and music-access signs only these objects for purchasers.';
 
--- A pinned version never changes and is never removed (only content_sha256
--- may be filled in, once).
+-- A pinned version never changes and is never removed. content_sha256 may
+-- be filled in once; invalidated_at/invalid_reason may be set once (final).
 create or replace function public.music_asset_version_guard()
 returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
 begin
@@ -253,7 +281,12 @@ begin
      is distinct from
      (old.id, old.track_id, old.bucket_id, old.object_name, old.storage_object_id, old.storage_version,
       old.etag, old.size_bytes, old.identity, old.pinned_via, old.created_at)
-     or (old.content_sha256 is not null and new.content_sha256 is distinct from old.content_sha256) then
+     or (old.content_sha256 is not null and new.content_sha256 is distinct from old.content_sha256)
+     or (old.content_sha256_at is not null and new.content_sha256_at is distinct from old.content_sha256_at)
+     or (new.content_sha256 is null) <> (new.content_sha256_at is null)
+     or (old.invalidated_at is not null
+         and (new.invalidated_at, new.invalid_reason) is distinct from (old.invalidated_at, old.invalid_reason))
+     or (new.invalidated_at is null) <> (new.invalid_reason is null) then
     raise exception 'music_asset_version_immutable';
   end if;
   return new;
@@ -280,7 +313,12 @@ begin
     values (p_track, 'creator-masters', p_master_path, (v_ident->>'object_id')::uuid, v_ident->>'version',
             v_ident->>'etag', case when v_ident->>'size' ~ '^[0-9]+$' then (v_ident->>'size')::bigint end,
             v_ident, p_via)
+    on conflict (track_id, bucket_id, object_name, identity) do nothing
     returning id into v_id;
+    if v_id is null then -- a concurrent pin of the same version won
+      select v.id into v_id from public.music_asset_versions v
+       where v.track_id = p_track and v.bucket_id = 'creator-masters' and v.object_name = p_master_path and v.identity = v_ident;
+    end if;
   end if;
   return v_id;
 end $$;
@@ -314,13 +352,17 @@ returns jsonb language sql immutable set search_path = pg_catalog, public as $$
 $$;
 revoke all on function public.music_track_content(public.creator_tracks) from public, anon, authenticated;
 
--- (e) What a review covers: the content AND the exact master object pinned
--- for it, so the digest names bytes, not just a path.
+-- (e)+(f) What a review covers: the content AND the exact master object
+-- pinned for it AND the SHA-256 of its bytes, so the digest names bytes, not
+-- just a path or a Storage version.
 create or replace function public.music_track_reviewed_snapshot(p_row public.creator_tracks)
 returns jsonb language sql stable security definer set search_path = pg_catalog, public as $$
   select public.music_track_content(p_row)
-         || jsonb_build_object('approved_master',
-              (select v.identity from public.music_asset_versions v where v.id = p_row.approved_master_version_id))
+         || jsonb_build_object(
+              'approved_master',
+              (select v.identity from public.music_asset_versions v where v.id = p_row.approved_master_version_id),
+              'approved_master_sha256',
+              (select v.content_sha256 from public.music_asset_versions v where v.id = p_row.approved_master_version_id))
 $$;
 revoke all on function public.music_track_reviewed_snapshot(public.creator_tracks) from public, anon, authenticated;
 
@@ -329,6 +371,20 @@ returns text language sql immutable set search_path = pg_catalog as $$
   select encode(sha256(convert_to(p_snapshot::text, 'UTF8')), 'hex')
 $$;
 revoke all on function public.music_review_digest(jsonb) from public, anon, authenticated;
+
+-- (f) May this pinned version be approved, sold or delivered? Storage still
+-- holds exactly the pinned object, its bytes' SHA-256 is on record, and it was
+-- never invalidated. Bytes are hashed once (operator-review-prepare), not per
+-- request: the object is immutable once pinned (storage trigger below), so
+-- the identity check here plus the recorded hash is the guarantee.
+create or replace function public.music_asset_version_intact(p_version uuid)
+returns boolean language sql stable security definer set search_path = pg_catalog, public as $$
+  select coalesce((select v.content_sha256 is not null and v.invalidated_at is null
+                          and public.music_object_identity(v.bucket_id, v.object_name) = v.identity
+                     from public.music_asset_versions v where v.id = p_version), false)
+$$;
+revoke all on function public.music_asset_version_intact(uuid) from public, anon, authenticated;
+grant execute on function public.music_asset_version_intact(uuid) to service_role;
 
 -- Are this release's audio and artwork owned by its creator?
 create or replace function public.music_track_assets_owned(p_row public.creator_tracks)
@@ -376,6 +432,8 @@ declare
   v_service boolean := coalesce(auth.role(), '') = 'service_role';
   v_reviewed boolean;
   v_art text;
+  v_ver public.music_asset_versions%rowtype;
+  v_expected text;
 begin
   new.updated_at := now();
   new.title := trim(new.title);
@@ -441,9 +499,32 @@ begin
     if not public.music_track_assets_owned(new) then
       raise exception 'release_asset_not_owned';
     end if;
-    -- (e) pin the exact master object being approved
-    new.approved_master_version_id := case when coalesce(new.master_path, '') <> ''
-      then public.music_pin_master(new.id, new.master_path, 'review_approval') end;
+    -- (f) approval is of audio: no master, nothing was listened to
+    if coalesce(new.master_path, '') = '' then
+      raise exception 'release_master_missing' using detail = 'no master';
+    end if;
+    -- (e) pin the exact master object being approved (normally the version
+    -- music_prepare_review already pinned and hashed for the reviewer)
+    new.approved_master_version_id := public.music_pin_master(new.id, new.master_path, 'review_approval');
+    -- (f) ...and approve only the bytes the reviewer was shown: the version's
+    -- SHA-256 must be on record and equal the hash the approval carries
+    -- (public.music_operator_review sets it for this statement only)
+    select * into v_ver from public.music_asset_versions where id = new.approved_master_version_id;
+    if v_ver.invalidated_at is not null then
+      raise exception 'release_master_invalid' using detail = v_ver.invalid_reason;
+    end if;
+    if v_ver.content_sha256 is null then
+      raise exception 'release_master_unhashed'
+        using hint = 'Verify the audio (music-access operator-review-prepare) before approving.';
+    end if;
+    v_expected := nullif(lower(coalesce(current_setting('music.review_expected_master_sha256', true), '')), '');
+    if v_expected is null then
+      raise exception 'release_master_hash_required'
+        using hint = 'Approve through public.music_operator_review with the SHA-256 the reviewer was shown.';
+    end if;
+    if v_expected is distinct from v_ver.content_sha256 then
+      raise exception 'release_master_hash_mismatch';
+    end if;
     new.reviewed_snapshot := public.music_track_reviewed_snapshot(new);
     new.reviewed_digest := public.music_review_digest(new.reviewed_snapshot);
     new.reviewed_at := now();
@@ -590,10 +671,16 @@ alter table public.music_orders
   add column if not exists asset_version_id uuid references public.music_asset_versions(id) on delete restrict;
 alter table public.music_entitlements
   add column if not exists asset_version_id uuid references public.music_asset_versions(id) on delete restrict;
+-- (f) ...and the SHA-256 of that version's bytes, copied from it (a record on
+-- the purchase itself; the version row is immutable too)
+alter table public.music_orders
+  add column if not exists asset_sha256 text check (asset_sha256 ~ '^[0-9a-f]{64}$');
+alter table public.music_entitlements
+  add column if not exists asset_sha256 text check (asset_sha256 ~ '^[0-9a-f]{64}$');
 
 create or replace function public.music_order_guard()
 returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
-declare v_status text; v_version uuid;
+declare v_status text; v_version uuid; v_sha text;
 begin
   if tg_op = 'INSERT' then
     if new.status <> 'pending' then raise exception 'music_order_must_start_pending'; end if;
@@ -607,7 +694,16 @@ begin
     if v_status is distinct from 'published' or v_version is null then
       raise exception 'music_order_track_not_on_sale';
     end if;
+    -- (f) and only while that version is intact: hashed, never invalidated,
+    -- and Storage still holds exactly the pinned object. The bytes are not
+    -- re-hashed per checkout (a full read of a master per session); the
+    -- object is immutable once pinned, so this identity check stands for it.
+    if not public.music_asset_version_intact(v_version) then
+      raise exception 'music_order_track_not_on_sale' using detail = 'pinned master not intact';
+    end if;
+    select v.content_sha256 into v_sha from public.music_asset_versions v where v.id = v_version;
     new.asset_version_id := v_version;
+    new.asset_sha256 := v_sha;
     return new;
   end if;
 
@@ -615,6 +711,14 @@ begin
   -- that predate this file)
   if old.asset_version_id is not null and new.asset_version_id is distinct from old.asset_version_id then
     raise exception 'music_order_terms_immutable' using detail = 'asset_version_id';
+  end if;
+  -- (f) its hash likewise; null -> the version's own hash only (a backfilled
+  -- order whose version was hashed after this file)
+  if new.asset_sha256 is distinct from old.asset_sha256
+     and (old.asset_sha256 is not null
+          or new.asset_sha256 is distinct from (select v.content_sha256 from public.music_asset_versions v
+                                                 where v.id = new.asset_version_id)) then
+    raise exception 'music_order_terms_immutable' using detail = 'asset_sha256';
   end if;
 
   if (new.offer_id, new.track_id, new.creator_m_uid, new.amount_cents, new.platform_fee_cents,
@@ -656,7 +760,11 @@ begin
     if (new.order_id, new.offer_id, new.track_id) is distinct from (old.order_id, old.offer_id, old.track_id)
        or (old.asset_version_id is not null and new.asset_version_id is distinct from old.asset_version_id)
        or (old.asset_version_id is null and new.asset_version_id is not null
-           and new.asset_version_id is distinct from o.asset_version_id) then
+           and new.asset_version_id is distinct from o.asset_version_id)
+       or (new.asset_sha256 is distinct from old.asset_sha256
+           and (old.asset_sha256 is not null
+                or new.asset_sha256 is distinct from (select v.content_sha256 from public.music_asset_versions v
+                                                       where v.id = new.asset_version_id))) then
       raise exception 'music_entitlement_immutable';
     end if;
     return new;
@@ -667,6 +775,7 @@ begin
   end if;
   -- (e) the licence delivers the order's pinned version, never the caller's
   new.asset_version_id := o.asset_version_id;
+  new.asset_sha256 := o.asset_sha256;
   return new;
 end $$;
 revoke execute on function public.music_entitlement_guard() from public, anon, authenticated;
@@ -687,6 +796,155 @@ update public.music_entitlements e
    set asset_version_id = o.asset_version_id
   from public.music_orders o
  where e.asset_version_id is null and o.id = e.order_id and o.asset_version_id is not null;
+-- (f) and the hash where the version already has one (a re-run after the
+-- operator's hash backfill; on first apply no version has one yet)
+update public.music_orders o
+   set asset_sha256 = v.content_sha256
+  from public.music_asset_versions v
+ where o.asset_sha256 is null and v.id = o.asset_version_id and v.content_sha256 is not null;
+update public.music_entitlements e
+   set asset_sha256 = v.content_sha256
+  from public.music_asset_versions v
+ where e.asset_sha256 is null and v.id = e.asset_version_id and v.content_sha256 is not null;
+
+------------------------------------------------------------------------------
+-- (f) APPROVAL IS BOUND TO THE REVIEWED AUDIO BYTES.
+--     Review flow (music-access, operator only):
+--       1. operator-review-prepare -> music_prepare_review(track): pins the
+--          release's current master as a version (which locks the object:
+--          the storage trigger refuses overwrite/move/delete from here on),
+--          and returns it. If it has no hash yet, music-access streams the
+--          pinned object's bytes through an incremental SHA-256 (size-capped,
+--          fail closed) and records it with music_record_asset_sha256().
+--          The reviewer's player streams THAT pinned object, and the desk
+--          shows the short hash.
+--       2. publish/approve -> music_operator_review(..., expected sha256): the
+--          track guard refuses entering approved/published unless the pinned
+--          version has a recorded hash equal to the one the reviewer saw.
+--     A replacement master is a new path: content change -> back to review,
+--     a new version with no hash -> step 1 again before re-approval.
+------------------------------------------------------------------------------
+create or replace function public.music_prepare_review(p_track uuid)
+returns table(track_id uuid, track_status text, track_updated_at timestamptz, version_id uuid,
+              bucket_id text, object_name text, size_bytes bigint, etag text, content_sha256 text,
+              invalidated boolean, invalid_reason text, identity_intact boolean)
+language plpgsql security definer set search_path = pg_catalog, public as $$
+declare t public.creator_tracks; v_id uuid;
+begin
+  select * into t from public.creator_tracks c where c.id = p_track;
+  if not found then raise exception 'track_not_found'; end if;
+  if t.status in ('approved','published') and t.approved_master_version_id is not null then
+    v_id := t.approved_master_version_id; -- already reviewed: show what was approved
+  elsif t.status in ('pending_review','rejected') then -- submitted, or an operator reconsidering
+    if not public.music_track_assets_owned(t) then raise exception 'release_asset_not_owned'; end if;
+    if coalesce(t.master_path, '') = '' then raise exception 'release_master_missing' using detail = 'no master'; end if;
+    v_id := public.music_pin_master(t.id, t.master_path, 'review_candidate');
+  else
+    raise exception 'release_not_in_review' using detail = t.status;
+  end if;
+  return query
+    select t.id, t.status, t.updated_at, v.id, v.bucket_id, v.object_name, v.size_bytes, v.etag, v.content_sha256,
+           v.invalidated_at is not null, v.invalid_reason,
+           coalesce(public.music_object_identity(v.bucket_id, v.object_name) = v.identity, false)
+      from public.music_asset_versions v where v.id = v_id;
+end $$;
+revoke all on function public.music_prepare_review(uuid) from public, anon, authenticated;
+grant execute on function public.music_prepare_review(uuid) to service_role;
+
+-- Record the SHA-256 music-access computed over a pinned version's bytes.
+-- Write-once. Answers (never raises for a verification outcome, so an
+-- invalidation is committed): 'recorded' | 'already_recorded' |
+-- 'size_mismatch' (nothing written: the read was not the whole object) |
+-- 'mismatch' (a recompute disagreed: the version is invalidated) |
+-- 'identity_changed' (Storage no longer holds the pinned object: invalidated) |
+-- 'invalid' (already invalidated). An invalidated version's releases go back
+-- to review and off sale; it is never approved, sold or delivered again.
+create or replace function public.music_record_asset_sha256(p_version uuid, p_sha256 text, p_size bigint)
+returns text language plpgsql security definer set search_path = pg_catalog, public as $$
+declare v public.music_asset_versions; v_sha text := lower(coalesce(p_sha256, '')); v_reason text;
+begin
+  if v_sha !~ '^[0-9a-f]{64}$' then raise exception 'invalid_sha256'; end if;
+  select * into v from public.music_asset_versions a where a.id = p_version for update;
+  if not found then raise exception 'music_asset_version_not_found'; end if;
+  if v.invalidated_at is not null then return 'invalid'; end if;
+  -- the platform's own write (local to this transaction): the track guard's
+  -- creator branch must not apply to the follow-up track updates below
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+  if public.music_object_identity(v.bucket_id, v.object_name) is distinct from v.identity then
+    v_reason := 'identity_changed';
+  elsif v.size_bytes is not null and p_size is distinct from v.size_bytes then
+    return 'size_mismatch';
+  elsif v.content_sha256 is null then
+    update public.music_asset_versions set content_sha256 = v_sha, content_sha256_at = now() where id = v.id;
+    -- a release pinned by this file's backfill was frozen before its hash
+    -- existed: its reviewed snapshot gains the hash of the same pinned bytes
+    -- (nothing else changes), and its purchases record it
+    update public.creator_tracks t
+       set reviewed_snapshot = public.music_track_reviewed_snapshot(t),
+           reviewed_digest = public.music_review_digest(public.music_track_reviewed_snapshot(t))
+     where t.approved_master_version_id = v.id and t.status in ('approved','published')
+       and t.reviewed_snapshot->>'approved_master_sha256' is null;
+    update public.music_orders o set asset_sha256 = v_sha where o.asset_version_id = v.id and o.asset_sha256 is null;
+    update public.music_entitlements e set asset_sha256 = v_sha where e.asset_version_id = v.id and e.asset_sha256 is null;
+    return 'recorded';
+  elsif v.content_sha256 = v_sha then
+    return 'already_recorded';
+  else
+    v_reason := 'sha256_mismatch';
+  end if;
+
+  update public.music_asset_versions set invalidated_at = now(), invalid_reason = v_reason where id = v.id;
+  update public.creator_tracks t
+     set status = 'pending_review', rights_status = 'review', published_at = null,
+         moderation_note = 'Returned to review: its approved master failed byte verification (' || v_reason || '). Upload the master again.'
+   where t.approved_master_version_id = v.id and t.status in ('approved','published');
+  return case when v_reason = 'sha256_mismatch' then 'mismatch' else v_reason end;
+end $$;
+revoke all on function public.music_record_asset_sha256(uuid, text, bigint) from public, anon, authenticated;
+grant execute on function public.music_record_asset_sha256(uuid, text, bigint) to service_role;
+
+-- The operator's decision. publish/approve carry the release version the
+-- operator loaded (expected_updated_at) and the SHA-256 of the audio they
+-- were shown; the track guard checks the hash on entering approved/published,
+-- and this function checks it for approved -> published too. Returns null
+-- when the release changed since it was loaded.
+create or replace function public.music_operator_review(p_track uuid, p_decision text, p_note text,
+                                                        p_expected_updated_at timestamptz, p_expected_master_sha256 text)
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public as $$
+declare t public.creator_tracks; v_expected text := nullif(lower(trim(coalesce(p_expected_master_sha256, ''))), '');
+        v_sha text;
+begin
+  if p_decision not in ('publish','approve','reject','review') then raise exception 'invalid_review_decision'; end if;
+  if p_decision in ('publish','approve') then
+    if p_expected_updated_at is null then raise exception 'review_expected_updated_at_required'; end if;
+    if v_expected is null or v_expected !~ '^[0-9a-f]{64}$' then raise exception 'release_master_hash_required'; end if;
+  end if;
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  perform set_config('music.review_expected_master_sha256', coalesce(v_expected, ''), true);
+  update public.creator_tracks c
+     set moderation_note = coalesce(p_note, ''),
+         status = case p_decision when 'publish' then 'published' when 'approve' then 'approved'
+                                  when 'reject' then 'rejected' else 'pending_review' end,
+         rights_status = case p_decision when 'publish' then 'cleared' when 'approve' then 'cleared'
+                                         when 'reject' then 'disputed' else 'review' end,
+         published_at = case when p_decision = 'publish' then coalesce(c.published_at, now()) else c.published_at end
+   where c.id = p_track and (p_expected_updated_at is null or c.updated_at = p_expected_updated_at)
+  returning c.* into t;
+  perform set_config('music.review_expected_master_sha256', '', true);
+  if t.id is null then return null; end if; -- changed since it was loaded
+  if p_decision in ('publish','approve') then
+    select v.content_sha256 into v_sha from public.music_asset_versions v where v.id = t.approved_master_version_id;
+    if v_sha is null or v_sha is distinct from v_expected or not public.music_asset_version_intact(t.approved_master_version_id) then
+      raise exception 'release_master_hash_mismatch';
+    end if;
+  end if;
+  return jsonb_build_object('id', t.id, 'title', t.title, 'status', t.status, 'rights_status', t.rights_status,
+                            'published_at', t.published_at, 'moderation_note', t.moderation_note, 'updated_at', t.updated_at,
+                            'approved_master_version_id', t.approved_master_version_id, 'master_sha256', v_sha);
+end $$;
+revoke all on function public.music_operator_review(uuid, text, text, timestamptz, text) from public, anon, authenticated;
+grant execute on function public.music_operator_review(uuid, text, text, timestamptz, text) to service_role;
 
 ------------------------------------------------------------------------------
 -- (e) delivery: what music-access signs. Service role only.
@@ -702,7 +960,10 @@ returns table(entitlement_id uuid, download_count integer, revoked boolean, orde
 language sql stable security definer set search_path = pg_catalog, public as $$
   select e.id, e.download_count, e.revoked_at is not null, o.status,
          e.asset_version_id, v.bucket_id, v.object_name,
-         coalesce(v.id is not null and public.music_object_identity(v.bucket_id, v.object_name) = v.identity, false),
+         -- (f) hashed, never invalidated, the object unchanged, and the hash
+         -- the purchase recorded is the version's
+         coalesce(v.id is not null and public.music_asset_version_intact(v.id)
+                  and (e.asset_sha256 is null or e.asset_sha256 = v.content_sha256), false),
          t.status
     from public.music_entitlements e
     join public.music_orders o on o.id = e.order_id
@@ -722,7 +983,7 @@ create or replace function public.music_track_delivery(p_track uuid)
 returns table(track_status text, asset_version_id uuid, bucket_id text, object_name text, intact boolean)
 language sql stable security definer set search_path = pg_catalog, public as $$
   select t.status, t.approved_master_version_id, v.bucket_id, v.object_name,
-         coalesce(v.id is not null and public.music_object_identity(v.bucket_id, v.object_name) = v.identity, false)
+         coalesce(v.id is not null and public.music_asset_version_intact(v.id), false)
     from public.creator_tracks t
     left join public.music_asset_versions v on v.id = t.approved_master_version_id
    where t.id = p_track

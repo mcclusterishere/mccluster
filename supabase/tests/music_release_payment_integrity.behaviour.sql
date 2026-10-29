@@ -29,6 +29,27 @@ begin
 end $$;
 create or replace function pg_temp.check(p_ok boolean, p_what text) returns void language plpgsql as $$
 begin if p_ok is not true then raise exception 'FAILED: %', p_what; end if; end $$;
+-- (f) The review desk, as music-access runs it: operator-review-prepare pins
+-- the master and records the SHA-256 of its bytes (here a stand-in hash of
+-- the pinned identity: Postgres has no bytes), then the decision carries the
+-- hash the reviewer was shown.
+create or replace function pg_temp.fake_sha(p_ident text) returns text language sql as $$
+  select encode(sha256(convert_to(p_ident, 'UTF8')), 'hex') $$;
+create or replace function pg_temp.verify_audio(p_track uuid) returns text language plpgsql as $$
+declare r record;
+begin
+  select * into r from public.music_prepare_review(p_track);
+  if r.content_sha256 is null then
+    perform public.music_record_asset_sha256(r.version_id, pg_temp.fake_sha(r.object_name || '|' || coalesce(r.etag, '')), r.size_bytes);
+  end if;
+  return (select v.content_sha256 from public.music_asset_versions v where v.id = r.version_id);
+end $$;
+create or replace function pg_temp.approve(p_track uuid, p_decision text) returns jsonb language plpgsql as $$
+declare v_sha text := pg_temp.verify_audio(p_track);
+begin
+  return public.music_operator_review(p_track, p_decision, '',
+           (select updated_at from public.creator_tracks where id = p_track), v_sha);
+end $$;
 
 -- ids
 --   Ana auth 00..a1 / M 10..a1      Bo auth 00..b1 / M 10..b1
@@ -63,6 +84,24 @@ select pg_temp.check((select v.pinned_via = 'legacy_backfill' and v.object_name 
                      'backfill pinned an honest release''s master (object id, version, eTag, size) into its reviewed snapshot');
 select pg_temp.check((select approved_master_version_id is null from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a2'),
                      'a release sent back to review has no pinned version');
+-- (f) the backfill cannot hash bytes: the legacy pin has no hash, the health
+-- query names it, and it is not sellable or streamable until the operator's
+-- hash backfill (music-access operator-review-prepare) records one
+create temp view f_unhashed as
+  select t.id from public.creator_tracks t left join public.music_asset_versions v on v.id = t.approved_master_version_id
+   where t.status in ('approved','published') and (v.content_sha256 is null or v.invalidated_at is not null);
+grant select on f_unhashed to service_role;
+select pg_temp.check((select array_agg(id) from f_unhashed) = array['20000000-0000-4000-8000-0000000000a1'::uuid],
+                     'health: the legacy published release is listed as approved without content_sha256');
+select pg_temp.check(not public.music_asset_version_intact((select approved_master_version_id from public.creator_tracks
+                       where id='20000000-0000-4000-8000-0000000000a1')), 'an unhashed legacy pin is not intact');
+select pg_temp.check(pg_temp.verify_audio('20000000-0000-4000-8000-0000000000a1') ~ '^[0-9a-f]{64}$', 'the hash backfill records the legacy master''s hash');
+select pg_temp.check((select count(*) from f_unhashed) = 0, 'health: no approved release without content_sha256');
+select pg_temp.check((select t.status = 'published' and t.reviewed_snapshot->>'approved_master_sha256' = v.content_sha256
+                       and t.reviewed_digest = public.music_review_digest(public.music_track_reviewed_snapshot(t))
+                       from public.creator_tracks t join public.music_asset_versions v on v.id = t.approved_master_version_id
+                      where t.id='20000000-0000-4000-8000-0000000000a1'),
+                     'the legacy release''s reviewed snapshot gains the hash of the same pinned bytes and stays consistent');
 select pg_temp.check(public.music_track_assets_verified('20000000-0000-4000-8000-0000000000a1'), 'honest assets verify');
 select pg_temp.check(not public.music_track_assets_verified('20000000-0000-4000-8000-0000000000a2'), 'borrowed assets do not verify');
 select pg_temp.check((select platform_fee_bps from public.music_license_offers where id='30000000-0000-4000-8000-0000000000a1') = 1500,
@@ -131,6 +170,8 @@ update public.creator_tracks set poster_url = :PUB || 'creator-artwork/00000000-
  where id = '20000000-0000-4000-8000-0000000000a3';
 update public.creator_tracks set master_path = '00000000-0000-4000-8000-0000000000a1/a2-master.wav'
  where id = '20000000-0000-4000-8000-0000000000a3';
+-- and submits it for review
+update public.creator_tracks set status = 'pending_review' where id = '20000000-0000-4000-8000-0000000000a3';
 
 -- storage: Ana reads, changes and removes her own objects only
 select pg_temp.check((select count(*) from storage.objects where bucket_id='creator-masters'
@@ -155,8 +196,7 @@ select pg_temp.must_fail($$update public.creator_tracks set status='published', 
 ------------------------------------------------------------------------------
 -- (b) a reviewed release cannot change under its review
 ------------------------------------------------------------------------------
-update public.creator_tracks set status='published', rights_status='cleared', published_at=now()
- where id='20000000-0000-4000-8000-0000000000a3';
+select pg_temp.approve('20000000-0000-4000-8000-0000000000a3', 'publish');
 select pg_temp.check((select reviewed_snapshot->>'title' = 'Fresh' and reviewed_at is not null
                        from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a3'), 'publishing freezes the reviewed snapshot');
 insert into public.music_license_offers(id, track_id, creator_m_uid, slug, title, license_type, price_cents, currency, terms_text, active, checkout_enabled)
@@ -178,25 +218,25 @@ select pg_temp.check((select count(*) from public.creator_tracks where status='p
                      'the unreviewed edit is not published');
 
 -- re-review, then change audio, artwork, rights, access in turn
-update public.creator_tracks set status='approved', rights_status='cleared' where id='20000000-0000-4000-8000-0000000000a3';
+select pg_temp.approve('20000000-0000-4000-8000-0000000000a3', 'approve');
 select pg_temp.as_user(:A);
 update public.creator_tracks set master_path = '00000000-0000-4000-8000-0000000000b1/really-ana.wav' where id='20000000-0000-4000-8000-0000000000a3';
 select pg_temp.check((select status from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a3') = 'pending_review',
                      'changing approved audio sends it back to review');
 select pg_temp.as_service();
-update public.creator_tracks set status='published', rights_status='cleared' where id='20000000-0000-4000-8000-0000000000a3';
+select pg_temp.approve('20000000-0000-4000-8000-0000000000a3', 'publish');
 select pg_temp.as_user(:A);
 update public.creator_tracks set poster_url = '' where id='20000000-0000-4000-8000-0000000000a3';
 select pg_temp.check((select status from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a3') = 'pending_review',
                      'changing published artwork sends it back to review');
 select pg_temp.as_service();
-update public.creator_tracks set status='published', rights_status='cleared' where id='20000000-0000-4000-8000-0000000000a3';
+select pg_temp.approve('20000000-0000-4000-8000-0000000000a3', 'publish');
 select pg_temp.as_user(:A);
 update public.creator_tracks set rights_declaration = '{"owns_master":false}' where id='20000000-0000-4000-8000-0000000000a3';
 select pg_temp.check((select status from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a3') = 'pending_review',
                      'changing the rights declaration sends it back to review');
 select pg_temp.as_service();
-update public.creator_tracks set status='published', rights_status='cleared' where id='20000000-0000-4000-8000-0000000000a3';
+select pg_temp.approve('20000000-0000-4000-8000-0000000000a3', 'publish');
 select pg_temp.as_user(:A);
 update public.creator_tracks set access_mode = 'purchase' where id='20000000-0000-4000-8000-0000000000a3';
 select pg_temp.check((select status from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a3') = 'pending_review',
@@ -211,12 +251,12 @@ select pg_temp.check((select reviewed_digest <> 'x' from public.creator_tracks w
                      'a creator cannot write the reviewed snapshot');
 -- even the service role cannot change published content without a fresh review
 select pg_temp.as_service();
-update public.creator_tracks set status='published', rights_status='cleared' where id='20000000-0000-4000-8000-0000000000a3';
+select pg_temp.approve('20000000-0000-4000-8000-0000000000a3', 'publish');
 update public.creator_tracks set genre = 'changed by an operator' where id='20000000-0000-4000-8000-0000000000a3';
 select pg_temp.check((select status from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a3') = 'pending_review',
                      'a service-role content change also needs a fresh review');
 -- a status-only change on a published row is not a content change
-update public.creator_tracks set status='published', rights_status='cleared' where id='20000000-0000-4000-8000-0000000000a3';
+select pg_temp.approve('20000000-0000-4000-8000-0000000000a3', 'publish');
 update public.creator_tracks set moderation_note = 'noted' where id='20000000-0000-4000-8000-0000000000a3';
 select pg_temp.check((select status from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a3') = 'published',
                      'a moderation note does not unpublish');
@@ -306,8 +346,9 @@ select pg_temp.must_fail($$update public.music_orders set status='paid' where id
 \set A3 '''20000000-0000-4000-8000-0000000000a3'''
 \set PINNED '''00000000-0000-4000-8000-0000000000b1/really-ana.wav'''
 select pg_temp.as_service();
-select pg_temp.check((select t.status = 'published' and v.object_name = :PINNED and v.pinned_via = 'review_approval'
+select pg_temp.check((select t.status = 'published' and v.object_name = :PINNED and v.pinned_via = 'review_candidate'
                        and t.reviewed_snapshot->'approved_master' = v.identity
+                       and t.reviewed_snapshot->>'approved_master_sha256' = v.content_sha256 and v.content_sha256 is not null
                        and t.reviewed_digest = public.music_review_digest(public.music_track_reviewed_snapshot(t))
                        from public.creator_tracks t join public.music_asset_versions v on v.id = t.approved_master_version_id
                       where t.id = :A3), 'approval pinned the exact master object and the digest covers it');
@@ -353,15 +394,21 @@ insert into public.music_orders(id, offer_id, track_id, creator_m_uid, customer_
 values ('40000000-0000-4000-8000-0000000000e1', '30000000-0000-4000-8000-0000000000a3', :A3,
         '10000000-0000-4000-8000-0000000000a1', 'buyer@test', 'cs_order_e1', 2000, 300, 1700, 'usd',
         (select approved_master_version_id from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000a1'));
-select pg_temp.check((select asset_version_id = (select v1 from e_pin) from public.music_orders
-                       where id = '40000000-0000-4000-8000-0000000000e1'),
-                     'an order records the version on sale, whatever the caller sent');
+select pg_temp.check((select o.asset_version_id = (select v1 from e_pin) and o.asset_sha256 = v.content_sha256
+                       from public.music_orders o join public.music_asset_versions v on v.id = o.asset_version_id
+                       where o.id = '40000000-0000-4000-8000-0000000000e1'),
+                     'an order records the version on sale and its sha256, whatever the caller sent');
 update public.music_orders set status = 'paid', paid_at = now() where id = '40000000-0000-4000-8000-0000000000e1';
 insert into public.music_entitlements(id, order_id, offer_id, track_id, customer_email, asset_version_id)
 values ('50000000-0000-4000-8000-0000000000e1', '40000000-0000-4000-8000-0000000000e1', '30000000-0000-4000-8000-0000000000a3',
         :A3, 'buyer@test', null);
-select pg_temp.check((select asset_version_id = (select v1 from e_pin) from public.music_entitlements
-                       where id = '50000000-0000-4000-8000-0000000000e1'), 'the entitlement inherits the order''s pinned version');
+select pg_temp.check((select e.asset_version_id = (select v1 from e_pin) and e.asset_sha256 = o.asset_sha256
+                       from public.music_entitlements e join public.music_orders o on o.id = e.order_id
+                       where e.id = '50000000-0000-4000-8000-0000000000e1'), 'the entitlement inherits the order''s pinned version and sha256');
+select pg_temp.must_fail($$update public.music_entitlements set asset_sha256 = repeat('c', 64)
+  where id = '50000000-0000-4000-8000-0000000000e1'$$, '%music_entitlement_immutable%');
+select pg_temp.must_fail($$update public.music_orders set asset_sha256 = repeat('c', 64)
+  where id = '40000000-0000-4000-8000-0000000000e1'$$, '%music_order_terms_immutable%');
 select pg_temp.must_fail($$update public.music_entitlements set asset_version_id = null
   where id = '50000000-0000-4000-8000-0000000000e1'$$, '%music_entitlement_immutable%');
 select pg_temp.must_fail($$update public.music_orders set asset_version_id = null
@@ -390,7 +437,7 @@ select pg_temp.must_fail($$insert into public.music_orders(offer_id, track_id, c
 select pg_temp.must_fail($$delete from storage.objects
   where bucket_id = 'creator-masters' and name = '00000000-0000-4000-8000-0000000000b1/really-ana.wav'$$, '%music_asset_immutable%');
 -- re-approval pins the replacement as a NEW version; the purchaser keeps theirs
-update public.creator_tracks set status = 'published', rights_status = 'cleared', published_at = now() where id = :A3;
+select pg_temp.approve(:A3, 'publish');
 select pg_temp.check((select approved_master_version_id <> (select v1 from e_pin) from public.creator_tracks where id = :A3),
                      're-approval pins the replacement as a new version');
 select pg_temp.check((select d.object_name like '%replacement.wav' and d.intact from public.music_track_delivery(:A3) d),
@@ -414,18 +461,189 @@ select pg_temp.check((select not d.intact from public.music_purchase_delivery(:A
 update public.music_entitlements set revoked_at = now() where id = '50000000-0000-4000-8000-0000000000e1';
 select pg_temp.check((select d.revoked from public.music_purchase_delivery(:A3, '30000000-0000-4000-8000-0000000000a3', null, 'buyer@test') d),
                      'a revoked licence is reported revoked');
--- the pinned record itself is immutable
+-- the pinned record itself is immutable: the service role cannot write it at
+-- all (only this file's functions do), and the guard holds for the owner too
+select pg_temp.must_fail($$update public.music_asset_versions set object_name = 'x/y.wav'$$, '%permission denied%');
+select pg_temp.must_fail($$update public.music_asset_versions set content_sha256 = repeat('b', 64)$$, '%permission denied%');
+select pg_temp.must_fail($$insert into public.music_asset_versions(track_id, bucket_id, object_name, storage_object_id, identity, pinned_via, content_sha256)
+  values ('20000000-0000-4000-8000-0000000000a3', 'creator-masters', 'x/y.wav', gen_random_uuid(), '{}', 'review_approval', repeat('a', 64))$$,
+  '%permission denied%');
+select pg_temp.must_fail($$delete from public.music_asset_versions$$, '%permission denied%');
+reset role;
 select pg_temp.must_fail($$update public.music_asset_versions set object_name = 'x/y.wav'$$, '%music_asset_version_immutable%');
 select pg_temp.must_fail($$delete from public.music_asset_versions$$, '%music_asset_version_immutable%');
-update public.music_asset_versions set content_sha256 = repeat('a', 64) where id = (select v1 from e_pin);
 select pg_temp.must_fail($$update public.music_asset_versions set content_sha256 = repeat('b', 64)
   where id = (select v1 from e_pin)$$, '%music_asset_version_immutable%');
+select pg_temp.as_service();
 -- and creators cannot write the pin
 select pg_temp.as_user(:A);
 update public.creator_tracks set approved_master_version_id = (select v1 from e_pin) where id = :A3;
 select pg_temp.as_service();
 select pg_temp.check((select approved_master_version_id is null from public.creator_tracks where id = :A3),
                      'a creator cannot set the pinned version');
+
+------------------------------------------------------------------------------
+-- (f) approval is bound to the SHA-256 of the reviewed audio bytes
+------------------------------------------------------------------------------
+\set F '''20000000-0000-4000-8000-0000000000f1'''
+\set FM '''00000000-0000-4000-8000-0000000000a1/f-master.wav'''
+\set FM2 '''00000000-0000-4000-8000-0000000000a1/f-master-2.wav'''
+select pg_temp.as_service();
+insert into public.music_creator_assets(bucket_id, object_name, owner_user_id, owner_m_uid) values
+  ('creator-masters', :FM, :A, '10000000-0000-4000-8000-0000000000a1'),
+  ('creator-masters', :FM2, :A, '10000000-0000-4000-8000-0000000000a1');
+insert into storage.objects(bucket_id, name, owner, owner_id) values ('creator-masters', :FM, null, null), ('creator-masters', :FM2, null, null);
+select pg_temp.as_user(:A);
+insert into public.creator_tracks(id, title, artist, slug, master_path, status, access_mode)
+values (:F, 'Hashed', 'Ana', 'hashed', :FM, 'pending_review', 'purchase');
+select pg_temp.as_service();
+create temp table f_h as select repeat('1', 64) as h1, repeat('2', 64) as h2, repeat('3', 64) as h3;
+grant select on f_h to authenticated, service_role;
+
+-- approval refused without a hash, whichever way it is attempted
+select pg_temp.must_fail($$update public.creator_tracks set status = 'published', rights_status = 'cleared'
+  where id = '20000000-0000-4000-8000-0000000000f1'$$, '%release_master_unhashed%');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '',
+  (select updated_at from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000f1'), (select h1 from f_h))$$,
+  '%release_master_unhashed%');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '',
+  (select updated_at from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000f1'), null)$$,
+  '%release_master_hash_required%');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'approve', '', null, (select h1 from f_h))$$,
+  '%review_expected_updated_at_required%');
+select pg_temp.check((select status = 'pending_review' and approved_master_version_id is null from public.creator_tracks where id = :F),
+                     'approval refused without a hash: still pending, nothing pinned on sale');
+
+-- the reviewer's step: pin the master as a version, then hash its bytes
+create temp table f_prep as select * from public.music_prepare_review(:F);
+grant select on f_prep to authenticated, service_role;
+select pg_temp.check((select p.object_name = :FM and p.content_sha256 is null and not p.invalidated and p.identity_intact
+                       and v.pinned_via = 'review_candidate' from f_prep p join public.music_asset_versions v on v.id = p.version_id),
+                     'prepare pins the master under review, unhashed');
+select pg_temp.check((select count(*) from public.music_prepare_review(:F) p where p.version_id = (select version_id from f_prep)) = 1,
+                     'preparing again reuses the same pinned version');
+select pg_temp.check(public.music_asset_locked('creator-masters', :FM), 'the master under review is locked from preparation on');
+select pg_temp.must_fail($$update storage.objects set version = 'swapped-under-review'
+  where bucket_id = 'creator-masters' and name = '00000000-0000-4000-8000-0000000000a1/f-master.wav'$$, '%music_asset_immutable%');
+select pg_temp.check(public.music_record_asset_sha256((select version_id from f_prep), (select h1 from f_h), 7) = 'size_mismatch',
+                     'a hash over a short read is not recorded');
+select pg_temp.check((select content_sha256 is null and invalidated_at is null from public.music_asset_versions where id = (select version_id from f_prep)),
+                     'and the version is untouched by it');
+select pg_temp.must_fail($$select public.music_record_asset_sha256((select version_id from f_prep), 'not-a-hash', 1024)$$, '%invalid_sha256%');
+select pg_temp.check(public.music_record_asset_sha256((select version_id from f_prep), upper((select h1 from f_h)), (select size_bytes from f_prep)) = 'recorded',
+                     'the hash of the bytes is recorded');
+select pg_temp.check((select content_sha256 = (select h1 from f_h) and content_sha256_at is not null
+                       from public.music_asset_versions where id = (select version_id from f_prep)), 'recorded once, normalised');
+
+-- hash write-once
+select pg_temp.check(public.music_record_asset_sha256((select version_id from f_prep), (select h1 from f_h), (select size_bytes from f_prep)) = 'already_recorded',
+                     'hash write-once: the same hash again changes nothing');
+
+-- approval refused with the wrong expected hash, or with none, or on an old look
+select pg_temp.must_fail($$update public.creator_tracks set status = 'published', rights_status = 'cleared'
+  where id = '20000000-0000-4000-8000-0000000000f1'$$, '%release_master_hash_required%');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '',
+  (select updated_at from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000f1'), (select h2 from f_h))$$,
+  '%release_master_hash_mismatch%');
+select pg_temp.check(public.music_operator_review(:F, 'publish', '', '2000-01-01T00:00:00Z', (select h1 from f_h)) is null,
+                     'a decision on a release that changed since it was loaded does nothing');
+select pg_temp.check((select status = 'pending_review' from public.creator_tracks where id = :F), 'wrong hash: not approved');
+
+-- approval accepted with the matching hash
+select pg_temp.check((public.music_operator_review(:F, 'publish', 'ok',
+                        (select updated_at from public.creator_tracks where id = :F), (select h1 from f_h)))->>'master_sha256' = (select h1 from f_h),
+                     'approval with the matching hash publishes and reports the hash approved');
+select pg_temp.check((select t.status = 'published' and t.approved_master_version_id = (select version_id from f_prep)
+                       and t.reviewed_snapshot->>'approved_master_sha256' = (select h1 from f_h)
+                       and t.reviewed_digest = public.music_review_digest(public.music_track_reviewed_snapshot(t))
+                       from public.creator_tracks t where t.id = :F),
+                     'the reviewed snapshot and digest include the approved sha256');
+-- approved -> published also carries the hash (here: re-publishing)
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '',
+  (select updated_at from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000f1'), (select h2 from f_h))$$,
+  '%release_master_hash_mismatch%');
+
+-- a purchase records the hash
+insert into public.music_license_offers(id, track_id, creator_m_uid, slug, title, license_type, price_cents, currency, terms_text, active, checkout_enabled)
+values ('30000000-0000-4000-8000-0000000000f1', :F, '10000000-0000-4000-8000-0000000000a1', 'hashed-c', 'Commercial', 'commercial_basic', 2000, 'usd', 'Terms.', true, true);
+insert into public.music_orders(id, offer_id, track_id, creator_m_uid, customer_email, stripe_checkout_session_id,
+  amount_cents, platform_fee_cents, creator_net_cents, currency, asset_sha256)
+values ('40000000-0000-4000-8000-0000000000f1', '30000000-0000-4000-8000-0000000000f1', :F,
+        '10000000-0000-4000-8000-0000000000a1', 'f@test', 'cs_order_f1', 2000, 300, 1700, 'usd', repeat('9', 64));
+select pg_temp.check((select asset_sha256 = (select h1 from f_h) from public.music_orders where id = '40000000-0000-4000-8000-0000000000f1'),
+                     'the order records the approved sha256, whatever the caller sent');
+update public.music_orders set status = 'paid', paid_at = now() where id = '40000000-0000-4000-8000-0000000000f1';
+insert into public.music_entitlements(id, order_id, offer_id, track_id, customer_email)
+values ('50000000-0000-4000-8000-0000000000f1', '40000000-0000-4000-8000-0000000000f1', '30000000-0000-4000-8000-0000000000f1', :F, 'f@test');
+select pg_temp.check((select d.intact and d.object_name = :FM
+                       from public.music_purchase_delivery(:F, '30000000-0000-4000-8000-0000000000f1', null, 'f@test') d),
+                     'the purchase delivers the hashed, approved bytes');
+
+-- replacement after approval needs a new hash and a new review
+select pg_temp.as_user(:A);
+update public.creator_tracks set master_path = :FM2 where id = :F;
+select pg_temp.as_service();
+select pg_temp.check((select status = 'pending_review' and approved_master_version_id is null from public.creator_tracks where id = :F),
+                     'replacing approved audio sends the release back to review');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '',
+  (select updated_at from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000f1'), (select h1 from f_h))$$,
+  '%release_master_unhashed%');
+create temp table f_prep2 as select * from public.music_prepare_review(:F);
+grant select on f_prep2 to authenticated, service_role;
+select pg_temp.check((select version_id <> (select version_id from f_prep) and object_name = :FM2 and content_sha256 is null from f_prep2),
+                     'the replacement is a new version with no hash yet');
+select pg_temp.check(public.music_record_asset_sha256((select version_id from f_prep2), (select h2 from f_h), (select size_bytes from f_prep2)) = 'recorded',
+                     'the replacement gets its own hash');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '',
+  (select updated_at from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000f1'), (select h1 from f_h))$$,
+  '%release_master_hash_mismatch%');
+select pg_temp.check((public.music_operator_review(:F, 'publish', '', (select updated_at from public.creator_tracks where id = :F),
+                        (select h2 from f_h)))->>'master_sha256' = (select h2 from f_h),
+                     'the replacement is approved with its own hash');
+update public.music_license_offers set active = true, checkout_enabled = true where id = '30000000-0000-4000-8000-0000000000f1';
+
+-- a recompute that disagrees invalidates the version and refuses everywhere
+select pg_temp.check(public.music_record_asset_sha256((select version_id from f_prep2), (select h3 from f_h), (select size_bytes from f_prep2)) = 'mismatch',
+                     'a disagreeing recompute is reported');
+select pg_temp.check((select content_sha256 = (select h2 from f_h) and invalidated_at is not null and invalid_reason = 'sha256_mismatch'
+                       from public.music_asset_versions where id = (select version_id from f_prep2)),
+                     'the recorded hash is kept and the version is invalidated');
+select pg_temp.check((select status = 'pending_review' and approved_master_version_id is null and moderation_note like '%failed byte verification%'
+                       from public.creator_tracks where id = :F), 'its release goes back to review');
+select pg_temp.check((select not active and not checkout_enabled from public.music_license_offers where id = '30000000-0000-4000-8000-0000000000f1'),
+                     'and off sale');
+select pg_temp.check(public.music_record_asset_sha256((select version_id from f_prep2), (select h2 from f_h), (select size_bytes from f_prep2)) = 'invalid',
+                     'an invalidated version stays invalid');
+select pg_temp.check((select invalidated and content_sha256 = (select h2 from f_h) from public.music_prepare_review(:F)),
+                     'the desk sees it as invalid');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '',
+  (select updated_at from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000f1'), (select h2 from f_h))$$,
+  '%release_master_invalid%');
+select pg_temp.check((select d.intact and d.object_name = :FM
+                       from public.music_purchase_delivery(:F, '30000000-0000-4000-8000-0000000000f1', null, 'f@test') d),
+                     'the earlier purchase of the first approved bytes still delivers');
+-- identity changed under a pin (a path outside the database): invalidated
+reset role;
+select pg_temp.must_fail($$update public.music_asset_versions set invalidated_at = null, invalid_reason = null
+  where invalidated_at is not null$$, '%music_asset_version_immutable%');
+alter table storage.objects disable trigger music_storage_object_guard_upd;
+update storage.objects set version = 'tampered-f' where bucket_id = 'creator-masters' and name = :FM;
+alter table storage.objects enable trigger music_storage_object_guard_upd;
+select pg_temp.as_service();
+select pg_temp.check(public.music_record_asset_sha256((select version_id from f_prep), (select h1 from f_h), (select size_bytes from f_prep)) = 'identity_changed',
+                     'a recompute over changed Storage identity is refused');
+select pg_temp.check((select invalid_reason = 'identity_changed' from public.music_asset_versions where id = (select version_id from f_prep)),
+                     'and invalidates the version');
+select pg_temp.check((select not d.intact from public.music_purchase_delivery(:F, '30000000-0000-4000-8000-0000000000f1', null, 'f@test') d),
+                     'delivery of an invalidated version is refused');
+
+-- creators reach none of it
+select pg_temp.as_user(:A);
+select pg_temp.must_fail($$select * from public.music_prepare_review('20000000-0000-4000-8000-0000000000f1')$$, '%permission denied%');
+select pg_temp.must_fail($$select public.music_record_asset_sha256((select version_id from f_prep), (select h1 from f_h), 1024)$$, '%permission denied%');
+select pg_temp.must_fail($$select public.music_operator_review('20000000-0000-4000-8000-0000000000f1', 'publish', '', now(), (select h1 from f_h))$$,
+  '%permission denied%');
+select pg_temp.must_fail($$select public.music_asset_version_intact((select version_id from f_prep))$$, '%permission denied%');
 
 -- nobody but the service role reaches the asset registry
 select pg_temp.as_user(:A);

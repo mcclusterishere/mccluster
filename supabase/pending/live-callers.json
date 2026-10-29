@@ -325,11 +325,33 @@
         "workers/mccluster/src/music/router.js"
       ]
     },
+    "music_operator_review": {
+      "kind": "function",
+      "pending": "music_release_payment_integrity_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/index.ts",
+        "supabase/functions/music-access/review-audio.ts"
+      ]
+    },
+    "music_prepare_review": {
+      "kind": "function",
+      "pending": "music_release_payment_integrity_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/review-audio.ts"
+      ]
+    },
     "music_purchase_delivery": {
       "kind": "function",
       "pending": "music_release_payment_integrity_v1.sql",
       "callers": [
         "supabase/functions/music-access/delivery.ts"
+      ]
+    },
+    "music_record_asset_sha256": {
+      "kind": "function",
+      "pending": "music_release_payment_integrity_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/review-audio.ts"
       ]
     },
     "music_track_assets_verified": {

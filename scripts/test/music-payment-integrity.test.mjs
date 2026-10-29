@@ -20,6 +20,10 @@ import { musicFulfilmentRefusal } from '../../supabase/functions/stripe-webhook/
 import {
   DependencyMissing, assetsVerified, purchasedDownload, recordUpload, streamTarget
 } from '../../supabase/functions/music-access/delivery.ts';
+import {
+  MAX_HASH_BYTES, prepareReviewAudio, reviewDecisionRefusal, sha256OfStream, shortHash
+} from '../../supabase/functions/music-access/review-audio.ts';
+import { createHash } from 'node:crypto';
 
 const read = (p) => readFile(p, 'utf8');
 const PENDING = 'supabase/pending/music_release_payment_integrity_v1.sql';
@@ -254,7 +258,7 @@ test('a listener streams the pinned reviewed master; an owner previews only an o
 
 test('approval pins the exact object; storage refuses changing it for every role', async () => {
   const sql = await read(PENDING);
-  assert.match(sql, /new\.approved_master_version_id := case when coalesce\(new\.master_path, ''\) <> ''\s+then public\.music_pin_master\(new\.id, new\.master_path, 'review_approval'\) end;/);
+  assert.match(sql, /new\.approved_master_version_id := public\.music_pin_master\(new\.id, new\.master_path, 'review_approval'\);/);
   assert.match(sql, /'object_id', o\.id,\s+'version', o\.version, 'etag', o\.metadata->>'eTag', 'size', o\.metadata->>'size'/);
   assert.match(sql, /create trigger music_storage_object_guard_upd before update on storage\.objects/);
   assert.match(sql, /create trigger music_storage_object_guard_del before delete on storage\.objects/);
@@ -270,8 +274,10 @@ test('approval pins the exact object; storage refuses changing it for every role
 test('a review decision is about the version the operator saw, and a reviewed release cannot change under it', async () => {
   const access = await read('supabase/functions/music-access/index.ts');
   assert.match(access, /expected_updated_at required/);
-  assert.match(access, /query = query\.eq\("updated_at", expected\)/);
+  assert.match(access, /p_expected_updated_at: expected \|\| null/);
   assert.match(access, /the release changed since you loaded it/);
+  const sqlReview = await read(PENDING);
+  assert.match(sqlReview, /where c\.id = p_track and \(p_expected_updated_at is null or c\.updated_at = p_expected_updated_at\)/);
   const admin = await read('js/music-admin.js');
   assert.match(admin, /expected_updated_at:b\.getAttribute\("data-version"\)/);
   assert.match(admin, /data-version="'\+esc\(t\.updated_at\|\|""\)/);
@@ -292,4 +298,164 @@ test('the pending migration is documented, tested in CI and has a rollback', asy
   assert.match(ci, /bash scripts\/test-music-release-integrity-db\.sh/);
   assert.match(ci, /node --test scripts\/test\/music-payment-integrity\.test\.mjs/);
   assert.doesNotMatch(ci, /git push/);
+});
+
+/* ---------------- (f) approval bound to the reviewed audio bytes ---------------- */
+
+const enc = (t) => new TextEncoder().encode(t);
+const oneShot = (bytes) => createHash('sha256').update(bytes).digest('hex');
+function streamOf(chunks, { failAfter = -1 } = {}) {
+  let i = 0; let cancelled = false;
+  const s = new ReadableStream({
+    pull(controller) {
+      if (i === failAfter) { controller.error(new Error('socket reset')); return; }
+      if (i >= chunks.length) { controller.close(); return; }
+      controller.enqueue(chunks[i++]);
+    },
+    cancel() { cancelled = true; }
+  });
+  return { stream: s, wasCancelled: () => cancelled, pulled: () => i };
+}
+
+test('sha256OfStream: known vectors (FIPS 180-2)', async () => {
+  assert.deepEqual(await sha256OfStream(streamOf([enc('abc')]).stream, 1024),
+    { ok: true, sha256: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', size: 3 });
+  assert.deepEqual(await sha256OfStream(streamOf([]).stream, 1024),
+    { ok: true, sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', size: 0 });
+  const two = enc('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq');
+  assert.equal((await sha256OfStream(streamOf([two]).stream, 1024)).sha256,
+    '248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1');
+});
+
+test('sha256OfStream: hashing over chunks equals the one-shot hash, for streams and async iterables', async () => {
+  const bytes = new Uint8Array(3 * 65536 + 17);
+  for (let i = 0; i < bytes.length; i++) bytes[i] = (i * 31 + 7) & 0xff;
+  const expected = oneShot(bytes);
+  for (const size of [1, 7, 4096, 65536, 100000, bytes.length]) {
+    const chunks = [];
+    for (let o = 0; o < bytes.length; o += size) chunks.push(bytes.subarray(o, o + size));
+    assert.deepEqual(await sha256OfStream(streamOf(chunks).stream, bytes.length), { ok: true, sha256: expected, size: bytes.length }, `chunks of ${size}`);
+    async function* gen() { for (const c of chunks) yield c; }
+    assert.equal((await sha256OfStream(gen(), bytes.length)).sha256, expected, `iterable chunks of ${size}`);
+  }
+});
+
+test('sha256OfStream: over the size cap fails closed and stops reading', async () => {
+  const chunks = Array.from({ length: 10 }, () => new Uint8Array(100));
+  const s = streamOf(chunks);
+  const r = await sha256OfStream(s.stream, 250);
+  assert.equal(r.ok, false); assert.equal(r.reason, 'too_large');
+  assert.ok(s.wasCancelled(), 'the read is cancelled');
+  assert.ok(s.pulled() < chunks.length, 'the rest is never read');
+  assert.equal((await sha256OfStream(streamOf(chunks).stream, 1000)).ok, true, 'exactly at the cap is fine');
+  assert.equal(MAX_HASH_BYTES, 524288000, 'the cap is the creator-masters bucket limit');
+});
+
+test('sha256OfStream: a missing object or a failed read fails closed', async () => {
+  assert.deepEqual(await sha256OfStream(null, 1024), { ok: false, reason: 'missing' });
+  assert.deepEqual(await sha256OfStream(undefined, 1024), { ok: false, reason: 'missing' });
+  const r = await sha256OfStream(streamOf([enc('a'), enc('b'), enc('c')], { failAfter: 2 }).stream, 1024);
+  assert.equal(r.ok, false); assert.equal(r.reason, 'read_failed');
+});
+
+const PREP = {
+  track_id: '20000000-0000-4000-8000-0000000000f1', track_status: 'pending_review', track_updated_at: '2026-10-29T10:00:00.123456+00:00',
+  version_id: '60000000-0000-4000-8000-0000000000f1', bucket_id: 'creator-masters', object_name: 'u/f-master.wav',
+  size_bytes: 11, etag: '"e"', content_sha256: null, invalidated: false, invalid_reason: null, identity_intact: true
+};
+const AUDIO = enc('hello audio');
+function reader(bytes = AUDIO, { status = 200, length = bytes?.length ?? null } = {}) {
+  const reads = [];
+  const fn = async (bucket, path) => {
+    reads.push([bucket, path]);
+    return { ok: status === 200, status, body: bytes ? streamOf([bytes.subarray(0, 4), bytes.subarray(4)]).stream : null, length };
+  };
+  fn.reads = reads;
+  return fn;
+}
+
+test('prepare review: hashes the pinned object once and records it', async () => {
+  const db = stubDb({ rpc: { music_prepare_review: { data: [PREP], error: null }, music_record_asset_sha256: { data: 'recorded', error: null } } });
+  const read = reader();
+  const r = await prepareReviewAudio(db, read, PREP.track_id);
+  assert.equal(r.ok, true);
+  assert.equal(r.sha256, oneShot(AUDIO));
+  assert.equal(r.path, PREP.object_name, 'the pinned object, never a live path');
+  assert.deepEqual(read.reads, [['creator-masters', 'u/f-master.wav']]);
+  assert.deepEqual(db.calls[1], ['music_record_asset_sha256', { p_version: PREP.version_id, p_sha256: oneShot(AUDIO), p_size: AUDIO.length }]);
+  /* already hashed: no read at all */
+  const again = reader();
+  const r2 = await prepareReviewAudio(stubDb({ rpc: { music_prepare_review: { data: [{ ...PREP, content_sha256: 'a'.repeat(64) }], error: null } } }), again, PREP.track_id);
+  assert.equal(r2.sha256, 'a'.repeat(64)); assert.equal(r2.hashedNow, false); assert.equal(again.reads.length, 0);
+  assert.equal(shortHash('a'.repeat(64)), 'aaaaaaaaaaaa…aaaa');
+});
+
+test('prepare review: every uncertain outcome refuses and records nothing', async () => {
+  const rec = { music_record_asset_sha256: { data: 'recorded', error: null } };
+  const prep = (row) => ({ music_prepare_review: { data: [row], error: null } });
+  const cases = [
+    ['missing object', prep(PREP), reader(null, { status: 404 }), 409],
+    ['storage error', prep(PREP), reader(null, { status: 500 }), 502],
+    ['too large by the pin', prep({ ...PREP, size_bytes: MAX_HASH_BYTES + 1 }), reader(), 413],
+    ['too large by the response', prep({ ...PREP, size_bytes: null }), reader(AUDIO, { length: MAX_HASH_BYTES + 1 }), 413],
+    ['invalidated version', prep({ ...PREP, invalidated: true, invalid_reason: 'sha256_mismatch' }), reader(), 409],
+    ['storage identity changed', prep({ ...PREP, identity_intact: false }), reader(), 409],
+  ];
+  for (const [what, rpc, read, status] of cases) {
+    const db = stubDb({ rpc: { ...rpc, ...rec } });
+    const r = await prepareReviewAudio(db, read, PREP.track_id);
+    assert.equal(r.ok, false, what); assert.equal(r.status, status, what);
+    assert.ok(!db.calls.some(([fn]) => fn === 'music_record_asset_sha256'), `${what}: nothing recorded`);
+  }
+  const thrown = async () => { throw new Error('dns'); };
+  assert.equal((await prepareReviewAudio(stubDb({ rpc: { ...prep(PREP), ...rec } }), thrown, PREP.track_id)).status, 502);
+  /* the database's verdict on the hash */
+  for (const [outcome, status] of [['size_mismatch', 502], ['mismatch', 409], ['identity_changed', 409], ['invalid', 409]]) {
+    const r = await prepareReviewAudio(stubDb({ rpc: { ...prep(PREP), music_record_asset_sha256: { data: outcome, error: null } } }), reader(), PREP.track_id);
+    assert.equal(r.ok, false, outcome); assert.equal(r.status, status, outcome);
+  }
+  /* a recheck re-hashes a recorded version; a disagreeing recompute refuses */
+  const db = stubDb({ rpc: { ...prep({ ...PREP, content_sha256: 'b'.repeat(64) }), music_record_asset_sha256: { data: 'mismatch', error: null } } });
+  assert.equal((await prepareReviewAudio(db, reader(), PREP.track_id, MAX_HASH_BYTES, true)).status, 409);
+  /* missing RPCs and database refusals */
+  await assert.rejects(prepareReviewAudio(stubDb(), reader(), PREP.track_id), (e) => e instanceof DependencyMissing && e.dependency === 'music_prepare_review');
+  await assert.rejects(prepareReviewAudio(stubDb({ rpc: prep(PREP) }), reader(), PREP.track_id), (e) => e instanceof DependencyMissing && e.dependency === 'music_record_asset_sha256');
+  const notInReview = stubDb({ rpc: { music_prepare_review: { data: null, error: { code: 'P0001', message: 'release_not_in_review' } } } });
+  assert.equal((await prepareReviewAudio(notInReview, reader(), PREP.track_id)).status, 409);
+});
+
+test('a decision maps every hash refusal to an operator answer', () => {
+  assert.equal(reviewDecisionRefusal({ message: 'release_master_unhashed' }).status, 409);
+  assert.match(reviewDecisionRefusal({ message: 'release_master_hash_mismatch' }).error, /not the version you listened to/);
+  assert.equal(reviewDecisionRefusal({ message: 'release_master_invalid' }).status, 409);
+  assert.equal(reviewDecisionRefusal({ message: 'release_master_hash_required' }).status, 400);
+  assert.equal(reviewDecisionRefusal({ message: 'something else' }), null);
+  assert.throws(() => reviewDecisionRefusal({ code: 'PGRST202' }), DependencyMissing);
+});
+
+test('the desk plays the pinned version and approves the hash it showed', async () => {
+  const access = await read('supabase/functions/music-access/index.ts');
+  const prep = access.slice(access.indexOf('action === "operator-review-prepare"'), access.indexOf('action === "operator-review")'));
+  assert.ok(prep.indexOf('houseOps(') < prep.indexOf('prepareReviewAudio('), 'operators only');
+  assert.match(prep, /signDownload\(audio\.bucket, audio\.path, undefined, 900\)/, 'the player signs the pinned object');
+  assert.doesNotMatch(prep, /master_path/, 'never the live path');
+  assert.doesNotMatch(access, /storage\.from\([^)]*\)\.download\(/, 'no whole-file buffering');
+  const review = access.slice(access.indexOf('action === "operator-review")'), access.indexOf('action === "operator-license"'));
+  assert.match(review, /expected_master_sha256 required/);
+  assert.match(review, /admin\.rpc\("music_operator_review"/);
+  assert.doesNotMatch(review, /from\("creator_tracks"\)\.update/, 'no decision bypasses the hash check');
+  const admin = await read('js/music-admin.js');
+  assert.match(admin, /call\("operator-review-prepare",\{track_id:id\}\)/);
+  assert.match(admin, /expected_master_sha256:b\.getAttribute\("data-sha"\)/);
+  assert.match(admin, /src="'\+esc\(p\.listen_url\)/, 'the player streams the prepared, pinned object');
+  assert.match(admin, /disabled title="Verify and listen to the audio first"/, 'publish waits for a verified listen');
+  const sql = await read(PENDING);
+  assert.match(sql, /raise exception 'release_master_unhashed'/);
+  assert.match(sql, /if v_expected is distinct from v_ver\.content_sha256 then\s+raise exception 'release_master_hash_mismatch';/);
+  assert.match(sql, /'approved_master_sha256',/, 'the reviewed snapshot carries the hash');
+  assert.match(sql, /new\.asset_sha256 := o\.asset_sha256;/, 'entitlements inherit the hash');
+  assert.match(sql, /grant select on public\.music_asset_versions to service_role;/);
+  assert.doesNotMatch(sql, /grant [^;]*(insert|update)[^;]* on public\.music_asset_versions/, 'only the definer functions write versions');
+  const readme = await read('supabase/pending/README.md');
+  assert.match(readme, /no approved release without content_sha256/i);
 });

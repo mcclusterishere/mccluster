@@ -1,13 +1,16 @@
 -- Rollback for music_release_payment_integrity_v1.sql. Restores the v1 guards
 -- (supabase/migrations/20260920041011_music_creator_platform_v1.sql) and the
 -- v1 storage policies, and removes what the file added (including the pinned
--- asset versions and the purchased version recorded on orders and
--- entitlements: that record is LOST). This REOPENS the five findings it closed; apply only to back out a broken promotion.
+-- asset versions, their recorded SHA-256 and the purchased version and hash
+-- recorded on orders and entitlements: that record is LOST). This REOPENS the five findings it closed; apply only to back out a broken promotion.
 set local lock_timeout = '5s';
 
 drop trigger if exists music_storage_object_guard_upd on storage.objects;
 drop trigger if exists music_storage_object_guard_del on storage.objects;
 drop function if exists public.music_storage_object_guard();
+drop function if exists public.music_operator_review(uuid, text, text, timestamptz, text);
+drop function if exists public.music_record_asset_sha256(uuid, text, bigint);
+drop function if exists public.music_prepare_review(uuid);
 drop function if exists public.music_purchase_delivery(uuid, uuid, uuid, text);
 drop function if exists public.music_track_delivery(uuid);
 drop trigger if exists music_entitlement_guard_trg on public.music_entitlements;
@@ -69,12 +72,15 @@ drop policy if exists "creator reads own private masters" on storage.objects;
 create policy "creator reads own private masters" on storage.objects for select to authenticated
 using (bucket_id='creator-masters' and (storage.foldername(name))[1]=auth.uid()::text);
 
+alter table public.music_entitlements drop column if exists asset_sha256;
+alter table public.music_orders drop column if exists asset_sha256;
 alter table public.music_entitlements drop column if exists asset_version_id;
 alter table public.music_orders drop column if exists asset_version_id;
 alter table public.creator_tracks drop column if exists approved_master_version_id;
 drop function if exists public.music_asset_locked(text, text);
 drop function if exists public.music_pin_master(uuid, text, text);
 drop function if exists public.music_track_reviewed_snapshot(public.creator_tracks);
+drop function if exists public.music_asset_version_intact(uuid);
 drop function if exists public.music_review_digest(jsonb);
 drop table if exists public.music_asset_versions;
 drop function if exists public.music_asset_version_guard();
