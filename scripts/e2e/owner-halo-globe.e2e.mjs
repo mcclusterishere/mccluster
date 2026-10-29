@@ -19,7 +19,7 @@ await mkdir(OUT,{recursive:true});
 const json=(r,b,s=200)=>r.fulfill({status:s,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(b)});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
 async function setup(viewport,who){
-  const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true});
+  const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true,serviceWorkers:'block'});
   const errors=[];const owner=who===OWNER;
   await ctx.addInitScript(({who})=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:who,email:who+'@fixture.invalid'})).replace(/=+$/,'')+'.y',refresh_token:'fixture',expires_at:exp,user:{id:who}}));},{who});
@@ -52,11 +52,14 @@ try{
     const globe=await page.evaluate(()=>{const a=document.querySelector('.appbar [data-appnav="halo"]');return a?{href:a.getAttribute('href'),label:a.getAttribute('aria-label')}:null;});
     check(scope,'the owner\'s bar globe opens Hitman\'s Halo, and there is no second (user) globe',!!globe&&/action-globe\.html\?explore=1&halo=1$/.test(globe.href)&&/Hitman’s Halo/.test(globe.label)&&!(await page.$('.appbar [data-appnav="world"]')),globe);
     await page.click('.appbar [data-appnav="halo"]');
-    await page.waitForURL(/action-globe\.html\?explore=1&halo=1$/,{timeout:20000}).catch(()=>{});
+    await page.waitForURL(/action-globe\.html\?explore=1&halo=/,{timeout:20000}).catch(()=>{});
     await page.waitForSelector('.hx-top',{timeout:60000}).catch(()=>{});
     await page.waitForTimeout(1500);
     const there=await page.evaluate(()=>({url:location.pathname+location.search,halo:!!document.querySelector('.hx-top'),lit:(document.querySelector('.appbar [data-appnav="halo"]')||{}).classList?.contains('is-here'),feed:(document.querySelector('.hx-feed')||{}).getAttribute?.('href')}));
-    check(scope,'tapping it lands in Halo (the four screens), with the globe lit',there.url==='/action-globe.html?explore=1&halo=1'&&there.halo&&there.lit===true,there);
+    /* Halo writes its own route once it mounts (3f5a73eb, 2026-10-24): halo=1 opens on its World screen and the URL then reads
+       halo=world&hours=24, so a reload or Back returns to the same screen and window */
+    const landed=new URL(there.url,'http://x');
+    check(scope,'tapping it lands in Halo (the four screens) on its World screen, with the globe lit',landed.pathname==='/action-globe.html'&&landed.searchParams.get('explore')==='1'&&landed.searchParams.get('halo')==='world'&&landed.searchParams.get('hours')==='24'&&there.halo&&there.lit===true,there);
     check(scope,'Halo carries the way to the World feed',!!there.feed&&/(mnet\.html\?view=feed|\?view=feed)$/.test(there.feed),there);
     const box=await page.evaluate(()=>{const f=document.querySelector('.hx-feed').getBoundingClientRect(),o=document.querySelector('.hx-operator').getBoundingClientRect(),b=document.querySelector('.hx-brand').getBoundingClientRect();return {feed:[Math.round(f.left),Math.round(f.right),Math.round(f.height)],op:[Math.round(o.left)],brand:[Math.round(b.right)],w:innerWidth};});
     check(scope,'the World feed door sits whole in the header, 44px tall, clear of the brand and the account button',box.feed[2]>=44&&box.feed[0]>=box.brand[0]-1&&box.feed[1]<=box.op[0]+1&&box.feed[1]<=box.w,box);

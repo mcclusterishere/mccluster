@@ -44,6 +44,11 @@ on:
       - 'supabase/functions/inbox/index.ts'
       - 'scripts/test/control-desk-bot.test.mjs'
       - 'scripts/e2e/control-desk-bot.e2e.mjs'
+      - 'js/control-room/front-page.js'
+      - 'index.html'
+      - 'js/front-*.js'
+      - 'scripts/e2e/control-front-page.e2e.mjs'
+      - 'scripts/e2e/analytics-globe.e2e.mjs'
       - '.github/workflows/control-workspace-visual.yml'
   workflow_dispatch:
 permissions:
@@ -54,7 +59,7 @@ concurrency:
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -92,6 +97,8 @@ jobs:
           node scripts/e2e/funding-register.e2e.mjs /tmp/control-proof/funding
           node scripts/e2e/analytics-measurement.e2e.mjs /tmp/control-proof/analytics-measurement
           node scripts/e2e/control-desk-bot.e2e.mjs /tmp/control-proof/desk-bot
+          node scripts/e2e/control-front-page.e2e.mjs /tmp/control-proof/front-page
+          node scripts/e2e/analytics-globe.e2e.mjs /tmp/control-proof/analytics-globe
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

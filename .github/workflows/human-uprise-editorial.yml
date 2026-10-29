@@ -33,6 +33,30 @@ on:
       - 'js/creator-onboarding.js'
       - 'scripts/e2e/creator-onboarding.e2e.mjs'
       - 'scripts/e2e/mission-pins.e2e.mjs'
+      - 'css/action-globe.css'
+      - 'css/world-countries.css'
+      - 'css/halo.css'
+      - 'js/world-space.js'
+      - 'js/world-transport.js'
+      - 'js/halo/**'
+      - 'data/geo/**'
+      - 'data/albums.json'
+      - 'index.html'
+      - 'listen.html'
+      - 'music-creator.html'
+      - 'account.html'
+      - 'js/music-community.js'
+      - 'js/music-creator-profile.js'
+      - 'workers/mccluster/src/human-uprise/**'
+      - 'workers/mccluster/src/company-site/**'
+      - 'workers/mccluster/src/world-host.js'
+      - 'scripts/e2e/world-switch.mjs'
+      - 'scripts/e2e/world-countries.e2e.mjs'
+      - 'scripts/e2e/world-globe-feed.e2e.mjs'
+      - 'scripts/e2e/world-transport.e2e.mjs'
+      - 'scripts/e2e/anti-social.e2e.mjs'
+      - 'scripts/e2e/human-uprise-door.e2e.mjs'
+      - 'scripts/e2e/owner-halo-globe.e2e.mjs'
       - '.github/workflows/human-uprise-editorial.yml'
   workflow_dispatch:
 permissions:
@@ -48,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins]
+        suite: [database, editorial, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -84,6 +108,12 @@ jobs:
             navigation) node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation ;;
             creator-onboarding) node scripts/e2e/creator-onboarding.e2e.mjs /tmp/hu-proof/creator-onboarding ;;
             mission-pins) node scripts/e2e/mission-pins.e2e.mjs /tmp/hu-proof/mission-pins ;;
+            world-countries) node scripts/e2e/world-countries.e2e.mjs /tmp/hu-proof/world-countries ;;
+            world-globe-feed) node scripts/e2e/world-globe-feed.e2e.mjs /tmp/hu-proof/world-globe-feed ;;
+            world-transport) node scripts/e2e/world-transport.e2e.mjs /tmp/hu-proof/world-transport ;;
+            anti-social) node scripts/e2e/anti-social.e2e.mjs /tmp/hu-proof/anti-social ;;
+            human-uprise-door) node scripts/e2e/human-uprise-door.e2e.mjs /tmp/hu-proof/human-uprise-door ;;
+            owner-halo-globe) node scripts/e2e/owner-halo-globe.e2e.mjs /tmp/hu-proof/owner-halo-globe ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
