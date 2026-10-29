@@ -54,7 +54,7 @@
       font-family: var(--pv-ui); font-weight: 800; font-size: 0.84rem; color: #fff; background: var(--pv-red);
       border-radius: 100px; padding: 0.62rem 1.3rem; box-shadow: 0 14px 30px -12px rgba(222,58,58,0.55); }
     /* ---- hero ---- */
-    .pvhero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 1.4rem; align-items: center;
+    .pvhero { display: grid; grid-template-columns: minmax(0,1fr); gap: 1.4rem; align-items: center;
       padding: clamp(2.2rem, 7vh, 4.5rem) 0 clamp(1.6rem, 5vh, 3rem); }
     .pvhero__k { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pv-gold); }
     .pvhero h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; letter-spacing: 0.01em;
@@ -72,7 +72,7 @@
       text-decoration: none; display: inline-block; }
     /* the capsule showreel: the template's pill, alive */
     .pvcap { position: relative; border-radius: 1000px; overflow: hidden; aspect-ratio: 7 / 9;
-      max-height: 26rem; justify-self: end; width: min(100%, 21rem); isolation: isolate;
+      max-height: 26rem; justify-self: center; width: min(100%, 21rem); isolation: isolate;
       box-shadow: inset 0 0 0 1px var(--pv-line), 0 30px 70px -30px rgba(0,0,0,0.8);
       animation: pvFloat 7s ease-in-out infinite; }
     @keyframes pvFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -0.7rem; } }
@@ -113,9 +113,9 @@
     .pvsv__head .arr { margin-left: auto; font-family: var(--pv-ui); font-weight: 800; color: var(--pv-mut);
       transition: transform 0.35s ease, color 0.35s ease; }
     .pvsv__row.open .pvsv__head .arr { transform: rotate(90deg); color: var(--pv-red); }
-    .pvsv__body { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: 1rem; align-items: center;
+    .pvsv__body { display: grid; grid-template-columns: minmax(0,1fr); gap: 1rem; align-items: center;
       max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), padding 0.5s ease; padding: 0 0.2rem; }
-    .pvsv__row.open .pvsv__body { max-height: 22rem; padding: 0.2rem 0.2rem 1.3rem; }
+    .pvsv__row.open .pvsv__body { max-height: 34rem; padding: 0.2rem 0.2rem 1.3rem; }
     .pvsv__body img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; }
     .pvsv__body p { font-weight: 600; color: var(--pv-mut); font-size: 0.9rem; margin: 0 0 0.8rem; }
     .pvsv__body .go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
@@ -127,7 +127,7 @@
     .pvmid p em { font-style: normal; color: var(--pv-red); }
     /* ---- the works ---- */
     .pvwk > small { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pv-gold); }
-    .pvwk__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.1rem 0 3.2rem; }
+    .pvwk__grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1rem; margin: 1.1rem 0 3.2rem; }
     .pvwk__grid .full { grid-column: 1 / -1; }
     .pvwk__it { display: block; text-decoration: none; color: var(--pv-ink); }
     .pvwk__m { position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 16 / 10; isolation: isolate;
@@ -164,11 +164,11 @@
       align-items: center; justify-content: space-between; font-weight: 600; font-size: 0.8rem; color: var(--pv-mut); }
     .pvfoot a { color: var(--pv-ink); text-decoration: none; font-weight: 800; }
     .pvfoot .v1 { color: var(--pv-mut); font-weight: 700; }
-    @media (max-width: 46rem) {
-      .pvhero { grid-template-columns: 1fr; }
-      .pvcap { justify-self: center; }
-      .pvsv__body { grid-template-columns: 1fr; }
-      .pvsv__row.open .pvsv__body { max-height: 34rem; }
+    @media (min-width: 46.001rem) {
+      .pvhero { grid-template-columns: minmax(0,1.05fr) minmax(0,0.95fr); }
+      .pvcap { justify-self: end; }
+      .pvsv__body { grid-template-columns: minmax(8rem, 13rem) minmax(0,1fr); }
+      .pvsv__row.open .pvsv__body { max-height: 22rem; }
     }
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>

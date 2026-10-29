@@ -61,7 +61,7 @@
       font: 600 max(16px,.88rem)/1.6 var(--ui); color: var(--cream);
       background: rgba(0,0,0,.34); box-shadow: inset 0 0 0 1px var(--edge); resize: vertical; }
     textarea { min-height: 6rem; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+    .grid2 { display: grid; grid-template-columns: minmax(0,1fr); gap: .4rem; }
 
     .msg { padding: .55rem .8rem; border-radius: 12px; margin: 0 0 .35rem; max-width: 84%;
       font: 600 .84rem/1.55 var(--ui); white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -74,7 +74,7 @@
     .empty { padding: 2.4rem 1rem; text-align: center; color: var(--cream-dim);
       font: 600 .85rem/1.6 var(--ui); }
     .num { font-family: var(--sig); font-size: 1.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
-    @media (max-width: 32rem) { .grid2 { grid-template-columns: 1fr; } }
+    @media (min-width: 32.001rem) { .grid2 { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } }
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
