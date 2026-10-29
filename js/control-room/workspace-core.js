@@ -3,10 +3,10 @@
 (function (root) {
   'use strict';
   const pages = Object.freeze(['intelligence', 'operations', 'studio']);
-  const work = ['inbox','pipeline','people','companies','relationships','clients','tasks','bookings','orders','projects','deliverables','payments','renewals','outreach','operations'];
+  const work = ['inbox','desk-bot','pipeline','people','companies','relationships','clients','tasks','bookings','orders','projects','deliverables','payments','renewals','outreach','operations'];
   const create = ['projects','front-page','library','schedule','channels','instagram','music','clipping','action-network','funding','song-test','build'];
   const system = ['command','overview','workload','observability','resources'];
-  const titles = {home:'Overview',ai:'McCluster conversation',apps:'Applications',analytics:'Platform intelligence',inbox:'Inbox',pipeline:'Pipeline',people:'People',companies:'Organizations',relationships:'Relationships',clients:'Clients',tasks:'Tasks',bookings:'Bookings',orders:'Orders',projects:'Projects',deliverables:'Deliverables',payments:'Payments',renewals:'Renewals',outreach:'Outreach',operations:'Administration',library:'Media library',schedule:'Publishing',channels:'Channels',instagram:'Instagram',music:'Music',clipping:'Clipping', 'action-network':'Missions', funding:'Funding intelligence','song-test':'Song testing',build:'Build · Code','front-page':'Front page',command:'System command',overview:'System overview',workload:'Workload',observability:'Observability',resources:'Resources'};
+  const titles = {home:'Overview',ai:'McCluster conversation',apps:'Applications',analytics:'Platform intelligence',inbox:'Inbox','desk-bot':'Desk bot',pipeline:'Pipeline',people:'People',companies:'Organizations',relationships:'Relationships',clients:'Clients',tasks:'Tasks',bookings:'Bookings',orders:'Orders',projects:'Projects',deliverables:'Deliverables',payments:'Payments',renewals:'Renewals',outreach:'Outreach',operations:'Administration',library:'Media library',schedule:'Publishing',channels:'Channels',instagram:'Instagram',music:'Music',clipping:'Clipping', 'action-network':'Missions', funding:'Funding intelligence','song-test':'Song testing',build:'Build · Code','front-page':'Front page',command:'System command',overview:'System overview',workload:'Workload',observability:'Observability',resources:'Resources'};
   const routes = [
     {hash:'#analytics',page:'intelligence',label:'Platform intelligence',group:'Intelligence'},
     {hash:'#home',page:'operations',label:'Overview',group:'Operate'},

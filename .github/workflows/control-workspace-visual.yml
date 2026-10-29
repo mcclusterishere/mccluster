@@ -36,6 +36,14 @@ on:
       - 'scripts/e2e/funding-register.e2e.mjs'
       - 'scripts/e2e/analytics-measurement.e2e.mjs'
       - 'scripts/test/control-workspace.test.mjs'
+      - 'js/control-room/desk-bot.js'
+      - 'js/control-room-v2.js'
+      - 'js/control-registry.js'
+      - 'css/control-admin.css'
+      - 'inbox.html'
+      - 'supabase/functions/inbox/index.ts'
+      - 'scripts/test/control-desk-bot.test.mjs'
+      - 'scripts/e2e/control-desk-bot.e2e.mjs'
       - '.github/workflows/control-workspace-visual.yml'
   workflow_dispatch:
 permissions:
@@ -62,7 +70,7 @@ jobs:
         run: |
           mkdir -p /tmp/control-proof
           git rev-parse HEAD > /tmp/control-proof/source-commit.txt
-          git archive --format=tar.gz -o /tmp/control-proof/control-source.tar.gz HEAD control.html js css data/geo data/analytics assets/img scripts/test scripts/e2e docs/control-plane docs/PRODUCT-ARCHITECTURE-ROADMAP.md data/product-context.json AGENTS.md CODEX.md CLAUDE.md package.json workers/mccluster/src workers/mccluster/test tools core
+          git archive --format=tar.gz -o /tmp/control-proof/control-source.tar.gz HEAD control.html inbox.html js css data/geo data/analytics assets/img scripts/test scripts/e2e supabase/functions/inbox docs/control-plane docs/PRODUCT-ARCHITECTURE-ROADMAP.md data/product-context.json AGENTS.md CODEX.md CLAUDE.md package.json workers/mccluster/src workers/mccluster/test tools core
           tar -czf /tmp/control-proof/cesium-1.131.0.tar.gz -C /tmp/control-qa/node_modules/cesium Build/Cesium
       - name: Exercise the actual Control page
         env:
@@ -70,7 +78,7 @@ jobs:
           CESIUM_DIR: /tmp/control-qa/node_modules/cesium/Build/Cesium
           CONTROL_QA_OUTPUT: /tmp/control-proof/screenshots
         run: |
-          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/browser-diagnostics.test.mjs scripts/test/control-surface.test.mjs
+          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/browser-diagnostics.test.mjs scripts/test/control-surface.test.mjs scripts/test/control-desk-bot.test.mjs
           node --test workers/mccluster/test/analytics-*.test.mjs
           node scripts/e2e/site-navigation.e2e.mjs /tmp/control-proof/navigation
           node scripts/e2e/control-workspace.e2e.mjs
@@ -83,6 +91,7 @@ jobs:
           node scripts/e2e/control-build-code.e2e.mjs /tmp/control-proof/build-code
           node scripts/e2e/funding-register.e2e.mjs /tmp/control-proof/funding
           node scripts/e2e/analytics-measurement.e2e.mjs /tmp/control-proof/analytics-measurement
+          node scripts/e2e/control-desk-bot.e2e.mjs /tmp/control-proof/desk-bot
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

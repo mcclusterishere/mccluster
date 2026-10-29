@@ -37,6 +37,7 @@ const EXEMPT = {
   'prints.html': 'redirect stub', 'role.html': 'redirect stub',
   'sponsor.html': 'redirect stub', 'walls.html': 'redirect stub',
   'insights.html': 'redirect stub to Analytics · Audience',
+  'inbox.html': 'redirect stub to Control · Work · Inbox (the desk bot lives at control.html#work:desk-bot)',
   '404.html': 'the not-found page GitHub Pages serves for a bad address; it forwards /action/<slug> and links home',
   'dashboard.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
   'feed.html': 'same-origin legacy redirect stub: destination is enforced by the route regression suite',
