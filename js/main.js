@@ -52,7 +52,12 @@
       { yaw: -140, pitch: -40, label: "McCluster · the résumé", href: "matthew-mccluster.html" },
     ] },
     night: { arrive: 0.74 },
+    /* owner, 2026-10-29: index.html opens INSIDE the Vaunt cabin, plays Antisocial, and can be tucked away from the
+       public (visible:false: a holding screen for visitors, noindex, the house owner still sees the page) */
+    start: "cabin", song: "antisocial", visible: true,
   };
+  /* the one song a page may play: one of the <audio id="track-…"> elements index.html carries */
+  var FRONT_SONGS = ["antisocial", "whodidtheshoot", "vaunt", "runway", "here", "environmental-injustice"];
   function frontNum(v, lo, hi, d) { var n = typeof v === "number" ? v : NaN; return isFinite(n) && n >= lo && n <= hi ? n : d; }
   function frontBool(v, d) { return typeof v === "boolean" ? v : d; }
   /* a tag's link stays on this site, or is an https link the owner typed; never a script */
@@ -99,6 +104,9 @@
       scroll: { duration: frontNum(sr.duration, 0.3, 1.8, D.scroll.duration), touchLerp: frontNum(sr.touchLerp, 0.05, 0.4, D.scroll.touchLerp) },
       vr: { enabled: frontBool(v.enabled, true), hold: frontBool(v.hold, true), band: band, yaw: frontNum(v.yaw, -180, 180, D.vr.yaw), pitch: frontNum(v.pitch, -85, 85, D.vr.pitch), spots: member ? (spots || []) : spots && spots.length ? spots : D.vr.spots },
       night: { arrive: frontNum(n.arrive, 0.5, 0.86, D.night.arrive) },
+      start: r.start === "plane" || r.start === "cabin" ? r.start : D.start,
+      song: FRONT_SONGS.indexOf(r.song) >= 0 ? r.song : D.song,
+      visible: frontBool(r.visible, D.visible),
       media: frontMedia(r.media),
     };
   }
@@ -107,6 +115,10 @@
      place. The same engine then runs the account's media. The house page (index.html) has no such hand-over. */
   var MEMBER = window.MCC_FRONT_SOURCE && typeof window.MCC_FRONT_SOURCE === "object" ? window.MCC_FRONT_SOURCE : null;
   var FRONT = frontConfig(MEMBER ? MEMBER.config : null, !!MEMBER);
+  /* THE HOUSE PAGE OPENS IN THE CABIN (owner, 2026-10-29). index.html carries #cabin, the 360 room as its first scene,
+     playing at once, muted, with no Allow / Cancel; an account's page (front.html) keeps its cabin inside the films,
+     behind its gate, exactly as before. */
+  var CABIN_FIRST = !MEMBER && !!document.getElementById("cabin");
   // Repository-managed project assets are separate from member-upload validation.
   var PROJECT = MEMBER && !MEMBER.studio && window.MCC_FRONT_PROJECTS && window.MCC_FRONT_PROJECTS.get(MEMBER.project);
   if (PROJECT) FRONT.media = PROJECT.config.media;
@@ -456,6 +468,7 @@
   }
 
   function introReveal() {
+    if (!heroChars.length) return;   // index.html has no hero now: it opens in the cabin
     var tl = gsap.timeline();
     tl.to(heroChars, {
       yPercent: 0, opacity: 1, rotate: 0,
@@ -476,7 +489,7 @@
       // ticker's loadedMax clamp holds the newest decoded frame until each one
       // arrives, so the scrub never shows black. This drops the blocking load
       // from all 161 frames (4.28 MB of webp) to 48 (1.35 MB) without a half-loaded feel.
-      var full = m.hero ? m.hero.count : 0;
+      var full = m.hero && sequences.hero ? m.hero.count : 0;   // no orbit on the page (index.html opens in the cabin): open at once
       var heroGate = Math.min(48, full);
       var opened = false;
       window.__MCC_ENTER = function () {
@@ -553,6 +566,8 @@
   var heroOffer = document.getElementById("heroOffer");
   var parHero = parCanvas("hero");
 
+  /* only a page that still has the orbit (an account's front.html): index.html opens in the cabin now */
+  if (sequences.hero && document.getElementById("hero")) {
   ScrollTrigger.create({
     trigger: "#hero",
     start: "top top",
@@ -585,6 +600,7 @@
     })
     .to(".hero__sub, .hero__eyebrow", { opacity: 0, yPercent: -60 }, 0)
     .to(".hud__scroll", { opacity: 0 }, 0);
+  }
 
   /* ---------------- the loadout: 360 studio pan, three corners ----------------
      (lives on its own page when absent from this one, so guard and move on) */
@@ -767,6 +783,8 @@
     { seq: "vaunt", f0: 0, f1: 1, speed: 1.75 },     // ...into the cabin fly-through
   ];
   cmdScenes = cmdScenes.filter(function (scene) { return sequences[scene.seq]; });
+  /* the plane alone (index.html, after the cabin): one film over a shorter section, finished before the night dissolves in */
+  if (CABIN_FIRST && cmdScenes.length === 1) cmdScenes[0] = { seq: cmdScenes[0].seq, f0: 0, f1: 1, speed: 1.25 };
   // Two scroll films with the 360 cabin between them.
   var cmdProjects = [1, 1];
   var cmdProjectCount = 1;
@@ -956,9 +974,14 @@
     if (workVR.viewer) workVR.viewer.pause();
     lockPageScroll(false);
   }
-  /* the cabin plays when it is on, its scene is on, and (on an account's page) the account has a 360 to put in it */
-  function cabinOn() { return FRONT.vr.enabled && FRONT.scenes.vaunt && (!MEMBER || !!FRONT.media.cabin); }
+  /* the cabin plays when it is on, its scene is on, and (on an account's page) the account has a 360 to put in it.
+     On index.html the cabin is the opening scene: it plays unless the owner opened the page on the plane instead. */
+  function cabinOn() {
+    if (CABIN_FIRST) return FRONT.vr.enabled && FRONT.start !== "plane";
+    return FRONT.vr.enabled && FRONT.scenes.vaunt && (!MEMBER || !!FRONT.media.cabin);
+  }
   function workVRSet(p) {
+    if (CABIN_FIRST) return;   // the opening cabin is its own scene (openingCabin below), not a band of the films
     if (!workVR.el || !window.VR360) return;
     /* the owner turned the cabin off: the band is just more of the runway */
     if (!cabinOn()) { workVR.lastP = p; return; }
@@ -1254,6 +1277,91 @@
     workSkip.click();
   });
 
+  /* ---- THE OPENING CABIN (index.html; owner, 2026-10-29) ----
+     "The page now opens INSIDE the Vaunt 360 cabin ... It plays immediately on load, muted, with NO Allow/Cancel gate.
+     Scrolling (or Escape / a clear continue affordance) moves on."
+     So on this page the cabin is not a band that holds the scroll: it is the first screen. The film is muted (js/vr360.js
+     never unmutes it), it plays while the room is on screen and pauses when it is not, a drag looks around (sideways on a
+     phone: an upward swipe is the scroll that moves on, which is why the canvas is pan-y and Lenis leaves the room's
+     touches to the browser), the wheel scrolls rather than zooms, and Continue or Escape go to whatever comes next.
+     With reduced motion the room waits on its poster until "Look around the cabin" is pressed. The tags, the opening
+     view and the on/off are the owner's front page settings (vr.*, start), applied at once. */
+  var cabinSec = CABIN_FIRST ? document.getElementById("cabin") : null;
+  var cabinInView = true, cabinAsked = false, frontTuckedNow = document.documentElement.hasAttribute("data-front-tucked");
+  var cabinView = { yaw: FRONT.vr.yaw, pitch: FRONT.vr.pitch };
+  function cabinPlay() {
+    if (!cabinSec || !workVR.el) return;
+    var on = !!workVR.viewer && cabinInView && cabinOn() && !frontTuckedNow;
+    workVR.live = on;
+    workVR.playing = on;
+    workVR.el.classList.toggle("is-live", !!workVR.viewer && cabinOn());
+    if (workVR.viewer) { if (on) workVR.viewer.play(); else workVR.viewer.pause(); }
+  }
+  function cabinMount() {
+    if (!cabinSec || workVR.viewer || !window.VR360 || !cabinOn() || frontTuckedNow) return;
+    if (prefersReduced && !cabinAsked) return;
+    var canvas = document.getElementById("workVRCanvas");
+    workVR.viewer = VR360.mount(canvas, {
+      src: "assets/video/vaunt-360.mp4", video: true, autoplay: false, poster: "assets/img/vaunt-360-poster.jpg",
+      yaw: FRONT.vr.yaw, pitch: FRONT.vr.pitch, touchAction: "pan-y", wheel: false,
+      spots: vrSpots(FRONT.vr.spots),
+    });
+    if (!workVR.viewer) return;          // no WebGL: the poster stays, and Continue still works
+    cabinView = { yaw: FRONT.vr.yaw, pitch: FRONT.vr.pitch };
+    workVR.allowed = true;               // no gate on the house page: nothing here is withheld
+    window.__MCC_VR = workVR;            // debug/verification handle (and the Control Room's "Use the preview's view")
+    cabinSec.classList.add("is-mounted");
+    canvas.addEventListener("pointerdown", function () { armCabinMotion(); });
+    if (window.MCC_TRACK) window.MCC_TRACK("vr_inline_view", { page: "home", opening: 1 });
+    cabinPlay();
+  }
+  function applyCabin(f) {
+    if (!cabinSec) return;
+    var off = !cabinOn();
+    if (off !== cabinSec.hasAttribute("data-front-off")) {
+      if (off) cabinSec.setAttribute("data-front-off", ""); else cabinSec.removeAttribute("data-front-off");
+      try { ScrollTrigger.refresh(); } catch (e) {}
+    }
+    if (!off && workVR.viewer && (f.vr.yaw !== cabinView.yaw || f.vr.pitch !== cabinView.pitch)) {
+      /* a new opening view, typed in the Control Room: the preview turns to it at once */
+      cabinView = { yaw: f.vr.yaw, pitch: f.vr.pitch };
+      workVR.viewer.state.yaw = f.vr.yaw * Math.PI / 180;
+      workVR.viewer.state.pitch = f.vr.pitch * Math.PI / 180;
+    }
+    if (!off) cabinMount();
+    cabinPlay();
+  }
+  function cabinContinue(how) {
+    if (!cabinSec) return;
+    var y = cabinSec.offsetTop + cabinSec.offsetHeight;
+    if (prefersReduced) lenis.scrollTo(y, { immediate: true, force: true });
+    else lenis.scrollTo(y, { duration: 1.2, force: true });
+    if (window.MCC_TRACK) window.MCC_TRACK("cabin_continue", { page: "home", how: how || "button" });
+  }
+  if (cabinSec) {
+    var cabinGo = document.getElementById("cabinContinue"), cabinLook = document.getElementById("cabinLook");
+    if (cabinGo) cabinGo.addEventListener("click", function () { cabinContinue("button"); });
+    if (cabinLook) {
+      cabinLook.hidden = !prefersReduced;
+      cabinLook.addEventListener("click", function () { cabinAsked = true; cabinLook.hidden = true; cabinMount(); });
+    }
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) { cabinInView = es[0].isIntersecting; cabinPlay(); }, { threshold: 0.12 }).observe(cabinSec);
+    }
+    /* Escape moves on while the room still owns the screen (never from inside a field, never past the privacy notice) */
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape" && e.key !== "Esc") return;
+      var t = e.target, tag = (t && t.tagName) || "";
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (t && t.isContentEditable)) return;
+      if (document.documentElement.getAttribute("data-privacy-gate") === "pending") return;
+      if (cabinSec.hasAttribute("data-front-off") || frontTuckedNow) return;
+      if (cabinSec.getBoundingClientRect().bottom <= window.innerHeight * 0.5) return;
+      e.preventDefault();
+      cabinContinue("escape");
+    });
+    frontHooks.push(applyCabin);
+  }
+
   /* ---- the sound beacon: someone is dragging the 360 with the sound off.
          An orange beacon rises from the Now Playing tab: rings, an arrow,
          and TURN ON SOUND! One tap lights the music. Shows once. ---- */
@@ -1382,7 +1490,9 @@
     var floatPause = document.getElementById("floatPause");
     /* The one record the house plays. Every zone and every hook resolves
        to this; nothing on the page may switch it. */
-    var HOUSE_TRACK = "whodidtheshoot";
+    /* index.html's one song is Antisocial (owner, 2026-10-29), or whichever of its tracks the owner names in Control →
+       Front page (FRONT.song). An account's page keeps its own sound in the whodidtheshoot slot (js/front-member.js). */
+    var HOUSE_TRACK = MEMBER ? "whodidtheshoot" : FRONT.song;
     var tracks = {
       "whodidtheshoot": document.getElementById("track-whodidtheshoot"),
       "antisocial": document.getElementById("track-antisocial"),
@@ -1400,8 +1510,8 @@
        changes every time you scroll past a heading stops being a
        soundtrack and becomes an interruption you cannot predict.
 
-       So the house plays WHO DID THE SHOOT and nothing else, start to
-       finish, on every page.
+       So the house plays ONE record and nothing else, start to finish:
+       Who Did The Shoot until 2026-10-29, Antisocial since (HOUSE_TRACK).
 
        The zones stay in the list rather than being deleted, because the
        #work ScrollTrigger below is also what maintains `commandInView`,
@@ -1409,6 +1519,7 @@
        that with it. They all name the same track now, so a scroll can no
        longer change the record. */
     var zones = [
+      { sel: "#cabin", track: HOUSE_TRACK },
       { sel: "#hero", track: HOUSE_TRACK },
       { sel: "#pillars", track: HOUSE_TRACK },
       { sel: "#work", track: HOUSE_TRACK },
@@ -1539,6 +1650,12 @@
     }
 
     commandAudioHook = fadeTo;
+    /* the owner names another of the page's songs: it is still one song, and it replaces the old one at once */
+    if (!MEMBER) frontHooks.push(function (f) {
+      if (!f.song || f.song === HOUSE_TRACK || !tracks[f.song]) return;
+      HOUSE_TRACK = f.song;
+      fadeTo(HOUSE_TRACK);
+    });
 
     // the Now Playing tab mirrors the section's track; a tap starts the sound
     function announceNP() {
@@ -1570,6 +1687,8 @@
 
     function setSound(on) {
       if (on === soundOn) return;
+      /* the tucked-away holding screen plays nothing, whoever asks (the volume call's tap included) */
+      if (on && !MEMBER && document.documentElement.hasAttribute("data-front-tucked")) return;
       soundOn = on;
       announceNP();
       toggle.classList.toggle("is-on", soundOn);
@@ -1721,6 +1840,37 @@
       if (document.visibilityState === "hidden") bankToPocket(true);
     });
 
+    /* THE FIRST GESTURE TURNS THE SONG ON (index.html; owner, 2026-10-29). Browsers will not start sound before the
+       visitor does something, so the first tap, click or key anywhere starts the house song. Only the first: once the
+       visitor has answered with the Sound pill (or the pause), that answer stands for the rest of the visit. Never from
+       the privacy notice, never on the holding screen, never inside the Control Room's preview. Only a gesture the browser
+       counts as activation is used, and a refused play() leaves the pill off rather than claiming sound. */
+    var autoStarted = false;
+    function soundAnswered() { return autoStarted || toggle.classList.contains("was-used"); }
+    function firstGesture(e) {
+      if (soundAnswered()) return stopFirstGesture();
+      var root = document.documentElement;
+      if (root.getAttribute("data-privacy-gate") === "pending" || root.hasAttribute("data-front-tucked")) return;
+      var t = e.target;
+      if (t && t.closest && (t.closest("#soundToggle, #floatPause, #soundAsk") || t.closest('[id^="mccPrivacy"]'))) return;
+      if (e.type === "keydown" && (e.key === "Escape" || e.key === "Tab" || e.key === "Shift" || e.metaKey || e.ctrlKey || e.altKey)) return;
+      if (navigator.userActivation && !navigator.userActivation.isActive) return;
+      autoStarted = true;
+      stopFirstGesture();
+      if (soundOn) return;
+      setSound(true);
+      track("sound_first_gesture", { page: "home", song: HOUSE_TRACK, via: e.type });
+      var a = tracks[currentTrack], pr = a && avail[currentTrack] ? a.play() : null;
+      if (pr && pr.catch) pr.catch(function (err) {
+        /* the browser said no after all: the pill goes back off, and the next gesture tries again */
+        if (err && err.name === "NotAllowedError" && soundOn && !toggle.classList.contains("was-used")) { autoStarted = false; setSound(false); armFirstGesture(); }
+      });
+    }
+    var FIRST_EVENTS = ["pointerup", "keydown", "touchend", "click"];
+    function armFirstGesture() { FIRST_EVENTS.forEach(function (ev) { window.addEventListener(ev, firstGesture, { capture: true, passive: true }); }); }
+    function stopFirstGesture() { FIRST_EVENTS.forEach(function (ev) { window.removeEventListener(ev, firstGesture, { capture: true, passive: true }); }); }
+    if (CABIN_FIRST && !framedByControl) armFirstGesture();
+
     ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
       window.addEventListener(ev, function (e) {
         if (!soundOn) return;
@@ -1737,7 +1887,7 @@
   (function () {
     function track(n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p); }
     // each section counts once per visit as the visitor reaches it
-    ["#hero", "#loadout", "#pillars", "#work", "#book"].forEach(function (sel) {
+    ["#cabin", "#hero", "#loadout", "#pillars", "#work", "#book"].forEach(function (sel) {
       if (!document.querySelector(sel)) return;
       ScrollTrigger.create({
         trigger: sel, start: "top 60%", once: true,
@@ -1828,10 +1978,53 @@
     if (moved) { try { ScrollTrigger.refresh(); } catch (e) {} }
   }
   frontHooks.push(applyScenes);
+
+  /* ---------------- TUCKED AWAY (owner, 2026-10-29) ----------------
+     visible:false in the "@front" row hides the front page from the public: visitors get the holding screen (#frontHolding;
+     the bar, the World and the footer stay), the page asks search engines not to index it, and the house owner, signed
+     in, still gets the real page with a note saying visitors do not. Who the owner is stays the server's answer: the bar
+     asks GET /v1/status (js/tabbar.js) and says so with mcc:appbar-admin / body[data-appbar-admin]; the Control Room's
+     preview is the owner's too, unless he asks it to show the page as a visitor.
+     This is a static site on GitHub Pages: index.html and everything it loads can still be fetched by anyone who asks
+     for them. It hides the page; it does not make it secret. */
+  var frontOwner = false, previewAs = "owner";
+  function ownerSees() {
+    if (framedByControl) return previewAs !== "visitor";
+    return frontOwner || !!(document.body && document.body.hasAttribute("data-appbar-admin"));
+  }
+  function applyVisibility(f) {
+    if (MEMBER || !document.getElementById("frontHolding")) return;
+    var root = document.documentElement, was = root.hasAttribute("data-front-tucked");
+    /* until the live row has been read, a page this browser last saw tucked stays tucked (no flash of the page);
+       the owner is shown it as soon as the server says he is the owner */
+    var known = Array.isArray(window.MCC_CONTENT_ROWS) || (window.MCC_FRONT && window.MCC_FRONT.source === "preview");
+    var hidden = known ? f.visible === false : was || root.hasAttribute("data-front-tucked-owner");
+    var visitor = hidden && !ownerSees();
+    root.toggleAttribute("data-front-tucked", visitor);
+    root.toggleAttribute("data-front-tucked-owner", hidden && !visitor);
+    var robots = document.querySelector('meta[name="robots"][data-front-robots]');
+    if (hidden && !robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots"; robots.content = "noindex"; robots.setAttribute("data-front-robots", "");
+      document.head.appendChild(robots);
+    } else if (!hidden && robots) robots.parentNode.removeChild(robots);
+    if (known && !framedByControl) { try { localStorage.setItem("mcc_front_tucked", f.visible === false ? "1" : "0"); } catch (e) {} }
+    frontTuckedNow = visitor;
+    if (visitor && window.MCC_NP_PAUSE) window.MCC_NP_PAUSE();   // the holding screen plays nothing
+    applyCabin(FRONT);
+    if (visitor !== was) { try { ScrollTrigger.refresh(); } catch (e) {} }
+  }
+  frontHooks.push(applyVisibility);
+  window.addEventListener("mcc:appbar-admin", function (e) {
+    frontOwner = !!(e && e.detail && e.detail.admin === true);
+    applyVisibility(FRONT);
+  });
+
   /* the saved settings: read now if live-content already has them, and again whenever it applies */
   var saved = MEMBER ? null : frontRow();
   if (saved) setFront(saved, "saved");
   else if (MEMBER) applyScenes(FRONT);
+  else { applyScenes(FRONT); applyVisibility(FRONT); }
   window.addEventListener("mcc:content-applied", function () {
     if (MEMBER) return;   // an account's page is its own settings, never the house's site_content rows
     if (window.MCC_FRONT && window.MCC_FRONT.source === "preview") return;   // a draft on screen outranks what is saved
@@ -1849,13 +2042,16 @@
         try { window.parent.postMessage({ type: "mcc:front-applied", seq: e.data.seq, commit: !!e.data.commit, config: FRONT }, location.origin); } catch (err) {}
       }
       else if (e.data.type === "mcc:front-goto") frontGoto(String(e.data.to || ""));
+      /* "See it as a visitor": the preview shows the holding screen a visitor gets while the page is tucked away */
+      else if (e.data.type === "mcc:front-view-as") { previewAs = e.data.as === "visitor" ? "visitor" : "owner"; applyVisibility(FRONT); }
     });
     try { window.parent.postMessage({ type: "mcc:front-ready" }, location.origin); } catch (e) {}
   }
   /* where the preview's scene buttons go: the top, a scene's start, or the middle of the cabin's band */
   function frontGoto(to) {
     var y = 0, el = null;
-    if (to === "cabin" && workST) y = workST.start + (workST.end - workST.start) * (workVR.band[0] + workVR.band[1]) / 2;
+    if (to === "cabin" && cabinSec) { el = cabinSec; if (el.hasAttribute("data-front-off")) return; y = el.getBoundingClientRect().top + window.scrollY; }
+    else if (to === "cabin" && workST) y = workST.start + (workST.end - workST.start) * (workVR.band[0] + workVR.band[1]) / 2;
     else if (to !== "top") { el = to === "vaunt" ? document.getElementById("work") : document.querySelector(FRONT_SCENES[to === "world" ? "world" : to === "night" ? "night" : "vaunt"]); if (!el || el.hasAttribute("data-front-off") || !el.offsetHeight) return; y = el.getBoundingClientRect().top + window.scrollY; }
     if (holding) leaveCabinQuietly();
     lenis.scrollTo(y, { immediate: true, force: true });

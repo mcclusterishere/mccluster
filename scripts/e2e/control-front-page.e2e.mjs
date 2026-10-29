@@ -20,7 +20,7 @@ const json=(route,body,status=200)=>route.fulfill({status,contentType:'applicati
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required']});
 
 async function setup(viewport,{signedIn=true,owner=true,rows=[]}={}){
-  const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true});
+  const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true,serviceWorkers:'block'});
   const db={rows:rows.slice(),sets:[],reverts:[],collects:[]},errors=[];
   await ctx.addInitScript(({signedIn,OWNER})=>{
     localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
@@ -85,9 +85,14 @@ try{
     const scope='visitor-shipped';const app=await setup({width:390,height:844},{signedIn:false});const {page,errors}=app;
     await page.goto(BASE+'/index.html',{waitUntil:'domcontentloaded'});await engine(page);
     const f=await page.evaluate(()=>({source:window.MCC_FRONT.source,c:window.MCC_FRONT.config,d:window.MCC_FRONT_DEFAULT}));
-    check(scope,'no row: the shipped settings, the cabin on and holding, the night room at 0.74',f.source==='shipped'&&f.c.vr.enabled&&f.c.vr.hold&&f.c.night.arrive===0.74&&JSON.stringify(f.c.vr.band)==='[0.4,0.5]'&&f.c.scroll.duration===0.85&&f.c.vr.spots.length===3&&JSON.stringify(f.c)===JSON.stringify(f.d),f);
+    check(scope,'no row: the shipped settings, opening in the cabin, Antisocial, public, the night room at 0.74',f.source==='shipped'&&f.c.vr.enabled&&f.c.start==='cabin'&&f.c.song==='antisocial'&&f.c.visible===true&&f.c.night.arrive===0.74&&f.c.scroll.duration===0.85&&f.c.vr.spots.length===3&&JSON.stringify(f.c)===JSON.stringify(f.d),f);
     check(scope,'every scene is on the page',await page.evaluate(()=>!document.querySelector('[data-front-off]')&&getComputedStyle(document.querySelector('.hero__doors')).display!=='none'&&getComputedStyle(document.getElementById('pillars')).display!=='none'));
-    check(scope,'the three scenes have moved; the portfolio tile links to the reusable project page',await page.locator('#work.project-feature a').getAttribute('href')==='front.html?project=vaunt'&&await page.locator('#workVR').count()===0);
+    await page.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
+    const open=await page.evaluate(()=>({first:document.querySelector('main section').id,y:scrollY,hero:!!document.getElementById('hero'),orbit:!!document.getElementById('orbitCanvas'),gate:!!document.getElementById('vrGateAllow'),live:!!(window.__MCC_VR&&window.__MCC_VR.live),allowed:!!(window.__MCC_VR&&window.__MCC_VR.allowed),robots:!!document.querySelector('meta[name="robots"]'),tucked:document.documentElement.hasAttribute('data-front-tucked')}));
+    check(scope,'the page opens in the cabin, playing, ungated; no orbit hero; public and indexable',open.first==='cabin'&&open.y===0&&!open.hero&&!open.orbit&&!open.gate&&open.live&&open.allowed&&!open.robots&&!open.tucked,open);
+    const free=await wheelFrom(page);
+    check(scope,'the cabin does not hold the page: a scroll moves on',!free.held&&free.moved>100,free);
+    check(scope,'the plane follows, linking the whole project page',await page.locator('#work.command--plane a[data-cta="vaunt-project"]').getAttribute('href')==='front.html?project=vaunt');
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await app.ctx.close();
   }
@@ -100,9 +105,56 @@ try{
     check(scope,'the saved row is applied: the doors and the night descent are off, the Vaunt scene stays',f.source==='saved'&&f.doors==='none'&&f.night==='none'&&f.work!=='none',f);
     check(scope,'the scroll feel and the night room are the saved ones',f.c.scroll.duration===1.2&&f.c.scroll.touchLerp===0.1&&f.c.night.arrive===0.8,f.c);
     check(scope,'a tag with a script link is dropped; the other keeps its label as text',f.c.vr.spots.length===1&&f.c.vr.spots[0].href==='hire.html',f.c.vr.spots);
+    await page.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
+    const spot=await page.evaluate(()=>{const l=document.querySelector('#workVR .vr360-spots');return {imgs:l?l.querySelectorAll('img,b').length:-1,text:l?l.textContent:'',pwned:!!window.__pwned};});
+    check(scope,'the tag label reaches the cabin as text, never as markup',spot.imgs===0&&/<b>Book<\/b> me/.test(spot.text)&&!spot.pwned,spot);
     check(scope,'no horizontal overflow at 390',(await overflow(page))===0,await overflow(page));
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await page.screenshot({path:join(OUT,'visitor-saved-390.png')});
+    await app.ctx.close();
+  }
+  /* 2b. TUCKED AWAY (owner, 2026-10-29): a visitor gets the holding screen, the bar, the World and the footer; noindex */
+  const TUCKED=[{page:'index.html',slot:'@front',kind:'text',value:JSON.stringify({visible:false}),updated_at:'2026-10-29T20:00:00Z'}];
+  for(const vp of [{width:390,height:844},{width:1280,height:800}]){
+    const scope='visitor-tucked-'+vp.width;const app=await setup(vp,{signedIn:false,rows:TUCKED});const {page,errors}=app;
+    await page.goto(BASE+'/index.html',{waitUntil:'domcontentloaded'});await engine(page);
+    await page.waitForFunction(()=>document.documentElement.hasAttribute('data-front-tucked'),null,{timeout:15000}).catch(()=>{});
+    await page.waitForTimeout(800);
+    const v=await page.evaluate(()=>({tucked:document.documentElement.hasAttribute('data-front-tucked'),main:getComputedStyle(document.getElementById('top')).display,holding:getComputedStyle(document.getElementById('frontHolding')).display,robots:(document.querySelector('meta[name="robots"]')||{}).content||'',world:getComputedStyle(document.getElementById('guestWorld')).display,foot:getComputedStyle(document.querySelector('.site-foot')).display,bar:!!document.querySelector('.appbar [data-appnav="home"]'),note:getComputedStyle(document.getElementById('frontOwnerNote')).display,cached:localStorage.getItem('mcc_front_tucked'),playing:!!(window.__MCC_VR&&window.__MCC_VR.playing),sound:document.getElementById('soundToggle').classList.contains('is-on')}));
+    check(scope,'a visitor gets the holding screen, not the page; noindex is added',v.tucked&&v.main==='none'&&v.holding!=='none'&&v.robots==='noindex'&&v.note==='none'&&!v.playing,v);
+    check(scope,'the bar, the World and the footer stay, so the house still works',v.world!=='none'&&v.foot!=='none'&&v.bar,v);
+    await page.mouse.click(Math.round(vp.width/2),300);await page.waitForTimeout(500);
+    check(scope,'the holding screen plays no song, even after a tap',!(await page.evaluate(()=>document.getElementById('soundToggle').classList.contains('is-on'))));
+    check(scope,'this browser remembers, so the next visit starts on the holding screen without a flash',v.cached==='1',v);
+    check(scope,'no horizontal overflow',(await overflow(page))===0,await overflow(page));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+    await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(300);
+    await page.screenshot({path:join(OUT,`holding-${vp.width}.png`)});
+    /* the next visit: the cached flag holds the page back before the row has even been read */
+    await page.reload({waitUntil:'domcontentloaded'});
+    check(scope,'reloaded: tucked from the first paint',await page.evaluate(()=>document.documentElement.hasAttribute('data-front-tucked')));
+    await app.ctx.close();
+  }
+  /* 2c. TUCKED AWAY, THE OWNER: signed in and named owner by the server, he still gets the real page */
+  {
+    const scope='owner-tucked';const app=await setup({width:390,height:844},{rows:TUCKED});const {page,errors}=app;
+    await page.goto(BASE+'/index.html',{waitUntil:'domcontentloaded'});await engine(page);
+    await page.waitForFunction(()=>document.body.hasAttribute('data-appbar-admin')&&document.documentElement.hasAttribute('data-front-tucked-owner'),null,{timeout:20000}).catch(()=>{});
+    await page.waitForTimeout(600);
+    const o=await page.evaluate(()=>({tucked:document.documentElement.hasAttribute('data-front-tucked'),owner:document.documentElement.hasAttribute('data-front-tucked-owner'),main:getComputedStyle(document.getElementById('top')).display,holding:getComputedStyle(document.getElementById('frontHolding')).display,note:getComputedStyle(document.getElementById('frontOwnerNote')).display,robots:(document.querySelector('meta[name="robots"]')||{}).content||'',cabin:!!(window.__MCC_VR&&window.__MCC_VR.viewer)}));
+    check(scope,'the house owner still sees his real page, told visitors do not',!o.tucked&&o.owner&&o.main!=='none'&&o.holding==='none'&&o.note!=='none'&&o.cabin,o);
+    check(scope,'and the page still asks search engines not to index it',o.robots==='noindex',o);
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+    await page.screenshot({path:join(OUT,'owner-tucked-390.png')});
+    await app.ctx.close();
+  }
+  /* a signed-in member who is not the owner is a visitor */
+  {
+    const scope='member-tucked';const app=await setup({width:390,height:844},{owner:false,rows:TUCKED});const {page,errors}=app;
+    await page.goto(BASE+'/index.html',{waitUntil:'domcontentloaded'});await engine(page);
+    await page.waitForTimeout(3000);
+    check(scope,'a signed-in member who is not the house owner gets the holding screen',await page.evaluate(()=>document.documentElement.hasAttribute('data-front-tucked')&&!document.documentElement.hasAttribute('data-front-tucked-owner')));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
     await app.ctx.close();
   }
   /* 3. THE OWNER: his M is the real front page, and Control → Create → Front page controls it */
@@ -118,7 +170,7 @@ try{
     const frame=()=>page.frames().find(f=>/\/index\.html$/.test(new URL(f.url()).pathname));
     await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="scenes.night"]'),null,{timeout:40000});
     let fr=frame();
-    check(scope,'the preview is the real index.html, running its own scroll engine',!!fr&&await fr.evaluate(()=>!!(window.MCC_FRONT&&document.querySelector('#work.project-feature')&&document.getElementById('pillars'))));
+    check(scope,'the preview is the real index.html, running its own scroll engine, opening in the cabin',!!fr&&await fr.evaluate(()=>!!(window.MCC_FRONT&&document.getElementById('cabin')&&document.querySelector('#work.command--plane')&&document.getElementById('pillars'))));
     check(scope,'it says the live page is as shipped',/Live: the page as shipped/.test(await page.textContent('[data-cfp-status]')));
     await page.waitForTimeout(1500);await page.screenshot({path:join(OUT,`front-page-open-${vp.width}.png`)});
     if(vp.width>=1100){
@@ -152,7 +204,56 @@ try{
     await page.selectOption('[data-cfp-form] [name="feel"]','quick');
     await fr.waitForFunction(()=>window.MCC_FRONT.config.scroll.duration===0.55,null,{timeout:8000}).catch(()=>{});
     check(scope,'a Quick scroll feel reaches the preview\'s scroll engine',await fr.evaluate(()=>window.MCC_FRONT.config.scroll.duration===0.55&&window.MCC_FRONT.config.scroll.touchLerp===0.22));
-    check(scope,'the editor names the new project destination instead of offering obsolete cabin controls',await page.locator('[data-cfp-form] a[href="front.html?project=vaunt"]').count()===1&&await page.locator('[data-cfp-form] [name="vr.yaw"]').count()===0);
+    check(scope,'the editor offers the start scene, the song, the visibility switch and the cabin\'s settings, and still names the project page',
+      await page.locator('[data-cfp-form] a[href="front.html?project=vaunt"]').count()===1&&await page.inputValue('[data-cfp-form] [name="start"]')==='cabin'&&await page.inputValue('[data-cfp-form] [name="song"]')==='antisocial'&&await page.locator('[data-cfp-form] [name="visible"]').isChecked()&&await page.locator('[data-cfp-form] [name="vr.yaw"]').count()===1&&await page.locator('.cfp-spot').count()===3);
+    /* the song: still one song, now another, at once in the preview */
+    await page.selectOption('[data-cfp-form] [name="song"]','here');
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.song==='here',null,{timeout:8000}).catch(()=>{});
+    check(scope,'choosing another song reaches the preview',await fr.evaluate(()=>window.MCC_FRONT.config.song==='here'));
+    await page.selectOption('[data-cfp-form] [name="song"]','antisocial');
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.song==='antisocial',null,{timeout:8000}).catch(()=>{});
+    /* the start scene: on the plane, the cabin leaves the page; back to the cabin, it returns */
+    await page.selectOption('[data-cfp-form] [name="start"]','plane');
+    await fr.waitForFunction(()=>document.getElementById('cabin').hasAttribute('data-front-off'),null,{timeout:8000}).catch(()=>{});
+    check(scope,'opening on the plane takes the cabin out of the preview',await fr.evaluate(()=>getComputedStyle(document.getElementById('cabin')).display==='none'&&window.MCC_FRONT.config.start==='plane'));
+    await page.selectOption('[data-cfp-form] [name="start"]','cabin');
+    await fr.waitForFunction(()=>!document.getElementById('cabin').hasAttribute('data-front-off')&&window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
+    check(scope,'and the cabin comes back first',await fr.evaluate(()=>!document.getElementById('cabin').hasAttribute('data-front-off')&&window.MCC_FRONT.config.start==='cabin'));
+    /* the cabin: take its view, and a bad link is refused by the page */
+    await page.click('[data-cfp-go="cabin"]');
+    await fr.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer,null,{timeout:15000}).catch(()=>{});
+    await fr.evaluate(()=>{const v=window.__MCC_VR.viewer;v.state.yaw=30*Math.PI/180;v.state.pitch=-10*Math.PI/180;});
+    await page.click('[data-cfp="view"]');
+    await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="vr.yaw"]').value==='30',null,{timeout:8000}).catch(()=>{});
+    check(scope,'"Use the preview\'s view" takes the cabin\'s current view as its opening view',await page.inputValue('[data-cfp-form] [name="vr.yaw"]')==='30'&&await page.inputValue('[data-cfp-form] [name="vr.pitch"]')==='-10');
+    await page.fill('[data-cfp-form] [name="spot.0.href"]','javascript:alert(1)');
+    await page.dispatchEvent('[data-cfp-form] [name="spot.0.href"]','change');
+    await page.waitForFunction(()=>document.querySelector('.cfp-spot.is-bad'),null,{timeout:8000}).catch(()=>{});
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.vr.spots.length===2,null,{timeout:8000}).catch(()=>{});
+    const refused=await page.evaluate(()=>({tags:document.querySelectorAll('.cfp-spot').length,bad:[...document.querySelectorAll('.cfp-spot.is-bad')].map(x=>x.textContent),save:document.querySelector('[data-cfp="save"]').disabled,draft:window.CR.frontPage.state.draft.vr.spots.map(s=>s.href)}));
+    const shown=await fr.evaluate(()=>window.MCC_FRONT.config.vr.spots.map(s=>s.href));
+    check(scope,'a script link is refused: the tag stays in the form, says why, and Save waits',refused.tags===3&&refused.bad.length===1&&/link must be a page on this site/.test(refused.bad[0])&&refused.save===true&&refused.draft[0]==='javascript:alert(1)',refused);
+    check(scope,'and the preview leaves that tag out, keeping the other two',JSON.stringify(shown)==='["hire.html","matthew-mccluster.html"]',shown);
+    await page.fill('[data-cfp-form] [name="spot.0.href"]','sites.html');
+    await page.dispatchEvent('[data-cfp-form] [name="spot.0.href"]','change');
+    await page.waitForFunction(()=>!document.querySelector('.cfp-spot.is-bad')&&!document.querySelector('[data-cfp="save"]').disabled,null,{timeout:8000}).catch(()=>{});
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.vr.spots.length===3,null,{timeout:8000}).catch(()=>{});
+    check(scope,'fixed, the tag is back in the preview and Save is open',await fr.evaluate(()=>window.MCC_FRONT.config.vr.spots[0].href==='sites.html')&&!(await page.locator('[data-cfp="save"]').isDisabled()));
+    /* TUCK AWAY: the owner's preview keeps his page; "See it as a visitor" shows the holding screen */
+    const honest=await page.textContent('[data-cfp-honest]');
+    check(scope,'the switch says plainly it hides the page and does not make it secret (a static site)',/does not make it secret/.test(honest)&&/static site on GitHub Pages/.test(honest)&&/noindex/.test(honest),honest);
+    await page.click('[data-cfp-form] [name="visible"]');
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.visible===false&&document.documentElement.hasAttribute('data-front-tucked-owner'),null,{timeout:8000}).catch(()=>{});
+    check(scope,'tucked away, the owner\'s preview still shows his real page, marked for him',await fr.evaluate(()=>!document.documentElement.hasAttribute('data-front-tucked')&&document.documentElement.hasAttribute('data-front-tucked-owner')&&getComputedStyle(document.getElementById('top')).display!=='none'));
+    await page.click('[data-cfp="viewas"]');
+    await fr.waitForFunction(()=>document.documentElement.hasAttribute('data-front-tucked'),null,{timeout:8000}).catch(()=>{});
+    check(scope,'"See it as a visitor" shows the holding screen in the preview',await fr.evaluate(()=>document.documentElement.hasAttribute('data-front-tucked')&&getComputedStyle(document.getElementById('frontHolding')).display!=='none'&&getComputedStyle(document.getElementById('top')).display==='none'));
+    await page.waitForTimeout(400);await page.screenshot({path:join(OUT,`front-page-tucked-${vp.width}.png`)});
+    await page.click('[data-cfp-form] [name="visible"]');
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.visible===true&&!document.documentElement.hasAttribute('data-front-tucked')&&!document.documentElement.hasAttribute('data-front-tucked-owner'),null,{timeout:8000}).catch(()=>{});
+    check(scope,'unhidden, the page is everyone\'s again',await fr.evaluate(()=>window.MCC_FRONT.config.visible===true&&!document.documentElement.hasAttribute('data-front-tucked')&&!document.querySelector('meta[name="robots"][data-front-robots]')));
+    await page.click('[data-cfp-form] [name="visible"]');
+    await fr.waitForFunction(()=>window.MCC_FRONT.config.visible===false,null,{timeout:8000}).catch(()=>{});
     /* the World at the end is a guests' scene: the preview shows it as a guest would, and its button goes there */
     await fr.waitForFunction(()=>!document.getElementById('guestWorld').hidden,null,{timeout:8000}).catch(()=>{});
     await page.click('[data-cfp-go="world"]');
@@ -166,7 +267,7 @@ try{
     await page.waitForFunction(()=>/Saved\./.test(document.querySelector('[data-cfp-status]').textContent),null,{timeout:10000}).catch(()=>{});
     const set=db.sets[0],v=set?JSON.parse(set.body.p_value):null;
     check(scope,'Save writes one row, index.html @front, with the owner\'s session',db.sets.length===1&&set.body.p_page==='index.html'&&set.body.p_slot==='@front'&&set.body.p_kind==='text'&&/^Bearer x\./.test(set.auth),set&&set.body);
-    check(scope,'save changes the retained scenes and keeps the original cabin settings recoverable',!!v&&v.scenes.night===false&&v.scroll.duration===0.55&&v.vr.yaw===-140&&v.vr.pitch===-32&&v.vr.spots.length===3,v);
+    check(scope,'what is saved is what the page applied: night off, Quick, tucked away, the cabin first with Antisocial, the taken view, the three tags with the fixed link',!!v&&v.scenes.night===false&&v.scroll.duration===0.55&&v.visible===false&&v.start==='cabin'&&v.song==='antisocial'&&v.vr.yaw===30&&v.vr.pitch===-10&&JSON.stringify(v.vr.spots.map(s=>s.href))==='["sites.html","hire.html","matthew-mccluster.html"]',v);
     check(scope,'the status says it is live',/Live: your settings, saved/.test(await page.textContent('[data-cfp-status]')));
     /* the analytics of the page in the frame stay off: the owner's look is not a visit */
     /* inside the frame the recorder is the do-nothing one (js/analytics.js mccControlPreview), and nothing was sent from it */
@@ -177,7 +278,7 @@ try{
     await page.waitForFunction(()=>/Reset\./.test(document.querySelector('[data-cfp-status]').textContent),null,{timeout:10000}).catch(()=>{});
     check(scope,'Reset deletes the row and the page is as shipped again',db.reverts.length===1&&db.reverts[0].p_page==='index.html'&&db.reverts[0].p_slot==='@front'&&db.rows.length===0&&/Live: the page as shipped/.test(await page.textContent('[data-cfp-status]')));
     await fr.waitForFunction(()=>!document.getElementById('pillars').hasAttribute('data-front-off'),null,{timeout:8000}).catch(()=>{});
-    check(scope,'and the preview shows every scene again',await fr.evaluate(()=>!document.querySelector('[data-front-off]')));
+    check(scope,'and the preview shows every scene again, public',await fr.evaluate(()=>!document.querySelector('[data-front-off]')&&!document.documentElement.hasAttribute('data-front-tucked')&&!document.documentElement.hasAttribute('data-front-tucked-owner')));
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await app.ctx.close();
   }

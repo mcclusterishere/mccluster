@@ -213,7 +213,8 @@
     window.addEventListener("blur", forceRelease);
     document.addEventListener("visibilitychange", forceRelease);
     canvas.addEventListener("touchend", function (e) { if (e.touches.length === 0 && ownerId !== null) forceRelease(); }, { passive: true });
-    canvas.addEventListener("wheel", function (e) {
+    /* wheel:false leaves the wheel to the page (index.html's opening cabin: a scroll there moves on, it does not zoom) */
+    if (opts.wheel !== false) canvas.addEventListener("wheel", function (e) {
       e.preventDefault();
       setFov(state.fov + e.deltaY * 0.002);
     }, { passive: false });

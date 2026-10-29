@@ -14,7 +14,10 @@
    - the scroll feel (how long a scroll glides, how closely a finger is followed);
    - the 360 cabin: on or off, whether it holds the page, where in the Vaunt scene it opens, the view it opens on, and its
      tags (label and link);
-   - where the night room arrives in the descent.
+   - where the night room arrives in the descent;
+   - (owner, 2026-10-29) where the page opens (in the Vaunt cabin, as shipped, or on the plane), its one song (Antisocial,
+     as shipped), and whether the public sees it at all: tucked away (visible:false), visitors get a holding screen and
+     the page is noindex, while the house owner still sees it. A static site still serves its files: hidden, not secret.
    A change shows in the preview at once (a draft posted to the frame, which only a Control Room parent on this origin
    can send) and reaches visitors only on Save. The page checks and bounds every value itself (frontConfig in
    js/main.js), and what is saved is what the page applied, read back from the frame. Reset deletes the row: the page is
@@ -25,10 +28,13 @@
   window.CR=window.CR||{};
   var PAGE="index.html",SLOT="@front";
   var DEVICES={phone:{w:390,h:844,label:"Phone"},desktop:{w:1280,h:800,label:"Desktop"}};
-  var JUMPS=[["top","Top"],["vaunt","Project tile"],["night","Night"],["world","World"]];
+  var JUMPS=[["top","Top"],["cabin","Cabin"],["vaunt","Plane"],["night","Night"],["world","World"]];
+  /* owner, 2026-10-29: the page opens in the Vaunt cabin and plays Antisocial; both can be changed here (start, song) */
+  var STARTS={cabin:"In the 360 cabin (as shipped)",plane:"On the plane (no cabin)"};
+  var SONGS={antisocial:"Antisocial (as shipped)",whodidtheshoot:"Who Did The Shoot",vaunt:"Vaunt (acoustic)",runway:"Runway Walk",here:"Here","environmental-injustice":"Environmental Injustice"};
   var FEEL={smooth:{duration:1.2,touchLerp:0.1,label:"Smooth"},standard:{duration:0.85,touchLerp:0.14,label:"Standard (as shipped)"},quick:{duration:0.55,touchLerp:0.22,label:"Quick"}};
   var S={request:null,rerender:null,device:"phone",saved:null,savedAt:null,loaded:false,loading:false,loadError:null,
-    draft:null,applied:null,seq:0,acked:0,waiters:[],ready:false,dirty:false,saving:false,message:"",bad:false,frame:null,observer:null};
+    draft:null,applied:null,seq:0,acked:0,waiters:[],ready:false,dirty:false,saving:false,message:"",bad:false,frame:null,observer:null,viewAs:"owner"};
 
   /* the page's own rule for a tag (frontHref / frontConfig in js/main.js), so a refused tag is named here, in the form,
      instead of quietly vanishing from the preview; the page still checks everything itself */
@@ -97,17 +103,31 @@
   }
 
   /* ---------- the form ---------- */
+  /* the page opens on the plane when the owner chose it, or when an older saved row turned the cabin off */
+  function startOf(f){return f.start==="plane"||!f.vr.enabled?"plane":"cabin";}
+  function pick(name,label,opts,on){return'<label>'+e(label)+'<select name="'+name+'">'+Object.keys(opts).map(function(k){return'<option value="'+e(k)+'"'+(on===k?" selected":"")+'>'+e(opts[k])+'</option>';}).join("")+'</select></label>';}
   function feelOf(sc){var best="custom";Object.keys(FEEL).forEach(function(k){if(Math.abs(FEEL[k].duration-sc.duration)<0.001&&Math.abs(FEEL[k].touchLerp-sc.touchLerp)<0.001)best=k;});return best;}
   function check(name,label,on,hint){return'<label class="cfp-check"><input type="checkbox" name="'+name+'"'+(on?" checked":"")+'><span><b>'+e(label)+'</b>'+(hint?'<small>'+e(hint)+'</small>':"")+'</span></label>';}
   function num(name,label,v,lo,hi,step){return'<label>'+e(label)+'<input type="number" inputmode="decimal" name="'+name+'" value="'+e(v)+'" min="'+lo+'" max="'+hi+'" step="'+step+'"></label>';}
   function formHtml(){
     var f=S.draft;
     if(!f)return'<div class="cro-note">'+(S.loadError?"The saved settings could not be read: "+e(S.loadError.message||S.loadError):"Opening your front page…")+'</div>';
-    var feel=feelOf(f.scroll),pct=function(x){return Math.round(x*100);};
+    var feel=feelOf(f.scroll),pct=function(x){return Math.round(x*100);},start=startOf(f),shown=f.visible!==false;
     return''+
+      /* TUCK AWAY. Honest about what a static site can do: the page is hidden from visitors and from search, not secret. */
+      '<fieldset class="cfp-group cfp-visibility"><legend>Who sees it</legend>'+
+        check("visible","Show my front page to the public",shown,shown?"On: everyone gets the page.":"Off: tucked away. Visitors get a holding screen; you still see the page when you are signed in.")+
+        '<p class="cro-meta" data-cfp-honest>Tucking the page away hides it: visitors get a short holding screen with the bar, the World and the footer, and search engines are asked not to index it (noindex). It does not make it secret. This is a static site on GitHub Pages, so index.html, its films and its files can still be fetched by anyone who asks for them directly.</p>'+
+        (shown?"":'<div class="cro-actions"><button type="button" class="cr-btn cr-btn--ghost" data-cfp="viewas" aria-pressed="'+(S.viewAs==="visitor")+'">'+(S.viewAs==="visitor"?"Show me my page again":"See it as a visitor")+'</button></div>')+
+      '</fieldset>'+
+      '<fieldset class="cfp-group"><legend>Opening and song</legend>'+
+        pick("start","The page opens",STARTS,start)+
+        pick("song","The page’s one song",SONGS,SONGS[f.song]?f.song:"antisocial")+
+        '<p class="cro-meta">One song plays for the whole page. Browsers keep it silent until the visitor’s first tap, click or key; the Sound button always decides.</p>'+
+      '</fieldset>'+
       '<fieldset class="cfp-group"><legend>Scenes</legend>'+
-        check("scenes.doors","The hero's two doors",f.scenes.doors,"“Want a website like this?” and “Resume/CV”")+
-
+        check("scenes.doors","The two doors",f.scenes.doors,"“Want a website like this?” and “Resume/CV”, at the foot of the cabin")+
+        check("scenes.vaunt","The plane",f.scenes.vaunt,"The Vaunt fly-through after the cabin")+
         check("scenes.night","The night descent",f.scenes.night,"The night film and the LOCK IN room")+
         '<p>The World entry is shared by every public front page.</p>'+
       '</fieldset>'+
@@ -115,7 +135,16 @@
         '<label>How the page scrolls<select name="feel">'+Object.keys(FEEL).map(function(k){return'<option value="'+k+'"'+(feel===k?" selected":"")+'>'+e(FEEL[k].label)+'</option>';}).join("")+(feel==="custom"?'<option value="custom" selected>Custom</option>':"")+'</select></label>'+
         '<div class="cfp-pair">'+num("scroll.duration","Glide (seconds)",f.scroll.duration,0.3,1.8,0.05)+num("scroll.touchLerp","Finger follow (0.05–0.4)",f.scroll.touchLerp,0.05,0.4,0.01)+'</div>'+
       '</fieldset>'+
-      '<p class="cro-note">Vaunt now has its own <a href="front.html?project=vaunt" target="_blank" rel="noopener">project page</a>, managed by Matthew through the repository. Its original cabin settings remain stored for recovery; this editor changes Matthew’s front page.</p>'+
+      /* the cabin's settings, back now that the cabin is this page's opening scene (they were dropped in #621 when it left) */
+      '<fieldset class="cfp-group"'+(start==="cabin"?"":" disabled")+'><legend>The 360 cabin</legend>'+
+        '<div class="cfp-pair">'+num("vr.yaw","Opening view: turn (°)",f.vr.yaw,-180,180,1)+num("vr.pitch","Opening view: tilt (°)",f.vr.pitch,-85,85,1)+'</div>'+
+        '<div class="cro-actions"><button type="button" class="cr-btn cr-btn--ghost" data-cfp="view">Use the preview’s view</button></div>'+
+        '<div class="cfp-spots">'+f.vr.spots.map(function(s,i){var bad=spotProblem(s);return'<div class="cfp-spot'+(bad?" is-bad":"")+'"><b>Tag '+(i+1)+(s.urgent?' · flashing':'')+'</b>'+(bad?'<p class="cfp-spot__bad" role="alert">This tag '+e(bad)+'. It is left out of the preview until it is fixed.</p>':"")+
+          '<label>Label<input name="spot.'+i+'.label" value="'+e(s.label)+'" maxlength="60"></label>'+
+          '<label>Link (a page here, or https://…)<input name="spot.'+i+'.href" value="'+e(s.href)+'" maxlength="300" inputmode="url"></label>'+
+          '<div class="cro-actions"><button type="button" class="cr-btn cr-btn--ghost" data-cfp="spot" data-i="'+i+'">Pin where the preview looks</button></div></div>';}).join("")+'</div>'+
+      '</fieldset>'+
+      '<p class="cro-note">The whole Vaunt project, the runway performance included, keeps its own <a href="front.html?project=vaunt" target="_blank" rel="noopener">project page</a>, managed by Matthew through the repository. This editor changes Matthew’s front page.</p>'+
       '<fieldset class="cfp-group"'+(f.scenes.night?"":" disabled")+'><legend>Night room</legend>'+
         num("night.arrive","LOCK IN arrives at (% of the descent)",pct(f.night.arrive),50,86,1)+
       '</fieldset>';
@@ -143,7 +172,7 @@
           '<a class="cr-btn cr-btn--ghost" href="index.html" target="_blank" rel="noopener">Open the site ↗</a>'+
         '</div>'+
         '<div class="cfp-viewport"><div class="cfp-device" style="--cfp-w:'+d.w+'px;--cfp-h:'+d.h+'px"><iframe title="Your front page, as visitors get it" src="index.html" data-cfp-frame></iframe></div></div>'+
-        '<p class="cro-meta">This is index.html itself, the page every visitor gets. Scroll it and open the project tile. To change its words, use the pencil on the page.</p>'+
+        '<p class="cro-meta">This is index.html itself, the page every visitor gets. It opens in the cabin: look around, then scroll on. To change its words, use the pencil on the page.</p>'+
       '</section>'+
       '<section class="cro-card cfp-panel" aria-label="Front page settings">'+
         '<div data-cfp-status>'+statusHtml()+'</div>'+
@@ -162,6 +191,9 @@
     var f=S.draft;if(!f)return;
     var n=Number(value),parts=name.split(".");
     if(name==="feel"){if(FEEL[value]){f.scroll.duration=FEEL[value].duration;f.scroll.touchLerp=FEEL[value].touchLerp;}}
+    else if(name==="visible"){f.visible=!!checked;if(f.visible&&S.viewAs!=="owner"){S.viewAs="owner";post({type:"mcc:front-view-as",as:"owner"});}}
+    else if(name==="start"){if(STARTS[value]){f.start=value;if(value==="cabin")f.vr.enabled=true;}}
+    else if(name==="song"){if(SONGS[value])f.song=value;}
     else if(parts[0]==="scenes"||name==="vr.enabled"||name==="vr.hold")f[parts[0]][parts[1]]=!!checked;
     else if(name==="vr.band0"||name==="vr.band1"){if(isFinite(n))f.vr.band[name==="vr.band0"?0:1]=n/100;}
     else if(name==="night.arrive"){if(isFinite(n))f.night.arrive=n/100;}
@@ -176,9 +208,10 @@
     return v||null;
   }
   function act(a,btn){
+    if(a==="viewas"){S.viewAs=S.viewAs==="visitor"?"owner":"visitor";post({type:"mcc:front-view-as",as:S.viewAs});paintForm();return;}
     if(a==="view"||a==="spot"){
       var v=lookingAt();
-      if(!v){S.message="Open the 360 cabin in the preview first (the “360 cabin” button), look where you want, then press this again.";S.bad=true;paintForm();return;}
+      if(!v){S.message="Open the 360 cabin in the preview first (the “Cabin” button), look where you want, then press this again.";S.bad=true;paintForm();return;}
       var deg=function(r){var d=Math.round(r*180/Math.PI)%360;return d>180?d-360:d<-180?d+360:d;};
       if(a==="view"){S.draft.vr.yaw=deg(v.state.yaw);S.draft.vr.pitch=Math.max(-85,Math.min(85,deg(v.state.pitch)));}
       else{
@@ -213,6 +246,7 @@
       S.ready=true;
       /* a draft in hand (a reload, a size change) goes back into the fresh frame; otherwise start from what is saved */
       if(S.draft&&S.dirty)preview(sendable(S.draft),true);else{S.draft=null;seed();}
+      if(S.viewAs==="visitor")post({type:"mcc:front-view-as",as:"visitor"});
       paintForm();
     }else if(ev.data.type==="mcc:front-applied"){
       var c=ev.data.config&&typeof ev.data.config==="object"?ev.data.config:null;

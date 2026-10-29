@@ -1,0 +1,76 @@
+/* THE FRONT PAGE OPENS IN THE CABIN (owner, 2026-10-29).
+   index.html only. Phone first: drawn at 390, given room from 760. min-width queries only. The cabin's viewer, tags and
+   sign are the shared .workvr / .vr360-* rules in css/style.css; this file places the opening room, its words and
+   doors, the plane section that follows it, and the tucked-away holding screen. */
+
+/* ---------- the opening room ---------- */
+.cabin-open{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;background:#0a0807;isolation:isolate}
+.cabin-open__poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
+.cabin-open__room{z-index:1}
+.cabin-open.is-mounted .cabin-open__poster{opacity:0;transition:opacity .6s ease .4s}
+/* the shared viewer sits its tag under a masthead this page does not have */
+.cabin-open .workvr__tag{top:calc(4.4rem + env(safe-area-inset-top));left:16px;transform:none;font-size:.66rem;letter-spacing:.2em;background:linear-gradient(120deg,var(--vaunt-deep,#c93a04),var(--vaunt,#f84c0a));box-shadow:0 8px 26px rgba(248,76,10,.45)}
+.cabin-open .vr360-spot i{background:var(--vaunt,#f84c0a);box-shadow:0 0 12px rgba(248,76,10,.9)}
+.cabin-open .vr360-spot i::after{border-color:rgba(248,76,10,.7)}
+.cabin-open .vr360-spot span{border-color:rgba(248,76,10,.55)}
+.cabin-open .vr360-spot:hover span{background:var(--vaunt,#f84c0a);border-color:var(--vaunt,#f84c0a)}
+.cabin-open .vr360-edge{border-color:var(--vaunt,#f84c0a);box-shadow:0 0 12px rgba(248,76,10,.75)}
+/* the words and the doors sit on a shade at the foot of the room, never across the middle of it */
+.cabin-open__copy{position:absolute;left:0;right:0;bottom:0;z-index:5;box-sizing:border-box;padding:4.5rem 16px calc(5.6rem + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;
+  background:linear-gradient(to top,rgba(10,8,7,.88) 0%,rgba(10,8,7,.6) 55%,rgba(10,8,7,0) 100%)}
+.cabin-open__copy a,.cabin-open__copy button{pointer-events:auto}
+.cabin-open__k{margin:0;font:600 .7rem/1.5 var(--body,system-ui,sans-serif);letter-spacing:.22em;text-transform:uppercase;color:#ffb38f;overflow-wrap:anywhere}
+.cabin-open__title{margin:.35rem 0 0;font:400 clamp(2.3rem,11vw,5.6rem)/1 var(--display,Anton,Impact,sans-serif);letter-spacing:.01em;text-transform:uppercase;color:#fff;overflow-wrap:anywhere;max-width:100%}
+.cabin-open .hero__doors{margin-top:1.1rem;animation:none}
+.cabin-open__acts{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin-top:.9rem}
+.cabin-open__go,.cabin-open__look{min-height:44px;padding:.6rem 1.3rem;border-radius:100px;cursor:pointer;
+  font:700 max(16px,.9rem)/1.2 var(--body,system-ui,sans-serif);letter-spacing:.06em;color:#fff;
+  background:rgba(10,8,7,.55);border:2px solid rgba(244,239,230,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.cabin-open__go:hover,.cabin-open__go:focus-visible,.cabin-open__look:hover,.cabin-open__look:focus-visible{border-color:#fff;background:rgba(10,8,7,.8)}
+.cabin-open__go:focus-visible,.cabin-open__look:focus-visible,.cabin-open__copy a:focus-visible{outline:3px solid #f5ce6c;outline-offset:3px}
+.cabin-open__look{background:linear-gradient(120deg,var(--vaunt-deep,#c93a04),var(--vaunt,#f84c0a));border-color:transparent}
+.cabin-open__look[hidden]{display:none}
+@media (min-width:760px){
+  .cabin-open__copy{align-items:flex-start;text-align:left;padding:6rem clamp(1.5rem,5vw,4rem) calc(6.2rem + env(safe-area-inset-bottom))}
+  .cabin-open .hero__doors{justify-content:flex-start}
+  .cabin-open__acts{justify-content:flex-start}
+  .cabin-open .workvr__tag{top:calc(1.2rem + env(safe-area-inset-top));left:clamp(1.5rem,5vw,4rem)}
+}
+
+/* ---------- the plane: one film now, so a shorter run (the runway lives on the project page) ---------- */
+#work.command--plane{height:340vh}
+.plane__project{position:absolute;z-index:6;left:16px;right:16px;bottom:calc(5.4rem + env(safe-area-inset-bottom));box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;gap:.5em;min-height:44px;padding:.6rem 1.1rem;border-radius:100px;text-align:center;
+  font:700 .9rem/1.3 var(--body,system-ui,sans-serif);color:#fff;text-decoration:none;overflow-wrap:anywhere;
+  background:rgba(10,8,7,.6);border:1px solid rgba(248,76,10,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.plane__project:hover,.plane__project:focus-visible{background:linear-gradient(120deg,var(--vaunt-deep,#c93a04),var(--vaunt,#f84c0a))}
+.plane__project:focus-visible{outline:3px solid #f5ce6c;outline-offset:3px}
+@media (min-width:760px){.plane__project{left:auto;right:clamp(1.5rem,5vw,4rem);max-width:30rem}}
+/* the night descent is pulled up a screen to dissolve over the plane; with the plane off it must not lie over the cabin */
+#work[data-front-off] ~ .services{margin-top:0}
+
+/* ---------- tucked away: the holding screen (and nothing of the page) for visitors ---------- */
+.front-holding{display:none}
+.front-owner-note{display:none}
+html[data-front-tucked] main#top,
+html[data-front-tucked] .sound-dock,
+html[data-front-tucked] .soundask,
+html[data-front-tucked] .float-pause,
+html[data-front-tucked] .volcall{display:none!important}
+html[data-front-tucked] .front-holding{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;
+  min-height:70vh;min-height:70svh;padding:5rem 16px 3rem;color:#f4efe6}
+.front-holding__k{margin:0;font:600 .72rem/1.5 var(--body,system-ui,sans-serif);letter-spacing:.22em;text-transform:uppercase;color:rgba(244,239,230,.6)}
+.front-holding__title{margin:.5rem 0 0;font:400 clamp(2.3rem,11vw,4.6rem)/1 var(--display,Anton,Impact,sans-serif);text-transform:uppercase;overflow-wrap:anywhere;max-width:100%}
+.front-holding__p{margin:1rem 0 0;max-width:30rem;font:400 1rem/1.6 var(--body,system-ui,sans-serif);color:rgba(244,239,230,.82)}
+.front-holding__doors{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin:1.4rem 0 0}
+.front-holding__doors a{display:inline-flex;align-items:center;min-height:44px;padding:.5rem 1.1rem;border-radius:100px;border:1px solid rgba(244,239,230,.4);color:#f4efe6;text-decoration:none;font:700 .9rem/1.2 var(--body,system-ui,sans-serif)}
+.front-holding__doors a:hover,.front-holding__doors a:focus-visible{border-color:#fff;background:rgba(244,239,230,.08)}
+.front-holding__doors a:focus-visible{outline:3px solid #f5ce6c;outline-offset:3px}
+/* the owner sees the real page, told plainly that visitors do not */
+html[data-front-tucked-owner] .front-owner-note{display:block;position:fixed;z-index:142;left:16px;right:16px;top:calc(4.2rem + env(safe-area-inset-top));margin:0;box-sizing:border-box;
+  padding:.6rem .9rem;border-radius:14px;background:rgba(10,8,7,.86);border:1px solid #f5ce6c;color:#f4efe6;font:500 .85rem/1.45 var(--body,system-ui,sans-serif);overflow-wrap:anywhere}
+.front-owner-note a{color:#f5ce6c}
+@media (min-width:760px){html[data-front-tucked-owner] .front-owner-note{left:auto;max-width:26rem}}
+
+@media (prefers-reduced-motion:reduce){.cabin-open.is-mounted .cabin-open__poster{transition:none}}
