@@ -13,14 +13,19 @@ cd "$(dirname "$0")/.."
 P=supabase/pending
 T=supabase/tests
 DBS=()
-cleanup() { for db in "${DBS[@]}"; do psql -q -d postgres -c "drop database if exists $db" >/dev/null; done; }
+TMP=""
+cleanup() {
+  for d in "${DBS[@]}"; do psql -q -d postgres -c "drop database if exists $d" >/dev/null; done
+  if [ -n "$TMP" ]; then rm -rf "$TMP"; fi
+}
 trap cleanup EXIT
-fresh() { local db="schema_hygiene_${1}_$$"; DBS+=("$db"); psql -q -v ON_ERROR_STOP=1 -d postgres -c "create database $db" >/dev/null; echo "$db"; }
+# Sets $db in this shell (not a subshell), so the EXIT trap sees every database it made.
+fresh() { db="schema_hygiene_${1}_$$"; DBS+=("$db"); psql -q -v ON_ERROR_STOP=1 -d postgres -c "create database $db" >/dev/null; }
 run() { local db="$1"; shift; for f in "$@"; do psql -X -q -1 -v ON_ERROR_STOP=1 -d "$db" -f "$f" >/dev/null; done; }
 check() { psql -X -q -t -A -v ON_ERROR_STOP=1 -d "$1" -f "$2" | grep -E ': ok$'; }
 
 # 1. privilege hygiene
-db=$(fresh hygiene)
+fresh hygiene
 run "$db" $T/supabase_api_roles.stub.sql $T/schema_test_helpers.sql $T/privilege_hygiene_v1.stub.sql $P/20261029100000_privilege_hygiene_v1.sql
 check "$db" $T/privilege_hygiene_v1.behaviour.sql
 run "$db" $P/20261029100000_privilege_hygiene_v1.rollback.sql
@@ -29,7 +34,7 @@ run "$db" $P/20261029100000_privilege_hygiene_v1.sql $P/20261029100000_privilege
 check "$db" $T/privilege_hygiene_v1.behaviour.sql
 
 # 2. definer views -> security_invoker views over SECURITY DEFINER functions (same rows), rollback, re-apply
-db=$(fresh views)
+fresh views
 run "$db" $T/supabase_api_roles.stub.sql $T/schema_test_helpers.sql $T/definer_views_invoker_v1.stub.sql
 psql -X -q -t -A -v ON_ERROR_STOP=1 -v pending=$P/20261029100100_definer_views_invoker_v1.sql \
   -v rollback=$P/20261029100100_definer_views_invoker_v1.rollback.sql -d "$db" -f $T/definer_views_invoker_v1.behaviour.sql | grep -E ': ok$'
@@ -49,9 +54,9 @@ psql -X -q -t -A -v ON_ERROR_STOP=1 -d "$db" -c "
 # stub's representative tables. The file's statements for those tables are applied; the
 # offline test scripts/test/rls-initplan-select-wrap.test.mjs proves all 71 statements are
 # production's expressions with only the three sub-selects added.
-db=$(fresh initplan)
+fresh initplan
 run "$db" $T/supabase_api_roles.stub.sql $T/schema_test_helpers.sql $T/rls_initplan_select_wrap_v1.stub.sql
-TMP=$(mktemp -d); DBS_TMP="$TMP"
+TMP=$(mktemp -d)
 subset() { node -e '
   const fs = require("fs"); const [file, out] = process.argv.slice(1);
   const keep = new Set(["prim3_course_progress","comments","campaigns","creator_service_offers","eu_fellowships","events","network_activity"]);
@@ -81,7 +86,7 @@ rm -rf "$TMP"
 
 # 4. EU worker runtime and media rollup: applied twice, behaviour, the created functions equal the
 # rows the CI reset records in supabase/schema-manifest.json (same bodies, config, EXECUTE), rollback
-db=$(fresh eu)
+fresh eu
 run "$db" $T/supabase_api_roles.stub.sql $T/supabase_storage.stub.sql $T/schema_test_helpers.sql $T/eu_runtime_and_media_rollup_v1.stub.sql \
   $P/20261029100300_eu_runtime_and_media_rollup_v1.sql $P/20261029100300_eu_runtime_and_media_rollup_v1.sql
 check "$db" $T/eu_runtime_and_media_rollup_v1.behaviour.sql
