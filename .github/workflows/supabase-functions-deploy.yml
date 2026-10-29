@@ -72,8 +72,10 @@ jobs:
       # OPT-IN CI GATE: off until the owner sets DEPLOY_REQUIRE_GREEN_CI=true.
       # It gates this CLI deploy only; the Supabase GitHub integration is an
       # owner-side setting and is covered in DEPLOYMENT-CONTROLS-PROPOSAL.md.
+      # It applies to manual dispatches too: a hand-run deploy ships main's HEAD
+      # just the same, so it must pass the same checks.
       - name: Require every deploy-gate check green on this exact commit
-        if: steps.plan.outputs.count != '0' && github.event_name == 'push' && vars.DEPLOY_REQUIRE_GREEN_CI == 'true'
+        if: steps.plan.outputs.count != '0' && vars.DEPLOY_REQUIRE_GREEN_CI == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         # The commit this run deploys is main's HEAD at checkout, not

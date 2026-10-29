@@ -154,6 +154,16 @@ test('the MCP transport and the opt-in Pages/Supabase gates are wired', () => {
   }
 });
 
+test('no green-CI gate step is limited to one trigger: a manual dispatch is gated like a push', () => {
+  for (const f of readdirSync(new URL(WF, root)).filter((n) => /\.ya?ml$/.test(n))) {
+    const text = read(`${WF}${f}`);
+    for (const step of text.split(/\n\s*- (?:name|uses):/).filter((s) => s.includes('require-green-ci.mjs'))) {
+      const cond = (step.match(/^\s*if:\s*(.+)$/m) || [, ''])[1];
+      assert.doesNotMatch(cond, /github\.event_name/, `${f}: the gate's condition must not depend on the trigger (${cond.trim()})`);
+    }
+  }
+});
+
 const run = (name, status, conclusion, id = 1, started_at = '2026-10-28T00:00:00Z') => ({ name, status, conclusion, id, started_at });
 const req = ['a', 'b'];
 
