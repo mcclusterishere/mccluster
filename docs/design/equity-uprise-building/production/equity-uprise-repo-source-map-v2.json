@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 506,
+  "candidate_count": 507,
   "capability_source_count": 102,
-  "support_only_count": 404,
+  "support_only_count": 405,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3810,6 +3810,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "docs/control-plane/canonical-architecture.json",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Machine architecture contract; records the public brand, Equity Uprise (owner, 2026-10-28), beside the legacy human_uprise host key. Defines no building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
