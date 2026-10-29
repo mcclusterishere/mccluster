@@ -210,6 +210,7 @@
      phone's own volume buttons are invisible to a web page, so a lowered volume is seen only when it is lowered here. */
   var FALLBACK_SONG = {title:"Heal the 3rd World", src:"assets/audio/heal-the-3rd-world.m4a", slug:"heal-the-3rd-world", album:"heal-the-3"};
   var rotation = null, rotationLoad = null, song = null, songOrd = 0, songStarted = 0, songBegun = false, pauseBy = "", soundWas = null;
+  var songMeasurement = null;
   function loadRotation() {
     if (rotationLoad) return rotationLoad;
     rotationLoad = fetch(ROOT + "data/albums.json", {credentials:"omit"}).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
@@ -252,25 +253,37 @@
     var a = theme && theme.audio;
     try {
       root.MCC_TRACK(name, Object.assign({page:"world", song:song.slug, album:song.album, ord:songOrd, pick:song.pick, pool:song.pool, at_s:a ? Math.round(a.currentTime || 0) : 0,
-        after_s:songStarted ? Math.round((Date.now() - songStarted) / 1000) : 0}, extra || {}));
+        after_s:songStarted ? Math.round((Date.now() - songStarted) / 1000) : 0}, songMeasurement ? songMeasurement.report() : {}, extra || {}));
     } catch (_) {}
   }
   // how the song was chosen is kept with it, so every event about one listen says the same thing
   function loadSong(next) {
     song = Object.assign({}, next, {pick:rotation ? "random" : "fallback", pool:rotation ? rotation.length : 1}); songOrd++; songBegun = false; songStarted = 0;
     theme.title = song.title; theme.audio.src = ROOT + song.src;
+    songMeasurement = root.MCC_PLAYBACK ? root.MCC_PLAYBACK.create(theme.audio) : null;
   }
   function reactions(audio) {
-    audio.addEventListener("play", function () {
-      if (!songBegun) { songBegun = true; songStarted = Date.now(); songEvent("song_start", {trigger:songOrd === 1 ? "first_tap" : "next"}); }
+    audio.addEventListener("playing", function () {
+      if ((!songMeasurement || !songMeasurement.valid()) && root.MCC_PLAYBACK) songMeasurement = root.MCC_PLAYBACK.create(audio);
+      var measuredStart = songMeasurement && songMeasurement.playing();
+      if (!songBegun || measuredStart) { songBegun = true; songStarted = Date.now(); songEvent("song_start", {trigger:songOrd === 1 ? "first_tap" : "next"}); }
       else songEvent("song_resume");
     });
     audio.addEventListener("pause", function () {
+      if (songMeasurement) songMeasurement.pause();
       if (audio.ended) return;
+      if (!songBegun) return;
       songEvent("song_pause", {by:pauseBy || "player"}); pauseBy = "";
     });
+    audio.addEventListener("timeupdate", function () { if (songMeasurement) songMeasurement.sample(); });
+    audio.addEventListener("waiting", function () { if (songMeasurement) songMeasurement.waiting(); });
+    audio.addEventListener("stalled", function () { if (songMeasurement) songMeasurement.waiting(); });
+    audio.addEventListener("seeking", function () { if (songMeasurement) songMeasurement.seeking(); });
+    audio.addEventListener("seeked", function () { if (songMeasurement) songMeasurement.resumeAfterSeek(); });
+    audio.addEventListener("ratechange", function () { if (songMeasurement) { songMeasurement.seeking(); songMeasurement.resumeAfterSeek(); } });
     audio.addEventListener("ended", function () {
-      songEvent("song_end");
+      if (songMeasurement) songMeasurement.finish();
+      if (songBegun) songEvent("song_end");
       loadSong(pickSong());
       try { var p = audio.play(); if (p && p.catch) p.catch(paint); } catch (_) {}
       paint();

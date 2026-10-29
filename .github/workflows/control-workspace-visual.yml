@@ -24,6 +24,7 @@ on:
       - 'css/control-analytics*.css'
       - 'css/control-forensics.css'
       - 'scripts/e2e/site-health.e2e.mjs'
+      - 'scripts/e2e/analytics-visitor-evidence.e2e.mjs'
       - 'workers/mccluster/src/analytics/**'
       - 'workers/mccluster/test/analytics-camera-measurement.test.mjs'
       - 'scripts/e2e/analytics-unified.e2e.mjs'
@@ -77,6 +78,7 @@ jobs:
           node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
           node scripts/e2e/analytics-tabs.e2e.mjs /tmp/control-proof/analytics-tabs
           node scripts/e2e/site-health.e2e.mjs /tmp/control-proof/site-health
+          node scripts/e2e/analytics-visitor-evidence.e2e.mjs /tmp/control-proof/visitor-evidence
           node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
           node scripts/e2e/connections.e2e.mjs /tmp/control-proof/connections
           node scripts/e2e/live-actors.e2e.mjs

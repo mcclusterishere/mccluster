@@ -109,7 +109,7 @@
       return s>=75?"Strong engagement":s>=50?"Moderate engagement":"Needs attention";
     }
     var list=rows.map(function(r,i){
-      var s=score(r),trend=r.view_change_pct==null?"Trend unavailable":signedPct(r.view_change_pct)+" vs prior range";
+      var s=score(r),trend=r.view_change_pct==null||!(r.prior_views>0)?"Trend unavailable (no positive prior denominator)":signedPct(r.view_change_pct)+" vs prior range";
       return'<details class="cra-page-row"'+(i===0?' open':'')+'><summary class="cra-page-row__summary">'+
         '<span class="cra-page-row__rank">'+(i+1)+'</span>'+
         '<span class="cra-page-row__main"><b>'+e(r.path||"Unknown page")+'</b><small>'+e(interpretation(r))+'</small>'+
@@ -120,13 +120,13 @@
         '<div class="cra-kpis">'+
           kpi("Typical visible time",r.median_visible_s==null?"—":seconds(r.median_visible_s),"median")+
           kpi("Scroll depth",pct(r.avg_depth),"average")+
-          kpi("Engaged 30s+",pct(r.engaged_30_pct),"visitors")+
-          kpi("Actions",n(r.action_events),"recorded events")+
-          kpi("Returning",pct(r.return_pct),"visitors")+
-          kpi("Short exits",pct(r.short_exit_pct),"visitors")+
-        '</div><p><small>Quality signal: '+e(r.quality_score==null?"—":Number(r.quality_score).toFixed(1))+' · Measurement confidence: '+pct(r.confidence==null?null:Number(r.confidence)*100)+'. The score combines attention, depth, actions, return behavior and friction, with confidence weighting; it is not a speed or SEO grade.</small></p></div></details>';
+          kpi("Visible 30s+",r.measured_exits>0?pct(r.engaged_30_pct):"—","page-leave reports")+
+          kpi("Action points",n(r.action_events),"weighted: mission 5, account/form/conversion 4, CTA 1")+
+          kpi("Repeat-session proxy",r.sessions>0?pct(r.return_pct):"—","max(sessions − browser IDs, 0) / sessions")+
+          kpi("Short exits",r.measured_exits>0?pct(r.short_exit_pct):"—","page-leave reports; missing time counts as short")+
+        '</div><p><small>Quality signal: '+e(r.quality_score==null?"—":Number(r.quality_score).toFixed(1))+' · View-volume weight: '+pct(r.confidence==null?null:Number(r.confidence)*100)+'. The score combines attention, depth, actions, return behavior and friction, with a view-volume weight of 1 − exp(−views/30). These are legacy heuristics, not measurement accuracy, attention proof or a speed/SEO grade. Exit reports: '+n(r.measured_exits)+' / '+n(r.views)+' pageviews (different event populations, not matched coverage).</small></p></div></details>';
     }).join("");
-    return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-confidence pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
+    return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-volume pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
   }
   function funnel(rows){
     if(S.data.stageTotals){
@@ -701,6 +701,7 @@
       '</div>'+["business","content","contentEvents","identity","audienceScience","acquisition","paths","funnel","pages","sources","countries","networks","totals",S.rangeId==="24h"?"hourly":"daily"].map(err).join("");
   }
   function scienceSignalLabel(v){
+    if(v==="deep_listening")return "Unverified legacy completion signal";
     if(v==="converted")return "Unverified legacy action signal";
     if(v==="purchase_intent")return "Purchase intent";
     if(v==="client_completion_reported")return "Client completion report";
@@ -711,7 +712,7 @@
     var d=S.data.audienceScience||{},t=d.totals||{},profiles=d.profiles||[],tracks=d.track_affinity||[],signals=d.signals||[],m=d.methodology||{};
     if(S.errors.audienceScience)return err("audienceScience");
     if(!d.version)return card("Audience science","Observed-behavior measurement is loading.","<p>Computing listener distributions and return behavior…</p>",true);
-    var summary='<div class="cra-kpis">'+
+    var summary='<p>Playback completion rate unavailable: legacy starts and ends are unpaired; preview reports are separate. Browser reports do not prove human attention.</p><div class="cra-kpis">'+
       kpi("Profiled visitors",n(t.profiled_visitors||0))+
       kpi("Music listeners",n(t.music_listeners||0))+
       kpi("5+ start evidence",n(t.distribution_eligible||0))+
@@ -801,18 +802,18 @@
     if(!S.completed||!S.completed.identity)return '<p class="cra-loading" role="status">Reading signup journeys…</p>';
     var d=S.data.identity||{},c=d.coverage||{},js=d.journeys||[],t=d.tracks||[];
     var accounts=Number(c.accounts)||js.length,linked=Number(c.bridged_accounts)||0,heard=Number(c.attributed_accounts)||0;
-    var sourced=js.filter(function(j){return j.source&&j.source!=="direct";}).length;
+    var sourced=js.filter(function(j){return j.source&&j.source!=="direct"&&j.source!=="unknown";}).length;
     /* the sentence first: what happened, in words */
     var paths={};js.forEach(function(j){if(j.last_track){var k=pathKey(j.source,j.last_track);paths[k]=(paths[k]||0)+1;}});
     var best=Object.keys(paths).sort(function(a,b){return paths[b]-paths[a];})[0];
     var lead=accounts?('<p class="cra-lead"><b>'+n(accounts)+(accounts===1?" account was":" accounts were")+' created.</b> '+
-      (heard?n(heard)+' of them ('+pct(heard,accounts)+') heard a song in the 7 days before signing up'+(best?', most often <b>'+e(best.split(PATH_SEP)[0])+' → '+e(best.split(PATH_SEP)[1])+'</b> ('+n(paths[best])+')':"")+'.':'None of them can be tied to a song yet.')+'</p>')
+      (heard?n(heard)+' of them ('+pct(heard,accounts)+') have an account-bound music event in the 7 days before signup'+(best?', most often <b>'+e(best.split(PATH_SEP)[0])+' → '+e(best.split(PATH_SEP)[1])+'</b> ('+n(paths[best])+')':"")+'.':'Music attribution is unknown for these accounts.')+'</p>')
       :'<p class="cra-lead">No accounts were created in this range.</p>';
     /* the funnel: each step is a share of accounts created */
-    var steps=[["Accounts created",accounts,"Everyone who signed up in this range."],["Linked to a device",linked,"We could match the account to the browser it signed up on."],["Heard a song first",heard,"That device played a song in the 7 days before signup."],["Came from a known source",sourced,"Arrived through a tagged link, not typed in or unknown."]];
+    var steps=[["Accounts created",accounts,"Everyone who signed up in this range."],["Linked to a device",linked,"A verified account event was observed on this browser."],["Account-bound music touch",heard,"Music events carry the same account uid; browser playback does not prove audibility."],["Came from a known source",sourced,"Arrived through a tagged link, not typed in or unknown."]];
     var funnel='<div class="cra-steps2">'+steps.map(function(x,i){var p=accounts?x[1]/accounts*100:0;return'<div class="cra-step2"><span class="cra-step2__n">'+(i+1)+'</span><div class="cra-step2__body"><div class="cra-step2__top"><b>'+e(x[0])+'</b><strong>'+n(x[1])+'</strong></div><div class="cra-step2__bar"><i style="--pct:'+Math.max(x[1]?2:0,p).toFixed(1)+'%"></i></div><small>'+(i?Math.round(p)+'% of accounts · ':"")+e(x[2])+'</small></div></div>';}).join("")+'</div>';
     /* songs, as a table you can read across */
-    var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Heard on the way</th><th class="n">Signup rate (cohort needed)</th><th class="n">Typical time</th></tr></thead><tbody>'+
+    var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Other music touches</th><th class="n">Signup rate (cohort needed)</th><th class="n">Mean time</th></tr></thead><tbody>'+
       t.map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+"—"+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
     /* the accounts themselves, filtered by the path you tapped */
     /* the shared region and source filters narrow the paths and the accounts (the counts above stay the whole range) */
@@ -820,16 +821,16 @@
     var cards=list.length?'<div class="cra-accts">'+list.slice(0,S.journeyLimit||30).map(function(j){
       var name=[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"Account",assisted=(j.assisted_tracks||[]).filter(function(x){return x!==j.last_track;});
       return'<article class="cra-acct"><div class="cra-acct__top"><b>'+e(name)+'</b><small>'+e(j.created_at?new Date(j.created_at).toLocaleString():"")+'</small></div>'+
-        '<div class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(j.source||"direct")+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>'+
-        (j.last_track?'<span class="cra-chip cra-chip--song">'+e(j.last_track)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>':'<span class="cra-chip">no song</span><span class="cra-path__arrow" aria-hidden="true">→</span>')+
+        '<div class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(j.source||"unknown")+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>'+
+        (j.last_track?'<span class="cra-chip cra-chip--song">'+e(j.last_track)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>':'<span class="cra-chip">music attribution unknown</span><span class="cra-path__arrow" aria-hidden="true">→</span>')+
         '<span class="cra-path__acct">signed up'+(j.minutes_after_last_track!=null?' '+mins(j.minutes_after_last_track)+' later':"")+'</span></div>'+
-        (assisted.length?'<p class="cra-acct__also">Also heard: '+e(assisted.join(", "))+'</p>':"")+
+        (assisted.length?'<p class="cra-acct__also">Other music touches: '+e(assisted.join(", "))+'</p>':"")+
         '<details class="cra-acct__more"><summary>Owner-only details</summary><dl><dt>Email</dt><dd>'+e(j.email||"—")+'</dd><dt>Location</dt><dd>'+e([j.city,j.region,j.country].filter(Boolean).join(", ")||"—")+'</dd><dt>Network</dt><dd>'+e(j.network||"—")+'</dd><dt>IP</dt><dd><code>'+e(j.ip||"—")+'</code></dd><dt>Confirmed</dt><dd>'+e(j.confirmed_at?new Date(j.confirmed_at).toLocaleString():"not yet")+'</dd></dl></details></article>';
     }).join("")+'</div>':'<p>No accounts match.</p>';
     var filterNote=f?'<div class="cra-filter"><span>Showing '+e(f.split(PATH_SEP)[0])+' → '+e(f.split(PATH_SEP)[1])+'</span><button type="button" class="cra-filter__x" data-cra-path="">Show everyone</button></div>':"";
-    return lead+'<div class="cra-grid">'+card("How signups happened","Each step as a share of accounts created. Song attribution looks back 7 days on the same device; it shows what happened before, not what caused it.",funnel,true)+
-      card("Source → track → account","Every route someone took to an account. Tap one to see those people."+(S.geo.region||S.geo.source?" Narrowed by "+[S.geo.region,S.geo.source].filter(Boolean).join(" · ")+".":""),flow({journeys:fj}),true)+
-      card("Songs","Last song before signup is the song they heard right before joining. Heard on the way counts every song they played in the 7 days before.",songs,true)+
+    return lead+'<div class="cra-grid">'+card("How signups happened","Shares of accounts created, not ordered funnel steps. Attribution requires the same verified account on each music event. Anonymous/shared-device history stays unattributed; association is not causation.",funnel,true)+
+      card("Source → track → account","Observed account-bound source and music associations. Tap one to inspect accounts."+(S.geo.region||S.geo.source?" Narrowed by "+[S.geo.region,S.geo.source].filter(Boolean).join(" · ")+".":""),flow({journeys:fj}),true)+
+      card("Songs","Last music touch is the most recent account-bound event before signup. Other music touches counts distinct tracks in the seven-day lookback. Missing evidence stays unknown.",songs,true)+
       card("Accounts","Newest first."+(list.length>(S.journeyLimit||30)?" Showing "+n(Math.min(S.journeyLimit||30,list.length))+" of "+n(list.length)+".":""),filterNote+cards+(list.length>(S.journeyLimit||30)?'<button type="button" class="cr-btn" data-cra-more-journeys>Show more accounts</button>':""),true)+'</div>'+measurementNote(d)+err("identity");
   }
   function pct(a,b){return b?Math.round(a/b*100)+"%":"0%";}
