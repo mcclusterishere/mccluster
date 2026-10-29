@@ -1,4 +1,4 @@
-const CACHE = 'whip-equipped-v3';
+const CACHE = 'whip-equipped-v4';
 const SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './assets/we-icon.png'];
 
 self.addEventListener('install', event => {

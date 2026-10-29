@@ -16,6 +16,7 @@
       --orange:#F6AD62;
       --orange2:#F58B58;
       --coral:#F04449;
+      --coral-text:#CE3A3F; /* --coral shaded so small type clears WCAG AA 4.5:1 on paper and cream */
       --red:#ED3F46;
       --black:#050505;
       --ink:#111111;
@@ -84,10 +85,11 @@
     .section-dark{background:#0b0b0c;color:#fff}
     .section-white{background:#fff}
     .section-head{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:52px;margin-bottom:54px;align-items:start}
-    .kicker{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.16em;color:var(--coral)}
+    .kicker{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.16em;color:var(--coral-text)}
     h2{font-size:clamp(42px,6vw,76px);line-height:.92;letter-spacing:-.065em;margin:12px 0 0;font-weight:930}
     .section-copy{font-size:20px;line-height:1.38;letter-spacing:-.025em;color:var(--charcoal);max-width:650px}
     .section-dark .section-copy{color:rgba(255,255,255,.64)}
+    .section-dark .kicker{color:var(--coral)}
 
     .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
     .card{position:relative;overflow:hidden;border-radius:var(--radius);padding:28px;background:#fff;border:1px solid var(--line);box-shadow:0 12px 34px rgba(0,0,0,.045);min-height:260px}
@@ -125,7 +127,7 @@
 
     .stake-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
     .stake{border-radius:28px;background:#fff;border:1px solid var(--line);padding:30px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end}
-    .stake small{display:block;color:var(--coral);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:10px;margin-bottom:12px}
+    .stake small{display:block;color:var(--coral-text);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:10px;margin-bottom:12px}
     .stake h3{font-size:26px;line-height:1.05;letter-spacing:-.045em;margin:0 0 10px}
     .stake p{color:var(--muted);font-size:13px;line-height:1.55;margin:0;max-width:520px}
     .stake-link{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--black);color:#fff;font-size:20px;font-weight:800;transition:.18s ease}
@@ -145,7 +147,7 @@
     footer{background:var(--black);color:#fff;padding:42px 0}
     .foot{display:flex;justify-content:space-between;gap:30px;align-items:center}
     .foot img{height:36px;width:auto}
-    .foot-copy{text-align:right;color:rgba(255,255,255,.45);font-size:11px;line-height:1.6}
+    .foot-copy{text-align:right;color:rgba(255,255,255,.47);font-size:11px;line-height:1.6}
 
     @media (max-width:900px){
       .navlinks a:not(.nav-cta){display:none}

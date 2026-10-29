@@ -305,7 +305,8 @@ body.prim3-range-page {
 .range-primary,
 .range-primary-link {
   border: 1px solid var(--range-red);
-  background: var(--range-red);
+  /* a shade under --range-red so white button text clears WCAG AA 4.5:1 */
+  background: #e71c1f;
   color: #fff;
   text-decoration: none;
 }

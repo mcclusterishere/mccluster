@@ -518,7 +518,7 @@ html[data-theme="light"] .btn--ghost:hover{border-color:var(--cream);background:
 .foot__brand { margin: 0; font-family: var(--display); font-size: 1.6rem; text-transform: uppercase;
   display: inline-flex; align-items: center; gap: .14em; }
 .foot__k { margin: 0; font: 800 .62rem var(--body); letter-spacing: .26em;
-  text-transform: uppercase; color: rgba(244,239,230,.45); }
+  text-transform: uppercase; color: rgba(244,239,230,.49); }
 
 /* 17.5rem is chosen, not guessed: it is the width at which nine tiles fall
    into a clean 3x3 inside the 66rem inner column instead of a 4+4+1 with an
@@ -559,7 +559,7 @@ html[data-theme="light"] .btn--ghost:hover{border-color:var(--cream);background:
   stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .footreach:hover, .footreach:focus-visible { border-color: var(--ruby-hot);
   background: rgba(229,56,59,.16); transform: translateY(-2px); }
-.footreach__handle { font: 500 .85rem var(--body); color: rgba(244,239,230,.42);
+.footreach__handle { font: 500 .85rem var(--body); color: rgba(244,239,230,.49);
   letter-spacing: .04em; }
 
 /* The legibility pass sets .site-foot__note to 1.14rem along with the site's
@@ -567,7 +567,7 @@ html[data-theme="light"] .btn--ghost:hover{border-color:var(--cream);background:
    footer — louder than the nine doors above it. It stays comfortably
    readable and stops competing: nobody came to this page for the notice. */
 .site-foot--doors .site-foot__note { margin: 0; font-size: .95rem; line-height: 1.6;
-  max-width: 62rem; color: rgba(244,239,230,.42); }
+  max-width: 62rem; color: rgba(244,239,230,.49); }
 .site-foot--doors .site-foot__note em { font-style: normal; color: var(--cream-dim); }
 
 /* the tiles read on the bone coat too: the same edges, inked */
@@ -3611,7 +3611,7 @@ html[data-financing="on"] .hirepage .hire__finance b { color: var(--cream); font
 .dkc { margin: 0 0 2rem; }
 .dkc__cap { margin: 0 0 .8rem; font: var(--caps-b); letter-spacing: .16em;
   text-transform: uppercase; color: var(--cream-dim); }
-.dkc__cap span { color: rgba(244,239,230,.45); }
+.dkc__cap span { color: rgba(244,239,230,.49); }
 /* the caption's quiet half — same weight in the hierarchy, ink side, so it
    does not disappear into the daylight ground */
 html[data-theme="light"] .dkc__cap span { color: rgba(26,20,13,.66); }
@@ -4555,10 +4555,15 @@ html[data-theme="light"] .kicker__mark[src$="equity-uprise-logo.webp"] { content
   /* ruby that can carry text on BOTH coats. --ruby-hot is 3.63:1 on the
      daylight ground, which is under the 4.5:1 floor for anything below
      24px; this token is the same red taken down until it clears. The
-     display red is untouched, because large type is not the problem. */
-  --ruby-text: #e5383b;
+     display red is untouched, because large type is not the problem.
+     #e5383b was 4.37:1 on the #151312 cards; #e63e41 is the same red
+     lifted just past 4.5:1 on every dark card the site uses. */
+  --ruby-text: #e63e41;
+  /* ruby that carries WHITE text: the same red taken down until white on it
+     clears 4.5:1 (white on #e5383b is 4.23:1). Daylight's ruby already does. */
+  --ruby-fill: #e32a2e;
 }
-html[data-theme="light"] { --ruby-text: #a4101a; }
+html[data-theme="light"] { --ruby-text: #a4101a; --ruby-fill: #c1121f; }
 
 /* -- ONE COLUMN, every page. -- */
 .bexp, .dkt, .verify, .manifesto, .chat, .felfigs {

@@ -234,7 +234,7 @@ html[data-theme="light"] .chapter__no { color: var(--offer-gold); }
 .chapter__per { display: block; margin-top: 0.5rem; color: var(--cream-dim); font-weight: 700;
   font-size: 0.74rem; letter-spacing: 0.2em; text-transform: uppercase; }
 .chapter__go { display: inline-block; margin-top: 1.4rem; text-decoration: none;
-  background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1rem;
+  background: var(--ruby-fill, var(--ruby-hot)); color: #fff; font-weight: 800; font-size: 1rem;
   border-radius: 100px; padding: 1rem 2.1rem;
   box-shadow: 0 16px 44px -14px rgba(229,56,59,0.6); transition: transform 0.2s ease; }
 .chapter__go:hover { transform: translateY(-2px); }
@@ -312,7 +312,7 @@ html[data-theme="light"] .chapter__no { color: var(--offer-gold); }
   padding: clamp(1.2rem, 4vw, 2rem);
   background: linear-gradient(158deg, rgba(38,28,20,0.9), rgba(16,12,10,0.95));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
-.calc h4 { font-family: var(--sig); text-transform: uppercase; color: var(--cream);
+.calc h3 { font-family: var(--sig); text-transform: uppercase; color: var(--cream);
   font-size: clamp(1.3rem, 4vw, 1.8rem); letter-spacing: 0.02em; }
 .calc__lede { margin-top: 0.5rem; color: var(--cream-dim); font-size: 0.88rem; line-height: 1.65;
   max-width: 40rem; }
@@ -508,6 +508,8 @@ html[data-theme="light"] .modes button[data-mode="m"] .modes__mark {
 .lic__state { display: inline-block; font-size: 0.56rem; letter-spacing: 0.2em;
   text-transform: uppercase; font-weight: 800; padding: 0.24rem 0.55rem; border-radius: 100px; }
 .lic.is-open .lic__state { color: #0a0807; background: var(--offer-gold); }
+/* daylight gold is dark (#6a4f0e), so the state word on it goes light */
+html[data-theme="light"] .lic.is-open .lic__state { color: #fbf6ea; }
 .lic.is-arranged .lic__state { color: var(--cream-dim);
   box-shadow: inset 0 0 0 1px rgba(244,239,230,0.28); }
 .lic b { display: block; margin-top: 0.6rem; font-family: var(--sig); text-transform: uppercase;
@@ -616,7 +618,7 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
 .buy:first-of-type { box-shadow: inset 0 0 0 1px var(--edge), inset 0 3px 0 0 var(--ruby-hot); }
 
 .buy__eyebrow { font: 800 .6rem/1.3 var(--ui, "Manrope", system-ui, sans-serif);
-  letter-spacing: .17em; text-transform: uppercase; color: var(--ruby-hot);
+  letter-spacing: .17em; text-transform: uppercase; color: var(--ruby-text, var(--ruby-hot));
   margin: 0 0 .5rem; }
 
 .buy h2 { font-family: var(--sig); text-transform: uppercase; line-height: .95;
@@ -645,10 +647,10 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
 /* full width, thumb height, and the only red thing in the card. Flat:
    the gloss-and-glow lozenge was the single cheapest object on the page. */
 .buy__go { display: block; text-align: center; text-decoration: none;
-  padding: .95rem 1.2rem; border-radius: 10px; color: #fff; background: var(--ruby-hot);
+  padding: .95rem 1.2rem; border-radius: 10px; color: #fff; background: var(--ruby-fill, var(--ruby-hot));
   font: 800 .95rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .01em;
   transition: background .16s ease; }
-.buy__go:hover, .buy__go:focus-visible { background: var(--ruby-hot); filter: brightness(1.09); }
+.buy__go:hover, .buy__go:focus-visible { background: var(--ruby-fill, var(--ruby-hot)); filter: brightness(1.09); }
 .buy__go:active { transform: translateY(1px); }
 
 .buy__after { font: 600 .78rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
@@ -716,6 +718,12 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
   letter-spacing: .045em; color: var(--cream-dim); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; }
 .buy .modes button[aria-selected="true"] .modes__word { color: var(--cream); }
+/* daylight: the .modes wells are dark veils (55% / 34%), which on bone read as a mid grey
+   that the flipped (dark) cream-dim word cannot read against (2.7:1). The
+   well goes pale instead, the same way .licgrant and .redraw do. */
+html[data-theme="light"] .modes,
+html[data-theme="light"] .buy .modes { background: rgba(20,16,12,0.06);
+  box-shadow: inset 0 0 0 1px rgba(26,20,13,0.16); }
 
 /* WHAT YOU GET — pushed to the foot of the card, which is what makes
    four cards of different lengths end on one line. */
@@ -729,7 +737,7 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
 .buy__list li::before { content: ""; position: absolute; left: 0; top: .52em;
   width: .3rem; height: .3rem; border-radius: 50%; background: var(--ruby-hot); opacity: .75; }
 .buy__more { display: inline-block; margin: .6rem 0 0; text-decoration: none;
-  font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--ruby-hot); }
+  font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--ruby-text, var(--ruby-hot)); }
 .buy__more:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* The count line. Small, quiet, and the only thing above the first card. */

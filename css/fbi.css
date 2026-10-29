@@ -7,7 +7,7 @@
   --fbi-paper: #e9dcc0;
   --fbi-ink: #f4efe6;
   --fbi-dim: #b9ad9b;
-  --fbi-faint: #7f7566;
+  --fbi-faint: #827868;
   --fbi-line: rgba(244, 239, 230, 0.12);
   --fbi-hot: #e5383b;
   --fbi-legit: #2fbf71;
@@ -27,7 +27,8 @@ body.fbi-page { margin: 0; background: var(--fbi-bg); color: var(--fbi-ink); }
 .fbi__cta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 
 .fbi__btn { min-height: 48px; padding: 12px 16px; border: 1px solid var(--fbi-line); border-radius: 12px; background: var(--fbi-panel); color: var(--fbi-ink); font: inherit; font-weight: 800; font-size: 15px; cursor: pointer; }
-.fbi__btn--hot { background: var(--fbi-hot); border-color: var(--fbi-hot); color: #fff; }
+/* white text needs a shade under --fbi-hot to clear WCAG AA 4.5:1 */
+.fbi__btn--hot { background: #db3538; border-color: #db3538; color: #fff; }
 .fbi__btn--wide { width: 100%; margin-top: 6px; }
 .fbi__btn:disabled { opacity: 0.55; cursor: default; }
 
@@ -59,7 +60,7 @@ body.fbi-page { margin: 0; background: var(--fbi-bg); color: var(--fbi-ink); }
 .fbi__votes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
 .fbi__vote { min-height: 46px; border: 2px solid #1c1710; border-radius: 10px; background: transparent; color: #1c1710; font: inherit; font-weight: 900; font-size: 15px; text-transform: uppercase; cursor: pointer; }
 .fbi__vote b { margin-left: 4px; }
-.fbi__vote--cap.is-on, .fbi__vote--guilty.is-on { background: var(--fbi-hot); border-color: var(--fbi-hot); color: #fff; }
+.fbi__vote--cap.is-on, .fbi__vote--guilty.is-on { background: #db3538; border-color: #db3538; color: #fff; }
 .fbi__vote--legit.is-on, .fbi__vote--acquitted.is-on { background: #17834b; border-color: #17834b; color: #fff; }
 .fbi__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .fbi__link { min-height: 36px; padding: 6px 4px; border: 0; background: none; color: #5d523f; font: inherit; font-weight: 800; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
