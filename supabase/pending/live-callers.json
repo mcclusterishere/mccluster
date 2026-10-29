@@ -1,9 +1,9 @@
 {
   "_comment": [
-    "Names shipped code calls that the applied migration history (supabase/migrations/ + supabase/replay_migrations/) does not define.",
-    "Checked by scripts/test/rpc-names-exist.test.mjs; the test fails for any such name missing here and for any entry that is stale, so both lists can only shrink.",
-    "pending_only: defined by the named file under supabase/pending/ and not yet applied in production; promote it (supabase/pending/PROMOTION-ORDER.md) and remove the entry.",
-    "missing_everywhere: no SQL in Git defines it and production did not have it (verified read-only on 2026-10-27); the calling page or route fails today. Write and promote the SQL, or remove the call, then remove the entry."
+    "Names shipped code calls that are not deployed: a name counts as deployed only when supabase/schema-manifest.json (the CI reset) AND the latest production evidence (docs/control-plane/evidence/production-schema-snapshot-<date>.json) both have it. A name only replay SQL defines is not deployed.",
+    "Checked by scripts/test/rpc-names-exist.test.mjs over js/, root pages, workers/mccluster/src, workers/mccluster-mcp/src and supabase/functions; the test fails for any such name missing here and for any entry that is stale, so both lists can only shrink.",
+    "pending_only: pending, not applied. Defined by the named file under supabase/pending/ and not yet applied in production; promote it (supabase/pending/PROMOTION-ORDER.md), commit the new production snapshot, and remove the entry.",
+    "missing_everywhere: not deployed and no pending SQL defines it; production did not have it (verified read-only on 2026-10-27); the calling page or route fails today. Write and promote the SQL, or remove the call, then remove the entry."
   ],
   "pending_only": {
     "action_globe_public_business_pins": {
@@ -191,6 +191,54 @@
         "workers/mccluster/src/creator-site-view.js"
       ]
     },
+    "eu_claim_ddex_jobs_service": {
+      "kind": "function",
+      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "callers": [
+        "supabase/functions/eu-ddex-worker/index.ts"
+      ],
+      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
+    },
+    "eu_claim_external_jobs_service": {
+      "kind": "function",
+      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "callers": [
+        "supabase/functions/eu-external-worker/index.ts"
+      ],
+      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
+    },
+    "eu_claim_monitors_service": {
+      "kind": "function",
+      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "callers": [
+        "supabase/functions/eu-monitor/index.ts"
+      ],
+      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
+    },
+    "eu_oauth_state_consume_service": {
+      "kind": "function",
+      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "callers": [
+        "supabase/functions/eu-orcid-oauth/index.ts"
+      ],
+      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
+    },
+    "eu_oauth_state_create_service": {
+      "kind": "function",
+      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "callers": [
+        "supabase/functions/eu-orcid-oauth/index.ts"
+      ],
+      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
+    },
+    "eu_vault_store_service": {
+      "kind": "function",
+      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "callers": [
+        "supabase/functions/eu-orcid-oauth/index.ts"
+      ],
+      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
+    },
     "front-media": {
       "kind": "bucket",
       "pending": "member_fronts_v1.sql",
@@ -296,6 +344,14 @@
       "callers": [
         "workers/mccluster/src/live/store.js"
       ]
+    },
+    "media_usage_rollup": {
+      "kind": "function",
+      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "callers": [
+        "workers/mccluster/src/media/router.js"
+      ],
+      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
     },
     "member_fronts": {
       "kind": "table",
