@@ -6,6 +6,58 @@ Owner, 2026-10-21:
 > front page, like the actual front page of the website, with, you know, the scroll dependent and the VR and all that
 > stuff from my admin panel, which I can't, and it should represent as my actual front page, which it doesn't."
 
+## Owner decision, 2026-10-29: the page opens in the Vaunt cabin, plays Antisocial, and can be tucked away
+
+Matthew McCluster, 2026-10-29, explicitly naming `index.html` (which lifts hard rule 3 for this change only; the file
+was edited surgically, not rewritten):
+
+1. **No orbit hero.** `#hero`, `orbitCanvas`, the `hero_0001–0161` frames and the "000°" readout are out of the page's
+   flow. The one `h1` is now "Matthew McCluster" (Matthew-first, hard rule 15) and the two doors sit at the foot of the
+   cabin.
+2. **The page opens inside the Vaunt 360 cabin** (`#cabin`: `#workVR`, `js/vr360.js`, `assets/video/vaunt-360.mp4`,
+   poster `assets/img/vaunt-360-poster.jpg`, the shipped yaw −140°, pitch −32° and three tags). It plays at once,
+   muted, with **no Allow / Cancel gate**. A drag looks around (sideways on a phone, where an upward swipe is the
+   scroll); the wheel scrolls rather than zooms (`wheel:false` in `js/vr360.js`). Scrolling, **Escape** or
+   **Continue** moves on. The cabin pauses off screen. With `prefers-reduced-motion` the cabin waits on its poster
+   until "Look around the cabin" is pressed.
+3. **Then the plane**: the Vaunt fly-through (`cmdCanvas4`, `vaunt_0001–0161`), restored from
+   `data/front-projects/vaunt-original.html`, then the existing night descent, the LOCK IN room and the World footer.
+   The runway performance (`cmdCanvas5`, `vauntlive_`) is **not** on the front page: it is the takeoff, and a page
+   that opens already in the air would have to rewind to the ground to show it. It plays in full on
+   `front.html?project=vaunt`, which the plane links to and which is unchanged (its cabin keeps its gate).
+4. **One song, Antisocial.** `HOUSE_TRACK` on index.html is `FRONT.song`, default `antisocial`
+   (`assets/audio/antisocial.mp3`). Browsers block sound until a gesture, so the first tap, click or key anywhere
+   turns it on (never from the privacy notice, never on the holding screen, never inside the Control preview; only a
+   gesture the browser counts as activation). After that the Sound pill decides for the rest of the visit. One song
+   for the whole page (owner rule, 2026-08-18) still holds: every route still goes through `fadeTo`.
+5. **Tuck away.** `visible:false` in the same row hides the front page from the public: visitors (and signed-in
+   members who are not the house owner) get a short holding screen (`#frontHolding`) with the bar, the World and the
+   footer; `<meta name="robots" content="noindex">` is added at runtime; the house owner, named by the server
+   (`GET /v1/status` via `js/tabbar.js`, `mcc:appbar-admin`), still sees the real page with a note. A browser that
+   last saw the page tucked starts on the holding screen (`localStorage` `mcc_front_tucked`) so there is no flash.
+   **Honest limit, said in the Control Room too:** this is a static GitHub Pages site. `index.html` and its files can
+   still be fetched by anyone who asks for them directly, and a visitor with scripts off gets the page. It hides the
+   page; it does not make it secret.
+6. **Control → Front page** gains: who sees it (the switch, "See it as a visitor" for the preview), where the page
+   opens (the cabin, as shipped, or the plane), the song (Antisocial, as shipped), the plane scene, and the cabin's
+   settings that #621 dropped (opening view with "Use the preview's view", and the tags with "Pin where the preview
+   looks"). The band and hold settings stay in the row for the project page's engine but do not apply to an opening
+   cabin, so the form does not show them.
+
+New keys, checked by the page (`frontConfig`) and by `packages/front-config` (`validateFront`) with the same lists:
+
+| Key | Values | As shipped |
+|---|---|---|
+| `start` | `cabin` / `plane` | `cabin` |
+| `song` | `antisocial`, `whodidtheshoot`, `vaunt`, `runway`, `here`, `environmental-injustice` | `antisocial` |
+| `visible` | `true` / `false` | `true` |
+
+Tests: `scripts/test/front-cabin-first.test.mjs` (new), `scripts/test/vaunt-project.test.mjs`,
+`scripts/e2e/vaunt-project.e2e.mjs` and `scripts/e2e/control-front-page.e2e.mjs` pin this decision.
+
+The sections below describe the 2026-10-21 view as built; where they mention the hero, the project tile or a cabin
+band inside the Vaunt scene, the decision above supersedes them for index.html.
+
 ## What was wrong
 
 - **The owner's M opened a member card.** In the shared bar (`js/tabbar.js` `paintPerspective`), the middle M opened
@@ -91,7 +143,8 @@ not a visit.
 
 ## Rules kept
 
-- `index.html` is not edited (AGENTS.md hard rule 3; CLAUDE.md).
+- `index.html` was not edited for the 2026-10-21 view (AGENTS.md hard rule 3). The owner named it on 2026-10-29 for the
+  cabin-first change above, which edited it surgically.
 - No new backend, table or route. `site_content` and its RPCs exist since 2026-09-22, and the owner's account is the one
   `mnet_is_admin()` names.
 - Phone first: min-width queries only, `minmax(0,1fr)`, 44px targets, 16px inputs, no sideways scroll at 390.

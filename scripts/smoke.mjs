@@ -173,7 +173,12 @@ try {
       check("index: titled Matthew-first, not after the album",
         /^Matthew McCluster/.test(await p.title()) && !/I AM HERE/.test(await p.title()), await p.title());
       check("index: no album marquee pinned to the front page", await p.locator(".albmq").count() === 0);
-      check("index: the emblem hero leads", await p.evaluate(() => !!document.getElementById("hero")));
+      /* owner, 2026-10-29: the page opens inside the Vaunt cabin; the orbit
+         hero is retired (scripts/test/front-cabin-first.test.mjs pins the rest) */
+      check("index: the cabin leads, the orbit hero is gone", await p.evaluate(() => {
+        const first = document.querySelector("main > section");
+        return !!first && first.id === "cabin" && !document.getElementById("hero") && !document.getElementById("orbitCanvas");
+      }));
 
       /* ONE BAR: the top masthead is retired, so no width shows two
          navigations at once and nothing pushes the page down from above */
