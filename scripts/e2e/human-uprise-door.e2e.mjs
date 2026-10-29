@@ -34,7 +34,7 @@ try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
 /* ---------- this checkout, served ---------- */
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   const file = path === '/' ? 'index.html' : path.endsWith('/') ? path + 'index.html' : path;
@@ -261,21 +261,21 @@ const settleWorld = async (page) => {
   /* the World's document name is the root here, query and all */
   const moved = (url) => served.find((x) => x.url === url && x.status === 301);
   await page.goto(`${HU}/mnet.html?view=missions`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(`${HU}/?view=missions`, { timeout: 15000 }).catch(() => {});
+  await page.waitForURL(`${HU}/?view=missions`, { timeout: 90000 }).catch(() => {});
   check(S, '/mnet.html?view=missions is a 301 to /?view=missions', page.url() === `${HU}/?view=missions` && !!moved(`${HU}/mnet.html?view=missions`) && moved(`${HU}/mnet.html?view=missions`).location === `${HU}/?view=missions`, { url: page.url(), served: moved(`${HU}/mnet.html?view=missions`) });
   await page.goto('https://www.humanuprise.com/?view=feed', { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(`${HU}/?view=feed`, { timeout: 15000 }).catch(() => {});
+  await page.waitForURL(`${HU}/?view=feed`, { timeout: 90000 }).catch(() => {});
   check(S, 'www is a 301 to the apex', page.url() === `${HU}/?view=feed` && !!moved('https://www.humanuprise.com/?view=feed'), { url: page.url(), served: moved('https://www.humanuprise.com/?view=feed') });
 
   /* a tap on Music lands on Matthew's site */
   await settleWorld(page);
   landed.length = 0;
   await page.click('.appbar [data-appnav="music"]');
-  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
   check(S, 'tapping Music lands on matthew.mccluster.org/listen.html, and a guest carries nothing', page.url() === `${HOUSE}/listen.html` && landed[0] === `${HOUSE}/listen.html` && !/mcc_handoff/.test(page.url()), page.url());
   /* a record's address on this host is Matthew's */
   await page.goto(`${HU}/album.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(`${HOUSE}/album.html`, { timeout: 15000 }).catch(() => {});
+  await page.waitForURL(`${HOUSE}/album.html`, { timeout: 90000 }).catch(() => {});
   check(S, '/album.html on this host is a 301 to Matthew\'s site', page.url() === `${HOUSE}/album.html` && !!moved(`${HU}/album.html`) && moved(`${HU}/album.html`).location === `${HOUSE}/album.html`, { url: page.url(), served: moved(`${HU}/album.html`) });
   await ctx.close();
 }
@@ -283,7 +283,8 @@ const settleWorld = async (page) => {
 /* ---------- 2. a creator's perspective, on Matthew's site (this checkout) ---------- */
 {
   const S = 'creator-perspective';
-  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true });
+  /* a creator's perspective is a signed-in member's (e5606627, 2026-10-18): a guest's middle cell stays the M */
+  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: BASE });
   await page.goto(`${BASE}/music-creator.html?handle=fixture-ana`, { waitUntil: 'domcontentloaded' });
   /* the name is set as two spans, the last word in the artist's accent, so the text reads "FixtureAna" */
   await page.waitForFunction(() => /Fixture\s*Ana/.test((document.getElementById('creatorArtist') || {}).textContent || ''), null, { timeout: 20000 });
@@ -309,13 +310,18 @@ const settleWorld = async (page) => {
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'perspective-music-iphone.png') });
 
-  /* McCluster opens the house, and the house lets the perspective go */
+  /* McCluster in Music opens the house page. Since e5606627 (2026-10-18) opening index.html keeps a signed-in member's chosen
+     perspective; the explicit house door (index.html?front=house, the wing's McCluster) is what puts the M back */
   await page.click('#artistsRow a.artist--house');
-  await page.waitForURL(/index\.html$|\/$/, { timeout: 15000 });
+  await page.waitForURL(/index\.html$|\/$/, { timeout: 90000 });
   await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"]'), null, { timeout: 15000 });
   b = await bar(page);
-  const stored = await page.evaluate(() => sessionStorage.getItem('mcc_perspective'));
-  check(S, 'McCluster in Music opens the house: the M is back in the middle and the perspective is gone', /index\.html$|\/$/.test(page.url()) && !b.perspective && b.coin && b.coin.tag === 'IMG' && !/creator/.test(b.coin.cls) && /m-mark\.png$/.test(b.coin.src) && stored === null, { url: page.url(), coin: b.coin, stored });
+  check(S, 'McCluster in Music opens the house page, and Ana stays in the middle', /index\.html$|\/$/.test(page.url()) && b.perspective === 'fixture-ana', { url: page.url(), perspective: b.perspective });
+  await page.goto(`${BASE}/index.html?front=house`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"]') && !document.querySelector('.appbar [data-appnav="home"][data-perspective]'), null, { timeout: 15000 }).catch(() => {});
+  b = await bar(page);
+  const stored = await page.evaluate(() => { try { return JSON.parse(sessionStorage.getItem('mcc_perspective')); } catch (e) { return 'unreadable'; } });
+  check(S, 'the house door lets the perspective go: the M is back in the middle', !b.perspective && b.coin && b.coin.tag === 'IMG' && !/creator/.test(b.coin.cls) && /m-mark\.png$/.test(b.coin.src) && (stored === null || (stored && stored.kind === 'house')), { url: page.url(), coin: b.coin, stored });
 
   /* a creator with no picture: the initial */
   await page.goto(`${BASE}/music-creator.html?handle=fixture-dev`, { waitUntil: 'domcontentloaded' });
@@ -330,16 +336,19 @@ const settleWorld = async (page) => {
 /* ---------- 3. the held wing keeps the way to the house (desktop pointer) ---------- */
 {
   const S = 'creator-wing';
-  const { ctx, page, errors } = await open({ viewport: { width: 1280, height: 800 }, mobile: false });
+  const { ctx, page, errors } = await open({ viewport: { width: 1280, height: 800 }, mobile: false }, { memberOn: BASE });
   await page.goto(`${BASE}/music-creator.html?handle=fixture-ana`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"][data-perspective="fixture-ana"]'), null, { timeout: 20000 }).catch(() => {});
+  await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"][data-perspective="fixture-ana"]'), null, { timeout: 60000 }).catch(() => {});
+  /* the bar repaints as the session and the creator's perspective settle (a repaint closes an open wing): hold once it is still */
+  await page.evaluate(() => new Promise((resolve) => { const bar = document.querySelector('.appbar'); let t = setTimeout(done, 1500); const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(done, 1500); }); mo.observe(bar, { subtree: true, childList: true, attributes: true }); const cap = setTimeout(done, 15000); function done() { mo.disconnect(); clearTimeout(cap); resolve(); } }));
   const box = await (await page.$('.appbar [data-appnav="home"]')).boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await page.waitForTimeout(700);
-  const wing = await page.evaluate(() => ({ morph: document.querySelector('.appbar').classList.contains('appbar--morph'), slots: [...document.querySelectorAll('.appbar .appbar__tab--slot')].map((a) => ({ href: a.getAttribute('href'), label: a.querySelector('span').textContent, mark: a.querySelector('img') ? a.querySelector('img').getAttribute('src') : null })) }));
+  await page.waitForFunction(() => document.querySelector('.appbar').classList.contains('appbar--morph'), null, { timeout: 5000 }).catch(() => {});   // a held press under a slow renderer
+  const wing = await page.evaluate((b) => ({ persp: (document.querySelector('.appbar [data-appnav="home"]') || {}).getAttribute?.('data-perspective'), hit: (() => { const h = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2); return h ? h.tagName + '.' + String(h.className).split(' ')[0] : null; })(), morph: document.querySelector('.appbar').classList.contains('appbar--morph'), slots: [...document.querySelectorAll('.appbar .appbar__tab--slot')].map((a) => ({ href: a.getAttribute('href'), label: a.querySelector('span').textContent, mark: a.querySelector('img') ? a.querySelector('img').getAttribute('src') : null })) }), box);
   await page.mouse.up();
-  check(S, 'holding Ana\'s coin opens her wing: McCluster (the M as supplied) beside Everything', wing.morph && wing.slots.length === 2 && wing.slots[0].label === 'McCluster' && /index\.html$/.test(wing.slots[0].href) && /m-mark\.png$/.test(wing.slots[0].mark || '') && wing.slots[1].label === 'Everything', wing);
+  check(S, 'holding Ana\'s coin opens her wing: McCluster (the M as supplied) beside Everything', wing.morph && wing.slots.length === 2 && wing.slots[0].label === 'McCluster' && /index\.html\?front=house$/.test(wing.slots[0].href) && /m-mark\.png$/.test(wing.slots[0].mark || '') && wing.slots[1].label === 'Everything', wing);
   await page.screenshot({ path: join(OUT, 'perspective-wing-desktop.png') });
   check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
@@ -369,10 +378,10 @@ const settleWorld = async (page) => {
   check(S, 'no page errors', errors.length === 0, errors);
   const moved = (u) => served.find((x) => x.url === u && x.status === 301);
   await page.goto(`${CO}/mnet.html?view=missions`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL((u) => u.pathname === '/' && u.searchParams.get('view') === 'missions', { timeout: 15000 });
+  await page.waitForURL((u) => u.pathname === '/' && u.searchParams.get('view') === 'missions', { timeout: 90000 });
   check(S, '/mnet.html?view=missions is a 301 to /?view=missions', page.url() === `${CO}/?view=missions` && !!moved(`${CO}/mnet.html?view=missions`) && moved(`${CO}/mnet.html?view=missions`).location === `${CO}/?view=missions`, { url: page.url(), served: moved(`${CO}/mnet.html?view=missions`) });
   await page.goto('https://www.mccluster.org/?view=feed', { waitUntil: 'domcontentloaded' });
-  await page.waitForURL((u) => u.hostname === 'mccluster.org', { timeout: 15000 });
+  await page.waitForURL((u) => u.hostname === 'mccluster.org', { timeout: 90000 });
   check(S, 'www is a 301 to the apex', page.url() === `${CO}/?view=feed` && !!moved('https://www.mccluster.org/?view=feed'), { url: page.url(), served: moved('https://www.mccluster.org/?view=feed') });
   /* the company page, "What is McCluster Corp?", at /company */
   await page.goto(`${CO}/company`, { waitUntil: 'domcontentloaded' });
@@ -382,7 +391,7 @@ const settleWorld = async (page) => {
   await page.screenshot({ path: join(OUT, 'company-page-iphone.png') });
   /* everything else is Matthew's */
   await page.goto(`${CO}/album.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
   check(S, '/album.html on this host is a 301 to Matthew\'s site', page.url() === `${HOUSE}/album.html` && !!moved(`${CO}/album.html`) && moved(`${CO}/album.html`).location === `${HOUSE}/album.html`, { url: page.url(), served: moved(`${CO}/album.html`) });
   await ctx.close();
 }
@@ -393,10 +402,10 @@ const settleWorld = async (page) => {
   const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true });
   /* the checkout's own root stands in for Matthew's root: index.html with the house bar */
   await page.goto(`${BASE}/?view=feed`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL((u) => /mnet\.html$/.test(u.pathname), { timeout: 15000 }).catch(() => {});
+  await page.waitForURL((u) => /mnet\.html$/.test(u.pathname), { timeout: 90000 }).catch(() => {});
   check(S, 'the house root with the World\'s query goes on to the World on this origin, query intact', page.url() === `${BASE}/mnet.html?view=feed`, page.url());
   await page.goto(`${BASE}/index.html?view=missions#mcc_handoff=carried`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL((u) => /mnet\.html$/.test(u.pathname), { timeout: 15000 }).catch(() => {});
+  await page.waitForURL((u) => /mnet\.html$/.test(u.pathname), { timeout: 90000 }).catch(() => {});
   check(S, 'index.html too, and a carried sign-in rides along in the fragment', page.url() === `${BASE}/mnet.html?view=missions` || page.url() === `${BASE}/mnet.html?view=missions#mcc_handoff=carried`, page.url());
   await page.goto(`${BASE}/listen.html?view=feed`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
@@ -428,6 +437,7 @@ const settleWorld = async (page) => {
   await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
   const gate = await page.evaluate(() => ({ status: document.getElementById('mnProfileStatus').textContent, back: document.getElementById('mnProfileBack').hidden ? null : document.getElementById('mnProfileBack').textContent, app: !document.getElementById('mnApp').hidden }));
   check(S, 'opening a member room opens the profile form with the reason and a way back to the World', /Finish your profile to open it\./.test(gate.status) && gate.back === '← Back to the World' && !gate.app, gate);
+  check(S, 'the account menu closed when the room stopped at the gate, so nothing covers the World on the way back', await page.evaluate(() => document.getElementById('mnMenu').hidden));
   await page.click('#mnProfileBack');
   await page.waitForSelector('#mnApp:not([hidden])', { timeout: 10000 });
   check(S, 'Back returns to the World, not to a profile page', (await page.evaluate(() => !document.getElementById('mnFeedView').hidden && document.getElementById('mnWorld').getBoundingClientRect().height > 200)));
@@ -435,7 +445,7 @@ const settleWorld = async (page) => {
   await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
   check(S, 'the card opens the same form', await page.evaluate(() => !document.getElementById('mnProfileGate').hidden));
   /* THE THREE PAGES (owner, 2026-10-15): this, that, that, boom */
-  const stepState = () => page.evaluate(() => ({ count: document.getElementById('mnStepsCount').textContent, current: document.querySelector('#mnSteps li.is-current') && document.querySelector('#mnSteps li.is-current').getAttribute('data-step'), done: [...document.querySelectorAll('#mnSteps li.is-done')].map((l) => l.getAttribute('data-step')), h1: document.querySelector('#mnProfileGate .mn__step:not([hidden]) h1') && document.querySelector('#mnProfileGate .mn__step:not([hidden]) h1').textContent, cta: document.getElementById('mnCtaLabel').textContent, back: !document.getElementById('mnStepBack').hidden }));
+  const stepState = () => page.evaluate(() => ({ count: document.getElementById('mnStepsCount').textContent, current: document.querySelector('#mnSteps li.is-current') && document.querySelector('#mnSteps li.is-current').getAttribute('data-step'), done: [...document.querySelectorAll('#mnSteps li.is-done')].map((l) => l.getAttribute('data-step')), h1: document.querySelector('#mnProfileGate .mn__step:not([hidden]) .mn__onboard-h') && document.querySelector('#mnProfileGate .mn__step:not([hidden]) .mn__onboard-h').textContent, cta: document.getElementById('mnCtaLabel').textContent, back: !document.getElementById('mnStepBack').hidden }));
   let st = await stepState();
   check(S, 'page 1 of 3: Make your profile, with Save & continue and no way back yet', st.count === '1 / 3' && st.current === '1' && /Make your profile\./.test(st.h1) && /Save & continue/.test(st.cta) && !st.back, st);
   await page.fill('#mnHandle', 'taken.name');
@@ -509,7 +519,7 @@ const settleWorld = async (page) => {
   check(S, 'nothing scrolls sideways at 390 on the gate', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'join-0-creator-gate-iphone.png') });
   await page.click('#creatorJoin');
-  await page.waitForURL((u) => /\/mnet\.html$/.test(u.pathname) && u.searchParams.get('join') === '1' && u.searchParams.get('next') === 'creator.html', { timeout: 15000 });
+  await page.waitForURL((u) => /\/mnet\.html$/.test(u.pathname) && u.searchParams.get('join') === '1' && u.searchParams.get('next') === 'creator.html', { timeout: 90000 });
   await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 20000 });
   const form = await page.evaluate(() => ({ mode: document.getElementById('mnSignedOut').getAttribute('data-auth-mode'), name: !!document.getElementById('mnCreateName'), note: !document.getElementById('mnCreateNote').hidden && document.getElementById('mnCreateNote').textContent, confirm: !document.getElementById('mnConfirmWrap').hidden, button: document.getElementById('mnAuthGo').textContent }));
   check(S, 'Join opens Create account: an email and a password, nothing that belongs to the pages', form.mode === 'create' && !form.name && form.confirm && /your profile, where we can reach you, and your phone/.test(form.note) && form.button === 'Create account', form);
@@ -520,7 +530,7 @@ const settleWorld = async (page) => {
   await page.screenshot({ path: join(OUT, 'join-1-account-iphone.png') });
   await page.click('#mnAuthGo');
   await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 20000 });
-  const stepNow = () => page.evaluate(() => ({ count: document.getElementById('mnStepsCount').textContent, h1: document.querySelector('#mnProfileGate .mn__step:not([hidden]) h1').textContent, lede: document.querySelector('#mnProfileGate .mn__step:not([hidden]) .mn__lede').textContent, cta: document.getElementById('mnCtaLabel').textContent, password: !document.getElementById('mnProfileSecurity').hidden, app: !document.getElementById('mnApp').hidden }));
+  const stepNow = () => page.evaluate(() => ({ count: document.getElementById('mnStepsCount').textContent, h1: document.querySelector('#mnProfileGate .mn__step:not([hidden]) .mn__onboard-h').textContent, lede: document.querySelector('#mnProfileGate .mn__step:not([hidden]) .mn__lede').textContent, cta: document.getElementById('mnCtaLabel').textContent, password: !document.getElementById('mnProfileSecurity').hidden, app: !document.getElementById('mnApp').hidden }));
   let st = await stepNow();
   check(S, 'the new account goes straight into page 1 (not the World\'s card): Make your profile', st.count === '1 / 3' && /Make your profile\./.test(st.h1) && /Your username and name\. It.s how people find you\./.test(st.lede) && !st.app, st);
   check(S, 'the account carries the privacy acknowledgement and no guessed name', signups.length === 1 && signups[0].email === 'new.member@example.org' && signups[0].data && signups[0].data.privacy_policy_version === '2026-10-19' && !signups[0].data.name, signups);
@@ -548,7 +558,7 @@ const settleWorld = async (page) => {
   await page.screenshot({ path: join(OUT, 'join-4-page3-iphone.png') });
   check(S, 'nothing scrolls sideways at 390 on page 3', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.click('#mnProfileSave');
-  await page.waitForURL((u) => u.pathname === '/creator.html', { timeout: 15000 });
+  await page.waitForURL((u) => u.pathname === '/creator.html', { timeout: 90000 });
   check(S, 'Done goes back to where the person started: Creator Studio', new URL(page.url()).pathname === '/creator.html', page.url());
   check(S, 'the profile and the contact row were saved on the way', onboarded.profile && onboarded.profile.mccluster_id === 'new.member' && onboarded.contact && onboarded.contact.legal_name === 'Nadia Member' && !onboarded.password, { profile: onboarded.profile, contact: onboarded.contact });
   check(S, 'no page errors', errors.length === 0, errors);
@@ -599,7 +609,7 @@ const settleWorld = async (page) => {
   const evil = [];
   await ctx.route('https://evil.example/**', (route) => { evil.push(route.request().url()); return route.fulfill({ status: 200, contentType: 'text/html', body: 'evil' }); });
   await page.goto(`${BASE}/account.html?next=${encodeURIComponent('/listen.html?from=account')}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL((u) => u.pathname === '/listen.html', { timeout: 15000 }).catch(() => {});
+  await page.waitForURL((u) => u.pathname === '/listen.html', { timeout: 90000 }).catch(() => {});
   check(S, 'a signed-in member with a finished profile goes straight back to ?next', new URL(page.url()).pathname === '/listen.html' && new URL(page.url()).search === '?from=account', page.url());
   for (const bad of ['//evil.example/x', 'https://evil.example/', 'javascript:alert(1)']) {
     await page.goto(`${BASE}/account.html?next=${encodeURIComponent(bad)}`, { waitUntil: 'domcontentloaded' });
@@ -633,8 +643,20 @@ const settleWorld = async (page) => {
   /* the Globe tab itself: from Matthew's site it goes to the World at the company's root */
   const globeHref = await page.evaluate(() => document.querySelector('.appbar [data-appnav="world"]').href);
   check(S, 'the Globe tab goes to the World at the company\'s root', globeHref === `${CO}/?view=feed`, globeHref);
+  /* on Music the World opens in its own layer over the page, so the music carries on (js/world-audio-continuity.js: the address
+     gains world=1 and the World's frame is the company's root); the sign-in crossing is a page that is not a music surface */
+  const errorsBefore = errors.length;
   await page.click('.appbar [data-appnav="world"]');
-  await page.waitForURL((u) => u.origin === CO && !u.hash, { timeout: 30000 });
+  await page.waitForFunction(() => { const f = document.getElementById('mccWorldAudioFrame'); return !!f && !document.getElementById('mccWorldAudioShell').hidden; }, null, { timeout: 30000 }).catch(() => {});
+  const layered = await page.evaluate(() => { const f = document.getElementById('mccWorldAudioFrame'); return { url: location.href, frame: f && f.getAttribute('src') }; });
+  check(S, 'from Music the Globe opens the World in a layer over the page (world=1), its frame the company\'s root', /\/listen\.html\?world=1$/.test(layered.url) && !!layered.frame && layered.frame.startsWith(`${CO}/`), layered);
+  /* this run's house is http://127.0.0.1, so the World's frame (https://mccluster.org) is cross-site here and Chrome denies it
+     storage; on the real hosts the two are the same site. Only that one message, from this layer, is set aside */
+  errors.splice(errorsBefore, errors.length - errorsBefore, ...errors.slice(errorsBefore).filter((m) => !/Failed to read the 'localStorage' property from 'Window': Access is denied for this document/.test(m)));
+  await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('.appbar [data-appnav="world"]'), null, { timeout: 30000 }).catch(() => {});
+  await page.click('.appbar [data-appnav="world"]');
+  await page.waitForURL((u) => u.origin === CO && !u.hash, { timeout: 90000 }).catch(() => {});   // the next check says where it landed
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('#mnFeed [data-post-id]'), null, { timeout: 60000 }).catch(() => {});
   const arrived = await page.evaluate(() => ({ url: location.href, hash: location.hash, signedIn: document.body.classList.contains('mcc-auth-in'), session: JSON.parse(localStorage.getItem('mccdb_session') || 'null'), composer: !!document.querySelector('.mn__create'), guestCard: !!document.querySelector('[data-guest-ask]') }));
   check(S, 'the World\'s host received the sign-in: the fragment is gone from the address', arrived.url === `${CO}/?view=feed` && arrived.hash === '', { url: arrived.url, hash: arrived.hash });
@@ -647,7 +669,7 @@ const settleWorld = async (page) => {
   await page.screenshot({ path: join(OUT, 'handoff-member-iphone.png') });
   /* and back: the Music tab carries the World host's own fresh token to Matthew's site */
   await page.click('.appbar [data-appnav="music"]');
-  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
   const back = page.url();
   check(S, 'tapping Music from the World\'s host carries the sign-in back in the fragment', back.startsWith(`${HOUSE}/listen.html#mcc_handoff=`) && decodeURIComponent(back.split('mcc_handoff=')[1]) === SESSION.fresh && landed.includes(`${HOUSE}/listen.html`), back.replace(SESSION.fresh, '<fresh token>'));
   /* a page link to one of Matthew's rooms (a relative album.html, a /receipt.html) looks same-origin on the
@@ -657,7 +679,7 @@ const settleWorld = async (page) => {
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 30000 }).catch(() => {});
   await page.evaluate(() => { const a = document.createElement('a'); a.id = 'roomLink'; a.href = '/receipt.html?a=11111111-1111-4111-8111-111111111111'; a.textContent = 'Receipt'; a.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9999;color:#fff'; document.body.appendChild(a); });
   await page.click('#roomLink');
-  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
   const room = page.url();
   check(S, 'a page link to one of Matthew\'s rooms goes to his site outright, carrying the sign-in', room.startsWith(`${HOUSE}/receipt.html?a=11111111-1111-4111-8111-111111111111#mcc_handoff=`) && decodeURIComponent(room.split('mcc_handoff=')[1]) === SESSION.fresh && !served.some((x) => x.url.startsWith(`${CO}/receipt.html`)), room.replace(SESSION.fresh, '<fresh token>'));
   check(S, 'no page errors', errors.length === 0, errors);

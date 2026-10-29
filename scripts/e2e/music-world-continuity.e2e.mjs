@@ -324,7 +324,11 @@ try{
   }
   {
     const {context,page}=await setup();
-    /* timed lyrics are looked up by the audio file's slug; the theme has none in the repo, so the fixture supplies two lines */
+    /* timed lyrics come from the lyrics file data/albums.json names for the song; a song it lists without one has no words.
+       The draw is pinned to the first public song that names a file, and the fixture supplies two lines for it */
+    const songs=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const worded=songs.findIndex(t=>typeof t.lyrics==='string'&&t.lyrics);
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[worded,songs.length]);
     await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Fixture song',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
     await page.goto(WORLD+'/?view=feed');
     await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool&&document.getElementById('mnWorldPlay'));

@@ -1,16 +1,18 @@
 /* The World is the feed (owner, 2026-10-15), end to end in a real browser:
    the Full world and the chrome-less "just the globe" mode, the layer access
-   map (one free layer for a guest, every other layer shaded), the CCTV lock
-   and a live snapshot through the mission gate, the Intel events layer while
-   its API is switched off (the Control Room's analytics globe has its own run: scripts/e2e/analytics-globe.e2e.mjs).
+   map (owner 2026-10-16, 04cadb18: every optional layer is the owner's admin
+   preview, so a guest or a signed-in member who is not the owner sees none of
+   them), the CCTV gate and a live snapshot inside the preview, the Intel events
+   layer while its API is switched off (the Control Room's analytics globe has its own run: scripts/e2e/analytics-globe.e2e.mjs).
 
    Serves this checkout and fakes api.mccluster.org and Supabase in memory
    (no production call). Renders at 390 and 1280 wide, checks
    scrollWidth === clientWidth, and saves screenshots.
 
    Run:  node scripts/e2e/world-globe-feed.e2e.mjs [outDir]
-   Needs Playwright (PLAYWRIGHT_DIR if not resolvable) and network access to
-   the Cesium CDN and the imagery tiles. Exits non-zero on any failed check. */
+   Needs Playwright (PLAYWRIGHT_DIR if not resolvable). CESIUM_DIR serves Cesium
+   from a local build (as world-countries.e2e.mjs does); without it the Cesium
+   CDN must be reachable. Exits non-zero on any failed check. */
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, mkdir } from 'node:fs/promises';
@@ -24,7 +26,7 @@ let chromium;
 try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try { const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
@@ -56,11 +58,16 @@ const FAN_LOCKED = (cctvReason) => [
   { id: 'cctv', reason: cctvReason, next_step: cctvReason === 'privacy_acknowledgement_required' ? 'acknowledge_privacy' : 'complete_a_mission' },
   { id: 'audience', reason: 'creator_business_required', next_step: 'become_a_creator' }
 ];
+const OPTIONAL_IDS = ['flights', 'satellites', 'launches', 'intel', 'music', 'cctv', 'audience', 'transport'];
 const WHIP_LAYER = { min: 'fan', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC', service_live: false, driver_signup_url: 'https://matthew.mccluster.org/whip/driver/' };
 
-async function context(viewport, { member = false, eligible = false, owner = false, intel = false } = {}) {
+const OPTIONAL = ['ctlFlights', 'ctlSats', 'ctlLaunch', 'ctlIntel', 'ctlMusic', 'ctlCctv', 'ctlTransport'];
+const RELEASE = (preview) => ({ version: 'globe-admin-preview/v1', admin_preview: preview });
+/* member: signed in. preview (default for a member): the house owner's admin preview, as workers/mccluster/src/world-access.js
+   answers the owner; preview:false is a signed-in member who is not the owner and gets no optional layer */
+async function context(viewport, { member = false, eligible = false, owner = false, intel = false, preview = member } = {}) {
   const mobile = viewport.width < 600;
-  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile });
+  const ctx = await browser.newContext({ serviceWorkers: 'block', viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (m) { const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: '11111111-1111-4111-8111-111111111111', email: 'owner@test' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp, user: { id: '11111111-1111-4111-8111-111111111111', email: 'owner@test' } })); }
@@ -70,9 +77,12 @@ async function context(viewport, { member = false, eligible = false, owner = fal
     const req = route.request(), u = new URL(req.url()), p = u.pathname, auth = req.headers().authorization || '';
     calls.push({ m: req.method(), p, auth: !!auth });
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
-    if (p === '/v1/world/access') return json(route, auth
-      ? { level: owner ? 'owner' : 'fan', unlocked_layers: ['flights', 'satellites', 'launches', 'intel', 'music', 'transport'].concat(eligible ? ['cctv'] : []), locked_layers: FAN_LOCKED('privacy_acknowledgement_required').filter((l) => !(eligible && l.id === 'cctv')), layers: { transport: WHIP_LAYER }, approximate_location: { source: 'ip_approximate', country: 'US', region: 'Connecticut', city: 'New Haven', lat: 41.3, lon: -72.9 } }
-      : { level: 'public', unlocked_layers: ['flights'], locked_layers: ['satellites', 'launches', 'intel', 'music', 'cctv', 'audience', 'transport'].map((id) => ({ id, reason: 'sign_in_required', next_step: 'sign_in' })), layers: { transport: WHIP_LAYER } });
+    /* CCTV is in the owner's preview; whether a camera may be shown is the eligibility read's answer (it re-checks the privacy
+       version, so the access map can be ahead of it); a member outside the preview gets every optional layer locked */
+    if (p === '/v1/world/access') return json(route, auth && !preview
+      ? { release: RELEASE(false), level: 'fan', unlocked_layers: [], locked_layers: OPTIONAL_IDS.map((id) => ({ id, reason: 'admin_preview', next_step: null })), layers: {} }
+      : auth ? { release: RELEASE(true), level: 'owner', unlocked_layers: ['flights', 'satellites', 'launches', 'intel', 'music', 'transport', 'cctv'], locked_layers: FAN_LOCKED('privacy_acknowledgement_required').filter((l) => l.id !== 'cctv'), layers: { transport: WHIP_LAYER }, approximate_location: { source: 'ip_approximate', country: 'US', region: 'Connecticut', city: 'New Haven', lat: 41.3, lon: -72.9 } }
+      : { release: RELEASE(false), level: 'public', unlocked_layers: [], locked_layers: OPTIONAL_IDS.map((id) => ({ id, reason: 'admin_preview', next_step: null })), layers: {} });
     if (p === '/v1/world/cctv/eligibility') return json(route, auth ? { eligible, checks: { signed_in: true, privacy_acknowledged: eligible, mission_completed: eligible }, reason: eligible ? null : 'privacy_acknowledgement_required', privacy_version: '2026-10-19' } : { eligible: false, checks: { signed_in: false, privacy_acknowledged: false, mission_completed: false }, reason: 'sign_in_required' });
     if (p === '/v1/world/cctv/sources') return eligible && auth ? json(route, SOURCES) : json(route, { error: 'no' }, 403);
     if (p.startsWith('/v1/world/cctv/frame/')) return eligible && auth ? route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': '*', 'x-cctv-source': 'upstream-image', 'x-cctv-provider': 'City of Austin', 'last-modified': new Date(Date.now() - 40000).toUTCString(), 'x-cctv-retrieved-at': new Date().toISOString(), 'x-cctv-license': 'public' }, body: FRAME }) : json(route, { error: 'no' }, 403);
@@ -96,6 +106,13 @@ async function context(viewport, { member = false, eligible = false, owner = fal
     if (p.startsWith('/rest/v1/rpc/')) return json(route, []);
     return json(route, []);
   });
+  /* CESIUM_DIR: serve Cesium from a local build, as world-countries.e2e.mjs does, when the CDN is out of reach */
+  if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async (route) => {
+    const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
+    if (!rel || rel.includes('..')) return route.abort();
+    try { return route.fulfill({ body: await readFile(join(process.env.CESIUM_DIR, rel)), contentType: TYPES[extname(rel)] || 'application/octet-stream' }); }
+    catch { return route.abort(); }
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -110,6 +127,16 @@ const barClear = (page) => page.evaluate(() => {
   return { bar: shown, top: Math.round(b.top), covered: hits };
 });
 const widths = (page) => page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
+/* the globe's controls live in the editorial tools tray (a <details> a click elsewhere closes): open it, press, put it away */
+async function press(page, id) {
+  await page.locator('#' + id).waitFor({ state: 'attached' });
+  if (!(await page.locator('.globe-editorial-tools').evaluate((d) => d.open))) await page.locator('.globe-editorial-tools > summary').click();
+  /* the control must be on screen in the open tray (a box, not hidden); the click itself is forced because at 1280 Playwright's
+     own visibility wait never settles on the tray's absolutely placed panel while the software renderer is busy */
+  await page.waitForFunction((x) => { const b = document.getElementById(x), r = b.getBoundingClientRect(), cs = getComputedStyle(b); return !b.hidden && r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && r.bottom <= innerHeight && r.top >= 0; }, id, { timeout: 30000 });
+  await page.locator('#' + id).click({ force: true });
+  if (await page.locator('.globe-editorial-tools').evaluate((d) => d.open)) await page.keyboard.press('Escape');
+}
 async function settle(frameOrPage) { await frameOrPage.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {}); }
 
 await mkdir(OUT, { recursive: true });
@@ -120,28 +147,25 @@ const runs = (scope) => !ONLY || scope.startsWith(ONLY);
 const SIZES = [{ name: '390', viewport: { width: 390, height: 844 } }, { name: '1280', viewport: { width: 1280, height: 800 } }];
 
 for (const size of SIZES) {
-  /* 1. guest, Full world: Flights free, every other layer on screen and shaded; a locked tap asks to sign in */
-  if (runs('guest')) {
-    const { ctx, page, calls, errors } = await context(size.viewport);
+  /* 1. guest and a signed-in member who is not the owner, Full world: the optional layers are the owner's admin preview
+     (04cadb18, 2026-10-16), so neither sees any of them, no layer, camera or intel read is made, and the Earth stays clear */
+  for (const who of ['guest', 'fan']) {
+    if (!runs(who)) continue;
+    const scope = `${who}-${size.name}`;
+    const { ctx, page, calls, errors } = await context(size.viewport, { member: who === 'fan', preview: false });
     await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__huAccess && window.__huAccess(), null, { timeout: 60000 });
     await settle(page);
-    const t = await page.evaluate(() => ['ctlFlights', 'ctlSats', 'ctlLaunch', 'ctlIntel', 'ctlMusic', 'ctlCctv', 'ctlTransport'].map((id) => { const b = document.getElementById(id); const r = b.getBoundingClientRect(); return { id, visible: !b.hidden && r.width > 0, locked: b.classList.contains('is-locked') }; }));
-    check(`guest-${size.name}`, 'every layer toggle is on screen', t.every((x) => x.visible), t);
-    check(`guest-${size.name}`, 'exactly one free layer (Flights); the rest shaded', JSON.stringify(t.filter((x) => !x.locked).map((x) => x.id)) === '["ctlFlights"]', t);
-    await page.click('#ctlCctv', { force: true });
-    await page.waitForTimeout(400);
-    check(`guest-${size.name}`, 'a locked tap opens the sign-in line, not an error', /Sign in/.test(await page.textContent('#exploreLine')) && !(await page.isHidden('#exploreLine')));
-    check(`guest-${size.name}`, 'no CCTV list or frame is ever requested for a guest', !calls.some((c) => /cctv\/(sources|frame)/.test(c.p)));
-    await page.click('#ctlFlights');
-    await page.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 10000 }).catch(() => {});
-    check(`guest-${size.name}`, 'the free layer opens', await page.evaluate(() => window.__huLayerOn('flights')));
+    const t = await page.evaluate((ids) => ids.map((id) => { const b = document.getElementById(id); const r = b.getBoundingClientRect(); return { id, hidden: b.hidden, box: r.width > 0, disabled: b.getAttribute('aria-disabled') }; }), OPTIONAL);
+    check(scope, 'the access read is the admin-preview release, without the preview', await page.evaluate(() => { const a = window.__huAccess(); return a.release.version === 'globe-admin-preview/v1' && a.release.admin_preview === false; }));
+    check(scope, 'no optional layer toggle is offered (flights, satellites, launches, intel, music, CCTV, transport)', t.every((x) => x.hidden && !x.box && x.disabled === 'true'), t);
+    check(scope, 'no layer, CCTV or intel read is ever made', !calls.some((c) => /\/v1\/world\/(layers|cctv)\/|\/v1\/intel\//.test(c.p)), calls.map((c) => c.p));
     const w = await widths(page);
-    check(`guest-${size.name}`, 'no sideways overflow', w.scrollW === w.clientW, w);
+    check(scope, 'no sideways overflow', w.scrollW === w.clientW, w);
     const gb = await barClear(page);
-    check(`guest-${size.name}`, 'the app bar is there and covers no globe control', gb.bar && gb.covered.length === 0, gb);
-    await page.screenshot({ path: join(OUT, `guest-full-world-${size.name}.png`) });
-    check(`guest-${size.name}`, 'no page errors', errors.length === 0, errors);
+    check(scope, 'the app bar is there and covers no globe control', gb.bar && gb.covered.length === 0, gb);
+    await page.screenshot({ path: join(OUT, `${who}-full-world-${size.name}.png`) });
+    check(scope, 'no page errors', errors.length === 0, errors);
     await ctx.close();
   }
   /* 2. just the globe: no controls, the credit, one way back, and the bottom app bar (it never leaves) */
@@ -161,14 +185,14 @@ for (const size of SIZES) {
     check(`bare-${size.name}`, 'no page errors', errors.length === 0, errors);
     await ctx.close();
   }
-  /* 3. a member who is not eligible: the lock explains the three requirements */
+  /* 3. inside the owner's preview, while the eligibility read says not yet: the gate explains the three requirements */
   if (runs('member')) {
     const { ctx, page, calls, errors } = await context(size.viewport, { member: true });
     await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__huCctv && window.__huCctv().state, null, { timeout: 60000 });
     await settle(page);
-    check(`member-${size.name}`, 'CCTV shaded for a member who is not eligible', await page.evaluate(() => document.getElementById('ctlCctv').classList.contains('is-locked')));
-    await page.click('#ctlCctv', { force: true });
+    check(`member-${size.name}`, 'CCTV is offered in the preview; the eligibility read says it is not yet allowed', await page.evaluate(() => !document.getElementById('ctlCctv').hidden && window.__huCctv().state.eligible === false));
+    await press(page, 'ctlCctv');
     await page.waitForSelector('#cctvSheet:not([hidden])', { timeout: 30000 });
     const txt = await page.textContent('#cctvBody');
     check(`member-${size.name}`, 'the lock names all three requirements and a way to meet each', /Signed in/.test(txt) && /Privacy Policy agreed/.test(txt) && /A mission completed/.test(txt) && /I agree to the Privacy Policy/.test(txt) && /Find a mission/.test(txt) && /no verified mission yet/.test(txt), txt.slice(0, 300));
@@ -188,8 +212,8 @@ for (const size of SIZES) {
     check(`member-${size.name}`, 'no location-consent route is ever called', !calls.some((c) => /location-consent/.test(c.p)));
     await page.$eval('#cctvClose', (b) => b.click());
     /* Whip Equipped: open to a member; rides are not live; drivers are asked to sign up with Whip */
-    check(`member-${size.name}`, 'Whip Equipped is open to a signed-in member', !(await page.evaluate(() => document.getElementById('ctlTransport').classList.contains('is-locked'))));
-    await page.click('#ctlTransport', { force: true });
+    check(`member-${size.name}`, 'Whip Equipped transport is offered in the preview', await page.evaluate(() => { const b = document.getElementById('ctlTransport'); return !b.hidden && b.getAttribute('aria-disabled') === 'false'; }));
+    await press(page, 'ctlTransport');
     await page.waitForFunction(() => window.__huWhip && window.__huWhip().open, null, { timeout: 10000 }).catch(() => {});
     const whip = await page.textContent('#cctvBody');
     const href = await page.getAttribute('[data-whip-signup]', 'href').catch(() => null);
@@ -200,7 +224,7 @@ for (const size of SIZES) {
     await page.screenshot({ path: join(OUT, `whip-not-live-${size.name}.png`) });
     /* a DOM click: Playwright's own click sometimes waits on a navigation the ion tiles schedule, and times out */
     await page.$eval('#cctvClose', (b) => b.click());
-    await page.click('#ctlIntel', { force: true });
+    await press(page, 'ctlIntel');
     await page.waitForFunction(() => /Intel events/.test(document.getElementById('cctvTitle').textContent) && !document.getElementById('cctvSheet').hidden, null, { timeout: 15000 }).catch(() => {});
     check(`member-${size.name}`, 'Intel events say honestly they are switched off; nothing drawn', /not switched on yet/.test(await page.textContent('#cctvBody')) && (await page.evaluate(() => window.__huIntel().cells)) === 0);
     check(`member-${size.name}`, 'no page errors', errors.length === 0, errors);
@@ -212,7 +236,7 @@ for (const size of SIZES) {
     await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__huAccess && window.__huAccess(), null, { timeout: 60000 });
     await settle(page);
-    await page.click('#ctlIntel', { force: true });
+    await press(page, 'ctlIntel');
     await page.waitForFunction(() => window.__huIntel && window.__huIntel().on, null, { timeout: 15000 }).catch(() => {});
     const cells = (await page.evaluate(() => window.__huPlaced())).intel;
     check(`intel-${size.name}`, 'coordinates: g10:3:-12 is the rectangle 120°W..110°W, 30°N..40°N; the null cell is not drawn', cells.length === 1 && JSON.stringify(cells[0].rect) === JSON.stringify([-120, 30, -110, 40]), cells);
@@ -225,7 +249,7 @@ for (const size of SIZES) {
     await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__huCctv && window.__huCctv().state && window.__huCctv().state.eligible, null, { timeout: 60000 });
     await settle(page);
-    await page.click('#ctlCctv', { force: true });
+    await press(page, 'ctlCctv');
     await page.waitForFunction(() => window.__huCctv().on, null, { timeout: 10000 }).catch(() => {});
     check(`eligible-${size.name}`, 'the cameras are on the Earth', (await page.evaluate(() => window.__huCctv().count)) === 2);
     const placed = (await page.evaluate(() => window.__huPlaced())).cctv;

@@ -393,8 +393,10 @@
       if (hit.country === s.country && !s.state) return { country: null, state: null };
       return { country: hit.country, state: null };
     }
+    var homeHeight = 0;
     function homeView(dur) {
-      var dest = Cs.Cartesian3.fromDegrees(opts.home ? opts.home[0] : -60, opts.home ? opts.home[1] : 22, homeAltitude());
+      homeHeight = homeAltitude();
+      var dest = Cs.Cartesian3.fromDegrees(opts.home ? opts.home[0] : -60, opts.home ? opts.home[1] : 22, homeHeight);
       if (dur) camera.flyTo({ destination: dest, duration: dur, easingFunction: Cs.EasingFunction.CUBIC_IN_OUT }); else { camera.cancelFlight(); camera.setView({ destination: dest, orientation: { heading: 0, pitch: -Cs.Math.PI_OVER_TWO, roll: 0 } }); scene.requestRender(); }
     }
     function flyToSel() {
@@ -462,7 +464,17 @@
       ensureStates(null); go(); return Promise.resolve(null);
     };
     api.flyTo = flyToSel;
-    api.resize = function () { if (!destroyed && active && widget) { widget.resize(); scene.requestRender(); } };
+    /* the stage can change size after the first view (the Analytics deck lays its panes out around the globe): while nothing is
+       selected and the camera is still at the home distance it was given, the distance follows the stage, so the whole sphere
+       stays in view (at 1280x800 the stage settled 252px tall under a sphere fitted for a taller one, and its disc was clipped) */
+    function refitHome() {
+      if (!api.ready || api.sel.country || !homeHeight) return;
+      var c = camera.positionCartographic; if (!c || Math.abs(c.height - homeHeight) / homeHeight > 0.01) return;
+      var h = homeAltitude(); if (Math.abs(h - homeHeight) / homeHeight < 0.01) return;
+      homeHeight = h; camera.cancelFlight();
+      camera.setView({ destination: Cs.Cartesian3.fromRadians(c.longitude, c.latitude, h), orientation: { heading: camera.heading, pitch: camera.pitch, roll: camera.roll } });
+    }
+    api.resize = function () { if (!destroyed && active && widget) { widget.resize(); refitHome(); scene.requestRender(); } };
     /* One active scene in the owner workspace. Keep selection/camera in memory
        while another page or the full Halo scene is in front; no hidden loop. */
     api.setActive = function (on) {
