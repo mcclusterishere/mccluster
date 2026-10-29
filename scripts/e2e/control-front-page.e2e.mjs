@@ -167,14 +167,14 @@ try{
     check(scope,'the owner\'s M is his front page, index.html, never a member card',!!m&&/index\.html$/.test(m.href)&&!m.persp&&!/member-front/.test(m.href),m);
     await page.goto(BASE+'/control.html#create:front-page',{waitUntil:'domcontentloaded'});
     await page.waitForSelector('[data-cfp-root] iframe[data-cfp-frame]',{timeout:30000});
-    const frame=()=>page.frames().find(f=>/\/index\.html$/.test(new URL(f.url()).pathname));
+    const frame=()=>page.frames().find(f=>{try{return /\/index\.html$/.test(new URL(f.url()).pathname)}catch{return false}});   // a frame still loading has an empty URL
     await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="scenes.night"]'),null,{timeout:40000});
     let fr=frame();
     check(scope,'the preview is the real index.html, running its own scroll engine, opening in the cabin',!!fr&&await fr.evaluate(()=>!!(window.MCC_FRONT&&document.getElementById('cabin')&&document.querySelector('#work.command--plane')&&document.getElementById('pillars'))));
     check(scope,'it says the live page is as shipped',/Live: the page as shipped/.test(await page.textContent('[data-cfp-status]')));
     await page.waitForTimeout(1500);await page.screenshot({path:join(OUT,`front-page-open-${vp.width}.png`)});
     if(vp.width>=1100){
-      const fitBox=await page.evaluate(async()=>{const st=document.querySelector('.cfp-stage');window.scrollTo(0,st.getBoundingClientRect().top+scrollY-8);await new Promise(r=>setTimeout(r,300));
+      const fitBox=await page.evaluate(async()=>{const st=document.querySelector('.cfp-stage');window.scrollTo({top:st.getBoundingClientRect().top+scrollY-8,behavior:'instant'});await new Promise(r=>setTimeout(r,300));
         const s=st.getBoundingClientRect(),p=document.querySelector('.cfp-panel'),b=document.querySelector('.appbar');
         return {top:Math.round(s.top),bottom:Math.round(s.bottom),bar:b?Math.round(b.getBoundingClientRect().top):innerHeight,panel:Math.round(p.getBoundingClientRect().height),stage:Math.round(s.height),scrolls:p.scrollHeight>p.clientHeight};});
       check(scope,'beside the settings, the whole stage fits the window above the house bar, and the settings scroll beside it at the same height',fitBox.top>=0&&fitBox.bottom<=fitBox.bar&&Math.abs(fitBox.panel-fitBox.stage)<=2&&fitBox.scrolls,fitBox);
@@ -258,6 +258,8 @@ try{
     await fr.waitForFunction(()=>!document.getElementById('guestWorld').hidden,null,{timeout:8000}).catch(()=>{});
     await page.click('[data-cfp-go="world"]');
     await page.waitForTimeout(600);
+    /* the page's own scroll engine carries the preview there; on a slow renderer that takes longer than 600 ms */
+    await fr.waitForFunction(()=>Math.abs(document.getElementById('guestWorld').getBoundingClientRect().top)<=4,null,{timeout:10000}).catch(()=>{});
     const world=await fr.evaluate(()=>{const g=document.getElementById('guestWorld');return {hidden:g.hidden,h:g.offsetHeight,top:Math.round(g.getBoundingClientRect().top)};});
     check(scope,'the preview shows the guests\' World, and the World button goes to it',!world.hidden&&world.h>0&&Math.abs(world.top)<=4,world);
     check(scope,'no horizontal overflow',(await overflow(page))===0,await overflow(page));

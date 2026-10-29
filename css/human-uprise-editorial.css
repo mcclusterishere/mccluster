@@ -10,6 +10,9 @@ html.hu-editorial, .hu-editorial body { background:#090b0d; color:#eef0f1; }
   --w-edge:none; --w-rim:none; --w-glow:none; --w-shadow:none;
   max-width:none; padding:0 20px calc(var(--mn-bar-clear,96px) + 20px); font-weight:400;
 }
+/* the profile gate runs to the bottom of the screen under the bar (owner, 2026-10-15: no black band): its own padding clears the
+   bar, so the page keeps none under it; this rule is later than mnet.css's .mn-gate-on .mn and was taking that back */
+.hu-editorial.mn-gate-on .mn {padding-bottom:0;}
 .hu-editorial .mn__top, .hu-editorial .mn__top.is-scrolled {
   position:sticky;top:0;margin:0 -20px;padding:12px 76px 12px 20px;
   min-height:69px;gap:8px;background:#090b0df2;border-bottom:1px solid var(--mn-rule);
