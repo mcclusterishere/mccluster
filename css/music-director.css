@@ -113,10 +113,9 @@ html[data-theme="light"] {
 
 .music-room--album .alb {
   display: grid;
-  grid-template-columns: minmax(18rem, 0.88fr) minmax(23rem, 1.12fr);
+  grid-template-columns: minmax(0,1fr);
   align-items: end;
-  gap: clamp(2rem, 5vw, 5rem);
-  min-height:min(68rem, 68vh);min-height: min(68rem, 68svh);
+  gap: clamp(2rem, 5vw, 5rem);min-height: 0;
   padding-bottom: clamp(2.5rem, 5vw, 5rem);
   border-bottom: 1px solid var(--music-rule);
 }
@@ -127,6 +126,8 @@ html[data-theme="light"] {
   aspect-ratio: 1;
   border-radius: 2px;
   box-shadow: 0 40px 100px -42px #000;
+  max-height: 68vh;max-height:68svh;
+  object-fit: cover;
 }
 
 .music-room--album .alb__k {
@@ -137,7 +138,7 @@ html[data-theme="light"] {
 .music-room--album .alb h1 {
   max-width: 7ch;
   margin: 0.35rem 0 1rem;
-  font-size: clamp(5rem, 11vw, 10.5rem);
+  font-size: clamp(4.4rem, 24vw, 8rem);
   /* 0.77 set two lines of Anton caps on top of each other. max-width is 7ch,
      so every album whose name does not fit one line wrapped and collided —
      EQUITY UPRISE did it long before CIA MIND CONTROL did. 0.88 still reads
@@ -237,15 +238,17 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 
 .music-room--track .tk {
   display: grid;
-  grid-template-columns: minmax(17rem, 0.76fr) minmax(28rem, 1.24fr);
+  grid-template-columns: minmax(0,1fr);
   grid-template-areas:
-    "k film"
-    "title film"
-    "line film"
-    "actions player"
-    "story story"
-    "meta meta";
-  align-items: end;
+    "k"
+      "title"
+      "line"
+      "film"
+      "player"
+      "actions"
+      "story"
+      "meta";
+  align-items: start;
   column-gap: clamp(2rem, 5vw, 5rem);
   row-gap: 1rem;
   max-width: var(--music-measure);
@@ -259,7 +262,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   grid-area: title;
   align-self: end;
   margin: 0.2rem 0 0;
-  font-size: clamp(4.2rem, 8vw, 8.8rem);
+  font-size: clamp(3.8rem, 18vw, 6.4rem);
   line-height: 0.78;
   letter-spacing: -0.025em;
 }
@@ -272,8 +275,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 }
 .music-room--track .tk__film {
   grid-area: film;
-  align-self: stretch;
-  min-height:clamp(25rem, 62vh, 45rem);min-height: clamp(25rem, 62svh, 45rem);
+  align-self: stretch;min-height: 48vh;min-height:48svh;
   margin: 0;
   border-radius: 2px;
   box-shadow: 0 42px 110px -46px #000;
@@ -300,17 +302,18 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 .music-room--track .tk__story {
   grid-area: story;
   display: grid;
-  grid-template-columns: repeat(var(--story-columns, 3), minmax(0, 1fr));
+  grid-template-columns: minmax(0,1fr);
   margin-top: clamp(2rem, 5vw, 4.5rem);
   border-top: 1px solid var(--music-rule);
   border-bottom: 1px solid var(--music-rule);
 }
 .music-room--track .tk__story article {
-  min-height: 9rem;
+  min-height: 0;
   padding: 1.35rem 1.25rem 1.7rem;
-  border-right: 1px solid var(--music-rule);
+  border-right: 0;
+  border-bottom: 1px solid var(--music-rule);
 }
-.music-room--track .tk__story article:last-child { border-right: 0; }
+.music-room--track .tk__story article:last-child { border-right: 0; border-bottom: 0; }
 .music-room--track .tk__story span {
   display: block;
   margin-bottom: 1.1rem;
@@ -339,19 +342,20 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 
 /* Track 02 owns the runway as a wide cinematic field. */
 .music-room--runway .tk {
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  grid-template-columns: minmax(0,1fr);
   grid-template-areas:
-    "k k"
-    "title title"
-    "line line"
-    "film film"
-    "player actions"
-    "story story"
-    "meta meta";
+    "k"
+      "title"
+      "line"
+      "film"
+      "player"
+      "actions"
+      "story"
+      "meta";
   align-items: start;
 }
 .music-room--runway .tk h1 { max-width: none; font-size: clamp(5rem, 12vw, 12rem); }
-.music-room--runway .tk__film { min-height:min(64rem, 62vh);min-height: min(64rem, 62svh); }
+.music-room--runway .tk__film {min-height: 48vh;min-height:48svh; }
 .music-room--runway .tk__line { margin-bottom: 1rem; }
 
 /* Track 03 reads like a session sheet. */
@@ -361,10 +365,19 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 
 /* Track 04 is the manifesto in the middle of the record. */
 .music-room--here .tk {
-  grid-template-columns: minmax(0,0.62fr) minmax(0,1.38fr);
+  grid-template-columns: minmax(0,1fr);
+  grid-template-areas: "k"
+      "title"
+      "line"
+      "film"
+      "player"
+      "actions"
+      "story"
+      "meta";
+  align-items: start;
 }
 .music-room--here .tk h1 {
-  font-size: clamp(8rem, 18vw, 18rem);
+  font-size: clamp(8rem, 42vw, 15rem);
   color: var(--music-paper);
 }
 .music-room--here .tk__story {
@@ -413,9 +426,18 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
     #030d19;
 }
 .music-room--antisocial .tk {
-  grid-template-columns: minmax(0,0.72fr) minmax(0,1.28fr);
+  grid-template-columns: minmax(0,1fr);
+  grid-template-areas: "k"
+      "title"
+      "line"
+      "film"
+      "player"
+      "actions"
+      "story"
+      "meta";
+  align-items: start;
 }
-.music-room--antisocial .tk__film { min-height:min(62rem, 72vh);min-height: min(62rem, 72svh); }
+.music-room--antisocial .tk__film {min-height: 48vh;min-height:48svh; }
 .music-room--antisocial .tk__story { border-color: rgba(142, 185, 219, 0.25); }
 
 /* Track 06 closes in the edit bay. */
@@ -497,14 +519,14 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 /* LICENSING: a numbered desk, not a generic dark form. */
 .music-room--license .lc {
   display: grid;
-  grid-template-columns: minmax(16rem, 0.7fr) minmax(30rem, 1.3fr);
+  grid-template-columns: minmax(0,1fr);
   grid-template-areas:
-    "k form"
-    "title form"
-    "sub form"
-    "promise form"
-    ". form"
-    "done done";
+    "k"
+      "title"
+      "sub"
+      "promise"
+      "form"
+      "done";
   align-items: start;
   column-gap: clamp(2.5rem, 7vw, 7rem);
   max-width: 78rem;
@@ -540,6 +562,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   margin: 0;
   padding: 1.35rem 0 0;
   border-top: 1px solid var(--music-rule);
+  margin-top: 2.5rem;
 }
 .music-room--license .lc label {
   counter-increment: brief;
@@ -571,58 +594,39 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 .music-room--license .lc__done { grid-area: done; }
 
 /* RESPONSIVE */
-@media (max-width: 52rem) {
-  .music-room--album .alb,
-  .music-room--track .tk,
-  .music-room--runway .tk,
-  .music-room--here .tk,
-  .music-room--antisocial .tk,
-  .music-room--license .lc {
-    grid-template-columns: minmax(0,1fr);
-  }
-
-  .music-room--album .alb { min-height: 0; }
-  .music-room--album .alb h1 { font-size: clamp(4.4rem, 24vw, 8rem); }
-  .music-room--album .alb__art { max-height:68vh;max-height: 68svh; object-fit: cover; }
-
-  .music-room--track .tk,
-  .music-room--runway .tk,
-  .music-room--here .tk,
-  .music-room--antisocial .tk {
-    grid-template-areas:
-      "k"
-      "title"
-      "line"
-      "film"
-      "player"
-      "actions"
-      "story"
-      "meta";
-    align-items: start;
-  }
-  .music-room--track .tk h1 { font-size: clamp(3.8rem, 18vw, 6.4rem); }
-  .music-room--here .tk h1 { font-size: clamp(8rem, 42vw, 15rem); }
-  .music-room--track .tk__film,
-  .music-room--runway .tk__film,
-  .music-room--antisocial .tk__film { min-height:48vh;min-height: 48svh; }
-  .music-room--track .tk__story { grid-template-columns: minmax(0,1fr); }
-  .music-room--track .tk__story article {
-    min-height: 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--music-rule);
-  }
-  .music-room--track .tk__story article:last-child { border-bottom: 0; }
-
-  .music-room--license .lc {
-    grid-template-areas:
-      "k"
-      "title"
-      "sub"
-      "promise"
-      "form"
-      "done";
-  }
-  .music-room--license .lc form { margin-top: 2.5rem; }
+@media (min-width: 52.001rem) {
+  .music-room--album .alb { grid-template-columns: minmax(18rem, 0.88fr) minmax(23rem, 1.12fr); min-height: min(68rem, 68vh);min-height:min(68rem, 68svh); }
+  .music-room--album .alb__art { max-height: none; }
+  .music-room--album .alb h1 { font-size: clamp(5rem, 11vw, 10.5rem); }
+  .music-room--track .tk { grid-template-columns: minmax(17rem, 0.76fr) minmax(28rem, 1.24fr); grid-template-areas: "k film"
+    "title film"
+    "line film"
+    "actions player"
+    "story story"
+    "meta meta"; align-items: end; }
+  .music-room--track .tk h1 { font-size: clamp(4.2rem, 8vw, 8.8rem); }
+  .music-room--track .tk__film { min-height: clamp(25rem, 62vh, 45rem);min-height:clamp(25rem, 62svh, 45rem); }
+  .music-room--track .tk__story { grid-template-columns: repeat(var(--story-columns, 3), minmax(0, 1fr)); }
+  .music-room--track .tk__story article { min-height: 9rem; border-right: 1px solid var(--music-rule); border-bottom: 0; }
+  .music-room--runway .tk { grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-areas: "k k"
+    "title title"
+    "line line"
+    "film film"
+    "player actions"
+    "story story"
+    "meta meta"; }
+  .music-room--runway .tk__film { min-height: min(64rem, 62vh);min-height:min(64rem, 62svh); }
+  .music-room--here .tk { grid-template-columns: minmax(0,0.62fr) minmax(0,1.38fr); grid-template-areas: none; align-items: normal; }
+  .music-room--here .tk h1 { font-size: clamp(8rem, 18vw, 18rem); }
+  .music-room--antisocial .tk { grid-template-columns: minmax(0,0.72fr) minmax(0,1.28fr); grid-template-areas: none; align-items: normal; }
+  .music-room--antisocial .tk__film { min-height: min(62rem, 72vh);min-height:min(62rem, 72svh); }
+  .music-room--license .lc { grid-template-columns: minmax(16rem, 0.7fr) minmax(30rem, 1.3fr); grid-template-areas: "k form"
+    "title form"
+    "sub form"
+    "promise form"
+    ". form"
+    "done done"; }
+  .music-room--license .lc form { margin-top: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
