@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 528,
+  "candidate_count": 530,
   "capability_source_count": 102,
-  "support_only_count": 426,
-  "checks_total": 2012,
-  "checks_passed": 2012,
+  "support_only_count": 428,
+  "checks_total": 2020,
+  "checks_passed": 2020,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -77,6 +77,7 @@
     "catalogue.html",
     "cohort-profile.html",
     "control.html",
+    "core/drift-contract.json",
     "create.html",
     "crm.html",
     "css/equity-uprise-app.css",
@@ -168,6 +169,7 @@
     "docs/control-plane/canonical-architecture.json",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -418,17 +420,17 @@
     "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
     "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql",
     "supabase/migrations/20261020205959_funding_criteria_register_v1.sql",
+    "supabase/migrations/20261029010919_privilege_hygiene_v1.sql",
+    "supabase/migrations/20261029011001_definer_views_invoker_v1.sql",
+    "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql",
+    "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
     "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
     "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
-    "supabase/pending/20261029100000_privilege_hygiene_v1.sql",
-    "supabase/pending/20261029100100_definer_views_invoker_v1.sql",
     "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
-    "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql",
     "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
-    "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
@@ -542,7 +544,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "528 entries"
+      "detail": "530 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7255,6 +7257,26 @@
       "detail": ""
     },
     {
+      "name": "core/drift-contract.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/drift-contract.json classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "core/drift-contract.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/drift-contract.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/replay_migrations/0007_offerings.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -8940,6 +8962,26 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/schema-manifest.json capability ids known",
       "passed": true,
       "detail": ""
@@ -9020,42 +9062,42 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.sql capability ids known",
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.sql classified",
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql classified",
       "passed": true,
       "detail": "classification='migration_wrapper'"
     },
     {
-      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.sql support rationale present",
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100100_definer_views_invoker_v1.sql capability ids known",
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100100_definer_views_invoker_v1.sql classified",
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql classified",
       "passed": true,
       "detail": "classification='migration_wrapper'"
     },
     {
-      "name": "supabase/pending/20261029100100_definer_views_invoker_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending/20261029100100_definer_views_invoker_v1.sql support rationale present",
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9080,22 +9122,22 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql capability ids known",
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql classified",
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql classified",
       "passed": true,
       "detail": "classification='migration_wrapper'"
     },
     {
-      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql support rationale present",
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9120,22 +9162,22 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql capability ids known",
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql classified",
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql classified",
       "passed": true,
       "detail": "classification='migration_wrapper'"
     },
     {
-      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql support rationale present",
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

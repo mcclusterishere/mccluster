@@ -1,4 +1,4 @@
--- Production's state, 2026-10-29, for what supabase/pending/20261029100000_privilege_hygiene_v1.sql
+-- Production's state, 2026-10-29, for what supabase/migrations/20261029010919_privilege_hygiene_v1.sql
 -- touches: the same grants (pg_class.relacl, pg_proc.proacl), the same policy roles and
 -- expressions (pg_policies), the same trigger functions, on minimal tables. Test-only, for a
 -- scratch database. Applied after supabase_api_roles.stub.sql.

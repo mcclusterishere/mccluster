@@ -30,15 +30,22 @@ reviews small). None needs a pending prerequisite; all four are tested by
 `bash scripts/test-schema-hygiene-db.sh` (stub of production's state, apply, behaviour,
 rollback, re-apply, behaviour again).
 
+**Applied 2026-10-29 (owner-approved)**, all four and `public_music_reads_lean_v1.sql`
+(group 3) after 0.2. Each is now `supabase/migrations/<version>_<name>.sql` with the version
+production recorded, its stored statement equal to the file byte for byte; the rollbacks
+stay in this folder under the pending names. Production evidence after the apply:
+`docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json`.
+
 | # | File (+ rollback) | What | Proof before apply |
 |---|---|---|---|
-| 0.1 | `20261029100000_privilege_hygiene_v1.sql` | grants and policy roles no migration meant: TRUNCATE/REFERENCES/TRIGGER off authenticated on 7 tables, anon DML off `network_{blocks,bookmarks,connections,mutes}` and `media_public_world_feed`, 9 public-role write policies `to authenticated`, anon EXECUTE off `eu_role`, `mnet_is_admin` and three trigger functions; what is kept and why is in its header | `supabase/tests/privilege_hygiene_v1.behaviour.sql` |
-| 0.2 | `20261029100100_definer_views_invoker_v1.sql` | the three `security_definer_view` ERRORs: invoker views over `private.*_rows()` SECURITY DEFINER functions, same rows | `supabase/tests/definer_views_invoker_v1.behaviour.sql`; on production compare `md5(string_agg(t::text,'|' order by t::text))` of each view before and after |
-| 0.3 | `20261029100200_rls_initplan_select_wrap_v1.sql` | the 71 `auth_rls_initplan` policies, sub-selects only | `scripts/test/rls-initplan-select-wrap.test.mjs` (offline, all 71 against the evidence) and the access matrix in `scripts/test-schema-hygiene-db.sh` |
-| 0.4 | `20261029100300_eu_runtime_and_media_rollup_v1.sql` | the replay-only EU worker runtime and `media_usage_rollup` that `eu-ddex-worker`, `eu-external-worker`, `eu-monitor`, `eu-orcid-oauth` and `/v1/media/usage` call; the two dispatch triggers and cron jobs stay off (owner decision) | `supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql`; its seven names are `pending_only` in `live-callers.json` |
+| 0.1 | **applied** as `20261029010919_privilege_hygiene_v1` (was `20261029100000_privilege_hygiene_v1.sql`) | grants and policy roles no migration meant: TRUNCATE/REFERENCES/TRIGGER off authenticated on 7 tables, anon DML off `network_{blocks,bookmarks,connections,mutes}` and `media_public_world_feed`, 9 public-role write policies `to authenticated`, anon EXECUTE off `eu_role`, `mnet_is_admin` and three trigger functions; what is kept and why is in its header | `supabase/tests/privilege_hygiene_v1.behaviour.sql` |
+| 0.2 | **applied** as `20261029011001_definer_views_invoker_v1` (was `20261029100100_definer_views_invoker_v1.sql`) | the three `security_definer_view` ERRORs: invoker views over `private.*_rows()` SECURITY DEFINER functions, same rows | `supabase/tests/definer_views_invoker_v1.behaviour.sql`; on production compare `md5(string_agg(t::text,'|' order by t::text))` of each view before and after |
+| 0.3 | **applied** as `20261029011314_rls_initplan_select_wrap_v1` (was `20261029100200_rls_initplan_select_wrap_v1.sql`) | the 71 `auth_rls_initplan` policies, sub-selects only | `scripts/test/rls-initplan-select-wrap.test.mjs` (offline, all 71 against the evidence) and the access matrix in `scripts/test-schema-hygiene-db.sh` |
+| 0.4 | **applied** as `20261029011534_eu_runtime_and_media_rollup_v1` (was `20261029100300_eu_runtime_and_media_rollup_v1.sql`) | the replay-only EU worker runtime and `media_usage_rollup` that `eu-ddex-worker`, `eu-external-worker`, `eu-monitor`, `eu-orcid-oauth` and `/v1/media/usage` call; the two dispatch triggers and cron jobs stay off (owner decision) | `supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql`; its seven names were `pending_only` in `live-callers.json` and were removed once the 2026-10-29 snapshot had them |
 
-`public_music_reads_lean_v1.sql` (group 3) now goes after 0.2: it replaces the bodies of
-0.2's two track functions instead of recreating the views as definer views.
+`public_music_reads_lean_v1.sql` (group 3) went after 0.2: it replaces the bodies of 0.2's
+two track functions instead of recreating the views as definer views. Applied as
+`20261029011108_public_music_reads_lean_v1` on 2026-10-29.
 
 After each: record the ledger row and move the file (README "To promote one"), take a new
 production snapshot (`scripts/db/verify-production-schema.mjs`), and drop the file's names
@@ -105,7 +112,7 @@ Rollback files sit beside the ones that have them.
 |---|---|---|
 | `action_bounty_claim_existing_row_guard_v1.sql` | replaces `claim_action_bounty()` so an aggregate `SELECT INTO` cannot fake an existing claim | `scripts/test-action-bounty-claim-db.sh` (also `.github/workflows/bounty-claim-guard-db.yml`) |
 | `commerce_stripe_reconciler_v3.sql` | serialises concurrent Stripe deliveries, partial refunds as money; production has v1 and v2 | API Economic Core CI: `supabase/tests/commerce_stripe_reconciler_v3_regression.sql` and `commerce_stripe_concurrency.sh` |
-| `public_music_reads_lean_v1.sql` | `play_counts()` and the `v_track_*` views read the lean events copy; after 0.2 (it replaces 0.2's two track functions) | `scripts/test/journey-errors.test.mjs`, the lean step in `scripts/test-schema-hygiene-db.sh`; compare timings on the album pages after apply |
+| **applied 2026-10-29** as `20261029011108_public_music_reads_lean_v1` (was `public_music_reads_lean_v1.sql`) | `play_counts()` and the `v_track_*` views read the lean events copy; after 0.2 (it replaces 0.2's two track functions) | `scripts/test/journey-errors.test.mjs`, the lean step in `scripts/test-schema-hygiene-db.sh`; compare timings on the album pages after apply |
 | `world_publisher_verified_geo_v1.sql` | nullable publisher/HQ columns on `media_news_sources`, no grants | additive `alter table ... add column if not exists`; check the ingest still runs |
 
 ## 4. Review before anything else: moved from `supabase/migrations/pending/` on 2026-10-27

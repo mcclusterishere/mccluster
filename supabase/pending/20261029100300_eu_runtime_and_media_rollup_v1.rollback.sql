@@ -1,4 +1,4 @@
--- Rollback of supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql. Drops what
+-- Rollback of supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql. Drops what
 -- it created. private.eu_runtime and private.eu_oauth_states hold only Vault ids and
 -- short-lived OAuth state; the Vault secrets themselves are left in place. If
 -- eu_cron_install_service() was called after the apply, unschedule its six jobs first

@@ -1,4 +1,4 @@
--- supabase/pending/20261029100100_definer_views_invoker_v1.sql keeps every public row:
+-- supabase/migrations/20261029011001_definer_views_invoker_v1.sql keeps every public row:
 -- what anon and a signed-in member read from v_track_signals, v_track_affinity and
 -- media_public_world_feed is hashed before the file, the file is applied (psql variable
 -- :pending), and the same reads must hash the same after, with the views now
