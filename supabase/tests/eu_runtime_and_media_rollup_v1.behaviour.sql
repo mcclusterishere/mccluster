@@ -1,4 +1,4 @@
--- supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql on its stub: the service
+-- supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql on its stub: the service
 -- RPCs the edge functions and the Worker call work for service_role and are refused to anon
 -- and authenticated; nothing is scheduled and no trigger is attached by the file.
 -- Run by scripts/test-schema-hygiene-db.sh. Scratch database only.

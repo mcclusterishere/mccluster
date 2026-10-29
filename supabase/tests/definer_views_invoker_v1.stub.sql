@@ -1,4 +1,4 @@
--- Production's state, 2026-10-29, for supabase/pending/20261029100100_definer_views_invoker_v1.sql:
+-- Production's state, 2026-10-29, for supabase/migrations/20261029011001_definer_views_invoker_v1.sql:
 -- public.events behind its desk-only policy, the media_news_* tables with no client grants,
 -- and the three views exactly as production defines them (pg_get_viewdef), as definer views
 -- with production's grants. Plus listening data. Test-only, scratch database. Applied after

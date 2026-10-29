@@ -191,54 +191,6 @@
         "workers/mccluster/src/creator-site-view.js"
       ]
     },
-    "eu_claim_ddex_jobs_service": {
-      "kind": "function",
-      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
-      "callers": [
-        "supabase/functions/eu-ddex-worker/index.ts"
-      ],
-      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
-    },
-    "eu_claim_external_jobs_service": {
-      "kind": "function",
-      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
-      "callers": [
-        "supabase/functions/eu-external-worker/index.ts"
-      ],
-      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
-    },
-    "eu_claim_monitors_service": {
-      "kind": "function",
-      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
-      "callers": [
-        "supabase/functions/eu-monitor/index.ts"
-      ],
-      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
-    },
-    "eu_oauth_state_consume_service": {
-      "kind": "function",
-      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
-      "callers": [
-        "supabase/functions/eu-orcid-oauth/index.ts"
-      ],
-      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
-    },
-    "eu_oauth_state_create_service": {
-      "kind": "function",
-      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
-      "callers": [
-        "supabase/functions/eu-orcid-oauth/index.ts"
-      ],
-      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
-    },
-    "eu_vault_store_service": {
-      "kind": "function",
-      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
-      "callers": [
-        "supabase/functions/eu-orcid-oauth/index.ts"
-      ],
-      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
-    },
     "front-media": {
       "kind": "bucket",
       "pending": "member_fronts_v1.sql",
@@ -344,14 +296,6 @@
       "callers": [
         "workers/mccluster/src/live/store.js"
       ]
-    },
-    "media_usage_rollup": {
-      "kind": "function",
-      "pending": "20261029100300_eu_runtime_and_media_rollup_v1.sql",
-      "callers": [
-        "workers/mccluster/src/media/router.js"
-      ],
-      "note": "defined only by replay SQL (CI reset has it, production does not; 2026-10-28 reconciliation)"
     },
     "member_fronts": {
       "kind": "table",

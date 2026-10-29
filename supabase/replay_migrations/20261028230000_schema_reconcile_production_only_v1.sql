@@ -45,8 +45,8 @@
 -- Not covered here, and still different between a rebuild and production (listed in the
 -- reconciliation page): changed function bodies, policy expressions that call the
 -- unqualified public.is_org_member, grant sets on existing tables, and the replay-only
--- objects production lacks (those have their own pending migration,
--- supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql).
+-- objects production lacked (those have their own migration, applied 2026-10-29:
+-- supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql).
 
 -- ---------------------------------------------------------------- anon insert rate limit
 do $blk$

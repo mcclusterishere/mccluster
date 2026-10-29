@@ -1,4 +1,4 @@
--- Rollback of supabase/pending/20261029100100_definer_views_invoker_v1.sql: the three views
+-- Rollback of supabase/migrations/20261029011001_definer_views_invoker_v1.sql: the three views
 -- back to production's definer views of 2026-10-29 (pg_get_viewdef, schema-qualified), their
 -- grants as they were, then the three private functions dropped.
 
