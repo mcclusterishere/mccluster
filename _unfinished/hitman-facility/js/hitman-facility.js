@@ -84,7 +84,7 @@
     // The selector's levels are the same programme the playable model was
     // reprogrammed to, so the chosen one can be handed straight to the game.
     if (enterLink) {
-      enterLink.href = "site0/?level=" + encodeURIComponent(level);
+      enterLink.href = "../site0-game/game/?level=" + encodeURIComponent(level);
       if (enterCode) enterCode.textContent = level;
     }
     focus.setAttribute("aria-label", level + " · " + data.title + " selected");

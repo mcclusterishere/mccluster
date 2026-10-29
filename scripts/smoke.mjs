@@ -188,8 +188,8 @@ try {
          tab. There is no PNG in that column any more for either rule to
          guard. What replaced them is the pair above (drawn glyph, real
          destination) plus the two rooms below, because the risk moved:
-         it is no longer "does the mark render" but "did the Closet and
-         HITMAN survive losing their tab". */
+         it is no longer "does the mark render" but "did the rooms that
+         lost their tab keep a door". */
       check("index: the M coin is still the only image in the bar", await p.evaluate(() =>
         document.querySelectorAll(".appbar img.appbar__m").length === 1 &&
         !!document.querySelector('[data-appnav="home"] img.appbar__m')));
@@ -1047,8 +1047,8 @@ try {
 
   /* Rooms removed from primary navigation still need a real door in the
      full-house map. If one of these fires, it was orphaned rather than put
-     away. HITMAN's door and the Closet's went when those lines were put
-     away (js/masthead.js); if either comes back, name it here again. */
+     away. The Closet's door went when its line was put away
+     (js/masthead.js); if it comes back, name it here again. */
   for (const [room, href] of [["the studio", "sites.html"], ["the privacy disclosure", "privacy.html"],
                               ["the engineering evidence", "engineering/"],
                               ["the Equity Uprise campaign", "action/?c=equity-uprise"]]) {
