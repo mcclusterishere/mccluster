@@ -30,7 +30,7 @@ it.
 | Private bucket patterns | `20260920035720_gated_audio_bucket_live.sql` (`mcc-gated-audio`, private), `20260921051000_mnet_avatar_bucket.sql` (owner-folder `storage.foldername(name)[1] = auth.uid()` policies) | The new bucket follows both: private, typed, size-capped, owner-folder paths. |
 | Camera code | `js/mnet-live.js` (`getUserMedia` for live rooms); mission proofs use `<input capture>` (camera-loop) | Proof capture accepts files, so it is **not** reused for identity; the identity page records with `getUserMedia` + `MediaRecorder` only. `creator-capture.html` was a placeholder and is shelved in `_unfinished/`. |
 | Notifications | `network_notifications` | Each decision notifies the member (`type = 'identity_verification_review'`). |
-| Owner control room | `control.html` → `js/control-room/action-network.js` (Human Uprise: proof review, fellowship, Policy memos) | New **Identity** tab there, module `js/control-room/identity-review.js`. |
+| Owner control room | `control.html` → `js/control-room/action-network.js` (Equity Uprise: proof review, fellowship, Policy memos) | New **Identity** tab there, module `js/control-room/identity-review.js`. |
 | Halo's gate | `hitmans-halo`: owner-only behind Cloudflare Access / a reviewed HTTPS boundary (its `AGENTS.md`, `SECURITY.md`) | Not edited. Section 6 is the contract for extending it. |
 
 ## 2. The two levels
@@ -158,7 +158,7 @@ automated matching is ever proposed, it needs **separate, explicit consent**
 (a new consent version for that purpose), counsel review, and its own
 retention schedule; it may not be added under these consents.
 
-## 4. Owner review (control room → Human Uprise → Identity)
+## 4. Owner review (control room → Equity Uprise → Identity)
 
 - The queue lists submitted videos oldest first with **age**, the 24-hour
   target (`sla_due_at`, "over 24 h" flagged), attempt number, region, and for

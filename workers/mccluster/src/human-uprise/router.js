@@ -1,4 +1,7 @@
-/* Human Uprise's own door: the World on the humanuprise.com host.
+/* The World on the humanuprise.com host: a legacy-named door (the host,
+   this file and HUMAN_UPRISE_ORIGIN keep the old name for compatibility).
+   Owner, 2026-10-28: "the public brand is Equity Uprise, not Human
+   Uprise", so what this host serves names Equity Uprise (og:site_name).
 
    Owner, 2026-10-14: "I want to have the globe experience as its own solo
    experience ... but it needs to be interconnected with all the systems."
@@ -43,9 +46,9 @@ const SITEMAP = '<?xml version="1.0" encoding="UTF-8"?>\n' +
   `  <url><loc>${HUMAN_UPRISE_ORIGIN}/</loc></url>\n` +
   '</urlset>\n';
 
-/* The World's head on this host: Human Uprise's front door, so the noindex
+/* The World's head on this host: the World's front door, so the noindex
    gives way to this host's canonical (../world-host.js). */
-const HEAD = { origin: HUMAN_UPRISE_ORIGIN, siteName: 'Human Uprise' };
+const HEAD = { origin: HUMAN_UPRISE_ORIGIN, siteName: 'Equity Uprise' };
 export function worldHead(html) {
   return worldHeadFor(html, HEAD);
 }
@@ -58,6 +61,8 @@ export async function humanUpriseResponse(request, env = {}, fetchImpl = fetch) 
   const url = new URL(request.url);
   const host = url.hostname.toLowerCase();
   if (host !== APEX && host !== WWW) return null;
+  /* never plain http on the apex: one hop to https (www already answers with https targets) */
+  if (host === APEX && url.protocol === 'http:') return moved(`${HUMAN_UPRISE_ORIGIN}${url.pathname}${url.search}`);
   if (host === WWW) return moved(`${HUMAN_UPRISE_ORIGIN}${url.pathname}${url.search}`);
 
   const path = url.pathname;

@@ -10,7 +10,7 @@
    list channels, queue a post, dispatch the queue and report stats — and
    nothing in the product was wired to it.
 
-   WHAT IT IS NOW. Write once, choose where it goes, send. Human Uprise is a
+   WHAT IT IS NOW. Write once, choose where it goes, send. Equity Uprise is a
    destination like any other, because it is the one we own and it should
    not be a separate errand.
 
@@ -69,14 +69,14 @@
   }
 
   /* ---------- destinations ----------
-     Human Uprise first, because it is ours and it is the one that always works. */
+     Equity Uprise first, because it is ours and it is the one that always works. */
   function mnetDest() {
     return {
       key: "__mnet__",
-      label: "Human Uprise",
+      label: "Equity Uprise",
       account: "your McCluster profile",
       postable: state.mnetReady,
-      blockers: state.mnetReady ? [] : ["sign in to post to Human Uprise"],
+      blockers: state.mnetReady ? [] : ["sign in to post to Equity Uprise"],
       house: true
     };
   }
@@ -139,7 +139,7 @@
                    .map(function (c) { return c.key; });
 
     var jobs = [];
-    /* Human Uprise goes through the same Worker route the Human Uprise composer uses, so a
+    /* Equity Uprise goes through the same Worker route the Equity Uprise composer uses, so a
        post made here is indistinguishable from one made there. */
     jobs.push(wantMnet
       ? w.MCC.api("/v1/mnet/posts?app_key=" + encodeURIComponent(MNET_APP),
@@ -155,8 +155,8 @@
 
       if (wantMnet) {
         rows.push(out[0].status === "fulfilled"
-          ? { label: "Human Uprise", state: "ok", detail: "Posted to your profile." }
-          : { label: "Human Uprise", state: "bad",
+          ? { label: "Equity Uprise", state: "ok", detail: "Posted to your profile." }
+          : { label: "Equity Uprise", state: "bad",
               detail: (out[0].reason && out[0].reason.message) || "Could not post." });
       }
 
@@ -256,7 +256,7 @@
   }
 
   function boot() {
-    /* Human Uprise readiness is a different question to the social service's, and
+    /* Equity Uprise readiness is a different question to the social service's, and
        either can be true without the other. */
     state.mnetReady = !!(w.MCC && w.MCC.api && w.MCC_SUPA);
 
