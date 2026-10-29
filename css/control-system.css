@@ -158,9 +158,9 @@
 .cmdk-hint:hover { background: var(--cs-3); }
 .cmdk-hint kbd { display: none; }
 /* Clears the app bar AND the auth chip that sits on top of it. */
-body.has-appbar .cmdk-hint { bottom: calc(7.9rem + env(safe-area-inset-bottom, 0px)); }
-@media (max-width: 420px) {
-  body.has-appbar .cmdk-hint { bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px)); }
+body.has-appbar .cmdk-hint { bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 420.02px) {
+  body.has-appbar .cmdk-hint { bottom: calc(7.9rem + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ---------- desktop: a dialog, and the keyboard legend ---------- */
