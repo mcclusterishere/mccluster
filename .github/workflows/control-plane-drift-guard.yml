@@ -9,6 +9,7 @@ on:
       - "scripts/supabase-local-reset-with-replay.sh"
       - "supabase/production-ledger.json"
       - "scripts/deploy-ovh-core.sh"
+      - "scripts/ovh-core-health.sh"
       - "scripts/mccluster-vps-reconcile.sh"
       - "scripts/control-plane-drift-contract-check.mjs"
       - ".github/workflows/control-plane-drift-guard.yml"
@@ -21,6 +22,7 @@ on:
       - "scripts/supabase-local-reset-with-replay.sh"
       - "supabase/production-ledger.json"
       - "scripts/deploy-ovh-core.sh"
+      - "scripts/ovh-core-health.sh"
       - "scripts/mccluster-vps-reconcile.sh"
       - "scripts/control-plane-drift-contract-check.mjs"
 
@@ -40,6 +42,7 @@ jobs:
         run: |
           bash -n scripts/mccluster-vps-reconcile.sh
           bash -n scripts/deploy-ovh-core.sh
+          bash -n scripts/ovh-core-health.sh
 
       - name: Validate Core syntax touched by drift controls
         run: |
