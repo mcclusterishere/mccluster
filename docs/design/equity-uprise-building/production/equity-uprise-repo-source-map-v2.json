@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 443,
+  "candidate_count": 447,
   "capability_source_count": 102,
-  "support_only_count": 341,
+  "support_only_count": 345,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1782,7 +1782,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3369,6 +3369,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Satellite kit head; names the Equity Uprise building block only to say satellites never copy it. Defines no program capability."
+    },
+    {
+      "path": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Production schema reconciliation report: names Equity Uprise tables, policies and functions only as database objects compared between production and the migration history. Not a building capability, program or geometry source."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-advisors-2026-10-28.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only Supabase advisor summary (lint names and schema entities) that lists eu_* tables among many others. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "supabase/schema-manifest.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Expected schema the CI migration reset builds, including eu_* objects among all others; a drift-check manifest, not a building capability, program or geometry source."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
