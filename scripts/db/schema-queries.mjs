@@ -45,6 +45,11 @@ const aclFor = (aclExpr) => `coalesce((select string_agg(z.grantee || '=' || z.p
       where e.grantee = 0 or e.grantee::regrole::text in ('anon', 'authenticated')
       group by 1) z), '')`;
 
+// A uuid literal in a default or a constraint is data chosen when the migration ran
+// (0026_tenancy sets org_id's default to the house org's freshly generated id), so it
+// differs on every rebuild. Signatures compare the shape, not the value.
+const UUID_LITERAL = (expr) => `regexp_replace(${expr}, '''[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''', '''<uuid>''', 'g')`;
+
 const wrap = (inner, rowExpr, order) =>
   `select md5(j::text) as md5, j from (select coalesce(jsonb_agg(${rowExpr} order by ${order}), '[]'::jsonb) as j from (${inner}) q) s`;
 
@@ -89,7 +94,8 @@ export const SECTIONS = {
   },
 
   // Tables, views, materialized views, foreign tables in repo-owned schemas.
-  // colsig: md5 prefix of the columns (name, type, not null, default, generated) by name.
+  // colsig: md5 prefix of the columns (name, type, not null, default, generated) by name,
+  // with uuid literals in defaults and constraints masked (UUID_LITERAL).
   // consig: constraints by name. idxsig: index definitions. defsig: view definition.
   // security_invoker: the view option ('' when unset, which means definer rights).
   relations: {
@@ -100,12 +106,12 @@ export const SECTIONS = {
               (select count(*) from pg_attribute a where a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped)::int as ncols,
               left(md5(coalesce((select string_agg(a.attname || ' ' || format_type(a.atttypid, a.atttypmod)
                    || case when a.attnotnull then ' nn' else '' end
-                   || coalesce(' d=' || pg_get_expr(ad.adbin, ad.adrelid), '')
+                   || coalesce(' d=' || ${UUID_LITERAL('pg_get_expr(ad.adbin, ad.adrelid)')}, '')
                    || case when a.attgenerated <> '' then ' g' else '' end
                    || case when a.attidentity <> '' then ' i' else '' end, ',' order by a.attname collate "C")
                  from pg_attribute a left join pg_attrdef ad on ad.adrelid = a.attrelid and ad.adnum = a.attnum
                  where a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped), '')), 12) as colsig,
-              left(md5(coalesce((select string_agg(k.conname || ' ' || pg_get_constraintdef(k.oid), ',' order by k.conname collate "C")
+              left(md5(coalesce((select string_agg(k.conname || ' ' || ${UUID_LITERAL('pg_get_constraintdef(k.oid)')}, ',' order by k.conname collate "C")
                  from pg_constraint k where k.conrelid = c.oid), '')), 12) as consig,
               left(md5(coalesce((select string_agg(pg_get_indexdef(i.indexrelid), ',' order by pg_get_indexdef(i.indexrelid) collate "C")
                  from pg_index i where i.indrelid = c.oid), '')), 12) as idxsig,
