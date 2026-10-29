@@ -76,7 +76,8 @@ html, body { background: #0a0807; }
 /* ---------- signed out / profile gate ---------- */
 .mn__gate { padding: 40px 0 24px; }
 .mn__eyebrow { margin: 0; color: var(--mn-hot); font-weight: 800; font-size: 0.7rem; line-height: 1.2; letter-spacing: 0.2em; text-transform: uppercase; }
-.mn__gate h1 {
+/* the gate and onboarding titles are <h2> (the World's one <h1> is its feed headline); the same look */
+.mn__gate > h2, .mn__gate h2.mn__onboard-h {
   max-width: 14ch; margin: 10px 0 0;
   font-family: var(--mn-display); font-weight: 400; font-size: clamp(2.6rem, 12vw, 4.6rem); line-height: 0.92;
   letter-spacing: 0; text-transform: uppercase; overflow-wrap: anywhere;
@@ -454,10 +455,10 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mng__seg.is-on { background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule); }
 .mng__grid { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
 .mng__card.is-target { box-shadow: inset 0 0 0 2px var(--mn-hot, #ff4d3d); }
-.mng__card { display: grid; grid-template-rows: auto 1fr; min-width: 0; overflow: hidden; border-radius: 18px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
+.mng__card { display: grid; grid-template-rows: auto minmax(0,1fr); min-width: 0; overflow: hidden; border-radius: 18px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
 .mng__cover { position: relative; height: 80px; }
 .mng__cover b { position: absolute; left: 14px; bottom: -20px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: var(--mn-ink); color: var(--mn-bg); font-weight: 900; font-size: 1.05rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
-.mng__body { display: grid; grid-template-rows: auto auto 1fr; gap: 4px; align-content: start; padding: 28px 16px 16px; }
+.mng__body { display: grid; grid-template-rows: auto auto minmax(0,1fr); gap: 4px; align-content: start; padding: 28px 16px 16px; }
 .mng__name { margin: 0; font-weight: 800; font-size: 1.05rem; line-height: 1.25; }
 .mng__purpose { margin: 0; color: var(--mn-dim); font-size: 0.88rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .mng__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; align-self: end; }
@@ -596,7 +597,7 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 /* the brand mark is the supplied artwork alone (no plate; CLAUDE.md rule 10) */
 .mn__actionboard,.mn__understand{margin:0 0 20px;padding:20px;border:1px solid var(--mn-rule-2);border-radius:22px;background:var(--mn-panel)}
 .mn__actionboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.mn__actionboard-head p,.mn__mission-strip p,.mn__understand p{margin:0;color:var(--mn-hot);font-size:.62rem;font-weight:900;letter-spacing:.18em}.mn__actionboard-head h2,.mn__understand h2{margin:4px 0 0;font-family:var(--mn-display);font-weight:400;text-transform:uppercase}.mn__actionboard-head>strong{font-size:1.15rem;white-space:nowrap}
-.mn__actionboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
+.mn__actionboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
 .mn__mission-strip{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--mn-rule)}.mn__mission-strip h3{margin:3px 0 0;font-size:.9rem}.mn__mission-strip a,.mn__understand>a{color:var(--mn-hot);font-weight:800;text-decoration:none;white-space:nowrap}
 .mn__understand{display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(135deg,rgba(4,45,82,.32),var(--mn-panel))}.mn__understand small{display:block;max-width:62ch;margin-top:7px;color:var(--mn-dim);line-height:1.45}
 

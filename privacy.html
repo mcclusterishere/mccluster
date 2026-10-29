@@ -61,6 +61,11 @@
     .pv__sum ul { margin: 0; padding-left: 1.05rem; }
     .pv__sum li:last-child { margin-bottom: 0; }
     .pv__why { display: block; margin-top: 0.15rem; opacity: 0.85; }
+    .pv__answer p { margin-bottom: .75rem; }
+    .pv__answer span { display: block; }
+    .pv__agree { min-height: 44px; min-width: 44px; padding: .65rem 1.1rem; border: 0; border-radius: 12px;
+      background: var(--cream); color: #0b0908; font: inherit; font-size: max(16px, 1rem); font-weight: 700; cursor: pointer; }
+    .pv__agree:focus-visible { outline: 3px solid var(--ruby-hot); outline-offset: 3px; }
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -72,13 +77,19 @@
       <h1>What we hold.<br>And what we <em>refuse</em> to.</h1>
 
       <p class="pv__lede">This covers every McCluster service: the site and the music, the
-        Human Uprise (formerly the Action Network), Equity Uprise, the mailing list, and — for business customers — the
+        Equity Uprise (formerly the Action Network), the mailing list, and — for business customers — the
         mailboxes and sites we host. It is written to be read. Where a practice would sound
         better in vaguer words, the plainer words are used instead.</p>
 
-      <p class="pv__lede"><b>Last updated 19 October 2026.</b> This update corrects
+      <p class="pv__lede"><b>Last updated 28 October 2026.</b> This update describes the
+        site-entry notice exactly as it now behaves: its entry dialog offers "Not now"
+        as well as "I agree &amp; continue", and you can agree later on this page. It
+        does not change what is collected, so the notice version stays 2026-10-19 and
+        an answer you already gave still stands.</p>
+
+      <p class="pv__lede"><b>19 October 2026.</b> That update corrected
         the earlier camera/microphone statement to accurately disclose optional live,
-        recording, and verification features already present. It does not turn on
+        recording, and verification features already present. It did not turn on
         any new audio-room or recording service.</p>
 
       <nav class="pv__toc" aria-label="Contents">
@@ -86,7 +97,7 @@
         <ol>
           <li><a href="#collect">What we collect</a></li>
           <li><a href="#use">How we use it</a></li>
-          <li><a href="#public">What is public on Human Uprise</a></li>
+          <li><a href="#public">What is public on Equity Uprise</a></li>
           <li><a href="#third">Who else touches it</a></li>
           <li><a href="#together">How the services work together</a></li>
           <li><a href="#rights">Your rights, and how to use them</a></li>
@@ -112,17 +123,21 @@
           and physical fulfillment. Phone and birth year remain optional. The birth year
           exists because sharing a minor's details is a different legal question from
           sharing an adult's, and the answer has to be recorded before the ask.</li>
-        <li><b>Your privacy acknowledgement.</b> We record the version of this notice that
+        <li id="entry-notice"><b>Your privacy acknowledgement.</b> We record the version of this notice that
           was presented when you create an account. If you agree to the site-entry notice
           while signed in, that version and the time are recorded on your account too. The
-          site-entry notice is shown once for each version of this policy. That you have
-          seen it (the bar on a document page counts as seen once it is shown) and whether
-          you agreed are kept as the notice version in a first-party cookie that
-          McCluster's own sites under mccluster.org share, and, with the time, in this
-          browser's own storage, so the notice does not reappear on another page or
-          another of those sites. Seeing the notice, or answering "Not now", records only
-          that you saw it: McCluster's own analytics stay off until you agree.</li>
-        <li><b>What you post.</b> On Human Uprise: posts, replies, follows, blocks, mutes, your
+          site-entry notice offers two answers, "I agree &amp; continue" and "Not now",
+          and is shown once for each version of this policy: once you have answered it
+          either way (or, on a document page, once its bar has been shown), it does not
+          appear again for that version. Leaving without answering is not an answer, so
+          the next page asks again. That you have seen it and whether you agreed are kept
+          as the notice version in a first-party cookie that McCluster's own sites under
+          mccluster.org share, and, with the time, in this browser's own storage, so the
+          notice does not reappear on another page or another of those sites. Seeing the
+          notice, or answering "Not now", records only that you saw it: "Not now" lets you
+          in, and McCluster's own analytics stay off until you agree. You can agree later
+          on this page.</li>
+        <li><b>What you post.</b> On Equity Uprise: posts, replies, follows, blocks, mutes, your
           profile photo and anything you attach.</li>
         <li><b>Purchases.</b> What you bought and the email it is tied to. <b>Card numbers
           never reach us</b> — Stripe handles payment and we are told only that it
@@ -251,11 +266,17 @@
 
       <div class="pv__note">
         <p><b>The entry acknowledgement is notice, not a blank check.</b> The public site
-          asks you to acknowledge this Privacy Policy before entering. That acknowledgement
+          asks you to acknowledge this Privacy Policy when you first enter; you can answer
+          "Not now" and enter without agreeing. That acknowledgement
           does not override browser or operating-system permissions, Global Privacy Control,
           Do Not Track, or a separate consent choice. Precise location still uses the
           browser's own permission prompt. Marketing and onward-sharing boxes remain
           optional and can be withdrawn.</p>
+      </div>
+      <div class="pv__note pv__answer" id="mccPrivacyAnswer" hidden>
+        <p><b>Your answer on this browser.</b>
+          <span id="mccPrivacyAnswerStatus" role="status">You have not agreed to the site-entry notice.</span></p>
+        <button type="button" class="pv__agree" id="mccPrivacyAnswerAgree">I agree &amp; continue</button>
       </div>
       <div class="pv__note">
         <p><b>Monthly swag is free.</b> Account completion can make a user eligible for
@@ -265,8 +286,8 @@
           selection method, odds or how odds are determined, and fulfillment terms.</p>
       </div>
 
-      <h2 id="public">3 &middot; What is public on Human Uprise</h2>
-      <p>A social network only works if it is clear what everyone can see. On Human Uprise:</p>
+      <h2 id="public">3 &middot; What is public on Equity Uprise</h2>
+      <p>A social network only works if it is clear what everyone can see. On Equity Uprise:</p>
       <ul>
         <li><b>Public:</b> your display name, your photo, your posts and replies, and who
           you follow.</li>
@@ -303,7 +324,7 @@
         information for their own purposes.</p>
 
       <h2 id="together">5 &middot; How the services work together</h2>
-      <p>One McCluster account signs you into all of it — the site, Human Uprise, Equity Uprise.
+      <p>One McCluster account signs you into all of it — the site and Equity Uprise.
         Your identity, follows and profile travel with you, because they are one system
         rather than several pretending to be.</p>
       <p>What does <b>not</b> travel: a fellowship application does not become marketing,
@@ -337,7 +358,7 @@
         <tr><th>What</th><th>How long</th></tr>
         <tr><td>Raw visit records</td><td>13 months, then aggregated and the detail dropped</td></tr>
         <tr><td>Your account and profile</td><td>Until you delete it</td></tr>
-        <tr><td>Posts on Human Uprise</td><td>Until you delete them or the account</td></tr>
+        <tr><td>Posts on Equity Uprise</td><td>Until you delete them or the account</td></tr>
         <tr><td>Live-session metadata, submitted proof and verification recordings</td>
           <td>Handled with the associated room, submission or account and its
           feature-specific retention and review rules. A streamed session is

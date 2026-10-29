@@ -181,7 +181,7 @@
       color: #fff; font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 14px 36px -14px rgba(229,56,59,0.6); }
     .alb__play:active { transform: translateY(1px); }
-    /* Heal the 3 only: the door from the EP to Human Uprise gateway */
+    /* Heal the 3 only: the door from the EP to Equity Uprise gateway */
     .alb-test { padding: 1.6rem 0 0.4rem; }
     .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
     .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
@@ -616,7 +616,6 @@
   </style>
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <link rel="stylesheet" href="css/song-test.css?v=__STAMP__">
@@ -654,10 +653,10 @@
 
 
     <!-- THE SHELF FRONT: the chips filter, the curated cards preview on tap -->
-    <div class="chips" id="chips" role="tablist" aria-label="Filter">
-      <button type="button" class="on" data-chip="all">All</button>
-      <button type="button" data-chip="albums">Albums</button>
-      <button type="button" data-chip="playlists">Playlists</button>
+    <div class="chips" id="chips" role="group" aria-label="Filter">
+      <button type="button" class="on" data-chip="all" aria-pressed="true">All</button>
+      <button type="button" data-chip="albums" aria-pressed="false">Albums</button>
+      <button type="button" data-chip="playlists" aria-pressed="false">Playlists</button>
     </div>
     <section id="featWrap" aria-label="Curated">
       <p class="lib__k">Curated by the house</p>
@@ -677,7 +676,7 @@
         <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
         <a class="alb__gate" id="albGate" href="heal-the-3rd-world.html" hidden>Enter Heal the 3rd World &#8594;</a>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
-        <div class="lrail" id="labelRail" aria-label="The label"></div>
+        <div class="lrail" id="labelRail" role="group" aria-label="The label"></div>
       </div>
     </header>
 
@@ -762,7 +761,7 @@
 
   <!-- the deck: the mini player that rides above the bar -->
   <div id="seekStatus" role="status" aria-live="polite" style="text-align:center;font-size:.85rem;padding:.3rem .8rem;color:#f0c8a0" hidden></div>
-  <div class="deckbar" id="deckbar" data-off="1">
+  <div class="deckbar" id="deckbar" data-off="1" role="region" aria-label="Player">
     <button class="deckbar__seek" id="seek" type="button" aria-label="Seek"><i><b id="seekFill"></b></i></button>
     <div class="deckbar__row">
       <img class="deckbar__art" src="assets/img/here-cover.jpg" alt="">
@@ -775,7 +774,7 @@
 
   <!-- THE BAR · Music · HERE · Hitman Halo · Profile. One tap goes where it says; hold a tab to open its wing. -->
   <!-- THE ROOM: fans speak under the record -->
-  <div data-comments="the-album"></div>
+  <div data-comments="the-album" role="region" aria-label="Comments"></div>
 
   <nav class="appbar" aria-label="Sections">
     <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
@@ -908,6 +907,7 @@
       var g = t.gated || null;
       return '<li data-src="' + t.src + '"' +
         ' data-key="' + escAttr(listenKey(t)) + '"' +
+        (!g && t.seconds > 0 ? ' data-seconds="' + Number(t.seconds) + '"' : "") +
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
              ' data-preview-src="' + escAttr(t.src) + '"' : "") +
@@ -1118,14 +1118,16 @@
     /* THE CLOCK COMES OFF THE SHELF, NOT OFF THE WIRE. Probing every row for
        its metadata opened one audio request per track on every visit, each
        cut off as soon as the header arrived: fifteen aborted loads before a
-       single play. The catalogue already stores every committed song's
-       length, so a row is painted from that and asks nothing of the server
-       until the listener presses play. A gated row is still probed: its
+       single play. data/albums.json carries every committed song's measured
+       length (`seconds`, stamped by scripts/music-track-lengths.mjs), and the
+       catalogue's stored length backs it up, so a row is painted from those
+       and asks nothing of the server until the listener presses play. A gated row is still probed: its
        clock is the length of whatever it points at right now, the public
        preview or the signed master, and the catalogue knows neither. So is
        a row the catalogue has no length for. */
     function paintDuration(row) {
-      var s = row.getAttribute("data-gated-bucket") ? 0 : LEN[String(row.getAttribute("data-key") || "").toLowerCase()];
+      var s = row.getAttribute("data-gated-bucket") ? 0
+        : (Number(row.getAttribute("data-seconds")) || LEN[String(row.getAttribute("data-key") || "").toLowerCase()]);
       if (!s) return probeDuration(row);
       var cell = row.querySelector(".d");
       if (cell) cell.textContent = rowTime(s);
@@ -1361,7 +1363,7 @@
       if (chips) chips.addEventListener("click", function (e) {
         var b = e.target.closest && e.target.closest("[data-chip]");
         if (!b) return;
-        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
         var w = b.getAttribute("data-chip");
         document.getElementById("featWrap").hidden = w === "playlists";
         document.getElementById("plWrap").hidden = w === "albums";
@@ -2171,7 +2173,6 @@
   <script src="js/gyro.js?v=__STAMP__"></script>
   <script src="js/intuition.js?v=__STAMP__"></script>
   <script src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
   <!-- the gate on a record: the M session, then the signer that trades it
        for a URL to the master. Both load after the shelf paints, because a
        locked row is the correct first frame and never a spinner. -->

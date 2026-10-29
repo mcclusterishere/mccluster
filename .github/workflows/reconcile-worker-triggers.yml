@@ -32,9 +32,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version-file: workers/mccluster/.node-version
       - name: Require reviewed source
         run: test "$GITHUB_REF" = refs/heads/main
+      - name: Install the locked Wrangler CLI (used only by apply)
+        run: npm ci --prefix workers/mccluster --ignore-scripts --no-audit --no-fund
       - name: Capture every live route, domain and cron before planning
         run: python3 scripts/worker-triggers.py snapshot --config "workers/$WORKER/wrangler.toml" > trigger-inventory.json
       - name: Review or apply the exact plan

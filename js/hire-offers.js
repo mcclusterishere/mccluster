@@ -229,7 +229,7 @@
     var eq = anti.pricing.equity, m = anti.pricing.m;
 
     calc.innerHTML =
-      "<h4>What Equity Uprise actually costs</h4>" +
+      "<h3>What Equity Uprise actually costs</h3>" +
       '<p class="calc__lede">Half the standard price, plus ' + eq.share_percent +
         "% of eligible connected online revenue, until " + eq.term_months + " months or the cap.</p>" +
       '<div class="calc__grid">' +

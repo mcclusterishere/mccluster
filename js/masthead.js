@@ -244,7 +244,7 @@ html { scroll-behavior: smooth; }
       { href: "services.html",     label: "Services & case work" },
       { href: "gallery.html",      label: "Photography: the gallery" },
     ] },
-    /* Equity Uprise came back as a group on Human Uprise, and its
+    /* Equity Uprise came back as a group on its own platform, and its
        front page is the Docket 516R record. Its older rooms stay put away
        in _unfinished/; only the record and the network are on the map. */
     { group: "Equity Uprise", rooms: [
@@ -263,10 +263,6 @@ html { scroll-behavior: smooth; }
       { href: "matthew-mccluster.html", label: "Who I am" },
       { href: "press.html",     label: "Press & citations" },
       { href: "newsroom.html",  label: "Verified newsroom & public record" },
-      /* HITMAN used to be reachable only because js/theme.js rewrote the
-         fifth tab into it after boot. That override was retired when the
-         shop took the tab, so this line is now the page's only door.
-         Deleting it orphans a whole room. */
       /* The site measures every visit itself — address, network, device,
          what was clicked. This map is the only door to the page that says
          so, and a disclosure nobody can reach is not a disclosure. */
@@ -340,7 +336,12 @@ html { scroll-behavior: smooth; }
       cta.href = ctaRaw[1].charAt(0) === "#" ? ctaRaw[1] : ROOT + ctaRaw[1];
       cta.textContent = ctaRaw[0];
       if (mode === "deferred") cta.classList.add("is-veiled");
-      document.body.appendChild(cta);
+      /* in a landmark for screen readers; the wrapper has no box (the pill is fixed) */
+      var ctaNav = document.createElement("nav");
+      ctaNav.className = "mh__cta-nav";
+      ctaNav.setAttribute("aria-label", "Page action");
+      ctaNav.appendChild(cta);
+      document.body.appendChild(ctaNav);
 
       /* ONE DOMINANT JOB OWNS THE FIRST VIEWPORT. On a page that opens with
          a hero, this pill was a third button arguing with the hero's own

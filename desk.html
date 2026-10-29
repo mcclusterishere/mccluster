@@ -73,7 +73,7 @@
       background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
     .draft__pick .on { color: #fff; background: var(--metal); box-shadow: none; }
 
-    .acts { display: grid; grid-template-columns: 1fr auto auto; gap: .4rem; }
+    .acts { display: grid; grid-template-columns: minmax(0,1fr); gap: .4rem; }
     .acts button { border: 0; border-radius: 12px; cursor: pointer; padding: .85rem .9rem;
       font: 800 .84rem var(--ui); color: var(--cream);
       background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
@@ -92,15 +92,14 @@
     .add { margin-top: 1.4rem; }
     .add summary { cursor: pointer; font: 800 .66rem var(--ui); letter-spacing: .16em;
       text-transform: uppercase; color: var(--cream-dim); }
-    .add__f { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin-top: .7rem; }
+    .add__f { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .4rem; margin-top: .7rem; }
     .add__f input, .add__f select { grid-column: span 1; padding: .7rem .8rem; border-radius: 10px; border: 0;
       font: 600 max(16px,.88rem) var(--ui); color: var(--cream); background: rgba(0,0,0,.34);
       box-shadow: inset 0 0 0 1px var(--edge); }
     .add__f button { grid-column: span 2; padding: .8rem; border: 0; border-radius: 10px; cursor: pointer;
       font: 800 .82rem var(--ui); color: #fff; background: var(--metal); }
-    @media (max-width: 30rem) { .acts { grid-template-columns: 1fr; } }
+    @media (min-width: 30.001rem) { .acts { grid-template-columns: minmax(0,1fr) auto auto; } }
   </style>
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -317,7 +316,6 @@
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

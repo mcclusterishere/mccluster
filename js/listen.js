@@ -457,6 +457,7 @@
     chip = b.getAttribute("data-chip");
     [].forEach.call(el("chips").querySelectorAll("button"), function (x) {
       x.classList.toggle("on", x === b);
+      x.setAttribute("aria-pressed", String(x === b));
     });
     paint();
     if (root.MCC_TRACK) root.MCC_TRACK("listen_chip", { chip: chip });

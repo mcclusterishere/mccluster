@@ -41,10 +41,10 @@ test('heavy Site 0 source artifacts stay out of the active git tree',async()=>{
   assert.match(ignore,/_full_res\.spz/);
 });
 
-test('retired material skin remains an inert stub',async()=>{
-  const css=await readFile(resolve(repoRoot,'css/here-material.css'),'utf8');
-  assert.match(css,/REMOVED 2026-08-15/);
-  assert.doesNotMatch(css,/background-image|box-shadow|linear-gradient|url\(/i);
+test('retired material skin stays removed (AGENTS.md: do not resurrect it)',async()=>{
+  for(const path of ['css/here-material.css','css/signature.css','js/here-material.js','js/signature.js','assets/brand']){
+    assert.equal(await exists(resolve(repoRoot,path)),false,`${path} was removed 2026-08-15 and must not return`);
+  }
 });
 
 async function packageManifestsUnder(dir){

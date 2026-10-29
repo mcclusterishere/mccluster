@@ -22,17 +22,20 @@ h1{font-size:clamp(2.2rem,7vw,4rem);line-height:1.02;letter-spacing:-.02em;margi
 .rule{height:1px;background:linear-gradient(90deg,var(--ruby),transparent);margin:2.4rem 0}
 
 .board{display:grid;gap:.6rem;margin-top:1.4rem}
-.board__row{display:grid;grid-template-columns:minmax(0,9rem) minmax(0,1fr) auto;gap:1rem;align-items:baseline;
+.board__row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1rem;align-items:baseline;
  padding:.85rem .9rem;border:1px solid var(--rule);border-radius:12px;background:var(--field)}
 .board__cat{font-weight:800;letter-spacing:.02em}
-.board__pages{color:var(--quiet);font-size:.86rem}
+.board__pages{color:var(--quiet);font-size:.86rem;grid-column:1/-1}
 .board__note{grid-column:2/-1;color:var(--quiet);font-size:.84rem;margin-top:.35rem}
 .pill{font-size:.6rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
  padding:.3rem .6rem;border-radius:100px;white-space:nowrap}
 .pill--done{background:var(--ruby);color:#fff}
 .pill--codex{background:rgba(244,239,230,.14);color:var(--paper)}
 .pill--todo{border:1px solid var(--rule);color:var(--quiet)}
-@media(max-width:640px){.board__row{grid-template-columns:minmax(0,1fr) auto}.board__pages{grid-column:1/-1}}
+@media (min-width: 640.02px) {
+  .board__row { grid-template-columns: minmax(0,9rem) minmax(0,1fr) auto; }
+  .board__pages { grid-column: auto; }
+}
 
 .cmp{margin-top:3.2rem;padding-top:2.4rem;border-top:1px solid var(--rule)}
 .cmp__head{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap}
@@ -46,7 +49,7 @@ h1{font-size:clamp(2.2rem,7vw,4rem);line-height:1.02;letter-spacing:-.02em;margi
 .cmp__finding{margin:.55rem 0 0;color:var(--quiet);font-size:.92rem}
 
 .shots{margin-top:1.4rem;display:grid;gap:1.4rem}
-.shotset{display:grid;gap:.9rem;grid-template-columns:repeat(2,minmax(0,1fr))}
+.shotset{display:grid;gap:.9rem;grid-template-columns:minmax(0,1fr)}
 .shotset[data-shot="mobile"]{max-width:44rem}
 figure{margin:0}
 figcaption{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--quiet);
@@ -70,7 +73,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;
  background:var(--field);padding:.1em .35em;border-radius:4px}
 h3,h4{text-wrap:balance}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media(max-width:720px){.shotset{grid-template-columns:minmax(0,1fr)}}
+@media (min-width: 720.02px) { .shotset { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 </style>
 
 <div class="wrap">

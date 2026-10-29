@@ -74,6 +74,14 @@ verifies that the target exists in `main`, validates Core, and prevents an
 unintentional rollback. Branch protection is defense in depth, not a substitute
 for that provenance check.
 
+## Deployment controls
+
+Which production paths wait for CI, which do not, and the owner settings that
+close the gap (rulesets, Environments reviewers, disconnecting Cloudflare Git
+auto-deploy in favour of the CI-gated workflow, rollback by tag) are proposed
+in `DEPLOYMENT-CONTROLS-PROPOSAL.md`. The required checks a deploy waits for on
+its exact commit are listed in `deploy-gate.json`.
+
 ## Deployment-ref recovery
 
 If `deploy/ovh-production` ever diverges from `main`:

@@ -427,7 +427,8 @@
     {
       "id": "fellowship-applications",
       "name": "Policy Fellowship/application workflow",
-      "status": "built",
+      "status": "built_not_armed_by_default",
+      "status_note": "Retired from the live site, in development (owner, 2026-10-28: \"Retire it — we'll end up using the function later; it's part of the product but it needs further development\"). The intake client and its loader are preserved intact under _unfinished/equity-uprise/js/, stripped at publish; no published page loads them. The eu-intake Edge Function is unchanged.",
       "primary_floor": 3,
       "secondary_floors": [
         1
@@ -435,7 +436,7 @@
       "visibility": "public-intake-private-state",
       "sources": [
         "_unfinished/equity-uprise/fellowship.html",
-        "js/equity-uprise-fellowship-live.js",
+        "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js",
         "supabase/functions/eu-intake/index.ts"
       ],
       "expression": "Fellowship application path, application tracking, and interview/meeting rooms."

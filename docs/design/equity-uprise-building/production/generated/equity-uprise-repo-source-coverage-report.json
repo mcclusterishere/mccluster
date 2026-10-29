@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 443,
+  "candidate_count": 531,
   "capability_source_count": 102,
-  "support_only_count": 341,
-  "checks_total": 1672,
-  "checks_passed": 1672,
+  "support_only_count": 429,
+  "checks_total": 2024,
+  "checks_passed": 2024,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -22,6 +22,7 @@
     "LICENSE",
     "README.md",
     "_unfinished/README.md",
+    "_unfinished/creator-selection-desk.html",
     "_unfinished/equity-uprise/dashboard.html",
     "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html",
     "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html",
@@ -37,6 +38,8 @@
     "_unfinished/equity-uprise/feed.html",
     "_unfinished/equity-uprise/fellowship.html",
     "_unfinished/equity-uprise/fellowships.html",
+    "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js",
+    "_unfinished/equity-uprise/js/here-material.js",
     "_unfinished/equity-uprise/profile.html",
     "_unfinished/equity-uprise/topics.html",
     "_unfinished/equity-uprise/uprise-admin.html",
@@ -50,7 +53,22 @@
     "_unfinished/uprise-world/uprise-world.html",
     "_unfinished/uprise-world/uprise-world.js",
     "_unfinished/uprise-world/uprise-world.json",
+    "account.html",
+    "action-network-artist.html",
+    "action-network-audio-engineer.html",
+    "action-network-clippers.html",
+    "action-network-cohorts.html",
+    "action-network-discovery.html",
+    "action-network-hire.html",
+    "action-network-influencers.html",
+    "action-network-producer.html",
+    "action-network-video-editor.html",
+    "action-network-videographer.html",
+    "action-policy.html",
     "action/index.html",
+    "album.html",
+    "analytics.html",
+    "anti-social-mission.html",
     "assets/img/equity-uprise-logo.webp",
     "assets/img/equity-uprise-mark-white.png",
     "assets/img/equity-uprise-mark.png",
@@ -58,6 +76,9 @@
     "audit/2026-09-13-p0-supabase-containment.md",
     "catalogue.html",
     "cohort-profile.html",
+    "control.html",
+    "core/drift-contract.json",
+    "create.html",
     "crm.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
@@ -117,6 +138,9 @@
     "docs/agent-web.md",
     "docs/analytics/application-schema-inventory.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
+    "docs/control-plane/CANONICAL-ARCHITECTURE.md",
+    "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md",
+    "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/ECOSYSTEM.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
@@ -125,9 +149,11 @@
     "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md",
     "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md",
     "docs/control-plane/INTEL-TO-MISSION-CANON.md",
+    "docs/control-plane/LIVE-MISSIONS.md",
     "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
     "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
+    "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
     "docs/control-plane/SATELLITE.md",
@@ -140,6 +166,10 @@
     "docs/control-plane/admin-evidence-20261020/funding-register.json",
     "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
+    "docs/control-plane/canonical-architecture.json",
+    "docs/control-plane/evidence/production-advisors-2026-10-28.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -181,54 +211,83 @@
     "end-racism.html",
     "engineering/mccluster-platform.html",
     "equity-uprise.html",
+    "fbi.html",
     "feed.xml",
     "gallery.html",
     "heal-the-3rd-world.html",
+    "help.html",
     "hire.html",
+    "identity-verify.html",
     "index.html",
+    "js/action-globe.js",
+    "js/action.js",
     "js/analytics-product.js",
+    "js/analytics-suite.js",
     "js/chatfirst.js",
     "js/cohort-profile.js",
+    "js/control-palette.js",
+    "js/control-room-v2.js",
+    "js/control-room/action-network.js",
     "js/control-room/analytics-unified.js",
     "js/control-room/analytics.js",
     "js/control-room/clipping.js",
+    "js/control-room/identity-review.js",
+    "js/control-room/instagram.js",
+    "js/control-room/profile-edit-review.js",
+    "js/control-room/social-compose.js",
+    "js/create.js",
     "js/crm.js",
     "js/docket-cohort-showcase.js",
-    "js/equity-uprise-fellowship-live.js",
     "js/equity-uprise-institutional.js",
     "js/eu-api.js",
     "js/fan-intake.js",
-    "js/here-material.js",
+    "js/fbi.js",
+    "js/gateway.js",
     "js/hire-offers.js",
     "js/insights.js",
     "js/lockroom.js",
     "js/masthead.js",
+    "js/mccluster-creator-account.js",
     "js/member-desk-core.js",
     "js/mnet-clips.js",
     "js/mnet-live.js",
     "js/mnet-tour.js",
     "js/mnet.js",
+    "js/music-creator-profile.js",
     "js/offers.js",
     "js/office.js",
     "js/onboard.js",
     "js/payments.js",
     "js/policy-fellowship-ladder.js",
     "js/site-navigation.js",
+    "js/socials-room.js",
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
     "js/world-audio-continuity.js",
     "lanes.html",
     "listen.html",
+    "live-mission.html",
     "llms.txt",
+    "management.html",
     "matthew-mccluster.html",
     "mccluster-corp.html",
+    "mccluster-platform.html",
     "mnet.html",
+    "music-videos.html",
     "native/app/(tabs)/_layout.tsx",
+    "native/app/(tabs)/create.tsx",
     "native/app/(tabs)/desk.tsx",
+    "native/app/(tabs)/profile.tsx",
     "native/app/(tabs)/uprise.tsx",
+    "native/app/group/[slug].tsx",
+    "native/app/mission/[id].tsx",
+    "native/src/ActionNetworkScreen.tsx",
     "native/src/AppBar.tsx",
     "native/src/RoomScreen.tsx",
+    "native/src/actionNetwork.ts",
     "native/src/content.ts",
+    "native/src/mcc.tsx",
+    "native/src/proofMedia.ts",
     "newsroom.html",
     "packages/release-policy/globe.mjs",
     "platform/sql/001_init.sql",
@@ -239,32 +298,38 @@
     "press.html",
     "privacy.html",
     "production.html",
-    "redirects/equity-uprise.html",
-    "redirects/walls/eu-rally.html",
+    "receipt.html",
     "resume-it-support.html",
+    "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
     "scripts/stage-cloudflare-pages.mjs",
+    "scripts/test-schema-hygiene-db.sh",
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-mission-curation.test.mjs",
     "scripts/test/action-network-live-governance.test.mjs",
     "scripts/test/action-network-redesign.test.mjs",
     "scripts/test/action-network.test.mjs",
     "scripts/test/action-origin-attribution.test.mjs",
+    "scripts/test/analytics-platform.test.mjs",
     "scripts/test/antisocial-three-levels.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
+    "scripts/test/creator-action-distribution.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
     "scripts/test/member-desk.test.mjs",
     "scripts/test/mission-pins-arcs-business.test.mjs",
+    "scripts/test/mnet-real-network.test.mjs",
     "scripts/test/mobile-rule.test.mjs",
+    "scripts/test/native-action-network.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/product-context.test.mjs",
+    "scripts/test/rpc-names-exist.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
     "scripts/test/seo-authority.test.mjs",
     "scripts/test/seo-contract.test.mjs",
@@ -356,10 +421,17 @@
     "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
     "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql",
     "supabase/migrations/20261020205959_funding_criteria_register_v1.sql",
+    "supabase/migrations/20261029010919_privilege_hygiene_v1.sql",
+    "supabase/migrations/20261029011001_definer_views_invoker_v1.sql",
+    "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql",
+    "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
     "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
+    "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
+    "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
+    "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
@@ -406,20 +478,31 @@
     "supabase/replay_migrations/20260908235000_close_view_rls_bypass.sql",
     "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
+    "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql",
+    "supabase/schema-manifest.json",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/action_globe_demo_pins_v1.applied.sql",
     "supabase/tests/action_mission_pins.stub.sql",
     "supabase/tests/action_mission_reset.stub.sql",
     "supabase/tests/analytics_geo_audience.behaviour.sql",
     "supabase/tests/analytics_measurement.deps.sql",
+    "supabase/tests/definer_views_invoker_v1.stub.sql",
     "supabase/tests/eu_platform_test.sql",
+    "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql",
+    "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
+    "supabase/tests/privilege_hygiene_v1.behaviour.sql",
+    "supabase/tests/privilege_hygiene_v1.stub.sql",
+    "supabase/tests/rls_initplan_select_wrap_v1.probe.sql",
+    "supabase/tests/rls_initplan_select_wrap_v1.stub.sql",
     "supabase/tests/run-eu-tests.sh",
+    "supabase/tests/schema_reconcile_production_only.stub.sql",
     "supabase/tests/supabase_api_roles.stub.sql",
     "sw.js",
     "tools/build-catalogue.mjs",
+    "tools/build-company-site.mjs",
     "tools/build-hire-schema.mjs",
     "tools/build-newsroom.mjs",
     "tools/eu-export-seed.sh",
@@ -427,11 +510,13 @@
     "vault.html",
     "vendor/supabase-js-2.57.0.mjs",
     "walls/eu-rally.html",
+    "wigger-recovery.html",
     "workers/mccluster/src/ai/envelope.js",
     "workers/mccluster/src/analytics/measurement-dictionary.js",
     "workers/mccluster/src/audio-sfu-rooms.js",
     "workers/mccluster/src/company-site/news.js",
     "workers/mccluster/src/company-site/pages.generated.js",
+    "workers/mccluster/src/company-site/router.js",
     "workers/mccluster/src/entry-platform.js",
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/human-uprise/router.js",
@@ -441,13 +526,16 @@
     "workers/mccluster/src/platform-api.js",
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
+    "workers/mccluster/src/social/router.js",
     "workers/mccluster/src/world-layers.js",
+    "workers/mccluster/test/company-site.test.mjs",
     "workers/mccluster/test/fbi.test.mjs",
     "workers/mccluster/test/halo-projection.test.mjs",
     "workers/mccluster/test/human-uprise-site.test.mjs",
     "workers/mccluster/test/live-missions.test.mjs",
     "workers/mccluster/test/mission-proof-media.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
+    "workers/mccluster/test/mnet-post-limits.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
     "workers/mccluster/test/world-layers.test.mjs",
     "workers/mccluster/test/world-release.test.mjs",
@@ -457,7 +545,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "443 entries"
+      "detail": "531 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3880,19 +3968,39 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js capability ids known",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js classified",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js classified",
       "passed": true,
       "detail": "classification='capability_source'"
     },
     {
-      "name": "js/equity-uprise-fellowship-live.js support-only semantics coherent",
+      "name": "_unfinished/equity-uprise/js/equity-uprise-fellowship-live.js support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/js/here-material.js support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "js/equity-uprise-institutional.js capability ids known",
@@ -3941,26 +4049,6 @@
     },
     {
       "name": "js/fan-intake.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/here-material.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/here-material.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "js/here-material.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "js/here-material.js support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4691,46 +4779,6 @@
     },
     {
       "name": "production.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/equity-uprise.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/equity-uprise.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -7210,6 +7258,26 @@
       "detail": ""
     },
     {
+      "name": "core/drift-contract.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/drift-contract.json classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "core/drift-contract.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/drift-contract.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/replay_migrations/0007_offerings.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -8811,6 +8879,1786 @@
     },
     {
       "name": "docs/control-plane/SATELLITE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/schema-manifest.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/schema-manifest.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "supabase/schema-manifest.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/schema-manifest.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-schema-hygiene-db.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-schema-hygiene-db.sh classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test-schema-hygiene-db.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test-schema-hygiene-db.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/rpc-names-exist.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/rpc-names-exist.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/rpc-names-exist.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/rpc-names-exist.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261029010919_privilege_hygiene_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261029011001_definer_views_invoker_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_wrapper'"
+    },
+    {
+      "name": "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/definer_views_invoker_v1.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/definer_views_invoker_v1.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/definer_views_invoker_v1.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/definer_views_invoker_v1.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/privilege_hygiene_v1.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.probe.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.probe.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.probe.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.probe.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/rls_initplan_select_wrap_v1.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/schema_reconcile_production_only.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/schema_reconcile_production_only.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/schema_reconcile_production_only.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/schema_reconcile_production_only.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/creator-selection-desk.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/creator-selection-desk.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "_unfinished/creator-selection-desk.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/creator-selection-desk.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "account.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "account.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "account.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "account.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-artist.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-artist.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-artist.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-artist.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-audio-engineer.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-audio-engineer.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-audio-engineer.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-audio-engineer.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-clippers.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-clippers.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-clippers.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-clippers.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-cohorts.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-cohorts.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-cohorts.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-cohorts.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-discovery.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-discovery.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-discovery.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-discovery.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-hire.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-hire.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-hire.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-hire.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-influencers.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-influencers.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-influencers.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-influencers.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-producer.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-producer.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-producer.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-producer.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-video-editor.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-video-editor.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-video-editor.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-video-editor.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-videographer.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-network-videographer.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-network-videographer.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-network-videographer.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-policy.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "action-policy.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "action-policy.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "action-policy.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "album.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "album.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "album.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "album.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "analytics.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "analytics.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "analytics.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "analytics.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "anti-social-mission.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "anti-social-mission.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "anti-social-mission.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "anti-social-mission.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "control.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "control.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "control.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "control.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "create.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "create.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "create.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "create.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/CANONICAL-ARCHITECTURE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/CANONICAL-ARCHITECTURE.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/CANONICAL-ARCHITECTURE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/CANONICAL-ARCHITECTURE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/CLOUDFLARE-PAGES-DIRECT-UPLOAD.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/LIVE-MISSIONS.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/LIVE-MISSIONS.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/LIVE-MISSIONS.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/LIVE-MISSIONS.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/canonical-architecture.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fbi.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fbi.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "fbi.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "fbi.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "help.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "help.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "help.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "help.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "identity-verify.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "identity-verify.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "identity-verify.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "identity-verify.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/action-globe.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/action-globe.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/action-globe.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/action-globe.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/action.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/action.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/action.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/action.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/analytics-suite.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/analytics-suite.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/analytics-suite.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/analytics-suite.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-palette.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-palette.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-palette.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-palette.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room-v2.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room-v2.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room-v2.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room-v2.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/action-network.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/action-network.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/action-network.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/action-network.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/identity-review.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/identity-review.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/identity-review.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/identity-review.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/instagram.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/instagram.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/instagram.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/instagram.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/profile-edit-review.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/profile-edit-review.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/profile-edit-review.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/profile-edit-review.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/social-compose.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/social-compose.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/social-compose.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/social-compose.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/create.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/create.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/create.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/create.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fbi.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fbi.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/fbi.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fbi.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/gateway.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/gateway.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/gateway.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/gateway.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/mccluster-creator-account.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/mccluster-creator-account.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/mccluster-creator-account.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/mccluster-creator-account.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/music-creator-profile.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/music-creator-profile.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/music-creator-profile.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/music-creator-profile.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/socials-room.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/socials-room.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/socials-room.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/socials-room.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "live-mission.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "live-mission.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "live-mission.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "live-mission.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "management.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "management.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "management.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "management.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mccluster-platform.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mccluster-platform.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "mccluster-platform.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "mccluster-platform.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-videos.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-videos.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "music-videos.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "music-videos.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/(tabs)/create.tsx capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/(tabs)/create.tsx classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/app/(tabs)/create.tsx support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/app/(tabs)/create.tsx support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/(tabs)/profile.tsx capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/(tabs)/profile.tsx classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/app/(tabs)/profile.tsx support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/app/(tabs)/profile.tsx support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/group/[slug].tsx capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/group/[slug].tsx classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/app/group/[slug].tsx support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/app/group/[slug].tsx support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/mission/[id].tsx capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/app/mission/[id].tsx classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/app/mission/[id].tsx support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/app/mission/[id].tsx support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/ActionNetworkScreen.tsx capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/ActionNetworkScreen.tsx classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/src/ActionNetworkScreen.tsx support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/src/ActionNetworkScreen.tsx support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/actionNetwork.ts capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/actionNetwork.ts classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/src/actionNetwork.ts support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/src/actionNetwork.ts support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/mcc.tsx capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/mcc.tsx classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/src/mcc.tsx support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/src/mcc.tsx support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/proofMedia.ts capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "native/src/proofMedia.ts classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "native/src/proofMedia.ts support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "native/src/proofMedia.ts support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "receipt.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "receipt.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "receipt.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "receipt.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/analytics-platform.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/analytics-platform.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/analytics-platform.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/analytics-platform.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/creator-action-distribution.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/creator-action-distribution.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/creator-action-distribution.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/creator-action-distribution.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mnet-real-network.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mnet-real-network.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/mnet-real-network.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/mnet-real-network.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/native-action-network.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/native-action-network.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/native-action-network.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/native-action-network.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tools/build-company-site.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tools/build-company-site.mjs classified",
+      "passed": true,
+      "detail": "classification='shared_data_support'"
+    },
+    {
+      "name": "tools/build-company-site.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "tools/build-company-site.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "wigger-recovery.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "wigger-recovery.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "wigger-recovery.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "wigger-recovery.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/company-site/router.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/company-site/router.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "workers/mccluster/src/company-site/router.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/company-site/router.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/social/router.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/social/router.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "workers/mccluster/src/social/router.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/social/router.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/company-site.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/company-site.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/company-site.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/company-site.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mnet-post-limits.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mnet-post-limits.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/mnet-post-limits.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/mnet-post-limits.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json support rationale present",
       "passed": true,
       "detail": ""
     }

@@ -427,6 +427,27 @@ try{
     await context.close();
   }
   {
+    /* owner finding, 2026-10-28: "The policy promises 'Not now', but the live entry dialog doesn't offer it."
+       The wall offers it now, with the behaviour privacy.html#entry-notice describes: in without a reload, seen and
+       never agreed, analytics off, not asked again on either host or in the World that Music opens. */
+    const {context,page,errors}=await setup(390,false,{privacy:false});
+    const first=await notice(page);
+    check('privacy: the entry dialog offers Not now',first.wall&&first.pending==='pending'&&await page.locator('#mccPrivacyLater').isVisible()&&(await page.locator('#mccPrivacyLater').boundingBox()).height>=44,first);
+    let reloaded=false;page.on('framenavigated',f=>{if(f===page.mainFrame())reloaded=true;});
+    await page.locator('#mccPrivacyLater').click();
+    check('privacy: Not now on the entry dialog lets the visitor in without a reload',none(await notice(page))&&!reloaded&&await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: Not now on the entry dialog is kept as seen, never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()),jar);
+    for(const url of [HOUSE+'/account.html',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after Not now on the entry dialog, ${u.host}${u.pathname} does not ask again`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()));
+    }
+    check('privacy: after Not now on the entry dialog, analytics records nothing',await page.evaluate(()=>window.MCC_TRACK('privacy_fixture')===false));
+    check('privacy: no notice errors after Not now on the entry dialog',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
+  {
     /* owner, 2026-10-20: "they see the privacy policy, and then they never see it again". The banner is seen once shown. */
     const {context,page,errors}=await setup(390,false,{privacy:false,start:'/press.html'});
     const first=await notice(page);

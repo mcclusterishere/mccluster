@@ -15,7 +15,7 @@ const EXPLORE=!embedded&&new URLSearchParams(location.search).has('explore');if(
    (owner, 2026-10-15): it stays here as on every other experience. The imagery credit stays (the licences ask for it), and
    one small corner control (and Escape) brings the chrome back. */
 const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(BARE)document.documentElement.classList.add('globe-bare');
-/* Network surface: the globe inside the Human Uprise World tab. The parent page owns the feed and the mission context,
+/* Network surface: the globe inside the Equity Uprise World tab. The parent page owns the feed and the mission context,
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');

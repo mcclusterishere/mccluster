@@ -48,7 +48,7 @@
     .ln::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ruby-hot); }
     .ln.is-locked::before { background: repeating-linear-gradient(180deg,var(--cream-dim) 0 3px,transparent 3px 9px); }
     .ln.is-on::before { background: #1d5c33; }
-    .ln__top { display: grid; grid-template-columns: 1fr auto; gap: .6rem; align-items: start; }
+    .ln__top { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .6rem; align-items: start; }
     .ln__name { font-weight: 800; font-size: 1rem; margin: 0 0 .25rem; }
     .ln__meta { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; margin: 0; }
     .pill { font-weight: 800; font-size: .58rem; letter-spacing: .12em; text-transform: uppercase;
@@ -66,7 +66,7 @@
     .ln__want { font-size: .84rem; color: var(--cream-dim); line-height: 1.6; margin: 0 0 .5rem; }
     .ln__want b { color: var(--cream); }
     .gates { list-style: none; padding: 0; margin: .6rem 0; display: grid; gap: .3rem; }
-    .gates li { display: grid; grid-template-columns: auto 1fr auto; gap: .55rem; align-items: baseline;
+    .gates li { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: .55rem; align-items: baseline;
       font-size: .8rem; padding: .4rem .1rem; border-bottom: 1px solid var(--edge); }
     .gates .mark { font-weight: 800; }
     .gates .yes { color: #4ba86a; }
@@ -93,7 +93,6 @@
     .house h2 { font: 800 .64rem var(--ui); letter-spacing: .2em; text-transform: uppercase;
       color: var(--cream-dim); margin: 0 0 .6rem; }
   </style>
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -292,7 +291,6 @@
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

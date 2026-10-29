@@ -16,6 +16,8 @@
   <link rel="stylesheet" href="css/prim3-tracking.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <!-- PRIM3 is McCluster Corp's learning project: the node as data/seo/entity-graph.json defines it (scripts/test/seo-entity-pages.test.mjs keeps them equal) -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Project","@id":"https://matthew.mccluster.org/prim3.html#prim3","name":"PRIM3","url":"https://matthew.mccluster.org/prim3.html","parentOrganization":{"@id":"https://matthew.mccluster.org/#mccluster-corp"},"founder":{"@id":"https://matthew.mccluster.org/#matthew-mccluster"},"description":"Free technology and cybersecurity learning project using the PRIM Method: Principles, Rhythm, Immersion and Missions."}</script>
 </head>
 <body class="prim3-lms">
   <a class="p3-skip" href="#course">Skip to coursework</a>
@@ -29,7 +31,7 @@
     <button class="p3-reset" id="resetProgress" type="button">Reset progress</button>
   </header>
 
-  <section class="p3-gate" id="courseGate" aria-labelledby="courseGateTitle">
+  <main class="p3-gate" id="courseGate" aria-labelledby="courseGateTitle">
     <div class="p3-gate__card">
       <img class="p3-gate__lockup" src="assets/img/prim3-lockup-512.png" alt="PRIM3" width="512" height="366">
       <p class="p3-gate__eyebrow">Free course · M Account required</p>
@@ -57,7 +59,7 @@
         <a href="account.html">Sign in</a>
       </div>
     </div>
-  </section>
+  </main>
 
   <main class="p3-shell" id="course" hidden>
     <div class="p3-sourcebar" id="courseSync" role="status">
@@ -70,7 +72,7 @@
     <section class="p3-hero" aria-labelledby="p3Title">
       <div class="p3-hero__copy">
         <p class="p3-kicker">THE PRIM METHOD</p>
-        <h1 id="p3Title">Learn it. Remember it.<br><span>See it. Do it.</span></h1>
+        <h2 id="p3Title">Learn it. Remember it.<br><span>See it. Do it.</span></h2>
         <p class="p3-lede">PRIM teaches the same technical knowledge through four connected learning styles. Principles gives you the complete conventional course. Rhythm makes the knowledge easier to remember. Immersion gives the concepts meaning through story. Missions lets you prove that you can use what you learned.</p>
       </div>
       <aside class="p3-progress-card" aria-label="Course progress">
