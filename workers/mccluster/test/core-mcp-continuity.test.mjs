@@ -6,8 +6,8 @@
  * the route simply did not exist. Nothing failed loudly: the deploy was green,
  * health was 200, and the only symptom was a 404 where a connector used to be.
  *
- * `.github/workflows/deploy-mccluster-worker.yml` deploys on every push
- * touching `workers/mccluster/**`, so any change in this directory can carry
+ * Cloudflare Git deploys every push to main touching `workers/mccluster/**`
+ * (and `.github/workflows/deploy-mccluster-worker.yml` can deploy too), so any change in this directory can carry
  * that regression to production. These tests run before the deploy step. A
  * source tree that has lost the MCP or OAuth surface fails here and never
  * reaches Cloudflare.
@@ -284,6 +284,10 @@ test('manual fallback provenance stamping survives the staged flow', async () =>
   assert.ok(deployStart > 0, 'manual deploy job missing');
   const deploy = workflow.slice(deployStart);
   const upload = deploy.slice(deploy.indexOf('versions upload'), deploy.indexOf('Promote the new version'));
-  assert.match(upload, /--var DEPLOY_SHA:\$\{GITHUB_SHA\}/, 'DEPLOY_SHA is not stamped on the manually uploaded version');
-  assert.match(upload, /--tag \$\{GITHUB_SHA\}/, 'manual version is not tagged with the commit, so promote cannot resolve it');
+  /* TARGET_SHA is the exact commit the job checked out: the CI-passed
+     commit on the gated workflow_run path (where GITHUB_SHA is merely the
+     default-branch tip), the dispatched commit on the manual path. */
+  assert.match(deploy, /TARGET_SHA: \$\{\{ github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/, 'TARGET_SHA must be the exact shipped commit');
+  assert.match(upload, /--var DEPLOY_SHA:\$\{TARGET_SHA\}/, 'DEPLOY_SHA is not stamped on the manually uploaded version');
+  assert.match(upload, /--tag \$\{TARGET_SHA\}/, 'manual version is not tagged with the commit, so promote cannot resolve it');
 });
