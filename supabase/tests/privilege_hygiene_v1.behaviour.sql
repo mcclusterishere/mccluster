@@ -1,4 +1,4 @@
--- supabase/pending/20261029100000_privilege_hygiene_v1.sql, after it is applied on top of
+-- supabase/migrations/20261029010919_privilege_hygiene_v1.sql, after it is applied on top of
 -- supabase/tests/privilege_hygiene_v1.stub.sql (production's grants and policies of 2026-10-29).
 -- Run by scripts/test-schema-hygiene-db.sh. Scratch database only.
 \set ON_ERROR_STOP 1

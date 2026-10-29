@@ -1,4 +1,4 @@
--- What supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql needs that
+-- What supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql needs that
 -- production already has: orgs, m_people, eu_jobs, eu_monitors, media_jobs,
 -- media_cost_events, and the Vault / pg_net / pg_cron surfaces its functions name
 -- (stand-ins; nothing here sends or schedules). Test-only, scratch database. Applied

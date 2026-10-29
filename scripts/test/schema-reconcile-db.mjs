@@ -4,8 +4,8 @@
 //
 //   1. Fidelity: each object it creates comes out exactly as production has it, row for
 //      row in the same catalog queries the production verifier runs
-//      (scripts/db/schema-queries.mjs), compared with the latest production evidence
-//      (docs/control-plane/evidence/production-schema-snapshot-*.json): columns,
+//      (scripts/db/schema-queries.mjs), compared with the production evidence it was
+//      written from (docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json): columns,
 //      constraints, indexes, RLS flags, function bodies, config and EXECUTE grants,
 //      policy expressions, trigger definitions, buckets.
 //   2. Idempotency: applied a second time it changes nothing (the whole snapshot hashes
@@ -23,7 +23,7 @@
 // (run by scripts/test-schema-reconcile-db.sh, which makes and drops the scratch database)
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { snapshotDatabase, FIELDS } from '../db/verify-production-schema.mjs';
 
@@ -79,7 +79,11 @@ const psql = (file) => execFileSync('psql', ['-X', '-q', '-v', 'ON_ERROR_STOP=1'
 const serverVersion = Number(execFileSync('psql', ['-X', '-A', '-t', '-d', url, '-c', 'show server_version_num'], { encoding: 'utf8' }).trim());
 
 const evidenceDir = path.join(ROOT, 'docs', 'control-plane', 'evidence');
-const latest = readdirSync(evidenceDir).filter((f) => /^production-schema-snapshot-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().at(-1);
+// Pinned to the capture step 0 was written from. Group 0 (applied 2026-10-29, the
+// 20261029010919.. migrations) later wrapped four of these policies' expressions in
+// production; the CI reset applies those migrations after step 0, so the rebuilt schema
+// still ends where production is.
+const latest = 'production-schema-snapshot-2026-10-28.json';
 const production = JSON.parse(readFileSync(path.join(evidenceDir, latest), 'utf8'));
 
 for (const f of ['supabase/tests/supabase_api_roles.stub.sql', 'supabase/tests/supabase_storage.stub.sql',

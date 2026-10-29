@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# The 2026-10-29 pending migrations against throwaway local Postgres (16+) databases, never
-# production. Each file is applied on a stub of production's state, its behaviour test runs,
-# its rollback runs, it is applied again (idempotent) and the behaviour test runs again:
-#   supabase/pending/20261029100000_privilege_hygiene_v1.sql          (+ rollback)
-#   supabase/pending/20261029100100_definer_views_invoker_v1.sql       (+ rollback)
-#   supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql    (+ rollback)
-#   supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql (+ rollback)
+# The group-0 migrations applied to production on 2026-10-29, against throwaway local Postgres
+# (16+) databases, never production. Each file is applied on a stub of production's state as it
+# was before them, its behaviour test runs, its rollback runs, it is applied again (idempotent)
+# and the behaviour test runs again. Forward files are the recorded migrations; their rollbacks
+# stay in supabase/pending/:
+#   supabase/migrations/20261029010919_privilege_hygiene_v1.sql           (+ pending/20261029100000_…rollback.sql)
+#   supabase/migrations/20261029011001_definer_views_invoker_v1.sql       (+ pending/20261029100100_…rollback.sql)
+#   supabase/migrations/20261029011108_public_music_reads_lean_v1.sql     (on top of the views)
+#   supabase/migrations/20261029011314_rls_initplan_select_wrap_v1.sql    (+ pending/20261029100200_…rollback.sql)
+#   supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql (+ pending/20261029100300_…rollback.sql)
 # Usage: PGHOST=/var/tmp/pg PGPORT=5497 PGUSER=postgres scripts/test-schema-hygiene-db.sh
 set -euo pipefail
 export PGOPTIONS="${PGOPTIONS:--c client_min_messages=warning}"
 cd "$(dirname "$0")/.."
-P=supabase/pending
+P=supabase/pending     # the rollbacks stay here
+M=supabase/migrations  # forward files, applied in production 2026-10-29
 T=supabase/tests
 DBS=()
 TMP=""
@@ -26,22 +30,22 @@ check() { psql -X -q -t -A -v ON_ERROR_STOP=1 -d "$1" -f "$2" | grep -E ': ok$';
 
 # 1. privilege hygiene
 fresh hygiene
-run "$db" $T/supabase_api_roles.stub.sql $T/schema_test_helpers.sql $T/privilege_hygiene_v1.stub.sql $P/20261029100000_privilege_hygiene_v1.sql
+run "$db" $T/supabase_api_roles.stub.sql $T/schema_test_helpers.sql $T/privilege_hygiene_v1.stub.sql $M/20261029010919_privilege_hygiene_v1.sql
 check "$db" $T/privilege_hygiene_v1.behaviour.sql
 run "$db" $P/20261029100000_privilege_hygiene_v1.rollback.sql
 psql -X -q -t -A -v ON_ERROR_STOP=1 -d "$db" -c "select t_eq(has_table_privilege('authenticated','public.campaigns','TRUNCATE') and has_table_privilege('anon','public.network_blocks','INSERT') and has_function_privilege('anon','public.eu_role()','EXECUTE') and (select roles::text from pg_policies where policyname='out_suppressions_add') = '{public}', true, 'rollback restores production')" >/dev/null
-run "$db" $P/20261029100000_privilege_hygiene_v1.sql $P/20261029100000_privilege_hygiene_v1.sql
+run "$db" $M/20261029010919_privilege_hygiene_v1.sql $M/20261029010919_privilege_hygiene_v1.sql
 check "$db" $T/privilege_hygiene_v1.behaviour.sql
 
 # 2. definer views -> security_invoker views over SECURITY DEFINER functions (same rows), rollback, re-apply
 fresh views
 run "$db" $T/supabase_api_roles.stub.sql $T/schema_test_helpers.sql $T/definer_views_invoker_v1.stub.sql
-psql -X -q -t -A -v ON_ERROR_STOP=1 -v pending=$P/20261029100100_definer_views_invoker_v1.sql \
+psql -X -q -t -A -v ON_ERROR_STOP=1 -v pending=$M/20261029011001_definer_views_invoker_v1.sql \
   -v rollback=$P/20261029100100_definer_views_invoker_v1.rollback.sql -d "$db" -f $T/definer_views_invoker_v1.behaviour.sql | grep -E ': ok$'
-run "$db" $P/20261029100100_definer_views_invoker_v1.sql $P/20261029100100_definer_views_invoker_v1.sql
-# public_music_reads_lean_v1.sql, which follows it, swaps the function bodies to events_lean and keeps the views invoker
+run "$db" $M/20261029011001_definer_views_invoker_v1.sql $M/20261029011001_definer_views_invoker_v1.sql
+# 20261029011108_public_music_reads_lean_v1.sql, which follows it, swaps the function bodies to events_lean and keeps the views invoker
 psql -X -q -v ON_ERROR_STOP=1 -d "$db" -c "create table public.events_lean as select id, name, lower(props->>'track') as track, device_id, session_id, at, coalesce(is_bot, false) as is_bot from public.events" >/dev/null
-run "$db" $P/public_music_reads_lean_v1.sql
+run "$db" $M/20261029011108_public_music_reads_lean_v1.sql
 psql -X -q -t -A -v ON_ERROR_STOP=1 -d "$db" -c "
   select t_eq(count(*), 2::bigint, 'track views still security_invoker after the lean file') from pg_class c
    where c.oid in ('public.v_track_signals'::regclass, 'public.v_track_affinity'::regclass) and c.reloptions @> array['security_invoker=true'];
@@ -68,7 +72,7 @@ subset() { node -e '
   console.error(`${picked.length} of ${stmts.length} statements from ${file}`);
 ' "$1" "$2"; }
 subset $P/20261029100200_rls_initplan_select_wrap_v1.rollback.sql "$TMP/before.sql"
-subset $P/20261029100200_rls_initplan_select_wrap_v1.sql "$TMP/after.sql"
+subset $M/20261029011314_rls_initplan_select_wrap_v1.sql "$TMP/after.sql"
 run "$db" "$TMP/before.sql"
 psql -X -q -v ON_ERROR_STOP=1 -v phase=before -d "$db" -f $T/rls_initplan_select_wrap_v1.probe.sql >/dev/null
 run "$db" "$TMP/after.sql"
@@ -88,7 +92,7 @@ rm -rf "$TMP"
 # rows the CI reset records in supabase/schema-manifest.json (same bodies, config, EXECUTE), rollback
 fresh eu
 run "$db" $T/supabase_api_roles.stub.sql $T/supabase_storage.stub.sql $T/schema_test_helpers.sql $T/eu_runtime_and_media_rollup_v1.stub.sql \
-  $P/20261029100300_eu_runtime_and_media_rollup_v1.sql $P/20261029100300_eu_runtime_and_media_rollup_v1.sql
+  $M/20261029011534_eu_runtime_and_media_rollup_v1.sql $M/20261029011534_eu_runtime_and_media_rollup_v1.sql
 check "$db" $T/eu_runtime_and_media_rollup_v1.behaviour.sql
 EU_DB_URL="postgresql://${PGUSER:-postgres}@/${db}?host=${PGHOST:-/var/run/postgresql}&port=${PGPORT:-5432}" node --input-type=module -e '
   import { snapshotDatabase } from "./scripts/db/verify-production-schema.mjs";
@@ -105,5 +109,5 @@ EU_DB_URL="postgresql://${PGUSER:-postgres}@/${db}?host=${PGHOST:-/var/run/postg
 '
 run "$db" $P/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql
 psql -X -q -t -A -v ON_ERROR_STOP=1 -d "$db" -c "select t_eq(to_regclass('private.eu_runtime') is null and to_regprocedure('public.media_usage_rollup(uuid,timestamptz,timestamptz,text)') is null, true, 'rollback removes the runtime')" >/dev/null
-run "$db" $P/20261029100300_eu_runtime_and_media_rollup_v1.sql
+run "$db" $M/20261029011534_eu_runtime_and_media_rollup_v1.sql
 check "$db" $T/eu_runtime_and_media_rollup_v1.behaviour.sql
