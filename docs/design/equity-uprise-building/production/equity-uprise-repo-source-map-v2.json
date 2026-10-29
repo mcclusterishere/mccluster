@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 442,
+  "candidate_count": 443,
   "capability_source_count": 102,
-  "support_only_count": 340,
+  "support_only_count": 341,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3356,6 +3356,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Satellite kit head; names the Equity Uprise building block only to say satellites never copy it. Defines no program capability."
+    },
+    {
+      "path": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Deployment-controls proposal names Equity Uprise only as CI check names, Edge Function contract jobs and the GitHub Pages building-artifact publish step; it defines no building capability."
     },
     {
       "path": "scripts/e2e/fixtures/axe-baseline.json",
