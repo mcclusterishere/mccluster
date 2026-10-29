@@ -437,6 +437,7 @@ const settleWorld = async (page) => {
   await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
   const gate = await page.evaluate(() => ({ status: document.getElementById('mnProfileStatus').textContent, back: document.getElementById('mnProfileBack').hidden ? null : document.getElementById('mnProfileBack').textContent, app: !document.getElementById('mnApp').hidden }));
   check(S, 'opening a member room opens the profile form with the reason and a way back to the World', /Finish your profile to open it\./.test(gate.status) && gate.back === '← Back to the World' && !gate.app, gate);
+  check(S, 'the account menu closed when the room stopped at the gate, so nothing covers the World on the way back', await page.evaluate(() => document.getElementById('mnMenu').hidden));
   await page.click('#mnProfileBack');
   await page.waitForSelector('#mnApp:not([hidden])', { timeout: 10000 });
   check(S, 'Back returns to the World, not to a profile page', (await page.evaluate(() => !document.getElementById('mnFeedView').hidden && document.getElementById('mnWorld').getBoundingClientRect().height > 200)));

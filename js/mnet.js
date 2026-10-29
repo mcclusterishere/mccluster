@@ -2858,6 +2858,10 @@
   function setView(name) {
     /* notifications are the bell's drop down, never a page of their own (owner, 2026-10-20) */
     if (name === "notifications") { if (state.guest) { askToSignIn(name); return; } openAlerts(); return; }
+    /* the menu closes on every pick, including the ones that stop at a gate
+       below (sign in, finish your profile); otherwise it stays open over the
+       World when the visitor comes back from the gate */
+    closeMenu();
     if (MISSIONS_OFF && name === "missions") name = "feed";
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
