@@ -78,6 +78,7 @@ jobs:
       - name: Parse VPS control-plane scripts
         run: |
           bash -n scripts/deploy-ovh-core.sh
+          bash -n scripts/ovh-core-health.sh
           bash -n scripts/mccluster-vps-reconcile.sh
           bash -n scripts/bootstrap-vps-self-management.sh
       - name: Test Operator OS control spine
