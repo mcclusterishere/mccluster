@@ -48,7 +48,7 @@ jobs:
           node --check js/prim3.js
           node --check js/prim3-sync.js
           node --check js/equity-uprise-institutional.js
-          node --check js/equity-uprise-fellowship-live.js
+          node --check _unfinished/equity-uprise/js/equity-uprise-fellowship-live.js
       - name: Assert private conversation ingestion boundary
         run: |
           grep -F 'private_context_reference_only: true' workers/mccluster/src/ai/objectives.js
