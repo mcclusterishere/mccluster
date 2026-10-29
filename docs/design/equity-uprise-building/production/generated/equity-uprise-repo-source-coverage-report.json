@@ -1,13 +1,13 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 463,
+  "candidate_count": 446,
   "capability_source_count": 102,
-  "support_only_count": 343,
-  "checks_total": 1680,
-  "checks_passed": 1679,
-  "checks_failed": 1,
-  "passed": false,
+  "support_only_count": 344,
+  "checks_total": 1684,
+  "checks_passed": 1684,
+  "checks_failed": 0,
+  "passed": true,
   "discovered_paths": [
     ".cursorrules",
     ".github/copilot-instructions.md",
@@ -119,6 +119,7 @@
     "docs/agent-web.md",
     "docs/analytics/application-schema-inventory.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
+    "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/ECOSYSTEM.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
@@ -249,7 +250,6 @@
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
     "scripts/stage-cloudflare-pages.mjs",
-    "scripts/test-schema-hygiene-db.sh",
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-mission-curation.test.mjs",
     "scripts/test/action-network-live-governance.test.mjs",
@@ -267,7 +267,6 @@
     "scripts/test/mobile-rule.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/product-context.test.mjs",
-    "scripts/test/rpc-names-exist.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
     "scripts/test/seo-authority.test.mjs",
     "scripts/test/seo-contract.test.mjs",
@@ -363,13 +362,6 @@
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
     "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
-    "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
-    "supabase/pending/20261029100000_privilege_hygiene_v1.sql",
-    "supabase/pending/20261029100100_definer_views_invoker_v1.sql",
-    "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
-    "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql",
-    "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
-    "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
@@ -416,7 +408,6 @@
     "supabase/replay_migrations/20260908235000_close_view_rls_bypass.sql",
     "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
-    "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql",
     "supabase/schema-manifest.json",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/action_globe_demo_pins_v1.applied.sql",
@@ -424,19 +415,11 @@
     "supabase/tests/action_mission_reset.stub.sql",
     "supabase/tests/analytics_geo_audience.behaviour.sql",
     "supabase/tests/analytics_measurement.deps.sql",
-    "supabase/tests/definer_views_invoker_v1.stub.sql",
     "supabase/tests/eu_platform_test.sql",
-    "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql",
-    "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
-    "supabase/tests/privilege_hygiene_v1.behaviour.sql",
-    "supabase/tests/privilege_hygiene_v1.stub.sql",
-    "supabase/tests/rls_initplan_select_wrap_v1.probe.sql",
-    "supabase/tests/rls_initplan_select_wrap_v1.stub.sql",
     "supabase/tests/run-eu-tests.sh",
-    "supabase/tests/schema_reconcile_production_only.stub.sql",
     "supabase/tests/supabase_api_roles.stub.sql",
     "sw.js",
     "tools/build-catalogue.mjs",
@@ -477,12 +460,12 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "445 entries"
+      "detail": "446 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
-      "passed": false,
-      "detail": "{\"missing_from_map\": [\"scripts/test-schema-hygiene-db.sh\", \"scripts/test/rpc-names-exist.test.mjs\", \"supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql\", \"supabase/pending/20261029100000_privilege_hygiene_v1.sql\", \"supabase/pending/20261029100100_definer_views_invoker_v1.sql\", \"supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql\", \"supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql\", \"supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql\", \"supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql\", \"supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql\", \"supabase/tests/definer_views_invoker_v1.stub.sql\", \"supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql\", \"supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql\", \"supabase/tests/privilege_hygiene_v1.behaviour.sql\", \"supabase/tests/privilege_hygiene_v1.stub.sql\", \"supabase/tests/rls_initplan_select_wrap_v1.probe.sql\", \"supabase/tests/rls_initplan_select_wrap_v1.stub.sql\", \"supabase/tests/schema_reconcile_production_only.stub.sql\"], \"stale_in_map\": []}"
+      "passed": true,
+      "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
     },
     {
       "name": ".cursorrules capability ids known",
@@ -8791,6 +8774,26 @@
     },
     {
       "name": "docs/control-plane/SATELLITE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md support rationale present",
       "passed": true,
       "detail": ""
     },

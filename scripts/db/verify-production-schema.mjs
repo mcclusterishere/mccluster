@@ -387,7 +387,14 @@ async function main() {
   const report = { mode: o.mode, source: snap.source, captured_at: snap.captured_at || null };
   let drift = 0;
 
-  if (o.mode === 'production' && snap.sections.ledger?.rows) {
+  /* Production is judged on its applied ledger as much as on its schema: a snapshot without a
+     readable ledger section never proves the database is caught up, so it is an integrity error
+     here, not a silent skip. The reset (CI rebuild) mode has no ledger of its own and may omit it. */
+  if (o.mode === 'production' && !Array.isArray(snap.sections.ledger?.rows)) {
+    console.error('integrity: production snapshot has no readable ledger section; capture ledger.json and re-run');
+    return 2;
+  }
+  if (o.mode === 'production') {
     report.ledger = await compareLedger(snap.sections.ledger.rows);
     const l = report.ledger;
     drift += l.missing_in_repo.length + l.extra_in_repo.length + l.renamed_twins.length + (l.committed_ledger.matches_live ? 0 : 1);
