@@ -27,7 +27,8 @@ try {
      Escape or Continue moves on to the plane, then the night descent and LOCK IN, then the World. Antisocial is the one
      song, and the first gesture turns it on. This context has motion on (the cabin plays); the one below has it off. */
   {
-   const mctx=await browser.newContext({viewport:{width,height},serviceWorkers:'block'});
+   /* phones and tablets with touch, as a visitor's hand would be: the touch path must be gate-free too */
+   const mctx=await browser.newContext({viewport:{width,height},serviceWorkers:'block',hasTouch:width<1000,isMobile:false});
    await mctx.addInitScript(()=>localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()})));
    await mctx.route('**/*',serve);
    const home=await mctx.newPage(); const herr=[];
@@ -36,7 +37,9 @@ try {
    await home.waitForFunction(()=>window.__MCC_VR&&window.__MCC_VR.viewer&&window.__MCC_FRONT_GOTO,null,{timeout:20000});
    await home.waitForTimeout(1200);
    assert.equal(await home.locator('#hero,#orbitCanvas,#hudDeg,#heroFallback').count(),0,'no orbit hero');
-   assert.equal(await home.locator('#vrGateAllow,#vrGateDeny,#workVRCompass').count(),0,'no gate');
+   assert.equal(await home.locator('#vrGateAllow,#vrGateDeny,#workVRCompass,#vrGate,.vrbrief--gate').count(),0,'no gate');
+   assert.equal(await home.getByText(/Allow to see|Blurred until/i).count(),0,'no Allow / Cancel words anywhere on the page');
+   assert.equal(await home.evaluate(()=>matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>0),width<1000,'touch path is exercised below 1000px');
    const open=await home.evaluate(()=>{const c=document.getElementById('cabin').getBoundingClientRect(),v=window.__MCC_VR;
      return {top:Math.round(c.top),fills:c.height>=innerHeight-1,live:v.live,playing:v.playing,allowed:v.allowed,muted:v.viewer.media.muted,gated:document.getElementById('workVR').classList.contains('is-gated'),shown:getComputedStyle(document.getElementById('workVR')).opacity,y:scrollY,song:window.MCC_FRONT.config.song};});
    assert.ok(open.top===0&&open.fills&&open.y===0,'the page opens in the cabin: '+JSON.stringify(open));
@@ -63,19 +66,20 @@ try {
    assert.equal(await home.evaluate(()=>window.__MCC_VR.playing),false,'the cabin pauses once it is off screen');
    assert.ok(await home.evaluate(()=>{const w=document.getElementById('work').getBoundingClientRect();return w.top<=1&&w.bottom>innerHeight;}),'the plane has the screen');
    await home.evaluate(()=>{const w=document.getElementById('work');window.scrollTo(0,w.offsetTop+(w.offsetHeight-innerHeight)*0.45);});
-   await home.waitForTimeout(2500);
+   await home.waitForFunction(()=>window.__MCC.lastDrawn('vaunt')>10,null,{timeout:10000}).catch(()=>{});
+   await home.waitForTimeout(800);
    assert.ok(await home.evaluate(()=>window.__MCC.lastDrawn('vaunt')>10),'the fly-through scrubs with the scroll');
    assert.equal(await home.locator('#cmdCanvas5').count(),0);
    await home.screenshot({path:join(OUT,`plane-${width}.png`)});
    /* the night descent, and LOCK IN at the bottom of it */
-   const toNight=()=>home.evaluate(()=>{const p=document.getElementById('pillars'),st=ScrollTrigger.getAll().find(s=>s.trigger===p&&s.pin);window.scrollTo(0,Math.round(st.start+(st.end-st.start)*0.93));});
-   /* a native jump can land while the smooth scroller is still settling a glide: jump until the descent is near its end */
-   for(let i=0;i<6;i++){await toNight();await home.waitForTimeout(1200);if(await home.evaluate(()=>{const p=document.getElementById('pillars');return ScrollTrigger.getAll().find(s=>s.trigger===p&&s.pin).progress>0.9;}))break;}
-   await home.waitForTimeout(1000);
+   /* through the page's own scroll engine (a native jump can be undone by the smooth scroller mid-glide, on touch most of all) */
+   await home.evaluate(()=>window.__MCC_FRONT_GOTO('lockin'));
+   await home.waitForFunction(()=>+getComputedStyle(document.getElementById('nightRoom')).opacity>0.9,null,{timeout:10000}).catch(()=>{});
+   await home.waitForTimeout(1200);
    const lock=await home.evaluate(()=>({o:+getComputedStyle(document.getElementById('nightRoom')).opacity,room:!!document.querySelector('#lockRoom')}));
    assert.ok(lock.o>0.9&&lock.room,'LOCK IN arrives: '+JSON.stringify(lock));
    await home.screenshot({path:join(OUT,`lockin-${width}.png`)});
-   await home.locator('#guestWorld').scrollIntoViewIfNeeded();
+   await home.evaluate(()=>window.__MCC_FRONT_GOTO('world'));await home.waitForTimeout(600);
    assert.equal(await home.locator('#guestWorld').isVisible(),true);
    assert.equal(await home.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
    assert.equal(await home.evaluate(()=>window.__MCC_ERR||null),null);
@@ -112,7 +116,8 @@ try {
   await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
   await page.waitForTimeout(1200);
   assert.equal(await page.evaluate(()=>window.__MCC_FRONT_HOLDING()),true);
-  await page.screenshot({path:join(OUT,`cabin-${width}.png`)});
+  /* the PROJECT page's cabin (front.html?project=vaunt keeps its gate); index.html's own opening is cabin-${width}.png */
+  await page.screenshot({path:join(OUT,`project-cabin-${width}.png`)});
   await page.locator('#vrGateAllow').click();
   await page.waitForTimeout(500);
   await page.keyboard.press('Escape');
