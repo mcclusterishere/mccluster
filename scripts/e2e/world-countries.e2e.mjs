@@ -59,6 +59,11 @@ async function context(viewport, { reducedMotion = 'no-preference' } = {}) {
     if (p === '/rest/v1/rpc/action_globe_public_regions') return json(route, REGIONS);
     return json(route, []);
   });
+  /* NASA GIBS imagery (day and city-light tiles, js/action-globe.js): served locally so a CDN
+     hiccup or a CORS-less error page from gibs.earthdata.nasa.gov can never fail this page's
+     own console-error check. Any small JPEG stands in for a tile. */
+  const TILE = await readFile(new URL('../../assets/img/closet/seek-first/sf-33.jpg', import.meta.url));
+  await ctx.route('https://gibs.earthdata.nasa.gov/**', (route) => route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*' }, body: TILE }));
   /* CESIUM_DIR: serve Cesium from a local build, as scripts/e2e/world-screen.e2e.mjs does, when the CDN is out of reach */
   if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async (route) => {
     const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
