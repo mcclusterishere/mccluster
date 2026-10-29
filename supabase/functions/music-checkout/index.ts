@@ -32,11 +32,16 @@ Deno.serve(async (req) => {
   if (!/^[0-9a-f-]{36}$/i.test(offerId)) return json({ error: "invalid offer" }, 400);
 
   const { data: offer, error } = await admin.from("music_license_offers")
-    .select("id,track_id,creator_m_uid,title,license_type,price_cents,currency,terms_text,active,checkout_enabled,creator_tracks!inner(id,title,artist,status,rights_status,slug)")
+    .select("id,track_id,creator_m_uid,title,license_type,price_cents,currency,terms_text,active,checkout_enabled,creator_tracks!inner(id,title,artist,status,rights_status,slug,approved_master_version_id)")
     .eq("id", offerId).eq("active", true).eq("checkout_enabled", true).limit(1).maybeSingle();
+  if (error) console.error("music checkout offer lookup", error.code, error.message);
   if (error || !offer) return json({ error: "offer unavailable" }, 404);
   const track = Array.isArray(offer.creator_tracks) ? offer.creator_tracks[0] : offer.creator_tracks;
   if (!track || track.status !== "published" || track.rights_status !== "cleared") return json({ error: "track is not cleared for sale" }, 409);
+  /* What is sold is the reviewed master pinned at approval
+     (music_asset_versions); the order records it (the database sets it, and
+     refuses an order for a release with none). No pin, no sale. */
+  if (!track.approved_master_version_id) return json({ error: "track is not cleared for sale" }, 409);
   if (!Number.isInteger(offer.price_cents) || offer.price_cents < 1) return json({ error: "offer has no checkout price" }, 409);
 
   const orderId = crypto.randomUUID();
@@ -51,6 +56,7 @@ Deno.serve(async (req) => {
     music_order_id: orderId,
     music_offer_id: offer.id,
     music_track_id: offer.track_id,
+    music_asset_version_id: String(track.approved_master_version_id),
     creator_m_uid: offer.creator_m_uid,
     customer_user_id: user.id,
     platform_fee_cents: String(fee),

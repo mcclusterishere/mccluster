@@ -20,6 +20,11 @@ alter table public.creator_tracks
 
 alter table storage.objects
   add column if not exists owner uuid default nullif(nullif(current_setting('request.jwt.claims', true), '')::jsonb->>'sub', '')::uuid,
-  add column if not exists owner_id text default nullif(nullif(current_setting('request.jwt.claims', true), '')::jsonb->>'sub', '');
+  add column if not exists owner_id text default nullif(nullif(current_setting('request.jwt.claims', true), '')::jsonb->>'sub', ''),
+  -- As in production: the Storage API gives every upload (and every
+  -- overwrite) a new version, and keeps the bytes' eTag and size in metadata.
+  add column if not exists last_accessed_at timestamptz default now(),
+  add column if not exists version text default gen_random_uuid()::text,
+  add column if not exists metadata jsonb default jsonb_build_object('eTag', md5(random()::text), 'size', 1024);
 grant usage on schema storage to anon, authenticated, service_role;
 grant select, insert, update, delete on storage.objects to authenticated, service_role;

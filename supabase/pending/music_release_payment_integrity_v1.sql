@@ -1,6 +1,6 @@
 -- MUSIC RELEASE AND PAYMENT INTEGRITY V1 (pending; NOT applied in production)
 --
--- Closes four owner security findings on the creator music catalogue
+-- Closes five owner security findings on the creator music catalogue
 -- (supabase/migrations/20260920041011_music_creator_platform_v1.sql and
 -- 20260920041250_music_commerce_v1.sql). Each part says what it fixes.
 --
@@ -57,9 +57,35 @@
 --     only be issued for a paid order, for that order's offer and track
 --     (and, already, once per order).
 --
--- Deploy order: deploy music-access, music-checkout and stripe-webhook first
--- (each tolerates this file being absent), then apply this file. Applying
--- it first would refuse new uploads until music-access writes the registry.
+-- (e) APPROVED AUDIO IS AN IMMUTABLE, PINNED VERSION; PURCHASERS GET THAT VERSION.
+--     A review used to cover the row, not the bytes: an object's creator could
+--     overwrite an approved master at the same path and the row kept its
+--     approval, and music-access signed whatever creator_tracks.master_path
+--     held for a purchaser. Now, entering approved/published pins the master's
+--     exact Storage identity (storage.objects id + version + eTag + size) in
+--     public.music_asset_versions, and that identity is part of the reviewed
+--     snapshot and its sha256 digest. A pinned object, and any object an
+--     approved/published release references, cannot be overwritten, moved or
+--     deleted by ANY role: a trigger on storage.objects refuses it (the
+--     Storage API writes every upload under a new version key and then swaps
+--     the row, so refusing the row change leaves the reviewed bytes in place).
+--     Creators lose UPDATE/DELETE on such objects in RLS too, and upload grants
+--     are no longer upserts. A different master is a new path, which is a
+--     content change and goes back to review. Every order records the pinned
+--     version on sale when checkout began (music_orders.asset_version_id) and
+--     its entitlement inherits it; a download signs exactly that object, after
+--     re-checking its live identity equals the pinned one (else refuse).
+--     Owner policy: a purchaser keeps the version bought even if the release
+--     is later taken down or replaced, unless the entitlement is revoked
+--     (refund or operator), which refuses delivery.
+--
+-- Deploy order (dependency-safe; music-access now FAILS CLOSED without this
+-- file): 1. apply this file (it backfills existing reviewed releases' pinned
+-- versions and existing orders'/entitlements' purchased version);
+-- 2. run the post-apply health queries in supabase/pending/README.md;
+-- 3. deploy music-access, music-checkout, stripe-webhook; 4. run the
+-- post-deploy checks there. The functions in production before step 3 keep
+-- working on top of this file.
 --
 -- Test: scripts/test-music-release-integrity-db.sh
 --       (supabase/tests/music_release_payment_integrity.behaviour.sql)
@@ -174,15 +200,135 @@ alter table public.creator_tracks
   add column if not exists reviewed_digest text,
   add column if not exists reviewed_at timestamptz;
 
+
+------------------------------------------------------------------------------
+-- (e) the pinned asset version
+------------------------------------------------------------------------------
+-- The live Storage identity of one object: which row, which stored version,
+-- which bytes (eTag, size). Changes on every overwrite; never read from a path.
+create or replace function public.music_object_identity(p_bucket text, p_name text)
+returns jsonb language sql stable security definer set search_path = pg_catalog, public, storage as $$
+  select jsonb_build_object('bucket', o.bucket_id, 'name', o.name, 'object_id', o.id,
+                            'version', o.version, 'etag', o.metadata->>'eTag', 'size', o.metadata->>'size')
+    from storage.objects o
+   where o.bucket_id = p_bucket and o.name = p_name
+   limit 1
+$$;
+revoke all on function public.music_object_identity(text, text) from public, anon, authenticated;
+grant execute on function public.music_object_identity(text, text) to service_role;
+
+create table if not exists public.music_asset_versions (
+  id uuid primary key default gen_random_uuid(),
+  track_id uuid not null references public.creator_tracks(id) on delete restrict deferrable initially deferred,
+  bucket_id text not null check (bucket_id = 'creator-masters'),
+  object_name text not null check (char_length(object_name) between 3 and 512),
+  storage_object_id uuid not null,
+  storage_version text,
+  etag text,
+  size_bytes bigint,
+  identity jsonb not null,
+  -- byte digest, written once by a server process that has read the bytes;
+  -- not computed in the database (Postgres cannot read Storage bytes)
+  content_sha256 text check (content_sha256 ~ '^[0-9a-f]{64}$'),
+  pinned_via text not null check (pinned_via in ('review_approval','legacy_backfill')),
+  created_at timestamptz not null default now()
+);
+create index if not exists music_asset_versions_object_idx on public.music_asset_versions(bucket_id, object_name);
+create index if not exists music_asset_versions_track_idx on public.music_asset_versions(track_id);
+alter table public.music_asset_versions enable row level security;
+alter table public.music_asset_versions force row level security;
+revoke all on public.music_asset_versions from public, anon, authenticated;
+grant select, insert, update on public.music_asset_versions to service_role;
+comment on table public.music_asset_versions is
+  'Exact Storage identity of each reviewed master (object id, version, eTag, size). Immutable; orders and entitlements point here, and music-access signs only these objects for purchasers.';
+
+-- A pinned version never changes and is never removed (only content_sha256
+-- may be filled in, once).
+create or replace function public.music_asset_version_guard()
+returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
+begin
+  if tg_op = 'DELETE' then raise exception 'music_asset_version_immutable'; end if;
+  if (new.id, new.track_id, new.bucket_id, new.object_name, new.storage_object_id, new.storage_version,
+      new.etag, new.size_bytes, new.identity, new.pinned_via, new.created_at)
+     is distinct from
+     (old.id, old.track_id, old.bucket_id, old.object_name, old.storage_object_id, old.storage_version,
+      old.etag, old.size_bytes, old.identity, old.pinned_via, old.created_at)
+     or (old.content_sha256 is not null and new.content_sha256 is distinct from old.content_sha256) then
+    raise exception 'music_asset_version_immutable';
+  end if;
+  return new;
+end $$;
+revoke execute on function public.music_asset_version_guard() from public, anon, authenticated;
+drop trigger if exists music_asset_version_guard_trg on public.music_asset_versions;
+create trigger music_asset_version_guard_trg before update or delete on public.music_asset_versions
+for each row execute function public.music_asset_version_guard();
+
+-- Pin a track's master as it stands in Storage now; the same identity reuses
+-- its row (re-approval after a metadata edit).
+create or replace function public.music_pin_master(p_track uuid, p_master_path text, p_via text)
+returns uuid language plpgsql security definer set search_path = pg_catalog, public as $$
+declare v_ident jsonb; v_id uuid;
+begin
+  v_ident := public.music_object_identity('creator-masters', p_master_path);
+  if v_ident is null then raise exception 'release_master_missing' using detail = p_master_path; end if;
+  select v.id into v_id from public.music_asset_versions v
+   where v.track_id = p_track and v.bucket_id = 'creator-masters' and v.object_name = p_master_path and v.identity = v_ident
+   limit 1;
+  if v_id is null then
+    insert into public.music_asset_versions(track_id, bucket_id, object_name, storage_object_id, storage_version,
+                                            etag, size_bytes, identity, pinned_via)
+    values (p_track, 'creator-masters', p_master_path, (v_ident->>'object_id')::uuid, v_ident->>'version',
+            v_ident->>'etag', case when v_ident->>'size' ~ '^[0-9]+$' then (v_ident->>'size')::bigint end,
+            v_ident, p_via)
+    returning id into v_id;
+  end if;
+  return v_id;
+end $$;
+revoke all on function public.music_pin_master(uuid, text, text) from public, anon, authenticated;
+
+alter table public.creator_tracks
+  add column if not exists approved_master_version_id uuid references public.music_asset_versions(id) on delete restrict;
+
+-- Is this object locked: pinned for review/sale, or referenced by a release
+-- that is approved or published?
+create or replace function public.music_asset_locked(p_bucket text, p_name text)
+returns boolean language sql stable security definer set search_path = pg_catalog, public as $$
+  select exists (select 1 from public.music_asset_versions v where v.bucket_id = p_bucket and v.object_name = p_name)
+      or exists (select 1 from public.creator_tracks t
+                  where t.status in ('approved','published')
+                    and ((p_bucket = 'creator-masters' and t.master_path = p_name)
+                      or (p_bucket = 'creator-previews' and t.preview_path = p_name)
+                      or (p_bucket = 'creator-artwork' and public.music_artwork_object(t.poster_url) = p_name)))
+$$;
+revoke all on function public.music_asset_locked(text, text) from public, anon;
+grant execute on function public.music_asset_locked(text, text) to authenticated, service_role;
+
 -- A release's content: every column except identity, workflow and review
 -- bookkeeping. A column added later counts as content until it is listed
 -- here, so a new field can never be edited under a review by omission.
 create or replace function public.music_track_content(p_row public.creator_tracks)
 returns jsonb language sql immutable set search_path = pg_catalog, public as $$
   select to_jsonb(p_row) - array['id','uid','m_uid','created_at','updated_at','status','rights_status',
-                                 'moderation_note','published_at','reviewed_snapshot','reviewed_digest','reviewed_at']
+                                 'moderation_note','published_at','reviewed_snapshot','reviewed_digest','reviewed_at',
+                                 'approved_master_version_id']
 $$;
 revoke all on function public.music_track_content(public.creator_tracks) from public, anon, authenticated;
+
+-- (e) What a review covers: the content AND the exact master object pinned
+-- for it, so the digest names bytes, not just a path.
+create or replace function public.music_track_reviewed_snapshot(p_row public.creator_tracks)
+returns jsonb language sql stable security definer set search_path = pg_catalog, public as $$
+  select public.music_track_content(p_row)
+         || jsonb_build_object('approved_master',
+              (select v.identity from public.music_asset_versions v where v.id = p_row.approved_master_version_id))
+$$;
+revoke all on function public.music_track_reviewed_snapshot(public.creator_tracks) from public, anon, authenticated;
+
+create or replace function public.music_review_digest(p_snapshot jsonb)
+returns text language sql immutable set search_path = pg_catalog as $$
+  select encode(sha256(convert_to(p_snapshot::text, 'UTF8')), 'hex')
+$$;
+revoke all on function public.music_review_digest(jsonb) from public, anon, authenticated;
 
 -- Are this release's audio and artwork owned by its creator?
 create or replace function public.music_track_assets_owned(p_row public.creator_tracks)
@@ -248,6 +394,7 @@ begin
     new.reviewed_snapshot := case when tg_op='UPDATE' then old.reviewed_snapshot else null end;
     new.reviewed_digest := case when tg_op='UPDATE' then old.reviewed_digest else null end;
     new.reviewed_at := case when tg_op='UPDATE' then old.reviewed_at else null end;
+    new.approved_master_version_id := case when tg_op='UPDATE' then old.approved_master_version_id else null end;
 
     -- (a) the buckets are fixed and every new reference must be to an
     -- object this account uploaded, by the server's record.
@@ -294,13 +441,31 @@ begin
     if not public.music_track_assets_owned(new) then
       raise exception 'release_asset_not_owned';
     end if;
-    new.reviewed_snapshot := public.music_track_content(new);
-    new.reviewed_digest := md5(new.reviewed_snapshot::text);
+    -- (e) pin the exact master object being approved
+    new.approved_master_version_id := case when coalesce(new.master_path, '') <> ''
+      then public.music_pin_master(new.id, new.master_path, 'review_approval') end;
+    new.reviewed_snapshot := public.music_track_reviewed_snapshot(new);
+    new.reviewed_digest := public.music_review_digest(new.reviewed_snapshot);
     new.reviewed_at := now();
-  elsif new.status in ('approved','published')
-        and new.reviewed_digest is distinct from md5(public.music_track_content(new)::text) then
-    -- unreachable through the branch above; kept so the invariant is stated
-    raise exception 'release_differs_from_review';
+  elsif new.status in ('approved','published') then
+    -- the pinned version of a reviewed release cannot be swapped; only this
+    -- file's backfill (service role, row never pinned) records one, and only
+    -- a version of this track's current master
+    if tg_op = 'UPDATE' and (old.approved_master_version_id is not null or not v_service) then
+      new.approved_master_version_id := old.approved_master_version_id;
+    elsif new.approved_master_version_id is not null and not exists (
+            select 1 from public.music_asset_versions v
+             where v.id = new.approved_master_version_id and v.track_id = new.id
+               and v.object_name = new.master_path) then
+      raise exception 'release_master_version_mismatch';
+    end if;
+    if new.reviewed_digest is distinct from public.music_review_digest(public.music_track_reviewed_snapshot(new)) then
+      -- unreachable through the branches above; kept so the invariant is stated
+      raise exception 'release_differs_from_review';
+    end if;
+  else
+    -- not under review approval: nothing is pinned as on sale
+    new.approved_master_version_id := null;
   end if;
   return new;
 end $$;
@@ -337,11 +502,24 @@ begin
   -- the platform's own write, not a creator's (local to this statement's transaction)
   perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
   for r in select t.* from public.creator_tracks t where t.status in ('approved','published') loop
-    if public.music_track_assets_owned(r) then
+    if r.approved_master_version_id is not null then
+      continue; -- already pinned (this file re-run)
+    elsif public.music_track_assets_owned(r)
+          and (coalesce(r.master_path, '') = '' or public.music_object_identity('creator-masters', r.master_path) is not null) then
+      -- (e) pin what is live now: the master object as Storage holds it
+      if coalesce(r.master_path, '') <> '' then
+        r.approved_master_version_id := public.music_pin_master(r.id, r.master_path, 'legacy_backfill');
+      end if;
       update public.creator_tracks
-         set reviewed_snapshot = public.music_track_content(r),
-             reviewed_digest = md5(public.music_track_content(r)::text),
+         set approved_master_version_id = r.approved_master_version_id,
+             reviewed_snapshot = public.music_track_reviewed_snapshot(r),
+             reviewed_digest = public.music_review_digest(public.music_track_reviewed_snapshot(r)),
              reviewed_at = coalesce(r.published_at, now())
+       where id = r.id;
+    elsif public.music_track_assets_owned(r) then
+      update public.creator_tracks
+         set status = 'pending_review', rights_status = 'review', published_at = null,
+             moderation_note = 'Returned to review: its master file is missing from Storage.'
        where id = r.id;
     else
       update public.creator_tracks
@@ -404,18 +582,39 @@ begin
 end $$;
 
 ------------------------------------------------------------------------------
--- (c)+(d) the order and entitlement guards (service role writes these; the
--- guards hold for it too)
+-- (c)+(d)+(e) the order and entitlement guards (service role writes these;
+-- the guards hold for it too)
 ------------------------------------------------------------------------------
+-- (e) the version a buyer pays for: the one pinned on sale when checkout began
+alter table public.music_orders
+  add column if not exists asset_version_id uuid references public.music_asset_versions(id) on delete restrict;
+alter table public.music_entitlements
+  add column if not exists asset_version_id uuid references public.music_asset_versions(id) on delete restrict;
+
 create or replace function public.music_order_guard()
 returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
+declare v_status text; v_version uuid;
 begin
   if tg_op = 'INSERT' then
     if new.status <> 'pending' then raise exception 'music_order_must_start_pending'; end if;
     if new.platform_fee_cents <> round(new.amount_cents * public.music_platform_fee_bps() / 10000.0)::integer then
       raise exception 'music_order_fee_mismatch';
     end if;
+    -- (e) only a published release with a pinned master is sold, and the
+    -- order names that exact version (whatever the caller sent)
+    select t.status, t.approved_master_version_id into v_status, v_version
+      from public.creator_tracks t where t.id = new.track_id;
+    if v_status is distinct from 'published' or v_version is null then
+      raise exception 'music_order_track_not_on_sale';
+    end if;
+    new.asset_version_id := v_version;
     return new;
+  end if;
+
+  -- (e) the purchased version is fixed once recorded (set-once for orders
+  -- that predate this file)
+  if old.asset_version_id is not null and new.asset_version_id is distinct from old.asset_version_id then
+    raise exception 'music_order_terms_immutable' using detail = 'asset_version_id';
   end if;
 
   if (new.offer_id, new.track_id, new.creator_m_uid, new.amount_cents, new.platform_fee_cents,
@@ -452,16 +651,84 @@ returns trigger language plpgsql security definer set search_path = pg_catalog, 
 declare o public.music_orders%rowtype;
 begin
   select * into o from public.music_orders where id = new.order_id;
+  if tg_op = 'UPDATE' then
+    -- delivery bookkeeping and revocation only; what was bought is fixed
+    if (new.order_id, new.offer_id, new.track_id) is distinct from (old.order_id, old.offer_id, old.track_id)
+       or (old.asset_version_id is not null and new.asset_version_id is distinct from old.asset_version_id)
+       or (old.asset_version_id is null and new.asset_version_id is not null
+           and new.asset_version_id is distinct from o.asset_version_id) then
+      raise exception 'music_entitlement_immutable';
+    end if;
+    return new;
+  end if;
   if not found or o.status <> 'paid' then raise exception 'music_entitlement_order_not_paid'; end if;
   if new.offer_id <> o.offer_id or new.track_id <> o.track_id then
     raise exception 'music_entitlement_order_mismatch';
   end if;
+  -- (e) the licence delivers the order's pinned version, never the caller's
+  new.asset_version_id := o.asset_version_id;
   return new;
 end $$;
 revoke execute on function public.music_entitlement_guard() from public, anon, authenticated;
 drop trigger if exists music_entitlement_guard_trg on public.music_entitlements;
-create trigger music_entitlement_guard_trg before insert on public.music_entitlements
+create trigger music_entitlement_guard_trg before insert or update on public.music_entitlements
 for each row execute function public.music_entitlement_guard();
+
+-- (e) backfill: an order that predates this file is recorded against the
+-- version pinned for its track now (the best evidence there is of what was
+-- on sale; production had no orders when this file was written), and its
+-- entitlement inherits the order's. One with no pinned version stays null
+-- and music-access refuses its download (409) until an operator resolves it.
+update public.music_orders o
+   set asset_version_id = t.approved_master_version_id
+  from public.creator_tracks t
+ where o.asset_version_id is null and t.id = o.track_id and t.approved_master_version_id is not null;
+update public.music_entitlements e
+   set asset_version_id = o.asset_version_id
+  from public.music_orders o
+ where e.asset_version_id is null and o.id = e.order_id and o.asset_version_id is not null;
+
+------------------------------------------------------------------------------
+-- (e) delivery: what music-access signs. Service role only.
+------------------------------------------------------------------------------
+-- A purchaser's licence for (track, offer): the newest unrevoked one, else
+-- the newest revoked one (so a revocation is refused, not mistaken for no
+-- purchase), with the pinned object and whether Storage still holds exactly
+-- those bytes. The release's current state is deliberately not consulted:
+-- a purchaser keeps the version bought (owner policy) unless revoked.
+create or replace function public.music_purchase_delivery(p_track uuid, p_offer uuid, p_user uuid, p_email text)
+returns table(entitlement_id uuid, download_count integer, revoked boolean, order_status text,
+              asset_version_id uuid, bucket_id text, object_name text, intact boolean, track_status text)
+language sql stable security definer set search_path = pg_catalog, public as $$
+  select e.id, e.download_count, e.revoked_at is not null, o.status,
+         e.asset_version_id, v.bucket_id, v.object_name,
+         coalesce(v.id is not null and public.music_object_identity(v.bucket_id, v.object_name) = v.identity, false),
+         t.status
+    from public.music_entitlements e
+    join public.music_orders o on o.id = e.order_id
+    join public.creator_tracks t on t.id = e.track_id
+    left join public.music_asset_versions v on v.id = e.asset_version_id
+   where e.track_id = p_track and e.offer_id = p_offer
+     and ((p_user is not null and e.user_id = p_user)
+       or (coalesce(p_email, '') <> '' and lower(e.customer_email) = lower(p_email)))
+   order by (e.revoked_at is null) desc, e.created_at desc
+   limit 1
+$$;
+revoke all on function public.music_purchase_delivery(uuid, uuid, uuid, text) from public, anon, authenticated;
+grant execute on function public.music_purchase_delivery(uuid, uuid, uuid, text) to service_role;
+
+-- A published release's pinned master, for listeners: never the live path.
+create or replace function public.music_track_delivery(p_track uuid)
+returns table(track_status text, asset_version_id uuid, bucket_id text, object_name text, intact boolean)
+language sql stable security definer set search_path = pg_catalog, public as $$
+  select t.status, t.approved_master_version_id, v.bucket_id, v.object_name,
+         coalesce(v.id is not null and public.music_object_identity(v.bucket_id, v.object_name) = v.identity, false)
+    from public.creator_tracks t
+    left join public.music_asset_versions v on v.id = t.approved_master_version_id
+   where t.id = p_track
+$$;
+revoke all on function public.music_track_delivery(uuid) from public, anon, authenticated;
+grant execute on function public.music_track_delivery(uuid) to service_role;
 
 ------------------------------------------------------------------------------
 -- (a) storage: changing, removing and reading your own private objects
@@ -469,15 +736,53 @@ for each row execute function public.music_entitlement_guard();
 -- Writing a NEW object stays confined to your own folder (a namespace, so
 -- two accounts never collide); who owns it is what Storage stamps.
 ------------------------------------------------------------------------------
+-- (e) and never an object that is pinned or that an approved/published
+-- release references: those are what was reviewed and sold.
 drop policy if exists "creator updates uploaded music objects" on storage.objects;
 create policy "creator updates uploaded music objects" on storage.objects for update to authenticated
-using (bucket_id in ('creator-previews','creator-masters','creator-artwork') and public.music_asset_is_mine(bucket_id, name))
+using (bucket_id in ('creator-previews','creator-masters','creator-artwork')
+       and public.music_asset_is_mine(bucket_id, name)
+       and not public.music_asset_locked(bucket_id, name))
 with check (bucket_id in ('creator-previews','creator-masters','creator-artwork')
             and (storage.foldername(name))[1] = auth.uid()::text
             and public.music_asset_is_mine(bucket_id, name));
 drop policy if exists "creator deletes uploaded music objects" on storage.objects;
 create policy "creator deletes uploaded music objects" on storage.objects for delete to authenticated
-using (bucket_id in ('creator-previews','creator-masters','creator-artwork') and public.music_asset_is_mine(bucket_id, name));
+using (bucket_id in ('creator-previews','creator-masters','creator-artwork')
+       and public.music_asset_is_mine(bucket_id, name)
+       and not public.music_asset_locked(bucket_id, name));
 drop policy if exists "creator reads own private masters" on storage.objects;
 create policy "creator reads own private masters" on storage.objects for select to authenticated
 using (bucket_id = 'creator-masters' and public.music_asset_is_mine(bucket_id, name));
+
+------------------------------------------------------------------------------
+-- (e) the same rule for every role, including the service role and the
+-- Storage API's own writes (signed upload URLs, upserts, moves, deletes),
+-- which RLS does not reach. Overwriting a locked object at the same path
+-- changes its version/eTag/size: refused, so the row keeps pointing at the
+-- reviewed version's bytes. Taking a pinned master down (legal) is an
+-- operator migration, not an API call.
+------------------------------------------------------------------------------
+create or replace function public.music_storage_object_guard()
+returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
+begin
+  if old.bucket_id in ('creator-previews','creator-masters','creator-artwork')
+     and public.music_asset_locked(old.bucket_id, old.name) then
+    raise exception 'music_asset_immutable'
+      using detail = old.bucket_id || '/' || old.name, errcode = '42501',
+            hint = 'Approved or purchased music is immutable: upload a new file (a new path) and resubmit for review.';
+  end if;
+  return case when tg_op = 'DELETE' then old else new end;
+end $$;
+revoke execute on function public.music_storage_object_guard() from public, anon, authenticated;
+drop trigger if exists music_storage_object_guard_upd on storage.objects;
+create trigger music_storage_object_guard_upd before update on storage.objects
+for each row
+when (old.bucket_id is distinct from new.bucket_id or old.name is distinct from new.name
+      or old.version is distinct from new.version
+      or old.metadata->>'eTag' is distinct from new.metadata->>'eTag'
+      or old.metadata->>'size' is distinct from new.metadata->>'size')
+execute function public.music_storage_object_guard();
+drop trigger if exists music_storage_object_guard_del on storage.objects;
+create trigger music_storage_object_guard_del before delete on storage.objects
+for each row execute function public.music_storage_object_guard();

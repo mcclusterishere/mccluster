@@ -51,9 +51,18 @@ select pg_temp.check((select status from public.creator_tracks where id='2000000
 select pg_temp.check((select published_at is null and rights_status = 'review' from public.creator_tracks
                        where id='20000000-0000-4000-8000-0000000000a2'), 'and is no longer published or cleared');
 select pg_temp.check((select status = 'published' and reviewed_digest is not null
-                       and reviewed_digest = md5(public.music_track_content(t)::text)
+                       and reviewed_digest = public.music_review_digest(public.music_track_reviewed_snapshot(t))
                        from public.creator_tracks t where id='20000000-0000-4000-8000-0000000000a1'),
                      'an honest published release keeps its status and has its reviewed snapshot');
+-- (e) backfill pinned the live master's exact Storage identity into the review
+select pg_temp.check((select v.pinned_via = 'legacy_backfill' and v.object_name = t.master_path
+                       and v.identity = public.music_object_identity('creator-masters', t.master_path)
+                       and t.reviewed_snapshot->'approved_master' = v.identity
+                       from public.creator_tracks t join public.music_asset_versions v on v.id = t.approved_master_version_id
+                      where t.id='20000000-0000-4000-8000-0000000000a1'),
+                     'backfill pinned an honest release''s master (object id, version, eTag, size) into its reviewed snapshot');
+select pg_temp.check((select approved_master_version_id is null from public.creator_tracks where id='20000000-0000-4000-8000-0000000000a2'),
+                     'a release sent back to review has no pinned version');
 select pg_temp.check(public.music_track_assets_verified('20000000-0000-4000-8000-0000000000a1'), 'honest assets verify');
 select pg_temp.check(not public.music_track_assets_verified('20000000-0000-4000-8000-0000000000a2'), 'borrowed assets do not verify');
 select pg_temp.check((select platform_fee_bps from public.music_license_offers where id='30000000-0000-4000-8000-0000000000a1') = 1500,
@@ -289,8 +298,140 @@ update public.music_orders set status='canceled' where id='40000000-0000-4000-80
 select pg_temp.must_fail($$update public.music_orders set status='paid' where id='40000000-0000-4000-8000-0000000000a2'$$,
   '%music_order_not_payable%');
 
+------------------------------------------------------------------------------
+-- (e) approved audio is immutable; purchasers get the version they bought
+------------------------------------------------------------------------------
+-- Fresh (20..a3) is published at this point; its master is Ana's
+-- 00..b1/really-ana.wav, pinned when it was last approved.
+\set A3 '''20000000-0000-4000-8000-0000000000a3'''
+\set PINNED '''00000000-0000-4000-8000-0000000000b1/really-ana.wav'''
+select pg_temp.as_service();
+select pg_temp.check((select t.status = 'published' and v.object_name = :PINNED and v.pinned_via = 'review_approval'
+                       and t.reviewed_snapshot->'approved_master' = v.identity
+                       and t.reviewed_digest = public.music_review_digest(public.music_track_reviewed_snapshot(t))
+                       from public.creator_tracks t join public.music_asset_versions v on v.id = t.approved_master_version_id
+                      where t.id = :A3), 'approval pinned the exact master object and the digest covers it');
+create temp table e_pin as
+  select t.approved_master_version_id as v1, public.music_object_identity('creator-masters', :PINNED) as ident
+    from public.creator_tracks t where t.id = :A3;
+grant select on e_pin to authenticated, service_role;
+
+-- REGRESSION: same-path overwrite of an approved master.
+-- The creator, through RLS (a direct upsert with her own token):
+select pg_temp.as_user(:A);
+with u as (update storage.objects set version = 'overwritten', metadata = '{"eTag":"evil","size":9}'
+            where bucket_id = 'creator-masters' and name = :PINNED returning 1)
+select pg_temp.check((select count(*) from u) = 0, 'same-path overwrite: a creator cannot overwrite her own approved master');
+with d as (delete from storage.objects where bucket_id = 'creator-masters' and name = :PINNED returning 1)
+select pg_temp.check((select count(*) from d) = 0, 'a creator cannot delete her own approved master');
+with u as (update storage.objects set version = 'overwritten'
+            where bucket_id = 'creator-previews' and name = '00000000-0000-4000-8000-0000000000a1/a2-preview.mp3' returning 1)
+select pg_temp.check((select count(*) from u) = 0, 'a creator cannot overwrite a published preview');
+-- an unreferenced upload of her own stays hers to replace
+insert into storage.objects(bucket_id, name) values ('creator-masters', '00000000-0000-4000-8000-0000000000a1/scratch.wav');
+with u as (update storage.objects set version = 'v2' where bucket_id = 'creator-masters'
+            and name = '00000000-0000-4000-8000-0000000000a1/scratch.wav' returning 1)
+select pg_temp.check((select count(*) from u) = 1, 'a draft upload nobody reviewed can still be replaced');
+-- Every role (a signed upload URL with upsert, the service key, a move): the trigger.
+select pg_temp.as_service();
+select pg_temp.must_fail($$update storage.objects set version = 'overwritten', metadata = '{"eTag":"evil","size":9}'
+  where bucket_id = 'creator-masters' and name = '00000000-0000-4000-8000-0000000000b1/really-ana.wav'$$, '%music_asset_immutable%');
+select pg_temp.must_fail($$update storage.objects set name = '00000000-0000-4000-8000-0000000000b1/moved.wav'
+  where bucket_id = 'creator-masters' and name = '00000000-0000-4000-8000-0000000000b1/really-ana.wav'$$, '%music_asset_immutable%');
+select pg_temp.must_fail($$delete from storage.objects
+  where bucket_id = 'creator-masters' and name = '00000000-0000-4000-8000-0000000000b1/really-ana.wav'$$, '%music_asset_immutable%');
+-- metadata the bytes do not depend on may still be touched
+update storage.objects set last_accessed_at = now() where bucket_id = 'creator-masters' and name = :PINNED;
+select pg_temp.check((select public.music_object_identity('creator-masters', :PINNED) = (select ident from e_pin)
+                         and t.status = 'published' and t.approved_master_version_id = (select v1 from e_pin)
+                         from public.creator_tracks t where t.id = :A3),
+                     'same-path overwrite: refused, the reviewed bytes and the approval are unchanged (never approved over new bytes)');
+
+-- REGRESSION: replacement after purchase.
+insert into public.music_orders(id, offer_id, track_id, creator_m_uid, customer_email, stripe_checkout_session_id,
+  amount_cents, platform_fee_cents, creator_net_cents, currency, asset_version_id)
+values ('40000000-0000-4000-8000-0000000000e1', '30000000-0000-4000-8000-0000000000a3', :A3,
+        '10000000-0000-4000-8000-0000000000a1', 'buyer@test', 'cs_order_e1', 2000, 300, 1700, 'usd',
+        (select approved_master_version_id from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000a1'));
+select pg_temp.check((select asset_version_id = (select v1 from e_pin) from public.music_orders
+                       where id = '40000000-0000-4000-8000-0000000000e1'),
+                     'an order records the version on sale, whatever the caller sent');
+update public.music_orders set status = 'paid', paid_at = now() where id = '40000000-0000-4000-8000-0000000000e1';
+insert into public.music_entitlements(id, order_id, offer_id, track_id, customer_email, asset_version_id)
+values ('50000000-0000-4000-8000-0000000000e1', '40000000-0000-4000-8000-0000000000e1', '30000000-0000-4000-8000-0000000000a3',
+        :A3, 'buyer@test', null);
+select pg_temp.check((select asset_version_id = (select v1 from e_pin) from public.music_entitlements
+                       where id = '50000000-0000-4000-8000-0000000000e1'), 'the entitlement inherits the order''s pinned version');
+select pg_temp.must_fail($$update public.music_entitlements set asset_version_id = null
+  where id = '50000000-0000-4000-8000-0000000000e1'$$, '%music_entitlement_immutable%');
+select pg_temp.must_fail($$update public.music_orders set asset_version_id = null
+  where id = '40000000-0000-4000-8000-0000000000e1'$$, '%music_order_terms_immutable%');
+-- the creator uploads a replacement master and points the release at it
+insert into public.music_creator_assets(bucket_id, object_name, owner_user_id, owner_m_uid)
+values ('creator-masters', '00000000-0000-4000-8000-0000000000a1/replacement.wav', :A, '10000000-0000-4000-8000-0000000000a1');
+insert into storage.objects(bucket_id, name, owner, owner_id)
+values ('creator-masters', '00000000-0000-4000-8000-0000000000a1/replacement.wav', null, null);
+select pg_temp.as_user(:A);
+update public.creator_tracks set master_path = '00000000-0000-4000-8000-0000000000a1/replacement.wav' where id = :A3;
+select pg_temp.as_service();
+select pg_temp.check((select status = 'pending_review' and approved_master_version_id is null from public.creator_tracks where id = :A3),
+                     'replacement after purchase: the release goes back to review and nothing is pinned on sale');
+select pg_temp.check((select d.object_name = :PINNED and d.intact and not d.revoked and d.order_status = 'paid'
+                       and d.asset_version_id = (select v1 from e_pin)
+                       from public.music_purchase_delivery(:A3, '30000000-0000-4000-8000-0000000000a3', null, 'BUYER@test') d),
+                     'replacement after purchase: the purchaser is still delivered ONLY the originally purchased bytes');
+select pg_temp.check((select count(*) from public.music_track_delivery(:A3) d where d.object_name is not null) = 0,
+                     'listeners get no master while the replacement is unreviewed');
+select pg_temp.must_fail($$insert into public.music_orders(offer_id, track_id, creator_m_uid, customer_email, stripe_checkout_session_id,
+  amount_cents, platform_fee_cents, creator_net_cents, currency) values ('30000000-0000-4000-8000-0000000000a3',
+  '20000000-0000-4000-8000-0000000000a3', '10000000-0000-4000-8000-0000000000a1', 'x@test', 'cs_unreviewed', 2000, 300, 1700, 'usd')$$,
+  '%music_order_track_not_on_sale%');
+-- the purchased master stays locked although no release references it now
+select pg_temp.must_fail($$delete from storage.objects
+  where bucket_id = 'creator-masters' and name = '00000000-0000-4000-8000-0000000000b1/really-ana.wav'$$, '%music_asset_immutable%');
+-- re-approval pins the replacement as a NEW version; the purchaser keeps theirs
+update public.creator_tracks set status = 'published', rights_status = 'cleared', published_at = now() where id = :A3;
+select pg_temp.check((select approved_master_version_id <> (select v1 from e_pin) from public.creator_tracks where id = :A3),
+                     're-approval pins the replacement as a new version');
+select pg_temp.check((select d.object_name like '%replacement.wav' and d.intact from public.music_track_delivery(:A3) d),
+                     'listeners now get the newly reviewed version');
+select pg_temp.check((select d.object_name = :PINNED from public.music_purchase_delivery(:A3, '30000000-0000-4000-8000-0000000000a3', null, 'buyer@test') d),
+                     'the earlier purchaser still gets the version bought');
+-- taken down: the purchaser keeps the version bought (owner policy)
+update public.creator_tracks set status = 'archived' where id = :A3;
+select pg_temp.check((select d.object_name = :PINNED and d.intact and d.track_status = 'archived'
+                       from public.music_purchase_delivery(:A3, '30000000-0000-4000-8000-0000000000a3', null, 'buyer@test') d),
+                     'a taken-down release still delivers the purchased version');
+-- if the bytes ever differ from the pin (a path outside the database), delivery is not intact
+reset role;
+alter table storage.objects disable trigger music_storage_object_guard_upd;
+update storage.objects set version = 'tampered' where bucket_id = 'creator-masters' and name = :PINNED;
+alter table storage.objects enable trigger music_storage_object_guard_upd;
+select pg_temp.as_service();
+select pg_temp.check((select not d.intact from public.music_purchase_delivery(:A3, '30000000-0000-4000-8000-0000000000a3', null, 'buyer@test') d),
+                     'bytes that no longer match the pin are reported not intact (music-access refuses)');
+-- revoked: refused, not mistaken for no purchase
+update public.music_entitlements set revoked_at = now() where id = '50000000-0000-4000-8000-0000000000e1';
+select pg_temp.check((select d.revoked from public.music_purchase_delivery(:A3, '30000000-0000-4000-8000-0000000000a3', null, 'buyer@test') d),
+                     'a revoked licence is reported revoked');
+-- the pinned record itself is immutable
+select pg_temp.must_fail($$update public.music_asset_versions set object_name = 'x/y.wav'$$, '%music_asset_version_immutable%');
+select pg_temp.must_fail($$delete from public.music_asset_versions$$, '%music_asset_version_immutable%');
+update public.music_asset_versions set content_sha256 = repeat('a', 64) where id = (select v1 from e_pin);
+select pg_temp.must_fail($$update public.music_asset_versions set content_sha256 = repeat('b', 64)
+  where id = (select v1 from e_pin)$$, '%music_asset_version_immutable%');
+-- and creators cannot write the pin
+select pg_temp.as_user(:A);
+update public.creator_tracks set approved_master_version_id = (select v1 from e_pin) where id = :A3;
+select pg_temp.as_service();
+select pg_temp.check((select approved_master_version_id is null from public.creator_tracks where id = :A3),
+                     'a creator cannot set the pinned version');
+
 -- nobody but the service role reaches the asset registry
 select pg_temp.as_user(:A);
+select pg_temp.must_fail($$select count(*) from public.music_asset_versions$$, '%permission denied%');
+select pg_temp.must_fail($$select * from public.music_purchase_delivery('20000000-0000-4000-8000-0000000000a3',
+  '30000000-0000-4000-8000-0000000000a3', null, 'buyer@test')$$, '%permission denied%');
 select pg_temp.must_fail($$select count(*) from public.music_creator_assets$$, '%permission denied%');
 select pg_temp.must_fail($$insert into public.music_creator_assets(bucket_id, object_name, owner_user_id)
   values ('creator-masters', '00000000-0000-4000-8000-0000000000b1/b-master.wav', '00000000-0000-4000-8000-0000000000a1')$$,

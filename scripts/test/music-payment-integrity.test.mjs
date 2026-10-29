@@ -17,6 +17,9 @@ import { readFile } from 'node:fs/promises';
 import { checkoutBindingFailure } from '../../supabase/functions/_shared/checkout-binding.ts';
 import { MUSIC_PLATFORM_FEE_BPS, musicPlatformFee } from '../../supabase/functions/_shared/music-commission.ts';
 import { musicFulfilmentRefusal } from '../../supabase/functions/stripe-webhook/music.ts';
+import {
+  DependencyMissing, assetsVerified, purchasedDownload, recordUpload, streamTarget
+} from '../../supabase/functions/music-access/delivery.ts';
 
 const read = (p) => readFile(p, 'utf8');
 const PENDING = 'supabase/pending/music_release_payment_integrity_v1.sql';
@@ -147,20 +150,119 @@ test('checkout ignores any fee but the server\'s', async () => {
 test('music-access records who it grants an upload to and verifies ownership before signing a master', async () => {
   const access = await read('supabase/functions/music-access/index.ts');
   const upload = access.slice(access.indexOf('action === "creator-upload-url"'), access.indexOf('action === "stream"'));
-  assert.ok(upload.indexOf('recordUpload(bucket, path, who.user.id, who.mUid)') > 0, 'the grant is recorded to the caller');
+  assert.ok(upload.indexOf('recordUpload(db, bucket, path, who.user.id, who.mUid)') > 0, 'the grant is recorded to the caller');
   assert.ok(upload.indexOf('recordUpload(') < upload.indexOf('uploadGrant('), 'before the grant is handed out');
-  for (const action of ['stream', 'download']) {
-    const start = access.indexOf(`action === "${action}"`);
-    const body = access.slice(start, access.indexOf('if (action ===', start + 10));
-    assert.ok(body.indexOf('assetsVerified(track.id)') > 0, `${action} verifies the assets`);
-    assert.ok(body.indexOf('assetsVerified(track.id)') < body.indexOf('signDownload('), `${action} verifies before signing`);
-    assert.match(body, /track\.master_bucket !== "creator-masters"/, `${action} signs only the creator masters bucket`);
-  }
+  assert.match(upload, /uploadGrant\(bucket, path, false\)/, 'a creator grant is never an upsert');
+  const stream = access.slice(access.indexOf('action === "stream"'), access.indexOf('action === "download"'));
+  assert.ok(stream.indexOf('streamTarget(db, track, !!owner)') > 0 && stream.indexOf('streamTarget(') < stream.indexOf('signDownload('),
+    'stream signs only what streamTarget resolved');
+  assert.match(stream, /signDownload\(target\.bucket, target\.path\)/);
+  const download = access.slice(access.indexOf('action === "download"'), access.indexOf('action === "operator-dashboard"'));
+  assert.ok(download.indexOf('purchasedDownload(db,') > 0 && download.indexOf('purchasedDownload(') < download.indexOf('signDownload('),
+    'download signs only what purchasedDownload resolved');
+  assert.doesNotMatch(download, /master_path/, 'a download never reads the live master path');
   const sql = await read(PENDING);
   assert.doesNotMatch(sql.slice(sql.indexOf('create or replace function public.music_asset_owned_by')).split('$$;')[0], /foldername|split_part/,
     'ownership is never read from the path');
   assert.match(sql, /raise exception 'creator_asset_not_owned' using detail = 'master_path'/);
   assert.match(sql, /raise exception 'release_asset_not_owned'/);
+});
+
+/* ---------------- (a)+(e) fail closed, with a stubbed client ---------------- */
+
+const MISSING_FN = { code: 'PGRST202', message: 'Could not find the function' };
+const MISSING_TABLE = { code: 'PGRST205', message: 'Could not find the table' };
+function stubDb({ rpc = {}, insertError = null } = {}) {
+  const calls = [];
+  return {
+    calls,
+    rpc: async (fn, args) => {
+      calls.push([fn, args]);
+      const r = rpc[fn];
+      if (!r) return { data: null, error: MISSING_FN };
+      return typeof r === 'function' ? r(args) : r;
+    },
+    from: (table) => ({ insert: async (row) => { calls.push(['insert', table, row]); return { error: insertError }; } })
+  };
+}
+const TRACK = { id: '20000000-0000-4000-8000-0000000000a3', status: 'published', master_bucket: 'creator-masters', master_path: 'u/live.wav' };
+const PURCHASE = {
+  entitlement_id: '50000000-0000-4000-8000-0000000000e1', download_count: 2, revoked: false, order_status: 'paid',
+  asset_version_id: '60000000-0000-4000-8000-0000000000e1', bucket_id: 'creator-masters', object_name: 'u/purchased.wav',
+  intact: true, track_status: 'pending_review'
+};
+const Q = { trackId: TRACK.id, offerId: '30000000-0000-4000-8000-0000000000a3', userId: 'u1', email: 'Buyer@Test' };
+
+test('missing RPC: ownership verification fails closed (never "verified")', async () => {
+  await assert.rejects(assetsVerified(stubDb(), TRACK.id), (e) => e instanceof DependencyMissing && e.dependency === 'music_track_assets_verified');
+  await assert.rejects(assetsVerified(stubDb({ rpc: { music_track_assets_verified: { data: null, error: { code: '42883' } } } }), TRACK.id), DependencyMissing);
+  await assert.rejects(assetsVerified(stubDb({ rpc: { music_track_assets_verified: { data: null, error: { code: 'XX000' } } } }), TRACK.id), /could_not_verify_assets/);
+  assert.equal(await assetsVerified(stubDb({ rpc: { music_track_assets_verified: { data: false, error: null } } }), TRACK.id), false);
+  assert.equal(await assetsVerified(stubDb({ rpc: { music_track_assets_verified: { data: true, error: null } } }), TRACK.id), true);
+});
+
+test('missing table: an upload grant is refused, not issued unrecorded', async () => {
+  await assert.rejects(recordUpload(stubDb({ insertError: MISSING_TABLE }), 'creator-masters', 'u/x.wav', 'u', 'm'), DependencyMissing);
+  await assert.rejects(recordUpload(stubDb({ insertError: { code: '23505' } }), 'creator-masters', 'u/x.wav', 'u', 'm'), /could_not_record_upload/);
+  await recordUpload(stubDb(), 'creator-masters', 'u/x.wav', 'u', 'm');
+});
+
+test('missing RPC: purchaser download and listener stream fail closed', async () => {
+  await assert.rejects(purchasedDownload(stubDb(), Q), (e) => e instanceof DependencyMissing && e.dependency === 'music_purchase_delivery');
+  await assert.rejects(streamTarget(stubDb(), TRACK, false), (e) => e instanceof DependencyMissing && e.dependency === 'music_track_delivery');
+  /* the delivery RPC present but the ownership RPC missing still refuses */
+  const halfApplied = stubDb({ rpc: { music_track_delivery: { data: [{ track_status: 'published', asset_version_id: 'v', bucket_id: 'creator-masters', object_name: 'u/p.wav', intact: true }], error: null } } });
+  await assert.rejects(streamTarget(halfApplied, TRACK, false), DependencyMissing);
+  await assert.rejects(streamTarget(stubDb(), { ...TRACK, status: 'draft' }, true), DependencyMissing);
+  const access = await read('supabase/functions/music-access/index.ts');
+  assert.match(access, /if \(error instanceof DependencyMissing\) \{[\s\S]{0,200}console\.error\([\s\S]{0,200}503\)/, 'music-access answers 503 and logs');
+  assert.doesNotMatch(access, /notApplied\(error\)\) return true/, 'no fail-open fallback is left');
+  const delivery = await read('supabase/functions/music-access/delivery.ts');
+  assert.doesNotMatch(delivery, /notApplied\([^)]*\)\)\s*return/, 'no notApplied() branch returns instead of refusing');
+});
+
+test('replacement after purchase: the download is the purchased pinned version, never the live master', async () => {
+  const db = stubDb({ rpc: { music_purchase_delivery: { data: [PURCHASE], error: null } } });
+  const got = await purchasedDownload(db, Q);
+  assert.deepEqual(got, { ok: true, bucket: 'creator-masters', path: 'u/purchased.wav', entitlementId: PURCHASE.entitlement_id, downloadCount: 2 });
+  assert.notEqual(got.path, TRACK.master_path);
+  assert.deepEqual(db.calls[0], ['music_purchase_delivery', { p_track: Q.trackId, p_offer: Q.offerId, p_user: 'u1', p_email: 'buyer@test' }]);
+  /* a takedown does not matter (owner policy); a revocation, a refund, an unpinned or changed object does */
+  assert.equal((await purchasedDownload(stubDb({ rpc: { music_purchase_delivery: { data: [{ ...PURCHASE, track_status: 'archived' }], error: null } } }), Q)).ok, true);
+  const refusals = [
+    [[], 402], [[{ ...PURCHASE, revoked: true }], 403], [[{ ...PURCHASE, order_status: 'refunded' }], 403],
+    [[{ ...PURCHASE, asset_version_id: null, object_name: null }], 409], [[{ ...PURCHASE, intact: false }], 409],
+    [[{ ...PURCHASE, bucket_id: 'mcc-gated-audio' }], 409]
+  ];
+  for (const [data, status] of refusals) {
+    const r = await purchasedDownload(stubDb({ rpc: { music_purchase_delivery: { data, error: null } } }), Q);
+    assert.equal(r.ok, false); assert.equal(r.status, status, JSON.stringify(data));
+  }
+});
+
+test('a listener streams the pinned reviewed master; an owner previews only an owned draft', async () => {
+  const ok = { music_track_assets_verified: { data: true, error: null } };
+  const pinned = { data: [{ track_status: 'published', asset_version_id: 'v1', bucket_id: 'creator-masters', object_name: 'u/pinned.wav', intact: true }], error: null };
+  assert.deepEqual(await streamTarget(stubDb({ rpc: { ...ok, music_track_delivery: pinned } }), TRACK, false), { ok: true, bucket: 'creator-masters', path: 'u/pinned.wav' });
+  const changed = { data: [{ ...pinned.data[0], intact: false }], error: null };
+  assert.equal((await streamTarget(stubDb({ rpc: { ...ok, music_track_delivery: changed } }), TRACK, false)).status, 409);
+  const unpublished = { data: [{ track_status: 'pending_review', asset_version_id: null, bucket_id: null, object_name: null, intact: false }], error: null };
+  assert.equal((await streamTarget(stubDb({ rpc: { ...ok, music_track_delivery: unpublished } }), TRACK, false)).status, 404);
+  assert.deepEqual(await streamTarget(stubDb({ rpc: ok }), { ...TRACK, status: 'draft' }, true), { ok: true, bucket: 'creator-masters', path: 'u/live.wav' });
+  assert.equal((await streamTarget(stubDb({ rpc: { music_track_assets_verified: { data: false, error: null } } }), { ...TRACK, status: 'draft' }, true)).status, 409);
+});
+
+test('approval pins the exact object; storage refuses changing it for every role', async () => {
+  const sql = await read(PENDING);
+  assert.match(sql, /new\.approved_master_version_id := case when coalesce\(new\.master_path, ''\) <> ''\s+then public\.music_pin_master\(new\.id, new\.master_path, 'review_approval'\) end;/);
+  assert.match(sql, /'object_id', o\.id,\s+'version', o\.version, 'etag', o\.metadata->>'eTag', 'size', o\.metadata->>'size'/);
+  assert.match(sql, /create trigger music_storage_object_guard_upd before update on storage\.objects/);
+  assert.match(sql, /create trigger music_storage_object_guard_del before delete on storage\.objects/);
+  assert.match(sql, /new\.asset_version_id := o\.asset_version_id;/, 'the entitlement inherits the order\'s version');
+  const rollback = await read('supabase/pending/music_release_payment_integrity_v1.rollback.sql');
+  for (const name of ['music_storage_object_guard_upd', 'music_asset_versions', 'approved_master_version_id', 'music_purchase_delivery']) {
+    assert.match(rollback, new RegExp(name), `rollback removes ${name}`);
+  }
 });
 
 /* ---------------- (b) review ---------------- */
@@ -175,7 +277,8 @@ test('a review decision is about the version the operator saw, and a reviewed re
   assert.match(admin, /data-version="'\+esc\(t\.updated_at\|\|""\)/);
   const sql = await read(PENDING);
   assert.match(sql, /if tg_op = 'UPDATE' and old\.status in \('approved','published'\)\s+and public\.music_track_content\(new\) is distinct from public\.music_track_content\(old\) then\s+new\.status := 'pending_review';/);
-  assert.match(sql, /new\.reviewed_snapshot := public\.music_track_content\(new\);/);
+  assert.match(sql, /new\.reviewed_snapshot := public\.music_track_reviewed_snapshot\(new\);/);
+  assert.match(sql, /new\.reviewed_digest := public\.music_review_digest\(new\.reviewed_snapshot\);/);
   assert.match(sql, /create trigger music_track_offers_follow_status_trg after update on public\.creator_tracks/);
 });
 

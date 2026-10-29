@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { DependencyMissing, purchasedDownload, recordUpload, streamTarget, type MusicDb } from "./delivery.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -50,34 +51,15 @@ async function signDownload(bucket: string, path: string, download?: string) {
   if (error || !data?.signedUrl) throw new Error(error?.message || "could_not_sign_asset");
   return data.signedUrl;
 }
-async function uploadGrant(bucket: string, path: string) {
-  const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(path, { upsert: true });
+/* Creator grants are never upserts: each grant is a fresh path, and an
+   approved or purchased object is immutable (the database refuses an
+   overwrite for every role; supabase/pending/music_release_payment_integrity_v1.sql). */
+async function uploadGrant(bucket: string, path: string, upsert: boolean) {
+  const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(path, { upsert });
   if (error || !data?.token) throw new Error(error?.message || "could_not_create_upload_url");
   return { bucket, path: data.path || path, token: data.token, signed_url: data.signedUrl || null };
 }
-/* PostgREST says the table/function is not there: the pending SQL
-   (supabase/pending/music_release_payment_integrity_v1.sql) is not applied yet. */
-function notApplied(error: { code?: string } | null | undefined) {
-  return !!error && ["PGRST202", "PGRST205", "42P01", "42883"].includes(String(error.code || ""));
-}
-/* (a) Who uploaded an object is the server's record, written here when the
-   grant is issued to the authenticated caller, never read from its path. */
-async function recordUpload(bucket: string, path: string, userId: string, mUid: string) {
-  const { error } = await admin.from("music_creator_assets")
-    .insert({ bucket_id: bucket, object_name: path, owner_user_id: userId, owner_m_uid: mUid, source: "upload_grant" });
-  if (error && !notApplied(error)) throw new Error("could_not_record_upload");
-}
-/* (a) Are this release's audio and artwork its creator's own, by that
-   record? Asked before any master is signed, for its owner too: a creator
-   pointing a draft at another creator's master is the attack. */
-async function assetsVerified(trackId: string) {
-  const { data, error } = await admin.rpc("music_track_assets_verified", { p_track: trackId });
-  if (error) {
-    if (notApplied(error)) return true; // the database guard is not there yet either; behaviour as before
-    throw new Error("could_not_verify_assets");
-  }
-  return data === true;
-}
+const db = admin as unknown as MusicDb;
 async function hasMusicEntitlement(trackId: string, userId: string, email: string) {
   const { count: byUser } = await admin.from("music_entitlements").select("id", { count: "exact", head: true })
     .eq("track_id", trackId).eq("user_id", userId).is("revoked_at", null);
@@ -112,7 +94,7 @@ Deno.serve(async (req) => {
         wav: { path: "niggy-nigg/niggy-nigg.wav", type: "audio/wav" },
       };
       if (!allowed[format]) return json({ error: "unsupported format" }, 400);
-      const grant = await uploadGrant("mcc-gated-audio", allowed[format].path);
+      const grant = await uploadGrant("mcc-gated-audio", allowed[format].path, true);
       return json({ ok: true, ...grant, content_type: allowed[format].type });
     }
 
@@ -125,8 +107,8 @@ Deno.serve(async (req) => {
       const fileName = clean(body.file_name, 180).replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
       if (!fileName || fileName.includes("..")) return json({ error: "invalid file name" }, 400);
       const path = `${who.user.id}/${crypto.randomUUID()}-${fileName}`;
-      await recordUpload(bucket, path, who.user.id, who.mUid);
-      return json({ ok: true, ...(await uploadGrant(bucket, path)) });
+      await recordUpload(db, bucket, path, who.user.id, who.mUid);
+      return json({ ok: true, ...(await uploadGrant(bucket, path, false)) });
     }
 
     if (action === "stream") {
@@ -143,10 +125,13 @@ Deno.serve(async (req) => {
         entitled = await hasMusicEntitlement(track.id, who.user.id, who.user.email || "");
       }
       if (!entitled) return json({ error: "purchase required", purchase_required: true }, 402);
-      if (track.master_bucket !== "creator-masters" || !(await assetsVerified(track.id))) {
-        return json({ error: "release assets are not verified" }, 409);
+      /* (e) listeners get the pinned, reviewed master; never the live path */
+      const target = await streamTarget(db, track, !!owner);
+      if (!target.ok) {
+        if (target.log) console.error("music-access stream refused", target.log);
+        return json({ error: target.error }, target.status);
       }
-      const url = await signDownload(track.master_bucket, track.master_path);
+      const url = await signDownload(target.bucket, target.path);
       return json({ ok: true, track_id: track.id, state: "full", url, expires_in: 3600 });
     }
 
@@ -154,28 +139,20 @@ Deno.serve(async (req) => {
       const trackId = clean(body.track_id, 80);
       const offerId = clean(body.offer_id, 80);
       if (!trackId || !offerId) return json({ error: "track_id and offer_id required" }, 400);
-      let entitlement = null;
-      const { data: byUser } = await admin.from("music_entitlements")
-        .select("id,offer_id,download_count").eq("track_id", trackId)
-        .eq("user_id", who.user.id).is("revoked_at", null).limit(1).maybeSingle();
-      entitlement = byUser || null;
-      if (!entitlement && who.user.email) {
-        const { data: byEmail } = await admin.from("music_entitlements")
-          .select("id,offer_id,download_count").eq("track_id", trackId)
-          .eq("customer_email", who.user.email.toLowerCase()).is("revoked_at", null).limit(1).maybeSingle();
-        entitlement = byEmail || null;
+      /* (e) exactly the version this purchase bought, re-checked against
+         Storage; revoked refuses; a takedown does not (owner policy) */
+      const target = await purchasedDownload(db, { trackId, offerId, userId: who.user.id, email: who.user.email || "" });
+      if (!target.ok) {
+        if (target.log) console.error("music-access download refused", target.log);
+        return json({ error: target.error, ...(target.status === 402 ? { purchase_required: true } : {}) }, target.status);
       }
-      if (!entitlement || entitlement.offer_id !== offerId) return json({ error: "purchase required", purchase_required: true }, 402);
-      const { data: track } = await admin.from("creator_tracks").select("id,status,master_bucket,master_path,title").eq("id", trackId).limit(1).maybeSingle();
-      if (!track?.master_path) return json({ error: "master unavailable" }, 409);
-      if (track.master_bucket !== "creator-masters" || !(await assetsVerified(track.id))) {
-        return json({ error: "release assets are not verified" }, 409);
-      }
-      const url = await signDownload(track.master_bucket, track.master_path, `${track.title || "track"}.mp3`);
+      const { data: track } = await admin.from("creator_tracks").select("title").eq("id", trackId).limit(1).maybeSingle();
+      const ext = (target.path.match(/\.([a-z0-9]{2,5})$/i)?.[1] || "mp3").toLowerCase();
+      const url = await signDownload(target.bucket, target.path, `${track?.title || "track"}.${ext}`);
       await admin.from("music_entitlements").update({
-        download_count: Number(entitlement.download_count || 0) + 1,
+        download_count: target.downloadCount + 1,
         last_download_at: new Date().toISOString()
-      }).eq("id", entitlement.id);
+      }).eq("id", target.entitlementId);
       return json({ ok: true, url, expires_in: 3600 });
     }
 
@@ -232,6 +209,9 @@ Deno.serve(async (req) => {
         if (/release_asset_not_owned/.test(error.message || "")) {
           return json({ error: "this release points at audio or artwork its creator did not upload" }, 409);
         }
+        if (/release_master_missing/.test(error.message || "")) {
+          return json({ error: "this release's master file is missing from storage" }, 409);
+        }
         throw error;
       }
       if (!rows?.length) return json({ error: "the release changed since you loaded it: reload and review it again" }, 409);
@@ -262,6 +242,11 @@ Deno.serve(async (req) => {
 
     return json({ error: "unknown action" }, 400);
   } catch (error) {
+    /* a missing integrity dependency refuses; it never falls back to signing */
+    if (error instanceof DependencyMissing) {
+      console.error("music-access dependency missing: refusing", { action, dependency: error.dependency });
+      return json({ error: "music delivery is temporarily unavailable", dependency: error.dependency }, 503);
+    }
     console.error("music-access", error);
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);
   }
