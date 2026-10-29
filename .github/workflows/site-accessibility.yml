@@ -1,0 +1,72 @@
+name: Site accessibility ratchet
+# axe-core over every sitemap page at 390 px (scripts/e2e/sitemap-a11y.e2e.mjs).
+# Sealed: the repository is served from disk and every other request is
+# answered by a fixture or refused, so this measures the checkout, never
+# production. The committed baseline (scripts/e2e/fixtures/axe-baseline.json)
+# holds the violating node count per page and rule; a change may lower a
+# count, never raise one or add a rule. PRs and main only, never a feature
+# branch push (AGENTS.md hard rule 2).
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '*.html'
+      - 'action/**'
+      - 'closet/**'
+      - 'engineering/**'
+      - 'walls/**'
+      - 'css/**'
+      - 'js/**'
+      - 'tools/build-walls.mjs'
+      - 'data/seo/sitemap-pages.json'
+      - 'scripts/e2e/sitemap-a11y.e2e.mjs'
+      - 'scripts/e2e/fixtures/axe-baseline.json'
+      - '.github/workflows/site-accessibility.yml'
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - 'action/**'
+      - 'closet/**'
+      - 'engineering/**'
+      - 'walls/**'
+      - 'css/**'
+      - 'js/**'
+      - 'tools/build-walls.mjs'
+      - 'data/seo/sitemap-pages.json'
+      - 'scripts/e2e/sitemap-a11y.e2e.mjs'
+      - 'scripts/e2e/fixtures/axe-baseline.json'
+      - '.github/workflows/site-accessibility.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: site-accessibility-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  axe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser, axe-core and Cesium outside the repository
+        run: |
+          npm install --prefix /tmp/a11y-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 axe-core@4.10.3 cesium@1.131.0
+          /tmp/a11y-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Axe counts may only go down
+        env:
+          PLAYWRIGHT_DIR: /tmp/a11y-qa/node_modules
+          AXE_DIR: /tmp/a11y-qa/node_modules
+          CESIUM_DIR: /tmp/a11y-qa/node_modules/cesium/Build/Cesium
+        run: node scripts/e2e/sitemap-a11y.e2e.mjs /tmp/a11y-proof
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: site-accessibility-${{ github.run_id }}
+          path: /tmp/a11y-proof
+          retention-days: 7

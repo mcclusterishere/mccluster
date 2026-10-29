@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 440,
+  "candidate_count": 441,
   "capability_source_count": 102,
-  "support_only_count": 338,
+  "support_only_count": 339,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3348,6 +3348,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Satellite kit head; names the Equity Uprise building block only to say satellites never copy it. Defines no program capability."
+    },
+    {
+      "path": "scripts/e2e/fixtures/axe-baseline.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Accessibility ratchet baseline (axe-core node counts per sitemap page, scripts/e2e/sitemap-a11y.e2e.mjs); it lists the end-racism and heal-the-3rd-world pages by path only. No spatial or program capability is added."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

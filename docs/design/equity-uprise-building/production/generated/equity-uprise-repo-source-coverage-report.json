@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 440,
+  "candidate_count": 441,
   "capability_source_count": 102,
-  "support_only_count": 338,
-  "checks_total": 1660,
-  "checks_passed": 1660,
+  "support_only_count": 339,
+  "checks_total": 1664,
+  "checks_passed": 1664,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -239,6 +239,7 @@
     "privacy.html",
     "production.html",
     "resume-it-support.html",
+    "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
@@ -454,7 +455,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "440 entries"
+      "detail": "441 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8748,6 +8749,26 @@
     },
     {
       "name": "docs/control-plane/SATELLITE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json support rationale present",
       "passed": true,
       "detail": ""
     }
