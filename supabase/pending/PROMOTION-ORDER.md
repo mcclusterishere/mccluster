@@ -15,6 +15,35 @@ applied, even partially, and every function a file replaces is unchanged in prod
 That page also orders a step 0 before any promotion (bring the production-only schema
 into Git so the CI reset equals production) and marks which files need edits first.
 
+## 0. Before everything else (written 2026-10-29)
+
+Step 0 is not a pending file: `supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql`
+brings the production-only schema into Git (17 tables, 10 functions, 6 triggers, 37
+policies, 2 buckets, read from production's catalogs). It is replay-only, a guarded no-op
+on production, and the CI reset now builds it: `supabase/schema-manifest.json` was
+regenerated from that reset, and nothing in the 2026-10-28 production evidence is missing
+from it. Proof: `bash scripts/test-schema-reconcile-db.sh` (row for row against the
+evidence) and Reconciliation CI's "Supabase migration reset".
+
+Then these four, in this order (each independent of the others; the order only keeps
+reviews small). None needs a pending prerequisite; all four are tested by
+`bash scripts/test-schema-hygiene-db.sh` (stub of production's state, apply, behaviour,
+rollback, re-apply, behaviour again).
+
+| # | File (+ rollback) | What | Proof before apply |
+|---|---|---|---|
+| 0.1 | `20261029100000_privilege_hygiene_v1.sql` | grants and policy roles no migration meant: TRUNCATE/REFERENCES/TRIGGER off authenticated on 7 tables, anon DML off `network_{blocks,bookmarks,connections,mutes}` and `media_public_world_feed`, 9 public-role write policies `to authenticated`, anon EXECUTE off `eu_role`, `mnet_is_admin` and three trigger functions; what is kept and why is in its header | `supabase/tests/privilege_hygiene_v1.behaviour.sql` |
+| 0.2 | `20261029100100_definer_views_invoker_v1.sql` | the three `security_definer_view` ERRORs: invoker views over `private.*_rows()` SECURITY DEFINER functions, same rows | `supabase/tests/definer_views_invoker_v1.behaviour.sql`; on production compare `md5(string_agg(t::text,'|' order by t::text))` of each view before and after |
+| 0.3 | `20261029100200_rls_initplan_select_wrap_v1.sql` | the 71 `auth_rls_initplan` policies, sub-selects only | `scripts/test/rls-initplan-select-wrap.test.mjs` (offline, all 71 against the evidence) and the access matrix in `scripts/test-schema-hygiene-db.sh` |
+| 0.4 | `20261029100300_eu_runtime_and_media_rollup_v1.sql` | the replay-only EU worker runtime and `media_usage_rollup` that `eu-ddex-worker`, `eu-external-worker`, `eu-monitor`, `eu-orcid-oauth` and `/v1/media/usage` call; the two dispatch triggers and cron jobs stay off (owner decision) | `supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql`; its seven names are `pending_only` in `live-callers.json` |
+
+`public_music_reads_lean_v1.sql` (group 3) now goes after 0.2: it replaces the bodies of
+0.2's two track functions instead of recreating the views as definer views.
+
+After each: record the ledger row and move the file (README "To promote one"), take a new
+production snapshot (`scripts/db/verify-production-schema.mjs`), and drop the file's names
+from `live-callers.json` (the test demands it once the snapshot has them).
+
 ## 1. Called by shipped code today, no prerequisite
 
 Each of these has a live caller that fails closed until the file is applied.
@@ -76,7 +105,7 @@ Rollback files sit beside the ones that have them.
 |---|---|---|
 | `action_bounty_claim_existing_row_guard_v1.sql` | replaces `claim_action_bounty()` so an aggregate `SELECT INTO` cannot fake an existing claim | `scripts/test-action-bounty-claim-db.sh` (also `.github/workflows/bounty-claim-guard-db.yml`) |
 | `commerce_stripe_reconciler_v3.sql` | serialises concurrent Stripe deliveries, partial refunds as money; production has v1 and v2 | API Economic Core CI: `supabase/tests/commerce_stripe_reconciler_v3_regression.sql` and `commerce_stripe_concurrency.sh` |
-| `public_music_reads_lean_v1.sql` | `play_counts()` and the `v_track_*` views read the lean events copy | `scripts/test/journey-errors.test.mjs`; compare timings on the album pages after apply |
+| `public_music_reads_lean_v1.sql` | `play_counts()` and the `v_track_*` views read the lean events copy; after 0.2 (it replaces 0.2's two track functions) | `scripts/test/journey-errors.test.mjs`, the lean step in `scripts/test-schema-hygiene-db.sh`; compare timings on the album pages after apply |
 | `world_publisher_verified_geo_v1.sql` | nullable publisher/HQ columns on `media_news_sources`, no grants | additive `alter table ... add column if not exists`; check the ingest still runs |
 
 ## 4. Review before anything else: moved from `supabase/migrations/pending/` on 2026-10-27

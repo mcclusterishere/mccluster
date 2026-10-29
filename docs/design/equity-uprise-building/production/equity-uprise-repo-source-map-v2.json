@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 447,
+  "candidate_count": 465,
   "capability_source_count": 102,
-  "support_only_count": 345,
+  "support_only_count": 363,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3391,6 +3391,132 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Expected schema the CI migration reset builds, including eu_* objects among all others; a drift-check manifest, not a building capability, program or geometry source."
+    },
+    {
+      "path": "scripts/test-schema-hygiene-db.sh",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "scripts/test/rpc-names-exist.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Contract test that every RPC, table and bucket shipped code calls (including the eu-* Edge Functions) is deployed in production or allowlisted; not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261029100000_privilege_hygiene_v1.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261029100100_definer_views_invoker_v1.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/tests/definer_views_invoker_v1.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/eu_runtime_and_media_rollup_v1.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/privilege_hygiene_v1.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/privilege_hygiene_v1.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/rls_initplan_select_wrap_v1.probe.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/rls_initplan_select_wrap_v1.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/schema_reconcile_production_only.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
     },
     {
       "path": "scripts/e2e/fixtures/axe-baseline.json",
