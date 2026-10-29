@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 447,
+  "candidate_count": 444,
   "capability_source_count": 102,
-  "support_only_count": 345,
+  "support_only_count": 342,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1458,13 +1458,6 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
-      "path": "js/here-material.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
-    },
-    {
       "path": "js/hire-offers.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -1762,20 +1755,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "redirects/equity-uprise.html",
-      "classification": "redirect_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
-    },
-    {
-      "path": "redirects/walls/eu-rally.html",
-      "classification": "redirect_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
     },
     {
       "path": "resume-it-support.html",

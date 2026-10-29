@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 447,
+  "candidate_count": 444,
   "capability_source_count": 102,
-  "support_only_count": 345,
-  "checks_total": 1688,
-  "checks_passed": 1688,
+  "support_only_count": 342,
+  "checks_total": 1676,
+  "checks_passed": 1676,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -201,7 +201,6 @@
     "js/equity-uprise-institutional.js",
     "js/eu-api.js",
     "js/fan-intake.js",
-    "js/here-material.js",
     "js/hire-offers.js",
     "js/insights.js",
     "js/lockroom.js",
@@ -242,8 +241,6 @@
     "press.html",
     "privacy.html",
     "production.html",
-    "redirects/equity-uprise.html",
-    "redirects/walls/eu-rally.html",
     "resume-it-support.html",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
@@ -461,7 +458,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "447 entries"
+      "detail": "444 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3949,26 +3946,6 @@
       "detail": ""
     },
     {
-      "name": "js/here-material.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/here-material.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "js/here-material.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "js/here-material.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "js/hire-offers.js capability ids known",
       "passed": true,
       "detail": ""
@@ -4695,46 +4672,6 @@
     },
     {
       "name": "production.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/equity-uprise.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/equity-uprise.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/equity-uprise.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "redirects/walls/eu-rally.html classified",
-      "passed": true,
-      "detail": "classification='redirect_support'"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "redirects/walls/eu-rally.html support rationale present",
       "passed": true,
       "detail": ""
     },
