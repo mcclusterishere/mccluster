@@ -339,7 +339,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 
 /* Track 02 owns the runway as a wide cinematic field. */
 .music-room--runway .tk {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
   grid-template-areas:
     "k k"
     "title title"
@@ -361,14 +361,14 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 
 /* Track 04 is the manifesto in the middle of the record. */
 .music-room--here .tk {
-  grid-template-columns: 0.62fr 1.38fr;
+  grid-template-columns: minmax(0,0.62fr) minmax(0,1.38fr);
 }
 .music-room--here .tk h1 {
   font-size: clamp(8rem, 18vw, 18rem);
   color: var(--music-paper);
 }
 .music-room--here .tk__story {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0,1fr);
   border: 0;
 }
 .music-room--here .tk__story article {
@@ -413,7 +413,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
     #030d19;
 }
 .music-room--antisocial .tk {
-  grid-template-columns: 0.72fr 1.28fr;
+  grid-template-columns: minmax(0,0.72fr) minmax(0,1.28fr);
 }
 .music-room--antisocial .tk__film { min-height:min(62rem, 72vh);min-height: min(62rem, 72svh); }
 .music-room--antisocial .tk__story { border-color: rgba(142, 185, 219, 0.25); }
@@ -578,7 +578,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   .music-room--here .tk,
   .music-room--antisocial .tk,
   .music-room--license .lc {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0,1fr);
   }
 
   .music-room--album .alb { min-height: 0; }
@@ -605,7 +605,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   .music-room--track .tk__film,
   .music-room--runway .tk__film,
   .music-room--antisocial .tk__film { min-height:48vh;min-height: 48svh; }
-  .music-room--track .tk__story { grid-template-columns: 1fr; }
+  .music-room--track .tk__story { grid-template-columns: minmax(0,1fr); }
   .music-room--track .tk__story article {
     min-height: 0;
     border-right: 0;

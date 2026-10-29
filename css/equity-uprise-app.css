@@ -229,6 +229,6 @@ html[data-theme="light"] .eua-field textarea,
 html[data-theme="light"] .eua-field select { background: #fff; }
 
 @media (max-width: 34rem) {
-  .eua-grid { grid-template-columns: 1fr; }
+  .eua-grid { grid-template-columns: minmax(0,1fr); }
   .eua-msg { max-width: 86%; }
 }

@@ -45,7 +45,7 @@
 .cr-observe-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.cr-observe-head>div{display:flex;align-items:center;gap:9px}.cr-live-dot{font-size:10px;color:var(--cr-ok)}
 .cr-live-dot:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cr-ok);margin-right:5px;box-shadow:0 0 0 4px rgba(53,208,127,.08)}
 
-.cr-trace{display:grid;gap:0}.cr-trace>div{display:grid;grid-template-columns:1fr auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--cr-line);font-size:11px}.cr-trace>div span{color:var(--cr-dim);text-align:right}.cr-trace .is-live:before,.cr-trace .is-done:before,.cr-trace .is-bad:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:7px}.cr-trace .is-live:before{background:var(--cr-ai)}.cr-trace .is-done:before{background:var(--cr-ok)}.cr-trace .is-bad:before{background:var(--cr-bad)}
+.cr-trace{display:grid;gap:0}.cr-trace>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--cr-line);font-size:11px}.cr-trace>div span{color:var(--cr-dim);text-align:right}.cr-trace .is-live:before,.cr-trace .is-done:before,.cr-trace .is-bad:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:7px}.cr-trace .is-live:before{background:var(--cr-ai)}.cr-trace .is-done:before{background:var(--cr-ok)}.cr-trace .is-bad:before{background:var(--cr-bad)}
 .cr-raw{margin:0;white-space:pre-wrap;word-break:break-word;font:10px/1.55 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:var(--cr-dim);background:#090a0c;border:1px solid var(--cr-line);padding:12px;border-radius:10px;max-height:56vh;overflow:auto}
 .cr-ai-box{display:grid;gap:9px}.cr-ai-box textarea,.cr-textarea{width:100%;resize:vertical;border:1px solid var(--cr-line);background:#0b0c0f;color:var(--cr-text);border-radius:10px;padding:11px;font:12px/1.5 inherit;outline:none}.cr-ai-box textarea:focus,.cr-textarea:focus{border-color:rgba(154,124,255,.65);box-shadow:0 0 0 3px rgba(154,124,255,.08)}
 .cr-app-section+.cr-app-section{margin-top:26px}
@@ -58,7 +58,7 @@
 @media(max-width:760px){
   .cr-board{grid-template-columns:repeat(4,minmax(78vw,1fr));scroll-snap-type:x proximity}.cr-board__col{scroll-snap-align:start;min-height:calc(100vh - 230px)}
   .cr-data-table{min-width:620px}.cr-table-wrap{border-radius:10px}
-  .cr-project-grid{grid-template-columns:1fr}.cr-project-card{min-height:145px}
+  .cr-project-grid{grid-template-columns:minmax(0,1fr)}.cr-project-card{min-height:145px}
   .cr-project-head{align-items:flex-start;flex-wrap:wrap}.cr-project-head .cr-btn{order:0}.cr-project-head>div{order:2;flex-basis:100%}
   .cr-creative-canvas{min-height:calc(100vh - 310px);padding:16px;scroll-snap-type:x proximity}.cr-node{flex:0 0 72vw;scroll-snap-align:center}.cr-node-link{flex:none}
   .cr-asset-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cr-asset-card strong{font-size:10px}
@@ -66,7 +66,7 @@
   .cr-topology__node{min-height:54px}
   .cr-raw{max-height:none}
 }
-@media(max-width:420px){.cr-asset-grid{grid-template-columns:1fr 1fr}.cr-data-table{min-width:560px}}
+@media(max-width:420px){.cr-asset-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cr-data-table{min-width:560px}}
 
 /* ---------------------------------------------------------------
    Functional depth: source honesty, conversations, generation.
@@ -198,7 +198,7 @@
 .cr-more{display:flex;justify-content:center;margin-top:12px}
 
 @media (max-width:720px){
-  .cr-modelpick{grid-template-columns:1fr}
+  .cr-modelpick{grid-template-columns:minmax(0,1fr)}
   .cr-genjob__meta{margin-left:0;width:100%}
 }
 
@@ -256,7 +256,7 @@
 .cr-ai-voice-error{margin-bottom:9px}
 .cr-ai-chat__hint{margin:6px 2px 0;color:var(--cr-faint);font-size:9px}
 @media(max-width:900px){
-  .cr-ai-chat{grid-template-columns:1fr;min-height:0}
+  .cr-ai-chat{grid-template-columns:minmax(0,1fr);min-height:0}
   .cr-ai-chat__sidebar{min-height:0;max-height:170px}
   .cr-ai-chat__threads{display:flex;overflow-x:auto;overflow-y:hidden}
   .cr-ai-thread{min-width:190px;max-width:240px}
@@ -265,7 +265,7 @@
 @media(max-width:760px){
   .cr-ai-chat__messages{padding:13px}
   .cr-ai-message{max-width:94%}
-  .cr-ai-chat__composerbox{grid-template-columns:1fr 1fr}
+  .cr-ai-chat__composerbox{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .cr-ai-chat__composerbox textarea{grid-column:1/-1}
   .cr-ai-chat__composerbox .cr-btn{width:100%}
   .cr-ai-voice-status{align-items:flex-start}

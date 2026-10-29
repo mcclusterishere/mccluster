@@ -55,13 +55,24 @@ const maxWidthQueries = (css) => (css.match(/@media[^{]*max-width/g) || []).leng
 /* a grid-template(-columns|-rows) declaration whose value has a 1fr that is
    not inside minmax(...). Scoped to the declaration (unlike the whole-file
    regex in action-network.test.mjs) so prose and other properties do not
-   count, and so repeat(auto-fill, 1fr) is caught as the bare track it is. */
+   count, and so repeat(auto-fill, 1fr) is caught as the bare track it is.
+   "Inside minmax" is decided by parenthesis depth, not a lookbehind, so the
+   correct minmax(min(100%, 9rem), 1fr) (whose inner min(...) closes before
+   the 1fr) is not miscounted as bare, while repeat(4, 1fr) still is. */
 const GRID_DECL = /grid-template(?:-columns|-rows)?\s*:\s*([^;}]*)/g;
-const BARE_FR = /(?<!minmax\([^)]*)\b1fr\b/;
-const bareTracks = (css) => [...css.matchAll(GRID_DECL)].filter((m) => BARE_FR.test(m[1])).length;
+const hasBareFr = (value) => {
+  const open = []; /* function names of the parentheses we are inside */
+  for (const [tok] of value.matchAll(/[a-z-]*\(|\)|(?<![\w.-])1fr\b/gi)) {
+    if (tok === ")") open.pop();
+    else if (tok.endsWith("(")) open.push(tok.slice(0, -1).toLowerCase());
+    else if (!open.includes("minmax")) return true;
+  }
+  return false;
+};
+const bareTracks = (css) => [...css.matchAll(GRID_DECL)].filter((m) => hasBareFr(m[1])).length;
 
 /* ---- the allowlists: seeded 2026-10-27, and they may only shrink ---- */
-/* @media (…max-width…) queries per file: 110 in 43 files */
+/* @media (…max-width…) queries per file: 107 in 41 files */
 const MAX_WIDTH_ALLOWED = {
   "catalogue.html": 1,
   "css/control-room-v2.css": 9,
@@ -105,66 +116,8 @@ const MAX_WIDTH_ALLOWED = {
   "workers/mccluster/src/seek-first/console.html": 1,
   "world-news.html": 2,
 };
-/* grid-template declarations with a bare 1fr per file: 279 in 59 files */
-const BARE_FR_ALLOWED = {
-  "account.html": 2,
-  "admin.html": 1,
-  "analytics.html": 1,
-  "card.html": 2,
-  "crm.html": 1,
-  "css/control-analytics-deck.css": 4,
-  "css/control-analytics.css": 3,
-  "css/control-forensics.css": 1,
-  "css/control-room-v2.css": 6,
-  "css/control-room.css": 4,
-  "css/equity-uprise-app.css": 1,
-  "css/equity-uprise-institutional.css": 21,
-  "css/hitman-facility.css": 1,
-  "css/mnet-audio.css": 1,
-  "css/mnet.css": 3,
-  "css/music-creator.css": 5,
-  "css/music-director-base.css": 4,
-  "css/music-director.css": 4,
-  "css/music-luxury.css": 2,
-  "css/music-private-listening.css": 2,
-  "css/music-system-v2.css": 7,
-  "css/offers.css": 8,
-  "css/prim3-course.css": 5,
-  "css/prim3-range.css": 4,
-  "css/prim3-tracking.css": 2,
-  "css/prim3.css": 19,
-  "css/resume-print.css": 1,
-  "css/style.css": 61,
-  "css/whip-manufacturer.css": 5,
-  "css/whip.css": 4,
-  "css/world-travel.css": 1,
-  "desk.html": 3,
-  "docs/design/native-identity-comparison.html": 3,
-  "gallery.html": 11,
-  "help.html": 1,
-  "inbox.html": 2,
-  "lanes.html": 3,
-  "license.html": 2,
-  "management.html": 3,
-  "mccluster-creator-studio.html": 2,
-  "mccluster-platform.html": 5,
-  "oauth/consent/index.html": 1,
-  "portfolio/onyx-elite.html": 5,
-  "prayer-closet.html": 4,
-  "production.html": 4,
-  "shots.html": 2,
-  "sites-details.html": 5,
-  "sites.html": 5,
-  "vault.html": 2,
-  "walls/brunch-and-beats.html": 1,
-  "walls/candler-crossing.html": 1,
-  "walls/cover-art.html": 1,
-  "walls/dressed-for-success.html": 1,
-  "walls/eu-rally.html": 1,
-  "walls/vaunt-runway.html": 1,
-  "we-manufacture.html": 1,
-  "whip/index.html": 15,
-};
+/* grid-template declarations with a bare 1fr per file: 0 in 0 files */
+const BARE_FR_ALLOWED = {};
 
 /* count every scanned file against its allowance: more is a regression,
    fewer means the allowance must come down (the ratchet), zero and unlisted

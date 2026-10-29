@@ -5,13 +5,13 @@ html,body{background:var(--mc-bg);color:var(--mc-text)}
 .creator-kicker{text-transform:uppercase;letter-spacing:.18em;font-weight:800;font-size:11px;color:var(--mc-red)}
 .creator-head h1{font-size:clamp(40px,8vw,78px);line-height:.92;letter-spacing:-.045em;margin:7px 0 0}
 .creator-head p{max-width:560px;color:var(--mc-dim);line-height:1.6}
-.creator-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.creator-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
 .creator-card{background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));border:1px solid var(--mc-line);border-radius:18px;padding:20px;box-shadow:0 28px 80px rgba(0,0,0,.22)}
 .creator-card.wide{grid-column:1/-1}
 .creator-card h2{font-size:20px;margin:0 0 6px}
 .creator-card>p{color:var(--mc-dim);font-size:13px;line-height:1.55;margin:0 0 17px}
 .creator-form{display:grid;gap:12px}
-.creator-form.two{grid-template-columns:1fr 1fr}
+.creator-form.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .creator-field{display:grid;gap:6px}
 .creator-field.wide{grid-column:1/-1}
 /* These two rules dress a field's CAPTION and its TEXT CONTROL. A rights
@@ -63,7 +63,7 @@ html,body{background:var(--mc-bg);color:var(--mc-text)}
 .creator-play{width:42px;height:42px;border-radius:50%;border:0;background:var(--mc-text);color:#090807;display:grid;place-items:center;cursor:pointer}.creator-play svg{width:17px;height:17px;fill:currentColor}
 .creator-offers{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}.creator-offer{font-size:10px;border:1px solid var(--mc-line);border-radius:999px;padding:6px 9px;color:var(--mc-text);background:transparent;cursor:pointer}
 .creator-admin-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:15px 0;border-top:1px solid var(--mc-line)}.creator-admin-row:first-child{border-top:0}.creator-admin-row .creator-actions{justify-content:flex-end}
-@media(max-width:720px){.creator-grid{grid-template-columns:1fr}.creator-card.wide{grid-column:auto}.creator-form.two{grid-template-columns:1fr}.creator-field.wide{grid-column:auto}.creator-head{display:block}.creator-head p{margin-top:15px}.creator-track{grid-template-columns:54px minmax(0,1fr) 40px}.creator-track img{width:54px;height:54px}.creator-admin-row{grid-template-columns:1fr}.creator-admin-row .creator-actions{justify-content:flex-start}}
+@media(max-width:720px){.creator-grid{grid-template-columns:minmax(0,1fr)}.creator-card.wide{grid-column:auto}.creator-form.two{grid-template-columns:minmax(0,1fr)}.creator-field.wide{grid-column:auto}.creator-head{display:block}.creator-head p{margin-top:15px}.creator-track{grid-template-columns:54px minmax(0,1fr) 40px}.creator-track img{width:54px;height:54px}.creator-admin-row{grid-template-columns:minmax(0,1fr)}.creator-admin-row .creator-actions{justify-content:flex-start}}
 
 .creator-action-network{display:inline-flex;margin-top:14px;padding:10px 14px;border:1px solid currentColor;border-radius:999px;color:var(--ruby-hot,#e5383b);font-weight:700;text-decoration:none;transition:transform .18s var(--mcc-ease,ease),background .18s ease}.creator-action-network:hover{transform:translateY(-2px);background:color-mix(in srgb,currentColor 10%,transparent)}
 

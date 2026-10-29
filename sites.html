@@ -62,7 +62,7 @@
 
     /* ============ THE SEATS: an editorial ledger, not boxes ============ */
     .seats { margin-top: clamp(3.2rem, 8vh, 5rem); }
-    .seats__row { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.8rem, 3vw, 2rem);
+    .seats__row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: clamp(0.8rem, 3vw, 2rem);
       margin-top: 1.4rem; align-items: end; }
     .seat { border-top: 1px solid rgba(244,239,230,0.16); padding-top: 0.9rem; }
     .seat b { display: block; font-family: var(--sig); line-height: 0.9; letter-spacing: 0.02em;
@@ -94,7 +94,7 @@
 
     .sw { position: relative; margin-top: 1.5rem; border-radius: 100px; background: rgba(18,14,11,0.9);
       box-shadow: inset 0 0 0 1px rgba(244,239,230,0.14), inset 0 8px 24px rgba(0,0,0,0.5);
-      display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px; }
+      display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); padding: 6px; }
     .sw__thumb { position: absolute; top: 6px; bottom: 6px; left: 6px; width: calc((100% - 12px) / 3);
       border-radius: 100px; background: linear-gradient(135deg, #e5383b, #a4161a);
       box-shadow: 0 10px 30px -8px rgba(229,56,59,0.7), inset 0 1px 0 rgba(255,255,255,0.25);
@@ -110,7 +110,7 @@
     /* the stage the switch drives */
     .stage { margin-top: clamp(1.8rem, 5vh, 2.8rem); display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
       gap: clamp(1.4rem, 4vw, 3rem); align-items: start; }
-    @media (max-width: 52rem) { .stage { grid-template-columns: 1fr; } }
+    @media (max-width: 52rem) { .stage { grid-template-columns: minmax(0,1fr); } }
     .stage__price { position: relative; }
     .stage__num { font-family: var(--sig); line-height: 0.85; letter-spacing: 0.01em; color: var(--cream);
       font-size: clamp(4.6rem, 17vw, 9rem); }
@@ -132,8 +132,8 @@
     @media (prefers-reduced-motion: reduce) { .stage.is-swap .swap { animation: none; } }
 
     /* ============ THE MATH ============ */
-    .math { margin-top: clamp(3.6rem, 9vh, 5.5rem); display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.4rem, 4vw, 3rem); }
-    @media (max-width: 46rem) { .math { grid-template-columns: 1fr; } }
+    .math { margin-top: clamp(3.6rem, 9vh, 5.5rem); display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: clamp(1.4rem, 4vw, 3rem); }
+    @media (max-width: 46rem) { .math { grid-template-columns: minmax(0,1fr); } }
     .math > div { border-top: 1px solid rgba(244,239,230,0.16); padding-top: 1rem; }
     .math .us { border-top-color: rgba(229,56,59,0.7); }
     .math h3 { font-family: var(--sig); text-transform: uppercase; font-size: 1.3rem; color: var(--cream); letter-spacing: 0.03em; }
