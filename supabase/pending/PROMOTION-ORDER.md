@@ -9,6 +9,12 @@ what and what proves each one. Apply order inside a group is top to bottom.
 Status is checked against production the same day: `applied` means the file's
 objects already exist there; everything else is absent.
 
+Re-checked object by object on 2026-10-28 with `scripts/db/verify-production-schema.mjs`
+(`docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md`): no file here is
+applied, even partially, and every function a file replaces is unchanged in production.
+That page also orders a step 0 before any promotion (bring the production-only schema
+into Git so the CI reset equals production) and marks which files need edits first.
+
 ## 1. Called by shipped code today, no prerequisite
 
 Each of these has a live caller that fails closed until the file is applied.
