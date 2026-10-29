@@ -65,10 +65,11 @@ try {
    await home.waitForTimeout(1500);
    assert.equal(await home.evaluate(()=>window.__MCC_VR.playing),false,'the cabin pauses once it is off screen');
    assert.ok(await home.evaluate(()=>{const w=document.getElementById('work').getBoundingClientRect();return w.top<=1&&w.bottom>innerHeight;}),'the plane has the screen');
-   await home.evaluate(()=>{const w=document.getElementById('work');window.scrollTo(0,w.offsetTop+(w.offsetHeight-innerHeight)*0.45);});
+   await home.evaluate(()=>window.__MCC_FRONT_GOTO('plane'));
    await home.waitForFunction(()=>window.__MCC.lastDrawn('vaunt')>10,null,{timeout:10000}).catch(()=>{});
    await home.waitForTimeout(800);
    assert.ok(await home.evaluate(()=>window.__MCC.lastDrawn('vaunt')>10),'the fly-through scrubs with the scroll');
+   assert.ok(await home.evaluate(()=>{const w=document.getElementById('work').getBoundingClientRect(),c=document.getElementById('cmdCanvas4').getBoundingClientRect();return w.top<0&&w.bottom>innerHeight&&Math.abs(c.top)<=1&&c.height>=innerHeight-1;}),'the plane fills the screen, pinned');
    assert.equal(await home.locator('#cmdCanvas5').count(),0);
    await home.screenshot({path:join(OUT,`plane-${width}.png`)});
    /* the night descent, and LOCK IN at the bottom of it */

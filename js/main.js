@@ -2052,6 +2052,8 @@
     var y = 0, el = null;
     if (to === "cabin" && cabinSec) { el = cabinSec; if (el.hasAttribute("data-front-off")) return; y = el.getBoundingClientRect().top + window.scrollY; }
     /* LOCK IN: near the end of the night descent, where the room is fully up (the pin's own start and end) */
+    /* the plane mid-flight: part-way through the fly-through's pin */
+    else if (to === "plane") { el = document.getElementById("work"); if (!el || el.hasAttribute("data-front-off")) return; y = el.getBoundingClientRect().top + window.scrollY + (el.offsetHeight - window.innerHeight) * 0.45; }
     else if (to === "lockin") { var pst = ScrollTrigger.getAll().filter(function (t) { return t.trigger === document.getElementById("pillars") && t.pin; })[0]; if (!pst) return; y = pst.start + (pst.end - pst.start) * 0.93; }
     else if (to === "cabin" && workST) y = workST.start + (workST.end - workST.start) * (workVR.band[0] + workVR.band[1]) / 2;
     else if (to !== "top") { el = to === "vaunt" ? document.getElementById("work") : document.querySelector(FRONT_SCENES[to === "world" ? "world" : to === "night" ? "night" : "vaunt"]); if (!el || el.hasAttribute("data-front-off") || !el.offsetHeight) return; y = el.getBoundingClientRect().top + window.scrollY; }
