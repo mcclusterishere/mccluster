@@ -37,7 +37,7 @@ html,body{background:var(--mc-bg);color:var(--mc-text)}
 .creator-check input{margin-top:2px}
 .creator-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:4px}
 .creator-btn{appearance:none;border:0;border-radius:999px;padding:11px 16px;font:800 12px/1 var(--ui,system-ui);letter-spacing:.04em;cursor:pointer;background:var(--mc-text);color:#090807;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-.creator-btn.primary{background:var(--mc-red);color:white}
+.creator-btn.primary{background:#db3538;color:white}
 .creator-btn.quiet{background:rgba(255,255,255,.07);color:var(--mc-text);border:1px solid var(--mc-line)}
 .creator-btn.good{background:var(--mc-green);color:#07120b}
 .creator-btn:disabled{opacity:.45;cursor:not-allowed}

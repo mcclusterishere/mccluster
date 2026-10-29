@@ -234,7 +234,7 @@
 }
 .rsm-get__pdf:hover { background: var(--ruby-hot); border-color: var(--ruby-hot); }
 .rsm-get__pdf small {
-  font-size: 0.86em; opacity: 0.75; margin-left: 0.5em; letter-spacing: 0.1em;
+  font-size: 0.86em; opacity: 0.9; margin-left: 0.5em; letter-spacing: 0.1em;
 }
 .rsm-get__doc:hover, .rsm-get__print:hover { border-color: var(--ruby); color: var(--cream); }
 .rsm-get__doc small { font-size: 0.86em; opacity: 0.7; margin-left: 0.5em; letter-spacing: 0.1em; }

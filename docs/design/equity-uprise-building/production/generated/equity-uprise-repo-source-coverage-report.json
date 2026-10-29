@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 530,
+  "candidate_count": 531,
   "capability_source_count": 102,
-  "support_only_count": 428,
-  "checks_total": 2020,
-  "checks_passed": 2020,
+  "support_only_count": 429,
+  "checks_total": 2024,
+  "checks_passed": 2024,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -300,6 +300,7 @@
     "production.html",
     "receipt.html",
     "resume-it-support.html",
+    "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
@@ -544,7 +545,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "530 entries"
+      "detail": "531 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -10638,6 +10639,26 @@
     },
     {
       "name": "workers/mccluster/test/mnet-post-limits.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fixtures/axe-baseline.json support rationale present",
       "passed": true,
       "detail": ""
     }

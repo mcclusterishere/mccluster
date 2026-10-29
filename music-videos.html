@@ -67,10 +67,10 @@
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage music-room music-room--music-videos">
-  <main class="fs" id="fs" aria-label="The lyric videos"></main>
+  <main class="fs" id="fs" aria-label="The lyric videos"><h1 class="sr-only">Music videos</h1></main>
 
   <!-- one tap: the reel gets its sound (autoplay law) -->
-  <div class="fa" id="fa"><div><b>Lyric videos</b><small>Tap for sound. Swipe for the next record.</small></div></div>
+  <div class="fa" id="fa" role="region" aria-label="Sound"><div><b>Lyric videos</b><small>Tap for sound. Swipe for the next record.</small></div></div>
 
   <!-- THE BAR: Music · HERE · Equity Uprise/Profile. One tap goes where it says; hold a tab to open its wing. -->
   <nav class="appbar" aria-label="Sections">
@@ -105,6 +105,8 @@
   (function () {
     "use strict";
     var fs = document.getElementById("fs");
+    /* the page's one h1, kept when the cards are drawn */
+    var FS_TITLE = '<h1 class="sr-only">Music videos</h1>';
     var PARAMS = new URLSearchParams(location.search);
     var TARGET_ALBUM = String(PARAMS.get("album") || "").toLowerCase();
     var TARGET_TRACK = PARAMS.get("t") || "";
@@ -144,7 +146,7 @@
           if (t.music_video || t.video || t.reel) TRACKS.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name }));
         });
       });
-      fs.innerHTML = TRACKS.map(function (t, i) {
+      fs.innerHTML = FS_TITLE + TRACKS.map(function (t, i) {
         return '<section class="fc" data-i="' + i + '">' +
           '<video muted loop playsinline preload="none"' + (t.poster ? ' poster="' + t.poster + '"' : "") + "></video>" +
           '<div class="fc__scrim"></div>' +
@@ -184,7 +186,7 @@
         var target=card(startIndex); if(target) target.scrollIntoView({block:"start"});
       });
     }).catch(function () {
-      fs.innerHTML = "<section class='fc'><div class='fc__meta'><b>The music videos are warming up</b><small>refresh in a moment</small></div></section>";
+      fs.innerHTML = FS_TITLE + "<section class='fc'><div class='fc__meta'><b>The music videos are warming up</b><small>refresh in a moment</small></div></section>";
     });
 
     /* one tap, the whole reel gets sound */

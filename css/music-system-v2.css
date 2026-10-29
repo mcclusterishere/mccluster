@@ -499,7 +499,7 @@ body.music-now-open{overflow:hidden}
   background:#f4f4f5;color:#09090b;
   font-size:10.5px;font-weight:820;letter-spacing:0
 }
-.music-v2 .creator-btn.primary{background:var(--music-accent);color:#fff}
+.music-v2 .creator-btn.primary{background:#db3538;color:#fff}
 .music-v2 .creator-btn.quiet{background:rgba(255,255,255,.07);color:var(--music-text)}
 .music-v2 .creator-btn.good{background:var(--music-good);color:#061109}
 .music-v2 .creator-status{font-size:10.5px;color:var(--music-muted)}
@@ -575,7 +575,7 @@ body.music-v2 .alb h1{
 body.music-v2 .alb__by{font-size:11px;color:var(--music-muted)}
 body.music-v2 .alb__play{
   margin-top:10px;padding:10px 19px;border-radius:9px;
-  background:var(--music-accent);box-shadow:none;
+  background:var(--ruby-fill, var(--music-accent));box-shadow:none;
   font-size:12px
 }
 body.music-v2 .mode{
