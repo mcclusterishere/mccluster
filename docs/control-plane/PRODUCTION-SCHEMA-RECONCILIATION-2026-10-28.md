@@ -37,8 +37,8 @@ and `cron.job`.
 
 The expected state is not a source scan. The "Supabase migration reset" CI job rebuilds a
 disposable database from `supabase/migrations/` + `supabase/replay_migrations/`, runs the
-same queries, and the result is `supabase/schema-manifest.json` (first taken from the
-`reset-schema` artifact of Reconciliation CI run 40790696674). From now on that job fails
+same queries, and the result is `supabase/schema-manifest.json` (the `reset-schema`
+artifact of Reconciliation CI run 40791694718). From now on that job fails
 when the rebuilt schema stops matching the committed manifest, and uploads the new
 snapshot and manifest as the `reset-schema` artifact; no production credentials are
 involved.
@@ -66,7 +66,7 @@ node scripts/db/verify-production-schema.mjs --snapshot docs/control-plane/evide
 | … identical once `--` comments are ignored | 77 more |
 | … whose committed **executable SQL differs** from what production ran | 142 (112 before the 2026-09-19 cutover, 30 after; 3 of them are comment-only anchors) |
 | Multi-statement (legacy) migrations, not byte-comparable | 27 |
-| Relations: only in production / only in repo / changed | 17 / 8 / 41 |
+| Relations: only in production / only in repo / changed | 17 / 8 / 31 (13 index sets, 18 grant sets, 6 column sets, 7 constraint sets; one relation can differ in several) |
 | Functions: only in production / only in repo / changed | 10 / 20 / 79 (71 bodies, 9 EXECUTE grants) |
 | Policies: only in production / only in repo / changed USING | 37 / 17 / 58 |
 | Triggers: only in production / only in repo | 6 / 2 |
@@ -282,6 +282,9 @@ objects the file created.
 
 ## Limits
 
+- Column-default and constraint signatures mask uuid literals: `0026_tenancy` sets `org_id`
+  defaults to the house org's id, generated afresh on every rebuild. A default that points
+  at a different org in production would not show here.
 - The validator compares structure and hashes, not data; `cron.job` commands, policy
   expressions and function bodies are compared by md5 prefix. Table sizes, row-level
   content and Auth settings are out of scope.
