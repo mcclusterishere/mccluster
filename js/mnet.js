@@ -3743,7 +3743,7 @@
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";}).map(publicMission);missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
-      var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
+      var helpGateway=!missions.campaign
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       if(worldMissionDeck)worldMissionDeck.update(missions.all);
