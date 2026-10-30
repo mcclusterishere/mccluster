@@ -41,6 +41,20 @@ export const DIRECT_AUDIO_TYPES: Record<string, string> = {
   flac: "audio/flac",
 };
 
+/**
+ * The format a buyer actually receives: the private file's extension, delivered
+ * unconverted. Every label (Stripe line item, Buy button, purchase page, owner
+ * desk) says this, never a blanket "MP3". null when the path is not a sellable file.
+ */
+export function audioFormatOf(path: string | null | undefined): string | null {
+  const ext = (String(path || "").match(/\.([a-z0-9]{2,5})$/i)?.[1] || "").toLowerCase();
+  return DIRECT_AUDIO_TYPES[ext] ? ext : null;
+}
+export function formatLabel(format: string | null | undefined): string {
+  const f = String(format || "").toLowerCase();
+  return DIRECT_AUDIO_TYPES[f] ? f.toUpperCase() : "Audio";
+}
+
 /** Matthew's property: the only origin that may call these functions from a browser. */
 export const SITE = "https://matthew.mccluster.org";
 export const ALLOWED_ORIGINS = [SITE];

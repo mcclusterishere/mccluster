@@ -1,4 +1,4 @@
-/* DIRECT CHECKOUT: "Buy MP3 — $X" on Matthew McCluster's own recordings.
+/* DIRECT CHECKOUT: "Buy WAV — $X" (the real format) on Matthew McCluster's own recordings.
    =====================================================================
    Owner, 2026-10-30: "I definitely need a direct checkout for all the music."
 
@@ -8,6 +8,9 @@
    keys it ("here:who-did-the-shoot"). A button appears only when that
    recording has an offer on sale now, read from music-direct-checkout
    ("offers"); nothing appears when there is none or the service is down.
+   The label names the format the buyer actually gets (the private file's
+   own type, delivered unconverted: MP3, M4A, WAV or FLAC), which the server
+   reads from the file and sends as "format"; never a blanket "MP3".
    A tap asks music-direct-checkout for a Stripe Checkout page for that
    offer: the request names the offer and nothing else, the server prices it.
    Stripe returns the buyer to purchase.html.
@@ -20,6 +23,8 @@
   var offersP = null, byKey = {};
 
   function slug(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+  var FORMATS = { mp3: "MP3", m4a: "M4A", wav: "WAV", flac: "FLAC" };
+  function formatLabel(f) { return FORMATS[String(f || "").toLowerCase()] || "Audio"; }
   function catalogKey(album, title) { return slug(album) + ":" + slug(title); }
   function money(c, cur) {
     try { return new Intl.NumberFormat("en-US", { style: "currency", currency: String(cur || "usd").toUpperCase() }).format(Number(c || 0) / 100); }
@@ -70,8 +75,10 @@
         b.className = "mdbuy";
         b.setAttribute("data-direct-offer", o.offer_key);
         b.setAttribute("data-cta", "direct-buy");
-        b.setAttribute("aria-label", "Buy " + (o.title || row.getAttribute("data-title")) + " as an MP3 for " + money(o.price_cents, o.currency));
-        b.textContent = "Buy MP3 — " + money(o.price_cents, o.currency);
+        var fmt = formatLabel(o.format);
+        b.setAttribute("data-direct-format", fmt);
+        b.setAttribute("aria-label", "Buy " + (o.title || row.getAttribute("data-title")) + " as a " + fmt + " file for " + money(o.price_cents, o.currency));
+        b.textContent = "Buy " + fmt + " \u2014 " + money(o.price_cents, o.currency);
         var host = row.querySelector(".t") || row;
         host.appendChild(b);
       });
@@ -110,7 +117,7 @@
         .observe(document.body, { childList: true, subtree: true });
     }
   }
-  root.MCC_DIRECT = { catalogKey: catalogKey, offers: offers, decorate: decorate };
+  root.MCC_DIRECT = { catalogKey: catalogKey, formatLabel: formatLabel, offers: offers, decorate: decorate };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 })(window);

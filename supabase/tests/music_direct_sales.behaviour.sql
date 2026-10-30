@@ -52,6 +52,8 @@ values ('here--here','here:here','Here',199,'USD','mcc-gated-audio','direct-sale
        ('here--lightroom','here:lightroom','Lightroom',299,'usd','mcc-gated-audio','direct-sales/here/lightroom/1-l.mp3','McCluster - Lightroom.mp3',true,5,30);
 update public.music_direct_offers set sale_starts_at = now() + interval '1 day' where offer_key = 'here--lightroom';
 select pg_temp.check((select currency from public.music_direct_offers where offer_key='here--here') = 'usd', 'currency normalised');
+select pg_temp.check((select format from public.music_direct_offers where offer_key='here--antisocial') = 'wav', 'format derived from the file: wav');
+select pg_temp.must_fail($q$update public.music_direct_offers set format='mp3' where offer_key='here--antisocial'$q$, '%can only be updated to DEFAULT%');
 select pg_temp.must_fail($q$update public.music_direct_offers set offer_key='other-key' where offer_key='here--here'$q$, '%offer_key_immutable%');
 
 -- public read: on sale now only, buy-button columns only
@@ -59,6 +61,7 @@ select pg_temp.as_role('anon');
 select pg_temp.check((select count(*) from public.music_direct_offers) = 1, 'anon sees only the active, started offer');
 select pg_temp.check((select offer_key from public.music_direct_offers) = 'here--here', 'anon sees here--here');
 select pg_temp.check((select price_cents from public.music_direct_offers where catalog_key='here:here') = 199, 'anon reads price');
+select pg_temp.check((select format from public.music_direct_offers where catalog_key='here:here') = 'mp3', 'anon reads the delivered format, never the path');
 select pg_temp.must_fail('select asset_path from public.music_direct_offers', '%permission denied%');
 select pg_temp.must_fail('select * from public.music_direct_offers', '%permission denied%');
 select pg_temp.must_fail($q$update public.music_direct_offers set price_cents=50$q$, '%permission denied%');

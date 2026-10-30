@@ -18,9 +18,9 @@
 // event writes the commerce ledger only: no plan, music licence or provider
 // flag changes because of a test. With neither variable set nothing changes.
 import Stripe from "npm:stripe@14";
-import { checkoutRecord, invoicePaymentIntent, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
+import { type BoundDirectSale, checkoutRecord, invoicePaymentIntent, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
 import { MUSIC_PAYABLE, musicFulfilmentRefusal } from "./music.ts";
-import { MUSIC_DIRECT_KIND, MUSIC_DIRECT_PAYABLE, directFulfilmentRefusal } from "../_shared/music-direct.ts";
+import { MUSIC_DIRECT_KIND, MUSIC_DIRECT_PAYABLE, audioFormatOf, directFulfilmentRefusal } from "../_shared/music-direct.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SK_TEST = Deno.env.get("STRIPE_SK_TEST") || "";
@@ -89,8 +89,8 @@ async function withInvoicePayment(record: Record<string, any>, event: Stripe.Eve
   return record;
 }
 
-async function recordCheckout(session: Stripe.Checkout.Session, event: Stripe.Event) {
-  const record = checkoutRecord(session as any, event as any);
+async function recordCheckout(session: Stripe.Checkout.Session, event: Stripe.Event, direct: BoundDirectSale | null = null) {
+  const record = checkoutRecord(session as any, event as any, direct);
   if (!record) return;
   await rpc("commerce_record_stripe_checkout", await withSubscriptionDetails(record, event));
 }
@@ -217,39 +217,60 @@ async function revokeMusicByPaymentIntent(paymentIntent: string) {
    one entitlement per order, so a replayed or concurrent delivery (or the purchase page
    claiming first) fulfils once. A session that is not this order's payment grants
    nothing and is not retried. */
-async function grantDirectOrder(session: Stripe.Checkout.Session, event: Stripe.Event) {
-  if (session.metadata?.kind !== MUSIC_DIRECT_KIND) return;
+/* Find the direct-sale order a session points at and bind it (read only).
+   Returns the bound order, with its offer's title and delivered format, or
+   null when the session is not this order's payment. Used both to fulfil
+   (effects only) and to record the sale in the commerce ledger, which takes
+   amount, currency and buyer from this binding, never from metadata. */
+async function bindDirectOrder(session: Stripe.Checkout.Session, event: Stripe.Event): Promise<BoundDirectSale | null> {
+  if (session.metadata?.kind !== MUSIC_DIRECT_KIND) return null;
   const orderId = session.metadata?.music_direct_order_id || "";
   if (!/^[0-9a-f-]{36}$/i.test(orderId)) {
     console.error("music direct fulfilment refused", { event: event.id, reason: "bad_order_id" });
-    return;
+    return null;
   }
-  const rows = await db(`music_direct_orders?id=eq.${encodeURIComponent(orderId)}&select=id,offer_key,stripe_checkout_session_id,amount_cents,currency,status&limit=1`);
+  const rows = await db(`music_direct_orders?id=eq.${encodeURIComponent(orderId)}&select=id,offer_key,stripe_checkout_session_id,amount_cents,currency,status,customer_email&limit=1`);
   const order = rows?.[0];
   /* the order is written right after Stripe creates the session: a fast webhook retries */
   if (!order) throw new Error(`music direct order ${orderId} not found`);
   const refusal = directFulfilmentRefusal(session as any, event as any, order);
   if (refusal) {
     console.error("music direct fulfilment refused", { event: event.id, order: orderId, session: session.id, reason: refusal });
-    return;
+    return null;
   }
+  const offer = (await db(`music_direct_offers?offer_key=eq.${encodeURIComponent(order.offer_key)}&select=title,asset_path&limit=1`))?.[0] || {};
+  return {
+    order_id: order.id,
+    stripe_checkout_session_id: order.stripe_checkout_session_id,
+    amount_cents: Number(order.amount_cents),
+    currency: order.currency,
+    customer_email: order.customer_email || null,
+    title: offer.title || null,
+    format: audioFormatOf(offer.asset_path || ""),
+  };
+}
+
+async function grantDirectOrder(session: Stripe.Checkout.Session, event: Stripe.Event, bound: BoundDirectSale) {
   const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : "";
+  const email = String(session.customer_details?.email || session.customer_email || "").toLowerCase();
   const done = await db("rpc/music_direct_fulfil", {
     method: "POST",
     body: JSON.stringify({
-      p_order: orderId,
+      p_order: bound.order_id,
       p_session: session.id,
       p_amount_cents: session.amount_total,
       p_currency: session.currency,
       p_payment_intent: paymentIntent,
-      p_email: String(session.customer_details?.email || session.customer_email || "").toLowerCase(),
+      p_email: email,
     }),
   });
   if (!done?.ok) {
-    console.error("music direct fulfilment refused", { event: event.id, order: orderId, reason: done?.reason });
-    return;
+    console.error("music direct fulfilment refused", { event: event.id, order: bound.order_id, reason: done?.reason });
+    return false;
   }
+  if (!bound.customer_email && email) bound.customer_email = email;
   if (paymentIntent && await refundedAtStripe(paymentIntent, event)) await revokeDirectByPaymentIntent(paymentIntent);
+  return true;
 }
 
 /* paid -> refunded; the database revokes the entitlement in the same transaction */
@@ -290,16 +311,20 @@ Deno.serve(async (req) => {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
       if (effects) await grantMusicOrder(s, event);
-      if (effects) await grantDirectOrder(s, event);
-      await recordCheckout(s, event);
+      /* a direct sale is booked in the ledger only once bound, and (live) only once fulfilled */
+      let direct = await bindDirectOrder(s, event);
+      if (direct && effects && !(await grantDirectOrder(s, event, direct))) direct = null;
+      await recordCheckout(s, event, direct);
     }
 
     /* card payments complete at once; bank debits and similar arrive here */
     if (event.type === "checkout.session.async_payment_succeeded") {
       const s = event.data.object as Stripe.Checkout.Session;
       if (effects) await grantMusicOrder(s, event);
-      if (effects) await grantDirectOrder(s, event);
-      await recordCheckout(s, event);
+      /* a direct sale is booked in the ledger only once bound, and (live) only once fulfilled */
+      let direct = await bindDirectOrder(s, event);
+      if (direct && effects && !(await grantDirectOrder(s, event, direct))) direct = null;
+      await recordCheckout(s, event, direct);
     }
 
     if (event.type === "checkout.session.expired") {

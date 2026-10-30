@@ -11,7 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 import {
-  ALLOWED_ORIGINS, DIRECT_BUCKET, DIRECT_DEFAULTS, MUSIC_DIRECT_KIND, SITE, assetPathProblem, catalogKeyOf, corsHeaders,
+  ALLOWED_ORIGINS, DIRECT_BUCKET, audioFormatOf, formatLabel, DIRECT_DEFAULTS, MUSIC_DIRECT_KIND, SITE, assetPathProblem, catalogKeyOf, corsHeaders,
   directFulfilmentRefusal, directUploadPath, downloadNameFor, downloadRefusal, offerKeyFor, offerSaleRefusal, priceProblem,
   tokenRevealAllowed
 } from '../../supabase/functions/_shared/music-direct.ts';
@@ -219,7 +219,7 @@ test('stripe-webhook: direct sales bound, platform only, refunds revoke', async 
   const src = await read('supabase/functions/stripe-webhook/index.ts');
   assert.match(src, /directFulfilmentRefusal\(session as any, event as any, order\)/);
   assert.match(src, /rpc\/music_direct_fulfil/);
-  assert.equal((src.match(/if \(effects\) await grantDirectOrder\(s, event\);/g) || []).length, 2, 'completed and async_payment_succeeded');
+  assert.equal((src.match(/if \(direct && effects && !\(await grantDirectOrder\(s, event, direct\)\)\) direct = null;/g) || []).length, 2, 'completed and async_payment_succeeded');
   assert.match(src, /if \(effects && !event\.account\) await revokeDirectByPaymentIntent\(/);
   assert.match(src, /music_direct_orders\?id=eq\.\$\{encodeURIComponent\(s\.metadata\.music_direct_order_id!\)\}&stripe_checkout_session_id=eq\.\$\{encodeURIComponent\(s\.id\)\}/, 'only the stored session expires an order');
   assert.match(src, /music_direct_orders\?stripe_payment_intent_id=eq\.\$\{encodeURIComponent\(paymentIntent\)\}&status=eq\.paid/);
@@ -243,7 +243,8 @@ test('pending SQL: guards, RLS and the functions the edge code calls', async () 
   for (const name of ['music_direct_fulfil', 'music_direct_claim_download', 'music_direct_order_guard', 'music_direct_entitlement_guard', 'music_direct_order_revoke']) {
     assert.match(sql, new RegExp(`create or replace function public\\.${name}\\(`), name);
   }
-  assert.match(sql, /grant select \(offer_key, catalog_key, title, price_cents, currency, active, sale_starts_at, sale_ends_at\)\s+on table public\.music_direct_offers to anon, authenticated/);
+  assert.match(sql, /grant select \(offer_key, catalog_key, title, price_cents, currency, format, active, sale_starts_at, sale_ends_at\)\s+on table public\.music_direct_offers to anon, authenticated/);
+  assert.match(sql, /add column if not exists format text generated always as \(lower\(substring\(asset_path from/);
   assert.doesNotMatch(sql.match(/grant select \([^)]*\)/)[0], /asset_|download_name/, 'never the file');
   assert.match(sql, /revoke all on table public\.music_direct_orders from public, anon, authenticated/);
   assert.match(sql, /revoke all on table public\.music_direct_entitlements from public, anon, authenticated/);
@@ -277,4 +278,28 @@ test('buyer and owner pages load the scripts, Matthew-first', async () => {
   const adminJs = await read('js/control-room/music-direct-sales.js');
   assert.doesNotMatch(adminJs, /rest\/v1\/music_direct|M\.supa\(|supa\("music_direct/, 'never a direct client write');
   assert.match(adminJs, /\/functions\/v1\/music-direct-access/);
+});
+
+test('the buyer is told the real format: the file is delivered unconverted', async () => {
+  assert.equal(audioFormatOf('direct-sales/here/antisocial/u-master.wav'), 'wav');
+  assert.equal(audioFormatOf('direct-sales/here/here/u.FLAC'), 'flac');
+  assert.equal(audioFormatOf('direct-sales/here/here/u.m4a'), 'm4a');
+  assert.equal(audioFormatOf('direct-sales/here/here/u.exe'), null);
+  assert.equal(audioFormatOf(null), null);
+  assert.deepEqual(['mp3', 'm4a', 'wav', 'flac', 'ogg', null].map(formatLabel), ['MP3', 'M4A', 'WAV', 'FLAC', 'Audio', 'Audio']);
+  const checkout = await read('supabase/functions/music-direct-checkout/index.ts');
+  assert.doesNotMatch(checkout, /MP3/, 'no blanket MP3 promise');
+  assert.match(checkout, /name: `\$\{o\.title\} \(\$\{label\} download\)`/);
+  assert.match(checkout, /format: audioFormatOf\(o\.asset_path\),/);
+  const offersAction = checkout.slice(checkout.indexOf('if (action === "offers")'), checkout.indexOf('if (action !== "checkout")'));
+  assert.doesNotMatch(offersAction.slice(offersAction.indexOf('.map(')), /asset_path:|asset_path,/, 'the public list names the format, never the path');
+  const buy = await read('js/music-direct.js');
+  assert.match(buy, /b\.textContent = "Buy " \+ fmt \+ " \\u2014 "/);
+  assert.doesNotMatch(buy, /"Buy MP3/);
+  const purchase = await read('js/music-purchase.js');
+  assert.match(purchase, /"Download " \+ fmt/);
+  const access = await read('supabase/functions/music-direct-access/index.ts');
+  assert.match(access, /format: audioFormatOf\(d\.asset_path\)/);
+  const desk = await read('js/control-room/music-direct-sales.js');
+  assert.match(desk, /sold as " \+ e\(fmtOf\(file\)\) \+ ", unconverted\)/);
 });

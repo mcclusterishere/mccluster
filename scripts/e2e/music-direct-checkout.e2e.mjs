@@ -2,7 +2,8 @@
    pages with every network call answered by fixtures: no production API,
    Stripe or Storage request escapes.
 
-   - album.html and catalogue.html show "Buy MP3 — $X" on exactly the
+   - album.html and catalogue.html show "Buy <format> — $X" (the file's real
+     format) on exactly the
      recordings with an offer on sale, and on no other row;
    - tapping it posts { action: "checkout", offer_key } and nothing priced,
      then goes to the Checkout URL; the album row does not start playing;
@@ -26,8 +27,8 @@ const MIME = { '.js': 'text/javascript', '.css': 'text/css', '.json': 'applicati
 const IMAGE = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
 const TOKEN = '6f1c2a34-5b6d-4e7f-8a9b-0c1d2e3f4a5b';
 const OFFERS = [
-  { offer_key: 'here--antisocial', catalog_key: 'here:antisocial', title: 'Antisocial', price_cents: 199, currency: 'usd' },
-  { offer_key: 'heal-the-3--deep-end', catalog_key: 'heal-the-3:deep-end', title: 'Deep End', price_cents: 299, currency: 'usd' }
+  { offer_key: 'here--antisocial', catalog_key: 'here:antisocial', title: 'Antisocial', price_cents: 199, currency: 'usd', format: 'wav' },
+  { offer_key: 'heal-the-3--deep-end', catalog_key: 'heal-the-3:deep-end', title: 'Deep End', price_cents: 299, currency: 'usd', format: 'mp3' }
 ];
 await mkdir(OUT, { recursive: true });
 let failures = 0;
@@ -68,7 +69,7 @@ async function setup(start, { left = 4, operator = false } = {}) {
       }
       if (p.endsWith('music-direct-access') && body.action === 'operator-direct-save') return json(r, { ok: true, offer: {} });
       if (p.endsWith('music-direct-access')) {
-        const view = { title: 'Antisocial', downloads_used: 5 - left, downloads_left: left, max_downloads: 5, expires_at: '2026-11-29T00:00:00Z', can_download: left > 0,
+        const view = { title: 'Antisocial', format: 'wav', downloads_used: 5 - left, downloads_left: left, max_downloads: 5, expires_at: '2026-11-29T00:00:00Z', can_download: left > 0,
           refusal: left > 0 ? null : { reason: 'download_limit', message: 'This purchase has used all of its downloads.' } };
         if (body.action === 'claim') return json(r, { ok: true, state: 'paid', token: TOKEN, ...view });
         if (body.action === 'status') return json(r, { ok: true, state: 'paid', ...view });
@@ -113,7 +114,7 @@ const noOverflow = (page) => page.evaluate(() => ({ sw: document.documentElement
   await page.waitForSelector('#tracks li[data-title="Antisocial"] [data-direct-offer]', { timeout: 15000 });
   const buttons = await page.$$eval('[data-direct-offer]', (bs) => bs.map((b) => ({ key: b.getAttribute('data-direct-offer'), text: b.textContent, row: b.closest('li').getAttribute('data-title') })));
   check('album: one buy button, on the recording on sale', buttons.length === 1 && buttons[0].row === 'Antisocial' && buttons[0].key === 'here--antisocial', buttons);
-  check('album: button names the price', buttons[0]?.text === 'Buy MP3 — $1.99', buttons[0]?.text);
+  check('album: button names the real format and the price', buttons[0]?.text === 'Buy WAV — $1.99', buttons[0]?.text);
   let o = await noOverflow(page);
   check('album: no horizontal scroll at 390px', o.sw === o.cw, o);
   await page.locator('#tracks li[data-title="Antisocial"]').scrollIntoViewIfNeeded();
@@ -137,6 +138,8 @@ const noOverflow = (page) => page.evaluate(() => ({ sw: document.documentElement
   const { context, page } = await setup('/catalogue.html');
   await page.waitForSelector('#reg li[data-albslug] [data-direct-offer]', { timeout: 15000 });
   const rows = await page.$$eval('[data-direct-offer]', (bs) => bs.map((b) => b.closest('li').id).sort());
+  const labels = await page.$$eval('[data-direct-offer]', (bs) => bs.map((b) => b.textContent).sort());
+  check('catalogue: each button names its own format', JSON.stringify(labels) === JSON.stringify(['Buy MP3 — $2.99', 'Buy WAV — $1.99']), labels);
   check('catalogue: buy buttons exactly on the two recordings on sale', JSON.stringify(rows) === JSON.stringify(['antisocial', 'deep-end']), rows);
   const o = await noOverflow(page);
   check('catalogue: no horizontal scroll at 390px', o.sw === o.cw, o);
@@ -150,7 +153,7 @@ const noOverflow = (page) => page.evaluate(() => ({ sw: document.documentElement
   await page.waitForSelector('#ppCard:not([hidden])', { timeout: 10000 });
   check('purchase: the session is claimed', calls.some((c) => c.body.action === 'claim' && c.body.session_id === 'cs_test_fixture123'), calls);
   check('purchase: the address now carries the token, not the session', page.url() === `${HOUSE}/purchase.html?token=${TOKEN}`, page.url());
-  check('purchase: title and downloads left', (await page.textContent('#ppTitle')) === 'Antisocial' && /4 of 5 downloads left/.test(await page.textContent('#ppMeta')), await page.textContent('#ppMeta'));
+  check('purchase: title, real format and downloads left', (await page.textContent('#ppTitle')) === 'Antisocial · WAV' && (await page.textContent('#ppDownload')) === 'Download WAV' && /4 of 5 downloads left/.test(await page.textContent('#ppMeta')), await page.textContent('#ppMeta'));
   check('purchase: the kept link is shown', (await page.inputValue('#ppLink')) === `${HOUSE}/purchase.html?token=${TOKEN}`);
   const o = await noOverflow(page);
   check('purchase: no horizontal scroll at 390px', o.sw === o.cw, o);
@@ -188,7 +191,7 @@ const noOverflow = (page) => page.evaluate(() => ({ sw: document.documentElement
   const rows = await page.$$eval('[data-crds]', (r) => r.map((x) => x.getAttribute('data-crds')));
   check('control: every catalogue recording is listed', rows.length === 3, rows);
   const text = await page.textContent('[data-crds="here:antisocial"]');
-  check('control: the live offer reads as on sale with its sales', /on sale \$1\.99/.test(text) && /3 sold, 1 refunded/.test(text), text);
+  check('control: the live offer reads as on sale with its format and sales', /on sale WAV \$1\.99/.test(text) && /sold as WAV, unconverted/.test(text) && /3 sold, 1 refunded/.test(text), text);
   const o = await noOverflow(page);
   check('control: no horizontal scroll at 390px', o.sw === o.cw, o);
   const sizes = await page.$$eval('[data-crds] input', (els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));

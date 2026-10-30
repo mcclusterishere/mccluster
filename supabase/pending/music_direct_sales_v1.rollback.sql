@@ -31,6 +31,7 @@ alter table public.music_direct_offers
   drop constraint if exists music_direct_offers_download_name_check,
   drop constraint if exists music_direct_offers_title_check,
   drop constraint if exists music_direct_offers_catalog_key_fkey,
+  drop column if exists format,
   drop column if exists max_downloads,
   drop column if exists download_window_days,
   drop column if exists sale_starts_at,

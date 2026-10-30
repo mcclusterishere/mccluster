@@ -30,7 +30,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { isHouseOperator } from "../_shared/house-ops.ts";
 import {
   CATALOG_KEY_RE, DIRECT_AUDIO_TYPES, DIRECT_BUCKET, DIRECT_DEFAULTS, MAX_DOWNLOADS_RANGE, REFUSAL_HTTP, SESSION_ID_RE,
-  TOKEN_RE, WINDOW_DAYS_RANGE, assetPathProblem, corsHeaders, directFulfilmentRefusal, directUploadPath, downloadNameFor,
+  TOKEN_RE, WINDOW_DAYS_RANGE, assetPathProblem, audioFormatOf, corsHeaders, directFulfilmentRefusal, directUploadPath, downloadNameFor,
   downloadRefusal, offerKeyFor, priceProblem, tokenRevealAllowed,
 } from "../_shared/music-direct.ts";
 
@@ -50,13 +50,16 @@ async function entitlementView(orderId: string) {
   return ent as any;
 }
 async function offerTitle(offerKey: string) {
-  const { data } = await admin.from("music_direct_offers").select("title,catalog_key").eq("offer_key", offerKey).limit(1).maybeSingle();
-  return (data as any) || { title: "Your track", catalog_key: null };
+  const { data } = await admin.from("music_direct_offers").select("title,catalog_key,asset_path").eq("offer_key", offerKey).limit(1).maybeSingle();
+  const d = (data as any) || { title: "Your track", catalog_key: null, asset_path: null };
+  /* the delivered format, never the path */
+  return { title: d.title, catalog_key: d.catalog_key, format: audioFormatOf(d.asset_path) };
 }
-function describe(ent: any, orderStatus: string, title: string) {
+function describe(ent: any, orderStatus: string, title: string, format: string | null = null) {
   const refusal = downloadRefusal(ent, orderStatus);
   return {
     title,
+    format,
     downloads_used: ent ? ent.download_count : 0,
     downloads_left: ent && ent.max_downloads != null ? Math.max(0, ent.max_downloads - ent.download_count) : 0,
     max_downloads: ent?.max_downloads ?? null,
@@ -112,7 +115,7 @@ async function claim(sessionId: string) {
   const { data: fresh } = await admin.from("music_direct_orders").select(ORDER_COLUMNS).eq("id", o.id).limit(1).maybeSingle();
   const ent = await entitlementView(o.id);
   const offer = await offerTitle(o.offer_key);
-  const view = describe(ent, (fresh as any)?.status, offer.title);
+  const view = describe(ent, (fresh as any)?.status, offer.title, offer.format);
   if (!ent) throw new Error("entitlement missing after fulfilment");
   if (!tokenRevealAllowed((fresh as any)?.paid_at)) {
     return { ok: true, state: "paid", token_hidden: true, ...view,
@@ -174,7 +177,7 @@ async function operator(action: string, body: Record<string, unknown>) {
       if (r.status === "paid") { s.paid++; s.gross_cents += Number(r.amount_cents || 0); }
       if (r.status === "refunded") s.refunded++;
     }
-    return { ok: true, catalogue: catalogue || [], offers: offers || [], sales,
+    return { ok: true, catalogue: catalogue || [], offers: ((offers || []) as any[]).map((o) => ({ ...o, format: audioFormatOf(o.asset_path) })), sales,
       defaults: { max_downloads: DIRECT_DEFAULTS.maxDownloads, download_window_days: DIRECT_DEFAULTS.downloadWindowDays },
       audio_types: Object.keys(DIRECT_AUDIO_TYPES) };
   }
@@ -261,7 +264,7 @@ Deno.serve(async (req) => {
       if (action === "status") {
         const { ent, orderStatus } = await tokenRow(token);
         const offer = await offerTitle(ent.offer_key);
-        return json({ ok: true, state: orderStatus === "paid" && !ent.revoked_at ? "paid" : "revoked", ...describe(ent, orderStatus, offer.title) });
+        return json({ ok: true, state: orderStatus === "paid" && !ent.revoked_at ? "paid" : "revoked", ...describe(ent, orderStatus, offer.title, offer.format) });
       }
       const { data: got, error } = await admin.rpc("music_direct_claim_download", { p_token: token });
       if (error) throw error;
@@ -273,7 +276,7 @@ Deno.serve(async (req) => {
       const { data: signed, error: signError } = await admin.storage.from(r.bucket)
         .createSignedUrl(r.path, DIRECT_DEFAULTS.signedUrlSeconds, { download: r.download_name });
       if (signError || !signed?.signedUrl) throw new Error(signError?.message || "could not sign download");
-      return json({ ok: true, title: r.title, url: signed.signedUrl, expires_in: DIRECT_DEFAULTS.signedUrlSeconds,
+      return json({ ok: true, title: r.title, format: audioFormatOf(r.path), url: signed.signedUrl, expires_in: DIRECT_DEFAULTS.signedUrlSeconds,
         downloads_left: r.downloads_left, download_expires_at: r.expires_at });
     }
     if (action === "operator-status") {

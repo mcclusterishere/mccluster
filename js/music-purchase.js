@@ -47,7 +47,9 @@
   }
   function show(d) {
     $("ppCard").hidden = false;
-    $("ppTitle").textContent = d.title || "Your track";
+    var fmt = { mp3: "MP3", m4a: "M4A", wav: "WAV", flac: "FLAC" }[String(d.format || "").toLowerCase()];
+    $("ppTitle").textContent = (d.title || "Your track") + (fmt ? " \u00b7 " + fmt : "");
+    $("ppDownload").textContent = fmt ? "Download " + fmt : "Download";
     var parts = [];
     if (d.max_downloads != null) parts.push(d.downloads_left + " of " + d.max_downloads + " downloads left");
     if (d.expires_at) parts.push("available until " + when(d.expires_at));

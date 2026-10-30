@@ -7,8 +7,8 @@
    and, for each recording: a price, the full-quality file (uploaded straight
    into the PRIVATE mcc-gated-audio bucket under direct-sales/ through a
    one-time signed upload slot that never overwrites), the downloads each
-   purchase gets and for how many days, and on/off sale. A "Buy MP3" button
-   then appears on that track in album.html and catalogue.html.
+   purchase gets and for how many days, and on/off sale. A "Buy <format>"
+   button (the file's real format: MP3, M4A, WAV or FLAC) then appears on that track in album.html and catalogue.html.
 
    Every read and write goes through music-direct-access operator-* actions,
    which verify the caller's token and the music desk's own authority
@@ -22,6 +22,8 @@
   var D = { rerender: null, loading: false, loaded: false, error: null, catalogue: [], offers: {}, sales: {},
     defaults: { max_downloads: 5, download_window_days: 30 }, files: {}, msg: {}, busy: {} };
   function e(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  /* buyers get the file exactly as uploaded: its extension is the format the buy button names */
+  function fmtOf(path) { var x = (String(path || "").match(/\.([a-z0-9]{2,5})$/i) || [])[1] || ""; return { mp3: "MP3", m4a: "M4A", wav: "WAV", flac: "FLAC" }[x.toLowerCase()] || "unknown"; }
   function money(c) { return "$" + (Number(c || 0) / 100).toFixed(2); }
   function token() { return window.MCC_SUPA && MCC_SUPA.token ? MCC_SUPA.token() : Promise.resolve(null); }
   function call(action, body) {
@@ -57,9 +59,9 @@
     var o = D.offers[c.catalog_key] || null, s = (o && D.sales[o.offer_key]) || null, live = !!(o && o.active);
     var file = D.files[c.catalog_key] || (o && o.asset_path) || "", k = e(c.catalog_key), busy = !!D.busy[c.catalog_key];
     return '<div class="cro-item" data-crds="' + k + '"><div class="cro-item__head"><div><strong>' + e(c.track_title) + '</strong>' +
-      '<div class="cro-meta">' + e(c.album_title) + " · file " + (file ? e(file.split("/").pop()) : "none yet") +
+      '<div class="cro-meta">' + e(c.album_title) + " · file " + (file ? e(file.split("/").pop()) + " (sold as " + e(fmtOf(file)) + ", unconverted)" : "none yet") +
       (s ? " · " + e(s.paid) + " sold" + (s.refunded ? ", " + e(s.refunded) + " refunded" : "") + " · " + e(money(s.gross_cents)) : "") + "</div></div>" +
-      '<span class="cro-pill">' + (live ? "on sale " + e(money(o.price_cents)) : o ? "off sale" : "not set up") + "</span></div>" +
+      '<span class="cro-pill">' + (live ? "on sale " + e(fmtOf(o.asset_path)) + " " + e(money(o.price_cents)) : o ? "off sale" : "not set up") + "</span></div>" +
       '<div class="cro-form cro-form--2" style="margin-top:8px">' +
         '<label>Price (USD)<input type="number" inputmode="decimal" min="0.50" max="500" step="0.01" data-crds-f="price" value="' + (o ? (o.price_cents / 100).toFixed(2) : "1.99") + '"></label>' +
         '<label>Full-quality file<input type="file" accept="audio/mpeg,audio/mp4,audio/wav,audio/flac,.mp3,.m4a,.wav,.flac" data-crds-f="file"></label>' +

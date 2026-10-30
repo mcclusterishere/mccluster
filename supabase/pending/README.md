@@ -111,7 +111,7 @@ Rollout for `music_direct_sales_v1.sql` (owner approval required):
 3. Health: `select count(*) from pg_trigger where tgname like 'music_direct_%_trg';` returns 4; as anon, `select asset_path from public.music_direct_offers` is refused; `select has_function_privilege('anon', 'public.music_direct_claim_download(uuid)', 'execute');` is false.
 4. Merge the PR: the "Supabase Edge Functions deploy" run deploys `music-direct-checkout`, `music-direct-access` and `stripe-webhook` from Git (replacing the hand-deployed versions). Unauthenticated probes: `music-direct-checkout` `{action:"offers"}` answers 200 with `[]`; `music-direct-access` `{action:"operator-direct-list"}` answers 401.
 5. In Stripe (test mode first), the webhook endpoint already sends `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `payment_intent.payment_failed` and `charge.refunded`; nothing to add.
-6. Owner, in Control → Create → Music → Direct sales (`control.html#create:music`): upload a file, set a price, put one track on sale; the album page shows "Buy MP3"; one test-mode purchase lands on `purchase.html` with a download; a test refund closes it.
+6. Owner, in Control → Create → Music → Direct sales (`control.html#create:music`): upload a file, set a price, put one track on sale; the album page shows "Buy <format> — $X" with the uploaded file's real format; one test-mode purchase lands on `purchase.html` with a download; a test refund closes it.
 
 Back out: take every offer off sale on the desk (or `update public.music_direct_offers set active=false`), then the rollback file.
 

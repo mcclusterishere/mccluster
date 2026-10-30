@@ -7,7 +7,8 @@
 --
 --   offers   : one per catalogue recording (FK to public.music_catalog_objects), price
 --              50..50000 cents, the full-quality file only in the PRIVATE bucket
---              mcc-gated-audio under direct-sales/, a per-offer download limit
+--              mcc-gated-audio under direct-sales/ (its format, derived from the file,
+--              is public; the path is not), a per-offer download limit
 --              (max_downloads, default 5) and window (download_window_days, default 30),
 --              an optional sale window. The public (anon/authenticated) may read ONLY
 --              offers on sale now, and only the columns a buy button needs: never the
@@ -78,6 +79,14 @@ do $c$ begin
     foreign key (catalog_key) references public.music_catalog_objects(catalog_key) on update cascade on delete restrict;
 exception when duplicate_object then null; end $c$;
 
+-- The format a buyer receives is the private file's own type, delivered unconverted.
+-- Derived from asset_path by the database (so it can never disagree with the file),
+-- and the only thing about the file the public may read.
+alter table public.music_direct_offers
+  add column if not exists format text generated always as (lower(substring(asset_path from '\.([A-Za-z0-9]+)$'))) stored;
+comment on column public.music_direct_offers.format is
+  'Delivered format (mp3, m4a, wav, flac): the private file''s extension, never converted. Public; the path is not.';
+
 comment on column public.music_direct_offers.campaign_key is
   'Legacy, optional: direct sales are not tied to a campaign page. Not read by the functions.';
 comment on column public.music_direct_offers.max_downloads is 'Downloads each purchase gets (snapshotted onto the entitlement at grant).';
@@ -102,7 +111,7 @@ create trigger music_direct_offer_guard_trg before insert or update on public.mu
 -- Public read: offers on sale now, buy-button columns only.
 alter table public.music_direct_offers enable row level security;
 revoke all on table public.music_direct_offers from public, anon, authenticated;
-grant select (offer_key, catalog_key, title, price_cents, currency, active, sale_starts_at, sale_ends_at)
+grant select (offer_key, catalog_key, title, price_cents, currency, format, active, sale_starts_at, sale_ends_at)
   on table public.music_direct_offers to anon, authenticated;
 grant all on table public.music_direct_offers to service_role;
 drop policy if exists music_direct_offers_public_read on public.music_direct_offers;
