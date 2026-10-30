@@ -20,6 +20,7 @@
 import Stripe from "npm:stripe@14";
 import { checkoutRecord, invoicePaymentIntent, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
 import { MUSIC_PAYABLE, musicFulfilmentRefusal } from "./music.ts";
+import { marketplaceExpiry, marketplaceOrderId, marketplacePaidRecord, marketplacePaymentRefusal, marketplaceRefund } from "./marketplace.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SK_TEST = Deno.env.get("STRIPE_SK_TEST") || "";
@@ -91,6 +92,8 @@ async function withInvoicePayment(record: Record<string, any>, event: Stripe.Eve
 async function recordCheckout(session: Stripe.Checkout.Session, event: Stripe.Event) {
   const record = checkoutRecord(session as any, event as any);
   if (!record) return;
+  /* a marketplace sale reaches the ledger only once it is bound to its order */
+  if (record.kind === "marketplace_sale" && !marketplaceBound.has(session)) return;
   await rpc("commerce_record_stripe_checkout", await withSubscriptionDetails(record, event));
 }
 
@@ -209,6 +212,35 @@ async function revokeMusicByPaymentIntent(paymentIntent: string) {
   });
 }
 
+/* MERCH MARKETPLACE (supabase/pending/merch_marketplace_v1.sql). A sale is a
+   direct charge on the seller's connected account, so its events carry
+   event.account. The order named in metadata is read from the database and
+   the session is bound to it (./marketplace.ts): the stored session, the
+   stored connected account, the mode, the server's amounts. The database
+   checks the same again under a row lock and moves the order pending -> paid
+   once; a replay changes nothing. A session that is not the order's payment
+   is logged and not retried. Only a bound sale is booked in the commerce
+   ledger, to the seller's org. */
+const marketplaceBound = new WeakSet<object>();
+const MARKETPLACE_SELECT = "id,seller_org_id,stripe_account_id,checkout_session_id,livemode,currency,subtotal_cents,shipping_cents,fee_basis_cents,status";
+
+async function settleMarketplaceOrder(session: Stripe.Checkout.Session, event: Stripe.Event) {
+  const orderId = marketplaceOrderId(session as any);
+  if (!orderId || session.payment_status !== "paid") return;
+  const order = (await db(`marketplace_orders?id=eq.${encodeURIComponent(orderId)}&select=${MARKETPLACE_SELECT}&limit=1`))?.[0];
+  const refusal = marketplacePaymentRefusal(session as any, event as any, order);
+  if (refusal) {
+    console.error("marketplace payment refused", { event: event.id, order: orderId, session: session.id, reason: refusal });
+    return;
+  }
+  const result = await rpc("marketplace_order_mark_paid", marketplacePaidRecord(session as any, event as any, order));
+  if (result?.refused) {
+    console.error("marketplace payment refused", { event: event.id, order: orderId, session: session.id, reason: result.refused });
+    return;
+  }
+  marketplaceBound.add(session);
+}
+
 Deno.serve(async (req) => {
   const sig = req.headers.get("stripe-signature") || "";
   const raw = await req.text();
@@ -238,6 +270,7 @@ Deno.serve(async (req) => {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
       if (effects) await grantMusicOrder(s, event);
+      await settleMarketplaceOrder(s, event);
       await recordCheckout(s, event);
     }
 
@@ -245,11 +278,17 @@ Deno.serve(async (req) => {
     if (event.type === "checkout.session.async_payment_succeeded") {
       const s = event.data.object as Stripe.Checkout.Session;
       if (effects) await grantMusicOrder(s, event);
+      await settleMarketplaceOrder(s, event);
       await recordCheckout(s, event);
     }
 
     if (event.type === "checkout.session.expired") {
       const s = event.data.object as Stripe.Checkout.Session;
+      /* an abandoned marketplace checkout gives its unit back; only the stored session can do it */
+      const expiry = marketplaceExpiry(s as any, event as any);
+      if (expiry) {
+        await db("rpc/marketplace_order_release", { method: "POST", body: JSON.stringify({ p_order: expiry.order_id, p_session: expiry.session_id }) });
+      }
       if (effects && !event.account && s.metadata?.kind === "music_license_sale" && s.metadata.music_order_id) {
         /* only the session stored on the order can expire it */
         await db(`music_orders?id=eq.${encodeURIComponent(s.metadata.music_order_id)}&stripe_checkout_session_id=eq.${encodeURIComponent(s.id)}&status=in.(pending,failed)`, {
@@ -274,6 +313,13 @@ Deno.serve(async (req) => {
       const c = event.data.object as Stripe.Charge;
       /* music is sold on the platform account; a connected account's refund names none of its payments */
       if (effects && !event.account) await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
+      const marketplace = marketplaceRefund(c as any, event as any);
+      if (marketplace) {
+        const result = await rpc("marketplace_order_record_refund", marketplace);
+        /* a refund that beats its checkout waits for it: Stripe retries */
+        if (result?.retry) throw new Error(`marketplace refund before payment: ${marketplace.order_id}`);
+        if (result?.refused) console.error("marketplace refund refused", { event: event.id, order: marketplace.order_id, reason: result.refused });
+      }
       const refund = refundRecord(c as any, event as any);
       if (refund) await rpc("commerce_record_stripe_refund", refund);
     }

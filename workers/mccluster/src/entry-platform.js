@@ -27,6 +27,7 @@ import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
 import { handleRegionScope } from './world-region-feed.js';
 import { handleMemberFronts } from './member-fronts.js';
+import { handleMerchRequest } from './merch/router.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -104,6 +105,9 @@ export default {
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
       const fronts = await handleMemberFronts(request, env);
       if (fronts) return fronts;
+      /* the merch marketplace: sellers, their buyers and the owner's moderation (./merch/router.js) */
+      const merch = await handleMerchRequest(request, env);
+      if (merch) return merch;
 
       const creatorSiteView = await handleCreatorSiteView(request, env);
       if (creatorSiteView) return creatorSiteView;

@@ -61,7 +61,7 @@ async function sb(env, path, init = {}) {
    rather than configured separately, because a mismatch between a
    `livemode` column and the key that wrote the row is the kind of bug that
    is only discovered by a real customer's card. */
-function livemode(env) {
+export function livemode(env) {
   return String(env.STRIPE_SECRET_KEY || '').startsWith('sk_live');
 }
 
@@ -130,7 +130,7 @@ function statusFor(account) {
   return account.details_submitted ? 'restricted' : 'onboarding';
 }
 
-function railPatchFromAccount(account) {
+export function railPatchFromAccount(account) {
   return {
     stripe_account_id: account.id,
     charges_enabled: Boolean(account.charges_enabled),
@@ -142,7 +142,7 @@ function railPatchFromAccount(account) {
   };
 }
 
-function publicRail(rail) {
+export function publicRail(rail) {
   if (!rail) return { connected: false, ready: false, onboarding_status: 'not_started' };
   return {
     connected: Boolean(rail.stripe_account_id),
@@ -168,7 +168,7 @@ function publicRail(rail) {
    takes the product description from the caller instead of asserting the
    client sells rideshare — Stripe reads that field during review, and a
    musician described as a rental operator gets held up for it. */
-async function createClientAccount(env, { org, email, productDescription, url }) {
+export async function createClientAccount(env, { org, email, productDescription, url }) {
   return stripeRequest(env, 'accounts', {
     type: 'express',
     country: 'US',
