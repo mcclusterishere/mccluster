@@ -68,6 +68,7 @@ Rollback files sit beside the ones that have them.
 | `20261009220000_at_night_adult_verification.sql` | `at_night_verifications` | `workers/mccluster/src/at-night.js` | moved from `supabase/migrations/pending/` 2026-10-27; written against the 2026-10-09 schema, re-run its statements on a scratch reset before apply |
 | `20261010008000_action_connect_recipients.sql` | `an_connect_recipients` | `workers/mccluster/src/action-connect.js` | same as above |
 | `20261010009000_creator_site_cohort_grants.sql` | `creator_site_cohort_grants` | `workers/mccluster/src/creator-site-publish.js`, `creator-site-v*.js` | same as above; `20261010009100_creator_publish_cohort_entitlement.sql` goes right after it |
+| `merch_marketplace_v1.sql` (+ rollback) | `marketplace_sellers`, `marketplace_seller_providers`, `marketplace_assets`, `marketplace_listings`, `marketplace_variants`, `marketplace_orders`, the `marketplace_*` functions, bucket `marketplace-media` | `workers/mccluster/src/merch/router.js` (`/v1/merch`), `supabase/functions/stripe-webhook/index.ts` (marketplace settlement) | `bash scripts/test-merch-marketplace-db.sh`; needs only what production already has (`orgs`, `org_members`, `org_stripe_accounts`, `control_audit`, `private.is_org_member`); until applied `/v1/merch` answers 503 and no marketplace checkout can exist. Added 2026-10-30 (owner: merch marketplace v1) |
 
 ## 2. The owner-approval chain (apply in this order)
 

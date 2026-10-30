@@ -30,8 +30,10 @@ export function checkoutRecord(session: Obj, event: Obj): Obj | null {
   const metadata = session.metadata || {};
   const offering = str(metadata.offering);
   const kind = str(metadata.kind);
-  if (!offering && kind !== "music_license_sale") return null;
+  if (!offering && kind !== "music_license_sale" && kind !== "marketplace_sale") return null;
   if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") return null;
+  /* a marketplace sale is the seller's, charged on its connected account; on the platform it is nobody's */
+  if (kind === "marketplace_sale" && !str(event.account)) return null;
   const owner = orgFor(event, metadata);
   if (!owner) return null;
   const details = session.customer_details || {};
@@ -63,6 +65,7 @@ export function checkoutRecord(session: Obj, event: Obj): Obj | null {
     paid_at: isoFromUnix(event.created),
     livemode: event.livemode === true,
     org_id: owner.org_id,
+    ...(kind === "marketplace_sale" ? { marketplace_order_id: str(metadata.marketplace_order_id) } : {}),
   };
 }
 

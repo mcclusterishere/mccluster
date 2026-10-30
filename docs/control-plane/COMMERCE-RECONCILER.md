@@ -243,6 +243,26 @@ commit;
   and a deploy); `stripe_events` has never held a row, so the live endpoint
   itself is unconfirmed (Owner actions 1).
 
+## Merch marketplace sales (pending: `supabase/pending/merch_marketplace_v1.sql`)
+
+A marketplace sale is a direct charge on the seller's connected account
+(`workers/mccluster/src/merch/router.js`, `metadata.kind = marketplace_sale`).
+`stripe-webhook` first binds the session to its `marketplace_orders` row
+(`supabase/functions/stripe-webhook/marketplace.ts`: the stored session, the
+stored connected account, the mode, the server's subtotal and shipping, total
+= those plus Stripe's tax, no discount) and moves it to paid with
+`public.marketplace_order_mark_paid()`, which checks the same under a row
+lock. Only then is the sale booked here, in the seller's org (named by
+`mccluster_org_id`, never the house); an unbound session books nothing.
+`charge.refunded` on the seller's account updates the order's refunded total
+(it only grows; a refund that beats its payment is retried) and, as before,
+the ledger payment. `checkout.session.expired` releases the unit the checkout
+held. McCluster's 15% application fee is on the order
+(`platform_fee_cents`) and in `control_audit` (`marketplace.order_paid`);
+booking the fee itself as house revenue from `application_fee.*` events is a
+follow-up. Tests: `scripts/test/merch-marketplace.test.mjs`,
+`bash scripts/test-merch-marketplace-db.sh`.
+
 ## Not covered yet
 
 - **Square.** `checkout` hands Square-routed offerings (the

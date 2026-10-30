@@ -19,6 +19,15 @@ never lies. Nothing else can write those columns.
    `account.updated` for creators only arrives on a Connect endpoint. Copy the
    **signing secret** (`whsec_…`).
 4. Secrets: add `STRIPE_WEBHOOK_SECRET` = that `whsec_…` value.
+5. Connected accounts on their own endpoint (2026-10-30, merch marketplace):
+   Stripe signs a "connected accounts" endpoint with a different secret. Add
+   it as `STRIPE_CONNECT_WEBHOOK_SECRET` (and `STRIPE_CONNECT_WEBHOOK_SECRET_TEST`
+   for the test-mode one). The function tries `STRIPE_WEBHOOK_SECRET` first,
+   so whatever that endpoint already delivers behaves as before; an event only
+   the Connect secret verifies must name a connected account and never grants
+   a premium plan or a music licence
+   (`supabase/functions/stripe-webhook/endpoints.ts`). The code below is the
+   historical first version; the function in the repository is the authority.
 
 ## index.ts
 

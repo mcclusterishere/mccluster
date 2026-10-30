@@ -8,7 +8,7 @@
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "desk-bot", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
+  var WORK_VIEWS = ["inbox", "desk-bot", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "marketplace", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
   var CREATE_VIEWS = ["projects", "front-page", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
@@ -1568,6 +1568,10 @@
     if (view === "desk-bot") {
       return derivedNote("The desk bot's back office: what it may say (the knowledge base), what it cost today, every message a platform refused, its channels and its tools. Each action is the inbox edge function, with your session.") +
         (window.CR.deskBot ? window.CR.deskBot.render() : empty("Desk bot unavailable", "The native Control module did not load."));
+    }
+    if (view === "marketplace") {
+      return derivedNote("The McCluster Corp merch marketplace: approve or suspend sellers, take listings down, and see orders and McCluster's 15% fee. Sellers are paid on their own Stripe accounts; every action is /v1/merch/admin on the API, which checks your ops.use grant.") +
+        (window.CR.marketplace ? window.CR.marketplace.render() : empty("Marketplace unavailable", "The native Control module did not load."));
     }
     if (view === "pipeline") return renderPipeline();
     if (view === "people") return renderPeople();
@@ -3385,6 +3389,7 @@
     window.CR.media.bind($("crSurface"));
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
     if (window.CR.deskBot) window.CR.deskBot.bind($("crSurface"));
+    if (window.CR.marketplace) window.CR.marketplace.bind($("crSurface"));
     if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
     if (window.CR.instagram) window.CR.instagram.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
@@ -3697,6 +3702,7 @@
     refreshLeads: function () { runLeadQuery(false); }
   });
   if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });
+  if (window.CR.marketplace) window.CR.marketplace.init({ request: request, render: render });
   if (window.CR.buildCode) window.CR.buildCode.init({ request: request, render: render, orgId: function () { return state.org && state.org.id; } });
   if (window.CR.frontPage) window.CR.frontPage.init({ request: request, render: render });
 
