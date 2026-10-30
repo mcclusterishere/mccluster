@@ -180,7 +180,12 @@
       "/creator.html",
       "/music-creator.html",
       "/music-creator-terms.html",
-      "/privacy.html"
+      "/privacy.html",
+      "/market/",
+      "/market/shop.html",
+      "/market/item.html",
+      "/market/order.html",
+      "/market/sell.html"
     ],
     "separate_company_hosted_on_personal": [
       "/whip.html",

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Shop · McCluster Corp Marketplace</title>
+  <meta name="description" content="A shop on the McCluster Corp marketplace.">
+  <!-- McCluster Corp's marketplace, hosted on this origin for sessions and checkout returns
+       (docs/control-plane/DOMAINS-AND-ENTITIES.md). Not indexed until the owner switches the marketplace on. -->
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://matthew.mccluster.org/market/shop.html">
+  <link rel="icon" type="image/png" href="/assets/img/m-mark.png">
+  <meta name="theme-color" content="#0d0e10">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="McCluster Corp">
+  <meta property="og:title" content="Shop · McCluster Corp Marketplace">
+  <meta property="og:description" content="A shop on the McCluster Corp marketplace.">
+  <meta property="og:url" content="https://matthew.mccluster.org/market/shop.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/m-mark.png">
+  <link rel="stylesheet" href="/css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="/css/market.css?v=__STAMP__">
+</head>
+<body class="mk" data-market="shop">
+  <div class="mk-wrap">
+    <header class="mk-top">
+      <a class="mk-top__home" href="/market/"><img class="mk-top__mark" src="/assets/img/m-mark.png" alt="" width="32" height="32"><span class="mk-top__name"><b>McCluster Corp</b><small>Marketplace</small></span></a>
+      <nav class="mk-top__nav" aria-label="Marketplace"><a class="mk-btn mk-btn--small" href="/market/sell.html">Sell</a></nav>
+    </header>
+    <main>
+      <div class="mk-row" style="margin-bottom:12px"><img id="mkShopLogo" alt="" width="56" height="56" style="border-radius:12px;object-fit:cover" hidden><div style="min-width:0"><h1 class="mk-h1" id="mkShopName">Shop</h1><p class="mk-lede" id="mkShopBio" style="margin:0"></p></div></div>
+      <div id="mkListings" aria-live="polite"><div class="mk-empty">Loading…</div></div>
+    </main>
+    <footer class="mk-foot">The McCluster Corp marketplace. Each shop is its own business: you buy from the seller, who is the merchant of record and ships your order (US only). Payments by Stripe. <a href="https://mccluster.org/company">About McCluster Corp</a> · <a href="/privacy.html">Privacy</a></footer>
+  </div>
+  <script src="/js/backend.js?v=__STAMP__"></script>
+  <script src="/js/market.js?v=__STAMP__"></script>
+  <script src="/js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
