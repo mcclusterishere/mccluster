@@ -297,6 +297,134 @@
         "workers/mccluster/src/live/store.js"
       ]
     },
+    "marketplace-media": {
+      "kind": "bucket",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_assets": {
+      "kind": "table",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_listing_request_publish": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_listing_set_removed": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_listings": {
+      "kind": "table",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_order_attach_session": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_order_by_token": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_order_create": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_order_mark_paid": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "supabase/functions/stripe-webhook/index.ts"
+      ]
+    },
+    "marketplace_order_record_refund": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "supabase/functions/stripe-webhook/index.ts"
+      ]
+    },
+    "marketplace_order_release": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "supabase/functions/stripe-webhook/index.ts",
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_order_seller_update": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_orders": {
+      "kind": "table",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "supabase/functions/stripe-webhook/index.ts",
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_public_listings": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_seller_apply": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_seller_set_status": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_sellers": {
+      "kind": "table",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
+    "marketplace_variants": {
+      "kind": "table",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
     "member_fronts": {
       "kind": "table",
       "pending": "member_fronts_v1.sql",

@@ -1,0 +1,58 @@
+name: Merch marketplace
+permissions:
+  contents: read
+on:
+  pull_request:
+    paths:
+      - 'supabase/pending/merch_marketplace_v1.sql'
+      - 'supabase/pending/merch_marketplace_v1.rollback.sql'
+      - 'supabase/tests/merch_marketplace.*.sql'
+      - 'supabase/tests/supabase_api_roles.stub.sql'
+      - 'supabase/functions/stripe-webhook/**'
+      - 'workers/mccluster/src/merch/**'
+      - 'workers/mccluster/src/connect.js'
+      - 'workers/mccluster/test/merch-marketplace.test.mjs'
+      - 'scripts/test-merch-marketplace-db.sh'
+      - 'scripts/test/merch-marketplace.test.mjs'
+      - 'market/**'
+      - 'js/market*.js'
+      - 'css/market.css'
+      - 'js/control-room/marketplace.js'
+      - '.github/workflows/merch-marketplace-db.yml'
+  workflow_dispatch:
+jobs:
+  merch-marketplace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+      - name: Fee, binding, ledger mapping and page contracts
+        run: node --test scripts/test/merch-marketplace.test.mjs scripts/test/stripe-commerce-reconciler.test.mjs
+      - name: Worker routes over fetch doubles
+        working-directory: workers/mccluster
+        run: node --import ./test/support/offline-network.mjs --test test/merch-marketplace.test.mjs
+      - name: Isolated PostgreSQL guards, RLS and money functions
+        run: bash scripts/test-merch-marketplace-db.sh

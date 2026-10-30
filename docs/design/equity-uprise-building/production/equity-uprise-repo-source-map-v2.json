@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 528,
+  "candidate_count": 529,
   "capability_source_count": 102,
-  "support_only_count": 426,
+  "support_only_count": 427,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2999,6 +2999,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/tests/merch_marketplace.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database dependency fixture for the merch marketplace pending SQL (orgs, org_members, org_stripe_accounts, control_audit, private.is_org_member, storage). Test-only stand-ins; never applied to a real project and not a building capability."
     },
     {
       "path": "supabase/tests/action_bounty_claim_guard.stub.sql",
