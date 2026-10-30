@@ -20,6 +20,7 @@
 import Stripe from "npm:stripe@14";
 import { checkoutRecord, invoicePaymentIntent, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
 import { MUSIC_PAYABLE, musicFulfilmentRefusal } from "./music.ts";
+import { MUSIC_DIRECT_KIND, MUSIC_DIRECT_PAYABLE, directFulfilmentRefusal } from "../_shared/music-direct.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SK_TEST = Deno.env.get("STRIPE_SK_TEST") || "";
@@ -209,6 +210,57 @@ async function revokeMusicByPaymentIntent(paymentIntent: string) {
   });
 }
 
+/* A direct sale of Matthew's own recording (music-direct-checkout) is fulfilled the
+   same way, bound by ../_shared/music-direct.ts: the platform account, the session id
+   stored on the order, its amount and currency, paid. public.music_direct_fulfil
+   re-binds in the database, moves the order to paid only from pending/failed and grants
+   one entitlement per order, so a replayed or concurrent delivery (or the purchase page
+   claiming first) fulfils once. A session that is not this order's payment grants
+   nothing and is not retried. */
+async function grantDirectOrder(session: Stripe.Checkout.Session, event: Stripe.Event) {
+  if (session.metadata?.kind !== MUSIC_DIRECT_KIND) return;
+  const orderId = session.metadata?.music_direct_order_id || "";
+  if (!/^[0-9a-f-]{36}$/i.test(orderId)) {
+    console.error("music direct fulfilment refused", { event: event.id, reason: "bad_order_id" });
+    return;
+  }
+  const rows = await db(`music_direct_orders?id=eq.${encodeURIComponent(orderId)}&select=id,offer_key,stripe_checkout_session_id,amount_cents,currency,status&limit=1`);
+  const order = rows?.[0];
+  /* the order is written right after Stripe creates the session: a fast webhook retries */
+  if (!order) throw new Error(`music direct order ${orderId} not found`);
+  const refusal = directFulfilmentRefusal(session as any, event as any, order);
+  if (refusal) {
+    console.error("music direct fulfilment refused", { event: event.id, order: orderId, session: session.id, reason: refusal });
+    return;
+  }
+  const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : "";
+  const done = await db("rpc/music_direct_fulfil", {
+    method: "POST",
+    body: JSON.stringify({
+      p_order: orderId,
+      p_session: session.id,
+      p_amount_cents: session.amount_total,
+      p_currency: session.currency,
+      p_payment_intent: paymentIntent,
+      p_email: String(session.customer_details?.email || session.customer_email || "").toLowerCase(),
+    }),
+  });
+  if (!done?.ok) {
+    console.error("music direct fulfilment refused", { event: event.id, order: orderId, reason: done?.reason });
+    return;
+  }
+  if (paymentIntent && await refundedAtStripe(paymentIntent, event)) await revokeDirectByPaymentIntent(paymentIntent);
+}
+
+/* paid -> refunded; the database revokes the entitlement in the same transaction */
+async function revokeDirectByPaymentIntent(paymentIntent: string) {
+  if (!paymentIntent) return;
+  await db(`music_direct_orders?stripe_payment_intent_id=eq.${encodeURIComponent(paymentIntent)}&status=eq.paid`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "refunded" }),
+  });
+}
+
 Deno.serve(async (req) => {
   const sig = req.headers.get("stripe-signature") || "";
   const raw = await req.text();
@@ -238,6 +290,7 @@ Deno.serve(async (req) => {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
       if (effects) await grantMusicOrder(s, event);
+      if (effects) await grantDirectOrder(s, event);
       await recordCheckout(s, event);
     }
 
@@ -245,6 +298,7 @@ Deno.serve(async (req) => {
     if (event.type === "checkout.session.async_payment_succeeded") {
       const s = event.data.object as Stripe.Checkout.Session;
       if (effects) await grantMusicOrder(s, event);
+      if (effects) await grantDirectOrder(s, event);
       await recordCheckout(s, event);
     }
 
@@ -255,6 +309,13 @@ Deno.serve(async (req) => {
         await db(`music_orders?id=eq.${encodeURIComponent(s.metadata.music_order_id)}&stripe_checkout_session_id=eq.${encodeURIComponent(s.id)}&status=in.(pending,failed)`, {
           method: "PATCH",
           body: JSON.stringify({ status: "canceled", updated_at: new Date().toISOString() }),
+        });
+      }
+      if (effects && !event.account && s.metadata?.kind === MUSIC_DIRECT_KIND && /^[0-9a-f-]{36}$/i.test(s.metadata.music_direct_order_id || "")) {
+        /* only the session stored on the order can expire it, and only while unpaid */
+        await db(`music_direct_orders?id=eq.${encodeURIComponent(s.metadata.music_direct_order_id!)}&stripe_checkout_session_id=eq.${encodeURIComponent(s.id)}&status=in.(${MUSIC_DIRECT_PAYABLE.join(",")})`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "canceled" }),
         });
       }
     }
@@ -268,12 +329,19 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ status: "failed", updated_at: new Date().toISOString() }),
         });
       }
+      if (effects && !event.account && p.metadata?.kind === MUSIC_DIRECT_KIND && /^[0-9a-f-]{36}$/i.test(p.metadata.music_direct_order_id || "")) {
+        await db(`music_direct_orders?id=eq.${encodeURIComponent(p.metadata.music_direct_order_id)}&status=eq.pending`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "failed" }),
+        });
+      }
     }
 
     if (event.type === "charge.refunded") {
       const c = event.data.object as Stripe.Charge;
       /* music is sold on the platform account; a connected account's refund names none of its payments */
       if (effects && !event.account) await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
+      if (effects && !event.account) await revokeDirectByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
       const refund = refundRecord(c as any, event as any);
       if (refund) await rpc("commerce_record_stripe_refund", refund);
     }

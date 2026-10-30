@@ -304,6 +304,21 @@
         "workers/mccluster/src/member-fronts.js"
       ]
     },
+    "music_direct_claim_download": {
+      "kind": "function",
+      "pending": "music_direct_sales_v1.sql",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts"
+      ]
+    },
+    "music_direct_fulfil": {
+      "kind": "function",
+      "pending": "music_direct_sales_v1.sql",
+      "callers": [
+        "supabase/functions/music-direct-access/index.ts",
+        "supabase/functions/stripe-webhook/index.ts"
+      ]
+    },
     "music_gate_claim_rule": {
       "kind": "function",
       "pending": "gated_track_mission_identity_v1.sql",

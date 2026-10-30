@@ -102,6 +102,19 @@ Rollout for `music_release_payment_integrity_v1.sql` (dependency-safe order; the
 
 Back out: functions first (redeploy the previous `music-access`, which tolerates the file either way), then the rollback file.
 
+Pending (2026-10-30): `music_direct_sales_v1.sql` makes the hand-made `music_direct_*` tables safe for Matthew McCluster's direct checkout of his own recordings (owner, 2026-10-30: "I definitely need a direct checkout for all the music. I would like to be able to put some of my music for sale"). Offers: one per `public.music_catalog_objects` recording (FK), 50..50000 cents, the full-quality file only in the private `mcc-gated-audio` bucket under `direct-sales/`, `max_downloads` (default 5, 1..50) and `download_window_days` (default 30, 1..365), an optional sale window; anon/authenticated read only offers on sale now and only the buy-button columns (never bucket, path or file name). Orders: inserted pending with a stored Checkout Session id at the offer's own price (the guard refuses anything else); offer, session, amount and currency immutable; paid only from pending/failed; paid -> refunded is the only exit and revokes the entitlement in the same transaction. Entitlements: only for a paid order, server-random token, limit and expiry snapshotted, count only up to the limit, revocation final. `public.music_direct_fulfil()` (the one writer of paid + entitlement, re-binding session/amount/currency) and `public.music_direct_claim_download()` (one counted download under a row lock), both service-role only. Callers: `supabase/functions/music-direct-checkout`, `music-direct-access`, `stripe-webhook`; until the file is applied those direct-sale paths fail closed (no rpc, no new columns) and no buy button appears (no offers). Test: `scripts/test-music-direct-sales-db.sh` (also `.github/workflows/music-direct-sales-db.yml`) and `scripts/test/music-direct-sales.test.mjs`. Rollback: `music_direct_sales_v1.rollback.sql`.
+
+Rollout for `music_direct_sales_v1.sql` (owner approval required):
+
+1. Pre-check (read-only), each must be 0: `select count(*) from public.music_direct_offers; select count(*) from public.music_direct_orders; select count(*) from public.music_direct_entitlements;`
+2. Apply the file (`apply_migration` as `music_direct_sales_v1`), then promote it with the steps below.
+3. Health: `select count(*) from pg_trigger where tgname like 'music_direct_%_trg';` returns 4; as anon, `select asset_path from public.music_direct_offers` is refused; `select has_function_privilege('anon', 'public.music_direct_claim_download(uuid)', 'execute');` is false.
+4. Merge the PR: the "Supabase Edge Functions deploy" run deploys `music-direct-checkout`, `music-direct-access` and `stripe-webhook` from Git (replacing the hand-deployed versions). Unauthenticated probes: `music-direct-checkout` `{action:"offers"}` answers 200 with `[]`; `music-direct-access` `{action:"operator-direct-list"}` answers 401.
+5. In Stripe (test mode first), the webhook endpoint already sends `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `payment_intent.payment_failed` and `charge.refunded`; nothing to add.
+6. Owner, in Control → Create → Music → Direct sales (`control.html#create:music`): upload a file, set a price, put one track on sale; the album page shows "Buy MP3"; one test-mode purchase lands on `purchase.html` with a download; a test refund closes it.
+
+Back out: take every offer off sale on the desk (or `update public.music_direct_offers set active=false`), then the rollback file.
+
 Promoted on 2026-10-17: `action_archive_cohort_v1.sql` is
 `supabase/migrations/20261017164335_action_archive_cohort_v1.sql`, and
 `action_mission_reset_v1.sql` is
