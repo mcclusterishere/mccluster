@@ -400,7 +400,16 @@ section (the validator rechecks it). Against 2026-10-29: ledger +1 row; relation
 `music_operator_review`; 2 changed: `music_license_guard`, `music_track_guard`); policies
 440 (the three creator `storage.objects` policies redefined); triggers 134 (+4); schemas, extensions,
 buckets and cron jobs unchanged. The committed `supabase/schema-manifest.json` is refreshed
-from the CI reset's `reset-schema` artifact, as for group 0.
+from the CI reset's `reset-schema` artifact (Reconciliation CI run 40979915354), as for group 0.
+
+Against that manifest, production's new tables, triggers and policies match the reset row
+for row, and so do the new functions' signatures, SECURITY DEFINER, volatility, config and
+EXECUTE grants. The 24 new and 2 changed `music_*` function bodies differ only in their line
+endings: the SQL Editor stored the pasted text with CRLF. A read-only check of
+`music_review_digest` and `music_track_guard` found `\r` in `prosrc`, and with `\r\n` replaced
+by `\n` their md5 prefixes equal the manifest's (`7590fbf8aeb3`, `d7e878d0b115`). The
+behaviour is the same. Only `apply_migration` (or a re-run of the file from a client that
+sends LF) would make these bodies byte-equal. That is not needed, and it is left as it is.
 
 ## Limits
 
