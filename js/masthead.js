@@ -248,8 +248,7 @@ html { scroll-behavior: smooth; }
        front page is the Docket 516R record. Its older rooms stay put away
        in _unfinished/; only the record and the network are on the map. */
     { group: "Equity Uprise", rooms: [
-      { href: "docket-516.html", label: "Docket 516R: the public record, and what to do with it" },
-      { href: "action/?c=equity-uprise", label: "The Equity Uprise campaign" },
+      { href: "docket-516.html", label: "Docket 516R: the public record" },
     ] },
     /* The Closet is put away with the other lines the site is not
        concentrating on. Its rooms are intact on disk; the map simply stops

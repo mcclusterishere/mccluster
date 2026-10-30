@@ -110,8 +110,10 @@ for both. One mission, three levels, 1 / 3 → 2 / 3 → 3 / 3; one card.
   `20261003233747_action_network_live_governance_v1.sql:53`) with the commerce
   offer `anti-social` ("Get your presence managed",
   `20261006233518_here_album_commerce_v1_reconcile.sql:116`).
-- `anti-social-mission.html` is the "Do it for you" business mission page
-  (website / brand / business / content offers through `onboard.html`).
+- `anti-social-mission.html` was the "Do it for you" business mission page
+  (website / brand / business / content offers through `onboard.html`). It
+  was removed on 2026-10-30 with the other retired missions (owner); the
+  offers themselves stay on `onboard.html`.
 - The new mission is a civic mission in the community domain. It takes the
   owner's name, "Anti-Social — Get Social", carries no campaign and no link to
   the business offer or the track, and nothing of the existing two moves.

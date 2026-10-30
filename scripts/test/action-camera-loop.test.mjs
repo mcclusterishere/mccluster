@@ -17,7 +17,6 @@ const loadPoster = () => {
 const action = read("js/action.js");
 const gateway = read("js/gateway.js");
 const api = read("workers/mccluster/src/platform-api.js");
-const wrp = read("wigger-recovery.html");
 const migrationDir = new URL("../../supabase/migrations/", import.meta.url);
 const cameraMigrations = fs.readdirSync(migrationDir).filter(name => name.endsWith("_action_mission_camera_loop_v1.sql"));
 assert.ok(cameraMigrations.length >= 1, "camera-loop production migration is present");
@@ -43,15 +42,6 @@ test("mission execution is camera-first and preserves a return route", () => {
   assert.match(mnet, /missions\.returnHref/);
   assert.match(mnet, /location\.assign\(missions\.returnHref\)/);
   assert.match(mnet, /campaign_id=eq\./);
-});
-
-test("Freestyle Containment opens its exact mission, not a generic join page", () => {
-  assert.match(wrp, /mission=6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04/);
-  assert.match(wrp, /campaign=end-racism-002/);
-  assert.match(wrp, /Take this mission &amp; open the camera/);
-  assert.match(sql, /6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04/);
-  assert.match(sql, /Freestyle Containment Protocol/);
-  assert.match(sql, /'end-racism-002'/);
 });
 
 test("video uploads get local poster frames and feed video uses them", () => {

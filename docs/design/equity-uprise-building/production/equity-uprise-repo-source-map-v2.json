@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 531,
+  "candidate_count": 528,
   "capability_source_count": 102,
-  "support_only_count": 429,
+  "support_only_count": 426,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1292,13 +1292,6 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
-    },
-    {
-      "path": "end-racism.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "End Racism gateway (CIA Mind Control album) into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
     },
     {
       "path": "engineering/mccluster-platform.html",
@@ -3638,13 +3631,6 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
     },
     {
-      "path": "anti-social-mission.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
-    },
-    {
       "path": "control.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -3946,13 +3932,6 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; a generator comment for the company property; not a building capability."
     },
     {
-      "path": "wigger-recovery.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
-    },
-    {
       "path": "workers/mccluster/src/company-site/router.js",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -3985,7 +3964,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Accessibility ratchet baseline (axe-core node counts per sitemap page, scripts/e2e/sitemap-a11y.e2e.mjs); it lists the end-racism and heal-the-3rd-world pages by path only. No spatial or program capability is added."
+      "rationale": "Accessibility ratchet baseline (axe-core node counts per sitemap page, scripts/e2e/sitemap-a11y.e2e.mjs); it lists the heal-the-3rd-world page by path only. No spatial or program capability is added."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

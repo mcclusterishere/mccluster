@@ -2,7 +2,7 @@
    HUMAN UPRISE — the campaign page (/action/?c=<slug>).
 
    Attention in, organized people out. Someone taps the link under a
-   Reel (/action/?c=cobalt&src=ig&reel=0047), reads what is true and
+   Reel (/action/?c=<slug>&src=ig&reel=0047), reads what is true and
    where it comes from, says what they can bring, and becomes a
    numbered participant with a link of their own to recruit with.
 

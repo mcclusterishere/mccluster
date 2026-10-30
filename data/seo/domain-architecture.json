@@ -170,8 +170,6 @@
       "/mnet.html",
       "/receipt.html",
       "/heal-the-3rd-world.html",
-      "/end-racism.html",
-      "/wigger-recovery.html",
       "/prim3.html",
       "/prim3-range.html",
       "/site0/",
@@ -216,7 +214,7 @@
       "Cloudflare -> Workers Routes: add mccluster.org/* and www.mccluster.org/* -> Worker mccluster.",
       "Cloudflare -> Rules -> Redirect Rules: narrow the redirect rule to here.mccluster.org only (redirect rules run before Workers, so the Worker sees nothing until this changes). Rollback is re-widening the rule.",
       "Supabase -> Authentication -> URL Configuration -> Redirect URLs: add https://mccluster.org/** so ordinary sign-in on the host may return to it (the bar's handoff needs nothing).",
-      "Verify (owner, 2026-10-15: the root is the World): curl -I https://mccluster.org/ -> 200, the World (mnet.html) with this host's head: title Equity Uprise · McCluster, canonical https://mccluster.org/, og:site_name McCluster Corp, no noindex; curl -I https://mccluster.org/company -> 200 company page; curl -I 'https://mccluster.org/action/?c=end-racism' -> 200, a World room with x-robots-tag noindex; curl -I https://mccluster.org/docket-516.html -> 301 to https://matthew.mccluster.org/docket-516.html; curl -I https://www.mccluster.org/ -> 301 to https://mccluster.org/; curl -I http://mccluster.org/ -> 301 to https://mccluster.org/ (the Worker answers it; Cloudflare SSL/TLS -> Edge Certificates -> Always Use HTTPS covers the zone as well).",
+      "Verify (owner, 2026-10-15: the root is the World): curl -I https://mccluster.org/ -> 200, the World (mnet.html) with this host's head: title Equity Uprise · McCluster, canonical https://mccluster.org/, og:site_name McCluster Corp, no noindex; curl -I https://mccluster.org/company -> 200 company page; curl -I 'https://mccluster.org/action/' -> 200, a World room with x-robots-tag noindex; curl -I https://mccluster.org/docket-516.html -> 301 to https://matthew.mccluster.org/docket-516.html; curl -I https://www.mccluster.org/ -> 301 to https://mccluster.org/; curl -I http://mccluster.org/ -> 301 to https://mccluster.org/ (the Worker answers it; Cloudflare SSL/TLS -> Edge Certificates -> Always Use HTTPS covers the zone as well).",
       "Search Console: add the mccluster.org URL-prefix property (DNS TXT verification records already exist), submit https://mccluster.org/sitemap.xml.",
       "Supply a 1200x630 McCluster Corp share card; until then the company preview uses the supplied M mark (assets/img/m-mark.png), unaltered."
     ],

@@ -108,10 +108,7 @@ export function buildGraph(cat, albums) {
       url: `${SITE}/album.html${a.slug === "here" ? "" : "?album=" + a.slug}`,
       image: `${SITE}/${a.art}`
     };
-    if (NO_GRAPH_ALBUMS.has(a.slug)) {
-      node.subjectOf = { "@type": "WebPage", url: `${SITE}/end-racism.html` };
-      return node;
-    }
+    if (NO_GRAPH_ALBUMS.has(a.slug)) return node;
     if (a.slug === "here") {
       Object.assign(node, { byArtist: PERSON, albumProductionType: "https://schema.org/StudioAlbum", albumReleaseType: "https://schema.org/AlbumRelease", datePublished: "2026" });
     }
