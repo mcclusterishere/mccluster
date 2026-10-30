@@ -77,7 +77,6 @@
     "catalogue.html",
     "cohort-profile.html",
     "control.html",
-    "core/drift-contract.json",
     "create.html",
     "crm.html",
     "css/equity-uprise-app.css",
@@ -170,6 +169,7 @@
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -7258,26 +7258,6 @@
       "detail": ""
     },
     {
-      "name": "core/drift-contract.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "core/drift-contract.json classified",
-      "passed": true,
-      "detail": "classification='runtime_support'"
-    },
-    {
-      "name": "core/drift-contract.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "core/drift-contract.json support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "supabase/replay_migrations/0007_offerings.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -8979,6 +8959,26 @@
     },
     {
       "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json support rationale present",
       "passed": true,
       "detail": ""
     },

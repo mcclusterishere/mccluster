@@ -1,7 +1,7 @@
 -- The catalogue as it could stand BEFORE
--- supabase/pending/music_release_payment_integrity_v1.sql: written through the
+-- supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql: written through the
 -- v1 guards, including what those guards allowed and should not have. Applied
--- by scripts/test-music-release-integrity-db.sh before the pending file.
+-- by scripts/test-music-release-integrity-db.sh before the migration file.
 \set ON_ERROR_STOP 1
 select set_config('request.jwt.claims', '{"role":"service_role"}', false);
 

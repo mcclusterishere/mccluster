@@ -14,7 +14,7 @@ was a read-only catalog SELECT through the Supabase MCP `execute_sql` and `get_a
 | The queries (one SQL text, used three ways) | `scripts/db/schema-queries.mjs` |
 | Validator | `scripts/db/verify-production-schema.mjs` |
 | Expected state: what the repo's migrations build | `supabase/schema-manifest.json` |
-| Production snapshot (evidence) | `docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json` (before group 0); latest: `production-schema-snapshot-2026-10-29.json` (after group 0, see the end of this page) |
+| Production snapshot (evidence) | `docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json` (before group 0); `production-schema-snapshot-2026-10-29.json` (after group 0); latest: `production-schema-snapshot-2026-10-30.json` (after `music_release_payment_integrity_v1`, see the end of this page) |
 | Production advisors (evidence) | `docs/control-plane/evidence/production-advisors-2026-10-28.json` |
 | Offline tests | `scripts/test/production-schema-verifier.test.mjs` |
 | CI wiring | `.github/workflows/reconciliation-ci.yml`, job "Supabase migration reset" |
@@ -53,7 +53,7 @@ node scripts/db/verify-production-schema.mjs --from-mcp-dir <dir> --captured-at 
 # or with a connection string held only in the environment (psql must be installed)
 PROD_DB_URL=... node scripts/db/verify-production-schema.mjs --database-url-env PROD_DB_URL
 # verify a saved snapshot
-node scripts/db/verify-production-schema.mjs --snapshot docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json
+node scripts/db/verify-production-schema.mjs --snapshot docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json
 ```
 
 ## Result in one table
@@ -365,6 +365,42 @@ from that run's `reset-schema` artifact, never by hand. Tests that prove what st
 rollbacks restore stay pinned to the 2026-10-28 evidence (`scripts/test/schema-reconcile-db.mjs`,
 the rollback check in `scripts/test/rls-initplan-select-wrap.test.mjs`); everything that asks
 "what does production have now" reads the latest evidence.
+
+## Follow-up, 2026-10-30: `music_release_payment_integrity_v1` applied and recorded
+
+The owner applied `supabase/pending/music_release_payment_integrity_v1.sql` (PR #666's
+database half) in the Supabase SQL Editor, because the MCP `apply_migration` approval could
+not reach him, and then inserted its ledger row by hand:
+
+| Version | Name | Was | Now |
+|---|---|---|---|
+| `20261030001000` | `music_release_payment_integrity_v1` | `supabase/pending/music_release_payment_integrity_v1.sql` | `supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql` (bytes unchanged, md5 `5212054a89f62d77b2a11e8826bc73cf`) |
+
+Unlike group 0, the row's `statements` is null (SQL Editor, not `apply_migration`), so the
+ledger section shows it with 0 statements and there is no stored text to compare with the
+file; it counts toward neither "byte-identical" nor "multi-statement". The ledger is 354
+rows; `supabase/production-ledger.json` and `core/drift-contract.json` match it. The
+rollback stays in `supabase/pending/`. Health after the apply (README step 3): every query
+0 rows, 2 `music_storage_object_guard_%` triggers on `storage.objects`, 0 `creator_tracks`,
+0 orders, 0 entitlements, 2 creator storage objects and their 2 `music_creator_assets`
+rows. The functions followed (#666 merged as `249163db`, deploy run 40978491536,
+2026-10-30T00:16Z). README step 5 (a test release through Verify + listen and a test
+purchase) was not run: no test data is created in production; it waits for the first real
+release.
+
+New evidence, read-only through `execute_sql`:
+`docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json`. Each section's
+SQL is exactly what `--print-sql` prints; to keep the capture small it was read as a
+difference against the 2026-10-29 evidence (the live rows whose md5 was not among the
+2026-10-29 rows', with their position, and the 2026-10-29 rows no longer present), and every
+section rebuilt from that difference hashes to the md5 production returned for the whole
+section (the validator rechecks it). Against 2026-10-29: ledger +1 row; relations 515 (+2:
+`music_asset_versions`, `music_creator_assets`; changed: `creator_tracks`,
+`music_entitlements`, `music_orders`); functions 490 (+24 `music_*`, among them
+`music_operator_review`; 2 changed: `music_license_guard`, `music_track_guard`); policies
+440 (the three creator `storage.objects` policies redefined); triggers 134 (+4); schemas, extensions,
+buckets and cron jobs unchanged. The committed `supabase/schema-manifest.json` is refreshed
+from the CI reset's `reset-schema` artifact, as for group 0.
 
 ## Limits
 
