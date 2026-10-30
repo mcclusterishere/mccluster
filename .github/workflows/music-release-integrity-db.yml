@@ -4,7 +4,8 @@ permissions:
 on:
   pull_request:
     paths:
-      - 'supabase/pending/music_release_payment_integrity_v1*.sql'
+      - 'supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql'
+      - 'supabase/pending/music_release_payment_integrity_v1.rollback.sql'
       - 'supabase/migrations/20260920041011_music_creator_platform_v1.sql'
       - 'supabase/migrations/20260920041250_music_commerce_v1.sql'
       - 'supabase/tests/music_release_payment_integrity.*.sql'

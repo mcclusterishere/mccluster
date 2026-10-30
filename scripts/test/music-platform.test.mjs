@@ -110,9 +110,9 @@ test('derivative and parody releases cannot self-clear commercial rights', async
   assert.match(access,/operator-review/);
   /* only the operator's decision clears rights: music-access calls the
      operator-only RPC, which sets 'cleared' for publish/approve (and needs
-     the reviewed audio's hash, supabase/pending/music_release_payment_integrity_v1.sql) */
+     the reviewed audio's hash, supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql) */
   assert.match(access,/admin\.rpc\("music_operator_review"/);
-  const integrity=await read('supabase/pending/music_release_payment_integrity_v1.sql');
+  const integrity=await read('supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql');
   assert.match(integrity,/rights_status = case p_decision when 'publish' then 'cleared' when 'approve' then 'cleared'/);
   assert.match(access,/operator permission required/);
   assert.match(terms,/does not automatically clear it for commercial licensing/i);

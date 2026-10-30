@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Runs supabase/pending/music_release_payment_integrity_v1.sql and its
+# Runs supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql
+# (applied in production 2026-10-30; its rollback stays in supabase/pending/) and its
 # behaviour tests against a throwaway local Postgres (16+), as the real API
 # roles: the API role stub, the music creator stubs, the music creator
-# platform and commerce migrations, the pending file (twice: it must be safe
+# platform and commerce migrations, the migration file (twice: it must be safe
 # to re-run), then supabase/tests/music_release_payment_integrity.behaviour.sql.
 # Usage:
 #   PGHOST=/tmp/pg PGPORT=5499 PGUSER=postgres scripts/test-music-release-integrity-db.sh
@@ -19,8 +20,8 @@ apply supabase/migrations/20260920041011_music_creator_platform_v1.sql
 apply supabase/migrations/20260920041250_music_commerce_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_release_payment_integrity.seed.sql >/dev/null
 echo "seeded the pre-migration catalogue"
-apply supabase/pending/music_release_payment_integrity_v1.sql
-apply supabase/pending/music_release_payment_integrity_v1.sql
+apply supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql
+apply supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_release_payment_integrity.behaviour.sql >/dev/null
 # the rollback must apply cleanly on top
 apply supabase/pending/music_release_payment_integrity_v1.rollback.sql

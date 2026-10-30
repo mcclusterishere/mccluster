@@ -2704,13 +2704,6 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
-      "path": "core/drift-contract.json",
-      "classification": "runtime_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Control-plane drift contract naming the latest production migration (currently eu_runtime_and_media_rollup_v1); ledger bookkeeping, not a building capability, program or geometry."
-    },
-    {
       "path": "supabase/replay_migrations/0007_offerings.sql",
       "classification": "capability_source",
       "capability_ids": [
@@ -3398,6 +3391,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only production schema snapshot taken after the 2026-10-29 group-0 promotions (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken after music_release_payment_integrity_v1 was applied on 2026-10-30 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "supabase/schema-manifest.json",

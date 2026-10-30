@@ -1,4 +1,4 @@
--- Extra stand-ins for supabase/pending/music_release_payment_integrity_v1.sql,
+-- Extra stand-ins for supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql,
 -- applied by scripts/test-music-release-integrity-db.sh after
 -- supabase_api_roles.stub.sql and music_creator_onboarding.stub.sql. Scratch
 -- database only, never a real project.

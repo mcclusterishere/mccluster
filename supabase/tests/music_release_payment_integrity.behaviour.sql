@@ -1,4 +1,4 @@
--- Behaviour tests for supabase/pending/music_release_payment_integrity_v1.sql,
+-- Behaviour tests for supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql,
 -- as the real API roles with the JWT claims Supabase would set. Runs against a
 -- scratch database (scripts/test-music-release-integrity-db.sh) after
 -- supabase/tests/music_release_payment_integrity.seed.sql. Every check raises

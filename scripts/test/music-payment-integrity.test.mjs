@@ -26,7 +26,9 @@ import {
 import { createHash } from 'node:crypto';
 
 const read = (p) => readFile(p, 'utf8');
-const PENDING = 'supabase/pending/music_release_payment_integrity_v1.sql';
+// Applied in production 2026-10-30 (owner, SQL Editor) as 20261030001000_music_release_payment_integrity_v1;
+// its rollback stays in supabase/pending/.
+const MIGRATION = 'supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql';
 
 const ORDER = {
   id: '40000000-0000-4000-8000-0000000000a1',
@@ -132,7 +134,7 @@ test('the commission is one server constant, the same in the function and the da
   assert.deepEqual(musicPlatformFee(333), { platformFeeCents: 50, creatorNetCents: 283 });
   assert.throws(() => musicPlatformFee(0), /invalid_price/);
   assert.throws(() => musicPlatformFee(10.5), /invalid_price/);
-  const sql = await read(PENDING);
+  const sql = await read(MIGRATION);
   const m = sql.match(/create or replace function public\.music_platform_fee_bps\(\)\s+returns integer[^$]*\$\$ select (\d+) \$\$/);
   assert.ok(m, 'the database states its fee');
   assert.equal(Number(m[1]), MUSIC_PLATFORM_FEE_BPS, 'function and database agree');
@@ -144,7 +146,7 @@ test('checkout ignores any fee but the server\'s', async () => {
   assert.match(checkout, /musicPlatformFee\(offer\.price_cents\)/);
   assert.doesNotMatch(checkout, /platform_fee_bps/, 'the offer row\'s (creator-writable) fee is not read');
   assert.doesNotMatch(checkout, /body\.(platform_fee|fee|commission|application_fee|amount|price|currency)/, 'nothing about money is read from the request');
-  const sql = await read(PENDING);
+  const sql = await read(MIGRATION);
   assert.match(sql, /new\.platform_fee_bps := case when tg_op = 'UPDATE' then old\.platform_fee_bps else public\.music_platform_fee_bps\(\) end;/);
   assert.match(sql, /round\(new\.amount_cents \* public\.music_platform_fee_bps\(\) \/ 10000\.0\)::integer/);
 });
@@ -165,7 +167,7 @@ test('music-access records who it grants an upload to and verifies ownership bef
   assert.ok(download.indexOf('purchasedDownload(db,') > 0 && download.indexOf('purchasedDownload(') < download.indexOf('signDownload('),
     'download signs only what purchasedDownload resolved');
   assert.doesNotMatch(download, /master_path/, 'a download never reads the live master path');
-  const sql = await read(PENDING);
+  const sql = await read(MIGRATION);
   assert.doesNotMatch(sql.slice(sql.indexOf('create or replace function public.music_asset_owned_by')).split('$$;')[0], /foldername|split_part/,
     'ownership is never read from the path');
   assert.match(sql, /raise exception 'creator_asset_not_owned' using detail = 'master_path'/);
@@ -257,7 +259,7 @@ test('a listener streams the pinned reviewed master; an owner previews only an o
 });
 
 test('approval pins the exact object; storage refuses changing it for every role', async () => {
-  const sql = await read(PENDING);
+  const sql = await read(MIGRATION);
   assert.match(sql, /new\.approved_master_version_id := public\.music_pin_master\(new\.id, new\.master_path, 'review_approval'\);/);
   assert.match(sql, /'object_id', o\.id,\s+'version', o\.version, 'etag', o\.metadata->>'eTag', 'size', o\.metadata->>'size'/);
   assert.match(sql, /create trigger music_storage_object_guard_upd before update on storage\.objects/);
@@ -276,19 +278,23 @@ test('a review decision is about the version the operator saw, and a reviewed re
   assert.match(access, /expected_updated_at required/);
   assert.match(access, /p_expected_updated_at: expected \|\| null/);
   assert.match(access, /the release changed since you loaded it/);
-  const sqlReview = await read(PENDING);
+  const sqlReview = await read(MIGRATION);
   assert.match(sqlReview, /where c\.id = p_track and \(p_expected_updated_at is null or c\.updated_at = p_expected_updated_at\)/);
   const admin = await read('js/music-admin.js');
   assert.match(admin, /expected_updated_at:b\.getAttribute\("data-version"\)/);
   assert.match(admin, /data-version="'\+esc\(t\.updated_at\|\|""\)/);
-  const sql = await read(PENDING);
+  const sql = await read(MIGRATION);
   assert.match(sql, /if tg_op = 'UPDATE' and old\.status in \('approved','published'\)\s+and public\.music_track_content\(new\) is distinct from public\.music_track_content\(old\) then\s+new\.status := 'pending_review';/);
   assert.match(sql, /new\.reviewed_snapshot := public\.music_track_reviewed_snapshot\(new\);/);
   assert.match(sql, /new\.reviewed_digest := public\.music_review_digest\(new\.reviewed_snapshot\);/);
   assert.match(sql, /create trigger music_track_offers_follow_status_trg after update on public\.creator_tracks/);
 });
 
-test('the pending migration is documented, tested in CI and has a rollback', async () => {
+test('the migration is recorded as applied, documented, tested in CI and has a rollback', async () => {
+  const ledger = JSON.parse(await read('supabase/production-ledger.json'));
+  assert.ok(ledger.migrations.some((m) => m.version === '20261030001000' && m.name === 'music_release_payment_integrity_v1'));
+  await read(MIGRATION);
+  await assert.rejects(read('supabase/pending/music_release_payment_integrity_v1.sql'), 'no longer pending');
   const promotion = await read('supabase/pending/PROMOTION-ORDER.md');
   assert.match(promotion, /music_release_payment_integrity_v1\.sql/);
   const readme = await read('supabase/pending/README.md');
@@ -449,7 +455,7 @@ test('the desk plays the pinned version and approves the hash it showed', async 
   assert.match(admin, /expected_master_sha256:b\.getAttribute\("data-sha"\)/);
   assert.match(admin, /src="'\+esc\(p\.listen_url\)/, 'the player streams the prepared, pinned object');
   assert.match(admin, /disabled title="Verify and listen to the audio first"/, 'publish waits for a verified listen');
-  const sql = await read(PENDING);
+  const sql = await read(MIGRATION);
   assert.match(sql, /raise exception 'release_master_unhashed'/);
   assert.match(sql, /if v_expected is distinct from v_ver\.content_sha256 then\s+raise exception 'release_master_hash_mismatch';/);
   assert.match(sql, /'approved_master_sha256',/, 'the reviewed snapshot carries the hash');

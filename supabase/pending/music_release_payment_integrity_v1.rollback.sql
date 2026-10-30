@@ -1,4 +1,4 @@
--- Rollback for music_release_payment_integrity_v1.sql. Restores the v1 guards
+-- Rollback for supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql. Restores the v1 guards
 -- (supabase/migrations/20260920041011_music_creator_platform_v1.sql) and the
 -- v1 storage policies, and removes what the file added (including the pinned
 -- asset versions, their recorded SHA-256 and the purchased version and hash
