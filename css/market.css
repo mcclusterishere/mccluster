@@ -96,6 +96,8 @@ body.mk { background: var(--mk-bg); color: var(--mk-text); margin: 0; font: 16px
 .mk-stat span { color: var(--mk-muted); font-size: 13px; }
 .mk-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .mk-steps li { display: flex; gap: 10px; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.mk-embed { display: grid; gap: 14px; margin-top: 12px; min-width: 0; }
+.mk-embed__part { min-width: 0; max-width: 100%; overflow-x: hidden; }
 .mk-foot { color: var(--mk-muted); font-size: 13px; margin-top: 30px; border-top: 1px solid var(--mk-line); padding-top: 14px; }
 .mk-empty { padding: 28px 12px; text-align: center; color: var(--mk-muted); border: 1px dashed var(--mk-line); border-radius: var(--mk-radius); }
 

@@ -148,11 +148,15 @@ test('the database functions are server-only, definer-safe and idempotent by con
 
 test('test-mode events reach the same function without ever passing for live money', async () => {
   const hook = await read('supabase/functions/stripe-webhook/index.ts');
+  const policy = await read('supabase/functions/stripe-webhook/endpoints.ts');
   assert.match(hook, /const WH_TEST = Deno\.env\.get\("STRIPE_WEBHOOK_SECRET_TEST"\) \|\| "";/, 'the test endpoint secret is optional');
-  assert.match(hook, /return \{ event: await stripe\.webhooks\.constructEventAsync\(raw, sig, WH\), testEndpoint: false \};/, 'the endpoint secret is tried first');
-  assert.match(hook, /const event = await stripe\.webhooks\.constructEventAsync\(raw, sig, WH_TEST\);\s+return event\.livemode === false \? \{ event, testEndpoint: true \} : null;/,
-    'an event only the test secret verifies is accepted only when Stripe marks it test mode');
+  assert.match(hook, /const secrets: \[Endpoint, string\]\[\] = \[\["platform", WH\], \["platform_test", WH_TEST\], \["connect", WH_CONNECT\], \["connect_test", WH_CONNECT_TEST\]\];/,
+    'the endpoint secret is tried first, then its test twin, then the Connect endpoint\'s');
+  assert.match(hook, /return \{ event: await stripe\.webhooks\.constructEventAsync\(raw, sig, secret\), endpoint \};/);
+  assert.match(policy, /if \(test && event\.livemode !== false\) return refuse\("test_secret_live_event"\);/,
+    'an event only a test secret verifies is accepted only when Stripe marks it test mode');
   assert.match(hook, /if \(!verified\) return new Response\("bad signature", \{ status: 400 \}\);/);
+  assert.match(hook, /if \(!policy\.accept\) \{[\s\S]*?return new Response\("bad signature", \{ status: 400 \}\);/);
   assert.match(hook, /const stripeTest = \/\^\(sk\|rk\)_test_\/\.test\(SK_TEST\) \? new Stripe\(SK_TEST\) : null;/, 'only a test key is used as the test client');
   assert.match(hook, /event\.livemode === false && stripeTest \? stripeTest : stripe/, 'test objects are read back with the test key');
   assert.doesNotMatch(hook.replace(/stripe\.webhooks\.constructEventAsync/g, ''), /\bstripe\.(invoices|subscriptions|paymentIntents)\./, 'every Stripe read goes through clientFor(event)');
@@ -160,13 +164,16 @@ test('test-mode events reach the same function without ever passing for live mon
 
 test('a test-endpoint event writes TEST commerce rows and changes nothing a real account holds', async () => {
   const hook = await read('supabase/functions/stripe-webhook/index.ts');
-  assert.match(hook, /const effects = !verified\.testEndpoint;/);
-  const body = hook.slice(hook.indexOf('const effects = !verified.testEndpoint;'));
+  const policy = await read('supabase/functions/stripe-webhook/endpoints.ts');
+  assert.match(hook, /const effects = policy\.platformEffects;/);
+  assert.match(policy, /platformEffects: !test && !connect,/, 'neither a test secret nor the Connect secret reaches the platform\'s own sales');
+  assert.match(policy, /accountEffects: !test,/);
+  const body = hook.slice(hook.indexOf('const effects = policy.platformEffects;'));
   /* every write outside the commerce ledger and the livemode-scoped seller row */
   for (const [what, line] of [
     ['a premium plan', /if \(effects && s\.mode === "subscription" && s\.metadata\?\.uid\) \{\s+await patchBy\("providers", "uid", s\.metadata\.uid, \{ plan: "premium" \}\);/],
     ['a plan downgrade', /if \(effects && sub\.metadata\?\.uid\) await patchBy\("providers", "uid", sub\.metadata\.uid, \{ plan: "free" \}\);/],
-    ['a provider flag', /if \(effects\) await patchBy\("providers", "stripe_acct", a\.id,/],
+    ['a provider flag', /if \(policy\.accountEffects\) await patchBy\("providers", "stripe_acct", a\.id,/],
     ['a music refund', /if \(effects && !event\.account\) await revokeMusicByPaymentIntent\(/],
     ['an expired music order', /if \(effects && !event\.account && s\.metadata\?\.kind === "music_license_sale"/],
     ['a failed music payment', /if \(effects && !event\.account && p\.metadata\?\.kind === "music_license_sale"/]

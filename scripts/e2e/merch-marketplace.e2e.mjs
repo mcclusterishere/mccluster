@@ -46,8 +46,8 @@ function dashboard(s,user){
   if(user===NEW_USER&&!s.applied)return {seller:null,platform_fee_bps:1500};
   return {seller:{org_id:ORG_A,slug:'alpha-goods',display_name:'Alpha Goods',bio:s.seller.bio,logo_path:null,logo_url:null,status:'approved',status_reason:null,role:'owner'},
     stripe:{connected:true,ready:true,onboarding_status:'ready',account_id:'acct_1Alpha',charges_enabled:true,payouts_enabled:true,details_submitted:true,requirements:{currently_due:[],past_due:[],disabled_reason:null},livemode:true},
-    tax:{status:'active',missing:[]},platform_fee_bps:1500,
-    listings:s.listings.map((l,i)=>({...l,status:i?'draft':'published',inventory_policy:'tracked',variants:l.variants.map(v=>({...v,sku:v.label==='M / Black'?'ALPHA-M-BLK':null,inventory_count:v.available??0,active:true}))})),
+    tax:{status:s.taxStatus||'active',missing:[]},platform_fee_bps:1500,
+    listings:s.listings.map((l,i)=>({...l,status:i===0?'published':i===1?'pending_review':'draft',inventory_policy:'tracked',variants:l.variants.map(v=>({...v,sku:v.label==='M / Black'?'ALPHA-M-BLK':null,inventory_count:v.available??0,active:true}))})),
     orders:s.orders};
 }
 const userOf=auth=>{try{return JSON.parse(atob(String(auth||'').replace(/^Bearer\s+/i,'').split('.')[1])).sub;}catch{return null;}};
@@ -65,6 +65,8 @@ async function setup(viewport,user){
   await ctx.route('**/*',async route=>{
     const req=route.request(),u=new URL(req.url()),p=u.pathname,method=req.method();
     if(method==='OPTIONS')return route.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
+    /* Stripe's Connect.js, as a fixture: the same global API (StripeConnect.init → instance.create(name)) */
+    if(u.href==='https://connect-js.stripe.com/v1.0/connect.js')return route.fulfill({contentType:'text/javascript',body:`window.StripeConnect={init:function(o){window.__connectInit=o;return {create:function(n){var e=document.createElement('div');e.setAttribute('data-stripe-component',n);e.style.cssText='display:block;min-height:120px;border:1px solid #ccc;border-radius:10px;padding:12px;width:100%;box-sizing:border-box';e.textContent='Stripe '+n+' (fixture)';e.setOnTaxSettingsUpdated=function(){};o.fetchClientSecret().then(function(sec){e.setAttribute('data-secret',sec);});return e;}};}};`});
     if(u.origin==='https://checkout.stripe.com')return route.fulfill({contentType:'text/html',body:'<!doctype html><title>Stripe Checkout (fixture)</title><p>Stripe Checkout fixture</p>'});
     if(u.origin==='https://api.mccluster.org'){
       const body=method==='GET'?null:(req.postDataJSON()||{});const who=userOf(req.headers().authorization);
@@ -77,6 +79,8 @@ async function setup(viewport,user){
       if(p==='/v1/merch/seller'){if(!who)return json(route,{error:'Sign in to sell on McCluster'},401);return json(route,dashboard(s,who));}
       if(p==='/v1/merch/seller/apply'){s.applied=true;return json(route,{created:true,org_id:ORG_A,slug:body.slug,status:'applied'},201);}
       if(/^\/v1\/merch\/seller\/orders\/[0-9a-f-]+\/fulfil$/.test(p)){const o=s.orders[0];if(body.status==='shipped'){if(!body.carrier||!body.tracking_number)return json(route,{error:'Enter the carrier and tracking number'},400);Object.assign(o,{status:'shipped',carrier:body.carrier,tracking_number:body.tracking_number});}return json(route,{id:O1,status:body.status});}
+      if(p==='/v1/merch/seller/account-session'&&method==='POST'){if(who!==SELLER_USER)return json(route,{error:'Only the shop owner can do that'},403);return json(route,{client_secret:'accs_secret_fixture',publishable_key:'pk_test_fixture',components:['tax_settings','tax_registrations','notification_banner']});}
+      if(/^\/v1\/merch\/seller\/listings\/[0-9a-f-]+$/.test(p)&&method==='PATCH')return json(route,{ok:true});
       if(p==='/v1/merch/seller/listings'&&method==='POST'){s.listings.push({...s.listings[1],id:'dddddddd-4444-4444-8444-ddddddddddd3',title:body.title});return json(route,{id:'x',status:'draft'},201);}
       if(p==='/v1/merch/admin'){if(who!==OWNER)return json(route,{error:'McCluster operator access required'},403);
         return json(route,{platform_fee_bps:1500,sellers:s.adminSellers,listings:s.listings.map(l=>({...l,seller_org_id:ORG_A,status:'published',removed_reason:null})),orders:s.orders.map(o=>({...o,seller_org_id:ORG_A})),totals:{orders:1,gross_cents:5850,refunded_cents:0,platform_fee_cents:825,test_orders:0}});}
@@ -181,7 +185,41 @@ try{
       await page.waitForFunction(()=>/Marked shipped/.test(document.getElementById('mkSell').textContent),null,{timeout:10000});
       const sh=s.calls.find(c=>/\/fulfil$/.test(c.path));
       check(scope,'mark shipped sends carrier and tracking',sh&&sh.body.status==='shipped'&&sh.body.carrier==='UPS'&&sh.body.tracking_number==='1Z999AA10123456784',sh&&sh.body);
+      /* a waiting listing can go back to draft */
+      await page.locator('[data-tab="listings"]').click();
+      await page.waitForSelector(`[data-todraft="${L2}"]`,{timeout:10000});
+      await page.locator(`[data-todraft="${L2}"]`).click();
+      await page.waitForFunction(()=>/Back to draft\./.test(document.getElementById('mkSell').textContent),null,{timeout:10000});
+      check(scope,'pending_review listing back to draft',!!s.calls.find(c=>c.path===`/v1/merch/seller/listings/${L2}`&&c.method==='PATCH'&&c.body.unpublish===true));
+      /* an edit sends the stock count it loaded, so the server can refuse a stale write */
+      await page.locator(`[data-edit="${L1}"]`).click();
+      await page.waitForSelector('#mkEditor',{timeout:10000});
+      await page.locator('#mkEditor [name="title"]').fill('Alpha Tee, renamed');
+      await page.locator('#mkEditor button[type="submit"]').click();
+      await page.waitForFunction(()=>/Saved\./.test(document.getElementById('mkSell').textContent),null,{timeout:10000});
+      const ed=s.calls.find(c=>c.path===`/v1/merch/seller/listings/${L1}`&&c.method==='PATCH');
+      check(scope,'edit carries the loaded stock as expected_inventory',ed&&ed.body.variants[0].expected_inventory===3&&ed.body.variants[0].inventory_count===3&&ed.body.variants[0].id===V1,ed&&ed.body.variants);
       check(scope,'seller: no script errors',errors.length===0,errors);
+      await ctx.close();
+    }
+    /* ---- seller: the Sales tax step in Stripe's embedded components ---- */
+    {
+      const {ctx,page,s,errors}=await setup(vp,SELLER_USER);
+      s.taxStatus='pending';
+      await page.goto(BASE+'/market/sell.html',{waitUntil:'domcontentloaded'});
+      await page.waitForSelector('[data-act="tax"]',{timeout:20000});
+      check(scope,'tax: not set up, and checkout is said to wait for it',/Sales tax not set up/.test(await page.locator('#mkSell').textContent())&&/cannot check out until sales tax is set up/.test(await page.locator('#mkSell').textContent()));
+      await page.locator('[data-act="tax"]').click();
+      await page.waitForSelector('[data-stripe-component="tax-registrations"][data-secret]',{timeout:20000});
+      const parts=await page.locator('[data-stripe-component]').evaluateAll(els=>els.map(e=>e.getAttribute('data-stripe-component')));
+      check(scope,'tax: Stripe tax settings, registrations and banner are mounted',JSON.stringify(parts)===JSON.stringify(['notification-banner','tax-settings','tax-registrations']),parts);
+      check(scope,'tax: Connect.js is given the server session and publishable key',await page.evaluate(()=>window.__connectInit&&window.__connectInit.publishableKey==='pk_test_fixture'));
+      check(scope,'tax: the session is asked for by the seller, with no account in the request',s.calls.filter(c=>c.path==='/v1/merch/seller/account-session').every(c=>c.who===SELLER_USER&&Object.keys(c.body||{}).length===0));
+      check(scope,'tax step: no sideways scroll',await overflow(page)===0,await overflow(page));
+      if(shots)await page.screenshot({path:join(OUT,'seller-sales-tax-390.png'),fullPage:true});
+      await page.locator('[data-act="taxdone"]').click();
+      await page.waitForSelector('[data-tab="orders"]',{timeout:10000});
+      check(scope,'tax: no script errors',errors.length===0,errors);
       await ctx.close();
     }
     /* ---- a new seller applies ---- */

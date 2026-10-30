@@ -17,9 +17,22 @@
 // livemode=false (TEST in Control, outside every revenue total), and such an
 // event writes the commerce ledger only: no plan, music licence or provider
 // flag changes because of a test. With neither variable set nothing changes.
+//
+// THE CONNECTED-ACCOUNTS ENDPOINT. Stripe sends connected-account events
+// (merch marketplace sellers, Client Connect orgs) to a separate "connected
+// accounts" endpoint with its own signing secret:
+// STRIPE_CONNECT_WEBHOOK_SECRET (and STRIPE_CONNECT_WEBHOOK_SECRET_TEST for
+// its test-mode twin). The platform secrets are tried first, so nothing the
+// platform endpoint signs changes. An event only a Connect secret verifies
+// must name a connected account and reaches only what a connected account may
+// change: a marketplace order bound to that seller's stored account,
+// org_stripe_accounts and the providers flag on account.updated, and the
+// org-scoped commerce ledger; never a premium plan or a music licence
+// (./endpoints.ts).
 import Stripe from "npm:stripe@14";
 import { checkoutRecord, invoicePaymentIntent, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
 import { MUSIC_PAYABLE, musicFulfilmentRefusal } from "./music.ts";
+import { endpointPolicy, type Endpoint } from "./endpoints.ts";
 import { marketplaceExpiry, marketplaceOrderId, marketplacePaidRecord, marketplacePaymentRefusal, marketplaceRefund } from "./marketplace.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
@@ -27,24 +40,25 @@ const SK_TEST = Deno.env.get("STRIPE_SK_TEST") || "";
 const stripeTest = /^(sk|rk)_test_/.test(SK_TEST) ? new Stripe(SK_TEST) : null;
 const WH = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 const WH_TEST = Deno.env.get("STRIPE_WEBHOOK_SECRET_TEST") || "";
+const WH_CONNECT = Deno.env.get("STRIPE_CONNECT_WEBHOOK_SECRET") || "";
+const WH_CONNECT_TEST = Deno.env.get("STRIPE_CONNECT_WEBHOOK_SECRET_TEST") || "";
 
 /* The Stripe client that can read this event's objects back: the test key
    for a test-mode event when one is configured, otherwise the main key. */
 const clientFor = (event: Stripe.Event) => (event.livemode === false && stripeTest ? stripeTest : stripe);
 
-/* Verify against the endpoint secret, then the test endpoint's. Only a
-   test-mode event may be accepted on the test secret, and it says so. */
-async function verifiedEvent(raw: string, sig: string): Promise<{ event: Stripe.Event; testEndpoint: boolean } | null> {
-  try {
-    return { event: await stripe.webhooks.constructEventAsync(raw, sig, WH), testEndpoint: false };
-  } catch { /* not the endpoint secret */ }
-  if (!WH_TEST) return null;
-  try {
-    const event = await stripe.webhooks.constructEventAsync(raw, sig, WH_TEST);
-    return event.livemode === false ? { event, testEndpoint: true } : null;
-  } catch {
-    return null;
+/* Verify against the platform endpoint's secret, then its test twin, then the
+   connected-accounts endpoint's secrets. Which one verified is returned; what
+   that endpoint may change is ./endpoints.ts's to decide. */
+async function verifiedEvent(raw: string, sig: string): Promise<{ event: Stripe.Event; endpoint: Endpoint } | null> {
+  const secrets: [Endpoint, string][] = [["platform", WH], ["platform_test", WH_TEST], ["connect", WH_CONNECT], ["connect_test", WH_CONNECT_TEST]];
+  for (const [endpoint, secret] of secrets) {
+    if (!secret) continue;
+    try {
+      return { event: await stripe.webhooks.constructEventAsync(raw, sig, secret), endpoint };
+    } catch { /* not this endpoint's secret */ }
   }
+  return null;
 }
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -247,9 +261,15 @@ Deno.serve(async (req) => {
   const verified = await verifiedEvent(raw, sig);
   if (!verified) return new Response("bad signature", { status: 400 });
   const event = verified.event;
+  const policy = endpointPolicy(verified.endpoint, event as any);
+  if (!policy.accept) {
+    console.error("stripe webhook refused", { event: event.id, endpoint: verified.endpoint, reason: policy.reason });
+    return new Response("bad signature", { status: 400 });
+  }
   /* A test-endpoint event records TEST commerce rows and changes nothing a
-     real account holds: no plan, music licence or provider flag. */
-  const effects = !verified.testEndpoint;
+     real account holds: no plan, music licence or provider flag. A
+     Connect-signed event never reaches the platform's own sales either. */
+  const effects = policy.platformEffects;
 
   try {
     const seen = await db(`stripe_events?event_id=eq.${encodeURIComponent(event.id)}&select=event_id&limit=1`);
@@ -257,7 +277,7 @@ Deno.serve(async (req) => {
 
     if (event.type === "account.updated") {
       const a = event.data.object as Stripe.Account;
-      if (effects) await patchBy("providers", "stripe_acct", a.id, { charges_enabled: a.charges_enabled === true });
+      if (policy.accountEffects) await patchBy("providers", "stripe_acct", a.id, { charges_enabled: a.charges_enabled === true });
       await db(`org_stripe_accounts?stripe_account_id=eq.${encodeURIComponent(a.id)}&livemode=eq.${event.livemode}`, {
         method: "PATCH",
         body: JSON.stringify(stateFor(a)),

@@ -10,7 +10,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var M = window.MCC_MARKET;
   var esc = M.esc, money = M.money;
-  var S = { data: null, tab: 'listings', editing: null, busy: false, flash: null };
+  var S = { data: null, tab: 'listings', editing: null, busy: false, flash: null, taxOpen: false };
   var root = $('mkSell');
 
   function token() { return window.MCC_SUPA && MCC_SUPA.token ? MCC_SUPA.token() : Promise.resolve(null); }
@@ -59,11 +59,13 @@
     var approval = s.status === 'approved' ? pill('Approved', 'good') : s.status === 'suspended' ? pill('Suspended', 'bad') : pill('Waiting for McCluster approval', 'warn');
     var stripe = st.ready ? pill('Stripe ready', 'good') : st.connected ? pill('Stripe: finish onboarding', 'warn') : pill('Stripe not connected', 'warn');
     var taxPill = tax.status === 'active' ? pill('Sales tax on', 'good') : pill('Sales tax not set up', 'warn');
+    var canTax = s.role === 'owner' && s.status === 'approved' && st.connected && st.details_submitted;
     var due = (st.requirements && st.requirements.currently_due || []).length;
     return '<div class="mk-panel"><div class="mk-item__head"><div><h2 style="margin:0">' + esc(s.display_name) + '</h2><a class="mk-muted" href="shop.html?s=' + encodeURIComponent(s.slug) + '">/market/shop.html?s=' + esc(s.slug) + '</a></div></div>' +
-      '<ul class="mk-steps" style="margin-top:12px"><li>' + approval + '</li><li>' + stripe + (due ? '<span class="mk-muted">' + due + ' item' + (due === 1 ? '' : 's') + ' Stripe still needs</span>' : '') + '</li><li>' + taxPill + '</li></ul>' +
+      '<ul class="mk-steps" style="margin-top:12px"><li>' + approval + '</li><li>' + stripe + (due ? '<span class="mk-muted">' + due + ' item' + (due === 1 ? '' : 's') + ' Stripe still needs</span>' : '') + '</li><li>' + taxPill + (canTax ? '<button class="mk-btn mk-btn--small" type="button" data-act="tax">' + (tax.status === 'active' ? 'Sales tax settings' : 'Set up sales tax') + '</button>' : '') + '</li></ul>' +
       (s.status_reason ? '<p class="mk-note">' + esc(s.status_reason) + '</p>' : '') +
-      (tax.status !== 'active' && st.connected ? '<p class="mk-note">Buyers cannot check out until Stripe Tax is active on your account: your head office address and the states where you are registered to collect sales tax. You are the seller of record and owe the tax; McCluster never sells untaxed.</p>' : '') +
+      (tax.status !== 'active' ? '<p class="mk-note">Buyers cannot check out until sales tax is set up: your head office address, what you sell, and the states where you are registered to collect sales tax. You are the seller of record and owe the tax; McCluster never sells untaxed.' +
+        (canTax ? '' : s.status !== 'approved' ? ' You can set it up once McCluster approves your shop.' : ' Finish Stripe onboarding first.') + '</p>' : '') +
       '<div class="mk-row" style="margin-top:12px">' + (s.role === 'owner' ? (!st.ready ? '<button class="mk-btn mk-btn--primary" type="button" data-act="onboard">' + (st.connected ? 'Continue Stripe onboarding' : 'Connect Stripe') + '</button>' : '<button class="mk-btn" type="button" data-act="payouts">Payouts &amp; Stripe dashboard</button>') : '') + '</div></div>';
   }
 
@@ -72,10 +74,11 @@
     var kind = { draft: '', pending_review: 'warn', published: 'good', removed: 'bad' }[l.status];
     var stock = (l.variants || []).filter(function (v) { return v.active; }).map(function (v) { return esc(v.label) + (l.inventory_policy === 'tracked' ? ' (' + (v.inventory_count || 0) + ')' : ''); }).join(' · ');
     return '<div class="mk-item"><div class="mk-item__head"><div><b>' + esc(l.title) + '</b><div class="mk-muted" style="font-size:14px">' + money(l.price_cents) + ' · ship ' + money(l.shipping_cents) + '</div><div class="mk-muted" style="font-size:13px">' + stock + '</div></div>' +
-      pill(l.status === 'pending_review' ? 'waiting for approval' : l.status, kind) + '</div>' +
+      pill(l.status === 'pending_review' ? 'waiting for approval or Stripe' : l.status, kind) + '</div>' +
       (l.removed_reason ? '<p class="mk-note">Removed by McCluster: ' + esc(l.removed_reason) + '</p>' : '') +
       '<div class="mk-row">' + (l.status !== 'removed' ? '<button class="mk-btn mk-btn--small" type="button" data-edit="' + esc(l.id) + '">Edit</button>' : '') +
       (l.status === 'draft' ? '<button class="mk-btn mk-btn--small mk-btn--primary" type="button" data-publish="' + esc(l.id) + '">Publish</button>' : '') +
+      (l.status === 'pending_review' ? '<button class="mk-btn mk-btn--small" type="button" data-todraft="' + esc(l.id) + '">Back to draft</button>' : '') +
       (l.status === 'published' ? '<a class="mk-btn mk-btn--small" href="item.html?id=' + encodeURIComponent(l.id) + '">View</a>' : '') + '</div></div>';
   }
   function blankListing() { return { id: null, title: '', description: '', images: [], image_urls: [], price_cents: null, shipping_cents: 500, inventory_policy: 'tracked', variants: [{ label: 'One size', options: {}, sku: '', price_cents: null, inventory_count: 0, active: true }] }; }
@@ -92,11 +95,11 @@
       '<div class="mk-field"><span>Options (size, colour…), each with its own SKU, price and stock</span><div class="mk-list" id="mkVariants">' + vrows.map(variantRow).join('') + '</div>' +
       '<button class="mk-btn mk-btn--small" type="button" data-act="addvariant">+ Add option</button></div>' +
       '<div class="mk-row"><button class="mk-btn mk-btn--primary" type="submit">Save</button><button class="mk-btn" type="button" data-act="cancel">Cancel</button>' +
-      (l.status === 'published' ? '<button class="mk-btn" type="button" data-act="unpublish">Unpublish</button>' : '') + '</div></form></div>';
+      (l.status === 'published' || l.status === 'pending_review' ? '<button class="mk-btn" type="button" data-act="unpublish">' + (l.status === 'published' ? 'Unpublish' : 'Back to draft') + '</button>' : '') + '</div></form></div>';
   }
   function variantRow(v) {
     var o = v.options || {};
-    return '<div class="mk-vrow" data-vid="' + esc(v.id || '') + '"><label class="mk-field mk-field--wide"><span>Name</span><input data-v="label" maxlength="80" value="' + esc(v.label) + '"></label>' +
+    return '<div class="mk-vrow" data-vid="' + esc(v.id || '') + '" data-expected="' + esc(v.id && v.inventory_count != null ? v.inventory_count : '') + '"><label class="mk-field mk-field--wide"><span>Name</span><input data-v="label" maxlength="80" value="' + esc(v.label) + '"></label>' +
       '<label class="mk-field"><span>Size</span><input data-v="size" maxlength="40" value="' + esc(o.size || '') + '"></label>' +
       '<label class="mk-field"><span>Colour</span><input data-v="colour" maxlength="40" value="' + esc(o.colour || '') + '"></label>' +
       '<label class="mk-field"><span>SKU</span><input data-v="sku" maxlength="64" value="' + esc(v.sku || '') + '" autocapitalize="characters"></label>' +
@@ -109,8 +112,11 @@
     var variants = Array.prototype.map.call(form.querySelectorAll('.mk-vrow'), function (row) {
       var g = function (k) { return (row.querySelector('[data-v="' + k + '"]') || {}).value || ''; };
       var stock = g('stock').trim();
-      return { id: row.getAttribute('data-vid') || null, label: g('label').trim(), options: { size: g('size').trim(), colour: g('colour').trim() }, sku: g('sku').trim(),
+      var id = row.getAttribute('data-vid') || null, out = { id: id, label: g('label').trim(), options: { size: g('size').trim(), colour: g('colour').trim() }, sku: g('sku').trim(),
         price_cents: g('price').trim() ? cents(g('price')) : null, inventory_count: stock === '' ? null : parseInt(stock, 10), active: true };
+      /* the count this page loaded: the server changes stock only if it still matches (an order may have taken one since) */
+      if (id) { var was = row.getAttribute('data-expected'); out.expected_inventory = was === '' ? null : parseInt(was, 10); }
+      return out;
     });
     return { title: form.title.value, description: form.description.value, price_cents: cents(form.price.value), shipping_cents: cents(form.shipping.value || '0') || 0,
       inventory_policy: form.inventory_policy.value, images: l.images.slice(), variants: variants };
@@ -133,11 +139,53 @@
       (S.data.seller.role === 'owner' && o.status !== 'refunded' && left > 0 ? '<button class="mk-btn mk-btn--small" type="button" data-refund="' + esc(o.id) + '" data-left="' + left + '">Refund</button>' : '') + '</div></div>';
   }
 
+  /* SALES TAX, in Stripe's own embedded components (tax settings, tax
+     registrations, and Stripe's notification banner), on the seller's own
+     connected account. The Worker mints the Account Session for the caller's
+     own approved shop only; Connect.js comes from Stripe's CDN. */
+  var CONNECT_JS = 'https://connect-js.stripe.com/v1.0/connect.js';
+  function loadConnect() {
+    return new Promise(function (resolve, reject) {
+      if (window.StripeConnect && window.StripeConnect.init) return resolve(window.StripeConnect);
+      var tag = document.createElement('script');
+      tag.src = CONNECT_JS; tag.async = true;
+      tag.onload = function () { window.StripeConnect && window.StripeConnect.init ? resolve(window.StripeConnect) : reject(new Error('Stripe did not load')); };
+      tag.onerror = function () { reject(new Error('Stripe could not be reached. Check your connection and try again.')); };
+      document.head.appendChild(tag);
+    });
+  }
+  function taxPanel() {
+    return '<div class="mk-panel"><div class="mk-item__head"><div><h2 style="margin:0">Sales tax</h2><p class="mk-muted" style="margin:4px 0 0">Set your head office and the states where you collect sales tax. Stripe stores it on your account; checkout opens once Stripe says it is active.</p></div></div>' +
+      '<div id="mkTaxBox" class="mk-embed" aria-live="polite"><div class="mk-empty">Opening Stripe…</div></div>' +
+      '<div class="mk-row" style="margin-top:12px"><button class="mk-btn" type="button" data-act="taxdone">Done</button></div></div>';
+  }
+  function openTax() {
+    S.taxOpen = true; render();
+    var first = null, box = function () { return $('mkTaxBox'); };
+    var session = function () { return call('/seller/account-session', { method: 'POST', body: {} }); };
+    session().then(function (j) { first = j; return loadConnect(); }).then(function (SC) {
+      var used = false;
+      var instance = SC.init({
+        publishableKey: first.publishable_key,
+        fetchClientSecret: function () { if (!used) { used = true; return Promise.resolve(first.client_secret); } return session().then(function (j) { return j.client_secret; }); },
+        appearance: { variables: { colorPrimary: '#9b6f00', borderRadius: '10px', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif' } }
+      });
+      var el = box(); if (!el) return;
+      el.innerHTML = '';
+      ['notification-banner', 'tax-settings', 'tax-registrations'].forEach(function (name) {
+        var c = instance.create(name);
+        if (name === 'tax-settings' && c.setOnTaxSettingsUpdated) c.setOnTaxSettingsUpdated(function () { flash('Tax settings saved.', 'good'); });
+        var wrap = document.createElement('div'); wrap.className = 'mk-embed__part'; wrap.appendChild(c); el.appendChild(wrap);
+      });
+    }).catch(function (e) { var el = box(); if (el) M.alertBox(el, e.message, 'bad'); });
+  }
+
   function render() {
     var d = S.data;
     if (!d.seller) { root.innerHTML = flashBox() + applyForm(); bind(); return; }
     var orders = d.orders || [], open = orders.filter(function (o) { return o.status === 'paid' || o.status === 'fulfilled'; }).length;
     var body;
+    if (S.taxOpen) { root.innerHTML = flashBox() + taxPanel(); bind(); return; }
     if (S.editing) body = editor(S.editing);
     else if (S.tab === 'orders') body = orders.length ? '<div class="mk-list">' + orders.map(orderCard).join('') + '</div>' : '<div class="mk-empty">No orders yet.</div>';
     else body = '<div class="mk-row" style="margin-bottom:10px"><button class="mk-btn mk-btn--primary" type="button" data-act="new">+ New listing</button></div>' +
@@ -150,7 +198,11 @@
   function act(promise, okText) {
     if (S.busy) return; S.busy = true;
     return promise.then(function (r) { S.busy = false; if (okText) flash(typeof okText === 'function' ? okText(r) : okText, 'good'); return load(); })
-      .catch(function (e) { S.busy = false; flash(e.message, 'bad'); });
+      .catch(function (e) {
+        S.busy = false; flash(e.message, 'bad');
+        /* stock moved under the editor: show the real counts, never write over them */
+        if (e.detail && e.detail.code === 'stock_changed') { S.editing = null; return load().then(function () { flash(e.message, 'bad'); }); }
+      });
   }
 
   function upload(file) {
@@ -178,6 +230,8 @@
       b.onclick = function () {
         var a = b.getAttribute('data-act');
         if (a === 'onboard' || a === 'payouts') { b.disabled = true; call(a === 'onboard' ? '/seller/onboard' : '/seller/payouts-link', { method: 'POST', body: {} }).then(function (j) { location.href = j.url; }).catch(function (e) { b.disabled = false; flash(e.message, 'bad'); }); }
+        if (a === 'tax') openTax();
+        if (a === 'taxdone') { S.taxOpen = false; flash(''); load(); }
         if (a === 'new') { S.editing = blankListing(); render(); }
         if (a === 'cancel') { S.editing = null; render(); }
         if (a === 'addvariant') { var list = $('mkVariants'); list.insertAdjacentHTML('beforeend', variantRow({ label: '', options: {}, inventory_count: 0 })); bind(); }
@@ -203,6 +257,7 @@
         act(call('/seller/orders/' + id + '/fulfil', { method: 'POST', body: { status: 'shipped', carrier: root.querySelector('[data-carrier="' + id + '"]').value, tracking_number: root.querySelector('[data-tracking="' + id + '"]').value } }), 'Marked shipped. The buyer sees the tracking number.');
       };
     });
+    root.querySelectorAll('[data-todraft]').forEach(function (b) { b.onclick = function () { act(call('/seller/listings/' + b.getAttribute('data-todraft'), { method: 'PATCH', body: { unpublish: true } }), 'Back to draft.'); }; });
     root.querySelectorAll('[data-pack]').forEach(function (b) { b.onclick = function () { act(call('/seller/orders/' + b.getAttribute('data-pack') + '/fulfil', { method: 'POST', body: { status: 'fulfilled' } }), 'Marked packed.'); }; });
     root.querySelectorAll('[data-deliver]').forEach(function (b) { b.onclick = function () { act(call('/seller/orders/' + b.getAttribute('data-deliver') + '/fulfil', { method: 'POST', body: { status: 'delivered' } }), 'Marked delivered.'); }; });
     root.querySelectorAll('[data-refund]').forEach(function (b) {

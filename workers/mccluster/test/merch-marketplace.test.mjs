@@ -8,18 +8,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { handleMerchRequest, cleanVariants, cleanListing } from '../src/merch/router.js';
+import { handleMerchRequest, cleanVariants, cleanListing, TAX_COMPONENTS } from '../src/merch/router.js';
 import { MARKETPLACE_PLATFORM_FEE_BPS, marketplaceFee, orderAmounts, orderFeeMismatch } from '../src/merch/fee.js';
 import { __resetCapabilityCache } from '../src/lib/capabilities.js';
 
 const SB = 'https://db.fixture';
-const ENV = { SUPABASE_URL: SB, SUPABASE_SERVICE_ROLE_KEY: 'srv', STRIPE_SECRET_KEY: 'sk_test_fixture', ALLOWED_ORIGINS: 'https://matthew.mccluster.org' };
+const ENV = { SUPABASE_URL: SB, SUPABASE_SERVICE_ROLE_KEY: 'srv', STRIPE_SECRET_KEY: 'sk_test_fixture', STRIPE_PUBLISHABLE_KEY: 'pk_test_fixture', ALLOWED_ORIGINS: 'https://matthew.mccluster.org' };
 const ALICE = { id: 'a1111111-1111-4111-8111-111111111111', email: 'alice@example.com' };
 const BOB = { id: 'b2222222-2222-4222-8222-222222222222', email: 'bob@example.com' };
 const OWNER = { id: '0aaaaaaa-0000-4000-8000-000000000000', email: 'matthew@mccluster.org' };
+const CAROL = { id: 'c3333333-3333-4333-8333-333333333333', email: 'carol@example.com' };
+const DAVE = { id: 'd4444444-4444-4444-8444-444444444444', email: 'dave@example.com' };
 const ORG_A = 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa';
 const ORG_B = 'bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb';
 const HOUSE = 'cccccccc-3333-4333-8333-cccccccccccc';
+const ORG_C = 'cccccccc-9999-4999-8999-cccccccccccc';
 const LISTING = 'dddddddd-4444-4444-8444-dddddddddddd';
 const VARIANT = 'eeeeeeee-5555-4555-8555-eeeeeeeeeeee';
 const ORDER = 'ffffffff-6666-4666-8666-ffffffffffff';
@@ -27,7 +30,8 @@ const ORDER = 'ffffffff-6666-4666-8666-ffffffffffff';
 function world(overrides = {}) {
   const w = {
     calls: [], stripe: [], released: [], attached: [],
-    tax: 'active', orderFee: null, stock: 2, sessionFails: false,
+    tax: 'active', orderFee: null, stock: 2, sessionFails: false, listingStatus: 'published', stockNow: 1,
+    listingPatches: [], variantPatches: [], variantInserts: [], stockCalls: [],
     orders: [{ id: ORDER, seller_org_id: ORG_A, status: 'paid', payment_intent_id: 'pi_1', stripe_account_id: 'acct_1Alpha', total_cents: 5850, amount_refunded_cents: 0 }],
     ...overrides
   };
@@ -42,10 +46,11 @@ function world(overrides = {}) {
       if (u.pathname === '/v1/tax/settings') return json({ status: w.tax, status_details: { pending: { missing_fields: w.tax === 'active' ? [] : ['head_office'] } } });
       if (u.pathname === '/v1/checkout/sessions') return w.sessionFails ? json({ error: { message: 'Stripe Tax has not been activated on your account' } }, 400) : json({ id: 'cs_test_Session0001', url: 'https://checkout.stripe.com/c/pay/cs_test_Session0001' });
       if (u.pathname === '/v1/refunds') return json({ id: 're_1', status: 'succeeded', amount: Number(form.get('amount')) });
+      if (u.pathname === '/v1/account_sessions') return json({ object: 'account_session', account: form.get('account'), client_secret: 'accs_secret_fixture', expires_at: 1793000000 });
       return json({ error: { message: 'unexpected stripe ' + u.pathname } }, 404);
     }
     if (u.pathname === '/auth/v1/user') {
-      const who = { 'Bearer alice': ALICE, 'Bearer bob': BOB, 'Bearer owner': OWNER }[(init.headers || {}).authorization];
+      const who = { 'Bearer alice': ALICE, 'Bearer bob': BOB, 'Bearer owner': OWNER, 'Bearer carol': CAROL, 'Bearer dave': DAVE }[(init.headers || {}).authorization];
       return who ? json(who) : json({ msg: 'bad jwt' }, 401);
     }
     const p = u.pathname.replace('/rest/v1/', '');
@@ -55,16 +60,38 @@ function world(overrides = {}) {
       if (q('select').includes('orgs(')) {
         return json(profile === OWNER.id ? [{ role: 'owner', orgs: { id: HOUSE, slug: 'mccluster', name: 'McCluster', kind: 'studio', enabled: true } }] : []);
       }
-      return json(profile === ALICE.id ? [{ org_id: ORG_A, role: 'owner' }] : profile === BOB.id ? [{ org_id: ORG_B, role: 'owner' }] : []);
+      const members = { [ALICE.id]: [{ org_id: ORG_A, role: 'owner' }], [BOB.id]: [{ org_id: ORG_B, role: 'owner' }], [CAROL.id]: [{ org_id: ORG_C, role: 'owner' }], [DAVE.id]: [{ org_id: ORG_A, role: 'staff' }] }[profile] || [];
+      const roles = (q('role').match(/^in\.\((.*)\)$/) || [, 'owner,staff,viewer'])[1].split(',');
+      return json(members.filter((m) => roles.includes(m.role)));
     }
     if (p === 'control_role_capabilities') return json([{ role: 'owner', capability: 'ops.use', allowed: true }]);
     if (p === 'marketplace_sellers') {
-      const rows = [{ org_id: ORG_A, slug: 'alpha', display_name: 'Alpha', status: 'approved' }, { org_id: ORG_B, slug: 'bravo', display_name: 'Bravo', status: 'approved' }];
+      const rows = [{ org_id: ORG_A, slug: 'alpha', display_name: 'Alpha', status: 'approved' }, { org_id: ORG_B, slug: 'bravo', display_name: 'Bravo', status: 'approved' }, { org_id: ORG_C, slug: 'carol', display_name: 'Carol', status: 'applied' }];
       if (method === 'PATCH') return new Response(null, { status: 204 });
       return json(rows.filter((r) => q('org_id').includes(r.org_id) || q('slug') === 'eq.' + r.slug || (!q('org_id') && !q('slug'))));
     }
-    if (p === 'marketplace_listings') return json(q('id') === 'eq.' + LISTING ? [{ seller_org_id: ORG_A, id: LISTING, status: 'published' }] : []);
-    if (p === 'org_stripe_accounts') return json([{ org_id: ORG_A, livemode: false, stripe_account_id: 'acct_1Alpha', onboarding_status: 'ready', charges_enabled: true, payouts_enabled: true, details_submitted: true }]);
+    if (p === 'marketplace_listings') {
+      if (method === 'PATCH') { w.listingPatches.push(body); return new Response(null, { status: 204 }); }
+      return json(q('id') === 'eq.' + LISTING && (!q('seller_org_id') || q('seller_org_id') === 'eq.' + ORG_A) ? [{ seller_org_id: ORG_A, id: LISTING, status: w.listingStatus }] : []);
+    }
+    if (p === 'marketplace_variants') {
+      if (method === 'PATCH') { w.variantPatches.push({ query: u.search, body }); return new Response(null, { status: 204 }); }
+      if (method === 'POST') { w.variantInserts.push(body); return new Response(null, { status: 201 }); }
+      return json([{ id: VARIANT, inventory_count: w.stockNow }]);
+    }
+    if (p === 'rpc/marketplace_variant_set_stock') {
+      w.stockCalls.push(body);
+      if (body.p_expected !== w.stockNow) return json({ code: 'P0001', message: 'stock_changed' }, 400);
+      w.stockNow = body.p_count; return json({ id: VARIANT, inventory_count: body.p_count });
+    }
+    if (p === 'org_stripe_accounts') {
+      const rails = [
+        { org_id: ORG_A, livemode: false, stripe_account_id: 'acct_1Alpha', onboarding_status: 'ready', charges_enabled: true, payouts_enabled: true, details_submitted: true },
+        { org_id: ORG_B, livemode: false, stripe_account_id: w.bobAccount === undefined ? 'acct_1Bravo' : w.bobAccount, onboarding_status: 'onboarding', charges_enabled: false, payouts_enabled: false, details_submitted: w.bobAccount !== null },
+        { org_id: ORG_C, livemode: false, stripe_account_id: 'acct_1Carol', onboarding_status: 'ready', charges_enabled: true, payouts_enabled: true, details_submitted: true }
+      ];
+      return json(q('org_id') ? rails.filter((r) => q('org_id') === 'eq.' + r.org_id) : rails);
+    }
     if (p === 'marketplace_orders') {
       return json(w.orders.filter((o) => q('id') === 'eq.' + o.id && q('seller_org_id') === 'eq.' + o.seller_org_id));
     }
@@ -84,14 +111,14 @@ function world(overrides = {}) {
   };
   return w;
 }
-async function call(w, path, { method = 'GET', body, auth } = {}) {
+async function call(w, path, { method = 'GET', body, auth, env = ENV } = {}) {
   const prev = globalThis.fetch;
   globalThis.fetch = w.fetch;
   __resetCapabilityCache();
   try {
     const headers = { origin: 'https://matthew.mccluster.org', 'content-type': 'application/json' };
     if (auth) headers.authorization = 'Bearer ' + auth;
-    const res = await handleMerchRequest(new Request('https://api.mccluster.org/v1/merch/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined }), ENV);
+    const res = await handleMerchRequest(new Request('https://api.mccluster.org/v1/merch/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined }), env);
     return { status: res.status, body: await res.json() };
   } finally { globalThis.fetch = prev; }
 }
@@ -216,7 +243,7 @@ test('buyer status by token; public reads carry image URLs; validation of seller
   assert.throws(() => cleanListing({ title: 'Tee', price_cents: 50 }), /Price/);
   assert.throws(() => cleanVariants([{ label: 'M', sku: 'bad sku!' }]), /SKU/);
   assert.deepEqual(cleanVariants([{ label: 'M / Black', options: { Size: 'M', colour: 'Black' }, inventory_count: 3 }])[0],
-    { id: null, label: 'M / Black', options: { size: 'M', colour: 'Black' }, sku: null, price_cents: null, inventory_count: 3, active: true, position: 0 });
+    { id: null, label: 'M / Black', options: { size: 'M', colour: 'Black' }, sku: null, price_cents: null, inventory_count: 3, expected_inventory: undefined, active: true, position: 0 });
 });
 
 test('wiring: the platform entry routes /v1/merch, its preflight is answered, and the Connect rail is reused', async () => {
@@ -228,4 +255,66 @@ test('wiring: the platform entry routes /v1/merch, its preflight is answered, an
   assert.match(router, /from '\.\.\/connect\.js'/, 'the Express account comes from the Client Connect rail');
   assert.match(router, /from '\.\.\/whip\/stripe\.js'/, 'one Stripe request helper in this Worker');
   assert.doesNotMatch(router, /api\.printful\.com/i, 'no Printful calls in v1');
+});
+
+test('sales tax: an Account Session only for the caller\'s own approved seller account, tax components only', async () => {
+  let w = world();
+  let r = await call(w, 'seller/account-session', { method: 'POST', auth: 'alice', body: { account: 'acct_1Bravo', org: ORG_B } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.client_secret, 'accs_secret_fixture');
+  assert.equal(r.body.publishable_key, 'pk_test_fixture');
+  const s = w.stripe.find((x) => x.path === '/v1/account_sessions');
+  assert.equal(s.form.get('account'), 'acct_1Alpha', 'the body cannot pick another seller\'s account');
+  assert.equal(s.headers['Stripe-Account'], undefined, 'created by the platform for the connected account');
+  const enabled = [...s.form.keys()].filter((k) => k.startsWith('components[')).map((k) => k.match(/^components\[([a-z_]+)\]/)[1]);
+  assert.deepEqual([...new Set(enabled)].sort(), ['notification_banner', 'tax_registrations', 'tax_settings'], 'nothing but tax (+ the banner)');
+  assert.deepEqual(Object.keys(TAX_COMPONENTS).sort(), ['notification_banner', 'tax_registrations', 'tax_settings']);
+  w = world();
+  r = await call(w, 'seller/account-session', { method: 'POST', auth: 'carol', body: {} });
+  assert.equal(r.status, 403); assert.equal(r.body.detail.code, 'seller_not_approved', 'not before McCluster approves the shop');
+  r = await call(w, 'seller/account-session', { method: 'POST', auth: 'dave', body: {} });
+  assert.equal(r.status, 403, 'staff of the shop cannot open the owner\'s tax settings');
+  r = await call(w, 'seller/account-session', { method: 'POST', auth: 'owner', body: {} });
+  assert.equal(r.status, 403, 'the house owner is not a seller here; Control never mints a seller session');
+  r = await call(w, 'seller/account-session', { method: 'POST', body: {} });
+  assert.equal(r.status, 401);
+  r = await call(world({ bobAccount: null }), 'seller/account-session', { method: 'POST', auth: 'bob', body: {} });
+  assert.equal(r.status, 409); assert.equal(r.body.detail.code, 'connect_not_ready');
+  r = await call(world(), 'seller/account-session', { method: 'POST', auth: 'alice', env: { ...ENV, STRIPE_PUBLISHABLE_KEY: '' } });
+  assert.equal(r.status, 503);
+  r = await call(world(), 'seller/account-session', { method: 'POST', auth: 'alice', env: { ...ENV, STRIPE_PUBLISHABLE_KEY: 'pk_live_wrongmode' } });
+  assert.equal(r.status, 503, 'a live publishable key with a test secret key is refused');
+  assert.equal(w.stripe.filter((x) => x.path === '/v1/account_sessions').length, 0, 'no refused caller reached Stripe');
+});
+
+test('saving a listing never writes stock from the snapshot: a changed count is a compare-and-set', async () => {
+  /* the seller loaded 3 and typed 5; a checkout reserved one since, so the database holds 2 */
+  let w = world({ stockNow: 2 });
+  let r = await call(w, `seller/listings/${LISTING}`, { method: 'PATCH', auth: 'alice', body: { title: 'New title', variants: [{ id: VARIANT, label: 'M', inventory_count: 5, expected_inventory: 3 }] } });
+  assert.equal(r.status, 409); assert.equal(r.body.detail.code, 'stock_changed', 'a stale stock write is refused');
+  assert.ok(w.variantPatches.every((p) => !('inventory_count' in p.body)), 'no PATCH ever carries a stock count');
+  assert.equal(w.stockNow, 2, 'the reservation survives');
+  w = world({ stockNow: 2 });
+  r = await call(w, `seller/listings/${LISTING}`, { method: 'PATCH', auth: 'alice', body: { title: 'New title', variants: [{ id: VARIANT, label: 'M', inventory_count: 3, expected_inventory: 2 }] } });
+  assert.equal(r.status, 200, 'after a reload the seller sets 3 against the 2 they now see');
+  assert.equal(w.stockNow, 3);
+  w = world({ stockNow: 2 });
+  r = await call(w, `seller/listings/${LISTING}`, { method: 'PATCH', auth: 'alice', body: { title: 'Only the title', variants: [{ id: VARIANT, label: 'M', inventory_count: 2, expected_inventory: 2 }] } });
+  assert.equal(r.status, 200);
+  assert.equal(w.stockCalls.length, 0, 'an edit that leaves stock alone does not touch it');
+  assert.equal(w.stockNow, 2);
+  r = await call(w, `seller/listings/${LISTING}`, { method: 'PATCH', auth: 'alice', body: { variants: [{ id: VARIANT, label: 'M', inventory_count: 9 }] } });
+  assert.equal(w.stockCalls.length, 0, 'without the loaded count, stock is left alone');
+});
+
+test('a seller can take a waiting (pending_review) or published listing back to draft', async () => {
+  for (const status of ['pending_review', 'published']) {
+    const w = world({ listingStatus: status });
+    const r = await call(w, `seller/listings/${LISTING}`, { method: 'PATCH', auth: 'alice', body: { unpublish: true } });
+    assert.equal(r.status, 200);
+    assert.deepEqual(w.listingPatches, [{ status: 'draft' }], status);
+  }
+  const w = world({ listingStatus: 'draft' });
+  await call(w, `seller/listings/${LISTING}`, { method: 'PATCH', auth: 'alice', body: { unpublish: true } });
+  assert.deepEqual(w.listingPatches, [], 'a draft stays a draft');
 });

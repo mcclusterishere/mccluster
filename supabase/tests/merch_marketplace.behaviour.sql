@@ -204,12 +204,24 @@ select t_eq(public.marketplace_order_record_refund(jsonb_build_object('order_id'
 select t_eq((select inventory_count from public.marketplace_variants where sku = 'ALPHA-M-BLK'), 0, 'a refund does not restock');
 reset role;
 
--- an expired checkout gives the unit back
-update public.marketplace_variants set inventory_count = 1 where sku = 'ALPHA-M-BLK';
+-- stock is never written from a snapshot: only a compare-and-set against the loaded count
+select t_err($$update public.marketplace_variants set inventory_count = 1 where sku = 'ALPHA-M-BLK'$$, '%stock_write_outside_function%');
+select t_err($$update public.marketplace_variants set inventory_count = 1, label = 'M / Black' where sku = 'ALPHA-M-BLK'$$, '%stock_write_outside_function%');
+set role service_role;
+select t_err($$update public.marketplace_variants set inventory_count = 1 where sku = 'ALPHA-M-BLK'$$, '%stock_write_outside_function%');
+select t_err($$select public.marketplace_variant_set_stock((select vm from lst), (select a from ids), 5, 1, null)$$, '%stock_changed%');
+select t_err($$select public.marketplace_variant_set_stock((select vm from lst), (select b from ids), 0, 1, null)$$, '%unknown_variant%');
+select t_eq((public.marketplace_variant_set_stock((select vm from lst), (select a from ids), 0, 1, null))->>'inventory_count', '1', 'seller restocks against the count it loaded');
+reset role;
 set role service_role;
 create temp table o2 as select public.marketplace_order_create((select listing from lst), (select vm from lst), 1, false,
   encode(sha256(convert_to('tok_' || repeat('2', 40), 'UTF8')), 'hex')) as j;
 select public.marketplace_order_attach_session((select (j->>'id')::uuid from o2), 'cs_test_Alpha00003');
+-- a title edit while the unit is reserved keeps the reserved count; a stale stock write is refused
+select t_eq((select inventory_count from public.marketplace_variants where sku = 'ALPHA-M-BLK'), 0, 'reserved by the open checkout');
+update public.marketplace_variants set label = 'M / Black (heavy)' where sku = 'ALPHA-M-BLK';
+select t_eq((select inventory_count from public.marketplace_variants where sku = 'ALPHA-M-BLK'), 0, 'an edit that leaves stock alone keeps the reservation');
+select t_err($$select public.marketplace_variant_set_stock((select vm from lst), (select a from ids), 1, 5, null)$$, '%stock_changed%');
 select t_eq(public.marketplace_order_release((select (j->>'id')::uuid from o2), 'cs_test_Alpha00003'), true, 'expired');
 select t_eq((select inventory_count from public.marketplace_variants where sku = 'ALPHA-M-BLK'), 1, 'restocked on expiry');
 select t_eq(public.marketplace_order_mark_paid(jsonb_build_object('order_id', (select j->>'id' from o2), 'session_id', 'cs_test_Alpha00003', 'account', 'acct_1Alpha', 'livemode', false, 'currency', 'usd', 'amount_subtotal', 2500, 'amount_shipping', 500, 'amount_tax', 0, 'amount_total', 3000, 'payment_intent', 'pi_Late'))->>'refused', 'order_not_payable', 'a canceled order is not paid');
@@ -253,6 +265,24 @@ select t_eq(jsonb_array_length(public.marketplace_public_listings(null, null)), 
 reset role;
 update public.org_stripe_accounts r set payouts_enabled = false from ids where r.org_id = ids.a;
 select t_eq(jsonb_array_length(public.marketplace_public_listings(null, null)), 0, 'unready Connect hides the shop');
+
+-- waiting listings go live when the second of approval and Stripe readiness arrives.
+-- Approval first, Stripe later (Bob): his listing waited in pending_review.
+select t_eq((select status from public.marketplace_listings where title = 'Bravo Cap'), 'pending_review', 'Bob waits for Stripe');
+update public.org_stripe_accounts r set charges_enabled = true, payouts_enabled = true, details_submitted = true from ids where r.org_id = ids.b;
+select t_eq((select status from public.marketplace_listings where title = 'Bravo Cap'), 'published', 'Stripe becoming ready releases it');
+select t_eq(public.marketplace_public_listings('bravo', null)->0->>'title', 'Bravo Cap', 'public now');
+-- Stripe first, approval later (Alpha above): approval released it; a suspended seller releases nothing
+set role service_role;
+select public.marketplace_seller_set_status((select b from ids), 'suspended', '0aaaaaaa-0000-4000-8000-000000000000', 'hold');
+reset role;
+update public.marketplace_listings set status = 'pending_review' where title = 'Bravo Cap';
+update public.org_stripe_accounts r set charges_enabled = false from ids where r.org_id = ids.b;
+update public.org_stripe_accounts r set charges_enabled = true from ids where r.org_id = ids.b;
+select t_eq((select status from public.marketplace_listings where title = 'Bravo Cap'), 'pending_review', 'a suspended seller is not released by Stripe');
+-- the seller may take a waiting listing back to draft
+update public.marketplace_listings set status = 'draft' where title = 'Bravo Cap';
+select t_eq((select status from public.marketplace_listings where title = 'Bravo Cap'), 'draft', 'pending_review -> draft');
 
 -- audit trail written
 select t_eq((select count(*) > 5 from public.control_audit where event like 'marketplace.%'), true, 'audited');

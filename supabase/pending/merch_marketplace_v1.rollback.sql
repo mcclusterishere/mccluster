@@ -18,6 +18,10 @@ drop function if exists public.marketplace_listing_request_publish(uuid, uuid);
 drop function if exists public.marketplace_seller_set_status(uuid, text, uuid, text);
 drop function if exists public.marketplace_seller_apply(uuid, text, text, text, boolean);
 drop function if exists public.marketplace_public_listings(text, uuid);
+drop function if exists public.marketplace_variant_set_stock(uuid, uuid, integer, integer, uuid);
+drop trigger if exists marketplace_rail_became_ready on public.org_stripe_accounts;
+drop function if exists public.marketplace_rail_became_ready();
+drop function if exists public.marketplace_release_waiting_listings(uuid);
 
 drop table if exists public.marketplace_orders cascade;
 drop table if exists public.marketplace_variants cascade;

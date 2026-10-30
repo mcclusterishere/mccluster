@@ -12,6 +12,7 @@ import {
   marketplaceOrderId, marketplacePaymentRefusal, marketplacePaidRecord, marketplaceExpiry, marketplaceRefund
 } from '../../supabase/functions/stripe-webhook/marketplace.ts';
 import { checkoutRecord, refundRecord, commerceCall } from '../../supabase/functions/stripe-webhook/commerce.ts';
+import { endpointPolicy } from '../../supabase/functions/stripe-webhook/endpoints.ts';
 import { MARKETPLACE_PLATFORM_FEE_BPS } from '../../workers/mccluster/src/merch/fee.js';
 
 const read = (p) => readFile(new URL('../../' + p, import.meta.url), 'utf8');
@@ -71,6 +72,43 @@ test('the paid record carries Stripe tax and the shipping address; expiry and re
   assert.equal(marketplaceOrderId({ metadata: { kind: 'marketplace_sale', marketplace_order_id: 'not-a-uuid' } }), null);
 });
 
+test('each signing secret reaches only what its endpoint may change', () => {
+  const live = { livemode: true }, test = { livemode: false }, acct = { account: 'acct_1Alpha' };
+  const flags = (p) => p.accept ? [p.platformEffects, p.accountEffects, p.marketplace, p.ledger] : p.reason;
+  /* platform secret: exactly as before the Connect endpoint existed */
+  assert.deepEqual(flags(endpointPolicy('platform', { ...live })), [true, true, true, true], 'a platform event');
+  assert.deepEqual(flags(endpointPolicy('platform', { ...live, ...acct })), [true, true, true, true], 'a connected-account event on the platform endpoint stays as today');
+  /* platform test secret: test mode only, ledger and marketplace only */
+  assert.equal(flags(endpointPolicy('platform_test', { ...live })), 'test_secret_live_event');
+  assert.deepEqual(flags(endpointPolicy('platform_test', { ...test })), [false, false, true, true]);
+  /* Connect secret: must name a connected account, never reaches the platform's own sales */
+  assert.equal(flags(endpointPolicy('connect', { ...live })), 'connect_secret_without_account', 'a platform-only event signed by the Connect secret is refused');
+  assert.equal(flags(endpointPolicy('connect', { ...live, account: 'not-an-account' })), 'connect_secret_without_account');
+  assert.deepEqual(flags(endpointPolicy('connect', { ...live, ...acct })), [false, true, true, true], 'no premium plan or music licence from a connected account');
+  assert.equal(flags(endpointPolicy('connect_test', { ...live, ...acct })), 'test_secret_live_event');
+  assert.equal(flags(endpointPolicy('connect_test', { ...test })), 'connect_secret_without_account');
+  assert.deepEqual(flags(endpointPolicy('connect_test', { ...test, ...acct })), [false, false, true, true]);
+  assert.equal(flags(endpointPolicy(null, { ...live })), 'unverified');
+});
+
+test('the webhook tries the platform secrets first and gates every platform-only effect on the endpoint', async () => {
+  const hook = await read('supabase/functions/stripe-webhook/index.ts');
+  assert.match(hook, /const WH_CONNECT = Deno\.env\.get\("STRIPE_CONNECT_WEBHOOK_SECRET"\) \|\| "";/);
+  assert.match(hook, /const WH_CONNECT_TEST = Deno\.env\.get\("STRIPE_CONNECT_WEBHOOK_SECRET_TEST"\) \|\| "";/);
+  assert.match(hook, /\[\["platform", WH\], \["platform_test", WH_TEST\], \["connect", WH_CONNECT\], \["connect_test", WH_CONNECT_TEST\]\]/, 'platform first');
+  const refusedAt = hook.indexOf('if (!policy.accept)'), firstWrite = hook.indexOf('stripe_events?event_id=eq.');
+  assert.ok(refusedAt > 0 && refusedAt < firstWrite, 'a refused endpoint/event pair is answered before anything is read or written');
+  assert.match(hook, /const effects = policy\.platformEffects;/);
+  const body = hook.slice(hook.indexOf('const effects = policy.platformEffects;'));
+  /* the platform-only handlers: premium plan, music grant, music expiry, music failure, music refund, plan downgrade */
+  for (const gate of [/if \(effects && s\.mode === "subscription" && s\.metadata\?\.uid\)/, /if \(effects\) await grantMusicOrder\(s, event\);/,
+    /if \(effects && !event\.account && s\.metadata\?\.kind === "music_license_sale"/, /if \(effects && !event\.account && p\.metadata\?\.kind === "music_license_sale"/,
+    /if \(effects && !event\.account\) await revokeMusicByPaymentIntent/, /if \(effects && sub\.metadata\?\.uid\)/]) assert.match(body, gate);
+  assert.equal((body.match(/grantMusicOrder\(s, event\)/g) || []).length, (body.match(/if \(effects\) await grantMusicOrder\(s, event\)/g) || []).length, 'every music grant is gated');
+  const posture = await read('docs/control-plane/SECURITY-POSTURE.md');
+  assert.match(posture, /STRIPE_CONNECT_WEBHOOK_SECRET/);
+});
+
 test('the commerce ledger books a marketplace sale to the seller org, never to the house', () => {
   const booked = checkoutRecord(SESSION, EVENT);
   assert.equal(booked.org_id, ORG);
@@ -117,6 +155,17 @@ test('one fee constant in code and database; v1 publishes only what the seller s
   }
   assert.match(sql, /execute format\('revoke all on function %s from public, anon, authenticated', f\);\s+execute format\('grant execute on function %s to service_role', f\);/);
   assert.match(sql, /create trigger marketplace_order_guard before insert or update on public\.marketplace_orders/);
+  /* stock is never written from a snapshot (Codex review, PR #679) */
+  assert.match(sql, /coalesce\(current_setting\('marketplace\.stock_write', true\), ''\) <> 'on' then\s+raise exception 'stock_write_outside_function';/);
+  assert.match(sql, /if v\.inventory_count is distinct from p_expected then raise exception 'stock_changed'; end if;/);
+  assert.equal((sql.match(/set_config\('marketplace\.stock_write', 'on', true\)/g) || []).length, 3, 'only create, release and the compare-and-set open the stock gate');
+  assert.equal((sql.match(/set_config\('marketplace\.stock_write', '', true\)/g) || []).length, 3, 'and each closes it again');
+  /* waiting listings go live whichever of approval and Stripe readiness comes second */
+  assert.match(sql, /v_published := public\.marketplace_release_waiting_listings\(p_org\);/);
+  assert.match(sql, /create trigger marketplace_rail_became_ready\s+after insert or update of stripe_account_id, charges_enabled, payouts_enabled, details_submitted on public\.org_stripe_accounts/);
+  for (const fn of ['marketplace_variant_set_stock', 'marketplace_release_waiting_listings']) {
+    assert.match(sql, new RegExp(`'public\\.${fn}\\([^']*\\)',?\\n`), `${fn} is service-role only`);
+  }
   for (const fn of sql.matchAll(/create or replace function (public\.marketplace_[a-z_]+)\([^)]*\)\s+returns[^$]*?(security definer)?[^$]*?set search_path = ''/g)) assert.ok(fn[1]);
   assert.equal((sql.match(/security definer set search_path = ''/g) || []).length >= 15, true, 'every definer pins its search path');
   assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /security definer(?! set search_path = '')/, 'no definer without a pinned search path');
@@ -149,6 +198,10 @@ test('the pages are McCluster Corp\'s, mobile first, and draw no logo', async ()
     assert.doesNotMatch(html, /<svg[^>]*>(?![\s\S]*?aria-hidden)/i, `${page}: no inline drawing`);
     assert.ok(domains.url_ownership.company_hosted_on_personal_for_compatibility.includes('/' + page.replace('index.html', '')), `${page} is listed as the company's`);
   }
+  const sell = await read('js/market-sell.js');
+  assert.match(sell, /var CONNECT_JS = 'https:\/\/connect-js\.stripe\.com\/v1\.0\/connect\.js';/, 'Connect.js only from Stripe\'s CDN');
+  assert.match(sell, /\['notification-banner', 'tax-settings', 'tax-registrations'\]/);
+  assert.doesNotMatch(sell, /account-session', \{ method: 'POST', body: \{[^}]/, 'the page never names an account for its session');
   const css = await read('css/market.css');
   assert.doesNotMatch(css, /max-width\s*:\s*[0-9.]+px\s*\)/, 'min-width queries only');
   assert.doesNotMatch(css, /@media[^{]*max-width/, 'min-width queries only');

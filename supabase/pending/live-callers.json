@@ -418,6 +418,13 @@
         "workers/mccluster/src/merch/router.js"
       ]
     },
+    "marketplace_variant_set_stock": {
+      "kind": "function",
+      "pending": "merch_marketplace_v1.sql",
+      "callers": [
+        "workers/mccluster/src/merch/router.js"
+      ]
+    },
     "marketplace_variants": {
       "kind": "table",
       "pending": "merch_marketplace_v1.sql",

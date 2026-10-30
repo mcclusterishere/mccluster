@@ -42,8 +42,17 @@
 -- Decisions documented here (and in the PR):
 --   * Stock is reserved when the checkout is created, not when it is paid,
 --     so two buyers can never both pay for the last unit. A checkout that
---     expires (Stripe: 30 minutes minimum, the Worker asks for 30) or fails
+--     expires (Stripe: 30 minutes minimum, the Worker asks for 31) or fails
 --     to open gives the unit back.
+--   * Stock is never written from a snapshot. After creation a variant's
+--     count changes only inside the order functions or
+--     marketplace_variant_set_stock(), a compare-and-set against the count
+--     the seller loaded; the variant guard refuses any other write, for every
+--     role. A stale dashboard cannot erase a reservation or a sale.
+--   * Listings waiting for the seller's approval or for Stripe go live when
+--     the second of the two arrives, whichever order they come in
+--     (marketplace_release_waiting_listings(), called by approval and by a
+--     trigger when the org's Stripe rail becomes ready).
 --   * A refund does not restock. The unit may not come back, or may come
 --     back damaged; the seller adjusts the count by hand.
 --
@@ -311,6 +320,15 @@ begin
   if not public.marketplace_privileged() and v_listing.status not in ('draft', 'pending_review') then
     raise exception 'listing_locked';
   end if;
+  -- Stock is never written from a snapshot. After creation it changes only
+  -- inside marketplace_order_create / _release (a sale, an abandoned
+  -- checkout) or marketplace_variant_set_stock (the seller's compare-and-set
+  -- against the count they loaded), each of which opens this gate for its
+  -- own statement. Any other write, by any role, is refused.
+  if tg_op = 'UPDATE' and new.inventory_count is distinct from old.inventory_count
+     and coalesce(current_setting('marketplace.stock_write', true), '') <> 'on' then
+    raise exception 'stock_write_outside_function';
+  end if;
   new.updated_at := now();
   return new;
 end $$;
@@ -560,6 +578,67 @@ begin
   return jsonb_build_object('created', true, 'org_id', v_org, 'slug', v_slug, 'status', 'applied');
 end $$;
 
+-- One rule for "what was waiting may go live now", used by both orders of
+-- events: the owner approves a seller whose Stripe is already ready, or Stripe
+-- becomes ready (account.updated, a dashboard refresh, any write to
+-- org_stripe_accounts) after the owner approved. Publishes the seller's
+-- pending_review listings that have an active option, only if the seller is
+-- approved and its rail can take and pay out money.
+create or replace function public.marketplace_release_waiting_listings(p_org uuid)
+returns integer language plpgsql security definer set search_path = '' as $$
+declare v_published integer := 0;
+begin
+  if not exists (select 1 from public.marketplace_sellers where org_id = p_org and status = 'approved')
+     or not public.marketplace_rail_ready(p_org) then
+    return 0;
+  end if;
+  with moved as (
+    update public.marketplace_listings l set status = 'published'
+     where l.seller_org_id = p_org and l.status = 'pending_review' and l.fulfilment_mode = 'seller_ships'
+       and exists (select 1 from public.marketplace_variants v where v.listing_id = l.id and v.active)
+    returning 1)
+  select count(*) into v_published from moved;
+  if v_published > 0 then
+    perform public.marketplace_audit(p_org, null, 'marketplace.listings_released', 'marketplace_seller', p_org::text,
+      jsonb_build_object('published', v_published));
+  end if;
+  return v_published;
+end $$;
+
+create or replace function public.marketplace_rail_became_ready()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.marketplace_release_waiting_listings(new.org_id);
+  return null;
+end $$;
+drop trigger if exists marketplace_rail_became_ready on public.org_stripe_accounts;
+create trigger marketplace_rail_became_ready
+  after insert or update of stripe_account_id, charges_enabled, payouts_enabled, details_submitted on public.org_stripe_accounts
+  for each row
+  when (new.stripe_account_id is not null and new.charges_enabled and new.payouts_enabled and new.details_submitted)
+  execute function public.marketplace_rail_became_ready();
+
+-- The seller's own stock change: a compare-and-set against the count the
+-- seller loaded. If an order took (or an expired checkout returned) a unit in
+-- between, the count differs and the write is refused (stock_changed), so a
+-- stale dashboard can never erase a reservation or a sale.
+create or replace function public.marketplace_variant_set_stock(
+  p_variant uuid, p_seller_org uuid, p_expected integer, p_count integer, p_actor uuid)
+returns jsonb language plpgsql security definer set search_path = '' as $$
+declare v record;
+begin
+  if p_count is not null and (p_count < 0 or p_count > 1000000) then raise exception 'invalid_stock'; end if;
+  select * into v from public.marketplace_variants where id = p_variant for update;
+  if not found or v.seller_org_id <> p_seller_org then raise exception 'unknown_variant'; end if;
+  if v.inventory_count is distinct from p_expected then raise exception 'stock_changed'; end if;
+  perform set_config('marketplace.stock_write', 'on', true);
+  update public.marketplace_variants set inventory_count = p_count where id = p_variant;
+  perform set_config('marketplace.stock_write', '', true);
+  perform public.marketplace_audit(p_seller_org, p_actor, 'marketplace.stock_set', 'marketplace_variant', p_variant::text,
+    jsonb_build_object('from', v.inventory_count, 'to', p_count));
+  return jsonb_build_object('id', p_variant, 'inventory_count', p_count);
+end $$;
+
 create or replace function public.marketplace_seller_set_status(p_org uuid, p_status text, p_actor uuid, p_reason text default null)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
@@ -577,13 +656,8 @@ begin
          status_reason = left(p_reason, 500)
    where org_id = p_org;
   -- approval releases what was waiting for it, if Stripe can pay the seller
-  if p_status = 'approved' and public.marketplace_rail_ready(p_org) then
-    with moved as (
-      update public.marketplace_listings l set status = 'published'
-       where l.seller_org_id = p_org and l.status = 'pending_review' and l.fulfilment_mode = 'seller_ships'
-         and exists (select 1 from public.marketplace_variants v where v.listing_id = l.id and v.active)
-      returning 1)
-    select count(*) into v_published from moved;
+  if p_status = 'approved' then
+    v_published := public.marketplace_release_waiting_listings(p_org);
   end if;
   perform public.marketplace_audit(p_org, p_actor, 'marketplace.seller_' || p_status, 'marketplace_seller', p_org::text,
     jsonb_strip_nulls(jsonb_build_object('from', v_old, 'reason', p_reason, 'published', v_published)));
@@ -669,7 +743,9 @@ begin
   if not found then raise exception 'seller_not_ready'; end if;
   if l.inventory_policy = 'tracked' then
     if coalesce(v.inventory_count, 0) < p_quantity then raise exception 'out_of_stock'; end if;
+    perform set_config('marketplace.stock_write', 'on', true);
     update public.marketplace_variants set inventory_count = inventory_count - p_quantity where id = p_variant;
+    perform set_config('marketplace.stock_write', '', true);
     v_held := true;
   end if;
   v_unit := coalesce(v.price_cents, l.price_cents);
@@ -716,7 +792,9 @@ begin
   end if;
   update public.marketplace_orders set status = 'canceled', canceled_at = now(), inventory_held = false where id = p_order;
   if o.inventory_held then
+    perform set_config('marketplace.stock_write', 'on', true);
     update public.marketplace_variants set inventory_count = coalesce(inventory_count, 0) + o.quantity where id = o.variant_id;
+    perform set_config('marketplace.stock_write', '', true);
   end if;
   perform public.marketplace_audit(o.seller_org_id, null, 'marketplace.order_released', 'marketplace_order', p_order::text,
     jsonb_build_object('restocked', o.inventory_held, 'quantity', o.quantity));
@@ -854,7 +932,10 @@ begin
     'public.marketplace_order_mark_paid(jsonb)',
     'public.marketplace_order_record_refund(jsonb)',
     'public.marketplace_order_seller_update(uuid, uuid, text, text, text, uuid)',
-    'public.marketplace_audit(uuid, uuid, text, text, text, jsonb)'
+    'public.marketplace_audit(uuid, uuid, text, text, text, jsonb)',
+    'public.marketplace_release_waiting_listings(uuid)',
+    'public.marketplace_variant_set_stock(uuid, uuid, integer, integer, uuid)',
+    'public.marketplace_rail_became_ready()'
   ] loop
     execute format('revoke all on function %s from public, anon, authenticated', f);
     execute format('grant execute on function %s to service_role', f);

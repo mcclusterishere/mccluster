@@ -25,6 +25,8 @@
               GET  seller                     the signed-in seller: status, Stripe, tax, listings, orders
               POST seller/onboard             Stripe Express onboarding link (owner)
               POST seller/payouts-link        Stripe Express dashboard login link (owner)
+              POST seller/account-session     Stripe Account Session for the seller's OWN account, enabling only
+                                              the sales tax components (+ notification banner) (owner, approved)
               PATCH seller/profile            {display_name, bio, logo_path}
               POST seller/uploads             {content_type} -> one signed upload URL for a recorded path
               POST seller/listings            create; PATCH seller/listings/:id update
@@ -51,6 +53,12 @@ export const MEDIA_BUCKET = 'marketplace-media';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SLUG = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 const IMAGE_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+/* the only embedded components a seller's Account Session may open */
+export const TAX_COMPONENTS = Object.freeze({
+  tax_settings: { enabled: true },
+  tax_registrations: { enabled: true },
+  notification_banner: { enabled: true }
+});
 const CHECKOUT_MINUTES = 31; // Stripe's floor is 30; the order holds its unit for 35
 
 /* Known refusals from the database functions, as the buyer or seller should read them. */
@@ -72,6 +80,10 @@ const DB_REFUSALS = {
   unknown_listing: [404, 'Listing not found'],
   unknown_seller: [404, 'Seller not found'],
   invalid_status: [400, 'Not a valid status'],
+  stock_changed: [409, 'Stock changed since you opened this (an order came in or a checkout expired). Reload and set it again'],
+  stock_write_outside_function: [409, 'Stock changes through its own action. Reload and set it again'],
+  unknown_variant: [404, 'Option not found'],
+  invalid_stock: [400, 'Stock: 0 to 1,000,000'],
   marketplace_listings_v1_seller_ships: [400, 'v1 sells only what you ship']
 };
 
@@ -219,27 +231,38 @@ export function cleanVariants(list) {
     const price = v.price_cents == null || v.price_cents === '' ? null : cents(v.price_cents, 100, 1000000);
     if (v.price_cents != null && v.price_cents !== '' && price === null) throw Object.assign(new Error('Option price: $1.00 to $10,000.00'), { status: 400 });
     const count = v.inventory_count == null || v.inventory_count === '' ? null : cents(v.inventory_count, 0, 1000000);
+    /* the count the seller loaded, so a stock change is a compare-and-set, never a snapshot overwrite */
+    const expected = !('expected_inventory' in v) ? undefined
+      : v.expected_inventory == null || v.expected_inventory === '' ? null : cents(Number(v.expected_inventory), 0, 1000000);
     return { id: UUID.test(String(v.id || '')) ? v.id : null, label, options, sku: sku || null, price_cents: price,
-      inventory_count: count, active: v.active !== false, position: i };
+      inventory_count: count, expected_inventory: expected, active: v.active !== false, position: i };
   });
 }
 
-async function saveVariants(env, seller, listingId, variants) {
+/* Saving a listing never writes stock from the dashboard's snapshot: an
+   existing option's count changes only when the seller changed it, and then
+   as a compare-and-set against the count they loaded
+   (public.marketplace_variant_set_stock, enforced by the variant guard), so a
+   sale or reservation made in between is never erased. */
+async function saveVariants(env, seller, listingId, variants, actor) {
   if (!variants) return;
-  const existing = await sb(env, `marketplace_variants?listing_id=eq.${listingId}&select=id`);
-  const known = new Set((existing || []).map((r) => r.id));
+  const existing = await sb(env, `marketplace_variants?listing_id=eq.${listingId}&select=id,inventory_count`);
+  const known = new Map((existing || []).map((r) => [r.id, r]));
   const kept = new Set();
   for (const v of variants) {
-    const row = { label: v.label, options: v.options, sku: v.sku, price_cents: v.price_cents, inventory_count: v.inventory_count, active: v.active, position: v.position };
+    const row = { label: v.label, options: v.options, sku: v.sku, price_cents: v.price_cents, active: v.active, position: v.position };
     if (v.id && known.has(v.id)) {
       kept.add(v.id);
       await sb(env, `marketplace_variants?id=eq.${v.id}&listing_id=eq.${listingId}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify(row) });
+      if (v.expected_inventory !== undefined && v.inventory_count !== v.expected_inventory) {
+        await rpc(env, 'marketplace_variant_set_stock', { p_variant: v.id, p_seller_org: seller.org_id, p_expected: v.expected_inventory, p_count: v.inventory_count, p_actor: actor || null });
+      }
     } else {
-      await sb(env, 'marketplace_variants', { method: 'POST', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ ...row, listing_id: listingId, seller_org_id: seller.org_id }) });
+      await sb(env, 'marketplace_variants', { method: 'POST', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ ...row, inventory_count: v.inventory_count, listing_id: listingId, seller_org_id: seller.org_id }) });
     }
   }
   /* an option sold before cannot be deleted (its orders point at it): it is switched off */
-  const gone = [...known].filter((id) => !kept.has(id));
+  const gone = [...known.keys()].filter((id) => !kept.has(id));
   if (gone.length) await sb(env, `marketplace_variants?id=in.(${gone.join(',')})&listing_id=eq.${listingId}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ active: false }) });
 }
 
@@ -364,6 +387,29 @@ async function route(request, env, url, rest, method) {
     const link = await stripeRequest(env, `accounts/${encodeURIComponent(rail.stripe_account_id)}/login_links`, {});
     return send(request, env, { url: link.url });
   }
+  /* SALES TAX, set up by the seller in Stripe's own embedded components
+     (tax settings: head office and product type; tax registrations: the
+     states it collects in). Express accounts have no Stripe Dashboard page
+     for tax, so this is the seller's way in. The Account Session is minted
+     for the caller's own seller org only (no org or account is read from
+     the request), only for its owner, only once McCluster approved the shop
+     and Stripe has its details, and it enables nothing but the tax
+     components and the notification banner. Checkout keeps refusing until
+     Stripe reports the tax settings active. */
+  if (rest === 'seller/account-session' && method === 'POST') {
+    const user = await requireUser(request, env);
+    const seller = await requireSeller(env, user, ['owner']);
+    if (seller.status !== 'approved') return fail(request, env, 'Sales tax opens once McCluster approves your shop', 403, { code: 'seller_not_approved' });
+    if (!stripeConfigured(env)) return fail(request, env, 'Stripe is not configured on this Worker', 503);
+    const publishable = String(env.STRIPE_PUBLISHABLE_KEY || '');
+    if (!/^pk_(live|test)_/.test(publishable) || publishable.startsWith('pk_live') !== livemode(env)) {
+      return fail(request, env, 'Stripe embedded components are not configured', 503, { code: 'publishable_key_missing' });
+    }
+    const rail = await railFor(env, seller.org_id);
+    if (!rail?.stripe_account_id || !rail.details_submitted) return fail(request, env, 'Finish Stripe onboarding first', 409, { code: 'connect_not_ready' });
+    const session = await stripeRequest(env, 'account_sessions', { account: rail.stripe_account_id, components: TAX_COMPONENTS });
+    return send(request, env, { client_secret: session.client_secret, expires_at: session.expires_at, publishable_key: publishable, components: Object.keys(TAX_COMPONENTS) });
+  }
   if (rest === 'seller/profile' && method === 'PATCH') {
     const user = await requireUser(request, env);
     const seller = await requireSeller(env, user);
@@ -399,7 +445,7 @@ async function route(request, env, url, rest, method) {
     const fields = cleanListing(body);
     const variants = cleanVariants(body.variants) || [{ id: null, label: 'One size', options: {}, sku: null, price_cents: null, inventory_count: fields.inventory_policy === 'tracked' ? 0 : null, active: true, position: 0 }];
     const rows = await sb(env, 'marketplace_listings', { method: 'POST', headers: { prefer: 'return=representation' }, body: JSON.stringify({ ...fields, seller_org_id: seller.org_id, status: 'draft' }) });
-    await saveVariants(env, seller, rows[0].id, variants);
+    await saveVariants(env, seller, rows[0].id, variants, user.id);
     return send(request, env, { id: rows[0].id, status: 'draft' }, 201);
   }
   const lst = rest.match(/^seller\/listings\/([0-9a-f-]{36})(\/publish)?$/i);
@@ -416,11 +462,12 @@ async function route(request, env, url, rest, method) {
     if (!lst[2] && method === 'PATCH') {
       const body = await readJson(request);
       const fields = cleanListing(body, { partial: true });
-      if (body.unpublish === true && listing.status === 'published') fields.status = 'draft';
+      /* back to draft: off sale, or no longer waiting for approval/Stripe */
+      if (body.unpublish === true && ['published', 'pending_review'].includes(listing.status)) fields.status = 'draft';
       if (Object.keys(fields).length) {
         await sb(env, `marketplace_listings?id=eq.${listing.id}&seller_org_id=eq.${seller.org_id}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify(fields) });
       }
-      await saveVariants(env, seller, listing.id, cleanVariants(body.variants));
+      await saveVariants(env, seller, listing.id, cleanVariants(body.variants), user.id);
       return send(request, env, { id: listing.id, ok: true });
     }
     return fail(request, env, 'Method not allowed', 405);
