@@ -126,7 +126,7 @@ export function renderPage(ledger) {
 
   return `<!doctype html>
 <html lang="en">
-<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+<head><script src="js/shell-boot.js?v=e80cb0a13768"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Newsroom &amp; Public Record · Matthew McCluster / McCluster Corp</title>
@@ -154,12 +154,12 @@ export function renderPage(ledger) {
 ${json}
   </script>
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/authority.css?v=__STAMP__">
-  <script src="js/theme.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/style.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/authority.css?v=e80cb0a13768">
+  <script src="js/theme.js?v=e80cb0a13768"></script>
   <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
   <meta name="mcc-privacy-notice" content="banner">
-  <script src="js/live-content.js?v=__STAMP__"></script>
+  <script src="js/live-content.js?v=e80cb0a13768"></script>
 </head>
 <body class="record">
   <main class="rec" id="main">
@@ -194,9 +194,9 @@ ${list}
     </p>
   </main>
 
-  <script src="js/masthead.js?v=__STAMP__"></script>
-  <script src="js/analytics.js?v=__STAMP__"></script>
-  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/masthead.js?v=e80cb0a13768"></script>
+  <script src="js/analytics.js?v=e80cb0a13768"></script>
+  <script src="js/tabbar.js?v=e80cb0a13768"></script>
   <script>if (window.MCC_TRACK) window.MCC_TRACK("record_view", { page: "newsroom" });</script>
 </body>
 </html>

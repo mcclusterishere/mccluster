@@ -18,14 +18,14 @@
   function loadLive(){
     if(document.querySelector('script[data-eu-fellowship-live]'))return;
     var s=document.createElement("script");
-    s.src="js/equity-uprise-fellowship-live.js?v=__STAMP__";
+    s.src="js/equity-uprise-fellowship-live.js?v=e80cb0a13768";
     s.dataset.euFellowshipLive="1";
     document.head.appendChild(s);
   }
 
   if(window.MCC_SUPA){loadLive();return;}
   var backend=document.createElement("script");
-  backend.src="js/backend.js?v=__STAMP__";
+  backend.src="js/backend.js?v=e80cb0a13768";
   backend.dataset.euBackendBridge="1";
   backend.onload=loadLive;
   backend.onerror=loadLive; // adapter preserves the email fallback if backend loading fails

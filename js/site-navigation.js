@@ -16,7 +16,7 @@
   function core() {
     if (window.CR?.workspaceCore) return Promise.resolve(window.CR.workspaceCore);
     if (!coreReady) coreReady = new Promise((resolve, reject) => {
-      const s = document.createElement('script'); s.src = root + 'js/control-room/workspace-core.js?v=__STAMP__';
+      const s = document.createElement('script'); s.src = root + 'js/control-room/workspace-core.js?v=e80cb0a13768';
       s.onload = () => window.CR?.workspaceCore ? resolve(window.CR.workspaceCore) : reject(Error('Routes unavailable'));
       s.onerror = reject; document.head.appendChild(s);
     }).catch(error => {coreReady = null; throw error;});

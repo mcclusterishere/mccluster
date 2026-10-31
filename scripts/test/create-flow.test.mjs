@@ -39,7 +39,7 @@ test('the editor trims by reference and the feed plays only the kept stretch', a
 /* THE COVER (owner, 2026-10-20: "when people upload videos, there's no thumbnail, just a black video") */
 test('a video post from Create carries a cover, chosen on the filmstrip', async () => {
   const [html, js, css] = await Promise.all([read('create.html'), read('js/create.js'), read('css/create.css')]);
-  assert.match(html, /<script src="js\/video-poster\.js\?v=__STAMP__"><\/script>\s*<script src="js\/create\.js\?v=__STAMP__"><\/script>/);
+  assert.match(html, /<script src="js\/video-poster\.js\?v=e80cb0a13768"><\/script>\s*<script src="js\/create\.js\?v=e80cb0a13768"><\/script>/);
   assert.match(html, /<button class="cr__chip cr__cover" id="crCover" type="button" aria-label="Cover: use the frame on screen"/);
   assert.match(html, /id="crCoverHint">Tap a frame on the strip to make it the cover\./);
   assert.match(html, /id="crCoverMark"/);

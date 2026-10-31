@@ -58,8 +58,8 @@ test("video uploads get local poster frames and feed video uses them", () => {
 
 /* THE BLACK VIDEO (owner, 2026-10-20: "when people upload videos, there's no thumbnail, just a black video") */
 test("one shared poster capture, loaded before the pages that use it", () => {
-  assert.match(html, /<script src="js\/video-poster\.js\?v=__STAMP__"><\/script>\s*<script src="js\/mnet\.js\?v=__STAMP__"><\/script>/);
-  assert.match(create, /<script src="js\/video-poster\.js\?v=__STAMP__"><\/script>\s*<script src="js\/create\.js\?v=__STAMP__"><\/script>/);
+  assert.match(html, /<script src="js\/video-poster\.js\?v=e80cb0a13768"><\/script>\s*<script src="js\/mnet\.js\?v=e80cb0a13768"><\/script>/);
+  assert.match(create, /<script src="js\/video-poster\.js\?v=e80cb0a13768"><\/script>\s*<script src="js\/create\.js\?v=e80cb0a13768"><\/script>/);
   /* attached out of sight, muted, inline, loading data; a detached never-played video gives WebKit nothing to draw */
   assert.match(poster, /appendChild\(v\)/);
   assert.match(poster, /v\.muted = true; v\.defaultMuted = true; v\.playsInline = true;/);

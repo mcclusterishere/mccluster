@@ -89,7 +89,7 @@ test('the engine and the Worker bound the settings the same way', () => {
 test('the account page is the house page as a template: same engine, its own words as text, not indexed', () => {
   const html = read('front.html');
   assert.match(html, /<meta name="robots" content="noindex">/);
-  assert.match(html, /<script defer src="js\/front-member\.js\?v=__STAMP__"><\/script>/);
+  assert.match(html, /<script defer src="js\/front-member\.js\?v=e80cb0a13768"><\/script>/);
   assert.doesNotMatch(html, /<script[^>]+src="js\/main\.js/, 'the loader starts the engine once the page is in');
   for (const id of ['orbitCanvas', 'heroTitle', 'workVR', 'workVRCanvas', 'pillars', 'finaleTitle', 'vrGateAllow', 'vrGateDeny', 'soundToggle', 'track-whodidtheshoot'])
     assert.match(html, new RegExp(`id="${id}"`), id);

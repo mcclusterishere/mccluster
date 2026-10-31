@@ -139,5 +139,5 @@ test('phone first: the new sheet adds room with min-width only, 16px controls, n
   assert.doesNotMatch(CSS, /(?<!minmax\(0,)\b1fr\b/);
   assert.match(CSS, /font:700 max\(16px,\.9rem\)/);
   assert.match(HTML, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
-  assert.match(HTML, /css\/front-cabin\.css\?v=__STAMP__/);
+  assert.match(HTML, /css\/front-cabin\.css\?v=e80cb0a13768/);
 });

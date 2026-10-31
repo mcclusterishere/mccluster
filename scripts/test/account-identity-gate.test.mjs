@@ -55,7 +55,7 @@ test('account creation requires legal first and last name, mailing address and p
   assert.match(html, /<a class="ac__btn" id="acCreateGo" href="mnet\.html\?join=1">Create account<\/a>/, 'Create account is the one sign-up');
   assert.match(html, /el\("acCreateGo"\)\.href = "mnet\.html\?join=1" \+ \(NEXT \? "&next=" \+ encodeURIComponent\(NEXT\) : ""\)/, 'and it carries where the person started');
   /* the rules, on the pages that ask for them */
-  assert.match(mnet, /<script src="js\/name-integrity\.js\?v=__STAMP__"><\/script>/);
+  assert.match(mnet, /<script src="js\/name-integrity\.js\?v=e80cb0a13768"><\/script>/);
   assert.match(js, /named = MCC_NAME_INTEGRITY\.validate\(parts\.shift\(\) \|\| "", parts\.join\(" "\)\)/, 'page 2 screens the legal name');
   assert.match(js, /var missing = \["mnLegalName", "mnAddr1", "mnCity", "mnRegion", "mnPostal", "mnCountry"\]/, 'page 2 requires the whole address');
   assert.match(js, /Fill in your legal name and the whole address\./);

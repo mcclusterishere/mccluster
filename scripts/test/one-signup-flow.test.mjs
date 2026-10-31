@@ -295,7 +295,7 @@ test('the inline forms do not ask a signed-in member for what the account has', 
   assert.match(onboard, /answered: function \(\) \{ return !!\(MEMBER && MEMBER\.email && MEMBER\.phone\); \},/, 'nor the email and phone');
   assert.match(onboard, /answered: function \(\) \{ return !!MEMBER; \},/, 'nor the account');
   assert.match(onboard, /function answerLines\(\) \{\n\s*var w = brief\(\), out = \[\];/, 'the answers still reach the desk');
-  assert.match(read('onboard.html'), /<script src="js\/fan-intake\.js\?v=__STAMP__"><\/script>\n\s*<script src="js\/onboard\.js/);
+  assert.match(read('onboard.html'), /<script src="js\/fan-intake\.js\?v=e80cb0a13768"><\/script>\n\s*<script src="js\/onboard\.js/);
   /* the print shop's shipping lines */
   const counter = read('js/counter.js');
   const box = { fields: { addr: { value: '' }, city: { value: '' } }, querySelector(sel) { return this.fields[/name="(\w+)"/.exec(sel)[1]]; } };
@@ -306,7 +306,7 @@ test('the inline forms do not ask a signed-in member for what the account has', 
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(box.fields.addr.value, '1 Main Street, Apt 2');
   assert.equal(box.fields.city.value, 'Bridgeport, CT 06604');
-  assert.match(read('gallery.html'), /<script src="js\/fan-intake\.js\?v=__STAMP__"><\/script>\n\s*<script src="js\/counter\.js/);
+  assert.match(read('gallery.html'), /<script src="js\/fan-intake\.js\?v=e80cb0a13768"><\/script>\n\s*<script src="js\/counter\.js/);
   /* the campaign page already hides its account fields from a signed-in member */
   assert.match(read('js/action.js'), /\$\("anAuth"\)\.hidden = signedIn\(\);/);
 });

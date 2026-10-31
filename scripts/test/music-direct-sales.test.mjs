@@ -263,8 +263,8 @@ test('buyer and owner pages load the scripts, Matthew-first', async () => {
   const control = await read('control.html');
   const ops = await read('js/control-room/music-ops.js');
   const purchase = await read('purchase.html');
-  assert.match(album, /<script src="js\/music-direct\.js\?v=__STAMP__"><\/script>/);
-  assert.match(cat, /<script src="js\/music-direct\.js\?v=__STAMP__"><\/script>/);
+  assert.match(album, /<script src="js\/music-direct\.js\?v=e80cb0a13768"><\/script>/);
+  assert.match(cat, /<script src="js\/music-direct\.js\?v=e80cb0a13768"><\/script>/);
   assert.match(cat, /data-albslug='" \+ slug \+ "' data-title='/);
   /* the owner's panel lives in Control · Create · Music (music-admin.html forwards there) */
   assert.ok(control.indexOf('js/control-room/music-direct-sales.js') > 0 && control.indexOf('js/control-room/music-direct-sales.js') < control.indexOf('js/control-room/music-ops.js'), 'loaded before music-ops');

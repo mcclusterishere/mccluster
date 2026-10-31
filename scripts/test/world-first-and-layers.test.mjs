@@ -124,7 +124,7 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
   assert.match(html, /<p class="mn__hint">Optional\. Leave it blank or choose “Prefer not to say\.”<\/p><\/fieldset>/);
   assert.match(html, /<button class="mn__cta" id="mnProfileSave" type="submit"><span id="mnCtaLabel">Save &amp; continue<\/span><i class="mn__cta-arrow"/);
   assert.match(html, /<p class="mn__onboard-note">[\s\S]*?<span>You can update this anytime\.<\/span><\/p>/);
-  assert.match(html, /<script src="js\/fan-intake\.js\?v=__STAMP__"><\/script>/, 'the contact step writes through the fan intake, the only writer of fan_profiles');
+  assert.match(html, /<script src="js\/fan-intake\.js\?v=e80cb0a13768"><\/script>/, 'the contact step writes through the fan intake, the only writer of fan_profiles');
   assert.doesNotMatch(html, /mn__brand-plate/, 'no plate the artwork does not contain');
   assert.match(js, /var HANDLE_RE = \/\^\[a-z0-9\]\[a-z0-9\._-\]\{2,31\}\$\/i;/);
   assert.match(js, /api\("\/v1\/mnet\/people\/" \+ encodeURIComponent\(v\)\)/, 'the handle is checked live: a person nobody can find is free');

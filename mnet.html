@@ -1,26 +1,26 @@
 <!doctype html>
 <html lang="en" data-theme-lock="dark" class="hu-editorial hu-travel-enabled hu-social-only mn-world-on" data-world-mode="posts">
-<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+<head><script src="js/shell-boot.js?v=e80cb0a13768"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Equity Uprise · McCluster</title>
   <meta name="description" content="Equity Uprise is the McCluster social network: the people, posts, groups and campaigns organizing across McCluster.">
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
-  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/mnet.css?v=__STAMP__">
-  <script src="js/theme.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/style.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/mnet.css?v=e80cb0a13768">
+  <script src="js/theme.js?v=e80cb0a13768"></script>
   <!-- the house owner keeps Travel, Missions and Feed: must run before the scripts that read hu-social-only -->
-  <script src="js/world-owner-modes.js?v=__STAMP__"></script>
-  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/human-uprise-editorial.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/world-travel.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/mission-swipe-deck.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/mnet-audio.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/daylight.css?v=__STAMP__">
+  <script src="js/world-owner-modes.js?v=e80cb0a13768"></script>
+  <link rel="stylesheet" href="css/control-system.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/member-desk.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/human-uprise-editorial.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/world-travel.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/mission-swipe-deck.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/mnet-audio.css?v=e80cb0a13768">
+  <link rel="stylesheet" href="css/daylight.css?v=e80cb0a13768">
   <!-- day or night follows the real Sun before first paint (owner, 2026-10-19) -->
-  <script src="js/daylight.js?v=__STAMP__"></script>
+  <script src="js/daylight.js?v=e80cb0a13768"></script>
   <!-- NO SCREEN FLASHES (owner, 2026-10-20: "I'll see like other screens flash up instead of just a smooth transition from
        screen to screen"). The World screen ships visible, so the first paint is the World, never a blank page or another
        room. Before any script asks the network, this reads what the page already knows: a visitor with no stored sign-in
@@ -31,8 +31,8 @@
        only those two words), so its frame never fills the wait with words. The World's own script and the bar take over
        from here. -->
   <script>(function(){var h=document.documentElement,s=null,q=location.search;try{s=JSON.parse(localStorage.getItem("mccdb_session")||"null")}catch(e){}if(!(s&&s.access_token)&&!/(?:^#|&)mcc_handoff=[^&]/.test(location.hash)){h.classList.add("mn-guest");if(/(?:^\?|&)signin=1(?:&|$)/.test(q))h.classList.add("mn-boot-signin")}else{var v=(/(?:^\?|&)view=([a-z]+)(?:&|$)/.exec(q)||[])[1];if(/^(?:live|clips|discover|groups|messages|profile)$/.test(v||"")&&!/(?:^\?|&)(?:group|mission)=[^&]/.test(q)){h.setAttribute("data-boot-view",v);h.classList.remove("mn-world-on")}}try{if(window.parent!==window&&/(?:^\?|&)mcc_audio=1(?:&|$)/.test(q)){h.classList.add("mn-music-frame");var o=new URL(document.referrer).origin;if(/^https:\/\/(?:matthew\.mccluster\.org|(?:www\.)?mccluster\.org|(?:www\.)?humanuprise\.com)$/.test(o)){var say=function(t){window.parent.postMessage({channel:"mcc-world-audio-v1",type:t},o)};say("alive");new PerformanceObserver(function(l){if(l.getEntriesByName("first-contentful-paint").length)say("painted")}).observe({type:"paint",buffered:true})}}}catch(e){}})();</script>
-  <link rel="stylesheet" href="css/docket-cohort-showcase.css?v=__STAMP__"><link rel="stylesheet" href="css/world-news-globe.css?v=__STAMP__">
-  <script src="js/live-content.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/docket-cohort-showcase.css?v=e80cb0a13768"><link rel="stylesheet" href="css/world-news-globe.css?v=e80cb0a13768">
+  <script src="js/live-content.js?v=e80cb0a13768"></script>
 </head>
 <body class="songpage has-appbar">
   <!-- THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the
@@ -292,7 +292,7 @@
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
           <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News feed</button></nav>
-          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=e80cb0a13768" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <!-- the place card (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): drawn by paintPlaceCard in the page script -->
           <div class="mn__place-card" id="mnPlaceCard" role="status" aria-live="polite" hidden></div>
           <!-- the globe's corner stack (owner, 2026-10-19): the World music play/pause sits with the fullscreen control, same size, same place -->
@@ -714,31 +714,31 @@
     <a class="appbar__tab appbar__world is-here" href="https://mccluster.org/?view=feed" data-appnav="world" aria-label="Open the World globe"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg><span>Globe</span></a>
   </nav>
 
-  <script src="js/analytics.js?v=__STAMP__"></script>
-  <script src="js/mcc-auth.js?v=__STAMP__"></script>
-  <script src="js/fan-intake.js?v=__STAMP__"></script>
-  <script src="js/name-integrity.js?v=__STAMP__"></script>
-  <script src="js/creator-onboarding.js?v=__STAMP__"></script>
-  <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
-  <script src="js/image-resize.js?v=__STAMP__"></script>
-  <script src="js/video-poster.js?v=__STAMP__"></script>
-  <script src="js/mnet.js?v=__STAMP__"></script>
-  <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=e80cb0a13768"></script>
+  <script src="js/mcc-auth.js?v=e80cb0a13768"></script>
+  <script src="js/fan-intake.js?v=e80cb0a13768"></script>
+  <script src="js/name-integrity.js?v=e80cb0a13768"></script>
+  <script src="js/creator-onboarding.js?v=e80cb0a13768"></script>
+  <script src="js/mission-swipe-deck.js?v=e80cb0a13768"></script>
+  <script src="js/image-resize.js?v=e80cb0a13768"></script>
+  <script src="js/video-poster.js?v=e80cb0a13768"></script>
+  <script src="js/mnet.js?v=e80cb0a13768"></script>
+  <script src="js/docket-cohort-showcase.js?v=e80cb0a13768"></script><script src="js/world-news-globe.js?v=e80cb0a13768"></script>
   <!-- async: the Travel module (switched off while the World is the social feed) never holds the World's boot, which runs
        at DOMContentLoaded; it wires itself whenever it arrives -->
-  <script type="module" async src="js/travel/world-travel.mjs?v=__STAMP__"></script>
-  <script src="js/mnet-tour.js?v=__STAMP__"></script>
-  <script src="js/mnet-live.js?v=__STAMP__"></script>
-  <script src="js/mnet-audio.js?v=__STAMP__"></script>
-  <script src="js/mnet-clips.js?v=__STAMP__"></script>
-  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script type="module" async src="js/travel/world-travel.mjs?v=e80cb0a13768"></script>
+  <script src="js/mnet-tour.js?v=e80cb0a13768"></script>
+  <script src="js/mnet-live.js?v=e80cb0a13768"></script>
+  <script src="js/mnet-audio.js?v=e80cb0a13768"></script>
+  <script src="js/mnet-clips.js?v=e80cb0a13768"></script>
+  <script src="js/tabbar.js?v=e80cb0a13768"></script>
   <!-- the member desk, opened from the bar over the globe; policy, analytics and the profile edit gate live in it -->
-  <script src="js/member-desk-core.js?v=__STAMP__"></script>
-  <script src="js/identity-capture-core.js?v=__STAMP__"></script>
-  <script src="js/profile-edit-gate.js?v=__STAMP__"></script>
-  <script src="js/member-desk.js?v=__STAMP__"></script>
-  <script src="js/control-registry.js?v=__STAMP__"></script>
-  <script src="js/control-palette.js?v=__STAMP__" defer></script>
-  <script src="js/site-editor.js?v=__STAMP__" defer></script>
+  <script src="js/member-desk-core.js?v=e80cb0a13768"></script>
+  <script src="js/identity-capture-core.js?v=e80cb0a13768"></script>
+  <script src="js/profile-edit-gate.js?v=e80cb0a13768"></script>
+  <script src="js/member-desk.js?v=e80cb0a13768"></script>
+  <script src="js/control-registry.js?v=e80cb0a13768"></script>
+  <script src="js/control-palette.js?v=e80cb0a13768" defer></script>
+  <script src="js/site-editor.js?v=e80cb0a13768" defer></script>
 </body>
 </html>

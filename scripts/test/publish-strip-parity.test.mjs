@@ -87,14 +87,14 @@ test("every root file the Cloudflare export forbids is removed, agent instructio
   assert.ok(!removedFiles.has("capacitor.config.json"), "the Capacitor wrapper is gone; native/ is the app");
 });
 
-test("the stamp step rewrites every file kind that carries a ?v=__STAMP__ URL", () => {
-  const step = workflow.match(/name: Stamp asset versions[\s\S]*?xargs -0 sed -i "s\/__STAMP__\/\$\{GITHUB_SHA::12\}\/g"/);
+test("the stamp step rewrites every file kind that carries a ?v=e80cb0a13768 URL", () => {
+  const step = workflow.match(/name: Stamp asset versions[\s\S]*?xargs -0 sed -i "s\/e80cb0a13768\/\$\{GITHUB_SHA::12\}\/g"/);
   assert.ok(step, "the stamp step moved");
   for (const kind of ["'*.html'", "'*.js'", "'*.mjs'", "'*.css'"])
     assert.ok(step[0].includes(`-name ${kind}`), `the stamp find skips ${kind}`);
   assert.ok(step[0].includes("-path ./vendor -prune"), "third-party vendor/ must not be rewritten");
   /* the files that made js/css stamping necessary; if these stop carrying
      the placeholder the find is still correct, only this guard goes stale */
-  assert.match(read("js/tabbar.js"), /\?v=__STAMP__/, "tabbar loads versioned assets");
-  assert.match(read("sw.js"), /__STAMP__/, "the service worker keys its cache on the stamp");
+  assert.match(read("js/tabbar.js"), /\?v=e80cb0a13768/, "tabbar loads versioned assets");
+  assert.match(read("sw.js"), /e80cb0a13768/, "the service worker keys its cache on the stamp");
 });
