@@ -49,7 +49,7 @@ jobs:
           node --test workers/mccluster/test/world-release.test.mjs workers/mccluster/test/world-access.test.mjs
           node --test scripts/test/halo-consistency.test.mjs scripts/test/halo-console.test.mjs scripts/test/halo-objects.test.mjs scripts/test/halo-events.test.mjs workers/mccluster/test/world-events.test.mjs
           node scripts/e2e/world-release.e2e.mjs /tmp/world-proof
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: world-release-proof-${{ github.run_id }}-${{ matrix.width }}
