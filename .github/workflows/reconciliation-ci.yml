@@ -4,8 +4,7 @@ name: Reconciliation CI
 
 on:
   push:
-    branches:
-      - reconcile/equity-uprise-20260908
+    branches: [main, reconcile/equity-uprise-20260908]
   pull_request:
     branches:
       - main
@@ -30,7 +29,7 @@ jobs:
           node-version: '22'
       - name: Install Worker dependencies
         working-directory: workers/mccluster
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Run Worker tests
         working-directory: workers/mccluster
         run: npm test

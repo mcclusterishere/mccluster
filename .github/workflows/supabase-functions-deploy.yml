@@ -37,7 +37,7 @@ jobs:
   deploy:
     name: Deploy changed Edge Functions
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       SUPABASE_PROJECT_REF: zmnhbrjyhxzhkxmhkexs
       HAS_DEPLOY_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
@@ -69,13 +69,9 @@ jobs:
             node scripts/supabase-functions-deploy.mjs plan --before "$BEFORE" --after HEAD --base-from-last-success true
           fi
 
-      # OPT-IN CI GATE: off until the owner sets DEPLOY_REQUIRE_GREEN_CI=true.
-      # It gates this CLI deploy only; the Supabase GitHub integration is an
-      # owner-side setting and is covered in DEPLOYMENT-CONTROLS-PROPOSAL.md.
-      # It applies to manual dispatches too: a hand-run deploy ships main's HEAD
-      # just the same, so it must pass the same checks.
+      # Mandatory for every nonempty deployment plan, including manual runs.
       - name: Require every deploy-gate check green on this exact commit
-        if: steps.plan.outputs.count != '0' && vars.DEPLOY_REQUIRE_GREEN_CI == 'true'
+        if: steps.plan.outputs.count != '0'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         # The commit this run deploys is main's HEAD at checkout, not

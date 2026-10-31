@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 529,
+  "candidate_count": 530,
   "capability_source_count": 102,
-  "support_only_count": 427,
+  "support_only_count": 428,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3972,6 +3972,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests Matthew McCluster's direct music checkout (bound fulfilment, download limits, buy buttons); mentions Equity Uprise only to assert the purchase page is not company-branded. Not a building capability."
+    },
+    {
+      "path": "docs/control-plane/deploy-gate.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
