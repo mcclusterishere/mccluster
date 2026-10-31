@@ -318,6 +318,13 @@
         "workers/mccluster/src/music/router.js"
       ]
     },
+    "music_stem_sets": {
+      "kind": "table",
+      "pending": "20261031190000_music_stem_sets_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/index.ts"
+      ]
+    },
     "network_audio_assign_speaker": {
       "kind": "function",
       "pending": "20261019235000_network_sfu_audio_rooms.sql",

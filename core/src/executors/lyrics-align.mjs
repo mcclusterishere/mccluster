@@ -20,6 +20,7 @@ import { join, extname } from 'node:path';
 import { rest, buildSupabaseHeaders } from '../supabase.mjs';
 import { transcribe } from '../lyrics/pipeline.mjs';
 import { parseTimedLyrics } from '../lyrics/import.mjs';
+import { storeStems } from '../lyrics/stems.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_MASTER_BYTES = Number(process.env.LYRICS_MAX_MASTER_BYTES || 250 * 1024 * 1024);
@@ -76,7 +77,13 @@ export async function lyricsAlign(job, deps = {}) {
     const audio = join(dir, 'master' + (extname(track.master_path).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.audio'));
     await _download(track.master_bucket, track.master_path, audio);
     const { sheetText, imported } = sheetInput(track.lyrics_sheet);
-    const { doc } = await _transcribe({ audio, sheetText, imported, title: track.title || '', workDir: join(dir, 'work') });
+    const { doc, stems, stemsDir } = await _transcribe({ audio, sheetText, imported, title: track.title || '', workDir: join(dir, 'work') });
+    /* the separation already made every stem: keep them, privately (never fails the lyrics) */
+    let stemsResult = null;
+    if (stems && stemsDir && job?.input?.stems !== false) {
+      try { stemsResult = await (deps.storeStems || storeStems)({ trackKey: `ct-${trackId.toLowerCase()}`, dir: stemsDir, manifest: stems, source: 'creator', creatorTrackId: trackId }); }
+      catch (e) { stemsResult = { error: String(e.message || e).slice(0, 300) }; }
+    }
     doc.track_id = trackId;
     /* the owner may have reviewed while this ran: never write over that */
     const patch = `creator_tracks?id=eq.${trackId}&or=(lyrics.is.null,lyrics->>reviewed.is.null,lyrics->>reviewed.eq.false)`;
@@ -96,6 +103,7 @@ export async function lyricsAlign(job, deps = {}) {
       mismatched_lines: m.mismatched_lines || 0,
       engine: m.engine || null,
       timing: m.timing || null,
+      stems: stemsResult,
     };
   } finally {
     await rm(dir, { recursive: true, force: true });
