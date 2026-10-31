@@ -52,7 +52,11 @@ async function setup(viewport,{owner=true}={}){
         const b=req.postDataJSON()||{};db.calls.push(b);
         if(!owner)return json(route,{error:'operator permission required'},403);
         if(b.action==='operator-dashboard')return json(route,{ok:true,tracks:[{id:UPLOAD,title:'Fixture Upload',artist:'A Creator',status:'pending_review',m_uid:'m1'}],creators:[],offers:[]});
-        if(b.action==='operator-lyrics-get')return json(route,{ok:true,track_id:UPLOAD,title:'Fixture Upload',lyrics:{...HUNDUN,source:'auto'},listen_url:'https://fixture-storage.invalid/master.wav'});
+        if(b.action==='operator-lyrics-get'){
+          /* the slow release: answers late, with a different three-line file */
+          if(db.slow){db.slow=false;await new Promise(r=>setTimeout(r,1500));return json(route,{ok:true,track_id:UPLOAD,title:'Fixture Upload',lyrics:{...HUNDUN,source:'auto',timed:{line:HUNDUN.timed.line.slice(0,3)}},listen_url:'https://fixture-storage.invalid/master.wav'});}
+          return json(route,{ok:true,track_id:UPLOAD,title:'Fixture Upload',lyrics:{...HUNDUN,source:'auto'},listen_url:'https://fixture-storage.invalid/master.wav'});
+        }
         if(b.action==='operator-lyrics-save')return json(route,{ok:true,track_id:b.track_id,reviewed:b.reviewed===true});
         if(b.action==='operator-lyrics-queue')return json(route,{ok:true,queued:true,job_id:'j1'});
         return json(route,{ok:true});
@@ -131,6 +135,13 @@ async function openLyrics(page){
   await page.waitForFunction(()=>/Queued on McCluster Core/.test(document.querySelector('.crl-msg').textContent),null,{timeout:10000});
   check('upload','re-run queues the machine on Core',db.calls.some(c=>c.action==='operator-lyrics-queue'&&c.track_id===UPLOAD),{});
   check('upload','no sideways scroll',(await overflow(page))===0,{});
+  /* a late answer for a track that is no longer selected is dropped (review finding, PR #684) */
+  db.slow=true;
+  await page.selectOption('[data-crl-pick]',{label:'Fixture Upload — A Creator (upload)'});
+  await page.selectOption('[data-crl-pick]',{label:'Hundun (B-Side) — Whip Equipped'});
+  await page.waitForTimeout(2500);
+  const after=await page.evaluate(()=>({lines:document.querySelectorAll('.crl-line').length,save:!!document.querySelector('[data-crl-save]'),dl:!!document.querySelector('[data-crl-download]'),key:window.CR.lyricsReview.state.key,doc:window.CR.lyricsReview.state.doc&&window.CR.lyricsReview.state.doc.timed.line.length}));
+  check('race','switching A→B mid-load: B stays selected with B\'s lyrics, A\'s late answer is dropped',after.key.startsWith('shelf:')&&after.lines===HUNDUN.timed.line.length&&after.doc===HUNDUN.timed.line.length&&after.dl&&!after.save,after);
   check('390','no page errors',errors.length===0,errors.slice(0,5));
   await ctx.close();
 }

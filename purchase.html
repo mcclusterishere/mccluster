@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Your music purchase · Matthew McCluster</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Download a track you bought from Matthew McCluster.">
+  <link rel="canonical" href="https://matthew.mccluster.org/purchase.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* Phone first (AGENTS.md hard rule 14): one column at 390px; wider screens only get room. */
+    html, body { background: var(--ink, #0a0807); }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; color: var(--cream, #f4efe6);
+      font-family: var(--ui, system-ui, sans-serif); overflow-wrap: anywhere; }
+    .pp { box-sizing: border-box; width: 100%; max-width: 32rem; margin: 0 auto;
+      padding: calc(env(safe-area-inset-top) + 28px) 16px calc(env(safe-area-inset-bottom) + 112px); }
+    .pp__brand { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ruby-text, #ff6b6e);
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; text-decoration: none; }
+    .pp__brand img { width: 20px; height: 20px; }
+    .pp h1 { font-family: var(--sig, "Anton"), sans-serif; text-transform: uppercase; font-weight: 400;
+      font-size: clamp(2rem, 10vw, 3rem); line-height: 0.96; margin: 1.1rem 0 0.4rem; }
+    .pp__lead { color: var(--cream-dim, #c9bfb2); font-size: 1rem; line-height: 1.55; margin: 0 0 1.4rem; }
+    .pp__card { border: 1px solid rgba(229,56,59,0.35); border-radius: 18px; padding: 18px 16px;
+      background: rgba(229,56,59,0.06); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .pp__title { font-weight: 800; font-size: 1.2rem; line-height: 1.25; margin: 0; }
+    .pp__meta { color: var(--cream-dim, #c9bfb2); font-size: 0.92rem; line-height: 1.5; margin: 0; }
+    .pp__btn { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      box-sizing: border-box; width: 100%; min-height: 52px; padding: 14px 16px; border-radius: 14px;
+      background: var(--ruby-hot, #e5383b); color: #fff; font: 800 max(16px, 1.05rem)/1.2 var(--ui, system-ui, sans-serif); }
+    .pp__btn[disabled] { background: #2a241d; color: #8a8172; cursor: default; }
+    .pp__link { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .pp__link label { font-size: 0.82rem; color: var(--cream-dim, #c9bfb2); }
+    .pp__link input { box-sizing: border-box; width: 100%; min-width: 0; font-size: max(16px, 0.95rem); padding: 12px;
+      border-radius: 10px; border: 1px solid rgba(244,239,230,0.25); background: rgba(0,0,0,0.3); color: inherit; }
+    .pp__copy { -webkit-appearance: none; appearance: none; cursor: pointer; min-height: 44px; border-radius: 12px;
+      border: 1px solid currentColor; background: transparent; color: var(--ruby-text, #ff6b6e);
+      font: 800 max(16px, 0.95rem)/1.2 var(--ui, system-ui, sans-serif); padding: 10px 14px; }
+    .pp__note { color: var(--cream-dim, #c9bfb2); font-size: 0.86rem; line-height: 1.55; margin: 0; }
+    .pp__status { margin: 0; font-size: 0.95rem; line-height: 1.5; }
+    .pp__status[data-tone="bad"] { color: #ffb4b4; }
+    .pp__back { display: inline-block; margin-top: 1.6rem; color: var(--ruby-text, #ff6b6e); text-decoration: none; font-weight: 800; }
+    [hidden] { display: none !important; }
+    @media (min-width: 720px) {
+      .pp { padding-top: calc(env(safe-area-inset-top) + 64px); }
+      .pp__card { padding: 24px; }
+      .pp__link { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+      .pp__link label { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="pp" id="pp">
+    <a class="pp__brand" href="matthew-mccluster.html"><img src="assets/img/m-mark.png" alt="">Matthew McCluster · Music</a>
+    <h1 id="ppHead">Your purchase</h1>
+    <p class="pp__lead" id="ppLead">Checking your purchase…</p>
+
+    <section class="pp__card" id="ppCard" hidden aria-live="polite">
+      <p class="pp__title" id="ppTitle"></p>
+      <p class="pp__meta" id="ppMeta"></p>
+      <button class="pp__btn" id="ppDownload" type="button">Download</button>
+      <p class="pp__status" id="ppStatus" role="status"></p>
+      <div class="pp__link" id="ppLinkBox" hidden>
+        <label for="ppLink">Your download link. Save it: it is how you download again.</label>
+        <input id="ppLink" type="text" readonly>
+        <button class="pp__copy" id="ppCopy" type="button">Copy link</button>
+      </div>
+      <p class="pp__note" id="ppNote">Stripe emails your receipt. Keep this page's link: it is your download link.</p>
+    </section>
+
+    <a class="pp__back" href="catalogue.html">Back to the music</a>
+  </main>
+
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/music-purchase.js?v=__STAMP__"></script>
+</body>
+</html>
