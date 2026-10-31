@@ -33,6 +33,7 @@
   <script>(function(){var h=document.documentElement,s=null,q=location.search;try{s=JSON.parse(localStorage.getItem("mccdb_session")||"null")}catch(e){}if(!(s&&s.access_token)&&!/(?:^#|&)mcc_handoff=[^&]/.test(location.hash)){h.classList.add("mn-guest");if(/(?:^\?|&)signin=1(?:&|$)/.test(q))h.classList.add("mn-boot-signin")}else{var v=(/(?:^\?|&)view=([a-z]+)(?:&|$)/.exec(q)||[])[1];if(/^(?:live|clips|discover|groups|messages|profile)$/.test(v||"")&&!/(?:^\?|&)(?:group|mission)=[^&]/.test(q)){h.setAttribute("data-boot-view",v);h.classList.remove("mn-world-on")}}try{if(window.parent!==window&&/(?:^\?|&)mcc_audio=1(?:&|$)/.test(q)){h.classList.add("mn-music-frame");var o=new URL(document.referrer).origin;if(/^https:\/\/(?:matthew\.mccluster\.org|(?:www\.)?mccluster\.org|(?:www\.)?humanuprise\.com)$/.test(o)){var say=function(t){window.parent.postMessage({channel:"mcc-world-audio-v1",type:t},o)};say("alive");new PerformanceObserver(function(l){if(l.getEntriesByName("first-contentful-paint").length)say("painted")}).observe({type:"paint",buffered:true})}}}catch(e){}})();</script>
   <link rel="stylesheet" href="css/docket-cohort-showcase.css?v=__STAMP__"><link rel="stylesheet" href="css/world-news-globe.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/world-composer-overlay.css?v=__STAMP__">
 </head>
 <body class="songpage has-appbar">
   <!-- THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the
@@ -382,11 +383,11 @@
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
             <textarea id="mnPostBody" maxlength="2000" rows="1" placeholder="Share a live moment from the world…" aria-label="Post text"></textarea>
             <!-- CREATE, in context: record, film or write with the full tools -->
-            <a class="mn__create" href="create.html" aria-label="Record or create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+            <button class="mn__create" id="mnComposeOpen" type="button" aria-label="Create a post" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
-            <a class="mn__attach" href="create.html" aria-label="Open Equity Uprise recording and creation tools">Record / Create</a>
+            <a class="mn__attach" href="create.html" aria-label="Open advanced recording and trim tools">Advanced capture / trim</a>
             <!-- shown only to a member the desk has granted live hosting, once live video is switched on -->
             <button class="mn__attach" id="mnComposerLive" type="button" hidden>Go live</button>
             <label class="mn__attach" for="mnMediaInput">Photo / video
@@ -412,12 +413,34 @@
             </label>
             <button class="mn__post" id="mnPost" type="button">Post</button>
           </div>
+          <details id="mnExternalDestinations" hidden style="padding:.75rem;max-width:100%;overflow-wrap:anywhere">
+            <summary>Destinations · World selected</summary>
+            <p>World is always included. Choose Instagram only when you want this video published there too.</p>
+            <label for="mnExternalSite" style="display:block">Your connected Instagram account</label>
+            <select id="mnExternalSite" style="display:block;width:100%;max-width:100%;font-size:16px" aria-label="Connected site Instagram account"></select>
+            <label style="display:block;margin-top:.75rem"><input id="mnExternalOptIn" type="checkbox" disabled> Also publish to Instagram Reels</label>
+            <label for="mnExternalMission" style="display:block;margin-top:.75rem">Optional Action mission</label>
+            <select id="mnExternalMission" style="display:block;width:100%;max-width:100%;font-size:16px" disabled><option value="">No Action attribution</option></select>
+            <p id="mnExternalPreview"></p>
+            <p id="mnExternalNotice" role="status">Checking connections…</p>
+            <button id="mnExternalRefresh" class="mn__attach" type="button">Refresh connections</button>
+            <a class="mn__attach" href="https://matthew.mccluster.org/customer-site.html">Your site / connect Instagram</a>
+            <p>Publishes now. Scheduling and other external platforms are not supported here. Instagram uses only the video and caption; World visibility does not restrict Instagram. Delivery history is saved with your World post. If Instagram is interrupted, return here and retry Instagram only.</p>
+          </details>
           <!-- THE NEWSROOM (owner, 2026-10-20): shown only to the house owner. A public post ticked here is also an article
                on mccluster.org/news/, for search engines and news indexes (workers/mccluster/src/company-site/news.js). -->
           <label class="mn__newsroom" id="mnNewsroomRow" hidden><input type="checkbox" id="mnNewsroom"> <span>Also publish to the newsroom, as an article on mccluster.org/news. The first line is its headline.</span></label>
+          <button class="mn__attach" id="mnUploadCancel" type="button" hidden>Cancel upload</button>
           <p class="mn__status" id="mnMediaStatus" role="status"></p>
+          <p class="mn__status" id="mnDraftStatus" role="status"></p>
+          <button class="mn__attach" id="mnCompositionRetry" type="button" hidden>Recover original post</button>
+          <label id="mnNativeReview" hidden><input id="mnNativeReviewed" type="checkbox"> I checked my profile. The earlier post may already exist; a new draft is a separate post.</label>
+          <button class="mn__attach" id="mnStartSeparateDraft" type="button" hidden disabled>Start separate draft</button>
+          <details id="mnReviewedRequest" hidden><summary>Previous unconfirmed post</summary><p id="mnReviewedBody"></p></details>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
+
+        <section id="mnExternalDeliveries" aria-label="Post delivery status" style="padding:.75rem;overflow-wrap:anywhere" hidden></section>
 
         <!-- WORLD NEWS (owner, 2026-10-15): one member post to one news item, ingested from GDELT into the McCluster plane
              and served by the Worker. GDELT's licence asks for this credit; it shows whenever a news card does. -->
@@ -510,6 +533,7 @@
       </dialog>
 
       <section class="mn__view" id="mnDiscoverView" hidden>
+        <p><a class="mn__attach" href="world-discover.html">Businesses, services &amp; projects</a></p>
         <div class="mn__section-head">
           <div><p class="mn__eyebrow">Find the doers</p><h2>People taking action</h2></div>
           <button class="mn__quiet" id="mnShowBlocked" type="button">Blocked</button>
@@ -721,6 +745,10 @@
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
   <script src="js/image-resize.js?v=__STAMP__"></script>
+  <script src="js/composition-draft.js?v=__STAMP__"></script>
+  <script src="js/world-composer-overlay.js?v=__STAMP__"></script>
+  <script src="js/world-publish-core.js?v=__STAMP__"></script>
+  <script src="js/world-social-composer.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>

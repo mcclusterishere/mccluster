@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Connected social accounts · McCluster</title>
+<link rel="stylesheet" href="css/customer-social.css">
+</head><body><main>
+<nav><a id="site-link" href="customer-site.html">Your site</a> · <a href="https://mccluster.org/">World</a> · <a href="account.html">Sign in</a></nav>
+<h1>Connected social accounts</h1>
+<p>Publish Reels to your Instagram Professional account. You’ll need an Instagram account linked to a Facebook Page you manage. Posting in World remains available separately.</p>
+<p id="notice" role="status" aria-live="polite">Loading your connection…</p>
+<section aria-labelledby="connection-title"><h2 id="connection-title">Instagram</h2><p id="connection">Not connected</p>
+<button id="connect" type="button" disabled>Connect Instagram</button> <button id="disconnect" type="button" hidden>Disconnect this site</button>
+<p>Disconnect removes this site's stored credential and cancels posts that haven’t started. To revoke McCluster’s permissions across all your sites, use <a href="https://www.facebook.com/settings?tab=business_tools" target="_blank" rel="noopener noreferrer">Facebook Business Integrations</a>.</p>
+<div id="selection" hidden><label for="accounts">Choose your account</label><select id="accounts"></select><button id="select" type="button">Use this account</button></div>
+</section>
+<section aria-labelledby="publish-title"><h2 id="publish-title">Publish a Reel</h2><form id="publish"><label for="video">Video (MP4 or MOV, up to 500 MB)</label><input id="video" type="file" accept="video/mp4,video/quicktime" required><label for="caption">Caption</label><textarea id="caption" maxlength="2200" rows="5"></textarea><button id="publish-button" disabled>Publish to Instagram</button></form><p>Instagram processes your video before publishing. Refresh the delivery status below. Submitting again after a network error reuses the same request.</p></section>
+<section aria-labelledby="jobs-title"><h2 id="jobs-title">Delivery status</h2><button id="refresh" type="button">Refresh status</button><ul id="jobs"></ul></section>
+</main><script src="js/mcc-auth.js"></script><script src="js/tabbar.js"></script><script src="js/customer-social.js" defer></script></body></html>

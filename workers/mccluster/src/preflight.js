@@ -28,15 +28,18 @@ export const PREFLIGHT_FIRST_PREFIXES = [
   '/v1/creator-billing', '/v1/creator-sites', '/v1/action-connect',
   '/v1/action-archive',
   '/v1/identity',
+  '/v1/canonical-artists',
   /* the morning brief (brief.html): the house owner's and region leaders' session rides with every call */
   '/v1/news-briefs',
   /* every account's front page: the editor saves with the account's session (./member-fronts.js) */
-  '/v1/fronts'
+  '/v1/customer-site', '/v1/fronts', '/v1/projects', '/v1/customer-social', '/v1/creator-domains', '/v1/creator-domain-orders', '/v1/creator-commerce', '/v1/creator-store', '/v1/world-directory', '/v1/music-workspace'
 ];
 
 export function preflightResponse(request, env) {
   if (request.method !== 'OPTIONS' || !request.headers.get('access-control-request-method')) return null;
   const path = new URL(request.url).pathname.replace(/\/+$/, '') || '/';
   if (!PREFLIGHT_FIRST_PREFIXES.some((p) => path === p || path.startsWith(p + '/'))) return null;
-  return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+  const headers=corsHeaders(request, env);
+  if(path.startsWith('/v1/customer-site/'))headers['access-control-allow-headers']+=',x-site-bytes';
+  return new Response(null, { status: 204, headers });
 }

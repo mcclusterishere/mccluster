@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-front-state="loading">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -37,6 +37,8 @@
     .front-foot small a{color:#f5efe6}
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/site-offers.css?v=__STAMP__">
+  <script defer src="js/site-offers.js?v=__STAMP__"></script>
 </head>
 <body>
   <div class="preloader is-done" id="preloader" hidden aria-hidden="true"></div>
@@ -177,7 +179,7 @@
   </footer>
 
   <section id="guestWorld" class="guest-world" aria-label="Explore the World" data-profile-world>
-    <div class="guest-world__frame"><iframe title="Interactive globe preview" data-src="guest-globe.html?entry=parent" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <div class="guest-world__frame"><iframe title="Interactive globe preview" data-src="guest-globe.html?entry=parent" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
     <div class="guest-world__cta"><a href="account.html" data-world-entry>Sign in / Join the World →</a><span>Explore freely. An account is needed for member activity.</span></div>
   </section>
   <script defer src="js/guest-world.js?v=__STAMP__"></script>
@@ -208,6 +210,7 @@
   <script defer src="vendor/ScrollTrigger.min.js?v=__STAMP__"></script>
   <script defer src="js/parallax.js?v=__STAMP__"></script>
   <!-- reads the account's page, fills the words in, then starts js/main.js with its media -->
+  <script defer src="js/front-project-entry.js?v=__STAMP__"></script>
   <script defer src="js/front-projects.js?v=__STAMP__"></script>
   <script defer src="js/front-member.js?v=__STAMP__"></script>
   <script defer src="js/backend.js?v=__STAMP__"></script>

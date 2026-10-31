@@ -8,501 +8,916 @@
   "pending_only": {
     "action_globe_public_business_pins": {
       "kind": "function",
-      "pending": "20261015230000_action_mission_pins_arcs_black_business.sql",
       "callers": [
         "js/action-globe.js"
-      ]
+      ],
+      "pending": "20261015230000_action_mission_pins_arcs_black_business.sql"
     },
     "action_live_abandon": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_attach": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_complete": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_controls": {
       "kind": "table",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_kill": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_mark_third_party": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_now_public": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_observe": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_open": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_record_chunk": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_recording_chunks": {
       "kind": "table",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/recording.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_report": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_sessions": {
       "kind": "table",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_set_publishing_consent": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_set_recording": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js",
         "workers/mccluster/src/live/recording.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_live_sweep": {
       "kind": "function",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/index.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
     },
     "action_mission_card_extras": {
       "kind": "function",
-      "pending": "20261015230000_action_mission_pins_arcs_black_business.sql",
       "callers": [
         "js/mnet.js"
-      ]
+      ],
+      "pending": "20261015230000_action_mission_pins_arcs_black_business.sql"
     },
     "action_policy_memos": {
       "kind": "table",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/control-room/action-network.js",
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
     },
     "add_policy_memo_research_item": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
     },
     "an_connect_recipients": {
       "kind": "table",
-      "pending": "20261010008000_action_connect_recipients.sql",
       "callers": [
         "workers/mccluster/src/action-connect.js"
-      ]
+      ],
+      "pending": "20261010008000_action_connect_recipients.sql"
     },
     "at_night_verifications": {
       "kind": "table",
-      "pending": "20261009220000_at_night_adult_verification.sql",
       "callers": [
         "workers/mccluster/src/at-night.js"
-      ]
+      ],
+      "pending": "20261009220000_at_night_adult_verification.sql"
+    },
+    "bind_creator_checkout": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-billing.js"
+      ],
+      "pending": "20261026009200_creator_checkout_reservations.sql"
+    },
+    "canonical_artist_binding_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/canonical-artists.js"
+      ],
+      "pending": "canonical_artist_bindings_v1.sql"
+    },
+    "canonical_artist_bindings": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/canonical-artists.js"
+      ],
+      "pending": "canonical_artist_bindings_v1.sql"
+    },
+    "claim_cf_registration_attempt": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/domains/cloudflare-registration-store.js"
+      ],
+      "pending": "creator_inline_domain_contacts_v1.sql"
+    },
+    "claim_creator_domain_order": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-domain-orders.js"
+      ],
+      "pending": "creator_domain_orders_v1.sql"
+    },
+    "claim_creator_domain_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-domains.js"
+      ],
+      "pending": "creator_domain_provider_bindings_v1.sql"
     },
     "clip_campaign_create_from_action": {
       "kind": "function",
-      "pending": "equity_uprise_clipping_sources.sql",
       "callers": [
         "js/control-room/clipping.js"
-      ]
+      ],
+      "pending": "equity_uprise_clipping_sources.sql"
     },
     "clip_campaign_set_distribution": {
       "kind": "function",
-      "pending": "equity_uprise_clipping_sources.sql",
       "callers": [
         "js/control-room/clipping.js"
-      ]
+      ],
+      "pending": "equity_uprise_clipping_sources.sql"
     },
     "create_policy_memo": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
+    },
+    "creator-research-outputs": {
+      "kind": "bucket",
+      "callers": [
+        "js/music-research-queue.mjs"
+      ],
+      "pending": "music_research_pipeline_reconciled.sql"
+    },
+    "creator_cf_registration_attempts": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-domain-orders.js",
+        "workers/mccluster/src/domains/cloudflare-registration-store.js"
+      ],
+      "pending": "creator_cf_registration_attempts_v1.sql"
+    },
+    "creator_checkout_reservations": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-billing.js"
+      ],
+      "pending": "20261026009200_creator_checkout_reservations.sql"
+    },
+    "creator_domain_contacts": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-domain-orders.js",
+        "workers/mccluster/src/domains/registration-contact-vault.js"
+      ],
+      "pending": "creator_domain_orders_v1.sql"
+    },
+    "creator_domain_orders": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-domain-orders.js"
+      ],
+      "pending": "creator_domain_orders_v1.sql"
+    },
+    "creator_domain_quotes": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-domain-orders.js"
+      ],
+      "pending": "creator_domain_orders_v1.sql"
+    },
+    "creator_domains": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-domain-host.js",
+        "workers/mccluster/src/creator-domains.js"
+      ],
+      "pending": "creator_domains_v1.sql"
+    },
+    "creator_products": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-store.js"
+      ],
+      "pending": "20261026009300_creator_store.sql"
+    },
+    "creator_site_access": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/website-studio/service.mjs"
+      ],
+      "pending": "website_studio_v2.sql"
     },
     "creator_site_cohort_grants": {
       "kind": "table",
-      "pending": "20261010009000_creator_site_cohort_grants.sql",
       "callers": [
         "workers/mccluster/src/creator-site-publish.js",
         "workers/mccluster/src/creator-site-view.js"
-      ]
+      ],
+      "pending": "20261010009000_creator_site_cohort_grants.sql"
+    },
+    "creator_site_drafts": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/project-tiles.js"
+      ],
+      "pending": "website_studio_v2.sql"
+    },
+    "creator_site_media_state": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/customer-site-storage.js",
+        "workers/mccluster/src/website-studio/service.mjs"
+      ],
+      "pending": "website_studio_v2.sql"
+    },
+    "creator_site_revisions": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/project-tiles.js"
+      ],
+      "pending": "website_studio_v2.sql"
+    },
+    "creator_site_template_versions": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/project-tiles.js",
+        "workers/mccluster/src/website-studio/service.mjs"
+      ],
+      "pending": "website_studio_v2.sql"
+    },
+    "creator_store_orders": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/creator-store.js"
+      ],
+      "pending": "20261026009300_creator_store.sql"
+    },
+    "customer_site_address_assign_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/customer-site-addresses.js"
+      ],
+      "pending": "customer_site_addresses_v1.sql"
+    },
+    "customer_site_addresses": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/customer-site-addresses.js"
+      ],
+      "pending": "customer_site_addresses_v1.sql"
+    },
+    "customer_site_module_set_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/customer-site-modules.js"
+      ],
+      "pending": "customer_site_modules_v1.sql"
+    },
+    "customer_site_modules": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/customer-site-modules.js",
+        "workers/mccluster/src/world-directory.js"
+      ],
+      "pending": "customer_site_modules_v1.sql"
+    },
+    "customer_site_storage_reservations": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/customer-site-storage.js"
+      ],
+      "pending": "customer_site_storage_v1.sql"
+    },
+    "customer_site_storage_reserve_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/customer-site-storage.js"
+      ],
+      "pending": "customer_site_storage_v1.sql"
+    },
+    "customer_site_storage_usage_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/customer-site-storage.js"
+      ],
+      "pending": "customer_site_storage_v1.sql"
+    },
+    "customer_social_credential_access": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/meta.js"
+      ],
+      "pending": "customer_social_selfservice.sql"
+    },
+    "customer_social_selection_gc": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/meta.js"
+      ],
+      "pending": "customer_social_selfservice.sql"
+    },
+    "customer_social_service": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/customer.js"
+      ],
+      "pending": "customer_social_selfservice.sql"
     },
     "front-media": {
       "kind": "bucket",
-      "pending": "member_fronts_v1.sql",
       "callers": [
-        "js/front-media.js"
-      ]
+        "js/front-media.js",
+        "workers/mccluster/src/customer-site-storage.js"
+      ],
+      "pending": "member_fronts_v1.sql"
+    },
+    "fund_creator_domain_order": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-domain-orders.js"
+      ],
+      "pending": "creator_domain_orders_v1.sql"
     },
     "identity_apply_persona_event": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "workers/mccluster/src/identity/router.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_entitlement_for": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "workers/mccluster/src/identity/router.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_finish_submission": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/identity-verify.js",
         "js/profile-edit-gate.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_mark_video_deleted": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/control-room/identity-review.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_record_persona_inquiry": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "workers/mccluster/src/identity/router.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_request_deletion": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/identity-verify.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_review_decide": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/control-room/identity-review.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_review_open": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/control-room/identity-review.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_review_queue": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/control-room/identity-review.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_start_submission": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/identity-verify.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_submission_for_persona": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "workers/mccluster/src/identity/router.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_verification_status": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/identity-verify.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "identity_videos_due_for_deletion": {
       "kind": "function",
-      "pending": "20261015230000_identity_verification_levels_v1.sql",
       "callers": [
         "js/control-room/identity-review.js"
-      ]
+      ],
+      "pending": "20261015230000_identity_verification_levels_v1.sql"
     },
     "live-mission-recordings": {
       "kind": "bucket",
-      "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/store.js"
-      ]
+      ],
+      "pending": "live_missions_v1.sql"
+    },
+    "managed_projects": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/canonical-artists.js",
+        "workers/mccluster/src/creator-domain-targets.js",
+        "workers/mccluster/src/creator-domains.js",
+        "workers/mccluster/src/customer-site-addresses.js",
+        "workers/mccluster/src/customer-site-advertising.js",
+        "workers/mccluster/src/customer-site-modules.js",
+        "workers/mccluster/src/customer-site-storage.js",
+        "workers/mccluster/src/customer-site-world.js",
+        "workers/mccluster/src/managed-projects.js",
+        "workers/mccluster/src/project-tiles.js",
+        "workers/mccluster/src/world-directory.js"
+      ],
+      "pending": "managed_projects_v1.sql"
+    },
+    "mcc_music_research_cancel": {
+      "kind": "function",
+      "callers": [
+        "js/music-research-queue.mjs"
+      ],
+      "pending": "music_research_pipeline_reconciled.sql"
+    },
+    "mcc_music_research_enqueue": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/music-workspace-analysis.js"
+      ],
+      "pending": "music_research_pipeline_reconciled.sql"
+    },
+    "mcc_music_research_review": {
+      "kind": "function",
+      "callers": [
+        "js/music-research-queue.mjs"
+      ],
+      "pending": "music_research_pipeline_reconciled.sql"
     },
     "member_fronts": {
       "kind": "table",
-      "pending": "member_fronts_v1.sql",
       "callers": [
-        "workers/mccluster/src/member-fronts.js"
-      ]
+        "workers/mccluster/src/creator-domain-targets.js",
+        "workers/mccluster/src/creator-domains.js",
+        "workers/mccluster/src/customer-site-addresses.js",
+        "workers/mccluster/src/customer-site-world.js",
+        "workers/mccluster/src/member-fronts.js",
+        "workers/mccluster/src/world-directory.js"
+      ],
+      "pending": "member_fronts_v1.sql"
+    },
+    "music-workspace-originals": {
+      "kind": "bucket",
+      "callers": [
+        "workers/mccluster/src/music-workspace-release.js",
+        "workers/mccluster/src/music-workspace.js"
+      ],
+      "pending": "20261026009400_music_workspace.sql"
     },
     "music_gate_claim_rule": {
       "kind": "function",
-      "pending": "gated_track_mission_identity_v1.sql",
       "callers": [
         "workers/mccluster/src/music/router.js"
-      ]
+      ],
+      "pending": "gated_track_mission_identity_v1.sql"
     },
     "music_gate_rule_state": {
       "kind": "function",
-      "pending": "gated_track_mission_identity_v1.sql",
       "callers": [
         "workers/mccluster/src/music/router.js"
-      ]
+      ],
+      "pending": "gated_track_mission_identity_v1.sql"
+    },
+    "music_workspace_action": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/music-workspace.js"
+      ],
+      "pending": "20261026009400_music_workspace.sql"
+    },
+    "music_workspace_release_finish": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/music-workspace-release.js"
+      ],
+      "pending": "music_workspace_release_handoff.sql"
+    },
+    "music_workspace_release_prepare": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/music-workspace-release.js"
+      ],
+      "pending": "music_workspace_release_handoff.sql"
+    },
+    "music_workspace_research_enqueue": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/music-workspace-research.js"
+      ],
+      "pending": "music_workspace_research_bridge.sql"
+    },
+    "music_workspace_research_state": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/music-workspace-research.js"
+      ],
+      "pending": "music_workspace_research_state.sql"
     },
     "network_audio_assign_speaker": {
       "kind": "function",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_audio_directory": {
       "kind": "function",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_audio_join_room": {
       "kind": "function",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_audio_join_visitor": {
       "kind": "function",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_audio_members": {
       "kind": "table",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_audio_rooms": {
       "kind": "table",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_audio_seat_counts": {
       "kind": "function",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_audio_subscriptions": {
       "kind": "table",
-      "pending": "20261019235000_network_sfu_audio_rooms.sql",
       "callers": [
         "workers/mccluster/src/audio-sfu-rooms.js"
-      ]
+      ],
+      "pending": "20261019235000_network_sfu_audio_rooms.sql"
     },
     "network_push_subscriptions": {
       "kind": "table",
-      "pending": "20261020150000_network_web_push.sql",
       "callers": [
         "workers/mccluster/src/platform-api.js",
         "workers/mccluster/src/web-push.js"
-      ]
+      ],
+      "pending": "20261020150000_network_web_push.sql"
     },
     "news_region_leads": {
       "kind": "table",
-      "pending": "20261020170000_news_region_leads.sql",
       "callers": [
         "workers/mccluster/src/news-briefs.js"
-      ]
+      ],
+      "pending": "20261020170000_news_region_leads.sql"
     },
     "policy_ladder_status": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/member-desk.js",
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
     },
     "policy_memo_history": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/control-room/action-network.js",
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
     },
     "profile_edit_review_decide": {
       "kind": "function",
-      "pending": "20261016010000_profile_edit_gate_v1.sql",
       "callers": [
         "js/control-room/profile-edit-review.js"
-      ]
+      ],
+      "pending": "20261016010000_profile_edit_gate_v1.sql"
     },
     "profile_edit_review_queue": {
       "kind": "function",
-      "pending": "20261016010000_profile_edit_gate_v1.sql",
       "callers": [
         "js/control-room/profile-edit-review.js"
-      ]
+      ],
+      "pending": "20261016010000_profile_edit_gate_v1.sql"
     },
     "profile_edit_start": {
       "kind": "function",
-      "pending": "20261016010000_profile_edit_gate_v1.sql",
       "callers": [
         "js/profile-edit-gate.js"
-      ]
+      ],
+      "pending": "20261016010000_profile_edit_gate_v1.sql"
     },
     "profile_edit_status": {
       "kind": "function",
-      "pending": "20261016010000_profile_edit_gate_v1.sql",
       "callers": [
         "js/profile-edit-gate.js"
-      ]
+      ],
+      "pending": "20261016010000_profile_edit_gate_v1.sql"
+    },
+    "project_tile_publish_free_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/project-tiles.js"
+      ],
+      "pending": "project_tiles_free_v1.sql"
+    },
+    "project_tile_publish_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/project-tiles.js"
+      ],
+      "pending": "project_tiles_v1.sql"
+    },
+    "project_tile_save_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/project-tiles.js"
+      ],
+      "pending": "project_tiles_v1.sql"
+    },
+    "record_creator_store_payment": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-store.js"
+      ],
+      "pending": "20261026009300_creator_store.sql"
+    },
+    "record_creator_store_refund": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-store.js"
+      ],
+      "pending": "20261026009300_creator_store.sql"
+    },
+    "release_expired_creator_checkout": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-billing.js"
+      ],
+      "pending": "20261026009200_creator_checkout_reservations.sql"
     },
     "remove_policy_memo_research_item": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
+    },
+    "reserve_creator_checkout": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-billing.js"
+      ],
+      "pending": "20261026009200_creator_checkout_reservations.sql"
+    },
+    "reserve_creator_store_order": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-store.js"
+      ],
+      "pending": "20261026009300_creator_store.sql"
     },
     "review_policy_memo": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/control-room/action-network.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
     },
     "save_policy_memo_draft": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
+    },
+    "studio_finish_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/website-studio/service.mjs"
+      ],
+      "pending": "website_studio_v2.sql"
+    },
+    "studio_queue_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/website-studio/service.mjs"
+      ],
+      "pending": "website_studio_v2.sql"
+    },
+    "studio_register_upload_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/website-studio/service.mjs"
+      ],
+      "pending": "website_studio_v2.sql"
     },
     "submit_action_business_listing": {
       "kind": "function",
-      "pending": "20261015230000_action_mission_pins_arcs_black_business.sql",
       "callers": [
         "js/mnet.js"
-      ]
+      ],
+      "pending": "20261015230000_action_mission_pins_arcs_black_business.sql"
     },
     "submit_policy_memo": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
+    },
+    "update_creator_domain_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/creator-domains.js"
+      ],
+      "pending": "creator_domain_provider_bindings_v1.sql"
     },
     "whip_booking_idempotency": {
       "kind": "table",
-      "pending": "whip_booking_authority_v1.sql",
       "callers": [
         "workers/mccluster/src/whip/booking-gate.js"
-      ]
+      ],
+      "pending": "whip_booking_authority_v1.sql"
     },
     "whip_driver_clearances": {
       "kind": "table",
-      "pending": "whip_booking_authority_v1.sql",
       "callers": [
         "workers/mccluster/src/whip/booking-gate.js",
         "workers/mccluster/src/whip/gateway.js"
-      ]
+      ],
+      "pending": "whip_booking_authority_v1.sql"
     },
     "whip_reserve_booking_v1": {
       "kind": "function",
-      "pending": "whip_booking_authority_v1.sql",
       "callers": [
         "workers/mccluster/src/whip/booking-gate.js"
-      ]
+      ],
+      "pending": "whip_booking_authority_v1.sql"
     },
     "withdraw_policy_memo": {
       "kind": "function",
-      "pending": "policy_fellowship_ladder_v1.sql",
       "callers": [
         "js/policy-fellowship-desk.js"
-      ]
+      ],
+      "pending": "policy_fellowship_ladder_v1.sql"
+    },
+    "world_directory_listings": {
+      "kind": "table",
+      "callers": [
+        "workers/mccluster/src/world-directory.js"
+      ],
+      "pending": "world_directory_v1.sql"
     },
     "world_member_regions": {
       "kind": "function",
-      "pending": "world_member_regions_v1.sql",
       "callers": [
         "workers/mccluster/src/world-members.js"
-      ]
+      ],
+      "pending": "world_member_regions_v1.sql"
+    },
+    "world_social_delivery": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/world-delivery.js"
+      ],
+      "pending": "world_social_delivery.sql"
+    },
+    "world_social_video": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/meta.js"
+      ],
+      "pending": "world_social_delivery.sql"
     }
   },
   "missing_everywhere": {

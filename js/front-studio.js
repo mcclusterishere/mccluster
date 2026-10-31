@@ -12,6 +12,15 @@
 (function (w, d) {
   "use strict";
   var API = "https://api.mccluster.org";
+  var projectMode = w.__MCC_PROJECT_STUDIO === true;
+  var projectSlug = projectMode ? w.__MCC_PROJECT_STUDIO_SLUG : null;
+  var ownPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/edit" : "/v1/fronts/me";
+  var publishedPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/published" : "/v1/fronts/me/published";
+  var editorReturn = projectMode ? "project-studio.html?project=" + encodeURIComponent(projectSlug || "") : "front-studio.html";
+  var offersTemplate=new URLSearchParams(location.search).get('template')==='offers';
+  if(offersTemplate)editorReturn+=(editorReturn.indexOf('?')>=0?'&':'?')+'template=offers';
+  function publicUrl(handle) { return projectMode ? "front.html?project=" + encodeURIComponent(projectSlug) : "front.html?u=" + encodeURIComponent(handle); }
+
   var FILMS = [
     ["hero", "Opening film", "Plays as the page scrolls from the top: the first thing anyone sees."],
     ["scene1", "Scene film 1", "The first film after the opening, before the 360 room."],
@@ -26,13 +35,38 @@
   function clone(v) { return v == null ? v : JSON.parse(JSON.stringify(v)); }
   function sb() { return w.MCC_SUPA || {}; }
   function token() { return Promise.resolve(sb().token ? sb().token() : null); }
+  var boundSession, authEpoch = 0;
+  function sessionIdentity(t) {
+    if (!t) return "signed-out";
+    try { return JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).sub || t; } catch (_) { return t; }
+  }
+  function guardSession(t) {
+    var id = sessionIdentity(t);
+    if (boundSession === undefined) boundSession = id;
+    if (id !== boundSession) {
+      // A pending upload/save must never move the previous account's draft into
+      // a newly signed-in account. A fresh document also cancels its callbacks.
+      S.dirty = false; S.busy = {}; S.me = null; S.draft = null; S.state = "loading";
+      clearTimeout(S.reloadTimer); paint(); location.reload();
+      throw new Error("Account changed. Reopening the editor.");
+    }
+  }
+  w.addEventListener("mcc:auth-changed", function () {
+    // Hide private state synchronously even if the next token read fails.
+    authEpoch++; S.dirty = false; S.busy = {}; S.me = null; S.draft = null; S.frame = null;
+    S.state = "loading"; clearTimeout(S.reloadTimer); paint(); location.reload();
+  });
   function api(path, opts) {
     opts = opts || {};
+    var epoch = authEpoch;
     return token().then(function (t) {
+      if (epoch !== authEpoch) throw new Error("Account changed.");
+      guardSession(t);
       if (!t) throw Object.assign(new Error("signed out"), { status: 401 });
       return fetch(API + path, { method: opts.method || "GET", headers: Object.assign({ authorization: "Bearer " + t, accept: "application/json" }, opts.body ? { "content-type": "application/json" } : {}), body: opts.body ? JSON.stringify(opts.body) : undefined, cache: "no-store" });
     }).then(function (r) {
       return r.json().catch(function () { return null; }).then(function (b) {
+        if (epoch !== authEpoch) throw new Error("Account changed.");
         if (!r.ok) throw Object.assign(new Error((b && (b.error || b.message)) || ("HTTP " + r.status)), { status: r.status, body: b });
         return b;
       });
@@ -50,7 +84,7 @@
   }
   function ensure(o, k) { o[k] = o[k] && typeof o[k] === "object" ? o[k] : {}; return o[k]; }
   /* the page the preview gets: the same scene rules the published page uses (js/front-member.js) */
-  function page() { return { handle: S.me.handle, name: S.me.name, avatar: S.me.avatar, headline: "", config: clone(S.draft) }; }
+  function page() { return { handle: S.me.handle, name: S.me.name, avatar: S.me.avatar, headline: "", registry_key: S.me.registry_key || null, config: clone(S.draft) }; }
   function linkProblem(h) {
     h = String(h || "").trim();
     if (!h) return "needs a link";
@@ -63,7 +97,7 @@
   function post(msg) { var f = frameWin(); if (f) try { f.postMessage(msg, location.origin); } catch (_) {} }
   function reloadPreview(now) {
     clearTimeout(S.reloadTimer);
-    var go = function () { if (S.frame) S.frame.src = "front.html?u=" + encodeURIComponent(S.me.handle) + "&studio=" + (++S.seq); };
+    var go = function () { if (S.frame) S.frame.src = publicUrl(S.me.handle) + "&studio=" + (++S.seq); };
     if (now) go(); else S.reloadTimer = setTimeout(go, 800);
   }
   /* settings that the engine can take live go to the frame at once; words and media reload it */
@@ -114,12 +148,17 @@
   }
   function form() {
     var c = S.draft, wd = c.words || {}, m = c.media || {}, v = c.vr || {}, sc = c.scroll || {}, n = c.night || {};
+    var picker=S.me.registry_key?'':'<fieldset class="fs-group"><legend>Page layout</legend><label class="fs-field"><span>Template</span><select name="layout"><option value="cinematic"'+(c.layout!=='offers'?' selected':'')+'>Cinematic front</option><option value="offers"'+(c.layout==='offers'?' selected':'')+'>Words, images and offers</option></select></label><p class="fs-help">The offers layout needs no paid plan or media preparation allowance. Uploaded images are public bytes; publish only images you may share.</p></fieldset>';
+    if(c.layout==='offers'&&!S.me.registry_key){
+      var offer=c.offer_page||{},cards=offer.cards||[];
+      return picker+'<fieldset class="fs-group"><legend>Your introduction</legend>'+mediaRow('offer-logo','Your logo','Upload your complete logo as a PNG, JPEG or WebP. It remains in your website storage.','image/jpeg,image/png,image/webp',offer.logo,function(){return 'Your logo';})+field('offer_page.title','Page headline',offer.title,100)+field('offer_page.intro','Introduction',offer.intro,600)+linkRow('offer_page.primary',offer.primary,0,60)+linkRow('offer_page.secondary',offer.secondary,1,60)+'<button type="button" class="fs-btn" data-act="offer-example">Use Equity Uprise example content</button><p class="fs-help">Copies editable example words and links into this draft. It does not assign an identity, domain or account.</p></fieldset>'+cards.map(function(card,i){return '<fieldset class="fs-group"><legend>Offer '+(i+1)+'</legend>'+field('offer_page.cards.'+i+'.title','Offer title',card.title,80)+field('offer_page.cards.'+i+'.body','Description',card.body,600)+field('offer_page.cards.'+i+'.status','Availability note',card.status,120)+linkRow('offer_page.cards.'+i+'.action',card.action,i,60)+(card.experiences||[]).map(function(item,j){return field('offer_page.cards.'+i+'.experiences.'+j+'.title','Experience '+(j+1),item.title,60)+field('offer_page.cards.'+i+'.experiences.'+j+'.body','Experience description',item.body,300);}).join('')+mediaRow('offer'+i,'Offer image','Optional JPEG, PNG or WebP. Uploaded through your website storage allowance.','image/jpeg,image/png,image/webp',card.image,function(){return 'Your image';})+'<button type="button" class="fs-btn fs-btn--ghost" data-act="offer-remove" data-i="'+i+'">Remove offer</button></fieldset>';}).join('')+(cards.length<6?'<button type="button" class="fs-btn" data-act="offer-add">Add an offer</button>':'');
+    }
     var feel = "standard";
     Object.keys(FEEL).forEach(function (k) { if (sc.duration === FEEL[k][0] && sc.touchLerp === FEEL[k][1]) feel = k; });
     if (sc.duration !== undefined && feel === "standard" && !(sc.duration === 0.85 && sc.touchLerp === 0.14)) feel = "custom";
     var spots = Array.isArray(v.spots) ? v.spots : [], links = Array.isArray(c.links) ? c.links : [];
     var filmWhat = function (f) { return f.count + " frames, cut from your video"; };
-    return '' +
+    return picker +
       '<fieldset class="fs-group"><legend>Words</legend>' +
         field("words.eyebrow", "Above your name", wd.eyebrow, 60, "e.g. Producer · Atlanta") +
         '<div class="fs-pair">' + field("words.title1", "Big title, line 1", wd.title1, 14) + field("words.title2", "Line 2 (red)", wd.title2, 14) + '</div>' +
@@ -161,6 +200,11 @@
     chk(wd.door1, "button 1"); chk(wd.door2, "button 2");
     (c.vr && c.vr.spots || []).forEach(function (s, i) { chk(s, "tag " + (i + 1)); });
     (c.links || []).forEach(function (x, i) { chk(x, "link " + (i + 1)); });
+    if(c.layout==='offers'){
+      var o=c.offer_page||{};if(!String(o.title||'').trim()||!String(o.intro||'').trim())out.push('headline and introduction');
+      chk(o.primary,'main button');chk(o.secondary,'second button');
+      (o.cards||[]).forEach(function(x,i){if(!String(x.title||'').trim()||!String(x.body||'').trim())out.push('offer '+(i+1));chk(x.action,'offer '+(i+1)+' button');});
+    }
     return out;
   }
   function busy() { return Object.keys(S.busy).some(function (k) { return S.busy[k]; }); }
@@ -168,11 +212,12 @@
     var root = $("fsRoot"); if (!root) return;
     if (S.state !== "ready") {
       var t = { loading: ["Opening your editor…", ""], signin: ["Sign in to build your front page", "Your front page is yours: sign in and it opens here."], handle: ["Choose your handle first", "Your front page lives at your handle (front.html?u=you). Finish your account, then come back."], off: ["Front pages are not switched on yet", S.error || "The editor will open here as soon as they are."], error: ["The editor could not open", S.error] }[S.state] || ["", ""];
-      var act = S.state === "signin" ? '<a class="fs-btn" href="account.html?next=front-studio.html">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html">Finish my account</a>' : "";
+      var act = S.state === "signin" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Finish my account</a>' : S.state === "loading" ? "" : '<button type="button" class="fs-btn" id="fsRetry">Try again</button>';
       root.innerHTML = '<section class="fs-gate"><h1>' + e(t[0]) + '</h1><p>' + e(t[1]) + '</p>' + act + '</section>';
+      if ($("fsRetry")) $("fsRetry").onclick = function () { S.state = "loading"; paint(); boot(); };
       return;
     }
-    var me = S.me, live = me.published ? "Live at front.html?u=" + me.handle + (me.published_at ? " since " + new Date(me.published_at).toLocaleString() : "") : "Not published yet";
+    var me = S.me, live = me.published && !me.publish_blocker ? "Live at " + publicUrl(me.handle) + (me.published_at ? " since " + new Date(me.published_at).toLocaleString() : "") : me.published ? "Your saved page is not publicly available." : "Not published yet";
     if (!root.querySelector("#fsForm")) {
       root.innerHTML =
         '<header class="fs-head"><div><p class="fs-k">Your front page</p><h1>' + e(me.name || me.handle) + '</h1><p class="fs-live" id="fsLive"></p></div>' +
@@ -191,14 +236,15 @@
       fit();
     }
     $("fsLive").textContent = live;
-    $("fsOpen").href = "front.html?u=" + encodeURIComponent(me.handle);
-    $("fsOpen").hidden = !me.published;
+    $("fsOpen").href = publicUrl(me.handle);
+    $("fsOpen").hidden = !me.published || !!me.publish_blocker;
     $("fsUnpublish").hidden = !me.published;
     var problems = bad();
     $("fsStatus").innerHTML = (S.dirty ? '<p class="fs-dirty">Unsaved changes: shown in the preview only.</p>' : "") +
+      (me.publish_blocker === "private_profile" || me.publish_blocker === "profile_required" ? '<p class="fs-bad">' + (me.publish_blocker === "private_profile" ? 'Your profile is private.' : 'Finish your profile first.') + ' You can save a draft. <a href="' + (me.publish_blocker === "private_profile" ? 'mccluster-creator-studio.html' : 'mnet.html?view=profile') + '" target="_blank" rel="noopener">Open profile settings</a>, then <button type="button" data-act="refresh-access">check publishing access</button>.</p>' : "") +
       (problems.length ? '<p class="fs-bad" role="alert">Fix ' + e(problems.join(", ")) + ' before saving.</p>' : "") +
       (S.msg ? '<p class="' + (S.bad ? "fs-bad" : "fs-ok") + '" role="status">' + e(S.msg) + '</p>' : "");
-    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || ((a === "save" || a === "publish") && problems.length > 0); });
+    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || (a === "publish" && !!me.publish_blocker) || ((a === "save" || a === "publish") && problems.length > 0); });
     Array.prototype.forEach.call(root.querySelectorAll("[data-device]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-device") === S.device)); });
   }
   /* the shell first (the first paint builds it), then the settings into it */
@@ -208,7 +254,12 @@
   var LIVE = /^(vr\.|night\.|feel$)/;
   function set(name, value, checked) {
     var c = S.draft, p = name.split("."), n = Number(value);
-    if (name === "feel") { if (FEEL[value]) { var sc = ensure(c, "scroll"); sc.duration = FEEL[value][0]; sc.touchLerp = FEEL[value][1]; } }
+    if(name==='layout'&&!S.me.registry_key){c.layout=value==='offers'?'offers':'cinematic';if(c.layout==='offers'&&!c.offer_page)c.offer_page=w.MCC_SITE_OFFERS.defaults(S.me.name);paintForm();}
+    else if(p[0]==='offer_page'){
+      var target=ensure(c,'offer_page');for(var j=1;j<p.length-1;j++)target=target[p[j]]=target[p[j]]||{};
+      if(String(value).trim())target[p[p.length-1]]=value;else delete target[p[p.length-1]];
+    }
+    else if (name === "feel") { if (FEEL[value]) { var sc = ensure(c, "scroll"); sc.duration = FEEL[value][0]; sc.touchLerp = FEEL[value][1]; } }
     else if (name === "vr.hold") ensure(c, "vr").hold = !!checked;
     else if (name === "vr.yaw" || name === "vr.pitch") { var vv = ensure(c, "vr"); if (String(value).trim() === "") delete vv[p[1]]; else if (isFinite(n)) vv[p[1]] = n; }
     else if (name === "night.arrive") { var nn = ensure(c, "night"); if (String(value).trim() === "") delete nn.arrive; else if (isFinite(n)) nn.arrive = n / 100; }
@@ -223,6 +274,24 @@
   function viewer() { var f = frameWin(); try { return f && f.__MCC_VR && f.__MCC_VR.live ? f.__MCC_VR.viewer : null; } catch (_) { return null; } }
   function act(a, btn) {
     var c = S.draft, i = Number(btn && btn.getAttribute("data-i"));
+    if(/^offer-/.test(a)&&(busy()||S.saving))return;
+    if(a==='offer-add'){c.offer_page.cards=c.offer_page.cards||[];if(c.offer_page.cards.length<6)c.offer_page.cards.push({title:'New offer',body:'Describe what is available.'});S.dirty=true;paintForm();reloadPreview(true);return;}
+    if(a==='offer-remove'){c.offer_page.cards.splice(i,1);S.dirty=true;paintForm();reloadPreview(true);return;}
+    if(a==='offer-example'){
+      var epoch=authEpoch;S.saving=true;paint();
+      fetch('data/equity-uprise-offers-template.json').then(function(r){if(!r.ok)throw Error('Example unavailable');return r.json();}).then(function(example){if(epoch!==authEpoch||!S.draft)return;S.draft.offer_page=example;S.dirty=true;S.msg='Example copied into your draft. Review and edit before publishing.';}).catch(function(err){if(epoch===authEpoch){S.msg=err.message;S.bad=true;}}).finally(function(){if(epoch===authEpoch){S.saving=false;paintForm();reloadPreview(true);}});return;
+    }
+    if (a === "refresh-access") {
+      if (S.saving) return;
+      S.saving = true; paint();
+      api(ownPath).then(function (me) {
+        S.me = me; // Keep the local draft and dirty flag: checking access is not a reload.
+        S.msg = me.publish_blocker ? "Publishing is still unavailable. Your draft is kept." : "Ready to publish.";
+        S.bad = !!me.publish_blocker;
+      }).catch(function (err) { S.msg = "Could not check publishing access: " + err.message; S.bad = true; })
+        .then(function () { S.saving = false; paint(); });
+      return;
+    }
     if (a === "tag") { var v = ensure(c, "vr"); v.spots = v.spots || []; v.spots.push({ yaw: 0, pitch: 0, label: "", href: "" }); S.dirty = true; paintForm(); return; }
     if (a === "untag") { c.vr.spots.splice(i, 1); S.dirty = true; paintForm(); livePreview(); return; }
     if (a === "link") { c.links = c.links || []; c.links.push({ label: "", href: "" }); S.dirty = true; paintForm(); return; }
@@ -242,40 +311,47 @@
     if (a === "save" || a === "publish") return save(a === "publish");
     if (a === "unpublish") {
       S.saving = true; paint();
-      api("/v1/fronts/me/published", { method: "DELETE" }).then(function () { S.me.published = null; S.me.published_at = null; S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
+      api(publishedPath, { method: "DELETE" }).then(function () { S.me.published = null; S.me.published_at = null; S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
         .catch(function (err) { S.msg = "Not taken down: " + err.message; S.bad = true; }).then(function () { S.saving = false; paint(); });
     }
   }
   function save(publish) {
     if (bad().length || busy()) return;
     S.saving = true; S.msg = publish ? "Publishing…" : "Saving…"; S.bad = false; paint();
-    api("/v1/fronts/me", { method: "POST", body: { config: S.draft, publish: publish } }).then(function (b) {
+    api(ownPath, { method: "POST", body: { config: S.draft, publish: publish } }).then(function (b) {
       S.draft = clone(b.draft) || {}; S.me.draft = b.draft; S.dirty = false;
+      S.me.publish_blocker = b.publish_blocker || null; S.me.profile_visibility = b.profile_visibility;
       if (publish) { S.me.published = b.published; S.me.published_at = b.published_at; }
       var dropped = (b.dropped || []).length ? " Not kept: " + b.dropped.join(", ") + "." : "";
-      S.msg = (publish ? "Published. Everyone sees it at front.html?u=" + b.handle + "." : "Draft saved.") + dropped; S.bad = !!dropped;
+      S.msg = (publish ? "Published. Everyone sees it at " + publicUrl(b.handle) + "." : "Draft saved.") + dropped; S.bad = !!dropped;
       paintForm(); reloadPreview(true); sweep();
     }).catch(function (err) {
+      var code = err.body && err.body.detail && err.body.detail.code;
+      if (code === "private_profile" || code === "profile_required" || code === "removed") S.me.publish_blocker = code;
       S.msg = (publish ? "Not published: " : "Not saved: ") + (err.status === 403 && err.body && err.body.detail && err.body.detail.code === "removed" ? "McCluster took this page down." : err.message);
       S.bad = true;
     }).then(function () { S.saving = false; paint(); });
   }
   function upload(key, file, input) {
-    var M = w.MCC_FRONT_MEDIA, dir = folder();
+    var M = w.MCC_FRONT_MEDIA, dir = folder(), uploadEpoch=authEpoch;
+    var offerCard=/^offer[0-5]$/.test(key)&&S.draft.offer_page.cards[Number(key.slice(5))];
     if (!M || !dir || !file) return;
     S.busy[key] = true; S.progress[key] = "Starting…"; S.msg = ""; paintForm();
     var start = S.sweeping || Promise.resolve();
-    var pct = function (x) { S.progress[key] = "Uploading " + Math.round(x * 100) + "%"; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; };
+    var pct = function (x) { if(uploadEpoch!==authEpoch)return;S.progress[key] = "Uploading " + Math.round(x * 100) + "%"; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; };
     var job = start.then(function () {
-      return key === "cabin" ? M.cabin(file, dir, pct) : key === "still" ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
+      return key === "cabin" ? M.cabin(file, dir, pct) : key === "still"||/^offer(?:[0-5]|-logo)$/.test(key) ? M.still(file, dir, pct) : key === "sound" ? M.sound(file, dir, pct)
         : M.film(file, dir, function (p) { S.progress[key] = "Cutting frames " + p.cut + " of " + p.of + " · uploaded " + p.sent + " of " + p.total; var el = d.querySelector('[data-media="' + key + '"] .fs-progress'); if (el) el.textContent = S.progress[key]; });
     });
     job.then(function (res) {
+      if(uploadEpoch!==authEpoch||!S.draft)return;
+      if(key==='offer-logo'){S.draft.offer_page.logo=res.src;S.dirty=true;S.msg='Logo added. Review before publishing.';S.bad=false;return;}
+      if(offerCard){if((S.draft.offer_page.cards||[]).includes(offerCard)){offerCard.image=res.src;S.dirty=true;S.msg='Image added. Review before publishing.';S.bad=false;}return;}
       var m = ensure(S.draft, "media");
       m[key] = key === "hero" || key === "scene1" || key === "scene2" || key === "night" ? { base: res.base, count: res.count, ext: res.ext, sm: res.sm } : res;
       S.dirty = true; S.msg = "Added. Save or publish to keep it."; S.bad = false;
-    }).catch(function (err) { S.msg = err.message || String(err); S.bad = true; })
-      .then(function () { S.busy[key] = false; S.progress[key] = ""; if (input) input.value = ""; paintForm(); reloadPreview(true); });
+    }).catch(function (err) { if(uploadEpoch===authEpoch){S.msg = err.message || String(err); S.bad = true;} })
+      .then(function () { if(uploadEpoch!==authEpoch)return;S.busy[key] = false; S.progress[key] = ""; if (input) input.value = ""; paintForm(); reloadPreview(true); });
   }
   function bind(root) {
     root.addEventListener("click", function (ev) {
@@ -284,7 +360,7 @@
       if (b.hasAttribute("data-act")) { ev.preventDefault(); act(b.getAttribute("data-act"), b); }
       else if (b.hasAttribute("data-device")) { S.device = b.getAttribute("data-device"); fit(); paint(); }
       else if (b.hasAttribute("data-go")) post({ type: "mcc:front-goto", to: b.getAttribute("data-go") });
-      else if (b.hasAttribute("data-remove")) { var m = ensure(S.draft, "media"); delete m[b.getAttribute("data-remove")]; S.dirty = true; paintForm(); reloadPreview(true); }
+      else if (b.hasAttribute("data-remove")) { var key=b.getAttribute('data-remove');if(key==='offer-logo')delete S.draft.offer_page.logo;else if(/^offer[0-5]$/.test(key))delete S.draft.offer_page.cards[Number(key.slice(5))].image;else{var m = ensure(S.draft, "media"); delete m[key];} S.dirty = true; paintForm(); reloadPreview(true); }
     });
     /* A field is never redrawn under the hand typing in it: leaving one for the next must not replace the next (that
        lost what was typed there, and the tap on a button after it). Text applies as it is typed; a link row says what
@@ -306,8 +382,9 @@
   w.addEventListener("beforeunload", function (ev) { if (S.dirty || busy()) { ev.preventDefault(); ev.returnValue = ""; } });
 
   function boot() {
-    api("/v1/fronts/me").then(function (me) {
+    api(ownPath).then(function (me) {
       S.me = me; S.draft = clone(me.draft || me.published) || {}; S.state = "ready";
+      if(offersTemplate&&!me.registry_key&&!S.draft.layout&&Object.keys(S.draft).every(function(k){return k==='schema';})){S.draft.layout='offers';S.draft.offer_page=w.MCC_SITE_OFFERS.defaults(me.name);S.dirty=true;S.msg='Choose your words, or copy the editable Equity Uprise example below.';}
       if (me.removed) { S.msg = "McCluster took your published page down. You can keep editing your draft."; S.bad = true; }
       paintForm();
     }).catch(function (err) {
@@ -317,7 +394,7 @@
       paint();
     });
   }
-  function whenReady() { if (w.MCC_SUPA && w.MCC_SUPA.token) boot(); else setTimeout(whenReady, 50); }
+  function whenReady() { if (projectMode && !projectSlug) { S.state = "error"; S.error = "Choose a project from your project dashboard first."; paint(); return; } if (w.MCC_SUPA && w.MCC_SUPA.token) boot(); else setTimeout(whenReady, 50); }
   paint();
   whenReady();
   w.__MCC_FRONT_STUDIO = S; // verification handle

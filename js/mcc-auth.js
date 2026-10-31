@@ -233,9 +233,10 @@
     refresh: function () {
       var s = readSession();
       if (!s || !s.refresh_token) return Promise.resolve(null);
+      function unchanged(){var now=readSession();return now&&now.access_token===s.access_token&&now.refresh_token===s.refresh_token;}
       return authApi('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
-        .then(writeSession)
-        .catch(function () { writeSession(null); return null; });
+        .then(function(next){return unchanged()?writeSession(next):readSession();})
+        .catch(function () { if(unchanged()){writeSession(null);return null;}return readSession(); });
     },
 
     refreshIfNeeded: function () {
@@ -557,6 +558,13 @@
       init = init || {};
       return MCC.refreshIfNeeded().then(function (session) {
         if (!session) throw Object.assign(new Error('Not signed in'), { status: 401 });
+        // Optional async-operation fence. The server still verifies the bearer;
+        // this prevents a composition captured for A from being sent using B.
+        if (init.expectedUserId) {
+          var subject = function (value) { try { var part=String(value?.access_token||'').split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(root.atob(part)).sub||''; } catch (_) { return ''; } };
+          if (subject(session)!==init.expectedUserId || subject(readSession())!==init.expectedUserId) throw Object.assign(new Error('Account changed. Reopen your draft.'),{stale:true});
+        }
+        if (init.beforeFetch) init.beforeFetch();
         return fetch('https://api.mccluster.org' + path, {
           method: init.method || 'GET',
           headers: Object.assign({ authorization: 'Bearer ' + session.access_token, 'content-type': 'application/json' }, init.headers || {}),

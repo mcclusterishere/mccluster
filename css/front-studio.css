@@ -52,3 +52,6 @@
 @media (min-width:560px){.fs-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:768px){.fs{padding:24px 24px 140px}.fs-head{grid-template-columns:minmax(0,1fr) auto;align-items:end}}
 @media (min-width:1100px){.fs-grid{grid-template-columns:minmax(0,1fr) minmax(360px,460px);align-items:start}.fs-form{max-height:calc(100vh - 210px);overflow:auto;overscroll-behavior:contain}}
+
+.fs-hub-link { max-width:960px; margin:auto; padding:20px 20px 0; }
+.fs-hub-link a { display:inline-flex; align-items:center; min-height:44px; color:inherit; font-size:16px; }

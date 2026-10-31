@@ -222,7 +222,8 @@
     },
     "artist_brand": "Matthew McCluster",
     "commerce_mode": "lyric-service"
-   }
+   },
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "prim3",
@@ -241,7 +242,8 @@
      "music_video": "assets/video/prim3.mp4",
      "seconds": 92.4
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "equity-uprise",
@@ -292,7 +294,8 @@
      "music_video": "assets/video/moneyglitch.mp4",
      "seconds": 216.1
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise"
   },
   {
    "slug": "heal-the-3",
@@ -319,7 +322,8 @@
      "music_video": "assets/video/angel.mp4",
      "seconds": 146
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "vaunt-ep",
@@ -336,7 +340,8 @@
      "music_video": "assets/video/vauntlive.mp4",
      "seconds": 92.4
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "whip-equipped",
@@ -363,7 +368,8 @@
      "music_video": "assets/video/dealer-plates-b-video.mp4",
      "seconds": 97.4
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "singles",
@@ -382,7 +388,8 @@
      "music_video": "assets/video/coffeecam.mp4",
      "seconds": 184.2
     }
-   ]
+   ],
+   "artist_profile_id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
   {
    "slug": "cia-mind-control",
@@ -440,5 +447,15 @@
     }
    ]
   }
- ]
+ ],
+ "artist_profiles": {
+  "https://matthew.mccluster.org/#matthew-mccluster": {
+   "home": "matthew-mccluster.html",
+   "logo": "assets/img/m-mark.png"
+  },
+  "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise": {
+   "home": "platform-home.html",
+   "logo": "assets/img/equity-uprise-mark-white.png"
+  }
+ }
 }

@@ -98,7 +98,27 @@ try {
   }
   const page=await context.newPage(); const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(BASE+'/index.html?front=house');
+  page.on('framenavigated',frame=>historyEvents.push({type:'framenavigated',main:frame===page.mainFrame(),url:frame.url(),at:Date.now()}));
+  page.on('request',request=>{if(request.isNavigationRequest())historyEvents.push({type:'navigation-request',url:request.url(),main:request.frame()===page.mainFrame(),at:Date.now()});});
+  page.on('requestfailed',request=>{if(request.isNavigationRequest())historyEvents.push({type:'navigation-failed',url:request.url(),error:request.failure(),at:Date.now()});});
+  const cdp=await context.newCDPSession(page);
+  async function historySnapshot(label){
+    const history=await cdp.send('Page.getNavigationHistory');
+    const runtime=await Promise.race([page.evaluate(()=>({url:location.href,ready:document.readyState,scrollY,holding:window.__MCC_FRONT_HOLDING?.(),transition:!!document.activeViewTransition,frames:[...document.querySelectorAll('iframe')].map(f=>({src:f.src,url:f.contentWindow?.location.href}))})).catch(error=>({error:error.message})),new Promise(resolve=>setTimeout(()=>resolve({evaluation:'timed out'}),2000))]);
+    const proof={label,url:page.url(),runtime,history,events:historyEvents.slice(-40)};
+    await writeFile(join(OUT,`history-${width}-${label}.json`),JSON.stringify(proof,null,2));
+    console.log('HISTORY',width,label,JSON.stringify(proof));
+  }
+  async function browserBack(label){
+    await historySnapshot(label+'-before');
+    const timer=setTimeout(()=>historySnapshot(label+'-pending').catch(()=>{}),5000);
+    try{await page.goBack({waitUntil:'commit'});}
+    catch(error){await historySnapshot(label+'-failed');throw error;}
+    finally{clearTimeout(timer);}
+    await historySnapshot(label+'-after');
+  }
+  try {
+  await page.goto(BASE+'/index.html?front=house',{waitUntil:'domcontentloaded'});
   await page.waitForTimeout(3000);
   /* reduced motion: the cabin is its poster until it is asked for, and still first */
   const still=await page.evaluate(()=>({first:document.querySelector('main section:not(noscript section)').id,viewer:!!(window.__MCC_VR&&window.__MCC_VR.viewer),look:!document.getElementById('cabinLook').hidden,poster:getComputedStyle(document.querySelector('.cabin-open__poster')).opacity}));
@@ -114,9 +134,28 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({path:join(OUT,`portfolio-${width}.png`)});
   if(width===820){await page.locator('[data-cta="vaunt-project"]').focus();await page.keyboard.press('Enter');}
-  else await page.locator('[data-cta="vaunt-project"]').click();
+  else await page.locator('[data-cta="vaunt-project"]').click({noWaitAfter:true});
   await page.waitForFunction(()=>document.documentElement.dataset.frontState==='ready'&&!!window.__MCC_FRONT_GOTO);
   assert.match(await page.title(),/Vaunt/);
+  await page.waitForFunction(()=>document.querySelector('[data-appnav="home"] img')?.src.includes('vaunt-logo.webp'));
+  assert.ok(Math.abs(await page.locator('#work').evaluate(el=>el.getBoundingClientRect().top))<2);
+  assert.equal(await page.locator('.hero').isVisible(),false);
+  assert.notEqual(await page.locator('#guestWorld iframe').getAttribute('loading'),'lazy');
+  assert.equal(await page.locator('#guestWorld iframe').getAttribute('src'),null);
+  assert.equal(await page.locator('#work .scene-intro h1').isVisible(),true);
+  assert.doesNotMatch(await page.locator('#work .scene-intro').textContent(),/independent|official|endorse/i);
+  assert.equal(await page.locator('[data-appnav="home"]').getAttribute('href'),BASE+'/front.html?project=vaunt');
+  await page.evaluate(()=>window.__previewReveal);
+  await page.waitForFunction(()=>window.__MCC.ready('vauntlive')&&window.__MCC.loadedMax('vauntlive')>=30);
+  await page.locator('#cmdCanvas5').evaluate(c=>{window.__firstRunwayFrame=c.toDataURL();});
+  await page.mouse.wheel(0,160);
+  await page.waitForFunction(()=>scrollY>50&&document.querySelector('#cmdCanvas5').toDataURL()!==window.__firstRunwayFrame);
+  await page.evaluate(()=>delete window.__firstRunwayFrame);
+  await page.locator('[data-appnav="home"]').click();
+  await page.waitForTimeout(400);
+  assert.ok(await page.evaluate(()=>window.scrollY)<4);
+  assert.equal(await page.locator('#work .scene-intro').isVisible(),true);
+
   assert.match(await page.locator('.front-project-note').textContent(),/Managed by Matthew McCluster/);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
   assert.equal(await page.evaluate(()=>window.MCC_FRONT.config.media.scene1.prefix),'vauntlive_');
@@ -130,22 +169,57 @@ try {
   await page.screenshot({path:join(OUT,`project-cabin-${width}.png`)});
   await page.locator('#vrGateAllow').click();
   await page.waitForTimeout(500);
+  await page.locator('[data-appnav="home"]').click();
+  await page.waitForTimeout(500);
+  assert.equal(await page.evaluate(()=>window.__MCC_FRONT_HOLDING()),false);
+  assert.equal(await page.locator('#work .scene-intro').isVisible(),true);
+  await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
+  await page.waitForTimeout(600);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(1000);
   assert.equal(await page.evaluate(()=>window.__MCC_FRONT_HOLDING()),false);
   await page.locator('#guestWorld').scrollIntoViewIfNeeded();
   assert.equal(await page.locator('#guestWorld').isVisible(),true);
+  await page.waitForFunction(()=>document.querySelector('#guestWorld iframe').contentWindow.location.pathname==='/guest-globe.html');
   assert.equal(await page.locator('[data-world-entry]').getAttribute('href'),'account.html');
   await page.screenshot({path:join(OUT,`world-${width}.png`)});
+  // Page branding is local, safe and independent of account privileges.
+  const musicHref=await page.locator('[data-appnav="music"]').getAttribute('href');
+  await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Another project',home:'front.html?project=other'}));
+  assert.equal(await page.locator('[data-appnav="home"] .appbar__m--initial').textContent(),'A');
+  await page.evaluate(()=>window.MCC_BAR.pageProfile({name:'Unsafe',home:'javascript:alert(1)',logo:'https://bad.example/logo.png'}));
+  assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
+  assert.equal(await page.locator('[data-appnav="music"]').getAttribute('href'),musicHref);
+  await page.goto(BASE+'/front.html?project=vaunt#work',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
+  await page.locator('#work .scene-intro a[href="album.html?album=vaunt-ep"]').click({noWaitAfter:true});
+  await page.waitForURL('**/album.html?album=vaunt-ep',{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>window.__previewReveal);
+  assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
+  // History restoration need not emit a new DOMContentLoaded event.
+  await browserBack('album');
+  assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
+  await page.evaluate(()=>window.__previewReveal);
+  await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
+  assert.ok((await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt-logo'));
+  await page.locator('#work .scene-intro a[href="index.html#work"]').click({noWaitAfter:true});
+  await page.waitForURL('**/index.html#work',{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>window.__previewReveal);
+  assert.ok(!(await page.locator('[data-appnav="home"] img').getAttribute('src')).includes('vaunt'));
+  // History restoration need not emit a new DOMContentLoaded event.
+  await browserBack('portfolio');
+  assert.equal(page.url(),BASE+'/front.html?project=vaunt#work');
+  await page.evaluate(()=>window.__previewReveal);
+  await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
   // The shell's existing verified auth contract drives the CTA; no permissions are fabricated.
-  await page.evaluate(()=>{window.MCC_BAR={refreshAuth:()=>Promise.resolve({verified:true,signed_in:true})};window.dispatchEvent(new Event('mcc:auth-changed'));});
+  await page.evaluate(()=>{window.MCC_BAR=Object.assign({},window.MCC_BAR,{refreshAuth:()=>Promise.resolve({verified:true,signed_in:true})});window.dispatchEvent(new Event('mcc:auth-changed'));});
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').textContent==='Enter the World →');
   assert.equal(await page.locator('#guestWorld').isVisible(),true);
-  await page.evaluate(()=>{window.MCC_BAR={refreshAuth:()=>Promise.resolve({verified:true,signed_in:false})};window.dispatchEvent(new Event('mcc:auth-changed'));});
+  await page.evaluate(()=>{window.MCC_BAR=Object.assign({},window.MCC_BAR,{refreshAuth:()=>Promise.resolve({verified:true,signed_in:false})});window.dispatchEvent(new Event('mcc:auth-changed'));});
   await page.waitForFunction(()=>document.querySelector('[data-world-entry]').getAttribute('href')==='account.html');
   assert.equal(await page.evaluate(()=>window.__MCC_ERR||null),null);
   if(width===820){
-    await page.reload();
+    await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>!!window.__MCC_FRONT_GOTO);
     await page.evaluate(()=>window.__MCC_FRONT_GOTO('cabin'));
     await page.waitForTimeout(1000);
@@ -157,6 +231,11 @@ try {
   assert.deepEqual(errors,[]);
   results.push({width,height,pass:true,checks:'index opens in the ungated muted cabin, Antisocial on first gesture, Escape to the plane, LOCK IN; reduced-motion poster; project page ordering, album links, cabin consent/Escape, auth transition, overflow, JS errors'});
   console.log('PASS',width,height);
+  } catch(error) {
+    try { await historySnapshot('failure'); }
+    catch(diagnosticError) { console.error('History diagnostic unavailable:',diagnosticError.message); }
+    throw error;
+  }
   await context.close();
  }
 } finally {await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}

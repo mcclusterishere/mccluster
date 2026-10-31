@@ -1,7 +1,8 @@
 # Vaunt creator project and public profile shell
 
-This is a local implementation proposed for review, not a deployed profile or a
-company account. **This is interim partial fulfillment of the requested named
+The initial repository project shipped in #621; the scroll-first followup below
+is proposed for review and is not deployed. No company account is provisioned.
+**This is interim partial fulfillment of the requested named
 Vaunt user/profile. A static Matthew-managed project is not equivalent to an
 independently managed database profile.** The route is `front.html?project=vaunt` on Matthew's property.
 Matthew McCluster manages its repository content. No auth identity, company
