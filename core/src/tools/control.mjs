@@ -82,6 +82,11 @@ const BASE_TOOLS = [
     inputSchema: { type: 'object', required: ['org_id', 'objective'], properties: { org_id: { type: 'string' }, objective: { type: 'string' }, target_id: { type: 'string' }, max_steps: { type: 'integer', minimum: 1, maximum: 12 }, since_hours: { type: 'integer', minimum: 1, maximum: 168 }, priority: { type: 'number' } }, additionalProperties: false }
   },
   {
+    name: 'core.lyrics.align', title: 'Time lyrics to a release',
+    description: 'Queue the owned lyric machine for one uploaded release: Demucs vocal separation, faster-whisper, the creator\'s lyric sheet (or TTML/LRC) mapped to the audio, wav2vec2 word alignment. Writes unreviewed timed lyrics; never replaces lyrics the owner reviewed.',
+    inputSchema: { type: 'object', required: ['org_id', 'track_id'], properties: { org_id: { type: 'string' }, track_id: { type: 'string' }, priority: { type: 'number' } }, additionalProperties: false }
+  },
+  {
     name: 'core.code.build', title: 'Build code change',
     description: 'Queue an isolated autonomous code change that can produce a draft branch/PR but never auto-merge.',
     inputSchema: { type: 'object', required: ['org_id', 'repository', 'task'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, task: { type: 'string' }, title: { type: 'string' }, allowed_paths: { type: 'array', items: { type: 'string' } }, priority: { type: 'number' } } }
@@ -189,6 +194,14 @@ export async function callControlTool(name, args = {}, options = {}) {
         production_mutation: false,
       },
     };
+  }
+
+  if (name === 'core.lyrics.align') {
+    const orgId = requireOrg(args.org_id);
+    const trackId = text(args.track_id, 80);
+    if (!/^[0-9a-f-]{36}$/i.test(trackId)) throw Object.assign(new Error('track_id must be a creator track uuid'), { status: 400 });
+    const job = await enqueueJob({ orgId, jobType: 'lyrics_align', targetType: 'creator_track', targetId: trackId, priority: Math.min(100, Math.max(0, Number(args.priority ?? 40))), maxAttempts: 2, input: { track_id: trackId, trigger: 'tool' } });
+    return { queued: true, job_id: job.id, job_type: job.job_type, track_id: trackId, safety: { paid_provider: false, overwrites_reviewed_lyrics: false } };
   }
 
   if (name === 'core.code.build') {

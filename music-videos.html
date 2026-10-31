@@ -93,6 +93,7 @@
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/lyric-commerce.js?v=__STAMP__"></script>
+  <script src="js/lyrics-sync.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
   /* ============================================================
@@ -268,14 +269,12 @@
       if (!src) return;
       if (lyrCache[src]) return;
       fetch(src, { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
-        var timed = j && j.timed && j.timed.line ? j.timed.line : null;
-        if (!timed && j && j.lines && j.lines.length && j.lines[0].t != null) {
-          timed = j.lines.map(function (l) { return { begin: l.t, content: l.text || "" }; });
-        }
-        if (timed) lyrCache[src] = { t: timed };
-        else if (j && j.plain) {
+        /* the shared reader (js/lyrics-sync.js): every shape the shelf names */
+        var m = window.MCC_LYRICS ? window.MCC_LYRICS.normalize(j) : null;
+        if (m && m.timed) lyrCache[src] = { t: m.lines };
+        else if (m) {
           /* the player's second dialect: plain words ride the song's progress */
-          lyrCache[src] = { p: j.plain.split("\n").filter(function (l) { return l.trim(); }) };
+          lyrCache[src] = { p: m.lines.map(function (l) { return l.text; }).filter(function (l) { return l.trim(); }) };
         } else lyrCache[src] = {};
       }).catch(function () { lyrCache[src] = {}; });
     }
@@ -383,7 +382,8 @@
       if (L) {
         var want = "";
         if (L.t && L.t.length) {
-          for (var i = 0; i < L.t.length; i++) if (time >= L.t[i].begin) want = L.t[i].content;
+          var at = window.MCC_LYRICS.indexAt(L.t, time);
+          want = at >= 0 ? L.t[at].text : "";
         } else if (L.p && L.p.length && deck.duration) {
           want = L.p[Math.min(L.p.length - 1, Math.floor(time / deck.duration * L.p.length))] || "";
         }

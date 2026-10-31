@@ -1,0 +1,72 @@
+name: Lyric machine
+# Timed lyrics for shelf tracks that have audio but no lyrics file yet (a new
+# track committed to assets/audio + data/albums.json, optionally with a sheet in
+# data/lyrics/src/<slug>.txt). Same engine as McCluster Core's lyrics_align
+# executor: core/src/lyrics/ (Demucs -> faster-whisper -> sheet mapping ->
+# wav2vec2 CTC). Open models on the runner's CPU: no paid API, no secret.
+#
+# It NEVER pushes (AGENTS.md hard rule 2). The generated data/lyrics/*.json and
+# the updated data/albums.json are uploaded as an artifact for the owner to
+# review and commit; uploads made through creator.html are timed on McCluster
+# Core instead (supabase/pending/20261031180000_lyrics_machine_v1.sql).
+on:
+  workflow_dispatch:
+    inputs:
+      asr_model:
+        description: faster-whisper model
+        default: large-v3-turbo
+  push:
+    branches: [main]
+    paths:
+      - 'assets/audio/**'
+      - 'data/albums.json'
+      - 'data/lyrics/src/**'
+permissions:
+  contents: read
+concurrency:
+  group: lyrics-machine
+  cancel-in-progress: false
+jobs:
+  lyrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Which shelf tracks have no lyrics yet
+        id: todo
+        run: |
+          node -e '
+            const fs=require("fs");const a=JSON.parse(fs.readFileSync("data/albums.json","utf8"));const todo=[];
+            for(const al of a.albums)for(const t of al.tracks){if(!t.src||t.gated||t.lyrics)continue;
+              const slug=t.src.split("/").pop().replace(/\.[^.]+$/,"");if(!fs.existsSync(`data/lyrics/${slug}.json`))todo.push(slug);}
+            console.log(todo.join(" ")||"(none)");fs.appendFileSync(process.env.GITHUB_OUTPUT,`count=${todo.length}\n`);'
+      - name: Install the open models' runtime (CPU)
+        if: steps.todo.outputs.count != '0'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install --no-cache-dir torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu
+          pip install --no-cache-dir faster-whisper==1.2.1 demucs==4.1.0 soundfile
+      - name: Time the lyrics
+        if: steps.todo.outputs.count != '0'
+        env:
+          LYRICS_ASR_MODEL: ${{ inputs.asr_model || 'large-v3-turbo' }}
+          LYRICS_PYTHON: python
+        run: node tools/lyrics/transcribe.mjs --missing --wire --threads 4
+      - name: Check what was made
+        if: steps.todo.outputs.count != '0'
+        run: node --test scripts/test/lyrics-machine-format.test.mjs scripts/test/lyrics-data.test.mjs
+      - name: Upload for the owner's review (never pushed)
+        if: steps.todo.outputs.count != '0'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lyric-machine-output
+          path: |
+            data/lyrics/*.json
+            data/albums.json
+          retention-days: 14

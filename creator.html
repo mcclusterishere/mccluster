@@ -177,6 +177,7 @@
           <div class="creator-field wide"><label for="trackArt">Artwork</label><input id="trackArt" type="file" accept="image/jpeg,image/png,image/webp,image/avif"></div>
           <div class="creator-field"><label for="trackMusicVideo">Music video URL</label><input id="trackMusicVideo" type="url" placeholder="https:// or your hosted music-video URL"></div>
           <div class="creator-field"><label for="trackLyricsUrl">Lyrics JSON URL</label><input id="trackLyricsUrl" type="url" placeholder="https:// or public lyrics JSON URL"></div>
+          <div class="creator-field wide"><label for="trackLyricSheet">Lyric sheet (optional)</label><textarea id="trackLyricSheet" maxlength="40000" placeholder="Paste your lyrics, or attach a .docx / .txt / .lrc / .ttml below. Leave empty and McCluster writes them from the audio."></textarea><input id="trackLyricSheetFile" type="file" accept=".docx,.txt,.lrc,.ttml,.xml,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" aria-label="Attach a lyric sheet file"><small id="trackLyricSheetHelp" style="color:var(--mc-dim)">After upload McCluster times your lyrics to the music (line by line and word by word). The owner checks them in Control before they show as reviewed.</small></div>
           <div class="creator-field"><label for="trackAccent">Track accent</label><input id="trackAccent" type="color" value="#e5383b"></div>
           <div class="creator-field"><label for="trackBackground">Track background</label><input id="trackBackground" type="color" value="#090706"></div>
           <div class="creator-field"><label for="trackForeground">Track text</label><input id="trackForeground" type="color" value="#f4efe6"></div>
@@ -211,6 +212,7 @@
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
+  <script src="js/lyric-sheet.js?v=__STAMP__"></script>
   <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
   <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

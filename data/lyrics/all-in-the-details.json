@@ -1,0 +1,2697 @@
+{
+ "duration_seconds": 155,
+ "language": "en",
+ "songTitle": "All in the Details",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:30:42.687Z",
+  "confidence": 0.816,
+  "mismatched_lines": 16,
+  "sheet_lines": 37,
+  "heard_words": 424,
+  "ctc_aligned_lines": 53,
+  "timing": {
+   "align_seconds": 11.8,
+   "separate_seconds": 94.6,
+   "asr_seconds": 84.8,
+   "map_seconds": 0.3
+  }
+ },
+ "plain": "I got a dealership it’s retail\nGive me a call if you need a whip or detail\n\nSend me the details, whip equipment,\n\nall in the details, details\nGive me a call if you need a whip or detail\nSend me the details.\nWhip equipped it’s all in the details\n\nLike how much you got?\nNo matter how dirty you know I’ll clean every spot.\nSteam it with that hydro smoke like hydroponics\nType of tip that we on\nIt’s all in the details details\nI cleaned a car full of snakes, a car full of rats\nOne with toxic waste another had crabs\nA car with no plates whose owner wore a mask\nEven cleaned a Cadillac with a body in back\nSolving any problem with deposits send the cash\nI’ll be there so fast give your mom a heart attack\nI got the dopest ads, and not to boast and brag but\nAsk mr miyagi I taught him how wax\n\nI got a dealership it’s retail\nGive me a call if you need a whip or detail\n\nto whip a detail yeah send me the details\nwhip\n\nIt’s all in the details details\n\nretail give me your If you need to\n\nSend me the details.\nWhip equipped it’s all in the details\n\nMobile mogul hit my phone or social\nWanna know the biz? For the low I’ll coach you\nShow the whole approach uplift the culture\nEven All the if you know you know stuff.\nIf you knew you’d know what.\nIf you don’t just show up get this glow up\nMoney glitch your algorithm\nTake 3 months 1 quarter hit the quota\nI’m so dope with this I’ll overdose ya\nI just flip these whips no brick no soda\nGot so many whips I park unconscionably\nDo it by the book you touch my property\nDone improperly big catastrophe\nYou just made a hit list internationally\nFuck Jim’s auto you a bitch like Anthony’s\nPaper blitzed him drained his shit financially\n\nYeah, cuz they ain't know But now they know,\nthey ain't wanna know I had to put them\non notice, I caught them though Caught they ass\nslippin' with the constable, shout out to John Paio\nThey had the police in their pockets, so I\nhad to go to the constable and the attorney\ngeneral. They got served twice,\nand then three times from the state of Georgia.\nYou luck at it and press that recall.\nin San Rico.",
+ "timed": {
+  "line": [
+   {
+    "begin": 9.226,
+    "end": 10.521,
+    "content": "I got a dealership it’s retail",
+    "confidence": 0.969,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 9.226,
+      "end": 9.246,
+      "content": "I"
+     },
+     {
+      "begin": 9.367,
+      "end": 9.508,
+      "content": "got"
+     },
+     {
+      "begin": 9.569,
+      "end": 9.589,
+      "content": "a"
+     },
+     {
+      "begin": 9.649,
+      "end": 10.052,
+      "content": "dealership"
+     },
+     {
+      "begin": 10.112,
+      "end": 10.233,
+      "content": "it’s"
+     },
+     {
+      "begin": 10.273,
+      "end": 10.521,
+      "content": "retail"
+     }
+    ],
+    "align_score": 0.606
+   },
+   {
+    "begin": 10.521,
+    "end": 13.176,
+    "content": "Give me a call if you need a whip or detail",
+    "confidence": 0.97,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 10.521,
+      "end": 11.024,
+      "content": "Give"
+     },
+     {
+      "begin": 11.124,
+      "end": 11.205,
+      "content": "me"
+     },
+     {
+      "begin": 11.285,
+      "end": 11.305,
+      "content": "a"
+     },
+     {
+      "begin": 11.406,
+      "end": 11.688,
+      "content": "call"
+     },
+     {
+      "begin": 11.788,
+      "end": 11.849,
+      "content": "if"
+     },
+     {
+      "begin": 11.869,
+      "end": 11.949,
+      "content": "you"
+     },
+     {
+      "begin": 12.009,
+      "end": 12.13,
+      "content": "need"
+     },
+     {
+      "begin": 12.191,
+      "end": 12.211,
+      "content": "a"
+     },
+     {
+      "begin": 12.291,
+      "end": 12.392,
+      "content": "whip"
+     },
+     {
+      "begin": 12.492,
+      "end": 12.533,
+      "content": "or"
+     },
+     {
+      "begin": 12.613,
+      "end": 13.176,
+      "content": "detail"
+     }
+    ],
+    "align_score": 0.449
+   },
+   {
+    "begin": 14.564,
+    "end": 16.964,
+    "content": "Send me the details, whip equipment,",
+    "confidence": 0.791,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 14.564,
+      "end": 14.705,
+      "content": "Send"
+     },
+     {
+      "begin": 14.725,
+      "end": 14.786,
+      "content": "me"
+     },
+     {
+      "begin": 14.846,
+      "end": 14.926,
+      "content": "the"
+     },
+     {
+      "begin": 15.027,
+      "end": 15.651,
+      "content": "details,"
+     },
+     {
+      "begin": 16.194,
+      "end": 16.315,
+      "content": "whip"
+     },
+     {
+      "begin": 16.415,
+      "end": 16.964,
+      "content": "equipment,"
+     }
+    ],
+    "added": true,
+    "align_score": 0.376
+   },
+   {
+    "begin": 16.964,
+    "end": 19.117,
+    "content": "all in the details, details",
+    "confidence": 0.333,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "all in the details, details",
+    "sheet": "I got a dealership it’s retail",
+    "words": [
+     {
+      "begin": 16.964,
+      "end": 17.085,
+      "content": "all"
+     },
+     {
+      "begin": 17.165,
+      "end": 17.225,
+      "content": "in"
+     },
+     {
+      "begin": 17.266,
+      "end": 17.326,
+      "content": "the"
+     },
+     {
+      "begin": 17.427,
+      "end": 18.292,
+      "content": "details,"
+     },
+     {
+      "begin": 18.412,
+      "end": 19.117,
+      "content": "details"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.745
+   },
+   {
+    "begin": 20.101,
+    "end": 22.797,
+    "content": "Give me a call if you need a whip or detail",
+    "confidence": 0.97,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 20.101,
+      "end": 20.423,
+      "content": "Give"
+     },
+     {
+      "begin": 20.644,
+      "end": 20.725,
+      "content": "me"
+     },
+     {
+      "begin": 20.846,
+      "end": 20.866,
+      "content": "a"
+     },
+     {
+      "begin": 21.007,
+      "end": 21.268,
+      "content": "call"
+     },
+     {
+      "begin": 21.369,
+      "end": 21.409,
+      "content": "if"
+     },
+     {
+      "begin": 21.449,
+      "end": 21.55,
+      "content": "you"
+     },
+     {
+      "begin": 21.61,
+      "end": 21.771,
+      "content": "need"
+     },
+     {
+      "begin": 21.811,
+      "end": 21.831,
+      "content": "a"
+     },
+     {
+      "begin": 21.892,
+      "end": 22.053,
+      "content": "whip"
+     },
+     {
+      "begin": 22.093,
+      "end": 22.133,
+      "content": "or"
+     },
+     {
+      "begin": 22.193,
+      "end": 22.797,
+      "content": "detail"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.507
+   },
+   {
+    "begin": 24.167,
+    "end": 25.275,
+    "content": "Send me the details.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 24.167,
+      "end": 24.308,
+      "content": "Send"
+     },
+     {
+      "begin": 24.328,
+      "end": 24.408,
+      "content": "me"
+     },
+     {
+      "begin": 24.429,
+      "end": 24.489,
+      "content": "the"
+     },
+     {
+      "begin": 24.63,
+      "end": 25.275,
+      "content": "details."
+     }
+    ],
+    "align_score": 0.365
+   },
+   {
+    "begin": 25.743,
+    "end": 27.664,
+    "content": "Whip equipped it’s all in the details",
+    "confidence": 0.952,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 25.743,
+      "end": 25.864,
+      "content": "Whip"
+     },
+     {
+      "begin": 25.965,
+      "end": 26.227,
+      "content": "equipped"
+     },
+     {
+      "begin": 26.267,
+      "end": 26.388,
+      "content": "it’s"
+     },
+     {
+      "begin": 26.549,
+      "end": 26.649,
+      "content": "all"
+     },
+     {
+      "begin": 26.77,
+      "end": 26.81,
+      "content": "in"
+     },
+     {
+      "begin": 26.871,
+      "end": 26.931,
+      "content": "the"
+     },
+     {
+      "begin": 27.012,
+      "end": 27.664,
+      "content": "details"
+     }
+    ],
+    "align_score": 0.469
+   },
+   {
+    "begin": 27.664,
+    "end": 29.095,
+    "content": "Like how much you got?",
+    "confidence": 0.899,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 27.664,
+      "end": 28.007,
+      "content": "Like"
+     },
+     {
+      "begin": 28.108,
+      "end": 28.229,
+      "content": "how"
+     },
+     {
+      "begin": 28.37,
+      "end": 28.551,
+      "content": "much"
+     },
+     {
+      "begin": 28.611,
+      "end": 28.692,
+      "content": "you"
+     },
+     {
+      "begin": 28.833,
+      "end": 29.095,
+      "content": "got?"
+     }
+    ],
+    "align_score": 0.672
+   },
+   {
+    "begin": 31.048,
+    "end": 34.62,
+    "content": "No matter how dirty you know I’ll clean every spot.",
+    "confidence": 0.891,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 31.048,
+      "end": 31.129,
+      "content": "No"
+     },
+     {
+      "begin": 31.189,
+      "end": 31.409,
+      "content": "matter"
+     },
+     {
+      "begin": 31.47,
+      "end": 31.57,
+      "content": "how"
+     },
+     {
+      "begin": 31.65,
+      "end": 31.911,
+      "content": "dirty"
+     },
+     {
+      "begin": 32.011,
+      "end": 32.112,
+      "content": "you"
+     },
+     {
+      "begin": 32.232,
+      "end": 32.393,
+      "content": "know"
+     },
+     {
+      "begin": 32.633,
+      "end": 32.774,
+      "content": "I’ll"
+     },
+     {
+      "begin": 32.814,
+      "end": 33.055,
+      "content": "clean"
+     },
+     {
+      "begin": 33.235,
+      "end": 33.637,
+      "content": "every"
+     },
+     {
+      "begin": 33.797,
+      "end": 34.62,
+      "content": "spot."
+     }
+    ],
+    "align_score": 0.811
+   },
+   {
+    "begin": 35.942,
+    "end": 38.46,
+    "content": "Steam it with that hydro smoke like hydroponics",
+    "confidence": 0.5,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 35.942,
+      "end": 36.204,
+      "content": "Steam"
+     },
+     {
+      "begin": 36.284,
+      "end": 36.345,
+      "content": "it"
+     },
+     {
+      "begin": 36.446,
+      "end": 36.647,
+      "content": "with"
+     },
+     {
+      "begin": 36.748,
+      "end": 36.909,
+      "content": "that"
+     },
+     {
+      "begin": 37.03,
+      "end": 37.493,
+      "content": "hydro"
+     },
+     {
+      "begin": 37.614,
+      "end": 37.755,
+      "content": "smoke"
+     },
+     {
+      "begin": 37.775,
+      "end": 37.916,
+      "content": "like"
+     },
+     {
+      "begin": 38.017,
+      "end": 38.46,
+      "content": "hydroponics"
+     }
+    ],
+    "align_score": 0.365
+   },
+   {
+    "begin": 42.7,
+    "end": 43.38,
+    "content": "Type of tip that we on",
+    "confidence": 0.623,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 42.7,
+      "end": 42.7,
+      "content": "Type"
+     },
+     {
+      "begin": 42.7,
+      "end": 42.7,
+      "content": "of"
+     },
+     {
+      "begin": 42.7,
+      "end": 42.92,
+      "content": "tip"
+     },
+     {
+      "begin": 42.92,
+      "end": 43.06,
+      "content": "that"
+     },
+     {
+      "begin": 43.06,
+      "end": 43.24,
+      "content": "we"
+     },
+     {
+      "begin": 43.24,
+      "end": 43.38,
+      "content": "on"
+     }
+    ],
+    "align_score": 0.118
+   },
+   {
+    "begin": 43.38,
+    "end": 46.817,
+    "content": "It’s all in the details details",
+    "confidence": 0.817,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 43.38,
+      "end": 43.521,
+      "content": "It’s"
+     },
+     {
+      "begin": 43.601,
+      "end": 43.682,
+      "content": "all"
+     },
+     {
+      "begin": 43.883,
+      "end": 44.003,
+      "content": "in"
+     },
+     {
+      "begin": 44.385,
+      "end": 44.868,
+      "content": "the"
+     },
+     {
+      "begin": 45.008,
+      "end": 45.933,
+      "content": "details"
+     },
+     {
+      "begin": 46.054,
+      "end": 46.817,
+      "content": "details"
+     }
+    ],
+    "align_score": 0.308
+   },
+   {
+    "begin": 47.606,
+    "end": 49.58,
+    "content": "I cleaned a car full of snakes, a car full of rats",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 47.606,
+      "end": 47.627,
+      "content": "I"
+     },
+     {
+      "begin": 47.727,
+      "end": 47.908,
+      "content": "cleaned"
+     },
+     {
+      "begin": 47.968,
+      "end": 47.988,
+      "content": "a"
+     },
+     {
+      "begin": 48.028,
+      "end": 48.189,
+      "content": "car"
+     },
+     {
+      "begin": 48.33,
+      "end": 48.47,
+      "content": "full"
+     },
+     {
+      "begin": 48.51,
+      "end": 48.551,
+      "content": "of"
+     },
+     {
+      "begin": 48.611,
+      "end": 48.932,
+      "content": "snakes,"
+     },
+     {
+      "begin": 49.153,
+      "end": 49.173,
+      "content": "a"
+     },
+     {
+      "begin": 49.234,
+      "end": 49.394,
+      "content": "car"
+     },
+     {
+      "begin": 49.535,
+      "end": 49.58,
+      "content": "full"
+     },
+     {
+      "begin": 49.58,
+      "end": 49.58,
+      "content": "of"
+     },
+     {
+      "begin": 49.58,
+      "end": 49.58,
+      "content": "rats"
+     }
+    ],
+    "align_score": 0.813
+   },
+   {
+    "begin": 49.58,
+    "end": 52.343,
+    "content": "One with toxic waste another had crabs",
+    "confidence": 0.788,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 49.58,
+      "end": 49.741,
+      "content": "One"
+     },
+     {
+      "begin": 49.842,
+      "end": 50.083,
+      "content": "with"
+     },
+     {
+      "begin": 50.244,
+      "end": 50.747,
+      "content": "toxic"
+     },
+     {
+      "begin": 51.028,
+      "end": 51.25,
+      "content": "waste"
+     },
+     {
+      "begin": 51.551,
+      "end": 51.853,
+      "content": "another"
+     },
+     {
+      "begin": 51.934,
+      "end": 52.094,
+      "content": "had"
+     },
+     {
+      "begin": 52.215,
+      "end": 52.343,
+      "content": "crabs"
+     }
+    ],
+    "align_score": 0.574
+   },
+   {
+    "begin": 52.343,
+    "end": 54.421,
+    "content": "A car with no plates whose owner wore a mask",
+    "confidence": 0.517,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 52.343,
+      "end": 52.363,
+      "content": "A"
+     },
+     {
+      "begin": 52.806,
+      "end": 52.967,
+      "content": "car"
+     },
+     {
+      "begin": 53.027,
+      "end": 53.128,
+      "content": "with"
+     },
+     {
+      "begin": 53.168,
+      "end": 53.248,
+      "content": "no"
+     },
+     {
+      "begin": 53.41,
+      "end": 53.671,
+      "content": "plates"
+     },
+     {
+      "begin": 53.731,
+      "end": 53.973,
+      "content": "whose"
+     },
+     {
+      "begin": 54.094,
+      "end": 54.295,
+      "content": "owner"
+     },
+     {
+      "begin": 54.355,
+      "end": 54.421,
+      "content": "wore"
+     },
+     {
+      "begin": 54.421,
+      "end": 54.421,
+      "content": "a"
+     },
+     {
+      "begin": 54.421,
+      "end": 54.421,
+      "content": "mask"
+     }
+    ],
+    "align_score": 0.574
+   },
+   {
+    "begin": 54.421,
+    "end": 57.256,
+    "content": "Even cleaned a Cadillac with a body in back",
+    "confidence": 0.841,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 54.421,
+      "end": 54.783,
+      "content": "Even"
+     },
+     {
+      "begin": 55.185,
+      "end": 55.386,
+      "content": "cleaned"
+     },
+     {
+      "begin": 55.447,
+      "end": 55.467,
+      "content": "a"
+     },
+     {
+      "begin": 55.507,
+      "end": 55.969,
+      "content": "Cadillac"
+     },
+     {
+      "begin": 56.13,
+      "end": 56.271,
+      "content": "with"
+     },
+     {
+      "begin": 56.331,
+      "end": 56.351,
+      "content": "a"
+     },
+     {
+      "begin": 56.412,
+      "end": 56.713,
+      "content": "body"
+     },
+     {
+      "begin": 56.794,
+      "end": 56.834,
+      "content": "in"
+     },
+     {
+      "begin": 57.035,
+      "end": 57.256,
+      "content": "back"
+     }
+    ],
+    "align_score": 0.636
+   },
+   {
+    "begin": 57.605,
+    "end": 59.221,
+    "content": "Solving any problem with deposits send the cash",
+    "confidence": 0.745,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 57.605,
+      "end": 57.947,
+      "content": "Solving"
+     },
+     {
+      "begin": 58.027,
+      "end": 58.148,
+      "content": "any"
+     },
+     {
+      "begin": 58.269,
+      "end": 58.49,
+      "content": "problem"
+     },
+     {
+      "begin": 58.53,
+      "end": 58.651,
+      "content": "with"
+     },
+     {
+      "begin": 58.691,
+      "end": 59.113,
+      "content": "deposits"
+     },
+     {
+      "begin": 59.133,
+      "end": 59.221,
+      "content": "send"
+     },
+     {
+      "begin": 59.221,
+      "end": 59.221,
+      "content": "the"
+     },
+     {
+      "begin": 59.221,
+      "end": 59.221,
+      "content": "cash"
+     }
+    ],
+    "align_score": 0.45
+   },
+   {
+    "begin": 59.221,
+    "end": 62.304,
+    "content": "I’ll be there so fast give your mom a heart attack",
+    "confidence": 0.909,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 59.221,
+      "end": 59.603,
+      "content": "I’ll"
+     },
+     {
+      "begin": 60.005,
+      "end": 60.085,
+      "content": "be"
+     },
+     {
+      "begin": 60.186,
+      "end": 60.367,
+      "content": "there"
+     },
+     {
+      "begin": 60.407,
+      "end": 60.508,
+      "content": "so"
+     },
+     {
+      "begin": 60.629,
+      "end": 60.87,
+      "content": "fast"
+     },
+     {
+      "begin": 60.93,
+      "end": 61.031,
+      "content": "give"
+     },
+     {
+      "begin": 61.071,
+      "end": 61.192,
+      "content": "your"
+     },
+     {
+      "begin": 61.252,
+      "end": 61.373,
+      "content": "mom"
+     },
+     {
+      "begin": 61.453,
+      "end": 61.473,
+      "content": "a"
+     },
+     {
+      "begin": 61.554,
+      "end": 61.715,
+      "content": "heart"
+     },
+     {
+      "begin": 61.956,
+      "end": 62.304,
+      "content": "attack"
+     }
+    ],
+    "align_score": 0.64
+   },
+   {
+    "begin": 62.304,
+    "end": 64.342,
+    "content": "I got the dopest ads, and not to boast and brag but",
+    "confidence": 0.759,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 62.304,
+      "end": 62.325,
+      "content": "I"
+     },
+     {
+      "begin": 62.405,
+      "end": 62.546,
+      "content": "got"
+     },
+     {
+      "begin": 62.586,
+      "end": 62.646,
+      "content": "the"
+     },
+     {
+      "begin": 62.686,
+      "end": 62.988,
+      "content": "dopest"
+     },
+     {
+      "begin": 63.109,
+      "end": 63.269,
+      "content": "ads,"
+     },
+     {
+      "begin": 63.491,
+      "end": 63.551,
+      "content": "and"
+     },
+     {
+      "begin": 63.611,
+      "end": 63.732,
+      "content": "not"
+     },
+     {
+      "begin": 63.772,
+      "end": 63.832,
+      "content": "to"
+     },
+     {
+      "begin": 63.873,
+      "end": 64.054,
+      "content": "boast"
+     },
+     {
+      "begin": 64.094,
+      "end": 64.154,
+      "content": "and"
+     },
+     {
+      "begin": 64.214,
+      "end": 64.342,
+      "content": "brag"
+     },
+     {
+      "begin": 64.342,
+      "end": 64.342,
+      "content": "but"
+     }
+    ],
+    "align_score": 0.706
+   },
+   {
+    "begin": 64.342,
+    "end": 66.361,
+    "content": "Ask mr miyagi I taught him how wax",
+    "confidence": 0.445,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "saw",
+    "words": [
+     {
+      "begin": 64.342,
+      "end": 64.826,
+      "content": "Ask"
+     },
+     {
+      "begin": 64.967,
+      "end": 65.209,
+      "content": "mr"
+     },
+     {
+      "begin": 65.269,
+      "end": 65.632,
+      "content": "miyagi"
+     },
+     {
+      "begin": 65.693,
+      "end": 65.713,
+      "content": "I"
+     },
+     {
+      "begin": 65.773,
+      "end": 65.995,
+      "content": "taught"
+     },
+     {
+      "begin": 66.056,
+      "end": 66.156,
+      "content": "him"
+     },
+     {
+      "begin": 66.217,
+      "end": 66.277,
+      "content": "how"
+     },
+     {
+      "begin": 66.298,
+      "end": 66.361,
+      "content": "wax"
+     }
+    ],
+    "align_score": 0.381
+   },
+   {
+    "begin": 66.361,
+    "end": 67.861,
+    "content": "I got a dealership it’s retail",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 66.361,
+      "end": 66.381,
+      "content": "I"
+     },
+     {
+      "begin": 66.986,
+      "end": 67.087,
+      "content": "got"
+     },
+     {
+      "begin": 67.167,
+      "end": 67.187,
+      "content": "a"
+     },
+     {
+      "begin": 67.248,
+      "end": 67.671,
+      "content": "dealership"
+     },
+     {
+      "begin": 67.731,
+      "end": 67.812,
+      "content": "it’s"
+     },
+     {
+      "begin": 67.861,
+      "end": 67.861,
+      "content": "retail"
+     }
+    ],
+    "align_score": 0.571
+   },
+   {
+    "begin": 67.861,
+    "end": 69.381,
+    "content": "Give me a call if you need a whip or detail",
+    "confidence": 0.792,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 67.861,
+      "end": 68.284,
+      "content": "Give"
+     },
+     {
+      "begin": 68.707,
+      "end": 68.768,
+      "content": "me"
+     },
+     {
+      "begin": 68.848,
+      "end": 68.869,
+      "content": "a"
+     },
+     {
+      "begin": 69.01,
+      "end": 69.312,
+      "content": "call"
+     },
+     {
+      "begin": 69.381,
+      "end": 69.381,
+      "content": "if"
+     },
+     {
+      "begin": 69.381,
+      "end": 69.381,
+      "content": "you"
+     },
+     {
+      "begin": 69.381,
+      "end": 69.381,
+      "content": "need"
+     },
+     {
+      "begin": 69.381,
+      "end": 69.381,
+      "content": "a"
+     },
+     {
+      "begin": 69.381,
+      "end": 69.381,
+      "content": "whip"
+     },
+     {
+      "begin": 69.381,
+      "end": 69.381,
+      "content": "or"
+     },
+     {
+      "begin": 69.381,
+      "end": 69.381,
+      "content": "detail"
+     }
+    ],
+    "align_score": 0.562
+   },
+   {
+    "begin": 69.381,
+    "end": 73.378,
+    "content": "to whip a detail yeah send me the details",
+    "confidence": 0.829,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 69.381,
+      "end": 69.522,
+      "content": "to"
+     },
+     {
+      "begin": 69.863,
+      "end": 70.024,
+      "content": "whip"
+     },
+     {
+      "begin": 70.104,
+      "end": 70.124,
+      "content": "a"
+     },
+     {
+      "begin": 70.225,
+      "end": 70.787,
+      "content": "detail"
+     },
+     {
+      "begin": 71.088,
+      "end": 71.852,
+      "content": "yeah"
+     },
+     {
+      "begin": 72.173,
+      "end": 72.313,
+      "content": "send"
+     },
+     {
+      "begin": 72.354,
+      "end": 72.394,
+      "content": "me"
+     },
+     {
+      "begin": 72.474,
+      "end": 72.534,
+      "content": "the"
+     },
+     {
+      "begin": 72.635,
+      "end": 73.378,
+      "content": "details"
+     }
+    ],
+    "added": true,
+    "align_score": 0.564
+   },
+   {
+    "begin": 73.812,
+    "end": 73.861,
+    "content": "whip",
+    "confidence": 0.656,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 73.812,
+      "end": 73.861,
+      "content": "whip"
+     }
+    ],
+    "added": true,
+    "align_score": 0.804
+   },
+   {
+    "begin": 73.861,
+    "end": 76.717,
+    "content": "It’s all in the details details",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 73.861,
+      "end": 74.424,
+      "content": "It’s"
+     },
+     {
+      "begin": 74.565,
+      "end": 74.665,
+      "content": "all"
+     },
+     {
+      "begin": 74.766,
+      "end": 74.806,
+      "content": "in"
+     },
+     {
+      "begin": 74.867,
+      "end": 74.927,
+      "content": "the"
+     },
+     {
+      "begin": 75.027,
+      "end": 75.892,
+      "content": "details"
+     },
+     {
+      "begin": 76.013,
+      "end": 76.717,
+      "content": "details"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.717
+   },
+   {
+    "begin": 77.447,
+    "end": 79.577,
+    "content": "retail give me your If you need to",
+    "confidence": 0.734,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 77.447,
+      "end": 77.989,
+      "content": "retail"
+     },
+     {
+      "begin": 78.15,
+      "end": 78.351,
+      "content": "give"
+     },
+     {
+      "begin": 78.411,
+      "end": 78.492,
+      "content": "me"
+     },
+     {
+      "begin": 78.612,
+      "end": 78.874,
+      "content": "your"
+     },
+     {
+      "begin": 78.974,
+      "end": 79.015,
+      "content": "If"
+     },
+     {
+      "begin": 79.075,
+      "end": 79.155,
+      "content": "you"
+     },
+     {
+      "begin": 79.216,
+      "end": 79.356,
+      "content": "need"
+     },
+     {
+      "begin": 79.497,
+      "end": 79.577,
+      "content": "to"
+     }
+    ],
+    "added": true,
+    "align_score": 0.532
+   },
+   {
+    "begin": 81.769,
+    "end": 82.876,
+    "content": "Send me the details.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 81.769,
+      "end": 81.93,
+      "content": "Send"
+     },
+     {
+      "begin": 81.95,
+      "end": 82.01,
+      "content": "me"
+     },
+     {
+      "begin": 82.071,
+      "end": 82.131,
+      "content": "the"
+     },
+     {
+      "begin": 82.252,
+      "end": 82.876,
+      "content": "details."
+     }
+    ],
+    "align_score": 0.754
+   },
+   {
+    "begin": 83.365,
+    "end": 85.536,
+    "content": "Whip equipped it’s all in the details",
+    "confidence": 0.857,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 83.365,
+      "end": 83.486,
+      "content": "Whip"
+     },
+     {
+      "begin": 83.566,
+      "end": 83.848,
+      "content": "equipped"
+     },
+     {
+      "begin": 83.868,
+      "end": 83.989,
+      "content": "it’s"
+     },
+     {
+      "begin": 84.169,
+      "end": 84.29,
+      "content": "all"
+     },
+     {
+      "begin": 84.391,
+      "end": 84.431,
+      "content": "in"
+     },
+     {
+      "begin": 84.471,
+      "end": 84.531,
+      "content": "the"
+     },
+     {
+      "begin": 84.632,
+      "end": 85.536,
+      "content": "details"
+     }
+    ],
+    "align_score": 0.5
+   },
+   {
+    "begin": 86.724,
+    "end": 88.52,
+    "content": "Mobile mogul hit my phone or social",
+    "confidence": 0.857,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 86.724,
+      "end": 87.206,
+      "content": "Mobile"
+     },
+     {
+      "begin": 87.267,
+      "end": 87.609,
+      "content": "mogul"
+     },
+     {
+      "begin": 87.729,
+      "end": 87.89,
+      "content": "hit"
+     },
+     {
+      "begin": 87.971,
+      "end": 88.071,
+      "content": "my"
+     },
+     {
+      "begin": 88.192,
+      "end": 88.433,
+      "content": "phone"
+     },
+     {
+      "begin": 88.514,
+      "end": 88.52,
+      "content": "or"
+     },
+     {
+      "begin": 88.52,
+      "end": 88.52,
+      "content": "social"
+     }
+    ],
+    "align_score": 0.642
+   },
+   {
+    "begin": 88.52,
+    "end": 91.262,
+    "content": "Wanna know the biz? For the low I’ll coach you",
+    "confidence": 0.843,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 88.52,
+      "end": 89.445,
+      "content": "Wanna"
+     },
+     {
+      "begin": 89.566,
+      "end": 89.767,
+      "content": "know"
+     },
+     {
+      "begin": 89.807,
+      "end": 89.908,
+      "content": "the"
+     },
+     {
+      "begin": 90.049,
+      "end": 90.29,
+      "content": "biz?"
+     },
+     {
+      "begin": 90.391,
+      "end": 90.491,
+      "content": "For"
+     },
+     {
+      "begin": 90.511,
+      "end": 90.592,
+      "content": "the"
+     },
+     {
+      "begin": 90.672,
+      "end": 90.793,
+      "content": "low"
+     },
+     {
+      "begin": 90.934,
+      "end": 91.034,
+      "content": "I’ll"
+     },
+     {
+      "begin": 91.094,
+      "end": 91.262,
+      "content": "coach"
+     },
+     {
+      "begin": 91.262,
+      "end": 91.262,
+      "content": "you"
+     }
+    ],
+    "align_score": 0.496
+   },
+   {
+    "begin": 91.262,
+    "end": 94.105,
+    "content": "Show the whole approach uplift the culture",
+    "confidence": 0.949,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 91.262,
+      "end": 91.483,
+      "content": "Show"
+     },
+     {
+      "begin": 91.604,
+      "end": 91.745,
+      "content": "the"
+     },
+     {
+      "begin": 91.926,
+      "end": 92.187,
+      "content": "whole"
+     },
+     {
+      "begin": 92.348,
+      "end": 92.73,
+      "content": "approach"
+     },
+     {
+      "begin": 92.891,
+      "end": 93.213,
+      "content": "uplift"
+     },
+     {
+      "begin": 93.294,
+      "end": 93.354,
+      "content": "the"
+     },
+     {
+      "begin": 93.455,
+      "end": 94.105,
+      "content": "culture"
+     }
+    ],
+    "align_score": 0.518
+   },
+   {
+    "begin": 94.105,
+    "end": 95.942,
+    "content": "Even All the if you know you know stuff.",
+    "confidence": 0.778,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 94.105,
+      "end": 94.286,
+      "content": "Even"
+     },
+     {
+      "begin": 94.527,
+      "end": 94.648,
+      "content": "All"
+     },
+     {
+      "begin": 94.688,
+      "end": 94.749,
+      "content": "the"
+     },
+     {
+      "begin": 94.95,
+      "end": 94.99,
+      "content": "if"
+     },
+     {
+      "begin": 95.131,
+      "end": 95.251,
+      "content": "you"
+     },
+     {
+      "begin": 95.412,
+      "end": 95.553,
+      "content": "know"
+     },
+     {
+      "begin": 95.633,
+      "end": 95.714,
+      "content": "you"
+     },
+     {
+      "begin": 95.834,
+      "end": 95.942,
+      "content": "know"
+     },
+     {
+      "begin": 95.942,
+      "end": 95.942,
+      "content": "stuff."
+     }
+    ],
+    "align_score": 0.656
+   },
+   {
+    "begin": 95.942,
+    "end": 97.675,
+    "content": "If you knew you’d know what.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 95.942,
+      "end": 96.244,
+      "content": "If"
+     },
+     {
+      "begin": 96.527,
+      "end": 96.647,
+      "content": "you"
+     },
+     {
+      "begin": 96.809,
+      "end": 96.93,
+      "content": "knew"
+     },
+     {
+      "begin": 97.051,
+      "end": 97.212,
+      "content": "you’d"
+     },
+     {
+      "begin": 97.313,
+      "end": 97.454,
+      "content": "know"
+     },
+     {
+      "begin": 97.554,
+      "end": 97.675,
+      "content": "what."
+     }
+    ],
+    "align_score": 0.753
+   },
+   {
+    "begin": 97.964,
+    "end": 100.056,
+    "content": "If you don’t just show up get this glow up",
+    "confidence": 0.9,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 97.964,
+      "end": 98.004,
+      "content": "If"
+     },
+     {
+      "begin": 98.085,
+      "end": 98.185,
+      "content": "you"
+     },
+     {
+      "begin": 98.326,
+      "end": 98.507,
+      "content": "don’t"
+     },
+     {
+      "begin": 98.588,
+      "end": 98.749,
+      "content": "just"
+     },
+     {
+      "begin": 98.809,
+      "end": 98.99,
+      "content": "show"
+     },
+     {
+      "begin": 99.131,
+      "end": 99.171,
+      "content": "up"
+     },
+     {
+      "begin": 99.251,
+      "end": 99.352,
+      "content": "get"
+     },
+     {
+      "begin": 99.412,
+      "end": 99.593,
+      "content": "this"
+     },
+     {
+      "begin": 99.674,
+      "end": 99.875,
+      "content": "glow"
+     },
+     {
+      "begin": 99.996,
+      "end": 100.056,
+      "content": "up"
+     }
+    ],
+    "align_score": 0.704
+   },
+   {
+    "begin": 100.346,
+    "end": 101.981,
+    "content": "Money glitch your algorithm",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 100.346,
+      "end": 100.587,
+      "content": "Money"
+     },
+     {
+      "begin": 100.708,
+      "end": 100.97,
+      "content": "glitch"
+     },
+     {
+      "begin": 101.01,
+      "end": 101.131,
+      "content": "your"
+     },
+     {
+      "begin": 101.332,
+      "end": 101.981,
+      "content": "algorithm"
+     }
+    ],
+    "align_score": 0.604
+   },
+   {
+    "begin": 101.981,
+    "end": 104.817,
+    "content": "Take 3 months 1 quarter hit the quota",
+    "confidence": 0.5,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 101.981,
+      "end": 102.383,
+      "content": "Take"
+     },
+     {
+      "begin": 102.906,
+      "end": 103.047,
+      "content": "3"
+     },
+     {
+      "begin": 103.127,
+      "end": 103.328,
+      "content": "months"
+     },
+     {
+      "begin": 103.429,
+      "end": 103.509,
+      "content": "1"
+     },
+     {
+      "begin": 103.57,
+      "end": 103.952,
+      "content": "quarter"
+     },
+     {
+      "begin": 104.032,
+      "end": 104.173,
+      "content": "hit"
+     },
+     {
+      "begin": 104.233,
+      "end": 104.334,
+      "content": "the"
+     },
+     {
+      "begin": 104.455,
+      "end": 104.817,
+      "content": "quota"
+     }
+    ],
+    "align_score": 0.482
+   },
+   {
+    "begin": 105.125,
+    "end": 107.198,
+    "content": "I’m so dope with this I’ll overdose ya",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 105.125,
+      "end": 105.206,
+      "content": "I’m"
+     },
+     {
+      "begin": 105.286,
+      "end": 105.387,
+      "content": "so"
+     },
+     {
+      "begin": 105.508,
+      "end": 105.689,
+      "content": "dope"
+     },
+     {
+      "begin": 105.789,
+      "end": 105.93,
+      "content": "with"
+     },
+     {
+      "begin": 105.991,
+      "end": 106.152,
+      "content": "this"
+     },
+     {
+      "begin": 106.313,
+      "end": 106.413,
+      "content": "I’ll"
+     },
+     {
+      "begin": 106.534,
+      "end": 107.097,
+      "content": "overdose"
+     },
+     {
+      "begin": 107.138,
+      "end": 107.198,
+      "content": "ya"
+     }
+    ],
+    "align_score": 0.562
+   },
+   {
+    "begin": 107.485,
+    "end": 109.885,
+    "content": "I just flip these whips no brick no soda",
+    "confidence": 0.867,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 107.485,
+      "end": 107.505,
+      "content": "I"
+     },
+     {
+      "begin": 107.625,
+      "end": 107.786,
+      "content": "just"
+     },
+     {
+      "begin": 107.867,
+      "end": 108.088,
+      "content": "flip"
+     },
+     {
+      "begin": 108.169,
+      "end": 108.309,
+      "content": "these"
+     },
+     {
+      "begin": 108.37,
+      "end": 108.571,
+      "content": "whips"
+     },
+     {
+      "begin": 108.631,
+      "end": 108.691,
+      "content": "no"
+     },
+     {
+      "begin": 108.852,
+      "end": 109.013,
+      "content": "brick"
+     },
+     {
+      "begin": 109.074,
+      "end": 109.154,
+      "content": "no"
+     },
+     {
+      "begin": 109.295,
+      "end": 109.885,
+      "content": "soda"
+     }
+    ],
+    "align_score": 0.751
+   },
+   {
+    "begin": 109.885,
+    "end": 111.561,
+    "content": "Got so many whips I park unconscionably",
+    "confidence": 0.918,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 109.885,
+      "end": 110.046,
+      "content": "Got"
+     },
+     {
+      "begin": 110.106,
+      "end": 110.187,
+      "content": "so"
+     },
+     {
+      "begin": 110.327,
+      "end": 110.629,
+      "content": "many"
+     },
+     {
+      "begin": 110.73,
+      "end": 110.951,
+      "content": "whips"
+     },
+     {
+      "begin": 111.051,
+      "end": 111.071,
+      "content": "I"
+     },
+     {
+      "begin": 111.192,
+      "end": 111.353,
+      "content": "park"
+     },
+     {
+      "begin": 111.454,
+      "end": 111.561,
+      "content": "unconscionably"
+     }
+    ],
+    "align_score": 0.748
+   },
+   {
+    "begin": 111.561,
+    "end": 114.021,
+    "content": "Do it by the book you touch my property",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 111.561,
+      "end": 111.742,
+      "content": "Do"
+     },
+     {
+      "begin": 112.486,
+      "end": 112.546,
+      "content": "it"
+     },
+     {
+      "begin": 112.687,
+      "end": 112.828,
+      "content": "by"
+     },
+     {
+      "begin": 112.928,
+      "end": 112.989,
+      "content": "the"
+     },
+     {
+      "begin": 113.13,
+      "end": 113.29,
+      "content": "book"
+     },
+     {
+      "begin": 113.351,
+      "end": 113.451,
+      "content": "you"
+     },
+     {
+      "begin": 113.572,
+      "end": 113.733,
+      "content": "touch"
+     },
+     {
+      "begin": 113.793,
+      "end": 113.894,
+      "content": "my"
+     },
+     {
+      "begin": 114.021,
+      "end": 114.021,
+      "content": "property"
+     }
+    ],
+    "align_score": 0.602
+   },
+   {
+    "begin": 114.021,
+    "end": 116.784,
+    "content": "Done improperly big catastrophe",
+    "confidence": 0.822,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 114.021,
+      "end": 114.283,
+      "content": "Done"
+     },
+     {
+      "begin": 114.866,
+      "end": 115.49,
+      "content": "improperly"
+     },
+     {
+      "begin": 115.992,
+      "end": 116.153,
+      "content": "big"
+     },
+     {
+      "begin": 116.234,
+      "end": 116.784,
+      "content": "catastrophe"
+     }
+    ],
+    "align_score": 0.45
+   },
+   {
+    "begin": 116.784,
+    "end": 119.217,
+    "content": "You just made a hit list internationally",
+    "confidence": 0.839,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 116.784,
+      "end": 117.166,
+      "content": "You"
+     },
+     {
+      "begin": 117.306,
+      "end": 117.427,
+      "content": "just"
+     },
+     {
+      "begin": 117.528,
+      "end": 117.729,
+      "content": "made"
+     },
+     {
+      "begin": 117.809,
+      "end": 117.829,
+      "content": "a"
+     },
+     {
+      "begin": 117.91,
+      "end": 118.091,
+      "content": "hit"
+     },
+     {
+      "begin": 118.151,
+      "end": 118.292,
+      "content": "list"
+     },
+     {
+      "begin": 118.433,
+      "end": 119.217,
+      "content": "internationally"
+     }
+    ],
+    "align_score": 0.649
+   },
+   {
+    "begin": 119.445,
+    "end": 121.576,
+    "content": "Fuck Jim’s auto you a bitch like Anthony’s",
+    "confidence": 0.725,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 119.445,
+      "end": 119.605,
+      "content": "Fuck"
+     },
+     {
+      "begin": 119.686,
+      "end": 119.847,
+      "content": "Jim’s"
+     },
+     {
+      "begin": 119.987,
+      "end": 120.188,
+      "content": "auto"
+     },
+     {
+      "begin": 120.309,
+      "end": 120.41,
+      "content": "you"
+     },
+     {
+      "begin": 120.611,
+      "end": 120.631,
+      "content": "a"
+     },
+     {
+      "begin": 120.772,
+      "end": 120.952,
+      "content": "bitch"
+     },
+     {
+      "begin": 121.013,
+      "end": 121.154,
+      "content": "like"
+     },
+     {
+      "begin": 121.274,
+      "end": 121.576,
+      "content": "Anthony’s"
+     }
+    ],
+    "align_score": 0.545
+   },
+   {
+    "begin": 121.804,
+    "end": 123.481,
+    "content": "Paper blitzed him drained his shit financially",
+    "confidence": 0.638,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 121.804,
+      "end": 122.065,
+      "content": "Paper"
+     },
+     {
+      "begin": 122.226,
+      "end": 122.468,
+      "content": "blitzed"
+     },
+     {
+      "begin": 122.508,
+      "end": 122.588,
+      "content": "him"
+     },
+     {
+      "begin": 122.669,
+      "end": 122.93,
+      "content": "drained"
+     },
+     {
+      "begin": 122.971,
+      "end": 123.031,
+      "content": "his"
+     },
+     {
+      "begin": 123.152,
+      "end": 123.333,
+      "content": "shit"
+     },
+     {
+      "begin": 123.393,
+      "end": 123.481,
+      "content": "financially"
+     }
+    ],
+    "align_score": 0.596
+   },
+   {
+    "begin": 123.481,
+    "end": 127.06,
+    "content": "Yeah, cuz they ain't know But now they know,",
+    "confidence": 0.748,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 123.481,
+      "end": 123.842,
+      "content": "Yeah,"
+     },
+     {
+      "begin": 124.023,
+      "end": 124.344,
+      "content": "cuz"
+     },
+     {
+      "begin": 124.525,
+      "end": 124.947,
+      "content": "they"
+     },
+     {
+      "begin": 125.329,
+      "end": 125.69,
+      "content": "ain't"
+     },
+     {
+      "begin": 125.71,
+      "end": 125.851,
+      "content": "know"
+     },
+     {
+      "begin": 126.815,
+      "end": 127.06,
+      "content": "But"
+     },
+     {
+      "begin": 127.06,
+      "end": 127.06,
+      "content": "now"
+     },
+     {
+      "begin": 127.06,
+      "end": 127.06,
+      "content": "they"
+     },
+     {
+      "begin": 127.06,
+      "end": 127.06,
+      "content": "know,"
+     }
+    ],
+    "added": true,
+    "align_score": 0.327
+   },
+   {
+    "begin": 127.06,
+    "end": 129.596,
+    "content": "they ain't wanna know I had to put them",
+    "confidence": 0.9,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 127.06,
+      "end": 127.161,
+      "content": "they"
+     },
+     {
+      "begin": 127.221,
+      "end": 127.564,
+      "content": "ain't"
+     },
+     {
+      "begin": 127.845,
+      "end": 128.087,
+      "content": "wanna"
+     },
+     {
+      "begin": 128.147,
+      "end": 128.268,
+      "content": "know"
+     },
+     {
+      "begin": 128.952,
+      "end": 128.972,
+      "content": "I"
+     },
+     {
+      "begin": 129.073,
+      "end": 129.174,
+      "content": "had"
+     },
+     {
+      "begin": 129.234,
+      "end": 129.294,
+      "content": "to"
+     },
+     {
+      "begin": 129.355,
+      "end": 129.475,
+      "content": "put"
+     },
+     {
+      "begin": 129.516,
+      "end": 129.596,
+      "content": "them"
+     }
+    ],
+    "added": true,
+    "align_score": 0.573
+   },
+   {
+    "begin": 129.664,
+    "end": 131.984,
+    "content": "on notice, I caught them though Caught they ass",
+    "confidence": 0.904,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 129.664,
+      "end": 129.724,
+      "content": "on"
+     },
+     {
+      "begin": 129.784,
+      "end": 130.006,
+      "content": "notice,"
+     },
+     {
+      "begin": 130.106,
+      "end": 130.126,
+      "content": "I"
+     },
+     {
+      "begin": 130.207,
+      "end": 130.408,
+      "content": "caught"
+     },
+     {
+      "begin": 130.428,
+      "end": 130.508,
+      "content": "them"
+     },
+     {
+      "begin": 130.529,
+      "end": 130.689,
+      "content": "though"
+     },
+     {
+      "begin": 131.474,
+      "end": 131.635,
+      "content": "Caught"
+     },
+     {
+      "begin": 131.655,
+      "end": 131.755,
+      "content": "they"
+     },
+     {
+      "begin": 131.856,
+      "end": 131.984,
+      "content": "ass"
+     }
+    ],
+    "added": true,
+    "align_score": 0.625
+   },
+   {
+    "begin": 131.984,
+    "end": 134.236,
+    "content": "slippin' with the constable, shout out to John Paio",
+    "confidence": 0.803,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 131.984,
+      "end": 132.305,
+      "content": "slippin'"
+     },
+     {
+      "begin": 132.346,
+      "end": 132.466,
+      "content": "with"
+     },
+     {
+      "begin": 132.506,
+      "end": 132.567,
+      "content": "the"
+     },
+     {
+      "begin": 132.627,
+      "end": 133.09,
+      "content": "constable,"
+     },
+     {
+      "begin": 133.13,
+      "end": 133.311,
+      "content": "shout"
+     },
+     {
+      "begin": 133.331,
+      "end": 133.391,
+      "content": "out"
+     },
+     {
+      "begin": 133.452,
+      "end": 133.512,
+      "content": "to"
+     },
+     {
+      "begin": 133.572,
+      "end": 133.753,
+      "content": "John"
+     },
+     {
+      "begin": 133.874,
+      "end": 134.236,
+      "content": "Paio"
+     }
+    ],
+    "added": true,
+    "align_score": 0.599
+   },
+   {
+    "begin": 136.967,
+    "end": 138.484,
+    "content": "They had the police in their pockets, so I",
+    "confidence": 0.873,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 136.967,
+      "end": 137.047,
+      "content": "They"
+     },
+     {
+      "begin": 137.088,
+      "end": 137.168,
+      "content": "had"
+     },
+     {
+      "begin": 137.188,
+      "end": 137.249,
+      "content": "the"
+     },
+     {
+      "begin": 137.289,
+      "end": 137.49,
+      "content": "police"
+     },
+     {
+      "begin": 137.55,
+      "end": 137.591,
+      "content": "in"
+     },
+     {
+      "begin": 137.611,
+      "end": 137.711,
+      "content": "their"
+     },
+     {
+      "begin": 137.812,
+      "end": 138.355,
+      "content": "pockets,"
+     },
+     {
+      "begin": 138.484,
+      "end": 138.484,
+      "content": "so"
+     },
+     {
+      "begin": 138.484,
+      "end": 138.484,
+      "content": "I"
+     }
+    ],
+    "added": true,
+    "align_score": 0.621
+   },
+   {
+    "begin": 138.484,
+    "end": 139.36,
+    "content": "had to go to the constable and the attorney",
+    "confidence": 0.881,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 138.484,
+      "end": 138.565,
+      "content": "had"
+     },
+     {
+      "begin": 138.605,
+      "end": 138.666,
+      "content": "to"
+     },
+     {
+      "begin": 138.686,
+      "end": 138.767,
+      "content": "go"
+     },
+     {
+      "begin": 138.807,
+      "end": 138.847,
+      "content": "to"
+     },
+     {
+      "begin": 138.867,
+      "end": 138.928,
+      "content": "the"
+     },
+     {
+      "begin": 139.008,
+      "end": 139.36,
+      "content": "constable"
+     },
+     {
+      "begin": 139.36,
+      "end": 139.36,
+      "content": "and"
+     },
+     {
+      "begin": 139.36,
+      "end": 139.36,
+      "content": "the"
+     },
+     {
+      "begin": 139.36,
+      "end": 139.36,
+      "content": "attorney"
+     }
+    ],
+    "added": true,
+    "align_score": 0.567
+   },
+   {
+    "begin": 139.36,
+    "end": 141.717,
+    "content": "general. They got served twice,",
+    "confidence": 0.981,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 139.36,
+      "end": 139.964,
+      "content": "general."
+     },
+     {
+      "begin": 140.105,
+      "end": 140.468,
+      "content": "They"
+     },
+     {
+      "begin": 140.528,
+      "end": 140.649,
+      "content": "got"
+     },
+     {
+      "begin": 140.73,
+      "end": 140.971,
+      "content": "served"
+     },
+     {
+      "begin": 141.173,
+      "end": 141.717,
+      "content": "twice,"
+     }
+    ],
+    "added": true,
+    "align_score": 0.7
+   },
+   {
+    "begin": 142.224,
+    "end": 143.876,
+    "content": "and then three times from the state of Georgia.",
+    "confidence": 0.963,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 142.224,
+      "end": 142.285,
+      "content": "and"
+     },
+     {
+      "begin": 142.305,
+      "end": 142.385,
+      "content": "then"
+     },
+     {
+      "begin": 142.446,
+      "end": 142.647,
+      "content": "three"
+     },
+     {
+      "begin": 142.707,
+      "end": 142.909,
+      "content": "times"
+     },
+     {
+      "begin": 142.929,
+      "end": 143.03,
+      "content": "from"
+     },
+     {
+      "begin": 143.05,
+      "end": 143.11,
+      "content": "the"
+     },
+     {
+      "begin": 143.151,
+      "end": 143.332,
+      "content": "state"
+     },
+     {
+      "begin": 143.372,
+      "end": 143.412,
+      "content": "of"
+     },
+     {
+      "begin": 143.493,
+      "end": 143.876,
+      "content": "Georgia."
+     }
+    ],
+    "added": true,
+    "align_score": 0.593
+   },
+   {
+    "begin": 144.665,
+    "end": 145.263,
+    "content": "You luck at it and press that recall.",
+    "confidence": 0.758,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 144.665,
+      "end": 144.746,
+      "content": "You"
+     },
+     {
+      "begin": 144.867,
+      "end": 145.029,
+      "content": "luck"
+     },
+     {
+      "begin": 145.15,
+      "end": 145.19,
+      "content": "at"
+     },
+     {
+      "begin": 145.211,
+      "end": 145.251,
+      "content": "it"
+     },
+     {
+      "begin": 145.263,
+      "end": 145.263,
+      "content": "and"
+     },
+     {
+      "begin": 145.263,
+      "end": 145.263,
+      "content": "press"
+     },
+     {
+      "begin": 145.263,
+      "end": 145.263,
+      "content": "that"
+     },
+     {
+      "begin": 145.263,
+      "end": 145.263,
+      "content": "recall."
+     }
+    ],
+    "added": true,
+    "align_score": 0.478
+   },
+   {
+    "begin": 145.263,
+    "end": 146.073,
+    "content": "in San Rico.",
+    "confidence": 0.529,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 145.263,
+      "end": 145.304,
+      "content": "in"
+     },
+     {
+      "begin": 145.547,
+      "end": 145.729,
+      "content": "San"
+     },
+     {
+      "begin": 145.81,
+      "end": 146.073,
+      "content": "Rico."
+     }
+    ],
+    "added": true,
+    "align_score": 0.654
+   }
+  ]
+ }
+}

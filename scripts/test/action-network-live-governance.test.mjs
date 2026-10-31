@@ -55,10 +55,13 @@ test('A live Mission join preserves live first-touch through verified completion
 });
 
 test('Every current catalogue song is a first-class live discovery object', async () => {
-  const [sql, raw] = await Promise.all([
+  /* the original seed, plus the pending seed for the Whip Equipped tracks added 2026-10-31 */
+  const [base, whip, raw] = await Promise.all([
     read('supabase/migrations/20261003233747_action_network_live_governance_v1.sql'),
+    read('supabase/pending/20261031180100_whip_equipped_catalog_objects.sql'),
     read('data/albums.json')
   ]);
+  const sql = base + '\n' + whip;
   const albums = JSON.parse(raw).albums || [];
   let count = 0;
   for (const album of albums) {
@@ -68,7 +71,7 @@ test('Every current catalogue song is a first-class live discovery object', asyn
       assert.ok(sql.includes("'" + key.replaceAll("'", "''") + "'"), 'missing music catalog object ' + key);
     }
   }
-  assert.equal(count, 20);
+  assert.equal(count, 29);
   assert.match(sql, /music_object_id uuid references public\.music_catalog_objects/);
   assert.match(sql, /canonical_url text not null check\(canonical_url~'\^https:\/\/'\)/i);
 });

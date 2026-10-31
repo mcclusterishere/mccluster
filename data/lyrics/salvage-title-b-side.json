@@ -1,0 +1,1283 @@
+{
+ "duration_seconds": 89,
+ "language": "en",
+ "songTitle": "Salvage Title (B-Side)",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:28:51.176Z",
+  "confidence": 0.928,
+  "mismatched_lines": 0,
+  "sheet_lines": 26,
+  "heard_words": 193,
+  "ctc_aligned_lines": 26,
+  "timing": {
+   "align_seconds": 8.8,
+   "separate_seconds": 51.8,
+   "asr_seconds": 65.2,
+   "map_seconds": 0
+  }
+ },
+ "plain": "You came with a salvage title. I tried to rebuild you.\nThen I saw nothing I do can ever fulfill you.\nCould ever fulfill you…\nSo I gotta be real.\nYou came with a salvage title. I tried to rebuild you.\nThen I saw nothing I do could ever fulfill you.\nSo i gotta be real…\nYou gotta be real too.\n\nSo I gave you back to the streets where you came\nYeah that was me and you speeding in the lane\nBut there came a day…\nWhere I had nothing to spend and you had nothing to give\nSo I see the truth is I gotta keep it moving;\nOn to the next, new flip.\nSorry but I’m not sorry.\nYou for the streets, I garage things.\n\n…I tried to rebuild you.\nThen I saw nothing I do can ever fulfill you.\nCould ever fulfill you…\nSo I gotta be real.\nYou came with a salvage title. I tried to rebuild you.\nThen I saw nothing I do could ever fulfill you.\nSo i gotta be real…\nYou gotta be real too.\n\nHey, and you gotta be real too..\nBe real too…",
+ "timed": {
+  "line": [
+   {
+    "begin": 2.665,
+    "end": 5.697,
+    "content": "You came with a salvage title. I tried to rebuild you.",
+    "confidence": 0.951,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 2.665,
+      "end": 2.745,
+      "content": "You"
+     },
+     {
+      "begin": 2.846,
+      "end": 3.066,
+      "content": "came"
+     },
+     {
+      "begin": 3.127,
+      "end": 3.227,
+      "content": "with"
+     },
+     {
+      "begin": 3.287,
+      "end": 3.307,
+      "content": "a"
+     },
+     {
+      "begin": 3.388,
+      "end": 3.709,
+      "content": "salvage"
+     },
+     {
+      "begin": 3.789,
+      "end": 4.151,
+      "content": "title."
+     },
+     {
+      "begin": 4.392,
+      "end": 4.412,
+      "content": "I"
+     },
+     {
+      "begin": 4.492,
+      "end": 4.693,
+      "content": "tried"
+     },
+     {
+      "begin": 4.733,
+      "end": 4.794,
+      "content": "to"
+     },
+     {
+      "begin": 4.914,
+      "end": 5.577,
+      "content": "rebuild"
+     },
+     {
+      "begin": 5.617,
+      "end": 5.697,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.796
+   },
+   {
+    "begin": 5.763,
+    "end": 8.82,
+    "content": "Then I saw nothing I do can ever fulfill you.",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 5.763,
+      "end": 5.884,
+      "content": "Then"
+     },
+     {
+      "begin": 5.985,
+      "end": 6.005,
+      "content": "I"
+     },
+     {
+      "begin": 6.105,
+      "end": 6.226,
+      "content": "saw"
+     },
+     {
+      "begin": 6.326,
+      "end": 6.588,
+      "content": "nothing"
+     },
+     {
+      "begin": 6.769,
+      "end": 6.789,
+      "content": "I"
+     },
+     {
+      "begin": 6.849,
+      "end": 6.93,
+      "content": "do"
+     },
+     {
+      "begin": 7.211,
+      "end": 7.372,
+      "content": "can"
+     },
+     {
+      "begin": 7.513,
+      "end": 7.633,
+      "content": "ever"
+     },
+     {
+      "begin": 7.794,
+      "end": 8.438,
+      "content": "fulfill"
+     },
+     {
+      "begin": 8.759,
+      "end": 8.82,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.741
+   },
+   {
+    "begin": 10.068,
+    "end": 11.579,
+    "content": "Could ever fulfill you…",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 10.068,
+      "end": 10.269,
+      "content": "Could"
+     },
+     {
+      "begin": 10.35,
+      "end": 10.753,
+      "content": "ever"
+     },
+     {
+      "begin": 10.974,
+      "end": 11.458,
+      "content": "fulfill"
+     },
+     {
+      "begin": 11.518,
+      "end": 11.579,
+      "content": "you…"
+     }
+    ],
+    "align_score": 0.476
+   },
+   {
+    "begin": 12.769,
+    "end": 14.203,
+    "content": "So I gotta be real.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 12.769,
+      "end": 12.85,
+      "content": "So"
+     },
+     {
+      "begin": 13.031,
+      "end": 13.051,
+      "content": "I"
+     },
+     {
+      "begin": 13.151,
+      "end": 13.453,
+      "content": "gotta"
+     },
+     {
+      "begin": 13.533,
+      "end": 13.654,
+      "content": "be"
+     },
+     {
+      "begin": 13.895,
+      "end": 14.203,
+      "content": "real."
+     }
+    ],
+    "align_score": 0.75
+   },
+   {
+    "begin": 14.203,
+    "end": 16.72,
+    "content": "You came with a salvage title. I tried to rebuild you.",
+    "confidence": 0.99,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 14.203,
+      "end": 14.284,
+      "content": "You"
+     },
+     {
+      "begin": 14.384,
+      "end": 14.585,
+      "content": "came"
+     },
+     {
+      "begin": 14.645,
+      "end": 14.746,
+      "content": "with"
+     },
+     {
+      "begin": 14.806,
+      "end": 14.826,
+      "content": "a"
+     },
+     {
+      "begin": 14.906,
+      "end": 15.228,
+      "content": "salvage"
+     },
+     {
+      "begin": 15.308,
+      "end": 15.63,
+      "content": "title."
+     },
+     {
+      "begin": 15.891,
+      "end": 15.911,
+      "content": "I"
+     },
+     {
+      "begin": 16.012,
+      "end": 16.192,
+      "content": "tried"
+     },
+     {
+      "begin": 16.233,
+      "end": 16.293,
+      "content": "to"
+     },
+     {
+      "begin": 16.393,
+      "end": 16.72,
+      "content": "rebuild"
+     },
+     {
+      "begin": 16.72,
+      "end": 16.72,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.677
+   },
+   {
+    "begin": 16.72,
+    "end": 20.36,
+    "content": "Then I saw nothing I do could ever fulfill you.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 16.72,
+      "end": 17.383,
+      "content": "Then"
+     },
+     {
+      "begin": 17.483,
+      "end": 17.504,
+      "content": "I"
+     },
+     {
+      "begin": 17.604,
+      "end": 17.704,
+      "content": "saw"
+     },
+     {
+      "begin": 17.805,
+      "end": 18.106,
+      "content": "nothing"
+     },
+     {
+      "begin": 18.226,
+      "end": 18.247,
+      "content": "I"
+     },
+     {
+      "begin": 18.387,
+      "end": 18.467,
+      "content": "do"
+     },
+     {
+      "begin": 18.708,
+      "end": 18.909,
+      "content": "could"
+     },
+     {
+      "begin": 19.01,
+      "end": 19.19,
+      "content": "ever"
+     },
+     {
+      "begin": 19.271,
+      "end": 19.913,
+      "content": "fulfill"
+     },
+     {
+      "begin": 20.36,
+      "end": 20.36,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.451
+   },
+   {
+    "begin": 20.36,
+    "end": 22.681,
+    "content": "So i gotta be real…",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 20.36,
+      "end": 20.461,
+      "content": "So"
+     },
+     {
+      "begin": 21.668,
+      "end": 21.688,
+      "content": "i"
+     },
+     {
+      "begin": 21.769,
+      "end": 22.05,
+      "content": "gotta"
+     },
+     {
+      "begin": 22.151,
+      "end": 22.251,
+      "content": "be"
+     },
+     {
+      "begin": 22.533,
+      "end": 22.681,
+      "content": "real…"
+     }
+    ],
+    "align_score": 0.37
+   },
+   {
+    "begin": 22.681,
+    "end": 25.996,
+    "content": "You gotta be real too.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 22.681,
+      "end": 22.922,
+      "content": "You"
+     },
+     {
+      "begin": 24.69,
+      "end": 24.951,
+      "content": "gotta"
+     },
+     {
+      "begin": 25.052,
+      "end": 25.192,
+      "content": "be"
+     },
+     {
+      "begin": 25.413,
+      "end": 25.614,
+      "content": "real"
+     },
+     {
+      "begin": 25.715,
+      "end": 25.996,
+      "content": "too."
+     }
+    ],
+    "align_score": 0.562
+   },
+   {
+    "begin": 27.127,
+    "end": 29.077,
+    "content": "So I gave you back to the streets where you came",
+    "confidence": 0.947,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 27.127,
+      "end": 27.207,
+      "content": "So"
+     },
+     {
+      "begin": 27.288,
+      "end": 27.308,
+      "content": "I"
+     },
+     {
+      "begin": 27.368,
+      "end": 27.529,
+      "content": "gave"
+     },
+     {
+      "begin": 27.549,
+      "end": 27.609,
+      "content": "you"
+     },
+     {
+      "begin": 27.649,
+      "end": 27.77,
+      "content": "back"
+     },
+     {
+      "begin": 27.83,
+      "end": 27.871,
+      "content": "to"
+     },
+     {
+      "begin": 27.931,
+      "end": 28.011,
+      "content": "the"
+     },
+     {
+      "begin": 28.052,
+      "end": 28.253,
+      "content": "streets"
+     },
+     {
+      "begin": 28.293,
+      "end": 28.413,
+      "content": "where"
+     },
+     {
+      "begin": 28.454,
+      "end": 28.534,
+      "content": "you"
+     },
+     {
+      "begin": 28.574,
+      "end": 29.077,
+      "content": "came"
+     }
+    ],
+    "align_score": 0.769
+   },
+   {
+    "begin": 29.965,
+    "end": 32.327,
+    "content": "Yeah that was me and you speeding in the lane",
+    "confidence": 0.674,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 29.965,
+      "end": 30.166,
+      "content": "Yeah"
+     },
+     {
+      "begin": 30.186,
+      "end": 30.287,
+      "content": "that"
+     },
+     {
+      "begin": 30.347,
+      "end": 30.427,
+      "content": "was"
+     },
+     {
+      "begin": 30.528,
+      "end": 30.628,
+      "content": "me"
+     },
+     {
+      "begin": 30.649,
+      "end": 30.709,
+      "content": "and"
+     },
+     {
+      "begin": 30.729,
+      "end": 30.809,
+      "content": "you"
+     },
+     {
+      "begin": 30.91,
+      "end": 31.272,
+      "content": "speeding"
+     },
+     {
+      "begin": 31.574,
+      "end": 31.674,
+      "content": "in"
+     },
+     {
+      "begin": 31.775,
+      "end": 31.916,
+      "content": "the"
+     },
+     {
+      "begin": 32.327,
+      "end": 32.327,
+      "content": "lane"
+     }
+    ],
+    "align_score": 0.448
+   },
+   {
+    "begin": 32.327,
+    "end": 33.724,
+    "content": "But there came a day…",
+    "confidence": 0.964,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 32.327,
+      "end": 32.407,
+      "content": "But"
+     },
+     {
+      "begin": 32.488,
+      "end": 32.589,
+      "content": "there"
+     },
+     {
+      "begin": 32.609,
+      "end": 32.75,
+      "content": "came"
+     },
+     {
+      "begin": 33.073,
+      "end": 33.093,
+      "content": "a"
+     },
+     {
+      "begin": 33.724,
+      "end": 33.724,
+      "content": "day…"
+     }
+    ],
+    "align_score": 0.472
+   },
+   {
+    "begin": 33.724,
+    "end": 36.081,
+    "content": "Where I had nothing to spend and you had nothing to give",
+    "confidence": 0.997,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 33.724,
+      "end": 33.885,
+      "content": "Where"
+     },
+     {
+      "begin": 33.966,
+      "end": 34.006,
+      "content": "I"
+     },
+     {
+      "begin": 34.106,
+      "end": 34.207,
+      "content": "had"
+     },
+     {
+      "begin": 34.307,
+      "end": 34.608,
+      "content": "nothing"
+     },
+     {
+      "begin": 34.649,
+      "end": 34.749,
+      "content": "to"
+     },
+     {
+      "begin": 34.85,
+      "end": 35.191,
+      "content": "spend"
+     },
+     {
+      "begin": 35.251,
+      "end": 35.332,
+      "content": "and"
+     },
+     {
+      "begin": 35.372,
+      "end": 35.452,
+      "content": "you"
+     },
+     {
+      "begin": 35.553,
+      "end": 35.693,
+      "content": "had"
+     },
+     {
+      "begin": 35.774,
+      "end": 36.035,
+      "content": "nothing"
+     },
+     {
+      "begin": 36.081,
+      "end": 36.081,
+      "content": "to"
+     },
+     {
+      "begin": 36.081,
+      "end": 36.081,
+      "content": "give"
+     }
+    ],
+    "align_score": 0.895
+   },
+   {
+    "begin": 36.081,
+    "end": 39.417,
+    "content": "So I see the truth is I gotta keep it moving;",
+    "confidence": 0.887,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 36.081,
+      "end": 36.241,
+      "content": "So"
+     },
+     {
+      "begin": 36.965,
+      "end": 36.985,
+      "content": "I"
+     },
+     {
+      "begin": 37.166,
+      "end": 37.287,
+      "content": "see"
+     },
+     {
+      "begin": 37.347,
+      "end": 37.407,
+      "content": "the"
+     },
+     {
+      "begin": 37.487,
+      "end": 37.749,
+      "content": "truth"
+     },
+     {
+      "begin": 37.95,
+      "end": 38.05,
+      "content": "is"
+     },
+     {
+      "begin": 38.311,
+      "end": 38.332,
+      "content": "I"
+     },
+     {
+      "begin": 38.412,
+      "end": 38.613,
+      "content": "gotta"
+     },
+     {
+      "begin": 38.653,
+      "end": 38.814,
+      "content": "keep"
+     },
+     {
+      "begin": 38.914,
+      "end": 38.955,
+      "content": "it"
+     },
+     {
+      "begin": 39.035,
+      "end": 39.417,
+      "content": "moving;"
+     }
+    ],
+    "align_score": 0.827
+   },
+   {
+    "begin": 39.686,
+    "end": 41.258,
+    "content": "On to the next, new flip.",
+    "confidence": 0.997,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 39.686,
+      "end": 39.766,
+      "content": "On"
+     },
+     {
+      "begin": 39.827,
+      "end": 39.928,
+      "content": "to"
+     },
+     {
+      "begin": 40.028,
+      "end": 40.089,
+      "content": "the"
+     },
+     {
+      "begin": 40.19,
+      "end": 40.371,
+      "content": "next,"
+     },
+     {
+      "begin": 40.472,
+      "end": 40.593,
+      "content": "new"
+     },
+     {
+      "begin": 40.633,
+      "end": 41.258,
+      "content": "flip."
+     }
+    ],
+    "align_score": 0.358
+   },
+   {
+    "begin": 42.741,
+    "end": 46.618,
+    "content": "Sorry but I’m not sorry.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 42.741,
+      "end": 43.725,
+      "content": "Sorry"
+     },
+     {
+      "begin": 44.207,
+      "end": 44.408,
+      "content": "but"
+     },
+     {
+      "begin": 45.011,
+      "end": 45.171,
+      "content": "I’m"
+     },
+     {
+      "begin": 45.312,
+      "end": 45.473,
+      "content": "not"
+     },
+     {
+      "begin": 45.633,
+      "end": 46.618,
+      "content": "sorry."
+     }
+    ],
+    "align_score": 0.886
+   },
+   {
+    "begin": 46.904,
+    "end": 49.04,
+    "content": "You for the streets, I garage things.",
+    "confidence": 0.81,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 46.904,
+      "end": 47.005,
+      "content": "You"
+     },
+     {
+      "begin": 47.085,
+      "end": 47.306,
+      "content": "for"
+     },
+     {
+      "begin": 47.507,
+      "end": 47.608,
+      "content": "the"
+     },
+     {
+      "begin": 47.769,
+      "end": 48.11,
+      "content": "streets,"
+     },
+     {
+      "begin": 48.231,
+      "end": 48.251,
+      "content": "I"
+     },
+     {
+      "begin": 48.331,
+      "end": 49.04,
+      "content": "garage"
+     },
+     {
+      "begin": 49.04,
+      "end": 49.04,
+      "content": "things."
+     }
+    ],
+    "align_score": 0.684
+   },
+   {
+    "begin": 49.04,
+    "end": 51.676,
+    "content": "…I tried to rebuild you.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 49.04,
+      "end": 49.06,
+      "content": "…I"
+     },
+     {
+      "begin": 50.489,
+      "end": 50.69,
+      "content": "tried"
+     },
+     {
+      "begin": 50.73,
+      "end": 50.791,
+      "content": "to"
+     },
+     {
+      "begin": 50.912,
+      "end": 51.555,
+      "content": "rebuild"
+     },
+     {
+      "begin": 51.596,
+      "end": 51.676,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.61
+   },
+   {
+    "begin": 51.743,
+    "end": 54.8,
+    "content": "Then I saw nothing I do can ever fulfill you.",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 51.743,
+      "end": 51.864,
+      "content": "Then"
+     },
+     {
+      "begin": 51.985,
+      "end": 52.005,
+      "content": "I"
+     },
+     {
+      "begin": 52.085,
+      "end": 52.206,
+      "content": "saw"
+     },
+     {
+      "begin": 52.306,
+      "end": 52.588,
+      "content": "nothing"
+     },
+     {
+      "begin": 52.749,
+      "end": 52.769,
+      "content": "I"
+     },
+     {
+      "begin": 52.849,
+      "end": 52.93,
+      "content": "do"
+     },
+     {
+      "begin": 53.211,
+      "end": 53.372,
+      "content": "can"
+     },
+     {
+      "begin": 53.493,
+      "end": 53.714,
+      "content": "ever"
+     },
+     {
+      "begin": 53.774,
+      "end": 54.377,
+      "content": "fulfill"
+     },
+     {
+      "begin": 54.739,
+      "end": 54.8,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.673
+   },
+   {
+    "begin": 56.106,
+    "end": 57.553,
+    "content": "Could ever fulfill you…",
+    "confidence": 0.973,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 56.106,
+      "end": 56.327,
+      "content": "Could"
+     },
+     {
+      "begin": 56.387,
+      "end": 56.588,
+      "content": "ever"
+     },
+     {
+      "begin": 56.648,
+      "end": 57.292,
+      "content": "fulfill"
+     },
+     {
+      "begin": 57.372,
+      "end": 57.553,
+      "content": "you…"
+     }
+    ],
+    "align_score": 0.269
+   },
+   {
+    "begin": 58.747,
+    "end": 59.681,
+    "content": "So I gotta be real.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 58.747,
+      "end": 58.848,
+      "content": "So"
+     },
+     {
+      "begin": 59.009,
+      "end": 59.049,
+      "content": "I"
+     },
+     {
+      "begin": 59.13,
+      "end": 59.432,
+      "content": "gotta"
+     },
+     {
+      "begin": 59.512,
+      "end": 59.681,
+      "content": "be"
+     },
+     {
+      "begin": 59.681,
+      "end": 59.681,
+      "content": "real."
+     }
+    ],
+    "align_score": 0.641
+   },
+   {
+    "begin": 59.681,
+    "end": 63.303,
+    "content": "You came with a salvage title. I tried to rebuild you.",
+    "confidence": 0.758,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 59.681,
+      "end": 59.781,
+      "content": "You"
+     },
+     {
+      "begin": 60.364,
+      "end": 60.565,
+      "content": "came"
+     },
+     {
+      "begin": 60.625,
+      "end": 60.766,
+      "content": "with"
+     },
+     {
+      "begin": 60.806,
+      "end": 60.826,
+      "content": "a"
+     },
+     {
+      "begin": 60.906,
+      "end": 61.188,
+      "content": "salvage"
+     },
+     {
+      "begin": 61.288,
+      "end": 61.61,
+      "content": "title."
+     },
+     {
+      "begin": 61.911,
+      "end": 61.931,
+      "content": "I"
+     },
+     {
+      "begin": 62.012,
+      "end": 62.253,
+      "content": "tried"
+     },
+     {
+      "begin": 62.273,
+      "end": 62.333,
+      "content": "to"
+     },
+     {
+      "begin": 62.413,
+      "end": 63.036,
+      "content": "rebuild"
+     },
+     {
+      "begin": 63.077,
+      "end": 63.303,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.453
+   },
+   {
+    "begin": 63.303,
+    "end": 67.406,
+    "content": "Then I saw nothing I do could ever fulfill you.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 63.303,
+      "end": 63.403,
+      "content": "Then"
+     },
+     {
+      "begin": 63.504,
+      "end": 63.524,
+      "content": "I"
+     },
+     {
+      "begin": 63.604,
+      "end": 63.724,
+      "content": "saw"
+     },
+     {
+      "begin": 63.825,
+      "end": 64.126,
+      "content": "nothing"
+     },
+     {
+      "begin": 64.267,
+      "end": 64.287,
+      "content": "I"
+     },
+     {
+      "begin": 64.367,
+      "end": 64.447,
+      "content": "do"
+     },
+     {
+      "begin": 64.729,
+      "end": 64.929,
+      "content": "could"
+     },
+     {
+      "begin": 65.01,
+      "end": 65.19,
+      "content": "ever"
+     },
+     {
+      "begin": 65.271,
+      "end": 65.933,
+      "content": "fulfill"
+     },
+     {
+      "begin": 67.406,
+      "end": 67.406,
+      "content": "you."
+     }
+    ],
+    "align_score": 0.762
+   },
+   {
+    "begin": 67.406,
+    "end": 69.016,
+    "content": "So i gotta be real…",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 67.406,
+      "end": 67.527,
+      "content": "So"
+     },
+     {
+      "begin": 67.688,
+      "end": 67.708,
+      "content": "i"
+     },
+     {
+      "begin": 67.829,
+      "end": 68.09,
+      "content": "gotta"
+     },
+     {
+      "begin": 68.151,
+      "end": 68.272,
+      "content": "be"
+     },
+     {
+      "begin": 68.513,
+      "end": 69.016,
+      "content": "real…"
+     }
+    ],
+    "align_score": 0.586
+   },
+   {
+    "begin": 70.403,
+    "end": 72.616,
+    "content": "You gotta be real too.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 70.403,
+      "end": 70.484,
+      "content": "You"
+     },
+     {
+      "begin": 70.645,
+      "end": 70.906,
+      "content": "gotta"
+     },
+     {
+      "begin": 70.987,
+      "end": 71.107,
+      "content": "be"
+     },
+     {
+      "begin": 71.329,
+      "end": 71.61,
+      "content": "real"
+     },
+     {
+      "begin": 71.711,
+      "end": 72.616,
+      "content": "too."
+     }
+    ],
+    "align_score": 0.667
+   },
+   {
+    "begin": 75.765,
+    "end": 78.057,
+    "content": "Hey, and you gotta be real too..",
+    "confidence": 0.857,
+    "mismatch": false,
+    "section": "Outro",
+    "words": [
+     {
+      "begin": 75.765,
+      "end": 76.026,
+      "content": "Hey,"
+     },
+     {
+      "begin": 76.046,
+      "end": 76.127,
+      "content": "and"
+     },
+     {
+      "begin": 76.167,
+      "end": 76.247,
+      "content": "you"
+     },
+     {
+      "begin": 76.388,
+      "end": 76.629,
+      "content": "gotta"
+     },
+     {
+      "begin": 76.73,
+      "end": 76.871,
+      "content": "be"
+     },
+     {
+      "begin": 77.132,
+      "end": 77.354,
+      "content": "real"
+     },
+     {
+      "begin": 77.474,
+      "end": 78.057,
+      "content": "too.."
+     }
+    ],
+    "align_score": 0.435
+   },
+   {
+    "begin": 82.487,
+    "end": 83.393,
+    "content": "Be real too…",
+    "confidence": 0.982,
+    "mismatch": false,
+    "section": "Outro",
+    "words": [
+     {
+      "begin": 82.487,
+      "end": 82.588,
+      "content": "Be"
+     },
+     {
+      "begin": 82.93,
+      "end": 83.112,
+      "content": "real"
+     },
+     {
+      "begin": 83.192,
+      "end": 83.393,
+      "content": "too…"
+     }
+    ],
+    "align_score": 0.455
+   }
+  ]
+ }
+}

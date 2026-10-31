@@ -1,5 +1,5 @@
 /* Native Control · Create · Music.
-   Collapses Review Desk, Vault and Lanes into one view. */
+   Collapses Review Desk, Lyrics (js/control-room/lyrics-review.js), Vault and Lanes into one view. */
 (function(){
   "use strict";
   window.CR=window.CR||{};
@@ -58,10 +58,11 @@
   }
   function render(){
     if(!M.loaded&&!M.loading)load();
-    return'<div class="cro"><div class="cro-tabs">'+[["review","Review"],["direct","Direct sales"],["catalog","Catalog"],["distribution","Distribution"]].map(function(t){return'<button class="cro-tab'+(M.section===t[0]?" is-on":"")+'" type="button" data-crom-section="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>'+(M.loading&&!M.loaded?note("Loading music operations…"):M.error?note("Some music sources failed: "+(M.error.message||M.error),true):"")+(M.section==="direct"?(window.CR.musicDirect?window.CR.musicDirect.render():note("Direct sales did not load.",true)):M.section==="catalog"?catalog():M.section==="distribution"?distribution():review())+'</div>';
+    return'<div class="cro"><div class="cro-tabs">'+[["review","Review"],["direct","Direct sales"],["lyrics","Lyrics"],["catalog","Catalog"],["distribution","Distribution"]].map(function(t){return'<button class="cro-tab'+(M.section===t[0]?" is-on":"")+'" type="button" data-crom-section="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>'+(M.loading&&!M.loaded?note("Loading music operations…"):M.error?note("Some music sources failed: "+(M.error.message||M.error),true):"")+(M.section==="lyrics"?(window.CR.lyricsReview?window.CR.lyricsReview.render():note("Lyrics review did not load.",true)):M.section==="direct"?(window.CR.musicDirect?window.CR.musicDirect.render():note("Direct sales did not load.",true)):M.section==="catalog"?catalog():M.section==="distribution"?distribution():review())+'</div>';
   }
   function reloadSection(){return load();}
   function bind(root){
+    if(M.section==="lyrics"&&window.CR.lyricsReview)window.CR.lyricsReview.bind(root);
     (root?root.querySelectorAll("[data-crom-section]"):[]).forEach(function(b){b.onclick=function(){M.section=b.getAttribute("data-crom-section");if(M.rerender)M.rerender();};});
     (root?root.querySelectorAll("[data-crom-review]"):[]).forEach(function(b){b.onclick=function(){var d=b.getAttribute("data-crom-review"),noteText="";if(d!=="publish")noteText=prompt(d==="reject"?"Why is this release rejected?":"What documentation/review is needed?","")||"";b.disabled=true;musicCall("operator-review",{track_id:b.getAttribute("data-id"),decision:d,note:noteText}).then(reloadSection).catch(function(err){b.disabled=false;alert(err.message||"Review failed");});};});
     (root?root.querySelectorAll("[data-crom-license]"):[]).forEach(function(b){b.onclick=function(){b.disabled=true;musicCall("operator-license",{offer_id:b.getAttribute("data-crom-license"),enabled:b.getAttribute("data-enabled")==="1"}).then(reloadSection).catch(function(err){b.disabled=false;alert(err.message||"License update failed");});};});

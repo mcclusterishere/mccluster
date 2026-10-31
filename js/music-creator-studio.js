@@ -81,6 +81,38 @@ function describeSize(bytes, up) {
   const rounded = up ? Math.ceil(mb * 10) / 10 : mb;
   return (Number.isInteger(rounded) ? rounded : rounded.toFixed(1)) + "MB";
 }
+/* THE LYRIC SHEET. Optional words for the lyric machine: McCluster Core times
+   them to the master (line and word), or writes them from the audio when there
+   is no sheet. The sheet rides on its own column after the release row exists,
+   and a refusal never sinks the release: until that column is live the machine
+   simply writes the words from the audio. */
+async function attachLyricSheet(trackId) {
+  const sheet = ($("trackLyricSheet")?.value || "").trim();
+  if (!sheet) return;
+  try {
+    await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ lyrics_sheet: sheet.slice(0, 40000) })
+    });
+  } catch (err) {
+    console.warn("lyric sheet not attached", err);
+  }
+}
+function wireLyricSheet() {
+  const file = $("trackLyricSheetFile"), box = $("trackLyricSheet"), help = $("trackLyricSheetHelp");
+  if (!file || !box || !window.MCC_LYRIC_SHEET) return;
+  file.addEventListener("change", () => {
+    const f = file.files && file.files[0];
+    if (!f) return;
+    window.MCC_LYRIC_SHEET.read(f).then((r) => { box.value = r.text.trim(); if (help) help.textContent = "Read " + f.name + " (" + r.kind + "). Check the words, then upload."; })
+      .catch((e) => { if (help) help.textContent = e.message || "Could not read that file."; });
+  });
+}
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wireLyricSheet); else wireLyricSheet();
+}
+
 async function uploadGrant(bucket, file) {
   if (navigator.onLine === false) throw new Error("You are offline. Reconnect before uploading this release.");
   const max = BUCKET_MAX_BYTES[bucket];
@@ -687,6 +719,7 @@ $("trackForm").addEventListener("submit", async (e) => {
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
     createdTrackId = track.id;
+    await attachLyricSheet(track.id);
 
     await rest("music_rights_attestations", {
       method: "POST",
