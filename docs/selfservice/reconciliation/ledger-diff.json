@@ -1,0 +1,30 @@
+{
+  "production": {
+    "count": 348,
+    "latest": {
+      "version": "20261024014732",
+      "name": "analytics_forensics_search_index_v8"
+    },
+    "sha256": "831e4c7ab8f77390573bf72269e860c47b1f113198d709ff2f0c3f724e47e3ab"
+  },
+  "repository": {
+    "count": 348,
+    "latest": {
+      "version": "20261024014732",
+      "name": "analytics_forensics_search_index_v8"
+    },
+    "sha256": "831e4c7ab8f77390573bf72269e860c47b1f113198d709ff2f0c3f724e47e3ab"
+  },
+  "drift_contract": {
+    "project_ref": "zmnhbrjyhxzhkxmhkexs",
+    "migration_count": 348,
+    "latest_version": "20261024014732",
+    "latest_name": "analytics_forensics_search_index_v8",
+    "ledger_sha256": "831e4c7ab8f77390573bf72269e860c47b1f113198d709ff2f0c3f724e47e3ab"
+  },
+  "production_only": [],
+  "ledger_unresolved": [],
+  "aliases": [],
+  "safe_to_repair_automatically": false,
+  "note": "The repo migration files and production SQL must be independently verified before changing canonical history."
+}

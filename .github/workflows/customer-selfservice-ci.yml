@@ -1,0 +1,208 @@
+name: Customer self-service
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/customer-selfservice-ci.yml'
+      - 'front*.html'
+      - 'project*.html'
+      - 'platform-home.html'
+      - 'music-research.html'
+      - 'js/music-research-queue.mjs'
+      - 'css/music-research-queue.css'
+      - 'website-studio*.html'
+      - 'music*.html'
+      - 'mnet.html'
+      - 'create.html'
+      - 'js/create.js'
+      - 'js/composition-draft.js'
+      - 'js/mcc-auth.js'
+      - 'css/create.css'
+      - 'css/world-composer-overlay.css'
+      - 'js/website-studio/**'
+      - 'css/website-studio.css'
+      - 'data/website-studio/**'
+      - 'core/src/website-studio/**'
+      - 'js/music*.js'
+      - 'js/mnet.js'
+      - 'js/world*.js'
+      - 'workers/mccluster/src/project-tiles.js'
+      - 'workers/mccluster/src/website-studio/**'
+      - 'workers/mccluster/src/domains/**'
+      - 'workers/mccluster/src/music*/**'
+      - 'workers/mccluster/src/music*.js'
+      - 'workers/mccluster/src/world*.js'
+      - 'scripts/test/**'
+      - 'scripts/test-*-db.mjs'
+      - 'js/tabbar.js'
+      - 'js/platform-home.js'
+      - 'js/project-studio.js'
+      - 'workers/mccluster/src/entry-platform.js'
+      - 'workers/mccluster/src/preflight.js'
+      - 'workers/mccluster/src/social/**'
+      - 'workers/mccluster/src/managed-projects.js'
+      - 'workers/mccluster/src/canonical-artists.js'
+      - 'scripts/e2e/**'
+      - 'customer-*.html'
+      - 'js/front-*.js'
+      - 'js/customer-*.js'
+      - 'packages/front-config/**'
+      - 'workers/mccluster/src/member-fronts.js'
+      - 'workers/mccluster/src/creator-*.js'
+      - 'workers/mccluster/src/customer-*.js'
+      - 'workers/mccluster/test/**'
+      - 'supabase/pending/**'
+      - 'supabase/tests/**'
+      - 'scripts/test-member-fronts-db.sh'
+      - 'scripts/test/member-front-pages.test.mjs'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  member-fronts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Test real storage policies with isolated accounts
+        run: |
+          bash scripts/test-member-fronts-db.sh
+          bash scripts/test-customer-site-storage-db.sh
+      - name: Test publish, privacy, recovery and tenant boundaries without network
+        run: >-
+          node --import ./workers/mccluster/test/support/offline-network.mjs --test
+          workers/mccluster/test/member-fronts.test.mjs
+          scripts/test/member-front-pages.test.mjs
+
+  code-and-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: workers/mccluster
+      - name: Offline Worker and source regressions
+        run: |
+          node --import ./workers/mccluster/test/support/offline-network.mjs --test workers/mccluster/test/*.test.mjs
+          node --import ./workers/mccluster/test/support/offline-network.mjs --test scripts/test/*.test.mjs
+          node --test packages/backing-model/index.test.mjs
+      - name: Install isolated database fixture engine
+        run: npm install --prefix /tmp/selfservice-tools --no-audit --no-fund @electric-sql/pglite@0.5.11
+      - name: Execute tenant, OAuth, commerce, domains and handoff SQL fixtures
+        env:
+          PGLITE_DIR: /tmp/selfservice-tools/node_modules
+          PGLITE_MODULE: /tmp/selfservice-tools/node_modules/@electric-sql/pglite/dist/index.js
+          PGLITE_MODULE_PATH: /tmp/selfservice-tools/node_modules/@electric-sql/pglite/dist/index.js
+        run: |
+          node scripts/test-managed-projects-db.mjs
+          node scripts/test/customer-site-storage-db.mjs
+          node scripts/test/free-site-minimum-db.mjs
+          node scripts/test/customer-site-addresses-db.mjs
+          node scripts/test-world-directory-db.mjs
+          node scripts/test-customer-social-db.mjs
+          node scripts/test/creator-domain-schema.mjs
+          node scripts/test/creator-domain-orders.mjs
+          node scripts/test/creator-checkout-reservation-db.mjs
+          node scripts/test/creator-publish-rpc-db.mjs
+          node scripts/test/creator-store-db.mjs
+          node scripts/test/music-workspace-db.mjs
+          node scripts/test/music-workspace-worker.mjs
+          node scripts/test/creator-store-commerce-db.mjs
+          node scripts/test/creator-domain-target-schema.mjs
+          node scripts/test/creator-domain-provider-db.mjs
+          node scripts/test/creator-cf-registration-schema.mjs
+          node scripts/test/creator-inline-domain-contacts.mjs
+          node scripts/test-world-social-delivery-db.mjs
+          node scripts/test/music-workspace-handoff-db.mjs
+          node scripts/test/music-workspace-handoff-worker.mjs
+          node scripts/test/music-research-sql.mjs
+          node scripts/test/music-workspace-research-worker.mjs
+          node --test workers/mccluster/test/project-tiles.test.mjs workers/mccluster/test/creator-domain-composed.test.mjs
+
+  browser-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm install --prefix /tmp/selfservice-tools --no-audit --no-fund playwright@1.64.1 @electric-sql/pglite@0.5.11 esbuild@0.25.12
+      - run: /tmp/selfservice-tools/node_modules/.bin/playwright install --with-deps chromium
+        timeout-minutes: 15
+      - name: Install native media fixture tools
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Use installed Chromium for all fixture runners
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const {chromium} = require('/tmp/selfservice-tools/node_modules/playwright');
+          fs.appendFileSync(process.env.GITHUB_ENV, 'CHROMIUM_PATH=' + chromium.executablePath() + '\nCHROMIUM_EXECUTABLE=' + chromium.executablePath() + '\n');
+          NODE
+          # The recovered workspace runner currently uses this fixed executable path.
+          sudo ln -sf "$(node -p "require('/tmp/selfservice-tools/node_modules/playwright').chromium.executablePath()")" /usr/bin/chromium
+      - name: Customer journey and mobile layout fixtures
+        env:
+          PLAYWRIGHT_DIR: /tmp/selfservice-tools/node_modules
+          PLAYWRIGHT_MODULE: /tmp/selfservice-tools/node_modules/playwright/index.mjs
+          PLAYWRIGHT_MODULE_PATH: /tmp/selfservice-tools/node_modules/playwright/index.mjs
+          PGLITE_DIR: /tmp/selfservice-tools/node_modules
+          NODE_PATH: /tmp/selfservice-tools/node_modules
+        run: |
+          node scripts/e2e/customer-site.e2e.mjs
+          node scripts/e2e/customer-site-policy.e2e.mjs
+          node scripts/e2e/first-offer-acceptance.e2e.mjs
+          node scripts/e2e/managed-projects.e2e.mjs
+          node scripts/test/platform-center-nav.browser.mjs
+          node scripts/e2e/equity-offers-artist.e2e.mjs
+          node scripts/e2e/canonical-artist-owner.e2e.mjs
+          node scripts/e2e/customer-domain-recovery.e2e.mjs
+          node scripts/e2e/platform-home.e2e.mjs
+          node scripts/e2e/platform-home-transition.e2e.mjs
+          node scripts/e2e/world-directory.e2e.mjs
+          node scripts/e2e/member-front-auth.e2e.mjs
+          node scripts/e2e/music-profile-auth.e2e.mjs
+          node scripts/test/music-workspace-handoff-browser.mjs
+          node scripts/test/music-research-review-browser.mjs
+          node scripts/test/studio-processing-integration.mjs
+          node scripts/e2e/project-tiles.e2e.mjs
+          STUDIO_PROCESS_UPLOADS=1 STUDIO_QUOTA_FAILURE=1 FREE_SITE_PILOT=1 node scripts/e2e/project-tiles.e2e.mjs
+          node scripts/e2e/project-tiles-redirect.e2e.mjs
+          node scripts/test/world-social-composer.browser.mjs
+          node scripts/e2e/composer-overlay.e2e.mjs
+          node scripts/test/creator-domain-purchases-ui.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: customer-selfservice-browser-proof
+          path: |
+            /tmp/composer-overlay-proof
+            /tmp/equity-offers-proof
+            /tmp/managed-project-proof
+            /tmp/platform-audiences-proof
+            /tmp/project-tiles-proof

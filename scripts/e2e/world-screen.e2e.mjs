@@ -150,14 +150,18 @@ const TRAVEL_ORIGIN = TRAVEL_ROUTES[0].origin, TRAVEL_DESTINATION = TRAVEL_ROUTE
 
 async function routeBackends(ctx, world, { member, creator = true, verified = true }) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
-  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
+  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
     const u = route.request().url();
     /* STORAGE: a signed upload is kept; a signed read gives it back, open to any origin as storage is */
     if (u.startsWith(STORAGE + '/')) {
       const request = route.request(), method = request.method(), path = decodeURIComponent(new URL(u).pathname.replace(/^\/storage\/v1\/object\/(upload\/)?sign\/mnet-media\//, ''));
       if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,PUT,POST', 'access-control-allow-headers': 'apikey,authorization,content-type,x-upsert' } });
       if (method === 'PUT' || method === 'POST') {
-        (world.blobs ||= {})[path] = { body: request.postDataBuffer(), type: request.headers()['content-type'] || 'application/octet-stream' };
+        // Playwright omits file-backed request bytes; recover only the exact local fixture chosen by this suite.
+        const picked=path.endsWith('church_0001.jpg')?'assets/frames/church_0001.jpg':path.endsWith('hero.webm')?'assets/video/hero.webm':null;
+        const bytes=request.postDataBuffer()||(picked?await readFile(join(ROOT,picked)):null);
+        if(!bytes)throw new Error('Unrecorded fixture upload body: '+path);
+        (world.blobs ||= {})[path] = { body: bytes, type: request.headers()['content-type'] || 'application/octet-stream' };
         world.requests.push({ m: method, path: '/storage/' + path, auth: !!request.headers().authorization, bytes: world.blobs[path].body?.length || 0, type: world.blobs[path].type });
         return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ Key: 'mnet-media/' + path }) });
       }
@@ -175,7 +179,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       if(method==='DELETE'){world.journeys=world.journeys.filter(x=>x.id!==id);return json(route,[]);}
       return json(route,world.journeys);
     }
-    if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
+    if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     /* members who share their region, five or more per region (the only consented member count): two of Kenya's */
     if (/\/rpc\/action_globe_public_regions$/.test(u)) return json(route, PUBLIC_REGIONS);
@@ -1023,7 +1027,7 @@ if (runs('editorial-members') && (!process.env.EDITORIAL_DEVICE || process.env.E
 
 /* THE NEWSROOM (owner, 2026-10-20): the house owner, and only the house owner, may also publish a post as an article on
    mccluster.org/news/; the Worker checks again (workers/mccluster/test/newsroom.test.mjs). */
-if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
+if (runs('editorial-newsroom') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
   const scope = admin ? 'editorial-newsroom-owner' : 'editorial-newsroom-member';
   const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,admin});
   try {
@@ -1045,7 +1049,7 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
       await page.click('#mnPost');
       await page.waitForFunction(()=>/newsroom/.test(document.getElementById('mnPostStatus').textContent),null,{timeout:8000}).catch(()=>{});
       const sent=req(world,'POST',/^\/v1\/mnet\/posts$/).at(-1);
-      check(scope,'Post sends the newsroom mark with the owner\'s session',!!sent&&sent.auth&&sent.body.newsroom===true&&sent.body.visibility==='public',sent&&sent.body);
+      check(scope,'Post sends the newsroom mark with the owner\'s session',!!sent&&sent.auth&&sent.body.newsroom===true&&sent.body.visibility==='public',{sent:sent&&sent.body,status:await page.textContent('#mnPostStatus'),errors});
       const link=await page.getAttribute('#mnPostStatus a','href');
       check(scope,'and links the article on McCluster Corp\'s site',/^https:\/\/mccluster\.org\/news\/[0-9a-f-]{36}$/.test(link||''),link);
       check(scope,'the tick clears for the next post',!(await page.isChecked('#mnNewsroom')));

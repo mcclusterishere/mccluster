@@ -18,6 +18,27 @@
   var handle = (new URLSearchParams(location.search).get("handle") || "").trim().toLowerCase();
   var $ = function (id) { return doc.getElementById(id); };
 
+  var authEpoch = 0;
+  function authContext() {
+    var session = root.MCC && root.MCC.session && root.MCC.session();
+    return { epoch: authEpoch, token: session && session.access_token || "" };
+  }
+  function currentAuth(ctx) { return ctx.epoch === authEpoch && ctx.token === authContext().token; }
+  function accountChanged() {
+    ++authEpoch;
+    ["apOwnerEdit", "apOwnerFront"].forEach(function (id) { var node = $(id); if (node) node.remove(); });
+    closeBooking();
+    if ($("apBookForm")) $("apBookForm").reset();
+    if ($("apBookStatus")) $("apBookStatus").textContent = "";
+    if ($("apBookSend")) { $("apBookSend").disabled = false; $("apBookSend").textContent = "Send request"; }
+    doc.querySelectorAll('[data-offer][data-checkout="1"]').forEach(function (button) {
+      if (button.dataset.authPending === "1") { button.disabled = false; button.textContent = button.dataset.checkoutLabel || "Checkout"; delete button.dataset.authPending; }
+    });
+    if (state && state.p) ownerDoors(state.p);
+  }
+  root.addEventListener("mcc:auth-changed", accountChanged);
+  root.addEventListener("storage", function (e) { if (!e.key || e.key === "mccdb_session" || e.key === "mcc_sess_keep") accountChanged(); });
+
   function esc(x) { var d = doc.createElement("i"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
   function attr(x) { return esc(x).replace(/"/g, "&quot;"); }
   function money(cents, cur) {
@@ -160,12 +181,13 @@
      where to edit it (Creator Studio) and where to build their front page (front-studio.html). Nobody else sees them,
      and both editors check the account again themselves. */
   function ownerDoors(p) {
+    var ctx = authContext();
     var session = root.MCC && root.MCC.session && root.MCC.session();
     if (!session || !session.access_token) return;
     fetch(SB + "/rest/v1/rpc/current_m_uid", { method: "POST", headers: { apikey: KEY, authorization: "Bearer " + session.access_token, "content-type": "application/json" }, body: "{}" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (mine) {
-        if (!mine || mine !== p.m_uid || !$("apDoors") || doc.getElementById("apOwnerEdit")) return;
+        if (!currentAuth(ctx) || !mine || mine !== p.m_uid || !$("apDoors") || doc.getElementById("apOwnerEdit")) return;
         var edit = doc.createElement("a"); edit.id = "apOwnerEdit"; edit.className = "ap-door ap-door--lead"; edit.href = "creator.html?edit=profile"; edit.textContent = "Edit my artist page";
         var build = doc.createElement("a"); build.id = "apOwnerFront"; build.className = "ap-door"; build.href = "front-studio.html"; build.textContent = "Build my front page";
         $("apDoors").insertBefore(build, $("apDoors").firstChild);
@@ -226,6 +248,7 @@
   }
 
   function sendBooking(e) {
+    var ctx = authContext();
     e.preventDefault();
     var svc = state.booking;
     var form = $("apBookForm");
@@ -247,11 +270,13 @@
       note: note,
       campaign: ("artist-booking:" + state.p.handle).slice(0, 200)
     }).then(function () {
+      if (!currentAuth(ctx)) return;
       say("Sent. " + state.p.artist_name + " will confirm, then you'll get a payment link at " + email + ".", "good");
       send.textContent = "Sent";
       form.elements.message.value = "";
       if (root.MCC_TRACK) root.MCC_TRACK("creator_booking_request", { handle: handle, service: svc.title.slice(0, 80), unit: svc.unit });
     }).catch(function () {
+      if (!currentAuth(ctx)) return;
       send.disabled = false;
       send.textContent = "Send request";
       say("That didn't go through. Try again, or email matthew@mccluster.org.", "bad");
@@ -279,7 +304,9 @@
        their front page in the middle cell, their own picture or initial.
        Owner, 2026-10-14: "experience the site from their perspective". */
     var perspective = { kind: "artist", handle: p.handle, name: p.artist_name, avatar: avatar || "" };
-    try { root.sessionStorage.setItem("mcc_perspective", JSON.stringify(perspective)); } catch (_) {}
+    var pageBrand = {name:p.artist_name,home:"music-creator.html?handle="+encodeURIComponent(p.handle),logo:avatar||""};
+    root.MCC_PAGE_PROFILE = pageBrand;
+    if (root.MCC_BAR && root.MCC_BAR.pageProfile) root.MCC_BAR.pageProfile(pageBrand);
     try { root.dispatchEvent(new CustomEvent("mcc:perspective", { detail: perspective })); } catch (_) {}
 
     /* Every published track goes to the player in page order: the featured
@@ -377,6 +404,8 @@
       location.href = "account.html?next=" + encodeURIComponent(location.pathname + location.search);
       return;
     }
+    var ctx = authContext();
+    b.dataset.checkoutLabel = b.textContent; b.dataset.authPending = "1";
     b.disabled = true;
     b.textContent = "Opening checkout…";
     fetch(SB + "/functions/v1/music-checkout", {
@@ -389,10 +418,13 @@
       body: JSON.stringify({ offer_id: offerId })
     }).then(function (r) { return r.json().then(function (d) { return { ok:r.ok, data:d }; }); })
       .then(function (out) {
+        if (!currentAuth(ctx)) return;
         if (!out.ok || !out.data.url) throw new Error(out.data.error || "Checkout unavailable");
         if (root.MCC_TRACK) root.MCC_TRACK("music_license_checkout_start", { offer_id: offerId, creator: handle });
         location.href = out.data.url;
       }).catch(function (err) {
+        if (!currentAuth(ctx)) return;
+        delete b.dataset.authPending;
         b.disabled = false; b.textContent = "Checkout unavailable";
         b.title = err.message || "Checkout unavailable";
       });

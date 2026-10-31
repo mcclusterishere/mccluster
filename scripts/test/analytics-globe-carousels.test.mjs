@@ -121,7 +121,7 @@ test('applied country reads: security invoker over events_lean, country only, an
   assert.match(sql, /not e\.is_bot/);
 });
 
-test('owner bar: five tabs for the owner from the server\'s answer, three for everyone else; the M is the supplied PNG', async () => {
+test('owner bar: five tabs for the owner from the server\'s answer, three for everyone else; the center uses the supplied E=Up asset', async () => {
   const js = await read('js/tabbar.js');
   const block = js.slice(js.indexOf("THE OWNER'S FIVE TABS"), js.indexOf('function loadCanonicalAuth'));
   assert.match(block, /fetch\(API_ORIGIN \+ "\/v1\/status"/, 'the same owner check the Control Room uses');
@@ -132,7 +132,7 @@ test('owner bar: five tabs for the owner from the server\'s answer, three for ev
   assert.deepEqual(order, ['music', 'admin-home', 'home', 'analytics', 'halo']);
   assert.match(block, /control\.html#home/);
   assert.match(block, /control\.html#analytics/);
-  assert.match(block, /<img class="appbar__m" src="' \+ ROOT \+ 'assets\/img\/m-mark\.png" alt="">/, 'the supplied mark, no plate, nothing drawn');
+  assert.match(block, /platformMark\(\)/, 'owner center uses the same verified platform emblem');
   assert.doesNotMatch(block, /appbar__m[^"]*--plate|border-radius:50%[^"]*appbar__m/);
   assert.match(block, /dock\.classList\.toggle\("appbar--admin", on\)/, 'the integration point other bar add-ons check');
   assert.match(js, /paintAuthState\(false, null, true\);\n\s*paintAdmin\(false\);/, 'signed out: back to three');

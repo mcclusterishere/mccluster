@@ -160,7 +160,7 @@ test('the pages the live functions return to are the ones that exist', () => {
   assert.match(whip, /const rentalReturn = status => appUrl\(env, '\/whip\/rentals\/\?rental_payment='/);
   assert.ok(existsSync(join(ROOT, 'whip/rentals/index.html')));
   assert.deepEqual(by('supabase/functions/music-checkout/index.ts'), ['/listen.html', '/listen.html']);
-  assert.deepEqual(by('workers/mccluster/src/creator-billing.js'), ['/mccluster-platform.html', '/mccluster-platform.html']);
+  assert.deepEqual(by('workers/mccluster/src/creator-billing.js'), Array(3).fill('/customer-commerce.html'));
   assert.deepEqual(by('supabase/functions/org-connect-onboard/index.ts'), ['/account.html', '/account.html']);
   assert.deepEqual(by('supabase/functions/connect-org/index.ts'), ['/account.html', '/account.html']);
   assert.deepEqual(by('workers/mccluster/src/connect.js'), ['/control.html', '/control.html']);

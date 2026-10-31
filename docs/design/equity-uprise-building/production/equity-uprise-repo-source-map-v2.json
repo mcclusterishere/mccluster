@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 529,
+  "candidate_count": 550,
   "capability_source_count": 102,
-  "support_only_count": 427,
+  "support_only_count": 448,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3972,6 +3972,153 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
+    },
+    {
+      "path": "data/equity-uprise-offers-template.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/FIRST-OFFER-ACTIVATION.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/PR638-PROPOSED-METADATA.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/platform-offers.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/reconciliation/branch-inventory.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/reconciliation/live-migration-ledger.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/selfservice/reconciliation/pr-inventory.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "js/front-studio.js",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "js/platform-home.js",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "platform-home.html",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/e2e/canonical-artist-owner.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/e2e/composer-overlay.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/e2e/equity-offers-artist.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/e2e/managed-projects.e2e.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/test/customer-site-addresses-db.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/test/free-site-minimum-db.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/test/platform-center-nav.browser.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "scripts/test/site-offers.test.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "supabase/pending/canonical_artist_bindings_v1.sql",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "workers/mccluster/src/canonical-artists.js",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/managed-projects.test.mjs",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

@@ -9,6 +9,7 @@ on:
       - 'guest-globe.html'
       - 'js/front-*.js'
       - 'js/main.js'
+      - 'js/tabbar.js'
       - 'js/guest-world.js'
       - 'css/profile-shell.css'
       - 'scripts/e2e/vaunt-project.e2e.mjs'
@@ -30,6 +31,7 @@ jobs:
           node-version: '22'
       - run: npm install --prefix /tmp/profile-tools playwright@1.58.2 --ignore-scripts --no-audit --no-fund
       - run: /tmp/profile-tools/node_modules/.bin/playwright install --with-deps chromium
+        timeout-minutes: 15
       - run: node scripts/e2e/vaunt-project.e2e.mjs /tmp/profile-proof
         env:
           PLAYWRIGHT_DIR: /tmp/profile-tools/node_modules

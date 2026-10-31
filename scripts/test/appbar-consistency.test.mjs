@@ -73,7 +73,7 @@ test('every tab destination has the bar it was reached from', async () => {
      own door, so the bar reads the same from either host (js/tabbar.js) */
   const hrefs = [...bar.matchAll(/href="'\s*\+\s*(?:ROOT|HOUSE|WORLD)\s*\+\s*'([a-z0-9-]+\.html)(?:\?[a-z=&]*)?"/g)].map((m) => m[1]);
   /* Music | M | Globe (owner, 2026-10-14): the Globe replaced Profile */
-  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'mnet.html'],
+  assert.deepEqual(hrefs, ['listen.html', 'platform-home.html', 'mnet.html'],
     `expected the three canonical tab destinations, found ${hrefs.join(', ')}`);
   for (const href of hrefs) {
     const html = await read(href);
@@ -85,7 +85,7 @@ test('every tab destination has the bar it was reached from', async () => {
   const admin = all.slice(all.indexOf('function adminBar()'), all.indexOf('function markAdminHere()'));
   const adminHrefs = [...admin.matchAll(/href="'\s*\+\s*HOUSE\s*\+\s*'([a-z0-9-]+\.html)/g)].map((m) => m[1]);
   /* the owner's globe is Hitman's Halo (2026-10-22), on the house like the other four */
-  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'index.html', 'control.html', 'action-globe.html']);
+  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'platform-home.html', 'control.html', 'action-globe.html']);
   for (const href of new Set(adminHrefs)) {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/, `${href} is an owner tab destination but has no app bar`);

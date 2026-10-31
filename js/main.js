@@ -120,7 +120,7 @@
      behind its gate, exactly as before. */
   var CABIN_FIRST = !MEMBER && !!document.getElementById("cabin");
   // Repository-managed project assets are separate from member-upload validation.
-  var PROJECT = MEMBER && !MEMBER.studio && window.MCC_FRONT_PROJECTS && window.MCC_FRONT_PROJECTS.get(MEMBER.project);
+  var PROJECT = MEMBER && window.MCC_FRONT_PROJECTS && window.MCC_FRONT_PROJECTS.get(MEMBER.project);
   if (PROJECT) FRONT.media = PROJECT.config.media;
   window.MCC_FRONT_DEFAULT = frontConfig(null);   // what the page does with no row: the Control Room's starting point
   var frontHooks = [];
@@ -561,6 +561,8 @@
       finishPreloader();
     });
 
+  /* Scroll-first projects put their title on the first command film instead. */
+  if (document.documentElement.getAttribute("data-front-entry") !== "scene") {
   /* ---------------- hero scrub ---------------- */
   var hudDeg = document.getElementById("hudDeg");
   var heroOffer = document.getElementById("heroOffer");
@@ -600,6 +602,8 @@
     })
     .to(".hero__sub, .hero__eyebrow", { opacity: 0, yPercent: -60 }, 0)
     .to(".hud__scroll", { opacity: 0 }, 0);
+  }
+
   }
 
   /* ---------------- the loadout: 360 studio pan, three corners ----------------
@@ -837,6 +841,7 @@
 
   function applyCommand(p) {
     if (!cmdScenes.length) return;
+    if (window.MCC_PROJECT_ENTRY) window.MCC_PROJECT_ENTRY.update(p);
     var n = cmdScenes.length;
     var active = Math.min(n - 1, Math.floor(p * n));
     cmdScenes.forEach(function (sc, i) {
@@ -2079,6 +2084,14 @@
     if (holding) leaveCabinQuietly();
     lenis.scrollTo(y, { immediate: true, force: true });
     try { ScrollTrigger.update(); } catch (e) {}
+  }
+  // Hash entry can arrive before the project has removed its old hero height.
+  // Resolve opening-scene aliases after the cinematic scroll engine is ready.
+  if (document.documentElement.getAttribute("data-front-entry") === "scene") {
+    var resolveProjectAnchor = function () { if (/^(#work|#hero)$/.test(location.hash)) frontGoto("top"); };
+    resolveProjectAnchor();
+    // A same-document deep link can also cross the cabin's capture band.
+    window.addEventListener("hashchange", resolveProjectAnchor);
   }
   window.__MCC_FRONT_GOTO = frontGoto; // verification handles
   window.__MCC_FRONT_HOLDING = function () { return holding; };

@@ -836,6 +836,14 @@ try {
     const ctx = await browser.newContext({ viewport: { width, height: width < 500 ? 844 : 900 } });
     await ctx.route(OUTBOUND, refuse);
     await seen(ctx);
+    // This server represents Matthew's host. Supply its document-local profile
+    // on the loopback origin; production derives the same context from hostname.
+    await ctx.addInitScript(() => {
+      if (/^\/(?:index\.html)?$/.test(location.pathname)) window.MCC_PAGE_PROFILE = {
+        name: 'Matthew McCluster', home: location.origin + '/index.html',
+        logo: location.origin + '/assets/img/m-mark.png'
+      };
+    });
     const page = await ctx.newPage();
     /* SMOKE_ONLY=sites.html,hire.html runs one page's checks instead of
        the whole house. The full suite is the release gate and CI runs it

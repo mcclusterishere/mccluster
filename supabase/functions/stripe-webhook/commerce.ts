@@ -28,6 +28,9 @@ export function orgFor(event: Obj, metadata: Obj | null | undefined): { org_id: 
 /** checkout.session.completed / async_payment_succeeded for an offering or a music sale. */
 export function checkoutRecord(session: Obj, event: Obj): Obj | null {
   const metadata = session.metadata || {};
+  // Storefront uses its identity-bound transactional adapter, never editable
+  // metadata alone to authorize canonical records. Its Worker retries itself.
+  if (metadata.creator_store_order_id) return null;
   const offering = str(metadata.offering);
   const kind = str(metadata.kind);
   if (!offering && kind !== "music_license_sale") return null;
@@ -68,6 +71,7 @@ export function checkoutRecord(session: Obj, event: Obj): Obj | null {
 
 /** charge.refunded: the payment the refund belongs to, and how much of it. */
 export function refundRecord(charge: Obj, event: Obj): Obj | null {
+  if (charge.metadata?.creator_store_order_id) return null;
   const paymentIntent = idOf(charge.payment_intent);
   if (!paymentIntent) return null;
   const owner = orgFor(event, charge.metadata);

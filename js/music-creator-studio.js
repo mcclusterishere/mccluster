@@ -12,6 +12,7 @@ let profile = null;
 let tracksCache = [];
 let editingAlbum = null;
 let editingService = null;
+let workspaceDraft = null;
 
 function status(id, message, tone = "") {
   const el = $(id);
@@ -200,7 +201,7 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
+    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,rights_declaration,moderation_note,created_at,published_at&order=created_at.desc");
   tracksCache = rows || [];
   renderAlbums();
   const list = $("creatorTracks");
@@ -213,8 +214,32 @@ async function loadTracks() {
     escapeHtml([t.artist, t.genre, t.access_mode].filter(Boolean).join(" · ")) +
     (t.moderation_note ? '<br>' + escapeHtml(t.moderation_note) : '') +
     '</small></div><span class="' + pillClass(t) + '">' +
-    escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span></div>'
+    escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span>' +
+    (t.status === 'draft' && t.rights_declaration?.workspace_handoff ? '<a href="creator.html?workspace_draft=' + encodeURIComponent(t.id) + '">Continue private draft</a>' : '') + '</div>'
   ).join("");
+}
+async function loadWorkspaceDraft() {
+  const id = new URLSearchParams(location.search).get("workspace_draft");
+  if (!id || workspaceDraft) return;
+  if (!/^[a-f0-9-]{36}$/i.test(id)) { status("trackStatus", "Invalid draft link.", "bad"); return; }
+  try {
+    const token = session.access_token, owner = mUid;
+    const rows = await rest("creator_tracks?id=eq." + id + "&m_uid=eq." + encodeURIComponent(owner) + "&status=eq.draft&select=id,uid,m_uid,title,artist,description,master_bucket,master_path,rights_declaration&limit=1");
+    const draft = rows?.[0];
+    if (!draft || draft.uid !== session.user?.id || draft.m_uid !== owner || !draft.rights_declaration?.workspace_handoff || draft.master_bucket !== "creator-masters" || !draft.master_path.startsWith(draft.uid + "/workspace/") || draft.master_path.includes("..")) throw Error("This private workspace draft is unavailable.");
+    const source = await fetch(SB + "/storage/v1/object/authenticated/creator-masters/" + draft.master_path.split("/").map(encodeURIComponent).join("/"), {headers:{apikey:KEY,authorization:"Bearer " + token},cache:"no-store"});
+    if (!source.ok) throw Error("The private master could not be loaded. Reopen this draft to retry.");
+    const blob = await source.blob();
+    if (window.MCC.session()?.access_token !== token || mUid !== owner) throw Error("Account changed. Reopen Creator Studio.");
+    if (!blob.size || blob.size > 26214400) throw Error("Invalid workspace master size.");
+    const file = new File([blob], draft.master_path.split("/").pop(), {type:blob.type});
+    const transfer = new DataTransfer(); transfer.items.add(file); $("trackMaster").files = transfer.files;
+    workspaceDraft = {...draft,file:$("trackMaster").files[0]};
+    $("trackTitle").value = draft.title; $("trackArtist").value = draft.artist; $("trackDescription").value = draft.description || "";
+    $("trackAccess").value = "account";
+    ["ownsMaster","controlsComposition","samplesCleared","collaboratorsCleared","isDerivative"].forEach(key => { $(key).checked = false; });
+    status("trackStatus", "Private workspace draft loaded with its original credits. Choose a preview and review rights explicitly. Nothing is published.");
+  } catch (e) { status("trackStatus", e.message || "Draft unavailable.", "bad"); }
 }
 function escapeHtml(value) {
   const d = document.createElement("i");
@@ -599,11 +624,13 @@ $("trackForm").addEventListener("submit", async (e) => {
   let committed = false;
   try {
     if (!profile) throw new Error("Save your creator profile first.");
+    if (workspaceDraft && (window.MCC.session()?.access_token !== session.access_token || window.MCC.session()?.user?.id !== workspaceDraft.uid)) throw new Error("Account changed. Reopen Creator Studio before submitting this private draft.");
     const master = $("trackMaster").files[0];
     let preview = $("trackPreview").files[0] || null;
     const art = $("trackArt").files[0] || null;
     const access = $("trackAccess").value;
     if (!master) throw new Error("Choose the master audio.");
+    if (workspaceDraft && master !== workspaceDraft.file) throw new Error("This draft preserves its selected original. Open Creator Studio without the draft link to submit a different master.");
     if (access !== "public" && !preview) throw new Error("Account-only and licensable tracks need a public preview file.");
     if (access === "public" && !preview) preview = master;
     const derivative = $("isDerivative").checked;
@@ -631,8 +658,8 @@ $("trackForm").addEventListener("submit", async (e) => {
 
     submit.disabled = true;
     status("trackStatus", "Uploading private master…");
-    const masterPath = await uploadGrant("creator-masters", master);
-    uploaded.push({ bucket: "creator-masters", path: masterPath });
+    const masterPath = workspaceDraft ? workspaceDraft.master_path : await uploadGrant("creator-masters", master);
+    if (!workspaceDraft) uploaded.push({ bucket: "creator-masters", path: masterPath });
 
     status("trackStatus", "Uploading listener audio…");
     const previewPath = await uploadGrant("creator-previews", preview);
@@ -649,6 +676,7 @@ $("trackForm").addEventListener("submit", async (e) => {
 
     const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 7);
     const rights = {
+      ...(workspaceDraft ? {workspace_handoff:workspaceDraft.rights_declaration.workspace_handoff} : {}),
       owns_master: $("ownsMaster").checked,
       controls_composition: $("controlsComposition").checked,
       samples_cleared: $("samplesCleared").checked,
@@ -658,8 +686,8 @@ $("trackForm").addEventListener("submit", async (e) => {
     };
 
     status("trackStatus", "Writing release record…");
-    const inserted = await rest("creator_tracks", {
-      method: "POST",
+    const inserted = await rest(workspaceDraft ? "creator_tracks?id=eq." + encodeURIComponent(workspaceDraft.id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&status=eq.draft" : "creator_tracks", {
+      method: workspaceDraft ? "PATCH" : "POST",
       headers: { Prefer: "return=representation" },
       body: JSON.stringify({
         title,
@@ -686,7 +714,7 @@ $("trackForm").addEventListener("submit", async (e) => {
     });
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
-    createdTrackId = track.id;
+    createdTrackId = workspaceDraft ? null : track.id; // Never roll back/delete the existing handoff draft.
 
     await rest("music_rights_attestations", {
       method: "POST",
@@ -747,6 +775,8 @@ $("trackForm").addEventListener("submit", async (e) => {
     }
     licenseWarning += albumWarning;
 
+    workspaceDraft = null;
+    const cleanUrl = new URL(location.href); cleanUrl.searchParams.delete("workspace_draft"); history.replaceState(null, "", cleanUrl);
     $("trackForm").reset();
     $("trackAccess").value = "account";
     if (profile) {
@@ -856,6 +886,7 @@ async function showStudio(editing) {
     $("creatorIdentity").scrollIntoView({ block: "start" });
   }
   await loadTracks();
+  await loadWorkspaceDraft();
 }
 
 $("cobForm").addEventListener("submit", async (e) => {
