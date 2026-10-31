@@ -3393,6 +3393,13 @@
       "rationale": "Read-only production schema snapshot taken after music_release_payment_integrity_v1 was applied on 2026-10-30 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken after music_direct_sales_v1 was applied on 2026-10-31 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "supabase/schema-manifest.json",
       "classification": "documentation_support",
       "capability_ids": [],
