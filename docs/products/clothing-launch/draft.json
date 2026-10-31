@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "status": "draft",
+  "salesEnabled": false,
+  "brand": "Hitman Most High Fashion",
+  "relatedProduct": "PRIM3",
+  "commerceAuthority": "canonical-offerings",
+  "budgetBeforeShippingCents": 51665,
+  "shippingCents": null,
+  "purchaseVerified": false,
+  "receiptVerified": false,
+  "availableStock": null,
+  "samples": [
+    { "id": "womens-joggers", "sizes": [null, null, null], "plannedCostCents": 6591 },
+    { "id": "cropped-hoodies", "sizes": null, "plannedCostCents": 7791 },
+    { "id": "mens-fleece-pants", "sizes": ["S", "M", "L"], "plannedCostCents": 6312 },
+    { "id": "hidden-pocket-hoodies", "sizes": ["XS", "S", "M"], "plannedCostCents": 9852 },
+    { "id": "denim-jackets", "sizes": ["S", "M"], "plannedCostCents": 11184 },
+    { "id": "jeans", "sizes": ["S", "M"], "plannedCostCents": 6190 },
+    { "id": "personal-black-sun-fade-hoodie", "sizes": ["M"], "plannedCostCents": 3745 }
+  ],
+  "hoodieAllocation": {
+    "status": "unresolved",
+    "includedInBudget": null,
+    "sizeCandidates": ["M", "L"],
+    "purposes": ["own-custom", "influencer-custom", "unmodified-sale-or-custom-ready"],
+    "note": "Later three-hoodie allocation is not additional purchased stock; relation to the earlier budget is unconfirmed."
+  },
+  "editions": [
+    { "id": "standard", "repeatable": true, "brandPlacement": "bottom", "customizationPlacement": null, "tentativeCostMultiplier": 2, "priceCents": null },
+    { "id": "customer-name", "repeatable": false, "brandPlacement": "bottom", "customizationPlacement": "above-brand", "tentativeCostMultiplier": 15, "priceCents": null }
+  ],
+  "fulfillment": { "intendedProvider": "Tapstitch", "mode": "manual-planning-only", "apiVerified": false }
+}
