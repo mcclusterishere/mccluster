@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0020_harden_function_surface.
--- Executable reconstruction SQL: supabase/replay_migrations/0020_harden_function_surface.sql
--- Intentionally no-op in production; this version is already registered live.
