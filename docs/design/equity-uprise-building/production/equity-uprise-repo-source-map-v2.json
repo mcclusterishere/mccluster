@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 523,
+  "candidate_count": 527,
   "capability_source_count": 102,
-  "support_only_count": 421,
+  "support_only_count": 425,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3358,6 +3358,13 @@
       "rationale": "Read-only production schema snapshot taken after music_release_payment_integrity_v1 was applied on 2026-10-30 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken after music_direct_sales_v1 was applied on 2026-10-31 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "supabase/schema-manifest.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -3918,11 +3925,32 @@
       "rationale": "Accessibility ratchet baseline (axe-core node counts per sitemap page, scripts/e2e/sitemap-a11y.e2e.mjs); it lists the heal-the-3rd-world page by path only. No spatial or program capability is added."
     },
     {
+      "path": "scripts/test/music-direct-sales.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests Matthew McCluster's direct music checkout (bound fulfilment, download limits, buy buttons); mentions Equity Uprise only to assert the purchase page is not company-branded. Not a building capability."
+    },
+    {
       "path": "docs/control-plane/deploy-gate.json",
       "classification": "operational_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
+    },
+    {
+      "path": "docs/products/DISTRIBUTABLE-PRODUCT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Independent software distribution acceptance contract and portability assessment; no building capability, program or geometry implementation."
+    },
+    {
+      "path": "docs/releases/mission-content-cleanup-2026-10-31.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-authorized production content cleanup outcome; operational evidence, not a building capability or geometry change."
     },
     {
       "path": "js/control-room/nav.js",

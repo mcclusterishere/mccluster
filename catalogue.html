@@ -146,6 +146,7 @@
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/music-direct.js?v=__STAMP__"></script>
   <script>
   (function () {
     "use strict";
@@ -178,7 +179,8 @@
         var title = slug
           ? "<a href='album.html?album=" + encodeURIComponent(slug) + "&t=" + encodeURIComponent(t.title) + "' data-cta='registry-track'>" + t.title + "</a>"
           : t.title;
-        return "<li id='" + t.slug + "'><span class='no'>" + (c.isrc_prefix || "QT6KV") + "·" + String(t.no || t.order || "00").padStart(2, "0") + "</span>" +
+        /* data-albslug + data-title: js/music-direct.js adds "Buy MP3" when this recording is on sale */
+        return "<li id='" + t.slug + "'" + (slug ? " data-albslug='" + slug + "' data-title='" + String(t.title).replace(/&/g, "&amp;").replace(/'/g, "&#39;") + "'" : "") + "><span class='no'>" + (c.isrc_prefix || "QT6KV") + "·" + String(t.no || t.order || "00").padStart(2, "0") + "</span>" +
           "<span class='t'>" + title +
           (t.credit ? "<small>" + t.credit + "</small>" : "") + "</span>" +
           "<span class='al'>" + (t.album || "") + "</span></li>";

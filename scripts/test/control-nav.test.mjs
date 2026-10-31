@@ -82,7 +82,7 @@ test('every renderer a leaf names exists in the Control shell',async()=>{
 
 test('the in-flight PRs only have to register a renderer',()=>{
   const slots=Object.fromEntries(N.leaves().filter(l=>l.leaf.module).map(l=>[l.leaf.route,l.leaf.module]));
-  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'directSales','#sell:music:lyrics':'lyrics'});
+  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics'});
 });
 
 test('the palette finds a view by its old name',()=>{

@@ -3747,6 +3747,9 @@
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
     if (window.CR.buildCode) window.CR.buildCode.bind($("crSurface"));
     if (window.CR.frontPage) window.CR.frontPage.bind($("crSurface"));
+    /* a NAV mount point whose module has registered binds its own view */
+    var slotMod = state.leaf && state.leaf.leaf.renderer === "slot" && window.CR[state.leaf.leaf.module];
+    if (slotMod && typeof slotMod.bind === "function") slotMod.bind($("crSurface"));
     var search = $("crWorkSearch");
     if (search) {
       search.value = state.search || "";

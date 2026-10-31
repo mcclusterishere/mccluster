@@ -94,7 +94,7 @@
       v("store", "Store", null, [], { views: [
         v("operations", "Shop & operations", "work.operations", ["#work:operations", "Work · Operations", "back office", "prints", "merch", "walls", "rights", "shop", "admin.html"]),
         v("marketplace", "Marketplace", "slot", ["Marketplace sellers", "seller applications", "listings"], { module: "marketplace" }),
-        v("direct", "Direct sales", "slot", ["Direct music sales", "direct checkout"], { module: "directSales" })
+        v("direct", "Direct sales", "slot", ["Direct music sales", "direct checkout", "music downloads", "on sale"], { module: "musicDirect" })
       ] }),
       v("music", "Music", null, [], { views: [
         v("catalog", "Review & catalog", "create.music", ["#create:music", "Create · Music", "music review", "catalogue", "isrc", "distribution", "rights", "vault", "lanes", "music-admin.html", "vault.html", "lanes.html"]),
