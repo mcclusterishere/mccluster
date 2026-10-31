@@ -8,7 +8,7 @@
 // server's offer row, for one catalogue recording (public.music_catalog_objects).
 // What the buyer gets is an entitlement token (a server-random uuid) that
 // downloads the full-quality file a limited number of times inside a window.
-// The database is the last word on all of it (supabase/pending/music_direct_sales_v1.sql):
+// The database is the last word on all of it (supabase/migrations/20261031180839_music_direct_sales_v1.sql):
 // these functions only decide early and say why.
 import { checkoutBindingFailure, type CheckoutSessionLike } from "./checkout-binding.ts";
 

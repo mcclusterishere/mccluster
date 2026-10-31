@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs supabase/pending/music_direct_sales_v1.sql and its behaviour tests against a
+# Runs supabase/migrations/20261031180839_music_direct_sales_v1.sql and its behaviour tests against a
 # throwaway local Postgres (16+), as the real API roles: the API role stub, the
 # production shape of the three music_direct_* tables (lifted verbatim from
 # supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql),
@@ -23,8 +23,8 @@ grep -q 'create table public.music_direct_entitlements' "$TMP/direct_tables.sql"
 apply supabase/tests/supabase_api_roles.stub.sql
 apply supabase/tests/music_direct_sales.stub.sql
 apply "$TMP/direct_tables.sql"
-apply supabase/pending/music_direct_sales_v1.sql
-apply supabase/pending/music_direct_sales_v1.sql
+apply supabase/migrations/20261031180839_music_direct_sales_v1.sql
+apply supabase/migrations/20261031180839_music_direct_sales_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_direct_sales.behaviour.sql >/dev/null
 echo "behaviour: ok"
 apply supabase/pending/music_direct_sales_v1.rollback.sql
@@ -33,7 +33,7 @@ psql -q -v ON_ERROR_STOP=1 -d "$DB" <<'SQL' >/dev/null
 insert into public.music_direct_offers(offer_key,catalog_key,title,price_cents,asset_bucket,asset_path,download_name,active)
 values ('legacy-inactive','here:here','Legacy',100,'mcc-gated-audio','legacy/song.mp3','song.mp3',false);
 SQL
-apply supabase/pending/music_direct_sales_v1.sql
+apply supabase/migrations/20261031180839_music_direct_sales_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" <<'SQL' >/dev/null
 do $$
 begin

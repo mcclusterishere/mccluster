@@ -2,7 +2,7 @@
 //
 // Brought into Git 2026-10-30 from the hand-deployed version (which was wired to one
 // campaign offer and returned to a campaign page) and generalised to any catalogue
-// recording with an active offer (supabase/pending/music_direct_sales_v1.sql).
+// recording with an active offer (supabase/migrations/20261031180839_music_direct_sales_v1.sql).
 //
 // Public by design (verify_jwt = false: buyers have no account). The request names an
 // offer and nothing else: the price, currency and title come only from the server's

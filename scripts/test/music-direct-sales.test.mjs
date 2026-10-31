@@ -238,8 +238,8 @@ test('config: both functions are public at the gateway and declared, with a reco
   assert.match(ci, /deno check --node-modules-dir=auto supabase\/functions\/music-direct-access\/index\.ts/);
 });
 
-test('pending SQL: guards, RLS and the functions the edge code calls', async () => {
-  const sql = await read('supabase/pending/music_direct_sales_v1.sql');
+test('applied SQL: guards, RLS and the functions the edge code calls', async () => {
+  const sql = await read('supabase/migrations/20261031180839_music_direct_sales_v1.sql');
   for (const name of ['music_direct_fulfil', 'music_direct_claim_download', 'music_direct_order_guard', 'music_direct_entitlement_guard', 'music_direct_order_revoke']) {
     assert.match(sql, new RegExp(`create or replace function public\\.${name}\\(`), name);
   }

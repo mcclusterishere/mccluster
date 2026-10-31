@@ -4,7 +4,8 @@ permissions:
 on:
   pull_request:
     paths:
-      - 'supabase/pending/music_direct_sales_v1*.sql'
+      - 'supabase/pending/music_direct_sales_v1.rollback.sql'
+      - 'supabase/migrations/*_music_direct_sales_v1.sql'
       - 'supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql'
       - 'supabase/tests/music_direct_sales.*.sql'
       - 'supabase/tests/supabase_api_roles.stub.sql'

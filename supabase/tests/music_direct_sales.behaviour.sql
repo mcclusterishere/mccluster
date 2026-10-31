@@ -1,4 +1,4 @@
--- Behaviour tests for supabase/pending/music_direct_sales_v1.sql, as the real API roles.
+-- Behaviour tests for supabase/migrations/20261031180839_music_direct_sales_v1.sql, as the real API roles.
 -- Runs on a scratch database (scripts/test-music-direct-sales-db.sh) after the
 -- production shape of the three tables (lifted from the replay migration) and a
 -- minimal public.music_catalog_objects. Every check raises on failure. Runs twice:
