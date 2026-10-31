@@ -36,14 +36,24 @@ const LEADS=[
   {id:'l3',name:'Sam M. (sample)',email:'sam@example.invalid',campaign:'portrait-booking',want:'Portrait session · Nov 14',status:'replied',at:ago(21600)},
   {id:'l4',name:'Sample buyer 22',email:'b22@example.invalid',campaign:'print-shop',want:'Print 18×24 · Low Tide',note:'$65',status:'closed',at:ago(90000)}
 ];
-const WORK={orders:[{id:'o1',title:'Studio print bundle (sample)',amount_cents:18000,currency:'usd',status:'paid',placed_at:ago(30000)}],bookings:[{id:'b1',title:'Portrait session (sample)',status:'confirmed',starts_at:ago(-86400*14),location:'Studio'}],
-  renewals:[{id:'r1',title:'Studio membership · Sample member 07',cadence:'monthly',status:'lapsed',amount_cents:2500,currency:'usd',renews_at:ago(86400)}],payments:[{id:'p1',title:'Site retainer (sample)',status:'failed',amount_cents:50000,currency:'usd',provider:'manual'}],
+/* /v1/work/{kind} rows carry `state`, the shape workers/mccluster/src/work.js listWork returns. */
+const WORK={orders:[{id:'o1',title:'Studio print bundle (sample)',amount_cents:18000,currency:'usd',state:'paid',placed_at:ago(30000)},
+    {id:'o2',title:'Framed print (sample)',amount_cents:9000,currency:'usd',state:'fulfilled',placed_at:ago(200000)},
+    {id:'o3',title:'Cancelled tee (sample)',amount_cents:2500,currency:'usd',state:'cancelled',placed_at:ago(300000)}],
+  bookings:[{id:'b1',title:'Portrait session (sample)',state:'confirmed',starts_at:ago(-86400*14),location:'Studio',created_at:ago(40000)},
+    {id:'b2',title:'Event shoot (sample)',state:'completed',starts_at:ago(86400*5),location:'Hall',created_at:ago(86400*9)}],
+  renewals:[{id:'r1',title:'Studio membership · Sample member 07',cadence:'monthly',state:'lapsed',amount_cents:2500,currency:'usd',renews_at:ago(86400)},
+    {id:'r2',title:'Hosting (sample)',cadence:'annual',state:'upcoming',amount_cents:12000,currency:'usd',renews_at:ago(-86400*30)}],
+  payments:[{id:'p1',title:'Site retainer (sample)',state:'failed',amount_cents:50000,currency:'usd',provider:'manual'},
+    {id:'p2',title:'Logo work (sample)',state:'paid',amount_cents:30000,currency:'usd',provider:'manual'}],
   companies:[],tasks:[],relationships:[],projects:[],deliverables:[]};
-const MUSIC=[{id:'m1',amount_cents:1000,currency:'usd',status:'paid',customer_email:'fan203@example.invalid',metadata:{track_title:'Album download · I AM HERE'},paid_at:ago(28800),created_at:ago(28800)}];
+const MUSIC_FIRST=[{id:'m1',amount_cents:1000,currency:'usd',status:'paid',customer_email:'fan203@example.invalid',metadata:{track_title:'Album download · I AM HERE'},paid_at:ago(28800),created_at:ago(28800)}];
 
 async function setup(viewport){
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true,serviceWorkers:'block'});
   const errors=[];
+  /* music_orders: the first read fails, later reads return whatever MUSIC holds now, so the test can prove Refresh refetches */
+  const music={calls:0,rows:MUSIC_FIRST.slice()};
   await ctx.addInitScript(({OWNER})=>{
     localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     const exp=Math.floor(Date.now()/1000)+3600;
@@ -64,7 +74,7 @@ async function setup(viewport){
     if(u.hostname.endsWith('supabase.co')){
       if(p==='/auth/v1/user')return json(route,{id:OWNER,email:'owner@fixture.invalid'});
       if(p==='/rest/v1/leads')return json(route,LEADS,200,{'content-range':'0-3/4'});
-      if(p==='/rest/v1/music_orders')return json(route,MUSIC);
+      if(p==='/rest/v1/music_orders'){music.calls++;return music.calls===1?json(route,{message:'fixture outage'},503):json(route,music.rows);}
       return json(route,[]);
     }
     if(u.origin===BASE){
@@ -77,7 +87,7 @@ async function setup(viewport){
   const page=await ctx.newPage();
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource|net::ERR_FAILED/.test(m.text()))errors.push(m.text().slice(0,200));});
-  return {ctx,page,errors};
+  return {ctx,page,errors,music};
 }
 const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
 async function settle(page){await page.waitForFunction(()=>window.CR&&window.CR.nav&&!document.getElementById('crApp').hidden&&document.getElementById('crSurface').childElementCount>0,null,{timeout:20000});await page.waitForTimeout(600);}
@@ -91,7 +101,7 @@ const OLD=[['#work:inbox','#people:inbox:conversations'],['#work:desk-bot','#peo
 try{
   for(const vp of [{width:390,height:844},{width:820,height:1180},{width:1280,height:860}]){
     const scope=vp.width+'px';
-    const {ctx,page,errors}=await setup(vp);
+    const {ctx,page,errors,music}=await setup(vp);
     await page.goto(BASE+'/control.html#home',{waitUntil:'domcontentloaded'});
     await settle(page);
     check(scope,'#home lands on Home → Today',await page.evaluate(()=>location.hash)==='#home:today');
@@ -129,6 +139,28 @@ try{
     await goto(page,'#sell:orders:all');
     const orders=await page.evaluate(()=>[...document.querySelectorAll('.cr-orders .cr-order')].length);
     check(scope,'Sell → Orders lists every source in one list',orders>=4,orders);
+    /* Work rows are read by `state`: a fulfilled order is done, a cancelled one is a problem, a confirmed booking is open */
+    const kpis=await page.evaluate(()=>[...document.querySelectorAll('.cr-kpi2')].map(k=>[k.querySelector('.cr-kpi2__label').textContent,k.querySelector('.cr-kpi2__value').textContent]));
+    check(scope,'Problems counts the cancelled order record',JSON.stringify(kpis).includes('["Problems","1"]'),kpis);
+    check(scope,'open list carries the confirmed booking and the paid order',/Confirmed/.test(await page.locator('.cr-orders').textContent())&&/Paid/.test(await page.locator('.cr-orders').textContent()));
+    await page.locator('[data-order-phase="done"]').click();await page.waitForTimeout(200);
+    const done=await page.locator('.cr-orders').textContent();
+    check(scope,'Done shows the fulfilled order and the completed booking',/Fulfilled/.test(done)&&/Completed/.test(done)&&!/Cancelled/.test(done),done.slice(0,200));
+    await page.locator('[data-order-phase="problems"]').click();await page.waitForTimeout(200);
+    check(scope,'Problems shows the cancelled order',/Cancelled tee/.test(await page.locator('.cr-orders').textContent()));
+    await page.locator('[data-order-phase="open"]').click();await page.waitForTimeout(200);
+    /* the first music read failed: no music rows, and the failure is not cached as the answer */
+    check(scope,'a failed music read shows no music orders',await page.locator('[data-order-type="music"] b').textContent()==='0');
+    music.rows=MUSIC_FIRST.concat([{id:'m2',amount_cents:200,currency:'usd',status:'paid',customer_email:'fan118@example.invalid',metadata:{track_title:'Single · Late Bloom (refreshed)'},paid_at:ago(60),created_at:ago(60)}]);
+    await page.locator('.cr-head [data-action="refresh"]').click();
+    await page.waitForFunction(()=>document.querySelector('[data-order-type="music"] b')?.textContent==='2',null,{timeout:10000}).catch(()=>{});
+    check(scope,'Refresh refetches music orders after a failure and shows the new one',await page.locator('[data-order-type="music"] b').textContent()==='2',await page.locator('[data-order-type="music"] b').textContent());
+    music.rows=music.rows.map(r=>r.id==='m2'?{...r,status:'refunded'}:r);
+    await page.locator('.cr-head [data-action="refresh"]').click();
+    await page.waitForFunction(()=>/Refunded/.test(document.querySelector('.cr-orders')?.textContent||'')||document.querySelector('[data-order-phase="problems"]'),null,{timeout:10000});
+    await page.locator('[data-order-phase="problems"]').click();await page.waitForTimeout(300);
+    check(scope,'Refresh refetches a successful read too: the changed order moves to Problems',/Late Bloom \(refreshed\)/.test(await page.locator('.cr-orders').textContent()));
+    await page.locator('[data-order-phase="open"]').click();await page.waitForTimeout(150);
     await page.locator('[data-order-type="music"]').click();await page.waitForTimeout(200);
     check(scope,'type chips filter the one list',await page.locator('[data-order-type="music"].is-on').count()===1);
     await goto(page,'#sell:store:marketplace');
@@ -138,6 +170,9 @@ try{
     await goto(page,'#home:today');
     const needs=await page.locator('.cr-today .cr-panel2').first().textContent();
     check(scope,'Needs you aggregates orders, unanswered, failed renewals and payments',/New order/i.test(needs)&&/Unanswered/i.test(needs)&&/Renewal lapsed/i.test(needs)&&/Payment failed/i.test(needs),needs.slice(0,300));
+    /* exactly the lapsed renewal and the failed payment, read from `state`: not the upcoming renewal or the paid payment */
+    check(scope,'Needs you lists one lapsed renewal and one failed payment by state',(needs.match(/Renewal lapsed/g)||[]).length===1&&(needs.match(/Payment failed/g)||[]).length===1&&/Sample member 07/.test(needs)&&/Site retainer/.test(needs)&&!/Hosting \(sample\)|Logo work/.test(needs));
+    check(scope,'a fulfilled or cancelled order record is not a new order',!/Framed print|Cancelled tee/.test(needs));
     check(scope,'Home carries the AI command bar',await page.locator('#crHeroInput').count()===1);
 
     /* old routes redirect through NAV `was` */

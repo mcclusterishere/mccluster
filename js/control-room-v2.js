@@ -2459,13 +2459,22 @@
      --------------------------------------------------------------------- */
   var ORDER_TYPES = [["all", "All"], ["prints", "Prints"], ["merch", "Merch"], ["bookings", "Bookings"], ["music", "Music"], ["marketplace", "Marketplace"], ["records", "Records"]];
   var ORDER_ICON = { prints: "frame", merch: "shirt", bookings: "cal", music: "note", marketplace: "store", records: "bag" };
+  /* A good read is kept until Refresh (load(true)) asks again; a failed one
+     is shown but never cached: it is retried on Refresh, or on the next
+     render once a minute has passed, so a render never loops on a failure. */
+  var MUSIC_RETRY_MS = 60000;
   function loadMusicOrders(force) {
-    if (!state.org || (state.musicOrders && !force) || state.pending.musicOrders) return;
+    if (!state.org || state.pending.musicOrders) return;
+    if (!force && state.musicOrders && state.musicOrders.ok) return;
+    if (!force && state.musicOrders && !state.musicOrders.ok && Date.now() - (state.musicOrdersAt || 0) < MUSIC_RETRY_MS) return;
     state.pending.musicOrders = true;
     src(supa("music_orders?select=id,amount_cents,currency,status,customer_email,metadata,paid_at,created_at&order=created_at.desc&limit=100")).then(function (r) {
-      state.musicOrders = r; delete state.pending.musicOrders; render();
+      state.musicOrders = r; state.musicOrdersAt = Date.now(); delete state.pending.musicOrders; render();
     });
   }
+  /* /v1/work/{kind} rows carry their lifecycle in `state` (workers/mccluster/
+     src/work.js); `status` is only a fallback for an older row shape. */
+  function workState(r, fallback) { return (r && (r.state || r.status)) || fallback; }
   function allOrders() {
     var out = [];
     (state.leads || []).forEach(function (l) {
@@ -2476,12 +2485,12 @@
         status: l.status || "new", open: (l.status || "new") === "new" || l.status === "replied", total: null, action: "inspect-lead", id: l.id, source: "Lead" });
     });
     workRows("orders").forEach(function (o) {
-      out.push({ key: "order:" + o.id, type: "records", title: o.title || "Order", who: "", when: o.placed_at || o.created_at, status: o.status || "open",
-        open: ["open", "paid", "in_production"].indexOf(o.status || "open") >= 0, total: moneyOf(o.amount_cents, o.currency), route: "#sell:orders:order-records", source: "Order record" });
+      out.push({ key: "order:" + o.id, type: "records", title: o.title || "Order", who: "", when: o.placed_at || o.created_at, status: workState(o, "open"),
+        open: ["open", "paid", "in_production"].indexOf(workState(o, "open")) >= 0, total: moneyOf(o.amount_cents, o.currency), route: "#sell:orders:order-records", source: "Order record" });
     });
     workRows("bookings").forEach(function (b) {
-      out.push({ key: "booking:" + b.id, type: "bookings", title: b.title || "Booking", who: [b.location, b.starts_at ? formatDate(b.starts_at) : ""].filter(Boolean).join(" · "), when: b.created_at || b.starts_at, status: b.status || "proposed",
-        open: ["proposed", "confirmed"].indexOf(b.status || "proposed") >= 0, total: null, route: "#sell:orders:booking-records", source: "Booking record" });
+      out.push({ key: "booking:" + b.id, type: "bookings", title: b.title || "Booking", who: [b.location, b.starts_at ? formatDate(b.starts_at) : ""].filter(Boolean).join(" · "), when: b.created_at || b.starts_at, status: workState(b, "proposed"),
+        open: ["proposed", "confirmed"].indexOf(workState(b, "proposed")) >= 0, total: null, route: "#sell:orders:booking-records", source: "Booking record" });
     });
     rowsOf(state.musicOrders || okResult([])).forEach(function (m) {
       out.push({ key: "music:" + m.id, type: "music", title: (m.metadata && (m.metadata.track_title || m.metadata.title)) || "Music order", who: m.customer_email || "", when: m.paid_at || m.created_at,
@@ -2491,7 +2500,7 @@
     if (mk && typeof mk.orders === "function") {
       try {
         (mk.orders() || []).forEach(function (o) {
-          out.push({ key: "mk:" + o.id, type: "marketplace", title: o.title || "Marketplace order", who: o.who || o.customer || "", when: o.when || o.created_at, status: o.status || "open",
+          out.push({ key: "mk:" + o.id, type: "marketplace", title: o.title || "Marketplace order", who: o.who || o.customer || "", when: o.when || o.created_at, status: o.state || o.status || "open",
             open: o.open !== false, total: o.total || moneyOf(o.amount_cents, o.currency), route: "#sell:store:marketplace", source: "Marketplace" });
         });
       } catch (e) { /* the module owns its own errors */ }
@@ -2567,10 +2576,10 @@
         });
       } catch (e) { /* the module owns its own errors */ }
     }
-    workRows("renewals").filter(function (r) { return r.status === "lapsed"; }).slice(0, 5).forEach(function (r) {
+    workRows("renewals").filter(function (r) { return workState(r) === "lapsed"; }).slice(0, 5).forEach(function (r) {
       items.push(rowi("warn", "bad", "Renewal lapsed", r.title || "Renewal", [moneyOf(r.amount_cents, r.currency), r.renews_at ? "renewed by " + formatDate(r.renews_at) : ""].filter(Boolean).join(" · "), routeBtn("View", "#sell:payments:renewals")));
     });
-    workRows("payments").filter(function (p) { return p.status === "failed"; }).slice(0, 5).forEach(function (p) {
+    workRows("payments").filter(function (p) { return workState(p) === "failed"; }).slice(0, 5).forEach(function (p) {
       items.push(rowi("warn", "bad", "Payment failed", p.title || "Payment", [moneyOf(p.amount_cents, p.currency), p.provider].filter(Boolean).join(" · "), routeBtn("View", "#sell:payments:payments")));
     });
     attentionItems().filter(function (it) { return !/awaiting a reply/.test(it.title); }).forEach(function (it) {
@@ -3970,6 +3979,8 @@
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
       state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null; renderWorkspaceSwitcher(); loadRecentErrors();
+      /* Refresh re-reads the per-view sources too, not just the shell's. */
+      if (force && state.musicOrders) loadMusicOrders(true);
       state.workspace = (a.workspace && a.workspace.membership) || null;
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
