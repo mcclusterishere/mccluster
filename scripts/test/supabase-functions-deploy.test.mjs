@@ -119,6 +119,25 @@ test('the real repo: every function is declared, and #369’s shared change reac
   }
 });
 
+test('the direct-sale functions are declared public at the gateway (anonymous buyers) and deploy on their own and on shared changes', async () => {
+  const toml = await read('supabase/config.toml');
+  const declared = parseDeclaredFunctions(toml);
+  for (const fn of ['music-direct-checkout', 'music-direct-access']) {
+    assert.ok(declared.has(fn), `${fn} is declared`);
+    assert.equal(declared.get(fn).verify_jwt, false, `${fn}: buyers have no account`);
+  }
+  const { readdir } = await import('node:fs/promises');
+  const files = {};
+  for (const d of ['music-direct-checkout', 'music-direct-access', 'stripe-webhook', '_shared']) {
+    for (const f of await readdir(`supabase/functions/${d}`)) if (/\.ts$/.test(f)) files[`supabase/functions/${d}/${f}`] = await read(`supabase/functions/${d}/${f}`);
+  }
+  const state = repo({ toml, files });
+  const plan = planDeploy({ changedPaths: ['supabase/functions/_shared/music-direct.ts'], ...state });
+  assert.deepEqual(plan.functions, ['music-direct-access', 'music-direct-checkout', 'stripe-webhook']);
+  const own = planDeploy({ changedPaths: ['supabase/functions/music-direct-access/index.ts'], ...state });
+  assert.deepEqual(own.functions, ['music-direct-access']);
+});
+
 test('a push plans from the last successful run, so a cancelled or failed push is not skipped', () => {
   /* A deploys; B waits; C arrives and GitHub cancels B. C must cover B's
      functions too, so it plans from A (the last success), not from B. */

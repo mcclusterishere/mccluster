@@ -105,12 +105,12 @@ test('a refund that beats its music checkout still revokes the music', async () 
 test('the webhook verifies the signature first, then routes each commerce event to its database function', async () => {
   const hook = await read('supabase/functions/stripe-webhook/index.ts');
   const verify = hook.indexOf('const verified = await verifiedEvent(raw, sig);');
-  for (const call of ['await recordCheckout(s, event)', 'rpc("commerce_record_stripe_refund"', 'rpc("commerce_record_stripe_invoice"', 'rpc("commerce_record_stripe_subscription_ended"']) {
+  for (const call of ['await recordCheckout(s, event, direct)', 'rpc("commerce_record_stripe_refund"', 'rpc("commerce_record_stripe_invoice"', 'rpc("commerce_record_stripe_subscription_ended"']) {
     const at = hook.indexOf(call);
     assert.ok(verify > 0 && at > verify, `nothing is recorded before the signature is verified (${call})`);
   }
-  assert.match(hook, /event\.type === "checkout\.session\.completed"[\s\S]*?await recordCheckout\(s, event\);/);
-  assert.match(hook, /event\.type === "checkout\.session\.async_payment_succeeded"[\s\S]*?await recordCheckout\(s, event\);/);
+  assert.match(hook, /event\.type === "checkout\.session\.completed"[\s\S]*?await recordCheckout\(s, event, direct\);/);
+  assert.match(hook, /event\.type === "checkout\.session\.async_payment_succeeded"[\s\S]*?await recordCheckout\(s, event, direct\);/);
   assert.match(hook, /event\.type === "charge\.refunded"[\s\S]*?rpc\("commerce_record_stripe_refund", refund\)/);
   assert.match(hook, /event\.type === "invoice\.paid"[\s\S]*?rpc\("commerce_record_stripe_invoice", await withInvoicePayment\(invoice, event\)\)/);
   assert.match(hook, /event\.type === "customer\.subscription\.deleted"[\s\S]*?rpc\("commerce_record_stripe_subscription_ended", ended\)/);
@@ -181,8 +181,8 @@ test('commerceCall routes each event type exactly as the webhook does', async ()
   const hook = await read('supabase/functions/stripe-webhook/index.ts');
   const paid = { ...SESSION };
   const cases = [
-    ['checkout.session.completed', paid, 'commerce_record_stripe_checkout', /event\.type === "checkout\.session\.completed"[\s\S]*?await recordCheckout\(s, event\);/],
-    ['checkout.session.async_payment_succeeded', paid, 'commerce_record_stripe_checkout', /event\.type === "checkout\.session\.async_payment_succeeded"[\s\S]*?await recordCheckout\(s, event\);/],
+    ['checkout.session.completed', paid, 'commerce_record_stripe_checkout', /event\.type === "checkout\.session\.completed"[\s\S]*?await recordCheckout\(s, event, direct\);/],
+    ['checkout.session.async_payment_succeeded', paid, 'commerce_record_stripe_checkout', /event\.type === "checkout\.session\.async_payment_succeeded"[\s\S]*?await recordCheckout\(s, event, direct\);/],
     ['charge.refunded', { payment_intent: 'pi_3Abc123', amount: 4000, amount_refunded: 500, metadata: {} }, 'commerce_record_stripe_refund', /event\.type === "charge\.refunded"[\s\S]*?rpc\("commerce_record_stripe_refund"/],
     ['invoice.paid', { id: 'in_2Renew', subscription: 'sub_1Abc', payment_intent: 'pi_2Renew', amount_paid: 100 }, 'commerce_record_stripe_invoice', /event\.type === "invoice\.paid"[\s\S]*?rpc\("commerce_record_stripe_invoice"/],
     ['customer.subscription.deleted', { id: 'sub_1Abc', metadata: {} }, 'commerce_record_stripe_subscription_ended', /event\.type === "customer\.subscription\.deleted"[\s\S]*?rpc\("commerce_record_stripe_subscription_ended"/]
@@ -222,4 +222,60 @@ test('pending reconciler v3 serialises deliveries and is exercised in CI', async
   assert.ok(apply > ci.indexOf('-f supabase/tests/commerce_stripe_reconciler_regression.sql'), 'v1/v2 suite first, on production\'s shape');
   assert.ok(ci.indexOf('-f supabase/tests/commerce_stripe_reconciler_v3_regression.sql') > apply, 'then the v3 suite');
   assert.ok(ci.indexOf('bash supabase/tests/commerce_stripe_concurrency.sh') > apply, 'then the race');
+});
+
+/* ---------------- direct music sales (music_direct_sale) ---------------- */
+
+const DIRECT_SESSION = {
+  id: 'cs_live_direct9Z8y7X',
+  mode: 'payment',
+  payment_status: 'paid',
+  payment_intent: 'pi_3Direct1',
+  amount_total: 999999, /* what Stripe says is never what the ledger books: the bound order is */
+  currency: 'eur',
+  customer_details: { email: 'Fan@Example.com', name: 'A Fan', phone: '+12035550101' },
+  metadata: { kind: 'music_direct_sale', music_direct_order_id: '50000000-0000-4000-8000-000000000001', music_direct_offer_key: 'here--antisocial', offering: 'print-11x14' }
+};
+const BOUND = {
+  order_id: '50000000-0000-4000-8000-000000000001', stripe_checkout_session_id: 'cs_live_direct9Z8y7X',
+  amount_cents: 199, currency: 'usd', customer_email: 'fan@example.com', title: 'Antisocial', format: 'wav'
+};
+
+test('a bound direct sale is booked from the order, not from Stripe metadata', () => {
+  assert.deepEqual(checkoutRecord(DIRECT_SESSION, EVENT, BOUND), {
+    session_id: 'cs_live_direct9Z8y7X', payment_intent: 'pi_3Direct1', invoice: null, subscription: null,
+    offering: 'Music download · Antisocial (WAV)', kind: 'music_direct_sale', email: 'fan@example.com', name: 'A Fan', phone: null,
+    shipping: null, amount_cents: 199, currency: 'usd', paid_at: '2026-10-06T12:00:00.000Z', livemode: true, org_id: null
+  });
+  assert.equal(checkoutRecord(DIRECT_SESSION, { ...EVENT, livemode: false }, BOUND).livemode, false, 'test mode is carried through');
+});
+
+test('a direct sale that is not bound, or not the platform\'s, is not booked', () => {
+  assert.equal(checkoutRecord(DIRECT_SESSION, EVENT), null, 'unbound: the metadata offering is ignored');
+  assert.equal(checkoutRecord(DIRECT_SESSION, EVENT, null), null);
+  assert.equal(checkoutRecord(DIRECT_SESSION, { ...EVENT, account: 'acct_connected' }, BOUND), null, 'a connected account is never the house\'s sale');
+  assert.equal(checkoutRecord({ ...DIRECT_SESSION, id: 'cs_live_someoneElse1' }, EVENT, BOUND), null, 'another session');
+  assert.equal(checkoutRecord(DIRECT_SESSION, EVENT, { ...BOUND, stripe_checkout_session_id: null }), null, 'an order with no stored session');
+  assert.equal(checkoutRecord({ ...DIRECT_SESSION, payment_status: 'unpaid' }, EVENT, BOUND), null, 'unpaid');
+  assert.equal(checkoutRecord(DIRECT_SESSION, EVENT, { ...BOUND, amount_cents: 1.5 }), null);
+});
+
+test('the webhook books a direct sale only from its binding, and only once fulfilled on a live endpoint', async () => {
+  const hook = await read('supabase/functions/stripe-webhook/index.ts');
+  const body = hook.slice(hook.indexOf('const effects = !verified.testEndpoint;'));
+  assert.equal(body.match(/let direct = await bindDirectOrder\(s, event\);\s+if \(direct && effects && !\(await grantDirectOrder\(s, event, direct\)\)\) direct = null;\s+await recordCheckout\(s, event, direct\);/g).length, 2,
+    'completed and async_payment_succeeded');
+  assert.match(hook, /const record = checkoutRecord\(session as any, event as any, direct\);/);
+  const bind = hook.slice(hook.indexOf('async function bindDirectOrder('), hook.indexOf('async function grantDirectOrder('));
+  assert.match(bind, /directFulfilmentRefusal\(session as any, event as any, order\)/);
+  assert.match(bind, /amount_cents: Number\(order\.amount_cents\)/);
+  assert.match(bind, /currency: order\.currency/);
+  assert.doesNotMatch(bind, /amount_total/, 'the binding books the order\'s amount');
+});
+
+test('commerceCall books a direct sale only with its binding', () => {
+  const ev = { ...EVENT, type: 'checkout.session.completed', data: { object: DIRECT_SESSION } };
+  assert.equal(commerceCall(ev), null, 'a replayed event alone proves nothing about the order');
+  assert.equal(commerceCall(ev, BOUND).payload.amount_cents, 199);
+  assert.equal(commerceCall({ ...ev, account: 'acct_connected' }, BOUND), null);
 });
