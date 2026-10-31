@@ -240,6 +240,89 @@
      "reel": "data/reels/got-wifi.json",
      "music_video": "assets/video/prim3.mp4",
      "seconds": 92.4
+    },
+    {
+     "title": "High Alert",
+     "src": "assets/audio/high-alert.m4a",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/high-alert.json",
+     "seconds": 167.6
+    },
+    {
+     "title": "OSINT",
+     "src": "assets/audio/osint.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/osint.json",
+     "seconds": 97
+    },
+    {
+     "title": "Anti-Social Engineering (Draft)",
+     "src": "assets/audio/anti-social-engineering.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/anti-social-engineering.json",
+     "seconds": 109.7
+    },
+    {
+     "title": "Red, Blue, Purple, White Team",
+     "src": "assets/audio/red-blue-purple-white-team.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/red-blue-purple-white-team.json",
+     "seconds": 87.7
+    },
+    {
+     "title": "Data Breach",
+     "src": "assets/audio/data-breach.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/data-breach.json",
+     "seconds": 256.1
+    },
+    {
+     "title": "App Attacks",
+     "src": "assets/audio/app-attacks.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/app-attacks.json",
+     "seconds": 86.1
+    },
+    {
+     "title": "Dive In",
+     "src": "assets/audio/dive-in.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "seconds": 163.9
+    },
+    {
+     "title": "IOT (Draft)",
+     "src": "assets/audio/iot.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/iot.json",
+     "seconds": 72.1
+    },
+    {
+     "title": "Per Diem (Draft)",
+     "src": "assets/audio/per-diem.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/per-diem.json",
+     "seconds": 85.2
+    },
+    {
+     "title": "RAID (Hot Site)",
+     "src": "assets/audio/raid-hot-site.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/raid-hot-site.json",
+     "seconds": 219.5
+    },
+    {
+     "title": "Evil Twin (Middle Man)",
+     "src": "assets/audio/evil-twin-middle-man.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/evil-twin-middle-man.json",
+     "seconds": 219.5
+    },
+    {
+     "title": "Ghost in the Wires",
+     "src": "assets/audio/ghost-in-the-wires.mp3",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/ghost-in-the-wires.json",
+     "seconds": 249.8
     }
    ]
   },

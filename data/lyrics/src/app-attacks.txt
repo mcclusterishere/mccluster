@@ -1,0 +1,31 @@
+Privilege escalation worked, they did it using Mimikatz
+Now I admin the database and those are mean clean facts
+Breached role based access controls for short: rbac
+Stop cross site scripting, Validate the User inputs
+sanitize it clean that Use a CSP and that’s
+A Content Security Policy I know you need that.
+If you’re down for exploration XXSER has the means for that
+And the browser exploitation framework is really where the beef is at.
+Feeling like a fiend I must prevail
+I don’t do injections, well…
+Unless you talking XML, LDAP, DLL
+Need a fix of SQL as well;
+I can’t keep the needle to myself
+Needle drops I speak infectious tales
+Wear a mask don’t want ring no bells
+SQL Map was breaching pretty well
+Listen to me promise you won’t fail
+Check parameters of URLs
+Validation libraries can help
+Practice what I preach and teach as well
+Salted hash decryptions like a snail
+Pray to free my people from the cells
+I up the Gs and  post the bail
+Life is just a vivid lucid dream
+Even in my sleep I’m woke as hell
+Code reviews I their see testing fail
+Errors on your screens how you can tell
+Pull up GDB pretend to help
+Whole damn time I did that shit myself
+My offshore received it in the mail
+I only owe allegiance to my wealth
