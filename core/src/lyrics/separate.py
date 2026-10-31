@@ -23,6 +23,7 @@ import sys
 import time
 
 SR = 44100
+HEADROOM = 10 ** (-1.0 / 20)  # -1 dBFS: room for the MP3 encoder's own overshoot
 
 
 def decode(path, sr=SR, channels=2):
@@ -90,8 +91,19 @@ def main() -> int:
     names = list(model.sources)
     stems = {n: out[i] for i, n in enumerate(names)}
     stems_meta = []
+    gain_db = 0.0
     if not args.vocals_only:
         inst = sum(v for n, v in stems.items() if n != "vocals")
+        # Separated stems (and their sum) routinely peak above full scale: a mastered
+        # mix sits at 0 dBFS and the model's float output overshoots it (measured up
+        # to +3 dBFS here). Written as-is they clip. One shared gain on every file
+        # keeps the stems' balance, so they still add back up to the (quieter) mix.
+        peak = max(float(np.max(np.abs(v))) for v in list(stems.values()) + [inst])
+        if peak > HEADROOM:
+            g = HEADROOM / peak
+            gain_db = round(20 * np.log10(g), 2)
+            stems = {n: v * g for n, v in stems.items()}
+            inst = inst * g
         for n, v in list(stems.items()) + [("instrumental", inst)]:
             p = os.path.join(args.outdir, f"{n}.{args.format}")
             encode(v, p, args.format, model.samplerate)
@@ -108,7 +120,7 @@ def main() -> int:
     encode(voc16[None], os.path.join(args.outdir, "vocals16k.wav"), "wav", 16000)
 
     manifest = {
-        "version": 1, "separator": "demucs", "model": args.model, "stems": stems_meta,
+        "version": 1, "separator": "demucs", "model": args.model, "stems": stems_meta, "gain_db": gain_db,
         "sources": names, "samplerate": model.samplerate, "format": args.format,
         "seconds": round(wav.shape[1] / model.samplerate, 3),
         "timing": {"separate_seconds": round(t_sep, 1), "total_seconds": round(time.time() - t0, 1)},
