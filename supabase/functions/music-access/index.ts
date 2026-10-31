@@ -232,7 +232,9 @@ Deno.serve(async (req) => {
       const { data: org } = await admin.from("orgs").select("id").eq("slug", "mccluster").limit(1).maybeSingle();
       if (!org?.id) return json({ error: "house org missing" }, 500);
       const { count } = await admin.from("ops_agent_jobs").select("id", { count: "exact", head: true })
-        .eq("org_id", org.id).eq("job_type", "lyrics_align").eq("target_id", trackId).in("status", ["queued", "running"]);
+        .eq("org_id", org.id).eq("job_type", "lyrics_align").eq("target_id", trackId).eq("status", "queued");
+      /* a queued job reads the release when it starts, so it covers this request;
+         a running one may be on old inputs, so it never suppresses a re-run */
       if (Number(count || 0) > 0) return json({ ok: true, queued: false, already: true });
       const { data: job, error } = await admin.from("ops_agent_jobs").insert({
         org_id: org.id, job_type: "lyrics_align", target_type: "creator_track", target_id: trackId,
