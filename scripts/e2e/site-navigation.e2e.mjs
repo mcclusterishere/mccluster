@@ -147,6 +147,7 @@ try{
     await page.goto(BASE+'/member-front.html?handle=other-member');
     await page.waitForFunction(()=>document.getElementById('mfName').textContent==='Other member');
     check('other member front has no profile editor controls',await page.isHidden('#mfCustomize'));
+    await page.waitForFunction(()=>typeof window.MCC?.signOut==='function'&&window.MCC_BAR?.auth().verified);
     await page.evaluate(async()=>{await window.MCC.signOut();});
     await page.waitForFunction(()=>MCC_BAR.auth().signed_in===false);
     check('signing out clears selected identity and unavailable profile branding',
