@@ -70,7 +70,8 @@ try{
     await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
     check(width+' owner never sees the guest three-tab bar during entry',await page.evaluate(()=>__navFrames.every(n=>n===5)),await page.evaluate(()=>__navFrames));
     check(width+' profile is top right',await topRight(page));
-    check(width+' one global bottom bar',await page.locator('.appbar').count()===1&&await page.locator('.cr-rail').isHidden()&&await page.locator('.cr-bottom').isHidden());
+    /* one bottom bar: the Control sections (NAV) are a row under the topbar on a phone and the sidebar from 1024px, never a second fixed bar */
+    check(width+' one global bottom bar',await page.locator('.appbar').count()===1&&await page.locator('#crSections').evaluate(el=>getComputedStyle(el).position!=='fixed'));
     await open(page);
     await page.keyboard.press('Tab');
     check(width+' keyboard reaches destination search',await page.locator('#mccDestinationSearch').evaluate(el=>document.activeElement===el));
@@ -78,16 +79,16 @@ try{
     check(width+' every native destination is in the dock',JSON.stringify(inventory.actual)===JSON.stringify(inventory.expected));
     check(width+' all destinations preserve organization',await page.locator('[data-control-route]').evaluateAll(links=>links.every(a=>new URL(a.href).searchParams.get('org')==='o1')));
     check(width+' no horizontal overflow',await fits(page));
-    await page.locator('[data-destination-group="Studio"]').click();
-    check(width+' Studio filters destinations',await page.locator('[data-control-route="#create:funding"]').isVisible()&&await page.locator('[data-control-route="#work:people"]').count()===0);
+    await page.locator('[data-destination-group="Create"]').click();
+    check(width+' Create filters destinations',await page.locator('[data-control-route="#create:front-page"]').isVisible()&&await page.locator('[data-control-route="#people:contacts"]').count()===0);
     await page.locator('[data-destination-group="All"]').click();
     await page.fill('#mccDestinationSearch','zzzzzz');
     check(width+' empty search is explicit',await page.locator('#mccDestinationCount').textContent()==='No destinations match. Try another search.');
     await page.fill('#mccDestinationSearch','people');
-    await page.locator('[data-control-route="#work:people"]').click();
-    await page.waitForFunction(()=>location.hash==='#work:people');
+    await page.locator('[data-control-route="#people:contacts"]').click();
+    await page.waitForFunction(()=>location.hash==='#people:contacts');
     check(width+' native route opens with context',new URL(page.url()).searchParams.get('org')==='o1');
-    await page.goBack();await page.waitForFunction(()=>location.hash==='#home');
+    await page.goBack();await page.waitForFunction(()=>location.hash==='#home:today');
     check(width+' browser Back works',true);
     await open(page);await page.keyboard.press('Escape');
     check(width+' Escape closes and restores dock focus',await page.locator('#mccControlToggle').evaluate(el=>document.activeElement===el&&el.getAttribute('aria-expanded')==='false'));
@@ -191,7 +192,7 @@ try{
     const {ctx,page}=await setup(1280);
     await ctx.route('**/js/control-room/workspace-core.js*',route=>route.abort());
     await page.goto(BASE+'/control.html#home');await page.waitForSelector('.appbar--admin');
-    check('route-module failure retains the original Control door and sidebar',await page.locator('.appbar a[data-appnav="admin-home"]').count()===1&&await page.locator('.cr-rail').isVisible());
+    check('route-module failure retains the original Control door and sidebar',await page.locator('.appbar a[data-appnav="admin-home"]').count()===1&&await page.locator('#crSections').isVisible());
     await ctx.close();
   }
   {
@@ -199,8 +200,8 @@ try{
     await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
     await page.waitForSelector('#mnMe:not([hidden])');
     check('World keeps one top-right native profile',await topRight(page,'#mnMe')&&await page.locator('#mccAuthChip').isHidden());
-    await open(page);const url=await page.locator('[data-control-route="#create:library"]').getAttribute('href');
-    check('World routes Control to Matthew’s host',url===BASE+'/control.html#create:library');
+    await open(page);const url=await page.locator('[data-control-route="#create:projects:library"]').getAttribute('href');
+    check('World routes Control to Matthew’s host',url===BASE+'/control.html#create:projects:library');
     await page.keyboard.press('Escape');await page.click('#mnMe');
     check('World account menu still opens',await page.locator('#mnMenu').isVisible());
     check('World has no horizontal overflow',await fits(page));

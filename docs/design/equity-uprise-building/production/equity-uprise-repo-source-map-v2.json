@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 529,
+  "candidate_count": 523,
   "capability_source_count": 102,
-  "support_only_count": 427,
+  "support_only_count": 421,
   "entries": [
     {
       "path": ".cursorrules",
@@ -402,13 +402,6 @@
       "rationale": "Public profile for an organizer-confirmed Equity Uprise cohort participant, showing attributed completed work and the participant's separately controlled provider webpage. Extends the existing people directory and actual cohort record."
     },
     {
-      "path": "crm.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
       "path": "css/equity-uprise-app.css",
       "classification": "presentation_support",
       "capability_ids": [],
@@ -702,13 +695,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "desk.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Current operator outreach surface contains Equity Uprise references but does not define an independent program capability."
     },
     {
       "path": "docket-516.html",
@@ -1533,13 +1519,6 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
-      "path": "js/office.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared office/operator frontend references Equity Uprise rooms but does not define an independent program capability."
-    },
-    {
       "path": "js/onboard.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -1584,13 +1563,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared audio continuity across music and World; no separate building-specific capability."
-    },
-    {
-      "path": "lanes.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Current music distribution operator surface references Equity Uprise context but does not define an independent program capability."
     },
     {
       "path": "listen.html",
@@ -1762,7 +1734,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3120,13 +3092,6 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
-      "path": "vault.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Current music-rights operator surface references Equity Uprise context but does not define an independent program capability."
-    },
-    {
       "path": "vendor/supabase-js-2.57.0.mjs",
       "classification": "incidental_text_match",
       "capability_ids": [],
@@ -3799,21 +3764,7 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
     },
     {
-      "path": "js/socials-room.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
-    },
-    {
       "path": "live-mission.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
-    },
-    {
-      "path": "management.html",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
@@ -3972,6 +3923,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
+    },
+    {
+      "path": "js/control-room/nav.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The one Control Room navigation definition; names the existing Equity Uprise operations views (missions, fellows, funding) as a System section entry and adds no distinct program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

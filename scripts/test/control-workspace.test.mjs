@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import '../../js/control-room/nav.js';
 import '../../js/control-room/workspace-core.js';
 const C=globalThis.CR.workspaceCore;
 const read=path=>readFile(new URL('../../'+path,import.meta.url),'utf8');
@@ -11,17 +12,19 @@ test('exactly three pages and immutable route inventory',()=>{
   assert.equal(new Set(C.routes.map(r=>r.hash)).size,C.routes.length);
   assert.ok(Object.isFrozen(C.routes));assert.ok(C.routes.every(Object.isFrozen));
 });
-test('all current native Control routes retain a home',async()=>{
-  const source=await read('js/control-room-v2.js');
-  for(const [name,surface,page] of [['WORK_VIEWS','work','operations'],['CREATE_VIEWS','create','studio'],['SYSTEM_VIEWS','system','operations']]){
-    const list=JSON.parse(source.match(new RegExp('var '+name+' = (\\[[^;]+\\]);'))[1]);
-    for(const view of list){const hash='#'+surface+':'+view;assert.equal(C.resolve(hash).hash,hash);assert.equal(C.resolve(hash).page,page);}
+test('every NAV leaf is a workspace route, and every old Control route still lands',async()=>{
+  const N=globalThis.CR.nav;
+  for(const l of N.leaves()){
+    const r=C.resolve(l.leaf.route);
+    assert.equal(r.hash,l.leaf.route);
+    assert.equal(r.page,l.section.id==='insights'?'intelligence':l.section.id==='create'?'studio':'operations');
+    for(const old of l.leaf.was.filter(w=>w.startsWith('#')))assert.equal(C.resolve(old).hash,l.leaf.route,old+' lost its home');
   }
-  for(const surface of ['home','ai','apps','analytics'])assert.equal(C.resolve('#'+surface).hash,'#'+surface);
+  for(const [old,now] of [['#home','#home:today'],['#ai','#home:ask'],['#apps','#system:apps'],['#analytics','#insights:overview'],['#work:desk-bot','#people:inbox:ai-reply'],['#create:music','#sell:music:catalog']])assert.equal(C.resolve(old).hash,now);
 });
-test('aliases cannot navigate outside the declared legacy routes',()=>{
-  for(const [alias,hash] of [['#intelligence','#analytics'],['#studio','#create:projects'],['#operations','#home'],['#work','#work:inbox']])assert.equal(C.resolve(alias).hash,hash);
-  for(const invalid of ['https://evil.example','#analytics<script>','#__proto__',null,{}])assert.equal(C.resolve(invalid).hash,'#home');
+test('aliases cannot navigate outside the declared routes',()=>{
+  for(const [alias,hash] of [['#intelligence','#insights:overview'],['#studio','#create:projects:projects'],['#operations','#home:today'],['#work','#people:inbox:conversations']])assert.equal(C.resolve(alias).hash,hash);
+  for(const invalid of ['https://evil.example','#analytics<script>','#__proto__',null,{}])assert.equal(C.resolve(invalid).hash,'#home:today');
 });
 test('server ownership is explicit, enabled and house-scoped',()=>{
   assert.equal(C.isOwnerWorkspace(payload),true);

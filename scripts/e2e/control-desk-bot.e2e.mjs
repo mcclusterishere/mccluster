@@ -134,7 +134,8 @@ try{
     const app=await setup(vp);const {page,state}=app;
     await page.goto(BASE+'/control.html#work:desk-bot',{waitUntil:'domcontentloaded'});
     await page.waitForSelector(`[data-crd-doc="${D1}"]`,{timeout:30000});
-    check(scope,'the desk bot is a Work view at #work:desk-bot',await page.locator('#crViewSelect').inputValue()==='desk-bot');
+    /* the old route lands on its new home: People → Inbox → AI reply */
+    check(scope,'the desk bot is People → Inbox → AI reply, and #work:desk-bot still lands there',await page.evaluate(()=>location.hash)==='#people:inbox:ai-reply'&&await page.locator('.cr-seg--views a.is-on').textContent()==='AI reply');
     let t=await text(page);
     check(scope,'knowledge: both documents listed, unembedded chunks called out',/McCluster Sites/.test(t)&&/I AM HERE/.test(t)&&/3 unembedded/.test(t));
     check(scope,'every call is the inbox function with the operator bearer and the Control workspace org',state.calls.length>0&&state.calls.every(c=>/^Bearer x\./.test(c.auth)&&c.body.org==='mccluster'),state.calls.map(c=>c.body));
@@ -269,7 +270,7 @@ try{
     /* The old room's URL is a stub that returns to Control and loads no desk script. */
     const app=await setup({width:390,height:844});const {page,requested}=app;
     await page.goto(BASE+'/inbox.html',{waitUntil:'domcontentloaded'});
-    await page.waitForURL(/control\.html#work:inbox$/,{timeout:15000});
+    await page.waitForURL(/control\.html#people:inbox:conversations$/,{timeout:15000});
     check('inbox.html','the compatibility URL returns to Control and never requests inbox-desk.js',!requested.some(r=>/inbox-desk\.js/.test(r)));
     await app.ctx.close();
   }

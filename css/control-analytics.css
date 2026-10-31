@@ -289,17 +289,9 @@ body.cr[data-cr-surface="analytics"] .mcc-auth-chip{position:absolute;top:calc(1
 body.cr[data-cr-surface="analytics"] .cr-shell{grid-template-rows:minmax(0,1fr);grid-template-areas:"main"}
 body.cr[data-cr-surface="analytics"] .cr-main{padding:0;min-height:0}
 body.cr[data-cr-surface="analytics"] .cr-surface{max-width:none}
-/* the shared bottom bar carries the owner's five tabs here (js/tabbar.js); the Control Room's own bottom row becomes a
-   row of rooms under its topbar instead of a second bar at the bottom */
+/* the shared bottom bar (js/tabbar.js) leaves room at the foot of the page; the Control sections row
+   beside it is styled in css/control-room-v2.css */
 body.cr.has-appbar{padding-bottom:calc(var(--appbar-h,64px) + 1.4rem + env(safe-area-inset-bottom))}
-body.cr.has-appbar .cr-bottom{grid-area:main;align-self:start;position:sticky;top:var(--cr-top);bottom:auto;z-index:30;display:flex;gap:4px;height:auto;padding:6px 10px;overflow-x:auto;scrollbar-width:none;border-top:0;border-bottom:1px solid var(--cr-line);background:rgba(10,11,13,.96)}
-body.cr.has-appbar .cr-bottom::-webkit-scrollbar{display:none}
-body.cr.has-appbar .cr-bottom .cr-nav__item{flex:none;flex-direction:row;gap:6px;min-height:36px;padding:0 12px;border-radius:999px}
-body.cr.has-appbar .cr-bottom .cr-nav__item.is-active::before{display:none}
-body.cr.has-appbar .cr-bottom .cr-nav__item.is-active{background:rgba(229,56,59,.14)}
-body.cr.has-appbar .cr-main{padding-top:62px}
-body.cr.has-appbar[data-cr-surface="analytics"] .cr-bottom{display:none}
-body.cr.has-appbar[data-cr-surface="analytics"] .cr-main{padding-top:0}
 @media (min-width:30rem){.cra-prop__short{display:none}.cra-prop__full{display:inline}}
 @media (min-width:48rem){
   .cra-top{padding:20px 24px 8px}
@@ -315,4 +307,4 @@ body.cr.has-appbar[data-cr-surface="analytics"] .cr-main{padding-top:0}
   .cra-side{min-height:0;overflow-y:auto;align-content:start;overscroll-behavior:contain}
   .cra-car__track{grid-auto-columns:100%}
 }
-@media (min-width:761px){body.cr[data-cr-surface="analytics"] .cr-shell{grid-template-areas:"rail main"}body.cr.has-appbar .cr-bottom{display:none}body.cr.has-appbar .cr-main{padding-top:18px}body.cr.has-appbar[data-cr-surface="analytics"] .cr-main{padding-top:0}}
+@media (min-width:1024px){body.cr[data-cr-surface="analytics"] .cr-shell{grid-template-areas:"nav main"}}

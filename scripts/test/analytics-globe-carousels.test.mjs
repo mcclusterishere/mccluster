@@ -151,6 +151,7 @@ test('the bar never leaves: the Control Room carries the shared bar (no data-no-
   const v2 = await read('js/control-room-v2.js');
   assert.match(v2, /document\.body\.setAttribute\("data-cr-surface", state\.surface\)/);
   const css = await read('css/control-analytics.css');
-  assert.match(css, /body\.cr\.has-appbar\[data-cr-surface="analytics"\] \.cr-bottom\{display:none\}/);
+  /* one bottom bar: beside the shared bar the Control sections step out of the analytics screen on a phone */
+  assert.match(await read('css/control-room-v2.css'), /body\.cr\.has-appbar\[data-cr-surface="analytics"\] \.cr-sections\{display:none\}/);
   assert.doesNotMatch(css, /\.appbar\{display:none|\.appbar[^{]*\{[^}]*display:none/);
 });

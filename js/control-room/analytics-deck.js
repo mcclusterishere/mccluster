@@ -60,7 +60,7 @@
     if(!host||!host.isConnected)return;
     var app=host.querySelector('.cad-app');if(!app)return;
     var bottom=window.innerHeight-8;
-    document.querySelectorAll('.appbar,.cr-bottom').forEach(function(el){var r=el.getBoundingClientRect();if(r.height&&r.top>0&&getComputedStyle(el).position==='fixed')bottom=Math.min(bottom,r.top-8);});
+    document.querySelectorAll('.appbar,.cr-sections').forEach(function(el){var r=el.getBoundingClientRect();if(r.height&&r.top>0&&getComputedStyle(el).position==='fixed')bottom=Math.min(bottom,r.top-8);});
     app.style.setProperty('--cad-height',Math.max(320,bottom-app.getBoundingClientRect().top)+'px');
   }
   window.CR.analyticsDeck={render:render,bind:bind,before:before,fit:fit,sections:sections,health:health,reads:reads};

@@ -51,7 +51,8 @@ test('legacy navigation preserves harmless campaign context but refuses credenti
 });
 
 test('CRM no longer sends visitors to the retired verification page', async () => {
+  /* crm.html is a compatibility stub now: it goes to Control → People → Deals and nowhere else. */
   const crm = await read('crm.html');
   assert.doesNotMatch(crm, /href="verify\.html"/);
-  assert.match(crm, /href="mnet\.html\?view=discover"/);
+  assert.match(crm, /control\.html#people:deals:pipeline/);
 });
