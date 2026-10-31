@@ -165,6 +165,8 @@ try{
     check(scope,'type chips filter the one list',await page.locator('[data-order-type="music"].is-on').count()===1);
     await goto(page,'#sell:store:marketplace');
     check(scope,'a mount point renders "not available yet"',/not available yet/i.test(await page.locator('[data-cr-slot="marketplace"]').textContent()));
+    await goto(page,'#sell:store:direct');
+    check(scope,'Sell → Store → Direct sales renders the registered module (#678), not a placeholder',await page.locator('[data-cr-slot]').count()===0&&/Direct sales/.test(await page.locator('.cr-leaf').textContent()));
     await goto(page,'#sell:music:lyrics');
     check(scope,'Lyrics & stems mount point exists',await page.locator('[data-cr-slot="lyrics"]').count()===1);
     await goto(page,'#home:today');
