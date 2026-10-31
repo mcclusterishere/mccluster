@@ -6,12 +6,13 @@ import assert from 'node:assert/strict';
 const { chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright');
 const ROOT = process.cwd(), OUT = process.argv[2] || '/tmp/vaunt-proof';
 const BASE = 'https://matthew.mccluster.org';
-const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.mp4':'video/mp4','.mp3':'audio/mpeg'};
+const types = {'.mjs':'text/javascript','.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.mp4':'video/mp4','.mp3':'audio/mpeg'};
 await mkdir(OUT,{recursive:true});
 const browser = await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const results=[];
 async function serve(route){
  const u=new URL(route.request().url());
+ if(u.origin==='https://api.mccluster.org'&&u.pathname==='/v1/projects/vaunt')return route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({code:'project_not_found'})});
  if(u.origin!==BASE)return route.fulfill({status:200,contentType:'application/json',body:'{}'});
  const file=resolve(ROOT,'.'+u.pathname);
  if(!file.startsWith(ROOT+'/'))return route.abort();
@@ -96,7 +97,7 @@ try {
    assert.deepEqual(herr,[]);
    await mctx.close();
   }
-  const page=await context.newPage(); const errors=[];
+  const page=await context.newPage(); const errors=[], historyEvents=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('framenavigated',frame=>historyEvents.push({type:'framenavigated',main:frame===page.mainFrame(),url:frame.url(),at:Date.now()}));
   page.on('request',request=>{if(request.isNavigationRequest())historyEvents.push({type:'navigation-request',url:request.url(),main:request.frame()===page.mainFrame(),at:Date.now()});});

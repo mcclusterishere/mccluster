@@ -13,6 +13,7 @@ async function fixture(browser,{foreign=false}={}){
  await page.route('**/*',async route=>{
   const r=route.request(),u=new URL(r.url());
   const json=b=>route.fulfill({contentType:'application/json',body:JSON.stringify(b)});
+  if(u.pathname==='/vendor/supabase-js-2.57.0.mjs')return route.fulfill({contentType:'text/javascript',body:`export function createClient(){return {storage:{from(bucket){return {getPublicUrl(path){return {data:{publicUrl:'https://fixture.invalid/'+path}}},remove:async()=>({}),uploadToSignedUrl:async()=>{window.uploadBuckets.push(bucket);return {}}}}}}}`});
   if(u.hostname==='fixture.invalid'){
    if(u.pathname==='/creator.html')return route.fulfill({contentType:'text/html',body:(await readFile(new URL('creator.html',root),'utf8')).replace(/<script[\s\S]*?<\/script>/g,'')});
    return route.fulfill({status:204,body:''});
@@ -33,7 +34,7 @@ async function fixture(browser,{foreign=false}={}){
  return {page,calls,errors};
 }
 test('private draft resumes own master/credits, requires fresh rights and reuses master on existing release review',async()=>{
- const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});try{
  const {page,calls,errors}=await fixture(browser);
  await page.waitForFunction(()=>document.getElementById('trackStatus').textContent.includes('draft loaded'));
  assert.equal(await page.locator('#trackTitle').inputValue(),draft.title);

@@ -175,7 +175,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       if(method==='DELETE'){world.journeys=world.journeys.filter(x=>x.id!==id);return json(route,[]);}
       return json(route,world.journeys);
     }
-    if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
+    if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     /* members who share their region, five or more per region (the only consented member count): two of Kenya's */
     if (/\/rpc\/action_globe_public_regions$/.test(u)) return json(route, PUBLIC_REGIONS);
@@ -1023,7 +1023,7 @@ if (runs('editorial-members') && (!process.env.EDITORIAL_DEVICE || process.env.E
 
 /* THE NEWSROOM (owner, 2026-10-20): the house owner, and only the house owner, may also publish a post as an article on
    mccluster.org/news/; the Worker checks again (workers/mccluster/test/newsroom.test.mjs). */
-if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
+if (runs('editorial-newsroom') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
   const scope = admin ? 'editorial-newsroom-owner' : 'editorial-newsroom-member';
   const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,admin});
   try {
@@ -1045,7 +1045,7 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
       await page.click('#mnPost');
       await page.waitForFunction(()=>/newsroom/.test(document.getElementById('mnPostStatus').textContent),null,{timeout:8000}).catch(()=>{});
       const sent=req(world,'POST',/^\/v1\/mnet\/posts$/).at(-1);
-      check(scope,'Post sends the newsroom mark with the owner\'s session',!!sent&&sent.auth&&sent.body.newsroom===true&&sent.body.visibility==='public',sent&&sent.body);
+      check(scope,'Post sends the newsroom mark with the owner\'s session',!!sent&&sent.auth&&sent.body.newsroom===true&&sent.body.visibility==='public',{sent:sent&&sent.body,status:await page.textContent('#mnPostStatus'),errors});
       const link=await page.getAttribute('#mnPostStatus a','href');
       check(scope,'and links the article on McCluster Corp\'s site',/^https:\/\/mccluster\.org\/news\/[0-9a-f-]{36}$/.test(link||''),link);
       check(scope,'the tick clears for the next post',!(await page.isChecked('#mnNewsroom')));

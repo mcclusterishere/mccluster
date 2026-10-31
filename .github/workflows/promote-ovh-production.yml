@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  checks: read
 
 concurrency:
   group: promote-ovh-production
@@ -59,6 +60,12 @@ jobs:
           cd core
           npm run check
           npm test
+
+      - name: Require every deploy-gate check green on the target commit
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/require-green-ci.mjs --sha "$TARGET_SHA"
 
       - name: Promote deployment ref
         env:
