@@ -41,6 +41,9 @@
 --   select count(*) from public.music_direct_orders;
 --   select count(*) from public.music_direct_entitlements;
 set local lock_timeout = '5s';
+-- Hold the preflight and schema changes against concurrent checkout writes.
+lock table public.music_direct_offers, public.music_direct_orders,
+  public.music_direct_entitlements in access exclusive mode;
 
 -- Keep rollout fail-closed if sales changed after the read-only preflight.
 do $preflight$ begin

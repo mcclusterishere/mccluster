@@ -13,7 +13,7 @@ DB="music_direct_sales_$$"
 TMP="$(mktemp -d)"
 psql -q -v ON_ERROR_STOP=1 -d postgres -c "create database $DB" >/dev/null
 trap 'psql -q -d postgres -c "drop database if exists $DB" >/dev/null; rm -rf "$TMP"' EXIT
-apply() { PGOPTIONS="--client-min-messages=warning" psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$1" >/dev/null; echo "applied $1"; }
+apply() { PGOPTIONS="--client-min-messages=warning" psql -1 -q -v ON_ERROR_STOP=1 -d "$DB" -f "$1" >/dev/null; echo "applied $1"; }
 
 # the production tables, exactly as the replay migration creates them
 awk '/^-- -+ music direct sales$/{on=1} /^-- -+ the ISRC registry$/{on=0} on' \
