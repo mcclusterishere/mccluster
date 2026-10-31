@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 530,
+  "candidate_count": 533,
   "capability_source_count": 102,
-  "support_only_count": 428,
-  "checks_total": 2020,
-  "checks_passed": 2020,
+  "support_only_count": 431,
+  "checks_total": 2032,
+  "checks_passed": 2032,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -170,6 +170,7 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -196,6 +197,7 @@
     "docs/music-platform.md",
     "docs/pay-now.md",
     "docs/products/DISTRIBUTABLE-PRODUCT.md",
+    "docs/releases/mission-content-cleanup-2026-10-31.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
     "docs/sales-redesign/CRM-MIGRATION.md",
     "docs/sales-redesign/MOBBIN-REFERENCES.md",
@@ -326,6 +328,7 @@
     "scripts/test/mission-pins-arcs-business.test.mjs",
     "scripts/test/mnet-real-network.test.mjs",
     "scripts/test/mobile-rule.test.mjs",
+    "scripts/test/music-direct-sales.test.mjs",
     "scripts/test/native-action-network.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/product-context.test.mjs",
@@ -544,7 +547,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "530 entries"
+      "detail": "533 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8962,6 +8965,26 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/schema-manifest.json capability ids known",
       "passed": true,
       "detail": ""
@@ -10602,6 +10625,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/music-direct-sales.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-direct-sales.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/music-direct-sales.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/music-direct-sales.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/deploy-gate.json capability ids known",
       "passed": true,
       "detail": ""
@@ -10638,6 +10681,26 @@
     },
     {
       "name": "docs/products/DISTRIBUTABLE-PRODUCT.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/releases/mission-content-cleanup-2026-10-31.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/releases/mission-content-cleanup-2026-10-31.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/releases/mission-content-cleanup-2026-10-31.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/releases/mission-content-cleanup-2026-10-31.md support rationale present",
       "passed": true,
       "detail": ""
     }

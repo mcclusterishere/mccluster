@@ -1,12 +1,20 @@
-# Installable McCluster product: release contract
+# Equity Uprise architecture: installable product release contract
 
-Owner direction, 2026-10-31: customers must be able to obtain the product in a new repository, without existing user data, retain its UI and workflows, configure modules and branding, and operate it on their own backend. This promotes independently operated editions from a future packaging idea to an active product target. It does not replace the current McCluster production backend or move its users.
+Owner direction, 2026-10-31: the reusable architecture and product are named **Equity Uprise**. It will power independently configured ecosystems, including transportation and actionable social media. Customers must be able to obtain the product in a new repository, without existing user data, retain its UI and workflows, configure modules and branding, and operate it on their own backend. This promotes independently operated editions from a future packaging idea to an active product target. It does not replace the current McCluster production backend or move its users.
 
 ## What “productized” means
 
 A customer who has not worked on this repository can install a versioned release on empty supported infrastructure, create their own administrator, configure their brand and enabled modules without editing application source, complete the advertised workflows, back up and restore their installation, and upgrade to the next release without losing data or customizations. Documentation and repeatable acceptance tests must prove every step.
 
 Production-ready for Matthew's installation and ready to distribute are separate release gates. A working checkout or green repository test suite does not prove an independent installation works. Deleting production records does not create a clean product distribution: records, identifiers, credentials, branded assets and historical seed data can still remain in Git history, migrations and fixtures.
+
+## Product and ecosystem scope
+
+Equity Uprise is the reusable software architecture owned by McCluster Corp. Equity Uprise World is a social application built on that architecture. Existing company/person identities and deployed infrastructure names remain distinct; the product name does not rename the canonical Worker, database or organizations.
+
+The shared foundation provides identity, organizations, authorization, owner Control, module configuration, events, jobs, media, observability and deployment. Configurable modules cover actionable social/community, mission workflows, transportation, music/media, commerce/storefronts, customer sites, collaboration and intelligence. Each module has its own readiness gates; an installation can enable a supported subset without forking the product. The first independent-install proof may use a small subset, but the product contract covers the full ecosystem architecture.
+
+Mission content is installation data. Removing the current mission catalog does not remove the mission engine; a clean product install starts without Matthew's missions and allows its operator to create their own when that module is enabled. Disabled modules must be inaccessible through server APIs as well as absent from navigation.
 
 ## Supported deployment model
 
@@ -46,7 +54,7 @@ Do not assign a completion percentage from file counts. Count accepted gates and
 
 ## Implementation order
 
-1. **Finish the live commerce release.** Preserve the applied direct-sales migration and its Git ledger. Deploy reviewed checkout/access/webhook code after CI. Resolve the two new albums' names, files and prices. Prove test purchase, fulfilment, download and refund; track full-album bundles separately from single-track v1. Review merch schema and provider configuration independently. No campaign/mission cleanup is a prerequisite for packaging.
+1. **Finish the live commerce release.** The owner-approved mission cleanup has separately removed 39 missions, five campaigns and 19 partner drafts while retaining the specified free-ride mission; music offers were preserved. Preserve the applied direct-sales migration and its Git ledger. Deploy reviewed checkout/access/webhook code after CI. Resolve the two new albums' names, files and prices. Prove test purchase, fulfilment, download and refund; track full-album bundles separately from single-track v1. Review merch schema and provider configuration independently. No campaign/mission cleanup is a prerequisite for packaging.
 2. **Create a neutral installation profile.** Inventory runtime production references; replace them through a typed installation configuration and secret references. Keep the existing installation behavior through its own profile. Bootstrap ownership from a fresh authenticated installation flow, never a hardcoded email or org slug. Missing configuration must fail closed, with no production fallback.
 3. **Build a clean baseline and installer.** Classify SQL into schema, system defaults, demo data and production-only history. Build a new edition baseline from reviewed schema, not a blind replay of every production migration. Validate on empty infrastructure with no network access to production. Preserve the current production ledger unchanged for existing deployments.
 4. **Extract one complete edition.** Start with identity, owner Control, branding and music storefront capabilities; add modules only when their dependency and lifecycle contracts pass. Keep existing UI/UX and compatibility routes. An album purchase must snapshot the included tracks, bind price/currency/session, grant all purchased tracks idempotently and revoke/refund consistently; do not fake a bundle by granting unrelated individual orders.

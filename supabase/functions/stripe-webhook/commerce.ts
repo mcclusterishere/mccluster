@@ -25,11 +25,29 @@ export function orgFor(event: Obj, metadata: Obj | null | undefined): { org_id: 
   return org ? { org_id: org } : null;
 }
 
-/** checkout.session.completed / async_payment_succeeded for an offering or a music sale. */
-export function checkoutRecord(session: Obj, event: Obj): Obj | null {
+/**
+ * A direct sale of Matthew's own recording, as the webhook BOUND it
+ * (index.ts bindDirectOrder: the order found by its id, then
+ * ../_shared/music-direct.ts directFulfilmentRefusal against the order's
+ * stored session, amount, currency and the platform account). The ledger
+ * takes amount, currency and buyer from this, never from session metadata.
+ */
+export type BoundDirectSale = {
+  order_id: string;
+  stripe_checkout_session_id: string | null;
+  amount_cents: number;
+  currency: string;
+  customer_email?: string | null;
+  title?: string | null;
+  format?: string | null;
+};
+
+/** checkout.session.completed / async_payment_succeeded for an offering, a music licence or a direct music sale. */
+export function checkoutRecord(session: Obj, event: Obj, direct?: BoundDirectSale | null): Obj | null {
   const metadata = session.metadata || {};
   const offering = str(metadata.offering);
   const kind = str(metadata.kind);
+  if (kind === "music_direct_sale") return directSaleRecord(session, event, direct);
   if (!offering && kind !== "music_license_sale") return null;
   if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") return null;
   const owner = orgFor(event, metadata);
@@ -63,6 +81,38 @@ export function checkoutRecord(session: Obj, event: Obj): Obj | null {
     paid_at: isoFromUnix(event.created),
     livemode: event.livemode === true,
     org_id: owner.org_id,
+  };
+}
+
+/* A direct sale is recorded only once it is bound: platform account (it is
+   the house's revenue, never a connected account's), the session the server
+   stored on the order, paid. Amount, currency, title and buyer come from the
+   bound order; nothing priced by metadata. */
+function directSaleRecord(session: Obj, event: Obj, direct?: BoundDirectSale | null): Obj | null {
+  if (!direct || !str(direct.order_id)) return null;
+  if (str(event.account)) return null;
+  if (!str(session.id) || session.id !== direct.stripe_checkout_session_id) return null;
+  if (session.payment_status !== "paid") return null;
+  if (!Number.isSafeInteger(direct.amount_cents) || !/^[a-z]{3}$/i.test(String(direct.currency || ""))) return null;
+  const details = session.customer_details || {};
+  const format = str(direct.format) ? String(direct.format).toUpperCase() : "audio";
+  return {
+    session_id: str(session.id),
+    payment_intent: idOf(session.payment_intent),
+    invoice: null,
+    subscription: null,
+    /* not an offerings slug: commerce_record_stripe_checkout labels the order with it */
+    offering: `Music download · ${str(direct.title) || "track"} (${format})`.slice(0, 200),
+    kind: "music_direct_sale",
+    email: str(direct.customer_email) || str(details.email) || str(session.customer_email),
+    name: str(details.name),
+    phone: null,
+    shipping: null,
+    amount_cents: direct.amount_cents,
+    currency: String(direct.currency).toLowerCase(),
+    paid_at: isoFromUnix(event.created),
+    livemode: event.livemode === true,
+    org_id: null,
   };
 }
 
@@ -132,13 +182,14 @@ export function subscriptionEndedRecord(subscription: Obj, event: Obj): Obj | nu
  * webhook still adds what only Stripe can tell it (a subscription's
  * PaymentIntent and period end) before calling.
  */
-export function commerceCall(event: Obj): { rpc: string; payload: Obj } | null {
+/** `direct`: a direct music sale as the webhook bound it; without it a direct sale is not booked. */
+export function commerceCall(event: Obj, direct?: BoundDirectSale | null): { rpc: string; payload: Obj } | null {
   const object = event?.data?.object || {};
   let rpc: string, payload: Obj | null;
   switch (event?.type) {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded":
-      rpc = "commerce_record_stripe_checkout"; payload = checkoutRecord(object, event); break;
+      rpc = "commerce_record_stripe_checkout"; payload = checkoutRecord(object, event, direct); break;
     case "charge.refunded":
       rpc = "commerce_record_stripe_refund"; payload = refundRecord(object, event); break;
     case "invoice.paid":

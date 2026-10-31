@@ -196,6 +196,18 @@ verify_jwt = true
 [functions.music-checkout]
 verify_jwt = true
 
+# Direct sales of Matthew McCluster's own recordings. Buyers are anonymous, so no
+# gateway JWT: the request names an offer only; price, currency and title come from
+# the server's offer row; CORS is matthew.mccluster.org only.
+[functions.music-direct-checkout]
+verify_jwt = false
+
+# Delivery of a direct purchase (session bound to its stored order, then a limited,
+# revocable entitlement token) and the owner's Direct sales desk, whose operator-*
+# actions verify the caller's token and ops.use in-function.
+[functions.music-direct-access]
+verify_jwt = false
+
 # Public read-only world news; privileged sync authenticates internally.
 [functions.public-gdelt-news]
 verify_jwt = false
