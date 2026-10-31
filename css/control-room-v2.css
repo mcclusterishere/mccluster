@@ -331,6 +331,7 @@ body.cr.has-appbar[data-cr-surface="analytics"] .cr-main{padding-top:0}
 .cr-more[hidden]{display:none}
 .cr-more__box{width:100%;background:var(--cr-panel);border-radius:18px 18px 0 0;border-top:1px solid var(--cr-line-strong);padding:10px 14px calc(24px + env(safe-area-inset-bottom));display:grid;gap:8px}
 .cr-more__list{list-style:none;margin:0;padding:0}
+body.cr.has-appbar .cr-more__box{padding-bottom:calc(var(--appbar-h,64px) + 2.2rem + env(safe-area-inset-bottom))}
 
 /* section head, item tabs, view segments */
 .cr-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px;min-width:0}
