@@ -311,10 +311,14 @@ try{
     await context.close();
   }
   {
-    /* the catalog's draw can land on the song the theme already holds (1 in 19): it is still the catalog's pick, and its
-       events say so (pick random, the whole pool), never a fallback of one */
+    /* the catalog's draw can land on the song the theme already holds (1 in the pool): it is still the catalog's pick, and
+       its events say so (pick random, the whole pool), never a fallback of one. The draw is pinned to Heal the 3rd World
+       (the theme's fallback) wherever it sits in the public catalog, so a longer or reordered shelf cannot move it */
     const {context,page}=await setup();
-    await page.addInitScript(()=>{Math.random=()=>12.5/19;}); // index 12 of the 19 public songs: Heal the 3rd World
+    const shelf=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const heal=shelf.findIndex(t=>t.src==='assets/audio/heal-the-3rd-world.m4a');
+    if(heal<0)throw new Error('Heal the 3rd World is no longer a public song: this check needs a new fixed point');
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[heal,shelf.length]);
     await page.goto(WORLD+'/?view=feed');
     await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool);
     await page.waitForTimeout(200);
