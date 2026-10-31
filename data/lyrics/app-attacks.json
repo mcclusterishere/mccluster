@@ -1,0 +1,1500 @@
+{
+ "duration_seconds": 86,
+ "language": "en",
+ "songTitle": "App Attacks",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T19:24:46.638Z",
+  "confidence": 0.744,
+  "mismatched_lines": 5,
+  "sheet_lines": 31,
+  "heard_words": 230,
+  "ctc_aligned_lines": 30,
+  "timing": {
+   "align_seconds": 7.7,
+   "separate_seconds": 41.8,
+   "asr_seconds": 20.2,
+   "map_seconds": 0
+  }
+ },
+ "plain": "Privilege escalation worked, they did it using Mimikatz\nNow I admin the database and those are mean clean facts\nBreached role based access controls for short: rbac\nStop cross site scripting, Validate the User inputs\nsanitize it clean that Use a CSP and that’s\nA Content Security Policy I know you need that.\nIf you’re down for exploration XXSER has the means for that\nAnd the browser exploitation framework is really where the beef is at.\nFeeling like a fiend I must prevail\nI don’t do injections, well…\nUnless you talking XML, LDAP, DLL\nNeed a fix of SQL as well;\nI can’t keep the needle to myself\nNeedle drops I speak infectious tales\nWear a mask don’t want ring no bells\nSQL Map was breaching pretty well\nListen to me promise you won’t fail\nCheck parameters of URLs\nValidation libraries can help\nPractice what I preach and teach as well\nSalted hash decryptions like a snail\nPray to free my people from the cells\nI up the Gs and post the bail\nLife is just a vivid lucid dream\nEven in my sleep I’m woke as hell\nCode reviews I their see testing fail\nErrors on your screens how you can tell\nPull up GDB pretend to help\nWhole damn time I did that shit myself\nMy offshore received it in the mail\nI only owe allegiance to my wealth",
+ "timed": {
+  "line": [
+   {
+    "begin": 8.74,
+    "end": 9.46,
+    "content": "Privilege escalation worked, they did it using Mimikatz",
+    "confidence": 0.375,
+    "mismatch": true,
+    "heard": "I me,",
+    "words": [
+     {
+      "begin": 8.74,
+      "end": 8.74,
+      "content": "Privilege"
+     },
+     {
+      "begin": 8.74,
+      "end": 8.74,
+      "content": "escalation"
+     },
+     {
+      "begin": 8.74,
+      "end": 8.74,
+      "content": "worked,"
+     },
+     {
+      "begin": 8.74,
+      "end": 8.74,
+      "content": "they"
+     },
+     {
+      "begin": 8.74,
+      "end": 8.96,
+      "content": "did"
+     },
+     {
+      "begin": 8.96,
+      "end": 9.1,
+      "content": "it"
+     },
+     {
+      "begin": 9.1,
+      "end": 9.46,
+      "content": "using"
+     },
+     {
+      "begin": 9.46,
+      "end": 9.46,
+      "content": "Mimikatz"
+     }
+    ],
+    "align_score": 0.072
+   },
+   {
+    "begin": 10.782,
+    "end": 14.398,
+    "content": "Now I admin the database and those are mean clean facts",
+    "confidence": 0.893,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 10.782,
+      "end": 10.923,
+      "content": "Now"
+     },
+     {
+      "begin": 11.063,
+      "end": 11.083,
+      "content": "I"
+     },
+     {
+      "begin": 11.304,
+      "end": 11.646,
+      "content": "admin"
+     },
+     {
+      "begin": 11.726,
+      "end": 11.827,
+      "content": "the"
+     },
+     {
+      "begin": 11.887,
+      "end": 12.469,
+      "content": "database"
+     },
+     {
+      "begin": 12.71,
+      "end": 12.791,
+      "content": "and"
+     },
+     {
+      "begin": 12.831,
+      "end": 13.092,
+      "content": "those"
+     },
+     {
+      "begin": 13.172,
+      "end": 13.353,
+      "content": "are"
+     },
+     {
+      "begin": 13.433,
+      "end": 13.654,
+      "content": "mean"
+     },
+     {
+      "begin": 13.775,
+      "end": 13.996,
+      "content": "clean"
+     },
+     {
+      "begin": 14.116,
+      "end": 14.398,
+      "content": "facts"
+     }
+    ],
+    "align_score": 0.738
+   },
+   {
+    "begin": 14.701,
+    "end": 17.36,
+    "content": "Breached role based access controls for short: rbac",
+    "confidence": 0.346,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 14.701,
+      "end": 15.043,
+      "content": "Breached"
+     },
+     {
+      "begin": 15.144,
+      "end": 15.366,
+      "content": "role"
+     },
+     {
+      "begin": 15.426,
+      "end": 15.748,
+      "content": "based"
+     },
+     {
+      "begin": 15.97,
+      "end": 16.393,
+      "content": "access"
+     },
+     {
+      "begin": 16.473,
+      "end": 16.917,
+      "content": "controls"
+     },
+     {
+      "begin": 16.937,
+      "end": 17.017,
+      "content": "for"
+     },
+     {
+      "begin": 17.078,
+      "end": 17.259,
+      "content": "short:"
+     },
+     {
+      "begin": 17.279,
+      "end": 17.36,
+      "content": "rbac"
+     }
+    ],
+    "align_score": 0.575
+   },
+   {
+    "begin": 18.583,
+    "end": 22.542,
+    "content": "Stop cross site scripting, Validate the User inputs",
+    "confidence": 0.875,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 18.583,
+      "end": 18.844,
+      "content": "Stop"
+     },
+     {
+      "begin": 18.984,
+      "end": 19.266,
+      "content": "cross"
+     },
+     {
+      "begin": 19.326,
+      "end": 19.587,
+      "content": "site"
+     },
+     {
+      "begin": 19.687,
+      "end": 20.229,
+      "content": "scripting,"
+     },
+     {
+      "begin": 20.591,
+      "end": 21.073,
+      "content": "Validate"
+     },
+     {
+      "begin": 21.113,
+      "end": 21.173,
+      "content": "the"
+     },
+     {
+      "begin": 21.354,
+      "end": 21.655,
+      "content": "User"
+     },
+     {
+      "begin": 21.856,
+      "end": 22.542,
+      "content": "inputs"
+     }
+    ],
+    "align_score": 0.681
+   },
+   {
+    "begin": 22.542,
+    "end": 25.801,
+    "content": "sanitize it clean that Use a CSP and that’s",
+    "confidence": 0.865,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 22.542,
+      "end": 23.084,
+      "content": "sanitize"
+     },
+     {
+      "begin": 23.125,
+      "end": 23.185,
+      "content": "it"
+     },
+     {
+      "begin": 23.265,
+      "end": 23.607,
+      "content": "clean"
+     },
+     {
+      "begin": 23.707,
+      "end": 23.948,
+      "content": "that"
+     },
+     {
+      "begin": 24.47,
+      "end": 24.631,
+      "content": "Use"
+     },
+     {
+      "begin": 24.732,
+      "end": 24.752,
+      "content": "a"
+     },
+     {
+      "begin": 24.812,
+      "end": 25.193,
+      "content": "CSP"
+     },
+     {
+      "begin": 25.495,
+      "end": 25.595,
+      "content": "and"
+     },
+     {
+      "begin": 25.676,
+      "end": 25.801,
+      "content": "that’s"
+     }
+    ],
+    "align_score": 0.514
+   },
+   {
+    "begin": 25.801,
+    "end": 28.74,
+    "content": "A Content Security Policy I know you need that.",
+    "confidence": 0.556,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 25.801,
+      "end": 25.821,
+      "content": "A"
+     },
+     {
+      "begin": 26.344,
+      "end": 26.866,
+      "content": "Content"
+     },
+     {
+      "begin": 26.946,
+      "end": 27.75,
+      "content": "Security"
+     },
+     {
+      "begin": 27.931,
+      "end": 28.252,
+      "content": "Policy"
+     },
+     {
+      "begin": 28.393,
+      "end": 28.413,
+      "content": "I"
+     },
+     {
+      "begin": 28.453,
+      "end": 28.574,
+      "content": "know"
+     },
+     {
+      "begin": 28.674,
+      "end": 28.74,
+      "content": "you"
+     },
+     {
+      "begin": 28.74,
+      "end": 28.74,
+      "content": "need"
+     },
+     {
+      "begin": 28.74,
+      "end": 28.74,
+      "content": "that."
+     }
+    ],
+    "align_score": 0.689
+   },
+   {
+    "begin": 28.74,
+    "end": 33.08,
+    "content": "If you’re down for exploration XXSER has the means for that",
+    "confidence": 0.856,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 28.74,
+      "end": 28.78,
+      "content": "If"
+     },
+     {
+      "begin": 29.081,
+      "end": 30.205,
+      "content": "you’re"
+     },
+     {
+      "begin": 30.286,
+      "end": 30.426,
+      "content": "down"
+     },
+     {
+      "begin": 30.506,
+      "end": 30.587,
+      "content": "for"
+     },
+     {
+      "begin": 30.687,
+      "end": 31.329,
+      "content": "exploration"
+     },
+     {
+      "begin": 31.59,
+      "end": 32.474,
+      "content": "XXSER"
+     },
+     {
+      "begin": 32.534,
+      "end": 32.714,
+      "content": "has"
+     },
+     {
+      "begin": 32.775,
+      "end": 32.895,
+      "content": "the"
+     },
+     {
+      "begin": 32.975,
+      "end": 33.08,
+      "content": "means"
+     },
+     {
+      "begin": 33.08,
+      "end": 33.08,
+      "content": "for"
+     },
+     {
+      "begin": 33.08,
+      "end": 33.08,
+      "content": "that"
+     }
+    ],
+    "align_score": 0.591
+   },
+   {
+    "begin": 33.08,
+    "end": 37.577,
+    "content": "And the browser exploitation framework is really where the beef is at.",
+    "confidence": 0.889,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 33.08,
+      "end": 33.462,
+      "content": "And"
+     },
+     {
+      "begin": 34.064,
+      "end": 34.124,
+      "content": "the"
+     },
+     {
+      "begin": 34.164,
+      "end": 34.445,
+      "content": "browser"
+     },
+     {
+      "begin": 34.606,
+      "end": 35.309,
+      "content": "exploitation"
+     },
+     {
+      "begin": 35.429,
+      "end": 35.971,
+      "content": "framework"
+     },
+     {
+      "begin": 36.072,
+      "end": 36.152,
+      "content": "is"
+     },
+     {
+      "begin": 36.212,
+      "end": 36.433,
+      "content": "really"
+     },
+     {
+      "begin": 36.493,
+      "end": 36.654,
+      "content": "where"
+     },
+     {
+      "begin": 36.694,
+      "end": 36.754,
+      "content": "the"
+     },
+     {
+      "begin": 36.855,
+      "end": 37.095,
+      "content": "beef"
+     },
+     {
+      "begin": 37.236,
+      "end": 37.296,
+      "content": "is"
+     },
+     {
+      "begin": 37.517,
+      "end": 37.577,
+      "content": "at."
+     }
+    ],
+    "align_score": 0.727
+   },
+   {
+    "begin": 38.104,
+    "end": 39.36,
+    "content": "Feeling like a fiend I must prevail",
+    "confidence": 0.286,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 38.104,
+      "end": 38.388,
+      "content": "Feeling"
+     },
+     {
+      "begin": 38.449,
+      "end": 38.611,
+      "content": "like"
+     },
+     {
+      "begin": 38.692,
+      "end": 38.712,
+      "content": "a"
+     },
+     {
+      "begin": 38.874,
+      "end": 39.056,
+      "content": "fiend"
+     },
+     {
+      "begin": 39.076,
+      "end": 39.097,
+      "content": "I"
+     },
+     {
+      "begin": 39.117,
+      "end": 39.198,
+      "content": "must"
+     },
+     {
+      "begin": 39.218,
+      "end": 39.36,
+      "content": "prevail"
+     }
+    ],
+    "align_score": 0.245
+   },
+   {
+    "begin": 39.861,
+    "end": 42.023,
+    "content": "I don’t do injections, well…",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 39.861,
+      "end": 39.881,
+      "content": "I"
+     },
+     {
+      "begin": 40.647,
+      "end": 40.808,
+      "content": "don’t"
+     },
+     {
+      "begin": 40.869,
+      "end": 40.989,
+      "content": "do"
+     },
+     {
+      "begin": 41.07,
+      "end": 41.514,
+      "content": "injections,"
+     },
+     {
+      "begin": 41.574,
+      "end": 42.023,
+      "content": "well…"
+     }
+    ],
+    "align_score": 0.676
+   },
+   {
+    "begin": 42.023,
+    "end": 45.578,
+    "content": "Unless you talking XML, LDAP, DLL",
+    "confidence": 0.958,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 42.023,
+      "end": 42.244,
+      "content": "Unless"
+     },
+     {
+      "begin": 42.264,
+      "end": 42.324,
+      "content": "you"
+     },
+     {
+      "begin": 42.424,
+      "end": 42.766,
+      "content": "talking"
+     },
+     {
+      "begin": 42.967,
+      "end": 43.71,
+      "content": "XML,"
+     },
+     {
+      "begin": 44.192,
+      "end": 44.573,
+      "content": "LDAP,"
+     },
+     {
+      "begin": 45.076,
+      "end": 45.578,
+      "content": "DLL"
+     }
+    ],
+    "align_score": 0.879
+   },
+   {
+    "begin": 45.924,
+    "end": 47.021,
+    "content": "Need a fix of SQL as well;",
+    "confidence": 0.894,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 45.924,
+      "end": 46.045,
+      "content": "Need"
+     },
+     {
+      "begin": 46.126,
+      "end": 46.146,
+      "content": "a"
+     },
+     {
+      "begin": 46.206,
+      "end": 46.347,
+      "content": "fix"
+     },
+     {
+      "begin": 46.488,
+      "end": 46.528,
+      "content": "of"
+     },
+     {
+      "begin": 46.669,
+      "end": 47.021,
+      "content": "SQL"
+     },
+     {
+      "begin": 47.021,
+      "end": 47.021,
+      "content": "as"
+     },
+     {
+      "begin": 47.021,
+      "end": 47.021,
+      "content": "well;"
+     }
+    ],
+    "align_score": 0.746
+   },
+   {
+    "begin": 47.021,
+    "end": 49.021,
+    "content": "I can’t keep the needle to myself",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 47.021,
+      "end": 47.041,
+      "content": "I"
+     },
+     {
+      "begin": 47.967,
+      "end": 48.128,
+      "content": "can’t"
+     },
+     {
+      "begin": 48.188,
+      "end": 48.329,
+      "content": "keep"
+     },
+     {
+      "begin": 48.409,
+      "end": 48.49,
+      "content": "the"
+     },
+     {
+      "begin": 48.57,
+      "end": 48.812,
+      "content": "needle"
+     },
+     {
+      "begin": 48.953,
+      "end": 49.013,
+      "content": "to"
+     },
+     {
+      "begin": 49.021,
+      "end": 49.021,
+      "content": "myself"
+     }
+    ],
+    "align_score": 0.664
+   },
+   {
+    "begin": 49.021,
+    "end": 51.282,
+    "content": "Needle drops I speak infectious tales",
+    "confidence": 0.761,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 49.021,
+      "end": 50.067,
+      "content": "Needle"
+     },
+     {
+      "begin": 50.107,
+      "end": 50.349,
+      "content": "drops"
+     },
+     {
+      "begin": 50.429,
+      "end": 50.45,
+      "content": "I"
+     },
+     {
+      "begin": 50.51,
+      "end": 50.792,
+      "content": "speak"
+     },
+     {
+      "begin": 50.812,
+      "end": 51.255,
+      "content": "infectious"
+     },
+     {
+      "begin": 51.282,
+      "end": 51.282,
+      "content": "tales"
+     }
+    ],
+    "align_score": 0.451
+   },
+   {
+    "begin": 51.282,
+    "end": 53.645,
+    "content": "Wear a mask don’t want ring no bells",
+    "confidence": 0.886,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 51.282,
+      "end": 51.866,
+      "content": "Wear"
+     },
+     {
+      "begin": 51.967,
+      "end": 51.987,
+      "content": "a"
+     },
+     {
+      "begin": 52.067,
+      "end": 52.249,
+      "content": "mask"
+     },
+     {
+      "begin": 52.329,
+      "end": 52.43,
+      "content": "don’t"
+     },
+     {
+      "begin": 52.49,
+      "end": 52.651,
+      "content": "want"
+     },
+     {
+      "begin": 52.792,
+      "end": 52.953,
+      "content": "ring"
+     },
+     {
+      "begin": 52.973,
+      "end": 53.054,
+      "content": "no"
+     },
+     {
+      "begin": 53.154,
+      "end": 53.645,
+      "content": "bells"
+     }
+    ],
+    "align_score": 0.614
+   },
+   {
+    "begin": 53.645,
+    "end": 54.841,
+    "content": "SQL Map was breaching pretty well",
+    "confidence": 0.882,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 53.645,
+      "end": 53.927,
+      "content": "SQL"
+     },
+     {
+      "begin": 54.028,
+      "end": 54.149,
+      "content": "Map"
+     },
+     {
+      "begin": 54.229,
+      "end": 54.33,
+      "content": "was"
+     },
+     {
+      "begin": 54.41,
+      "end": 54.732,
+      "content": "breaching"
+     },
+     {
+      "begin": 54.813,
+      "end": 54.841,
+      "content": "pretty"
+     },
+     {
+      "begin": 54.841,
+      "end": 54.841,
+      "content": "well"
+     }
+    ],
+    "align_score": 0.668
+   },
+   {
+    "begin": 54.841,
+    "end": 57.256,
+    "content": "Listen to me promise you won’t fail",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 54.841,
+      "end": 55.263,
+      "content": "Listen"
+     },
+     {
+      "begin": 55.968,
+      "end": 56.068,
+      "content": "to"
+     },
+     {
+      "begin": 56.129,
+      "end": 56.209,
+      "content": "me"
+     },
+     {
+      "begin": 56.33,
+      "end": 56.672,
+      "content": "promise"
+     },
+     {
+      "begin": 56.733,
+      "end": 56.833,
+      "content": "you"
+     },
+     {
+      "begin": 56.874,
+      "end": 57.014,
+      "content": "won’t"
+     },
+     {
+      "begin": 57.055,
+      "end": 57.256,
+      "content": "fail"
+     }
+    ],
+    "align_score": 0.535
+   },
+   {
+    "begin": 57.604,
+    "end": 59.256,
+    "content": "Check parameters of URLs",
+    "confidence": 0.75,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 57.604,
+      "end": 57.765,
+      "content": "Check"
+     },
+     {
+      "begin": 57.805,
+      "end": 58.511,
+      "content": "parameters"
+     },
+     {
+      "begin": 58.571,
+      "end": 58.611,
+      "content": "of"
+     },
+     {
+      "begin": 58.773,
+      "end": 59.256,
+      "content": "URLs"
+     }
+    ],
+    "align_score": 0.538
+   },
+   {
+    "begin": 59.546,
+    "end": 61.506,
+    "content": "Validation libraries can help",
+    "confidence": 0.915,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 59.546,
+      "end": 60.19,
+      "content": "Validation"
+     },
+     {
+      "begin": 60.271,
+      "end": 60.774,
+      "content": "libraries"
+     },
+     {
+      "begin": 60.834,
+      "end": 60.915,
+      "content": "can"
+     },
+     {
+      "begin": 60.995,
+      "end": 61.506,
+      "content": "help"
+     }
+    ],
+    "align_score": 0.627
+   },
+   {
+    "begin": 61.506,
+    "end": 63.116,
+    "content": "Practice what I preach and teach as well",
+    "confidence": 0.712,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 61.506,
+      "end": 61.808,
+      "content": "Practice"
+     },
+     {
+      "begin": 61.888,
+      "end": 61.989,
+      "content": "what"
+     },
+     {
+      "begin": 62.069,
+      "end": 62.089,
+      "content": "I"
+     },
+     {
+      "begin": 62.21,
+      "end": 62.432,
+      "content": "preach"
+     },
+     {
+      "begin": 62.492,
+      "end": 62.552,
+      "content": "and"
+     },
+     {
+      "begin": 62.613,
+      "end": 62.774,
+      "content": "teach"
+     },
+     {
+      "begin": 62.834,
+      "end": 62.895,
+      "content": "as"
+     },
+     {
+      "begin": 62.955,
+      "end": 63.116,
+      "content": "well"
+     }
+    ],
+    "align_score": 0.788
+   },
+   {
+    "begin": 63.401,
+    "end": 65.077,
+    "content": "Salted hash decryptions like a snail",
+    "confidence": 0.429,
+    "mismatch": true,
+    "heard": "have",
+    "words": [
+     {
+      "begin": 63.401,
+      "end": 63.704,
+      "content": "Salted"
+     },
+     {
+      "begin": 63.764,
+      "end": 63.906,
+      "content": "hash"
+     },
+     {
+      "begin": 63.987,
+      "end": 64.491,
+      "content": "decryptions"
+     },
+     {
+      "begin": 64.552,
+      "end": 64.673,
+      "content": "like"
+     },
+     {
+      "begin": 64.734,
+      "end": 64.754,
+      "content": "a"
+     },
+     {
+      "begin": 64.815,
+      "end": 65.077,
+      "content": "snail"
+     }
+    ],
+    "align_score": 0.635
+   },
+   {
+    "begin": 65.386,
+    "end": 67.076,
+    "content": "Pray to free my people from the cells",
+    "confidence": 0.875,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 65.386,
+      "end": 65.547,
+      "content": "Pray"
+     },
+     {
+      "begin": 65.607,
+      "end": 65.668,
+      "content": "to"
+     },
+     {
+      "begin": 65.768,
+      "end": 65.909,
+      "content": "free"
+     },
+     {
+      "begin": 65.99,
+      "end": 66.05,
+      "content": "my"
+     },
+     {
+      "begin": 66.13,
+      "end": 66.412,
+      "content": "people"
+     },
+     {
+      "begin": 66.452,
+      "end": 66.533,
+      "content": "from"
+     },
+     {
+      "begin": 66.593,
+      "end": 66.674,
+      "content": "the"
+     },
+     {
+      "begin": 66.815,
+      "end": 67.076,
+      "content": "cells"
+     }
+    ],
+    "align_score": 0.66
+   },
+   {
+    "begin": 67.387,
+    "end": 69.019,
+    "content": "I up the Gs and post the bail",
+    "confidence": 0.723,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 67.387,
+      "end": 67.407,
+      "content": "I"
+     },
+     {
+      "begin": 67.79,
+      "end": 67.83,
+      "content": "up"
+     },
+     {
+      "begin": 68.052,
+      "end": 68.132,
+      "content": "the"
+     },
+     {
+      "begin": 68.173,
+      "end": 68.253,
+      "content": "Gs"
+     },
+     {
+      "begin": 68.314,
+      "end": 68.374,
+      "content": "and"
+     },
+     {
+      "begin": 68.435,
+      "end": 68.616,
+      "content": "post"
+     },
+     {
+      "begin": 68.656,
+      "end": 68.717,
+      "content": "the"
+     },
+     {
+      "begin": 68.838,
+      "end": 69.019,
+      "content": "bail"
+     }
+    ],
+    "align_score": 0.629
+   },
+   {
+    "begin": 69.265,
+    "end": 70.642,
+    "content": "Life is just a vivid lucid dream",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 69.265,
+      "end": 69.446,
+      "content": "Life"
+     },
+     {
+      "begin": 69.547,
+      "end": 69.587,
+      "content": "is"
+     },
+     {
+      "begin": 69.648,
+      "end": 69.809,
+      "content": "just"
+     },
+     {
+      "begin": 69.93,
+      "end": 69.95,
+      "content": "a"
+     },
+     {
+      "begin": 70.03,
+      "end": 70.312,
+      "content": "vivid"
+     },
+     {
+      "begin": 70.413,
+      "end": 70.642,
+      "content": "lucid"
+     },
+     {
+      "begin": 70.642,
+      "end": 70.642,
+      "content": "dream"
+     }
+    ],
+    "align_score": 0.553
+   },
+   {
+    "begin": 70.642,
+    "end": 72.441,
+    "content": "Even in my sleep I’m woke as hell",
+    "confidence": 0.428,
+    "mismatch": true,
+    "heard": "mocha",
+    "words": [
+     {
+      "begin": 70.642,
+      "end": 70.944,
+      "content": "Even"
+     },
+     {
+      "begin": 71.346,
+      "end": 71.507,
+      "content": "in"
+     },
+     {
+      "begin": 71.729,
+      "end": 71.809,
+      "content": "my"
+     },
+     {
+      "begin": 71.89,
+      "end": 72.111,
+      "content": "sleep"
+     },
+     {
+      "begin": 72.212,
+      "end": 72.272,
+      "content": "I’m"
+     },
+     {
+      "begin": 72.292,
+      "end": 72.441,
+      "content": "woke"
+     },
+     {
+      "begin": 72.441,
+      "end": 72.441,
+      "content": "as"
+     },
+     {
+      "begin": 72.441,
+      "end": 72.441,
+      "content": "hell"
+     }
+    ],
+    "align_score": 0.377
+   },
+   {
+    "begin": 72.441,
+    "end": 74.856,
+    "content": "Code reviews I their see testing fail",
+    "confidence": 0.683,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 72.441,
+      "end": 72.783,
+      "content": "Code"
+     },
+     {
+      "begin": 73.427,
+      "end": 73.91,
+      "content": "reviews"
+     },
+     {
+      "begin": 74.051,
+      "end": 74.071,
+      "content": "I"
+     },
+     {
+      "begin": 74.131,
+      "end": 74.252,
+      "content": "their"
+     },
+     {
+      "begin": 74.292,
+      "end": 74.413,
+      "content": "see"
+     },
+     {
+      "begin": 74.433,
+      "end": 74.614,
+      "content": "testing"
+     },
+     {
+      "begin": 74.675,
+      "end": 74.856,
+      "content": "fail"
+     }
+    ],
+    "align_score": 0.487
+   },
+   {
+    "begin": 75.206,
+    "end": 77.085,
+    "content": "Errors on your screens how you can tell",
+    "confidence": 0.732,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 75.206,
+      "end": 75.528,
+      "content": "Errors"
+     },
+     {
+      "begin": 75.568,
+      "end": 75.608,
+      "content": "on"
+     },
+     {
+      "begin": 75.669,
+      "end": 75.769,
+      "content": "your"
+     },
+     {
+      "begin": 75.789,
+      "end": 76.091,
+      "content": "screens"
+     },
+     {
+      "begin": 76.112,
+      "end": 76.212,
+      "content": "how"
+     },
+     {
+      "begin": 76.273,
+      "end": 76.353,
+      "content": "you"
+     },
+     {
+      "begin": 76.454,
+      "end": 76.534,
+      "content": "can"
+     },
+     {
+      "begin": 76.595,
+      "end": 77.085,
+      "content": "tell"
+     }
+    ],
+    "align_score": 0.631
+   },
+   {
+    "begin": 77.085,
+    "end": 78.381,
+    "content": "Pull up GDB pretend to help",
+    "confidence": 0.953,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 77.085,
+      "end": 77.246,
+      "content": "Pull"
+     },
+     {
+      "begin": 77.327,
+      "end": 77.367,
+      "content": "up"
+     },
+     {
+      "begin": 77.448,
+      "end": 77.83,
+      "content": "GDB"
+     },
+     {
+      "begin": 77.971,
+      "end": 78.333,
+      "content": "pretend"
+     },
+     {
+      "begin": 78.381,
+      "end": 78.381,
+      "content": "to"
+     },
+     {
+      "begin": 78.381,
+      "end": 78.381,
+      "content": "help"
+     }
+    ],
+    "align_score": 0.406
+   },
+   {
+    "begin": 78.381,
+    "end": 80.321,
+    "content": "Whole damn time I did that shit myself",
+    "confidence": 0.547,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 78.381,
+      "end": 78.784,
+      "content": "Whole"
+     },
+     {
+      "begin": 79.207,
+      "end": 79.409,
+      "content": "damn"
+     },
+     {
+      "begin": 79.449,
+      "end": 79.61,
+      "content": "time"
+     },
+     {
+      "begin": 79.671,
+      "end": 79.691,
+      "content": "I"
+     },
+     {
+      "begin": 79.812,
+      "end": 79.953,
+      "content": "did"
+     },
+     {
+      "begin": 80.013,
+      "end": 80.094,
+      "content": "that"
+     },
+     {
+      "begin": 80.175,
+      "end": 80.296,
+      "content": "shit"
+     },
+     {
+      "begin": 80.321,
+      "end": 80.321,
+      "content": "myself"
+     }
+    ],
+    "align_score": 0.42
+   },
+   {
+    "begin": 80.321,
+    "end": 83.006,
+    "content": "My offshore received it in the mail",
+    "confidence": 0.761,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 80.321,
+      "end": 80.643,
+      "content": "My"
+     },
+     {
+      "begin": 81.206,
+      "end": 81.529,
+      "content": "offshore"
+     },
+     {
+      "begin": 81.569,
+      "end": 81.992,
+      "content": "received"
+     },
+     {
+      "begin": 82.072,
+      "end": 82.112,
+      "content": "it"
+     },
+     {
+      "begin": 82.193,
+      "end": 82.233,
+      "content": "in"
+     },
+     {
+      "begin": 82.455,
+      "end": 82.575,
+      "content": "the"
+     },
+     {
+      "begin": 82.958,
+      "end": 83.006,
+      "content": "mail"
+     }
+    ],
+    "align_score": 0.427
+   },
+   {
+    "begin": 83.006,
+    "end": 84.678,
+    "content": "I only owe allegiance to my wealth",
+    "confidence": 0.571,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 83.006,
+      "end": 83.027,
+      "content": "I"
+     },
+     {
+      "begin": 83.188,
+      "end": 83.389,
+      "content": "only"
+     },
+     {
+      "begin": 83.51,
+      "end": 83.611,
+      "content": "owe"
+     },
+     {
+      "begin": 83.712,
+      "end": 84.074,
+      "content": "allegiance"
+     },
+     {
+      "begin": 84.094,
+      "end": 84.155,
+      "content": "to"
+     },
+     {
+      "begin": 84.215,
+      "end": 84.276,
+      "content": "my"
+     },
+     {
+      "begin": 84.296,
+      "end": 84.678,
+      "content": "wealth"
+     }
+    ],
+    "align_score": 0.331
+   }
+  ]
+ }
+}
