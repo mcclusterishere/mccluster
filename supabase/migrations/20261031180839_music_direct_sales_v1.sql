@@ -41,12 +41,14 @@
 --   select count(*) from public.music_direct_orders;
 --   select count(*) from public.music_direct_entitlements;
 set local lock_timeout = '5s';
--- Hold the preflight and schema changes against concurrent checkout writes.
-lock table public.music_direct_offers, public.music_direct_orders,
-  public.music_direct_entitlements in access exclusive mode;
-
 -- Keep rollout fail-closed if sales changed after the read-only preflight.
+-- The lock lives inside the DO block: LOCK TABLE needs a transaction block,
+-- which the SQL Editor provides but a migration runner applying statements
+-- one by one does not. Applied as one script, it holds for the whole file.
 do $preflight$ begin
+  -- Hold the preflight and schema changes against concurrent checkout writes.
+  lock table public.music_direct_offers, public.music_direct_orders,
+    public.music_direct_entitlements in access exclusive mode;
   if exists(select 1 from public.music_direct_orders)
      or exists(select 1 from public.music_direct_entitlements) then
     raise exception 'music_direct_rollout_requires_purchase_review';
