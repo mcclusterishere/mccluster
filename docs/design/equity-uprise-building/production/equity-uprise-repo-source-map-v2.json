@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 530,
+  "candidate_count": 532,
   "capability_source_count": 102,
-  "support_only_count": 428,
+  "support_only_count": 430,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3986,6 +3986,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
+    },
+    {
+      "path": "docs/products/DISTRIBUTABLE-PRODUCT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Independent software distribution acceptance contract and portability assessment; no building capability, program or geometry implementation."
+    },
+    {
+      "path": "docs/releases/mission-content-cleanup-2026-10-31.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-authorized production content cleanup outcome; operational evidence, not a building capability or geometry change."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
