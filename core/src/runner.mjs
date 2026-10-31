@@ -24,6 +24,7 @@ import { residentAiTurn } from './executors/resident-ai-turn.mjs';
 import { actorLiveComment } from './executors/actor-live-comment.mjs';
 import { actorNewsComment } from './executors/actor-news-comment.mjs';
 import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
+import { lyricsAlign } from './executors/lyrics-align.mjs';
 import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
 const executors = new Map([
@@ -52,6 +53,7 @@ const executors = new Map([
   ['ai_diagnostics', aiDiagnostics],
   ['actor_news_comment', actorNewsComment],
   ['actor_live_comment', actorLiveComment],
+  ['lyrics_align', lyricsAlign],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));

@@ -182,6 +182,66 @@ Deno.serve(async (req) => {
       return json({ ok: true, tracks: tracks || [], creators: creators || [], offers: offers || [] });
     }
 
+    /* THE LYRIC MACHINE, owner side (Control → Create → Music → Lyrics).
+       get: the release's timed lyrics + a short-lived URL to listen against;
+       save: the owner's corrected lyrics (and the reviewed mark) onto
+       creator_tracks.lyrics; queue: run the machine again on McCluster Core
+       (an ops_agent_jobs row; core/src/executors/lyrics-align.mjs). */
+    if (action === "operator-lyrics-get") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const trackId = clean(body.track_id, 80);
+      if (!trackId) return json({ error: "track_id required" }, 400);
+      const { data: t, error } = await admin.from("creator_tracks")
+        .select("id,title,artist,lyrics,master_bucket,master_path,audio_url").eq("id", trackId).maybeSingle();
+      if (error) throw error;
+      if (!t) return json({ error: "track not found" }, 404);
+      const listen = t.master_bucket && t.master_path ? await signDownload(t.master_bucket, t.master_path, undefined, 900) : (t.audio_url || null);
+      return json({ ok: true, track_id: t.id, title: t.title, artist: t.artist, lyrics: t.lyrics || null, listen_url: listen, expires_in: 900 });
+    }
+
+    if (action === "operator-lyrics-save") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const trackId = clean(body.track_id, 80);
+      type LyricLine = { begin?: unknown; content?: unknown };
+      type LyricDoc = Record<string, unknown> & { timed?: { line?: unknown } };
+      const lyrics = (body.lyrics && typeof body.lyrics === "object") ? body.lyrics as LyricDoc : null;
+      if (!trackId) return json({ error: "track_id required" }, 400);
+      const lines = lyrics && lyrics.timed && Array.isArray(lyrics.timed.line) ? lyrics.timed.line as LyricLine[] : null;
+      if (!lines || lines.length > 2000) return json({ error: "lyrics must carry timed.line (at most 2000 lines)" }, 400);
+      if (JSON.stringify(lyrics).length > 512 * 1024) return json({ error: "lyrics too large" }, 413);
+      let prev = -1;
+      for (const l of lines) {
+        const begin = l && typeof l.begin === "number" ? l.begin : NaN;
+        if (!l || typeof l.content !== "string" || !Number.isFinite(begin) || begin < prev) {
+          return json({ error: "every line needs content and a begin time in order" }, 400);
+        }
+        prev = begin;
+      }
+      const reviewed = body.reviewed === true;
+      const doc = { ...lyrics, reviewed, reviewed_at: reviewed ? new Date().toISOString() : null, reviewed_by: reviewed ? who.user.id : null };
+      const { data, error } = await admin.from("creator_tracks").update({ lyrics: doc }).eq("id", trackId).select("id");
+      if (error) throw error;
+      if (!data?.length) return json({ error: "track not found" }, 404);
+      return json({ ok: true, track_id: trackId, reviewed });
+    }
+
+    if (action === "operator-lyrics-queue") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const trackId = clean(body.track_id, 80);
+      if (!trackId) return json({ error: "track_id required" }, 400);
+      const { data: org } = await admin.from("orgs").select("id").eq("slug", "mccluster").limit(1).maybeSingle();
+      if (!org?.id) return json({ error: "house org missing" }, 500);
+      const { count } = await admin.from("ops_agent_jobs").select("id", { count: "exact", head: true })
+        .eq("org_id", org.id).eq("job_type", "lyrics_align").eq("target_id", trackId).in("status", ["queued", "running"]);
+      if (Number(count || 0) > 0) return json({ ok: true, queued: false, already: true });
+      const { data: job, error } = await admin.from("ops_agent_jobs").insert({
+        org_id: org.id, job_type: "lyrics_align", target_type: "creator_track", target_id: trackId,
+        priority: 30, max_attempts: 2, input: { track_id: trackId, trigger: "operator", requested_by: who.user.id },
+      }).select("id").single();
+      if (error) throw error;
+      return json({ ok: true, queued: true, job_id: job.id });
+    }
+
     /* (f) The reviewer's step before a decision: pin the master under review,
        hash its exact bytes once (streaming, size-capped, fail closed), and
        hand back a player URL for THAT pinned object and its hash. The

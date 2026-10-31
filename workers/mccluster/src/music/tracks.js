@@ -71,6 +71,26 @@ export const TRACKS = {
     "album": "vaunt-ep",
     "seconds": 92.4
   },
+  "test-drive": {
+    "title": "Test Drive",
+    "album": "whip-equipped",
+    "seconds": 95.2
+  },
+  "salvage-title-b-side": {
+    "title": "Salvage Title (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 89.1
+  },
+  "repo-guy-b-side": {
+    "title": "Repo Guy (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 120.2
+  },
+  "hundun-b-side": {
+    "title": "Hundun (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 143
+  },
   "dealer-plates": {
     "title": "Dealer Plates (A-Side)",
     "album": "whip-equipped",
@@ -80,6 +100,31 @@ export const TRACKS = {
     "title": "Dealer Plates (B-Side)",
     "album": "whip-equipped",
     "seconds": 97.4
+  },
+  "towyard-killer": {
+    "title": "Towyard Killer",
+    "album": "whip-equipped",
+    "seconds": 65.7
+  },
+  "mr-lock-changer-remix": {
+    "title": "Mr. Lock Changer (Remix)",
+    "album": "whip-equipped",
+    "seconds": 108.1
+  },
+  "lana-b-side": {
+    "title": "Lana (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 85.3
+  },
+  "stand-on-business-b-side": {
+    "title": "Stand On Business (B-Side)",
+    "album": "whip-equipped",
+    "seconds": 120.7
+  },
+  "all-in-the-details": {
+    "title": "All in the Details",
+    "album": "whip-equipped",
+    "seconds": 155
   },
   "upset": {
     "title": "Upset",

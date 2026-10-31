@@ -1,5 +1,1644 @@
 {
- "songTitle": "Who Did The Shoot",
+ "duration_seconds": 130,
  "language": "en",
- "plain": "Who did the shoot?\nWas it you?\nIt was me\nWunt for free\nPay the fee, pay the fee\nDeposit lock the day in,\nimma charge the card for payment\nLock at least halfway in\nYour brand got a ring to it now,\nthe content so engaging\nWe got the hottest infotainment\ngot 'em commenting \"who made this?\"\nGot 'em asking…\nWho did this shoot?\nWas it you!\nIt was me\nWunt for free\nPay the fee, pay the fee\nNever ask me to lower my price\nI snap like my A7R5\nOwn so much Sony I'm feeling like Mike\nIf you try to jack son\nhit you with the 45\nMillimeter on sight, we seen long days,\nwe seen long nights, word to the gang\nCount down prime time:\nlights, camera, action… set, be quiet\nBlessed with the spirit of excellence\nIf you won't settle for less\nthen connect with us\nThem, they just do it for presidents\nAll of our visuals set a new precedence\nHow you say you don't believe in we?\nYou gotta be speaking facetiously\nDon't let shortcuts make your pockets bleed\nWe challenge ourselves,\ndon't do easy things\nGot 'em asking…"
+ "songTitle": "Who Did The Shoot",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:30:54.989Z",
+  "confidence": 0.808,
+  "mismatched_lines": 7,
+  "sheet_lines": 37,
+  "heard_words": 233,
+  "ctc_aligned_lines": 45,
+  "timing": {
+   "align_seconds": 10.7,
+   "separate_seconds": 86.9,
+   "asr_seconds": 57.6,
+   "map_seconds": 0.1
+  }
+ },
+ "plain": "Who did the shoot?\nWas it you?\nIt was me\nWunt for free\nPay the fee, pay the fee\nDeposit lock the day in,\nimma charge the card for payment\nLock at least halfway in\nYour brand got a ring to it now,\nthe content so engaging\nWe got the hottest infotainment\ngot 'em commenting \"who made this?\"\nGot 'em asking…\nWho did this shoot?\nWas it you!\nIt was me\nWunt for free\nPay the fee, pay the fee\nNever ask me to lower my price\nI snap like my A7R5\nOwn so much Sony I'm feeling like Mike\nIf you try to jack son\nhit you with the 45\nMillimeter on sight, we seen long days,\nwe seen long nights, word to the gang\n\nlights, camera, action… set, be quiet\nBlessed with the spirit of excellence\nIf you won't settle for less\nthen connect with us\nThem, they just do it for presidents\nAll of our visuals set a new precedence\nHow you say you don't believe in we?\nYou gotta be speaking facetiously\nDon't let shortcuts make your pockets bleed\nWe challenge ourselves,\ndon't do easy things\nGot 'em asking…\n\nWho did this shoot?\nWas it you!\nIt was me\nWunt for free\nPay the fee, pay the fee\nNever ask me to lower my price\n\nOne for free,\npaid a fee, paid a fee",
+ "timed": {
+  "line": [
+   {
+    "begin": 6.646,
+    "end": 9.899,
+    "content": "Who did the shoot?",
+    "confidence": 0.764,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 6.646,
+      "end": 6.967,
+      "content": "Who"
+     },
+     {
+      "begin": 8.433,
+      "end": 8.634,
+      "content": "did"
+     },
+     {
+      "begin": 8.694,
+      "end": 8.754,
+      "content": "the"
+     },
+     {
+      "begin": 8.855,
+      "end": 9.899,
+      "content": "shoot?"
+     }
+    ],
+    "align_score": 0.451
+   },
+   {
+    "begin": 10.624,
+    "end": 11.209,
+    "content": "Was it you?",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 10.624,
+      "end": 10.806,
+      "content": "Was"
+     },
+     {
+      "begin": 10.846,
+      "end": 10.887,
+      "content": "it"
+     },
+     {
+      "begin": 11.048,
+      "end": 11.209,
+      "content": "you?"
+     }
+    ],
+    "align_score": 0.439
+   },
+   {
+    "begin": 12.906,
+    "end": 14.356,
+    "content": "It was me",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 12.906,
+      "end": 12.946,
+      "content": "It"
+     },
+     {
+      "begin": 13.047,
+      "end": 13.188,
+      "content": "was"
+     },
+     {
+      "begin": 14.316,
+      "end": 14.356,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.712
+   },
+   {
+    "begin": 15.043,
+    "end": 16.495,
+    "content": "Wunt for free",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 15.043,
+      "end": 15.245,
+      "content": "Wunt"
+     },
+     {
+      "begin": 15.447,
+      "end": 15.568,
+      "content": "for"
+     },
+     {
+      "begin": 16.394,
+      "end": 16.495,
+      "content": "free"
+     }
+    ],
+    "align_score": 0.175
+   },
+   {
+    "begin": 17.202,
+    "end": 21.885,
+    "content": "Pay the fee, pay the fee",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 17.202,
+      "end": 17.342,
+      "content": "Pay"
+     },
+     {
+      "begin": 17.463,
+      "end": 17.543,
+      "content": "the"
+     },
+     {
+      "begin": 17.603,
+      "end": 18.547,
+      "content": "fee,"
+     },
+     {
+      "begin": 19.45,
+      "end": 19.631,
+      "content": "pay"
+     },
+     {
+      "begin": 19.671,
+      "end": 19.771,
+      "content": "the"
+     },
+     {
+      "begin": 19.832,
+      "end": 21.885,
+      "content": "fee"
+     }
+    ],
+    "align_score": 0.219
+   },
+   {
+    "begin": 21.885,
+    "end": 24.201,
+    "content": "Deposit lock the day in,",
+    "confidence": 0.708,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 21.885,
+      "end": 22.468,
+      "content": "Deposit"
+     },
+     {
+      "begin": 22.528,
+      "end": 22.648,
+      "content": "lock"
+     },
+     {
+      "begin": 22.729,
+      "end": 22.809,
+      "content": "the"
+     },
+     {
+      "begin": 22.89,
+      "end": 23.111,
+      "content": "day"
+     },
+     {
+      "begin": 24.201,
+      "end": 24.201,
+      "content": "in,"
+     }
+    ],
+    "align_score": 0.511
+   },
+   {
+    "begin": 24.201,
+    "end": 28.239,
+    "content": "imma charge the card for payment",
+    "confidence": 0.749,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 24.201,
+      "end": 26.351,
+      "content": "imma"
+     },
+     {
+      "begin": 26.431,
+      "end": 26.733,
+      "content": "charge"
+     },
+     {
+      "begin": 26.773,
+      "end": 26.853,
+      "content": "the"
+     },
+     {
+      "begin": 26.893,
+      "end": 27.114,
+      "content": "card"
+     },
+     {
+      "begin": 27.134,
+      "end": 27.235,
+      "content": "for"
+     },
+     {
+      "begin": 27.315,
+      "end": 28.239,
+      "content": "payment"
+     }
+    ],
+    "align_score": 0.608
+   },
+   {
+    "begin": 28.703,
+    "end": 30.382,
+    "content": "Lock at least halfway in",
+    "confidence": 0.8,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 28.703,
+      "end": 28.844,
+      "content": "Lock"
+     },
+     {
+      "begin": 28.985,
+      "end": 29.045,
+      "content": "at"
+     },
+     {
+      "begin": 29.126,
+      "end": 29.267,
+      "content": "least"
+     },
+     {
+      "begin": 29.307,
+      "end": 29.77,
+      "content": "halfway"
+     },
+     {
+      "begin": 30.382,
+      "end": 30.382,
+      "content": "in"
+     }
+    ],
+    "align_score": 0.412
+   },
+   {
+    "begin": 30.382,
+    "end": 32.22,
+    "content": "Your brand got a ring to it now,",
+    "confidence": 0.998,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 30.382,
+      "end": 30.825,
+      "content": "Your"
+     },
+     {
+      "begin": 30.925,
+      "end": 31.247,
+      "content": "brand"
+     },
+     {
+      "begin": 31.328,
+      "end": 31.489,
+      "content": "got"
+     },
+     {
+      "begin": 31.549,
+      "end": 31.569,
+      "content": "a"
+     },
+     {
+      "begin": 31.71,
+      "end": 31.931,
+      "content": "ring"
+     },
+     {
+      "begin": 32.052,
+      "end": 32.213,
+      "content": "to"
+     },
+     {
+      "begin": 32.22,
+      "end": 32.22,
+      "content": "it"
+     },
+     {
+      "begin": 32.22,
+      "end": 32.22,
+      "content": "now,"
+     }
+    ],
+    "align_score": 0.665
+   },
+   {
+    "begin": 32.22,
+    "end": 34.685,
+    "content": "the content so engaging",
+    "confidence": 0.75,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 32.22,
+      "end": 32.341,
+      "content": "the"
+     },
+     {
+      "begin": 33.046,
+      "end": 33.409,
+      "content": "content"
+     },
+     {
+      "begin": 33.469,
+      "end": 33.59,
+      "content": "so"
+     },
+     {
+      "begin": 33.751,
+      "end": 34.685,
+      "content": "engaging"
+     }
+    ],
+    "align_score": 0.363
+   },
+   {
+    "begin": 34.685,
+    "end": 36.978,
+    "content": "We got the hottest infotainment",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 34.685,
+      "end": 34.785,
+      "content": "We"
+     },
+     {
+      "begin": 34.886,
+      "end": 35.047,
+      "content": "got"
+     },
+     {
+      "begin": 35.087,
+      "end": 35.148,
+      "content": "the"
+     },
+     {
+      "begin": 35.268,
+      "end": 35.61,
+      "content": "hottest"
+     },
+     {
+      "begin": 35.711,
+      "end": 36.978,
+      "content": "infotainment"
+     }
+    ],
+    "align_score": 0.824
+   },
+   {
+    "begin": 37.125,
+    "end": 39.336,
+    "content": "got 'em commenting \"who made this?\"",
+    "confidence": 0.814,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 37.125,
+      "end": 37.306,
+      "content": "got"
+     },
+     {
+      "begin": 37.326,
+      "end": 37.407,
+      "content": "'em"
+     },
+     {
+      "begin": 37.487,
+      "end": 38.07,
+      "content": "commenting"
+     },
+     {
+      "begin": 38.13,
+      "end": 38.191,
+      "content": "\"who"
+     },
+     {
+      "begin": 38.291,
+      "end": 38.633,
+      "content": "made"
+     },
+     {
+      "begin": 38.773,
+      "end": 39.336,
+      "content": "this?\""
+     }
+    ],
+    "align_score": 0.671
+   },
+   {
+    "begin": 40.989,
+    "end": 41.893,
+    "content": "Got 'em asking…",
+    "confidence": 0,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 40.989,
+      "end": 41.13,
+      "content": "Got"
+     },
+     {
+      "begin": 41.17,
+      "end": 41.25,
+      "content": "'em"
+     },
+     {
+      "begin": 41.492,
+      "end": 41.893,
+      "content": "asking…"
+     }
+    ],
+    "align_score": 0.766
+   },
+   {
+    "begin": 42.784,
+    "end": 45.118,
+    "content": "Who did this shoot?",
+    "confidence": 0.466,
+    "mismatch": true,
+    "heard": "the",
+    "words": [
+     {
+      "begin": 42.784,
+      "end": 42.904,
+      "content": "Who"
+     },
+     {
+      "begin": 43.649,
+      "end": 43.87,
+      "content": "did"
+     },
+     {
+      "begin": 43.911,
+      "end": 44.011,
+      "content": "this"
+     },
+     {
+      "begin": 44.072,
+      "end": 45.118,
+      "content": "shoot?"
+     }
+    ],
+    "align_score": 0.334
+   },
+   {
+    "begin": 45.886,
+    "end": 46.41,
+    "content": "Was it you!",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 45.886,
+      "end": 46.047,
+      "content": "Was"
+     },
+     {
+      "begin": 46.087,
+      "end": 46.128,
+      "content": "it"
+     },
+     {
+      "begin": 46.289,
+      "end": 46.41,
+      "content": "you!"
+     }
+    ],
+    "align_score": 0.245
+   },
+   {
+    "begin": 48.125,
+    "end": 49.596,
+    "content": "It was me",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 48.125,
+      "end": 48.165,
+      "content": "It"
+     },
+     {
+      "begin": 48.266,
+      "end": 48.427,
+      "content": "was"
+     },
+     {
+      "begin": 49.555,
+      "end": 49.596,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.712
+   },
+   {
+    "begin": 50.223,
+    "end": 51.795,
+    "content": "Wunt for free",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 50.223,
+      "end": 50.465,
+      "content": "Wunt"
+     },
+     {
+      "begin": 50.687,
+      "end": 50.808,
+      "content": "for"
+     },
+     {
+      "begin": 51.695,
+      "end": 51.795,
+      "content": "free"
+     }
+    ],
+    "align_score": 0.232
+   },
+   {
+    "begin": 52.444,
+    "end": 56.939,
+    "content": "Pay the fee, pay the fee",
+    "confidence": 0.97,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 52.444,
+      "end": 52.585,
+      "content": "Pay"
+     },
+     {
+      "begin": 52.685,
+      "end": 52.765,
+      "content": "the"
+     },
+     {
+      "begin": 52.846,
+      "end": 53.789,
+      "content": "fee,"
+     },
+     {
+      "begin": 54.672,
+      "end": 54.812,
+      "content": "pay"
+     },
+     {
+      "begin": 54.912,
+      "end": 54.993,
+      "content": "the"
+     },
+     {
+      "begin": 55.073,
+      "end": 56.939,
+      "content": "fee"
+     }
+    ],
+    "align_score": 0.36
+   },
+   {
+    "begin": 57.566,
+    "end": 59.063,
+    "content": "Never ask me to lower my price",
+    "confidence": 0.94,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 57.566,
+      "end": 57.788,
+      "content": "Never"
+     },
+     {
+      "begin": 57.928,
+      "end": 58.029,
+      "content": "ask"
+     },
+     {
+      "begin": 58.15,
+      "end": 58.21,
+      "content": "me"
+     },
+     {
+      "begin": 58.251,
+      "end": 58.291,
+      "content": "to"
+     },
+     {
+      "begin": 58.351,
+      "end": 58.552,
+      "content": "lower"
+     },
+     {
+      "begin": 58.673,
+      "end": 58.774,
+      "content": "my"
+     },
+     {
+      "begin": 58.915,
+      "end": 59.063,
+      "content": "price"
+     }
+    ],
+    "align_score": 0.802
+   },
+   {
+    "begin": 59.063,
+    "end": 61.764,
+    "content": "I snap like my A7R5",
+    "confidence": 0.977,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 59.063,
+      "end": 59.083,
+      "content": "I"
+     },
+     {
+      "begin": 59.445,
+      "end": 59.707,
+      "content": "snap"
+     },
+     {
+      "begin": 59.807,
+      "end": 59.968,
+      "content": "like"
+     },
+     {
+      "begin": 60.069,
+      "end": 60.23,
+      "content": "my"
+     },
+     {
+      "begin": 60.431,
+      "end": 61.764,
+      "content": "A7R5"
+     }
+    ],
+    "align_score": 0.759
+   },
+   {
+    "begin": 61.764,
+    "end": 63.242,
+    "content": "Own so much Sony I'm feeling like Mike",
+    "confidence": 0.988,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 61.764,
+      "end": 61.844,
+      "content": "Own"
+     },
+     {
+      "begin": 61.925,
+      "end": 62.005,
+      "content": "so"
+     },
+     {
+      "begin": 62.106,
+      "end": 62.227,
+      "content": "much"
+     },
+     {
+      "begin": 62.287,
+      "end": 62.569,
+      "content": "Sony"
+     },
+     {
+      "begin": 62.67,
+      "end": 62.73,
+      "content": "I'm"
+     },
+     {
+      "begin": 62.831,
+      "end": 63.133,
+      "content": "feeling"
+     },
+     {
+      "begin": 63.193,
+      "end": 63.242,
+      "content": "like"
+     },
+     {
+      "begin": 63.242,
+      "end": 63.242,
+      "content": "Mike"
+     }
+    ],
+    "align_score": 0.697
+   },
+   {
+    "begin": 63.242,
+    "end": 64.687,
+    "content": "If you try to jack son",
+    "confidence": 0.719,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 63.242,
+      "end": 63.303,
+      "content": "If"
+     },
+     {
+      "begin": 63.484,
+      "end": 63.807,
+      "content": "you"
+     },
+     {
+      "begin": 63.848,
+      "end": 63.969,
+      "content": "try"
+     },
+     {
+      "begin": 64.049,
+      "end": 64.09,
+      "content": "to"
+     },
+     {
+      "begin": 64.171,
+      "end": 64.372,
+      "content": "jack"
+     },
+     {
+      "begin": 64.453,
+      "end": 64.687,
+      "content": "son"
+     }
+    ],
+    "align_score": 0.538
+   },
+   {
+    "begin": 64.687,
+    "end": 65.78,
+    "content": "hit you with the 45",
+    "confidence": 0.793,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 64.687,
+      "end": 64.789,
+      "content": "hit"
+     },
+     {
+      "begin": 64.829,
+      "end": 64.93,
+      "content": "you"
+     },
+     {
+      "begin": 64.991,
+      "end": 65.092,
+      "content": "with"
+     },
+     {
+      "begin": 65.132,
+      "end": 65.193,
+      "content": "the"
+     },
+     {
+      "begin": 65.254,
+      "end": 65.78,
+      "content": "45"
+     }
+    ],
+    "align_score": 0.791
+   },
+   {
+    "begin": 65.864,
+    "end": 68.102,
+    "content": "Millimeter on sight, we seen long days,",
+    "confidence": 0.8,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 65.864,
+      "end": 66.347,
+      "content": "Millimeter"
+     },
+     {
+      "begin": 66.447,
+      "end": 66.488,
+      "content": "on"
+     },
+     {
+      "begin": 66.628,
+      "end": 66.83,
+      "content": "sight,"
+     },
+     {
+      "begin": 66.97,
+      "end": 67.051,
+      "content": "we"
+     },
+     {
+      "begin": 67.212,
+      "end": 67.393,
+      "content": "seen"
+     },
+     {
+      "begin": 67.494,
+      "end": 67.695,
+      "content": "long"
+     },
+     {
+      "begin": 67.775,
+      "end": 68.102,
+      "content": "days,"
+     }
+    ],
+    "align_score": 0.676
+   },
+   {
+    "begin": 68.102,
+    "end": 70.196,
+    "content": "we seen long nights, word to the gang",
+    "confidence": 0.778,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 68.102,
+      "end": 68.162,
+      "content": "we"
+     },
+     {
+      "begin": 68.324,
+      "end": 68.485,
+      "content": "seen"
+     },
+     {
+      "begin": 68.626,
+      "end": 68.847,
+      "content": "long"
+     },
+     {
+      "begin": 68.907,
+      "end": 69.089,
+      "content": "nights,"
+     },
+     {
+      "begin": 69.451,
+      "end": 69.632,
+      "content": "word"
+     },
+     {
+      "begin": 69.733,
+      "end": 69.793,
+      "content": "to"
+     },
+     {
+      "begin": 69.834,
+      "end": 69.894,
+      "content": "the"
+     },
+     {
+      "begin": 69.975,
+      "end": 70.196,
+      "content": "gang"
+     }
+    ],
+    "align_score": 0.664
+   },
+   {
+    "begin": 71.663,
+    "end": 74.777,
+    "content": "lights, camera, action… set, be quiet",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 71.663,
+      "end": 71.944,
+      "content": "lights,"
+     },
+     {
+      "begin": 72.085,
+      "end": 72.426,
+      "content": "camera,"
+     },
+     {
+      "begin": 72.547,
+      "end": 72.788,
+      "content": "action…"
+     },
+     {
+      "begin": 73.813,
+      "end": 74.034,
+      "content": "set,"
+     },
+     {
+      "begin": 74.134,
+      "end": 74.215,
+      "content": "be"
+     },
+     {
+      "begin": 74.355,
+      "end": 74.777,
+      "content": "quiet"
+     }
+    ],
+    "align_score": 0.721
+   },
+   {
+    "begin": 75.483,
+    "end": 76.661,
+    "content": "Blessed with the spirit of excellence",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 75.483,
+      "end": 75.664,
+      "content": "Blessed"
+     },
+     {
+      "begin": 75.685,
+      "end": 75.806,
+      "content": "with"
+     },
+     {
+      "begin": 75.846,
+      "end": 75.927,
+      "content": "the"
+     },
+     {
+      "begin": 75.967,
+      "end": 76.39,
+      "content": "spirit"
+     },
+     {
+      "begin": 76.431,
+      "end": 76.471,
+      "content": "of"
+     },
+     {
+      "begin": 76.661,
+      "end": 76.661,
+      "content": "excellence"
+     }
+    ],
+    "align_score": 0.509
+   },
+   {
+    "begin": 76.661,
+    "end": 78.04,
+    "content": "If you won't settle for less",
+    "confidence": 0.792,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 76.661,
+      "end": 76.722,
+      "content": "If"
+     },
+     {
+      "begin": 77.165,
+      "end": 77.387,
+      "content": "you"
+     },
+     {
+      "begin": 77.448,
+      "end": 77.609,
+      "content": "won't"
+     },
+     {
+      "begin": 77.69,
+      "end": 77.972,
+      "content": "settle"
+     },
+     {
+      "begin": 78.032,
+      "end": 78.04,
+      "content": "for"
+     },
+     {
+      "begin": 78.04,
+      "end": 78.04,
+      "content": "less"
+     }
+    ],
+    "align_score": 0.636
+   },
+   {
+    "begin": 78.04,
+    "end": 79.865,
+    "content": "then connect with us",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 78.04,
+      "end": 78.525,
+      "content": "then"
+     },
+     {
+      "begin": 78.646,
+      "end": 78.989,
+      "content": "connect"
+     },
+     {
+      "begin": 79.05,
+      "end": 79.171,
+      "content": "with"
+     },
+     {
+      "begin": 79.865,
+      "end": 79.865,
+      "content": "us"
+     }
+    ],
+    "align_score": 0.702
+   },
+   {
+    "begin": 79.865,
+    "end": 81.06,
+    "content": "Them, they just do it for presidents",
+    "confidence": 0.964,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 79.865,
+      "end": 80.006,
+      "content": "Them,"
+     },
+     {
+      "begin": 80.046,
+      "end": 80.147,
+      "content": "they"
+     },
+     {
+      "begin": 80.187,
+      "end": 80.328,
+      "content": "just"
+     },
+     {
+      "begin": 80.388,
+      "end": 80.509,
+      "content": "do"
+     },
+     {
+      "begin": 80.55,
+      "end": 80.65,
+      "content": "it"
+     },
+     {
+      "begin": 80.711,
+      "end": 80.812,
+      "content": "for"
+     },
+     {
+      "begin": 80.932,
+      "end": 81.06,
+      "content": "presidents"
+     }
+    ],
+    "align_score": 0.627
+   },
+   {
+    "begin": 81.06,
+    "end": 83.681,
+    "content": "All of our visuals set a new precedence",
+    "confidence": 0.85,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 81.06,
+      "end": 81.242,
+      "content": "All"
+     },
+     {
+      "begin": 81.564,
+      "end": 81.664,
+      "content": "of"
+     },
+     {
+      "begin": 81.885,
+      "end": 81.966,
+      "content": "our"
+     },
+     {
+      "begin": 82.067,
+      "end": 82.529,
+      "content": "visuals"
+     },
+     {
+      "begin": 82.57,
+      "end": 82.751,
+      "content": "set"
+     },
+     {
+      "begin": 82.811,
+      "end": 82.831,
+      "content": "a"
+     },
+     {
+      "begin": 82.912,
+      "end": 83.033,
+      "content": "new"
+     },
+     {
+      "begin": 83.113,
+      "end": 83.681,
+      "content": "precedence"
+     }
+    ],
+    "align_score": 0.484
+   },
+   {
+    "begin": 83.681,
+    "end": 85.895,
+    "content": "How you say you don't believe in we?",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 83.681,
+      "end": 84.365,
+      "content": "How"
+     },
+     {
+      "begin": 84.426,
+      "end": 84.506,
+      "content": "you"
+     },
+     {
+      "begin": 84.607,
+      "end": 84.728,
+      "content": "say"
+     },
+     {
+      "begin": 84.808,
+      "end": 84.889,
+      "content": "you"
+     },
+     {
+      "begin": 84.969,
+      "end": 85.13,
+      "content": "don't"
+     },
+     {
+      "begin": 85.191,
+      "end": 85.513,
+      "content": "believe"
+     },
+     {
+      "begin": 85.593,
+      "end": 85.634,
+      "content": "in"
+     },
+     {
+      "begin": 85.775,
+      "end": 85.895,
+      "content": "we?"
+     }
+    ],
+    "align_score": 0.851
+   },
+   {
+    "begin": 86.184,
+    "end": 88.157,
+    "content": "You gotta be speaking facetiously",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 86.184,
+      "end": 86.264,
+      "content": "You"
+     },
+     {
+      "begin": 86.445,
+      "end": 86.707,
+      "content": "gotta"
+     },
+     {
+      "begin": 86.788,
+      "end": 86.868,
+      "content": "be"
+     },
+     {
+      "begin": 86.929,
+      "end": 87.251,
+      "content": "speaking"
+     },
+     {
+      "begin": 87.351,
+      "end": 88.157,
+      "content": "facetiously"
+     }
+    ],
+    "align_score": 0.844
+   },
+   {
+    "begin": 88.624,
+    "end": 90.686,
+    "content": "Don't let shortcuts make your pockets bleed",
+    "confidence": 0.857,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 88.624,
+      "end": 88.785,
+      "content": "Don't"
+     },
+     {
+      "begin": 88.825,
+      "end": 88.946,
+      "content": "let"
+     },
+     {
+      "begin": 88.966,
+      "end": 89.389,
+      "content": "shortcuts"
+     },
+     {
+      "begin": 89.429,
+      "end": 89.55,
+      "content": "make"
+     },
+     {
+      "begin": 89.57,
+      "end": 89.731,
+      "content": "your"
+     },
+     {
+      "begin": 89.771,
+      "end": 90.114,
+      "content": "pockets"
+     },
+     {
+      "begin": 90.154,
+      "end": 90.686,
+      "content": "bleed"
+     }
+    ],
+    "align_score": 0.496
+   },
+   {
+    "begin": 90.686,
+    "end": 91.635,
+    "content": "We challenge ourselves,",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 90.686,
+      "end": 90.746,
+      "content": "We"
+     },
+     {
+      "begin": 90.847,
+      "end": 91.211,
+      "content": "challenge"
+     },
+     {
+      "begin": 91.251,
+      "end": 91.635,
+      "content": "ourselves,"
+     }
+    ],
+    "align_score": 0.977
+   },
+   {
+    "begin": 91.645,
+    "end": 92.854,
+    "content": "don't do easy things",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 91.645,
+      "end": 91.786,
+      "content": "don't"
+     },
+     {
+      "begin": 91.806,
+      "end": 91.866,
+      "content": "do"
+     },
+     {
+      "begin": 92.008,
+      "end": 92.229,
+      "content": "easy"
+     },
+     {
+      "begin": 92.33,
+      "end": 92.854,
+      "content": "things"
+     }
+    ],
+    "align_score": 0.736
+   },
+   {
+    "begin": 93.809,
+    "end": 94.62,
+    "content": "Got 'em asking…",
+    "confidence": 0.2,
+    "mismatch": true,
+    "section": "Count down prime time",
+    "words": [
+     {
+      "begin": 93.809,
+      "end": 93.971,
+      "content": "Got"
+     },
+     {
+      "begin": 94.012,
+      "end": 94.093,
+      "content": "'em"
+     },
+     {
+      "begin": 94.316,
+      "end": 94.62,
+      "content": "asking…"
+     }
+    ],
+    "align_score": 0.517
+   },
+   {
+    "begin": 95.681,
+    "end": 98.018,
+    "content": "Who did this shoot?",
+    "confidence": 0.4,
+    "mismatch": true,
+    "heard": "the",
+    "words": [
+     {
+      "begin": 95.681,
+      "end": 95.761,
+      "content": "Who"
+     },
+     {
+      "begin": 96.507,
+      "end": 96.688,
+      "content": "did"
+     },
+     {
+      "begin": 96.749,
+      "end": 96.849,
+      "content": "this"
+     },
+     {
+      "begin": 96.91,
+      "end": 98.018,
+      "content": "shoot?"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.33
+   },
+   {
+    "begin": 98.727,
+    "end": 99.252,
+    "content": "Was it you!",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 98.727,
+      "end": 98.889,
+      "content": "Was"
+     },
+     {
+      "begin": 98.929,
+      "end": 98.969,
+      "content": "it"
+     },
+     {
+      "begin": 99.03,
+      "end": 99.252,
+      "content": "you!"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.137
+   },
+   {
+    "begin": 100.986,
+    "end": 101.63,
+    "content": "It was me",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 100.986,
+      "end": 101.026,
+      "content": "It"
+     },
+     {
+      "begin": 101.127,
+      "end": 101.268,
+      "content": "was"
+     },
+     {
+      "begin": 101.429,
+      "end": 101.63,
+      "content": "me"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.958
+   },
+   {
+    "begin": 103.083,
+    "end": 104.636,
+    "content": "Wunt for free",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 103.083,
+      "end": 103.265,
+      "content": "Wunt"
+     },
+     {
+      "begin": 103.325,
+      "end": 103.426,
+      "content": "for"
+     },
+     {
+      "begin": 103.507,
+      "end": 104.636,
+      "content": "free"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.192
+   },
+   {
+    "begin": 105.282,
+    "end": 109.099,
+    "content": "Pay the fee, pay the fee",
+    "confidence": 0.948,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 105.282,
+      "end": 105.423,
+      "content": "Pay"
+     },
+     {
+      "begin": 105.543,
+      "end": 105.604,
+      "content": "the"
+     },
+     {
+      "begin": 105.684,
+      "end": 106.588,
+      "content": "fee,"
+     },
+     {
+      "begin": 107.532,
+      "end": 107.653,
+      "content": "pay"
+     },
+     {
+      "begin": 107.753,
+      "end": 107.854,
+      "content": "the"
+     },
+     {
+      "begin": 107.934,
+      "end": 109.099,
+      "content": "fee"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.273
+   },
+   {
+    "begin": 118.522,
+    "end": 119.46,
+    "content": "Never ask me to lower my price",
+    "confidence": 0.143,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 118.522,
+      "end": 118.683,
+      "content": "Never"
+     },
+     {
+      "begin": 118.784,
+      "end": 118.885,
+      "content": "ask"
+     },
+     {
+      "begin": 119.006,
+      "end": 119.248,
+      "content": "me"
+     },
+     {
+      "begin": 119.268,
+      "end": 119.369,
+      "content": "to"
+     },
+     {
+      "begin": 119.389,
+      "end": 119.46,
+      "content": "lower"
+     },
+     {
+      "begin": 119.46,
+      "end": 119.46,
+      "content": "my"
+     },
+     {
+      "begin": 119.46,
+      "end": 119.46,
+      "content": "price"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.152
+   },
+   {
+    "begin": 119.46,
+    "end": 122.176,
+    "content": "One for free,",
+    "confidence": 0.739,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 119.46,
+      "end": 119.561,
+      "content": "One"
+     },
+     {
+      "begin": 120.909,
+      "end": 121.029,
+      "content": "for"
+     },
+     {
+      "begin": 121.15,
+      "end": 122.176,
+      "content": "free,"
+     }
+    ],
+    "added": true,
+    "align_score": 0.363
+   },
+   {
+    "begin": 122.882,
+    "end": 126.838,
+    "content": "paid a fee, paid a fee",
+    "confidence": 0.868,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 122.882,
+      "end": 123.123,
+      "content": "paid"
+     },
+     {
+      "begin": 123.203,
+      "end": 123.223,
+      "content": "a"
+     },
+     {
+      "begin": 123.304,
+      "end": 123.545,
+      "content": "fee,"
+     },
+     {
+      "begin": 125.131,
+      "end": 125.292,
+      "content": "paid"
+     },
+     {
+      "begin": 125.432,
+      "end": 125.453,
+      "content": "a"
+     },
+     {
+      "begin": 125.533,
+      "end": 126.838,
+      "content": "fee"
+     }
+    ],
+    "added": true,
+    "align_score": 0.161
+   }
+  ]
+ }
 }

@@ -799,6 +799,7 @@
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/lyric-commerce.js?v=__STAMP__"></script>
+  <script src="js/lyrics-sync.js?v=__STAMP__"></script>
   <script>
   /* ============================================================
      THE I AM HERE PLAYER: the album's own Spotify.
@@ -1878,7 +1879,9 @@
       }
       var line = "", t = deck.currentTime;
       if (lyrTimed && lyrTimed.length) {
-        for (var k = 0; k < lyrTimed.length; k++) if (t >= lyrTimed[k].begin) line = lyrTimed[k].content;
+        /* lyrTimed is the shared reader's lines ({t, text}): js/lyrics-sync.js */
+        var k = window.MCC_LYRICS ? window.MCC_LYRICS.indexAt(lyrTimed, t) : -1;
+        line = k >= 0 ? lyrTimed[k].text : "";
       } else if (lyrPlain && deck.duration && lyrLines.length) {
         var idx = Math.min(lyrLines.length - 1, Math.floor(t / deck.duration * lyrLines.length));
         line = lyrLines[idx] ? lyrLines[idx].textContent : "";
@@ -2050,7 +2053,7 @@
       syncFilm(false);
     });
     function loadLyrics(src) {
-      lyrTimed = null; lyrPlain = false; lyrLines = [];
+      lyrTimed = null; lyrPlain = false; lyrLines = []; lyrCtl = null;
       if (src === "@inline") { paintLyrics(INLINE.lyrics || null); return; }
       if (!src) {
         nowLyr.innerHTML = "<p class='now__none'>The words land here soon. For now, let the record talk.</p>";
@@ -2064,49 +2067,21 @@
         nowLyr.innerHTML = "<p class='now__none'>The words land here soon.</p>";
       });
     }
+    /* the words: one shared renderer (js/lyrics-sync.js) for every player.
+       Timed lines light and scroll with the song, words light as they are
+       sung where the file has word times, and a tap on a line seeks there. */
+    var lyrCtl = null, lyrRaf = 0;
     function paintLyrics(j) {
-      var timed = j && j.timed && j.timed.line && j.timed.line.length ? j.timed.line : null;
-      if (!timed && j && j.lines && j.lines.length && j.lines[0].t != null) {
-        timed = j.lines.map(function (l) { return { begin: l.t, content: l.text || l.line || "" }; });
-      }
       var exp = {};
       if (cur > -1) { try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {} }
       var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album", track_view:false };
-      nowLyr.textContent = "";
-      function addLine(text) {
-        var p = document.createElement("p");
-        if (window.MCC_LYRIC_COMMERCE) window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context);
-        else p.textContent = text;
-        nowLyr.appendChild(p);
-      }
-      if (timed) {
-        lyrTimed = timed;
-        timed.forEach(function (l) { addLine(l.content || ""); });
-      } else if (j && j.plain) {
-        lyrPlain = true;
-        j.plain.split("\n").forEach(addLine);
-      } else {
-        var none = document.createElement("p"); none.className = "now__none";
-        none.textContent = "The words land here soon."; nowLyr.appendChild(none);
-      }
-      lyrLines = Array.prototype.slice.call(nowLyr.querySelectorAll("p"));
-      nowLyr.scrollTop = 0;
-    }
-    function paintSheet() {
-      if (!sheetOn()) return;
-      el("nowT0").textContent = fmt(deck.currentTime);
-      /* the premium read: what's LEFT, counting down */
-      el("nowT1").textContent = deck.duration ? "-" + fmt(Math.max(0, deck.duration - deck.currentTime)) : "-:--";
-      el("nowSeekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
-      el("nowPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
-      /* the words ride the music: timed lines light up; plain lyrics
-         roll with the song's progress */
-      if (lyrTimed && lyrLines.length) {
-        var t = deck.currentTime, live = -1;
-        for (var i = 0; i < lyrTimed.length; i++) if (t >= lyrTimed[i].begin) live = i;
-        lyrLines.forEach(function (p, i2) { p.classList.toggle("is-live", i2 === live); });
-        if (live > -1) {
-          var target = lyrLines[live];
+      lyrCtl = window.MCC_LYRICS ? window.MCC_LYRICS.mount(nowLyr, j, {
+        seek: function (t) { try { deck.currentTime = Math.max(0, t); } catch (e) {} if (deck.paused) play(); },
+        renderLine: function (p, text) {
+          if (window.MCC_LYRIC_COMMERCE) return !!window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context) || !!p.querySelector("a");
+          p.textContent = text; return false;
+        },
+        onLive: function (i, target) {
           var cta = target && target.querySelector && target.querySelector(".lyric-service-cta");
           if (cta && !target.dataset.ctaViewed) {
             target.dataset.ctaViewed = "1";
@@ -2115,24 +2090,37 @@
               offer:cta.dataset.offer||null, phrase:cta.dataset.phrase||null, surface:"album"
             });
           }
-          nowLyr.scrollTo({ top: target.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
         }
-      } else if (lyrPlain && deck.duration && lyrLines.length) {
-        var prog = deck.currentTime / deck.duration;
-        var live2 = Math.min(lyrLines.length - 1, Math.floor(prog * lyrLines.length));
-        lyrLines.forEach(function (p, i3) { p.classList.toggle("is-live", i3 === live2); });
-        var target2 = lyrLines[live2];
-        if (target2) {
-          var cta2 = target2.querySelector && target2.querySelector(".lyric-service-cta");
-          if (cta2 && !target2.dataset.ctaViewed) {
-            target2.dataset.ctaViewed = "1";
-            if (window.MCC_TRACK) window.MCC_TRACK("lyric_service_cta_view", {
-              track:rows[cur].getAttribute("data-title"),album:ALBUM,
-              offer:cta2.dataset.offer||null,phrase:cta2.dataset.phrase||null,surface:"album"
-            });
-          }
-          nowLyr.scrollTo({ top: target2.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
-        }
+      }) : null;
+      lyrTimed = lyrCtl && lyrCtl.timed ? lyrCtl.lines : null;
+      lyrPlain = !!(lyrCtl && !lyrCtl.empty && !lyrCtl.timed);
+      if (!lyrCtl || lyrCtl.empty) {
+        nowLyr.textContent = "";
+        var none = document.createElement("p"); none.className = "now__none";
+        none.textContent = "The words land here soon."; nowLyr.appendChild(none);
+      }
+      lyrLines = lyrCtl ? lyrCtl.nodes : [];
+      nowLyr.setAttribute("data-lyrics-mode", lyrTimed ? "timed" : lyrPlain ? "plain" : "none");
+      if (lyrCtl) lyrCtl.update(deck.currentTime || 0, deck.duration);
+    }
+    /* timeupdate ticks ~4 times a second; sung words need a frame clock */
+    function lyrFrame() {
+      lyrRaf = 0;
+      if (!lyrCtl || deck.paused || !sheetOn()) return;
+      lyrCtl.update(deck.currentTime, deck.duration);
+      lyrRaf = requestAnimationFrame(lyrFrame);
+    }
+    function paintSheet() {
+      if (!sheetOn()) return;
+      el("nowT0").textContent = fmt(deck.currentTime);
+      /* the premium read: what's LEFT, counting down */
+      el("nowT1").textContent = deck.duration ? "-" + fmt(Math.max(0, deck.duration - deck.currentTime)) : "-:--";
+      el("nowSeekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
+      el("nowPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+      /* the words ride the music (js/lyrics-sync.js) */
+      if (lyrCtl) {
+        lyrCtl.update(deck.currentTime, deck.duration);
+        if (!deck.paused && !lyrRaf) lyrRaf = requestAnimationFrame(lyrFrame);
       }
     }
     /* tap the PLAYING row again: instead of pausing, the record opens up

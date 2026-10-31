@@ -1,0 +1,2187 @@
+{
+ "duration_seconds": 108,
+ "language": "en",
+ "songTitle": "Mr. Lock Changer (Remix)",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:29:30.279Z",
+  "confidence": 0.836,
+  "mismatched_lines": 4,
+  "sheet_lines": 41,
+  "heard_words": 338,
+  "ctc_aligned_lines": 41,
+  "timing": {
+   "align_seconds": 31.8,
+   "separate_seconds": 69.2,
+   "asr_seconds": 76.3,
+   "map_seconds": 0.1
+  }
+ },
+ "plain": "Left pocket blank keys with me\nRight pocket my tool in it\nCuz sent this tablet to me\nI know what to do with it\nI'm the guy to chose if you ever get locked out\nTake credit card and cash even come to your damn house\nI'm Mr. Snake a door, mr. Save you dough\nDo dail for a quote\nwebsite is below\nI'm Mr. got courses, I'm Mr. stay focused\nHe Mr. Fob breaker, I'm Mr. lock changer\n\nNever late arriving it's like I'm setting records coming\nWhy would I swap out whips, you ain't sent a check or nothing?\nThe police acting funny. But we burnout quick\nRev. on the gas like we brought the church out with us\nYou can use Siri say \"I'm stuck and need a rep\"\nI'll be there in a second leave a deposit and a message\nYeah I'm him don't be settling for less\nI ain't DJ khaled baby but you know we the best\n\nHit me up for a quote\nI done seen a hunnid notifs\nTrapping off that Facebook group doing numbers on em\n\nHit me up for a quote\nI done seen a hunnid notifs\nTrapping off that Facebook group doing numbers on em\n\nGroup full of earners with us\nYour group is a heard of wishers\nYou know I'm my brothers boss but I still put the work in with em\nWhen I say I'm serving niggas. It's cause I own a service business\nIf you wanna link here go the link to the purchase: Click it.\n\nLeft pocket blank keys with me\nRight pocket my tool in it\nCuz sent this tablet to me\nI know what to do with it\nI'm the guy to chose if you ever get locked out\nTake credit card and cash even come to your damn house\nI'm Mr. Snake a door, mr. Save you dough\nDo dail for a quote\nwebsite is below\nI'm Mr. got courses, I'm Mr. stay focused\nHe Mr. Fob breaker, I'm Mr. lock changer",
+ "timed": {
+  "line": [
+   {
+    "begin": 0.725,
+    "end": 2.264,
+    "content": "Left pocket blank keys with me",
+    "confidence": 0.943,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 0.725,
+      "end": 0.907,
+      "content": "Left"
+     },
+     {
+      "begin": 0.967,
+      "end": 1.229,
+      "content": "pocket"
+     },
+     {
+      "begin": 1.289,
+      "end": 1.471,
+      "content": "blank"
+     },
+     {
+      "begin": 1.531,
+      "end": 1.753,
+      "content": "keys"
+     },
+     {
+      "begin": 1.793,
+      "end": 1.975,
+      "content": "with"
+     },
+     {
+      "begin": 2.264,
+      "end": 2.264,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.586
+   },
+   {
+    "begin": 2.264,
+    "end": 3.782,
+    "content": "Right pocket my tool in it",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 2.264,
+      "end": 2.426,
+      "content": "Right"
+     },
+     {
+      "begin": 2.506,
+      "end": 2.768,
+      "content": "pocket"
+     },
+     {
+      "begin": 2.829,
+      "end": 2.91,
+      "content": "my"
+     },
+     {
+      "begin": 3.01,
+      "end": 3.252,
+      "content": "tool"
+     },
+     {
+      "begin": 3.353,
+      "end": 3.393,
+      "content": "in"
+     },
+     {
+      "begin": 3.782,
+      "end": 3.782,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.784
+   },
+   {
+    "begin": 3.782,
+    "end": 4.801,
+    "content": "Cuz sent this tablet to me",
+    "confidence": 0.661,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 3.782,
+      "end": 3.963,
+      "content": "Cuz"
+     },
+     {
+      "begin": 4.004,
+      "end": 4.226,
+      "content": "sent"
+     },
+     {
+      "begin": 4.286,
+      "end": 4.428,
+      "content": "this"
+     },
+     {
+      "begin": 4.488,
+      "end": 4.801,
+      "content": "tablet"
+     },
+     {
+      "begin": 4.801,
+      "end": 4.801,
+      "content": "to"
+     },
+     {
+      "begin": 4.801,
+      "end": 4.801,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.522
+   },
+   {
+    "begin": 4.801,
+    "end": 6.02,
+    "content": "I know what to do with it",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 4.801,
+      "end": 4.821,
+      "content": "I"
+     },
+     {
+      "begin": 5.466,
+      "end": 5.567,
+      "content": "know"
+     },
+     {
+      "begin": 5.648,
+      "end": 5.769,
+      "content": "what"
+     },
+     {
+      "begin": 5.829,
+      "end": 5.91,
+      "content": "to"
+     },
+     {
+      "begin": 6.011,
+      "end": 6.02,
+      "content": "do"
+     },
+     {
+      "begin": 6.02,
+      "end": 6.02,
+      "content": "with"
+     },
+     {
+      "begin": 6.02,
+      "end": 6.02,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.836
+   },
+   {
+    "begin": 6.02,
+    "end": 9.543,
+    "content": "I'm the guy to chose if you ever get locked out",
+    "confidence": 0.985,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 6.02,
+      "end": 6.221,
+      "content": "I'm"
+     },
+     {
+      "begin": 6.362,
+      "end": 6.462,
+      "content": "the"
+     },
+     {
+      "begin": 7.005,
+      "end": 7.085,
+      "content": "guy"
+     },
+     {
+      "begin": 7.166,
+      "end": 7.226,
+      "content": "to"
+     },
+     {
+      "begin": 7.286,
+      "end": 7.789,
+      "content": "chose"
+     },
+     {
+      "begin": 7.829,
+      "end": 7.889,
+      "content": "if"
+     },
+     {
+      "begin": 7.93,
+      "end": 8.01,
+      "content": "you"
+     },
+     {
+      "begin": 8.151,
+      "end": 8.392,
+      "content": "ever"
+     },
+     {
+      "begin": 8.452,
+      "end": 8.573,
+      "content": "get"
+     },
+     {
+      "begin": 8.653,
+      "end": 9.055,
+      "content": "locked"
+     },
+     {
+      "begin": 9.236,
+      "end": 9.543,
+      "content": "out"
+     }
+    ],
+    "align_score": 0.6
+   },
+   {
+    "begin": 9.543,
+    "end": 12.585,
+    "content": "Take credit card and cash even come to your damn house",
+    "confidence": 0.909,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 9.543,
+      "end": 9.704,
+      "content": "Take"
+     },
+     {
+      "begin": 9.765,
+      "end": 9.986,
+      "content": "credit"
+     },
+     {
+      "begin": 10.026,
+      "end": 10.187,
+      "content": "card"
+     },
+     {
+      "begin": 10.207,
+      "end": 10.267,
+      "content": "and"
+     },
+     {
+      "begin": 10.307,
+      "end": 10.689,
+      "content": "cash"
+     },
+     {
+      "begin": 10.79,
+      "end": 11.011,
+      "content": "even"
+     },
+     {
+      "begin": 11.091,
+      "end": 11.212,
+      "content": "come"
+     },
+     {
+      "begin": 11.292,
+      "end": 11.352,
+      "content": "to"
+     },
+     {
+      "begin": 11.413,
+      "end": 11.573,
+      "content": "your"
+     },
+     {
+      "begin": 11.634,
+      "end": 11.935,
+      "content": "damn"
+     },
+     {
+      "begin": 12.016,
+      "end": 12.585,
+      "content": "house"
+     }
+    ],
+    "align_score": 0.607
+   },
+   {
+    "begin": 12.585,
+    "end": 14.821,
+    "content": "I'm Mr. Snake a door, mr. Save you dough",
+    "confidence": 0.424,
+    "mismatch": true,
+    "section": "Chorus",
+    "heard": "Doll,",
+    "words": [
+     {
+      "begin": 12.585,
+      "end": 12.666,
+      "content": "I'm"
+     },
+     {
+      "begin": 12.746,
+      "end": 12.968,
+      "content": "Mr."
+     },
+     {
+      "begin": 12.988,
+      "end": 13.209,
+      "content": "Snake"
+     },
+     {
+      "begin": 13.229,
+      "end": 13.249,
+      "content": "a"
+     },
+     {
+      "begin": 13.33,
+      "end": 13.652,
+      "content": "door,"
+     },
+     {
+      "begin": 14.275,
+      "end": 14.456,
+      "content": "mr."
+     },
+     {
+      "begin": 14.497,
+      "end": 14.698,
+      "content": "Save"
+     },
+     {
+      "begin": 14.718,
+      "end": 14.799,
+      "content": "you"
+     },
+     {
+      "begin": 14.821,
+      "end": 14.821,
+      "content": "dough"
+     }
+    ],
+    "align_score": 0.301
+   },
+   {
+    "begin": 14.821,
+    "end": 17.178,
+    "content": "Do dail for a quote",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 14.821,
+      "end": 15.043,
+      "content": "Do"
+     },
+     {
+      "begin": 15.687,
+      "end": 16.01,
+      "content": "dail"
+     },
+     {
+      "begin": 16.211,
+      "end": 16.372,
+      "content": "for"
+     },
+     {
+      "begin": 16.453,
+      "end": 16.473,
+      "content": "a"
+     },
+     {
+      "begin": 16.554,
+      "end": 17.178,
+      "content": "quote"
+     }
+    ],
+    "align_score": 0.455
+   },
+   {
+    "begin": 17.266,
+    "end": 17.5,
+    "content": "website is below",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 17.266,
+      "end": 17.5,
+      "content": "website"
+     },
+     {
+      "begin": 17.5,
+      "end": 17.5,
+      "content": "is"
+     },
+     {
+      "begin": 17.5,
+      "end": 17.5,
+      "content": "below"
+     }
+    ],
+    "align_score": 0.716
+   },
+   {
+    "begin": 17.5,
+    "end": 21.584,
+    "content": "I'm Mr. got courses, I'm Mr. stay focused",
+    "confidence": 0.964,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 17.5,
+      "end": 17.982,
+      "content": "I'm"
+     },
+     {
+      "begin": 18.746,
+      "end": 18.967,
+      "content": "Mr."
+     },
+     {
+      "begin": 19.047,
+      "end": 19.268,
+      "content": "got"
+     },
+     {
+      "begin": 19.349,
+      "end": 20.072,
+      "content": "courses,"
+     },
+     {
+      "begin": 20.172,
+      "end": 20.233,
+      "content": "I'm"
+     },
+     {
+      "begin": 20.273,
+      "end": 20.494,
+      "content": "Mr."
+     },
+     {
+      "begin": 20.514,
+      "end": 20.755,
+      "content": "stay"
+     },
+     {
+      "begin": 20.875,
+      "end": 21.584,
+      "content": "focused"
+     }
+    ],
+    "align_score": 0.593
+   },
+   {
+    "begin": 21.584,
+    "end": 24.041,
+    "content": "He Mr. Fob breaker, I'm Mr. lock changer",
+    "confidence": 0.634,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 21.584,
+      "end": 21.665,
+      "content": "He"
+     },
+     {
+      "begin": 21.765,
+      "end": 21.986,
+      "content": "Mr."
+     },
+     {
+      "begin": 22.027,
+      "end": 22.248,
+      "content": "Fob"
+     },
+     {
+      "begin": 22.368,
+      "end": 22.971,
+      "content": "breaker,"
+     },
+     {
+      "begin": 23.152,
+      "end": 23.212,
+      "content": "I'm"
+     },
+     {
+      "begin": 23.273,
+      "end": 23.494,
+      "content": "Mr."
+     },
+     {
+      "begin": 23.554,
+      "end": 23.715,
+      "content": "lock"
+     },
+     {
+      "begin": 23.795,
+      "end": 24.041,
+      "content": "changer"
+     }
+    ],
+    "align_score": 0.645
+   },
+   {
+    "begin": 24.041,
+    "end": 26.796,
+    "content": "Never late arriving it's like I'm setting records coming",
+    "confidence": 0.974,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 24.041,
+      "end": 24.604,
+      "content": "Never"
+     },
+     {
+      "begin": 24.665,
+      "end": 24.825,
+      "content": "late"
+     },
+     {
+      "begin": 24.866,
+      "end": 25.348,
+      "content": "arriving"
+     },
+     {
+      "begin": 25.409,
+      "end": 25.529,
+      "content": "it's"
+     },
+     {
+      "begin": 25.63,
+      "end": 25.771,
+      "content": "like"
+     },
+     {
+      "begin": 25.791,
+      "end": 25.891,
+      "content": "I'm"
+     },
+     {
+      "begin": 25.952,
+      "end": 26.193,
+      "content": "setting"
+     },
+     {
+      "begin": 26.233,
+      "end": 26.515,
+      "content": "records"
+     },
+     {
+      "begin": 26.555,
+      "end": 26.796,
+      "content": "coming"
+     }
+    ],
+    "align_score": 0.65
+   },
+   {
+    "begin": 27.265,
+    "end": 29.3,
+    "content": "Why would I swap out whips, you ain't sent a check or nothing?",
+    "confidence": 0.977,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 27.265,
+      "end": 27.426,
+      "content": "Why"
+     },
+     {
+      "begin": 27.546,
+      "end": 27.667,
+      "content": "would"
+     },
+     {
+      "begin": 27.687,
+      "end": 27.707,
+      "content": "I"
+     },
+     {
+      "begin": 27.787,
+      "end": 28.049,
+      "content": "swap"
+     },
+     {
+      "begin": 28.189,
+      "end": 28.31,
+      "content": "out"
+     },
+     {
+      "begin": 28.37,
+      "end": 28.611,
+      "content": "whips,"
+     },
+     {
+      "begin": 28.651,
+      "end": 28.732,
+      "content": "you"
+     },
+     {
+      "begin": 28.812,
+      "end": 28.953,
+      "content": "ain't"
+     },
+     {
+      "begin": 28.993,
+      "end": 29.114,
+      "content": "sent"
+     },
+     {
+      "begin": 29.174,
+      "end": 29.194,
+      "content": "a"
+     },
+     {
+      "begin": 29.295,
+      "end": 29.3,
+      "content": "check"
+     },
+     {
+      "begin": 29.3,
+      "end": 29.3,
+      "content": "or"
+     },
+     {
+      "begin": 29.3,
+      "end": 29.3,
+      "content": "nothing?"
+     }
+    ],
+    "align_score": 0.671
+   },
+   {
+    "begin": 29.3,
+    "end": 33.056,
+    "content": "The police acting funny. But we burnout quick",
+    "confidence": 0.637,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 29.3,
+      "end": 29.381,
+      "content": "The"
+     },
+     {
+      "begin": 30.305,
+      "end": 30.686,
+      "content": "police"
+     },
+     {
+      "begin": 30.807,
+      "end": 30.967,
+      "content": "acting"
+     },
+     {
+      "begin": 31.088,
+      "end": 31.329,
+      "content": "funny."
+     },
+     {
+      "begin": 31.871,
+      "end": 31.972,
+      "content": "But"
+     },
+     {
+      "begin": 32.052,
+      "end": 32.132,
+      "content": "we"
+     },
+     {
+      "begin": 32.293,
+      "end": 32.735,
+      "content": "burnout"
+     },
+     {
+      "begin": 32.835,
+      "end": 33.056,
+      "content": "quick"
+     }
+    ],
+    "align_score": 0.601
+   },
+   {
+    "begin": 33.762,
+    "end": 36,
+    "content": "Rev. on the gas like we brought the church out with us",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 33.762,
+      "end": 33.883,
+      "content": "Rev."
+     },
+     {
+      "begin": 34.084,
+      "end": 34.164,
+      "content": "on"
+     },
+     {
+      "begin": 34.204,
+      "end": 34.265,
+      "content": "the"
+     },
+     {
+      "begin": 34.325,
+      "end": 34.586,
+      "content": "gas"
+     },
+     {
+      "begin": 34.667,
+      "end": 34.787,
+      "content": "like"
+     },
+     {
+      "begin": 34.828,
+      "end": 34.868,
+      "content": "we"
+     },
+     {
+      "begin": 34.928,
+      "end": 35.089,
+      "content": "brought"
+     },
+     {
+      "begin": 35.129,
+      "end": 35.19,
+      "content": "the"
+     },
+     {
+      "begin": 35.23,
+      "end": 35.531,
+      "content": "church"
+     },
+     {
+      "begin": 35.632,
+      "end": 35.793,
+      "content": "out"
+     },
+     {
+      "begin": 35.873,
+      "end": 36,
+      "content": "with"
+     },
+     {
+      "begin": 36,
+      "end": 36,
+      "content": "us"
+     }
+    ],
+    "align_score": 0.493
+   },
+   {
+    "begin": 36,
+    "end": 38.5,
+    "content": "You can use Siri say \"I'm stuck and need a rep\"",
+    "confidence": 0.809,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 36,
+      "end": 36.584,
+      "content": "You"
+     },
+     {
+      "begin": 36.664,
+      "end": 36.744,
+      "content": "can"
+     },
+     {
+      "begin": 36.865,
+      "end": 36.966,
+      "content": "use"
+     },
+     {
+      "begin": 37.006,
+      "end": 37.328,
+      "content": "Siri"
+     },
+     {
+      "begin": 37.83,
+      "end": 37.971,
+      "content": "say"
+     },
+     {
+      "begin": 38.011,
+      "end": 38.072,
+      "content": "\"I'm"
+     },
+     {
+      "begin": 38.152,
+      "end": 38.333,
+      "content": "stuck"
+     },
+     {
+      "begin": 38.393,
+      "end": 38.454,
+      "content": "and"
+     },
+     {
+      "begin": 38.474,
+      "end": 38.5,
+      "content": "need"
+     },
+     {
+      "begin": 38.5,
+      "end": 38.5,
+      "content": "a"
+     },
+     {
+      "begin": 38.5,
+      "end": 38.5,
+      "content": "rep\""
+     }
+    ],
+    "align_score": 0.472
+   },
+   {
+    "begin": 38.5,
+    "end": 41.92,
+    "content": "I'll be there in a second leave a deposit and a message",
+    "confidence": 0.987,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 38.5,
+      "end": 38.621,
+      "content": "I'll"
+     },
+     {
+      "begin": 39.605,
+      "end": 39.665,
+      "content": "be"
+     },
+     {
+      "begin": 39.726,
+      "end": 39.987,
+      "content": "there"
+     },
+     {
+      "begin": 40.047,
+      "end": 40.087,
+      "content": "in"
+     },
+     {
+      "begin": 40.147,
+      "end": 40.168,
+      "content": "a"
+     },
+     {
+      "begin": 40.248,
+      "end": 40.79,
+      "content": "second"
+     },
+     {
+      "begin": 40.83,
+      "end": 41.031,
+      "content": "leave"
+     },
+     {
+      "begin": 41.071,
+      "end": 41.092,
+      "content": "a"
+     },
+     {
+      "begin": 41.112,
+      "end": 41.513,
+      "content": "deposit"
+     },
+     {
+      "begin": 41.574,
+      "end": 41.674,
+      "content": "and"
+     },
+     {
+      "begin": 41.734,
+      "end": 41.754,
+      "content": "a"
+     },
+     {
+      "begin": 41.855,
+      "end": 41.92,
+      "content": "message"
+     }
+    ],
+    "align_score": 0.6
+   },
+   {
+    "begin": 41.92,
+    "end": 45.262,
+    "content": "Yeah I'm him don't be settling for less",
+    "confidence": 0.984,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 41.92,
+      "end": 42.483,
+      "content": "Yeah"
+     },
+     {
+      "begin": 43.186,
+      "end": 43.287,
+      "content": "I'm"
+     },
+     {
+      "begin": 43.367,
+      "end": 43.769,
+      "content": "him"
+     },
+     {
+      "begin": 43.89,
+      "end": 44.051,
+      "content": "don't"
+     },
+     {
+      "begin": 44.091,
+      "end": 44.151,
+      "content": "be"
+     },
+     {
+      "begin": 44.231,
+      "end": 44.633,
+      "content": "settling"
+     },
+     {
+      "begin": 44.694,
+      "end": 44.774,
+      "content": "for"
+     },
+     {
+      "begin": 44.814,
+      "end": 45.262,
+      "content": "less"
+     }
+    ],
+    "align_score": 0.578
+   },
+   {
+    "begin": 45.262,
+    "end": 48.117,
+    "content": "I ain't DJ khaled baby but you know we the best",
+    "confidence": 0.966,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 45.262,
+      "end": 45.282,
+      "content": "I"
+     },
+     {
+      "begin": 45.644,
+      "end": 45.785,
+      "content": "ain't"
+     },
+     {
+      "begin": 45.986,
+      "end": 46.086,
+      "content": "DJ"
+     },
+     {
+      "begin": 46.147,
+      "end": 46.468,
+      "content": "khaled"
+     },
+     {
+      "begin": 46.549,
+      "end": 46.81,
+      "content": "baby"
+     },
+     {
+      "begin": 46.911,
+      "end": 47.031,
+      "content": "but"
+     },
+     {
+      "begin": 47.092,
+      "end": 47.172,
+      "content": "you"
+     },
+     {
+      "begin": 47.252,
+      "end": 47.353,
+      "content": "know"
+     },
+     {
+      "begin": 47.554,
+      "end": 47.634,
+      "content": "we"
+     },
+     {
+      "begin": 47.715,
+      "end": 47.775,
+      "content": "the"
+     },
+     {
+      "begin": 47.835,
+      "end": 48.117,
+      "content": "best"
+     }
+    ],
+    "align_score": 0.672
+   },
+   {
+    "begin": 48.826,
+    "end": 50.265,
+    "content": "Hit me up for a quote",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 48.826,
+      "end": 48.947,
+      "content": "Hit"
+     },
+     {
+      "begin": 49.047,
+      "end": 49.128,
+      "content": "me"
+     },
+     {
+      "begin": 49.148,
+      "end": 49.209,
+      "content": "up"
+     },
+     {
+      "begin": 49.33,
+      "end": 49.532,
+      "content": "for"
+     },
+     {
+      "begin": 49.612,
+      "end": 49.632,
+      "content": "a"
+     },
+     {
+      "begin": 49.673,
+      "end": 50.265,
+      "content": "quote"
+     }
+    ],
+    "align_score": 0.394
+   },
+   {
+    "begin": 50.265,
+    "end": 51.322,
+    "content": "I done seen a hunnid notifs",
+    "confidence": 0.786,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 50.265,
+      "end": 50.285,
+      "content": "I"
+     },
+     {
+      "begin": 50.386,
+      "end": 50.527,
+      "content": "done"
+     },
+     {
+      "begin": 50.547,
+      "end": 50.668,
+      "content": "seen"
+     },
+     {
+      "begin": 50.749,
+      "end": 50.769,
+      "content": "a"
+     },
+     {
+      "begin": 50.809,
+      "end": 51.071,
+      "content": "hunnid"
+     },
+     {
+      "begin": 51.172,
+      "end": 51.322,
+      "content": "notifs"
+     }
+    ],
+    "align_score": 0.621
+   },
+   {
+    "begin": 51.322,
+    "end": 54.1,
+    "content": "Trapping off that Facebook group doing numbers on em",
+    "confidence": 0.853,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 51.322,
+      "end": 52.045,
+      "content": "Trapping"
+     },
+     {
+      "begin": 52.126,
+      "end": 52.226,
+      "content": "off"
+     },
+     {
+      "begin": 52.267,
+      "end": 52.427,
+      "content": "that"
+     },
+     {
+      "begin": 52.528,
+      "end": 53.171,
+      "content": "Facebook"
+     },
+     {
+      "begin": 53.291,
+      "end": 53.472,
+      "content": "group"
+     },
+     {
+      "begin": 53.553,
+      "end": 53.774,
+      "content": "doing"
+     },
+     {
+      "begin": 53.834,
+      "end": 54.1,
+      "content": "numbers"
+     },
+     {
+      "begin": 54.1,
+      "end": 54.1,
+      "content": "on"
+     },
+     {
+      "begin": 54.1,
+      "end": 54.1,
+      "content": "em"
+     }
+    ],
+    "align_score": 0.644
+   },
+   {
+    "begin": 54.1,
+    "end": 56.305,
+    "content": "Hit me up for a quote",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 54.1,
+      "end": 54.221,
+      "content": "Hit"
+     },
+     {
+      "begin": 54.947,
+      "end": 55.008,
+      "content": "me"
+     },
+     {
+      "begin": 55.088,
+      "end": 55.149,
+      "content": "up"
+     },
+     {
+      "begin": 55.29,
+      "end": 55.552,
+      "content": "for"
+     },
+     {
+      "begin": 55.632,
+      "end": 55.653,
+      "content": "a"
+     },
+     {
+      "begin": 55.713,
+      "end": 56.305,
+      "content": "quote"
+     }
+    ],
+    "align_score": 0.437
+   },
+   {
+    "begin": 56.305,
+    "end": 57.723,
+    "content": "I done seen a hunnid notifs",
+    "confidence": 0.786,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 56.305,
+      "end": 56.325,
+      "content": "I"
+     },
+     {
+      "begin": 56.406,
+      "end": 56.506,
+      "content": "done"
+     },
+     {
+      "begin": 56.567,
+      "end": 56.728,
+      "content": "seen"
+     },
+     {
+      "begin": 56.789,
+      "end": 56.809,
+      "content": "a"
+     },
+     {
+      "begin": 56.829,
+      "end": 57.172,
+      "content": "hunnid"
+     },
+     {
+      "begin": 57.252,
+      "end": 57.723,
+      "content": "notifs"
+     }
+    ],
+    "align_score": 0.463
+   },
+   {
+    "begin": 57.723,
+    "end": 60.763,
+    "content": "Trapping off that Facebook group doing numbers on em",
+    "confidence": 0.871,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 57.723,
+      "end": 58.045,
+      "content": "Trapping"
+     },
+     {
+      "begin": 58.105,
+      "end": 58.206,
+      "content": "off"
+     },
+     {
+      "begin": 58.266,
+      "end": 58.467,
+      "content": "that"
+     },
+     {
+      "begin": 58.588,
+      "end": 59.211,
+      "content": "Facebook"
+     },
+     {
+      "begin": 59.251,
+      "end": 59.432,
+      "content": "group"
+     },
+     {
+      "begin": 59.532,
+      "end": 59.733,
+      "content": "doing"
+     },
+     {
+      "begin": 59.794,
+      "end": 60.196,
+      "content": "numbers"
+     },
+     {
+      "begin": 60.357,
+      "end": 60.437,
+      "content": "on"
+     },
+     {
+      "begin": 60.763,
+      "end": 60.763,
+      "content": "em"
+     }
+    ],
+    "align_score": 0.554
+   },
+   {
+    "begin": 60.763,
+    "end": 62.325,
+    "content": "Group full of earners with us",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 60.763,
+      "end": 61.005,
+      "content": "Group"
+     },
+     {
+      "begin": 61.086,
+      "end": 61.247,
+      "content": "full"
+     },
+     {
+      "begin": 61.308,
+      "end": 61.348,
+      "content": "of"
+     },
+     {
+      "begin": 61.509,
+      "end": 61.792,
+      "content": "earners"
+     },
+     {
+      "begin": 61.832,
+      "end": 62.325,
+      "content": "with"
+     },
+     {
+      "begin": 62.325,
+      "end": 62.325,
+      "content": "us"
+     }
+    ],
+    "align_score": 0.585
+   },
+   {
+    "begin": 62.325,
+    "end": 63.3,
+    "content": "Your group is a heard of wishers",
+    "confidence": 0.938,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 62.325,
+      "end": 62.426,
+      "content": "Your"
+     },
+     {
+      "begin": 62.466,
+      "end": 62.587,
+      "content": "group"
+     },
+     {
+      "begin": 62.668,
+      "end": 62.728,
+      "content": "is"
+     },
+     {
+      "begin": 62.769,
+      "end": 62.789,
+      "content": "a"
+     },
+     {
+      "begin": 62.89,
+      "end": 63.112,
+      "content": "heard"
+     },
+     {
+      "begin": 63.192,
+      "end": 63.233,
+      "content": "of"
+     },
+     {
+      "begin": 63.273,
+      "end": 63.3,
+      "content": "wishers"
+     }
+    ],
+    "align_score": 0.711
+   },
+   {
+    "begin": 63.3,
+    "end": 66.704,
+    "content": "You know I'm my brothers boss but I still put the work in with em",
+    "confidence": 0.85,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 63.3,
+      "end": 63.501,
+      "content": "You"
+     },
+     {
+      "begin": 63.863,
+      "end": 63.964,
+      "content": "know"
+     },
+     {
+      "begin": 64.024,
+      "end": 64.085,
+      "content": "I'm"
+     },
+     {
+      "begin": 64.145,
+      "end": 64.205,
+      "content": "my"
+     },
+     {
+      "begin": 64.306,
+      "end": 64.668,
+      "content": "brothers"
+     },
+     {
+      "begin": 64.728,
+      "end": 65.07,
+      "content": "boss"
+     },
+     {
+      "begin": 65.15,
+      "end": 65.231,
+      "content": "but"
+     },
+     {
+      "begin": 65.311,
+      "end": 65.331,
+      "content": "I"
+     },
+     {
+      "begin": 65.412,
+      "end": 65.553,
+      "content": "still"
+     },
+     {
+      "begin": 65.573,
+      "end": 65.693,
+      "content": "put"
+     },
+     {
+      "begin": 65.734,
+      "end": 65.794,
+      "content": "the"
+     },
+     {
+      "begin": 65.834,
+      "end": 66.015,
+      "content": "work"
+     },
+     {
+      "begin": 66.095,
+      "end": 66.156,
+      "content": "in"
+     },
+     {
+      "begin": 66.216,
+      "end": 66.337,
+      "content": "with"
+     },
+     {
+      "begin": 66.704,
+      "end": 66.704,
+      "content": "em"
+     }
+    ],
+    "align_score": 0.598
+   },
+   {
+    "begin": 66.704,
+    "end": 69.282,
+    "content": "When I say I'm serving niggas. It's cause I own a service business",
+    "confidence": 0.914,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 66.704,
+      "end": 66.804,
+      "content": "When"
+     },
+     {
+      "begin": 66.885,
+      "end": 66.905,
+      "content": "I"
+     },
+     {
+      "begin": 66.985,
+      "end": 67.086,
+      "content": "say"
+     },
+     {
+      "begin": 67.146,
+      "end": 67.206,
+      "content": "I'm"
+     },
+     {
+      "begin": 67.267,
+      "end": 67.689,
+      "content": "serving"
+     },
+     {
+      "begin": 67.729,
+      "end": 67.97,
+      "content": "niggas."
+     },
+     {
+      "begin": 68.131,
+      "end": 68.211,
+      "content": "It's"
+     },
+     {
+      "begin": 68.231,
+      "end": 68.352,
+      "content": "cause"
+     },
+     {
+      "begin": 68.412,
+      "end": 68.432,
+      "content": "I"
+     },
+     {
+      "begin": 68.533,
+      "end": 68.633,
+      "content": "own"
+     },
+     {
+      "begin": 68.693,
+      "end": 68.713,
+      "content": "a"
+     },
+     {
+      "begin": 68.754,
+      "end": 69.155,
+      "content": "service"
+     },
+     {
+      "begin": 69.236,
+      "end": 69.282,
+      "content": "business"
+     }
+    ],
+    "align_score": 0.746
+   },
+   {
+    "begin": 69.282,
+    "end": 72.242,
+    "content": "If you wanna link here go the link to the purchase: Click it.",
+    "confidence": 0.892,
+    "mismatch": false,
+    "section": "Refrain",
+    "words": [
+     {
+      "begin": 69.282,
+      "end": 69.804,
+      "content": "If"
+     },
+     {
+      "begin": 69.844,
+      "end": 69.925,
+      "content": "you"
+     },
+     {
+      "begin": 69.965,
+      "end": 70.206,
+      "content": "wanna"
+     },
+     {
+      "begin": 70.306,
+      "end": 70.487,
+      "content": "link"
+     },
+     {
+      "begin": 70.628,
+      "end": 70.869,
+      "content": "here"
+     },
+     {
+      "begin": 70.99,
+      "end": 71.05,
+      "content": "go"
+     },
+     {
+      "begin": 71.13,
+      "end": 71.191,
+      "content": "the"
+     },
+     {
+      "begin": 71.271,
+      "end": 71.432,
+      "content": "link"
+     },
+     {
+      "begin": 71.492,
+      "end": 71.572,
+      "content": "to"
+     },
+     {
+      "begin": 71.613,
+      "end": 71.693,
+      "content": "the"
+     },
+     {
+      "begin": 71.793,
+      "end": 72.175,
+      "content": "purchase:"
+     },
+     {
+      "begin": 72.215,
+      "end": 72.242,
+      "content": "Click"
+     },
+     {
+      "begin": 72.242,
+      "end": 72.242,
+      "content": "it."
+     }
+    ],
+    "align_score": 0.695
+   },
+   {
+    "begin": 72.242,
+    "end": 74.264,
+    "content": "Left pocket blank keys with me",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 72.242,
+      "end": 72.886,
+      "content": "Left"
+     },
+     {
+      "begin": 72.967,
+      "end": 73.229,
+      "content": "pocket"
+     },
+     {
+      "begin": 73.289,
+      "end": 73.471,
+      "content": "blank"
+     },
+     {
+      "begin": 73.511,
+      "end": 73.753,
+      "content": "keys"
+     },
+     {
+      "begin": 73.813,
+      "end": 73.974,
+      "content": "with"
+     },
+     {
+      "begin": 74.264,
+      "end": 74.264,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.725
+   },
+   {
+    "begin": 74.264,
+    "end": 76.26,
+    "content": "Right pocket my tool in it",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 74.264,
+      "end": 74.405,
+      "content": "Right"
+     },
+     {
+      "begin": 74.506,
+      "end": 74.748,
+      "content": "pocket"
+     },
+     {
+      "begin": 74.808,
+      "end": 74.929,
+      "content": "my"
+     },
+     {
+      "begin": 75.05,
+      "end": 75.353,
+      "content": "tool"
+     },
+     {
+      "begin": 75.453,
+      "end": 75.494,
+      "content": "in"
+     },
+     {
+      "begin": 76.179,
+      "end": 76.26,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.583
+   },
+   {
+    "begin": 76.321,
+    "end": 76.74,
+    "content": "Cuz sent this tablet to me",
+    "confidence": 0.333,
+    "mismatch": true,
+    "section": "Chorus",
+    "heard": "and",
+    "words": [
+     {
+      "begin": 76.321,
+      "end": 76.422,
+      "content": "Cuz"
+     },
+     {
+      "begin": 76.443,
+      "end": 76.544,
+      "content": "sent"
+     },
+     {
+      "begin": 76.645,
+      "end": 76.74,
+      "content": "this"
+     },
+     {
+      "begin": 76.74,
+      "end": 76.74,
+      "content": "tablet"
+     },
+     {
+      "begin": 76.74,
+      "end": 76.74,
+      "content": "to"
+     },
+     {
+      "begin": 76.74,
+      "end": 76.74,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.246
+   },
+   {
+    "begin": 76.74,
+    "end": 78.62,
+    "content": "I know what to do with it",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 76.74,
+      "end": 76.76,
+      "content": "I"
+     },
+     {
+      "begin": 77.607,
+      "end": 77.728,
+      "content": "know"
+     },
+     {
+      "begin": 77.808,
+      "end": 77.889,
+      "content": "what"
+     },
+     {
+      "begin": 77.97,
+      "end": 78.03,
+      "content": "to"
+     },
+     {
+      "begin": 78.091,
+      "end": 78.252,
+      "content": "do"
+     },
+     {
+      "begin": 78.574,
+      "end": 78.62,
+      "content": "with"
+     },
+     {
+      "begin": 78.62,
+      "end": 78.62,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.538
+   },
+   {
+    "begin": 78.62,
+    "end": 81.001,
+    "content": "I'm the guy to chose if you ever get locked out",
+    "confidence": 0.621,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 78.62,
+      "end": 78.721,
+      "content": "I'm"
+     },
+     {
+      "begin": 78.862,
+      "end": 78.982,
+      "content": "the"
+     },
+     {
+      "begin": 79.022,
+      "end": 79.163,
+      "content": "guy"
+     },
+     {
+      "begin": 79.183,
+      "end": 79.224,
+      "content": "to"
+     },
+     {
+      "begin": 79.264,
+      "end": 79.485,
+      "content": "chose"
+     },
+     {
+      "begin": 79.646,
+      "end": 79.686,
+      "content": "if"
+     },
+     {
+      "begin": 79.847,
+      "end": 79.968,
+      "content": "you"
+     },
+     {
+      "begin": 80.149,
+      "end": 80.37,
+      "content": "ever"
+     },
+     {
+      "begin": 80.431,
+      "end": 80.511,
+      "content": "get"
+     },
+     {
+      "begin": 80.632,
+      "end": 81.001,
+      "content": "locked"
+     },
+     {
+      "begin": 81.001,
+      "end": 81.001,
+      "content": "out"
+     }
+    ],
+    "align_score": 0.337
+   },
+   {
+    "begin": 81.001,
+    "end": 84.544,
+    "content": "Take credit card and cash even come to your damn house",
+    "confidence": 0.909,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 81.001,
+      "end": 81.724,
+      "content": "Take"
+     },
+     {
+      "begin": 81.765,
+      "end": 82.006,
+      "content": "credit"
+     },
+     {
+      "begin": 82.026,
+      "end": 82.207,
+      "content": "card"
+     },
+     {
+      "begin": 82.247,
+      "end": 82.307,
+      "content": "and"
+     },
+     {
+      "begin": 82.327,
+      "end": 82.709,
+      "content": "cash"
+     },
+     {
+      "begin": 82.85,
+      "end": 83.031,
+      "content": "even"
+     },
+     {
+      "begin": 83.111,
+      "end": 83.272,
+      "content": "come"
+     },
+     {
+      "begin": 83.312,
+      "end": 83.352,
+      "content": "to"
+     },
+     {
+      "begin": 83.433,
+      "end": 83.593,
+      "content": "your"
+     },
+     {
+      "begin": 83.634,
+      "end": 83.955,
+      "content": "damn"
+     },
+     {
+      "begin": 84.016,
+      "end": 84.544,
+      "content": "house"
+     }
+    ],
+    "align_score": 0.613
+   },
+   {
+    "begin": 84.544,
+    "end": 86.88,
+    "content": "I'm Mr. Snake a door, mr. Save you dough",
+    "confidence": 0.467,
+    "mismatch": true,
+    "section": "Chorus",
+    "heard": "Doll,",
+    "words": [
+     {
+      "begin": 84.544,
+      "end": 84.625,
+      "content": "I'm"
+     },
+     {
+      "begin": 84.705,
+      "end": 85.027,
+      "content": "Mr."
+     },
+     {
+      "begin": 85.067,
+      "end": 85.288,
+      "content": "Snake"
+     },
+     {
+      "begin": 85.308,
+      "end": 85.328,
+      "content": "a"
+     },
+     {
+      "begin": 85.369,
+      "end": 85.63,
+      "content": "door,"
+     },
+     {
+      "begin": 86.273,
+      "end": 86.595,
+      "content": "mr."
+     },
+     {
+      "begin": 86.635,
+      "end": 86.756,
+      "content": "Save"
+     },
+     {
+      "begin": 86.776,
+      "end": 86.877,
+      "content": "you"
+     },
+     {
+      "begin": 86.88,
+      "end": 86.88,
+      "content": "dough"
+     }
+    ],
+    "align_score": 0.4
+   },
+   {
+    "begin": 86.88,
+    "end": 89.044,
+    "content": "Do dail for a quote",
+    "confidence": 0.29,
+    "mismatch": true,
+    "section": "Chorus",
+    "heard": "-dah, full",
+    "words": [
+     {
+      "begin": 86.88,
+      "end": 87.243,
+      "content": "Do"
+     },
+     {
+      "begin": 87.707,
+      "end": 88.191,
+      "content": "dail"
+     },
+     {
+      "begin": 88.251,
+      "end": 88.413,
+      "content": "for"
+     },
+     {
+      "begin": 88.695,
+      "end": 88.715,
+      "content": "a"
+     },
+     {
+      "begin": 89.044,
+      "end": 89.044,
+      "content": "quote"
+     }
+    ],
+    "align_score": 0.33
+   },
+   {
+    "begin": 89.044,
+    "end": 89.6,
+    "content": "website is below",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 89.044,
+      "end": 89.569,
+      "content": "website"
+     },
+     {
+      "begin": 89.6,
+      "end": 89.6,
+      "content": "is"
+     },
+     {
+      "begin": 89.6,
+      "end": 89.6,
+      "content": "below"
+     }
+    ],
+    "align_score": 0.654
+   },
+   {
+    "begin": 89.6,
+    "end": 93.624,
+    "content": "I'm Mr. got courses, I'm Mr. stay focused",
+    "confidence": 0.795,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 89.6,
+      "end": 89.841,
+      "content": "I'm"
+     },
+     {
+      "begin": 90.705,
+      "end": 90.926,
+      "content": "Mr."
+     },
+     {
+      "begin": 90.967,
+      "end": 91.208,
+      "content": "got"
+     },
+     {
+      "begin": 91.288,
+      "end": 92.052,
+      "content": "courses,"
+     },
+     {
+      "begin": 92.112,
+      "end": 92.172,
+      "content": "I'm"
+     },
+     {
+      "begin": 92.232,
+      "end": 92.333,
+      "content": "Mr."
+     },
+     {
+      "begin": 92.453,
+      "end": 92.674,
+      "content": "stay"
+     },
+     {
+      "begin": 92.795,
+      "end": 93.624,
+      "content": "focused"
+     }
+    ],
+    "align_score": 0.492
+   },
+   {
+    "begin": 93.624,
+    "end": 97.02,
+    "content": "He Mr. Fob breaker, I'm Mr. lock changer",
+    "confidence": 0.659,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 93.624,
+      "end": 93.705,
+      "content": "He"
+     },
+     {
+      "begin": 93.785,
+      "end": 93.986,
+      "content": "Mr."
+     },
+     {
+      "begin": 94.046,
+      "end": 94.247,
+      "content": "Fob"
+     },
+     {
+      "begin": 94.368,
+      "end": 94.93,
+      "content": "breaker,"
+     },
+     {
+      "begin": 95.191,
+      "end": 95.252,
+      "content": "I'm"
+     },
+     {
+      "begin": 95.292,
+      "end": 95.513,
+      "content": "Mr."
+     },
+     {
+      "begin": 95.573,
+      "end": 95.794,
+      "content": "lock"
+     },
+     {
+      "begin": 95.854,
+      "end": 97.02,
+      "content": "changer"
+     }
+    ],
+    "align_score": 0.572
+   }
+  ]
+ }
+}
