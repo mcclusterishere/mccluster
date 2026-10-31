@@ -1,6 +1,8 @@
 # Deployment controls: proposal for owner approval
 
-Status: **proposal**, 2026-10-28. Source-side pinning and the gated paths are
+Status: **partially implemented**, 2026-10-31. The owner authorized the five-step productization release. Pages, Edge Functions, and OVH promotion now require exact-commit CI unconditionally. Reconciliation CI runs on main and its six checks join the four existing deployment checks. The Cloudflare cutover and GitHub administration controls below still need verification. Historical proposal follows.
+
+Original status: **proposal**, 2026-10-28. Source-side pinning and the gated paths are
 in this repository; every production behaviour change below waits for an
 owner action and is marked **OWNER**. Nothing here was changed in Cloudflare,
 GitHub settings, OVH or Supabase.

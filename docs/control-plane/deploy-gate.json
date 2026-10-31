@@ -1,22 +1,33 @@
 {
   "schema_version": "mccluster-deploy-gate/v1",
-  "description": "Checks a production deploy waits for on the exact commit it ships. Each name is a GitHub check-run name produced by a workflow that runs on every push to main with no path filter, so the gate can never wait on a check that will not run. scripts/test/deploy-controls.test.mjs holds this list to the workflows. See docs/control-plane/DEPLOYMENT-CONTROLS-PROPOSAL.md.",
+  "description": "Required exact-commit checks for production deployments. All run on every push to main. Pages, Edge Functions and OVH promotion enforce this gate unconditionally; Worker cutover still requires coordinated Cloudflare configuration.",
   "required_checks_on_main_sha": [
     "architecture",
     "contracts",
     "scan",
-    "smoke"
+    "smoke",
+    "Worker contracts",
+    "McCluster Core contracts",
+    "Equity Uprise Edge Function contracts",
+    "Admin evidence and pending SQL contracts",
+    "Equity Uprise RLS wall and offline function contracts",
+    "Supabase migration reset"
   ],
   "check_sources": {
     "architecture": ".github/workflows/canonical-architecture-contract.yml",
     "contracts": ".github/workflows/mcp-continuity-ci.yml",
     "scan": ".github/workflows/secret-scan.yml",
-    "smoke": ".github/workflows/site-smoke.yml"
+    "smoke": ".github/workflows/site-smoke.yml",
+    "Worker contracts": ".github/workflows/reconciliation-ci.yml",
+    "McCluster Core contracts": ".github/workflows/reconciliation-ci.yml",
+    "Equity Uprise Edge Function contracts": ".github/workflows/reconciliation-ci.yml",
+    "Admin evidence and pending SQL contracts": ".github/workflows/reconciliation-ci.yml",
+    "Equity Uprise RLS wall and offline function contracts": ".github/workflows/reconciliation-ci.yml",
+    "Supabase migration reset": ".github/workflows/reconciliation-ci.yml"
   },
   "timeout_seconds": 2700,
   "poll_seconds": 20,
   "opt_in_variables": {
-    "DEPLOY_REQUIRE_GREEN_CI": "Repository variable. 'true' makes the GitHub Pages publish and the Supabase Edge Function deploy wait for every required check above to pass on the exact SHA before they publish. Unset (default): they publish as they always have.",
     "WORKER_DEPLOY_MODE": "Repository variable. 'github-gated' makes .github/workflows/deploy-mccluster-worker.yml deploy Worker mccluster itself after CI passes on the exact main SHA. Set it ONLY after Cloudflare Workers Builds auto-deploy for mccluster is disconnected, or both will deploy. Unset (default): Cloudflare Git deploys and the workflow only observes."
   }
 }
