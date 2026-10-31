@@ -203,9 +203,9 @@ try{
     await ctx.close();
   }
   {
-    const {ctx,page}=await setup(390);await page.goto('https://mccluster.org/?view=feed');
+    const {ctx,page,errors}=await setup(390);await page.goto('https://mccluster.org/?view=feed');
     await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
-    await page.waitForSelector('#mnMe:not([hidden])');
+    await page.waitForSelector('#mnMe:not([hidden])').catch(async error=>{console.error('World navigation bootstrap',JSON.stringify({errors,state:await page.evaluate(()=>({auth:window.MCC_BAR?.auth(),status:document.body.innerText.slice(0,1800)}))}));throw error;});
     check('World keeps one top-right native profile',await topRight(page,'#mnMe')&&await page.locator('#mccAuthChip').isHidden());
     await open(page);const url=await page.locator('[data-control-route="#create:library"]').getAttribute('href');
     check('World routes Control to Matthew’s host',url===BASE+'/control.html#create:library');

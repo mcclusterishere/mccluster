@@ -78,6 +78,15 @@ async function setup(viewport,account){
         if(!res)return json(route,{error:'Not found'},404);
         return route.fulfill({status:res.status,headers:Object.fromEntries(res.headers),body:Buffer.from(await res.arrayBuffer())});
       }
+      if(p==='/v1/customer-site/media'&&req.method()==='POST'){
+        const path=u.searchParams.get('path')||'',a=who(req.headers().authorization);
+        if(!a||path.split('/')[0]!==a.id){world.refused.push(path);return json(route,{error:'Forbidden'},403);}
+        const picked=/\/cabin-[^/]+\.jpg$/.test(path)?'room360.jpg':/\/sound-[^/]+\.wav$/.test(path)?'beat.wav':'';
+        const body=req.postDataBuffer()||(picked?await readFile(join(FIX,picked)):null);
+        if(!body||Number(req.headers()['x-site-bytes'])!==body.length)return json(route,{error:'Invalid upload size'},400);
+        world.objects.set(path,{type:req.headers()['content-type'],body});world.uploads.push(path);
+        return json(route,{ok:true});
+      }
       if(p==='/v1/collect')return json(route,{ok:true});
       if(p==='/v1/status')return json(route,{error:'Forbidden'},403);
       const a=who(req.headers().authorization);

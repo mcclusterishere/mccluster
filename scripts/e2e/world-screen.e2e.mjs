@@ -150,14 +150,18 @@ const TRAVEL_ORIGIN = TRAVEL_ROUTES[0].origin, TRAVEL_DESTINATION = TRAVEL_ROUTE
 
 async function routeBackends(ctx, world, { member, creator = true, verified = true }) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
-  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
+  await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
     const u = route.request().url();
     /* STORAGE: a signed upload is kept; a signed read gives it back, open to any origin as storage is */
     if (u.startsWith(STORAGE + '/')) {
       const request = route.request(), method = request.method(), path = decodeURIComponent(new URL(u).pathname.replace(/^\/storage\/v1\/object\/(upload\/)?sign\/mnet-media\//, ''));
       if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,PUT,POST', 'access-control-allow-headers': 'apikey,authorization,content-type,x-upsert' } });
       if (method === 'PUT' || method === 'POST') {
-        (world.blobs ||= {})[path] = { body: request.postDataBuffer(), type: request.headers()['content-type'] || 'application/octet-stream' };
+        // Playwright omits file-backed request bytes; recover only the exact local fixture chosen by this suite.
+        const picked=path.endsWith('church_0001.jpg')?'assets/frames/church_0001.jpg':path.endsWith('hero.webm')?'assets/video/hero.webm':null;
+        const bytes=request.postDataBuffer()||(picked?await readFile(join(ROOT,picked)):null);
+        if(!bytes)throw new Error('Unrecorded fixture upload body: '+path);
+        (world.blobs ||= {})[path] = { body: bytes, type: request.headers()['content-type'] || 'application/octet-stream' };
         world.requests.push({ m: method, path: '/storage/' + path, auth: !!request.headers().authorization, bytes: world.blobs[path].body?.length || 0, type: world.blobs[path].type });
         return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ Key: 'mnet-media/' + path }) });
       }
