@@ -1,7 +1,7 @@
 /* Owner-preview only. The public bar, legacy Control, and globe materials stay intact. */
 body.cr[data-control-workspace="owner"]{--cw-bg:#0b0b0d;--cw-panel:#121315;--cw-line:#292a2e;--cw-text:#f0f1f3;--cw-muted:#a0a4ad;background:var(--cw-bg);color:var(--cw-text)}
 body[data-control-workspace] .cr-shell{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto minmax(0,1fr)!important;grid-template-areas:"workspace" "tools" "main"!important;min-height:calc(100dvh - var(--appbar-h,76px));padding:0!important;gap:0}
-body[data-control-workspace] .cr-rail,body[data-control-workspace] .cr-bottom,body[data-control-workspace] .cr-topbar{display:none!important}
+body[data-control-workspace] .cr-sections,body[data-control-workspace] .cr-topbar{display:none!important}
 .cw-header{grid-area:workspace;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:16px 16px 8px;border-bottom:1px solid var(--cw-line);background:var(--cw-bg);z-index:5}
 .cw-brand{display:flex;align-items:center;gap:12px;min-width:0}
 .cw-brand img{width:76px;height:32px;object-fit:contain}

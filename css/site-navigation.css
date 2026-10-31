@@ -50,13 +50,21 @@ body[data-admin-navigation] .appbar [aria-expanded="true"]{background:#30252a;co
 .mcc-profile-menu :is(a,button):hover,.mcc-destination:hover{background:#2b242f}
 /* Remove global duplicates only after the shared destination module is ready.
    Editors, local filters and their own section tabs keep their behavior. */
-html body.cr[data-site-navigation][data-admin-navigation] .cr-rail,
-html body.cr[data-site-navigation][data-admin-navigation] .cr-bottom,
+html body.cr[data-site-navigation][data-admin-navigation] #crAccount,
 html body.cr[data-site-navigation][data-admin-navigation] .cw-pages,
 html body.cr[data-site-navigation][data-admin-navigation] #cwAccount,
 html body.cr[data-site-navigation][data-admin-navigation] #cwRouteWrap{display:none!important}
 html body.cr[data-site-navigation][data-admin-navigation]:not([data-control-workspace]) .cr-shell{
   grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"top" "main"!important;
+}
+/* The Control sections (js/control-room/nav.js) are this page's own index,
+   not a second global bar (owner-approved consolidation, 2026-10-30): on a
+   phone they are a row under the topbar, because the shared bar keeps the
+   bottom (css/control-room-v2.css, body.cr.has-appbar); from 1024px they
+   are the sidebar. The shared bar's Control panel lists the same NAV. */
+@media(min-width:1024px){
+  html body.cr[data-site-navigation][data-admin-navigation]:not([data-control-workspace]) .cr-shell{grid-template-columns:var(--cr-side,248px) minmax(0,1fr)!important;grid-template-areas:"nav top" "nav main"!important}
+  html body.cr[data-site-navigation][data-admin-navigation][data-cr-surface="analytics"]:not([data-control-workspace]) .cr-shell{grid-template-areas:"nav main"!important}
 }
 html body.cr[data-site-navigation][data-admin-navigation] .cr-topbar{padding-right:118px;min-height:68px;box-sizing:border-box}
 html body.cr[data-site-navigation][data-admin-navigation] .cr-topbar .cr-command{min-width:0;min-height:44px}

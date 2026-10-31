@@ -8,7 +8,8 @@
   const dock = document.querySelector('.appbar');
   const get = id => document.getElementById(id);
   let coreReady, panel, profile, installed = false, group = 'All', opening = 0;
-  const groups = ['All', 'Analytics', 'Operations', 'Studio', 'System', 'Products'];
+  // The six Control sections come from NAV (js/control-room/nav.js); Products are the product doors.
+  const groups = ['All', 'Home', 'People', 'Sell', 'Create', 'Insights', 'System', 'Products'];
   function element(tag, className, text) {
     const el = document.createElement(tag); el.className = className;
     if (text) el.textContent = text; return el;
@@ -16,9 +17,13 @@
   function core() {
     if (window.CR?.workspaceCore) return Promise.resolve(window.CR.workspaceCore);
     if (!coreReady) coreReady = new Promise((resolve, reject) => {
-      const s = document.createElement('script'); s.src = root + 'js/control-room/workspace-core.js?v=__STAMP__';
-      s.onload = () => window.CR?.workspaceCore ? resolve(window.CR.workspaceCore) : reject(Error('Routes unavailable'));
-      s.onerror = reject; document.head.appendChild(s);
+      const load = path => new Promise((done, fail) => {
+        const s = document.createElement('script'); s.src = root + path + '?v=__STAMP__';
+        s.onload = done; s.onerror = fail; document.head.appendChild(s);
+      });
+      (window.CR?.nav ? Promise.resolve() : load('js/control-room/nav.js'))
+        .then(() => load('js/control-room/workspace-core.js'))
+        .then(() => window.CR?.workspaceCore ? resolve(window.CR.workspaceCore) : reject(Error('Routes unavailable')), reject);
     }).catch(error => {coreReady = null; throw error;});
     return coreReady;
   }
@@ -31,15 +36,12 @@
     const C = window.CR.workspaceCore;
     const native = C.routes.map(route => ({
       href: controlHref(route.hash), hash: route.hash,
-      label: route.hash === '#analytics' ? 'Analytics' : route.label,
-      group: route.hash.startsWith('#system:') ? 'System' : route.hash === '#apps' ? 'Products' :
-        route.page === 'intelligence' ? 'Analytics' : route.page === 'studio' ? 'Studio' : 'Operations',
-      context: route.group
+      label: route.label, group: route.group, context: route.group
     }));
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
       {label:'World', group:'Products', href:world, context:'Equity Uprise'},
-      {label:'Your desk', group:'Operations', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
+      {label:'Your desk', group:'People', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
       {label:'Hitman’s Halo', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'World · Missions · People · Intelligence'},
@@ -147,12 +149,12 @@
   function markCurrent() {
     if (!installed) return;
     const button = get('mccControlToggle');
-    const on = /\/control\.html$/.test(location.pathname) && location.hash !== '#analytics';
+    const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section !== 'insights';
     button?.classList.toggle('is-here', on);
     if (on) button?.setAttribute('aria-current', 'page'); else button?.removeAttribute('aria-current');
     // Analytics uses the same document, preserving org, draft editors and the globe instance.
     const analytics = dock.querySelector('[data-appnav="analytics"]');
-    if (analytics) analytics.href = controlHref('#analytics');
+    if (analytics) analytics.href = controlHref('#insights:overview');
     if (panel?.matches(':popover-open')) render();
   }
   function closeProfile(focus = false) {

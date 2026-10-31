@@ -1,27 +1,30 @@
-/* Control's three-page presentation contract. Routes remain the existing Control
-   routes; this file creates no permissions, data stores, or mutations. */
+/* Control's three-page presentation contract over the one NAV definition.
+   This file creates no permissions, data stores, or mutations. */
 (function (root) {
   'use strict';
   const pages = Object.freeze(['intelligence', 'operations', 'studio']);
-  const work = ['inbox','desk-bot','pipeline','people','companies','relationships','clients','tasks','bookings','orders','projects','deliverables','payments','renewals','outreach','operations'];
-  const create = ['projects','front-page','library','schedule','channels','instagram','music','clipping','action-network','funding','song-test','build'];
-  const system = ['command','overview','workload','observability','resources'];
-  const titles = {home:'Overview',ai:'McCluster conversation',apps:'Applications',analytics:'Platform intelligence',inbox:'Inbox','desk-bot':'Desk bot',pipeline:'Pipeline',people:'People',companies:'Organizations',relationships:'Relationships',clients:'Clients',tasks:'Tasks',bookings:'Bookings',orders:'Orders',projects:'Projects',deliverables:'Deliverables',payments:'Payments',renewals:'Renewals',outreach:'Outreach',operations:'Administration',library:'Media library',schedule:'Publishing',channels:'Channels',instagram:'Instagram',music:'Music',clipping:'Clipping', 'action-network':'Missions', funding:'Funding intelligence','song-test':'Song testing',build:'Build · Code','front-page':'Front page',command:'System command',overview:'System overview',workload:'Workload',observability:'Observability',resources:'Resources'};
-  const routes = [
-    {hash:'#analytics',page:'intelligence',label:'Platform intelligence',group:'Intelligence'},
-    {hash:'#home',page:'operations',label:'Overview',group:'Operate'},
-    ...work.map(view => ({hash:'#work:'+view,page:'operations',label:titles[view],group:'Work'})),
-    ...system.map(view => ({hash:'#system:'+view,page:'operations',label:titles[view],group:'System'})),
-    {hash:'#apps',page:'operations',label:'Applications',group:'System'},
-    {hash:'#ai',page:'operations',label:'McCluster conversation',group:'Assistant'},
-    ...create.map(view => ({hash:'#create:'+view,page:'studio',label:titles[view],group:'Create'}))
-  ].map(Object.freeze);
-  const defaults = Object.freeze({intelligence:'#analytics',operations:'#home',studio:'#create:projects'});
+  /* The route inventory is NAV (js/control-room/nav.js), not a second list.
+     Insights is the intelligence page, Create the studio, the rest operations. */
+  const NAVI = root.CR && root.CR.nav;
+  if (!NAVI) throw new Error('js/control-room/nav.js must load before workspace-core.js');
+  const pageOf = section => section === 'insights' ? 'intelligence' : section === 'create' ? 'studio' : 'operations';
+  const routes = NAVI.leaves().map(l => ({
+    hash: l.leaf.route,
+    page: pageOf(l.section.id),
+    label: l.view && l.view.label !== l.item.label ? l.item.label + ' · ' + l.view.label : l.item.label,
+    group: l.section.label,
+    section: l.section.id
+  })).map(Object.freeze);
+  const defaults = Object.freeze({intelligence:'#insights:overview',operations:'#home:today',studio:'#create:projects:projects'});
+  /* Any hash, new or old (#work:inbox, #analytics, #ai…), resolves through
+     NAV; anything that is not a route lands on Home. */
   function resolve(hash) {
     const value = typeof hash === 'string' ? hash.toLowerCase() : '';
-    const aliases = {'#intelligence':'#analytics','#operations':'#home','#studio':'#create:projects','#work':'#work:inbox','#create':'#create:projects','#system':'#system:overview'};
+    const aliases = {'#intelligence':defaults.intelligence,'#operations':defaults.operations,'#studio':defaults.studio};
     const normalized = aliases[value] || value;
-    return routes.find(item => item.hash === normalized) || routes[1];
+    if (!/^#[a-z0-9:-]*$/.test(normalized)) return routes[0];
+    const leaf = NAVI.resolve(normalized).entry;
+    return routes.find(item => item.hash === leaf.leaf.route) || routes[0];
   }
   function selectedWorkspace(payload, wanted) {
     const list = payload && Array.isArray(payload.workspaces) ? payload.workspaces : [];

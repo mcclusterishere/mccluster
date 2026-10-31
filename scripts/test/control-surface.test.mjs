@@ -11,8 +11,9 @@ const read=(p)=>readFile(join(ROOT,p),'utf8');
 const fileOf=(href)=>String(href).split(/[?#]/)[0];
 
 async function registry(){
-  const src=await read('js/control-registry.js');
+  const [nav,src]=await Promise.all([read('js/control-room/nav.js'),read('js/control-registry.js')]);
   const scope={window:{}};
+  new Function('window',nav.replace('typeof window === "undefined" ? globalThis : window','window'))(scope.window);
   new Function('window',src)(scope.window);
   return scope.window.MCC_SURFACES;
 }
@@ -26,14 +27,21 @@ test('the operator registry has one physical admin destination',async()=>{
   }
 });
 
-test('Control owns native Work Create Analytics and System navigation',async()=>{
-  const [html,js]=await Promise.all([read('control.html'),read('js/control-room-v2.js')]);
-  for(const key of ['home','ai','work','create','analytics','system','apps']){
-    assert.ok(html.includes('data-surface="'+key+'"'),key+' is missing from the desktop Control rail');
-  }
-  assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
-  assert.match(js,/WORK_VIEWS = \["inbox", "desk-bot", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"\]/);
-  assert.match(js,/CREATE_VIEWS = \["projects", "front-page", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"\]/);
+test('Control is six sections from one NAV definition, and the old views are derived from it',async()=>{
+  const [html,js,nav]=await Promise.all([read('control.html'),read('js/control-room-v2.js'),read('js/control-room/nav.js')]);
+  const scope={window:{}};
+  new Function('window',nav.replace('typeof window === "undefined" ? globalThis : window','window'))(scope.window);
+  const N=scope.window.CR.nav;
+  assert.deepEqual(N.NAV.map(s=>s.id),['home','people','sell','create','insights','system']);
+  /* one nav element in the page, drawn from NAV; no hand-written rail or bottom bar */
+  assert.match(html,/<nav class="cr-sections" id="crSections"/);
+  assert.doesNotMatch(html,/data-surface=|class="cr-rail|class="cr-bottom/);
+  assert.ok(html.indexOf('js/control-room/nav.js')<html.indexOf('js/control-room-v2.js'));
+  /* the old view lists are derived from NAV, not typed a second time */
+  assert.match(js,/var WORK_VIEWS = rendererViews\("work"\)/);
+  assert.match(js,/var CREATE_VIEWS = rendererViews\("create"\)/);
+  assert.match(js,/var SYSTEM_VIEWS = rendererViews\("system"\)/);
+  assert.doesNotMatch(js,/var SURFACES = \[/);
 });
 
 test('the old admin room iframe strategy is dead',async()=>{
@@ -48,25 +56,28 @@ test('the old admin room iframe strategy is dead',async()=>{
 
 test('former owner rooms are compatibility URLs that return to Control',async()=>{
   const expected={
-    'inbox.html':'#work:inbox',
-    'crm.html':'#work:pipeline',
-    'desk.html':'#work:outreach',
-    'admin.html':'#work:operations',
-    'management.html':'#create:channels',
-    'music-admin.html':'#create:music',
-    'vault.html':'#create:music',
-    'lanes.html':'#create:music',
-    'studio.html':'#create:projects',
-    'insights.html':'#analytics'
+    'inbox.html':'#people:inbox:conversations',
+    'crm.html':'#people:deals:pipeline',
+    'desk.html':'#people:outreach',
+    'admin.html':'#sell:store:operations',
+    'management.html':'#create:publish:channels',
+    'music-admin.html':'#sell:music:catalog',
+    'vault.html':'#sell:music:catalog',
+    'lanes.html':'#sell:music:catalog',
+    'studio.html':'#create:projects:projects',
+    'insights.html':'#insights:overview'
   };
   for(const [page,target] of Object.entries(expected)){
     const html=await read(page);
     assert.match(html,/js\/control-compat\.js/,page+' no longer returns to Control');
     assert.ok(html.includes('data-control-target="'+target+'"'),page+' routes to the wrong Control view');
+    /* a stub is a stub: no dead room body, no scripts but the redirect */
+    assert.doesNotMatch(html,/<main|js\/backend\.js|js\/office\.js|control-palette|ops-polish/,page+' still carries a retired room body');
+    assert.ok(html.split('\n').length<30,page+' is not a minimal stub');
     if(page==='insights.html'){
       assert.doesNotMatch(html,/url=analytics\.html|location\.replace\("analytics\.html|href="analytics\.html/,'Insights carries a competing redirect away from Control');
-      assert.match(html,/url=control\.html#analytics/);
-      assert.match(html,/location\.replace\("control\.html#analytics"\)/);
+      assert.match(html,/url=control\.html#insights:overview/);
+      assert.match(html,/location\.replace\("control\.html#insights:overview"\)/);
     }
   }
   const compat=await read('js/control-compat.js');
@@ -88,19 +99,19 @@ test('customer dashboards remain usable but operators are routed into Control',a
 });
 
 test('the old six-room office strip is deleted at the source',async()=>{
-  const office=await read('js/office.js');
-  assert.match(office,/MCCOffice = \{ isDesk: isDesk, open: open \}/);
-  assert.doesNotMatch(office,/var ROOMS|Back Office.*Front Desk|insertBefore\(bar/);
+  /* js/office.js only served the retired room bodies; it is gone with them */
+  await assert.rejects(read('js/office.js'));
 });
 
 test('mobile Control navigation stays five primary destinations',async()=>{
-  const html=await read('control.html');
-  const m=html.match(/<nav class="cr-bottom"[\s\S]*?<\/nav>/);
-  assert.ok(m,'mobile Control navigation is missing');
-  assert.equal((m[0].match(/data-surface=/g)||[]).length,5,'phone navigation must not become a room directory');
-  for(const key of ['home','work','create','analytics','system']){
-    assert.ok(m[0].includes('data-surface="'+key+'"'),key+' is missing from mobile Control');
-  }
+  const [nav,js]=await Promise.all([read('js/control-room/nav.js'),read('js/control-room-v2.js')]);
+  const scope={window:{}};
+  new Function('window',nav.replace('typeof window === "undefined" ? globalThis : window','window'))(scope.window);
+  const N=scope.window.CR.nav;
+  /* four phone sections plus More: the bar never becomes a room directory */
+  assert.deepEqual(N.phoneSections().map(s=>s.id),['home','people','sell','create']);
+  assert.deepEqual(N.moreSections().map(s=>s.id),['insights','system']);
+  assert.match(js,/id="crMore" aria-haspopup="dialog"/);
 });
 
 test('house-owner account entry opens Control, not the retired Studio door',async()=>{
@@ -112,14 +123,16 @@ test('house-owner account entry opens Control, not the retired Studio door',asyn
 test('operator search resolves concepts to logical Control views',async()=>{
   const R=await registry();
   const cases=[
-    ['leads','#work:pipeline'],
-    ['unsubscribe','#work:outreach'],
-    ['orders','#work:operations'],
-    ['instagram','#create:channels'],
-    ['isrc','#create:music'],
-    ['distribution','#create:music'],
-    ['forensics','#analytics'],
-    ['traffic','#analytics']
+    ['leads','#people:deals:pipeline'],
+    ['unsubscribe','#people:outreach'],
+    ['orders','#sell:orders:all'],
+    ['back office','#sell:store:operations'],
+    ['instagram','#create:publish:instagram'],
+    ['isrc','#sell:music:catalog'],
+    ['distribution','#sell:music:catalog'],
+    ['forensics','#insights:health'],
+    ['traffic','#insights:overview'],
+    ['desk bot','#people:inbox:ai-reply']
   ];
   for(const [q,hash] of cases){
     const top=R.search(q)[0];
@@ -367,15 +380,15 @@ test('AI replies show what the resident turn checked on the web', async()=>{
 });
 
 test('Work carries the post-sale graph as stored records, with honest payment verification', async()=>{
-  const [shell,mod,registry,css]=await Promise.all([
+  const [shell,mod,navSrc,css]=await Promise.all([
     read('js/control-room-v2.js'),
     read('js/control-room/work-records.js'),
-    read('js/control-registry.js'),
+    read('js/control-room/nav.js'),
     read('css/control-admin.css')
   ]);
   for (const kind of ['relationships','projects','deliverables','payments','renewals']) {
     assert.match(shell,new RegExp('    '+kind+': "'),kind+' has a view note');
-    assert.match(registry,new RegExp('control\\.html#work:'+kind),kind+' is in the command palette');
+    assert.match(navSrc,new RegExp('"#work:'+kind+'"'),kind+' is in NAV, so in the command palette');
     assert.match(mod,new RegExp('"'+kind+'"'),kind+' is a Work kind');
   }
   /* each post-sale view is a stored-record section, not a derived lead lane */

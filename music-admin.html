@@ -1,50 +1,20 @@
 <!doctype html>
-<html lang="en">
-<head><script src="js/shell-boot.js?v=__STAMP__"></script>
-  <script src="js/control-compat.js?v=__STAMP__" data-control-target="#create:music"></script>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <script src="js/control-compat.js?v=__STAMP__" data-control-target="#sell:music:catalog"></script>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Music Review Desk · McCluster</title>
-  <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/music-creator.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
-  <script src="js/live-content.js?v=__STAMP__"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Music review · McCluster Control</title>
+  <meta name="robots" content="noindex,nofollow">
+  <!-- A compatibility URL, kept so bookmarks land. The room it used to be is
+       a view of the one Control Room now: control.html#sell:music:catalog. -->
+  <link rel="canonical" href="https://matthew.mccluster.org/control.html">
+  <meta http-equiv="refresh" content="0; url=control.html#sell:music:catalog">
+  <script>location.replace("control.html#sell:music:catalog");</script>
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <style>body{margin:0;padding:24px 16px;background:#0b0908;color:#f4efe6;font:600 16px/1.5 system-ui,-apple-system,sans-serif}a{color:inherit}</style>
 </head>
-<body class="songpage music-v2">
-<header class="music-contextbar">
-  <a class="music-contextbar__brand" href="listen.html"><img src="assets/img/m-mark.png" alt=""><span>Music</span></a>
-  <nav class="music-contextbar__nav" aria-label="Music"><a href="listen.html">Listen</a><a href="creator.html">Creator Studio</a><a href="music-admin.html" aria-current="page">Review</a></nav>
-</header>
-<main class="creator-shell">
-  <header class="creator-head">
-    <div><div class="creator-kicker">Operator only</div><h1>Music Review Desk</h1></div>
-    <p>Rights review, publication, and checkout activation. This surface uses the existing <code>ops.use</code> authority and service-side writes.</p>
-  </header>
-  <section class="creator-gate creator-card wide" id="adminGate">
-    <h2>Operator access required.</h2>
-    <p>Sign in with an M Account that holds McCluster <code>ops.use</code>.</p>
-    <a class="creator-btn primary" href="account.html?next=music-admin.html">Sign in</a>
-  </section>
-  <div id="adminApp" hidden>
-    <section class="creator-card wide">
-      <h2>Release queue</h2>
-      <p>Publishing also marks the rights record cleared. Use “Review” when the release needs more documentation, and “Reject” for a rights conflict.</p>
-      <div id="adminTracks"><div class="creator-status">Loading…</div></div>
-    </section>
-    <section class="creator-card wide" style="margin-top:16px">
-      <h2>License offers</h2>
-      <p>Checkout cannot be activated until the release is published and rights-cleared.</p>
-      <div id="adminOffers"><div class="creator-status">Loading…</div></div>
-    </section>
-  </div>
-</main>
-<script src="js/mcc-auth.js?v=__STAMP__"></script>
-<script src="js/tabbar.js?v=__STAMP__"></script>
-<script src="js/music-admin.js?v=__STAMP__"></script>
-  <script src="js/control-registry.js?v=__STAMP__"></script>
-  <script src="js/control-palette.js?v=__STAMP__" defer></script>
-  <script src="js/site-editor.js?v=__STAMP__" defer></script>
+<body>
+  <p>Music review and the catalog live in Control → Sell → Music. <a href="control.html#sell:music:catalog">Open music</a></p>
 </body>
 </html>

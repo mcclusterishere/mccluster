@@ -69,23 +69,25 @@ test('one door: the view calls only the inbox function, and only actions it serv
   for(const a of used)assert.match(fn,new RegExp('action === "'+a+'"'),a+' is not an inbox action');
 });
 
-test('registered as a Work view, in the workspace routes, the registry and the palette',async()=>{
-  const [v2,core,reg,html]=await Promise.all([read('js/control-room-v2.js'),read('js/control-room/workspace-core.js'),read('js/control-registry.js'),read('control.html')]);
-  assert.match(v2,/var WORK_VIEWS = \[[^\]]*"desk-bot"/);
+test('registered in NAV as People → Inbox → AI reply, in the workspace routes, the registry and the palette',async()=>{
+  const [v2,nav,html]=await Promise.all([read('js/control-room-v2.js'),read('js/control-room/nav.js'),read('control.html')]);
+  /* the desk bot became the inbox's AI reply settings; its old route still lands there */
+  assert.match(nav,/v\("ai-reply", "AI reply", "work\.desk-bot", \["#work:desk-bot", "Desk bot"/);
   assert.match(v2,/window\.CR\.deskBot\.render\(\)/);assert.match(v2,/window\.CR\.deskBot\.bind\(/);assert.match(v2,/"work-desk-bot"/);
   assert.equal(globalThis.CR.workspaceCore,undefined);
+  await import('../../js/control-room/nav.js');
   await import('../../js/control-room/workspace-core.js');
-  assert.equal(globalThis.CR.workspaceCore.resolve('#work:desk-bot').hash,'#work:desk-bot');
-  assert.match(core,/'desk-bot':'Desk bot'/);
-  assert.match(reg,/href:"control\.html#work:desk-bot"/);
+  assert.equal(globalThis.CR.workspaceCore.resolve('#work:desk-bot').hash,'#people:inbox:ai-reply');
+  assert.equal(globalThis.CR.workspaceCore.resolve('#people:inbox:ai-reply').label,'Inbox · AI reply');
+  assert.equal(globalThis.CR.nav.search('desk bot')[0].route,'#people:inbox:ai-reply');
   assert.ok(html.indexOf('js/control-room/desk-bot.js')>0&&html.indexOf('js/control-room/desk-bot.js')<html.indexOf('js/control-room-v2.js'));
 });
 
 test('the old room is gone: inbox.html is a stub back to Control and loads no desk script',async()=>{
   const html=await read('inbox.html');
-  assert.match(html,/js\/control-compat\.js[^>]*data-control-target="#work:inbox"/);
+  assert.match(html,/js\/control-compat\.js[^>]*data-control-target="#people:inbox:conversations"/);
   assert.doesNotMatch(html,/inbox-desk\.js|backend\.js|<main/);
-  assert.match(html,/noindex, nofollow/);
+  assert.match(html,/noindex,\s?nofollow/);
   await assert.rejects(read('js/inbox-desk.js'));
 });
 

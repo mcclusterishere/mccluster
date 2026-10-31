@@ -68,7 +68,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   font-weight: 700;
 }
 .cr-btn:hover { border-color: rgba(244, 239, 230, .28); background: #1b1e23; }
-.cr-btn:focus-visible, .cr-nav__item:focus-visible, .cr-chip:focus-visible { outline: 2px solid var(--cr-info); outline-offset: 2px; }
+.cr-btn:focus-visible, .cr-chip:focus-visible { outline: 2px solid var(--cr-info); outline-offset: 2px; }
 .cr-btn--primary { border-color: transparent; background: var(--cr-ruby); color: #fff; }
 .cr-btn--primary:hover { background: var(--cr-ruby-hot); }
 .cr-btn--ghost { background: transparent; }
@@ -87,61 +87,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
     "rail main";
 }
 
-.cr-rail {
-  grid-area: rail;
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #0a0b0d;
-  border-right: 1px solid var(--cr-line);
-  padding: 10px 8px 12px;
-}
-.cr-rail__brand {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 44px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-}
-.cr-rail__brand img { max-width: 34px; max-height: 28px; object-fit: contain; }
-.cr-nav { display: grid; gap: 5px; width: 100%; }
-.cr-nav__item {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 3px;
-  width: 100%;
-  min-height: 55px;
-  border: 0;
-  border-radius: 11px;
-  background: transparent;
-  color: var(--cr-faint);
-  cursor: pointer;
-  padding: 8px 3px 6px;
-}
-.cr-nav__item:hover { color: var(--cr-text); background: rgba(244, 239, 230, .05); }
-.cr-nav__item.is-active { color: #fff; background: rgba(199, 34, 43, .15); }
-.cr-nav__item.is-active::before {
-  content: "";
-  position: absolute;
-  left: -8px;
-  top: 13px;
-  bottom: 13px;
-  width: 2px;
-  border-radius: 2px;
-  background: var(--cr-ruby-hot);
-}
-.cr-nav__icon { font-size: 17px; line-height: 1; display: grid; place-items: center; }
-/* Drawn icons, not text symbols: a phone font draws some symbols tiny and
-   others (⌁) not at all, which left the bottom tabs as bare words. */
-.cr-nav__icon svg { width: 22px; height: 22px; display: block; }
-.cr-nav__label { font-size: 10px; font-weight: 750; letter-spacing: .01em; }
-.cr-rail__foot { margin-top: auto; display: grid; justify-items: center; gap: 8px; width: 100%; }
 .cr-avatar {
   width: 34px;
   height: 34px;
@@ -364,7 +309,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   top: var(--cr-top);
   right: 0;
   bottom: 0;
-  width: min(var(--cr-inspector), calc(100vw - var(--cr-rail)));
+  width: min(var(--cr-inspector), 100vw);
   display: flex;
   flex-direction: column;
   background: #101216;
@@ -435,7 +380,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .cr-account-menu__email { padding: 8px; color: var(--cr-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
 .cr-account-menu button { text-align: left; }
 
-.cr-bottom { display: none; }
 
 @media (max-width: 1100px) {
   :root { --cr-inspector: 390px; }
@@ -455,7 +399,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
     grid-template-rows: var(--cr-top) minmax(0, 1fr);
     grid-template-areas: "top" "main";
   }
-  .cr-rail { display: none; }
   .cr-topbar { padding: 7px 10px; gap: 8px; }
   .cr-topbar__title { display: none; }
   .cr-command { margin: 0; width: 100%; min-width: 0; }
@@ -494,22 +437,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .cr-palette { padding: max(18px, env(safe-area-inset-top)) 0 0; align-items: stretch; }
   .cr-palette__dialog { width: 100%; max-height: 100%; height: 100%; border-radius: 0; border-left: 0; border-right: 0; }
   .cr-account-menu { left: 10px; right: 10px; bottom: calc(72px + env(safe-area-inset-bottom)); width: auto; }
-  .cr-bottom {
-    position: fixed;
-    z-index: 55;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: calc(62px + env(safe-area-inset-bottom));
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0,1fr));
-    padding: 5px 6px env(safe-area-inset-bottom);
-    background: rgba(10, 11, 13, .96);
-    border-top: 1px solid var(--cr-line);
-    backdrop-filter: blur(16px);
-  }
-  .cr-bottom .cr-nav__item { min-height: 52px; padding: 7px 2px 4px; }
-  .cr-bottom .cr-nav__item.is-active::before { left: 22%; right: 22%; top: auto; bottom: -5px; width: auto; height: 2px; }
 }
 
 @media (max-width: 430px) {

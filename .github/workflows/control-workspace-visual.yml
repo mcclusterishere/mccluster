@@ -38,6 +38,10 @@ on:
       - 'scripts/test/control-workspace.test.mjs'
       - 'js/control-room/desk-bot.js'
       - 'js/control-room-v2.js'
+      - 'js/control-room/nav.js'
+      - 'css/control-room-v2.css'
+      - 'scripts/test/control-nav.test.mjs'
+      - 'scripts/e2e/control-room-nav.e2e.mjs'
       - 'js/control-registry.js'
       - 'css/control-admin.css'
       - 'inbox.html'
@@ -83,7 +87,7 @@ jobs:
           CESIUM_DIR: /tmp/control-qa/node_modules/cesium/Build/Cesium
           CONTROL_QA_OUTPUT: /tmp/control-proof/screenshots
         run: |
-          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/browser-diagnostics.test.mjs scripts/test/control-surface.test.mjs scripts/test/control-desk-bot.test.mjs
+          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/browser-diagnostics.test.mjs scripts/test/control-surface.test.mjs scripts/test/control-desk-bot.test.mjs scripts/test/control-nav.test.mjs
           node --test workers/mccluster/test/analytics-*.test.mjs
           node scripts/e2e/site-navigation.e2e.mjs /tmp/control-proof/navigation
           node scripts/e2e/control-workspace.e2e.mjs
@@ -98,6 +102,7 @@ jobs:
           node scripts/e2e/analytics-measurement.e2e.mjs /tmp/control-proof/analytics-measurement
           node scripts/e2e/control-desk-bot.e2e.mjs /tmp/control-proof/desk-bot
           node scripts/e2e/control-front-page.e2e.mjs /tmp/control-proof/front-page
+          node scripts/e2e/control-room-nav.e2e.mjs /tmp/control-proof/control-room-nav
           node scripts/e2e/analytics-globe.e2e.mjs /tmp/control-proof/analytics-globe
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()

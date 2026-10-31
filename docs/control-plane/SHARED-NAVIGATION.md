@@ -8,18 +8,37 @@ the public World, mission applications, tax onboarding or feature-release toolin
 ## One bottom bar
 
 The server-verified house owner has Play, Control, the supplied M, Analytics and
-Globe. Control expands a bottom-anchored destination panel with All, Analytics,
-Operations, Studio, System and Products filters and text search. This avoids
-shrinking dozens of buttons into one row. Its groups swipe horizontally and its
-destination list scrolls independently; the page and bar stay in place.
+Globe. Control expands a bottom-anchored destination panel with All, Home,
+People, Sell, Create, Insights, System and Products filters and text search.
+This avoids shrinking dozens of buttons into one row. Its groups swipe
+horizontally and its destination list scrolls independently; the page and bar
+stay in place.
 
-All 35 native Control routes are read from `js/control-room/workspace-core.js`,
-the same inventory used by the owner workspace. Existing contract tests compare
-that inventory to the actual router's work/create/system views. Eight existing
-product/workspace doors are included: World, Your desk, Hitman's Halo, PRIM3,
-Whip, WE Manufacture, Asset Lab and Spatial Intelligence. Registered tenant apps
-remain in the existing Applications destination; no unverified app URL is added
-to the global bar automatically.
+## One Control navigation definition
+
+Owner, 2026-10-30 (the consolidation mockup: "get that control room under
+wraps"): Control is six sections, Home, People, Sell, Create, Insights and
+System, defined once in `js/control-room/nav.js` (`window.CR.nav.NAV`). Every
+Control navigation surface reads it: the sidebar and phone section bar in
+`control.html`, the phone More sheet, the ⌘K palette, `js/control-registry.js`
+(the owner palette on other pages) and the route inventory in
+`js/control-room/workspace-core.js` that this shared bar's destination panel
+lists. Each NAV entry carries `was`, the old routes (`#work:*`, `#create:*`,
+`#ai`, `#analytics`, `#system:*`, `#apps`) and old names that fold into it, so
+every old link and bookmark lands on its new view and the palettes find a view
+by its old name. `scripts/test/control-nav.test.mjs` holds NAV to covering every
+old view and naming only renderers that exist.
+
+On control.html the shared bar keeps the bottom of the screen. The Control
+sections are that page's own index, not a second global bar: a row under the
+Control topbar on a phone and the sidebar from 1024px. Without the shared bar
+(a guest preview, or the bar failing to load) the same element is a floating
+bottom bar with Home, People, Sell, Create and More.
+
+Eight existing product/workspace doors are included in the destination panel:
+World, Your desk, Hitman's Halo, PRIM3, Whip, WE Manufacture, Asset Lab and
+Spatial Intelligence. Registered tenant apps remain in System → Apps; no
+unverified app URL is added to the global bar automatically.
 
 While already in Control, navigation changes the hash on the same document. The
 organization query, optional workspace presentation, editors and retained
@@ -28,11 +47,9 @@ From a World host, Control points to Matthew's host using the bar's existing
 cross-origin sign-in handoff. Local chapter tabs, filters and editor tools remain
 local; they do not replace the global destination menu.
 
-Only after the shared module and stylesheet load do the verified owner's duplicate
-Control sidebar, Control mobile bar, workspace page tabs and workspace route
-selector disappear. If the shared module fails, the original Home link and Control
-navigation remain usable. The destination panel is a nonmodal popover: Escape and
-Close return focus to Control; moving focus outside closes it. Opening it does not
+If the shared module fails, the original Home link and the Control sections
+remain usable. The destination panel is a nonmodal popover: Escape and Close
+return focus to Control; moving focus outside closes it. Opening it does not
 automatically raise the phone keyboard.
 
 ## Profile and account

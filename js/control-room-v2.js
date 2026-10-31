@@ -1,5 +1,9 @@
-/* McCluster Control Room v2
-   Canonical operator architecture: Home / AI / Work / Create / Analytics / System / Apps.
+/* McCluster Control Room
+   Six sections from ONE navigation definition (js/control-room/nav.js):
+   Home / People / Sell / Create / Insights / System. The sidebar, the phone
+   bottom bar, the More sheet, the ⌘K palette and the owner bar's destination
+   panel all read NAV; old routes (#work:*, #create:*, #ai, #analytics,
+   #system:*, #apps) land through each entry's `was` list.
    This browser client composes existing canonical APIs and Supabase records.
    It does not introduce a second backend, auth stack, job queue, CRM, or media store. */
 (function () {
@@ -7,12 +11,23 @@
 
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
-  var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "desk-bot", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "front-page", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
-  var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
+  var NAVI = window.CR && window.CR.nav;
+  var NAV = NAVI.NAV;
+  /* The renderers each NAV leaf names, grouped by the surface whose code
+     draws them. Derived from NAV so there is no second list to drift. */
+  function rendererViews(prefix) {
+    return NAVI.leaves().map(function (l) { return l.leaf.renderer || ""; })
+      .filter(function (r) { return r.indexOf(prefix + ".") === 0; })
+      .map(function (r) { return r.slice(prefix.length + 1); });
+  }
+  var WORK_VIEWS = rendererViews("work");
+  var CREATE_VIEWS = rendererViews("create");
+  var SYSTEM_VIEWS = rendererViews("system");
 
   var state = {
+    /* where the operator is, in NAV terms */
+    route: "#home:today",
+    leaf: null,
     surface: "home",
     workView: "inbox",
     createView: "projects",
@@ -807,69 +822,54 @@
 
   function note(message, bad) { var n = $("cpNote"); if (!n) return; n.textContent = message || ""; n.className = "cr-note" + (bad ? " is-err" : ""); }
 
-  function normalizeWorkView(v) {
-    if (WORK_VIEWS.indexOf(v) >= 0) return v;
-    if (["crm", "front-desk"].indexOf(v) >= 0) return "pipeline";
-    if (["desk", "outreach-desk"].indexOf(v) >= 0) return "outreach";
-    if (["admin", "back-office"].indexOf(v) >= 0) return "operations";
-    if (["client-console", "console"].indexOf(v) >= 0) return "clients";
-    return "inbox";
-  }
-  function normalizeCreateView(v) {
-    if (CREATE_VIEWS.indexOf(v) >= 0) return v;
-    if (["campaigns", "canvas", "studio"].indexOf(v) >= 0) return "projects";
-    if (v === "assets") return "library";
-    if (["calendar", "published"].indexOf(v) >= 0) return "schedule";
-    if (["management", "socials", "socials-room"].indexOf(v) >= 0) return "channels";
-    if (["social-agent", "ig", "reels"].indexOf(v) >= 0) return "instagram";
-    if (["music-review", "vault", "lanes", "review-desk"].indexOf(v) >= 0) return "music";
-    if (["action", "uprise", "mobilize"].indexOf(v) >= 0) return "action-network";
-    if (["grants", "opportunity-intelligence", "bounties-funding"].indexOf(v) >= 0) return "funding";
-    if (["build-code", "code"].indexOf(v) >= 0) return "build";
-    if (["front", "site", "homepage", "home-page", "index"].indexOf(v) >= 0) return "front-page";
-    return "projects";
-  }
-  function normalizeSystemView(v) {
-    if (SYSTEM_VIEWS.indexOf(v) >= 0) return v;
-    if (["agents", "runs"].indexOf(v) >= 0) return "workload";
-    if (["infrastructure", "deployments"].indexOf(v) >= 0) return "overview";
-    if (v === "logs") return "observability";
-    if (["api", "integrations", "usage"].indexOf(v) >= 0) return "resources";
-    return "overview";
+  /* ROUTING. Every hash, new or old, resolves through NAV. A leaf's
+     renderer ("work.inbox", "create.music", "home.ask"…) names the code that
+     draws it; the surface/view pair below is that code's own state, kept so
+     the existing renderers and loaders run unchanged. */
+  function applyLeaf(entry) {
+    var leaf = entry.leaf, r = leaf.renderer || "";
+    var dot = r.indexOf("."), kind = dot >= 0 ? r.slice(0, dot) : r, view = dot >= 0 ? r.slice(dot + 1) : "";
+    state.leaf = entry;
+    state.route = leaf.route;
+    state.section = entry.section.id;
+    if (kind === "work") { state.surface = "work"; state.workView = view; }
+    else if (kind === "create") { state.surface = "create"; state.createView = view; }
+    else if (kind === "system") { state.surface = "system"; state.systemView = view; }
+    else if (kind === "analytics") { state.surface = "analytics"; state.analyticsSection = view; }
+    else if (r === "home.today") state.surface = "home";
+    else if (r === "home.ask") state.surface = "ai";
+    else if (r === "apps") state.surface = "apps";
+    else state.surface = r.replace(/\./g, "-") || "slot";
   }
   function readHash() {
-    var raw = (location.hash || "#home").slice(1).toLowerCase().split(":");
-    state.surface = SURFACES.indexOf(raw[0]) >= 0 ? raw[0] : "home";
-    if (state.surface === "work") state.workView = normalizeWorkView(raw[1]);
-    if (state.surface === "create") state.createView = normalizeCreateView(raw[1]);
-    if (state.surface === "system") state.systemView = normalizeSystemView(raw[1]);
+    var resolved = NAVI.resolve(location.hash || "#home");
+    applyLeaf(resolved.entry);
+    return resolved;
   }
-  function routeHash() {
-    if (state.surface === "work") return "#work:" + state.workView;
-    if (state.surface === "create") return "#create:" + state.createView;
-    if (state.surface === "system") return "#system:" + state.systemView;
-    return "#" + state.surface;
-  }
+  function routeHash() { return state.route; }
   function setHash(replace) {
     var next = routeHash();
     if (location.hash === next) return;
     if (replace && history.replaceState) history.replaceState(null, "", next); else location.hash = next;
   }
-  function setSurface(surface, view, replace) {
-    if (SURFACES.indexOf(surface) < 0) return;
-    if (state.surface === "ai" && surface !== "ai") {
-      stopAiVoiceListening(true);
-      stopAiVoiceSpeech();
-    }
-    state.surface = surface;
-    if (surface === "work" && view) state.workView = normalizeWorkView(view);
-    if (surface === "create") state.createView = normalizeCreateView(view);
-    if (surface === "system") state.systemView = normalizeSystemView(view);
+  /* Go to a NAV route (new or old spelling). */
+  function go(hash, replace) {
+    var entry = NAVI.resolve(hash).entry;
+    var before = state.surface;
+    applyLeaf(entry);
+    if (before === "ai" && state.surface !== "ai") { stopAiVoiceListening(true); stopAiVoiceSpeech(); }
     state.selectedProjectId = null;
     closeInspector();
+    closeMore();
     setHash(replace);
     render();
     try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { window.scrollTo(0, 0); }
+  }
+  /* The old surface/view call sites keep working: they name an old route,
+     and NAV says where it lives now. */
+  function setSurface(surface, view, replace) {
+    var old = surface === "work" || surface === "create" || surface === "system" ? "#" + surface + ":" + (view || "") : "#" + surface;
+    go(old, replace);
   }
   function currentView() {
     if (state.surface === "work") return state.workView;
@@ -901,22 +901,12 @@
   function viewOptions(values, selected) {
     return values.map(function (v) { return '<option value="' + esc(v) + '"' + (v === selected ? " selected" : "") + '>' + esc(titleCase(v)) + '</option>'; }).join("");
   }
-  function renderHeader(title, subtitle, selector) {
+  function renderHeader(title, subtitle) {
     return '<header class="cr-surface__head"><div><h1 class="cr-surface__title">' + esc(title) + '</h1>' +
-      (subtitle ? '<p class="cr-surface__subtitle">' + esc(subtitle) + '</p>' : "") + '</div><div class="cr-surface__tools">' +
-      (selector ? '<select id="crViewSelect" class="cr-select" aria-label="Change view">' + viewOptions(selector.values, selector.selected) + '</select>' : "") +
-      '<button class="cr-btn cr-btn--ghost" type="button" data-action="refresh">Refresh</button></div></header>';
+      (subtitle ? '<p class="cr-surface__subtitle">' + esc(subtitle) + '</p>' : "") + '</div></header>';
   }
   function kpi(label, value, sub) { return '<div class="cr-kpi"><div class="cr-kpi__label">' + esc(label) + '</div><div class="cr-kpi__value">' + esc(value) + '</div><div class="cr-kpi__sub">' + esc(sub || "") + '</div></div>'; }
 
-  function renderNav() {
-    document.querySelectorAll("[data-surface]").forEach(function (el) {
-      var active = el.getAttribute("data-surface") === state.surface;
-      el.classList.toggle("is-active", active);
-      if (active) el.setAttribute("aria-current", "page"); else el.removeAttribute("aria-current");
-    });
-    if ($("crTopTitle")) $("crTopTitle").textContent = titleCase(state.surface);
-  }
   function renderTopStatus() {
     var healthy = Boolean(state.health && state.health.ok);
     var dot = $("crHealthDot");
@@ -1075,8 +1065,7 @@
       body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>' + esc(taskStatus) + '</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> ' + esc(pendingCopy) + '</div></div>';
     }
 
-    return renderHeader("AI", "A persistent conversation with the resident McCluster model running through your own control plane.") +
-      sourceBanner(state.sources.coreBridge, "Core bridge") +
+    return sourceBanner(state.sources.coreBridge, "Core bridge") +
       sourceBanner(state.sources.coreTools, "AI execution path") +
       sourceBanner(state.sources.aiThreads, "AI conversations") +
       '<div class="cr-ai-chat">' +
@@ -1143,38 +1132,6 @@
         publicRecordLink("Google Search Console", "Indexing and search performance", "https://search.google.com/search-console", "Open", true) +
         publicRecordLink("Bing Webmaster Tools", "Bing and Copilot search console", "https://www.bing.com/webmasters/", "Open", true) +
       '</div>';
-  }
-
-  function renderHome() {
-    var c = state.status && state.status.counts || {};
-    var attention = attentionItems();
-    var activeJobs = state.jobs.filter(function (j) { return ["queued", "running"].indexOf(j.status) >= 0; });
-    var inboxRows = attention.length ? attention.map(function (it) { return row(it.title, it.sub, "Open", it.kind, it.action, { id: it.id, badge: it.kind === "bad" ? "Issue" : "Review" }); }).join("") :
-      '<div class="cr-panel__body"><span class="' + stateClass("ok") + '">All clear</span><p class="cr-muted">No instrumented exception currently needs you.</p></div>';
-    var workRows = activeJobs.slice(0, 6).map(function (j) {
-      return row(titleCase(j.job_type), text(j.target_id, j.target_type), titleCase(j.status), j.status === "running" ? "ai" : "info", "inspect-job", { id: j.id, badge: j.status });
-    }).join("") || '<div class="cr-panel__body cr-muted">No queued or running canonical jobs.</div>';
-
-    return renderHeader("Home", "Exceptions first. Everything else stays quiet until it matters.") +
-      '<section class="cr-command-hero"><h1>What do you want done?</h1><div class="cr-command-hero__box"><input id="crHeroInput" autocomplete="off" placeholder="Search, navigate, or give McCluster an objective…" aria-label="Search or command McCluster"><button class="cr-btn cr-btn--primary" type="button" data-action="hero-command">Go</button></div>' +
-      '<div class="cr-quick"><button class="cr-chip" data-action="work-inbox">Inbox</button><button class="cr-chip" data-action="work-pipeline">Pipeline</button><button class="cr-chip" data-action="create-projects">Create</button><button class="cr-chip" data-action="system-workload">Workload</button><button class="cr-chip" data-action="apps">Apps</button></div></section>' +
-      '<div class="cr-kpis">' +
-      kpi("Conversations", String(state.threads.length || count(c.conversations)), "live work") +
-      kpi("Open leads", String(state.leads.filter(function (x) { return x.status !== "closed"; }).length), "business") +
-      kpi("Active jobs", String(activeJobs.length), "canonical workload") +
-      kpi("Projects", String(state.campaigns.length), "creative") + '</div>' +
-      '<div class="cr-grid cr-home-grid">' +
-      panel("Needs you", attention.length ? attention.length + " item" + (attention.length === 1 ? "" : "s") : "clear", '<div class="cr-list">' + inboxRows + '</div>', "cr-span-7") +
-      panel("Working now", activeJobs.length + " active", '<div class="cr-list">' + workRows + '</div>', "cr-span-5") +
-      panel("Recent activity", "last change per surface", '<div class="cr-list">' + recentActivity().map(function (a) {
-        return row(a.title, a.sub, ago(a.when), a.kind, a.action, a.id ? { id: a.id, badge: a.badge } : { badge: a.badge });
-      }).join("") + '</div>', "cr-span-7") +
-      panel("System pulse", state.health && state.health.ok ? "operational" : "check", '<div class="cr-list">' +
-        row("API Worker", "api.mccluster.org", state.health && state.health.ok ? "Healthy" : "Check", state.health && state.health.ok ? "ok" : "bad", "system-overview") +
-        row("Database", "Canonical Supabase", state.status && state.status.database && state.status.database.reachable ? "Healthy" : "Check", state.status && state.status.database && state.status.database.reachable ? "ok" : "warn", "system-overview") +
-        row("Core", "ai_context-v4", state.ai && state.ai.ok ? "Healthy" : "Inspect", state.ai && state.ai.ok ? "ai" : "warn", "system-workload") +
-      '</div>', "cr-span-5") +
-      panel("Public record", "canonical search authority", renderPublicRecord(), "cr-span-12") + '</div>';
   }
 
   function unifiedInbox() {
@@ -1256,6 +1213,9 @@
       '<header class="cr-convo__head"><div><b>' + esc(threadLabel(thread)) + '</b>' +
       '<p class="cr-muted">' + esc(c.address || thread.relay_address || "—") + ' · ' + esc(thread.channel || "sms") + ' · last activity ' + esc(ago(thread.updated_at)) + '</p></div>' +
       ownerPill(thread) + '</header>' +
+      '<div class="cr-aireply"><span><b>AI reply</b> · ' + esc(owned ? "off: you have this thread. Turn it on and McCluster answers again." : "on: McCluster answers this thread. Turn it off to take it over.") +
+      ' <a href="#people:inbox:ai-reply" data-nav-route="#people:inbox:ai-reply">AI reply settings</a></span>' +
+      '<button class="cr-switch' + (owned ? "" : " is-on") + '" type="button" role="switch" aria-checked="' + (!owned) + '" aria-label="AI reply for this thread" data-action="thread-mode" data-id="' + esc(thread.id) + '" data-mode="' + (owned ? "release" : "takeover") + '"' + (switching ? " disabled" : "") + '></button></div>' +
       renderTranscript(thread.id) +
       (failure ? '<div class="cr-convo__error">' + sourceBanner(failure, "Last action") + '</div>' : "") +
       '<footer class="cr-convo__foot">' +
@@ -1588,11 +1548,6 @@
     payments: "McCluster's service-payment ledger. You record what was billed and received; every entry is labelled owner-recorded until a Stripe or Square reconciler verifies it. Product checkouts (prints, music, merch) keep their own payment truth in their order tables.",
     renewals: "Recurring obligations and the next commercial decision: hosting, management, retainers. A renewal can point at the site account, API subscription or offering it renews."
   };
-  function renderWork() {
-    return renderHeader("Work", "One business graph: inbox, pipeline, people, companies, relationships, clients, tasks, bookings, orders, projects, deliverables, payments and renewals are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
-      '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + (window.CR.work ? window.CR.work.renderForm() : "") + renderWorkView(state.workView);
-  }
-
   function projectById(id) { return state.campaigns.find(function (c) { return String(c.id) === String(id); }); }
   function projectStats(id) {
     return {
@@ -1722,7 +1677,7 @@
       : state.createView === "front-page"
         ? (window.CR.frontPage ? window.CR.frontPage.render() : empty("Front page unavailable", "The native Control module did not load."))
         : renderSchedule();
-    return renderHeader("Create", "Your front page, projects, assets, publishing, channels, music operations, clipping and Equity Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    return body;
   }
 
   /* CHANNELS — where publishing actually points.
@@ -2364,7 +2319,7 @@
       : (state.systemView === "overview" ? renderSystemOverview()
       : (state.systemView === "workload" ? renderWorkload()
       : (state.systemView === "observability" ? renderObservability() : renderResources())));
-    return renderHeader("System", "Command, observe, and intervene through one canonical control plane.", { values: SYSTEM_VIEWS, selected: state.systemView }) + body;
+    return body;
   }
 
   function appCard(title, subtitle, href, meta, external) {
@@ -2381,31 +2336,433 @@
   function renderApps() {
     var registered = state.apps.map(function (a) { return appCard(a.name || a.app_key, [a.product_family, a.kind].filter(Boolean).join(" · ") || "Registered application", a.public_url || "#", a.app_key || "registered", true); }).join("") || '<div class="cr-panel__body cr-muted">No registered applications were returned.</div>';
     var specialty = [bridge.whip, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
-    return renderHeader("Apps", "Specialized products stay one launch away without becoming permanent Control Room navigation.") + '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
+    return '<section class="cr-app-section"><div class="cr-panel__head"><h2>Registered applications</h2><span class="cr-panel__meta">' + state.apps.length + '</span></div><div class="cr-app-grid">' + registered + '</div></section><section class="cr-app-section"><div class="cr-panel__head"><h2>Specialized workspaces</h2></div><div class="cr-app-grid">' + specialty + '</div></section>';
   }
 
-  function renderLoading() { return renderHeader(titleCase(state.surface), "Loading canonical McCluster state…") + '<div class="cr-canvas">' + empty("Loading", "Reading existing APIs and operator-visible records.") + '</div>'; }
+  /* ---------------------------------------------------------------------
+     NAVIGATION CHROME — all of it from NAV.
+     One <nav id="crSections">: the floating bottom bar on a phone (the
+     `phone` sections plus More), the sidebar from 1024px. The section head
+     carries the item tabs and, where an item has views, a segmented control.
+     --------------------------------------------------------------------- */
+  function navIcon(name, attrs) { return NAVI.icon(name, attrs); }
+  function sectionBadge(id) {
+    if (id === "people") return state.threads.filter(function (t) { return threadInQueue(t, "inbound"); }).length;
+    if (id === "sell") return openOrders().length;
+    return 0;
+  }
+  function renderNav() {
+    var host = $("crSections");
+    var current = state.leaf || NAVI.resolve(state.route);
+    var sec = current.section ? current.section.id : "home";
+    if (host) {
+      var items = NAV.map(function (s) {
+        var on = s.id === sec, badge = sectionBadge(s.id);
+        var subs = '<ul class="cr-sections__subs">' + s.items.map(function (it) {
+          var here = on && current.item && current.item.id === it.id;
+          return '<li><a href="' + esc(it.route) + '" data-nav-route="' + esc(it.route) + '"' + (here ? ' class="is-on" aria-current="page"' : "") + '>' + esc(it.label) + '</a></li>';
+        }).join("") + '</ul>';
+        return '<li class="' + (s.phone ? "is-phone" : "is-overflow") + '"><a class="cr-sections__item' + (on ? " is-active" : "") + '" href="' + esc(s.route) + '" data-nav-route="' + esc(s.route) + '" data-section="' + esc(s.id) + '"' + (on ? ' aria-current="true"' : "") + '>' +
+          navIcon(s.icon) + '<span class="cr-sections__label">' + esc(s.label) + '</span>' +
+          (badge ? '<span class="cr-sections__badge" aria-label="' + badge + ' waiting">' + (badge > 99 ? "99+" : badge) + '</span>' : "") + '</a>' + subs + '</li>';
+      }).join("");
+      var overflowOn = NAVI.moreSections().some(function (s) { return s.id === sec; });
+      var healthy = Boolean(state.health && state.health.ok);
+      host.innerHTML =
+        '<a class="cr-sections__brand" href="#home:today" data-nav-route="#home:today" aria-label="Control Room home"><img src="assets/img/hm-mark-wide.webp" alt=""><b>Control Room</b></a>' +
+        '<ul class="cr-sections__list">' + items +
+        '<li class="is-more"><button class="cr-sections__item' + (overflowOn ? " is-active" : "") + '" type="button" id="crMore" aria-haspopup="dialog" aria-expanded="false" aria-controls="crMoreSheet">' + navIcon("more") + '<span class="cr-sections__label">More</span></button></li></ul>' +
+        '<div class="cr-sections__foot"><span class="cr-health-dot' + (healthy ? " is-up" : (state.error ? " is-down" : "")) + '"></span>' + esc(healthy ? "All systems healthy" : (state.error ? "Check system health" : "Checking health")) + ' · PROD</div>';
+      var more = $("crMore"); if (more) more.addEventListener("click", openMore);
+      host.querySelectorAll("[data-nav-route]").forEach(function (a) {
+        a.addEventListener("click", function (e) {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+          e.preventDefault(); go(a.getAttribute("data-nav-route"));
+        });
+      });
+    }
+    if ($("crTopTitle")) $("crTopTitle").textContent = current.section ? current.section.label : "Home";
+  }
+  function openMore() {
+    var sheet = $("crMoreSheet"); if (!sheet) return;
+    sheet.innerHTML = '<div class="cr-more__box" role="document"><p class="cr-eyebrow">More</p><ul class="cr-more__list">' +
+      NAVI.moreSections().map(function (s) {
+        return '<li><a class="cr-rowi cr-rowi--link" href="' + esc(s.route) + '" data-nav-route="' + esc(s.route) + '"><span class="cr-ico">' + navIcon(s.icon) + '</span><span class="cr-rowi__main"><span class="cr-rowi__title">' + esc(s.label) + '</span><span class="cr-rowi__sub">' + esc(s.items.map(function (x) { return x.label; }).join(" · ")) + '</span></span></a></li>';
+      }).join("") + '</ul><button class="cr-btn cr-btn--ghost" type="button" data-more-close>Close</button></div>';
+    sheet.hidden = false; sheet.classList.add("is-open");
+    var more = $("crMore"); if (more) more.setAttribute("aria-expanded", "true");
+    sheet.querySelectorAll("[data-nav-route]").forEach(function (a) {
+      a.addEventListener("click", function (e) { e.preventDefault(); go(a.getAttribute("data-nav-route")); });
+    });
+    var close = sheet.querySelector("[data-more-close]"); if (close) { close.addEventListener("click", closeMore); }
+    var first = sheet.querySelector("a"); if (first) first.focus();
+  }
+  function closeMore() {
+    var sheet = $("crMoreSheet"); if (!sheet || sheet.hidden) return;
+    sheet.hidden = true; sheet.classList.remove("is-open"); sheet.innerHTML = "";
+    var more = $("crMore"); if (more) { more.setAttribute("aria-expanded", "false"); }
+  }
+  function sectionHead(entry, right) {
+    var s = entry.section, it = entry.item;
+    var title = entry.view && it.views && it.views.length > 1 ? it.label : (entry.leaf.label || it.label);
+    var counts = { inbox: state.threads.filter(function (t) { return threadInQueue(t, "inbound"); }).length, orders: openOrders().length };
+    var tabs = '<nav class="cr-tabs" aria-label="' + esc(s.label) + ' views">' + s.items.map(function (x) {
+      var on = x.id === it.id;
+      return '<a class="cr-tab' + (on ? " is-on" : "") + '" href="' + esc(x.route) + '" data-nav-route="' + esc(x.route) + '"' + (on ? ' aria-current="page"' : "") + '>' + esc(x.label) + (counts[x.id] ? '<b>' + counts[x.id] + '</b>' : "") + '</a>';
+    }).join("") + '</nav>';
+    var views = it.views && it.views.length > 1 ? '<nav class="cr-seg cr-seg--views" aria-label="' + esc(it.label) + '">' + it.views.map(function (vw) {
+      var on = entry.view && vw.id === entry.view.id;
+      return '<a href="' + esc(vw.route) + '" data-nav-route="' + esc(vw.route) + '"' + (on ? ' class="is-on" aria-current="page"' : "") + '>' + esc(vw.label) + '</a>';
+    }).join("") + '</nav>' : "";
+    return '<header class="cr-head"><div class="cr-head__titles"><p class="cr-eyebrow">' + esc(s.label) + '</p><h1 class="cr-h1">' + esc(title) + '</h1></div>' +
+      '<div class="cr-head__tools">' + (right || "") + '<button class="cr-btn cr-btn--ghost cr-btn--sm" type="button" data-action="refresh">Refresh</button></div></header>' + tabs + views;
+  }
+  function bindNavLinks(root) {
+    (root || document).querySelectorAll("[data-nav-route]").forEach(function (a) {
+      if (a.getAttribute("data-bound-route") === "1" || (a.closest && a.closest("#crSections"))) return;
+      a.setAttribute("data-bound-route", "1");
+      a.addEventListener("click", function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+        e.preventDefault(); go(a.getAttribute("data-nav-route"));
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     SHARED ROW SHAPE (Needs you, Working now, pulse, orders).
+     --------------------------------------------------------------------- */
+  function pill(kind, label) { return '<span class="cr-pill cr-pill--' + esc(kind) + '">' + esc(label) + '</span>'; }
+  function rowi(icon, cls, kind, title, sub, right) {
+    return '<li class="cr-rowi"><span class="cr-ico cr-ico--' + esc(cls) + '">' + navIcon(icon) + '</span><span class="cr-rowi__main"><span class="cr-rowi__kind">' + esc(kind) + '</span><span class="cr-rowi__title">' + esc(title) + '</span>' + (sub ? '<span class="cr-rowi__sub">' + esc(sub) + '</span>' : "") + '</span>' + (right || "") + '</li>';
+  }
+  function actBtn(label, action, attrs, primary) {
+    return '<button class="cr-btn cr-btn--sm' + (primary ? " cr-btn--primary" : "") + '" type="button" data-action="' + esc(action) + '"' + (attrs || "") + '>' + esc(label) + '</button>';
+  }
+  function routeBtn(label, route) { return '<a class="cr-btn cr-btn--sm" href="' + esc(route) + '" data-nav-route="' + esc(route) + '">' + esc(label) + '</a>'; }
+  function moneyOf(cents, cur) {
+    if (cents == null || isNaN(Number(cents))) return "";
+    try { return (Number(cents) / 100).toLocaleString(undefined, { style: "currency", currency: String(cur || "usd").toUpperCase() }); } catch (e) { return "$" + (Number(cents) / 100).toFixed(2); }
+  }
+  function workRows(kind) {
+    var W = window.CR.work && window.CR.work.state;
+    return W && W.rows && Array.isArray(W.rows[kind]) ? W.rows[kind] : [];
+  }
+  function ensureWork(kinds) { if (window.CR.work && window.CR.work.ensure && state.org) window.CR.work.ensure(kinds); }
+
+  /* ---------------------------------------------------------------------
+     SELL · ORDERS — one list built from the sources that already exist.
+     Nothing is merged at the table level: each row says where it lives.
+       leads (print-shop / merch-shop / booking lanes)  → Prints, Merch, Bookings
+       /v1/work/orders, /v1/work/bookings records       → Orders, Bookings
+       music_orders (the owner's own, RLS)              → Music
+       window.CR.marketplace.orders() when #679 lands   → Marketplace
+     --------------------------------------------------------------------- */
+  var ORDER_TYPES = [["all", "All"], ["prints", "Prints"], ["merch", "Merch"], ["bookings", "Bookings"], ["music", "Music"], ["marketplace", "Marketplace"], ["records", "Records"]];
+  var ORDER_ICON = { prints: "frame", merch: "shirt", bookings: "cal", music: "note", marketplace: "store", records: "bag" };
+  /* A good read is kept until Refresh (load(true)) asks again; a failed one
+     is shown but never cached: it is retried on Refresh, or on the next
+     render once a minute has passed, so a render never loops on a failure. */
+  var MUSIC_RETRY_MS = 60000;
+  function loadMusicOrders(force) {
+    if (!state.org || state.pending.musicOrders) return;
+    if (!force && state.musicOrders && state.musicOrders.ok) return;
+    if (!force && state.musicOrders && !state.musicOrders.ok && Date.now() - (state.musicOrdersAt || 0) < MUSIC_RETRY_MS) return;
+    state.pending.musicOrders = true;
+    src(supa("music_orders?select=id,amount_cents,currency,status,customer_email,metadata,paid_at,created_at&order=created_at.desc&limit=100")).then(function (r) {
+      state.musicOrders = r; state.musicOrdersAt = Date.now(); delete state.pending.musicOrders; render();
+    });
+  }
+  /* /v1/work/{kind} rows carry their lifecycle in `state` (workers/mccluster/
+     src/work.js); `status` is only a fallback for an older row shape. */
+  function workState(r, fallback) { return (r && (r.state || r.status)) || fallback; }
+  function allOrders() {
+    var out = [];
+    (state.leads || []).forEach(function (l) {
+      var c = String(l.campaign || "").toLowerCase();
+      var type = c === "print-shop" ? "prints" : c === "merch-shop" ? "merch" : (leadLane(l) === "bookings" && /book|session|portrait|shoot/i.test(c + " " + (l.want || "")) ? "bookings" : null);
+      if (!type) return;
+      out.push({ key: "lead:" + l.id, type: type, title: l.want || l.note || titleCase(type), who: l.name || l.email || "Customer", when: l.at || l.created_at,
+        status: l.status || "new", open: (l.status || "new") === "new" || l.status === "replied", total: null, action: "inspect-lead", id: l.id, source: "Lead" });
+    });
+    workRows("orders").forEach(function (o) {
+      out.push({ key: "order:" + o.id, type: "records", title: o.title || "Order", who: "", when: o.placed_at || o.created_at, status: workState(o, "open"),
+        open: ["open", "paid", "in_production"].indexOf(workState(o, "open")) >= 0, total: moneyOf(o.amount_cents, o.currency), route: "#sell:orders:order-records", source: "Order record" });
+    });
+    workRows("bookings").forEach(function (b) {
+      out.push({ key: "booking:" + b.id, type: "bookings", title: b.title || "Booking", who: [b.location, b.starts_at ? formatDate(b.starts_at) : ""].filter(Boolean).join(" · "), when: b.created_at || b.starts_at, status: workState(b, "proposed"),
+        open: ["proposed", "confirmed"].indexOf(workState(b, "proposed")) >= 0, total: null, route: "#sell:orders:booking-records", source: "Booking record" });
+    });
+    rowsOf(state.musicOrders || okResult([])).forEach(function (m) {
+      out.push({ key: "music:" + m.id, type: "music", title: (m.metadata && (m.metadata.track_title || m.metadata.title)) || "Music order", who: m.customer_email || "", when: m.paid_at || m.created_at,
+        status: m.status || "pending", open: m.status === "pending", total: moneyOf(m.amount_cents, m.currency), route: "#sell:music:catalog", source: "music_orders" });
+    });
+    var mk = window.CR.marketplace;
+    if (mk && typeof mk.orders === "function") {
+      try {
+        (mk.orders() || []).forEach(function (o) {
+          out.push({ key: "mk:" + o.id, type: "marketplace", title: o.title || "Marketplace order", who: o.who || o.customer || "", when: o.when || o.created_at, status: o.state || o.status || "open",
+            open: o.open !== false, total: o.total || moneyOf(o.amount_cents, o.currency), route: "#sell:store:marketplace", source: "Marketplace" });
+        });
+      } catch (e) { /* the module owns its own errors */ }
+    }
+    return out.sort(function (a, b) { return new Date(b.when || 0) - new Date(a.when || 0); });
+  }
+  function openOrders() { return allOrders().filter(function (o) { return o.open; }); }
+  function orderStateKind(o) {
+    var s = String(o.status || "").toLowerCase();
+    if (/fail|cancel|refund|lapsed|closed/.test(s)) return s === "closed" ? "ok" : "bad";
+    if (/paid|fulfilled|completed|shipped|delivered|confirmed|booked/.test(s)) return "ok";
+    if (/new|open|pending|proposed|in_production|replied/.test(s)) return "warn";
+    return "info";
+  }
+  function renderSellOrders() {
+    ensureWork(["orders", "bookings", "companies"]); loadMusicOrders();
+    var all = allOrders();
+    var type = state.orderType || "all", phase = state.orderPhase || "open";
+    var typed = all.filter(function (o) { return type === "all" || o.type === type; });
+    var shown = typed.filter(function (o) { return phase === "open" ? o.open : phase === "done" ? !o.open && orderStateKind(o) !== "bad" : orderStateKind(o) === "bad"; });
+    var week = Date.now() - 7 * 86400000;
+    var chips = '<div class="cr-chips" role="group" aria-label="Order type">' + ORDER_TYPES.map(function (t) {
+      var n = t[0] === "all" ? all.length : all.filter(function (o) { return o.type === t[0]; }).length;
+      return '<button class="cr-chip' + (type === t[0] ? " is-on" : "") + '" type="button" data-order-type="' + t[0] + '" aria-pressed="' + (type === t[0]) + '">' + esc(t[1]) + ' <b>' + n + '</b></button>';
+    }).join("") + '</div>';
+    var seg = '<div class="cr-seg" role="group" aria-label="Order state">' + [["open", "Open"], ["done", "Done"], ["problems", "Problems"]].map(function (p) {
+      return '<button type="button" data-order-phase="' + p[0] + '"' + (phase === p[0] ? ' class="is-on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + p[1] + '</button>';
+    }).join("") + '</div>';
+    var rows = shown.length ? shown.slice(0, 200).map(function (o) {
+      var act = o.action ? ' data-action="' + esc(o.action) + '" data-id="' + esc(o.id) + '"' : ' data-nav-route="' + esc(o.route) + '"';
+      return '<li><button class="cr-order" type="button"' + act + '><span class="cr-ico cr-ico--order">' + navIcon(ORDER_ICON[o.type] || "bag") + '</span>' +
+        '<span class="cr-order__main">' + esc(o.title) + '</span>' +
+        '<span class="cr-order__meta">' + esc([titleCase(o.type), o.who, ago(o.when)].filter(Boolean).join(" · ")) + '</span>' +
+        '<span class="cr-order__type">' + esc(titleCase(o.type)) + '</span><span class="cr-order__cust">' + esc(o.who || "—") + '</span><span class="cr-order__when">' + esc(ago(o.when)) + '</span>' +
+        '<span class="cr-order__state">' + pill(orderStateKind(o), titleCase(o.status)) + '</span><span class="cr-order__val">' + esc(o.total || "—") + '</span></button></li>';
+    }).join("") : '<li class="cr-empty-row">' + esc(all.length ? "Nothing " + (phase === "open" ? "open" : phase === "done" ? "finished" : "failed or refunded") + " in this type." : "No orders came back from any source yet.") + '</li>';
+    var problems = all.filter(function (o) { return orderStateKind(o) === "bad"; }).length;
+    return sourceStates([["Leads", state.sources.leads], ["Music orders", state.musicOrders]]) +
+      '<div class="cr-kpis2">' +
+        kpi2("Open", String(all.filter(function (o) { return o.open; }).length), "across all types") +
+        kpi2("New · 7 days", String(all.filter(function (o) { return new Date(o.when || 0).getTime() > week; }).length), "every source") +
+        kpi2("Bookings", String(all.filter(function (o) { return o.type === "bookings" && o.open; }).length), "open") +
+        kpi2("Problems", String(problems), problems ? "failed, cancelled or refunded" : "none") +
+      '</div>' + chips +
+      '<section class="cr-panel2"><header class="cr-panel2__head"><h2>' + esc(type === "all" ? "All orders" : titleCase(type)) + '</h2>' + seg + '</header>' +
+      '<div class="cr-ohead" aria-hidden="true"><span></span><span>Order</span><span>Type</span><span>Customer</span><span>When</span><span>Status</span><span>Total</span></div>' +
+      '<ul class="cr-orders">' + rows + '</ul></section>' +
+      derivedNote("One list over the existing order sources: print and merch shop leads, Work order and booking records, your music orders and, once it ships, the marketplace. Each row opens where that order lives; the tables are not merged.");
+  }
+  function kpi2(label, value, sub) { return '<div class="cr-kpi2"><div class="cr-kpi2__label">' + esc(label) + '</div><div class="cr-kpi2__value">' + esc(value) + '</div><div class="cr-kpi2__sub">' + esc(sub || "") + '</div></div>'; }
+
+  /* ---------------------------------------------------------------------
+     HOME · TODAY — the AI bar, the numbers, Needs you, Working now, pulse.
+     --------------------------------------------------------------------- */
+  function needsYou() {
+    var items = [];
+    pendingApprovalRows().forEach(function (a) {
+      items.push(rowi("check", "approve", "Approval · " + (a.capability || "owner decision"), a.resource || a.capability || "Approval", a.reason || "",
+        '<span class="cr-rowi__actions">' + actBtn("Approve", "approval-decide", ' data-id="' + esc(a.id) + '" data-decision="approve"', true) + actBtn("Deny", "approval-decide", ' data-id="' + esc(a.id) + '" data-decision="deny"') + '</span>'));
+    });
+    openOrders().filter(function (o) { return o.type !== "records" || o.status === "paid"; }).slice(0, 5).forEach(function (o) {
+      var btn = o.action ? actBtn("Open", o.action, ' data-id="' + esc(o.id) + '"') : routeBtn("Open", o.route);
+      items.push(rowi(ORDER_ICON[o.type] || "bag", "order", "New order · " + titleCase(o.type), o.title, [o.who, o.total, ago(o.when)].filter(Boolean).join(" · "), btn));
+    });
+    state.threads.filter(function (t) { return threadInQueue(t, "inbound"); }).slice(0, 5).forEach(function (t) {
+      items.push(rowi("chat", "msg", "Unanswered · " + ago(t.last_inbound_at || t.updated_at), threadLabel(t), (t.channel || "message") + (threadOwned(t) ? " · you have it" : " · assistant"), actBtn("Reply", "open-thread", ' data-id="' + esc(t.id) + '"')));
+    });
+    var mk = window.CR.marketplace;
+    if (mk && typeof mk.applications === "function") {
+      try {
+        (mk.applications() || []).slice(0, 5).forEach(function (a) {
+          items.push(rowi("store", "seller", "Seller application", a.name || "Seller", a.summary || "Marketplace", routeBtn("Review", "#sell:store:marketplace")));
+        });
+      } catch (e) { /* the module owns its own errors */ }
+    }
+    workRows("renewals").filter(function (r) { return workState(r) === "lapsed"; }).slice(0, 5).forEach(function (r) {
+      items.push(rowi("warn", "bad", "Renewal lapsed", r.title || "Renewal", [moneyOf(r.amount_cents, r.currency), r.renews_at ? "renewed by " + formatDate(r.renews_at) : ""].filter(Boolean).join(" · "), routeBtn("View", "#sell:payments:renewals")));
+    });
+    workRows("payments").filter(function (p) { return workState(p) === "failed"; }).slice(0, 5).forEach(function (p) {
+      items.push(rowi("warn", "bad", "Payment failed", p.title || "Payment", [moneyOf(p.amount_cents, p.currency), p.provider].filter(Boolean).join(" · "), routeBtn("View", "#sell:payments:payments")));
+    });
+    attentionItems().filter(function (it) { return !/awaiting a reply/.test(it.title); }).forEach(function (it) {
+      items.push(rowi(it.kind === "bad" ? "warn" : "spark", it.kind === "bad" ? "bad" : "approve", it.kind === "bad" ? "Issue" : "Review", it.title, it.sub, actBtn("Open", it.action, it.id ? ' data-id="' + esc(it.id) + '"' : "")));
+    });
+    return items;
+  }
+  function workingNow() {
+    var items = [];
+    if (state.aiChatPending) items.push(rowi("spark", "approve", "AI · " + ((state.aiChatTask && state.aiChatTask.status) || "queued"), "McCluster is answering", "Ask McCluster", pill("ai", "Running")));
+    state.jobs.filter(function (j) { return ["queued", "running"].indexOf(j.status) >= 0; }).slice(0, 6).forEach(function (j) {
+      items.push(rowi("system", "msg", "Core · " + titleCase(j.status), titleCase(j.job_type), text(j.target_id, j.target_type), actBtn(titleCase(j.status), "inspect-job", ' data-id="' + esc(j.id) + '"')));
+    });
+    allMediaJobs().filter(function (j) { return ["queued", "running", "processing"].indexOf(j.status) >= 0; }).slice(0, 3).forEach(function (j) {
+      items.push(rowi("frame", "msg", "Media · " + titleCase(j.status), titleCase(j.kind || j.job_type || "generation"), ago(j.created_at), actBtn("Open", "inspect-media-job", ' data-id="' + esc(j.id) + '"')));
+    });
+    state.publishJobs.filter(function (p) { return ["queued", "draft", "publishing"].indexOf(p.state) >= 0; }).slice(0, 3).forEach(function (p) {
+      items.push(rowi("frame", "msg", "Publish · " + titleCase(p.state), titleCase(p.platform || "post"), p.scheduled_at ? "Scheduled " + formatDate(p.scheduled_at) : "", routeBtn("Open", "#create:publish:schedule")));
+    });
+    return items;
+  }
+  function lastAiReply() {
+    var id = state.selectedAiThreadId; if (!id) return null;
+    var list = aiMessagesFor(id).filter(function (m) { return m.role === "assistant" && m.content; });
+    return list.length ? list[list.length - 1] : null;
+  }
+  function renderToday() {
+    ensureWork(["orders", "bookings", "renewals", "payments"]); loadMusicOrders();
+    var now = new Date();
+    var eyebrow = now.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
+    var needs = needsYou(), working = workingNow();
+    var waiting = state.threads.filter(function (t) { return threadInQueue(t, "inbound"); });
+    var oldest = waiting.map(function (t) { return t.last_inbound_at || t.updated_at; }).sort()[0];
+    var reply = lastAiReply();
+    var ready = coreToolAvailable("ai.chat");
+    var ask = '<section class="cr-ask cr-full" aria-label="Ask McCluster">' +
+      '<div class="cr-ask__row"><input id="crHeroInput" autocomplete="off" placeholder="Ask McCluster, or tell it what to do…" aria-label="Ask McCluster, search, or give it an objective">' +
+      '<button class="cr-btn cr-btn--primary" type="button" data-action="hero-command">' + navIcon("spark", ' width="16" height="16"') + 'Go</button></div>' +
+      '<div class="cr-ask__chips">' +
+        (waiting.length ? '<button class="cr-chip" type="button" data-action="goto-waiting">Open the ' + waiting.length + ' unanswered</button>' : "") +
+        '<button class="cr-chip" type="button" data-nav-route="#sell:orders:all">Orders to fill</button>' +
+        '<button class="cr-chip" type="button" data-action="goto-failed">Show failed work</button>' +
+        '<button class="cr-chip" type="button" data-nav-route="#home:ask">Open the chat</button>' +
+        '<button class="cr-chip" type="button" data-nav-route="#create:publish:schedule">What is scheduled?</button></div>' +
+      '<div class="cr-answer"><span class="cr-dot-ai">' + navIcon("spark", ' width="13" height="13"') + '</span><span>' +
+        (reply ? '<b>McCluster:</b> ' + esc(String(reply.content).slice(0, 280)) + (String(reply.content).length > 280 ? "…" : "")
+          : '<b>McCluster</b> ' + esc(ready ? "is ready. Ask a question here, or open the chat for the full thread." : "is offline on this deployment; commands still route and queue.")) +
+      '</span></div></section>';
+    var kpis = '<div class="cr-kpis2 cr-full">' +
+      kpi2("Needs you", String(needs.length), needs.length ? "items below" : "all clear") +
+      kpi2("Open orders", String(openOrders().length), "every source") +
+      kpi2("Unanswered", String(waiting.length), oldest ? "oldest " + ago(oldest) : "none waiting") +
+      kpi2("Running now", String(working.length), "jobs and publishing") + '</div>';
+    var pulse = [
+      rowi("system", "order", "API Worker", "api.mccluster.org", state.health && state.health.ok ? "Edge responding" : "Edge health unavailable", pill(state.health && state.health.ok ? "ok" : "bad", state.health && state.health.ok ? "Healthy" : "Check")),
+      rowi("system", "order", "Database", "Canonical Supabase", state.status && state.status.database && state.status.database.reachable ? "Reachable" : "Not confirmed", pill(state.status && state.status.database && state.status.database.reachable ? "ok" : "warn", state.status && state.status.database && state.status.database.reachable ? "Healthy" : "Check")),
+      rowi("system", "order", "Core", "OVH McCluster Core", "ai_context-v4", pill(state.ai && state.ai.ok ? "ok" : "warn", state.ai && state.ai.ok ? "Healthy" : "Inspect"))
+    ].join("");
+    return '<header class="cr-head"><div class="cr-head__titles"><p class="cr-eyebrow">' + esc(eyebrow) + '</p><h1 class="cr-h1">Today</h1></div><div class="cr-head__tools"><button class="cr-btn cr-btn--ghost cr-btn--sm" type="button" data-action="refresh">Refresh</button></div></header>' +
+      sectionTabsOnly() +
+      '<div class="cr-today">' + ask + kpis +
+        '<section class="cr-panel2"><header class="cr-panel2__head"><h2>Needs you</h2><span class="cr-panel2__meta">' + (needs.length ? needs.length + " item" + (needs.length === 1 ? "" : "s") : "clear") + '</span></header>' +
+          (needs.length ? '<ul class="cr-rows">' + needs.join("") + '</ul>' : '<div class="cr-panel2__body">' + pill("ok", "All clear") + '<p class="cr-muted">Nothing instrumented needs you right now.</p></div>') + '</section>' +
+        '<div class="cr-col">' +
+          '<section class="cr-panel2"><header class="cr-panel2__head"><h2>Working now</h2><span class="cr-panel2__meta">' + working.length + ' active</span></header>' +
+            (working.length ? '<ul class="cr-rows">' + working.join("") + '</ul>' : '<div class="cr-panel2__body cr-muted">No queued or running work.</div>') + '</section>' +
+          '<section class="cr-panel2"><header class="cr-panel2__head"><h2>System pulse</h2><span class="cr-panel2__meta">' + (state.health && state.health.ok ? "operational" : "check") + '</span></header><ul class="cr-rows">' + pulse + '</ul></section>' +
+        '</div>' +
+        '<div class="cr-grid cr-full">' +
+          panel("Recent activity", "last change per surface", '<div class="cr-list">' + recentActivity().map(function (a) {
+            return row(a.title, a.sub, ago(a.when), a.kind, a.action, a.id ? { id: a.id, badge: a.badge } : { badge: a.badge });
+          }).join("") + '</div>', "cr-span-6") +
+          panel("Public record", "canonical search authority", renderPublicRecord(), "cr-span-12") +
+        '</div>' +
+      '</div>';
+  }
+  function sectionTabsOnly() {
+    var entry = state.leaf; if (!entry) return "";
+    var s = entry.section;
+    return '<nav class="cr-tabs" aria-label="' + esc(s.label) + ' views">' + s.items.map(function (x) {
+      var on = x.id === entry.item.id;
+      return '<a class="cr-tab' + (on ? " is-on" : "") + '" href="' + esc(x.route) + '" data-nav-route="' + esc(x.route) + '"' + (on ? ' aria-current="page"' : "") + '>' + esc(x.label) + '</a>';
+    }).join("") + '</nav>';
+  }
+
+  /* ---------------------------------------------------------------------
+     INSIGHTS · HALO — One Halo (docs/control-plane/HALO-ADMIN-GLOBE.md):
+     every Halo door opens the four screens on the globe, never another app.
+     --------------------------------------------------------------------- */
+  function renderHalo() {
+    var href = (window.CR.workspaceCore && window.CR.workspaceCore.HALO_PAGE) || bridge.halo.href;
+    return '<section class="cr-panel2 cr-halo"><header class="cr-panel2__head"><h2>Hitman’s Halo</h2><span class="cr-panel2__meta">owner only</span></header>' +
+      '<div class="cr-panel2__body"><p>The owner’s four screens on the globe: World, Missions, People and Intelligence. One Halo, on its own full-screen page; its feeds keep their own owner checks.</p>' +
+      '<p><a class="cr-btn cr-btn--primary" href="' + esc(href) + '">' + navIcon("globe", ' width="16" height="16"') + 'Open the Halo globe</a></p>' +
+      '<p class="cr-muted">The analytics globe stays inside Insights → Overview, where it keeps its camera and selection between chapters.</p></div></section>';
+  }
+
+  /* ---------------------------------------------------------------------
+     MOUNT POINTS — a NAV view whose module is not loaded yet. A later PR
+     registers window.CR.<module> = { render, bind?, init? } and nothing in
+     the shell changes.
+     --------------------------------------------------------------------- */
+  function renderSlot(entry) {
+    var mod = entry.leaf.module, M = mod && window.CR[mod];
+    if (M && typeof M.render === "function") {
+      try { return M.render(entry.leaf.id); } catch (e) { return empty(entry.leaf.label + " failed to start", "The module threw while rendering. Refresh Control Room."); }
+    }
+    return '<div class="cr-slot" data-cr-slot="' + esc(mod || entry.leaf.id) + '"><strong>' + esc(entry.leaf.label) + ' is not available yet</strong>' +
+      '<p class="cr-muted">This view has its place in Control. It appears here as soon as its module (window.CR.' + esc(mod || entry.leaf.id) + ') is loaded; nothing is shown until it is real.</p></div>';
+  }
+
+  /* ---------------------------------------------------------------------
+     LEAF BODIES — the existing renderers, without their old page headers.
+     --------------------------------------------------------------------- */
+  function workChrome() {
+    return '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter this view"><button class="cr-btn cr-btn--primary" type="button" data-action="new-work">+ New</button></div>' + (window.CR.work ? window.CR.work.renderForm() : "");
+  }
+  function leafBody(entry) {
+    var r = entry.leaf.renderer || "";
+    if (r === "home.ask") return renderAi();
+    if (r === "sell.orders") return renderSellOrders();
+    if (r === "insights.halo") return renderHalo();
+    if (r === "slot") return renderSlot(entry);
+    if (r === "apps") return renderApps();
+    if (state.surface === "work") return (["inbox", "desk-bot"].indexOf(state.workView) >= 0 ? "" : workChrome()) + renderWorkView(state.workView);
+    if (state.surface === "create") return renderCreate();
+    if (state.surface === "system") return renderSystem();
+    return empty("Nothing here", "This route has no view.");
+  }
+  function renderLeaf() {
+    var entry = state.leaf || NAVI.resolve(state.route).entry;
+    if (state.surface === "home") return renderToday();
+    return sectionHead(entry) + '<div class="cr-leaf" data-cr-leaf="' + esc(entry.leaf.route) + '">' + leafBody(entry) + '</div>';
+  }
+
+  function renderLoading() {
+    var entry = state.leaf || NAVI.resolve(state.route).entry;
+    return sectionHead(entry) + '<div class="cr-canvas">' + empty("Loading", "Reading existing APIs and operator-visible records.") + '</div>';
+  }
+  /* The analytics deck's own chapter tabs are the Insights items. Keep the
+     address bar and the sidebar on the chapter the deck is showing. */
+  function syncInsightsRoute() {
+    var S = window.CR.analytics && window.CR.analytics.state;
+    if (!S || state.surface !== "analytics") return;
+    var leaf = NAVI.leaves().filter(function (l) { return l.leaf.renderer === "analytics." + S.section; })[0];
+    if (!leaf || leaf.leaf.route === state.route) return;
+    applyLeaf(leaf); state.analyticsApplied = leaf.leaf.route;
+    if (history.replaceState) history.replaceState(null, "", leaf.leaf.route);
+    renderNav();
+  }
   function render() {
     renderNav(); renderTopStatus();
     var root = $("crSurface"); if (!root) return;
-    if (state.loading && !state.status && !state.health) root.innerHTML = renderLoading();
-    else if (state.surface === "home") root.innerHTML = renderHome();
-    else if (state.surface === "ai") root.innerHTML = renderAi();
-    else if (state.surface === "work") root.innerHTML = renderWork();
-    else if (state.surface === "create") root.innerHTML = renderCreate();
+    var section = state.leaf ? state.leaf.section.id : "home";
+    if (state.loading && !state.status && !state.health && state.surface !== "analytics") root.innerHTML = renderLoading();
     /* Analytics keeps its mount between Control Room repaints: it owns its own
        paint, and its globe frame (the 60/40 layout) would reload the Earth on
        every unrelated state change if the mount were rebuilt. */
-    else if (state.surface === "analytics") { if (!(root.getAttribute("data-cr-surface") === "analytics" && $("crAnalyticsMount"))) root.innerHTML = renderAnalytics(); }
-    else if (state.surface === "system") root.innerHTML = renderSystem();
-    else root.innerHTML = renderApps();
-    root.setAttribute("data-cr-surface", state.surface);
+    else if (state.surface === "analytics") {
+      if (!(root.getAttribute("data-cr-mount") === "analytics" && $("crAnalyticsMount"))) root.innerHTML = renderAnalytics();
+    }
+    else root.innerHTML = renderLeaf();
+    root.setAttribute("data-cr-mount", state.surface === "analytics" ? "analytics" : "leaf");
+    root.setAttribute("data-cr-surface", section);
+    root.setAttribute("data-cr-route", state.route);
     /* the page knows its surface: Analytics runs full-bleed on a phone (css/control-analytics.css) */
     document.body.setAttribute("data-cr-surface", state.surface);
+    document.body.setAttribute("data-cr-section", section);
+    bindNavLinks(root);
     bindSurfaceControls();
     if (state.surface === "analytics" && window.CR.analytics) {
       var analyticsHost = $("crAnalyticsMount");
       if (analyticsHost) {
+        if (state.analyticsApplied !== state.route && state.analyticsSection) {
+          window.CR.analytics.state.section = state.analyticsSection;
+          state.analyticsApplied = state.route;
+        }
+        if (analyticsHost.getAttribute("data-cr-sync") !== "1") {
+          analyticsHost.setAttribute("data-cr-sync", "1");
+          ["click", "keyup", "touchend"].forEach(function (type) {
+            analyticsHost.addEventListener(type, function () { setTimeout(syncInsightsRoute, 30); }, { passive: true });
+          });
+        }
         try {
           window.CR.analytics.mount(analyticsHost);
         } catch (analyticsErr) {
@@ -2835,42 +3192,37 @@
     var project = state.campaigns.find(function (c) { return String(c.name || "").toLowerCase().indexOf(lower) >= 0; });
     if (project) { closePalette(); state.selectedProjectId = project.id; setSurface("create", "projects"); state.selectedProjectId = project.id; render(); return; }
 
+    /* A question goes to the resident model's durable chat (the old AI
+       surface, now Home → Ask McCluster); anything else is an objective. */
+    if (/\?\s*$|^(what|why|how|when|who|which|where|is|are|can|should|do|does|did)\b/i.test(q) && coreToolAvailable("ai.chat")) {
+      closePalette(); go("#home:ask"); sendAiMessage(q, { inputMode: "text", speakReply: false }); return;
+    }
     closePalette(); submitCoreTask(q);
   }
 
-  function paletteCommands() {
-    return [
-      ["Home", "Attention, signals, current work", "home"],
-      ["McCluster AI", "Persistent chat with your self-hosted model", "ai"],
-      ["Work · Inbox", "Unified incoming conversations", "work-inbox"],
-      ["Work · Desk bot", "Knowledge base, spend, refusals, channels and tools", "work-desk-bot"],
-      ["Work · Pipeline", "Leads and opportunities", "work-pipeline"],
-      ["Work · People", "Canonical people", "work-people"],
-      ["Work · Clients", "Client work and site requests", "work-clients"],
-      ["Work · Outreach", "Templates and outbound follow-up", "work-outreach"],
-      ["Work · Operations", "Orders, merch, walls and rights", "work-operations"],
-      ["Create · Projects", "Creative objectives and media generation", "create-projects"],
-      ["Create · Library", "Canonical assets", "create-library"],
-      ["Create · Schedule", "Distribution and publishing", "create-schedule"],
-      ["Create · Channels", "Social destinations and composer", "create-channels"],
-      ["Create · Music", "Review, catalogue, rights and distribution", "create-music"],
-      ["Create · Funding", "Grants, award searches and private partner mission proposals", "create-funding"],
-      ["Analytics", "Traffic, audience, content, identity and forensics", "analytics"],
-      ["System · Command", "Speak to the signed Core capability bus", "system-command"],
-      ["System · Overview", "Topology and service health", "system-overview"],
-      ["System · Workload", "Agents, jobs, queues", "system-workload"],
-      ["System · Observability", "Events, traces, incidents", "system-observability"],
-      ["System · Resources", "Providers, usage, API access", "system-resources"],
-      ["Apps", "Specialized products", "apps"],
-      ["Show failed work", "Workload, filtered to failures", "goto-failed"],
-      ["Open waiting conversations", "Threads whose last message came in", "goto-waiting"],
-      ["Run system health", "Ask Core for a fresh host health result", "refresh-health"]
-    ];
+  /* ⌘K: every NAV leaf (searchable by its old names through `was`), then
+     the three object shortcuts. Typing anything else hands it to McCluster. */
+  function paletteCommands(q) {
+    var nav = NAVI.search(q).map(function (e) { return { label: e.label, blurb: e.blurb, route: e.route, group: e.group }; });
+    var verbs = [
+      { label: "Show failed work", blurb: "Workload, filtered to failures", action: "goto-failed", group: "Do" },
+      { label: "Open waiting conversations", blurb: "Threads whose last message came in", action: "goto-waiting", group: "Do" },
+      { label: "Run system health", blurb: "Ask Core for a fresh host health result", action: "refresh-health", group: "Do" }
+    ].filter(function (x) { var t = String(q || "").trim().toLowerCase(); return !t || (x.label + " " + x.blurb).toLowerCase().indexOf(t) >= 0; });
+    return nav.concat(verbs);
   }
   function renderPalette(filter) {
-    var q = String(filter || "").trim().toLowerCase(); var cmds = paletteCommands().filter(function (x) { return !q || (x[0] + " " + x[1]).toLowerCase().indexOf(q) >= 0; });
-    $("crPaletteResults").innerHTML = cmds.length ? cmds.map(function (x, i) { return '<button class="cr-palette__item' + (i === 0 ? " is-active" : "") + '" type="button" data-action="' + x[2] + '"><span>' + esc(x[0]) + '</span><small>' + esc(x[1]) + '</small></button>'; }).join("") : '<button class="cr-palette__item" type="button" data-command-query="' + esc(filter) + '"><span>Give Core this objective</span><small>' + esc(filter) + '</small></button>';
+    var q = String(filter || "").trim();
+    var cmds = paletteCommands(q);
+    var html = "", last = "";
+    if (q) html += '<button class="cr-palette__item cr-palette__item--ask" type="button" data-command-query="' + esc(q) + '"><span>Ask McCluster: “' + esc(q) + '”</span><small>Search, open a person or project, or hand it over as an objective</small></button>';
+    cmds.forEach(function (x, i) {
+      if (!q && x.group !== last) { html += '<div class="cr-palette__group" role="presentation">' + esc(x.group) + '</div>'; last = x.group; }
+      html += '<button class="cr-palette__item' + (i === 0 && !q ? " is-active" : "") + '" type="button"' + (x.route ? ' data-palette-route="' + esc(x.route) + '"' : ' data-action="' + esc(x.action) + '"') + '><span>' + esc(x.label) + '</span><small>' + esc(x.blurb) + '</small></button>';
+    });
+    $("crPaletteResults").innerHTML = html || '<p class="cr-muted">Nothing matches.</p>';
     bindActions($("crPaletteResults"));
+    $("crPaletteResults").querySelectorAll("[data-palette-route]").forEach(function (b) { b.addEventListener("click", function () { closePalette(); go(b.getAttribute("data-palette-route")); }); });
     $("crPaletteResults").querySelectorAll("[data-command-query]").forEach(function (b) { b.addEventListener("click", function () { handleCommand(b.getAttribute("data-command-query")); }); });
   }
   function openPalette() { var p = $("crPalette"); p.classList.add("is-open"); p.setAttribute("aria-hidden", "false"); var input = $("crPaletteInput"); input.value = ""; renderPalette(""); setTimeout(function () { input.focus(); }, 0); }
@@ -2882,6 +3234,7 @@
     /* Generation owns its own actions; everything else falls through. */
     if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
+    else if (action === "open-thread") { state.threadFilter = "all"; state.selectedThreadId = el && el.getAttribute("data-id"); go("#people:inbox:conversations"); }
     else if (action === "ai") setSurface("ai");
     else if (action === "ai-new-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); createAiThread(); }
     else if (action === "ai-select-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; state.aiVoiceError = null; render(); }
@@ -3394,8 +3747,9 @@
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
     if (window.CR.buildCode) window.CR.buildCode.bind($("crSurface"));
     if (window.CR.frontPage) window.CR.frontPage.bind($("crSurface"));
-    var select = $("crViewSelect");
-    if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
+    /* a NAV mount point whose module has registered binds its own view */
+    var slotMod = state.leaf && state.leaf.leaf.renderer === "slot" && window.CR[state.leaf.leaf.module];
+    if (slotMod && typeof slotMod.bind === "function") slotMod.bind($("crSurface"));
     var search = $("crWorkSearch");
     if (search) {
       search.value = state.search || "";
@@ -3432,6 +3786,12 @@
 
     /* These chips were rendered before but never bound, so the workload
        filters looked live and did nothing. They filter state now. */
+    document.querySelectorAll("[data-order-type]").forEach(function (b) {
+      b.addEventListener("click", function () { state.orderType = b.getAttribute("data-order-type"); render(); });
+    });
+    document.querySelectorAll("[data-order-phase]").forEach(function (b) {
+      b.addEventListener("click", function () { state.orderPhase = b.getAttribute("data-order-phase"); render(); });
+    });
     document.querySelectorAll("[data-thread-filter]").forEach(function (b) {
       b.addEventListener("click", function () { state.threadFilter = b.getAttribute("data-thread-filter"); render(); });
     });
@@ -3622,6 +3982,8 @@
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
       state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null; renderWorkspaceSwitcher(); loadRecentErrors();
+      /* Refresh re-reads the per-view sources too, not just the shell's. */
+      if (force && state.musicOrders) loadMusicOrders(true);
       state.workspace = (a.workspace && a.workspace.membership) || null;
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
@@ -3658,7 +4020,8 @@
     $("cpPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("cpIn").click(); });
   }
   function bindShell() {
-    document.querySelectorAll("[data-surface]").forEach(function (el) { el.addEventListener("click", function () { setSurface(el.getAttribute("data-surface")); }); });
+    var sheet = $("crMoreSheet");
+    if (sheet) sheet.addEventListener("click", function (e) { if (e.target === sheet) closeMore(); });
     $("crCommandOpen").addEventListener("click", openPalette);
     $("crInspectorClose").addEventListener("click", closeInspector);
     $("crInspectorTabs").addEventListener("click", function (e) { var b = e.target.closest("[data-inspector-tab]"); if (!b || !state.inspector) return; state.inspector.tab = b.getAttribute("data-inspector-tab"); renderInspector(); });
@@ -3666,13 +4029,19 @@
     $("crPaletteInput").addEventListener("input", function () { renderPalette($("crPaletteInput").value); });
     var orgSelect = $("crOrgSelect");
     if (orgSelect) orgSelect.addEventListener("change", function () { switchWorkspace(orgSelect.value); });
-    $("crPaletteInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { var first = $("crPaletteResults").querySelector(".cr-palette__item"); if (first) first.click(); else handleCommand($("crPaletteInput").value); } });
+    $("crPaletteInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { var first = $("crPaletteResults").querySelector("[data-palette-route],[data-action]"); if (first) first.click(); else handleCommand($("crPaletteInput").value); } });
     $("crAccount").addEventListener("click", function () { $("crAccountMenu").classList.toggle("is-open"); });
     $("crRefresh").addEventListener("click", function () { $("crAccountMenu").classList.remove("is-open"); load(true); });
     $("crOut").addEventListener("click", function () { window.MCC_AUTH.signOut().then(function () { location.reload(); }); });
     document.addEventListener("click", function (e) { if (!$("crAccountMenu").contains(e.target) && !$("crAccount").contains(e.target)) $("crAccountMenu").classList.remove("is-open"); });
-    document.addEventListener("keydown", function (e) { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(); } if (e.key === "Escape") { if ($("crPalette").classList.contains("is-open")) closePalette(); else closeInspector(); } });
-    window.addEventListener("hashchange", function () { readHash(); state.selectedProjectId = null; closeInspector(); render(); });
+    document.addEventListener("keydown", function (e) { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(); } if (e.key === "Escape") { if ($("crPalette").classList.contains("is-open")) closePalette(); else if ($("crMoreSheet") && !$("crMoreSheet").hidden) { closeMore(); if ($("crMore")) $("crMore").focus(); } else closeInspector(); } });
+    window.addEventListener("hashchange", function () {
+      if (location.hash === state.route) return;
+      var before = state.surface;
+      readHash(); setHash(true);
+      if (before === "ai" && state.surface !== "ai") { stopAiVoiceListening(true); stopAiVoiceSpeech(); }
+      state.selectedProjectId = null; closeInspector(); closeMore(); render();
+    });
   }
   function tryResume() { token().then(function (t) { if (t && $("crApp").hidden) boot(); }); }
   /* The media module renders into the Create canvas and needs the shell's
