@@ -1,5 +1,5 @@
-/* THE SONG TEST cards (js/song-test.js). Self-contained so the same
-   cards sit in the album player and on end-racism.html, both dark rooms.
+/* THE SONG TEST cards (js/song-test.js). Self-contained so the cards
+   can sit in any dark room; today that is the album player.
    Phone first: one column, 16px+ controls, nothing wider than its box. */
 .stq { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; font-family: "Manrope", system-ui, -apple-system, sans-serif; color: #f4efe6; }
 .stq-out { margin: 0; color: #b3a89c; font-weight: 600; font-size: 0.95rem; line-height: 1.6; }

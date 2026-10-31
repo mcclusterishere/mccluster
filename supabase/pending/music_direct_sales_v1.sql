@@ -31,11 +31,31 @@
 -- Callers: supabase/functions/music-direct-checkout, music-direct-access, stripe-webhook.
 -- Test: scripts/test-music-direct-sales-db.sh (supabase/tests/music_direct_sales.behaviour.sql).
 -- Rollback: music_direct_sales_v1.rollback.sql.
--- Pre-check before apply (all must be 0; production 2026-10-30 after cleanup):
+-- Existing inactive legacy offers may remain without moving or deleting their bytes.
+-- The private-path constraint is NOT VALID only for existing rows; every insert
+-- and update must satisfy it, so a legacy offer cannot be reactivated in place.
+-- Preflight must reject any ACTIVE offer outside the new private-path contract.
+-- Validate the constraint after legacy rows have been repaired through the operator.
+-- Pre-check before apply (orders and entitlements must be 0):
 --   select count(*) from public.music_direct_offers;
 --   select count(*) from public.music_direct_orders;
 --   select count(*) from public.music_direct_entitlements;
 set local lock_timeout = '5s';
+
+-- Keep rollout fail-closed if sales changed after the read-only preflight.
+do $preflight$ begin
+  if exists(select 1 from public.music_direct_orders)
+     or exists(select 1 from public.music_direct_entitlements) then
+    raise exception 'music_direct_rollout_requires_purchase_review';
+  end if;
+  if exists(select 1 from public.music_direct_offers where active and not (
+    asset_bucket = 'mcc-gated-audio'
+    and asset_path ~ '^direct-sales/[A-Za-z0-9][A-Za-z0-9/._-]*\.(mp3|m4a|wav|flac)$'
+    and position('..' in asset_path)=0 and position('//' in asset_path)=0)) then
+    raise exception 'music_direct_rollout_active_legacy_offer';
+  end if;
+end $preflight$;
+
 
 -- ------------------------------------------------------------------ offers
 alter table public.music_direct_offers
@@ -64,7 +84,7 @@ do $c$ begin
   alter table public.music_direct_offers add constraint music_direct_offers_private_asset_check
     check (asset_bucket = 'mcc-gated-audio'
        and asset_path ~ '^direct-sales/[A-Za-z0-9][A-Za-z0-9/._-]*\.(mp3|m4a|wav|flac)$'
-       and position('..' in asset_path) = 0 and position('//' in asset_path) = 0);
+       and position('..' in asset_path) = 0 and position('//' in asset_path) = 0) not valid;
 exception when duplicate_object then null; end $c$;
 do $c$ begin
   alter table public.music_direct_offers add constraint music_direct_offers_download_name_check

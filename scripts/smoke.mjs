@@ -1053,10 +1053,10 @@ try {
   /* Rooms removed from primary navigation still need a real door in the
      full-house map. If one of these fires, it was orphaned rather than put
      away. The Closet's door went when its line was put away
-     (js/masthead.js); if it comes back, name it here again. */
+     (js/masthead.js); if it comes back, name it here again. The Equity
+     Uprise campaign's door went with the campaign (owner, 2026-10-30). */
   for (const [room, href] of [["the studio", "sites.html"], ["the privacy disclosure", "privacy.html"],
-                              ["the engineering evidence", "engineering/"],
-                              ["the Equity Uprise campaign", "action/?c=equity-uprise"]]) {
+                              ["the engineering evidence", "engineering/"]]) {
     check(`the map still has a door to ${room}`,
       await page.locator(`.mhd__grp a[href$="${href}"]`).count() >= 1);
   }

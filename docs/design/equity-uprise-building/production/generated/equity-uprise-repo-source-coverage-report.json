@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 532,
+  "candidate_count": 529,
   "capability_source_count": 102,
-  "support_only_count": 430,
-  "checks_total": 2028,
-  "checks_passed": 2028,
+  "support_only_count": 427,
+  "checks_total": 2016,
+  "checks_passed": 2016,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -68,7 +68,6 @@
     "action/index.html",
     "album.html",
     "analytics.html",
-    "anti-social-mission.html",
     "assets/img/equity-uprise-logo.webp",
     "assets/img/equity-uprise-mark-white.png",
     "assets/img/equity-uprise-mark.png",
@@ -208,7 +207,6 @@
     "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
-    "end-racism.html",
     "engineering/mccluster-platform.html",
     "equity-uprise.html",
     "fbi.html",
@@ -511,7 +509,6 @@
     "vault.html",
     "vendor/supabase-js-2.57.0.mjs",
     "walls/eu-rally.html",
-    "wigger-recovery.html",
     "workers/mccluster/src/ai/envelope.js",
     "workers/mccluster/src/analytics/measurement-dictionary.js",
     "workers/mccluster/src/audio-sfu-rooms.js",
@@ -546,7 +543,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "532 entries"
+      "detail": "529 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3667,26 +3664,6 @@
       "name": "ecosystem.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "end-racism.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "end-racism.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "end-racism.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "end-racism.html support rationale present",
-      "passed": true,
-      "detail": ""
     },
     {
       "name": "engineering/mccluster-platform.html capability ids known",
@@ -9664,26 +9641,6 @@
       "detail": ""
     },
     {
-      "name": "anti-social-mission.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "anti-social-mission.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "anti-social-mission.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "anti-social-mission.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "control.html capability ids known",
       "passed": true,
       "detail": ""
@@ -10540,26 +10497,6 @@
     },
     {
       "name": "tools/build-company-site.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "wigger-recovery.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "wigger-recovery.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "wigger-recovery.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "wigger-recovery.html support rationale present",
       "passed": true,
       "detail": ""
     },

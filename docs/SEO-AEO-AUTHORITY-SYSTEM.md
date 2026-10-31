@@ -201,7 +201,7 @@ Indexable (in `sitemap.xml`; each self-canonical and never `noindex`):
 - **Services:** `/services.html`, `/hire.html`, `/sites.html`, `/sites-details.html`, `/case-designer-kicks.html`
 - **Photography and film:** `/gallery.html`, `/walls/*.html`, `/shots.html`, `/films.html`, `/portfolio.html`
 - **Music:** `/`, `/album.html`, `/listen.html`, `/catalogue.html`, `/license.html`
-- **Civic and policy:** `/docket-516.html` (Equity Uprise front page), `/policy.html`, `/policy-memo-dna.html`, `/action/`, `/heal-the-3rd-world.html`, `/end-racism.html`
+- **Civic and policy:** `/docket-516.html` (Equity Uprise front page), `/policy.html`, `/policy-memo-dna.html`, `/action/`, `/heal-the-3rd-world.html`
 - **Other ventures:** `/whip.html`, `/prayer-closet.html`, `/closet/sent.html`, `/inner-room.html`, `/privacy.html`
 
 Out on purpose: desks and accounts (noindex or disallowed), redirect stubs

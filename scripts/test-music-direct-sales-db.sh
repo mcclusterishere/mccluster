@@ -28,7 +28,27 @@ apply supabase/pending/music_direct_sales_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_direct_sales.behaviour.sql >/dev/null
 echo "behaviour: ok"
 apply supabase/pending/music_direct_sales_v1.rollback.sql
+# Preserve a pre-existing inactive offer while enforcing the path on every new write.
+psql -q -v ON_ERROR_STOP=1 -d "$DB" <<'SQL' >/dev/null
+insert into public.music_direct_offers(offer_key,catalog_key,title,price_cents,asset_bucket,asset_path,download_name,active)
+values ('legacy-inactive','here:here','Legacy',100,'mcc-gated-audio','legacy/song.mp3','song.mp3',false);
+SQL
 apply supabase/pending/music_direct_sales_v1.sql
+psql -q -v ON_ERROR_STOP=1 -d "$DB" <<'SQL' >/dev/null
+do $$
+begin
+  if not exists(select 1 from public.music_direct_offers where offer_key='legacy-inactive' and not active) then
+    raise exception 'inactive legacy offer was not preserved';
+  end if;
+  begin
+    update public.music_direct_offers set active=true where offer_key='legacy-inactive';
+    raise exception 'legacy path was allowed to reactivate';
+  exception when check_violation then
+    if sqlerrm not like '%private_asset%' then raise; end if;
+  end;
+end $$;
+SQL
+echo "inactive legacy offer preserved; unsafe reactivation refused"
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_direct_sales.behaviour.sql >/dev/null
 echo "behaviour after rollback + re-apply: ok"
 echo "music direct sales: ok"
