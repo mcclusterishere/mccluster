@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 528,
+  "candidate_count": 529,
   "capability_source_count": 102,
-  "support_only_count": 426,
-  "checks_total": 2012,
-  "checks_passed": 2012,
+  "support_only_count": 427,
+  "checks_total": 2016,
+  "checks_passed": 2016,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -165,6 +165,7 @@
     "docs/control-plane/admin-evidence-20261020/funding-source-refresh.json",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
     "docs/control-plane/canonical-architecture.json",
+    "docs/control-plane/deploy-gate.json",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
@@ -542,7 +543,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "528 entries"
+      "detail": "529 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -10596,6 +10597,26 @@
     },
     {
       "name": "scripts/e2e/fixtures/axe-baseline.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deploy-gate.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/deploy-gate.json classified",
+      "passed": true,
+      "detail": "classification='operational_support'"
+    },
+    {
+      "name": "docs/control-plane/deploy-gate.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/deploy-gate.json support rationale present",
       "passed": true,
       "detail": ""
     }

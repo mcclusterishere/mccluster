@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 528,
+  "candidate_count": 529,
   "capability_source_count": 102,
-  "support_only_count": 426,
+  "support_only_count": 427,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1762,7 +1762,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3965,6 +3965,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Accessibility ratchet baseline (axe-core node counts per sitemap page, scripts/e2e/sitemap-a11y.e2e.mjs); it lists the heal-the-3rd-world page by path only. No spatial or program capability is added."
+    },
+    {
+      "path": "docs/control-plane/deploy-gate.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

@@ -8,7 +8,7 @@
    - deploy-path workflows take Node from the one pinned .node-version;
    - every action is pinned by commit SHA;
    - the CI gate's required checks exist and always run on a push to main;
-   - the gated paths are wired, and stay inert until the owner opts in. */
+   - production gates cannot be disabled by an unset repository variable. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -124,7 +124,7 @@ test('the deploy gate only names checks that always run on a push to main', () =
     assert.ok(file, `${name}: source workflow recorded`);
     const text = read(file);
     const on = text.slice(text.search(/^on:/m), text.search(/^(permissions|jobs|concurrency|env):/m));
-    assert.match(on, /\n  push:\n    branches: \[main\]/, `${file}: runs on push to main`);
+    assert.match(on, /\n  push:\n    branches: \[main(?:, [^\]]+)?\]/, `${file}: runs on push to main`);
     assert.ok(!/paths/.test(on), `${file}: no path filter, so ${name} runs on every main commit`);
     assert.ok(new RegExp(`^  ${name}:\\s*$`, 'm').test(text) || new RegExp(`^    name: ${name}\\s*$`, 'm').test(text), `${file}: job ${name}`);
   }
@@ -144,12 +144,13 @@ test('the Worker workflow deploys only a CI-green tip of main, and only when opt
   assert.ok(!/\$GITHUB_SHA|\$\{GITHUB_SHA\}/.test(deploy), 'the deploy job ships TARGET_SHA, never the workflow_run default-branch SHA');
 });
 
-test('the MCP transport and the opt-in Pages/Supabase gates are wired', () => {
+test('the MCP transport and mandatory Pages/Supabase gates are wired', () => {
   const mcp = read(`${WF}deploy-mccluster-mcp.yml`);
   assert.ok(mcp.indexOf('require-green-ci.mjs') < mcp.indexOf('wrangler versions upload'), 'MCP deploy waits for green CI');
   for (const f of [`${WF}deploy-pages.yml`, `${WF}supabase-functions-deploy.yml`]) {
     const text = read(f);
-    assert.match(text, /vars\.DEPLOY_REQUIRE_GREEN_CI == 'true'[\s\S]*?require-green-ci\.mjs/, `${f}: opt-in gate`);
+    assert.doesNotMatch(text, /vars\.DEPLOY_REQUIRE_GREEN_CI/, `${f}: cannot bypass the gate`);
+    assert.match(text, /require-green-ci\.mjs/, `${f}: mandatory gate`);
     assert.match(text, /checks: read/, `${f}: may read check runs`);
   }
 });
@@ -189,4 +190,11 @@ test('gate: the newest run of a check decides it', () => {
   assert.equal(evaluate(rerunPassed, req).state, 'success');
   const rerunFailed = [run('a', 'completed', 'success'), run('b', 'completed', 'success', 1, '2026-10-28T00:00:00Z'), run('b', 'completed', 'failure', 2, '2026-10-28T00:10:00Z')];
   assert.equal(evaluate(rerunFailed, req).state, 'failure');
+});
+
+ test('OVH promotion checks exact-target CI before updating the deployment ref', () => {
+  const text = read(`${WF}promote-ovh-production.yml`);
+  assert.match(text, /checks: read/);
+  assert.ok(text.indexOf('require-green-ci.mjs --sha "$TARGET_SHA"') < text.indexOf('- name: Promote deployment ref'));
+  assert.ok(text.includes('require-green-ci.mjs --sha "$TARGET_SHA"'));
 });
