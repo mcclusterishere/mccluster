@@ -57,12 +57,26 @@ export async function loadReflectionJobs(rest, orgId, sinceHours, nowMs = Date.n
 }
 
 export async function loadReflectionHealth(rest, orgId) {
-  const query = new URLSearchParams({
+  // Find the row using narrow columns before extracting JSON. Otherwise Postgres
+  // evaluates every historical output before the top-N sort (51.7s in production).
+  const identityQuery = new URLSearchParams({
     org_id: `eq.${orgId}`, job_type: 'eq.host_health', status: 'eq.done',
+    select: 'id', order: 'updated_at.desc,id.desc', limit: '1',
+  });
+  const { body: identities } = await rest(`ops_agent_jobs?${identityQuery}`);
+  if (!Array.isArray(identities)) throw new Error('Reflection health identity unavailable');
+  if (!identities.length) return null;
+  const id = identities[0]?.id;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '')) {
+    throw new Error('Reflection health identity invalid');
+  }
+  const query = new URLSearchParams({
+    id: `eq.${id}`, org_id: `eq.${orgId}`, job_type: 'eq.host_health', status: 'eq.done',
     select: 'checked_at:output->>checked_at,overall:output->>overall,deployed_sha:output->deployment->>deployed_sha,sha_match:output->deployment->>sha_match,parity:output->supabase->migration_attestation->>parity,failures:output->jobs->counts->>failed',
-    order: 'updated_at.desc,id.desc', limit: '1',
+    limit: '1',
   });
   const { body } = await rest(`ops_agent_jobs?${query}`);
   if (!Array.isArray(body)) throw new Error('Reflection health evidence unavailable');
+  // Deletion between reads means unavailable evidence, never another tenant's row.
   return body[0] || null;
 }
