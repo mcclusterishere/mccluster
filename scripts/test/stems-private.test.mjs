@@ -14,7 +14,8 @@ test('music-access signs stems and queues separation only for the house operator
   const block = src.slice(start, src.indexOf('\n    }\n', start));
   assert.match(block.slice(0, 200), /if \(!\(await houseOps\(who\.user\.id\)\)\) return json\(\{ error: "operator permission required" \}, 403\);/, 'operator check is the first thing the stems actions do');
   assert.match(block, /signDownload\("mcc-gated-audio", x\.path, undefined, 900\)/, 'play URLs are short-lived');
-  assert.match(block, /\^stems\\\/\[a-z0-9-\]\+\\\/\[a-z\]\+\\\.\(mp3\|flac\|wav\)\$/, 'only stems/<key>/<stem>.<ext> paths are ever signed');
+  assert.ok(block.includes('/^stems\\/[a-z0-9-]+\\/(r\\d{14}-[0-9a-f]{6}\\/)?[a-z]+\\.(mp3|flac|wav)$/'), 'only stems/<key>/[<run>/]<stem>.<ext> paths are ever signed');
+  assert.match(block, /\.eq\("status", "queued"\)/, 'a running separation never suppresses a re-run');
   for (const action of ['operator-lyrics-get', 'operator-lyrics-save', 'operator-lyrics-queue']) {
     const i = src.indexOf(`if (action === "${action}")`);
     assert.ok(i > 0, action);

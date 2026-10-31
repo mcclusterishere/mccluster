@@ -39,7 +39,9 @@ async function setup(viewport,{owner=true}={}){
       if(p==='/v1/workspaces/me')return json(route,{ok:true,profile:{id:OWNER},default_org_id:'o1',workspaces:[{org_id:'o1',slug:'mccluster',kind:'studio',role:'owner',enabled:true,name:'McCluster'}]});
       return json(route,{ok:true,threads:[],apps:[],events:[],jobs:[],tools:[],decisions:[],leads:[],total:0});
     }
-    if(u.hostname==='fixture-storage.invalid'){db.stemFetches++;const s=p.split('/').pop().replace('.wav','');return route.fulfill({status:200,contentType:'audio/wav',headers:{'access-control-allow-origin':'*'},body:WAVS[s]});}
+    if(u.hostname==='fixture-storage.invalid'){db.stemFetches++;const s=p.split('/').pop().replace('.wav','');
+      if(db.slowAudio&&p.includes('/test-drive/'))await new Promise(r=>setTimeout(r,1500));
+      return route.fulfill({status:200,contentType:'audio/wav',headers:{'access-control-allow-origin':'*'},body:WAVS[s]});}
     if(u.hostname.endsWith('supabase.co')){
       if(p==='/auth/v1/user')return json(route,{id:OWNER,email:'owner@fixture.invalid'});
       if(p==='/functions/v1/music-access'){
@@ -47,6 +49,9 @@ async function setup(viewport,{owner=true}={}){
         if(!owner)return json(route,{error:'operator permission required'},403);
         if(b.action==='operator-dashboard')return json(route,{ok:true,tracks:[],creators:[],offers:[]});
         if(b.action==='operator-stems-list'){
+          if(db.slowManifest&&b.track_key==='test-drive'){db.slowManifest=false;await new Promise(r=>setTimeout(r,1500));}
+          /* a four-stem set (htdemucs): a stale six-stem load would overrun it */
+          if(b.track_key==='towyard-killer')return json(route,{ok:true,track_key:'towyard-killer',model:'htdemucs',format:'mp3',seconds:6,expires_in:900,stems:['vocals','drums','bass','other','instrumental'].map(s=>({stem:s,bytes:2000000,seconds:6,peak_dbfs:-1.5,rms_dbfs:-18,url:`https://fixture-storage.invalid/stems/towyard-killer/${s}.wav`,download_url:`https://fixture-storage.invalid/stems/towyard-killer/${s}.wav?download=1`}))});
           if(b.track_key!=='test-drive')return json(route,{ok:true,track_key:b.track_key,stems:[]});
           return json(route,{ok:true,track_key:'test-drive',model:'htdemucs_6s',format:'mp3',seconds:6,expires_in:900,stems:STEMS.map(s=>({stem:s,bytes:3800000,seconds:6,peak_dbfs:-1.2,rms_dbfs:-17.5,url:`https://fixture-storage.invalid/stems/test-drive/${s}.wav`,download_url:`https://fixture-storage.invalid/stems/test-drive/${s}.wav?download=test-drive-${s}.mp3`}))});
         }
@@ -111,6 +116,22 @@ const gains=page=>page.evaluate(()=>{const g=window.CR.stemsPanel.state.gains;re
   await page.waitForFunction(()=>/Queued on McCluster Core/.test(document.querySelector('.crs-msg').textContent),null,{timeout:10000});
   const q=db.calls.find(c=>c.action==='operator-stems-queue');
   check('390','Separate stems queues Core with the shelf key and its audio',q&&q.track_key==='hundun-b-side'&&q.src==='assets/audio/hundun-b-side.mp3',q);
+  /* switching A→B mid-load (review finding, PR #685): A's late audio and A's late manifest are both dropped */
+  const B='Towyard Killer — Whip Equipped',A='Test Drive — Whip Equipped';
+  const stateNow=()=>page.evaluate(()=>{const S=window.CR.stemsPanel.state;return{key:S.key,loaded:S.loaded,buffers:Object.keys(S.buffers).sort(),rows:document.querySelectorAll('.crs-stem').length,transport:!!document.querySelector('[data-crs-play]'),model:(document.querySelector('.crs .cro-pill')||{}).textContent||''};});
+  db.slowAudio=true;
+  await page.selectOption('[data-crs-pick]',{label:A});
+  await page.waitForFunction(()=>document.querySelectorAll('.crs-stem').length===7,null,{timeout:10000});
+  await page.selectOption('[data-crs-pick]',{label:B});
+  await page.waitForTimeout(2600);
+  let st=await stateNow();
+  check('race','A\'s late audio never lands in B: B shows its four stems, its transport and only its buffers',st.key==='shelf:towyard-killer'&&st.rows===5&&st.loaded===5&&st.transport&&st.model==='htdemucs'&&JSON.stringify(st.buffers)===JSON.stringify(['bass','drums','instrumental','other','vocals']),st);
+  db.slowAudio=false;db.slowManifest=true;
+  await page.selectOption('[data-crs-pick]',{label:A});
+  await page.selectOption('[data-crs-pick]',{label:B});
+  await page.waitForTimeout(2600);
+  st=await stateNow();
+  check('race','A\'s late manifest never replaces B\'s',st.key==='shelf:towyard-killer'&&st.rows===5&&st.model==='htdemucs'&&st.transport,st);
   check('390','no page errors',errors.length===0,errors.slice(0,5));
   await ctx.close();
 }

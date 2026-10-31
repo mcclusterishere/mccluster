@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
         if (!set || set.status !== "ready") return json({ ok: true, track_key: trackKey, stems: [] });
         type Stem = { stem: string; file: string; path: string; bytes: number; seconds: number; peak_dbfs?: number; rms_dbfs?: number };
-        const list = (((set.manifest || {}) as { stems?: Stem[] }).stems || []).filter((x) => /^stems\/[a-z0-9-]+\/[a-z]+\.(mp3|flac|wav)$/.test(String(x.path || "")));
+        const list = (((set.manifest || {}) as { stems?: Stem[] }).stems || []).filter((x) => /^stems\/[a-z0-9-]+\/(r\d{14}-[0-9a-f]{6}\/)?[a-z]+\.(mp3|flac|wav)$/.test(String(x.path || "")));
         const stems = [];
         for (const x of list) {
           stems.push({
@@ -276,7 +276,7 @@ Deno.serve(async (req) => {
       const { data: org } = await admin.from("orgs").select("id").eq("slug", "mccluster").limit(1).maybeSingle();
       if (!org?.id) return json({ error: "house org missing" }, 500);
       const { count } = await admin.from("ops_agent_jobs").select("id", { count: "exact", head: true })
-        .eq("org_id", org.id).eq("job_type", "stems_separate").eq("target_id", trackKey).in("status", ["queued", "running"]);
+        .eq("org_id", org.id).eq("job_type", "stems_separate").eq("target_id", trackKey).eq("status", "queued");
       if (Number(count || 0) > 0) return json({ ok: true, queued: false, already: true });
       const input = creator ? { source: "creator", track_id: trackId, requested_by: who.user.id } : { source: "shelf", track_key: trackKey, src: src || undefined, requested_by: who.user.id };
       const { data: job, error } = await admin.from("ops_agent_jobs").insert({

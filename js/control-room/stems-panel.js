@@ -11,7 +11,7 @@
 (function(){
   "use strict";
   window.CR=window.CR||{};
-  var S={list:null,key:"",track:null,data:null,msg:"",node:null,ctx:null,buffers:{},gains:{},sources:[],mute:{},solo:{},playing:false,offset:0,startedAt:0,duration:0,loaded:0,raf:0};
+  var S={gen:0,list:null,key:"",track:null,data:null,msg:"",node:null,ctx:null,buffers:{},gains:{},sources:[],mute:{},solo:{},playing:false,offset:0,startedAt:0,duration:0,loaded:0,raf:0};
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function fmt(t){t=Math.max(0,t||0);var m=Math.floor(t/60),s=Math.floor(t-m*60);return m+":"+(s<10?"0":"")+s;}
   function mb(b){return(b/1e6).toFixed(1)+" MB";}
@@ -45,7 +45,7 @@
   function seek(t){var was=S.playing;if(was){stopSources();S.playing=false;}S.offset=Math.max(0,Math.min(S.duration,t));if(was)play();else paintTransport();}
   function tick(){cancelAnimationFrame(S.raf);if(!S.playing)return;if(now()>=S.duration){pause();S.offset=0;paintTransport();return;}paintTransport();S.raf=requestAnimationFrame(tick);}
   function teardown(){stopSources();S.playing=false;S.offset=0;S.buffers={};S.gains={};S.mute={};S.solo={};S.loaded=0;S.duration=0;}
-  function loadStems(){
+  function loadStems(gen){
     var AC=window.AudioContext||window.webkitAudioContext;if(!AC){S.msg="This browser cannot mix audio here; download the stems instead.";paint();return;}
     if(!S.ctx)S.ctx=new AC();
     var stems=S.data.stems.filter(function(x){return x.stem!=="instrumental";});
@@ -53,14 +53,17 @@
     Promise.all(stems.concat(inst).map(function(x){
       return fetch(x.url).then(function(r){if(!r.ok)throw new Error(x.stem+" "+r.status);return r.arrayBuffer();})
         .then(function(ab){return new Promise(function(res,rej){S.ctx.decodeAudioData(ab,res,rej);});})
-        .then(function(buf){S.buffers[x.stem]=buf;var g=S.ctx.createGain();g.connect(S.ctx.destination);S.gains[x.stem]=g;S.loaded++;S.duration=Math.max(S.duration,buf.duration);var p=S.node.querySelector(".crs-load");if(p)p.textContent="Loading stems… "+S.loaded+"/"+S.data.stems.length;});
-    })).then(function(){applyGains();S.msg="";paint();}).catch(function(err){S.msg="Could not load the stems: "+(err.message||err);paint();});
+        .then(function(buf){if(gen!==S.gen)return;S.buffers[x.stem]=buf;var g=S.ctx.createGain();g.connect(S.ctx.destination);S.gains[x.stem]=g;S.loaded++;S.duration=Math.max(S.duration,buf.duration);var p=S.node.querySelector(".crs-load");if(p)p.textContent="Loading stems… "+S.loaded+"/"+S.data.stems.length;});
+    })).then(function(){if(gen!==S.gen)return;applyGains();S.msg="";paint();}).catch(function(err){if(gen!==S.gen)return;S.msg="Could not load the stems: "+(err.message||err);paint();});
   }
   function open(key){
     var t=(S.list||[]).filter(function(x){return x.key===key;})[0];if(!t)return;
+    /* one generation per selection: the manifest answer and every decode callback
+       of an earlier selection are dropped, so A can never land in B's mixer */
+    var gen=S.gen=(S.gen||0)+1;
     teardown();S.key=key;S.track=t;S.data=null;S.msg="Loading…";paint();
-    musicCall("operator-stems-list",t.body).then(function(j){S.data=j;S.msg="";paint();if(j.stems&&j.stems.length)loadStems();})
-      .catch(function(err){S.msg=err.message||"Could not load";paint();});
+    musicCall("operator-stems-list",t.body).then(function(j){if(gen!==S.gen)return;S.data=j;S.msg="";paint();if(j.stems&&j.stems.length)loadStems(gen);})
+      .catch(function(err){if(gen!==S.gen)return;S.msg=err.message||"Could not load";paint();});
   }
 
   /* ---- view ---- */

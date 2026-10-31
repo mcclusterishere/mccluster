@@ -4,7 +4,7 @@
  * vocals / drums / bass / guitar / piano / other plus an instrumental mix and a
  * manifest. Stems are the owner's unreleased material, so they never enter the
  * public repository: they go to the private bucket `mcc-gated-audio` under
- * stems/<track_key>/<stem>.<ext>, and the manifest goes to the service-role-only
+ * stems/<track_key>/<run_id>/<stem>.<ext>, and the manifest goes to the service-role-only
  * table public.music_stem_sets (supabase/pending/20261031190000_music_stem_sets_v1.sql).
  * The owner hears and downloads them through music-access (operator-stems-*),
  * which signs short-lived URLs only for the house operator.
@@ -58,38 +58,74 @@ function env() {
   return { url, key };
 }
 
-/** Upload every stem of one separation and record its manifest. Idempotent (upsert). */
-export async function storeStems({ trackKey, dir, manifest, source = 'shelf', creatorTrackId = null }, deps = {}) {
+/** A run id that sorts by time and never collides: r20261031184512-3fa9c1 */
+export function newRunId(now = new Date(), rand = Math.random) {
+  return 'r' + now.toISOString().replace(/[-:TZ]/g, '').slice(0, 14) + '-' + Math.floor(rand() * 0xffffff).toString(16).padStart(6, '0');
+}
+
+/**
+ * Publish one separation without ever exposing a half-written set:
+ *   1. upload every file under a run-specific prefix stems/<key>/<run>/ (new objects, no overwrite);
+ *   2. only when all of them are in, flip the manifest row to the new run;
+ *   3. then remove the previous run's objects (best effort; a leftover is harmless and private).
+ * A failure in 1 or 2 leaves the live manifest and its objects exactly as they were,
+ * and the new run's partial uploads are cleaned up (best effort).
+ */
+export async function storeStems({ trackKey, dir, manifest, source = 'shelf', creatorTrackId = null, runId = newRunId() }, deps = {}) {
   if (!stemsKeyValid(trackKey)) throw new Error(`bad stems key ${trackKey}`);
+  if (!/^r\d{14}-[0-9a-f]{6}$/.test(runId)) throw new Error(`bad run id ${runId}`);
   const errs = validateStemsManifest(manifest);
   if (errs.length) throw new Error(`stems manifest refused: ${errs.slice(0, 4).join('; ')}`);
   const _fetch = deps.fetch || fetch;
   const _read = deps.readFile || readFile;
   const { url, key } = deps.env || env();
   const auth = { apikey: key, authorization: `Bearer ${key}` };
-  const stored = [];
-  for (const s of manifest.stems) {
-    const body = await _read(join(dir, s.file));
-    const path = stemPath(trackKey, s.file);
-    const res = await _fetch(`${url}/storage/v1/object/${STEMS_BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`, {
-      method: 'POST',
-      headers: { ...auth, 'content-type': MIME[manifest.format], 'x-upsert': 'true', 'cache-control': 'private, max-age=0' },
-      body,
-    });
-    if (!res.ok) throw new Error(`stem upload refused (${s.stem}): ${res.status}`);
-    stored.push({ ...s, path });
-  }
-  const row = {
-    track_key: trackKey, source, creator_track_id: creatorTrackId,
-    separator: manifest.separator, model: manifest.model, format: manifest.format,
-    seconds: manifest.seconds, manifest: { ...manifest, stems: stored, bucket: STEMS_BUCKET },
-    status: 'ready', updated_at: new Date().toISOString(),
+  const objectUrl = (path) => `${url}/storage/v1/object/${STEMS_BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const remove = async (paths) => {
+    if (!paths.length) return true;
+    try {
+      const res = await _fetch(`${url}/storage/v1/object/${STEMS_BUCKET}`, { method: 'DELETE', headers: { ...auth, 'content-type': 'application/json' }, body: JSON.stringify({ prefixes: paths }) });
+      return res.ok;
+    } catch { return false; }
   };
-  const res = await _fetch(`${url}/rest/v1/music_stem_sets?on_conflict=track_key`, {
-    method: 'POST',
-    headers: { ...auth, 'content-type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify(row),
-  });
-  if (!res.ok) throw new Error(`stems manifest write refused: ${res.status}`);
-  return { trackKey, stems: stored.length, bytes: stored.reduce((a, s) => a + s.bytes, 0) };
+
+  /* what is live now, so it can be retired after the flip */
+  let previous = [];
+  try {
+    const res = await _fetch(`${url}/rest/v1/music_stem_sets?track_key=eq.${encodeURIComponent(trackKey)}&select=manifest`, { headers: auth });
+    if (res.ok) previous = ((await res.json())[0]?.manifest?.stems || []).map((x) => x.path).filter((p) => typeof p === 'string' && p.startsWith(`stems/${trackKey}/`));
+  } catch { previous = []; }
+
+  const stored = [];
+  try {
+    for (const s of manifest.stems) {
+      const body = await _read(join(dir, s.file));
+      const path = stemPath(trackKey, `${runId}/${s.file}`);
+      const res = await _fetch(objectUrl(path), {
+        method: 'POST',
+        headers: { ...auth, 'content-type': MIME[manifest.format], 'x-upsert': 'false', 'cache-control': 'private, max-age=0' },
+        body,
+      });
+      if (!res.ok) throw new Error(`stem upload refused (${s.stem}): ${res.status}`);
+      stored.push({ ...s, path });
+    }
+    const row = {
+      track_key: trackKey, source, creator_track_id: creatorTrackId,
+      separator: manifest.separator, model: manifest.model, format: manifest.format,
+      seconds: manifest.seconds, manifest: { ...manifest, stems: stored, bucket: STEMS_BUCKET, run_id: runId },
+      status: 'ready', updated_at: new Date().toISOString(),
+    };
+    const res = await _fetch(`${url}/rest/v1/music_stem_sets?on_conflict=track_key`, {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(row),
+    });
+    if (!res.ok) throw new Error(`stems manifest write refused: ${res.status}`);
+  } catch (e) {
+    await remove(stored.map((x) => x.path)); /* the live set was never touched */
+    throw e;
+  }
+  const retired = previous.filter((p) => !stored.some((x) => x.path === p));
+  const cleaned = await remove(retired);
+  return { trackKey, runId, stems: stored.length, bytes: stored.reduce((a, s) => a + s.bytes, 0), retired: retired.length, retired_cleaned: cleaned };
 }

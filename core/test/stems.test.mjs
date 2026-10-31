@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateStemsManifest, storeStems, stemPath, stemsKeyValid } from '../src/lyrics/stems.mjs';
+import { validateStemsManifest, storeStems, stemPath, stemsKeyValid, newRunId } from '../src/lyrics/stems.mjs';
 import { stemsSeparate, shelfAudioUrl } from '../src/executors/stems-separate.mjs';
 import { lyricsAlign } from '../src/executors/lyrics-align.mjs';
 
@@ -26,26 +26,66 @@ test('stems keys are a shelf slug or ct-<creator track uuid>, and paths stay und
   assert.equal(stemPath('test-drive', 'drums.mp3'), 'stems/test-drive/drums.mp3');
 });
 
-test('storeStems uploads every stem privately (upsert) and records the manifest', async () => {
+function fakeStore({ previous = [], failUploadAt = -1, failManifest = false } = {}) {
   const calls = [];
-  const out = await storeStems({ trackKey: 'repo-guy-b-side', dir: '/tmp/x', manifest: MANIFEST }, {
-    env: { url: 'https://sb.test', key: 'sb_secret_x' },
-    readFile: async (p) => Buffer.from(p),
-    fetch: async (url, init) => { calls.push({ url, init }); return { ok: true, status: 200 }; },
-  });
+  let uploads = 0;
+  const fetch = async (url, init = {}) => {
+    const method = init.method || 'GET';
+    calls.push({ url, method, init });
+    if (method === 'GET') return { ok: true, status: 200, json: async () => (previous.length ? [{ manifest: { stems: previous.map((p) => ({ path: p })) } }] : []) };
+    if (method === 'POST' && url.includes('/storage/v1/object/')) { uploads += 1; return uploads - 1 === failUploadAt ? { ok: false, status: 503 } : { ok: true, status: 200 }; }
+    if (method === 'POST' && url.includes('/rest/v1/music_stem_sets')) return failManifest ? { ok: false, status: 500 } : { ok: true, status: 201 };
+    if (method === 'DELETE') return { ok: true, status: 200 };
+    return { ok: false, status: 404 };
+  };
+  return { calls, deps: { env: { url: 'https://sb.test', key: 'sb_secret_x' }, readFile: async (p) => Buffer.from(p), fetch } };
+}
+const RUN = 'r20261031184512-3fa9c1';
+const OLD = ['stems/repo-guy-b-side/r20261030120000-000001/drums.mp3', 'stems/repo-guy-b-side/r20261030120000-000001/vocals.mp3'];
+
+test('storeStems publishes a new run under its own prefix, flips the manifest, then retires the old run', async () => {
+  const { calls, deps } = fakeStore({ previous: OLD });
+  const out = await storeStems({ trackKey: 'repo-guy-b-side', dir: '/tmp/x', manifest: MANIFEST, runId: RUN }, deps);
   assert.equal(out.stems, 7);
-  const uploads = calls.filter((c) => c.url.includes('/storage/v1/object/'));
+  assert.equal(out.runId, RUN);
+  const uploads = calls.filter((c) => c.method === 'POST' && c.url.includes('/storage/v1/object/'));
   assert.equal(uploads.length, 7);
-  assert.equal(uploads[0].url, 'https://sb.test/storage/v1/object/mcc-gated-audio/stems/repo-guy-b-side/drums.mp3');
-  assert.equal(uploads[0].init.headers['x-upsert'], 'true');
+  assert.equal(uploads[0].url, `https://sb.test/storage/v1/object/mcc-gated-audio/stems/repo-guy-b-side/${RUN}/drums.mp3`);
+  assert.equal(uploads[0].init.headers['x-upsert'], 'false', 'a new run never overwrites a live object');
   assert.equal(uploads[0].init.headers['content-type'], 'audio/mpeg');
-  const row = JSON.parse(calls.find((c) => c.url.includes('/rest/v1/music_stem_sets')).init.body);
+  const order = calls.map((c) => (c.url.includes('music_stem_sets') && c.method === 'POST' ? 'flip' : c.method === 'DELETE' ? 'retire' : c.method === 'POST' ? 'upload' : 'read'));
+  assert.ok(order.lastIndexOf('upload') < order.indexOf('flip') && order.indexOf('flip') < order.indexOf('retire'), order.join(','));
+  const row = JSON.parse(calls.find((c) => c.url.includes('/rest/v1/music_stem_sets') && c.method === 'POST').init.body);
   assert.equal(row.track_key, 'repo-guy-b-side');
-  assert.equal(row.model, 'htdemucs_6s');
-  assert.equal(row.manifest.bucket, 'mcc-gated-audio');
-  assert.ok(row.manifest.stems.every((s) => s.path.startsWith('stems/repo-guy-b-side/')));
-  await assert.rejects(storeStems({ trackKey: '../x', dir: '/', manifest: MANIFEST }, { env: { url: 'u', key: 'k' } }), /bad stems key/);
-  await assert.rejects(storeStems({ trackKey: 'x', dir: '/', manifest: { ...MANIFEST, stems: [] } }, { env: { url: 'u', key: 'k' } }), /manifest refused/);
+  assert.equal(row.manifest.run_id, RUN);
+  assert.ok(row.manifest.stems.every((s) => s.path.startsWith(`stems/repo-guy-b-side/${RUN}/`)));
+  assert.deepEqual(JSON.parse(calls.find((c) => c.method === 'DELETE').init.body).prefixes, OLD);
+  await assert.rejects(storeStems({ trackKey: '../x', dir: '/', manifest: MANIFEST }, deps), /bad stems key/);
+  await assert.rejects(storeStems({ trackKey: 'x', dir: '/', manifest: { ...MANIFEST, stems: [] } }, deps), /manifest refused/);
+  await assert.rejects(storeStems({ trackKey: 'x', dir: '/', manifest: MANIFEST, runId: '../r' }, deps), /bad run id/);
+});
+
+test('a failure mid-upload leaves the live set exactly as it was', async () => {
+  const { calls, deps } = fakeStore({ previous: OLD, failUploadAt: 3 });
+  await assert.rejects(storeStems({ trackKey: 'repo-guy-b-side', dir: '/tmp/x', manifest: MANIFEST, runId: RUN }, deps), /stem upload refused/);
+  assert.ok(!calls.some((c) => c.url.includes('/rest/v1/music_stem_sets') && c.method === 'POST'), 'the manifest never flipped');
+  const dels = calls.filter((c) => c.method === 'DELETE').flatMap((c) => JSON.parse(c.init.body).prefixes);
+  assert.ok(dels.every((p) => p.includes(`/${RUN}/`)), 'only the failed run\'s partial uploads are removed');
+  assert.ok(!dels.some((p) => OLD.includes(p)), 'the live objects are untouched');
+  assert.equal(dels.length, 3);
+});
+
+test('a refused manifest write also leaves the live set, and cleans up the new run', async () => {
+  const { calls, deps } = fakeStore({ previous: OLD, failManifest: true });
+  await assert.rejects(storeStems({ trackKey: 'repo-guy-b-side', dir: '/tmp/x', manifest: MANIFEST, runId: RUN }, deps), /manifest write refused/);
+  const dels = calls.filter((c) => c.method === 'DELETE').flatMap((c) => JSON.parse(c.init.body).prefixes);
+  assert.equal(dels.length, 7);
+  assert.ok(dels.every((p) => p.includes(`/${RUN}/`)) && !dels.some((p) => OLD.includes(p)));
+});
+
+test('run ids sort by time and stay inside the path rule', () => {
+  const id = newRunId(new Date('2026-10-31T18:45:12.345Z'), () => 0.5);
+  assert.equal(id, 'r20261031184512-7fffff');
 });
 
 test('stems_separate: shelf audio only from the site\'s assets/audio, uploads by key', async () => {
