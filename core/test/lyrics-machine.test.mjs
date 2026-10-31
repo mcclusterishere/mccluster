@@ -307,3 +307,52 @@ test('a hook the sheet writes once but the song sings twice is placed twice, the
   assert.equal(hooks[1].repeat, true);
   assert.ok(!doc.timed.line.some((l) => l.added), 'nothing left over as raw heard text');
 });
+
+/* ---- review findings (PR #684) ---- */
+test('LRC that opens with [ti:]/[ar:] metadata is still recognised as timed, not as words', () => {
+  const lrc = '[ti:Stand On Business]\n[ar:McCluster]\n[length:02:00]\n\n[00:11.60]Stand on business with us\n[00:14.50]You should stand on business\n';
+  const got = sheetInput(lrc);
+  assert.equal(got.sheetText, '', 'timestamps never become words to align');
+  assert.equal(got.imported.lines.length, 2);
+  assert.equal(got.imported.title, 'Stand On Business');
+  assert.deepEqual(got.imported.lines.map((l) => l.begin), [11.6, 14.5]);
+  assert.equal(parseTimedLyrics(lrc).lines.length, 2, 'the importer agrees');
+  assert.equal(sheetInput('Hook:\nwe was at [the spot]\n').imported, null, 'brackets in plain lyrics stay plain');
+});
+
+test('lyrics_align writes only onto the inputs it listened to', async () => {
+  const id = '123e4567-e89b-42d3-a456-426614174000';
+  const REV = '0123456789abcdef0123456789abcdef';
+  const calls = [];
+  const base = { id, title: 'Up', master_bucket: 'creator-masters', master_path: 'u/1-song.mp3', lyrics: null, lyrics_sheet: SHEET, lyrics_input_rev: REV };
+  const deps = (patchRows) => ({
+    rest: async (path, init = {}) => { calls.push({ path, method: init.method || 'GET' }); return init.method ? { body: patchRows } : { body: [base] }; },
+    download: async () => {},
+    transcribe: async (a) => ({ doc: buildLyrics({ asr: ASR, sheet: a.sheetText, duration: 14, generatedAt: 'fixed' }) }),
+  });
+  const ok = await lyricsAlign({ input: { track_id: id } }, deps([{ id }]));
+  const patch = calls.find((c) => c.method === 'PATCH');
+  assert.match(patch.path, new RegExp(`lyrics_input_rev=eq\\.${REV}`), 'the write is held to the revision that was heard');
+  assert.equal(ok.written, true);
+  /* the master or sheet moved while it ran: the filter matched nothing, the newer job writes */
+  calls.length = 0;
+  const stale = await lyricsAlign({ input: { track_id: id } }, deps([]));
+  assert.equal(stale.written, false);
+  assert.match(stale.summary, /changed while McCluster listened/);
+});
+
+test('before the revision column exists, the write is still held to the master that was heard', async () => {
+  const id = '123e4567-e89b-42d3-a456-426614174000';
+  const paths = [];
+  const out = await lyricsAlign({ input: { track_id: id } }, {
+    rest: async (path, init = {}) => {
+      paths.push(path);
+      if (!init.method && path.includes('lyrics_input_rev')) throw new Error('column creator_tracks.lyrics_input_rev does not exist');
+      return init.method ? { body: [{ id }] } : { body: [{ id, title: 'Up', master_bucket: 'b', master_path: 'u/1 song.mp3', lyrics: null }] };
+    },
+    download: async () => {},
+    transcribe: async () => ({ doc: buildLyrics({ asr: ASR, duration: 14, generatedAt: 'fixed' }) }),
+  });
+  assert.equal(out.written, true);
+  assert.match(paths.find((p) => p.includes('or=(')), /master_path=eq\.u%2F1%20song\.mp3/);
+});

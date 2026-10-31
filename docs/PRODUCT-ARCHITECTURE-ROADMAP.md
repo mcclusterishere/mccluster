@@ -15,6 +15,10 @@ Neither system replaces the other. The product is complete only when they behave
 
 ---
 
+## Equity Uprise architecture and independent product distribution (owner direction, 2026-10-31)
+
+Equity Uprise is the name of the reusable architecture/product, intended to power transportation, actionable social media and other configurable ecosystems. The current live installation and an installable customer edition have separate finish lines. The [distributable product contract](products/DISTRIBUTABLE-PRODUCT.md) defines clean packaging, customer-owned infrastructure, configurable modules, installation, upgrade, operational and documentation acceptance gates. It records the gaps and implementation order; it does not claim the distribution is shipped.
+
 ## 1. Product thesis
 
 McCluster Corp is not a collection of unrelated microsites.

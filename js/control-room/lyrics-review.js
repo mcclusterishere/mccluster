@@ -18,7 +18,7 @@
 (function(){
   "use strict";
   window.CR=window.CR||{};
-  var L={list:null,loading:false,error:null,key:"",doc:null,orig:"",src:"",kind:"",track:null,filter:"all",msg:"",node:null,audio:null,raf:0,live:-1};
+  var L={gen:0,list:null,loading:false,error:null,key:"",doc:null,orig:"",src:"",kind:"",track:null,filter:"all",msg:"",node:null,audio:null,raf:0,live:-1};
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function fmt(t){if(!isFinite(t))return"-";var m=Math.floor(t/60),s=t-m*60;return m+":"+(s<10?"0":"")+s.toFixed(2);}
   function r3(x){return Math.round(x*1000)/1000;}
@@ -80,14 +80,18 @@
   }
   function open(key){
     var t=(L.list||[]).filter(function(x){return x.key===key;})[0];if(!t)return;
+    /* every selection gets a generation: a late answer (or error) for a track
+       that is no longer selected is dropped, so A's lyrics can never land on B */
+    var gen=L.gen=(L.gen||0)+1;
     L.key=key;L.track=t;L.doc=null;L.msg="Loading…";L.live=-1;paint();
     var got=t.kind==="shelf"
       ?fetch(t.lyrics,{cache:"no-cache"}).then(function(r){if(!r.ok)throw new Error("No lyrics file");return r.json();}).then(function(j){return{doc:j,src:t.src};})
       :musicCall("operator-lyrics-get",{track_id:t.id}).then(function(j){return{doc:j.lyrics,src:j.listen_url};});
     got.then(function(r){
+      if(gen!==L.gen||L.key!==key)return;
       if(!r.doc||!r.doc.timed||!Array.isArray(r.doc.timed.line)){L.doc=null;L.msg=r.doc?"These lyrics have no timing yet. Re-run the machine to time them.":"No lyrics yet. The machine writes them after upload.";L.src=r.src||"";paint();return;}
       L.doc=r.doc;L.orig=JSON.stringify(r.doc);L.src=r.src||"";L.msg="";paint();
-    }).catch(function(err){L.msg=err.message||"Could not load";paint();});
+    }).catch(function(err){if(gen!==L.gen||L.key!==key)return;L.msg=err.message||"Could not load";paint();});
   }
 
   /* ---- view ---- */
@@ -177,7 +181,7 @@
     };
     var q=root.querySelector("[data-crl-queue]");if(q)q.onclick=function(){
       q.disabled=true;musicCall("operator-lyrics-queue",{track_id:L.track.id})
-        .then(function(j){say(j.already?"Already running on McCluster Core.":"Queued on McCluster Core. The new lyrics arrive unreviewed.");})
+        .then(function(j){say(j.already?"Already queued on McCluster Core.":"Queued on McCluster Core. The new lyrics arrive unreviewed.");})
         .catch(function(err){q.disabled=false;say(err.message||"Could not queue");});
     };
   }

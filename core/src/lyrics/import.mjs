@@ -78,7 +78,7 @@ export function parseLrc(src) {
 }
 
 export function parseTimedLyrics(text, name = '') {
-  if (/\.lrc$/i.test(name) || /^\s*\[\d+:\d/.test(text)) return parseLrc(text);
+  if (/\.lrc$/i.test(name) || /^[ \t]*(\[[a-z]+:[^\]\n]*\][ \t]*)*\[\d+:\d{1,2}(?:[.:]\d+)?\]/im.test(text)) return parseLrc(text);
   return parseTtml(text);
 }
 

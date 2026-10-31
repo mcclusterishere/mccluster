@@ -32,15 +32,30 @@ export function mayReplace(current) {
   return ['auto', 'aligned', 'imported'].includes(current.source) || !current.timed;
 }
 
+/** TTML (after an XML declaration / comments) or LRC: any line that opens with a
+ *  [mm:ss] stamp, even when [ti:]/[ar:] metadata comes first. */
+export function isTimedText(t) {
+  return /^\s*(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<tt[\s>]/.test(t) || /^[ \t]*(\[[a-z]+:[^\]\n]*\][ \t]*)*\[\d+:\d{1,2}(?:[.:]\d+)?\]/im.test(t);
+}
+
 /** Sheet text -> what the pipeline wants: a TTML/LRC import, or plain sheet words. */
 export function sheetInput(text) {
   const t = String(text || '').trim();
   if (!t) return { sheetText: '', imported: null };
-  if (/^\s*(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<tt[\s>]/.test(t) || /^\s*\[\d+:\d/.test(t)) {
+  if (isTimedText(t)) {
     const parsed = parseTimedLyrics(t);
     if (parsed.lines.length) return { sheetText: '', imported: parsed };
   }
   return { sheetText: t, imported: null };
+}
+
+/** The revision of a release's lyric inputs, and the PostgREST filter that holds a write to it. */
+export function inputRev(track) {
+  if (typeof track.lyrics_input_rev === 'string' && /^[0-9a-f]{32}$/.test(track.lyrics_input_rev)) {
+    return { value: track.lyrics_input_rev, filter: `lyrics_input_rev=eq.${track.lyrics_input_rev}` };
+  }
+  /* before the column exists: at least the master must still be the one heard */
+  return { value: null, filter: `master_path=eq.${encodeURIComponent(track.master_path)}` };
 }
 
 async function download(bucket, path, to) {
@@ -63,7 +78,14 @@ export async function lyricsAlign(job, deps = {}) {
   const _download = deps.download || download;
   const _transcribe = deps.transcribe || transcribe;
 
-  const { body: rows = [] } = await _rest(`creator_tracks?id=eq.${trackId}&select=id,title,master_bucket,master_path,lyrics,lyrics_sheet&limit=1`);
+  const cols = 'id,title,master_bucket,master_path,lyrics,lyrics_sheet';
+  let rows;
+  try { ({ body: rows = [] } = await _rest(`creator_tracks?id=eq.${trackId}&select=${cols},lyrics_input_rev&limit=1`)); }
+  catch (e) {
+    /* the revision column arrives with the pending SQL; until then, read without it */
+    if (!/lyrics_input_rev|lyrics_sheet/.test(String(e?.message || ''))) throw e;
+    ({ body: rows = [] } = await _rest(`creator_tracks?id=eq.${trackId}&select=id,title,master_bucket,master_path,lyrics&limit=1`));
+  }
   const track = rows[0];
   if (!track) throw new Error(`creator track ${trackId} not found`);
   if (!track.master_bucket || !track.master_path) throw new Error('release has no master to listen to');
@@ -78,14 +100,23 @@ export async function lyricsAlign(job, deps = {}) {
     const { sheetText, imported } = sheetInput(track.lyrics_sheet);
     const { doc } = await _transcribe({ audio, sheetText, imported, title: track.title || '', workDir: join(dir, 'work') });
     doc.track_id = trackId;
-    /* the owner may have reviewed while this ran: never write over that */
-    const patch = `creator_tracks?id=eq.${trackId}&or=(lyrics.is.null,lyrics->>reviewed.is.null,lyrics->>reviewed.eq.false)`;
+    /* Write only onto the inputs this run listened to. lyrics_input_rev is kept by
+       the database (md5 of master_path + lyrics_sheet, pending SQL); if the master
+       or sheet changed while this ran, the filter matches nothing and the newer
+       job the trigger queued writes instead. The owner may also have reviewed
+       while this ran: never write over that. */
+    const rev = inputRev(track);
+    doc.input_rev = rev.value;
+    const patch = `creator_tracks?id=eq.${trackId}&${rev.filter}&or=(lyrics.is.null,lyrics->>reviewed.is.null,lyrics->>reviewed.eq.false)`;
     const { body: updated = [] } = await _rest(patch, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
       body: JSON.stringify({ lyrics: doc }),
     });
     const m = doc.machine || {};
+    if (!updated.length) {
+      return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" not written: the master, sheet or review changed while McCluster listened (a newer job takes it)`, track_id: trackId, written: false, input_rev: rev.value };
+    }
     return {
       executor: 'lyrics_align:v1',
       summary: `Lyrics ${doc.source} for "${track.title}": ${doc.timed.line.length} lines, ${m.mismatched_lines || 0} flagged for review`,
