@@ -30,6 +30,8 @@ Identity of record: [ORCID 0009-0000-8988-8955](https://orcid.org/0009-0000-8988
 
 ## The record
 
+Story authoring and fictional canon: [docs/stories/README.md](docs/stories/README.md). Cluster Fucked's editable episode, current direction, source provenance and open decisions are indexed there. This private manuscript checkpoint is local-only; the public repository and website are distinct publication boundaries.
+
 *I AM HERE* — Who Did The Shoot · Lightroom · Runway Walk · Write a Song ·
 Here · Antisocial
 

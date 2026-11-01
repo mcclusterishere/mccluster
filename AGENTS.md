@@ -52,6 +52,8 @@ The canonical API Worker is `mccluster`. The approved `mccluster-mcp` extraction
 
 ## AI work: read the harness first
 
+For fictional story/canon work, start at `docs/stories/README.md` and obey `docs/stories/AGENTS.md`. Cluster Fucked / Cluster Fuck and the PRIM3 / Hitman crossover decisions are indexed there. Source snapshots, current intended canon and unresolved proposals have separate authority; private authoring files are not public website content.
+
 Read `docs/control-plane/AI-HARNESS.md` before any AI, agent, memory, RAG, conversation-history, provider-routing, or autonomous-company work. Private cross-model context lives in Supabase schema `ai_context`, not in public Git: never commit raw ChatGPT, Claude, Grok, Gemini, Copilot, local-model or other provider transcripts to this repository. Every provider is a replaceable adapter that normalizes into the authenticated `context-ingest` contract and retrieves from the one McCluster context plane. No AI provider owns memory: do not create a shadow vector store, a second conversation database, a raw-chat directory, a separate memory service or a competing context source. Git holds schemas, adapters, policies, tests and intentionally public-safe summaries; Supabase holds the private corpus and its provenance.
 
 ## Autonomous operations contract

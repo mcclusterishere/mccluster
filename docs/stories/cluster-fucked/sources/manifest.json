@@ -1,0 +1,24 @@
+{
+  "retrieved_on": "2026-11-01",
+  "format": "UTF-8 text returned by authorized Drive reader; not binary DOCX export",
+  "sources": [
+    {
+      "id": "current-episode",
+      "title": "McCluster Corp - Cluster Fuck",
+      "url": "https://docs.google.com/document/d/11q8v75FzZYlJ-_GlMIBZPnpTFXgrsXXmqd3oVLX10Tk/edit",
+      "modified_time": "2026-11-01T13:52:56.372Z",
+      "snapshot": "sources/current-episode.2026-11-01.txt",
+      "sha256": "08b9341f04c40e52f58b66d6be58b5c695dbdf3e0bb5bd0b0c125900ea7c9fc5",
+      "bytes": 33480
+    },
+    {
+      "id": "historical-film",
+      "title": "McCluster Corp - Cluster Fucked FILM-1.docx",
+      "url": "https://docs.google.com/document/d/1LVQ6SV0nMdGlr2niqysigihZl_Jeys8-/edit",
+      "modified_time": "2026-08-06T17:16:44.785Z",
+      "snapshot": "sources/film.2026-08-06.txt",
+      "sha256": "ccac6f43d3b92b71f9a768a5fa922065d2e744478590ac387451fb323da4b1e6",
+      "bytes": 52469
+    }
+  ]
+}

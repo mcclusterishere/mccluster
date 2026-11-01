@@ -1,0 +1,2 @@
+# Historical source text preserves returned bytes, including CRLF and spaces.
+sources/*.txt -text whitespace=-blank-at-eol,-blank-at-eof
