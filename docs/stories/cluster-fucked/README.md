@@ -4,4 +4,6 @@ Edit [CURRENT-EPISODE.md](CURRENT-EPISODE.md) for the native episode. It preserv
 
 The older expanded 38-minute film is preserved once as [historical source text](sources/film.2026-08-06.txt). It is not the latest episode. Its acquisition, cast, containment line, dark-web threat and floor-greeting material must not override the current episode or later canon decisions. See [SOURCES.md](SOURCES.md) before using it.
 
-All files are ordinary UTF-8 text in the repository. Use VS Code's Source Control diff to review edits. Do not edit the historical `sources/` files in place. No Drive edits, public upload, main commit, merge or deployment is part of this snapshot.
+All files are ordinary UTF-8 text in the repository. Use VS Code's Source Control diff to review edits. Do not edit the historical `sources/` files in place. No Drive edits, main commit, merge or deployment is part of this snapshot. The owner separately authorized public branch publication of this prepared manuscript and spoiler notes on 2026-11-01.
+
+Comprehensive canon reading is still pending. New creative revisions are paused; this folder preserves the prepared snapshot and does not claim to reconcile every later direction or to approve an expanded draft or final cast.
