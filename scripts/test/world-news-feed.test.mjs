@@ -24,6 +24,20 @@ function fnSource(src, name) {
   return src.slice(at, i + 1);
 }
 
+test('every AI comment carries a visible disclosure while preserving the character name', async () => {
+  const element = tag => ({ tag, children: [], textContent: '', append(...nodes) { this.children.push(...nodes); },
+    appendChild(node) { this.children.push(node); }, replaceChildren() { this.children = []; }, setAttribute() {} });
+  const document = { createElement: element }, list = element('div');
+  const paint = new Function('document', 'timeAgo', 'return (' + fnSource(await read('js/mnet.js'), 'paintDiscussion') + ')')(document, () => 'now');
+  paint({ querySelector: () => list }, [
+    { actor: { display_name: 'Royce', is_ai: true }, body: 'Synthetic fixture comment' },
+    { actor: { display_name: 'Member', is_ai: false }, body: 'Human fixture comment' },
+  ]);
+  assert.equal(list.children[0].children[0].textContent, 'Royce');
+  assert.equal(list.children[0].children[0].children[0].textContent, ' · AI character');
+  assert.equal(list.children[1].children[0].children.length, 0);
+});
+
 test('one member post to one news item, as a single named constant', async () => {
   const js = await read('js/mnet.js');
   assert.match(js, /var FEED_NEWS_PER_POST = 1, NEWS_API = "https:\/\/api\.mccluster\.org\/v1\/world\/news"/);

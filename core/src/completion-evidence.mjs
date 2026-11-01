@@ -77,6 +77,16 @@ function policyEvidence(job, output) {
   const records = [];
 
   switch (type) {
+    case 'actor_comment_preview': {
+      requireValue(job, output.actor_key === job.target_id && output.preview === true && output.published === false, 'actor preview cannot publish');
+      requireValue(job, output.source_item_id === job.input?.item_id && output.kind === job.input?.kind, 'preview must match source');
+      requireValue(job, ['withheld', 'ready_for_owner_review'].includes(output.status) && Boolean(text(output.reason)), 'preview needs a bounded outcome');
+      if (output.status === 'ready_for_owner_review') {
+        requireValue(job, output.review?.approved === true && Boolean(text(output.provenance?.evidence_sha256)) && Boolean(text(output.metrics?.generation?.model)) && output.disclosure?.is_ai === true, 'ready preview needs provenance, local model, review and identity');
+      }
+      records.push({ kind: 'actor_preview', source_item_id: output.source_item_id, status: output.status, reason: output.reason });
+      break;
+    }
     case 'actor_live_comment': {
       requireValue(job, output.actor_key === job.target_id, 'live actor must match job');
       if (output.published === true) {
@@ -94,7 +104,7 @@ function policyEvidence(job, output) {
         requireValue(job, Boolean(text(output.publication_id)) && Boolean(text(output.comment_id)), 'published actor work requires durable publication and comment receipts');
         records.push({ kind: 'platform_comment', publication_id: output.publication_id, comment_id: output.comment_id, article_id: output.article_id, actor_key: output.actor_key });
       } else {
-        requireValue(job, output.published === false && ['actor_paused','daily_limit','no_recent_article','already_commented'].includes(output.reason), 'actor skip must have a bounded reason');
+        requireValue(job, output.published === false && ['actor_paused','daily_limit','no_recent_article','already_commented','review_withheld'].includes(output.reason), 'actor skip must have a bounded reason');
         records.push({kind:'bounded_noop',reason:output.reason,actor_key:output.actor_key});
       }
       break;

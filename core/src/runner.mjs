@@ -23,6 +23,7 @@ import { meetingDelegateCollect } from './executors/meeting-delegate-collect.mjs
 import { residentAiTurn } from './executors/resident-ai-turn.mjs';
 import { actorLiveComment } from './executors/actor-live-comment.mjs';
 import { actorNewsComment } from './executors/actor-news-comment.mjs';
+import { actorCommentPreview } from './executors/actor-comment-preview.mjs';
 import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
 import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
@@ -51,6 +52,7 @@ const executors = new Map([
   ['resident_ai_turn', residentAiTurn],
   ['ai_diagnostics', aiDiagnostics],
   ['actor_news_comment', actorNewsComment],
+  ['actor_comment_preview', actorCommentPreview],
   ['actor_live_comment', actorLiveComment],
 ]);
 

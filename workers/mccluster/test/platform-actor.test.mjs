@@ -10,7 +10,7 @@ test('public discussion resolves a disclosed actor handle without an auth accoun
   const p=String(url).split('/rest/v1/')[1];
   if(p.startsWith('media_news_articles?'))return Response.json([{id:story,canonical_url:'https://news.example/story'}]);
   if(p.startsWith('media_news_comments?'))return Response.json([{id:'comment',article_id:story,author_m_uid:id,body:'An opinion.',created_at:'2026-10-21T12:00:00Z'}]);
-  if(p.startsWith('network_profiles?'))return Response.json([{m_uid:id,display_name:'Royce · AI'}]);
+  if(p.startsWith('network_profiles?'))return Response.json([{m_uid:id,display_name:'Royce'}]);
   if(p.startsWith('m_auth_user_links?'))return Response.json([]);
   if(p.startsWith('ops_platform_actors?'))return Response.json([{m_uid:id,handle:'royce.r01'}]);
   throw new Error('Unexpected lookup '+p);
@@ -18,7 +18,23 @@ test('public discussion resolves a disclosed actor handle without an auth accoun
  try{
   const response=await handlePlatformApi(new Request(`https://api.mccluster.org/v1/world/news/${story}/comments`),env);
   assert.equal(response.status,200);
-  const data=await response.json();assert.deepEqual(data.comments[0].actor,{display_name:'Royce · AI',mccluster_id:'royce.r01'});
+  const data=await response.json();assert.deepEqual(data.comments[0].actor,{display_name:'Royce',mccluster_id:'royce.r01',is_ai:true});
   assert.equal(JSON.stringify(data).includes('server-only'),false);
+ }finally{globalThis.fetch=original;}
+});
+
+test('news discussion fails closed when AI identity cannot be resolved',async()=>{
+ const original=globalThis.fetch;
+ globalThis.fetch=async(url)=>{
+  const p=String(url).split('/rest/v1/')[1];
+  if(p.startsWith('media_news_articles?'))return Response.json([{id:story,canonical_url:'https://news.example/story'}]);
+  if(p.startsWith('media_news_comments?'))return Response.json([{id:'comment',article_id:story,author_m_uid:id,body:'An opinion.'}]);
+  if(p.startsWith('network_profiles?'))return Response.json([{m_uid:id,display_name:'Royce'}]);
+  if(p.startsWith('m_auth_user_links?'))return Response.json([]);
+  if(p.startsWith('ops_platform_actors?'))return Response.json({message:'identity unavailable'},{status:503});
+  throw new Error('Unexpected lookup '+p);
+ };
+ try{
+  await assert.rejects(handlePlatformApi(new Request(`https://api.mccluster.org/v1/world/news/${story}/comments`),env),/identity unavailable/);
  }finally{globalThis.fetch=original;}
 });

@@ -43,7 +43,7 @@ async function storedSurfaceProfile(env,userId,body){
 function chars(value){return [...String(value||'')].length}
 function uuidLike(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''))}
 function uniq(values){return [...new Set((values||[]).filter(Boolean).map(String))]}
-async function networkActors(env,muids=[]){
+async function networkActors(env,muids=[],strictIdentity=false){
   const ids=uniq(muids).filter(uuidLike); if(!ids.length)return {};
   const inIds=ids.join(',');
   const [profiles,links]=await Promise.all([
@@ -55,9 +55,10 @@ async function networkActors(env,muids=[]){
   const handleByUser=new Map((platform||[]).map(x=>[x.user_id,x.mccluster_id||'']));
   const handleByMuid=new Map((links||[]).map(x=>[x.m_uid,handleByUser.get(x.auth_user_id)||'']));
   const actorIds=new Set();
-  const unlinked=ids.filter(id=>!handleByMuid.get(id));
+  const unlinked=strictIdentity?ids:ids.filter(id=>!handleByMuid.get(id));
   if(unlinked.length){
-    const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle`).catch(()=>[]);
+    const lookup=service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle`);
+    const actors=strictIdentity?await lookup:await lookup.catch(()=>[]);
     for(const actor of actors||[]) {handleByMuid.set(actor.m_uid,actor.handle);actorIds.add(actor.m_uid);}
   }
   const out={};
@@ -1565,11 +1566,13 @@ async function handleWorldNewsDiscussion(req,env,path){
       ...(blockedViewer||[]).map(x=>x.blocker_m_uid)]);
   }
   const allowed=(rows||[]).filter(comment=>!blocked.has(comment.author_m_uid));
-  const actors=await networkActors(env,allowed.map(c=>c.author_m_uid));
+  // Do not silently present a known actor as human when identity lookup fails.
+  const actors=await networkActors(env,allowed.map(c=>c.author_m_uid),true);
   const response=reply(req,env,{comments:allowed.map(c=>({
     id:c.id,article_id:c.article_id,body:c.body,created_at:c.created_at,
     actor:{display_name:actors[c.author_m_uid]?.display_name||'Member',
-      mccluster_id:actors[c.author_m_uid]?.mccluster_id||''}
+      mccluster_id:actors[c.author_m_uid]?.mccluster_id||'',
+      is_ai:actors[c.author_m_uid]?.is_ai===true}
   }))});
   response.headers.set('cache-control','private, no-store');
   return response;

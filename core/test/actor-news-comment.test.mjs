@@ -16,12 +16,12 @@ function fixture({paused=false,limit=false,replay=false,approved=true}={}){
   if(url==='rpc/ops_actor_publish_comment'){const p=JSON.parse(init.body);assert.equal(p.p_org_id,'house');assert.equal(p.p_actor_key,'royce.r01');assert.equal(p.p_article_id,article.id);return {body:{published:true,publication_id:'receipt',comment_id:'comment',article_id:article.id}};}
   throw new Error(url);
  },
- chat:async(input)=>{inferences.push(input);return {model:'qwen3:8b',message:{content:JSON.stringify(inferences.length===1?{source_article_id:article.id,comment:'A public studio? Finally, a city budget with something worth listening to.'}:{approved,reason:'Opinion on the supplied headline.'})}};}
+ chat:async(input)=>{inferences.push(input); const packet=JSON.parse(input.messages[1].content).evidence; const anchor={source_id:packet.sources[0].source_id,quote:packet.sources[0].text}; return {model:'qwen3:8b',message:{content:JSON.stringify(inferences.length===1?{decision:'comment',source_item_id:article.id,comment:'A public recording studio? What would make it easier for beginners to book time?',evidence:[anchor]}:{approved,grounded:true,relevant:true,voice_consistent:true,issues:[],anchors:[anchor],reason:'A question grounded in the supplied headline.'})}};}
  };
 }
 test('Royce generates and reviews using local inference before a scoped publication',async()=>{
  const deps=fixture();const out=await actorNewsComment(job,deps);
- assert.equal(out.published,true);assert.equal(deps.inferences.length,2);assert.equal(deps.inferences[0].numCtx,4096);
+ assert.equal(out.published,true);assert.equal(deps.inferences.length,2);assert.equal(deps.inferences[0].numCtx,8192);
  assert.ok(deps.calls.some(c=>c.url==='rpc/ops_actor_publish_comment'));
  assert.doesNotThrow(()=>buildCompletionEvidence(job,out));
 });
@@ -34,7 +34,7 @@ test('paused, capped, and replayed jobs do not spend inference or publish again'
 });
 test('wrong organization and rejected reviews cannot publish',async()=>{
  const deps=fixture();await assert.rejects(actorNewsComment({...job,org_id:'other'},deps),/authority/);assert.equal(deps.calls.length,0);
- const rejected=fixture({approved:false});await assert.rejects(actorNewsComment(job,rejected),/withheld/);assert.equal(rejected.calls.some(c=>c.url==='rpc/ops_actor_publish_comment'),false);
+ const rejected=fixture({approved:false});assert.equal((await actorNewsComment(job,rejected)).reason,'review_withheld');assert.equal(rejected.calls.some(c=>c.url==='rpc/ops_actor_publish_comment'),false);
 });
 test('malformed, threatening, and misattributed model outputs are rejected',()=>{
  for(const data of [{comment:'Something interesting',source_article_id:'other'},{comment:'I will kill you for that',source_article_id:article.id},{comment:'Go to https://example.test now',source_article_id:article.id}])assert.throws(()=>validateActorComment(data,article.id));
@@ -48,4 +48,12 @@ test('profile and directory pages cannot become news reactions',()=>{
   {...article,canonical_url:'https://example.org/marketplace/listing/purchase-clerk'},
   {...article,canonical_url:'not a URL'},
  ]) assert.equal(isNewsCandidate(candidate),false);
+});
+
+test('an article changed during inference is withheld before publication',async()=>{
+ const deps=fixture(),query=deps.query;
+ deps.query=async(url,init)=>url.startsWith('media_news_articles?id=')?{body:[{...article,title:'A changed story about something entirely different'}]}:query(url,init);
+ const out=await actorNewsComment(job,deps);
+ assert.equal(out.published,false);assert.equal(out.withheld_reason,'source_changed_before_publish');
+ assert.ok(!deps.calls.some(c=>c.url==='rpc/ops_actor_publish_comment'));
 });
