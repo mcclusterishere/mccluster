@@ -75,12 +75,15 @@ try { for(const width of [390,768,1280]) {
     await click('generate');assert.equal(calls.filter(c=>c.path==='/v1/media/generate').length,1);assert.equal(calls.find(c=>c.path==='/v1/media/generate').body.input.image_url,'https://fixture.invalid/owner-face.png');
     await click('takes');await page.locator('[data-plan-select]').click();await click('save');
     const [download]=await Promise.all([page.waitForEvent('download'),click('export')]);const path=join(OUT,'timeline-'+width+'.json');await download.saveAs(path);const manifest=JSON.parse(await readFile(path));assert.equal(manifest.rendered_video,false);assert.equal(manifest.episode_link.episode_id,'S02E03');assert.equal(manifest.episode_link.status,'draft');assert.equal(manifest.hash,records.get(key).config.hash);assert.equal(manifest.scenes[0].asset_id,ASSET);
+    await page.getByText('Story and canon',{exact:true}).click();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth),0);
+    await page.screenshot({path:join(OUT,'studio-'+width+'.png'),fullPage:true});
     await page.reload();await page.locator('[data-plan-action="list"]').waitFor();await click('list');await page.selectOption('[data-plan-open]',key);await page.waitForFunction(()=>!!CR.productionPlan.state.saved);assert.equal(await page.locator('[data-plan-field="script"]').inputValue(),'Owner-authored second revision.');
     failGeneration=true;await click('estimate');await click('generate');assert.equal(records.get(key).config.plan.scenes[0].submission.state,'uncertain');await click('reload');await click('estimate');assert.equal(await page.locator('[data-plan-action="generate"]').isDisabled(),true);failGeneration=false;
     await page.selectOption('[data-plan-restore]','1');assert.equal(await page.locator('[data-plan-field="script"]').inputValue(),'Owner-authored script. Preserve this exactly.');
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);assert.equal(overflow,0);
     assert.equal(await page.locator('[data-plan-field="script"]').evaluate(n=>parseFloat(getComputedStyle(n).fontSize)>=16),true);
-    await page.screenshot({path:join(OUT,'studio-'+width+'.png'),fullPage:true});
+    await page.screenshot({path:join(OUT,'recovery-'+width+'.png'),fullPage:true});
     assert.deepEqual(errors,[]);results.push({width,passed:true,scope:'real Control + plan handler; synthetic database and generation'});
   }catch(e){await page.screenshot({path:join(OUT,'failure-'+width+'.png'),fullPage:true});throw e;}finally{await ctx.close();globalThis.fetch=priorFetch;}
 } }finally{await browser.close();await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));}
