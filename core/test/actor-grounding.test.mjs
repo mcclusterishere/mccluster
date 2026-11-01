@@ -147,3 +147,11 @@ test('configured fallback model names are not reported as observed model identit
   assert.equal(out.reason, 'model_identity_missing'); assert.equal(out.metrics.generation.model, null);
   assert.equal(out.metrics.generation.configured_model, 'qwen3:8b'); assert.equal(out.published, false);
 });
+
+test('unreconciled old biography and fictional missions never become campaign instructions', async () => {
+  const m = mock();
+  await previewActorComment({ item, actor: { ...actor, persona: { ...actor.persona, identity: 'UNRECONCILED_WRITER_ONLY_HISTORY' } } }, m);
+  assert.ok(!m.calls[0].messages[0].content.includes('UNRECONCILED_WRITER_ONLY_HISTORY'));
+  assert.match(m.calls[0].messages[0].content, /never real campaign objectives/);
+  assert.match(m.calls[1].messages[0].content, /demographic political targeting/);
+});

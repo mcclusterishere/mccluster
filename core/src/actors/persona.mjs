@@ -12,12 +12,13 @@ export function validatePersonaConfig(config) {
   for (const p of config.characters) {
     if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(p.actor_key || '') || keys.has(p.actor_key) || !present(p.name) ||
         p.identity_kind !== 'fictional_ai' || !['pending', 'approved', 'rejected'].includes(p.identity_status) ||
-        !present(p.canon?.version) || !Array.isArray(p.canon?.sources) || !p.canon.sources.length ||
+        !present(p.canon?.version) || !['verified', 'pending', 'proposed'].includes(p.canon.status) || !Array.isArray(p.canon?.sources) || !p.canon.sources.length ||
         p.canon.sources.length > 8 || p.canon.sources.some(s => !present(s.ref) || !present(s.version)) ||
         !present(p.voice?.perspective) || !present(p.voice?.rhythm) || !present(p.voice?.humor) || !present(p.voice?.motivation) ||
         !Array.isArray(p.topics) || p.topics.length > 12 || p.topics.some(t => !present(t)) || !Array.isArray(p.surfaces) ||
         !p.surfaces.length || p.surfaces.some(s => !['news', 'song', 'post'].includes(s))) throw new Error('Invalid source-backed persona');
-    if (p.identity_status === 'approved' && (!present(p.approval_ref) || !present(p.canon.approval_ref))) throw new Error('Persona approval provenance missing');
+    if (p.identity_status === 'approved' && (!present(p.approval_ref) || !present(p.canon.approval_ref) || p.canon.status !== 'verified' ||
+        p.canon.sources.some(s => !['CANON', 'CANON-AUTHORING-AUTHORITY', 'OWNER_APPROVED'].includes(s.status)))) throw new Error('Persona approval provenance missing or source is not canon');
     const voice = digest([p.voice.perspective, p.voice.rhythm, p.voice.humor, p.voice.motivation].map(s => s.trim().toLowerCase()));
     if (voices.has(voice)) throw new Error('Characters must have distinct voice configurations');
     voices.add(voice); keys.add(p.actor_key);
@@ -59,6 +60,8 @@ export function personaForActor(actor, config) {
   return { actor_key: actor.actor_key, name: boundedText(p.name || actor.actor_key, 100),
     identity_kind: 'fictional_ai', identity_status: 'not_reconciled',
     canon: { version: null, sources: [], status: 'needs_reconciliation' }, config_version: null,
-    voice: { perspective: boundedText(p.identity, 500), rhythm: boundedText(p.voice, 700), humor: '', motivation: boundedText(p.motivation, 300) },
+    // Old biography text may conflict with newer specialist canon or reveal
+    // writer-only history. Unreconciled biography never becomes prompt authority.
+    voice: { perspective: '', rhythm: boundedText(p.voice, 700), humor: '', motivation: boundedText(p.motivation, 300) },
     digest: digest(p), disclosure: AI_DISCLOSURE };
 }

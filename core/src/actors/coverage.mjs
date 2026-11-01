@@ -4,7 +4,7 @@ import { PROMPT_VERSION } from './generate.mjs';
 
 // Proposed preview budgets only. Existing publication limits/timers are untouched.
 export const DEFAULT_COVERAGE_POLICY = Object.freeze({ schema: 'actor-coverage/v1', enabled: false,
-  mode: 'preview', surfaces: ['news', 'song', 'post'], max_batch: 3, max_pending: 6,
+  mode: 'preview', purpose: 'ordinary_own_platform_commentary', surfaces: ['news', 'song', 'post'], max_batch: 3, max_pending: 6,
   max_daily: 12, max_per_actor_daily: 3, max_attempts: 2, backfill: false });
 const key = item => `${item.kind}:${item.id}`;
 const stamp = item => {
@@ -23,6 +23,7 @@ export function coverageJobId(orgId, item) {
 
 function validatePolicy(p) {
   if (p.schema !== 'actor-coverage/v1' || p.mode !== 'preview' || typeof p.enabled !== 'boolean' ||
+      p.purpose !== 'ordinary_own_platform_commentary' || p.audience_targeting || p.political_objective || p.campaign_objective ||
       !Array.isArray(p.surfaces) || !p.surfaces.length || new Set(p.surfaces).size !== p.surfaces.length || p.surfaces.some(s => !['news', 'song', 'post'].includes(s))) throw new Error('Only bounded own-platform preview coverage is supported');
   for (const [name, max] of [['max_batch', 6], ['max_pending', 12], ['max_daily', 24], ['max_per_actor_daily', 6], ['max_attempts', 2]]) {
     if (!Number.isInteger(p[name]) || p[name] < 1 || p[name] > max) throw new Error(`Invalid coverage limit: ${name}`);

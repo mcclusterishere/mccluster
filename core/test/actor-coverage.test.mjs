@@ -5,7 +5,7 @@ import { validatePersonaConfig, selectedPersonas, personaForActor, personaConfig
 const now = new Date('2026-11-01T12:00:00Z');
 // Synthetic identities used only to exercise the cast contract; not Hitman canon.
 const character = (key, rhythm) => ({ actor_key: key, name: 'Test ' + key, identity_kind: 'fictional_ai', identity_status: 'approved', approval_ref: 'test-only-owner-approval',
-  canon: { version: 'fixture-v1', approval_ref: 'test-only-canon-approval', sources: [{ ref: 'synthetic-fixture', version: '1' }] },
+  canon: { version: 'fixture-v1', status: 'verified', approval_ref: 'test-only-canon-approval', sources: [{ ref: 'synthetic-fixture', version: '1', status: 'OWNER_APPROVED' }] },
   voice: { perspective: 'Practical questions', rhythm, humor: 'Gentle', motivation: 'Understand the detail' }, topics: ['community'], surfaces: ['news', 'song', 'post'] });
 const config = { schema: 'actor-persona/v1', version: 'fixture-only-1', selected_cast: ['test.one', 'test.two'], characters: [character('test.one', 'Short and direct'), character('test.two', 'Warm and patient')] };
 const policy = { ...DEFAULT_COVERAGE_POLICY, enabled: true };
@@ -16,6 +16,8 @@ const plan = extra => planActorCoverage({ orgId: 'house', items, personaConfig: 
 test('broader coverage is disabled by default; publishing and unbounded backfill are invalid', () => {
   assert.equal(plan({ policy: DEFAULT_COVERAGE_POLICY }).jobs.length, 0);
   assert.throws(() => plan({ policy: { ...policy, mode: 'publish' } }), /preview/);
+  assert.throws(() => plan({ policy: { ...policy, audience_targeting: { demographic: 'fixture' } } }), /preview/);
+  assert.throws(() => plan({ policy: { ...policy, purpose: 'fictional_mission_campaign' } }), /preview/);
   assert.throws(() => plan({ policy: { ...policy, max_batch: 500 } }), /limit/);
   assert.throws(() => plan({ policy: { ...policy, backfill: true } }), /Backfill/);
   assert.throws(() => plan({ load: {} }), /load snapshot/);
@@ -33,6 +35,7 @@ test('cast approval and sources are required; unrelated characters and copied vo
   cfg.characters[1].canon.sources = []; assert.throws(() => validatePersonaConfig(cfg), /source-backed/);
   const copied = structuredClone(config); copied.characters[1].voice = copied.characters[0].voice; assert.throws(() => validatePersonaConfig(copied), /distinct/);
   const noApproval = structuredClone(config); delete noApproval.characters[0].approval_ref; assert.throws(() => validatePersonaConfig(noApproval), /approval/);
+  const proposed = structuredClone(config); proposed.characters[0].canon.sources[0].status = 'PROPOSED'; assert.throws(() => validatePersonaConfig(proposed), /not canon/);
   assert.throws(() => personaForActor({ actor_key: 'test.unselected' }, config), /selected adaptation cast/);
   const v = personaForActor({ actor_key: 'test.one' }, config); assert.equal(v.canon.version, 'fixture-v1'); assert.equal(v.disclosure.is_ai, true);
 });

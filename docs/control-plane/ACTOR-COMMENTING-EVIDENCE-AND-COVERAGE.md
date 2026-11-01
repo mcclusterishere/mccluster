@@ -45,16 +45,18 @@ Each proposal includes source/persona/prompt hashes, requested and returned sett
 
 Only the explicitly selected **adaptation cast**, which may span PRIM3 and Hitman, belongs in expanded coverage. No broad Hitman roster is assumed. Canon/story editing belongs to the separate canon task. This branch makes no claim about unverified characters or the story's employer/founder relationships.
 
-The repository's `PRIM3/game/halo/world-roster.v1.json` is empty and research-gated. No canonical roster was supplied to this implementation. `core/config/actor-personas.example.json` therefore has empty `characters` and `selected_cast`. It is a contract example, not an additional registry. Existing unversioned actor personas are reported as `not_reconciled`, with null canon version and no invented source references. Their already-authorized legacy news path remains controlled by the existing actor row and RPC.
+The authoritative source is the separate **`mcclusterishere/Prim3` repository**, pinned for this review at `160020bdeac4afa0cd3f25638169e657af55bc29`; the empty local `PRIM3/game/halo/world-roster.v1.json` is not the source roster. `core/config/actor-canon-sources.json` records public source paths, versions, statuses, blob hashes and pinned links for root `CANON.md`, the immediate cast, Hitman dossiers, psychology authority and Aya's specialist authority. `story/PRIM3-CHARACTER-DOSSIERS.md` is explicitly **PROPOSED** and cannot authorize a persona. Specialist canon overrides short summaries where non-conflicting. Writer truth is not permission to disclose lore in a public comment.
+
+The final adaptation subset and its account approvals remain pending in the separate canon workflow. The known immediate-story roster is **not** selected wholesale. `core/config/actor-personas.example.json` therefore retains empty `characters` and `selected_cast`. No extra contemporary Benji identity is created: the pinned canon identifies Benji as McCluster's historical identity. Existing unversioned actor personas are reported as `not_reconciled`, with null canon version and no invented source references. Their old biography text is excluded from prompts pending reconciliation; stored conversational voice/motivation can still serve the already-authorized legacy news path under the existing actor row and RPC.
 
 New configuration uses `actor-persona/v1`, an immutable config version, explicit `selected_cast`, and character records containing:
 
 - Existing `actor_key`, unchanged display name and `identity_kind: fictional_ai`.
 - `identity_status: pending | approved | rejected`, plus an approval reference for approved identities.
-- A canon version, versioned source references and canon approval reference.
+- A canon version/status, versioned source references with explicit source statuses, and canon approval reference. Approved identities require verified canon and CANON, CANON-AUTHORING-AUTHORITY or OWNER_APPROVED sources; PROPOSED sources cannot qualify.
 - Separate voice perspective, rhythm, humor and motivation; topical affinities and allowed own-platform surfaces.
 
-Identical voice configurations are rejected. Source references must be verified by the canon/owner workflow; validation checks their presence, not their truth. No model can approve an identity or manufacture a roster.
+Identical voice configurations are rejected. The pinned sources distinguish, for example, Royce's control/legitimacy sensitivity from Aya's evidence/safety focus and economical humor; those differences inform owner-authored voice records only after adaptation selection, not automatic account creation. Source references must be verified by the canon/owner workflow; validation checks their presence, not their truth. No model can approve an identity or manufacture a roster. Fictional foreign-influence plots and other story missions never become real commenting-campaign goals. The coverage policy accepts only ordinary own-platform commentary and rejects campaign objectives and audience targeting; generation/review prompts separately enforce that boundary.
 
 Store each approved record on the **existing** `ops_platform_actors.persona.commenting` object:
 
@@ -113,6 +115,6 @@ Acceptance before increased live volume: no false personal/audio/full-reading cl
 
 ## Implementation verification
 
-On 2026-11-01, the complete Core suite passed **384 tests**, the affected Worker suites passed **63 tests**, and the site/data suites passed **85 tests**. Core syntax checks, syntax checks for the new modules, `git diff --check`, and importing the actor modules from an isolated copy of only the deployable `core/` tree passed. Worker bundle compilation was not run because the local Wrangler executable is not installed. Existing database publication SQL was not changed or run.
+On 2026-11-01, the complete Core suite passed **385 tests**, the affected Worker suites passed **63 tests**, and the site/data suites passed **85 tests**. Core syntax checks, syntax checks for the new modules, `git diff --check`, and importing the actor modules from an isolated copy of only the deployable `core/` tree passed. Worker bundle compilation was not run because the local Wrangler executable is not installed. Existing database publication SQL was not changed or run.
 
-The repository was confirmed public. A review of the 23 changed files found no raw runtime transcripts, private canon documents or generated runtime outputs; the credential-pattern scan found no matches. Synthetic input fixtures and mocks are labeled as such. No live-quality, throughput, distinct-cast or production-publication success is claimed by these tests.
+The repository was confirmed public. A review of the changed files found no raw runtime transcripts, private canon documents or generated runtime outputs; the credential-pattern scan found no matches. Synthetic input fixtures and mocks are labeled as such. No live-quality, throughput, distinct-cast or production-publication success is claimed by these tests.
