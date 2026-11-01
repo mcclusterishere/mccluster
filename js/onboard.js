@@ -20,10 +20,34 @@
 (function () {
   "use strict";
 
-  var KEY = "mcc_onboard_v2";
+  var query = new URLSearchParams(location.search);
+  var requestedDomain = (query.get("domain") || "").toLowerCase().trim();
+  function validDomain(value) {
+    return value.length <= 253 && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(value);
+  }
+  // An address search is a domain request, not a website-service brief.
+  // Old inbound links work too; neither a query string nor RDAP is a price quote.
+  var domainRequest = query.get("offer") === "runway" && validDomain(requestedDomain);
+  var sessionGeneration = 0;
+  function signedInUser() { return window.MCC_AUTH && window.MCC_AUTH.user && window.MCC_AUTH.user(); }
+  function draftKey() {
+    var user = signedInUser();
+    return domainRequest ? "mcc_domain_quote_v1:" + (user && user.id || "guest") + ":" + requestedDomain : "mcc_onboard_v2";
+  }
+  var KEY = draftKey();
+  // Guest details stay in this tab. Account drafts never inherit the old shared service brief.
+  function draftStore() { return domainRequest && !signedInUser() ? sessionStorage : localStorage; }
   var S;
-  try { S = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { S = {}; }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function readDraft() {
+    try { S = JSON.parse(draftStore().getItem(KEY)) || {}; } catch (e) { S = {}; }
+    if (!S || typeof S !== "object" || Array.isArray(S)) S = {};
+    if (domainRequest) { S.offer = "runway"; S.mode = "m"; S.domainName = S.domainName || requestedDomain; }
+  }
+  readDraft();
+  function save() {
+    if (domainRequest && KEY !== draftKey()) return;
+    try { draftStore().setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  }
 
   var L = null;                       /* the ledger */
   var at = 0;                         /* index into the live walk */
@@ -490,12 +514,14 @@
      snapshot is taken once, before the walk is first drawn, so the steps never shift under the member. */
   var MEMBER = null;
   function memberSnapshot() {
+    var scope = sessionGeneration;
     var A = window.MCC_AUTH, u = A && A.user && A.user();
     if (!u) return Promise.resolve(null);
     var me = { name: u.name || "", email: u.email || "", phone: u.phone || "" };
     var row = window.MCC_FAN && MCC_FAN.load ? MCC_FAN.load().catch(function () { return null; }) : Promise.resolve(null);
     var patience = new Promise(function (done) { setTimeout(function () { done(null); }, 2500); });
     return Promise.race([row, patience]).then(function (fan) {
+      if (domainRequest && (scope !== sessionGeneration || KEY !== draftKey())) return null;
       if (fan) { me.name = me.name || fan.legal_name || fan.display_name || ""; me.phone = fan.phone_e164 || me.phone; }
       MEMBER = me;
       if (!S.name && me.name) S.name = me.name;
@@ -508,6 +534,8 @@
 
   /* every step whose answer goes to the desk, asked or answered by the account */
   function brief() {
+    if (domainRequest) return [{ id: "domain_request", rail: "Domain", kind: "domain-request",
+      q: "Your web address.", sub: "Review the domain and your contact details in one place." }];
     return STEPS.filter(function (s) { return !s.when || s.when(); });
   }
   /* the live walk: only the steps whose condition holds and that the account has not already answered */
@@ -524,6 +552,28 @@
      RENDERING
      ============================================================ */
   function fieldValue(key) { return S[key]; }
+
+  function renderDomainRequest() {
+    return '<div class="oback ob__domain-summary"><p><b id="obDomainSummary">' + esc(S.domainName) + '</b></p>' +
+      '<p>Registration price: awaiting a confirmed quote.<br>Renewal price: awaiting a confirmed quote.</p>' +
+      '<p>Checkout is paused. The desk will confirm availability and both prices before payment. This request does not reserve or buy the domain.</p></div>' +
+      '<label class="ob__lbl" for="obDomain">Domain</label><input type="text" id="obDomain" maxlength="253" autocomplete="off" value="' + esc(S.domainName) + '">' +
+      '<div class="ob__contact-grid"><div><label class="ob__lbl" for="obName">Name</label><input type="text" id="obName" maxlength="200" autocomplete="name" value="' + esc(S.name || "") + '"></div>' +
+      '<div><label class="ob__lbl" for="obEmail">Email</label><input type="email" id="obEmail" maxlength="254" autocomplete="email" value="' + esc(S.email || "") + '"></div>' +
+      '<div><label class="ob__lbl" for="obPhone">Phone (optional)</label><input type="tel" id="obPhone" maxlength="50" autocomplete="tel" value="' + esc(S.phone || "") + '"></div></div>' +
+      '<p class="ob__note">Your website plans can wait. If you accept a purchase quote, the registrar will need the owner’s required contact details and consent before registration.</p>' +
+      (!signedInUser() ? '<p class="ob__note">Sign in or create your M Account to save this request to your account.</p><div id="obAcctIn"></div>' : '') +
+      '<p class="ob__note" id="obSendMsg" role="status"></p>';
+  }
+
+  function finishDomainRequest() {
+    el("obNav").hidden = true;
+    el("obStep").textContent = "Request sent";
+    el("obProg").setAttribute("aria-valuetext", "Domain quote request sent");
+    el("obStage").innerHTML = '<h1 id="obQ">Quote requested.</h1><div class="oback"><p><b>' + esc(S.domainName) + '</b></p>' +
+      '<p>Your request is saved to your account. The desk will confirm availability, registration and renewal prices before any payment.</p>' +
+      '<p>No domain has been reserved or purchased.</p></div><a class="ws__go" href="sites.html">Back to domains</a>';
+  }
 
   function optionButton(s, o, selected) {
     return '<button type="button" role="button" data-v="' + esc(o.v) + '"' +
@@ -683,6 +733,9 @@
   }
 
   function render() {
+    if (domainRequest && S.sent) { finishDomainRequest(); return; }
+    el("obNav").hidden = false;
+    el("obNext").hidden = false;
     var w = walk();
     at = Math.max(0, Math.min(at, w.length - 1));
     var s = w[at];
@@ -707,12 +760,14 @@
     /* the question */
     var offer = S.offer ? window.MCC_OFFERS.offerOf(L, S.offer) : null;
     var ctx = offer ? offer.name + (S.offer !== "runway" && S.mode ? " · " + L.modes[S.mode].name : "") : "Onboarding";
+    if (domainRequest) ctx = "Domain quote";
     /* a step may compute its own sub-line from the ledger rather than
        carrying a typed copy of a price that can go stale */
     var sub = typeof s.sub === "function" ? s.sub(L) : s.sub;
 
     var body = "";
     switch (s.kind) {
+      case "domain-request": body = renderDomainRequest(); break;
       case "offer": body = renderOffer(s); break;
       case "mode": body = renderMode(s); break;
       case "choice":
@@ -779,8 +834,9 @@
     next.textContent = s.kind === "review" ? "Send it to the desk" :
       s.kind === "summary" ? "Looks right — continue" : "Continue";
     next.disabled = false;
+    if (domainRequest) next.textContent = signedInUser() ? "Request domain quote" : "Sign in or create account";
 
-    if (s.kind === "account") mountAccount();
+    if (s.kind === "account" || domainRequest && !signedInUser()) mountAccount();
 
     /* focus the question so a screen reader and a keyboard land in the right place */
     var h = el("obQ"); h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true });
@@ -845,7 +901,9 @@
 
     stage.addEventListener("input", function (e) {
       var s = current(), t = e.target;
-      if (t.id === "obIn") S[s.key] = t.value;
+      if (t.id === "obDomain") { S.domainName = t.value.toLowerCase().trim(); el("obDomainSummary").textContent = S.domainName; }
+      else if (t.id === "obName") S.name = t.value;
+      else if (t.id === "obIn") S[s.key] = t.value;
       else if (t.id === "obFollowIn") S[s.follow.key] = t.value;
       else if (t.id === "obOther") S[s.other] = t.value;
       else if (t.id === "obEmail") S.email = t.value;
@@ -873,6 +931,11 @@
   function validate(s) {
     if (s.optional) return true;
     switch (s.kind) {
+      case "domain-request":
+        if (!validDomain(S.domainName || "")) return "Enter a complete domain, such as yourname.com.";
+        if (!(S.name || "").trim()) return "Enter your name.";
+        if (!/^\S+@\S+\.\S+$/.test((S.email || "").trim())) return "Enter a complete email address.";
+        return true;
       case "offer": return S.offer ? true : "Pick the service you came for.";
       case "mode": return S.mode ? true : "Pick how you want to pay. Neither one is preselected on purpose.";
       case "contact":
@@ -1008,6 +1071,7 @@
 
   /* ---------- send ---------- */
   function send() {
+    if (domainRequest) { sendDomainRequest(); return; }
     var btn = el("obNext");
     btn.disabled = true; btn.textContent = "Sending…";
     var payload = window.MCC_OFFER_CRM.build(L, {
@@ -1024,6 +1088,38 @@
         encodeURIComponent("Onboarding · " + (S.org || "")) + "&body=" +
         encodeURIComponent(payload.body) + '">one tap</a>. It lands on the same desk.';
     });
+  }
+
+  function sendDomainRequest() {
+    if (KEY !== draftKey()) { refreshDomainSession(); return; }
+    var user = signedInUser(), scope = sessionGeneration, btn = el("obNext");
+    if (!user || !user.id || S.sent || btn.disabled) return;
+    btn.disabled = true; btn.textContent = "Sending…";
+    el("obStage").querySelectorAll("input, button").forEach(function (input) { input.disabled = true; });
+    var payload = window.MCC_OFFER_CRM.buildDomainRequest(S);
+    window.MCC_OFFER_CRM.post(payload, { expectedUserId: user.id }).then(function () {
+      if (scope !== sessionGeneration) return;
+      if (KEY !== draftKey()) { refreshDomainSession(); return; }
+      S.sent = true; save(); finishDomainRequest();
+    }).catch(function () {
+      if (scope !== sessionGeneration) return;
+      if (KEY !== draftKey()) { refreshDomainSession(); return; }
+      btn.disabled = false; btn.textContent = "Request domain quote";
+      el("obStage").querySelectorAll("input, button").forEach(function (input) { input.disabled = false; });
+      el("obSendMsg").textContent = "We could not confirm that the request was saved. Your draft is still here. Check your console before trying again.";
+    });
+  }
+
+  function refreshDomainSession() {
+    var scope = ++sessionGeneration;
+    MEMBER = null; KEY = draftKey(); readDraft(); at = 0;
+    // Clear previous account details immediately, before any profile request resolves.
+    if (L) render();
+    memberSnapshot().then(function () { if (L && scope === sessionGeneration) render(); });
+  }
+  if (domainRequest) {
+    window.addEventListener("mcc:auth-changed", refreshDomainSession);
+    window.addEventListener("storage", function () { if (KEY !== draftKey()) refreshDomainSession(); });
   }
 
   /* ============================================================
@@ -1058,7 +1154,7 @@
        that survives the same shape check the search box applies is
        taken; a query string is typed by whoever holds the link. */
     var qDomain = (q.get("domain") || "").toLowerCase().trim();
-    if (S.offer === "runway" && /^[a-z0-9-]{1,63}\.[a-z]{2,63}$/.test(qDomain)) {
+    if (!domainRequest && S.offer === "runway" && /^[a-z0-9-]{1,63}\.[a-z]{2,63}$/.test(qDomain)) {
       S.domain = "need";
       S.domainName = qDomain;
     }
@@ -1085,6 +1181,20 @@
       var err = el("obErr");
       if (v !== true) { err.textContent = v; err.hidden = false; err.focus && err.focus(); return; }
       err.hidden = true;
+
+      if (s.kind === "domain-request") {
+        if (signedInUser()) { send(); return; }
+        var domainButton = this;
+        domainButton.disabled = true; domainButton.textContent = "Signing in…";
+        ensureAccount().then(function () {
+          if (signedInUser()) { render(); el("obSendMsg").textContent = "Check your details, then request your domain quote."; }
+        }).catch(function (e) {
+          domainButton.disabled = false; domainButton.textContent = "Sign in or create account";
+          err.textContent = typeof e === "string" ? e : (e && e.message) || "Please try again.";
+          err.hidden = false;
+        });
+        return;
+      }
 
       if (s.kind === "review") { send(); return; }
 

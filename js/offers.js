@@ -587,7 +587,7 @@
         btn.setAttribute("href", "onboard.html?offer=" + encodeURIComponent(o.id) +
           "&mode=" + encodeURIComponent(mode) +
           (off.free ? "&domain=" + encodeURIComponent(r.name) : ""));
-        btn.textContent = off.free ? "Ask about " + r.name : "Start with a different name";
+        btn.textContent = off.free ? "Request quote for " + r.name : "Start with a different name";
         if (hold) hold.hidden = true;
       }
       btn.setAttribute("data-domain", r.name);

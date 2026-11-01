@@ -95,6 +95,12 @@ html[data-theme="light"] .ob__rail span.is-done:not(.is-here) { color: rgba(26,2
 .ob__err { margin-top: 0.8rem; font-size: 0.82rem; color: #ff8a8d; line-height: 1.6; font-weight: 600; }
 .ob__note { margin-top: 0.9rem; font-size: 0.78rem; color: var(--cream-dim); line-height: 1.6; }
 .ob__note a { color: var(--ruby-text); text-decoration: none; }
+.ob__contact-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 1rem; }
+.ob__contact-grid > div { min-width: 0; }
+.ob__domain-summary { overflow-wrap: anywhere; }
+@media (min-width: 40rem) {
+  .ob__contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ---------- the money summary ---------- */
 .obsum { margin-top: 1rem; border-radius: 18px; padding: 1.2rem;

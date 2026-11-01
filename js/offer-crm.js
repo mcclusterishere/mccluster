@@ -103,11 +103,26 @@
     return /column|schema cache|PGRST204|PGRST205/i.test(text || "");
   }
 
-  function post(payload) {
+  function buildDomainRequest(state) {
+    return { kind: "onboarding", body: [
+      "DOMAIN QUOTE REQUEST", "INTENT: domain_quote", "Domain: " + state.domainName,
+      "Name: " + (state.name || "").trim(), "Email: " + (state.email || "").trim(),
+      "Phone: " + ((state.phone || "").trim() || "not provided"),
+      "Registration and renewal prices: not yet confirmed.",
+      "Quote request only. No purchase, reservation or registrar contact consent."
+    ].join("\n") };
+  }
+
+  function post(payload, options) {
     var S = window.MCC_SUPA;
+    function checkOwner() {
+      if (options && options.expectedUserId && (!S.uid || S.uid() !== options.expectedUserId)) throw new Error("Session changed");
+    }
     return S.token().then(function (t) {
+      checkOwner();
       if (!t) throw new Error("no session");
       function insert(row) {
+        checkOwner();
         return fetch(S.url + "/rest/v1/site_requests", {
           method: "POST",
           headers: {
@@ -133,7 +148,7 @@
   }
 
   window.MCC_OFFER_CRM = {
-    build: build, post: post, identity: identity,
+    build: build, buildDomainRequest: buildDomainRequest, post: post, identity: identity,
     legacyHeadline: legacyHeadline, stamp: stamp, isSchemaError: isSchemaError
   };
 })();
