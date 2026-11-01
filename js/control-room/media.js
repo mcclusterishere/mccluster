@@ -346,12 +346,14 @@
         (state.jobs.length ? '<div class="cr-genjobs">' + state.jobs.map(renderJobCard).join("") + '</div>' : "") +
         '</div>';
     }
-    return ctx.panel("Generate", state.jobs.length ? state.jobs.length + " tracked" : "real media compute", body, "cr-span-12");
+    var studio = window.CR.productionPlan ? ctx.panel("Production studio", "private drafts", CR.productionPlan.render(), "cr-span-12") : "";
+    return studio + '<details class="cr-span-12"><summary>Quick generation</summary>' + ctx.panel("Generate", state.jobs.length ? state.jobs.length + " tracked" : "real media compute", body, "cr-span-12") + '</details>';
   }
 
   /* Rebinds the panel's own controls after each render. */
   function bind(root) {
     if (!root) return;
+    if (window.CR.productionPlan) CR.productionPlan.bind(root);
     root.querySelectorAll("[data-gen-mode]").forEach(function (b) {
       b.addEventListener("click", function () { state.mode = b.getAttribute("data-gen-mode"); state.submitError = null; ctx.render(); });
     });
@@ -390,7 +392,8 @@
   }
 
   window.CR.media = {
-    init: function (c) { ctx = c; },
+    init: function (c) { ctx = c; if (window.CR.productionPlan) CR.productionPlan.init(c); },
+    trackExisting: track,
     renderPanel: renderPanel,
     bind: bind,
     handleAction: handleAction,

@@ -144,7 +144,7 @@ test('prompt-only generation refuses models that require structured media input 
   try {
     await assert.rejects(
       () => createGeneration(generationRequest(), env, { id: 'user-1' }),
-      (error) => error.status === 422 && /structured media input/.test(error.message)
+      (error) => error.status === 422 && error.detail?.missing_fields?.includes('start_image_url')
     );
     assert.equal(seen.some((href) => href.includes('/rest/v1/rpc/media_create_budgeted_job')), false);
     assert.equal(seen.some((href) => href.includes('fal.run')), false);

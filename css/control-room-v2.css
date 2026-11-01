@@ -281,3 +281,18 @@
 .cr-org__label{display:none;color:var(--cr-faint);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
 .cr-org__select{max-width:38vw;min-height:34px;padding:4px 8px;border:1px solid var(--cr-line);border-radius:8px;background:var(--cr-panel-2);color:var(--cr-text);font:inherit;font-size:max(16px,1em);text-overflow:ellipsis}
 @media (min-width:760px){.cr-org__label{display:inline}.cr-org__select{max-width:260px;font-size:max(16px,12px)}}
+/* Private story authoring shares the existing Create canvas. */
+.cr-plan {padding:16px; min-width:0; overflow-wrap:anywhere;}
+.cr-plan details {margin:16px 0; border-top:1px solid var(--cr-line, #333); padding-top:12px;}
+.cr-plan summary {cursor:pointer; font-weight:650; padding:8px 0;}
+.cr-plan-actions {display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0;}
+.cr-plan-actions>* {max-width:100%; min-width:0;}
+.cr-plan-fields {display:grid; grid-template-columns:minmax(0, 1fr); gap:12px; margin:12px 0;}
+.cr-plan label {display:flex; flex-direction:column; gap:6px; min-width:0;}
+.cr-plan input,.cr-plan textarea,.cr-plan select {box-sizing:border-box; max-width:100%; width:100%; font:inherit; font-size:16px; color:inherit; background:var(--cr-card,#151519); border:1px solid var(--cr-line,#444); border-radius:6px; padding:10px;}
+.cr-plan input[type=checkbox] {width:20px; height:20px;}
+.cr-plan textarea {resize:vertical; line-height:1.5;}
+.cr-plan-takes {display:grid; grid-template-columns:minmax(0,1fr); gap:12px;}
+.cr-plan-take {display:flex; flex-direction:column; gap:10px; min-width:0; border:1px solid var(--cr-line,#444); padding:12px;}
+.cr-plan-take video,.cr-plan-take img {width:100%; max-height:360px; object-fit:contain;}
+@media (min-width:800px) {.cr-plan-takes {grid-template-columns:repeat(2,minmax(0,1fr));}}

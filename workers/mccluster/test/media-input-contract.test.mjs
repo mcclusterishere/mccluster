@@ -65,7 +65,7 @@ const refused422 = (pattern) => (error) => error?.status === 422 && pattern.test
 test('arbitrary structured input cannot unlock a specialized paid model', () => withPlane(async (spent) => {
   await assert.rejects(
     createGeneration(request('/v1/media/generate', { model_id: 'i2v', prompt: 'x', input: { foo: 1 } }), env, { id: 'u' }),
-    refused422(/visual reference media|real reference media/)
+    (error) => error.status === 422 && error.detail?.missing_fields?.includes('start_image_url')
   );
   assert.equal(spent(), false);
 }));

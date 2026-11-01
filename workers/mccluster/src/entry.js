@@ -2,8 +2,9 @@ import core from './index.js';
 import { applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
-import { getUsage, getMediaBudget, updateMediaBudget, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
+import { getUsage, getMediaBudget, updateMediaBudget, createGeneration, estimateGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
+import { handlePlans, handleReferences } from './media/plans.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
 import { handleCoreMcp, handleCoreStatus } from './core/mcp.js';
@@ -442,6 +443,16 @@ async function dispatchRequest(request, env, ctx) {
       }
     }
 
+    if (/^\/v1\/media\/(?:plans(?:\/[^/]+)?|references)$/.test(path)) {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await (path.endsWith('/references') ? handleReferences : handlePlans)(request, env, user));
+      } catch (error) {
+        return fail(request, env, error.message || 'Production plan request failed', error.status || 500);
+      }
+    }
+
     if (path === '/v1/media/models' && request.method === 'GET') {
       try {
         const user = await authUser(request, env);
@@ -461,6 +472,16 @@ async function dispatchRequest(request, env, ctx) {
         return reply(request, env, recommendation);
       } catch (error) {
         return fail(request, env, error.message || 'Media recommendation failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/media/estimate' && request.method === 'POST') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await estimateGeneration(request, env, user));
+      } catch (error) {
+        return fail(request, env, error.message || 'Estimate failed', error.status || 500, error.detail);
       }
     }
 

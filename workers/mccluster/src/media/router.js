@@ -5,6 +5,8 @@ import { requireOrgId } from '../social/security.js';
 import { requireCapability } from '../lib/capabilities.js';
 import { validateModelInput } from './input-contract.js';
 import { recordAudit } from '../lib/audit.js';
+import { planHash } from './plans.js';
+import { withAuthoringInputs } from './authoring-inputs.js';
 
 function headers(env) {
   return {
@@ -42,7 +44,7 @@ async function getOrg(env, userId, requestedOrgId) {
 
 export async function modelById(env, id) {
   const rows = await db(env, `media_models?id=eq.${encodeURIComponent(id)}&enabled=eq.true&select=*`);
-  return rows?.[0] || null;
+  return withAuthoringInputs(rows?.[0] || null);
 }
 
 async function jobById(env, id, orgId) {
@@ -333,7 +335,21 @@ export async function listModels(request, env) {
   let path = 'media_models?enabled=eq.true&order=capability.asc,display_name.asc&select=*';
   if (capability) path += `&capability=eq.${encodeURIComponent(capability)}`;
   if (provider) path += `&provider=eq.${encodeURIComponent(provider)}`;
-  return db(env, path);
+  return (await db(env, path) || []).map(withAuthoringInputs);
+}
+
+export async function estimateGeneration(request, env, user) {
+  const body = await request.json();
+  const org = await getOrg(env, user.id, body.org_id);
+  await requireCapability(env, org, 'media.generate');
+  const model = await modelById(env, body.model_id);
+  if (!model) throw Object.assign(new Error('Unknown or disabled model'), { status: 404 });
+  if (model.provider !== 'fal') throw Object.assign(new Error('Provider adapter not installed'), { status: 501 });
+  const input = { ...(body.input || {}) };
+  if (body.prompt && !input.prompt) input.prompt = body.prompt;
+  validateModelInput(model, input);
+  const estimate = estimateModelCost(model, input);
+  return { estimate, quote_hash: await planHash({ model_id: model.id, input, pricing: model.cost_hint || {}, estimate: estimatePayload(estimate), available: !!estimate.available }), model_id: model.id, provider: model.provider };
 }
 
 export async function createGeneration(request, env, user) {
@@ -357,6 +373,9 @@ export async function createGeneration(request, env, user) {
   const budget = budgetCents(body.budget_cents);
   const budgetUsdMicros = budget === null ? null : budget * 10_000;
   const estimate = estimateModelCost(model, input);
+  if (body.expected_quote_hash && body.expected_quote_hash !== await planHash({ model_id: model.id, input, pricing: model.cost_hint || {}, estimate: estimatePayload(estimate), available: !!estimate.available })) {
+    throw Object.assign(new Error('The inputs or price changed. Review a fresh estimate before generating.'), { status: 409 });
+  }
   if (budget !== null && !estimate.available) {
     throw Object.assign(new Error('This model cannot be safely preflighted against a budget yet'), {
       status: 422,
