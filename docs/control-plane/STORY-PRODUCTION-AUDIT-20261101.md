@@ -28,7 +28,7 @@ The existing universe schema names Higgsfield for planned hero transitions. That
 | [#686](https://github.com/mcclusterishere/mccluster/pull/686), `feature/control-room-consolidation` | `86a90f7199d84b65a22eae67cb30b5c8a3347cd3` | Broad navigation consolidation; not a safe blind merge for a narrow story task. Its module expectations differ from the lyrics branch. |
 | [#687](https://github.com/mcclusterishere/mccluster/pull/687), `feature/prim3-album` | `a2a32da12e39bf33fbaa639f188fda024ab0f26a` | Stacked on #684, adds PRIM3 recordings and machine-timed lyric files. Timed does not mean listened to and approved. |
 
-All four PRs were open and unmerged when rechecked. The branch `feature/character-studio-mvp-20261019` is also being reconciled before any character-editor work. Its existence alone does not prove deployment.
+All four PRs were open and unmerged when rechecked. The fetched `feature/character-studio-mvp-20261019` source includes `character-studio.js` UI and `/v1/house-agents/owner/characters/preview` / `/characters` handlers. Its compiler produces hooks/visual briefs with empty canon references, canon unapproved, and media generation disabled. The pending `20261019211500_character_studio_v1.sql` is not runtime evidence. The production reference library does not create or alter these agent personas.
 
 ## Bounded integration order
 
@@ -39,3 +39,7 @@ All four PRs were open and unmerged when rechecked. The branch `feature/characte
 5. Reuse public-safe episode associations and the existing landing engine. No manuscript text or reveals in public bundles. Unknown/release-unverified mappings stay drafts. Preview is separate from public save.
 
 This is the implementation order, not a claim those integrations are complete. Tests must distinguish mocked local proof from real persistence/provider/deployment evidence. Payments and booking remain outside this work.
+
+## Subsequent local checkpoints
+
+Domain repair: `docs/domain-quote-flow.md`. Production studio: `PRODUCTION-STUDIO-CHECKPOINT-20261101.md`. Lyrics and episode associations: `MUSIC-STORY-CHECKPOINT-20261101.md`. These describe implemented source/mock proof after the baseline inventory above; they do not assert a live deployment.

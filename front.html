@@ -35,6 +35,12 @@
     .front-foot{padding:40px 16px 140px;text-align:center;color:#d8cfc3;font:14px/1.5 system-ui,sans-serif}
     .front-foot .front-links{margin-bottom:18px}
     .front-foot small a{color:#f5efe6}
+    html[data-front-plan],html[data-front-plan] body{background:#0b0908;color:#f5efe6}
+    html[data-front-plan] .hero__sticky{background:#181310;color:#f5efe6}
+    html[data-front-plan] .hero__sticky::after{background:radial-gradient(ellipse at center,transparent,#090706)}
+    html[data-front-plan] .hero__sub{font:16px/1.5 system-ui,sans-serif;letter-spacing:0;text-transform:none;max-width:36rem}
+    html[data-front-plan] .hero__sub span{text-transform:none}
+    html[data-front-plan] .front-project-note{color:#e1d8cd}
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -208,6 +214,7 @@
   <script defer src="vendor/ScrollTrigger.min.js?v=__STAMP__"></script>
   <script defer src="js/parallax.js?v=__STAMP__"></script>
   <!-- reads the account's page, fills the words in, then starts js/main.js with its media -->
+  <script defer src="js/story-links.js?v=__STAMP__"></script>
   <script defer src="js/front-projects.js?v=__STAMP__"></script>
   <script defer src="js/front-member.js?v=__STAMP__"></script>
   <script defer src="js/backend.js?v=__STAMP__"></script>

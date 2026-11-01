@@ -81,6 +81,8 @@
       border-radius:999px; background:var(--pulse); color:#fff; font:800 .78rem/1 var(--ui); letter-spacing:.04em;
       text-decoration:none; box-shadow:0 12px 34px -16px color-mix(in srgb,var(--pulse) 80%,transparent); }
     .now__service[hidden]{display:none}
+    [data-story-link]{display:block;white-space:normal;font-size:16px;line-height:1.4;padding:10px 0}
+    [data-story-link][hidden],#nowEpisode[hidden]{display:none}
     .lyric-service-cta { color:#fff; text-decoration-color:var(--pulse); text-decoration-thickness:3px;
       text-underline-offset:.16em; background:linear-gradient(180deg,transparent 62%,color-mix(in srgb,var(--pulse) 58%,transparent) 62%);
       border-radius:.15em; padding:0 .04em; position:relative; z-index:8; pointer-events:auto; }
@@ -735,6 +737,7 @@
     <div class="now__meta">
       <div class="now__title" id="nowTitle">·</div>
       <p class="now__by" id="nowBy">Matthew McCluster</p>
+      <p><a id="nowEpisode" hidden></a></p>
       <a class="now__service" id="nowService" href="hire.html" hidden>Take the next step</a>
     </div>
     <div class="now__deck">
@@ -798,6 +801,7 @@
   <script src="js/payments.js?v=__STAMP__"></script>
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/story-links.js?v=__STAMP__"></script>
   <script src="js/lyric-commerce.js?v=__STAMP__"></script>
   <script src="js/music-direct.js?v=__STAMP__"></script>
   <script>
@@ -925,7 +929,7 @@
         '<span class="n">' + (i + 1) + "</span>" +
         '<span class="th"' + (t.poster ? ' style="background-image:url(' + t.poster + ')"' : "") + "></span>" +
         '<span class="t">' + esc(t.title) +
-        '<small>' + esc(t.sub || t.albName || "") + '<span data-plays></span></small></span>' +
+        '<small>' + esc(t.sub || t.albName || "") + '<span data-plays></span></small><a data-story-link hidden></a></span>' +
         '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
         (g ? '<span class="reclock" data-reclock></span>' : "") +
         '<button class="hrt" type="button" data-hrt aria-label="Save to My Rotation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
@@ -1014,6 +1018,7 @@
       document.querySelector(".deckbar__art").src = head.art;
       document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");
       rows = Array.prototype.slice.call(document.querySelectorAll("#tracks li"));
+      rows.forEach(function(row){var link=row.querySelector('[data-story-link]');if(link){link.addEventListener('click',function(event){event.stopPropagation();});if(window.MCC_STORIES)MCC_STORIES.bind(link,row.getAttribute('data-albslug'),row.getAttribute('data-src'));}});
       paintHearts();
       paintGates();
       buildRails(data, pls);
@@ -1452,6 +1457,7 @@
       if (cur !== to && listen) { if (window.MCC_LISTENS) window.MCC_LISTENS.release(listen.handle); listen = null; }
       cur = to;
       deck.src = rows[cur].getAttribute("data-src");
+      if(window.MCC_STORIES)MCC_STORIES.bind(document.getElementById('nowEpisode'),rows[cur].getAttribute('data-albslug'),rows[cur].getAttribute('data-src'));
       /* the track's own grade: chamber silk, glows and filament all follow */
       var exp = {};
       try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {}

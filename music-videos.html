@@ -92,6 +92,7 @@
 
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/story-links.js?v=__STAMP__"></script>
   <script src="js/lyric-commerce.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
@@ -166,13 +167,14 @@
             (LIC[t.title]
               ? ' · <a href="license.html?track=' + LIC[t.title] + '" data-cta="music-video-license">license this track →</a>'
               : "") +
-            '</small><a class="fc__service" data-service href="#" hidden>Take the next step</a></div>' +
+            '</small><a data-story-link hidden></a><a class="fc__service" data-service href="#" hidden>Take the next step</a></div>' +
           '<div class="fc__rail">' +
             '<button class="hrt' + (inRot(t.albSlug, t.title) ? " on" : "") + '" type="button" data-hrt aria-label="Save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
             '<a href="album.html?album=' + t.albSlug + '" aria-label="Open in the player"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M10 18V5l8-2v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="3" fill="currentColor"/><circle cx="15" cy="16" r="3" fill="currentColor"/></svg></a>' +
             '<button type="button" data-share aria-label="Share"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M7 17L17 7M9.5 7H17v7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
           "</div></section>";
       }).join("");
+      if(window.MCC_STORIES)TRACKS.forEach(function(t,i){MCC_STORIES.bind(card(i).querySelector('[data-story-link]'),t.albSlug,t.src);});
       watch();
       var startIndex = 0;
       if (TARGET_ALBUM || TARGET_TRACK) {

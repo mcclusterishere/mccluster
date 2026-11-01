@@ -39,5 +39,18 @@
   };
   function freeze(x) { Object.keys(x).forEach(function (k) { if (x[k] && typeof x[k] === 'object') freeze(x[k]); }); return Object.freeze(x); }
   freeze(projects);
-  w.MCC_FRONT_PROJECTS = Object.freeze({ get: function (slug) { return Object.prototype.hasOwnProperty.call(projects, slug) ? projects[slug] : null; } });
+  var plans={};
+  var ready=w.MCC_STORIES?w.MCC_STORIES.load().then(function(index){
+    (index.shows||[]).forEach(function(show){
+      var showHref='front.html?project='+show.id;
+      function page(id,title,subtitle,links){return{episodePlan:true,attribution:'Episode plans use the canonical PRIM3 course associations. Video release is not verified here.',handle:id,name:title,owner:'Matthew McCluster',ownerHref:'matthew-mccluster.html',config:{scenes:{doors:true,vaunt:false,night:false,world:true},media:{},words:{eyebrow:show.title+' · story and soundtrack',title1:title,title2:'',sub:subtitle,door1:links[0],door2:{label:'PRIM3 course',href:'prim3.html'}},links:links}};}
+      plans[show.id]=page(show.id,show.title,'Episode plans · soundtrack connections',show.episodes.map(function(ep){return{label:ep.id+' · '+ep.title,href:'front.html?project='+w.MCC_STORIES.project(show.id,ep.id)};}));
+      show.episodes.forEach(function(ep){
+        var id=w.MCC_STORIES.project(show.id,ep.id),links=(ep.tracks||[]).map(function(t){return{label:'Listen · '+t.title,href:'album.html?album='+encodeURIComponent(t.album)+'&t='+encodeURIComponent(t.title)};});
+        links.push({label:'All '+show.title+' episode plans',href:showHref});
+        plans[id]=page(id,ep.title,ep.id+' · Episode plan · '+(ep.tracks.length?'Soundtrack linked below.':'Soundtrack recording unassigned in this catalog.')+' Video release not verified.',links);
+      });
+    });return plans;
+  }).catch(function(){return plans;}):Promise.resolve(plans);
+  w.MCC_FRONT_PROJECTS = Object.freeze({ready:ready,get:function(slug){return Object.prototype.hasOwnProperty.call(projects,slug)?projects[slug]:Object.prototype.hasOwnProperty.call(plans,slug)?plans[slug]:null;}});
 })(window);

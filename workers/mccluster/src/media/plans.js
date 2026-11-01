@@ -27,6 +27,7 @@ export function validatePlan(p) {
   if (!text(p.title, 300).trim()) fail('Give the plan a title');
   text(p.script || '', 200000); text(p.canon || '', 30000); text(p.source_ref || '', 2000);
   if (p.work_project_id) id(p.work_project_id);
+  if(p.episode_link){for(const key of ['key','show_id','episode_id','source_unit_id'])text(p.episode_link[key],120);if(p.episode_link.status!=='draft')fail('Episode connections require review before release');}
   if (!Array.isArray(p.scenes) || p.scenes.length > 100) fail('Use at most 100 scenes');
   const keys = new Set();
   for (const s of p.scenes) {

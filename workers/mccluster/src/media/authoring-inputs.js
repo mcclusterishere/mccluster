@@ -5,7 +5,7 @@
    https://fal.ai/models/fal-ai/flux-2-max/edit/api */
 const inputs = {
   'fal-ai/kling-video/v3/standard/image-to-video': {
-    type: 'object', required: ['prompt','start_image_url'], properties: {
+    type: 'object', required: ['start_image_url'], properties: {
       prompt: { type:'string' },
       start_image_url: { type:'string', title:'Starting image' },
       end_image_url: { type:'string', title:'Ending image (optional)' },

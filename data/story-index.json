@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "source": {
+    "repo": "mcclusterishere/Prim3",
+    "path": "learning/course/course-feed.json",
+    "snapshot_date": "2026-11-01",
+    "sha256": "a4c9b72d4dcbb4e706ab589be5051b7bdd8aa12c9225158347b0dd13a75e69c4"
+  },
+  "shows": [
+    {
+      "id": "prim3",
+      "title": "PRIM3",
+      "course_id": "prim3-foundation",
+      "episodes": [
+        {
+          "id": "S01E01",
+          "title": "The Blip",
+          "source_unit_id": "M01",
+          "source_slug": "high-alert",
+          "song": "High Alert",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S01E02",
+          "title": "Permission Slip",
+          "source_unit_id": "M02",
+          "source_slug": "white-grey-black-hat",
+          "song": "White Grey Black Hat",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S01E03",
+          "title": "Open Book",
+          "source_unit_id": "M03",
+          "source_slug": "osint",
+          "song": "OSINT",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S02E01",
+          "title": "The Human Layer",
+          "source_unit_id": "M04",
+          "source_slug": "anti-social-engineering",
+          "song": "Anti Social Engineering",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S02E02",
+          "title": "Four Colors",
+          "source_unit_id": "M05",
+          "source_slug": "red-blue-purple-white-team",
+          "song": "Red Blue Purple White Team",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S02E03",
+          "title": "Dead Air",
+          "source_unit_id": "M06",
+          "source_slug": "got-wifi",
+          "song": "Got Wifi",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": [
+            {
+              "album": "prim3",
+              "src": "assets/audio/got-wifi.mp3",
+              "title": "Got WiFi?"
+            }
+          ]
+        },
+        {
+          "id": "S03E01",
+          "title": "Exposure",
+          "source_unit_id": "M07",
+          "source_slug": "data-breach",
+          "song": "Data Breach",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S03E02",
+          "title": "Bad Input",
+          "source_unit_id": "M08",
+          "source_slug": "app-attacks",
+          "song": "App Attacks",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S03E03",
+          "title": "Patient Zero",
+          "source_unit_id": "M09",
+          "source_slug": "virus-types",
+          "song": "Virus Types",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S04E01",
+          "title": "Clean Install",
+          "source_unit_id": "M10",
+          "source_slug": "installation-types",
+          "song": "Installation Types",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S04E02",
+          "title": "Dumpster Signal",
+          "source_unit_id": "M11",
+          "source_slug": "dive-in",
+          "song": "Dive In",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S04E03",
+          "title": "House of Eyes",
+          "source_unit_id": "M12",
+          "source_slug": "iot",
+          "song": "IoT",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S05E01",
+          "title": "Shared Responsibility",
+          "source_unit_id": "M13",
+          "source_slug": "iaas-saas-paas",
+          "song": "IaaS, SaaS, PaaS",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S05E02",
+          "title": "Own the Exit",
+          "source_unit_id": "M14",
+          "source_slug": "cap-ex-vs-op-ex",
+          "song": "Cap Ex Vs. Op Ex",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S05E03",
+          "title": "Elastic",
+          "source_unit_id": "M15",
+          "source_slug": "trappin-from-the-cloud",
+          "song": "Trappin From The Cloud",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S06E01",
+          "title": "Road Kit",
+          "source_unit_id": "M16",
+          "source_slug": "per-diem",
+          "song": "Per Diem",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S06E02",
+          "title": "Trust Boundary",
+          "source_unit_id": "M17",
+          "source_slug": "patch-work",
+          "song": "Patch Work",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S06E03",
+          "title": "Open Song #21",
+          "source_unit_id": "M18",
+          "source_slug": null,
+          "song": null,
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S07E01",
+          "title": "RAID (HOT SITE)",
+          "source_unit_id": "M19",
+          "source_slug": "raid-hot-site",
+          "song": "RAID (HOT SITE)",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S07E02",
+          "title": "Evil Twin",
+          "source_unit_id": "M20",
+          "source_slug": "evil-twin",
+          "song": "Evil Twin",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        },
+        {
+          "id": "S07E03",
+          "title": "Ghost In The Wires",
+          "source_unit_id": "M21",
+          "source_slug": "ghost-in-the-wires",
+          "song": "Ghost In The Wires",
+          "mapping_status": "course-source-verified",
+          "release_status": "not-verified",
+          "tracks": []
+        }
+      ]
+    }
+  ]
+}

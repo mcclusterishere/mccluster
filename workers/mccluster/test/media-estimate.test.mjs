@@ -25,7 +25,7 @@ test('estimate is read-only, ignores capture time, and stale inputs/price stop b
 test('documented authoring controls fill only absent schemas and keep defaults typed',async()=>{
  const {withAuthoringInputs}=await import('../src/media/authoring-inputs.js');
  const base={provider:'fal',provider_model_id:'fal-ai/kling-video/v3/standard/image-to-video',parameter_schema:{}};
- const filled=withAuthoringInputs(base);assert.deepEqual(filled.parameter_schema.required,['prompt','start_image_url']);assert.equal(filled.parameter_schema.properties.duration.default,'5');assert.equal(filled.parameter_schema.properties.generate_audio.default,true);assert.deepEqual(base.parameter_schema,{});
+ const filled=withAuthoringInputs(base);assert.deepEqual(filled.parameter_schema.required,['start_image_url']);assert.equal(filled.parameter_schema.properties.duration.default,'5');assert.equal(filled.parameter_schema.properties.generate_audio.default,true);assert.deepEqual(base.parameter_schema,{});
  const declared={...base,parameter_schema:{required:['custom']}};assert.equal(withAuthoringInputs(declared),declared);
  assert.equal(withAuthoringInputs({...base,provider:'uninstalled'}).parameter_schema.properties,undefined);
 });

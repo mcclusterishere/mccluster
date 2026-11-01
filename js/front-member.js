@@ -95,13 +95,14 @@
     return c;
   }
   function start(page) {
+    if(page.episodePlan)d.documentElement.setAttribute("data-front-plan", "");
     fill(page);
     var config = settings(page);
     var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
     var isProject = !inStudio && project === page;
     if (isProject) {
       d.documentElement.setAttribute("data-front-project", params.get("project"));
-      d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });
+      d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = params.get('project') !== 'vaunt'; });
       var note = d.createElement('p'); note.className = 'front-project-note';
       note.textContent = 'Managed by ' + project.owner + '. ' + project.attribution;
       d.querySelector('.hero__content').appendChild(note);
@@ -143,7 +144,7 @@
   if (params.has("project")) {
     var project = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(params.get("project"));
     if (project) start(project);
-    else empty("No project here", "This link does not name a published project.", [{ label: "Matthew’s portfolio", href: "index.html" }]);
+    else Promise.resolve(w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.ready).then(function(){var found=w.MCC_FRONT_PROJECTS&&w.MCC_FRONT_PROJECTS.get(params.get('project'));if(found)start(found);else empty("No project here", "This link does not name a published project or an indexed episode plan.", [{ label: "Matthew’s portfolio", href: "index.html" }]);});
     return;
   }
   if (!HANDLE.test(handle)) { empty("No front page here", "This link does not name an account.", [{ label: "Make your own front page", href: "front-studio.html" }]); return; }
