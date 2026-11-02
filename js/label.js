@@ -413,10 +413,16 @@
   /* ============ THE NIGHTCAP: the record tucks the listener in ============ */
   var napAt = 0, napTick = 0, napBtn = null;
   var NAPS = [0, 15, 30, 60];
+  /* Explicit words: what the timer will do, and a way to turn it off. */
+  var napOff = null;
   function napPaint(mins) {
     if (!napBtn) return;
-    napBtn.textContent = mins ? "Sleep in " + mins + " min" : "Sleep timer";
+    napBtn.textContent = mins ? "Stop playback after " + mins + " minutes" : "Sleep timer: off";
+    napBtn.setAttribute("aria-label", mins
+      ? "Sleep timer: playback stops after " + mins + " minutes. Tap to change the time."
+      : "Sleep timer is off. Tap to stop playback after 15 minutes.");
     napBtn.classList.toggle("on", !!mins);
+    if (napOff) napOff.hidden = !mins;
   }
   function napSet(mins) {
     clearInterval(napTick);
@@ -426,7 +432,7 @@
     napTick = setInterval(function () {
       var left = napAt - Date.now();
       if (left > 10000) {
-        if (napBtn) napBtn.textContent = "Sleep in " + Math.ceil(left / 60000) + " min";
+        if (napBtn) napBtn.title = "Playback stops in " + Math.ceil(left / 60000) + " min";
         return;
       }
       /* the last ten seconds dim the lamp (iOS keeps its own volume; pause still lands) */
@@ -454,6 +460,16 @@
       track("nightcap_set", { minutes: NAPS[napIdx] });
     });
     doors.appendChild(napBtn);
+    napOff = document.createElement("button");
+    napOff.type = "button";
+    napOff.id = "nowNapOff";
+    napOff.textContent = "Turn off timer";
+    napOff.hidden = true;
+    napOff.addEventListener("click", function () {
+      napIdx = 0; napSet(0); napBtn.removeAttribute("title");
+      track("nightcap_set", { minutes: 0 });
+    });
+    doors.appendChild(napOff);
   }
   window.MCC_NIGHTCAP = { set: napSet };
 })();

@@ -76,8 +76,8 @@
         "</div>" +
         '<div class="lcd__done" id="lcdDone" hidden>' +
           "<b>It's on the desk.</b>" +
-          "<small>Your request is in. The quote comes back to your email, usually same day — " +
-          "and the record never stopped playing.</small>" +
+          '<small id="lcdDoneNote">Your request is saved on the rights holder\'s desk. Nobody is emailed automatically: ' +
+          "a person reads it and replies to the address you gave. The record never stopped playing.</small>" +
         "</div>" +
       "</div>";
     document.body.appendChild(el);
@@ -107,7 +107,16 @@
     err.hidden = true;
     btn.disabled = true; btn.textContent = "Sending…";
 
-    var note = "LICENSE REQUEST · track: " + v("lcdTrack") +
+    /* WHO CONTROLS THE RIGHTS. The page that opened the desk names the rights
+       holder (album.html sets data-license-holder from the album's artist).
+       Every record the desk lists today is in the house catalog, which the
+       house account controls (Matthew's own records, PRIM3 and the Equity
+       Uprise act it manages), so the request is saved as a house lead and
+       shows in Control (Home → Needs you; People → Inbox). A tenant's own
+       releases are NOT routed here: they need a server route that resolves
+       the release's controller account (pending, see the completion ledger). */
+    var holder = holderName || "Matthew McCluster";
+    var note = "LICENSE REQUEST · rights holder: " + holder + " · track: " + v("lcdTrack") +
       " · org: " + (v("lcdOrg") || "n/a") +
       " · media: " + (v("lcdMedia") || "n/a") +
       " · territory: " + (v("lcdTerritory") || "n/a") +
@@ -133,13 +142,15 @@
 
     if (window.MCC_CRM && window.MCC_CRM.send) {
       window.MCC_CRM.send({
-        name: v("lcdName"), email: v("lcdEmail"), want: "Music / scoring",
+        name: v("lcdName"), email: v("lcdEmail"), want: "License · " + (holderTitle || v("lcdTrack")),
         note: note, campaign: "here-licensing",
       }).then(done).catch(failed);
     } else { failed(); }
   }
 
-  function open(slug, title) {
+  var holderName = "", holderTitle = "";
+  function open(slug, title, holder) {
+    holderName = holder || ""; holderTitle = title || "";
     build();
     var sel = document.getElementById("lcdTrack");
     if (slug && sel.querySelector('[value="' + slug + '"]')) sel.value = slug;
@@ -160,7 +171,7 @@
     var t = e.target.closest && e.target.closest("[data-license]");
     if (!t) return;
     e.preventDefault();
-    open(t.getAttribute("data-license"), t.getAttribute("data-license-title"));
+    open(t.getAttribute("data-license"), t.getAttribute("data-license-title"), t.getAttribute("data-license-holder"));
   });
 
   window.MCC_LICENSE = { open: open, close: close };

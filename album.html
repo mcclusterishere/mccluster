@@ -611,7 +611,7 @@
     .now__tp .now__side:hover { opacity: .9; }
     .now__tp .now__side svg { width: 19px; height: 19px; fill: none; stroke: currentColor;
       stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .now__doors #nowNap { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; }
+    .now__doors #nowNap, .now__doors #nowNapOff { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; min-height: 44px; }
     .now__doors #nowNap.on { color: #fff; background: linear-gradient(165deg,#ff5a5c,#b3121b); }
   </style>
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
@@ -752,8 +752,6 @@
         <p class="now__cred" id="nowCred"></p>
         <div class="now__doors">
           <a href="license.html" id="ecoLic" data-license="who-did-the-shoot">License this track</a>
-          <a href="catalogue.html" id="ecoReg">On the record</a>
-          <a href="hire.html" id="ecoHire">Book the studio</a>
         </div>
       </div>
     </div>
@@ -1500,6 +1498,7 @@
         licEl.href = "license.html" + (licSlug ? "?track=" + licSlug : "");
         licEl.setAttribute("data-license", licSlug || "other");
         licEl.setAttribute("data-license-title", licTitle || "");
+        licEl.setAttribute("data-license-holder", rows[cur].getAttribute("data-artist") || ARTIST);
       }
       if (at) deck.currentTime = at;
       var art = rows[cur].getAttribute("data-art");
@@ -1510,6 +1509,10 @@
       setRoom(rows[cur].getAttribute("data-music-video") || "", rows[cur].getAttribute("data-poster") || "");
       loadLyrics(rows[cur].getAttribute("data-lyrics") || "");
       media(); paintRows(); paintDeck();
+      /* the open sheet follows the record. `now`/`nowFilm` are declared further
+         down; a load() that runs before they exist (the first restore) has no
+         sheet to update yet, and openSheet() renders it when it opens. */
+      if (now && nowFilm) { renderSheetTrack(); if (sheetOn()) paintSheet(); }
     }
     /* A PLAY THAT DOES NOT START MUST SAY SO. deck.play() rejections were
        swallowed, so a track that could not load, or a browser that refused
@@ -1916,26 +1919,43 @@
     var now = el("now"), nowFilm = el("nowFilm"), nowLyr = el("nowLyr");
     var lyrCache = {}, lyrTimed = null, lyrPlain = false, lyrLines = [];
     function sheetOn() { return now.dataset.on === "1"; }
+    /* THE CURRENT TRACK, ONE RENDERER. Title, artist, credit, film and the
+       license door all follow rows[cur]; load() calls this on every track
+       change (manual next/previous, a row tap, AND the deck ending into the
+       next record), so an open Now Playing sheet updates at once, never a
+       timer after a simulated tap. It also tells the page who is playing. */
+    var sheetKey = null;
+    function renderSheetTrack() {
+      if (cur < 0) return;
+      var row = rows[cur], title = row.getAttribute("data-title") || "";
+      el("nowTitle").textContent = title;
+      el("nowBy").textContent = row.getAttribute("data-artist") || ARTIST;
+      el("nowCred").textContent = CRED[title.toLowerCase()] ||
+        "Written & performed by " + (row.getAttribute("data-artist") || ARTIST) + " · QT6KV";
+      if (!row.getAttribute("data-reel")) {
+        var v = row.getAttribute("data-video") || "";
+        nowFilm.poster = row.getAttribute("data-poster") || "";
+        if (v && nowFilm.getAttribute("src") !== v) { nowFilm.src = v; nowFilm.load(); }
+      }
+      var key = row.getAttribute("data-key") || title;
+      if (key !== sheetKey) {
+        sheetKey = key;
+        try {
+          window.dispatchEvent(new CustomEvent("mcc:now-playing", { detail: {
+            key: key, title: title, artist: row.getAttribute("data-artist") || ARTIST, album: ALBUM,
+            art: row.getAttribute("data-art") || "", lyrics: row.getAttribute("data-lyrics") || "",
+            license: (document.getElementById("ecoLic") || {}).href || ""
+          } }));
+        } catch (e) {}
+      }
+    }
     function openSheet() {
       if (cur < 0) return;
       var row = rows[cur];
       now.dataset.on = "1";
-      el("nowTitle").textContent = row.getAttribute("data-title");
-      el("nowCred").textContent = CRED[(row.getAttribute("data-title") || "").toLowerCase()] ||
-        "Written & performed by " + ARTIST + " · QT6KV";
-      var reelSrc = row.getAttribute("data-reel") || "";
-      loadReel(reelSrc);
-      if (!reelSrc) {
-        var v = row.getAttribute("data-video") || "";
-        nowFilm.poster = row.getAttribute("data-poster") || "";
-        if (v && nowFilm.getAttribute("src") !== v) {
-          nowFilm.src = v;
-          nowFilm.load();
-        }
-      }
+      renderSheetTrack();
       nowFilm.muted = true;
       if (!deck.paused) { var pr = nowFilm.play(); if (pr && pr.catch) pr.catch(function () {}); }
-      loadLyrics(row.getAttribute("data-lyrics") || "");
       paintSheet();
       if (window.MCC_TRACK) window.MCC_TRACK("now_sheet_open", { track: row.getAttribute("data-title") });
     }
@@ -2156,8 +2176,8 @@
     el("deckbar").querySelector(".deckbar__art").addEventListener("click", openSheet);
     el("nowDown").addEventListener("click", closeSheet);
     el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
-    el("nowNext").addEventListener("click", function () { next(); setTimeout(openSheet, 60); });
-    el("nowPrev").addEventListener("click", function () { prev(); setTimeout(openSheet, 60); });
+    el("nowNext").addEventListener("click", function () { next(); });
+    el("nowPrev").addEventListener("click", function () { prev(); });
 
     deck.addEventListener("timeupdate", paintSheet);
     deck.addEventListener("play", paintSheet);
