@@ -164,18 +164,22 @@ function wireTravelGestures(){
  canvas.addEventListener('wheel',pauseTravelFollow,{passive:true});
  for(const id of ['ctlZoomIn','ctlZoomOut'])$(id)?.addEventListener('click',pauseTravelFollow,{capture:true});
 }
-/* Parent and iframe controls share one phone canvas: the page's own bar, tabs and buttons that lie over this frame */
+/* Parent and iframe controls share one phone canvas: the page's own bar, tabs and buttons that lie over this frame.
+   Words the page lays over the map without taking a touch (pointer-events:none, the headline above all, which the World's
+   music rewrites with each lyric line) are SOFT: a control keeps clear of them when it can, and sits over them when the
+   alternative is a slot under a tab or button, because a tap passes through words and never through a tab */
 function frameObstacles(){
  const frame=window.frameElement.getBoundingClientRect(),doc=parentFrame.document;
- const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?r:null};
+ const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?{left:r.left,right:r.right,top:r.top,bottom:r.bottom,soft:style.pointerEvents==='none'}:null};
  const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
  const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
  const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
  return {frame,overlap,obstacles:[dock,...['#mccWorldAudioControls','#mnWorldStack','.mn__world-expand','#mnWorldPlay','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r))};
 }
-/* the lowest free slot for a control of this size, bottom right first, then bottom left (or the sides given); null when there is none */
-function clearSlot(size,base,margin,sides=['right','left']){
- const {frame,overlap,obstacles}=frameObstacles();
+/* the lowest free slot for a control of this size, bottom right first, then bottom left (or the sides given); null when there is none.
+   With hardOnly the soft obstacles (words that take no touch) are left out, for when nothing is free of them as well */
+function clearSlot(size,base,margin,sides=['right','left'],hardOnly=false){
+ const found=frameObstacles(),{frame,overlap}=found,obstacles=hardOnly?found.obstacles.filter(r=>!r.soft):found.obstacles;
  for(const side of sides){
   const left=side==='right'?frame.right-size.width-margin:frame.left+margin,right=left+size.width;
   const blocking=obstacles.filter(r=>left<r.right&&right>r.left);
@@ -193,11 +197,12 @@ function liftTravelControls(){
  for(const key of ['bottom','left','right','flex-direction'])rail.style.removeProperty(key);
  if(!travelMode||!parentFrame||!window.frameElement)return;
  try{
-  // Check every obstacle, including Expand when the dock does not overlap this stacked map.
+  // Check every obstacle, including Expand when the dock does not overlap this stacked map. A long lyric line can wrap the
+  // headline over the only free slot on a phone: then the controls sit over the words, never under the mode tabs.
   const preferred=getComputedStyle(rail).flexDirection;
-  for(const direction of [preferred,preferred==='row'?'column':'row']){
+  for(const hardOnly of [false,true])for(const direction of [preferred,preferred==='row'?'column':'row']){
    rail.style.flexDirection=direction;
-   const slot=clearSlot(rail.getBoundingClientRect(),26,12);
+   const slot=clearSlot(rail.getBoundingClientRect(),26,12,undefined,hardOnly);
    if(slot){rail.style.left=slot.side==='left'?'12px':'auto';rail.style.right=slot.side==='right'?'12px':'auto';rail.style.bottom=slot.bottom+'px';return}
   }
   // Extremely short keyboard viewports retain full-size controls. The normal
@@ -212,7 +217,7 @@ function liftWorldCorner(){
  for(const key of ['bottom','left','right'])corner.style.removeProperty(key);
  if(travelMode||!parentFrame||!window.frameElement)return;
  try{
-  const slot=clearSlot(corner.getBoundingClientRect(),24,8);
+  const slot=clearSlot(corner.getBoundingClientRect(),24,8)||clearSlot(corner.getBoundingClientRect(),24,8,undefined,true);
   if(slot){corner.style.left=slot.side==='left'?'8px':'auto';corner.style.right=slot.side==='right'?'8px':'auto';corner.style.bottom=slot.bottom+'px'}
  }catch(_){}
 }
