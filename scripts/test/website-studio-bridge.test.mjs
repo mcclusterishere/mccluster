@@ -5,10 +5,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
+import * as proposal from '../../js/website-studio/proposal.mjs';
 
 const SRC = readFileSync('js/website-studio/editor.mjs', 'utf8').replace(/^import [^\n]+\n/gm, '');
-const flush = async () => { for (let i = 0; i < 14; i++) await new Promise(r => setImmediate(r)); };
-const DOC = { schema: 'website-studio/v1', template: 'motion-portfolio', version: 1, title: 'T', mode: 'scroll', tiles: [{ id: 'a', kind: 'music', headline: 'h', body: 'b' }, { id: 'b', kind: 'native_video', headline: 'h', body: 'b' }, { id: 'c', kind: 'immersive360', headline: 'h', body: 'b' }] };
+const flush = async () => { for (let i = 0; i < 3; i++) { await new Promise(r => setTimeout(r, 4)); for (let j = 0; j < 8; j++) await new Promise(r => setImmediate(r)); } };
+const tile = (id, kind) => ({ id, kind, headline: 'h', body: 'b', source_ref: null, transition: null, playback: 'manual', action: null });
+const DOC = { schema_version: 'website-studio/v1', template_key: 'motion-portfolio', template_version: 1, title: 'T', mode: 'standard', tiles: [tile('a', 'music'), tile('b', 'native_video'), tile('c', 'immersive360')] };
 
 function studio({ routes }) {
   const calls = [], byId = new Map();
@@ -19,7 +21,7 @@ function studio({ routes }) {
       classList: { toggle(c, on) { on ? n._cls.add(c) : n._cls.delete(c); }, contains: c => n._cls.has(c) }, get id() { return this.attrs.id; }, set id(v) { this.setAttribute('id', v); } };
     return n;
   }
-  for (const id of ['useTemplate', 'demo', 'load', 'status', 'auth', 'authLink', 'editor', 'title', 'mode', 'tiles', 'guidance', 'save', 'preview', 'refreshMedia', 'workspace', 'publish', 'published', 'previewPanel', 'back', 'previewHost', 'manage']) byId.set(id, Object.assign(el(id === 'workspace' ? 'select' : 'div'), { attrs: { id } }));
+  for (const id of ['useTemplate', 'demo', 'load', 'status', 'auth', 'authLink', 'editor', 'title', 'mode', 'tiles', 'guidance', 'save', 'preview', 'refreshMedia', 'workspace', 'publish', 'published', 'previewPanel', 'back', 'previewHost', 'manage', 'assist']) byId.set(id, Object.assign(el(id === 'workspace' ? 'select' : 'div'), { attrs: { id } }));
   const document = { getElementById: id => byId.get(id) || null, createElement: t => el(t) };
   const fetch = async (url, init) => {
     const u = new URL(url), method = (init && init.method) || 'GET', body = init && init.body ? JSON.parse(init.body) : null;
@@ -30,9 +32,10 @@ function studio({ routes }) {
   };
   const window = { MCC: { refreshIfNeeded: async () => {}, session: () => ({ access_token: 't' }), user: async () => ({ id: 'u' }) }, addEventListener() {} };
   const ctx = { window, document, location: { search: '?project=alpha' }, fetch, URL, URLSearchParams, sessionStorage: { setItem() {}, removeItem() {} }, confirm: () => true, structuredClone, AbortSignal, JSON, Promise, Object, Array, Number, String, Error, TypeError, Math, setTimeout: f => setImmediate(f), console,
-    assertDocument() {}, renderWebsite() { return () => {}; } };
+    assertDocument() {}, renderWebsite() { return () => {}; }, ...proposal, structuredClone, TextEncoder, crypto: globalThis.crypto };
   vm.runInNewContext(SRC, ctx);
-  return { calls, byId, status: () => byId.get('status').textContent, manage: () => byId.get('manage'),
+  const walk = (n, out = []) => { for (const c of n.children || []) { out.push(c); walk(c, out); } return out; };
+  return { calls, byId, walk, status: () => byId.get('status').textContent, manage: () => byId.get('manage'), assist: () => byId.get('assist'),
     async start() { byId.get('useTemplate').onclick(); await flush(); await flush(); },
     async click(id) { const n = byId.get(id); assert.ok(n, id + ' exists'); n.onclick(); await flush(); await flush(); },
     writes: p => calls.filter(c => c[0] !== 'GET' && c[1].includes(p)) };
@@ -111,4 +114,34 @@ test('where the bridge is unconfigured the legacy single-token PUT remains and n
   assert.equal(s.manage().hidden, true);
   await s.click('save');
   assert.deepEqual(Object.keys(put).sort(), ['document', 'expected_revision']); assert.equal(put.expected_revision, 4); assert.match(s.status(), /revision 5/);
+});
+
+test('the owned proposal slice: own wording → diff → explicit Apply through the dual-revision save → one Undo', async () => {
+  const puts = [];
+  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': v2(9, 4), 'PUT /v2/projects/alpha/tiles': b => { puts.push(b); return v2(9 + puts.length, 4 + puts.length, { draft: { document: b.document } }); } } });
+  await s.start();
+  const assist = s.assist(); assert.equal(assist.hidden, false);
+  const src = s.walk(assist).find(n => n.tagName === 'select' && [...n.children].some(o => o.value === 'own')); src.value = 'own'; src.onchange();
+  const inputs = s.walk(s.assist()); const head = inputs.find(n => n.tagName === 'input'); head.value = 'A clearer heading';
+  inputs.find(n => n.tagName === 'select').value = 'a'; // the fake DOM does not preselect the first option
+  const form = s.assist().children.find(n => n.tagName === 'form'); form.onsubmit({ preventDefault() {} }); await flush(); await flush();
+  const diff = s.walk(s.assist()).find(n => n.tagName === 'dl'); assert.ok(diff, 'a diff is shown: ' + (s.walk(s.assist()).find(n => n.getAttribute && n.getAttribute('role') === 'status') || {}).textContent); assert.equal(s.walk(diff).find(n => n.tagName === 'ins').textContent, 'A clearer heading');
+  assert.equal(puts.length, 0, 'preview persisted nothing');
+  const apply = s.walk(s.assist()).find(n => n.tagName === 'button' && /^Apply/.test(n.textContent)); apply.onclick(); await flush(); await flush();
+  assert.equal(puts.length, 1); assert.equal(puts[0].expected_editor_revision, 9); assert.equal(puts[0].expected_revision, 4);
+  assert.equal(puts[0].document.tiles[0].headline, 'A clearer heading'); assert.equal(puts[0].document.tiles[1].headline, 'h', 'other tiles untouched');
+  assert.match(s.status(), /Applied the proposal · draft revision 5 · editor revision 10/);
+  const undo = s.walk(s.assist()).find(n => n.tagName === 'button' && /^Undo/.test(n.textContent)); assert.ok(undo, 'one undo entry'); undo.onclick(); await flush(); await flush();
+  assert.equal(puts.length, 2); assert.equal(puts[1].expected_editor_revision, 10); assert.equal(puts[1].expected_revision, 5); assert.equal(puts[1].document.tiles[0].headline, 'h', 'the prior draft is saved as a new revision');
+  assert.match(s.status(), /Undone as a new revision/);
+  assert.equal(s.calls.filter(c => c[1].includes('/publish')).length, 0, 'nothing published');
+});
+
+test('a McCluster proposal is honest about an unregistered route, and refuses answers that do not belong to the run', async () => {
+  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': v2(9, 4), 'POST /v1/ai/tile-proposal': { status: 404, body: { error: 'Not found' } } } });
+  await s.start();
+  const ask = s.walk(s.assist()).find(n => n.tagName === 'textarea'); ask.value = 'make it warmer'; s.walk(s.assist()).find(n => n.tagName === 'select').value = 'a';
+  s.assist().children.find(n => n.tagName === 'form').onsubmit({ preventDefault() {} }); await flush(); await flush();
+  assert.match(s.walk(s.assist()).find(n => n.tagName === 'p' && n.getAttribute('role') === 'status').textContent, /not registered on the plane/);
+  const sent = s.calls.find(c => c[1] === '/v1/ai/tile-proposal'); assert.equal(sent[2].target.tileId, 'a'); assert.equal(sent[2].tile.headline, 'h'); assert.ok(!('tiles' in sent[2]), 'only the one tile is sent');
 });

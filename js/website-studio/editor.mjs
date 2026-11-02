@@ -1,5 +1,6 @@
 import {assertDocument} from './contract.mjs';
 import {renderWebsite} from './renderer.mjs';
+import {captureBase,envelope,validateChanges,candidate,stillValid,createRun,undoEntry} from './proposal.mjs';
 const $=id=>document.getElementById(id),API='https://api.mccluster.org/v1/creator-sites/studio';
 const project=new URLSearchParams(location.search).get('project')||'',validProject=/^[a-z0-9][a-z0-9-]{2,39}$/.test(project);let authEpoch=0;
 const projectAPI='https://api.mccluster.org/v1/projects/'+encodeURIComponent(project)+'/tiles';
@@ -11,6 +12,12 @@ let definition,doc,draftID,revision=0,assets=[],processing={can_prepare:false,bl
    reports itself unconfigured, with the existing single expected_revision. */
 let bridge=null;   // null: legacy; otherwise {editor_revision, owner_withdrawn, presentation, removed}
 let conflict=null; // a stale write waiting for a decision: {what, fn}
+/* THE OWNED PROPOSAL SLICE (proposal.mjs): one tile's headline/body, captured against both revisions and a digest;
+   pure preview; explicit Apply = the one dual-revision save; one Undo transaction = a new deliberate save of the
+   prior draft. Source is McCluster (bounded nonstreaming request through the one plane; see the backend request in
+   docs/productization/20261102-claude/HANDOFF.md) or the owner's own typed text. Nothing here publishes. */
+const PROPOSAL_ROUTE='https://api.mccluster.org/v1/ai/tile-proposal';
+let P={state:'idle',base:null,env:null,run:null,cand:null,error:'',source:'mccluster',undo:[]};
 const status=(s,error=false)=>{$('status').textContent=s;$('status').classList.toggle('ws-error',error);};
 async function api(path,init={}){
  const epoch=authEpoch;await window.MCC?.refreshIfNeeded?.();if(epoch!==authEpoch)throw Error('Account changed');
@@ -56,7 +63,7 @@ async function write(path,body,what){
  }
 }
 function pending(){sessionStorage.setItem('studio-template-intent','motion-portfolio');}
-function changed(){dirty=true;status('Unsaved edits. Save before previewing or publishing.');}
+function changed(){dirty=true;status('Unsaved edits. Save before previewing or publishing.');if(P.cand){P.cand=null;P.state='rejected';P.error='The draft changed, so the proposal was set aside. Save, then ask again.';assistPanel();}}
 const node=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
 function field(parent,label,control){control.setAttribute('aria-label',label);const l=node('label',label);l.append(control);parent.append(l);return control;}
 async function media(){const result=await api('/assets');assets=result.assets||[];processing=result.processing||{can_prepare:false,blockers:['Processing readiness could not be verified.']};let notice=$('processingState');if(!notice){notice=node('p');notice.id='processingState';$('guidance').after(notice);}notice.textContent=processing.can_prepare?'Preparation allowance available. Jobs wait for a compatible compute node; refresh media status to track completion.':processing.blockers.join(' ');renderEditor();}
@@ -92,6 +99,79 @@ async function upload(file,settings,select){if(!file)return;return guard(async()
  const token=window.MCC?.session()?.access_token;if(!token||epoch!==authEpoch)throw Error('Account changed');
  const response=await fetch(r.upload_url,{method:'POST',headers:{authorization:'Bearer '+token,'x-site-bytes':String(file.size),'content-type':file.type||'application/octet-stream'},body:file,signal:AbortSignal.timeout(130000)});if(epoch!==authEpoch)throw Error('Account changed');if(!response.ok)throw Error('Upload was not confirmed. Refresh storage in Your site before retrying. Your saved draft has not changed.');
  select(r.asset_id);changed();await media();if(!processing.can_prepare){status('Upload retained. Save your draft to keep this selection. '+processing.blockers.join(' '),true);return;}try{const queued=await api('/assets/'+r.asset_id+'/complete',{method:'POST',body:{}});await media();status('Upload saved; media '+queued.state+'. Save your draft and refresh media status to see the result.');}catch(e){await media();throw Error('Upload retained. Save your draft, then use Prepare or retry. '+e.message);}});}
+function proposalReset(){P.state='idle';P.base=null;P.env=null;P.cand=null;P.error='';if(P.run)P.run.cancel();P.run=null;}
+function assistPanel(){
+ const a=$('assist');if(!a)return;a.replaceChildren();if(!doc||!bridge){a.hidden=true;return;}a.hidden=false;
+ a.append(node('h2','Suggest a change to one tile'));
+ a.append(node('p','One tile\'s headline and description, as a proposal you preview first. Nothing is saved until you press Apply, and Apply is the same revision-checked save as the Save button. Publishing stays separate.'));
+ const form=node('form');form.className='ws-inline';
+ const tileSel=node('select');doc.tiles.forEach((t,i)=>{const o=node('option','Tile '+(i+1)+' · '+t.kind+' · '+(t.headline||'(no headline)').slice(0,40));o.value=t.id;tileSel.append(o);});field(form,'Which tile',tileSel);
+ const src=node('select');for(const [k,l] of [['mccluster','Ask McCluster for wording'],['own','Write the new wording myself']]){const o=node('option',l);o.value=k;src.append(o);}src.value=P.source;src.onchange=()=>{P.source=src.value;assistPanel();};field(form,'Where the suggestion comes from',src);
+ const ask=node('textarea');ask.rows=3;ask.maxLength=2000;const head=node('input');head.maxLength=120;const body=node('textarea');body.rows=4;body.maxLength=2000;
+ if(P.source==='mccluster')field(form,'What should change (sent to McCluster with only that tile\'s current text)',ask);else{field(form,'New headline (leave blank to keep)',head);field(form,'New description (leave blank to keep)',body);}
+ const go=node('button',P.source==='mccluster'?'Ask for a proposal':'Preview my wording');go.type='submit';go.disabled=P.state==='requesting'||P.state==='applying'||busy;form.append(go);
+ form.onsubmit=ev=>{ev.preventDefault();propose(tileSel.value,P.source==='mccluster'?{ask:ask.value}:{headline:head.value,body:body.value});};
+ a.append(form);
+ const st=node('p',P.state==='requesting'?'Asking McCluster… (one bounded request; no streaming)':P.state==='proposed'||P.state==='previewed'?'Proposal ready. Review the change below, then Apply or discard.':P.state==='applying'?'Applying…':P.error||'');st.className=P.error?'ws-error':'';st.setAttribute('role','status');a.append(st);
+ if(P.cand){
+  const diff=node('dl');diff.className='ws-diff';for(const d of P.cand.diff){diff.append(node('dt',d.field));const dd=node('dd');dd.append(node('del',d.before||'(empty)'),node('ins',d.after));diff.append(dd);}a.append(diff);
+  const row=node('div');row.className='ws-inline';
+  const prev=node('button','Preview the whole website with this change');prev.type='button';prev.onclick=()=>{P.state='previewed';show(P.cand.document);};
+  const apply=node('button','Apply (saves a new revision)');apply.type='button';apply.disabled=busy;apply.onclick=()=>guard(applyProposal);
+  const drop=node('button','Discard proposal');drop.type='button';drop.onclick=()=>{proposalReset();assistPanel();};
+  row.append(prev,apply,drop);a.append(row);
+ }
+ if(P.undo.length){const u=P.undo[P.undo.length-1];const undo=node('button','Undo the last applied proposal (saves the previous wording as a new revision)');undo.type='button';undo.disabled=busy;undo.onclick=()=>guard(undoProposal);a.append(undo);a.append(node('p','Last applied: '+u.at+' · saved as draft revision '+u.tokens.studio+', editor revision '+u.tokens.editor+'.'));}
+}
+async function propose(tileId,input){
+ if(dirty){P.error='Save your edits first: a proposal is made against the saved draft so nothing you typed is overwritten quietly.';assistPanel();return;}
+ proposalReset();
+ try{P.base=await captureBase({projectId:project,document:doc,editorRevision:bridge.editor_revision,studioRevision:revision});}
+ catch(e){P.error=e.message;assistPanel();return;}
+ const r=createRun();P.run=r;P.env=envelope(P.base,{proposalId:'prop-'+r.run.id,runId:r.run.id,tileId});
+ const tile=P.base.document.tiles.find(t=>t.id===tileId);
+ let raw;
+ if(P.source==='own'){raw={};if(String(input.headline||'').trim())raw.headline=input.headline;if(String(input.body||'').trim())raw.body=input.body;}
+ else{
+  P.state='requesting';assistPanel();
+  try{
+   const epoch=authEpoch;await window.MCC?.refreshIfNeeded?.();const token=window.MCC?.session()?.access_token;if(!token||epoch!==authEpoch)throw Error('Account changed');
+   const res=await fetch(PROPOSAL_ROUTE,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({schema:P.env.schema,proposal_id:P.env.proposalId,run_id:P.env.runId,target:P.env.target,base_revision:P.env.baseRevision,base_document_digest:P.env.baseDocumentDigest,request:String(input.ask||'').slice(0,2000),tile:{kind:tile.kind,headline:tile.headline,body:tile.body}}),cache:'no-store',signal:AbortSignal.timeout(60000)});
+   const d=await res.json().catch(()=>({}));
+   if(r.run.cancelled)return;
+   if(res.status===404||res.status===503||res.status===501){P.state='failed';P.error='McCluster suggestions are not available on this site yet: the proposal route is not registered on the plane. You can still write the wording yourself above; Apply and Undo work the same way.';assistPanel();return;}
+   if(res.status===401){throw Error('Sign in again to ask McCluster.');}
+   if(res.status===429){throw Error('McCluster is busy (one request at a time). Try again in a moment.');}
+   if(!res.ok)throw Error(d.error||'McCluster could not answer.');
+   if(d.proposal_id!==P.env.proposalId||d.run_id!==P.env.runId)throw Error('The answer does not belong to this request and was discarded.');
+   if(d.status&&d.status!=='complete'){P.state='failed';P.error='The suggestion did not complete ('+d.status+'). Nothing was changed.';assistPanel();return;}
+   raw=d.changes;
+  }catch(e){if(r.run.cancelled)return;P.state='failed';P.error=e.message;assistPanel();return;}
+ }
+ try{P.cand=candidate(P.base,P.env,validateChanges(raw));P.state='proposed';P.error='';}
+ catch(e){P.state='rejected';P.cand=null;P.error='Proposal refused: '+e.message;}
+ assistPanel();
+}
+async function applyProposal(){
+ if(!P.cand||!P.base)return;
+ const still=await stillValid(P.base,{document:doc,editorRevision:bridge.editor_revision,studioRevision:revision,projectId:project});
+ if(!still.ok){P.state='rejected';P.error=still.reason==='dirty_draft'?'The draft changed since this proposal was made. Discard it and ask again.':still.reason==='revision_changed'?'The project was saved elsewhere since this proposal was made. Load the latest draft, then ask again.':'The project changed. Ask again.';assistPanel();return;}
+ P.state='applying';assistPanel();
+ const before=structuredClone(doc),after=P.cand.document;
+ const d=await write('/v2',{document:after},'applied');
+ if(!d){P.state='failed';P.error='Apply was not confirmed; nothing was assumed. Check the status above.';assistPanel();return;}
+ adoptBridge(d);doc=structuredClone(after);dirty=false;renderEditor();
+ P.undo.push(undoEntry({before,after,appliedTokens:{editor:bridge.editor_revision,studio:revision},proposalId:P.env.proposalId}));
+ const n=P.undo.length;proposalReset();P.state='applied';P.error='';status('Applied the proposal · draft revision '+revision+' · editor revision '+bridge.editor_revision+'. Not published.');assistPanel();
+}
+async function undoProposal(){
+ const u=P.undo[P.undo.length-1];if(!u)return;
+ if(dirty){P.error='Save or load first: undo replaces the saved draft, not unsaved typing.';assistPanel();return;}
+ if(bridge.editor_revision!==u.tokens.editor||revision!==u.tokens.studio){P.error='Something was saved after that proposal, so it cannot be undone blindly. Use History or edit by hand.';assistPanel();return;}
+ if(!confirm('Undo the last applied proposal? The previous wording is saved as a NEW revision; nothing is deleted from history.'))return;
+ const d=await write('/v2',{document:u.before},'undone');if(!d)return;
+ adoptBridge(d);doc=structuredClone(u.before);dirty=false;renderEditor();P.undo.pop();status('Undone as a new revision · draft revision '+revision+' · editor revision '+bridge.editor_revision);assistPanel();
+}
 async function start(){
  if(!validProject)throw Error('Choose an existing project from Your projects first.');
  pending();if(!await window.MCC?.user?.()){$('auth').hidden=false;status('Sign in to use this project template.');return;}
@@ -99,7 +179,7 @@ async function start(){
  $('guidance').textContent='Publishing requires an active paid workspace and a public profile. Private media preparation remains separately gated; no processing allowance is granted here. '+definition.guidance.transition.help;
  const saved=await api('');doc=structuredClone(saved.draft?.document||definition.definition);draftID=saved.draft?.id||'project';revision=saved.draft?.revision||0;dirty=!revision;
  bridge=null;try{adoptBridge(await api('/v2'));}catch(e){if(kindOf(e)!=='unconfigured')status(e.message,true);}
- manage();
+ manage();proposalReset();P.undo=[];assistPanel();
  $('editor').hidden=false;$('load').hidden=false;await media();
  $('guidance').textContent=(saved.free_publication?'Publish your owned website for free with a public profile.':'Publishing requires an active paid workspace and a public profile.')+' Media approval and preparation allowances remain separate. '+definition.guidance.transition.help;
  $('workspace').closest('label').hidden=saved.free_publication===true;
@@ -119,4 +199,4 @@ $('back').onclick=()=>{dispose();$('previewPanel').hidden=true;window.scrollTo(0
 $('publish').onclick=()=>guard(async()=>{if(dirty||!revision)throw Error('Save and review the latest draft first.');if(!confirm('Publish this saved version? Media will be visible publicly.'))return;const r=bridge?await write('/v2/publish',{confirm_public:true,org_id:$('workspace').value},'published'):await api('/drafts/'+draftID+'/publish',{method:'POST',body:{expected_revision:revision,confirm_public:true,org_id:$('workspace').value}});if(!r)return;if(bridge)adoptBridge(r);if(r.published!==true)throw Error('Publication not confirmed');const u=new URL(r.url);if(u.origin!=='https://matthew.mccluster.org'||u.pathname!=='/website-studio-view.html')throw Error('Unexpected published destination');const a=node('a','Open published website');a.href=u.href;$('published').replaceChildren(a);status('Published revision '+(r.revision??revision));manage();});
 $('demo').onclick=()=>guard(async()=>{const p=await(await fetch('data/website-studio/demo-v1.json')).json();status('McCluster demonstration. Your own template starts without this footage or wording.');show(p);});
 window.addEventListener('pagehide',()=>dispose());
-window.addEventListener('mcc:auth-changed',()=>{authEpoch++;dispose();doc=null;assets=[];revision=0;draftID=null;$('tiles').replaceChildren();$('editor').hidden=true;$('previewPanel').hidden=true;$('published').replaceChildren();status('Account changed. Reopening your project.');location.reload();});
+window.addEventListener('mcc:auth-changed',()=>{authEpoch++;proposalReset();P.undo=[];dispose();doc=null;assets=[];revision=0;draftID=null;$('tiles').replaceChildren();$('editor').hidden=true;$('previewPanel').hidden=true;$('published').replaceChildren();status('Account changed. Reopening your project.');location.reload();});
