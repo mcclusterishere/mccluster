@@ -41,6 +41,8 @@ let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 
 let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null };
 let look = (() => { try { return localStorage.getItem(LOOK_KEY) === 'studio' ? 'studio' : 'field'; } catch (e) { return 'field'; } })();
 if (PARAMS.get('look') === 'studio' || PARAMS.get('look') === 'field') look = PARAMS.get('look');
+const GRID_KEY = 'prim3.tactics.grid';
+let gridOn = (() => { try { return localStorage.getItem(GRID_KEY) !== 'off'; } catch (e) { return true; } })();
 let gfx = (() => { try { return localStorage.getItem(GFX_KEY) || 'auto'; } catch (e) { return 'auto'; } })();
 document.documentElement.dataset.look = look;
 if (REDUCED) document.documentElement.classList.add('reduce-motion');
@@ -103,6 +105,7 @@ function ensure3d() {
   r3loading = import('./level3d.mjs').then((mod) => {
     r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
     r3loading = null;
+    r3.setGrid(gridOn);
     const s = unitOf(ui.sel); if (s) r3.focus((s.x + SCENE.relay.x) / 2, (s.y + SCENE.relay.y) / 2 + 4, 0, 46);
     render();
   }).catch((e) => { r3loading = null; toast('The 3D view could not load here. ' + esc(e.message || '')); });
@@ -118,8 +121,6 @@ function boardModel() {
   for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: 1.55, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
   m.labels.push({ x: SCENE.relay.x, y: SCENE.relay.y, h: 2.6, kind: 'obj', text: `Relay ${relayLinks()}/2` });
   if (nodeState('RELAY') === 'VERIFIED') m.labels.push({ x: SCENE.extraction.x, y: SCENE.extraction.y, h: 0.4, kind: 'obj', text: 'Extract' });
-  for (let x = 0; x < W; x += 8) { const d = toDisplay(x, 0); m.labels.push({ x, y: H + 0.4, h: 0, kind: 'axis', text: String(d.X) }); }
-  for (let y = 0; y < H; y += 8) { const d = toDisplay(0, y); m.labels.push({ x: -1.4, y, h: 0, kind: 'axis', text: String(d.Y) }); }
   if (ui.preview && ui.preview.kind === 'move') { const d = ui.preview.dest; m.labels.push({ x: d.x, y: d.y, z: d.z, h: 0.1, kind: 'info', text: `${D(d.x, d.y)} · ${ui.preview.steps} steps` }); }
   return m;
 }
@@ -134,6 +135,8 @@ function render() {
   const ph = $('txPhase'); ph.textContent = ui.ended ? (ui.ended === 'win' ? 'Complete' : 'Failed') : state.phase === 'PLAYER' && !ui.busy ? 'Your move' : 'Threat move';
   ph.classList.toggle('is-threat', !!ui.busy || state.phase !== 'PLAYER');
   $('txBusy').hidden = !ui.busy;
+  $('txCoord').textContent = sel ? (() => { const d = toDisplay(sel.x, sel.y); return `${sel.role} (${d.X}, ${d.Y}${sel.z ? ', roof' : ''})`; })() : '';
+  $('txGrid').setAttribute('aria-pressed', String(gridOn)); $('txGrid').lastChild.textContent = gridOn ? 'Grid on' : 'Grid off';
   // objective
   const links = relayLinks();
   const clock = state.mission ? `${state.mission.escalation} · clock ${state.mission.clock}` : '';
@@ -414,6 +417,7 @@ $('txEndTurn').addEventListener('click', endTurn);
 $('camIn').addEventListener('click', () => { if (r3) { r3.zoom(1); render(); } });
 $('camOut').addEventListener('click', () => { if (r3) { r3.zoom(-1); render(); } });
 $('camRot').addEventListener('click', () => { if (r3) r3.rotate(1); });
+$('txGrid').addEventListener('click', () => { gridOn = !gridOn; try { localStorage.setItem(GRID_KEY, gridOn ? 'on' : 'off'); } catch (e) {} if (r3) r3.setGrid(gridOn); render(); });
 $('camAll').addEventListener('click', () => { if (r3) r3.overview(); });
 $('txMapTog').addEventListener('click', () => { const m = $('txMap'); m.hidden = !m.hidden; $('txMapTog').setAttribute('aria-expanded', String(!m.hidden)); drawMap(); if (!m.hidden) m.scrollIntoView({ block: 'nearest' }); });
 $('txSettings').addEventListener('click', () => { const s = $('txSet'); s.hidden = !s.hidden; $('txSettings').setAttribute('aria-expanded', String(!s.hidden)); render(); });

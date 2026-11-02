@@ -25,7 +25,7 @@
     .tx-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,var(--panel2),var(--panel))}
     .tx-logo{width:40px;height:40px;object-fit:contain}
     .tx-title{min-width:0;display:grid;line-height:1.05}
-    .tx-title b{font-size:17px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tx-title b{font-size:15px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .tx-title small{display:none;color:var(--dim);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
     .tx-turn{display:flex;align-items:center;gap:6px;min-width:0}
     .tx-bar{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
@@ -49,6 +49,13 @@
     .b3-label--obj{border:1px solid var(--amber);color:var(--amber);letter-spacing:.14em;font-size:12px;background:rgba(20,14,4,.85)}
     .b3-label--axis{translate:-50% -50%;background:transparent;border:0;color:rgba(230,237,241,.7);font:700 11px/1 ui-monospace,monospace;text-shadow:0 1px 2px #000}
     :root[data-look="studio"] .b3-label--axis{color:#1b2226;text-shadow:0 0 3px #fff}
+    .b3-ruler{position:absolute;left:0;top:0;white-space:nowrap;font:700 11px/1 ui-monospace,monospace;padding:4px 6px;border-radius:3px;background:rgba(8,14,18,.82);border:1px solid rgba(95,230,242,.45);color:#d9f7fa;letter-spacing:.06em}
+    .b3-ruler--x{translate:-50% -50%}.b3-ruler--y{translate:0 -50%}
+    :root[data-look="studio"] .b3-ruler{background:rgba(244,245,246,.9);border-color:rgba(20,26,30,.35);color:#14191c}
+    .tx-coord{position:absolute;left:8px;bottom:8px;padding:6px 9px;border-radius:4px;border:1px solid var(--line2);background:var(--panel);font:700 13px/1 ui-monospace,monospace;letter-spacing:.04em}
+    .tx-coord:empty{display:none}
+    .tx-gridtog{position:absolute;right:62px;bottom:8px;min-height:44px;display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+    .tx-gridtog[aria-pressed="true"]{border-color:var(--squad);color:var(--squad)}
     .b3-label--info{translate:-50% 30%;border-color:var(--amber);color:#fff}
     .tx-obj{position:absolute;left:8px;top:8px;max-width:min(260px,62%);padding:8px 10px;border:1px solid var(--amber);border-radius:6px;background:var(--panel);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
     .tx-obj small{display:block;color:var(--amber);font-size:11px;letter-spacing:.18em}
@@ -129,6 +136,7 @@
     /* tablet: squad cards gain portraits; actions in one row */
     @media (min-width:700px){
       .tx-title small{display:block}
+      .tx-title b{font-size:17px;letter-spacing:.12em}
       .tl{display:inline}
       .tx-stage{aspect-ratio:4/3}
       .sq{grid-template-columns:44px minmax(0,1fr);align-items:center;column-gap:8px}
@@ -176,6 +184,8 @@
         <button type="button" class="ibtn" id="camRot" aria-label="Rotate the camera a quarter turn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>
         <button type="button" class="ibtn" id="camAll" aria-label="Show the whole compound">All</button>
       </div>
+      <span class="tx-coord" id="txCoord" aria-live="polite"></span>
+      <button type="button" class="ibtn tx-gridtog" id="txGrid" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Grid on</button>
       <p class="tx-busy" id="txBusy" hidden>Threat activity</p>
       <div class="tx-end-screen" id="txEnd" hidden></div>
     </section>
