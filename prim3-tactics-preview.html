@@ -136,7 +136,7 @@
     .tbtn svg{width:20px;height:20px;display:block;margin:auto}
     .p3-dock .tbtn--end{min-height:52px;font-size:18px;color:#fff;border:0;background:linear-gradient(180deg,#d8323e,#9c1621);box-shadow:0 8px 20px -8px rgba(216,50,62,.7)}
     .tbtn--view{font-size:14px}
-    /* main menu: a 3D pedestal scene above real buttons; the scene only decorates them */
+    /* main menu: the real battlefield in a slow cinematic orbit behind real buttons; the scene only decorates them */
     .p3-menu[hidden]{display:none}
     .tac.menu-open>:not(.p3-menu){display:none}
     .p3-menu{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
@@ -144,8 +144,9 @@
     .pm-head img{width:56px;height:56px;object-fit:contain;flex:none}
     .pm-head h2{margin:0;font:800 28px/1.05 system-ui,sans-serif;letter-spacing:.01em}
     .pm-head p{margin:2px 0 0;color:var(--p3-dim,#9fb3c0);font-size:14px}
-    .pm-stage{position:relative;aspect-ratio:1/1;max-height:62vh;width:100%;border-radius:var(--p3-r);overflow:hidden;border:1px solid var(--p3-line);background:radial-gradient(120% 90% at 50% 20%,#24364a 0,#121c26 55%,#0a1117 100%)}
-    .pm-stage .m3-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+    .pm-stage{position:relative;aspect-ratio:4/5;max-height:62vh;width:100%;border-radius:var(--p3-r);overflow:hidden;border:1px solid var(--p3-line);background:radial-gradient(120% 90% at 50% 20%,#24364a 0,#121c26 55%,#0a1117 100%)}
+    .pm-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+    .pm-stage .b3-labels{display:none}
     .pm-stage.no-3d::after{content:"";position:absolute;inset:0;background:url(assets/img/prim3-logo.png) center/40% no-repeat;opacity:.5}
     .pm-list{display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
     .pm-opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:56px;padding:10px 14px;border-radius:14px;border:1px solid var(--p3-line);background:rgba(255,255,255,.04);color:inherit;text-align:left;cursor:pointer;font:700 17px/1.2 system-ui,sans-serif}
