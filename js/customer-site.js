@@ -129,7 +129,11 @@
   function renderModules(result, token, id) {
     var c=card(root,'Website modules');
     if(!result.ok||!result.data||!Array.isArray(result.data.modules)) {
-      c.appendChild(el('p','Website module settings are not available yet. Your account and saved pages remain separate.'));return;
+      var why=result.status===503&&result.data&&result.data.code==='unconfigured'?'Website module settings are not switched on for this site yet. Your account and saved pages are unaffected.'
+        :result.status===401?'Your session has expired. Sign in again to see this website\'s module settings.'
+        :result.status===404?'This website is not in your account (or was withdrawn), so its module settings cannot be shown.'
+        :'Website module settings could not be read right now. Nothing has been changed; refresh to try again.';
+      c.appendChild(el('p',why));if(result.status===401)action(actions(c),'Sign in again',signIn,true);return;
     }
     var project=new URLSearchParams(location.search).get('project');
     c.appendChild(el('p',project?'Settings for project: '+project:'Settings for your personal website.'));
@@ -142,11 +146,12 @@
           input.disabled=true;var wanted=input.checked;
           try {
             var response=await fetch('https://api.mccluster.org/v1/customer-site/modules'+(project?'?project='+encodeURIComponent(project):''),{method:'POST',headers:{Authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({module:m.key,enabled:wanted}),signal:controller.signal});
-            if(!response.ok)throw Error('Settings could not be saved.');
-            var d=await response.json();if(id!==generation)return;
-            if(!d.modules.some(function(x){return x.key===m.key&&x.enabled===wanted;}))throw Error('Settings were not confirmed.');
+            var d=await response.json().catch(function(){return null;});if(id!==generation)return;
+            if(!response.ok)throw Error(response.status===401?'Your session expired before the change was saved. Sign in again; nothing was changed.':response.status===404?'This website is no longer in your account; the setting was not changed.':response.status===503?'Module settings are unavailable right now; the setting was not changed.':'The setting could not be saved; nothing was changed.');
+            /* confirmed only by the server's own projection after the write, never by the checkbox */
+            if(!d||!Array.isArray(d.modules)||!d.modules.some(function(x){return x.key===m.key&&x.enabled===wanted;}))throw Error('The server did not confirm the change. Refresh to see the current setting.');
             note.textContent=m.key==='world'?(wanted?'World tab is on for this website.':'World tab is off for this website.'):(wanted?'World discovery is on. Create a listing and keep your page public to appear.':'World discovery is off. Your website is excluded from the directory.');
-          }catch(e){if(id!==generation)return;input.checked=!wanted;note.textContent='Settings could not be saved. Please retry.';}
+          }catch(e){if(id!==generation)return;input.checked=!wanted;note.textContent=e.message||'Settings could not be saved. Please retry.';}
           finally{if(id===generation)input.disabled=false;}
         });
       } else row.appendChild(el('h3',m.name));
