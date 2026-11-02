@@ -8,7 +8,7 @@
    What the player sees is the engine's player projection (fog of war): unseen hostiles are never
    drawn, listed, animated or used for previews. */
 import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase, moveUnit, fireWeapon,
-  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete } from './tactical-resolver.mjs';
+  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete, drawRolls } from './tactical-resolver.mjs';
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
 import { runThreatPhase } from './tactical-threat-ai.mjs';
 import * as LEVEL from './levels/transit-relay.mjs';
@@ -27,7 +27,8 @@ const ROLE = {
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const D = (x, y) => { const d = toDisplay(x, y); return `(${d.X}, ${d.Y})`; };
-const roll100 = () => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % 100; };
+// Every roll comes from the engine's seeded generator, which is saved with the state: reloading the page
+// cannot re-roll a shot, a reaction or a hostile turn.
 
 /* ---------- state, save ---------- */
 function fresh() { return beginPlayerPhase(createState(LEVEL.engineConfig({ seed: Number(PARAMS.get('seed')) || (Date.now() % 1e9) }))); }
@@ -127,7 +128,7 @@ function boardModel() {
 function render() {
   const sel = unitOf(ui.sel);
   if (!r3 && !r3loading) ensure3d();
-  if (r3) r3.update(boardModel());
+  if (r3 && !ui.holdBoard) r3.update(boardModel()); // frozen while engine events play out
   // top bar
   $('txTurn').textContent = String(state.round).padStart(2, '0');
   const ph = $('txPhase'); ph.textContent = ui.ended ? (ui.ended === 'win' ? 'Complete' : 'Failed') : state.phase === 'PLAYER' && !ui.busy ? 'Your move' : 'Threat move';
@@ -285,28 +286,32 @@ async function onSheet(a) {
   if (a.startsWith('aim:')) { aim(a.slice(4)); return; }
   if (a === 'confirm-move') {
     const pv = ui.preview, before = state;
-    try { state = moveUnit(state, sel.id, pv.dest, pv.dash ? 'DASH' : 'MOVE', { path: pv.path, rolls: roll100 }); }
+    try { state = moveUnit(state, sel.id, pv.dest, pv.dash ? 'DASH' : 'MOVE', { path: pv.path }); }
     catch (e) { state = before; toast('The move was refused: ' + esc(e.message)); ui.preview = null; render(); return; }
     ui.mode = null; ui.preview = null; ui.reach = null;
+    save(); // the outcome is final before it is shown
     await play(state.events.slice(before.events.length), before);
     afterChange(); return;
   }
   if (a === 'confirm-fire') {
     const before = state, tgt = ui.preview.target;
-    try { const out = fireWeapon(state, sel.id, tgt, roll100(), roll100()); state = out.state; }
+    try { const d = drawRolls(state, 2); const out = fireWeapon(d.state, sel.id, tgt, d.rolls[0], d.rolls[1]); state = out.state; }
     catch (e) { state = before; toast(esc(e.message)); return; }
     ui.mode = null; ui.preview = null;
+    save();
     await play(state.events.slice(before.events.length), before);
     afterChange();
   }
 }
 
 /* ---------- playing engine events (animation only; the state is already final) ---------- */
+let seenInPlay = new Set();
 function visibleIds(st) { return new Set(playerProjection(st).units.map((u) => u.id)); }
 async function play(events, before) {
   if (!events.length) return;
-  ui.busy = true; render();
+  ui.busy = true; ui.holdBoard = true; render();
   const seenBefore = visibleIds(before), seenAfter = visibleIds(state);
+  seenInPlay = new Set([...seenBefore, ...seenAfter]);
   const shown = (id) => seenBefore.has(id) || seenAfter.has(id);
   const wait = (fn) => new Promise((res) => fn(res));
   const pendingShots = [];
@@ -334,11 +339,13 @@ async function play(events, before) {
     if (ev.type === 'OVERWATCH_SET' && seenAfter.has(ev.unitId) && unitOf(ev.unitId).faction !== 'PLAYER') say(`${ev.unitId} goes on overwatch.`);
   }
   for (const s of pendingShots) { await shot(s.watcherId, s.targetId, s, false); logShot(s, true); }
-  ui.busy = false;
+  ui.busy = false; ui.holdBoard = false;
 }
 function roleOrId(id) { const u = unitOf(id); return u && u.faction === 'PLAYER' ? u.role : id; }
 function logShot(ev, reaction) {
-  const a = roleOrId(ev.attackerId || ev.watcherId), t = roleOrId(ev.targetId), tu = unitOf(ev.targetId);
+  const aid = ev.attackerId || ev.watcherId, au = unitOf(aid);
+  const known = (au && au.faction === 'PLAYER') || seenInPlay.has(aid);
+  const a = known ? roleOrId(aid) : 'An unseen shooter', t = roleOrId(ev.targetId), tu = unitOf(ev.targetId);
   say(`${reaction ? 'Reaction: ' : ''}${a} fires at ${t} (${ev.hitChance}%): ${ev.hit ? `hit for ${ev.damage}${ev.critical ? ', critical' : ''}` : 'miss'}${tu && tu.dead ? `. ${t} is down for good.` : tu && tu.downed ? `. ${t} is downed.` : ''}`);
 }
 function shot(a, t, ev, cinematic) {
@@ -355,13 +362,14 @@ async function endTurn() {
   if (ui.busy || ui.ended || state.phase !== 'PLAYER') return;
   ui.mode = null; ui.preview = null; ui.reach = null; toastMsg = '';
   const before = state;
-  state = beginThreatPhase(state);
-  try {
-    const out = runThreatPhase(state, { rng: roll100 });
-    state = out.state;
-  } catch (e) { say('Threat phase error: ' + e.message); }
-  await play(state.events.slice(before.events.length), before);
-  state = beginPlayerPhase(resolveClockStatePhase(state));
+  let next = beginThreatPhase(state);
+  try { next = runThreatPhase(next).state; } catch (e) { say('Threat phase error: ' + e.message); }
+  const events = next.events.slice(before.events.length);
+  // the whole hostile turn is resolved and saved before any of it is shown: a reload mid-turn lands
+  // on the outcome, never back before End turn
+  state = beginPlayerPhase(resolveClockStatePhase(next));
+  save();
+  await play(events, before);
   say(`New round. Escalation ${state.mission.escalation}.`);
   const s = unitOf(ui.sel); if (!s || s.dead || s.downed || extracted(s)) { const n = state.units.find((u) => u.faction === 'PLAYER' && !u.dead && !u.downed && !extracted(u)); if (n) ui.sel = n.id; }
   afterChange();
