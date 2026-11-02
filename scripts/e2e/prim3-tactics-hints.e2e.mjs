@@ -6,7 +6,9 @@
    refuses an old hint; the unseen hostile is never drawn; saved progress survives a reload and never
    restores a hint; another player's hint is refused; zoom/pan never fires a tap; reduced motion;
    44px targets; axes match the engine; no sideways scroll at 390 and 1280; no page errors.
-   PLAYWRIGHT_DIR=<node_modules> node scripts/e2e/prim3-tactics-hints.e2e.mjs [outDir] */
+   3D checks need three@0.180.0 locally (THREE_DIR=<.../node_modules/three> or installed beside Playwright);
+   without it they print SKIP and are not counted.
+   PLAYWRIGHT_DIR=<node_modules> [THREE_DIR=…] node scripts/e2e/prim3-tactics-hints.e2e.mjs [outDir] */
 import {createRequire} from 'node:module';
 import {readFile,mkdir} from 'node:fs/promises';
 import {join,extname,resolve,sep} from 'node:path';
@@ -66,7 +68,7 @@ const answerOf=page=>page.evaluate(()=>{const a=window.__tac.session.challenge.s
 for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const scope=String(vp.width);
   const {page,errors,ctx}=await context(vp);
-  await page.goto(`${BASE}/prim3-tactics-preview.html`,{waitUntil:'domcontentloaded'});
+  await page.goto(`${BASE}/prim3-tactics-preview.html?view=2d`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelectorAll('#tacBoard .tb-cell').length===100,null,{timeout:15000});
   await page.evaluate(()=>{try{localStorage.clear()}catch(e){}});await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelectorAll('#tacBoard .tb-cell').length===100);
@@ -134,7 +136,7 @@ for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   check(scope,'the save key is scoped to tenant, player and mission',await page.evaluate(()=>window.__tac.SAVE_KEY.endsWith(':preview:you:TR02-PREVIEW')));
   /* zoom/pan never taps */
   await page.locator('#zoomIn').click();await page.locator('#zoomIn').click();
-  check(scope,'zoom in scales the board',/scale\(2\)/.test(await page.locator('#tacBoard').getAttribute('style')));
+  check(scope,'zoom in scales the 2D board',/scale\(2\)/.test(await page.locator('#tacBoard').getAttribute('style')));
   const selBefore=await page.evaluate(()=>window.__tac.ui.selected);
   const box=await page.locator('#tacViewport').boundingBox();
   await page.mouse.move(box.x+box.width*0.6,box.y+box.height*0.6);await page.mouse.down();await page.mouse.move(box.x+box.width*0.3,box.y+box.height*0.3,{steps:6});await page.mouse.up();
@@ -156,8 +158,69 @@ for(const vp of [{width:390,height:844},{width:1280,height:900}]){
 {
   const ctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce',serviceWorkers:'block'});
   await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
-  const page=await ctx.newPage();await page.goto(`${BASE}/prim3-tactics-preview.html`);await page.waitForSelector('#tacBoard .tb-cell');
+  const page=await ctx.newPage();await page.goto(`${BASE}/prim3-tactics-preview.html?view=2d`);await page.waitForSelector('#tacBoard .tb-cell');
   check('reduced-motion','reduced motion turns animation off',await page.evaluate(()=>document.documentElement.classList.contains('reduce-motion')&&getComputedStyle(document.querySelector('.tac-board')).transitionDuration==='0s'));
+  await ctx.close();
+}
+
+/* 3D view: the same board drawn by three.js; taps go through the real WebGL canvas (raycast) */
+const THREE_DIR=process.env.THREE_DIR||(()=>{try{return createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x')).resolve('three/package.json').replace(/package\.json$/,'')}catch{return null}})();
+if(!THREE_DIR){console.log('SKIP [3d] three@0.180.0 not installed locally (set THREE_DIR); the 3D checks did not run');}
+else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
+  const scope='3d-'+vp.width;
+  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const ctx=await browser3.newContext({viewport:vp,serviceWorkers:'block',hasTouch:vp.width<1000});
+  await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());
+    if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.startsWith('/npm/three@0.180.0/'))return route.fulfill({body:await readFile(join(THREE_DIR,u.pathname.replace('/npm/three@0.180.0/',''))),contentType:'text/javascript',headers:{'access-control-allow-origin':'*'}});
+    if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
+    try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
+  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`${BASE}/prim3-tactics-preview.html`);
+  await page.waitForFunction(()=>window.__tac&&window.__tac.mode3d,null,{timeout:20000});await page.waitForTimeout(400);
+  const tap=async(x,y,h=0)=>{const p=await page.evaluate(([x,y,h])=>window.__tac.screenOf(x,y,h),[x,y,h]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(150);};
+  check(scope,'3D is the default view and draws into a WebGL canvas',await page.locator('#tac3d canvas').count()===1&&await page.evaluate(()=>getComputedStyle(document.getElementById('tacBoard')).display==='none'));
+  const painted=await page.evaluate(()=>{const c=document.querySelector('#tac3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});
+  check(scope,'the canvas actually renders the courtyard (centre pixel is not empty)',painted>30,painted);
+  await tap(1,2,0.8);
+  check(scope,'tapping E1 in 3D (body raycast) opens its menu beside it',await page.evaluate(()=>window.__tac.ui.menu&&window.__tac.ui.selected==='E1')&&await page.locator('#tacMenu.is-float').count()===1);
+  const acts=await page.evaluate(()=>[...document.querySelectorAll('#tacMenu [data-act]')].map(b=>b.dataset.act));
+  check(scope,'the 3D menu leads with Move, Inspect and Get hint; the rest sit under More',['move','inspect','hint','more'].every(a=>acts.includes(a))&&!acts.includes('dash'),acts);
+  await page.locator('[data-act="move"]').click();
+  const before=await unit(page,'E1');
+  await tap(3,3);
+  check(scope,'a 3D tap on a lit tile previews it; nothing spent',await page.evaluate(()=>window.__tac.ui.preview&&window.__tac.ui.preview.x===3&&window.__tac.ui.preview.y===3)&&JSON.stringify(await unit(page,'E1'))===JSON.stringify(before));
+  await tap(9,9);
+  check(scope,'a 3D tap on an unreachable tile spends nothing',JSON.stringify(await unit(page,'E1'))===JSON.stringify(before));
+  await tap(3,3);await page.locator('[data-sheet="confirm-move"]').click();
+  const after=await unit(page,'E1');
+  check(scope,'Confirm moves E1 through the resolver in the 3D view',after.x===3&&after.y===3&&after.ap===1,after);
+  await tap(3,3,0.8);await page.locator('[data-act="hint"]').click();
+  const labels=await page.evaluate(()=>[...document.querySelectorAll('.b3-label')].map(l=>l.textContent));
+  check(scope,'the challenge labels Origin and Target in the scene',labels.some(t=>/^Origin \(3, 3\)$/.test(t))&&labels.some(t=>/^Target \(/.test(t)),labels.filter(t=>/Origin|Target/.test(t)));
+  check(scope,'axis labels 0–9 are drawn in the scene',['0','9'].every(n=>labels.includes(n)));
+  check(scope,'the unseen hostile is not labelled in 3D',!labels.includes('H2'));
+  const z0=await page.evaluate(()=>window.__tac.zoomLevel());await page.locator('#zoomIn').click();
+  check(scope,'zoom in moves the 3D camera closer',await page.evaluate(()=>window.__tac.zoomLevel())<z0);
+  await page.locator('#tacView').click();
+  check(scope,'the 2D grid toggle shows the same board as labelled tiles',await page.evaluate(()=>!window.__tac.mode3d&&getComputedStyle(document.getElementById('tacBoard')).display!=='none')&&/x 3, y 3.*squad E1/.test(await page.locator('#tacBoard .tb-cell[data-x="3"][data-y="3"]').getAttribute('aria-label')));
+  check(scope,'no sideways scroll',(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth))===0);
+  check(scope,'no page errors',!errors.length,errors);
+  await page.locator('#tacView').click();await page.waitForTimeout(300);
+  await page.screenshot({path:join(OUT,`prim3-tactics-3d-${vp.width}.png`)});
+  await ctx.close();await browser3.close();
+}
+/* three.js unreachable: the game falls back to the 2D grid and still plays */
+{
+  const ctx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
+  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`${BASE}/prim3-tactics-preview.html`);await page.waitForSelector('#tacBoard .tb-cell');
+  await page.waitForFunction(()=>window.__tac&&!window.__tac.loading3d,null,{timeout:10000});
+  check('fallback','with three.js blocked the 2D grid is shown and says why',await page.evaluate(()=>!window.__tac.mode3d&&getComputedStyle(document.getElementById('tacBoard')).display!=='none')&&/2D grid/.test(await page.locator('#tacSheet').innerText()));
+  await page.locator('#tacBoard .tb-cell[data-x="1"][data-y="2"]').click();
+  check('fallback','the fallback board still plays (menu opens)',await page.locator('#tacMenu [data-act="move"]').count()===1);
+  check('fallback','no page errors',!errors.length,errors);
   await ctx.close();
 }
 await browser.close();

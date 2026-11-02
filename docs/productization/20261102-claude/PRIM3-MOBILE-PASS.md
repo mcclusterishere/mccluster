@@ -74,3 +74,27 @@ The no-auto-action and no-hidden-enemy hint boundary is unchanged.
 - An arcs/boosts rule decision.
 - Access to the private math LMS ref `88ec88a29edd90f21da7eeb6155c6b9c8fd678d5` (not on the remote) to replace the self-built challenge bank.
 - **Hostile AI:** this preview's End turn advances phases without one, because the engine has no threat AI yet.
+
+## 3D pass (owner, 2026-11-02: "more like this … we gotta make it 3D", with a concept mockup)
+
+The concept image is a mockup, not proof of working code. What exists now:
+
+| Item | Status | Evidence / note |
+|---|---|---|
+| 3D courtyard renderer | implemented · verified | `js/prim3-tactics/board3d.mjs` uses three.js **0.180.0**, the version the repo's 3D building pages already load from jsDelivr. It is loaded on demand. It draws the engine's own board: tile (x, y) → world (X = x, Z = y), Y up. **Scene contents:** lit stone tiles with a readable grid, brick wall pillars for walls, cover slabs (with planters on low cover) on the protected side, the relay cabinet with a glowing marker, and operatives with role-coloured bands. Warm low sun, sky fill, soft shadows. e2e checks that the WebGL canvas renders: the centre pixel is non-empty under SwiftShader. |
+| Same rules | verified | The 3D view is a renderer only. Taps go through a raycast to a tile, then the same `onBoardTap`, which uses the resolver's `moveUnit`/`fireWeapon` and the shared `knownPaths`. e2e: a tap through the canvas on E1's body opens its menu; a tap on a lit tile previews without spending; an unreachable tap spends nothing; Confirm moves through the resolver. |
+| Mockup layout | implemented | **Layout:** turn bar ("Turn 01 / Your move", using the supplied `prim3-logo.png`, scaled whole) above an objective strip ("Secure the relay · (7, 6)"). Under the board sit the preview strip ("(x, y) → (x, y) · steps · AP · cover · AP left") and the challenge card with "Continue playing". At the bottom, the unit dock shows the role token, "E · Entry", the AP pill and a red End turn button. **Menu and tags:** the operative's menu floats beside it with Move, Fire, Inspect and Get hint, and More for Dash, Reload, Overwatch and Hunker; Origin, Target, Relay and hostile tags are drawn in the scene. **Fixed dark theme:** the page uses one dark tactical palette whatever the system theme. Character portraits from the mockup are **not** added: no supplied portrait art exists, and none was generated. |
+| Visible math in 3D | implemented · verified | Axis labels 0–9 sit along the scene edges; the Origin and Target rings and labels and the x1/x2…, y1… step tiles are drawn on the floor (e2e checks the labels). |
+| Zoom / pan / pinch | implemented · partly verified | The camera zooms by dolly (+/−, wheel, two-finger pinch) and pans by drag; a pan never fires a tap. e2e checks + moves the camera closer; pinch needs a device check. |
+| 2D grid | implemented · verified | The "2D grid" toggle (also `?view=2d`) shows the same board as labelled buttons. It is the accessible view and the fallback. e2e: with three.js blocked, the page falls back to 2D, says why, and still plays. |
+| Hidden information in 3D | verified | The unseen hostile is neither drawn nor labelled (e2e). |
+
+Tests: `scripts/e2e/prim3-tactics-hints.e2e.mjs` **96/96**. That is 65 checks on the 2D grid, 14 in 3D at 390 and 1280 (WebGL via SwiftShader), and 3 for the fallback. The 3D checks need three@0.180.0 installed locally (`THREE_DIR`); without it they print SKIP and are not counted.
+
+Still designed only:
+- authored character models (GLB) and animation;
+- a hand-built courtyard environment (architecture beyond blocks, props, decals);
+- post-processing (bloom on the relay);
+- camera rotation;
+- a fog-of-war shroud rendered over unknown tiles;
+- a real-device performance budget for low-end phones (not measured).
