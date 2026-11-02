@@ -74,7 +74,10 @@ function creditFor(t) {
 
 export function recordings(cat) {
   return (cat.tracks || [])
-    .filter((t) => !t.gated && !NO_GRAPH_ALBUMS.has(t.albumSlug))
+    /* the graph is the REGISTERED discography: a recording joins it when its
+       ISRC is in the ledger (data/ddex/identifiers.json, minted by the owner),
+       never before; until then it is on the shelf and the registry list only */
+    .filter((t) => !t.gated && !NO_GRAPH_ALBUMS.has(t.albumSlug) && t.isrc)
     .map((t) => JSON.parse(JSON.stringify({
       "@type": "MusicRecording",
       "@id": `${SITE}/catalogue.html#${t.slug}`,

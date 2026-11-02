@@ -1,0 +1,1455 @@
+{
+ "duration_seconds": 95,
+ "language": "en",
+ "songTitle": "Test Drive",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:28:43.011Z",
+  "confidence": 0.801,
+  "mismatched_lines": 1,
+  "sheet_lines": 28,
+  "heard_words": 229,
+  "ctc_aligned_lines": 27,
+  "timing": {
+   "align_seconds": 8,
+   "separate_seconds": 49.5,
+   "asr_seconds": 50.3,
+   "map_seconds": 0
+  }
+ },
+ "plain": "Test drive\nImma bring you on a test drive\nPush the needle to the red line\nImma bring you on a test drive\nTry to keep me out of headlines\nKeep the speeding to the left side\nI'll teach you how to get deals\nHighway robbery on wheels. It's a steal\nI'll have you beaming like the headlights\nAfter being on a Test drive\n\nBefore you key ignition\nAdjust the mirrors for peripheral vision\nClick it or ticket. Then twist the ignition and shift the transmission\nstay vigilant turn the signals make sure that they signaling\nHit the high way and go over the limit I'm swerving at 66\nAsk the reason for selling it watch for a tell or suspicious tick\nLike saying he firm but shake wasn't firm when you take a grip on it\nThings that I learned from my life if you adhere you will benefit\nTrust me and click on this\n\nImma bring you on a test drive\nPush the needle to the red line\nImma bring you on a test drive\nTry to keep me out of headlines\nKeep the speeding to the left side\nI'mma teach you how to get deals\nHighway robbery on wheels. It's a steal\nI'll have you beaming like the headlights\nAfter being on a Test drive, test drive, test. Test. Test.",
+ "timed": {
+  "line": [
+   {
+    "begin": 0,
+    "end": 0,
+    "content": "Test drive",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 0,
+      "end": 0,
+      "content": "Test"
+     },
+     {
+      "begin": 0,
+      "end": 0,
+      "content": "drive"
+     }
+    ],
+    "align_score": 0
+   },
+   {
+    "begin": 0.403,
+    "end": 1.955,
+    "content": "Imma bring you on a test drive",
+    "confidence": 0.958,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 0.403,
+      "end": 0.625,
+      "content": "Imma"
+     },
+     {
+      "begin": 0.685,
+      "end": 0.826,
+      "content": "bring"
+     },
+     {
+      "begin": 0.867,
+      "end": 0.947,
+      "content": "you"
+     },
+     {
+      "begin": 1.008,
+      "end": 1.048,
+      "content": "on"
+     },
+     {
+      "begin": 1.129,
+      "end": 1.149,
+      "content": "a"
+     },
+     {
+      "begin": 1.209,
+      "end": 1.431,
+      "content": "test"
+     },
+     {
+      "begin": 1.512,
+      "end": 1.955,
+      "content": "drive"
+     }
+    ],
+    "align_score": 0.843
+   },
+   {
+    "begin": 3.585,
+    "end": 5.054,
+    "content": "Push the needle to the red line",
+    "confidence": 0.571,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 3.585,
+      "end": 3.786,
+      "content": "Push"
+     },
+     {
+      "begin": 3.806,
+      "end": 3.867,
+      "content": "the"
+     },
+     {
+      "begin": 3.927,
+      "end": 4.128,
+      "content": "needle"
+     },
+     {
+      "begin": 4.168,
+      "end": 4.269,
+      "content": "to"
+     },
+     {
+      "begin": 4.309,
+      "end": 4.39,
+      "content": "the"
+     },
+     {
+      "begin": 4.47,
+      "end": 4.631,
+      "content": "red"
+     },
+     {
+      "begin": 4.692,
+      "end": 5.054,
+      "content": "line"
+     }
+    ],
+    "align_score": 0.332
+   },
+   {
+    "begin": 6.885,
+    "end": 8.475,
+    "content": "Imma bring you on a test drive",
+    "confidence": 0.964,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 6.885,
+      "end": 7.046,
+      "content": "Imma"
+     },
+     {
+      "begin": 7.147,
+      "end": 7.288,
+      "content": "bring"
+     },
+     {
+      "begin": 7.348,
+      "end": 7.428,
+      "content": "you"
+     },
+     {
+      "begin": 7.489,
+      "end": 7.529,
+      "content": "on"
+     },
+     {
+      "begin": 7.61,
+      "end": 7.63,
+      "content": "a"
+     },
+     {
+      "begin": 7.69,
+      "end": 7.932,
+      "content": "test"
+     },
+     {
+      "begin": 7.992,
+      "end": 8.475,
+      "content": "drive"
+     }
+    ],
+    "align_score": 0.667
+   },
+   {
+    "begin": 9.985,
+    "end": 11.062,
+    "content": "Try to keep me out of headlines",
+    "confidence": 0.81,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 9.985,
+      "end": 10.106,
+      "content": "Try"
+     },
+     {
+      "begin": 10.166,
+      "end": 10.207,
+      "content": "to"
+     },
+     {
+      "begin": 10.247,
+      "end": 10.388,
+      "content": "keep"
+     },
+     {
+      "begin": 10.428,
+      "end": 10.489,
+      "content": "me"
+     },
+     {
+      "begin": 10.569,
+      "end": 10.65,
+      "content": "out"
+     },
+     {
+      "begin": 10.791,
+      "end": 10.831,
+      "content": "of"
+     },
+     {
+      "begin": 10.872,
+      "end": 11.062,
+      "content": "headlines"
+     }
+    ],
+    "align_score": 0.633
+   },
+   {
+    "begin": 11.062,
+    "end": 13.323,
+    "content": "Keep the speeding to the left side",
+    "confidence": 0.726,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 11.062,
+      "end": 11.404,
+      "content": "Keep"
+     },
+     {
+      "begin": 11.585,
+      "end": 11.726,
+      "content": "the"
+     },
+     {
+      "begin": 11.867,
+      "end": 12.17,
+      "content": "speeding"
+     },
+     {
+      "begin": 12.21,
+      "end": 12.27,
+      "content": "to"
+     },
+     {
+      "begin": 12.331,
+      "end": 12.391,
+      "content": "the"
+     },
+     {
+      "begin": 12.452,
+      "end": 12.633,
+      "content": "left"
+     },
+     {
+      "begin": 13.156,
+      "end": 13.323,
+      "content": "side"
+     }
+    ],
+    "align_score": 0.485
+   },
+   {
+    "begin": 13.323,
+    "end": 15.2,
+    "content": "I'll teach you how to get deals",
+    "confidence": 0.844,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 13.323,
+      "end": 13.485,
+      "content": "I'll"
+     },
+     {
+      "begin": 13.525,
+      "end": 13.666,
+      "content": "teach"
+     },
+     {
+      "begin": 13.687,
+      "end": 13.767,
+      "content": "you"
+     },
+     {
+      "begin": 13.808,
+      "end": 13.888,
+      "content": "how"
+     },
+     {
+      "begin": 13.929,
+      "end": 13.969,
+      "content": "to"
+     },
+     {
+      "begin": 14.07,
+      "end": 14.332,
+      "content": "get"
+     },
+     {
+      "begin": 14.453,
+      "end": 15.2,
+      "content": "deals"
+     }
+    ],
+    "align_score": 0.544
+   },
+   {
+    "begin": 16.344,
+    "end": 18.677,
+    "content": "Highway robbery on wheels. It's a steal",
+    "confidence": 0.926,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 16.344,
+      "end": 16.585,
+      "content": "Highway"
+     },
+     {
+      "begin": 16.646,
+      "end": 16.968,
+      "content": "robbery"
+     },
+     {
+      "begin": 17.33,
+      "end": 17.37,
+      "content": "on"
+     },
+     {
+      "begin": 17.51,
+      "end": 17.832,
+      "content": "wheels."
+     },
+     {
+      "begin": 18.074,
+      "end": 18.154,
+      "content": "It's"
+     },
+     {
+      "begin": 18.234,
+      "end": 18.255,
+      "content": "a"
+     },
+     {
+      "begin": 18.295,
+      "end": 18.677,
+      "content": "steal"
+     }
+    ],
+    "align_score": 0.393
+   },
+   {
+    "begin": 19.444,
+    "end": 21.34,
+    "content": "I'll have you beaming like the headlights",
+    "confidence": 0.856,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 19.444,
+      "end": 19.545,
+      "content": "I'll"
+     },
+     {
+      "begin": 19.565,
+      "end": 19.686,
+      "content": "have"
+     },
+     {
+      "begin": 19.727,
+      "end": 19.807,
+      "content": "you"
+     },
+     {
+      "begin": 19.848,
+      "end": 20.09,
+      "content": "beaming"
+     },
+     {
+      "begin": 20.11,
+      "end": 20.251,
+      "content": "like"
+     },
+     {
+      "begin": 20.271,
+      "end": 20.432,
+      "content": "the"
+     },
+     {
+      "begin": 20.513,
+      "end": 21.34,
+      "content": "headlights"
+     }
+    ],
+    "align_score": 0.493
+   },
+   {
+    "begin": 22.786,
+    "end": 24.538,
+    "content": "After being on a Test drive",
+    "confidence": 0.981,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 22.786,
+      "end": 23.007,
+      "content": "After"
+     },
+     {
+      "begin": 23.047,
+      "end": 23.249,
+      "content": "being"
+     },
+     {
+      "begin": 23.35,
+      "end": 23.41,
+      "content": "on"
+     },
+     {
+      "begin": 23.47,
+      "end": 23.49,
+      "content": "a"
+     },
+     {
+      "begin": 23.551,
+      "end": 23.752,
+      "content": "Test"
+     },
+     {
+      "begin": 23.853,
+      "end": 24.538,
+      "content": "drive"
+     }
+    ],
+    "align_score": 0.567
+   },
+   {
+    "begin": 27.207,
+    "end": 28.183,
+    "content": "Before you key ignition",
+    "confidence": 0.837,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 27.207,
+      "end": 27.408,
+      "content": "Before"
+     },
+     {
+      "begin": 27.449,
+      "end": 27.529,
+      "content": "you"
+     },
+     {
+      "begin": 27.59,
+      "end": 27.812,
+      "content": "key"
+     },
+     {
+      "begin": 27.872,
+      "end": 28.183,
+      "content": "ignition"
+     }
+    ],
+    "align_score": 0.851
+   },
+   {
+    "begin": 28.183,
+    "end": 30.418,
+    "content": "Adjust the mirrors for peripheral vision",
+    "confidence": 0.975,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 28.183,
+      "end": 28.525,
+      "content": "Adjust"
+     },
+     {
+      "begin": 28.565,
+      "end": 28.626,
+      "content": "the"
+     },
+     {
+      "begin": 28.666,
+      "end": 28.847,
+      "content": "mirrors"
+     },
+     {
+      "begin": 28.887,
+      "end": 28.968,
+      "content": "for"
+     },
+     {
+      "begin": 29.028,
+      "end": 29.471,
+      "content": "peripheral"
+     },
+     {
+      "begin": 29.572,
+      "end": 30.418,
+      "content": "vision"
+     }
+    ],
+    "align_score": 0.528
+   },
+   {
+    "begin": 30.824,
+    "end": 33.919,
+    "content": "Click it or ticket. Then twist the ignition and shift the transmission",
+    "confidence": 0.729,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 30.824,
+      "end": 30.985,
+      "content": "Click"
+     },
+     {
+      "begin": 31.005,
+      "end": 31.045,
+      "content": "it"
+     },
+     {
+      "begin": 31.126,
+      "end": 31.166,
+      "content": "or"
+     },
+     {
+      "begin": 31.226,
+      "end": 31.447,
+      "content": "ticket."
+     },
+     {
+      "begin": 31.467,
+      "end": 31.548,
+      "content": "Then"
+     },
+     {
+      "begin": 31.588,
+      "end": 31.809,
+      "content": "twist"
+     },
+     {
+      "begin": 31.829,
+      "end": 31.889,
+      "content": "the"
+     },
+     {
+      "begin": 31.909,
+      "end": 32.231,
+      "content": "ignition"
+     },
+     {
+      "begin": 32.271,
+      "end": 32.331,
+      "content": "and"
+     },
+     {
+      "begin": 32.392,
+      "end": 32.593,
+      "content": "shift"
+     },
+     {
+      "begin": 32.653,
+      "end": 32.713,
+      "content": "the"
+     },
+     {
+      "begin": 32.754,
+      "end": 33.919,
+      "content": "transmission"
+     }
+    ],
+    "align_score": 0.652
+   },
+   {
+    "begin": 34.124,
+    "end": 36.76,
+    "content": "stay vigilant turn the signals make sure that they signaling",
+    "confidence": 0.849,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 34.124,
+      "end": 34.306,
+      "content": "stay"
+     },
+     {
+      "begin": 34.386,
+      "end": 34.728,
+      "content": "vigilant"
+     },
+     {
+      "begin": 34.768,
+      "end": 34.889,
+      "content": "turn"
+     },
+     {
+      "begin": 34.909,
+      "end": 34.969,
+      "content": "the"
+     },
+     {
+      "begin": 35.03,
+      "end": 35.311,
+      "content": "signals"
+     },
+     {
+      "begin": 35.472,
+      "end": 35.573,
+      "content": "make"
+     },
+     {
+      "begin": 35.593,
+      "end": 35.694,
+      "content": "sure"
+     },
+     {
+      "begin": 35.714,
+      "end": 35.794,
+      "content": "that"
+     },
+     {
+      "begin": 35.814,
+      "end": 35.895,
+      "content": "they"
+     },
+     {
+      "begin": 35.955,
+      "end": 36.76,
+      "content": "signaling"
+     }
+    ],
+    "align_score": 0.426
+   },
+   {
+    "begin": 36.863,
+    "end": 39.658,
+    "content": "Hit the high way and go over the limit I'm swerving at 66",
+    "confidence": 0.846,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 36.863,
+      "end": 37.245,
+      "content": "Hit"
+     },
+     {
+      "begin": 37.305,
+      "end": 37.365,
+      "content": "the"
+     },
+     {
+      "begin": 37.406,
+      "end": 37.546,
+      "content": "high"
+     },
+     {
+      "begin": 37.587,
+      "end": 37.687,
+      "content": "way"
+     },
+     {
+      "begin": 37.707,
+      "end": 37.788,
+      "content": "and"
+     },
+     {
+      "begin": 37.808,
+      "end": 37.888,
+      "content": "go"
+     },
+     {
+      "begin": 38.049,
+      "end": 38.19,
+      "content": "over"
+     },
+     {
+      "begin": 38.25,
+      "end": 38.311,
+      "content": "the"
+     },
+     {
+      "begin": 38.371,
+      "end": 38.592,
+      "content": "limit"
+     },
+     {
+      "begin": 38.612,
+      "end": 38.693,
+      "content": "I'm"
+     },
+     {
+      "begin": 38.753,
+      "end": 39.014,
+      "content": "swerving"
+     },
+     {
+      "begin": 39.055,
+      "end": 39.115,
+      "content": "at"
+     },
+     {
+      "begin": 39.175,
+      "end": 39.658,
+      "content": "66"
+     }
+    ],
+    "align_score": 0.561
+   },
+   {
+    "begin": 40.182,
+    "end": 42.682,
+    "content": "Ask the reason for selling it watch for a tell or suspicious tick",
+    "confidence": 0.681,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 40.182,
+      "end": 40.283,
+      "content": "Ask"
+     },
+     {
+      "begin": 40.323,
+      "end": 40.404,
+      "content": "the"
+     },
+     {
+      "begin": 40.424,
+      "end": 40.625,
+      "content": "reason"
+     },
+     {
+      "begin": 40.665,
+      "end": 40.766,
+      "content": "for"
+     },
+     {
+      "begin": 40.786,
+      "end": 41.068,
+      "content": "selling"
+     },
+     {
+      "begin": 41.108,
+      "end": 41.148,
+      "content": "it"
+     },
+     {
+      "begin": 41.188,
+      "end": 41.349,
+      "content": "watch"
+     },
+     {
+      "begin": 41.39,
+      "end": 41.47,
+      "content": "for"
+     },
+     {
+      "begin": 41.55,
+      "end": 41.571,
+      "content": "a"
+     },
+     {
+      "begin": 41.611,
+      "end": 41.772,
+      "content": "tell"
+     },
+     {
+      "begin": 41.913,
+      "end": 42.013,
+      "content": "or"
+     },
+     {
+      "begin": 42.255,
+      "end": 42.637,
+      "content": "suspicious"
+     },
+     {
+      "begin": 42.682,
+      "end": 42.682,
+      "content": "tick"
+     }
+    ],
+    "align_score": 0.625
+   },
+   {
+    "begin": 42.682,
+    "end": 45.9,
+    "content": "Like saying he firm but shake wasn't firm when you take a grip on it",
+    "confidence": 0.542,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 42.682,
+      "end": 43.425,
+      "content": "Like"
+     },
+     {
+      "begin": 43.545,
+      "end": 43.766,
+      "content": "saying"
+     },
+     {
+      "begin": 43.786,
+      "end": 43.826,
+      "content": "he"
+     },
+     {
+      "begin": 43.887,
+      "end": 44.108,
+      "content": "firm"
+     },
+     {
+      "begin": 44.63,
+      "end": 44.73,
+      "content": "but"
+     },
+     {
+      "begin": 44.791,
+      "end": 44.951,
+      "content": "shake"
+     },
+     {
+      "begin": 44.991,
+      "end": 45.152,
+      "content": "wasn't"
+     },
+     {
+      "begin": 45.212,
+      "end": 45.353,
+      "content": "firm"
+     },
+     {
+      "begin": 45.393,
+      "end": 45.473,
+      "content": "when"
+     },
+     {
+      "begin": 45.514,
+      "end": 45.574,
+      "content": "you"
+     },
+     {
+      "begin": 45.614,
+      "end": 45.815,
+      "content": "take"
+     },
+     {
+      "begin": 45.835,
+      "end": 45.855,
+      "content": "a"
+     },
+     {
+      "begin": 45.895,
+      "end": 45.9,
+      "content": "grip"
+     },
+     {
+      "begin": 45.9,
+      "end": 45.9,
+      "content": "on"
+     },
+     {
+      "begin": 45.9,
+      "end": 45.9,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.44
+   },
+   {
+    "begin": 45.9,
+    "end": 49.237,
+    "content": "Things that I learned from my life if you adhere you will benefit",
+    "confidence": 0.74,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 45.9,
+      "end": 46.946,
+      "content": "Things"
+     },
+     {
+      "begin": 46.986,
+      "end": 47.066,
+      "content": "that"
+     },
+     {
+      "begin": 47.106,
+      "end": 47.127,
+      "content": "I"
+     },
+     {
+      "begin": 47.207,
+      "end": 47.368,
+      "content": "learned"
+     },
+     {
+      "begin": 47.448,
+      "end": 47.549,
+      "content": "from"
+     },
+     {
+      "begin": 47.569,
+      "end": 47.609,
+      "content": "my"
+     },
+     {
+      "begin": 47.629,
+      "end": 47.85,
+      "content": "life"
+     },
+     {
+      "begin": 48.051,
+      "end": 48.091,
+      "content": "if"
+     },
+     {
+      "begin": 48.152,
+      "end": 48.212,
+      "content": "you"
+     },
+     {
+      "begin": 48.292,
+      "end": 48.554,
+      "content": "adhere"
+     },
+     {
+      "begin": 48.594,
+      "end": 48.674,
+      "content": "you"
+     },
+     {
+      "begin": 48.694,
+      "end": 48.795,
+      "content": "will"
+     },
+     {
+      "begin": 48.815,
+      "end": 49.237,
+      "content": "benefit"
+     }
+    ],
+    "align_score": 0.699
+   },
+   {
+    "begin": 49.987,
+    "end": 50.894,
+    "content": "Trust me and click on this",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 49.987,
+      "end": 50.128,
+      "content": "Trust"
+     },
+     {
+      "begin": 50.208,
+      "end": 50.269,
+      "content": "me"
+     },
+     {
+      "begin": 50.309,
+      "end": 50.37,
+      "content": "and"
+     },
+     {
+      "begin": 50.43,
+      "end": 50.592,
+      "content": "click"
+     },
+     {
+      "begin": 50.652,
+      "end": 50.692,
+      "content": "on"
+     },
+     {
+      "begin": 50.733,
+      "end": 50.894,
+      "content": "this"
+     }
+    ],
+    "align_score": 0.594
+   },
+   {
+    "begin": 51.605,
+    "end": 53.358,
+    "content": "Imma bring you on a test drive",
+    "confidence": 0.956,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 51.605,
+      "end": 51.787,
+      "content": "Imma"
+     },
+     {
+      "begin": 51.887,
+      "end": 52.028,
+      "content": "bring"
+     },
+     {
+      "begin": 52.069,
+      "end": 52.129,
+      "content": "you"
+     },
+     {
+      "begin": 52.23,
+      "end": 52.27,
+      "content": "on"
+     },
+     {
+      "begin": 52.331,
+      "end": 52.351,
+      "content": "a"
+     },
+     {
+      "begin": 52.411,
+      "end": 52.653,
+      "content": "test"
+     },
+     {
+      "begin": 52.834,
+      "end": 53.358,
+      "content": "drive"
+     }
+    ],
+    "align_score": 0.593
+   },
+   {
+    "begin": 54.785,
+    "end": 57.317,
+    "content": "Push the needle to the red line",
+    "confidence": 0.817,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 54.785,
+      "end": 54.925,
+      "content": "Push"
+     },
+     {
+      "begin": 54.965,
+      "end": 55.026,
+      "content": "the"
+     },
+     {
+      "begin": 55.066,
+      "end": 55.287,
+      "content": "needle"
+     },
+     {
+      "begin": 55.327,
+      "end": 55.408,
+      "content": "to"
+     },
+     {
+      "begin": 55.468,
+      "end": 55.528,
+      "content": "the"
+     },
+     {
+      "begin": 55.609,
+      "end": 55.79,
+      "content": "red"
+     },
+     {
+      "begin": 55.87,
+      "end": 57.317,
+      "content": "line"
+     }
+    ],
+    "align_score": 0.361
+   },
+   {
+    "begin": 58.048,
+    "end": 59.617,
+    "content": "Imma bring you on a test drive",
+    "confidence": 0.964,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 58.048,
+      "end": 58.229,
+      "content": "Imma"
+     },
+     {
+      "begin": 58.289,
+      "end": 58.471,
+      "content": "bring"
+     },
+     {
+      "begin": 58.491,
+      "end": 58.551,
+      "content": "you"
+     },
+     {
+      "begin": 58.611,
+      "end": 58.672,
+      "content": "on"
+     },
+     {
+      "begin": 58.732,
+      "end": 58.752,
+      "content": "a"
+     },
+     {
+      "begin": 58.813,
+      "end": 59.074,
+      "content": "test"
+     },
+     {
+      "begin": 59.155,
+      "end": 59.617,
+      "content": "drive"
+     }
+    ],
+    "align_score": 0.569
+   },
+   {
+    "begin": 61.186,
+    "end": 62.08,
+    "content": "Try to keep me out of headlines",
+    "confidence": 0.714,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 61.186,
+      "end": 61.307,
+      "content": "Try"
+     },
+     {
+      "begin": 61.387,
+      "end": 61.448,
+      "content": "to"
+     },
+     {
+      "begin": 61.488,
+      "end": 61.629,
+      "content": "keep"
+     },
+     {
+      "begin": 61.669,
+      "end": 61.73,
+      "content": "me"
+     },
+     {
+      "begin": 61.79,
+      "end": 61.891,
+      "content": "out"
+     },
+     {
+      "begin": 62.011,
+      "end": 62.052,
+      "content": "of"
+     },
+     {
+      "begin": 62.08,
+      "end": 62.08,
+      "content": "headlines"
+     }
+    ],
+    "align_score": 0.761
+   },
+   {
+    "begin": 62.08,
+    "end": 64.283,
+    "content": "Keep the speeding to the left side",
+    "confidence": 0.98,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 62.08,
+      "end": 62.724,
+      "content": "Keep"
+     },
+     {
+      "begin": 62.805,
+      "end": 62.906,
+      "content": "the"
+     },
+     {
+      "begin": 63.027,
+      "end": 63.308,
+      "content": "speeding"
+     },
+     {
+      "begin": 63.349,
+      "end": 63.409,
+      "content": "to"
+     },
+     {
+      "begin": 63.51,
+      "end": 63.57,
+      "content": "the"
+     },
+     {
+      "begin": 63.631,
+      "end": 63.792,
+      "content": "left"
+     },
+     {
+      "begin": 63.872,
+      "end": 64.283,
+      "content": "side"
+     }
+    ],
+    "align_score": 0.665
+   },
+   {
+    "begin": 64.283,
+    "end": 66.4,
+    "content": "I'mma teach you how to get deals",
+    "confidence": 0.964,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 64.283,
+      "end": 64.604,
+      "content": "I'mma"
+     },
+     {
+      "begin": 64.665,
+      "end": 64.785,
+      "content": "teach"
+     },
+     {
+      "begin": 64.805,
+      "end": 64.866,
+      "content": "you"
+     },
+     {
+      "begin": 64.926,
+      "end": 64.986,
+      "content": "how"
+     },
+     {
+      "begin": 65.027,
+      "end": 65.127,
+      "content": "to"
+     },
+     {
+      "begin": 65.228,
+      "end": 65.409,
+      "content": "get"
+     },
+     {
+      "begin": 65.509,
+      "end": 66.4,
+      "content": "deals"
+     }
+    ],
+    "align_score": 0.303
+   },
+   {
+    "begin": 66.4,
+    "end": 69.96,
+    "content": "Highway robbery on wheels. It's a steal",
+    "confidence": 0.638,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 66.4,
+      "end": 67.808,
+      "content": "Highway"
+     },
+     {
+      "begin": 67.868,
+      "end": 68.27,
+      "content": "robbery"
+     },
+     {
+      "begin": 68.572,
+      "end": 68.612,
+      "content": "on"
+     },
+     {
+      "begin": 68.793,
+      "end": 69.256,
+      "content": "wheels."
+     },
+     {
+      "begin": 69.356,
+      "end": 69.437,
+      "content": "It's"
+     },
+     {
+      "begin": 69.477,
+      "end": 69.497,
+      "content": "a"
+     },
+     {
+      "begin": 69.557,
+      "end": 69.96,
+      "content": "steal"
+     }
+    ],
+    "align_score": 0.474
+   },
+   {
+    "begin": 69.965,
+    "end": 73.44,
+    "content": "I'll have you beaming like the headlights",
+    "confidence": 0.63,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 69.965,
+      "end": 70.226,
+      "content": "I'll"
+     },
+     {
+      "begin": 70.809,
+      "end": 70.929,
+      "content": "have"
+     },
+     {
+      "begin": 70.969,
+      "end": 71.05,
+      "content": "you"
+     },
+     {
+      "begin": 71.07,
+      "end": 71.311,
+      "content": "beaming"
+     },
+     {
+      "begin": 71.351,
+      "end": 71.451,
+      "content": "like"
+     },
+     {
+      "begin": 71.492,
+      "end": 71.552,
+      "content": "the"
+     },
+     {
+      "begin": 71.632,
+      "end": 73.44,
+      "content": "headlights"
+     }
+    ],
+    "align_score": 0.577
+   },
+   {
+    "begin": 74.004,
+    "end": 81.099,
+    "content": "After being on a Test drive, test drive, test. Test. Test.",
+    "confidence": 0.942,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 74.004,
+      "end": 74.184,
+      "content": "After"
+     },
+     {
+      "begin": 74.244,
+      "end": 74.485,
+      "content": "being"
+     },
+     {
+      "begin": 74.565,
+      "end": 74.605,
+      "content": "on"
+     },
+     {
+      "begin": 74.685,
+      "end": 74.705,
+      "content": "a"
+     },
+     {
+      "begin": 74.785,
+      "end": 75.006,
+      "content": "Test"
+     },
+     {
+      "begin": 75.407,
+      "end": 75.988,
+      "content": "drive,"
+     },
+     {
+      "begin": 76.068,
+      "end": 76.329,
+      "content": "test"
+     },
+     {
+      "begin": 76.689,
+      "end": 77.251,
+      "content": "drive,"
+     },
+     {
+      "begin": 77.351,
+      "end": 77.611,
+      "content": "test."
+     },
+     {
+      "begin": 78.393,
+      "end": 78.634,
+      "content": "Test."
+     },
+     {
+      "begin": 80.818,
+      "end": 81.099,
+      "content": "Test."
+     }
+    ],
+    "align_score": 0.694
+   }
+  ]
+ }
+}

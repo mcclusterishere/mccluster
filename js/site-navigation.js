@@ -7,8 +7,9 @@
   const {root, house, world, go} = bar.navigation;
   const dock = document.querySelector('.appbar');
   const get = id => document.getElementById(id);
-  let coreReady, panel, profile, installed = false, group = 'All', opening = 0;
-  const groups = ['All', 'Analytics', 'Operations', 'Studio', 'System', 'Products'];
+  let coreReady, panel, profile, installed = false, group = 'All', opening = 0, lastControlTap = null;
+  // The six Control sections come from NAV (js/control-room/nav.js); Products are the product doors.
+  const groups = ['All', 'Home', 'People', 'Sell', 'Create', 'Insights', 'System', 'Products'];
   function element(tag, className, text) {
     const el = document.createElement(tag); el.className = className;
     if (text) el.textContent = text; return el;
@@ -16,9 +17,13 @@
   function core() {
     if (window.CR?.workspaceCore) return Promise.resolve(window.CR.workspaceCore);
     if (!coreReady) coreReady = new Promise((resolve, reject) => {
-      const s = document.createElement('script'); s.src = root + 'js/control-room/workspace-core.js?v=__STAMP__';
-      s.onload = () => window.CR?.workspaceCore ? resolve(window.CR.workspaceCore) : reject(Error('Routes unavailable'));
-      s.onerror = reject; document.head.appendChild(s);
+      const load = path => new Promise((done, fail) => {
+        const s = document.createElement('script'); s.src = root + path + '?v=__STAMP__';
+        s.onload = done; s.onerror = fail; document.head.appendChild(s);
+      });
+      (window.CR?.nav ? Promise.resolve() : load('js/control-room/nav.js'))
+        .then(() => load('js/control-room/workspace-core.js'))
+        .then(() => window.CR?.workspaceCore ? resolve(window.CR.workspaceCore) : reject(Error('Routes unavailable')), reject);
     }).catch(error => {coreReady = null; throw error;});
     return coreReady;
   }
@@ -31,15 +36,12 @@
     const C = window.CR.workspaceCore;
     const native = C.routes.map(route => ({
       href: controlHref(route.hash), hash: route.hash,
-      label: route.hash === '#analytics' ? 'Analytics' : route.label,
-      group: route.hash.startsWith('#system:') ? 'System' : route.hash === '#apps' ? 'Products' :
-        route.page === 'intelligence' ? 'Analytics' : route.page === 'studio' ? 'Studio' : 'Operations',
-      context: route.group
+      label: route.label, group: route.group, context: route.group
     }));
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
       {label:'World', group:'Products', href:world, context:'Equity Uprise'},
-      {label:'Your desk', group:'Operations', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
+      {label:'Your desk', group:'People', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
       {label:'Hitman’s Halo', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'World · Missions · People · Intelligence'},
@@ -49,14 +51,34 @@
     ]);
   }
   function closePanel(focus = false) {
-    ++opening;
+    ++opening; lastControlTap = null; // a double tap is two taps with nothing chosen or closed between them
     if (panel?.matches(':popover-open')) panel.hidePopover();
     const button = get('mccControlToggle');
     button?.setAttribute('aria-expanded', 'false');
     if (focus) button?.focus();
   }
+  /* The six Control sections, straight from NAV, with the live counts Control
+     publishes when it is the page underneath (window.CR.navBadges). */
+  function renderSections() {
+    const host = get('mccSections'), N = window.CR?.nav;
+    if (!host || !N) return;
+    const here = /\/control\.html$/.test(location.pathname) ? window.CR.workspaceCore.resolve(location.hash).section : null;
+    const badges = window.CR.navBadges || {};
+    host.replaceChildren();
+    N.NAV.forEach(section => {
+      const link = element('a', 'mcc-section'); link.href = controlHref(section.route);
+      link.dataset.controlSection = section.id;
+      link.innerHTML = N.icon(section.icon);
+      link.append(element('strong', '', section.label));
+      const count = Number(badges[section.id]) || 0;
+      if (count) { const b = element('span', 'mcc-section__badge', count > 99 ? '99+' : String(count)); b.setAttribute('aria-label', count + ' waiting'); link.append(b); }
+      if (here === section.id) link.setAttribute('aria-current', 'true');
+      host.appendChild(link);
+    });
+  }
   function render() {
     if (!panel) return;
+    renderSections();
     const query = get('mccDestinationSearch').value.trim().toLowerCase();
     const items = entries().filter(item => (group === 'All' || item.group === group) &&
       query.split(/\s+/).every(word => `${item.label} ${item.group} ${item.context} ${item.hash || ''}`.toLowerCase().includes(word)));
@@ -84,8 +106,9 @@
     panel = element('section', 'mcc-destinations'); panel.id = 'mccDestinations';
     panel.setAttribute('popover', 'auto'); panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-label', 'Control destinations');
-    panel.innerHTML = '<header><div><small>CONTROL ROOM</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
+    panel.innerHTML = '<header><div><small>CONTROL ROOM · TAP TWICE FOR TODAY</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
       '<label class="mcc-destinations__search">Find a destination<input id="mccDestinationSearch" type="search" placeholder="People, missions, publishing…" autocomplete="off"></label>' +
+      '<nav class="mcc-sections" id="mccSections" aria-label="Control sections"></nav>' +
       '<div class="mcc-destinations__groups" role="group" aria-label="Destination groups"></div>' +
       '<nav id="mccDestinationList" aria-label="Admin destinations"></nav><p id="mccDestinationCount" role="status" aria-live="polite"></p>';
     groups.forEach(name => {
@@ -107,6 +130,35 @@
         const main = get('crMain'); if (main) {main.tabIndex = -1; main.focus({preventScroll:true});}
       });
     });
+  }
+  /* THE CONTROL BUTTON, ONE TAP AND TWO (owner, 2026-11-02: "you tap it once
+     and it'll open up the bar and then you tap it twice, it actually goes to
+     the situation"). One tap: a light haptic tick and the sections panel,
+     drawn from NAV (js/control-room/nav.js). Two taps inside DOUBLE_TAP_MS
+     (the same 350 ms gap the World's globe double tap uses,
+     js/world-countries.js TAP_GAP): a double tick and straight to Control →
+     Home → Today. The vibration is a no-op where the platform has none, and
+     is skipped when the person asked for reduced motion. */
+  const DOUBLE_TAP_MS = 350;
+  function haptic(pattern) {
+    try {
+      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (_) {}
+  }
+  function controlTap(event) {
+    const now = event && event.timeStamp ? event.timeStamp : performance.now();
+    const double = lastControlTap !== null && now - lastControlTap <= DOUBLE_TAP_MS;
+    lastControlTap = double ? null : now;
+    if (double) {
+      haptic([12, 40, 12]);
+      closePanel();
+      if (!bar.admin()) return;
+      go(controlHref('#home:today'));
+      return;
+    }
+    haptic(10);
+    openPanel();
   }
   async function openPanel() {
     if (panel?.matches(':popover-open')) {closePanel(true); return;}
@@ -136,9 +188,9 @@
       button.id = 'mccControlToggle'; button.dataset.appnav = 'admin-home';
       button.innerHTML = old.innerHTML;
       button.querySelector('span').textContent = 'Control';
-      button.setAttribute('aria-label', 'Open all Control destinations');
+      button.setAttribute('aria-label', 'Control: tap for sections, tap twice for Today');
       button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-controls', 'mccDestinations');
-      button.setAttribute('aria-haspopup', 'dialog'); button.onclick = openPanel;
+      button.setAttribute('aria-haspopup', 'dialog'); button.onclick = controlTap;
       old.replaceWith(button);
     }
     installed = true; document.body.dataset.adminNavigation = 'ready';
@@ -147,12 +199,12 @@
   function markCurrent() {
     if (!installed) return;
     const button = get('mccControlToggle');
-    const on = /\/control\.html$/.test(location.pathname) && location.hash !== '#analytics';
+    const on = /\/control\.html$/.test(location.pathname) && window.CR.workspaceCore.resolve(location.hash).section !== 'insights';
     button?.classList.toggle('is-here', on);
     if (on) button?.setAttribute('aria-current', 'page'); else button?.removeAttribute('aria-current');
     // Analytics uses the same document, preserving org, draft editors and the globe instance.
     const analytics = dock.querySelector('[data-appnav="analytics"]');
-    if (analytics) analytics.href = controlHref('#analytics');
+    if (analytics) analytics.href = controlHref('#insights:overview');
     if (panel?.matches(':popover-open')) render();
   }
   function closeProfile(focus = false) {

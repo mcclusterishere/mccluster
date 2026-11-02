@@ -312,10 +312,10 @@ try {
     ["management.html", async (p) => {
       /* The Socials Room is native to Control now; this address is a
          compatibility URL (js/control-compat.js) and must keep forwarding to
-         the channels desk rather than going dark on an old bookmark. The
+         Create → Publish → Channels rather than going dark on an old bookmark. The
          walk then measures control.html at this width, which is the point. */
       check("management: forwards to Control's channels desk",
-        /control\.html#create:channels$/.test(p.url()), p.url());
+        /control\.html#create:publish:channels$/.test(p.url()), p.url());
     }],
     ["album.html", async (p) => {
       check("album: track rows mounted", await p.locator("#tracks li").count() >= 6);
@@ -822,7 +822,7 @@ try {
       check("desk: forwards to Control", /\/control\.html$/.test(p.url()), p.url());
     }],
     ["inbox.html", async (p) => {
-      check("inbox: forwards to Control's inbox desk", /\/control\.html#work:inbox$/.test(p.url()), p.url());
+      check("inbox: forwards to Control's inbox desk", /\/control\.html#people:inbox:conversations$/.test(p.url()), p.url());
       /* the desk reads through PostgREST with the STAFF member's token and
          writes through the function, so it never needs a privileged key and
          must never carry one */
