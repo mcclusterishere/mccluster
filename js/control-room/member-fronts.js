@@ -13,7 +13,7 @@
   "use strict";
   window.CR=window.CR||{};
   var API="https://api.mccluster.org",HANDLE=/^[a-z0-9][a-z0-9._-]{2,39}$/;
-  var S={handle:"",looking:false,record:null,v2:null,legacy:false,history:null,showHistory:false,message:"",bad:false,working:false,reason:"",conflict:null,done:null};
+  var S={handle:"",looking:false,record:null,v2:null,legacy:false,blocked:null,history:null,showHistory:false,message:"",bad:false,working:false,reason:"",conflict:null,done:null};
   var V2=window.MCC_EDITOR_V2;
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function sb(){return window.MCC_SUPA||{};}
@@ -32,15 +32,16 @@
 
   function look(){
     if(!HANDLE.test(S.handle)){S.message="A handle is 3–40 lowercase letters, digits, dots, underscores or hyphens.";S.bad=true;paint();return;}
-    S.looking=true;S.record=null;S.v2=null;S.legacy=false;S.history=null;S.showHistory=false;S.message="";S.bad=false;S.conflict=null;S.done=null;paint();
+    S.looking=true;S.record=null;S.v2=null;S.legacy=false;S.blocked=null;S.history=null;S.showHistory=false;S.message="";S.bad=false;S.conflict=null;S.done=null;paint();
     var c=client();
-    (c?c.read():Promise.reject(Object.assign(new Error("unconfigured"),{status:503,body:{code:"unconfigured"}}))).then(function(v){
+    (c?c.read():Promise.reject(Object.assign(new Error("no client"),{status:0}))).then(function(v){
+      if(!V2.wellFormed(v))throw Object.assign(new Error("malformed"),{malformed:true,status:200});
       S.v2={revision:v.revision,protected:!!v.protected};S.record=v.snapshot||null;
       if(!S.record)S.message="No front page record for @"+S.handle+" yet.";
     }).catch(function(err){
-      var k=kind(err);
-      if(k==="unconfigured"){S.legacy=true;S.message="Versioned moderation is not switched on here. The legacy takedown route is available: it removes the publication without a revision check.";S.bad=false;}
-      else{S.message=explain(err,"read");S.bad=true;}
+      var cl=V2?V2.classify(err):{kind:"other"};
+      if(V2&&V2.legacyAllowed(cl,null)){S.legacy=true;S.message="Versioned moderation is not switched on here. The legacy takedown route is available: it removes the publication without a revision check.";S.bad=false;}
+      else{S.blocked=cl;S.message=explain(err,"read")+" Takedown is paused until the versioned editor answers; look the page up again.";S.bad=true;}
     }).then(function(){S.looking=false;paint();});
   }
   function loadHistory(){
@@ -49,6 +50,7 @@
   }
   function takedown(){
     if(S.working)return;
+    if(!S.v2&&!S.legacy){S.message="Not taken down: the versioned editor could not be reached. Nothing was changed; look the page up again.";S.bad=true;paint();return;}
     var reason=String(S.reason||"").trim();
     if(!reason){S.message="Write the reason first: it is recorded with the takedown.";S.bad=true;paint();return;}
     if(!window.confirm("Take @"+S.handle+"'s published front page down? The member keeps their draft and cannot republish it from here.\n\nReason: "+reason))return;

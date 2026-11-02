@@ -4,6 +4,17 @@
 
 Status words used below, as WHOLE-SITE-ACCEPTANCE.md defines them: `uninspected` · `blocked` · `implemented locally` · `verified locally` (local fixtures/harness) · `deployed attested` · `functionally verified` (real service). Source / pushed / merged / deployed / functional are separate fields and none of the last three is claimed anywhere.
 
+## Review findings (2026-11-02 08:43 ET) and their corrections
+
+Two confirmed findings against `ab84cb3f`, fixed in this branch and reproduced by runtime regressions:
+
+1. **Fail closed on versioned-API errors.** Before: each editor decided "legacy" when its opening v2 read failed with anything that classified loosely (`/not enabled/` text, a text-only 503) and `front-page.js` also on `signin`; a 403, generic 503, network failure, timeout or malformed body left `v2=null` and the next write branched to the legacy path behind a `updated_at` readback guard. Now: `classify()` recognises `unconfigured` ONLY on the documented signals (`503 {code:"unconfigured"}` from the Worker; `404 PGRST202` for the missing RPC); `legacyAllowed(classified, record)` additionally requires the record not to be `protected`; every editor has a third state, **blocked**, in which save/publish/unpublish/reset/takedown/withdraw are refused with the specific recoverable reason and unsaved edits kept; the legacy readback guard is explicitly a courtesy for a deployment without revisions, never a substitute for revision enforcement, and is closed the moment the versioned API has answered at all. Files: `js/editor-revisions.js`, `js/front-studio.js`, `js/control-room/front-page.js`, `js/site-editor.js`, `js/customer-projects.js`, `js/control-room/member-fronts.js`, `js/website-studio/editor.mjs`.
+2. **Verify the intended operation after a lost response.** Before: `reconcile()` accepted `revision === expected+1` plus a weak state check (`publish` only compared the draft, so `published:null` could be reported as published; `restore` had no link to the requested revision; `unpublish`/`withdraw` would accept any coincidentally matching state). Now: the readback reads the **history** and requires the row at `expected+1` to record **this operation** (`operation` = `save|publish|unpublish|withdraw|recover|restore|takedown`, or `tiles_<action>` for the Tile bridge), for `restore` its `restored_from === restore_revision`, AND the snapshot to show the operation's effect (`publish`: `published` non-null and equal to the sent config; `unpublish`/`withdraw`: `published` null; …). Anything else is **unknown**: shown as such, edits kept, nothing retried; the latest state is offered as a conflict decision. The contract is proven against real SQL + the real Worker adapter (`editor-versioned-db.mjs`, "readback contract" block, now 158 assertions): rows carry `operation`/`restored_from`, publish state is explicit, a protected record refuses a blind legacy write.
+
+Regressions added (runtime harnesses over the real page scripts): front-studio (403/503-generic/503-text-only/network/malformed → blocked, no legacy write, edits kept; lost publish with `published:null` → unknown; lost restore vs unrelated next revision → unknown, genuine `restored_from` row → confirmed; different-operation row at rev+1 → unknown), Control front page (same four failure classes; unrelated `reset` row → unknown), inline editor (403/503/malformed; text-only 503 is not legacy), member fronts (403/503/malformed pause takedown), Website Studio (five failure classes; lost publish without `tiles_publish*` row/published revision → unknown; `tiles_unpublish` row at rev+1 → unknown for a save).
+
+New backend request found while proving the contract (request 6 below): the legacy `managed-projects.js` adapter maps the enrollment trigger's PT409 to a generic 503.
+
 ## Exact sources
 
 | What | Identity |
@@ -26,10 +37,10 @@ Status words used below, as WHOLE-SITE-ACCEPTANCE.md defines them: `uninspected`
 
 | Suite | Result | Scope |
 |---|---|---|
-| Root `node --test scripts/test/*.test.mjs` | **1,384 / 1,384** | includes 7 new harnesses (front-studio 10, Control front page 6, inline editor 3, Studio bridge 7, proposal 5, platform access 5, member fronts 4) and the validator-copy parity test |
+| Root `node --test scripts/test/*.test.mjs` | **1,400 passed · 0 failed · 0 skipped** | includes 9 runtime harnesses with the review-finding regressions (front-studio 10, Control front page 6, inline editor 3, Studio bridge 7, proposal 5, platform access 5, member fronts 4) and the validator-copy parity test |
 | Root Python | 7 / 7 | |
 | Worker `npm test` (with shim, formerly skipped PGlite suites executed) | **1,309 passed · 4 failed (dependency-load, not source) · 0 skipped** of 1,313 — not a fully passing run | the 4 are `test/cloudflare-registration.test.mjs`, `test/registration-contact-vault.test.mjs`, `test/travel-routing.test.mjs` (cannot resolve `@cfworker/json-schema`) and one `observability-instrumentation` case (`fal gateway client is not installed`); they pass where `npm ci` can reach the registry (v4 evidence: 1,338/0) |
-| `editor-versioned-db.mjs` | 144 assertions PASS (free-builder journey + editor contract) | native PG via shim |
+| `editor-versioned-db.mjs` | **158 assertions PASS** (free-builder journey + editor contract + readback contract) | native PG via shim |
 | `tile-editor-bridge-db.mjs` | 57 PASS | native PG via shim |
 | `domain-trial-db.mjs` | 103 SQL/Worker assertions PASS | native PG via shim |
 | `prepared-foundation-db.mjs` / `free-site-minimum-db.mjs` | 28 PASS / PASS | native PG via shim |
@@ -73,6 +84,7 @@ Logs: `evidence/baseline-*.log` (combined baseline before frontend work) and the
 3. **Platform module manager contract** (unchanged from PLATFORM-CONTRACT-QUEUE.md): dependency/version/disable/drain semantics and tenant-scoped admin catalog authorization; the current `customer_site_modules` switches remain the only UI.
 4. **Durable idempotency receipt for Apply** — only if required: CAS suffices for exactly-once in the harness; a request-receipt ledger is not requested now.
 5. **Lyric revision/approval security correction** to accompany #684–#687 before any frontend adoption (INTEGRATION-ORDER 6).
+6. **Legacy adapter status for protected records.** Caller: `js/front-studio.js` legacy path (only when `unconfigured`). `workers/mccluster/src/managed-projects.js` line 25 maps every non-OK PostgREST answer except `23505` to 503 "Project storage unavailable"; when the enrollment trigger raises `PT409` on a protected record, the browser sees a 503 indistinguishable from an outage. Request: map `PT409`/`40001` → 409 with `code:'protected'` (and likewise in `member-fronts.js`). Acceptance: `editor-versioned-db.mjs` readback block asserts the status (currently `[409,503]`, to be tightened to 409). No data impact.
 
 ## Migration / application / recovery plan (prepared, not requested)
 

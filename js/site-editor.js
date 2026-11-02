@@ -79,13 +79,15 @@
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(function (rows) { var row = Array.isArray(rows) && rows[0]; return row ? row.updated_at || null : null; });
   }
   /* the slot's head when editing begins: {revision} from v2, or {legacy:true, updated_at} */
+  /* the slot's head: {revision} from v2; {legacy:true} ONLY on the contract's PGRST202 signal; otherwise the error is
+     kept and every write for that slot is refused (fail closed) until it is opened again */
   function openSlot(slot) {
     return ensureV2().then(function (v) {
       var c = slotClient(slot);
-      if (!c) return publicRow(slot).then(function (at) { return { legacy: true, updated_at: at }; });
-      return c.read().then(function (r) { return { revision: r.revision, snapshot: r.snapshot }; }).catch(function (err) {
-        var k = v.classify(err).kind;
-        if (k === "unconfigured") return publicRow(slot).then(function (at) { return { legacy: true, updated_at: at }; });
+      if (!c) throw Object.assign(new Error("the revision client could not be loaded"), { status: 0 });
+      return c.read().then(function (r) { if (!v.wellFormed(r)) throw Object.assign(new Error("malformed"), { malformed: true, status: 200 }); return { revision: r.revision, protected: !!r.protected, snapshot: r.snapshot }; }).catch(function (err) {
+        var cl = v.classify(err);
+        if (v.legacyAllowed(cl, null)) return publicRow(slot).then(function (at) { return { legacy: true, updated_at: at }; });
         throw err;
       });
     });
@@ -169,7 +171,7 @@
       d.getElementById("mccEditRevert").hidden = true;
       if (!save || after === before) { node.textContent = before; say(""); return; }
       var head = heads[slot];
-      if (!head || head.error) { node.textContent = before; say(head ? "not saved: the slot could not be read" : "not saved: still reading the slot; tap it again"); return; }
+      if (!head || head.error) { say(head ? "not saved: the versioned editor could not be reached (" + explain(head.error, "saved").slice(0, 50) + "); your words stay on screen until you reload" : "not saved: still reading the slot; tap it again"); return; } /* fail closed; typed words are left in place */
       say("saving…");
       var data = { value: after, kind: "text",
         /* original is what SHIPPED, so it is only meaningful the first time; the function keeps the first one it is given. */

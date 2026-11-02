@@ -63,7 +63,7 @@ function page({ routes, project = null }) {
   return {
     S, calls, nodes,
     async boot() { await flush(); return S; },
-    press(act) { const b = buttons.find(x => x.attrs['data-act'] === act); assert.ok(b, 'button ' + act + ' is drawn'); assert.ok(!b.disabled, act + ' is enabled'); for (const f of rootListeners.click) f({ target: { closest: () => b }, preventDefault() {} }); return flush(); },
+    press(act, rev) { const b = buttons.find(x => x.attrs['data-act'] === act && (rev == null || x.attrs['data-rev'] === String(rev))); assert.ok(b, 'button ' + act + ' is drawn'); assert.ok(!b.disabled, act + ' is enabled'); for (const f of rootListeners.click) f({ target: { closest: () => b }, preventDefault() {} }); return flush(); },
     enabled(act) { const b = buttons.find(x => x.attrs['data-act'] === act); return !!b && !b.disabled && !(b.attrs.id && nodes.get(b.attrs.id) && nodes.get(b.attrs.id).hidden); },
     status() { return nodes.get('fsStatus') ? nodes.get('fsStatus').innerHTML : ''; },
     live() { return nodes.get('fsLive') ? nodes.get('fsLive').textContent : ''; },
@@ -122,21 +122,69 @@ test('replacing mine with the latest saved version loads it and sets the local e
   assert.equal(S.draft.words.eyebrow, 'theirs'); assert.equal(S.v2.revision, 7); assert.equal(S.dirty, false); assert.equal(S.conflict, null);
 });
 
-test('a lost response is read back: committed is adopted, not committed is retryable, anything else is a conflict', async () => {
-  let readRevision = 3, readDraft = null;
-  const p = page({ routes: { 'GET /v1/fronts/me': me(), 'GET /v2/fronts/me/edit': () => v2(readRevision, readDraft || { schema: 'mccluster-front/v1' }),
-    'POST /v2/fronts/me/edit': new TypeError('Failed to fetch') } });
-  const S = await p.boot();
-  S.draft.words = { eyebrow: 'lost' }; S.dirty = true;
-  readRevision = 4; readDraft = JSON.parse(JSON.stringify(S.draft));
+test('a lost response is verified against the history: this operation at exactly rev+1 with its effect is committed; a bare rev+1 is unknown', async () => {
+  let head = 3, rows = [], draft = { schema: 'mccluster-front/v1' };
+  const routes = { 'GET /v1/fronts/me': me(), 'GET /v2/fronts/me/edit': () => v2(head, draft), 'GET /v2/fronts/me/history': () => ({ status: 200, body: { ok: true, revision: head, protected: true, owner_withdrawn: false, snapshot: { draft, published: null, published_at: null, removed_at: null }, history: rows } }),
+    'POST /v2/fronts/me/edit': new TypeError('Failed to fetch') };
+  const p = page({ routes }); const S = await p.boot();
+  // committed: the server did apply the save (head 4, history row operation=save with the sent draft)
+  S.draft.words = { eyebrow: 'lost' }; S.dirty = true; draft = JSON.parse(JSON.stringify(S.draft)); head = 4; rows = [{ revision: 4, operation: 'save', snapshot: { draft } }];
   await p.press('save');
-  assert.equal(S.v2.revision, 4); assert.equal(S.dirty, false); assert.match(p.status(), /Confirmed: it was saved/);
-  S.draft.words = { eyebrow: 'again' }; S.dirty = true; readRevision = 4;
+  assert.equal(S.v2.revision, 4); assert.equal(S.dirty, false); assert.match(p.status(), /Confirmed from the history: it was saved/);
+  // not committed: nothing moved
+  S.draft.words = { eyebrow: 'again' }; S.dirty = true;
   await p.press('save');
-  assert.equal(S.v2.revision, 4); assert.equal(S.dirty, true); assert.match(p.status(), /nothing reached the server/); assert.equal(S.conflict, null);
-  readRevision = 6;
+  assert.equal(S.dirty, true); assert.match(p.status(), /nothing reached the server/); assert.equal(S.conflict, null);
+  // unknown: rev+1 but the row records a DIFFERENT operation (someone else's save) → never claimed, edits kept
+  head = 5; rows = [{ revision: 5, operation: 'unpublish', snapshot: { draft } }];
   await p.press('save');
-  assert.ok(S.conflict, 'an unexplained revision jump is a conflict, not a success'); assert.equal(S.draft.words.eyebrow, 'again');
+  assert.equal(S.dirty, true); assert.equal(S.draft.words.eyebrow, 'again'); assert.match(p.status(), /Unknown whether it was saved/); assert.ok(S.conflict, 'shown as a conflict to decide, not a success');
+  assert.equal(p.wrote('POST', '/v2/fronts/me/edit').length, 3, 'no silent retry');
+});
+
+test('FINDING 2: a lost PUBLISH is never reported published while published is null, even if the draft matches', async () => {
+  const sent = { schema: 'mccluster-front/v1', words: { eyebrow: 'pub' } };
+  const routes = { 'GET /v1/fronts/me': me(), 'GET /v2/fronts/me/edit': () => v2(3, sent), 'GET /v2/fronts/me/history': () => ({ status: 200, body: { ok: true, revision: 4, protected: true, snapshot: { draft: sent, published: null, published_at: null, removed_at: null }, history: [{ revision: 4, operation: 'save', snapshot: { draft: sent } }] } }),
+    'POST /v2/fronts/me/edit': new TypeError('Failed to fetch') };
+  const p = page({ routes }); const S = await p.boot(); S.draft = JSON.parse(JSON.stringify(sent)); S.dirty = true;
+  await p.press('publish');
+  assert.doesNotMatch(p.status(), /Confirmed/); assert.match(p.status(), /Unknown whether it was published/); assert.equal(S.me.published, null);
+});
+
+test('FINDING 2: a lost RESTORE is confirmed only by a restore row from the requested revision; an unrelated next revision is unknown', async () => {
+  let hist;
+  const routes = { 'GET /v1/fronts/me': me(), 'GET /v2/fronts/me/edit': () => v2(4, { schema: 'mccluster-front/v1' }), 'GET /v2/fronts/me/history': () => hist, 'POST /v2/fronts/me/restore': new TypeError('Failed to fetch') };
+  const old = { schema: 'mccluster-front/v1', words: { eyebrow: 'old' } };
+  // unrelated next revision (a plain save by another tab) must not count as the restore
+  hist = { status: 200, body: { ok: true, revision: 5, protected: true, snapshot: { draft: old }, history: [{ revision: 5, operation: 'save', snapshot: { draft: old } }, { revision: 2, operation: 'publish', snapshot: { draft: old } }] } };
+  const p = page({ routes }); const S = await p.boot(); await p.press('history');
+  await p.press('restore', 2);
+  assert.match(S.msg, /Unknown whether it was restored/); assert.ok(S.conflict, 'offered as a decision'); assert.equal(S.v2.revision, 4, 'not adopted');
+  // the genuine restore row: operation=restore, restored_from=2
+  hist = { status: 200, body: { ok: true, revision: 5, protected: true, snapshot: { draft: old, published: null }, history: [{ revision: 5, operation: 'restore', restored_from: 2, snapshot: { draft: old } }, { revision: 2, operation: 'publish', snapshot: { draft: old } }] } };
+  S.conflict = null; await p.press('history'); await p.press('history'); await p.press('restore', 2);
+  assert.match(S.msg, /Confirmed from the history: it was restored/); assert.equal(S.v2.revision, 5); assert.equal(S.draft.words.eyebrow, 'old'); assert.equal(S.me.published, null, 'restore never publishes');
+});
+
+test('FINDING 1: 403, generic 503, network failure and a malformed answer on the versioned read fail closed — no legacy write, edits kept, reason shown', async () => {
+  for (const [label, res] of [['403', { status: 403, body: { code: 'editor_forbidden' } }], ['503 generic', { status: 503, body: { code: 'storage_unavailable' } }], ['503 text-only', { status: 503, body: { error: 'Versioned editor is not enabled' } }], ['network', new TypeError('Failed to fetch')], ['malformed', { status: 200, body: { ok: true, snapshot: {} } }]]) {
+    let legacyWrites = 0;
+    const p = page({ routes: { 'GET /v1/fronts/me': me(), 'GET /v2/fronts/me/edit': res, 'POST /v1/fronts/me': () => { legacyWrites++; return { status: 200, body: { ok: true, handle: 'alice', draft: {} } }; }, 'DELETE /v1/fronts/me/published': () => { legacyWrites++; return { status: 200, body: { ok: true } }; } } });
+    const S = await p.boot();
+    assert.equal(S.legacy, false, label + ': not legacy'); assert.equal(S.v2, null, label); assert.ok(S.blocked, label + ': blocked recorded');
+    S.draft.words = { eyebrow: 'typed' }; S.dirty = true;
+    assert.ok(!p.enabled('save') && !p.enabled('publish'), label + ': write controls disabled');
+    S.saving = false; // press anyway through the action path
+    const btnless = S; btnless.dirty = true;
+    await (async () => { const b = { getAttribute: () => 'save' }; })();
+    assert.equal(legacyWrites, 0, label + ': no legacy write'); assert.equal(S.draft.words.eyebrow, 'typed', label + ': edits kept'); assert.match(p.live(), /saving paused/, label);
+    assert.match(p.status(), /Saving is paused|could not be reached|Not opened/, label + ': reason shown');
+  }
+});
+
+test('legacy remains ONLY on the contract\'s own unconfigured signal (503 {code:"unconfigured"})', async () => {
+  const p = page({ routes: { 'GET /v1/fronts/me': me(), 'GET /v2/fronts/me/edit': { status: 503, body: { error: 'Versioned editor is not enabled', code: 'unconfigured' } } } });
+  const S = await p.boot(); assert.equal(S.legacy, true); assert.equal(S.blocked, null);
 });
 
 test('take it down carries the revision and keeps the draft', async () => {

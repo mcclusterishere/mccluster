@@ -67,13 +67,16 @@
     }).then(function(r){return r.text().then(function(t){var b=null;try{b=t?JSON.parse(t):null;}catch(_){}if(!r.ok){throw Object.assign(new Error((b&&(b.message||b.error))||("HTTP "+r.status)),{status:r.status,body:b});}return b;});});
   }
   /* the versioned head of this slot, read with the admin's own token; absent RPC means the legacy path remains */
+  /* three outcomes, decided once: v2 · legacy (ONLY the contract's own PGRST202 "RPC absent" signal) · blocked (403,
+     generic 503, network, timeout, malformed, signed out): writes are refused until a reload answers */
   function loadRevision(){
-    S.v2=null;S.legacy=false;
-    if(!client())return Promise.resolve(S.legacy=true);
-    return client().read().then(function(v){adopt(v);}).catch(function(err){var c=V2.classify(err);if(c.kind==="unconfigured"||c.kind==="signin")S.legacy=c.kind==="unconfigured";else{S.message=V2.explain(c,"opened");S.bad=true;}});
+    S.v2=null;S.legacy=false;S.blocked=null;
+    if(!client())return Promise.resolve(S.blocked={kind:"other",code:"no_client"});
+    return client().read().then(function(v){if(!V2.wellFormed(v))throw Object.assign(new Error("malformed"),{malformed:true,status:200});adopt(v);}).catch(function(err){var c=V2.classify(err);if(V2.legacyAllowed(c,null))S.legacy=true;else{S.blocked=c;S.message=V2.explain(c,"opened")+" Saving is paused until the versioned editor answers; refresh this view to try again.";S.bad=true;}});
   }
+  function refuse(what){if(S.v2||S.legacy)return false;S.message="Not "+what+": the versioned editor could not be reached when this view opened"+(S.blocked&&S.blocked.kind?" ("+S.blocked.kind+")":"")+". Your changes are kept in the preview. Refresh this view; nothing was written.";S.bad=true;paintForm();return true;}
   function adopt(v){
-    if(!v||typeof v.revision!=="number")return;
+    if(!V2.wellFormed(v))throw Object.assign(new Error("malformed"),{malformed:true,status:200});
     S.v2={revision:v.revision,protected:!!v.protected};
     var snap=v.snapshot;
     if(snap&&typeof snap.value==="string"){try{S.saved=JSON.parse(snap.value);}catch(_){S.saved=null;}S.savedAt=snap.updated_at||S.savedAt;}
@@ -172,7 +175,7 @@
   function statusHtml(){
     var live=S.saved?"Live: your settings, saved "+when(S.savedAt):"Live: the page as shipped";
     var cf=S.conflict;
-    return'<p class="cro-meta" data-cfp-live>'+e(live)+(S.v2?" · revision "+e(S.v2.revision):S.legacy?" · versioned saving not installed here":"")+(S.dirty?' · <b>unsaved changes, shown only in the preview</b>':"")+'</p>'+
+    return'<p class="cro-meta" data-cfp-live>'+e(live)+(S.v2?" · revision "+e(S.v2.revision):S.legacy?" · versioned saving not installed here":" · saving paused: versioned editor unreachable")+(S.dirty?' · <b>unsaved changes, shown only in the preview</b>':"")+'</p>'+
       (cf?'<div class="cro-note cro-note--bad cfp-conflict" role="alertdialog" aria-label="This page changed elsewhere"><p>Not '+e(cf.what)+': the front page settings were saved somewhere else since you opened this view'+(cf.latest&&typeof cf.latest.revision==="number"?" (now revision "+e(cf.latest.revision)+(cf.latest.snapshot&&cf.latest.snapshot.updated_at?", "+e(when(cf.latest.snapshot.updated_at)):"")+")":"")+'. Your changes are kept in the preview.</p><div class="cro-actions"><button type="button" class="cr-btn" data-cfp="conflict-load">Replace mine with the latest saved settings</button><button type="button" class="cr-btn cr-btn--ghost" data-cfp="conflict-keep">Keep mine and save over them</button><button type="button" class="cr-btn cr-btn--ghost" data-cfp="conflict-dismiss">Decide later</button></div></div>':"")+
       (S.message?'<div class="cro-note'+(S.bad?" cro-note--bad":"")+'" role="status">'+e(S.message)+'</div>':"")+
       (S.showHistory?'<section class="cfp-history" aria-label="Saved revisions of the front page settings">'+(S.history===null?'<p class="cro-meta">Reading saved revisions…</p>':!S.history.length?'<p class="cro-meta">No saved revisions yet.</p>':'<ul class="cfp-revisions">'+S.history.map(function(h){var cur=S.v2&&h.revision===S.v2.revision;return'<li><b>Revision '+e(h.revision)+'</b> <small>'+e(h.operation||"")+(h.restored_from!=null?" from "+e(h.restored_from):"")+(h.at?" · "+e(when(h.at)):"")+'</small>'+(cur?' <span class="cro-meta">current</span>':(h.snapshot&&typeof h.snapshot.value==="string"?' <button type="button" class="cr-btn cr-btn--ghost" data-cfp="restore" data-rev="'+e(h.revision)+'">Restore to the live site</button>':' <small>reset to shipped</small>'))+'</li>';}).join("")+'</ul><p class="cro-meta">Restoring writes that revision\'s settings to the live front page as a new revision; every visitor gets them at once. Nothing is deleted from history.</p>')+'</section>':"");
@@ -182,7 +185,7 @@
     var form=root.querySelector("[data-cfp-form]");if(form)form.innerHTML=formHtml();
     var st=root.querySelector("[data-cfp-status]");if(st)st.innerHTML=statusHtml();
     var actions=root.querySelector("[data-cfp-actions]");
-    if(actions)actions.querySelectorAll("button").forEach(function(b){var a=b.getAttribute("data-cfp");b.disabled=S.saving||!S.draft||(a==="discard"&&!S.dirty)||(a==="save"&&(!S.dirty||badSpots(S.draft).length>0||!!S.conflict))||(a==="reset"&&(!S.saved||!!S.conflict))||(a==="history"&&!S.v2);});
+    if(actions)actions.querySelectorAll("button").forEach(function(b){var a=b.getAttribute("data-cfp");var paused=!S.v2&&!S.legacy;b.disabled=S.saving||!S.draft||(a==="discard"&&!S.dirty)||(a==="save"&&(paused||!S.dirty||badSpots(S.draft).length>0||!!S.conflict))||(a==="reset"&&(paused||!S.saved||!!S.conflict))||(a==="history"&&!S.v2);});
   }
   function render(){
     if(!S.loaded&&!S.loading)load();
@@ -256,6 +259,7 @@
   /* ---------- the writes: every one carries the revision it was based on ---------- */
   function write(a){
     var what=a==="save"?"saved":"reset";
+    if(refuse(what))return;
     S.saving=true;S.message=a==="save"?"Saving…":"Resetting…";S.bad=false;S.conflict=null;paintForm();
     var value=null,attempt=null;
     /* what is saved is what the page applied to this exact draft, never the raw form */
@@ -265,7 +269,9 @@
         attempt=a==="save"?{action:"save",expected:S.v2.revision,data:{value:JSON.stringify(value),kind:"text",original:"",fragile:false}}:{action:"reset",expected:S.v2.revision};
         return (a==="save"?client().save(attempt.expected,attempt.data):client().reset(attempt.expected)).then(function(v){adopt(v);if(a==="save"){S.saved=clone(value);S.savedAt=(v.snapshot&&v.snapshot.updated_at)||new Date().toISOString();}else{S.saved=null;S.savedAt=null;}});
       }
-      /* legacy RPCs, only while the versioned RPC is not installed: read first; a newer save than the one shown here is never overwritten */
+      /* legacy RPCs, only on the contract's PGRST202 signal: read first; a newer save than the one shown here is never
+         overwritten. A courtesy check for a deployment without revisions, not revision enforcement. */
+      if(!S.legacy)return Promise.reject(Object.assign(new Error("legacy path closed"),{status:0,body:{code:"legacy_closed"}}));
       return legacyGuard().then(function(){return a==="save"?rpc("site_content_set",{p_page:PAGE,p_slot:SLOT,p_value:JSON.stringify(value),p_kind:"text",p_original:"",p_fragile:false,p_via:"control-front-page"}):rpc("site_content_revert",{p_page:PAGE,p_slot:SLOT});})
         .then(function(row){S.saved=a==="save"?clone(value):null;S.savedAt=a==="save"?(row&&row.updated_at)||new Date().toISOString():null;});
     }).then(function(){
@@ -285,9 +291,9 @@
   function readback(what,attempt){
     S.message="Checking what was saved…";S.bad=false;paintForm();
     return client().reconcile(attempt).then(function(r){
-      if(r.outcome==="committed"){adopt(r.current);S.dirty=false;if(attempt.action==="reset"){S.draft=null;seed();}S.message="Confirmed: it was "+what+" before the connection dropped (revision "+S.v2.revision+").";S.bad=false;}
+      if(r.outcome==="committed"){adopt(r.current);S.dirty=false;if(attempt.action==="reset"){S.draft=null;seed();}S.message="Confirmed from the history: it was "+what+" before the connection dropped (revision "+S.v2.revision+").";S.bad=false;}
       else if(r.outcome==="not_committed"){S.message="Not "+what+": the connection dropped and nothing reached the server. Your changes are kept in the preview; try again.";S.bad=true;}
-      else{S.message="Could not confirm whether it was "+what+": the settings changed meanwhile.";S.bad=true;return conflict(what,attempt);}
+      else{S.message="Unknown whether it was "+what+": the history does not show this exact operation at the next revision. Nothing is assumed and nothing was retried; your changes are kept in the preview.";S.bad=true;if(r.current){S.conflict={what:what,attempt:attempt,latest:r.current};return;}return conflict(what,attempt);}
     }).catch(function(){S.message="Could not confirm whether it was "+what+". Your changes are kept in the preview; check the connection and reopen this view.";S.bad=true;});
   }
   function resolveConflict(a){
@@ -311,7 +317,7 @@
     if(!S.v2||!isFinite(rev)||S.saving)return;
     if(!window.confirm("Restore revision "+rev+" to the live front page? Every visitor gets those settings at once. Unsaved changes in the preview are replaced."))return;
     S.saving=true;S.message="Restoring revision "+rev+"…";S.bad=false;paintForm();
-    var attempt={action:"restore",expected:S.v2.revision};
+    var attempt={action:"restore",expected:S.v2.revision,restore_revision:rev};
     return client().restore(S.v2.revision,rev).then(function(v){adopt(v);S.draft=null;S.dirty=false;seed();S.message="Restored revision "+rev+" as revision "+S.v2.revision+". It is live now.";S.bad=false;loadHistory();})
       .catch(function(err){return failed(err,"restored",attempt);}).then(function(){S.saving=false;paintForm();});
   }

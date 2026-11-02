@@ -26,11 +26,12 @@
      DELETE is the path only where the versioned API reports itself unconfigured, and then never on a newer save. */
   async function withdraw(p,status){
     var client=versioned(p.slug),state=null;
-    if(client){
-      try{state=await client.read();}
-      catch(e){var V=window.MCC_EDITOR_V2,kind=V?V.classify(e).kind:'other';if(kind!=='unconfigured'){status.textContent=explain(e,'withdrawn');return false;}}
-    }
-    if(state&&typeof state.revision==='number'){
+    var V=window.MCC_EDITOR_V2;
+    if(!client){status.textContent='Not withdrawn: the revision client is not loaded. Reload the page.';return false;}
+    var legacy=false;
+    try{state=await client.read();if(!V.wellFormed(state))throw Object.assign(new Error('malformed'),{malformed:true,status:200});}
+    catch(e){var c=V.classify(e);if(V.legacyAllowed(c,null))legacy=true;else{status.textContent=explain(e,'withdrawn')+' Nothing was changed; reload and try again.';return false;}}
+    if(!legacy){
       try{await client.withdraw(state.revision);return true;}
       catch(e){status.textContent=explain(e,'withdrawn')+(e&&e.status===409?' Refresh your projects and try again.':'');return false;}
     }

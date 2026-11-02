@@ -84,7 +84,7 @@
   function client() { if (!versioned && V2) versioned = V2.owned(api, projectMode ? "projects" : "fronts", projectMode ? projectSlug : "me"); return versioned; }
   /* the state the versioned API answered with, adopted as the current record */
   function adopt(b) {
-    if (!b || typeof b.revision !== "number") return;
+    if (!V2.wellFormed(b)) throw Object.assign(new Error("malformed"), { malformed: true, status: 200 });
     S.v2 = { revision: b.revision, protected: !!b.protected, owner_withdrawn: !!b.owner_withdrawn };
     var snap = b.snapshot || {};
     if (S.me) {
@@ -267,7 +267,7 @@
       reloadPreview(true);
       fit();
     }
-    $("fsLive").textContent = live + (S.v2 ? " · revision " + S.v2.revision : S.legacy ? " · versioned saving not switched on here" : "");
+    $("fsLive").textContent = live + (S.v2 ? " · revision " + S.v2.revision + (S.v2.protected ? "" : " · not yet enrolled") : S.legacy ? " · versioned saving not switched on here" : " · saving paused: versioned editor unreachable");
     $("fsHistory").hidden = !S.v2;
     $("fsHistory").setAttribute("aria-expanded", String(!!S.showHistory));
     var hl = $("fsHistoryList"); hl.hidden = !S.showHistory;
@@ -283,7 +283,7 @@
       (me.publish_blocker === "private_profile" || me.publish_blocker === "profile_required" ? '<p class="fs-bad">' + (me.publish_blocker === "private_profile" ? 'Your profile is private.' : 'Finish your profile first.') + ' You can save a draft. <a href="' + (me.publish_blocker === "private_profile" ? 'mccluster-creator-studio.html' : 'mnet.html?view=profile') + '" target="_blank" rel="noopener">Open profile settings</a>, then <button type="button" data-act="refresh-access">check publishing access</button>.</p>' : "") +
       (problems.length ? '<p class="fs-bad" role="alert">Fix ' + e(problems.join(", ")) + ' before saving.</p>' : "") +
       (S.msg ? '<p class="' + (S.bad ? "fs-bad" : "fs-ok") + '" role="status">' + e(S.msg) + '</p>' : "");
-    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || (a === "publish" && !!me.publish_blocker) || ((a === "save" || a === "publish") && (problems.length > 0 || !!S.conflict)) || ((a === "save" || a === "publish" || a === "unpublish") && S.v2 && S.v2.owner_withdrawn); });
+    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || (a === "publish" && !!me.publish_blocker) || ((a === "save" || a === "publish") && (problems.length > 0 || !!S.conflict)) || ((a === "save" || a === "publish" || a === "unpublish") && ((S.v2 && S.v2.owner_withdrawn) || (!S.v2 && !S.legacy))); });
     Array.prototype.forEach.call(root.querySelectorAll("[data-device]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-device") === S.device)); });
   }
   /* the shell first (the first paint builds it), then the settings into it */
@@ -354,6 +354,12 @@
     if (a === "conflict-load" || a === "conflict-keep" || a === "conflict-dismiss") return resolveConflict(a);
   }
   /* ---------- the writes: every one carries the revision it was based on ---------- */
+  /* fail closed: no write of any kind while the versioned editor's state is unknown */
+  function refuse(what) {
+    if (S.v2 || S.legacy) return false;
+    S.msg = "Not " + what + ": the versioned editor could not be reached when this page opened" + (S.blocked && S.blocked.kind ? " (" + S.blocked.kind + ")" : "") + ". Your edits are kept on this screen. Reload the editor; if it still cannot reach the server, keep this tab open and try again later."; S.bad = true; paint();
+    return true;
+  }
   function failed(err, what, attempt) {
     var c = V2 ? V2.classify(err) : { kind: "other" };
     if (c.kind === "forbidden" && (c.reason === "private_profile" || c.reason === "removed")) S.me.publish_blocker = c.reason === "removed" ? "removed" : "private_profile";
@@ -371,9 +377,9 @@
   function readback(what, attempt) {
     S.msg = "Checking what was saved…"; S.bad = false; paint();
     return client().reconcile(attempt).then(function (r) {
-      if (r.outcome === "committed") { adopt(r.current); S.draft = clone(S.me.draft) || S.draft; S.dirty = false; S.msg = "Confirmed: it was " + what + " before the connection dropped."; S.bad = false; paintForm(); reloadPreview(true); sweep(); }
+      if (r.outcome === "committed") { adopt(r.current); S.draft = clone(S.me.draft) || S.draft; S.dirty = false; S.msg = "Confirmed from the history: it was " + what + " before the connection dropped (revision " + S.v2.revision + ")."; S.bad = false; paintForm(); reloadPreview(true); sweep(); }
       else if (r.outcome === "not_committed") { S.msg = "Not " + what + ": the connection dropped and nothing reached the server. Your edits are kept; try again."; S.bad = true; }
-      else { S.msg = "Could not confirm whether it was " + what + ": this page changed meanwhile. Your edits are kept here; review the latest saved version before saving again."; S.bad = true; conflict(what, attempt); }
+      else { S.pending = { what: what, attempt: attempt }; S.msg = "Unknown whether it was " + what + ": the history does not show this exact operation at the next revision. Nothing is assumed and nothing was retried. Your edits are kept here; review the latest saved version before deciding."; S.bad = true; if (r.current) { S.conflict = { what: what, attempt: attempt, latest: r.current }; } else conflict(what, attempt); }
     }).catch(function () { S.msg = "Could not confirm whether it was " + what + ". Your edits are kept here; check the connection and reopen the editor."; S.bad = true; });
   }
   function resolveConflict(a) {
@@ -395,6 +401,7 @@
     }
   }
   function unpublish() {
+    if (refuse("taken down")) return;
     S.saving = true; S.msg = "Taking it down…"; S.bad = false; paint();
     var attempt = S.v2 ? { action: "unpublish", expected: S.v2.revision } : null;
     var p = S.v2 ? client().unpublish(S.v2.revision).then(function (b) { adopt(b); })
@@ -402,8 +409,11 @@
     return p.then(function () { S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
       .catch(function (err) { return failed(err, "taken down", attempt); }).then(function () { S.saving = false; paint(); });
   }
-  /* legacy writes (versioned API not switched on): read first; a newer save than the one opened here is never overwritten */
+  /* legacy writes, only on the contract's own "unconfigured" signal: read first; a newer save than the one opened here is
+     never overwritten. This is a courtesy check for a deployment WITHOUT revisions; it is not revision enforcement, and the
+     moment the versioned API answers (including an error) the legacy path is closed. */
   function legacyGuard() {
+    if (!S.legacy) return Promise.reject(Object.assign(new Error("legacy path closed"), { status: 0, body: { code: "legacy_closed" } }));
     return api(ownPath).then(function (now) {
       if (S.me && S.me.updated_at && now && now.updated_at && now.updated_at !== S.me.updated_at) {
         throw Object.assign(new Error("changed elsewhere"), { status: 409, body: { code: "conflict" } });
@@ -420,13 +430,14 @@
     if (!S.v2 || !isFinite(rev) || S.saving) return;
     if (S.dirty && !w.confirm("Restoring replaces the unsaved edits on this screen. Continue?")) return;
     S.saving = true; S.msg = "Restoring revision " + rev + " as a new draft…"; S.bad = false; paint();
-    var attempt = { action: "restore", expected: S.v2.revision, config: null };
+    var attempt = { action: "restore", expected: S.v2.revision, restore_revision: rev, config: null };
     return client().restore(S.v2.revision, rev).then(function (b) { adopt(b); S.draft = clone(S.me.draft) || {}; S.dirty = false; S.msg = "Restored revision " + rev + " as draft revision " + S.v2.revision + ". Not published: review it, then publish if you want it live."; S.bad = false; paintForm(); reloadPreview(true); loadHistory(); })
       .catch(function (err) { return failed(err, "restored", attempt); }).then(function () { S.saving = false; paint(); });
   }
   function save(publish) {
     if (bad().length || busy() || S.saving) return;
     var what = publish ? "published" : "saved";
+    if (refuse(what)) return;
     var why = preflight(); if (why) { S.msg = why; S.bad = true; paint(); return; }
     S.saving = true; S.msg = publish ? "Publishing…" : "Saving…"; S.bad = false; S.conflict = null; paint();
     var sent = clone(S.draft);
@@ -506,13 +517,18 @@
     api(ownPath).then(function (me) {
       if (me && me.presentation === "tiles") { S.state = "tiles"; S.error = ""; paint(); return; }
       S.me = me; S.draft = clone(me.draft || me.published) || {}; S.state = "ready";
-      S.v2 = null; S.legacy = false;
-      /* the versioned record beside it: its revision is what every write will carry */
-      var ready = client() ? client().read().then(function (v) { adopt(v); S.draft = clone(S.me.draft || S.me.published) || {}; }).catch(function (err) {
+      S.v2 = null; S.legacy = false; S.blocked = null;
+      /* the versioned record beside it: its revision is what every write will carry. Three outcomes, decided once:
+         v2 (answered, well-formed) · legacy (the contract's own "unconfigured" signal, record unprotected) ·
+         blocked (anything else: 403, 503, network, timeout, malformed) — writes are refused until a reload answers. */
+      var ready = client() ? client().read().then(function (v) {
+        if (!V2.wellFormed(v)) throw Object.assign(new Error("malformed"), { malformed: true, status: 200 });
+        adopt(v); S.draft = clone(S.me.draft || S.me.published) || {};
+      }).catch(function (err) {
         var c = V2.classify(err);
-        if (c.kind === "unconfigured") S.legacy = true;
-        else { S.msg = V2.explain(c, "opened"); S.bad = true; }
-      }) : Promise.resolve(S.legacy = true);
+        if (V2.legacyAllowed(c, null)) S.legacy = true;
+        else { S.blocked = c; S.msg = V2.explain(c, "opened") + " Saving is paused until the versioned editor answers; reload to try again."; S.bad = true; }
+      }) : Promise.resolve(S.blocked = { kind: "other", code: "no_client" });
       return ready.then(function () {
       if(offersTemplate&&!me.registry_key&&!S.draft.layout&&Object.keys(S.draft).every(function(k){return k==='schema';})){S.draft.layout='offers';S.draft.offer_page=w.MCC_SITE_OFFERS.defaults(me.name);S.dirty=true;S.msg='Choose your words, or copy the editable Equity Uprise example below.';}
       if (me.removed && !(S.v2 && S.v2.owner_withdrawn)) { S.msg = "McCluster took your published page down. You can keep editing your draft."; S.bad = true; }

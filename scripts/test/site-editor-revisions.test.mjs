@@ -68,3 +68,18 @@ function pageWithHook(opts) {
       return node;
     } };
 }
+
+test('FINDING 1: 403, generic 503, network and malformed answers when opening a slot fail closed — no legacy RPC, typed words kept', async () => {
+  for (const [label, rpcs] of [['403', { site_content_v2: () => ({ status: 403, body: { code: '42501', message: 'editor_forbidden' } }) }], ['503', { site_content_v2: () => ({ status: 503, body: { message: 'upstream' } }) }], ['malformed', { site_content_v2: () => ({ status: 200, body: { ok: true } }) }]]) {
+    let sets = 0;
+    const p = pageWithHook({ rows: () => [{ updated_at: 'x' }], rpcs: { ...rpcs, site_content_set: () => { sets++; return { status: 200, body: {} }; } } });
+    const node = await p.edit('Typed words');
+    assert.equal(sets, 0, label + ': no legacy write'); assert.equal(node.textContent, 'Typed words', label + ': kept on screen'); assert.match(p.say(), /could not be reached/, label);
+  }
+});
+
+test('legacy remains ONLY on PGRST202 (the RPC is absent), never on a text-only 503', async () => {
+  let sets = 0;
+  const p = pageWithHook({ rows: () => [{ updated_at: 'x' }], rpcs: { site_content_v2: () => ({ status: 503, body: { message: 'Versioned editor is not enabled' } }), site_content_set: () => { sets++; return { status: 200, body: {} }; } } });
+  await p.edit('Words'); assert.equal(sets, 0);
+});

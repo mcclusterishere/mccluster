@@ -84,16 +84,28 @@ test('a stale save keeps the preview changes and offers the decision; keeping mi
   assert.deepEqual(attempts, [4, 6]); assert.equal(S.v2.revision, 7); assert.equal(S.conflict, null); assert.equal(S.saved.song, 'runway');
 });
 
-test('a lost response is read back before anything is retried', async () => {
-  let readRev = 2, readVal = SHIPPED;
-  const v = view({ rows: rowsOf(SHIPPED), rpcs: { site_content_v2: b => b.p_action === 'read' ? head(readRev, readVal) : new TypeError('Failed to fetch') } });
+test('a lost response is verified against the slot history: save at rev+1 with the value is committed; an unrelated row is unknown', async () => {
+  let rev = 2, rows = [], value = SHIPPED;
+  const v = view({ rows: rowsOf(SHIPPED), rpcs: { site_content_v2: b => b.p_action === 'read' ? head(rev, value) : b.p_action === 'history' ? { status: 200, body: { ok: true, revision: rev, protected: true, snapshot: { value: JSON.stringify(value), updated_at: '2026-11-01T00:00:00Z' }, history: rows } } : new TypeError('Failed to fetch') } });
   const S = await v.open();
-  S.draft.song = 'here'; S.dirty = true; readRev = 3; readVal = { ...S.draft };
+  S.draft.song = 'here'; S.dirty = true; value = { ...S.draft }; rev = 3; rows = [{ revision: 3, operation: 'save', snapshot: { value: JSON.stringify(value) } }];
   await v.press('save');
-  assert.equal(S.v2.revision, 3); assert.equal(S.dirty, false); assert.match(v.status.innerHTML, /Confirmed: it was saved/);
-  S.draft.song = 'vaunt'; S.dirty = true; readRev = 3;
+  assert.equal(S.v2.revision, 3); assert.equal(S.dirty, false); assert.match(v.status.innerHTML, /Confirmed from the history: it was saved/);
+  S.draft.song = 'vaunt'; S.dirty = true; rev = 4; rows = [{ revision: 4, operation: 'reset', snapshot: null }];
   await v.press('save');
-  assert.equal(S.dirty, true); assert.match(v.status.innerHTML, /nothing reached the server/);
+  assert.equal(S.dirty, true); assert.match(v.status.innerHTML, /Unknown whether it was saved/);
+});
+
+test('FINDING 1: 403, generic 503, network and malformed answers on the slot read fail closed — no legacy RPC, preview changes kept', async () => {
+  for (const [label, rpc] of [['403', () => ({ status: 403, body: { code: '42501', message: 'editor_forbidden' } })], ['503', () => ({ status: 503, body: { message: 'upstream' } })], ['network', () => { throw new TypeError('Failed to fetch'); }], ['malformed', () => ({ status: 200, body: { ok: true } })]]) {
+    let sets = 0;
+    const v = view({ rows: rowsOf(SHIPPED), rpcs: { site_content_v2: b => { if (b.p_action === 'read') return rpc(); return { status: 500, body: {} }; }, site_content_set: () => { sets++; return { status: 200, body: {} }; }, site_content_revert: () => { sets++; return { status: 200, body: {} }; } } });
+    const S = await v.open();
+    assert.equal(S.legacy, false, label); assert.equal(S.v2, null, label); assert.ok(S.blocked, label);
+    S.draft.song = 'here'; S.dirty = true;
+    await v.press('save'); await v.press('reset');
+    assert.equal(sets, 0, label + ': no legacy RPC'); assert.equal(S.draft.song, 'here', label + ': kept'); assert.match(v.status.innerHTML, /paused/, label);
+  }
 });
 
 test('history lists revisions; restore writes a chosen one live as a new revision and never rewrites history', async () => {

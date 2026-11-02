@@ -58,3 +58,12 @@ test('without the versioned API the legacy unconditional takedown is offered and
   await s.look('bob');
   assert.equal(s.S.legacy, true); assert.match(s.S.message, /legacy takedown route/);
 });
+
+test('FINDING 1: a 403, generic 503, network failure or malformed read pauses takedown — no legacy route is used', async () => {
+  for (const [label, res] of [['403', { status: 403, body: { code: 'forbidden' } }], ['503', { status: 503, body: { code: 'storage_unavailable' } }], ['malformed', { status: 200, body: { ok: true } }]]) {
+    let legacy = 0;
+    const s = screen({ 'GET /v2/fronts/bob/edit': res, 'POST /v1/fronts/bob/takedown': () => { legacy++; return { status: 200, body: { ok: true } }; } });
+    await s.look('bob'); assert.equal(s.S.legacy, false, label); assert.ok(s.S.blocked, label);
+    await s.takedown('Reported'); assert.equal(legacy, 0, label + ': no legacy takedown'); assert.match(s.S.message, /could not be reached|paused/, label);
+  }
+});

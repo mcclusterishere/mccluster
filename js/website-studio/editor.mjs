@@ -26,17 +26,31 @@ async function api(path,init={}){
  const r=await fetch(endpoint,{method:init.method||'GET',headers:{...(token?{authorization:'Bearer '+token}:{}),...(init.body?{'content-type':'application/json'}:{})},body:init.body?JSON.stringify(init.body):undefined,cache:'no-store',signal:AbortSignal.timeout(15000)});
  const d=await r.json().catch(()=>({}));if(epoch!==authEpoch||window.MCC?.session()?.access_token!==token)throw Error('Account changed');if(!r.ok)throw Object.assign(Error(d.error||'Studio is unavailable'),{status:r.status,body:d});return d;
 }
-const kindOf=e=>e&&e.status===409?'conflict':e&&e.status===503&&/not enabled|unconfigured/i.test((e.body&&(e.body.error||e.body.code))||'')?'unconfigured':e&&typeof e.status==='number'?'other':'network';
+/* `unconfigured` is ONLY the bridge's own contract signal (503 {code:'unconfigured'}); 403, a generic 503, a network
+   failure, a timeout or a malformed answer fail closed: no legacy write, edits kept, specific reason shown. */
+const kindOf=e=>e&&e.status===409?'conflict':e&&e.status===503&&e.body&&e.body.code==='unconfigured'?'unconfigured':e&&e.status===401?'signin':e&&e.status===403?'forbidden':e&&e.malformed?'malformed':e&&typeof e.status==='number'?'other':'network';
+const wellFormedBridge=d=>!!d&&typeof d==='object'&&Number.isSafeInteger(d.editor_revision)&&d.editor_revision>=0&&Number.isSafeInteger(d.studio_revision)&&d.studio_revision>=0;
+let blocked=null,legacy=false; // blocked: the classified error that paused writes; legacy: true ONLY on the bridge's own unconfigured signal
 function tokens(){return bridge?{expected_editor_revision:bridge.editor_revision,expected_revision:revision}:{expected_revision:revision};}
-function adoptBridge(d){if(!d||typeof d.editor_revision!=='number')return;bridge={editor_revision:d.editor_revision,owner_withdrawn:!!d.owner_withdrawn,presentation:d.presentation||(bridge&&bridge.presentation)||'tiles',removed:!!d.removed};if(typeof d.studio_revision==='number')revision=d.studio_revision;}
-/* after a lost response: the record is read back; the write counts only if both revisions moved by exactly one and the draft is what was sent */
-async function readback(what,sent){
- status('Checking what was saved…');const now=await api('/v2');
- const moved=now.editor_revision===bridge.editor_revision+1&&now.studio_revision===revision+1,same=!sent||JSON.stringify(now.draft?.document)===JSON.stringify(sent);
- if(moved&&same){adoptBridge(now);if(sent)dirty=false;status('Confirmed: it was '+what+' before the connection dropped · revision '+revision);return true;}
+function adoptBridge(d){if(!wellFormedBridge(d))throw Object.assign(Error('The server\'s answer was not in the expected form; nothing was assumed.'),{malformed:true,status:200});bridge={editor_revision:d.editor_revision,owner_withdrawn:!!d.owner_withdrawn,presentation:d.presentation||(bridge&&bridge.presentation)||'tiles',removed:!!d.removed};revision=d.studio_revision;blocked=null;}
+function refuse(what){if(bridge||legacy)return false;status('Not '+what+': the versioned Tile bridge could not be reached when this project opened'+(blocked?' ('+blocked+')':'')+'. Your edits are kept here. Reload the project; nothing was written.',true);return true;}
+/* after a lost response: THIS operation counts as committed only if the editor-head history records it
+   (`tiles_<action>`) at exactly expected+1, the Studio revision moved as this operation moves it, and the state shows
+   its effect (the sent document for save; publication cleared for unpublish/withdraw; …). Anything else is unknown:
+   edits kept, nothing retried. */
+const OP={'/v2':'tiles_save','/v2/unpublish':'tiles_unpublish','/v2/withdraw':'tiles_withdraw','/v2/recover':'tiles_recover','/v2/switch-front':'tiles_switch_front'};
+async function readback(what,path,body){
+ status('Checking what was saved…');
+ let now=null,hist=null;
+ try{now=await api('/v2');const token=window.MCC?.session()?.access_token;hist=await fetch('https://api.mccluster.org/v2/projects/'+encodeURIComponent(project)+'/history',{headers:{authorization:'Bearer '+token},cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);}catch(_){now=null;}
+ if(!wellFormedBridge(now)){status('Unknown whether it was '+what+': the project could not be read back. Nothing is assumed; your edits are kept here.',true);return false;}
  if(now.editor_revision===bridge.editor_revision&&now.studio_revision===revision){status('Not '+what+': the connection dropped and nothing reached the server. Your edits are kept; try again.',true);return false;}
- adoptBridge(now);status('Could not confirm whether it was '+what+': this project changed meanwhile. Your edits are kept; load the latest saved draft, or save again to overwrite that change.',true);return false;
-}
+ const row=Array.isArray(hist?.history)?hist.history.find(h=>h&&h.revision===bridge.editor_revision+1):null;
+ const op=path==='/v2/publish'?(row&&/^tiles_publish/.test(String(row.operation))?row.operation:null):OP[path];
+ const stepped=now.editor_revision===bridge.editor_revision+1&&now.studio_revision===revision+(path==='/v2'?1:0);
+ const effect=path==='/v2'?JSON.stringify(now.draft?.document)===JSON.stringify(body.document):path==='/v2/unpublish'||path==='/v2/withdraw'?now.published_revision==null:path==='/v2/recover'?!now.removed&&!now.owner_withdrawn:path==='/v2/publish'?!!now.published_revision:true;
+ if(stepped&&row&&op&&row.operation===op&&effect){adoptBridge(now);if(path==='/v2')dirty=false;status('Confirmed from the history: it was '+what+' before the connection dropped · draft revision '+revision+' · editor revision '+bridge.editor_revision);return true;}
+ status('Unknown whether it was '+what+': the history does not show this exact operation at the next revision'+(stepped?'':' (the project moved by a different step)')+'. Nothing is assumed and nothing was retried. Your edits are kept; load the latest saved draft to see the current state.',true);return false;}
 function manage(){
  const m=$('manage');if(!m)return;m.replaceChildren();if(!bridge){m.hidden=true;return;}m.hidden=false;
  const b=(text,fn)=>{const x=node('button',text);x.type='button';x.onclick=()=>guard(fn);m.append(x);return x;};
@@ -48,6 +62,7 @@ function manage(){
 }
 /* one versioned write; a 409 keeps the edits and offers the decision; a lost response is read back */
 async function write(path,body,what){
+ if(refuse(what))throw Object.assign(Error(''),{handled:true});
  conflict=null;$('keepMine')?.remove();
  try{return await api(path,{method:path==='/v2'?'PUT':'POST',body:{...tokens(),...body}});}
  catch(e){
@@ -58,7 +73,10 @@ async function write(path,body,what){
    const keep=node('button','Keep mine and save over it');keep.id='keepMine';keep.type='button';keep.onclick=()=>guard(async()=>{if(!now)throw Error('The latest revisions could not be read; try again.');adoptBridge({...now,studio_revision:now.studio_revision});keep.remove();const r=await write(path,body,what);if(path==='/v2'){adoptBridge(r);dirty=false;status('Saved over the other change · revision '+revision);}else{adoptBridge(r);status(what.charAt(0).toUpperCase()+what.slice(1)+' · revision '+revision);manage();}});
    $('status').after(keep);throw Object.assign(Error(''),{handled:true});
   }
-  if(k==='network'&&bridge){if(await readback(what,path==='/v2'?body.document:null))return null;throw Object.assign(Error(''),{handled:true});}
+  if(k==='network'&&bridge){if(await readback(what,path,body))return null;throw Object.assign(Error(''),{handled:true});}
+  if(k==='malformed'){status('Not '+what+': '+e.message+' Your edits are kept.',true);throw Object.assign(Error(''),{handled:true});}
+  if(k==='forbidden'){status('Not '+what+': you are not allowed to change this project (403). Your edits are kept.',true);throw Object.assign(Error(''),{handled:true});}
+  if(k==='signin'){status('Not '+what+': you are signed out. Sign in again; your edits stay on this screen.',true);throw Object.assign(Error(''),{handled:true});}
   throw e;
  }
 }
@@ -178,25 +196,28 @@ async function start(){
  $('auth').hidden=true;const rows=(await api('/templates')).templates;if(!rows?.length)throw Error('The template is not enabled yet.');definition=rows[0];
  $('guidance').textContent='Publishing requires an active paid workspace and a public profile. Private media preparation remains separately gated; no processing allowance is granted here. '+definition.guidance.transition.help;
  const saved=await api('');doc=structuredClone(saved.draft?.document||definition.definition);draftID=saved.draft?.id||'project';revision=saved.draft?.revision||0;dirty=!revision;
- bridge=null;try{adoptBridge(await api('/v2'));}catch(e){if(kindOf(e)!=='unconfigured')status(e.message,true);}
+ bridge=null;legacy=false;blocked=null;
+ try{adoptBridge(await api('/v2'));}
+ catch(e){const k=kindOf(e);if(k==='unconfigured')legacy=true;else{blocked=k;status('The versioned Tile bridge could not be reached ('+k+'). Saving and publishing are paused until it answers; reload the project to try again. Your edits stay on this screen.',true);}}
  manage();proposalReset();P.undo=[];assistPanel();
  $('editor').hidden=false;$('load').hidden=false;await media();
  $('guidance').textContent=(saved.free_publication?'Publish your owned website for free with a public profile.':'Publishing requires an active paid workspace and a public profile.')+' Media approval and preparation allowances remain separate. '+definition.guidance.transition.help;
  $('workspace').closest('label').hidden=saved.free_publication===true;
  const access=saved.free_publication?{workspaces:[]}:await api('/workspaces');$('workspace').replaceChildren();for(const w of access.workspaces||[]){if(!/^[0-9a-f-]{36}$/.test(w.org_id))continue;const option=node('option','Workspace '+w.org_id);option.value=w.org_id;$('workspace').append(option);}
- status(revision?'Loaded saved revision '+revision:'Template ready. This draft is not saved yet.');sessionStorage.removeItem('studio-template-intent');
+ if(bridge||legacy)status(revision?'Loaded saved revision '+revision:'Template ready. This draft is not saved yet.');sessionStorage.removeItem('studio-template-intent');
 }
 $('useTemplate').onclick=()=>guard(start);
 $('authLink').href='account.html?next='+encodeURIComponent('website-studio.html?project='+project);
 $('title').oninput=()=>{doc.title=$('title').value;changed();};$('mode').onchange=()=>{doc.mode=$('mode').value;changed();};
-$('save').onclick=()=>guard(async()=>{assertDocument(doc);
+$('save').onclick=()=>guard(async()=>{if(!bridge&&!legacy){refuse('saved');return;}assertDocument(doc);
  if(bridge){const d=await write('/v2',{document:doc},'saved');if(d){adoptBridge(d);dirty=false;status('Saved to your account · draft revision '+revision+' · editor revision '+bridge.editor_revision);}return;}
+ if(!legacy){refuse('saved');return;}
  const d=await api('/drafts/'+draftID,{method:'PUT',body:{expected_revision:revision,document:doc}});revision=d.revision;dirty=false;status('Saved to your account · revision '+revision);});
 $('load').onclick=()=>guard(async()=>{if(dirty&&!confirm('Replace unsaved edits with the latest saved draft?'))return;const latest=await api('');const d=latest.draft;if(!d)throw Error('No saved draft yet.');doc=d.document;draftID=d.id;revision=d.revision;dirty=false;$('keepMine')?.remove();if(bridge)adoptBridge(await api('/v2').catch(()=>null));manage();$('editor').hidden=false;await media();status('Loaded saved revision '+revision);});
 const show=p=>{dispose();$('previewPanel').hidden=false;dispose=renderWebsite($('previewHost'),p);$('previewPanel').scrollIntoView();};
 $('preview').onclick=()=>guard(async()=>{if(dirty||!revision)throw Error('Save the draft before previewing.');show(await api('/drafts/'+draftID+'/preview',{method:'POST',body:{}}));});
 $('back').onclick=()=>{dispose();$('previewPanel').hidden=true;window.scrollTo(0,0);};$('refreshMedia').onclick=()=>guard(media);
-$('publish').onclick=()=>guard(async()=>{if(dirty||!revision)throw Error('Save and review the latest draft first.');if(!confirm('Publish this saved version? Media will be visible publicly.'))return;const r=bridge?await write('/v2/publish',{confirm_public:true,org_id:$('workspace').value},'published'):await api('/drafts/'+draftID+'/publish',{method:'POST',body:{expected_revision:revision,confirm_public:true,org_id:$('workspace').value}});if(!r)return;if(bridge)adoptBridge(r);if(r.published!==true)throw Error('Publication not confirmed');const u=new URL(r.url);if(u.origin!=='https://matthew.mccluster.org'||u.pathname!=='/website-studio-view.html')throw Error('Unexpected published destination');const a=node('a','Open published website');a.href=u.href;$('published').replaceChildren(a);status('Published revision '+(r.revision??revision));manage();});
+$('publish').onclick=()=>guard(async()=>{if(!bridge&&!legacy){refuse('published');return;}if(dirty||!revision)throw Error('Save and review the latest draft first.');if(!confirm('Publish this saved version? Media will be visible publicly.'))return;const r=bridge?await write('/v2/publish',{confirm_public:true,org_id:$('workspace').value},'published'):await api('/drafts/'+draftID+'/publish',{method:'POST',body:{expected_revision:revision,confirm_public:true,org_id:$('workspace').value}});if(!r)return;if(bridge)adoptBridge(r);if(r.published!==true)throw Error('Publication not confirmed');const u=new URL(r.url);if(u.origin!=='https://matthew.mccluster.org'||u.pathname!=='/website-studio-view.html')throw Error('Unexpected published destination');const a=node('a','Open published website');a.href=u.href;$('published').replaceChildren(a);status('Published revision '+(r.revision??revision));manage();});
 $('demo').onclick=()=>guard(async()=>{const p=await(await fetch('data/website-studio/demo-v1.json')).json();status('McCluster demonstration. Your own template starts without this footage or wording.');show(p);});
 window.addEventListener('pagehide',()=>dispose());
 window.addEventListener('mcc:auth-changed',()=>{authEpoch++;proposalReset();P.undo=[];dispose();doc=null;assets=[];revision=0;draftID=null;$('tiles').replaceChildren();$('editor').hidden=true;$('previewPanel').hidden=true;$('published').replaceChildren();status('Account changed. Reopening your project.');location.reload();});

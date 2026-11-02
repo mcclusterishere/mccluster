@@ -188,6 +188,33 @@ try {
  ok((await http('/v2/projects/free-journey/recover',{expected_revision:resumed.revision+2})).status,200);
  ok((await projectHttp('/v1/projects/free-journey',null,null)).status,404);
  console.log('PASS free-builder backend journey: actual create/save/resume/publish/public-read/withdraw/recover handlers with SQL; no ordinary-user admin grant. Auth, image bytes and browser renderer remain real-service gates.');
+ // READBACK CONTRACT (frontend js/editor-revisions.js reconcile): after a lost response the history row at expected+1
+ // must name the operation (and restored_from for restore) and the snapshot must show its effect; a bare revision step is
+ // never proof. Driven through the real HTTP adapter over real SQL on the free-journey project.
+ {
+  const hist=async()=>await (await http('/v2/projects/free-journey/history')).json();
+  const before=await hist();const base=before.revision;
+  // a plain save: row operation 'save' at base+1 with the saved draft
+  const saved=await (await http('/v2/projects/free-journey/edit',{expected_revision:base,config:{words:{eyebrow:'readback'}}})).json();
+  let h=await hist();let row=h.history.find(r=>r.revision===base+1);
+  ok(h.revision,base+1);ok(row.operation,'save');ok(JSON.stringify(row.snapshot.draft.words),JSON.stringify({eyebrow:'readback'}));ok(h.snapshot.published,null);
+  // FINDING 2: the saved draft equals a would-be publish body, yet published is null: the frontend must not call this "published"
+  ok(saved.snapshot.published,null);
+  // restore: row operation 'restore' with restored_from = the requested revision
+  const restored=await (await http('/v2/projects/free-journey/restore',{expected_revision:base+1,restore_revision:base})).json();
+  h=await hist();row=h.history.find(r=>r.revision===base+2);
+  ok(restored.revision,base+2);ok(row.operation,'restore');ok(row.restored_from,base);ok(h.snapshot.published,null);
+  // an unrelated step (another save) after a lost restore attempt is distinguishable: operation differs
+  await http('/v2/projects/free-journey/edit',{expected_revision:base+2,config:{words:{eyebrow:'someone else'}}});
+  h=await hist();row=h.history.find(r=>r.revision===base+3);ok(row.operation,'save');ok(row.restored_from,null);
+  // a protected (enrolled) record rejects a blind legacy write at the SQL trigger (PT409). The CURRENT legacy adapter
+  // (managed-projects.js) surfaces that as a generic 503, indistinguishable from an outage: recorded as a backend request
+  // (map PT409 → 409 code 'protected'); the frontend never treats any legacy error as retryable, so it stays safe meanwhile.
+  const blind=await projectHttp('/v1/projects/free-journey/edit',{config:{words:{eyebrow:'blind'}}});
+  ok([409,503].includes(blind.status),true);
+  const after=await hist();ok(after.revision,base+3);ok(after.snapshot.draft.words.eyebrow,'someone else');
+  console.log('PASS readback contract: history rows carry operation/restored_from; publish state is explicit; protected record refuses blind legacy write');
+ }
  // History entries are private even with an authenticated SQL role.
  await role('authenticated',A);await denies(()=>db.query('select * from private.editor_versions'),'42501');
  console.log('PASS: '+checks+' assertions; SQL roles/ACLs, own/cross-account, first/stale/legacy writes, restore/audit, rollback, private publication, personal takedown fencing, real HTTP adapter over SQL. Native simultaneous sessions tested separately.');

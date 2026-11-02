@@ -94,17 +94,39 @@ test('publish, take down, withdraw and recover carry both revisions through the 
   assert.deepEqual([seen.recover.expected_editor_revision, seen.recover.expected_revision], [12, 4]); assert.match(s.status(), /Nothing is published/);
 });
 
-test('a lost response is read back: moved-by-one with the sent draft is confirmed, unchanged is retryable', async () => {
-  let state = v2(9, 4);
-  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'PUT /v2/projects/alpha/tiles': new TypeError('Failed to fetch') } });
+test('a lost response is verified against the editor-head history: tiles_save at rev+1 with the sent document is committed; other rows are unknown', async () => {
+  let state = v2(9, 4), rows = [];
+  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'GET /v2/projects/alpha/history': () => ({ status: 200, body: { ok: true, revision: state.body.editor_revision, history: rows } }), 'PUT /v2/projects/alpha/tiles': new TypeError('Failed to fetch') } });
   await s.start();
-  state = v2(10, 5);
+  const sent = structuredClone(DOC); sent.title = 'x'; s.byId.get('title').value = 'x'; s.byId.get('title').oninput();
+  state = v2(10, 5, { draft: { document: sent } }); rows = [{ revision: 10, operation: 'tiles_save' }];
   await s.click('save');
-  assert.match(s.status(), /Confirmed: it was saved/);
-  state = v2(10, 5);
-  s.byId.get('title').value = 'x'; s.byId.get('title').oninput();
+  assert.match(s.status(), /Confirmed from the history: it was saved/);
+  s.byId.get('title').value = 'y'; s.byId.get('title').oninput();
+  state = v2(11, 6, { draft: { document: sent } }); rows = [{ revision: 11, operation: 'tiles_unpublish' }];
   await s.click('save');
-  assert.match(s.status(), /nothing reached the server/);
+  assert.match(s.status(), /Unknown whether it was saved/); assert.equal(s.calls.filter(c => c[0] === 'PUT').length, 2, 'no silent retry');
+});
+
+test('FINDING 2: a lost PUBLISH through the bridge is not reported published without a tiles_publish row and a published revision', async () => {
+  let state = v2(9, 4);
+  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'GET /v2/projects/alpha/history': () => ({ status: 200, body: { ok: true, revision: 10, history: [{ revision: 10, operation: 'tiles_save' }] } }), 'POST /v2/projects/alpha/tiles/publish': new TypeError('Failed to fetch') } });
+  await s.start(); state = v2(10, 4);
+  await s.click('publish');
+  assert.doesNotMatch(s.status(), /Published|Confirmed/); assert.match(s.status(), /Unknown whether it was published/); assert.equal(s.byId.get('published').children.length, 0);
+});
+
+test('FINDING 1: 403, generic 503, network and malformed bridge answers fail closed — no legacy PUT, edits kept, reason shown', async () => {
+  for (const [label, res] of [['403', { status: 403, body: { error: 'forbidden' } }], ['503 generic', { status: 503, body: { error: 'Tile studio temporarily unavailable' } }], ['503 text-only', { status: 503, body: { error: 'Versioned editor is not enabled' } }], ['network', new TypeError('Failed to fetch')], ['malformed', { status: 200, body: { ok: true } }]]) {
+    let legacy = 0;
+    const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': res, 'PUT /v1/projects/alpha/tiles': () => { legacy++; return { status: 200, body: { revision: 5 } }; } } });
+    await s.start();
+    assert.match(s.status(), /could not be reached .* paused/, label);
+    s.byId.get('title').value = 'typed'; s.byId.get('title').oninput();
+    await s.click('save'); await s.click('publish');
+    assert.equal(legacy, 0, label + ': no legacy write'); assert.equal(s.calls.filter(c => c[0] !== 'GET' && c[1].includes('/v2/')).length, 0, label + ': no v2 write either');
+    assert.match(s.status(), /Not (saved|published): the versioned Tile bridge could not be reached/, label); assert.equal(s.manage().hidden, true, label);
+  }
 });
 
 test('where the bridge is unconfigured the legacy single-token PUT remains and no manage controls appear', async () => {
