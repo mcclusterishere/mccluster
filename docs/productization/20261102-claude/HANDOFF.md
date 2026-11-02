@@ -55,7 +55,8 @@ New backend request found while proving the contract (request 6 below): the lega
 | Consolidated customer candidate | PR #681 `5e020833534b68b31e191b137e9a30da8b58314f` (fetched `refs/pull/681/head`) |
 | v5 bundle | `backend-productization-source-v5-20261102.zip` → `CHECKPOINT.json` commit `e55b9be0`, branch `codex/domain-trial-worker-20261102`, `pushed:false`; applied as `implementation.patch` on exact #681 → `38805bd6` |
 | Main merge | `f61c7323`: four conflicts resolved to the v4-reconciled union; `supabase/migrations` + `production-ledger.json` byte-identical to main (355 ledger) |
-| This branch's tip | see `git log 5e020833..HEAD`; frontend commits `943ecd7d` … `4130fcf9` |
+| Authoritative backend snapshot | `codex/productization-recovery-20261102` `17ed110d52a425c1570e67fbbdc6308d7b064559` (built on `edd8cdd8`; v6 content; verified as recorded in COMPLETION-LEDGER §1) — merged into this branch at `5d44e435` |
+| This branch's tip | see `git log 5e020833..HEAD`; frontend commits `943ecd7d` … (current tip in the commit log) |
 | Other workers | #684 `21c92673`, #685 `bdb8a945`, #686 `86a90f71`, #687 `a2a32da1`, #493 `9ad0503e`, #636 `a5efd156`, #640 `431da5bd`, #642 `327625eb`, `9d7a7eed` (`story/cluster-fucked-workspace-20261101`), `baa92490` (`codex/actor-evidence-preview-20261101`) — all fetched/resolved read-only; **not integrated** (below). `1fdef132` (profile restoration), `5d76d704` (private math LMS), `edaf4e09` (PRIM3 story), `c1505931`/`ba06fed8`/`e1eeacec`/`cded251c` (local checkpoints) are not advertised by the remote: **blocked, inaccessible from this session**; nothing was substituted for them. |
 
 ## Session gates (environment, not product)
@@ -69,12 +70,14 @@ New backend request found while proving the contract (request 6 below): the lega
 
 | Suite | Result | Scope |
 |---|---|---|
-| Root `node --test scripts/test/*.test.mjs` | **1,411 passed · 0 failed · 0 skipped** | includes 10 runtime harnesses with the review-finding regressions and the recovered-success contract (front-studio 10, Control front page 6, inline editor 3, Studio bridge 7, proposal 5, platform access 5, member fronts 4) and the validator-copy parity test |
+| Root `node --test scripts/test/*.test.mjs` | **1,417 passed · 0 failed · 0 skipped** | combined source; 11 runtime harnesses incl. the social status-contract UI (front-studio 10, Control front page 6, inline editor 3, Studio bridge 7, proposal 5, platform access 5, member fronts 4) and the validator-copy parity test |
 | Root Python | 7 / 7 | |
-| Worker `npm test` (with shim, formerly skipped PGlite suites executed) | **1,309 passed · 4 failed (dependency-load, not source) · 0 skipped** of 1,313 — not a fully passing run | the 4 are `test/cloudflare-registration.test.mjs`, `test/registration-contact-vault.test.mjs`, `test/travel-routing.test.mjs` (cannot resolve `@cfworker/json-schema`) and one `observability-instrumentation` case (`fal gateway client is not installed`); they pass where `npm ci` can reach the registry (v4 evidence: 1,338/0) |
+| Worker `npm test` (with shim, formerly skipped PGlite suites executed) | **1,319 passed · 4 failed (dependency-load, not source) · 0 skipped** of 1,323 — not a fully passing run; v6's 10 new `customer-social` tests pass | the 4 are `test/cloudflare-registration.test.mjs`, `test/registration-contact-vault.test.mjs`, `test/travel-routing.test.mjs` (cannot resolve `@cfworker/json-schema`) and one `observability-instrumentation` case (`fal gateway client is not installed`); they pass where `npm ci` can reach the registry (v4 evidence: 1,338/0) |
 | `editor-versioned-db.mjs` | **158 assertions PASS** (free-builder journey + editor contract + readback contract) | native PG via shim |
 | `tile-editor-bridge-db.mjs` | 57 PASS | native PG via shim |
 | `domain-trial-db.mjs` | 103 SQL/Worker assertions PASS | native PG via shim |
+| `social-consumer-db.mjs` (v6) | **67 SQL/Worker assertions PASS** | native PG via shim |
+| `social-consumer-native.py` (v6) | duplicate grant once; mutation/cancel serialized; lock-inversion bounded safe abort — PASS | native PG 16.15 |
 | `prepared-foundation-db.mjs` / `free-site-minimum-db.mjs` | 28 PASS / PASS | native PG via shim |
 | `editor-versioned-native.py`, `tile-editor-bridge-native.py`, `domain-trial-native.py`, `domain-purchase-native.py --local` | all PASS (two-session races: one commit/one PT409; lock order; duplicate funding/claims) | native PG 16.15 |
 | `scripts/e2e/mobile-overflow-audit.mjs` | 14/14 page×width checks PASS (390 and 1280; scrollWidth === clientWidth; no script errors) | signed-out gates; screenshots in `evidence/mobile/` |

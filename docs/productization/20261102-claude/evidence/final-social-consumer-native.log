@@ -1,0 +1,4 @@
+PASS two concurrent identical events: one receipt/event, both idempotent success
+PASS concurrent actual social mutation/cancel serialized; later mutations denied
+PASS direct job-row/service-disconnect lock inversion: bounded safe abort, retained job; retry required
+exit=0
