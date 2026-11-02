@@ -35,9 +35,17 @@ export function sha256Body(bodyBytes = Buffer.alloc(0)) {
   return b64url(crypto.createHash('sha256').update(bodyBytes).digest());
 }
 
-export function canonicalEdgeRequest({ method, path, timestamp, nonce, digest }) {
+// The reverse hop, Core -> Worker `mccluster` (/v1/media/mcp only), reuses the
+// same key with its own protocol and canonical label. The label is part of the
+// HMAC input, so a signature made for one direction never verifies in the
+// other, even for an identical method, path and body.
+export const CORE_PROTOCOL = 'mccluster-core/v1';
+const EDGE_LABEL = 'MCCLUSTER-EDGE-V1';
+const CORE_LABEL = 'MCCLUSTER-CORE-V1';
+
+export function canonicalEdgeRequest({ method, path, timestamp, nonce, digest, label = EDGE_LABEL }) {
   return [
-    'MCCLUSTER-EDGE-V1',
+    label,
     String(method || 'POST').toUpperCase(),
     String(path || '/'),
     String(timestamp),
@@ -155,5 +163,33 @@ export function createEdgeVerifier({
     get pendingNonces() {
       return nonces.size;
     }
+  };
+}
+
+// Core -> Worker: the outbound machine credential. The Worker verifies it in
+// workers/mccluster/src/media/core-signature.js; the two must agree byte for
+// byte, and core/test/broker-edge-auth.test.mjs pins the format.
+export function canonicalCoreRequest(fields) {
+  return canonicalEdgeRequest({ ...fields, label: CORE_LABEL });
+}
+
+export function signCoreRequest({
+  secret,
+  method,
+  path,
+  bodyBytes = Buffer.alloc(0),
+  timestamp = new Date().toISOString(),
+  nonce = crypto.randomUUID()
+}) {
+  if (!secret) throw new Error('Core signing secret is required');
+  const digest = sha256Body(bodyBytes);
+  const canonical = canonicalCoreRequest({ method, path, timestamp, nonce, digest });
+  const signature = b64url(crypto.createHmac('sha256', secret).update(canonical).digest());
+  return {
+    [EDGE_HEADERS.protocol]: CORE_PROTOCOL,
+    [EDGE_HEADERS.timestamp]: timestamp,
+    [EDGE_HEADERS.nonce]: nonce,
+    [EDGE_HEADERS.digest]: digest,
+    [EDGE_HEADERS.signature]: signature
   };
 }

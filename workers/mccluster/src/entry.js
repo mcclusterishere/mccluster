@@ -6,6 +6,7 @@ import { getUsage, getMediaBudget, updateMediaBudget, createGeneration, getGener
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
+import { houseOwnerActor, isCoreSigned, verifyCoreSignature } from './media/core-signature.js';
 import { handleCoreMcp, handleCoreStatus } from './core/mcp.js';
 import { coreOAuthChallenge, coreOAuthMetadataResponse } from './core/oauth-resource.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
@@ -303,8 +304,19 @@ async function dispatchRequest(request, env, ctx) {
 
     if (path === '/v1/media/mcp' && request.method === 'POST') {
       try {
-        const user = await authUser(request, env);
-        const { status, body } = await handleMediaMcp(request, env, user);
+        // McCluster Core signs its calls here (media/core-signature.js); a
+        // verified signature acts as the house owner. Anyone else signs in.
+        let user;
+        let mcpRequest = request;
+        if (isCoreSigned(request)) {
+          const bodyBytes = new Uint8Array(await request.arrayBuffer());
+          await verifyCoreSignature({ request, env, path, bodyBytes });
+          user = await houseOwnerActor(env);
+          mcpRequest = new Request(request, { body: bodyBytes });
+        } else {
+          user = await authUser(request, env);
+        }
+        const { status, body } = await handleMediaMcp(mcpRequest, env, user);
         return reply(request, env, body, status);
       } catch (error) {
         return fail(request, env, error.message || 'Media MCP request failed', error.status || 500, error.detail);
