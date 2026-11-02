@@ -1,0 +1,4881 @@
+{
+  ".github/workflows/analytics-platform-ci.yml": [
+    656,
+    657,
+    642,
+    640,
+    384,
+    385
+  ],
+  ".github/workflows/api-economic-core-ci.yml": [
+    656,
+    654,
+    657,
+    376
+  ],
+  ".github/workflows/archive-browser-acceptance.yml": [
+    656,
+    653,
+    657
+  ],
+  ".github/workflows/bootstrap-ovh-game-workstation.yml": [
+    656,
+    554
+  ],
+  ".github/workflows/cloudflare-pages-export-ci.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/comms-beta-ci.yml": [
+    656,
+    654,
+    657
+  ],
+  ".github/workflows/compute-node-ci.yml": [
+    656,
+    654,
+    657
+  ],
+  ".github/workflows/control-plane-drift-guard.yml": [
+    656,
+    269
+  ],
+  ".github/workflows/control-workspace-visual.yml": [
+    686,
+    656,
+    653,
+    657,
+    642
+  ],
+  ".github/workflows/customer-selfservice-ci.yml": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    622
+  ],
+  ".github/workflows/deploy-mccluster-mcp.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/deploy-mccluster-worker.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/deploy-pages.yml": [
+    656,
+    657,
+    554,
+    535
+  ],
+  ".github/workflows/equity-uprise-core-v2-ci.yml": [
+    656,
+    554,
+    428,
+    427
+  ],
+  ".github/workflows/human-uprise-editorial.yml": [
+    656,
+    653,
+    657,
+    553
+  ],
+  ".github/workflows/indexnow.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/listener-state-db.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/lyrics-machine.yml": [
+    687,
+    685,
+    684
+  ],
+  ".github/workflows/mcp-continuity-ci.yml": [
+    656,
+    657,
+    493
+  ],
+  ".github/workflows/music-direct-sales-db.yml": [
+    656,
+    653,
+    657
+  ],
+  ".github/workflows/music-platform-ci.yml": [
+    656,
+    657,
+    535,
+    385
+  ],
+  ".github/workflows/music-release-integrity-db.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/music-resonance-atlas.yml": [
+    543,
+    541
+  ],
+  ".github/workflows/native-action-network-ci.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/prim3-halo-canon.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/profile-project-preview.yml": [
+    656,
+    653,
+    657,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633
+  ],
+  ".github/workflows/reconcile-worker-triggers.yml": [
+    656,
+    653,
+    657
+  ],
+  ".github/workflows/reconciliation-ci.yml": [
+    656,
+    653,
+    654,
+    657,
+    600,
+    428,
+    427
+  ],
+  ".github/workflows/regenerate-resume-seo.yml": [
+    656,
+    653,
+    657
+  ],
+  ".github/workflows/research-engine-ci.yml": [
+    543,
+    541
+  ],
+  ".github/workflows/s477-lidar-crop.yml": [
+    656,
+    655,
+    653
+  ],
+  ".github/workflows/site-accessibility.yml": [
+    656,
+    653,
+    657
+  ],
+  ".github/workflows/site-smoke.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/social-hardening-test.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/supabase-functions-deploy.yml": [
+    656,
+    654,
+    657
+  ],
+  ".github/workflows/users-analytics-ci.yml": [
+    656,
+    657
+  ],
+  ".github/workflows/world-release-visual.yml": [
+    656,
+    653,
+    657
+  ],
+  ".github/workflows/world-unified-feed-ci.yml": [
+    656,
+    657
+  ],
+  ".gitignore": [
+    687,
+    685,
+    684
+  ],
+  "README.md": [
+    384,
+    385
+  ],
+  "_unfinished/research-world/index.html": [
+    543,
+    541
+  ],
+  "account.html": [
+    686,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    587,
+    553,
+    428,
+    427
+  ],
+  "action-globe.html": [
+    587,
+    553,
+    551,
+    550,
+    548,
+    428,
+    427
+  ],
+  "action-policy.html": [
+    553,
+    428,
+    427
+  ],
+  "action/index.html": [
+    553,
+    384,
+    385
+  ],
+  "album.html": [
+    687,
+    686,
+    685,
+    684,
+    681,
+    641,
+    639,
+    638,
+    553,
+    384,
+    385
+  ],
+  "analytics.html": [
+    686,
+    553,
+    411,
+    408
+  ],
+  "anti-social-mission.html": [
+    553,
+    428,
+    427
+  ],
+  "assets/audio/all-in-the-details.mp3": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/hundun-b-side.mp3": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/lana-b-side.mp3": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/mr-lock-changer-remix.mp3": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/repo-guy-b-side.mp3": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/salvage-title-b-side.m4a": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/stand-on-business-b-side.m4a": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/test-drive.mp3": [
+    687,
+    685,
+    684
+  ],
+  "assets/audio/towyard-killer.m4a": [
+    687,
+    685,
+    684
+  ],
+  "catalogue.html": [
+    687,
+    686,
+    685,
+    684,
+    681,
+    641,
+    639,
+    638,
+    553,
+    384,
+    385
+  ],
+  "control.html": [
+    687,
+    686,
+    685,
+    684,
+    679,
+    553,
+    550,
+    401,
+    410
+  ],
+  "core/README.md": [
+    687,
+    685,
+    684,
+    261
+  ],
+  "core/capabilities/catalog.json": [
+    687,
+    685,
+    684,
+    261
+  ],
+  "core/drift-contract.json": [
+    356,
+    428,
+    384,
+    385,
+    401,
+    427,
+    376
+  ],
+  "core/package.json": [
+    687,
+    685,
+    684,
+    261
+  ],
+  "core/src/executors/lyrics-align.mjs": [
+    687,
+    685,
+    684
+  ],
+  "core/src/lyrics/align.mjs": [
+    687,
+    685,
+    684
+  ],
+  "core/src/lyrics/asr_faster_whisper.py": [
+    687,
+    685,
+    684
+  ],
+  "core/src/lyrics/ctc_align.py": [
+    687,
+    685,
+    684
+  ],
+  "core/src/lyrics/import.mjs": [
+    687,
+    685,
+    684
+  ],
+  "core/src/lyrics/pipeline.mjs": [
+    687,
+    685,
+    684
+  ],
+  "core/src/lyrics/separate.py": [
+    687,
+    685,
+    684
+  ],
+  "core/src/lyrics/sheet.mjs": [
+    687,
+    685,
+    684
+  ],
+  "core/src/runner.mjs": [
+    687,
+    685,
+    684
+  ],
+  "core/src/tools/control.mjs": [
+    687,
+    685,
+    684,
+    600,
+    261
+  ],
+  "core/src/website-studio/executor.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "core/src/website-studio/prepare.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "core/test/lyrics-machine.test.mjs": [
+    687,
+    685,
+    684
+  ],
+  "create.html": [
+    681,
+    641,
+    639,
+    553
+  ],
+  "creator.html": [
+    687,
+    685,
+    684,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631,
+    553,
+    543,
+    541,
+    425
+  ],
+  "css/action-globe.css": [
+    553,
+    428,
+    427
+  ],
+  "css/adaptive-surfaces.css": [
+    384,
+    385
+  ],
+  "css/control-admin.css": [
+    687,
+    685,
+    684
+  ],
+  "css/control-analytics.css": [
+    686,
+    411,
+    406
+  ],
+  "css/create.css": [
+    681,
+    641,
+    639
+  ],
+  "css/customer-site.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "css/customer-social.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "css/front-studio.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "css/gateway.css": [
+    384,
+    385
+  ],
+  "css/mnet.css": [
+    553,
+    428,
+    422,
+    427
+  ],
+  "css/music-research-queue.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    543
+  ],
+  "css/platform-home.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "css/profile-shell.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633
+  ],
+  "css/resonance-world.css": [
+    543,
+    541
+  ],
+  "css/resonance.css": [
+    543,
+    541
+  ],
+  "css/site-offers.css": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "css/website-studio.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "css/world-composer-overlay.css": [
+    681,
+    641,
+    639
+  ],
+  "css/world-discover.css": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "css/world-house-agents.css": [
+    551,
+    550,
+    548
+  ],
+  "customer-checkout.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "customer-commerce.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "customer-domain-purchases.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "customer-domains.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "customer-projects.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "customer-site.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "customer-social.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "customer-world.html": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "data/albums.json": [
+    687,
+    685,
+    684,
+    681,
+    641,
+    639,
+    638,
+    384,
+    385
+  ],
+  "data/brands.json": [
+    553,
+    385
+  ],
+  "data/catalogue.json": [
+    687,
+    685,
+    684
+  ],
+  "data/equity-uprise-offers-template.json": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "data/lyrics/all-in-the-details.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/environmental-injustice.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/hundun-b-side.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/lana-b-side.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/mr-lock-changer-remix.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/repo-guy-b-side.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/salvage-title-b-side.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/all-in-the-details.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/environmental-injustice.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/hundun-b-side.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/lana-b-side.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/mr-lock-changer-remix.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/salvage-title-b-side.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/stand-on-business-b-side.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/test-drive.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/src/who-did-the-shoot.txt": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/stand-on-business-b-side.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/test-drive.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/towyard-killer.json": [
+    687,
+    685,
+    684
+  ],
+  "data/lyrics/who-did-the-shoot.json": [
+    687,
+    685,
+    684
+  ],
+  "data/prim3/house-agent-us-cohort.v1.json": [
+    551,
+    550,
+    548
+  ],
+  "data/research/music-brain-networks.json": [
+    543,
+    541
+  ],
+  "data/research/references.json": [
+    384,
+    385
+  ],
+  "data/seo/domain-architecture.json": [
+    679,
+    553
+  ],
+  "data/site-advertising-contract.json": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "data/website-studio/demo-v1.json": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "data/website-studio/motion-portfolio-v1.json": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "docs/END-RACISM-TWO-PATH-CAMPAIGN.md": [
+    384,
+    385
+  ],
+  "docs/action-network/CANDIDATE-LABS-NEWS-TRANSPARENCY.md": [
+    428,
+    427
+  ],
+  "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md": [
+    428,
+    427
+  ],
+  "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md": [
+    428,
+    427
+  ],
+  "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md": [
+    553,
+    428,
+    427
+  ],
+  "docs/action-network/GLOBAL-CIVIC-SOURCE-ACTIVATION.md": [
+    428,
+    427
+  ],
+  "docs/action-network/HOUSE-AGENT-WORLD-V1.md": [
+    551,
+    550,
+    548
+  ],
+  "docs/action-network/MISSION-ORIGINATED-PUBLISHING-CONTRACT.md": [
+    428,
+    427
+  ],
+  "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md": [
+    428,
+    427
+  ],
+  "docs/action-network/TWO-OR-MORE-REGIONAL-ACTIVATION.md": [
+    428,
+    427
+  ],
+  "docs/action-network/WORLD-AS-FEED-V1.md": [
+    428,
+    427
+  ],
+  "docs/action-network/WORLD-REGION-BOUNDARY-PIPELINE.md": [
+    428,
+    427
+  ],
+  "docs/analytics/MEASUREMENT-INTEGRITY-20261026.md": [
+    642,
+    640
+  ],
+  "docs/control-plane/COMMERCE-RECONCILER.md": [
+    679,
+    376
+  ],
+  "docs/control-plane/CONTROL-ROOM-BACKEND-GAPS.md": [
+    356,
+    376
+  ],
+  "docs/control-plane/HOUSE-AGENTS-WORLD-V1.md": [
+    551,
+    550,
+    548
+  ],
+  "docs/control-plane/MANAGED-PROJECTS.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "docs/control-plane/SECURITY-POSTURE.md": [
+    679,
+    553,
+    428,
+    384,
+    385,
+    427,
+    397
+  ],
+  "docs/control-plane/SHARED-NAVIGATION.md": [
+    686,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633
+  ],
+  "docs/control-plane/VAUNT-PROJECT-PAGE.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633
+  ],
+  "docs/control-plane/WEBSITE-STUDIO-CONSOLIDATION.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "docs/control-plane/WORLD-DIRECTORY.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md": [
+    587,
+    553
+  ],
+  "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json": [
+    687,
+    686,
+    685,
+    684,
+    681,
+    679,
+    589,
+    554,
+    497,
+    426,
+    413,
+    582,
+    546,
+    553,
+    551,
+    550,
+    548,
+    428,
+    431,
+    427
+  ],
+  "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json": [
+    686,
+    681,
+    679,
+    589,
+    554,
+    497,
+    426,
+    413,
+    582,
+    546,
+    553,
+    551,
+    550,
+    548,
+    428,
+    431,
+    427
+  ],
+  "docs/music/WHIP-EQUIPPED-STORY.md": [
+    687,
+    685,
+    684
+  ],
+  "docs/music/workspace-milestone.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "docs/research/ADAPTIVE-EXPERIENCE-RESEARCH-LOG-2026-10-06.md": [
+    384,
+    385
+  ],
+  "docs/research/MCCLUSTER-RESEARCH-ENGINE-V2.md": [
+    543,
+    541
+  ],
+  "docs/research/MCCLUSTER-RESONANCE-ATLAS-V1.md": [
+    543,
+    541
+  ],
+  "docs/self-service/customer-social.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "docs/self-service/world-composer.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "docs/selfservice-world-delivery.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634
+  ],
+  "docs/selfservice/ACTIVATION-PROPOSAL.md": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "docs/selfservice/COMPOSER-OVERLAY-CHECKPOINT.md": [
+    681,
+    641,
+    639
+  ],
+  "docs/selfservice/FIRST-OFFER-ACTIVATION.md": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "docs/selfservice/IDENTITY-DOMAIN-BINDINGS.md": [
+    681,
+    641
+  ],
+  "docs/selfservice/IMPLEMENTATION-STATUS.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "docs/selfservice/PR638-PROPOSED-METADATA.md": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "docs/selfservice/RECONCILIATION-2026-10-26.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    631
+  ],
+  "docs/selfservice/cloudflare-registrar-evaluation.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "docs/selfservice/cloudflare-registration-adapter.md": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "docs/selfservice/customer-billing.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "docs/selfservice/domain-targets.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "docs/selfservice/domains.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "docs/selfservice/inline-domain-contacts.md": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "docs/selfservice/music-research-reconciliation.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "docs/selfservice/music-research-review-ui.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "docs/selfservice/music-workspace-handoff.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "docs/selfservice/platform-offers.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "docs/selfservice/reconciliation/branch-inventory.json": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    631
+  ],
+  "docs/selfservice/reconciliation/ledger-diff.json": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    631
+  ],
+  "docs/selfservice/reconciliation/live-migration-ledger.json": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    631
+  ],
+  "docs/selfservice/reconciliation/pr-inventory.json": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    631
+  ],
+  "docs/selfservice/store-commerce-adapter.md": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634,
+    633
+  ],
+  "ecosystem.html": [
+    686,
+    553
+  ],
+  "end-racism.html": [
+    553,
+    384,
+    385
+  ],
+  "equity-uprise.html": [
+    553,
+    428,
+    427
+  ],
+  "front-studio.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "front.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633
+  ],
+  "guest-globe.html": [
+    428,
+    427
+  ],
+  "help.html": [
+    553,
+    431
+  ],
+  "index.html": [
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633,
+    428,
+    384,
+    385,
+    427
+  ],
+  "js/action-globe.js": [
+    617,
+    553,
+    551,
+    550,
+    548,
+    428,
+    427
+  ],
+  "js/action-policy.js": [
+    428,
+    427
+  ],
+  "js/action.js": [
+    553,
+    384,
+    385,
+    431
+  ],
+  "js/adaptive-surfaces.js": [
+    384,
+    385
+  ],
+  "js/analytics.js": [
+    642,
+    640,
+    384,
+    385
+  ],
+  "js/composition-draft.js": [
+    681,
+    641,
+    639
+  ],
+  "js/control-room-v2.js": [
+    686,
+    679,
+    553,
+    550,
+    356,
+    354,
+    261
+  ],
+  "js/control-room/analytics.js": [
+    642,
+    640,
+    553,
+    411,
+    406,
+    408
+  ],
+  "js/control-room/lyrics-review.js": [
+    687,
+    685,
+    684
+  ],
+  "js/control-room/music-ops.js": [
+    687,
+    685,
+    684
+  ],
+  "js/control-room/work-records.js": [
+    686,
+    376
+  ],
+  "js/control-room/workspace-core.js": [
+    686,
+    679,
+    550
+  ],
+  "js/create.js": [
+    681,
+    641,
+    639,
+    553
+  ],
+  "js/customer-checkout.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "js/customer-commerce.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "js/customer-domain-purchases.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "js/customer-domains.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "js/customer-projects.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "js/customer-seller.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "js/customer-site.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "js/customer-social.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "js/customer-store.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "js/customer-world.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "js/end-racism-sale.js": [
+    384,
+    385
+  ],
+  "js/experience.js": [
+    384,
+    385
+  ],
+  "js/front-media.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "js/front-member.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    622
+  ],
+  "js/front-project-entry.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633
+  ],
+  "js/front-projects.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633
+  ],
+  "js/front-studio.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    622
+  ],
+  "js/gated-audio.js": [
+    384,
+    385
+  ],
+  "js/google-places-address.js": [
+    428,
+    427
+  ],
+  "js/guest-world.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633,
+    428,
+    427
+  ],
+  "js/lyric-sheet.js": [
+    687,
+    685,
+    684
+  ],
+  "js/lyrics-sync.js": [
+    687,
+    685,
+    684
+  ],
+  "js/main.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "js/mcc-auth.js": [
+    681,
+    641,
+    639,
+    554
+  ],
+  "js/member-front.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633
+  ],
+  "js/mnet.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    419,
+    385,
+    431
+  ],
+  "js/music-creator-profile.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    553
+  ],
+  "js/music-creator-studio.js": [
+    687,
+    685,
+    684,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    543,
+    541,
+    425
+  ],
+  "js/music-engine.js": [
+    642,
+    640,
+    417,
+    543,
+    541,
+    428,
+    384,
+    385,
+    427
+  ],
+  "js/music-research-queue.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    543
+  ],
+  "js/music-workspace.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "js/onboard.js": [
+    428,
+    427
+  ],
+  "js/platform-home.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "js/project-studio.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "js/resonance/associations.mjs": [
+    543,
+    541
+  ],
+  "js/resonance/atlas-ui.mjs": [
+    543,
+    541
+  ],
+  "js/resonance/core.mjs": [
+    543,
+    541
+  ],
+  "js/resonance/media-graph.mjs": [
+    543,
+    541
+  ],
+  "js/resonance/theory.mjs": [
+    543,
+    541
+  ],
+  "js/resonance/upload-hook.mjs": [
+    543,
+    541
+  ],
+  "js/resonance/world.mjs": [
+    543,
+    541
+  ],
+  "js/site-navigation.js": [
+    686,
+    502,
+    553
+  ],
+  "js/site-offers.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "js/socials-room.js": [
+    686,
+    553
+  ],
+  "js/tabbar.js": [
+    686,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    554,
+    428,
+    427
+  ],
+  "js/travel/world-travel.mjs": [
+    617,
+    554
+  ],
+  "js/website-studio/contract.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "js/website-studio/editor.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "js/website-studio/panorama.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "js/website-studio/public.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "js/website-studio/renderer.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "js/world-audio-continuity.js": [
+    642,
+    640,
+    554
+  ],
+  "js/world-composer-overlay.js": [
+    681,
+    641,
+    639
+  ],
+  "js/world-countries.js": [
+    587,
+    551,
+    550,
+    548
+  ],
+  "js/world-discover.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "js/world-house-agents.js": [
+    551,
+    550,
+    548
+  ],
+  "js/world-news.js": [
+    428,
+    427
+  ],
+  "js/world-publish-core.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "js/world-social-composer.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "listen.html": [
+    686,
+    553,
+    543,
+    541,
+    384,
+    385
+  ],
+  "llms.txt": [
+    687,
+    685,
+    684,
+    553
+  ],
+  "management.html": [
+    686,
+    553
+  ],
+  "member-front.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633
+  ],
+  "mnet.html": [
+    686,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    419,
+    428,
+    422,
+    427
+  ],
+  "music-research.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "music-videos.html": [
+    687,
+    685,
+    684,
+    553
+  ],
+  "music-workspace.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "native/src/content.ts": [
+    384,
+    385
+  ],
+  "packages/backing-model/index.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "packages/backing-model/index.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "packages/front-config/index.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "platform-home.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "privacy.html": [
+    417,
+    553
+  ],
+  "project-studio.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "research.html": [
+    384,
+    385
+  ],
+  "resonance.html": [
+    543,
+    541
+  ],
+  "scripts/control-plane-drift-contract-check.mjs": [
+    428,
+    427
+  ],
+  "scripts/e2e/canonical-artist-owner.e2e.mjs": [
+    681,
+    641
+  ],
+  "scripts/e2e/composer-overlay.e2e.mjs": [
+    681,
+    641,
+    639
+  ],
+  "scripts/e2e/control-lyrics-review.e2e.mjs": [
+    687,
+    685,
+    684
+  ],
+  "scripts/e2e/customer-domain-recovery.e2e.mjs": [
+    681,
+    641
+  ],
+  "scripts/e2e/customer-site-policy.e2e.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/e2e/customer-site.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "scripts/e2e/equity-offers-artist.e2e.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/e2e/first-offer-acceptance.e2e.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/e2e/lyrics-sync.e2e.mjs": [
+    687,
+    685,
+    684
+  ],
+  "scripts/e2e/managed-projects.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "scripts/e2e/member-front-auth.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633
+  ],
+  "scripts/e2e/member-front.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "scripts/e2e/music-profile-auth.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633
+  ],
+  "scripts/e2e/music-world-continuity.e2e.mjs": [
+    687,
+    685,
+    684,
+    642,
+    640,
+    554
+  ],
+  "scripts/e2e/platform-home-transition.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633
+  ],
+  "scripts/e2e/platform-home.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "scripts/e2e/project-tiles-redirect.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "scripts/e2e/project-tiles.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "scripts/e2e/site-navigation.e2e.mjs": [
+    686,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    502
+  ],
+  "scripts/e2e/vaunt-project.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    630,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "scripts/e2e/world-directory.e2e.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "scripts/e2e/world-screen.e2e.mjs": [
+    681,
+    587,
+    553
+  ],
+  "scripts/geo/prepare-adm1-import.mjs": [
+    428,
+    427
+  ],
+  "scripts/music-resonance-analyze.mjs": [
+    543,
+    541
+  ],
+  "scripts/policy/legiscan-sync.mjs": [
+    428,
+    427
+  ],
+  "scripts/research-engine/build-science-catalogue.mjs": [
+    543,
+    541
+  ],
+  "scripts/research-engine/derive-stems-score.py": [
+    543,
+    541
+  ],
+  "scripts/smoke.mjs": [
+    686,
+    681,
+    200
+  ],
+  "scripts/stage-cloudflare-pages.mjs": [
+    679,
+    554
+  ],
+  "scripts/supabase-compare-live-ledger.mjs": [
+    428,
+    427
+  ],
+  "scripts/test-analytics-identity-db.mjs": [
+    642,
+    640
+  ],
+  "scripts/test-customer-site-storage-db.sh": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/test-customer-social-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "scripts/test-managed-projects-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "scripts/test-world-directory-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "scripts/test-world-social-delivery-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634
+  ],
+  "scripts/test/action-camera-loop.test.mjs": [
+    681,
+    641,
+    639
+  ],
+  "scripts/test/action-globe-regional-contract.test.mjs": [
+    428,
+    427
+  ],
+  "scripts/test/action-network-live-governance.test.mjs": [
+    687,
+    685,
+    684,
+    419,
+    428,
+    427
+  ],
+  "scripts/test/action-network-redesign.test.mjs": [
+    681,
+    641,
+    639,
+    553
+  ],
+  "scripts/test/action-network.test.mjs": [
+    384,
+    385
+  ],
+  "scripts/test/action-world-home.test.mjs": [
+    553,
+    428,
+    427
+  ],
+  "scripts/test/adaptive-compatibility.test.mjs": [
+    384,
+    385
+  ],
+  "scripts/test/analytics-globe-carousels.test.mjs": [
+    686,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "scripts/test/analytics-measurement-ui.test.mjs": [
+    642,
+    640
+  ],
+  "scripts/test/analytics-platform.test.mjs": [
+    642,
+    640,
+    553
+  ],
+  "scripts/test/analytics-transport-privacy.test.mjs": [
+    642,
+    640
+  ],
+  "scripts/test/appbar-consistency.test.mjs": [
+    686,
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    428,
+    427
+  ],
+  "scripts/test/composition-draft.test.mjs": [
+    681,
+    641,
+    639
+  ],
+  "scripts/test/control-surface.test.mjs": [
+    686,
+    679,
+    356,
+    354
+  ],
+  "scripts/test/create-flow.test.mjs": [
+    681,
+    641,
+    639
+  ],
+  "scripts/test/creator-billing-testmode-contract.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-cf-registration-schema.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "scripts/test/creator-checkout-reservation-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-commerce.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-domain-billing.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-domain-orders.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-domain-provider-db.mjs": [
+    681,
+    641
+  ],
+  "scripts/test/creator-domain-purchases-ui.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-domain-schema.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-domain-target-schema.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "scripts/test/creator-domain-ui.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-entitlement-contract.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-inline-domain-contacts.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "scripts/test/creator-publish-rpc-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-store-commerce-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634,
+    633
+  ],
+  "scripts/test/creator-store-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/creator-store.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/customer-billing.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/customer-commerce-browser.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "scripts/test/customer-site-addresses-db.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/test/customer-site-storage-db.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/test/end-racism-two-path.test.mjs": [
+    384,
+    385
+  ],
+  "scripts/test/experience-evidence-plane.test.mjs": [
+    384,
+    385
+  ],
+  "scripts/test/free-site-minimum-db.mjs": [
+    681,
+    641
+  ],
+  "scripts/test/gated-track-mission-identity.test.mjs": [
+    642,
+    640
+  ],
+  "scripts/test/guest-world-lifecycle.test.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/test/here-album-commerce.test.mjs": [
+    384,
+    385
+  ],
+  "scripts/test/human-uprise-door.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    554,
+    553
+  ],
+  "scripts/test/journey-errors.test.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/test/lyrics-machine-format.test.mjs": [
+    687,
+    685,
+    684
+  ],
+  "scripts/test/member-front-pages.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "scripts/test/mnet-real-network.test.mjs": [
+    553,
+    419,
+    428,
+    427
+  ],
+  "scripts/test/music-direct-sales.test.mjs": [
+    687,
+    685,
+    684
+  ],
+  "scripts/test/music-platform.test.mjs": [
+    686,
+    543,
+    541,
+    384,
+    385
+  ],
+  "scripts/test/music-research-review-browser.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "scripts/test/music-research-sql.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "scripts/test/music-resonance.test.mjs": [
+    543,
+    541
+  ],
+  "scripts/test/music-workspace-browser.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "scripts/test/music-workspace-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "scripts/test/music-workspace-handoff-browser.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "scripts/test/music-workspace-handoff-db.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "scripts/test/music-workspace-handoff-worker.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "scripts/test/music-workspace-research-worker.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "scripts/test/music-workspace-worker.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "scripts/test/operator-control-spine.test.mjs": [
+    686,
+    261
+  ],
+  "scripts/test/platform-center-nav.browser.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627
+  ],
+  "scripts/test/playback-measurement.test.mjs": [
+    642,
+    640
+  ],
+  "scripts/test/research-engine.test.mjs": [
+    543,
+    541
+  ],
+  "scripts/test/seo-authority.test.mjs": [
+    687,
+    685,
+    684
+  ],
+  "scripts/test/site-offers.test.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "scripts/test/song-test.test.mjs": [
+    384,
+    385
+  ],
+  "scripts/test/stripe-commerce-reconciler.test.mjs": [
+    681,
+    679,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634,
+    633,
+    376
+  ],
+  "scripts/test/studio-processing-integration.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "scripts/test/world-countries.test.mjs": [
+    551,
+    550,
+    548
+  ],
+  "scripts/test/world-house-agents.test.mjs": [
+    551,
+    550,
+    548
+  ],
+  "scripts/test/world-publish-core.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "scripts/test/world-social-composer.browser.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "supabase/config.toml": [
+    428,
+    384,
+    385,
+    427,
+    397
+  ],
+  "supabase/functions/music-access/index.ts": [
+    687,
+    685,
+    684
+  ],
+  "supabase/functions/music-direct-access/index.ts": [
+    384,
+    385,
+    397
+  ],
+  "supabase/functions/music-direct-checkout/index.ts": [
+    384,
+    385,
+    397
+  ],
+  "supabase/functions/public-gdelt-news/index.ts": [
+    428,
+    427
+  ],
+  "supabase/functions/stripe-webhook/commerce.ts": [
+    681,
+    679,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634,
+    633,
+    376
+  ],
+  "supabase/functions/stripe-webhook/index.ts": [
+    679,
+    384,
+    385,
+    401,
+    376
+  ],
+  "supabase/migrations/20261005063813_canonical_ai_context_decisions_v1.sql": [
+    356,
+    354
+  ],
+  "supabase/migrations/20261005063836_control_media_monthly_budget_v1.sql": [
+    356,
+    354
+  ],
+  "supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql": [
+    384,
+    385,
+    376
+  ],
+  "supabase/migrations/20261006022702_leads_status_vocabulary_reconcile_v1.sql": [
+    384,
+    385,
+    376
+  ],
+  "supabase/migrations/20261006023453_commerce_stripe_reconciler_v2.sql": [
+    384,
+    385,
+    376
+  ],
+  "supabase/migrations/20261006232625_music_direct_track_sales_v1.sql": [
+    428,
+    384,
+    385,
+    427
+  ],
+  "supabase/migrations/20261006233518_here_album_commerce_v1_reconcile.sql": [
+    384,
+    385
+  ],
+  "supabase/migrations/20261006234316_end_racism_track_funnel_taxonomy_v1.sql": [
+    384,
+    385
+  ],
+  "supabase/migrations/20261013230000_action_globe_public_projection.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261013233000_action_globe_regions.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261013234500_action_globe_song_portfolios.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014030000_action_globe_adm1_boundaries.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014033000_action_globe_presence.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014040000_action_globe_region_activation.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014050000_action_policy_memo_bounties.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014060000_civic_global_discovery.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014070000_candidate_labs_media_graph.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014080000_media_geo_ingestion.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014081000_media_ingest_rpc.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014081500_media_news_namespace.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014083000_gdelt_backoff_cache.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/20261014120000_action_globe_join_authorization.sql": [
+    428,
+    427
+  ],
+  "supabase/migrations/pending/20261010009100_creator_publish_cohort_entitlement.sql": [
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "supabase/migrations/pending/20261026009200_creator_checkout_reservations.sql": [
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "supabase/migrations/pending/20261026009300_creator_store.sql": [
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "supabase/migrations/pending/20261026009400_music_workspace.sql": [
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "supabase/migrations/pending/20261026009500_creator_store_commerce_adapter.sql": [
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634,
+    633
+  ],
+  "supabase/pending/20261019210000_house_agent_accounts_v1.sql": [
+    551,
+    550,
+    548
+  ],
+  "supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql": [
+    687,
+    685,
+    684
+  ],
+  "supabase/pending/20261031180000_lyrics_machine_v1.sql": [
+    687,
+    685,
+    684
+  ],
+  "supabase/pending/20261031180100_whip_equipped_catalog_objects.rollback.sql": [
+    687,
+    685,
+    684
+  ],
+  "supabase/pending/20261031180100_whip_equipped_catalog_objects.sql": [
+    687,
+    685,
+    684
+  ],
+  "supabase/pending/README.md": [
+    679,
+    600,
+    453
+  ],
+  "supabase/pending/analytics_tenant_history_restrict_v1.sql": [
+    642,
+    640
+  ],
+  "supabase/pending/analytics_visitor_event_identity_v6.sql": [
+    642,
+    640
+  ],
+  "supabase/pending/canonical_artist_bindings_v1.sql": [
+    681,
+    641
+  ],
+  "supabase/pending/creator_cf_registration_attempts_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "supabase/pending/creator_domain_orders_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "supabase/pending/creator_domain_provider_bindings_v1.sql": [
+    681,
+    641
+  ],
+  "supabase/pending/creator_domain_targets_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "supabase/pending/creator_domains_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "supabase/pending/creator_inline_domain_contacts_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "supabase/pending/customer_site_addresses_v1.sql": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "supabase/pending/customer_site_modules_v1.sql": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "supabase/pending/customer_site_storage_v1.sql": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "supabase/pending/customer_social_selfservice.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "supabase/pending/live-callers.json": [
+    685,
+    681,
+    679
+  ],
+  "supabase/pending/managed_project_identity_v1.sql": [
+    681,
+    641
+  ],
+  "supabase/pending/managed_projects_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "supabase/pending/music_research_pipeline_reconciled.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "supabase/pending/music_workspace_release_handoff.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "supabase/pending/music_workspace_research_bridge.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "supabase/pending/music_workspace_research_state.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "supabase/pending/project_tiles_free_v1.sql": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "supabase/pending/project_tiles_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "supabase/pending/website_studio_v2.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "supabase/pending/world_directory_v1.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "supabase/pending/world_social_delivery.sql": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634
+  ],
+  "supabase/production-ledger.json": [
+    356,
+    428,
+    384,
+    385,
+    401,
+    427,
+    376
+  ],
+  "supabase/tests/action_globe_join_authorization.behaviour.sql": [
+    428,
+    427
+  ],
+  "tools/build-catalogue.mjs": [
+    687,
+    685,
+    684,
+    681,
+    641,
+    639,
+    638,
+    384,
+    385
+  ],
+  "tools/lyrics/transcribe.mjs": [
+    687,
+    685,
+    684
+  ],
+  "website-studio-view.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "website-studio.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "whip/driver/app.js": [
+    554,
+    453
+  ],
+  "workers/mccluster/package-lock.json": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/package.json": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    401
+  ],
+  "workers/mccluster/src/ai/router.js": [
+    354,
+    261
+  ],
+  "workers/mccluster/src/analytics/audience-science.js": [
+    642,
+    640,
+    543,
+    541
+  ],
+  "workers/mccluster/src/analytics/geo.js": [
+    411,
+    410
+  ],
+  "workers/mccluster/src/analytics/geo.test.mjs": [
+    411,
+    410
+  ],
+  "workers/mccluster/src/analytics/measurement-dictionary.js": [
+    642,
+    640
+  ],
+  "workers/mccluster/src/analytics/router.js": [
+    642,
+    640,
+    411,
+    410
+  ],
+  "workers/mccluster/src/canonical-artists.js": [
+    681,
+    641
+  ],
+  "workers/mccluster/src/company-site/router.js": [
+    681,
+    641,
+    639,
+    638,
+    553
+  ],
+  "workers/mccluster/src/connect.js": [
+    681,
+    679,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-billing-webhook.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-billing.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-commerce.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-domain-billing.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-domain-host.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-domain-orders.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-domain-targets.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "workers/mccluster/src/creator-domains.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-entitlement.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/creator-store.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/customer-site-addresses.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/src/customer-site-advertising.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/src/customer-site-modules.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/src/customer-site-storage.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/src/customer-site-world.js": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/src/decision-intelligence/graph.js": [
+    411,
+    408
+  ],
+  "workers/mccluster/src/domains/cloudflare-registration-flow.js": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/src/domains/cloudflare-registration-store.js": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/src/domains/cloudflare-registration.js": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/src/domains/namesilo.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/src/domains/registration-contact-vault.js": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/src/domains/registration-schema.js": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/src/entry-platform.js": [
+    681,
+    679,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    619,
+    553,
+    551,
+    550,
+    548
+  ],
+  "workers/mccluster/src/entry.js": [
+    554,
+    356,
+    354
+  ],
+  "workers/mccluster/src/house-agents.js": [
+    551,
+    550,
+    548
+  ],
+  "workers/mccluster/src/index.js": [
+    551,
+    550,
+    548,
+    401,
+    453,
+    414
+  ],
+  "workers/mccluster/src/managed-projects.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "workers/mccluster/src/media/router.js": [
+    554,
+    356,
+    354
+  ],
+  "workers/mccluster/src/member-fronts.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    622
+  ],
+  "workers/mccluster/src/music-workspace-analysis.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "workers/mccluster/src/music-workspace-release.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "workers/mccluster/src/music-workspace-research.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635
+  ],
+  "workers/mccluster/src/music-workspace.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    631
+  ],
+  "workers/mccluster/src/music/router.js": [
+    384,
+    385
+  ],
+  "workers/mccluster/src/music/tracks.js": [
+    687,
+    685,
+    684,
+    384,
+    385
+  ],
+  "workers/mccluster/src/platform-api.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634,
+    553
+  ],
+  "workers/mccluster/src/preflight.js": [
+    681,
+    679,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    619
+  ],
+  "workers/mccluster/src/project-tiles.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "workers/mccluster/src/social/customer.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "workers/mccluster/src/social/meta.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "workers/mccluster/src/social/router.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634,
+    553,
+    356,
+    354
+  ],
+  "workers/mccluster/src/social/world-delivery.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634
+  ],
+  "workers/mccluster/src/website-studio/service.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    493
+  ],
+  "workers/mccluster/src/whip/worker.js": [
+    554,
+    411
+  ],
+  "workers/mccluster/src/world-directory.js": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "workers/mccluster/test/analytics-event-inventory-dictionary.test.mjs": [
+    642,
+    640
+  ],
+  "workers/mccluster/test/analytics-identity-evidence.test.mjs": [
+    642,
+    640
+  ],
+  "workers/mccluster/test/audience-science.test.mjs": [
+    642,
+    640
+  ],
+  "workers/mccluster/test/canonical-artists.test.mjs": [
+    681,
+    641
+  ],
+  "workers/mccluster/test/cloudflare-registration.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/test/creator-domain-composed.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "workers/mccluster/test/creator-domain-targets.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "workers/mccluster/test/creator-domain-webhook-mode.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/test/creator-domains.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/test/customer-site-advertising.test.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/test/customer-site-modules.test.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/test/customer-site-storage.test.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/test/customer-site-world.test.mjs": [
+    681,
+    641,
+    639,
+    638
+  ],
+  "workers/mccluster/test/customer-social.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626,
+    624
+  ],
+  "workers/mccluster/test/decision-intelligence-graph.test.mjs": [
+    411,
+    408
+  ],
+  "workers/mccluster/test/house-agents.test.mjs": [
+    551,
+    550,
+    548
+  ],
+  "workers/mccluster/test/managed-projects.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624
+  ],
+  "workers/mccluster/test/media-budget.test.mjs": [
+    554,
+    356,
+    354
+  ],
+  "workers/mccluster/test/member-fronts.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    623,
+    626,
+    624,
+    622
+  ],
+  "workers/mccluster/test/mnet-draft-media.test.mjs": [
+    681,
+    641,
+    639
+  ],
+  "workers/mccluster/test/music-gate.test.mjs": [
+    384,
+    385
+  ],
+  "workers/mccluster/test/preflight.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    625,
+    631,
+    627,
+    626
+  ],
+  "workers/mccluster/test/project-tiles.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "workers/mccluster/test/registration-contact-vault.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637
+  ],
+  "workers/mccluster/test/social-outbox.test.mjs": [
+    553,
+    356,
+    354
+  ],
+  "workers/mccluster/test/support/free-site-fixture.mjs": [
+    681,
+    641
+  ],
+  "workers/mccluster/test/support/project-tiles-fixture.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "workers/mccluster/test/support/studio-processing-fixture.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636
+  ],
+  "workers/mccluster/test/support/world-directory-fixture.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "workers/mccluster/test/world-directory.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "workers/mccluster/test/world-social-delivery.test.mjs": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    634
+  ],
+  "world-discover.html": [
+    681,
+    641,
+    639,
+    638,
+    637,
+    636,
+    635,
+    632,
+    634,
+    633,
+    629,
+    628,
+    631
+  ],
+  "world-news.html": [
+    553,
+    428,
+    427
+  ]
+}

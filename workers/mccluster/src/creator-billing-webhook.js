@@ -65,7 +65,10 @@ export async function handleCreatorBillingWebhook(request,env,{onDomainPaid,onSt
   if(session.id!==source.id||session.livemode!==event.livemode||session.metadata?.creator_domain_order_id!==domainOrderId||!/^[0-9a-f-]{36}$/i.test(domainOrderId)||!/^[0-9a-f-]{36}$/i.test(owner||'')||session.client_reference_id!==owner||session.mode!=='payment')return fail(request,env,'Domain checkout ownership mismatch',409);
   if(session.payment_status!=='paid')return reply(request,env,{received:true,pending:true});
   if(!Number.isSafeInteger(session.amount_total)||session.amount_total<=0)return fail(request,env,'Invalid domain payment amount',400);
-  await onDomainPaid({orderId:domainOrderId,livemode:event.livemode,ownerUserId:owner,eventId:event.id,sessionId:session.id,amountTotal:session.amount_total,currency:session.currency,paymentStatus:session.payment_status,paidAt:new Date(event.created*1000).toISOString()},env);
+  const funding=await onDomainPaid({orderId:domainOrderId,livemode:event.livemode,ownerUserId:owner,eventId:event.id,sessionId:session.id,amountTotal:session.amount_total,currency:session.currency,paymentStatus:session.payment_status,paidAt:new Date(event.created*1000).toISOString()},env);
+  // The verified callback may arrive before checkout's session-binding write.
+  // Acknowledge only a recorded outcome; let Stripe retry a storage/binding race.
+  if(['conflict','not_found'].includes(funding?.status))return fail(request,env,'Domain payment binding needs reconciliation',503);
   return reply(request,env,{received:true});
  }
  const id=subscriptionId(event);

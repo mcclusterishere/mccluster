@@ -5,6 +5,7 @@ import {registrationContact} from './domains/cloudflare-registration.js';
 import {cloudflareRegistrationStore} from './domains/cloudflare-registration-store.js';
 import {startCloudflareRegistration,reconcileCloudflareRegistration} from './domains/cloudflare-registration-flow.js';
 import { fulfillDomainOrder } from './domains/namesilo.js';
+import {matchesRegistrationQuote} from './domains/registration-quote.js';
 export const DOMAIN_ORDERS_PREFIX = '/v1/creator-domain-orders';
 const error = (message,status=409) => Object.assign(new Error(message),{status});
 const uuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value||''));
@@ -96,7 +97,7 @@ export async function handleCreatorDomainOrders(request,env,options={}) {
         if(!check?.owned||!check?.registrant_matches)throw error('Registrar ownership must be confirmed before renewal');
       }
       const quote=await provider.quote(domain,action,years);
-      if(quote?.available!==true||quote?.premium===true||quote?.currency!=='USD'||!Number.isSafeInteger(quote?.registrar_cents)||quote.registrar_cents<=0)throw error('A standard-price quote is not available for this domain');
+      if(!matchesRegistrationQuote(quote,domain,action,years))throw error('An exact standard-price quote is not available for this domain and term');
       const total=quote.registrar_cents+Number(env.CREATOR_DOMAIN_MARKUP_CENTS);
       if(!Number.isSafeInteger(total)||total>1000000)throw error('Domain price cannot be offered',503);
       const rows=await db('creator_domain_quotes',{method:'POST',body:JSON.stringify({auth_user_id:user.id,...(inline?{registrar:'cloudflare_sandbox'}:{}),hostname:domain,action,years,registrar_cents:quote.registrar_cents,total_cents:total,currency:'USD',expires_at:new Date(Date.now()+60*60*1000).toISOString()})});
@@ -176,7 +177,7 @@ export async function fulfillStoredDomainOrder(orderId,env,{fetchImpl=fetch,prov
   };
   const registrar = Object.fromEntries(['register','renew'].map(action => [action, async args => {
     const current = await provider.quote(args.domain, action, args.years);
-    if(!current?.available || current.premium || current.currency !== 'USD' || current.registrar_cents !== claimed.registrar_cents) throw Object.assign(new Error('Registrar price or availability changed; payment needs review/refund'), { noCharge: true });
+    if(!matchesRegistrationQuote(current,args.domain,action,args.years) || current.registrar_cents !== claimed.registrar_cents) throw Object.assign(new Error('Registrar price, identity, term or availability changed; payment needs review/refund'), { noCharge: true });
     return provider[action](args);
   }]));
   return fulfillDomainOrder(orderId,{store,registrar,enabled:true});

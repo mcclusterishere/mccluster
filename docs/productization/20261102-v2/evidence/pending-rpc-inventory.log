@@ -1,0 +1,11 @@
+✔ the extraction sees the shipped call sites (0.661621ms)
+✔ every name shipped code calls is in the applied migration history, or allowlisted as pending-only / missing (1.109605ms)
+✔ live-callers.json only shrinks: every entry is still unapplied, still called, and defined where it says (0.692897ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1196.408071

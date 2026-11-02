@@ -1,0 +1,1 @@
+PASS: provider create without metadata; exact-list minimum; durable lost/malformed/persistence-failure reconciliation; no unknown adoption/delete; zone/host readback, freshness, removed target, known404 cleanup; concurrent and expired lease fencing; reserved hostname and RLS. No live provider calls.

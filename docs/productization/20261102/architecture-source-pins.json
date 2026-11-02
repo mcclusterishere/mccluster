@@ -1,0 +1,128 @@
+{
+  "inspected_on": "2026-11-02",
+  "method": "GitHub connector exact-ref UTF-8 reads; web tool GitHub pages unavailable; no upstream code copied or installed",
+  "sources": [
+    {
+      "repository": "puckeditor/puck",
+      "commit": "d14401c3a47947543e9de733ef1a20fb85140d52",
+      "path": "packages/core/types/Data.tsx",
+      "blob_sha": "a304da0f73373e44882ecc6d19d59703f2f78c37",
+      "url": "https://github.com/puckeditor/puck/blob/d14401c3a47947543e9de733ef1a20fb85140d52/packages/core/types/Data.tsx"
+    },
+    {
+      "repository": "puckeditor/puck",
+      "commit": "d14401c3a47947543e9de733ef1a20fb85140d52",
+      "path": "packages/core/types/Config.tsx",
+      "blob_sha": "7aee2e42e841ccb68474c5184807667904efca2b",
+      "url": "https://github.com/puckeditor/puck/blob/d14401c3a47947543e9de733ef1a20fb85140d52/packages/core/types/Config.tsx"
+    },
+    {
+      "repository": "puckeditor/puck",
+      "commit": "d14401c3a47947543e9de733ef1a20fb85140d52",
+      "path": "packages/core/types/AppState.tsx",
+      "blob_sha": "e618c34ddff222c1440b11a565ba83d7ccd3dd14",
+      "url": "https://github.com/puckeditor/puck/blob/d14401c3a47947543e9de733ef1a20fb85140d52/packages/core/types/AppState.tsx"
+    },
+    {
+      "repository": "puckeditor/puck",
+      "commit": "d14401c3a47947543e9de733ef1a20fb85140d52",
+      "path": "packages/core/reducer/actions.tsx",
+      "blob_sha": "8c77ae80be0ab4f53490b3e8be414c21096cf368",
+      "url": "https://github.com/puckeditor/puck/blob/d14401c3a47947543e9de733ef1a20fb85140d52/packages/core/reducer/actions.tsx"
+    },
+    {
+      "repository": "puckeditor/puck",
+      "commit": "d14401c3a47947543e9de733ef1a20fb85140d52",
+      "path": "packages/core/store/slices/history.ts",
+      "blob_sha": "bf38c8cd59b3260481b98f58a323ceb572001118",
+      "url": "https://github.com/puckeditor/puck/blob/d14401c3a47947543e9de733ef1a20fb85140d52/packages/core/store/slices/history.ts"
+    },
+    {
+      "repository": "puckeditor/puck",
+      "commit": "d14401c3a47947543e9de733ef1a20fb85140d52",
+      "path": "apps/docs/pages/docs/guides/migrations/dropzones-to-slots.mdx",
+      "blob_sha": "7f1d5b894109a682213992e0466926f77960ccb8",
+      "url": "https://github.com/puckeditor/puck/blob/d14401c3a47947543e9de733ef1a20fb85140d52/apps/docs/pages/docs/guides/migrations/dropzones-to-slots.mdx"
+    },
+    {
+      "repository": "puckeditor/puck",
+      "commit": "d14401c3a47947543e9de733ef1a20fb85140d52",
+      "path": "LICENSE",
+      "blob_sha": "53a1190127b706aae6111b8aa2b1df26d665862f",
+      "url": "https://github.com/puckeditor/puck/blob/d14401c3a47947543e9de733ef1a20fb85140d52/LICENSE"
+    },
+    {
+      "repository": "assistant-ui/assistant-ui",
+      "commit": "4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2",
+      "path": "apps/docs/content/docs/runtimes/custom/external-store.mdx",
+      "blob_sha": "1757a0706593787c7789e43400cb7c26d7f38b4a",
+      "url": "https://github.com/assistant-ui/assistant-ui/blob/4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2/apps/docs/content/docs/runtimes/custom/external-store.mdx"
+    },
+    {
+      "repository": "assistant-ui/assistant-ui",
+      "commit": "4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2",
+      "path": "packages/core/src/runtimes/external-store/external-store-adapter.ts",
+      "blob_sha": "a9433f59f66fc14eb217be2daef0e47dcd563c4e",
+      "url": "https://github.com/assistant-ui/assistant-ui/blob/4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2/packages/core/src/runtimes/external-store/external-store-adapter.ts"
+    },
+    {
+      "repository": "assistant-ui/assistant-ui",
+      "commit": "4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2",
+      "path": "packages/assistant-stream/src/core/utils/stream/SSEJson.ts",
+      "blob_sha": "48961e424fcfc4c60ca3688482163f1b6007ff06",
+      "url": "https://github.com/assistant-ui/assistant-ui/blob/4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2/packages/assistant-stream/src/core/utils/stream/SSEJson.ts"
+    },
+    {
+      "repository": "assistant-ui/assistant-ui",
+      "commit": "4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2",
+      "path": "packages/assistant-stream/src/core/serialization/assistant-transport/AssistantTransport.ts",
+      "blob_sha": "6328783f6cddba2358c46ba522c4e17958b86439",
+      "url": "https://github.com/assistant-ui/assistant-ui/blob/4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2/packages/assistant-stream/src/core/serialization/assistant-transport/AssistantTransport.ts"
+    },
+    {
+      "repository": "assistant-ui/assistant-ui",
+      "commit": "4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2",
+      "path": "LICENSE",
+      "blob_sha": "ce2aca011368ed3c3af6ffd8e1d333b5bef08589",
+      "url": "https://github.com/assistant-ui/assistant-ui/blob/4b47dcf9c5f3d60f7365572524f49c5d9bf23fc2/LICENSE"
+    },
+    {
+      "repository": "Lightning-AI/LitServe",
+      "commit": "68c4943be1eeabd18561ac6704b6043459d6fa40",
+      "path": "src/litserve/server.py",
+      "blob_sha": "d4fb0e6893c3784222f69fa7199a86e6030d6799",
+      "url": "https://github.com/Lightning-AI/LitServe/blob/68c4943be1eeabd18561ac6704b6043459d6fa40/src/litserve/server.py"
+    },
+    {
+      "repository": "vercel/next-forge",
+      "commit": "f189de79ceef7c1ef69f61f12e272f99b4cdb699",
+      "path": "packages/database/prisma/schema.prisma",
+      "blob_sha": "a543d34602239c7c2fce55f866b0e6cb6559e68e",
+      "url": "https://github.com/vercel/next-forge/blob/f189de79ceef7c1ef69f61f12e272f99b4cdb699/packages/database/prisma/schema.prisma"
+    },
+    {
+      "repository": "vercel/next-forge",
+      "commit": "f189de79ceef7c1ef69f61f12e272f99b4cdb699",
+      "path": "packages/auth/server.ts",
+      "blob_sha": "d87997f53c43abdb2d23b90d0e100e620981f29d",
+      "url": "https://github.com/vercel/next-forge/blob/f189de79ceef7c1ef69f61f12e272f99b4cdb699/packages/auth/server.ts"
+    },
+    {
+      "repository": "vercel/next-forge",
+      "commit": "f189de79ceef7c1ef69f61f12e272f99b4cdb699",
+      "path": "packages/payments/index.ts",
+      "blob_sha": "d34cf0e2daed0bacb5457f721f36d9476cf817ca",
+      "url": "https://github.com/vercel/next-forge/blob/f189de79ceef7c1ef69f61f12e272f99b4cdb699/packages/payments/index.ts"
+    }
+  ],
+  "public_docs": [
+    {
+      "url": "https://docs.ploy.ai/faq",
+      "scope": "Public URL reconstruction; private/dynamic content not guaranteed"
+    },
+    {
+      "url": "https://docs.ploy.ai/site-builder",
+      "scope": "Public product behavior only, proprietary implementation unknown"
+    }
+  ]
+}

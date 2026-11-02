@@ -1,0 +1,1070 @@
+{
+  "schema_version": "mccluster-productization-inventory/v1",
+  "purpose": "Known production bindings and SQL requiring data classification",
+  "complete_release_audit": false,
+  "independent_install_verified": false,
+  "runtime_and_config_files_with_known_bindings": 136,
+  "bindings": [
+    {
+      "path": "core/core.env.example",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/executors/code-patch.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/executors/host-health-collect.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/health-details.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/preview-gateway.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/relay/smsgate-bridge.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/tools/registry.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/tools/research.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "core/src/tools/resume.mjs",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/action-globe.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/action-policy.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/action.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/analytics-product.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/analytics-suite.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/analytics-users.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/analytics.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/backend.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/closet.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/cohort-claim.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/cohort-profile.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/comments.js",
+      "categories": [
+        "production_project",
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/control-palette.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/control-room-v2.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/control-room/analytics.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/control-room/clipping.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/control-room/music-direct-sales.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/control-room/social-compose.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/control-room/work-records.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/control-room/workspace.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/create.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/creator-onboarding.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/crm.js",
+      "categories": [
+        "production_project",
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/deskchat-core.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/docket-cohort-showcase.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/eu-api.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/experience.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/fan-intake.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/fbi.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/front-member.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/front-studio.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/gate.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/gated-audio.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/gateway.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/identity-verify.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/insights.js",
+      "categories": [
+        "production_project",
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/licensedesk.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/listen-ledger.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/listen.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/live-content.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/live-mission-capture.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/lockroom.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/main.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/mc-analytics.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/mcc-auth.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/mccluster-creator-account.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/mccluster-public-profile.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/member-desk.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/member-front.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/mnet-audio.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/mnet.js",
+      "categories": [
+        "production_project",
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/music-admin.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/music-community.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/music-creator-page.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/music-creator-profile.js",
+      "categories": [
+        "production_project",
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/music-creator-studio.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/music-direct.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/music-engine.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/music-purchase.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/music-self-analytics.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/news-brief.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/onboard.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/owner-control-redirect.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/profile-edit-gate.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/site-editor.js",
+      "categories": [
+        "production_project",
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/socials-room.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/song-test.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "js/tabbar.js",
+      "categories": [
+        "production_project",
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/travel/route-client.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/travel/whip-booking.mjs",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/travel/world-travel.mjs",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "js/workspace.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/world-audio-continuity.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/world-live-now-layer.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "js/world-news.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "supabase/config.toml",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/house-ops.ts",
+      "categories": [
+        "house_org_lookup"
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/music-direct.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/checkout/index.ts",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "supabase/functions/collect/index.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/connect-org/index.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/eu-google-workspace/index.ts",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "supabase/functions/eu-monitor/index.ts",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "supabase/functions/eu-worker/index.ts",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "supabase/functions/gev-proxy/index.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/music-access/index.ts",
+      "categories": [
+        "house_org_lookup"
+      ]
+    },
+    {
+      "path": "supabase/functions/music-checkout/index.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/music-direct-checkout/index.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/org-connect-onboard/index.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "supabase/functions/shake-order/index.ts",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/action-archive.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/action-connect.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/analytics/forensic-insights.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/analytics/router.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/auth-handoff.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/client.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/company-site/news.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/company-site/pages.generated.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/company-site/router.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/connect.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/creator-billing.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/creator-site-publish.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/entry-platform.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/entry.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/human-uprise/router.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/index.js",
+      "categories": [
+        "production_project"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/intel/usgs-collector.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/lib/http.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/platform-api.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/public-comment.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/seek-first/adapters.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/seek-first/catalogs.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/seek-first/equity-uprise-halo.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/seek-first/registries.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/seek-first/verified-adapters.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/social/router.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/travel-routing-provider.js",
+      "categories": [
+        "production_origin",
+        "owner_email"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/web-push.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/whip/booking-gate.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/world-access.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/world-cctv.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/world-halo-layers.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/world-host.js",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/world-ion.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/world-layers.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/src/world-news-discovery.js",
+      "categories": [
+        "production_origin"
+      ]
+    },
+    {
+      "path": "workers/mccluster/wrangler.toml",
+      "categories": [
+        "production_project",
+        "production_origin"
+      ]
+    }
+  ],
+  "sql_files_requiring_classification": [
+    "supabase/migrations/20260912220809_mccluster_fabric_v1.sql",
+    "supabase/migrations/20260913023845_mnet_platform_api_commercial_layer.sql",
+    "supabase/migrations/20260913024042_platform_api_credit_exhaustion_guard.sql",
+    "supabase/migrations/20260913024201_mnet_notifications_and_api_catalog_expansion.sql",
+    "supabase/migrations/20260913024228_platform_api_plan_and_billing_scaffold.sql",
+    "supabase/migrations/20260913032256_mccluster_compute_gateway_cost_ledger.sql",
+    "supabase/migrations/20260913032327_mccluster_compute_pricing_router.sql",
+    "supabase/migrations/20260913032514_mccluster_compute_benchmark_catalog.sql",
+    "supabase/migrations/20260913034016_compute_reservation_tenant_safe_idempotency.sql",
+    "supabase/migrations/20260913034837_compute_route_resale_guard.sql",
+    "supabase/migrations/20260913035004_platform_api_scope_entitlements.sql",
+    "supabase/migrations/20260913040002_platform_api_atomic_usage_metering.sql",
+    "supabase/migrations/20260913043637_platform_api_rate_limit_enforcement.sql",
+    "supabase/migrations/20260913182443_seed_fal_text_to_3d_model.sql",
+    "supabase/migrations/20260913182810_seed_fal_text_to_video_model.sql",
+    "supabase/migrations/20260914191500_system_health_contract.sql",
+    "supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql",
+    "supabase/migrations/20260919021007_compute_capability_concurrency_live_reconcile.sql",
+    "supabase/migrations/20260919031008_canonical_lead_scoring_queue_contract.sql",
+    "supabase/migrations/20260919042036_fan_profiles.sql",
+    "supabase/migrations/20260919043433_operator_local_ai_chat.sql",
+    "supabase/migrations/20260919053445_operational_ontology_v1.sql",
+    "supabase/migrations/20260919055029_universal_ingestion_entity_resolution_v1.sql",
+    "supabase/migrations/20260919133905_analytics_platform_multitenant_v1.sql",
+    "supabase/migrations/20260920035720_gated_audio_bucket_live.sql",
+    "supabase/migrations/20260920035813_music_publish_bootstrap_tokens.sql",
+    "supabase/migrations/20260920041011_music_creator_platform_v1.sql",
+    "supabase/migrations/20260920045944_fix_mnet_bootstrap_trigger_call.sql",
+    "supabase/migrations/20260920071811_mnet_real_network_v1.sql",
+    "supabase/migrations/20260920072949_mnet_privacy_and_request_guards.sql",
+    "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql",
+    "supabase/migrations/20260921051000_mnet_avatar_bucket.sql",
+    "supabase/migrations/20260921071622_mnet_music_seam_and_pinning.sql",
+    "supabase/migrations/20260921075108_fan_list_bridge.sql",
+    "supabase/migrations/20260922054655_mail_multitenant_v1.sql",
+    "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql",
+    "supabase/migrations/20260922100313_site_content_live_editing.sql",
+    "supabase/migrations/20260922100615_site_content_service_role_path.sql",
+    "supabase/migrations/20260925040000_mnet_handles_groups_and_welcome.sql",
+    "supabase/migrations/20260927195014_mnet_welcome_every_new_member.sql",
+    "supabase/migrations/20260927222835_resident_ai_durable_vps_turn.sql",
+    "supabase/migrations/20260928012324_music_listen_gate.sql",
+    "supabase/migrations/20260930222516_music_listen_gate_hardening.sql",
+    "supabase/migrations/20260930235851_uprise_action_network.sql",
+    "supabase/migrations/20261002014251_end_racism_campaign.sql",
+    "supabase/migrations/20261002015418_song_test.sql",
+    "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
+    "supabase/migrations/20261002061954_analytics_events_lean.sql",
+    "supabase/migrations/20261002063754_action_network_fellowship_v1.sql",
+    "supabase/migrations/20261002134705_mnet_tour_seen.sql",
+    "supabase/migrations/20261002135458_action_network_feed_shares_v1.sql",
+    "supabase/migrations/20261002140857_account_deletion_requests_v1.sql",
+    "supabase/migrations/20261002141540_music_gate_sequence_v1.sql",
+    "supabase/migrations/20261002163249_music_gate_any_album_track.sql",
+    "supabase/migrations/20261002173558_action_network_organizations_authenticity_v1.sql",
+    "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
+    "supabase/migrations/20261002184158_social_outbox_v1.sql",
+    "supabase/migrations/20261002185248_fbi_board_v1.sql",
+    "supabase/migrations/20261003022730_action_mission_camera_loop_v1.sql",
+    "supabase/migrations/20261003023055_action_mission_camera_loop_v1.sql",
+    "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql",
+    "supabase/migrations/20261003230844_creator_action_distribution_v1.sql",
+    "supabase/migrations/20261003232339_creator_action_first_touch_attribution_v1.sql",
+    "supabase/migrations/20261003232607_creator_action_conversion_semantics_v1.sql",
+    "supabase/migrations/20261003233747_action_network_live_governance_v1.sql",
+    "supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql",
+    "supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql",
+    "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql",
+    "supabase/migrations/20261004004111_cobalt_action_missions_open_v1.sql",
+    "supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql",
+    "supabase/migrations/20261004021226_action_origin_attribution_v2.sql",
+    "supabase/migrations/20261004023007_action_network_hardening_v1.sql",
+    "supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql",
+    "supabase/migrations/20261004230939_analytics_page_scoring_v1.sql",
+    "supabase/migrations/20261005044012_control_work_records_v1.sql",
+    "supabase/migrations/20261005054031_native_telemetry_lockdown_v1.sql",
+    "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql",
+    "supabase/migrations/20261005054040_action_cohort_admission_v1.sql",
+    "supabase/migrations/20261005054042_action_network_demographics_antiracism_v1.sql",
+    "supabase/migrations/20261005054044_identity_presentations_music_action_v1.sql",
+    "supabase/migrations/20261005074135_control_observability_events_v2.sql",
+    "supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql",
+    "supabase/migrations/20261006023453_commerce_stripe_reconciler_v2.sql",
+    "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql",
+    "supabase/migrations/20261006172934_require_private_contact_before_action_network.sql",
+    "supabase/migrations/20261006211536_experience_evidence_plane_v1.sql",
+    "supabase/migrations/20261006233518_here_album_commerce_v1_reconcile.sql",
+    "supabase/migrations/20261006234316_end_racism_track_funnel_taxonomy_v1.sql",
+    "supabase/migrations/20261009204152_creator_billing_subscriptions_v1.sql",
+    "supabase/migrations/20261009204158_creator_published_sites_v1.sql",
+    "supabase/migrations/20261010011201_action_creator_payout_reservation_rpc.sql",
+    "supabase/migrations/20261010011502_action_creator_connect_binding_finalize.sql",
+    "supabase/migrations/20261010011611_action_creator_stripe_event_reconciliation.sql",
+    "supabase/migrations/20261010064726_action_creator_transfer_claim_bank_events.sql",
+    "supabase/migrations/20261010070310_action_creator_partial_reversal_guard.sql",
+    "supabase/migrations/20261014021057_civic_global_discovery.sql",
+    "supabase/migrations/20261014023302_media_geo_ingestion.sql",
+    "supabase/migrations/20261014023317_media_ingest_rpc.sql",
+    "supabase/migrations/20261014023548_media_news_namespace.sql",
+    "supabase/migrations/20261014023813_gdelt_backoff_cache.sql",
+    "supabase/migrations/20261014184518_action_globe_join_authorization.sql",
+    "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql",
+    "supabase/migrations/20261014185255_action_resource_sources_link_only.sql",
+    "supabase/migrations/20261014185932_equity_policy_memo_application_path.sql",
+    "supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql",
+    "supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql",
+    "supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql",
+    "supabase/migrations/20261017030617_intel_mission_canon_v1.sql",
+    "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
+    "supabase/migrations/20261017042608_analytics_geo_audience_region_backfill_v4.sql",
+    "supabase/migrations/20261017054833_analytics_ingestion_pipeline_v1.sql",
+    "supabase/migrations/20261017164335_action_archive_cohort_v1.sql",
+    "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
+    "supabase/migrations/20261017214808_mcp_approval_scope_v1.sql",
+    "supabase/migrations/20261020205942_analytics_measurement_semantics_v1.sql",
+    "supabase/migrations/20261020205959_funding_criteria_register_v1.sql",
+    "supabase/migrations/20261020210718_compute_lease_authority_v2.sql",
+    "supabase/migrations/20261020211313_intel_decision_integrity_v2.sql",
+    "supabase/migrations/20261021005247_daily_knowledge_news_capacity.sql",
+    "supabase/migrations/20261021011443_royce_platform_actor.sql",
+    "supabase/migrations/20261021013739_connected_operational_graph.sql",
+    "supabase/migrations/20261021021724_live_actor_participation.sql",
+    "supabase/migrations/20261021050105_music_creator_one_click_v1.sql",
+    "supabase/migrations/20261021173902_world_region_sharing_v1.sql",
+    "supabase/migrations/20261022005028_analytics_event_inventory_v1.sql",
+    "supabase/migrations/20261029011534_eu_runtime_and_media_rollup_v1.sql",
+    "supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql",
+    "supabase/migrations/20261031180839_music_direct_sales_v1.sql",
+    "supabase/replay_migrations/0003_creator_cuts.sql",
+    "supabase/replay_migrations/0004_print_shop.sql",
+    "supabase/replay_migrations/0007_offerings.sql",
+    "supabase/replay_migrations/0010_domain_hosting_offerings.sql",
+    "supabase/replay_migrations/0011_activation_sprints.sql",
+    "supabase/replay_migrations/0012_management_upgrade_offerings.sql",
+    "supabase/replay_migrations/0013_link_offerings_to_square_plans.sql",
+    "supabase/replay_migrations/0014_square_recurring_routing.sql",
+    "supabase/replay_migrations/0015_recurring_sells_where_it_can_sell.sql",
+    "supabase/replay_migrations/0016_customer_music_licence.sql",
+    "supabase/replay_migrations/0017_equity_uprise_platform.sql",
+    "supabase/replay_migrations/0018_equity_uprise_seed.sql",
+    "supabase/replay_migrations/0019_shake_delivery.sql",
+    "supabase/replay_migrations/0021_inbox.sql",
+    "supabase/replay_migrations/0022_inbox_outbound.sql",
+    "supabase/replay_migrations/0023_brain.sql",
+    "supabase/replay_migrations/0024_memory_note.sql",
+    "supabase/replay_migrations/0025_more_channels.sql",
+    "supabase/replay_migrations/0026_tenancy.sql",
+    "supabase/replay_migrations/0028_mcp.sql",
+    "supabase/replay_migrations/0030_hosting_year.sql",
+    "supabase/replay_migrations/0032_domains.sql",
+    "supabase/replay_migrations/0033_knowledge_base.sql",
+    "supabase/replay_migrations/0034_mccluster_platform_core.sql",
+    "supabase/replay_migrations/0035_whip_commercial_terms.sql",
+    "supabase/replay_migrations/0037_whip_mobility.sql",
+    "supabase/replay_migrations/0038_m_account_identity_spine.sql",
+    "supabase/replay_migrations/0039_m_account_device_touch.sql",
+    "supabase/replay_migrations/0041_media_harness_core.sql",
+    "supabase/replay_migrations/0047_control_authority_core.sql",
+    "supabase/replay_migrations/0048_m_account_identity.sql",
+    "supabase/replay_migrations/0049_m_account_people.sql",
+    "supabase/replay_migrations/0052_media_cost_controls.sql",
+    "supabase/replay_migrations/0053_media_cost_precision.sql",
+    "supabase/replay_migrations/0054_media_release_precision.sql",
+    "supabase/replay_migrations/0056_esmer_client_org.sql",
+    "supabase/replay_migrations/0057_inquiry_notifications.sql",
+    "supabase/replay_migrations/0058_sso_client_registry.sql",
+    "supabase/replay_migrations/0059_capability_role_reconciliation.sql",
+    "supabase/replay_migrations/0060_social_publish_lease_and_connect.sql",
+    "supabase/replay_migrations/0061_close_anonymous_rpc_holes.sql",
+    "supabase/replay_migrations/0062_esmer_canonical_host.sql",
+    "supabase/replay_migrations/0063_org_invitations.sql",
+    "supabase/replay_migrations/0066_control_authority_v2.sql",
+    "supabase/replay_migrations/0068_mnet_replay_foundation.sql",
+    "supabase/replay_migrations/0070_mccluster_identity_replay_foundation.sql",
+    "supabase/replay_migrations/0071_level3_replay_foundation.sql",
+    "supabase/replay_migrations/0073_legacy_rpc_replay_foundation.sql",
+    "supabase/replay_migrations/20260907040300_social_hardening.sql",
+    "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+    "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql",
+    "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql",
+    "supabase/replay_migrations/20260908213400_equity_uprise_publication_sequences.sql",
+    "supabase/replay_migrations/20260908213500_equity_uprise_storage.sql",
+    "supabase/replay_migrations/20260908213600_equity_uprise_outreach_bridge.sql",
+    "supabase/replay_migrations/20260908213700_equity_uprise_worker_partition.sql",
+    "supabase/replay_migrations/20260908213800_equity_uprise_oauth_runtime.sql",
+    "supabase/replay_migrations/20260908213900_equity_uprise_event_dispatch.sql",
+    "supabase/replay_migrations/20260908214000_equity_uprise_monitor_runtime.sql",
+    "supabase/replay_migrations/20260908214200_equity_uprise_cron.sql",
+    "supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql",
+    "supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql",
+    "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
+    "supabase/replay_migrations/20260909034000_spatial_intelligence.sql",
+    "supabase/replay_migrations/20260909040000_spatial_entity_history.sql",
+    "supabase/replay_migrations/20260910230000_spatial_bitemporal_and_resolution.sql",
+    "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
+    "supabase/replay_migrations/20260912080500_compute_capability_concurrency.sql",
+    "supabase/replay_migrations/20260912083000_compute_gateway_hardening.sql",
+    "supabase/replay_migrations/20260916080000_we_manufacture_org.sql",
+    "supabase/replay_migrations/20260918230000_gated_audio.sql",
+    "supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql"
+  ],
+  "release_contract": "docs/products/DISTRIBUTABLE-PRODUCT.md"
+}

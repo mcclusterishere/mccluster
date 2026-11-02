@@ -41,7 +41,9 @@ export function frontHref(v) {
 function mediaUrl(v, prefix) {
   if (typeof v !== 'string' || !prefix) return undefined;
   const u = v.trim();
-  return u.startsWith(prefix) && u.length <= 400 && /^[A-Za-z0-9._/:-]+$/.test(u.slice(prefix.length)) && !u.includes('..') ? u : undefined;
+  // A literal dot segment normalizes before fetching and can cross a blocked
+  // personal/project subtree even when the original string passed prefix checks.
+  return u.startsWith(prefix) && u.length <= 400 && /^[A-Za-z0-9._/:-]+$/.test(u.slice(prefix.length)) && !u.includes('..') && !u.includes('/./') && !u.endsWith('/.') ? u : undefined;
 }
 const clean = (o) => {
   for (const k of Object.keys(o)) if (o[k] === undefined) delete o[k];

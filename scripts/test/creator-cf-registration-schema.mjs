@@ -10,6 +10,7 @@ async function seed(owner,hostname,event) {
  const c=(await db.query("insert into creator_domain_contacts(auth_user_id,provider_contact_id,terms_version,consent_at,verified_at) values($1,$2,'fixture',now(),now()) returning id",[owner,event])).rows[0].id;
  const q=(await db.query("insert into creator_domain_quotes(auth_user_id,hostname,action,years,total_cents,registrar_cents,currency,expires_at) values($1,$2,'register',1,1500,857,'USD',now()+interval '1 hour') returning id",[owner,hostname])).rows[0].id;
  const o=(await db.query("insert into creator_domain_orders(auth_user_id,quote_id,contact_id,terms_version) values($1,$2,$3,'fixture') returning id",[owner,q,c])).rows[0].id;
+ await db.query("update creator_domain_orders set checkout_session_id=$1 where id=$2",['session-'+event,o]);
  await db.query("select fund_creator_domain_order($1,$2,$3,$4,1500,'USD',now())",[o,owner,event,'session-'+event]);return o;
 }
 const order=await seed(A,'customer.org','event-a'),hash='a'.repeat(64);

@@ -47,7 +47,9 @@ begin
  select * into o from public.creator_domain_orders where id=order_id and auth_user_id=owner_id for update;
  if not found then return 'not_found'; end if;
  if o.funded_event_id is not null then return case when o.checkout_session_id=session_id then o.status else 'conflict' end; end if;
- if o.status<>'awaiting_payment' or (o.checkout_session_id is not null and o.checkout_session_id<>session_id) then return 'conflict'; end if;
+ -- A webhook must match a session already bound by server checkout creation.
+ -- A callback racing that write is retryable; never let it select the session.
+ if o.status<>'awaiting_payment' or o.checkout_session_id is null or o.checkout_session_id is distinct from session_id then return 'conflict'; end if;
  select * into q from public.creator_domain_quotes where id=o.quote_id;
  if q.total_cents<>amount_cents or q.currency<>event_currency or paid_at>q.expires_at then
   update public.creator_domain_orders set status='refund_required',reason='Payment does not match a current quote',funded_event_id=event_id,checkout_session_id=session_id,paid_cents=amount_cents,funded_at=paid_at,updated_at=now() where id=o.id;

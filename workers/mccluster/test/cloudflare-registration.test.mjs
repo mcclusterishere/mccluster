@@ -95,3 +95,19 @@ test('blocked workflow backs off, failed workflow never resubmits, missing schem
  const noValidator=cloudflareRegistrationAdapter({accountId:'fixture',apiToken:'synthetic',fetchImpl:async()=>Response.json({success:true,result:{metadata:{name:'org'},registration_schema:{type:'object'}}})});
  await assert.rejects(noValidator.prepare({hostname:'customer.org',years:1,registrant}),/requirements/);
 });
+
+test('availability, hostname, action and term are rechecked before submit even at unchanged price',async()=>{
+ for(const patch of [{available:false},{premium:true},{premium:undefined},{hostname:'other.org'},{action:'renew'},{years:2}]){
+  const f=fixture(),x=await flowFixture(f),quote=f.adapter.quote;
+  x.options.provider={...f.adapter,quote:async(...args)=>({...await quote(...args),...patch})};
+  assert.equal((await startCloudflareRegistration('order',x.options)).status,'refund_required');
+  assert.equal(f.calls.filter(c=>c.path.endsWith('/registrations')).length,0);
+ }
+});
+test('ownership proof requires exact identity and finite current registration dates',async()=>{
+ for(const patch of [{hostname:'other.org'},{created_at:'invalid'},{expires_at:'invalid'},{expires_at:'2000-01-01'}]){
+  const f=fixture(),x=await flowFixture(f);await startCloudflareRegistration('order',x.options);f.setState('succeeded');
+  const ownership=f.adapter.ownership;x.options.provider={...f.adapter,ownership:async(...args)=>({...await ownership(...args),...patch})};
+  assert.equal((await reconcileCloudflareRegistration('order',x.options)).status,'reconciliation_required');
+ }
+});

@@ -1,0 +1,12 @@
+member fronts: table locked to the Worker; bucket folders held to their owner, 2,500 files and 1 GiB each; no listing
+psql:supabase/tests/supabase_api_roles.stub.sql:5: NOTICE:  role "postgres" has already been granted membership in role "anon" by role "postgres"
+psql:supabase/tests/supabase_api_roles.stub.sql:5: NOTICE:  role "postgres" has already been granted membership in role "authenticated" by role "postgres"
+psql:supabase/tests/supabase_api_roles.stub.sql:5: NOTICE:  role "postgres" has already been granted membership in role "service_role" by role "postgres"
+psql:supabase/pending/member_fronts_v1.sql:82: NOTICE:  policy "front media is world readable" for relation "storage.objects" does not exist, skipping
+psql:supabase/pending/member_fronts_v1.sql:83: NOTICE:  policy "front media is listed to its owner" for relation "storage.objects" does not exist, skipping
+psql:supabase/pending/member_fronts_v1.sql:113: NOTICE:  policy "front media is written by its owner" for relation "storage.objects" does not exist, skipping
+psql:supabase/pending/member_fronts_v1.sql:119: NOTICE:  policy "front media is replaced by its owner" for relation "storage.objects" does not exist, skipping
+psql:supabase/pending/member_fronts_v1.sql:126: NOTICE:  policy "front media is removed by its owner" for relation "storage.objects" does not exist, skipping
+psql:supabase/pending/customer_site_storage_v1.sql:69: NOTICE:  policy "site media writes require quota service" for relation "storage.objects" does not exist, skipping
+psql:supabase/pending/customer_site_storage_v1.sql:72: NOTICE:  policy "site media updates require quota service" for relation "storage.objects" does not exist, skipping
+PASS: two native PostgreSQL sessions cannot reserve 600 MB against the shared 500 MB allowance

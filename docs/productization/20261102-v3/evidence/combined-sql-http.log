@@ -1,0 +1,2 @@
+CONFIRMED GATE: enrolled front-to-Tile writes conflict atomically; no Studio draft leaks. Versioned bridge required before mixed-editor rollout.
+PASS: 128 assertions; SQL roles/ACLs, own/cross-account, first/stale/legacy writes, restore/audit, rollback, private publication, personal takedown fencing, real HTTP adapter over SQL. Native simultaneous sessions tested separately.

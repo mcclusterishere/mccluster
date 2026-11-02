@@ -45,6 +45,8 @@ import { configuredCloudflareRegistration } from './domains/cloudflare-registrat
 import { createCreatorDomainCheckout } from './creator-domain-billing.js';
 import { handleCreatorDomainHost } from './creator-domain-host.js';
 import { handleCustomerSocial } from './social/customer.js';
+import { handlePlatformModuleAccess } from './platform-module-access.js';
+import { handleVersionedEditor } from './editor-versioned.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -149,6 +151,10 @@ export default {
       if (social) return social;
       const fronts = await handleMemberFronts(request, env);
       if (fronts) return fronts;
+      const moduleAccess = await handlePlatformModuleAccess(request, env);
+      if (moduleAccess) return moduleAccess;
+      const versionedEditor = await handleVersionedEditor(request, env);
+      if (versionedEditor) return versionedEditor;
 
       const creatorSiteView = await handleCreatorSiteView(request, env);
       if (creatorSiteView) return creatorSiteView;

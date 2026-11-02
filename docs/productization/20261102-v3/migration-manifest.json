@@ -1,0 +1,11 @@
+{
+  "target_project": "zmnhbrjyhxzhkxmhkexs",
+  "production_applied": false,
+  "base": "5e020833534b68b31e191b137e9a30da8b58314f",
+  "previous_contract": "c1505931175a0753170fe7cd803eb7635e5bafcc",
+  "sql": "supabase/pending/editor_versioned_contracts_v1.sql",
+  "sha256": "35e654322b78a45ea828a5d038a171f12840d0bc80367ce38a60e821c42c48b2",
+  "replay": "c150 then candidate twice, disposable database only",
+  "change": "private head owner_withdrawn and versioned withdraw/recover; existing baseline/history preserved",
+  "rollout_gate": "mixed Tile/editor bridge and all legacy UI writers; actual-service tests; main reconciliation"
+}

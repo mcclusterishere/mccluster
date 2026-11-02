@@ -1,0 +1,27 @@
+{
+  "base": "cded251cc3430ccc1c5f43baf349b774984e172a",
+  "sql_sha256": "d8c6736232ad3e9d8441a2bff316d556b5bc19a4786b3606586c07f129756426",
+  "status": "prepared locally; production unapplied",
+  "sql_worker_assertions": 103,
+  "worker_suite": {
+    "passed": 1345,
+    "failed": 0,
+    "skipped": 0
+  },
+  "pending_rpc_inventory": {
+    "passed": 3,
+    "failed": 0
+  },
+  "native_postgres": [
+    "concurrent identical events produce exactly one receipt/event",
+    "concurrent retry/cancel preserves cancellation; changed evidence PT409"
+  ],
+  "production_migration_diff": "",
+  "limits": [
+    "synthetic auth and fixtures",
+    "no live registrar readback",
+    "no policy seed",
+    "no module-wide atomic enforcement",
+    "no live browser or production change"
+  ]
+}

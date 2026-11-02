@@ -70,3 +70,5 @@ jobs:
           deno check --node-modules-dir=auto supabase/functions/music-access/index.ts
           deno check --node-modules-dir=auto supabase/functions/music-checkout/index.ts
           deno check --node-modules-dir=auto supabase/functions/stripe-webhook/index.ts
+          deno check --node-modules-dir=auto supabase/functions/music-direct-checkout/index.ts
+          deno check --node-modules-dir=auto supabase/functions/music-direct-access/index.ts

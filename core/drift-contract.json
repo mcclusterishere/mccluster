@@ -2,9 +2,9 @@
   "schema_version": "mccluster-drift-contract/v1",
   "supabase": {
     "project_ref": "zmnhbrjyhxzhkxmhkexs",
-    "migration_count": 354,
-    "latest_version": "20261030001000",
-    "latest_name": "music_release_payment_integrity_v1",
-    "ledger_sha256": "701b901500a31f2e28da85435a1724b2a8e191e6167e63d3c829c6d7d464d9fa"
+    "migration_count": 355,
+    "latest_version": "20261031180839",
+    "latest_name": "music_direct_sales_v1",
+    "ledger_sha256": "1bcd0b6d4bf143c0b4b9917d8a5a2994e8be5ffcf3f75eb2c94a06d85f75eecd"
   }
 }

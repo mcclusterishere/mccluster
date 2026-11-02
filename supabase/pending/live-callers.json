@@ -269,6 +269,20 @@
       ],
       "pending": "creator_domain_orders_v1.sql"
     },
+    "creator_domain_trial_cancel_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/platform-module-access.js"
+      ],
+      "pending": "creator_domain_trial_v1.sql"
+    },
+    "creator_domain_trial_record_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/platform-module-access.js"
+      ],
+      "pending": "creator_domain_trial_v1.sql"
+    },
     "creator_domains": {
       "kind": "table",
       "callers": [
@@ -276,6 +290,20 @@
         "workers/mccluster/src/creator-domains.js"
       ],
       "pending": "creator_domains_v1.sql"
+    },
+    "creator_platform_access_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/platform-module-access.js"
+      ],
+      "pending": "creator_domain_trial_v1.sql"
+    },
+    "creator_platform_require_v1": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/platform-module-access.js"
+      ],
+      "pending": "creator_domain_trial_v1.sql"
     },
     "creator_products": {
       "kind": "table",
@@ -406,6 +434,13 @@
         "workers/mccluster/src/social/customer.js"
       ],
       "pending": "customer_social_selfservice.sql"
+    },
+    "editor_owned_v2": {
+      "kind": "function",
+      "pending": "editor_versioned_contracts_v1.sql",
+      "callers": [
+        "workers/mccluster/src/editor-versioned.js"
+      ]
     },
     "front-media": {
       "kind": "bucket",
@@ -742,6 +777,13 @@
         "js/profile-edit-gate.js"
       ],
       "pending": "20261016010000_profile_edit_gate_v1.sql"
+    },
+    "project_tile_editor_v2": {
+      "kind": "function",
+      "pending": "project_tile_editor_v2.sql",
+      "callers": [
+        "workers/mccluster/src/project-tiles.js"
+      ]
     },
     "project_tile_publish_free_v1": {
       "kind": "function",

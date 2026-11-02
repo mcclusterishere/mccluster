@@ -1,5 +1,6 @@
 // Internal execution bridge, never a browser endpoint. Store must reserve a
 // funded order/hostname once, CAS submit_started before I/O, and forbid retries.
+import {matchesRegistrationQuote} from './registration-quote.js';
 export async function contactDigest(contact) {
   const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(contact)));
   return [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');
@@ -16,7 +17,7 @@ export async function startCloudflareRegistration(orderId,{store,provider,loadRe
     const body=await provider.prepare({hostname:order.hostname,years:order.years,registrant:contact});
     if(await contactDigest(body.contacts.registrant)!==order.contact_sha256)throw Error('Registrant differs from immutable consent');
     const quote=await provider.quote(order.hostname,'register',order.years);
-    if(quote.registrar_cents!==order.registrar_cents||quote.currency!==order.currency||order.quote_expires_at<=Date.now())throw Error('Registrar price changed');
+    if(!matchesRegistrationQuote(quote,order.hostname,'register',order.years)||quote.registrar_cents!==order.registrar_cents||quote.currency!==order.currency||order.quote_expires_at<=Date.now())throw Error('Registrar quote changed or availability is unconfirmed');
     // Persist digest only. A crash after this boundary can poll but never submit.
     if(!await store.markSubmitted(orderId,{request_sha256:await contactDigest(body),submitted_at:new Date().toISOString()}))return {status:'not_claimed'};
     submitted=true;
@@ -35,7 +36,7 @@ export async function reconcileCloudflareRegistration(orderId,{store,provider,ma
     if(!Number.isFinite(Date.parse(workflow.created_at))||Date.parse(workflow.created_at)<Date.parse(attempt.submitted_at)-60000)throw Error('Workflow predates this attempt');
     if(workflow.state==='succeeded') {
       const proof=await provider.ownership(attempt.hostname);
-      if(!proof.owned||Date.parse(proof.created_at)<Date.parse(attempt.submitted_at)-60000)throw Error('Owned registration does not match attempt');
+      if(proof.owned!==true||proof.hostname!==attempt.hostname||!Number.isFinite(Date.parse(proof.created_at))||!Number.isFinite(Date.parse(proof.expires_at))||Date.parse(proof.expires_at)<=Date.now()||Date.parse(proof.created_at)<Date.parse(attempt.submitted_at)-60000)throw Error('Owned registration does not match attempt');
       // API omits billed amount and registrant readback. Do not fabricate either.
       return store.finish(orderId,{status:'registered_pending_reconciliation',expires_at:proof.expires_at,provider_state:'succeeded',reason:'Account registration confirmed; submitted contact and actual charge need reconciliation.'});
     }

@@ -1,0 +1,243 @@
+031531cc03418de1495a77991033a8752c57b0c4a061364063716e6261e4bb4f
+DO
+GRANT ROLE
+CREATE EXTENSION
+CREATE SCHEMA
+CREATE SCHEMA
+GRANT
+CREATE TABLE
+CREATE FUNCTION
+GRANT
+CREATE TABLE
+CREATE TABLE
+CREATE FUNCTION
+CREATE FUNCTION
+GRANT
+CREATE TABLE
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+CREATE TABLE
+CREATE SCHEMA
+GRANT
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+GRANT
+GRANT
+CREATE FUNCTION
+GRANT
+ALTER TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+GRANT
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+COMMENT
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+INSERT 0 1
+DROP POLICY
+NOTICE:  policy "front media is world readable" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+NOTICE:  policy "front media is listed to its owner" for relation "storage.objects" does not exist, skipping
+CREATE POLICY
+CREATE FUNCTION
+COMMENT
+REVOKE
+GRANT
+NOTICE:  policy "front media is written by its owner" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+NOTICE:  policy "front media is replaced by its owner" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+NOTICE:  policy "front media is removed by its owner" for relation "storage.objects" does not exist, skipping
+CREATE POLICY
+CREATE TABLE
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+COMMENT
+BEGIN
+ALTER TABLE
+DO
+CREATE FUNCTION
+REVOKE
+DROP TRIGGER
+NOTICE:  trigger "managed_project_identity_v1" for relation "public.managed_projects" does not exist, skipping
+CREATE TRIGGER
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+CREATE FUNCTION
+CREATE FUNCTION
+DROP POLICY
+DROP POLICY
+DROP POLICY
+NOTICE:  policy "site media writes require quota service" for relation "storage.objects" does not exist, skipping
+CREATE POLICY
+DROP POLICY
+NOTICE:  policy "site media updates require quota service" for relation "storage.objects" does not exist, skipping
+CREATE POLICY
+REVOKE
+GRANT
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+GRANT
+GRANT
+CREATE FUNCTION
+REVOKE
+CREATE TRIGGER
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMIT
+PASS ordered replay 1
+CREATE TABLE
+NOTICE:  relation "member_fronts" already exists, skipping
+CREATE INDEX
+NOTICE:  relation "member_fronts_handle_key" already exists, skipping
+CREATE INDEX
+NOTICE:  relation "member_fronts_auth_user_idx" already exists, skipping
+COMMENT
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+INSERT 0 1
+NOTICE:  policy "front media is world readable" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+DROP POLICY
+CREATE POLICY
+CREATE FUNCTION
+COMMENT
+REVOKE
+GRANT
+NOTICE:  policy "front media is written by its owner" for relation "storage.objects" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+NOTICE:  policy "front media is replaced by its owner" for relation "storage.objects" does not exist, skipping
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+NOTICE:  relation "managed_projects" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "managed_projects_owner_idx" already exists, skipping
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+COMMENT
+BEGIN
+ALTER TABLE
+NOTICE:  column "id" of relation "managed_projects" already exists, skipping
+DO
+CREATE FUNCTION
+REVOKE
+DROP TRIGGER
+CREATE TRIGGER
+COMMIT
+BEGIN
+NOTICE:  relation "customer_site_storage_accounts" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "customer_site_storage_reservations" already exists, skipping
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+CREATE FUNCTION
+CREATE FUNCTION
+DROP POLICY
+DROP POLICY
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+REVOKE
+GRANT
+COMMIT
+BEGIN
+CREATE TABLE
+NOTICE:  relation "customer_site_modules" already exists, skipping
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMIT
+BEGIN
+NOTICE:  relation "customer_site_addresses" already exists, skipping
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMIT
+PASS optional artist migration is ONE SHOT: repeated application fails closed, transaction disconnect rolls back
+PASS ordered replay 2
+DO
+ nspname |              proname              |                                            args                                             | security_definer |             proconfig              | anon_execute | authenticated_execute | service_execute
+---------+-----------------------------------+---------------------------------------------------------------------------------------------+------------------+------------------------------------+--------------+-----------------------+-----------------
+ public  | canonical_artist_binding_v1       | p_action text, p_artist text, p_actor uuid, p_owner uuid, p_project uuid, p_provenance text | f                | {"search_path=\"\""}               | f            | f                     | t
+ public  | customer_site_address_assign_v1   | p_user uuid, p_actor uuid, p_kind text, p_key text, p_slug text                             | f                | {"search_path=pg_catalog, public"} | f            | f                     | t
+ public  | customer_site_module_set_v1       | p_user uuid, p_actor uuid, p_kind text, p_key text, p_module text, p_enabled boolean        | f                | {"search_path=pg_catalog, public"} | f            | f                     | t
+ public  | customer_site_storage_reserve_v1  | p_user uuid, p_bucket text, p_path text, p_bytes bigint                                     | f                | {"search_path=pg_catalog, public"} | f            | f                     | t
+ public  | customer_site_storage_usage_v1    | p_user uuid                                                                                 | f                | {"search_path=pg_catalog, public"} | f            | f                     | t
+ public  | guard_managed_project_identity_v1 |                                                                                             | f                | {"search_path=\"\""}               | f            | f                     | t
+(6 rows)
+
+productization-proof-8ee5481f8ae9
+PASS catalog: forced RLS, browser revokes, identity trigger, restrictive Storage policy; RPC permission inventory above

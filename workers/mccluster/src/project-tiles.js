@@ -28,9 +28,11 @@ export async function handleProjectTiles(request,env,deps={}){
  const path=new URL(request.url).pathname;
  // Keep PR493's one registered-media and compute API; do not mount its competing legacy drafts/publisher.
  if(/^\/v1\/creator-sites\/studio\/(?:assets(?:\/|$)|uploads$|processor\/)/.test(path))return handleWebsiteStudio(request,env,{...deps,fetch:deps.fetchImpl||deps.fetch});
- const match=path.match(/^\/v1\/projects\/([a-z0-9][a-z0-9-]{2,39})\/tiles(?:\/(templates|preview|publish|public))?$/);
+ const match=path.match(/^\/v[12]\/projects\/([a-z0-9][a-z0-9-]{2,39})\/tiles(?:\/(templates|preview|publish|public|unpublish|withdraw|recover|switch-front))?$/);
  if(!match)return null;
+ const versioned=path.startsWith('/v2/');
  const send=(body,status=200)=>{const r=reply(request,env,body,status);r.headers.set('cache-control','private, no-store');r.headers.set('vary','Origin, Authorization');return r;};
+ if(versioned&&env.EDITOR_V2_ENABLED!=='true')return send({error:'Versioned editor is not enabled',code:'unconfigured'},503);
  if(env.WEBSITE_STUDIO_ENABLED!=='true')return send({error:'Tile studio is not enabled yet',code:'unconfigured'},503);
  try{
   const db=deps.db||supabaseStore(env,deps.fetchImpl||deps.fetch),slug=match[1],action=match[2]||'',publicRead=action==='public'&&request.method==='GET';
@@ -41,21 +43,27 @@ export async function handleProjectTiles(request,env,deps={}){
   if(deps.expectedAuthUserId)filters.owner_user_id='eq.'+deps.expectedAuthUserId;
   if(deps.expectedProjectId)filters.id='eq.'+deps.expectedProjectId;
   const rows=await db.select('managed_projects',filters),project=rows[0];
-  if(!project||project.removed_at)throw fail(404,'Project unavailable');
+  if(!project||(project.removed_at&&!versioned))throw fail(404,'Project unavailable');
   const visibility=await profile(db,project.m_uid);
   if(publicRead){
-   if(project.presentation!=='tiles'||!project.studio_revision_id||visibility!=='public')throw fail(404,'Project is not public');
+   if(project.removed_at||project.presentation!=='tiles'||!project.studio_revision_id||visibility!=='public')throw fail(404,'Project is not public');
    if(project.studio_org_id)await projectTileAccess(db,env,project.owner_user_id,project.studio_org_id);
    else if(env.CUSTOMER_SITE_OFFER_ENABLED!=='true')throw fail(503,'Free website publication is not enabled');
    const revisions=await db.select('creator_site_revisions',{id:'eq.'+project.studio_revision_id,owner_m_uid:'eq.'+project.m_uid,draft_id:'eq.'+project.studio_draft_id,limit:'1'});
    if(!revisions[0])throw fail(404,'Published revision unavailable');
    return send({...await resolveDocument(db,project.m_uid,revisions[0].document,'publish'),project:slug,revision:revisions[0].draft_revision,published_at:project.studio_published_at,site_modules:await siteModuleProjection(env,project.owner_user_id,'project',slug,deps.fetchImpl,db)});
   }
+  async function bridge(operation,b={}) {
+   if(operation!=='read'&&(!Number.isSafeInteger(b.expected_editor_revision)||b.expected_editor_revision<0||!Number.isSafeInteger(b.expected_revision)||b.expected_revision<0))throw fail(400,'Both expected revisions are required');
+   return db.rpc('project_tile_editor_v2',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_slug:slug,p_action:operation,p_editor_expected:b.expected_editor_revision??null,p_expected:b.expected_revision??null,p_document:b.document??null,p_org:b.org_id??null});
+  }
+  if(versioned&&['unpublish','withdraw','recover','switch-front'].includes(action)&&request.method==='POST')return send(await bridge(action.replace('-','_'),await json(request)));
   if(action==='templates'&&request.method==='GET')return send({templates:await db.select('creator_site_template_versions',{status:'eq.active'},'template_key,version,definition,guidance')});
   const draft=project.studio_draft_id?(await db.select('creator_site_drafts',{id:'eq.'+project.studio_draft_id,owner_m_uid:'eq.'+actor.m_uid,limit:'1'}))[0]:null;
-  if(!action&&request.method==='GET')return send({project:slug,draft:draft||null,presentation:project.presentation||'front',published_revision:project.studio_revision_id||null,profile_visibility:visibility,free_publication:env.CUSTOMER_SITE_OFFER_ENABLED==='true'});
+  if(!action&&request.method==='GET')return send({...versioned?await bridge('read'):{},removed:!!project.removed_at,project:slug,draft:draft||null,presentation:project.presentation||'front',published_revision:project.studio_revision_id||null,profile_visibility:visibility,free_publication:env.CUSTOMER_SITE_OFFER_ENABLED==='true'});
   if(!action&&request.method==='PUT'){
    const b=await json(request);assertDocument(b.document);if(!Number.isSafeInteger(b.expected_revision)||b.expected_revision<0)throw fail(400,'Expected revision required');
+   if(versioned)return send(await bridge('save',b));
    const saved=await db.rpc('project_tile_save_v1',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_slug:slug,p_expected:b.expected_revision,p_document:b.document});return send(saved);
   }
   if(action==='preview'&&request.method==='POST'){
@@ -69,7 +77,7 @@ export async function handleProjectTiles(request,env,deps={}){
    if(!free)await projectTileAccess(db,env,actor.auth_uid,b.org_id,{fetchImpl:deps.fetchImpl||fetch,provider:true});
    if(draft.document.tiles.some(t=>!t.source_ref))throw fail(400,'Each tile needs approved media');
    await resolveDocument(db,actor.m_uid,draft.document,'publish');
-   const result=await db.rpc(free?'project_tile_publish_free_v1':'project_tile_publish_v1',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_slug:slug,p_expected:draft.revision,...(free?{}:{p_org:b.org_id})});
+   const result=versioned?await bridge(free?'publish_free':'publish_paid',b):await db.rpc(free?'project_tile_publish_free_v1':'project_tile_publish_v1',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_slug:slug,p_expected:draft.revision,...(free?{}:{p_org:b.org_id})});
    return send({...result,published:true,presentation:'tiles',url:'https://matthew.mccluster.org/website-studio-view.html?project='+slug});
   }
   return send({error:'Method not allowed'},405);

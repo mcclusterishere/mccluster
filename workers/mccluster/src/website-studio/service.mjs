@@ -31,7 +31,7 @@ export function supabaseStore(env,fetcher=fetch){
  const base=String(env.SUPABASE_URL||'').replace(/\/$/,'');
  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(base)||!env.SUPABASE_SERVICE_ROLE_KEY)throw fail(503,'Studio storage unavailable');
  const serviceHeaders={apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY};
- async function raw(p,init={}){const r=await fetcher(base+p,{...init,headers:{...serviceHeaders,...init.headers},signal:AbortSignal.timeout(15000)});if(!r.ok){const b=await r.json().catch(()=>({}));throw fail(b.code==='40001'?409:b.code==='42501'?403:b.code==='54000'?429:503,'Studio operation failed'+(b.code==='40001'?': the draft changed. Reload before saving.':''));}return r;}
+ async function raw(p,init={}){const r=await fetcher(base+p,{...init,headers:{...serviceHeaders,...init.headers},signal:AbortSignal.timeout(15000)});if(!r.ok){const b=await r.json().catch(()=>({}));throw fail(['40001','PT409'].includes(b.code)?409:b.code==='42501'?403:b.code==='54000'?429:503,'Studio operation failed'+(['40001','PT409'].includes(b.code)?': the draft changed. Reload before saving.':''));}return r;}
  const data=async(p,init)=>{const r=await raw(p,init);return r.status===204?null:r.json();};
  const select=(table,filters,columns='*')=>{const q=new URLSearchParams({...filters,select:columns});return data('/rest/v1/'+table+'?'+q);};
  const patch=(table,filters,body)=>raw('/rest/v1/'+table+'?'+new URLSearchParams(filters),{method:'PATCH',headers:{'content-type':'application/json',prefer:'return=minimal'},body:JSON.stringify(body)});

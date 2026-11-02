@@ -1,0 +1,22 @@
+{
+  "target": "zmnhbrjyhxzhkxmhkexs",
+  "applied": false,
+  "production_version": null,
+  "prepared": [
+    {
+      "path": "supabase/pending/editor_versioned_contracts_v1.sql",
+      "sha256": "3f1fcd445feb86adac927043141b1da78f9b2e06d70971f9e20b7a604fc984b4",
+      "requires": [
+        "existing site_content/history and RPCs",
+        "member_fronts_v1",
+        "managed_projects_v1",
+        "managed_project_identity_v1",
+        "canonical auth/M-account/profile/org schema"
+      ],
+      "repeat_application": "replayed twice in PGlite and native PostgreSQL",
+      "data_effect": "baseline snapshots of existing rows into private journal; no source row rewrite; captures subsequent mutations",
+      "compatibility": "first v2 mutation protects object against blind legacy writes; safety takedown exception",
+      "rollback": "keep history and protection; contain feature and use compatible editor; no automatic drops or unprotect"
+    }
+  ]
+}

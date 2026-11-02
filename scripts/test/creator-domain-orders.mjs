@@ -26,7 +26,7 @@ async function fetchImpl(input,init={}){
  }catch(e){return Response.json({code:e.code},{status:409});}
 }
 let calls=0,timeout=false,ownership=true;
-const provider={quote:async()=>({available:true,premium:false,currency:'USD',registrar_cents:1000}),createContact:async()=>({id:crypto.randomUUID(),verified:true}),register:async({domain})=>{calls++;if(timeout)throw Error('timeout');return{code:300,domain,order_amount:'10.00'};},renew:async({domain})=>{calls++;return{code:300,domain,order_amount:'10.00'};},verifyOwnership:async()=>({owned:ownership,registrant_matches:true,expires_at:new Date(Date.now()+31536000000).toISOString()})};
+const provider={quote:async(hostname,action='register',years=1)=>({hostname,action,years,available:true,premium:false,currency:'USD',registrar_cents:1000}),createContact:async()=>({id:crypto.randomUUID(),verified:true}),register:async({domain})=>{calls++;if(timeout)throw Error('timeout');return{code:300,domain,order_amount:'10.00'};},renew:async({domain})=>{calls++;return{code:300,domain,order_amount:'10.00'};},verifyOwnership:async()=>({owned:ownership,registrant_matches:true,expires_at:new Date(Date.now()+31536000000).toISOString()})};
 let checkoutCalls=0;
 const options={fetchImpl,provider,authorizeEntitlement:async()=>true,createDomainCheckout:async o=>{checkoutCalls++;return{id:'cs_'+o.id,url:'https://checkout.stripe.com/c/pay/fixture'};}};
 async function call(user,path='',body){const r=await handleCreatorDomainOrders(new Request('https://api.mccluster.org/v1/creator-domain-orders'+path,{method:body?'POST':'GET',headers:{authorization:'Bearer '+user},body:body?JSON.stringify(body):undefined}),env,options);return{status:r.status,body:await r.json()};}
@@ -53,11 +53,26 @@ assert.equal((await fulfillStoredDomainOrder(order.id,env,{provider,fetchImpl}))
 assert.equal((await call('A','/'+order.id+'/checkout',{})).status,409);
 assert.equal((await call('B')).body.orders.length,0);
 async function nextOrder(domain){const q=(await call('A','/quotes',{hostname:domain})).body.quote;return(await call('A','',{...orderBody,quote_id:q.id})).body.order;}
-const wrong=await nextOrder('mismatch.org');assert.equal((await recordDomainFunding({...funding,orderId:wrong.id,eventId:'evt_wrong',sessionId:'cs_wrong',amountTotal:1},env,{fetchImpl})).status,'refund_required');assert.equal((await fulfillStoredDomainOrder(wrong.id,env,{provider,fetchImpl})).status,'not_claimed');
-const uncertain=await nextOrder('uncertain.org');await recordDomainFunding({...funding,orderId:uncertain.id,eventId:'evt_uncertain',sessionId:'cs_uncertain'},env,{fetchImpl});timeout=true;
+const wrong=await nextOrder('mismatch.org');await call('A','/'+wrong.id+'/checkout',{});assert.equal((await recordDomainFunding({...funding,orderId:wrong.id,eventId:'evt_wrong',sessionId:'cs_'+wrong.id,amountTotal:1},env,{fetchImpl})).status,'refund_required');assert.equal((await fulfillStoredDomainOrder(wrong.id,env,{provider,fetchImpl})).status,'not_claimed');
+const uncertain=await nextOrder('uncertain.org');await call('A','/'+uncertain.id+'/checkout',{});await recordDomainFunding({...funding,orderId:uncertain.id,eventId:'evt_uncertain',sessionId:'cs_'+uncertain.id},env,{fetchImpl});timeout=true;
 assert.equal((await fulfillStoredDomainOrder(uncertain.id,env,{provider,fetchImpl})).status,'reconciliation_required');assert.equal((await fulfillStoredDomainOrder(uncertain.id,env,{provider,fetchImpl})).status,'not_claimed');assert.equal(calls,2);
-const unowned=await nextOrder('unowned.org');await recordDomainFunding({...funding,orderId:unowned.id,eventId:'evt_unowned',sessionId:'cs_unowned'},env,{fetchImpl});timeout=false;ownership=false;assert.equal((await fulfillStoredDomainOrder(unowned.id,env,{provider,fetchImpl})).status,'reconciliation_required');
+const unowned=await nextOrder('unowned.org');await call('A','/'+unowned.id+'/checkout',{});await recordDomainFunding({...funding,orderId:unowned.id,eventId:'evt_unowned',sessionId:'cs_'+unowned.id},env,{fetchImpl});timeout=false;ownership=false;assert.equal((await fulfillStoredDomainOrder(unowned.id,env,{provider,fetchImpl})).status,'reconciliation_required');
 assert.equal((await call('B','/quotes',{hostname:'customer.org',action:'renew'})).status,404);
+// Funding cannot choose a checkout session before the checkout write binds it.
+const unbound=await nextOrder('unbound.org');
+const unboundEvent={...funding,orderId:unbound.id,eventId:'evt_unbound',sessionId:'cs_'+unbound.id};
+assert.equal((await recordDomainFunding(unboundEvent,env,{fetchImpl})).status,'conflict');
+assert.equal((await db.query('select status,checkout_session_id from creator_domain_orders where id=$1',[unbound.id])).rows[0].checkout_session_id,null);
+await call('A','/'+unbound.id+'/checkout',{});
+assert.equal((await recordDomainFunding({...unboundEvent,sessionId:'cs_wrong'},env,{fetchImpl})).status,'conflict');
+assert.equal((await recordDomainFunding(unboundEvent,env,{fetchImpl})).status,'funded');
+// Exact identity/term checks reject an unrelated otherwise-valid provider quote.
+const actualQuote=provider.quote;
+for(const patch of [{hostname:'other.org'},{action:'renew'},{years:2},{available:false},{premium:true},{premium:undefined}]){
+ provider.quote=async(...args)=>({...await actualQuote(...args),...patch});
+ assert.equal((await call('A','/quotes',{hostname:'requested.org'})).status,409);
+}
+provider.quote=actualQuote;
 await db.exec('reset role;set role authenticated');await assert.rejects(db.query('select * from creator_domain_orders'),/permission denied/);await assert.rejects(db.query("select claim_creator_domain_order($1)",[order.id]),/permission denied/);
 await db.exec('reset role;set role anon');await assert.rejects(db.query('select * from creator_domain_contacts'),/permission denied/);
 await db.close();console.log('Domain purchase SQL/API fixture flow passed: two tenants, immutable quote/consent, checkout, duplicate funding, fulfillment, mismatch/refund, timeout and ownership reconciliation, role denial.');

@@ -61,3 +61,9 @@ test('invalid HMAC never fetches provider or calls domain funding',async t=>{
  assert.equal((await handleCreatorBillingWebhook(signed(event(),'whsec_wrong'),env,{onDomainPaid:f.callback})).status,400);
  assert.equal(f.calls.length,0);assert.equal(f.paid.length,0);
 });
+
+for(const status of ['conflict','not_found'])test(`domain funding ${status} is retryable, not silently acknowledged`,async t=>{
+ const f=fixture(t);let called=0;
+ const response=await handleCreatorBillingWebhook(signed(event()),env,{onDomainPaid:async()=>{called++;return {status};}});
+ assert.equal(response.status,503);assert.equal(called,1);assert.equal(f.calls.length,1);
+});

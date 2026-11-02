@@ -1,0 +1,35 @@
+(node:36241) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/editor-681-integration/supabase/functions/stripe-webhook/commerce.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /workspace/editor-681-integration/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a paid offering checkout maps to one ledger record (1.711987ms)
+✔ only paid commerce is recorded (0.223402ms)
+✔ a connected seller’s sale is booked to that seller’s org, never to the house (1.154651ms)
+✔ subscriptions, renewals, refunds and cancellations map to their records (0.420484ms)
+✔ a renewal is recorded under the PaymentIntent a refund will name, on old and new invoice shapes (0.181128ms)
+✔ a refund that beats its music checkout still revokes the music (4.217781ms)
+✔ the webhook verifies the signature first, then routes each commerce event to its database function (1.486233ms)
+✔ the database functions are server-only, definer-safe and idempotent by construction (2.242182ms)
+✔ test-mode events reach the same function without ever passing for live money (1.080461ms)
+✔ a test-endpoint event writes TEST commerce rows and changes nothing a real account holds (1.32946ms)
+✔ commerceCall routes each event type exactly as the webhook does (1.182723ms)
+✔ pending reconciler v3 serialises deliveries and is exercised in CI (1.891193ms)
+✔ storefront metadata is routed only through its immutable-order adapter (0.158125ms)
+✔ a bound direct sale is booked from the order, not from Stripe metadata (0.367985ms)
+✔ a direct sale that is not bound, or not the platform's, is not booked (0.10796ms)
+✔ the webhook books a direct sale only from its binding, and only once fulfilled on a live endpoint (0.829379ms)
+✔ commerceCall books a direct sale only with its binding (0.173227ms)
+✔ the scanner sees the return URLs it is meant to guard (21.891964ms)
+✔ every server-side Stripe return URL on matthew.mccluster.org lands on a page in this repo (15.623765ms)
+✔ nothing names action-network.html, the page that never existed (22.884295ms)
+✔ the pages the live functions return to are the ones that exist (78.801641ms)
+✔ shake-order returns to matthew.mccluster.org when SITE_URL is unset (9.434423ms)
+✔ connect-onboard, whose return URLs point at the dead Here origin, refuses every request before Stripe is touched (9.57539ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 220.454814

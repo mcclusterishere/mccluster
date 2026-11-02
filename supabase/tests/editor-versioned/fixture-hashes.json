@@ -1,0 +1,18 @@
+{
+  "supabase/tests/editor-versioned/member-fronts.sql": "39d9b60a761f846e1a5a86f0a4fcdbe899f2fb31c67f9c70aae7b971f886150d",
+  "supabase/tests/editor-versioned/api-roles.sql": "bf376fae0e32c82620ca391a8d61fa9b5cbed8ae57c8c609c1f4d7fc72d35459",
+  "supabase/tests/editor-versioned/storage.sql": "3e07b2f7827a7c6ecf26580a0d3bad3c074dbf07ffabfd2a047ccf51992d2812",
+  "supabase/tests/editor-versioned/project-identity.sql": "1c03591c9e11b905c2b2c3ca5e966a6664dc72fa4537f841605690cb930f9129",
+  "supabase/tests/editor-versioned/site-content-service.sql": "9ef1dae88b7107bea2268cb9f2de3f361d80ceb3250a82dfa9dff3d15b13abde",
+  "supabase/tests/editor-versioned/site-content.sql": "11cfcbbced207693d165310d55401b018ea4b42c6c60c94dd4d3a22d91da7fa0",
+  "supabase/tests/editor-versioned/account-fixture.sql": "fb19abfd8df16efebf874e5fd40d58810a3f7f34ce3a814576adc8b4de0030f7",
+  "supabase/tests/editor-versioned/managed-projects.sql": "ffb4fa7247eb29b638e8439f5f8dad19b63837bf3da273621ab0d6e925440de1",
+  "supabase/tests/editor-versioned/studio-dependencies.sql": "49f1d71994f39bb7242db11065c5ee910d22d82b9d7d665551c0f706781e1a51",
+  "packages/front-config/index.mjs": "0467368355d1c9faf16a2c35bf4dc296a8d1dddfddb3dd2805ea4169d13a30a9",
+  "workers/mccluster/src/member-fronts.js": "3166978c3ccbe39cf5a20f1c8094fd0e3a9e949cf2324af9a8bf0f8a8bfddd34",
+  "workers/mccluster/src/managed-projects.js": "21ffd3df6cbb8f5f26faf9e112144bbcc92724f40e72e6dcb6386a9ac53d15f3",
+  "supabase/pending/website_studio_v2.sql": "f0387d9e4204f039d30e599848dc30f948f66590a65dc6811fdb8bfa652e36a3",
+  "supabase/pending/project_tiles_v1.sql": "ea04e729fb031fec19da1eb01625539fbea8b2d2c1d5c59fd5d73c6094c2e39c",
+  "supabase/pending/project_tiles_free_v1.sql": "cbe6dc9ebc5ee27ea7de53677793d054198fe6f2240b9c1d4e0f3212109f78b1",
+  "supabase/tests/editor-versioned/editor-contract-c150.sql": "3f1fcd445feb86adac927043141b1da78f9b2e06d70971f9e20b7a604fc984b4"
+}

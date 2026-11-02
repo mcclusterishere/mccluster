@@ -1,0 +1,337 @@
+{
+  "captured_at": "2026-11-02T02:30:35.672Z",
+  "project": "zmnhbrjyhxzhkxmhkexs",
+  "scope": "read-only catalog, grants, policies; no customer rows",
+  "rows": [
+    {
+      "schema": "public",
+      "name": "creator_billing_events",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "creator_billing_subscriptions",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "creator_consultation_entitlements",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "creator_published_sites",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "creator_selection_profiles",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "creator_selection_snapshots",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "creator_service_offers",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "creator_talent_reviews",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "creator_tracks",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "creator_trial_report_cards",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "music_asset_versions",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "music_catalog_objects",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_creator_assets",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "music_creator_profiles",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_direct_entitlements",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_direct_offers",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_direct_orders",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_entitlements",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_gated_plays",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_isrc_allocations",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_isrc_registrants",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_license_offers",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_listens",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_orders",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_publish_tokens",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "music_rights_attestations",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "network_profiles",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "org_media_budgets",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "platform_profiles",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "prim3_course_progress",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "site_accounts",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "site_content",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "site_content_history",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "site_requests",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_accounts",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_agent_devices",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_agent_events",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_agent_jobs",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_automation_rules",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_campaigns",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_content_items",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_lead_attribution",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_metric_snapshots",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_posts",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_publish_jobs",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_variants",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "social_webhook_events",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "work_bookings",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "work_deliverables",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "work_orders",
+      "rls": true,
+      "forced_rls": false
+    },
+    {
+      "schema": "public",
+      "name": "work_payments",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "work_projects",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "work_relationships",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "work_renewals",
+      "rls": true,
+      "forced_rls": true
+    },
+    {
+      "schema": "public",
+      "name": "work_tasks",
+      "rls": true,
+      "forced_rls": false
+    }
+  ]
+}

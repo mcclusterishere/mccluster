@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 550,
+  "candidate_count": 566,
   "capability_source_count": 102,
-  "support_only_count": 448,
+  "support_only_count": 464,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4119,6 +4119,118 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared website publishing, ownership, onboarding or validation support; references the existing Equity Uprise offer without adding a building capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-10-31.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken after music_direct_sales_v1 was applied on 2026-10-31 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "scripts/test/music-direct-sales.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests Matthew McCluster's direct music checkout (bound fulfilment, download limits, buy buttons); mentions Equity Uprise only to assert the purchase page is not company-branded. Not a building capability."
+    },
+    {
+      "path": "docs/products/DISTRIBUTABLE-PRODUCT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Independent software distribution acceptance contract and portability assessment; no building capability, program or geometry implementation."
+    },
+    {
+      "path": "docs/releases/mission-content-cleanup-2026-10-31.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-authorized production content cleanup outcome; operational evidence, not a building capability or geometry change."
+    },
+    {
+      "path": "docs/productization/20261102/CLAUDE-PROMPT.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/PR-INVENTORY.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/WHOLE-SITE-ACCEPTANCE.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/evidence/branches.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/evidence/ci-reviews.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/evidence/open-pr-snapshot.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/evidence/portability.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/evidence/pr-change-inventory.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/evidence/production-migrations.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/evidence/semantic-overlap-candidates.json",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102/prepared/canonical_artist_bindings_v1.sql",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "supabase/tests/editor-versioned/api-roles.sql",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

@@ -1,0 +1,1 @@
+Domain purchase SQL/API fixture flow passed: two tenants, immutable quote/consent, checkout, duplicate funding, fulfillment, mismatch/refund, timeout and ownership reconciliation, role denial.

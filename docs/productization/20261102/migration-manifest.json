@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "target": "zmnhbrjyhxzhkxmhkexs",
+  "production_ledger_count": 355,
+  "applied_this_task": [],
+  "new_schema_designs": [],
+  "prepared": [
+    {
+      "order": 1,
+      "name": "member_fronts_v1",
+      "path": "prepared/member_fronts_v1.sql",
+      "source_path": "supabase/pending/member_fronts_v1.sql",
+      "source_commit": "5e020833534b68b31e191b137e9a30da8b58314f",
+      "sha256": "39d9b60a761f846e1a5a86f0a4fcdbe899f2fb31c67f9c70aae7b971f886150d",
+      "status": "prepared_unapplied",
+      "optional": false,
+      "requires": [],
+      "production_application_authorized": false,
+      "reapply_contract": "repeat application tested on isolated fixture; IF NOT EXISTS is not schema equivalence proof",
+      "containment": "Disable affected entry points, retain rows and storage objects; do not DROP populated customer data",
+      "backup_requirement": "Capture catalog/function/grant definitions and tested backup before approved release; do not export private rows to public repository"
+    },
+    {
+      "order": 2,
+      "name": "managed_projects_v1",
+      "path": "prepared/managed_projects_v1.sql",
+      "source_path": "supabase/pending/managed_projects_v1.sql",
+      "source_commit": "5e020833534b68b31e191b137e9a30da8b58314f",
+      "sha256": "ffb4fa7247eb29b638e8439f5f8dad19b63837bf3da273621ab0d6e925440de1",
+      "status": "prepared_unapplied",
+      "optional": false,
+      "requires": [
+        "member_fronts_v1"
+      ],
+      "production_application_authorized": false,
+      "reapply_contract": "repeat application tested on isolated fixture; IF NOT EXISTS is not schema equivalence proof",
+      "containment": "Disable affected entry points, retain rows and storage objects; do not DROP populated customer data",
+      "backup_requirement": "Capture catalog/function/grant definitions and tested backup before approved release; do not export private rows to public repository"
+    },
+    {
+      "order": 3,
+      "name": "managed_project_identity_v1",
+      "path": "prepared/managed_project_identity_v1.sql",
+      "source_path": "supabase/pending/managed_project_identity_v1.sql",
+      "source_commit": "5e020833534b68b31e191b137e9a30da8b58314f",
+      "sha256": "1c03591c9e11b905c2b2c3ca5e966a6664dc72fa4537f841605690cb930f9129",
+      "status": "prepared_unapplied",
+      "optional": false,
+      "requires": [
+        "member_fronts_v1",
+        "managed_projects_v1"
+      ],
+      "production_application_authorized": false,
+      "reapply_contract": "repeat application tested on isolated fixture; IF NOT EXISTS is not schema equivalence proof",
+      "containment": "Disable affected entry points, retain rows and storage objects; do not DROP populated customer data",
+      "backup_requirement": "Capture catalog/function/grant definitions and tested backup before approved release; do not export private rows to public repository"
+    },
+    {
+      "order": 4,
+      "name": "customer_site_storage_v1",
+      "path": "prepared/customer_site_storage_v1.sql",
+      "source_path": "supabase/pending/customer_site_storage_v1.sql",
+      "source_commit": "5e020833534b68b31e191b137e9a30da8b58314f",
+      "sha256": "f1ab68dfd9bc73602d283441e70f4eb2ccce95e1f7680c3134e0a88901f561d3",
+      "status": "prepared_unapplied",
+      "optional": false,
+      "requires": [
+        "member_fronts_v1",
+        "managed_projects_v1",
+        "managed_project_identity_v1"
+      ],
+      "production_application_authorized": false,
+      "reapply_contract": "repeat application tested on isolated fixture; IF NOT EXISTS is not schema equivalence proof",
+      "containment": "Disable affected entry points, retain rows and storage objects; do not DROP populated customer data",
+      "backup_requirement": "Capture catalog/function/grant definitions and tested backup before approved release; do not export private rows to public repository"
+    },
+    {
+      "order": 5,
+      "name": "customer_site_modules_v1",
+      "path": "prepared/customer_site_modules_v1.sql",
+      "source_path": "supabase/pending/customer_site_modules_v1.sql",
+      "source_commit": "5e020833534b68b31e191b137e9a30da8b58314f",
+      "sha256": "950add4d0d05a7476def1cfb70c8f70f2bb95c424773e1090589d3699d84ae74",
+      "status": "prepared_unapplied",
+      "optional": false,
+      "requires": [
+        "managed_project_identity_v1"
+      ],
+      "production_application_authorized": false,
+      "reapply_contract": "repeat application tested on isolated fixture; IF NOT EXISTS is not schema equivalence proof",
+      "containment": "Disable affected entry points, retain rows and storage objects; do not DROP populated customer data",
+      "backup_requirement": "Capture catalog/function/grant definitions and tested backup before approved release; do not export private rows to public repository"
+    },
+    {
+      "order": 6,
+      "name": "customer_site_addresses_v1",
+      "path": "prepared/customer_site_addresses_v1.sql",
+      "source_path": "supabase/pending/customer_site_addresses_v1.sql",
+      "source_commit": "5e020833534b68b31e191b137e9a30da8b58314f",
+      "sha256": "0ba2475b8eeb56b5329819c530e7393b3968cb8db9acfeafbf04f16bfc17f59c",
+      "status": "prepared_unapplied",
+      "optional": false,
+      "requires": [
+        "managed_project_identity_v1"
+      ],
+      "production_application_authorized": false,
+      "reapply_contract": "repeat application tested on isolated fixture; IF NOT EXISTS is not schema equivalence proof",
+      "containment": "Disable affected entry points, retain rows and storage objects; do not DROP populated customer data",
+      "backup_requirement": "Capture catalog/function/grant definitions and tested backup before approved release; do not export private rows to public repository"
+    },
+    {
+      "order": 7,
+      "name": "canonical_artist_bindings_v1",
+      "path": "prepared/canonical_artist_bindings_v1.sql",
+      "source_path": "supabase/pending/canonical_artist_bindings_v1.sql",
+      "source_commit": "5e020833534b68b31e191b137e9a30da8b58314f",
+      "sha256": "469c60bb51ecc96375d6e9dd9ff169dd48a273dc732269a836b7cfb6cbef75af",
+      "status": "prepared_unapplied",
+      "optional": true,
+      "requires": [
+        "managed_project_identity_v1"
+      ],
+      "production_application_authorized": false,
+      "reapply_contract": "one-shot; duplicate table fails inside transaction; inspect catalog and ledger before any retry",
+      "containment": "Disable affected entry points, retain rows and storage objects; do not DROP populated customer data",
+      "backup_requirement": "Capture catalog/function/grant definitions and tested backup before approved release; do not export private rows to public repository"
+    }
+  ],
+  "note": "Exact existing pending definitions, not promoted migrations. No blanket pending-directory replay. Optional artist authority seeds no owners."
+}

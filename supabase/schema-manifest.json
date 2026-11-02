@@ -8,7 +8,7 @@
    ["private","postgres","anon=U;authenticated=U"],
    ["public","pg_database_owner","PUBLIC=U;anon=U;authenticated=U"]
   ]},
-  "relations": {"md5": "e1b0f7f930b74d7ef02d73b7e0a85b57", "rows": [
+  "relations": {"md5": "bd60b96fc2be5b1081a99787c26e2494", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -336,8 +336,8 @@
    ["public","music_catalog_objects","r",true,false,"",18,"8f2f7fd7419d","a20ecf6d2135","b2c46087fb16","","anon=r;authenticated=r"],
    ["public","music_creator_assets","r",true,true,"",6,"47a168789a3d","6af9aa0bd75a","46d0ae2bd935","",""],
    ["public","music_creator_profiles","r",true,false,"",16,"7c3e60d48b76","997096444368","fa72bf0980d6","","anon=damrw;authenticated=damrw"],
-   ["public","music_direct_entitlements","r",true,false,"",9,"56a98239ecee","3edc5aac1949","efa58f3f09e7","",""],
-   ["public","music_direct_offers","r",true,false,"",13,"21686c0291e1","535ee71337a1","3d7fd6d73073","",""],
+   ["public","music_direct_entitlements","r",true,false,"",11,"11083d43b835","3edc5aac1949","efa58f3f09e7","",""],
+   ["public","music_direct_offers","r",true,false,"",18,"44cd216a9b17","0d4b08dfbcd8","3d7fd6d73073","",""],
    ["public","music_direct_orders","r",true,false,"",13,"356c9abc4554","b6582a9b84ee","106e016deaaa","",""],
    ["public","music_entitlements","r",true,false,"",13,"1ef43d45183d","2bb3001242ba","13055ab27cdb","","authenticated=r"],
    ["public","music_gated_plays","r",true,false,"",7,"c66a5550824d","9bc3551339ec","aecd6ebc998f","","anon=damrw;authenticated=damrw"],
@@ -531,7 +531,7 @@
    ["public","work_tasks","r",true,false,"",13,"2963669335e0","6159eb3b84f2","298029dd3cf8","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "f7d681a558eaa94279636931ff874e28", "rows": [
+  "functions": {"md5": "e92317f71af2a290993137cf4f8cf9d5", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -895,6 +895,12 @@
    ["public","music_creator_guard","","trigger",true,"v","search_path=pg_catalog, public","cf6eae34f6d5",""],
    ["public","music_creator_onboarding_core","p_m uuid, p_handle text, p_artist_name text, p_accept_terms boolean, p_write boolean","jsonb",true,"v","search_path=pg_catalog, public","810dda56028d",""],
    ["public","music_creator_state","","jsonb",true,"v","search_path=pg_catalog, public","935c7f8f1d11","authenticated=X"],
+   ["public","music_direct_claim_download","p_token uuid","jsonb",true,"v","search_path=pg_catalog, public","7dc455851599",""],
+   ["public","music_direct_entitlement_guard","","trigger",true,"v","search_path=pg_catalog, public","acb16a8e0248",""],
+   ["public","music_direct_fulfil","p_order uuid, p_session text, p_amount_cents integer, p_currency text, p_payment_intent text, p_email text","jsonb",true,"v","search_path=pg_catalog, public","5faf1e8ee8a1",""],
+   ["public","music_direct_offer_guard","","trigger",true,"v","search_path=pg_catalog, public","1e6f89de2484",""],
+   ["public","music_direct_order_guard","","trigger",true,"v","search_path=pg_catalog, public","b01433ecb2ef",""],
+   ["public","music_direct_order_revoke","","trigger",true,"v","search_path=pg_catalog, public","ff131eb2b61d",""],
    ["public","music_entitlement_guard","","trigger",true,"v","search_path=pg_catalog, public","6c3585fe0a2f",""],
    ["public","music_gate_any_state","p_user uuid, p_track text, p_eligible text[]","jsonb",true,"s","search_path=\"\"","1d08be7e431e",""],
    ["public","music_gate_claim","p_user uuid, p_track text, p_first integer, p_each integer, p_token text, p_stream_seconds integer","jsonb",true,"v","search_path=\"\"","94eb16c4e390",""],
@@ -1024,7 +1030,7 @@
    ["public","world_region_sharing_get","","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"s","search_path=\"\"","8abf5cf315e3","authenticated=X"],
    ["public","world_region_sharing_set","p_country_code text, p_subdivision_code text","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"v","search_path=\"\"","f4b7eb59636b","authenticated=X"]
   ]},
-  "policies": {"md5": "bbd6fa7e26224e5cb924c696c7852eef", "rows": [
+  "policies": {"md5": "2ed94cecabb184a9fea2c3325be7c3b2", "rows": [
    ["public","action_antisocial_levels","owner reads own antisocial levels","PERMISSIVE","SELECT","authenticated","65f25830dac2",""],
    ["public","action_archive_events","action_archive_events_public","PERMISSIVE","SELECT","anon,authenticated","368b0c7d0476",""],
    ["public","action_archive_participants","action_archive_participants_public","PERMISSIVE","SELECT","anon,authenticated","7f168821b2d6",""],
@@ -1297,6 +1303,7 @@
    ["public","music_creator_profiles","music_creator_profiles_public_read","PERMISSIVE","SELECT","anon","9449d89a5cc0",""],
    ["public","music_creator_profiles","music_creator_profiles_read","PERMISSIVE","SELECT","authenticated","0cd7331edf20",""],
    ["public","music_creator_profiles","music_creator_profiles_update","PERMISSIVE","UPDATE","authenticated","7e7ebd85bbbe","7e7ebd85bbbe"],
+   ["public","music_direct_offers","music_direct_offers_public_read","PERMISSIVE","SELECT","anon,authenticated","0f2705089039",""],
    ["public","music_entitlements","music_entitlements_read","PERMISSIVE","SELECT","authenticated","6a6b7c2a3a52",""],
    ["public","music_gated_plays","listeners read their own gated plays","PERMISSIVE","SELECT","authenticated","6a6b7c2a3a52",""],
    ["public","music_license_offers","music_license_offers_delete","PERMISSIVE","DELETE","authenticated","8939a064f94f",""],
@@ -1483,7 +1490,7 @@
    ["storage","objects","mnet media owner update","PERMISSIVE","UPDATE","authenticated","97da7ab7aa90","97da7ab7aa90"],
    ["storage","objects","mnet media owner upload","PERMISSIVE","INSERT","authenticated","","97da7ab7aa90"]
   ]},
-  "triggers": {"md5": "39151811ed8d8ae611e7ae34dae42f9f", "rows": [
+  "triggers": {"md5": "b44ead535eab6c963dbbc3a668e33582", "rows": [
    ["ai_context","decisions","intel_decision_approval_v2","O","6bd9376e62fb"],
    ["public","action_clip_earnings","action_clip_earnings_guard","O","afb9ecb05b26"],
    ["public","action_mission_assignments","action_bounty_sync_claim_trg","O","d14981d81826"],
@@ -1569,6 +1576,10 @@
    ["public","media_news_comments","media_news_comments_rate_v1","O","397317699b39"],
    ["public","music_asset_versions","music_asset_version_guard_trg","O","c77ec260cb23"],
    ["public","music_creator_profiles","music_creator_guard_trg","O","b86da5f1a1c2"],
+   ["public","music_direct_entitlements","music_direct_entitlement_guard_trg","O","dcf48177a2ab"],
+   ["public","music_direct_offers","music_direct_offer_guard_trg","O","80ebac8c7653"],
+   ["public","music_direct_orders","music_direct_order_guard_trg","O","8fe77b80db84"],
+   ["public","music_direct_orders","music_direct_order_revoke_trg","O","8e9743ce402e"],
    ["public","music_entitlements","music_entitlement_guard_trg","O","e00a6417da7a"],
    ["public","music_license_offers","music_license_guard_trg","O","cec5c763f2ce"],
    ["public","music_orders","music_order_guard_trg","O","580a93278e54"],
