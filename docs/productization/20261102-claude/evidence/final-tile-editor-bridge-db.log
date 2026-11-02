@@ -1,0 +1,2 @@
+PASS 57 bridge SQL/HTTP assertions: double CAS, permissions, draft retention, explicit switch, rollback, media guard and legacy fencing
+exit=0

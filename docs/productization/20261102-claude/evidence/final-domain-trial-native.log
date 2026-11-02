@@ -1,0 +1,3 @@
+PASS two concurrent identical events: one receipt/event, both idempotent success
+PASS concurrent retry/cancel: cancellation persists; changed evidence rejects PT409
+exit=0
