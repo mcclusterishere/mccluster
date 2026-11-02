@@ -49,16 +49,16 @@ async function readback(what,path,body){
  const op=path==='/v2/publish'?(row&&/^tiles_publish/.test(String(row.operation))?row.operation:null):OP[path];
  const stepped=now.editor_revision===bridge.editor_revision+1&&now.studio_revision===revision+(path==='/v2'?1:0);
  const effect=path==='/v2'?JSON.stringify(now.draft?.document)===JSON.stringify(body.document):path==='/v2/unpublish'||path==='/v2/withdraw'?now.published_revision==null:path==='/v2/recover'?!now.removed&&!now.owner_withdrawn:path==='/v2/publish'?!!now.published_revision:true;
- if(stepped&&row&&op&&row.operation===op&&effect){adoptBridge(now);if(path==='/v2')dirty=false;status('Confirmed from the history: it was '+what+' before the connection dropped · draft revision '+revision+' · editor revision '+bridge.editor_revision);return true;}
+ if(stepped&&row&&op&&row.operation===op&&effect){status('Confirmed from the history: it was '+what+' before the connection dropped · draft revision '+now.studio_revision+' · editor revision '+now.editor_revision);return {...now,recovered:true};}
  status('Unknown whether it was '+what+': the history does not show this exact operation at the next revision'+(stepped?'':' (the project moved by a different step)')+'. Nothing is assumed and nothing was retried. Your edits are kept; load the latest saved draft to see the current state.',true);return false;}
 function manage(){
  const m=$('manage');if(!m)return;m.replaceChildren();if(!bridge){m.hidden=true;return;}m.hidden=false;
  const b=(text,fn)=>{const x=node('button',text);x.type='button';x.onclick=()=>guard(fn);m.append(x);return x;};
- if(bridge.owner_withdrawn){m.append(node('p','You withdrew this project: it is not public. Its drafts, history and address are kept.'));b('Recover project (stays unpublished)',async()=>{adoptBridge(await write('/v2/recover',{},'recovered'));status('Recovered. Nothing is published until you publish again.');manage();});return;}
+ if(bridge.owner_withdrawn){m.append(node('p','You withdrew this project: it is not public. Its drafts, history and address are kept.'));b('Recover project (stays unpublished)',async()=>{const r=await write('/v2/recover',{},'recovered');adoptBridge(r);if(!r.recovered)status('Recovered. Nothing is published until you publish again.');manage();});return;}
  if(bridge.removed){m.append(node('p','McCluster took this project down. Its drafts are kept; it cannot be recovered from here.'));return;}
- b('Take the published website down',async()=>{if(!confirm('Take the published website down? Your drafts and history are kept.'))return;adoptBridge(await write('/v2/unpublish',{},'taken down'));$('published').replaceChildren();status('Taken down · revision '+revision);manage();});
- b('Switch to the front-page presentation (unpublished)',async()=>{if(!confirm('Switch this project to its retained front-page draft? Nothing is published by the switch; the tile drafts stay.'))return;adoptBridge(await write('/v2/switch-front',{},'switched'));status('Switched to the front presentation, unpublished. Edit it in Project Studio; the tile drafts are kept here.');manage();});
- b('Withdraw project',async()=>{if(!confirm('Withdraw this project? Its page stops being public; drafts, history and address are kept and you can recover it.'))return;adoptBridge(await write('/v2/withdraw',{},'withdrawn'));$('published').replaceChildren();status('Withdrawn · not public · drafts kept');manage();});
+ b('Take the published website down',async()=>{if(!confirm('Take the published website down? Your drafts and history are kept.'))return;const r=await write('/v2/unpublish',{},'taken down');adoptBridge(r);$('published').replaceChildren();if(!r.recovered)status('Taken down · revision '+revision);manage();});
+ b('Switch to the front-page presentation (unpublished)',async()=>{if(!confirm('Switch this project to its retained front-page draft? Nothing is published by the switch; the tile drafts stay.'))return;const r=await write('/v2/switch-front',{},'switched');adoptBridge(r);if(!r.recovered)status('Switched to the front presentation, unpublished. Edit it in Project Studio; the tile drafts are kept here.');manage();});
+ b('Withdraw project',async()=>{if(!confirm('Withdraw this project? Its page stops being public; drafts, history and address are kept and you can recover it.'))return;const r=await write('/v2/withdraw',{},'withdrawn');adoptBridge(r);$('published').replaceChildren();if(!r.recovered)status('Withdrawn · not public · drafts kept');manage();});
 }
 /* one versioned write; a 409 keeps the edits and offers the decision; a lost response is read back */
 async function write(path,body,what){
@@ -70,10 +70,14 @@ async function write(path,body,what){
   if(k==='conflict'){
    const now=await api('/v2').catch(()=>null);
    status('Not '+what+': this project was saved somewhere else since you opened it'+(now?' (editor revision '+now.editor_revision+', draft revision '+now.studio_revision+')':'')+'. Your edits are kept here. Load the latest saved draft to take theirs, or keep yours and save over it.',true);
-   const keep=node('button','Keep mine and save over it');keep.id='keepMine';keep.type='button';keep.onclick=()=>guard(async()=>{if(!now)throw Error('The latest revisions could not be read; try again.');adoptBridge({...now,studio_revision:now.studio_revision});keep.remove();const r=await write(path,body,what);if(path==='/v2'){adoptBridge(r);dirty=false;status('Saved over the other change · revision '+revision);}else{adoptBridge(r);status(what.charAt(0).toUpperCase()+what.slice(1)+' · revision '+revision);manage();}});
+   const keep=node('button','Keep mine and save over it');keep.id='keepMine';keep.type='button';keep.onclick=()=>guard(async()=>{if(!now)throw Error('The latest revisions could not be read; try again.');adoptBridge({...now,studio_revision:now.studio_revision});keep.remove();const r=await write(path,body,what);adoptBridge(r);if(path==='/v2'){dirty=false;if(!r.recovered)status('Saved over the other change · revision '+revision);}else{if(!r.recovered)status(what.charAt(0).toUpperCase()+what.slice(1)+' · revision '+revision);manage();}});
    $('status').after(keep);throw Object.assign(Error(''),{handled:true});
   }
-  if(k==='network'&&bridge){if(await readback(what,path,body))return null;throw Object.assign(Error(''),{handled:true});}
+  /* CONTRACT: write() resolves to a well-formed bridge state on success — the server's own answer, or, after a lost
+     response, the state the history readback CONFIRMED (flagged recovered:true). It never resolves to null; every other
+     outcome throws (handled:true once the status line already says why). Consumers adopt the resolved state exactly as
+     they would a direct answer; no second write is ever issued to repair the screen. */
+  if(k==='network'&&bridge){const recovered=await readback(what,path,body);if(recovered)return recovered;throw Object.assign(Error(''),{handled:true});}
   if(k==='malformed'){status('Not '+what+': '+e.message+' Your edits are kept.',true);throw Object.assign(Error(''),{handled:true});}
   if(k==='forbidden'){status('Not '+what+': you are not allowed to change this project (403). Your edits are kept.',true);throw Object.assign(Error(''),{handled:true});}
   if(k==='signin'){status('Not '+what+': you are signed out. Sign in again; your edits stay on this screen.',true);throw Object.assign(Error(''),{handled:true});}
@@ -176,8 +180,7 @@ async function applyProposal(){
  if(!still.ok){P.state='rejected';P.error=still.reason==='dirty_draft'?'The draft changed since this proposal was made. Discard it and ask again.':still.reason==='revision_changed'?'The project was saved elsewhere since this proposal was made. Load the latest draft, then ask again.':'The project changed. Ask again.';assistPanel();return;}
  P.state='applying';assistPanel();
  const before=structuredClone(doc),after=P.cand.document;
- const d=await write('/v2',{document:after},'applied');
- if(!d){P.state='failed';P.error='Apply was not confirmed; nothing was assumed. Check the status above.';assistPanel();return;}
+ let d;try{d=await write('/v2',{document:after},'applied');}catch(e){P.state='failed';P.error=e&&e.handled?'Apply was not confirmed; nothing was assumed. See the status line above.':(e&&e.message)||'Apply failed.';assistPanel();if(!(e&&e.handled))throw e;return;}
  adoptBridge(d);doc=structuredClone(after);dirty=false;renderEditor();
  P.undo.push(undoEntry({before,after,appliedTokens:{editor:bridge.editor_revision,studio:revision},proposalId:P.env.proposalId}));
  const n=P.undo.length;proposalReset();P.state='applied';P.error='';status('Applied the proposal · draft revision '+revision+' · editor revision '+bridge.editor_revision+'. Not published.');assistPanel();
@@ -187,7 +190,7 @@ async function undoProposal(){
  if(dirty){P.error='Save or load first: undo replaces the saved draft, not unsaved typing.';assistPanel();return;}
  if(bridge.editor_revision!==u.tokens.editor||revision!==u.tokens.studio){P.error='Something was saved after that proposal, so it cannot be undone blindly. Use History or edit by hand.';assistPanel();return;}
  if(!confirm('Undo the last applied proposal? The previous wording is saved as a NEW revision; nothing is deleted from history.'))return;
- const d=await write('/v2',{document:u.before},'undone');if(!d)return;
+ const d=await write('/v2',{document:u.before},'undone');
  adoptBridge(d);doc=structuredClone(u.before);dirty=false;renderEditor();P.undo.pop();status('Undone as a new revision · draft revision '+revision+' · editor revision '+bridge.editor_revision);assistPanel();
 }
 async function start(){
@@ -210,14 +213,16 @@ $('useTemplate').onclick=()=>guard(start);
 $('authLink').href='account.html?next='+encodeURIComponent('website-studio.html?project='+project);
 $('title').oninput=()=>{doc.title=$('title').value;changed();};$('mode').onchange=()=>{doc.mode=$('mode').value;changed();};
 $('save').onclick=()=>guard(async()=>{if(!bridge&&!legacy){refuse('saved');return;}assertDocument(doc);
- if(bridge){const d=await write('/v2',{document:doc},'saved');if(d){adoptBridge(d);dirty=false;status('Saved to your account · draft revision '+revision+' · editor revision '+bridge.editor_revision);}return;}
+ if(bridge){const d=await write('/v2',{document:doc},'saved');adoptBridge(d);dirty=false;if(!d.recovered)status('Saved to your account · draft revision '+revision+' · editor revision '+bridge.editor_revision);return;}
  if(!legacy){refuse('saved');return;}
  const d=await api('/drafts/'+draftID,{method:'PUT',body:{expected_revision:revision,document:doc}});revision=d.revision;dirty=false;status('Saved to your account · revision '+revision);});
 $('load').onclick=()=>guard(async()=>{if(dirty&&!confirm('Replace unsaved edits with the latest saved draft?'))return;const latest=await api('');const d=latest.draft;if(!d)throw Error('No saved draft yet.');doc=d.document;draftID=d.id;revision=d.revision;dirty=false;$('keepMine')?.remove();if(bridge)adoptBridge(await api('/v2').catch(()=>null));manage();$('editor').hidden=false;await media();status('Loaded saved revision '+revision);});
 const show=p=>{dispose();$('previewPanel').hidden=false;dispose=renderWebsite($('previewHost'),p);$('previewPanel').scrollIntoView();};
 $('preview').onclick=()=>guard(async()=>{if(dirty||!revision)throw Error('Save the draft before previewing.');show(await api('/drafts/'+draftID+'/preview',{method:'POST',body:{}}));});
 $('back').onclick=()=>{dispose();$('previewPanel').hidden=true;window.scrollTo(0,0);};$('refreshMedia').onclick=()=>guard(media);
-$('publish').onclick=()=>guard(async()=>{if(!bridge&&!legacy){refuse('published');return;}if(dirty||!revision)throw Error('Save and review the latest draft first.');if(!confirm('Publish this saved version? Media will be visible publicly.'))return;const r=bridge?await write('/v2/publish',{confirm_public:true,org_id:$('workspace').value},'published'):await api('/drafts/'+draftID+'/publish',{method:'POST',body:{expected_revision:revision,confirm_public:true,org_id:$('workspace').value}});if(!r)return;if(bridge)adoptBridge(r);if(r.published!==true)throw Error('Publication not confirmed');const u=new URL(r.url);if(u.origin!=='https://matthew.mccluster.org'||u.pathname!=='/website-studio-view.html')throw Error('Unexpected published destination');const a=node('a','Open published website');a.href=u.href;$('published').replaceChildren(a);status('Published revision '+(r.revision??revision));manage();});
+$('publish').onclick=()=>guard(async()=>{if(!bridge&&!legacy){refuse('published');return;}if(dirty||!revision)throw Error('Save and review the latest draft first.');if(!confirm('Publish this saved version? Media will be visible publicly.'))return;const r=bridge?await write('/v2/publish',{confirm_public:true,org_id:$('workspace').value},'published'):await api('/drafts/'+draftID+'/publish',{method:'POST',body:{expected_revision:revision,confirm_public:true,org_id:$('workspace').value}});if(bridge)adoptBridge(r);
+ if(r.recovered){const a=node('a','Open published website');a.href='https://matthew.mccluster.org/website-studio-view.html?project='+encodeURIComponent(project);$('published').replaceChildren(a);manage();return;}
+ if(r.published!==true)throw Error('Publication not confirmed');const u=new URL(r.url);if(u.origin!=='https://matthew.mccluster.org'||u.pathname!=='/website-studio-view.html')throw Error('Unexpected published destination');const a=node('a','Open published website');a.href=u.href;$('published').replaceChildren(a);status('Published revision '+(r.revision??revision));manage();});
 $('demo').onclick=()=>guard(async()=>{const p=await(await fetch('data/website-studio/demo-v1.json')).json();status('McCluster demonstration. Your own template starts without this footage or wording.');show(p);});
 window.addEventListener('pagehide',()=>dispose());
 window.addEventListener('mcc:auth-changed',()=>{authEpoch++;proposalReset();P.undo=[];dispose();doc=null;assets=[];revision=0;draftID=null;$('tiles').replaceChildren();$('editor').hidden=true;$('previewPanel').hidden=true;$('published').replaceChildren();status('Account changed. Reopening your project.');location.reload();});

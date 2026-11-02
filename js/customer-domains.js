@@ -13,6 +13,8 @@
     const b = await r.json(); if (scope !== generation) throw stale(); if (!r.ok) throw new Error(b.error || 'Please retry shortly'); return b;
   }
   function el(tag, text) { const n = document.createElement(tag); n.textContent = text; return n; }
+  /* status words that do not overstate: a verified TXT record is not a live site; reconciliation is not a failure to retry */
+  function statusWords(s) { return { ownership_pending: 'ownership not yet verified · add the TXT record, then verify again', dns_pending: 'ownership verified · your CNAME does not point at the routing target yet', tls_pending: 'ownership and CNAME verified · certificate not active yet · verify again later', active: 'routing and certificate active', error: 'last check failed · see the message below, fix the record, verify again', reconciliation_required: 'needs a reviewed provider check · do not create another connection' }[s] || String(s || '').replaceAll('_', ' '); }
   async function load() {
     const scope = ++generation; controller.abort(); controller = new AbortController();
     targets = []; targetSelect.replaceChildren(); targetSelect.disabled = true;
@@ -24,7 +26,14 @@
     targetSelect.disabled = !targets.length;
     if (!targets.length) document.getElementById('connect').disabled = true;
     for (const row of b.domains) {
-      const card = el('article',''); card.append(el('h2',row.hostname), el('p','Status: ' + row.status.replaceAll('_',' ') + ' · Certificate: ' + (row.ssl_status || 'not requested')));
+      const card = el('article',''); card.append(el('h2',row.hostname), el('p','Status: ' + statusWords(row.status) + ' · Certificate: ' + (row.ssl_status || 'not requested')));
+      /* the provider snapshot behind a verified connection expires 24 hours after the last check and nothing refreshes it
+         unattended (a documented gate, docs/productization/20261102-domain/HANDOFF.md): say when, and offer the refresh */
+      if (row.last_checked_at && ['active','tls_pending','dns_pending'].includes(row.status)) {
+        const checked = Date.parse(row.last_checked_at), left = isFinite(checked) ? checked + 24*3600*1000 - Date.now() : NaN;
+        const note = el('p', !isFinite(left) ? 'Last check time unreadable; verify again to be sure routing stays current.' : left <= 0 ? 'Provider verification has lapsed (last checked ' + new Date(checked).toLocaleString() + '). Routing may stop until you verify again; nothing refreshes it automatically yet.' : left < 6*3600*1000 ? 'Provider verification lapses in about ' + Math.max(1, Math.round(left/3600000)) + ' hour(s) (last checked ' + new Date(checked).toLocaleString() + '). Verify again before then; nothing refreshes it automatically yet.' : 'Provider verification current until about ' + new Date(checked + 24*3600*1000).toLocaleString() + '; it is not refreshed automatically yet.');
+        note.className = left <= 0 ? 'domain-lapsed' : ''; card.append(note);
+      }
       if (row.target) card.append(el('p','Site: ' + row.target.slug));
       if (row.last_error) card.append(el('p',row.last_error));
       if (row.connection_note) card.append(el('p',row.connection_note));

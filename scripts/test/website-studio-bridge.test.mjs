@@ -167,3 +167,70 @@ test('a McCluster proposal is honest about an unregistered route, and refuses an
   assert.match(s.walk(s.assist()).find(n => n.tagName === 'p' && n.getAttribute('role') === 'status').textContent, /not registered on the plane/);
   const sent = s.calls.find(c => c[1] === '/v1/ai/tile-proposal'); assert.equal(sent[2].target.tileId, 'a'); assert.equal(sent[2].tile.headline, 'h'); assert.ok(!('tiles' in sent[2]), 'only the one tile is sent');
 });
+
+/* lost response, then the history confirms the operation: the consumer adopts the confirmed state, shows no
+   malformed-response error, and issues NO second write; a genuinely unknown outcome adopts nothing */
+for (const [label, path, op, after, button] of [
+  ['unpublish', '/v2/projects/alpha/tiles/unpublish', 'tiles_unpublish', { published_revision: null }, 'Take the published website down'],
+  ['withdraw', '/v2/projects/alpha/tiles/withdraw', 'tiles_withdraw', { published_revision: null, owner_withdrawn: true, removed: true }, 'Withdraw project'],
+  ['switch-front', '/v2/projects/alpha/tiles/switch-front', 'tiles_switch_front', { presentation: 'front' }, 'Switch to the front-page presentation (unpublished)'] ]) {
+  test('recovered success: lost ' + label + ' confirmed by history adopts state, no error, no second write', async () => {
+    let state = v2(9, 4, { published_revision: 'rev-1' }), rows = [], posts = 0;
+    const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'GET /v2/projects/alpha/history': () => ({ status: 200, body: { ok: true, revision: state.body.editor_revision, history: rows } }), ['POST ' + path]: () => { posts++; throw new TypeError('Failed to fetch'); } } });
+    await s.start();
+    const b = s.walk(s.manage()).find(n => n.tagName === 'button' && n.textContent === button); assert.ok(b, button);
+    state = v2(10, 4, { published_revision: 'rev-1', ...after }); rows = [{ revision: 10, operation: op }];
+    b.onclick(); await flush(); await flush();
+    assert.equal(posts, 1, 'exactly one write attempt'); assert.doesNotMatch(s.status(), /not in the expected form|Not taken down|Not withdrawn|Not switched/);
+    assert.match(s.status(), /Confirmed from the history/); 
+    assert.equal(s.calls.filter(c => c[0] === 'POST').length, 1, 'no repair write');
+  });
+  test('unknown outcome: lost ' + label + ' with an unrelated history row adopts nothing and says unknown', async () => {
+    let state = v2(9, 4, { published_revision: 'rev-1' }), rows = [];
+    const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'GET /v2/projects/alpha/history': () => ({ status: 200, body: { ok: true, revision: state.body.editor_revision, history: rows } }), ['POST ' + path]: new TypeError('Failed to fetch') } });
+    await s.start();
+    const b = s.walk(s.manage()).find(n => n.tagName === 'button' && n.textContent === button);
+    state = v2(10, 5, { published_revision: 'rev-1' }); rows = [{ revision: 10, operation: 'tiles_save' }];
+    b.onclick(); await flush(); await flush();
+    assert.match(s.status(), /Unknown whether it was/); assert.equal(s.calls.filter(c => c[0] === 'POST').length, 1);
+  });
+}
+
+test('recovered success: a lost recover confirmed by history clears the withdrawn state without a second write', async () => {
+  let state = v2(12, 4, { owner_withdrawn: true, removed: true, published_revision: null }), rows = [];
+  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'GET /v2/projects/alpha/history': () => ({ status: 200, body: { ok: true, revision: state.body.editor_revision, history: rows } }), 'POST /v2/projects/alpha/tiles/recover': new TypeError('Failed to fetch') } });
+  await s.start();
+  const b = s.walk(s.manage()).find(n => n.tagName === 'button' && /^Recover/.test(n.textContent)); assert.ok(b);
+  state = v2(13, 4, { owner_withdrawn: false, removed: false, published_revision: null }); rows = [{ revision: 13, operation: 'tiles_recover' }];
+  b.onclick(); await flush(); await flush();
+  assert.match(s.status(), /Confirmed from the history|Recovered/); assert.doesNotMatch(s.status(), /not in the expected form/);
+  assert.deepEqual(s.walk(s.manage()).filter(n => n.tagName === 'button').map(n => n.textContent)[0], 'Take the published website down', 'the manage panel reflects the recovered state');
+  assert.equal(s.calls.filter(c => c[0] === 'POST').length, 1);
+});
+
+test('recovered success: conflict-keep whose resend is lost but confirmed by history adopts and does not resend again', async () => {
+  let puts = 0, state = v2(12, 6), rows = [];
+  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'GET /v2/projects/alpha/history': () => ({ status: 200, body: { ok: true, revision: state.body.editor_revision, history: rows } }),
+    'PUT /v2/projects/alpha/tiles': b => { puts++; if (puts === 1) return { status: 409, body: { error: 'editor_revision_conflict' } }; throw new TypeError('Failed to fetch'); } } });
+  await s.start();
+  s.byId.get('title').value = 'Mine'; s.byId.get('title').oninput(); await s.click('save');
+  assert.ok(s.byId.get('keepMine'));
+  const sent = structuredClone(DOC); sent.title = 'Mine';
+  state = v2(13, 7, { draft: { document: sent } }); rows = [{ revision: 13, operation: 'tiles_save' }];
+  await s.click('keepMine');
+  assert.equal(puts, 2, 'the keep-mine resend happened once'); assert.match(s.status(), /Confirmed from the history: it was saved/); assert.doesNotMatch(s.status(), /not in the expected form/);
+});
+
+test('recovered success: a lost proposal Apply confirmed by history records the undo entry and does not report failure', async () => {
+  let state = v2(9, 4), rows = [];
+  const s = studio({ routes: { ...common, 'GET /v1/projects/alpha/tiles': v1(4), 'GET /v2/projects/alpha/tiles': () => state, 'GET /v2/projects/alpha/history': () => ({ status: 200, body: { ok: true, revision: state.body.editor_revision, history: rows } }), 'PUT /v2/projects/alpha/tiles': new TypeError('Failed to fetch') } });
+  await s.start();
+  const src = s.walk(s.assist()).find(n => n.tagName === 'select' && [...n.children].some(o => o.value === 'own')); src.value = 'own'; src.onchange();
+  const inputs = s.walk(s.assist()); inputs.find(n => n.tagName === 'input').value = 'A clearer heading'; inputs.find(n => n.tagName === 'select').value = 'a';
+  s.assist().children.find(n => n.tagName === 'form').onsubmit({ preventDefault() {} }); await flush(); await flush();
+  const expected = structuredClone(DOC); expected.tiles[0].headline = 'A clearer heading';
+  state = v2(10, 5, { draft: { document: expected } }); rows = [{ revision: 10, operation: 'tiles_save' }];
+  s.walk(s.assist()).find(n => n.tagName === 'button' && /^Apply/.test(n.textContent)).onclick(); await flush(); await flush();
+  assert.ok(s.walk(s.assist()).find(n => n.tagName === 'button' && /^Undo/.test(n.textContent)), 'undo entry exists after a recovered apply');
+  assert.doesNotMatch(s.walk(s.assist()).find(n => n.getAttribute('role') === 'status').textContent, /not confirmed|failed/);
+});
