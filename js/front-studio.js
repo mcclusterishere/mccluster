@@ -29,7 +29,12 @@
   ];
   var FEEL = { smooth: [1.2, 0.1, "Smooth"], standard: [0.85, 0.14, "Standard"], quick: [0.55, 0.22, "Quick"] };
   var DEVICES = { phone: [390, 844, "Phone"], desktop: [1280, 800, "Desktop"] };
-  var S = { me: null, draft: null, dirty: false, saving: false, busy: {}, progress: {}, msg: "", bad: false, device: "phone", frame: null, seq: 0, reloadTimer: 0, state: "loading", error: "" };
+  var S = { me: null, draft: null, dirty: false, saving: false, busy: {}, progress: {}, msg: "", bad: false, device: "phone", frame: null, seq: 0, reloadTimer: 0, state: "loading", error: "",
+    /* revision-aware saving (js/editor-revisions.js): v2 is {revision, protected, owner_withdrawn} once the versioned API
+       answered; legacy is true only when that API reports it is not switched on, and then every write first reads the
+       record back and refuses to overwrite a newer save. conflict holds a stale-save decision waiting for the owner. */
+    v2: null, legacy: false, conflict: null, history: null, showHistory: false, pending: null };
+  var V2 = w.MCC_EDITOR_V2, versioned = null;
   var $ = function (id) { return d.getElementById(id); };
   function e(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function clone(v) { return v == null ? v : JSON.parse(JSON.stringify(v)); }
@@ -71,6 +76,28 @@
         return b;
       });
     });
+  }
+  function client() { if (!versioned && V2) versioned = V2.owned(api, projectMode ? "projects" : "fronts", projectMode ? projectSlug : "me"); return versioned; }
+  /* the state the versioned API answered with, adopted as the current record */
+  function adopt(b) {
+    if (!b || typeof b.revision !== "number") return;
+    S.v2 = { revision: b.revision, protected: !!b.protected, owner_withdrawn: !!b.owner_withdrawn };
+    var snap = b.snapshot || {};
+    if (S.me) {
+      if ("draft" in snap) S.me.draft = snap.draft;
+      if ("published" in snap) S.me.published = snap.published;
+      if ("published_at" in snap) S.me.published_at = snap.published_at;
+      if ("removed_at" in snap) S.me.removed = !!snap.removed_at;
+      if ("updated_at" in snap) S.me.updated_at = snap.updated_at;
+    }
+  }
+  /* what the server would refuse, named here before the request (the Worker checks again, with its own prefix rules) */
+  function preflight() {
+    var FC = w.MCC_FRONT_CONFIG; if (!FC || !FC.validateFront || !S.me) return null;
+    var prefix = S.me.media_prefix || "";
+    var r = FC.validateFront(S.draft, { mediaPrefix: prefix, blockedMediaPrefixes: projectMode ? [] : [prefix + "projects/"] });
+    if (!r.ok) return "The settings are larger than this page allows (" + Math.round(r.size / 1024) + " KB of " + Math.round(FC.FRONT_MAX_BYTES / 1024) + " KB).";
+    return r.dropped.length ? "These settings would be refused: " + r.dropped.join(", ") + ". Fix them before saving." : null;
   }
   /* the folder this account's uploads go to: the Worker names it (its auth uid) */
   function folder() { var p = S.me && S.me.media_prefix || ""; var i = p.indexOf("/front-media/"); return i >= 0 ? p.slice(i + "/front-media/".length) : ""; }
@@ -211,8 +238,8 @@
   function paint() {
     var root = $("fsRoot"); if (!root) return;
     if (S.state !== "ready") {
-      var t = { loading: ["Opening your editor…", ""], signin: ["Sign in to build your front page", "Your front page is yours: sign in and it opens here."], handle: ["Choose your handle first", "Your front page lives at your handle (front.html?u=you). Finish your account, then come back."], off: ["Front pages are not switched on yet", S.error || "The editor will open here as soon as they are."], error: ["The editor could not open", S.error] }[S.state] || ["", ""];
-      var act = S.state === "signin" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Finish my account</a>' : S.state === "loading" ? "" : '<button type="button" class="fs-btn" id="fsRetry">Try again</button>';
+      var t = { loading: ["Opening your editor…", ""], signin: ["Sign in to build your front page", "Your front page is yours: sign in and it opens here."], handle: ["Choose your handle first", "Your front page lives at your handle (front.html?u=you). Finish your account, then come back."], off: ["Front pages are not switched on yet", S.error || "The editor will open here as soon as they are."], tiles: ["This project uses the three-tile template", "Its words, media and publication are edited in Website Studio, which keeps this project's revisions."], error: ["The editor could not open", S.error] }[S.state] || ["", ""];
+      var act = S.state === "tiles" ? '<a class="fs-btn" href="website-studio.html?project=' + encodeURIComponent(projectSlug || "") + '">Open Website Studio</a>' : S.state === "signin" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html?next=' + encodeURIComponent(editorReturn) + '">Finish my account</a>' : S.state === "loading" ? "" : '<button type="button" class="fs-btn" id="fsRetry">Try again</button>';
       root.innerHTML = '<section class="fs-gate"><h1>' + e(t[0]) + '</h1><p>' + e(t[1]) + '</p>' + act + '</section>';
       if ($("fsRetry")) $("fsRetry").onclick = function () { S.state = "loading"; paint(); boot(); };
       return;
@@ -222,7 +249,8 @@
       root.innerHTML =
         '<header class="fs-head"><div><p class="fs-k">Your front page</p><h1>' + e(me.name || me.handle) + '</h1><p class="fs-live" id="fsLive"></p></div>' +
         '<div class="fs-actions" id="fsTop"><button type="button" class="fs-btn fs-btn--primary" data-act="publish">Publish</button><button type="button" class="fs-btn" data-act="save">Save draft</button>' +
-        '<a class="fs-btn fs-btn--ghost" id="fsOpen" target="_blank" rel="noopener">See it live ↗</a><button type="button" class="fs-btn fs-btn--ghost" data-act="unpublish" id="fsUnpublish">Take it down</button></div></header>' +
+        '<a class="fs-btn fs-btn--ghost" id="fsOpen" target="_blank" rel="noopener">See it live ↗</a><button type="button" class="fs-btn fs-btn--ghost" data-act="unpublish" id="fsUnpublish">Take it down</button><button type="button" class="fs-btn fs-btn--ghost" data-act="history" id="fsHistory" aria-expanded="false" aria-controls="fsHistoryList">History</button></div></header>' +
+        '<section class="fs-history" id="fsHistoryList" hidden aria-label="Saved revisions"></section>' +
         '<div class="fs-status" id="fsStatus"></div>' +
         '<div class="fs-grid"><section class="fs-stage" aria-label="Your page, live"><div class="fs-bar">' +
           '<div class="fs-seg" role="group" aria-label="Preview size">' + Object.keys(DEVICES).map(function (k) { return '<button type="button" data-device="' + k + '" aria-pressed="' + (S.device === k) + '">' + DEVICES[k][2] + '</button>'; }).join("") + '</div>' +
@@ -235,16 +263,23 @@
       reloadPreview(true);
       fit();
     }
-    $("fsLive").textContent = live;
+    $("fsLive").textContent = live + (S.v2 ? " · revision " + S.v2.revision : S.legacy ? " · versioned saving not switched on here" : "");
+    $("fsHistory").hidden = !S.v2;
+    $("fsHistory").setAttribute("aria-expanded", String(!!S.showHistory));
+    var hl = $("fsHistoryList"); hl.hidden = !S.showHistory;
+    if (S.showHistory) hl.innerHTML = S.history === null ? '<p class="fs-progress" role="status">Reading your saved revisions…</p>' : !S.history.length ? '<p class="fs-none">No saved revisions yet.</p>' :
+      '<h2 class="fs-sub">Saved revisions</h2><ul class="fs-revisions">' + S.history.map(function (h) { var cur = S.v2 && h.revision === S.v2.revision; return '<li><b>Revision ' + e(h.revision) + '</b> <small>' + e(h.operation || "") + (h.restored_from != null ? " from " + e(h.restored_from) : "") + (h.at ? " · " + e(new Date(h.at).toLocaleString()) : "") + '</small>' + (cur ? ' <span class="fs-ok">current</span>' : (h.snapshot && h.snapshot.draft ? ' <button type="button" class="fs-btn fs-btn--ghost" data-act="restore" data-rev="' + e(h.revision) + '">Restore to draft</button>' : '')) + '</li>'; }).join("") + '</ul><p class="fs-help">Restoring makes a new draft revision from the one you choose. It never publishes by itself.</p>';
     $("fsOpen").href = publicUrl(me.handle);
     $("fsOpen").hidden = !me.published || !!me.publish_blocker;
     $("fsUnpublish").hidden = !me.published;
     var problems = bad();
-    $("fsStatus").innerHTML = (S.dirty ? '<p class="fs-dirty">Unsaved changes: shown in the preview only.</p>' : "") +
+    var cf = S.conflict;
+    $("fsStatus").innerHTML = (cf ? '<div class="fs-conflict" role="alertdialog" aria-labelledby="fsConflictTitle"><p class="fs-bad" id="fsConflictTitle">Not ' + e(cf.what) + ': this page was saved somewhere else since you opened it' + (cf.latest && typeof cf.latest.revision === "number" ? ' (now revision ' + e(cf.latest.revision) + (cf.latest.snapshot && cf.latest.snapshot.updated_at ? ', ' + e(new Date(cf.latest.snapshot.updated_at).toLocaleString()) : '') + ')' : '') + '. Your edits are kept on this screen.</p><div class="fs-actions"><button type="button" class="fs-btn" data-act="conflict-load">Replace mine with the latest saved version</button><button type="button" class="fs-btn fs-btn--ghost" data-act="conflict-keep">Keep mine and save over it</button><button type="button" class="fs-btn fs-btn--ghost" data-act="conflict-dismiss">Decide later</button></div></div>' : "") +
+      (S.dirty ? '<p class="fs-dirty">Unsaved changes: shown in the preview only.</p>' : "") +
       (me.publish_blocker === "private_profile" || me.publish_blocker === "profile_required" ? '<p class="fs-bad">' + (me.publish_blocker === "private_profile" ? 'Your profile is private.' : 'Finish your profile first.') + ' You can save a draft. <a href="' + (me.publish_blocker === "private_profile" ? 'mccluster-creator-studio.html' : 'mnet.html?view=profile') + '" target="_blank" rel="noopener">Open profile settings</a>, then <button type="button" data-act="refresh-access">check publishing access</button>.</p>' : "") +
       (problems.length ? '<p class="fs-bad" role="alert">Fix ' + e(problems.join(", ")) + ' before saving.</p>' : "") +
       (S.msg ? '<p class="' + (S.bad ? "fs-bad" : "fs-ok") + '" role="status">' + e(S.msg) + '</p>' : "");
-    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || (a === "publish" && !!me.publish_blocker) || ((a === "save" || a === "publish") && problems.length > 0); });
+    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || (a === "publish" && !!me.publish_blocker) || ((a === "save" || a === "publish") && (problems.length > 0 || !!S.conflict)) || ((a === "save" || a === "publish" || a === "unpublish") && S.v2 && S.v2.owner_withdrawn); });
     Array.prototype.forEach.call(root.querySelectorAll("[data-device]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-device") === S.device)); });
   }
   /* the shell first (the first paint builds it), then the settings into it */
@@ -309,17 +344,100 @@
       S.dirty = true; S.msg = ""; S.bad = false; paintForm(); livePreview(); return;
     }
     if (a === "save" || a === "publish") return save(a === "publish");
-    if (a === "unpublish") {
+    if (a === "unpublish") return unpublish();
+    if (a === "history") { S.showHistory = !S.showHistory; if (S.showHistory) loadHistory(); else paint(); return; }
+    if (a === "restore") return restore(Number(btn.getAttribute("data-rev")));
+    if (a === "conflict-load" || a === "conflict-keep" || a === "conflict-dismiss") return resolveConflict(a);
+  }
+  /* ---------- the writes: every one carries the revision it was based on ---------- */
+  function failed(err, what, attempt) {
+    var c = V2 ? V2.classify(err) : { kind: "other" };
+    if (c.kind === "forbidden" && (c.reason === "private_profile" || c.reason === "removed")) S.me.publish_blocker = c.reason === "removed" ? "removed" : "private_profile";
+    if (c.kind === "conflict" && S.v2) return conflict(what, attempt);
+    if (c.kind === "network" && S.v2 && attempt) return readback(what, attempt);
+    S.msg = V2 ? V2.explain(c, what) : ("Not " + what + ": " + err.message); S.bad = true;
+    return Promise.resolve();
+  }
+  /* a stale revision: nothing was written; the owner decides with the latest saved version in view */
+  function conflict(what, attempt) {
+    S.msg = ""; S.conflict = { what: what, attempt: attempt, latest: null };
+    return client().read().then(function (now) { S.conflict.latest = now; }).catch(function () {});
+  }
+  /* a response that never arrived: read the record back before anything is retried */
+  function readback(what, attempt) {
+    S.msg = "Checking what was saved…"; S.bad = false; paint();
+    return client().reconcile(attempt).then(function (r) {
+      if (r.outcome === "committed") { adopt(r.current); S.draft = clone(S.me.draft) || S.draft; S.dirty = false; S.msg = "Confirmed: it was " + what + " before the connection dropped."; S.bad = false; paintForm(); reloadPreview(true); sweep(); }
+      else if (r.outcome === "not_committed") { S.msg = "Not " + what + ": the connection dropped and nothing reached the server. Your edits are kept; try again."; S.bad = true; }
+      else { S.msg = "Could not confirm whether it was " + what + ": this page changed meanwhile. Your edits are kept here; review the latest saved version before saving again."; S.bad = true; conflict(what, attempt); }
+    }).catch(function () { S.msg = "Could not confirm whether it was " + what + ". Your edits are kept here; check the connection and reopen the editor."; S.bad = true; });
+  }
+  function resolveConflict(a) {
+    var cf = S.conflict; if (!cf) return;
+    if (a === "conflict-dismiss") { S.conflict = null; paint(); return; }
+    if (a === "conflict-load") {
+      /* take theirs: the latest saved draft replaces the local edits, deliberately */
       S.saving = true; paint();
-      api(publishedPath, { method: "DELETE" }).then(function () { S.me.published = null; S.me.published_at = null; S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
-        .catch(function (err) { S.msg = "Not taken down: " + err.message; S.bad = true; }).then(function () { S.saving = false; paint(); });
+      return client().read().then(function (now) { adopt(now); S.draft = clone(S.me.draft || S.me.published) || {}; S.dirty = false; S.conflict = null; S.msg = "Loaded the latest saved version. Your previous edits were set aside."; S.bad = false; paintForm(); reloadPreview(true); })
+        .catch(function (err) { return failed(err, "loaded"); }).then(function () { S.saving = false; paint(); });
+    }
+    if (a === "conflict-keep") {
+      /* keep mine: the request is sent again on top of the latest revision, a deliberate overwrite of that one save */
+      var latest = cf.latest && typeof cf.latest.revision === "number" ? cf.latest.revision : null;
+      if (latest === null) { S.msg = "The latest saved version could not be read; try again."; S.bad = true; paint(); return; }
+      S.v2.revision = latest; S.conflict = null;
+      if (cf.attempt.action === "unpublish") return unpublish();
+      return save(cf.attempt.action === "publish");
     }
   }
+  function unpublish() {
+    S.saving = true; S.msg = "Taking it down…"; S.bad = false; paint();
+    var attempt = S.v2 ? { action: "unpublish", expected: S.v2.revision } : null;
+    var p = S.v2 ? client().unpublish(S.v2.revision).then(function (b) { adopt(b); })
+      : legacyGuard().then(function () { return api(publishedPath, { method: "DELETE" }); }).then(function (b) { S.me.published = null; S.me.published_at = null; if (b && b.updated_at) S.me.updated_at = b.updated_at; });
+    return p.then(function () { S.msg = "Taken down. Your draft is kept."; S.bad = false; sweep(); })
+      .catch(function (err) { return failed(err, "taken down", attempt); }).then(function () { S.saving = false; paint(); });
+  }
+  /* legacy writes (versioned API not switched on): read first; a newer save than the one opened here is never overwritten */
+  function legacyGuard() {
+    return api(ownPath).then(function (now) {
+      if (S.me && S.me.updated_at && now && now.updated_at && now.updated_at !== S.me.updated_at) {
+        throw Object.assign(new Error("changed elsewhere"), { status: 409, body: { code: "conflict" } });
+      }
+    });
+  }
+  function loadHistory() {
+    if (!S.v2) { S.history = []; paint(); return; }
+    S.history = null; paint();
+    client().history().then(function (h) { S.history = Array.isArray(h && h.history) ? h.history : []; }).catch(function (err) { S.history = []; S.msg = V2.explain(V2.classify(err), "listed"); S.bad = true; }).then(paint);
+  }
+  /* restore: the chosen revision's draft becomes a NEW draft revision; nothing is published by it */
+  function restore(rev) {
+    if (!S.v2 || !isFinite(rev) || S.saving) return;
+    if (S.dirty && !w.confirm("Restoring replaces the unsaved edits on this screen. Continue?")) return;
+    S.saving = true; S.msg = "Restoring revision " + rev + " as a new draft…"; S.bad = false; paint();
+    var attempt = { action: "restore", expected: S.v2.revision, config: null };
+    return client().restore(S.v2.revision, rev).then(function (b) { adopt(b); S.draft = clone(S.me.draft) || {}; S.dirty = false; S.msg = "Restored revision " + rev + " as draft revision " + S.v2.revision + ". Not published: review it, then publish if you want it live."; S.bad = false; paintForm(); reloadPreview(true); loadHistory(); })
+      .catch(function (err) { return failed(err, "restored", attempt); }).then(function () { S.saving = false; paint(); });
+  }
   function save(publish) {
-    if (bad().length || busy()) return;
-    S.saving = true; S.msg = publish ? "Publishing…" : "Saving…"; S.bad = false; paint();
-    api(ownPath, { method: "POST", body: { config: S.draft, publish: publish } }).then(function (b) {
-      S.draft = clone(b.draft) || {}; S.me.draft = b.draft; S.dirty = false;
+    if (bad().length || busy() || S.saving) return;
+    var what = publish ? "published" : "saved";
+    var why = preflight(); if (why) { S.msg = why; S.bad = true; paint(); return; }
+    S.saving = true; S.msg = publish ? "Publishing…" : "Saving…"; S.bad = false; S.conflict = null; paint();
+    var sent = clone(S.draft);
+    if (S.v2) {
+      var attempt = { action: publish ? "publish" : "save", expected: S.v2.revision, config: sent };
+      return client().save(S.v2.revision, sent, publish).then(function (b) {
+        adopt(b); S.draft = clone(S.me.draft) || {}; S.dirty = false;
+        S.msg = publish ? "Published as revision " + S.v2.revision + ". Everyone sees it at " + publicUrl(S.me.handle) + "." : "Draft saved as revision " + S.v2.revision + "."; S.bad = false;
+        if (publish) S.me.publish_blocker = null;
+        paintForm(); reloadPreview(true); sweep(); if (S.showHistory) loadHistory();
+      }).catch(function (err) { return failed(err, what, attempt); }).then(function () { S.saving = false; paint(); });
+    }
+    /* legacy path, only while the versioned API is not switched on: never a blind write */
+    return legacyGuard().then(function () { return api(ownPath, { method: "POST", body: { config: sent, publish: publish } }); }).then(function (b) {
+      S.draft = clone(b.draft) || {}; S.me.draft = b.draft; S.dirty = false; if (b.updated_at) S.me.updated_at = b.updated_at;
       S.me.publish_blocker = b.publish_blocker || null; S.me.profile_visibility = b.profile_visibility;
       if (publish) { S.me.published = b.published; S.me.published_at = b.published_at; }
       var dropped = (b.dropped || []).length ? " Not kept: " + b.dropped.join(", ") + "." : "";
@@ -328,8 +446,7 @@
     }).catch(function (err) {
       var code = err.body && err.body.detail && err.body.detail.code;
       if (code === "private_profile" || code === "profile_required" || code === "removed") S.me.publish_blocker = code;
-      S.msg = (publish ? "Not published: " : "Not saved: ") + (err.status === 403 && err.body && err.body.detail && err.body.detail.code === "removed" ? "McCluster took this page down." : err.message);
-      S.bad = true;
+      return failed(err, what, null);
     }).then(function () { S.saving = false; paint(); });
   }
   function upload(key, file, input) {
@@ -383,10 +500,21 @@
 
   function boot() {
     api(ownPath).then(function (me) {
+      if (me && me.presentation === "tiles") { S.state = "tiles"; S.error = ""; paint(); return; }
       S.me = me; S.draft = clone(me.draft || me.published) || {}; S.state = "ready";
+      S.v2 = null; S.legacy = false;
+      /* the versioned record beside it: its revision is what every write will carry */
+      var ready = client() ? client().read().then(function (v) { adopt(v); S.draft = clone(S.me.draft || S.me.published) || {}; }).catch(function (err) {
+        var c = V2.classify(err);
+        if (c.kind === "unconfigured") S.legacy = true;
+        else { S.msg = V2.explain(c, "opened"); S.bad = true; }
+      }) : Promise.resolve(S.legacy = true);
+      return ready.then(function () {
       if(offersTemplate&&!me.registry_key&&!S.draft.layout&&Object.keys(S.draft).every(function(k){return k==='schema';})){S.draft.layout='offers';S.draft.offer_page=w.MCC_SITE_OFFERS.defaults(me.name);S.dirty=true;S.msg='Choose your words, or copy the editable Equity Uprise example below.';}
-      if (me.removed) { S.msg = "McCluster took your published page down. You can keep editing your draft."; S.bad = true; }
+      if (me.removed && !(S.v2 && S.v2.owner_withdrawn)) { S.msg = "McCluster took your published page down. You can keep editing your draft."; S.bad = true; }
+      if (S.v2 && S.v2.owner_withdrawn) { S.msg = "You withdrew this project. It is not public; recover it from Your projects to publish again."; S.bad = true; }
       paintForm();
+      });
     }).catch(function (err) {
       /* 503: the table is not there yet; 404: the Worker with these routes is not deployed yet. Either way, not on yet. */
       S.state = err.status === 401 ? "signin" : err.status === 409 ? "handle" : (err.status === 503 || err.status === 404) ? "off" : "error";
