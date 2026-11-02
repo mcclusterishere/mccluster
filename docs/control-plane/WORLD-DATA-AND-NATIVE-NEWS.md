@@ -30,10 +30,75 @@ adapter, canonical storage and the actual native reader are reviewed together.
 The filter covers the existing World news cron and `/v1/world/news`; legacy
 Edge Functions or separate discovery APIs are not claimed to be migrated.
 
-The indicator adapter is NOT yet imported into a public or owner HTTP route or
-rendered on the globe. It must be wired behind the canonical owner gate in the
-existing intel/router.js, not a new auth stack/Worker. The black globe and #470
+The indicator adapter is wired behind the canonical owner gate in the existing
+intel/router.js (`GET /v1/intel/world-indicators`) and, since 2026-11-02, feeds
+the owner-only Markets card below; it is not a public route and no new auth
+stack/Worker exists. The black globe and #470
 workspace files are unchanged. No catalog is represented as already live.
+
+## World markets on the owner's Halo globe (2026-11-02)
+
+Owner, 2026-11-02: "live financial markets on the globe, geographically placed,
+so when you click country, you can look at its GDP ... the stock market, all the
+stocks and businesses that are registered there ... and news tied to that."
+Decisions the same day: **owner globe only first** (not the public World) and
+**start free, upgrade later** (a paid global feed must be config + secret).
+
+What is connected (code in this repository; nothing deployed by the change):
+
+| Piece | Where | State |
+|---|---|---|
+| Routes, all behind the house-owner gate in `workers/mccluster/src/intel/router.js` | `GET /v1/intel/markets/exchanges`, `/country/:iso2`, `/country/:iso2/listings?mic=&q=&offset=&limit=&type=&quotes=`, `/company/:symbol?mic=` | Implemented, fixture-tested |
+| Adapter + provider interface | `workers/mccluster/src/intel/world-markets.js` | Implemented |
+| Exchange reference set (49 venues: MIC, city, lat/lon, time zone, regular sessions, provider codes) | `data/markets/exchanges.json` | Checked in |
+| Halo layer + card | `js/halo/markets.js`, `css/halo-markets.css`, the "Markets" group in `js/halo/halo.js`; `js/action-globe.js` announces a country tap as a `hu:country` window event | Implemented, e2e at 390/820/1280 |
+
+What each number is, and is not:
+
+- **GDP** (key-free, real today): World Bank WDI latest reported year (existing
+  adapter: nominal, per capita, real growth) plus the IMF DataMapper WEO
+  current-year figure (`NGDPD`, `NGDPDPC`, `NGDP_RPCH`; the API returns every
+  economy, cached 12 h per isolate). The current year is an IMF estimate or
+  projection. Always `is_live:false` with period, source and `retrieved_at`.
+  The IMF row is joined by the ISO3 code World Bank returns; if WDI is down the
+  IMF block says `iso3_unresolved` rather than guessing.
+- **Exchanges** (real today): placed at their main venue's city. Open/closed is
+  the regular schedule in the venue's time zone; holidays, auctions, half days
+  and seasonal changes are not modeled. An exchange pin is where the exchange
+  is, not where its companies operate (HQ, exchange, assets and revenue remain
+  different relations).
+- **Listings** (needs the owner's key): Finnhub free tier `/stock/symbol` per
+  exchange code, common stock by default, searchable and paged server-side,
+  cached in the Cache API for 24 h under an internal key with no secret. Until
+  the secret exists every listings answer is `state:"needs_key"` with no rows.
+- **Quotes**: Finnhub free tier quotes US listings only (first 8 rows of a page
+  and the selected company; per-isolate budget of 50 provider calls/minute,
+  60 s quote cache). Every non-US row is `price:null,
+  price_status:"needs_paid_feed"`; a 403 from the provider is reported the same
+  way, a 429 as `rate_limited`. Never a guessed or carried-over price.
+- **Market news**: stored GDELT headline metadata from the existing World news
+  ingest (`media_news_articles`, last 72 h, the country's FIPS code, finance
+  words in the headline; headlines only, unverified). With a key, Finnhub
+  global market headlines and the selected company's last 7 days of news.
+
+What still needs the owner:
+
+1. `wrangler secret put FINNHUB_API_KEY` on Worker `mccluster` (free key from
+   https://finnhub.io/register). Until then listings say `needs_key`.
+2. Deploy Worker `mccluster` (this change deploys nothing).
+3. Paid global feed later: set `MARKETS_PROVIDER = "eodhd"` in `[vars]` and
+   `wrangler secret put EODHD_API_KEY`. The EODHD adapter is implemented to the
+   published API and fixture-tested only; confirm the `eodhd` codes in
+   `data/markets/exchanges.json` against EODHD `/api/exchanges-list` first, and
+   check the plan's redistribution terms. Twelve Data or another vendor is one
+   more adapter object of the same shape in `world-markets.js`.
+4. Venues with no reviewed provider code (Cairo, Lagos, Nairobi, Dubai, Karachi,
+   Manila) show a pin and GDP but `not_covered` listings until a code is added.
+
+Run: `cd workers/mccluster && node --import ./test/support/offline-network.mjs
+--test test/world-markets.test.mjs`, `node --test
+scripts/test/halo-markets.test.mjs`, and `scripts/e2e/halo-markets.e2e.mjs`
+(Playwright + local Cesium; all answers are fixtures).
 
 ## Reader product rule
 
@@ -98,7 +163,7 @@ Official specification and terms:
 | Cities | GHSL UCDB R2024A / GHS-WUP R2025A, UN WUP 2025 | Urban centres vs administrative cities vs metros |
 | US small areas | Census PEP / ACS | Official population estimates vs survey attributes; keep margins of error |
 | Macro and local economy | WDI, BEA, FRED/ALFRED | Nominal vs real vs PPP; period and geography must agree |
-| Markets and companies | Alpaca Basic, SEC EDGAR | IEX is partial market coverage; filings are not trade prices |
+| Markets and companies | Finnhub (connected, owner-only, needs key), EODHD (adapter, paid), Alpaca Basic, SEC EDGAR | IEX is partial market coverage; filings are not trade prices |
 | Energy | EIA Open Data | Hourly grid conditions vs monthly/annual series |
 | Buildings, roads, places | Overture / OSM | Feature-level license and geometry provenance |
 | Transit | Agency GTFS / GTFS Realtime | Static schedule vs observed vehicle vs predicted arrival |

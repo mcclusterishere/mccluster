@@ -21,7 +21,9 @@ import { evidenceProjection, sourceHealthProjection, TRUTH_KINDS } from './proje
 
 import { createIndicatorClient, IndicatorError } from './world-indicators.js';
 import { buildNewsContext, newsContextQuery } from './news-context.js';
+import { MarketsError, companyQuery, countryCode, createMarketsClient, listingsQuery } from './world-markets.js';
 const indicatorClient = createIndicatorClient();
+const marketsClient = createMarketsClient({ indicatorClient });
 
 const SERVICE = 'mccluster-intel';
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
@@ -181,6 +183,39 @@ export async function handleIntelRequest(request, env, options = {}) {
         if (!(error instanceof IndicatorError)) throw error;
         const status = error.code.startsWith('invalid_') && ['invalid_economy', 'invalid_indicators'].includes(error.code) ? 400 : error.code === 'too_many_indicator_requests' ? 429 : error.code === 'provider_timeout' ? 504 : 502;
         return fail(request, env, 'World indicators unavailable', status, { code: error.code });
+      }
+    }
+    /* World markets for the owner's Halo globe (./world-markets.js): GDP, exchanges, listings, market news */
+    if (path === '/v1/intel/markets' || path.startsWith('/v1/intel/markets/')) {
+      if (request.method !== 'GET') {
+        const response = fail(request, env, 'Method not allowed', 405, { code: 'method_not_allowed' });
+        response.headers.set('allow', 'GET');
+        return response;
+      }
+      const markets = options.marketsClient || marketsClient;
+      try {
+        let data = null, m;
+        if (path === '/v1/intel/markets/exchanges') {
+          if ([...url.searchParams.keys()].length) throw new MarketsError('invalid_parameter', 400, 'Unsupported parameter');
+          data = markets.exchanges(env);
+        } else if ((m = path.match(/^\/v1\/intel\/markets\/country\/([^/]+)$/))) {
+          if ([...url.searchParams.keys()].length) throw new MarketsError('invalid_parameter', 400, 'Unsupported parameter');
+          data = await markets.country(countryCode(m[1]), env);
+        } else if ((m = path.match(/^\/v1\/intel\/markets\/country\/([^/]+)\/listings$/))) {
+          data = await markets.listings(listingsQuery(m[1], url.searchParams), env);
+        } else if ((m = path.match(/^\/v1\/intel\/markets\/company\/([^/]+)$/))) {
+          let symbol = '';
+          try { symbol = decodeURIComponent(m[1]); } catch { throw new MarketsError('invalid_symbol', 400, 'Unsupported symbol'); }
+          data = await markets.company(companyQuery(symbol, url.searchParams), env);
+        } else return fail(request, env, 'Not found', 404, { code: 'not_found' });
+        const response = reply(request, env, data);
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
+      } catch (error) {
+        if (!(error instanceof MarketsError)) throw error;
+        const response = fail(request, env, error.message, error.status, { code: error.code });
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
       }
     }
     const org = await resolveHouseOrg(env);
