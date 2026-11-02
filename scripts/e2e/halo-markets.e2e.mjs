@@ -43,7 +43,8 @@ const companyFix={ok:true,state:'ok',symbol:'AAPL',profile:{name:'Apple Inc',ind
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
 async function setup(viewport){
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true,serviceWorkers:'block'});
-  const errors=[],asked=[];
+  const errors=[],asked=[],slow={country:0,listingsAll:0};
+  const later=ms=>new Promise(r=>setTimeout(r,ms));
   await ctx.addInitScript(({who})=>{localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     const exp=Math.floor(Date.now()/1000)+3600;localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:who,email:who+'@fixture.invalid'})).replace(/=+$/,'')+'.y',refresh_token:'fixture',expires_at:exp,user:{id:who}}));},{who:OWNER});
   await ctx.route('**/*',async r=>{
@@ -56,10 +57,10 @@ async function setup(viewport){
       if(p==='/v1/world/access')return json(r,{release:{version:'globe-admin-preview/v1',admin_preview:true},level:'owner',levels:[],unlocked_layers:[],locked_layers:[]});
       if(p==='/v1/mnet/bootstrap')return json(r,{identity:{mccluster_id:'matthew',m_uid:'m-1111'},profile:{display_name:'Matthew McCluster'}});
       if(p==='/v1/intel/markets/exchanges')return json(r,{ok:true,schema:'world-markets/v1',generated_at:NOW,provider:provider('ready'),exchanges:EX});
-      if(p==='/v1/intel/markets/country/US')return json(r,country('US','United States','ready'));
+      if(p==='/v1/intel/markets/country/US'){if(slow.country)await later(slow.country);return json(r,country('US','United States','ready'));}
       if(p==='/v1/intel/markets/country/GB')return json(r,country('GB','United Kingdom','ready'));
       if(p==='/v1/intel/markets/country/JP')return json(r,country('JP','Japan','needs_key'));
-      let m=p.match(/^\/v1\/intel\/markets\/country\/([A-Z]{2})\/listings$/);if(m)return json(r,listings(m[1],(u.searchParams.get('q')||'').toLowerCase()));
+      let m=p.match(/^\/v1\/intel\/markets\/country\/([A-Z]{2})\/listings$/);if(m&&slow.listingsAll&&!u.searchParams.get('q')){await later(slow.listingsAll);await json(r,listings(m[1],''));asked.push({path:'LISTINGS-ALL-DELIVERED'});return;}if(m)return json(r,listings(m[1],(u.searchParams.get('q')||'').toLowerCase()));
       if(p==='/v1/intel/markets/company/AAPL')return json(r,companyFix);
       return json(r,{ok:true,items:[],threads:[],events:[],total:0});
     }
@@ -69,13 +70,13 @@ async function setup(viewport){
     return r.abort();
   });
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
-  return {ctx,page,errors,asked};
+  return {ctx,page,errors,asked,slow};
 }
 const overflow=p=>p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
 /* every visible control inside the card: at least 44px in both directions */
 const smallTargets=p=>p.evaluate(()=>[...document.querySelectorAll('#haloMarkets button,#haloMarkets a,#haloMarkets input')].filter(e=>e.offsetParent).map(e=>{const b=e.getBoundingClientRect();return {t:(e.textContent||e.getAttribute('aria-label')||e.tagName).trim().slice(0,30),w:Math.round(b.width),h:Math.round(b.height)}}).filter(x=>x.h<44||x.w<44));
 try{
-  for(const vp of [{width:390,height:844},{width:820,height:1180},{width:1280,height:800}]){
+  for(const vp of process.env.MARKETS_E2E_ONLY==='races'?[]:[{width:390,height:844},{width:820,height:1180},{width:1280,height:800}]){
     const scope='halo-markets-'+vp.width;const {ctx,page,errors,asked}=await setup(vp);
     await page.goto(BASE+'/action-globe.html?explore=1&halo=1',{waitUntil:'domcontentloaded'});
     await page.waitForSelector('[data-item="markets"] input',{state:'attached',timeout:60000}).catch(()=>{});
@@ -132,6 +133,38 @@ try{
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('hu:country',{detail:{code:'US',name:'United States'}})));
     await page.waitForTimeout(300);
     check(scope,'with the layer off a country tap opens nothing',await page.evaluate(()=>document.getElementById('haloMarkets').hidden),null);
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+    await ctx.close();
+  }
+  /* RACES (Codex review of #689): a pin refresh during a card load must not strand the card on "Loading…", and an older
+     unfiltered listings answer must not replace a newer search's answer */
+  {
+    const scope='halo-markets-races';const {ctx,page,errors,asked,slow}=await setup({width:390,height:844});
+    await page.goto(BASE+'/action-globe.html?explore=1&halo=1',{waitUntil:'domcontentloaded'});
+    await page.waitForSelector('[data-item="markets"] input',{state:'attached',timeout:60000}).catch(()=>{});
+    await page.evaluate(()=>document.querySelector('[data-item="markets"] input').click());
+    await page.waitForFunction(()=>HaloConsole.state().layers.markets.state==='on',null,{timeout:20000}).catch(()=>{});
+    slow.country=1500;
+    await page.evaluate(()=>HaloConsole.pick({id:{marketPick:true,mic:'XNYS',country:'US'}}));
+    await page.waitForTimeout(300);
+    const pinsBefore=asked.filter(a=>a.path==='/v1/intel/markets/exchanges').length;
+    /* the owner's Refresh data re-reads the pins, as the 60 s refresh does, while the country answer is still in flight */
+    await page.evaluate(()=>[...document.querySelectorAll('.hx-btn')].find(b=>b.textContent==='Refresh data').click());
+    /* swiftshader keeps the page's thread busy: wait for the answer, not for a fixed time */
+    await page.waitForFunction(()=>!/Loading/.test(document.querySelector('#haloMarkets [data-sub]').textContent)&&document.querySelectorAll('#haloMarkets [data-symbol]').length>0,null,{timeout:20000}).catch(()=>{});
+    const after=await page.evaluate(()=>({sub:document.querySelector('#haloMarkets [data-sub]').textContent,stats:document.querySelectorAll('#haloMarkets .hm__stat').length,rows:document.querySelectorAll('#haloMarkets [data-symbol]').length}));
+    check(scope,'a pin refresh during a card load still paints the card and its listings',asked.filter(a=>a.path==='/v1/intel/markets/exchanges').length>pinsBefore&&!/Loading/.test(after.sub)&&after.stats>0&&after.rows>0,after);
+    slow.country=0;slow.listingsAll=1500;
+    const n=asked.length;
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('hu:country',{detail:{code:'US',name:'United States'}})));
+    await page.waitForFunction(()=>document.querySelector('#haloMarkets h2').textContent==='United States'&&document.querySelectorAll('#haloMarkets .hm__stat').length>0,null,{timeout:10000}).catch(()=>{});
+    const t0=Date.now();while(Date.now()-t0<5000&&!asked.slice(n).some(a=>/\/listings\?/.test(a.path)&&!/q=/.test(a.path)))await page.waitForTimeout(50);
+    await page.fill('#haloMarkets [data-q]','apple');
+    /* the search answer lands first; then wait until the slow unfiltered answer has been delivered and given time to paint */
+    const t1=Date.now();while(Date.now()-t1<15000&&!asked.slice(n).some(a=>a.path==='LISTINGS-ALL-DELIVERED'))await page.waitForTimeout(100);
+    await page.waitForTimeout(1500);
+    const rows=await page.evaluate(()=>({rows:[...document.querySelectorAll('#haloMarkets [data-symbol]')].map(b=>b.dataset.symbol),note:document.querySelector('#haloMarkets [data-list-note]').textContent}));
+    check(scope,'an older unfiltered answer arriving after a search does not replace the search result',asked.slice(n).some(a=>/q=apple/.test(a.path))&&rows.rows.join()==='AAPL'&&/matching "apple"/.test(rows.note),rows);
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await ctx.close();
   }

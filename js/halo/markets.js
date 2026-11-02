@@ -22,7 +22,10 @@
     const V = G.viewer(), C = window.Cesium, esc = (s) => G.esc(String(s == null ? '' : s));
     const changed = (opts && opts.changed) || function () {};
     let on = false, state = 'off', reason = '', exchanges = [], fetched = 0, timer = 0, pins = null, labels = null, alive = true;
-    let card = null, ui = null, listing = null, company = null, listQ = '', listMic = null, seq = 0, searchTimer = 0;
+    let card = null, ui = null, listing = null, company = null, listQ = '', listMic = null, searchTimer = 0;
+    /* three independent generations: the pin refresh never invalidates a card, a card load or close invalidates its own
+       listings and company reads, and only the newest listings request for the current search and exchange filter paints */
+    let pinSeq = 0, cardSeq = 0, listSeq = 0;
 
     async function ask(path) {
       const t = G.token();
@@ -61,10 +64,10 @@
       V.scene.requestRender();
     }
     async function load() {
-      const my = ++seq;
+      const my = ++pinSeq;
       try {
         const d = await ask('/v1/intel/markets/exchanges');
-        if (!alive || !on || my !== seq) return;
+        if (!alive || !on || my !== pinSeq) return;
         exchanges = Array.isArray(d && d.exchanges) ? d.exchanges.filter((x) => fin(x.lat) && fin(x.lon)) : [];
         fetched = Date.parse(d.generated_at) || Date.now(); state = 'on'; reason = '';
         drawPins();
@@ -136,13 +139,13 @@
     }
     function close() {
       if (!ui) return;
-      ui.root.hidden = true; card = null; listing = null; company = null; seq++;
+      ui.root.hidden = true; card = null; listing = null; company = null; cardSeq++; listSeq++;
       document.documentElement.removeAttribute('data-halo-markets');
       changed();
     }
     async function openCountry(code, name, mic) {
       build();
-      const my = ++seq;
+      const my = ++cardSeq; listSeq++;
       card = { country: { iso2: code, name: name || code } }; listing = null; company = null; listQ = ''; listMic = mic || null; ui.q.value = '';
       ui.root.hidden = false; document.documentElement.setAttribute('data-halo-markets', 'open');
       ui.title.textContent = name || code; ui.sub.textContent = 'Loading…';
@@ -150,11 +153,11 @@
       ui.body.scrollTop = 0; changed();
       try {
         const d = await ask('/v1/intel/markets/country/' + encodeURIComponent(code));
-        if (my !== seq) return;
+        if (my !== cardSeq) return;
         card = d; paintCard();
         if (d.listings && d.listings.state === 'ready') loadListings(false); else paintListingState(d.listings && d.listings.state);
       } catch (e) {
-        if (my !== seq) return;
+        if (my !== cardSeq) return;
         ui.sub.textContent = e.status === 403 || e.status === 401 ? 'Owner only' : 'Could not reach the Worker (' + e.message + ')';
       }
     }
@@ -204,16 +207,19 @@
     }
     async function loadListings(more) {
       if (!card || !card.listings || card.listings.state !== 'ready') return;
-      const my = seq, offset = more && listing ? listing.offset + listing.listings.length : 0;
+      const cardGen = cardSeq, my = ++listSeq, key = listQ + '\u0000' + (listMic || '');
+      /* a page is appended only to the list it continues: same search, same exchange filter */
+      const cont = !!(more && listing && listing.key === key);
+      const offset = cont ? listing.offset + listing.listings.length : 0;
       const qs = new URLSearchParams({ limit: '25', offset: String(offset) });
       if (listQ) qs.set('q', listQ); if (listMic) qs.set('mic', listMic);
       ui.q.disabled = false; ui.note.textContent = 'Loading listings…';
       try {
         const d = await ask('/v1/intel/markets/country/' + card.country.iso2 + '/listings?' + qs);
-        if (my !== seq) return;
-        if (more && listing) { d.listings = listing.listings.concat(d.listings); d.offset = listing.offset; }
-        listing = d; paintListings();
-      } catch (e) { if (my === seq) ui.note.textContent = 'Listings unavailable (' + e.message + ').'; }
+        if (cardGen !== cardSeq || my !== listSeq) return;
+        if (cont) { d.listings = listing.listings.concat(d.listings); d.offset = listing.offset; }
+        d.key = key; listing = d; paintListings();
+      } catch (e) { if (cardGen === cardSeq && my === listSeq) ui.note.textContent = 'Listings unavailable (' + e.message + ').'; }
     }
     function paintListings() {
       const d = listing;
@@ -228,13 +234,13 @@
       ui.more.hidden = !d.has_more;
     }
     async function openCompany(symbol, mic) {
-      const my = seq;
+      const my = cardSeq;
       company = { symbol, mic, loading: true }; paintCompany(); if (listing) paintListings();
       try {
         const d = await ask('/v1/intel/markets/company/' + encodeURIComponent(symbol) + '?mic=' + encodeURIComponent(mic));
-        if (my !== seq || !company || company.symbol !== symbol) return;
+        if (my !== cardSeq || !company || company.symbol !== symbol) return;
         company = Object.assign({ symbol, mic }, d); paintCompany(); paintNews();
-      } catch (e) { if (my === seq && company && company.symbol === symbol) { company = { symbol, mic, error: e.message }; paintCompany(); } }
+      } catch (e) { if (my === cardSeq && company && company.symbol === symbol) { company = { symbol, mic, error: e.message }; paintCompany(); } }
     }
     function paintCompany() {
       if (!company) { ui.company.innerHTML = ''; return; }
@@ -274,7 +280,7 @@
       alive = false; clearInterval(timer); clearTimeout(searchTimer); window.removeEventListener('hu:country', onCountry); clearPins();
       if (ui) ui.root.remove(); ui = null; document.documentElement.removeAttribute('data-halo-markets');
     }
-    return { set, on: () => on, status, pick, openCountry, close, destroy };
+    return { set, on: () => on, refresh: () => (on ? load() : Promise.resolve()), status, pick, openCountry, close, destroy };
   }
 
   window.HaloMarkets = Object.freeze({ create });

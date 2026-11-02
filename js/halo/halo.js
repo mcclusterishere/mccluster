@@ -1113,7 +1113,7 @@
         setView(next); $('#hxTab-' + next).focus();
       };
     });
-    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
+    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);if(markets&&markets.on())await markets.refresh();}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
     ui.operator.onclick = () => { const chip = document.getElementById('mccAuthChip'); if (chip) chip.click(); else location.href = 'account.html'; };
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }

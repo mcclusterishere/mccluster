@@ -142,6 +142,8 @@ const FINNHUB = Object.freeze({
   }
 });
 
+/* EODHD venue names (the Exchange field of /exchange-symbol-list) as ISO 10383 MICs */
+export const EODHD_VENUE_MIC = Object.freeze({ NYSE: 'XNYS', NASDAQ: 'XNAS', 'NYSE ARCA': 'ARCX', 'NYSE MKT': 'XASE', AMEX: 'XASE', BATS: 'BATS', CBOE: 'BATS' });
 const EODHD = Object.freeze({
   id: 'eodhd', label: 'EODHD', secret: 'EODHD_API_KEY', tier: 'paid', site: 'https://eodhd.com/', terms: 'https://eodhd.com/financial-apis/terms-conditions',
   coverage_note: 'Paid global feed: listings and delayed quotes for every covered exchange. Exchange codes must be confirmed before switching.',
@@ -156,7 +158,9 @@ const EODHD = Object.freeze({
     return rows.flatMap(r => {
       const base = typeof r?.Code === 'string' ? r.Code.trim() : '', symbol = base + '.' + code;
       if (!base || !SYMBOL_RE.test(symbol)) return [];
-      return [[symbol, base, cleanText(r.Name, 140), cleanText(r.Type, 40), '', cleanText(r.Currency, 8)]];
+      // EODHD's US list is one exchange code ("US") with each row's venue in Exchange; carry it as the MIC so the two
+      // placed US exchanges (provider_mic_filter XNYS / XNAS) keep their listings. Unknown venues keep no MIC.
+      return [[symbol, base, cleanText(r.Name, 140), cleanText(r.Type, 40), EODHD_VENUE_MIC[String(r.Exchange || '').trim().toUpperCase()] || '', cleanText(r.Currency, 8)]];
     });
   },
   quote(symbol, key) { return this.request('/real-time/' + encodeURIComponent(symbol), {}, key); },

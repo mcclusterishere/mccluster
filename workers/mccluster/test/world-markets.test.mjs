@@ -239,3 +239,29 @@ test('routes: only GET, bounded parameters, 404 for unknown markets paths', asyn
   const ex = await (await get('/v1/intel/markets/exchanges', env, options)).json();
   assert.equal(ex.exchanges.length, EXCHANGES.length); assert.equal(ex.provider.state, 'needs_key'); assert.match(ex.notes.hours, /holidays/);
 });
+
+test('under the paid EODHD feed both placed US exchanges keep their listings (venue carried as the MIC)', async () => {
+  const PAID = 'fixture-eodhd-secret', seen = [];
+  const fetchImpl = async (url, init) => {
+    const u = new URL(url); seen.push(u);
+    assert.equal(u.hostname, 'eodhd.com');
+    if (u.pathname === '/api/exchange-symbol-list/US') return json([
+      { Code: 'AAPL', Name: 'Apple Inc', Country: 'USA', Exchange: 'NASDAQ', Currency: 'USD', Type: 'Common Stock' },
+      { Code: 'IBM', Name: 'International Business Machines', Country: 'USA', Exchange: 'NYSE', Currency: 'USD', Type: 'Common Stock' },
+      { Code: 'KO', Name: 'Coca-Cola Co', Country: 'USA', Exchange: 'NYSE', Currency: 'USD', Type: 'Common Stock' },
+      { Code: 'SPY', Name: 'SPDR S&P 500', Country: 'USA', Exchange: 'NYSE ARCA', Currency: 'USD', Type: 'ETF' },
+      { Code: 'XYZOTC', Name: 'Pink sheet co', Country: 'USA', Exchange: 'PINK', Currency: 'USD', Type: 'Common Stock' }]);
+    if (u.pathname.startsWith('/api/real-time/')) return json({ code: u.pathname.split('/').pop(), timestamp: 1793622000, close: 101.25, change: -0.5, change_p: -0.49, previousClose: 101.75 });
+    throw new Error('unexpected ' + url);
+  };
+  const c = createMarketsClient({ fetchImpl, now: () => NOW, clock: () => NOW.getTime(), cacheImpl: null });
+  const e = { ...env, MARKETS_PROVIDER: 'eodhd', EODHD_API_KEY: PAID };
+  const d = await (await get('/v1/intel/markets/country/US/listings', e, { ...owner, marketsClient: c })).json();
+  assert.equal(d.state, 'ok'); assert.equal(d.provider.id, 'eodhd');
+  assert.deepEqual(d.exchanges, [{ mic: 'XNYS', state: 'ok', total: 2 }, { mic: 'XNAS', state: 'ok', total: 1 }]);
+  assert.deepEqual(d.listings.map(x => [x.symbol, x.mic, x.price_status, x.price]), [['AAPL.US', 'XNAS', 'quote', 101.25], ['IBM.US', 'XNYS', 'quote', 101.25], ['KO.US', 'XNYS', 'quote', 101.25]]);
+  const nas = await (await get('/v1/intel/markets/country/US/listings?mic=XNAS&quotes=0', e, { ...owner, marketsClient: c })).json();
+  assert.deepEqual(nas.listings.map(x => x.symbol), ['AAPL.US']);
+  assert.equal(seen.filter(u => u.pathname.startsWith('/api/exchange-symbol-list/')).length, 1);
+  assert.doesNotMatch(JSON.stringify([d, nas]), new RegExp(PAID));
+});

@@ -14,6 +14,12 @@ test('the markets client reads only the canonical Worker, with the owner session
   assert.match(js, /Price needs paid feed/);
   assert.match(js, /never live/);
   assert.doesNotMatch(js, /localStorage|sessionStorage|indexedDB/, 'nothing is stored');
+  /* Codex review of #689: the pin refresh, the card and each listings request keep their own generation */
+  assert.match(js, /const my = \+\+pinSeq;/);
+  assert.match(js, /const my = \+\+cardSeq; listSeq\+\+;/);
+  assert.match(js, /if \(cardGen !== cardSeq \|\| my !== listSeq\) return;/);
+  assert.match(js, /const cont = !!\(more && listing && listing\.key === key\);/);
+  assert.doesNotMatch(js, /\bseq\b/, 'no shared generation counter is left');
 });
 
 test('Halo wires the Markets group, its picks and its lifecycle; the globe announces country taps', () => {
