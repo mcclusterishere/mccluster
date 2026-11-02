@@ -1,3 +1,5 @@
+> Current publication supplement: see [the frozen source manifest and continuation](../20261102-current/SNAPSHOT.md). Historical local-only/no-push wording below describes earlier checkpoints and is superseded only for authorized non-force review-branch publication. No main merge, production migration, deployment, credential change or spending is authorized. Claude's implementation is preserved from `edd8cdd8be4d07fa674071a9b151045bf7cfc94c`; see [its handoff](../20261102-claude/HANDOFF.md). This snapshot publishes reviewed source corrections; complete combined acceptance remains outstanding.
+
 # Whole-site productization master handoff — updated 2026-11-02
 
 **Release decision: gated. This packet is an audit and tested implementation scaffold, not a finished product or deployment approval.** No production SQL, external Claude message, public push, PR, merge, deployment, credential change, purchase or feature activation occurred.
@@ -7,7 +9,7 @@ The existing McCluster plane is the implementation target: Control and its curre
 
 ## Current assignment and implementation updates
 
-Claude frontend implementation of the whole-platform assignment, with its coverage table, verification, session gates, Codex requests and migration plan: [20261102-claude/HANDOFF.md](../20261102-claude/HANDOFF.md). Local only; nothing pushed, merged, deployed or applied.
+Latest v6 increment: [module consumer ledger](../20261102-social-consumer/CONSUMER-LEDGER.md) and atomic social consumer SQL/Worker integration. Customer social has an explicit compatibility/module mode, transactional advanced mutation checks, and a combined managed-token authorization/read. Default-off; no policy seed. World delivery, other advanced modules and external provider execution retain separately listed gates.
 
 Latest local increment: [default-off annual-registration/trial SQL](../20261102-domain-trial/HANDOFF.md) and [Worker contracts/limits](../20261102-trial/WORKER-CONTRACT.md). Verified registration receipts, scoped capability metadata/require/cancel and conservative social enforcement are prepared. Policy is unseeded, current registrar cannot grant, and consumer integration remains gated. See the v5 bundle checkpoint for the exact source identity.
 
@@ -66,3 +68,5 @@ No live browser login, real Storage round-trip, paid-provider sandbox, OVH model
 ## Next concrete work
 
 First reconcile #681 with exact current main in an isolated integration branch while preserving the 355-migration hygiene and recent payment/privacy protections. Then implement conflict-aware saves and explicit restore semantics over the existing content/project engines, test two-session races and account changes, and refresh this packet. Only after those contracts and required real-service checks pass should Claude receive an implementation-ready frontend brief. Production approval must name the exact reviewed SQL hashes, target, impact and coordinated application SHA; this packet does not request or imply that approval.
+
+Documentation amendment: [Cloudflare registrar capability, evidence and commercial boundaries](../20261102-domain/REGISTRAR-EVIDENCE-AMENDMENT.md). Tested runtime/SQL remains unchanged at b1b994d5; no new activation or financial authority.

@@ -56,6 +56,17 @@ async function pages(env, token) {
   }
   throw error('Too many Facebook Pages to select safely. Contact support.', 409);
 }
+function entitlementReason(consumer) {
+  if (consumer.reason === 'safety_disabled') return 'safety_disabled';
+  if (consumer.mode === 'legacy_paid') return consumer.eligible ? 'legacy_paid' : 'legacy_paid_required';
+  const reason = consumer.access?.capabilities?.advanced?.reason;
+  // An active trial can omit this app/capability; never label that denial eligible.
+  if (!consumer.eligible && ['active', 'included_trial'].includes(reason)) return 'module_not_included';
+  if (!consumer.eligible && reason === 'mapped_paid_subscription') return 'module_capability_unavailable';
+  const known = ['expired', 'cancelled', 'module_disabled', 'trial_disabled', 'registration_blocked', 'not_granted', 'pending', 'unentitled', 'included_trial', 'mapped_paid_subscription'];
+  return known.includes(reason) ? reason : 'module_authorization_unavailable';
+}
+
 function publicJob(job) {
   return { id: job.id, state: job.state, created_at: job.created_at, external_media_id: job.external_media_id,
     caption: job.payload?.caption || '', recovery: job.state === 'failed' ? 'Check your connection, then retry. Existing Instagram containers are reused when possible.' : null };
@@ -75,7 +86,21 @@ export async function handleCustomerSocialRequest(request, env, user) {
   const org = requireOrgId(body.org_id || url.searchParams.get('org_id'));
   const members = await db(env, `org_members?org_id=eq.${org}&profile_id=eq.${encodeURIComponent(user.id)}&select=role&limit=1`);
   requireOrgRole(members?.[0]);
-  const socialAction = (action, data = {}) => db(env, 'rpc/customer_social_service', { p_action: action, p_org: org, p_user: user.id, p_data: data });
+  const useModuleContract = env.CREATOR_SOCIAL_MODULE_ACCESS_ENABLED === 'true';
+  let consumer;
+  const consumerAccess = async () => {
+    if (!consumer) {
+      consumer = await db(env, 'rpc/customer_social_access_v2', { p_org: org, p_user: user.id });
+      if (consumer?.org_id !== org || !['legacy_paid', 'module'].includes(consumer.mode) || typeof consumer.eligible !== 'boolean') throw error('Social authorization is unavailable.', 503);
+    }
+    return consumer;
+  };
+  const socialAction = async (action, data = {}) => {
+    if (!useModuleContract) return db(env, 'rpc/customer_social_service', { p_action: action, p_org: org, p_user: user.id, p_data: data });
+    // SQL re-evaluates entitlement under the mutation lock. Preflight is UX only.
+    const current = await consumerAccess();
+    return db(env, 'rpc/customer_social_service_v2', { p_action: action, p_org: org, p_user: user.id, p_data: data, p_mode: current.mode });
+  };
   const blockers = configuration(env);
   const suffix = url.pathname.replace('/v1/customer-social/', '');
   const activeOwnedPlan = async () => {
@@ -86,7 +111,7 @@ export async function handleCustomerSocialRequest(request, env, user) {
     let connection = null;
     try { connection = await socialAction('status'); } catch (e) { if (e.status !== 503) throw e; blockers.push('Customer social database migration is not available.'); }
     let moduleAccess = null;
-    if (env.CREATOR_DOMAIN_TRIAL_ENABLED === 'true') {
+    if (!useModuleContract && env.CREATOR_DOMAIN_TRIAL_ENABLED === 'true') {
       if (!env.CREATOR_SOCIAL_PLATFORM_APP_KEY) blockers.push('Social module mapping is not configured.');
       else {
         try { moduleAccess = await platformModuleAccess(env, user.id, org, env.CREATOR_SOCIAL_PLATFORM_APP_KEY); }
@@ -94,20 +119,25 @@ export async function handleCustomerSocialRequest(request, env, user) {
         if (moduleAccess && !moduleAccess.capabilities.advanced.allowed) blockers.push('Advanced social access is not entitled.');
       }
     }
-    const eligible = await activeOwnedPlan();
-    const reason = !eligible ? 'active_owned_workspace_required' : blockers.length ? 'provider_unavailable' : connection?.status !== 'connected' ? 'owned_connection_required' : null;
-    return { org_id: org, module_access: moduleAccess, legacy_paid_gate_required: true, provider: 'instagram', configured: !blockers.length, blockers, connection, supported: ['instagram_reels'],
-      capability: { eligible, can_publish: reason === null, reason, authority: 'owned_active_creator_workspace', formats: ['instagram_reels'] } };
+    const consumerState = useModuleContract ? await consumerAccess() : null;
+    if (consumerState) moduleAccess = consumerState.access;
+    const eligible = consumerState ? consumerState.eligible : await activeOwnedPlan();
+    const entitlement_reason = consumerState ? entitlementReason(consumerState) : eligible ? 'legacy_paid' : 'active_owned_workspace_required';
+    const reason = !eligible ? entitlement_reason : blockers.length ? 'provider_unavailable' : connection?.status !== 'connected' ? 'owned_connection_required' : null;
+    return { org_id: org, module_access: moduleAccess, module_consumer: consumerState, legacy_paid_gate_required: !consumerState || consumerState.mode === 'legacy_paid', world_delivery_requires_paid_plan: true, provider: 'instagram', configured: !blockers.length, blockers, connection, supported: ['instagram_reels'],
+      capability: { eligible, can_publish: reason === null, reason, entitlement_reason, authority: consumerState ? 'atomic_customer_social_consumer_v2' : 'owned_active_creator_workspace', formats: ['instagram_reels'] } };
   }
   // Disconnect stays available when the feature is disabled.
   if (suffix === 'disconnect' && request.method === 'POST') return socialAction('disconnect');
   const cancelling = /^jobs\/[a-f0-9-]{36}\/cancel$/i.test(suffix);
   if (request.method === 'POST' && !cancelling) {
-    if (env.CREATOR_DOMAIN_TRIAL_ENABLED === 'true') {
+    if (!useModuleContract && env.CREATOR_DOMAIN_TRIAL_ENABLED === 'true') {
       if (!env.CREATOR_SOCIAL_PLATFORM_APP_KEY) throw error('Social module mapping is not configured.', 503);
       await requirePlatformModule(env, user.id, org, env.CREATOR_SOCIAL_PLATFORM_APP_KEY, 'advanced');
     }
-    if (!await activeOwnedPlan()) throw error('An active site plan is required for Instagram publishing.', 402);
+    if (useModuleContract) {
+      if (!(await consumerAccess()).eligible) throw error('Social publishing is not currently entitled.', 402);
+    } else if (!await activeOwnedPlan()) throw error('An active site plan is required for Instagram publishing.', 402);
   }
   if (blockers.length && !cancelling && suffix !== 'jobs') throw error(blockers.join(' '), 503);
   if (suffix === 'action-targets' && request.method === 'GET') {
@@ -115,6 +145,7 @@ export async function handleCustomerSocialRequest(request, env, user) {
   }
   const delivery = suffix.match(/^deliveries\/([a-f0-9-]{36})\/submit$/i);
   if (delivery && request.method === 'POST') {
+    if (useModuleContract && !await activeOwnedPlan()) throw error('World delivery still requires an active site plan.', 402);
     const record = await worldDelivery(env, user.id, 'get', { id:delivery[1] });
     if (record.org !== org) throw error('Delivery not found.',403);
     await socialAction('ready');

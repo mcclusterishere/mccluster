@@ -967,6 +967,27 @@
         "workers/mccluster/src/social/meta.js"
       ],
       "pending": "world_social_delivery.sql"
+    },
+    "customer_social_access_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/customer.js"
+      ],
+      "pending": "customer_social_trial_consumer_v2.sql"
+    },
+    "customer_social_service_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/customer.js"
+      ],
+      "pending": "customer_social_trial_consumer_v2.sql"
+    },
+    "customer_social_token_v2": {
+      "kind": "function",
+      "callers": [
+        "workers/mccluster/src/social/meta.js"
+      ],
+      "pending": "customer_social_trial_consumer_v2.sql"
     }
   },
   "missing_everywhere": {

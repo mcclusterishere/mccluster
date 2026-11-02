@@ -1,0 +1,13 @@
+{
+  "supabase/tests/editor-versioned/api-roles.sql": "bf376fae0e32c82620ca391a8d61fa9b5cbed8ae57c8c609c1f4d7fc72d35459",
+  "supabase/tests/editor-versioned/account-fixture.sql": "fb19abfd8df16efebf874e5fd40d58810a3f7f34ce3a814576adc8b4de0030f7",
+  "supabase/tests/editor-versioned/domain-trial-catalog.sql": "0ad4393d1088a0ce622d81896a30d010781707e9b68112ba5355ca9c494e845d",
+  "supabase/tests/editor-versioned/managed-projects.sql": "ffb4fa7247eb29b638e8439f5f8dad19b63837bf3da273621ab0d6e925440de1",
+  "supabase/pending/creator_domain_orders_v1.sql": "cd82c370a0707ee445f1e0360f964d93a832c510684236c929314715a0918ccc",
+  "supabase/migrations/20261009204152_creator_billing_subscriptions_v1.sql": "fb4d7a67beb0f32e2bb061b1238f02e156fa3e7cd2be3b3b21fd3aee678d042a",
+  "supabase/pending/creator_domain_trial_v1.sql": "d8c6736232ad3e9d8441a2bff316d556b5bc19a4786b3606586c07f129756426",
+  "supabase/tests/editor-versioned/storage.sql": "3e07b2f7827a7c6ecf26580a0d3bad3c074dbf07ffabfd2a047ccf51992d2812",
+  "supabase/tests/editor-versioned/social-consumer-fixture.sql": "afb9b1f805538ebaf230fdc06bebb811e52b1d24e0e908965e69bc132f6cd23d",
+  "supabase/pending/customer_social_selfservice.sql": "9161be18d56813832504648a1ef91b5a476052c00f4672bcd164f37fbeab802c",
+  "supabase/pending/customer_social_trial_consumer_v2.sql": "6cb140e9c521b0f690bfe06972ca34f7ffd5e72ab552fcfa7a37c6163f1f3229"
+}

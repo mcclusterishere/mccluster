@@ -120,3 +120,72 @@ test('eligible owner can discover setup while unready connection stays nonpublis
  mock(()=>response(null));const result=await handler(request('status'),env,user);
  assert.equal(result.capability.eligible,true);assert.equal(result.capability.can_publish,false);assert.equal(result.capability.reason,'owned_connection_required');
 });
+
+test('module consumer uses authoritative mode and SQL v2 without demanding unrelated payment',async()=>{
+ const calls=[];mock((url,init)=>{
+  if(url.pathname.endsWith('customer_social_access_v2'))return response({org_id:org,mode:'module',eligible:true,app_key:'social',access:{capabilities:{advanced:{allowed:true}}}});
+  if(url.pathname.endsWith('customer_social_service_v2')){calls.push(JSON.parse(init.body));return response({});}
+  throw Error('unexpected '+url);
+ });
+ const result=await handler(request('connect',{}),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user);
+ assert.ok(result.authorization_url);assert.equal(calls.length,1);assert.equal(calls[0].p_mode,'module');assert.equal(calls[0].p_user,user.id);
+});
+test('policy-disabled consumer explicitly uses legacy paid mode; denied and foreign projections fail closed',async()=>{
+ let projection={org_id:org,mode:'legacy_paid',eligible:true,access:null};let mode;
+ mock((url,init)=>{if(url.pathname.endsWith('customer_social_access_v2'))return response(projection);if(url.pathname.endsWith('customer_social_service_v2')){mode=JSON.parse(init.body).p_mode;return response({});}throw Error('unexpected');});
+ await handler(request('connect',{}),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user);assert.equal(mode,'legacy_paid');
+ projection={...projection,eligible:false};await assert.rejects(handler(request('connect',{}),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user),{status:402});
+ projection={...projection,org_id:other,eligible:true};await assert.rejects(handler(request('connect',{}),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user),{status:503});
+});
+test('SQL authorization is rechecked after preflight and failure cannot produce OAuth URL',async()=>{
+ mock(url=>url.pathname.endsWith('customer_social_access_v2')?response({org_id:org,mode:'module',eligible:true}):response({code:'42501'},403));
+ await assert.rejects(handler(request('connect',{}),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user),{status:403});
+});
+test('cancelled module consumer can disconnect without paid entitlement',async()=>{
+ let action;mock((url,init)=>{if(url.pathname.endsWith('customer_social_access_v2'))return response({org_id:org,mode:'module',eligible:false});action=JSON.parse(init.body).p_action;return response({disconnected:true});});
+ const result=await handler(request('disconnect',{}),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user);assert.equal(action,'disconnect');assert.equal(result.disconnected,true);
+});
+test('managed module credential cannot be released with new Worker feature off',async()=>{
+ const {tokenFor}=await import('../src/social/meta.js');let vault=0;
+ globalThis.fetch=async(input)=>{const url=new URL(input);if(url.pathname.endsWith('/org_channels'))return response([{secret_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',account_id:'ig1'}]);if(url.pathname.endsWith('customer_social_credential_access'))return response({managed:true,allowed:true,mode:'module'});if(url.pathname.endsWith('vault_secret')){vault++;return response('never');}throw Error('unexpected');};
+ await assert.rejects(tokenFor({...env,SUPABASE_URL:'https://fixture.invalid',SUPABASE_SERVICE_ROLE_KEY:'fixture'},{org_id:org,platform:'instagram',external_account_id:'ig1'}),{status:402});assert.equal(vault,0);
+});
+
+test('managed token uses atomic authorization/read RPC without separate Vault read',async()=>{
+ const {tokenFor}=await import('../src/social/meta.js');let atomic=0;
+ globalThis.fetch=async(input,init)=>{const url=new URL(input);if(url.pathname.endsWith('/org_channels'))return response([{secret_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',account_id:'ig1'}]);if(url.pathname.endsWith('customer_social_token_v2')){atomic++;assert.equal(JSON.parse(init.body).p_org,org);return response({managed:true,mode:'module',token:'synthetic-token'});}throw Error('unexpected separate credential read');};
+ assert.equal(await tokenFor({...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},{org_id:org,platform:'instagram',external_account_id:'ig1'}),'synthetic-token');assert.equal(atomic,1);
+});
+
+test('status exposes exact authoritative denial reasons without collapsing trial expiry into paid requirement',async()=>{
+ const cases=[
+  [{mode:'module',access:{capabilities:{advanced:{reason:'expired'}}}},'expired'],
+  [{mode:'module',access:{capabilities:{advanced:{reason:'cancelled'}}}},'cancelled'],
+  [{mode:'module',reason:'safety_disabled'},'safety_disabled'],
+  [{mode:'legacy_paid',reason:'safety_disabled'},'safety_disabled'],
+  [{mode:'legacy_paid',reason:'legacy_paid'},'legacy_paid_required'],
+  ...['module_disabled','trial_disabled','registration_blocked','not_granted','pending','unentitled'].map(reason=>[{mode:'module',access:{capabilities:{advanced:{reason}}}},reason]),
+  [{mode:'module',access:{capabilities:{advanced:{reason:'active'}}}},'module_not_included'],
+  [{mode:'module',access:{capabilities:{advanced:{reason:'mapped_paid_subscription'}}}},'module_capability_unavailable'],
+  [{mode:'module'},'module_authorization_unavailable']
+ ];
+ for(const [state,want] of cases){
+  mock(url=>url.pathname.endsWith('customer_social_access_v2')?response({org_id:org,eligible:false,...state}):response({status:'connected'}));
+  const result=await handler(request('status'),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user);
+  assert.equal(result.capability.reason,want);assert.equal(result.capability.entitlement_reason,want);assert.equal(result.capability.can_publish,false);
+ }
+});
+test('eligible trial retains its entitlement reason when connection setup is incomplete',async()=>{
+ mock(url=>url.pathname.endsWith('customer_social_access_v2')?response({org_id:org,mode:'module',eligible:true,access:{capabilities:{advanced:{reason:'included_trial'}}}}):response(null));
+ const result=await handler(request('status'),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user);
+ assert.equal(result.capability.reason,'owned_connection_required');assert.equal(result.capability.entitlement_reason,'included_trial');
+});
+test('another tenant status is denied before reading its entitlement or reason',async()=>{
+ let reads=0;mock(()=>{reads++;return response({org_id:other,mode:'module',eligible:false,reason:'cancelled'});});
+ await assert.rejects(handler(new Request('https://api.mccluster.org/v1/customer-social/status?org_id='+other),{...env,CREATOR_SOCIAL_MODULE_ACCESS_ENABLED:'true'},user),{status:403});assert.equal(reads,0);
+});
+
+test('feature-off unpaid status retains the legacy reason without module lookup',async()=>{
+ globalThis.fetch=async(input)=>{const name=new URL(input).pathname.split('/').pop();if(name==='org_members')return response([{role:'owner'}]);if(name==='creator_billing_subscriptions')return response([]);if(name==='customer_social_service')return response(null);throw Error('unexpected module lookup');};
+ const result=await handler(request('status'),env,user);assert.equal(result.capability.reason,'active_owned_workspace_required');assert.equal(result.capability.entitlement_reason,'active_owned_workspace_required');
+});
