@@ -612,7 +612,7 @@
     /* the owner's globe is Hitman's Halo: lit while Halo is on screen */
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("halo")) return "halo";
     if (!/control\.html$/.test(location.pathname)) return null;
-    return /^#analytics/i.test(location.hash) ? "analytics" : "admin-home";
+    return /^#(analytics|insights)/i.test(location.hash) ? "analytics" : "admin-home";
   }
   function adminBar() {
     return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +

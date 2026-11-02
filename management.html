@@ -1,178 +1,20 @@
 <!doctype html>
 <html lang="en" data-theme-lock="dark">
-<head><script src="js/shell-boot.js?v=__STAMP__"></script>
-  <script src="js/control-compat.js?v=__STAMP__" data-control-target="#create:channels"></script>
+<head>
+  <script src="js/control-compat.js?v=__STAMP__" data-control-target="#create:publish:channels"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Socials Room · McCluster</title>
+  <title>Socials · McCluster Control</title>
   <meta name="robots" content="noindex,nofollow">
+  <!-- A compatibility URL, kept so bookmarks land. The room it used to be is
+       a view of the one Control Room now: control.html#create:publish:channels. -->
+  <link rel="canonical" href="https://matthew.mccluster.org/control.html">
+  <meta http-equiv="refresh" content="0; url=control.html#create:publish:channels">
+  <script>location.replace("control.html#create:publish:channels");</script>
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
-  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/ops-polish.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
-  <script src="js/theme.js?v=__STAMP__"></script>
-  <style>
-    /* ==========================================================
-       MOBILE FIRST, and the breakpoints only ADD columns. Composing a
-       post from a phone is the normal case for this room, not the
-       degraded one.
-
-           base     phone      one column
-           46rem    tablet     the two side panels sit together
-           72rem    desktop    composer left, panels right
-
-       Every class is prefixed sr-. css/style.css is loaded here and
-       already owns .stat, .stats, .gate, .card and others for the public
-       site; a page that reuses those names inherits marketing padding and
-       fixed-overlay positioning it never asked for.
-       ========================================================== */
-    .sr { width: 100%; max-width: 88rem; margin: 0 auto; color: var(--cs-text);
-      padding: 1rem 1rem 7rem; }
-    @media (min-width: 46rem) { .sr { padding: 1.6rem 1.6rem 6rem; } }
-
-    .sr-top { margin-bottom: 1.1rem; }
-    .sr-k { font: 700 .68rem/1 var(--cs-ui); letter-spacing: .2em; text-transform: uppercase;
-      color: var(--cs-ruby); margin: 0; }
-    .sr h1 { font: 800 clamp(1.6rem,6vw,2.2rem)/1.05 var(--cs-ui); letter-spacing: -.03em; margin: .3rem 0 0; }
-    .sr-lede { font: 400 .85rem/1.55 var(--body); color: var(--cs-dim); margin: .5rem 0 0; max-width: 42rem; }
-
-    .sr-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0,1fr); align-items: start; }
-    @media (min-width: 72rem) { .sr-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
-    .sr-side { display: grid; gap: 1rem; grid-template-columns: minmax(0,1fr); }
-    @media (min-width: 46rem) { .sr-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (min-width: 72rem) { .sr-side { grid-template-columns: minmax(0,1fr); } }
-
-    .sr-panel { min-width: 0; border-radius: var(--cs-r-lg); background: var(--cs-1);
-      box-shadow: inset 0 0 0 1px var(--cs-edge); padding: 1rem 1.05rem 1.15rem; }
-    .sr-h { font: 700 .95rem/1.2 var(--cs-ui); margin: 0 0 .2rem; letter-spacing: -.01em; }
-    .sr-why { font: 400 .78rem/1.45 var(--body); color: var(--cs-faint); margin: .15rem 0 .9rem; }
-
-    /* The composer. 16px minimum on the control itself, because anything
-       smaller makes iOS zoom the whole page on focus. */
-    .sr-body { width: 100%; min-width: 0; box-sizing: border-box; min-height: 8.5rem;
-      resize: vertical; border: 0; border-radius: 12px; padding: .85rem .9rem;
-      background: var(--cs-2); color: var(--cs-text);
-      font: 500 max(16px, .95rem)/1.5 var(--body); box-shadow: inset 0 0 0 1px var(--cs-edge); }
-    .sr-body:focus { outline: none; box-shadow: inset 0 0 0 1px var(--cs-ruby); }
-    .sr-count { display: block; text-align: right; margin: .4rem 0 .9rem;
-      font: 600 .72rem var(--cs-ui); color: var(--cs-faint); font-variant-numeric: tabular-nums; }
-    .sr-over { color: #ff8e8e; }
-
-    .sr-dests { display: grid; gap: .45rem; grid-template-columns: minmax(0,1fr); margin-bottom: .9rem; }
-    @media (min-width: 30rem) { .sr-dests { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    .sr-dest { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: .1rem .5rem;
-      text-align: left; min-height: 52px; padding: .55rem .7rem; border: 0; cursor: pointer;
-      border-radius: 11px; background: var(--cs-2); color: var(--cs-text);
-      box-shadow: inset 0 0 0 1px var(--cs-edge); }
-    .sr-dest.sr-on { background: rgba(229,56,59,.14); box-shadow: inset 0 0 0 1px var(--cs-ruby); }
-    /* A destination that cannot publish is not greyed out and left to be
-       guessed at — it carries the server's own reason on its second line. */
-    .sr-dest--off { cursor: not-allowed; opacity: .62; }
-    .sr-dest__tick { grid-row: 1 / span 2; align-self: center; color: var(--cs-ruby); font-weight: 900; }
-    .sr-dest__l { font: 800 .84rem var(--cs-ui); }
-    .sr-dest__s { font: 500 .72rem/1.35 var(--cs-ui); color: var(--cs-faint); min-width: 0;
-      overflow-wrap: anywhere; }
-    .sr-house { font-style: normal; font-size: .62rem; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--cs-ruby); margin-left: .3rem; }
-
-    .sr-send { width: 100%; min-height: 48px; border: 0; border-radius: 12px; cursor: pointer;
-      background: var(--cs-ruby); color: #fff; font: 800 .95rem var(--cs-ui); }
-    .sr-send:disabled { background: var(--cs-3); color: var(--cs-faint); cursor: default; }
-
-    .sr-rep { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: 2px; }
-    .sr-rep__row { display: grid; gap: .05rem; padding: .55rem .65rem; border-radius: 9px;
-      background: var(--cs-2); font: 500 .8rem/1.4 var(--cs-ui); }
-    .sr-rep--ok { box-shadow: inset 2px 0 0 #6ee7a0; }
-    .sr-rep--bad { box-shadow: inset 2px 0 0 #fca5a5; }
-    .sr-rep__k { font-weight: 800; }
-    .sr-rep__v { color: var(--cs-dim); overflow-wrap: anywhere; }
-
-    .sr-chan { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
-    .sr-chan__row { padding: .6rem .7rem; border-radius: 10px; background: var(--cs-2);
-      display: grid; gap: .18rem; font: 500 .82rem var(--cs-ui); min-width: 0; }
-    .sr-chan__top { display: flex; gap: .5rem; align-items: center; justify-content: space-between; }
-    .sr-chan__sub { font-size: .74rem; color: var(--cs-faint); overflow-wrap: anywhere; }
-    .sr-pill { flex: none; font: 800 .6rem var(--cs-ui); letter-spacing: .08em; text-transform: uppercase;
-      border-radius: 999px; padding: .2rem .5rem; }
-    .sr-pill--on { background: rgba(110,231,160,.16); color: #6ee7a0; }
-    .sr-pill--off { background: rgba(252,165,165,.14); color: #fca5a5; }
-    .sr-why-list, ul.sr-why { list-style: none; margin: .25rem 0 0; padding: 0; display: grid; gap: .15rem; }
-    ul.sr-why li { font: 500 .72rem/1.4 var(--cs-ui); color: var(--cs-dim);
-      padding-left: .8rem; position: relative; overflow-wrap: anywhere; }
-    ul.sr-why li::before { content: "—"; position: absolute; left: 0; color: var(--cs-faint); }
-
-    .sr-rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-    .sr-rank__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .1rem .6rem;
-      padding: .5rem .6rem; border-radius: 9px; background: var(--cs-2); font: 500 .8rem var(--cs-ui); }
-    /* Every cell is placed explicitly. Leaving the label to auto-place put
-       it in the same row as the total and pushed it to the right-hand
-       column, so the row read "44 Telegram" instead of naming the channel
-       first. */
-    .sr-rank__k { grid-column: 1; grid-row: 1; font-weight: 800; min-width: 0;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .sr-rank__v { grid-column: 2; grid-row: 1; text-align: right; font-weight: 800;
-      font-variant-numeric: tabular-nums; }
-    .sr-rank__n { grid-column: 1 / -1; grid-row: 2; font-size: .72rem;
-      color: var(--cs-faint); overflow-wrap: anywhere; }
-
-    .sr-none { font: 400 .8rem/1.55 var(--body); color: var(--cs-faint); margin: 0; }
-    .sr-none b { display: block; color: var(--cs-text); font-weight: 700; margin-bottom: .2rem; }
-    .sr-none--stop { color: var(--cs-dim); background: rgba(229,56,59,.08);
-      border-radius: 9px; padding: .6rem .7rem; }
-    [hidden] { display: none !important; }
-  </style>
-  <script src="js/live-content.js?v=__STAMP__"></script>
+  <style>body{margin:0;padding:24px 16px;background:#0b0908;color:#f4efe6;font:600 16px/1.5 system-ui,-apple-system,sans-serif}a{color:inherit}</style>
 </head>
-<body class="songpage" data-ops-polish="wave-2">
-  <main class="sr">
-    <div class="sr-top">
-      <p class="sr-k">McCluster</p>
-      <h1>Socials Room</h1>
-      <p class="sr-lede">Write it once and choose where it goes. Equity Uprise is a destination
-        like any other, because it is the one we own.</p>
-    </div>
-
-    <div class="sr-grid">
-      <section class="sr-panel">
-        <h2 class="sr-h">Compose</h2>
-        <p class="sr-why">A destination that cannot publish today says why in its own
-          words, straight from the service, rather than being greyed out and left for
-          you to guess at.</p>
-
-        <label class="sr-why" for="srBody" style="display:block;margin-bottom:.35rem">What are you posting?</label>
-        <textarea class="sr-body" id="srBody" placeholder="Say it once."></textarea>
-        <span class="sr-count" id="srCount">0 / 5,000</span>
-
-        <div class="sr-dests" id="srDests" role="group" aria-label="Destinations"></div>
-        <button class="sr-send" id="srSend" type="button" disabled>Choose a destination</button>
-
-        <div id="srResult" hidden aria-live="polite" style="margin-top:1rem"></div>
-      </section>
-
-      <div class="sr-side">
-        <section class="sr-panel">
-          <h2 class="sr-h">Channels</h2>
-          <p class="sr-why">Every platform the house can speak through, and for the ones
-            it cannot yet, exactly what is missing.</p>
-          <div id="srChannels"></div>
-        </section>
-
-        <section class="sr-panel">
-          <h2 class="sr-h">Last 30 days</h2>
-          <p class="sr-why">Conversations in, posts out, counted per channel by the state
-            they ended in.</p>
-          <div id="srStats"></div>
-        </section>
-      </div>
-    </div>
-  </main>
-
-  <script src="js/mcc-auth.js?v=__STAMP__"></script>
-  <script src="js/backend.js?v=__STAMP__"></script>
-  <script src="js/control-registry.js?v=__STAMP__"></script>
-  <script src="js/socials-room.js?v=__STAMP__" defer></script>
-  <script src="js/control-palette.js?v=__STAMP__" defer></script>
-  <script src="js/tabbar.js?v=__STAMP__"></script>
-  <script src="js/site-editor.js?v=__STAMP__" defer></script>
+<body>
+  <p>Channels, Instagram and the schedule live in Control → Create → Publish. <a href="control.html#create:publish:channels">Open publishing</a></p>
 </body>
 </html>
