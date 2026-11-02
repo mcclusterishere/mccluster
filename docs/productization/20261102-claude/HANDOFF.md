@@ -153,3 +153,83 @@ Once a record is enrolled, its history and protection are the record of truth. *
 ## Owner decisions still open (unchanged)
 
 Trial policy (calendar month vs 720 h, once-per-org, freshness, sandbox), app↔price mapping, hosting economics, renewal consent/prices, retention/export terms, pricing/commission, #686 navigation adoption, branch protection / HTTPS / Access / password / extension moves, campaign budget/platforms, the Anti-Social rights checklist answers.
+
+## Continuation 2026-11-02 PM (Claude, taking over the remaining scoped work)
+
+Authority: owner handoff "CLAUDE CONTINUATION HANDOFF" (review-branch publication only; no main merge, production SQL, deploy, paid service, domain purchase, ad, actor posting or tracking activation). Nothing below was applied to production.
+
+### Stage 1 re-verified before any change
+
+| Ref | Full SHA | Finding |
+|---|---|---|
+| `origin/main` | `6cddfbec6e75a123dedecbd8a069f5d61c476ef2` | 14 commits past `e80cb0a1`: #684, #685, #687, #688, #686 |
+| `codex/productization-recovery-20261102` | `17ed110d52a425c1570e67fbbdc6308d7b064559` | parent `edd8cdd8`; already merged into this branch at `5d44e435` (no re-application) |
+| review branch before this cycle | `6df05e3d2c5c3842bac9fa3587436bdac3dba816` | contains `edd8cdd8`, `17ed110d`, `e80cb0a1` |
+| `story/cluster-fucked-workspace-20261101` | `9d7a7eedc495bb577da1df879cbf7a8fe7aa1cfa` | not an ancestor of main or of this branch (see Music below) |
+| `a3cde5de` (Whip Equipped local checkpoint) | — | **not a valid object on the remote**; not invented, not redone. Request: the recoverable patch/commit. |
+
+### Merge of main (`e91f8336`)
+
+Seven conflicts, resolved deliberately (no side dropped):
+- **#686 Control NAV adopted** (owner merged it 2026-11-02 after the bottom-bar trial was approved; D8 is answered). The branch's Create view `member-fronts` is a NAV leaf (`#create:member-fronts` + aliases `members`, `moderation`, `takedown`); its bind is kept; the removed `crViewSelect` is not revived.
+- `css/control-admin.css`: the branch's front-page revision/member-fronts styles AND main's lyrics/stems styles.
+- `js/music-creator-studio.js`: the branch's "never roll back the handoff draft" rule AND main's `attachLyricSheet()`.
+- Equity Uprise source map: union in main's order then the branch's, plus the missing `ANTI-SOCIAL-CAMPAIGN.md` entry; generated reports path-normalized.
+- The versioned editor protections, dual-CAS Tile bridge, social status contract, conflict/readback fixes and corrected recovery guidance are untouched by the merge (none of their files conflicted).
+
+### Shared Now Playing (`3cb46a81`)
+
+| Item | Result |
+|---|---|
+| 2A autoplay metadata | **fixed**: `renderSheetTrack()` is the one renderer for title, artist, credit, film, license target and a `mcc:now-playing` event; `load()` calls it on every track change, so natural `ended → next` updates the open sheet with no tap and no timer. The 60 ms `setTimeout(openSheet)` is gone. `album.html` has no repeat/shuffle control (not tested; not claimed). |
+| 2B actions | **done**: the sheet keeps License this track and the sleep timer; "On the record" (catalogue) and "Book the studio" removed from the sheet. Timer: "Sleep timer: off" / "Stop playback after N minutes" + "Turn off timer"; 44px. |
+| 2C license routing | **partial, honest**: requests from `album.html` are saved as a house lead naming the record and the rights holder (`data-license-holder` = the record's artist). They appear in Control (Home → Needs you; People → Inbox). **No email is sent**: `public.leads` has only a rate-limit trigger (verified read-only); the confirmation now says so. Every record the desk lists is house catalog (Matthew; PRIM3 and the Equity Uprise act, both controlled by the house account). **Gap:** a tenant's own release must route to that release's controller account through a server route that resolves it (needs the label model below applied + a Worker/Edge route); until then tenant releases are not offered in this desk. |
+| Evidence | `scripts/e2e/now-playing-continuity.e2e.mjs` 18/18 at 390 (natural ended→next, exactly one advance, manual next/prev synchronous, actions, timer, license lead body, no overflow, no page errors); `lyrics-sync` 328/328; `music-world-continuity` 117/117. |
+
+### High Alert lyrics — investigated, cause established
+
+- Player state is not the cause of the wrong words: the shipped `data/lyrics/high-alert.json` itself carries `source:"auto"` (recogniser text, faster-whisper small.en) — e.g. "Hylar", "Terved you with the scope of my work".
+- The owner's sheet exists, verbatim, in `mcclusterishere/Prim3` at `source-material/high-alert/LYRICS.md` (from `Prim3 - High Alert.docx`; repo HEAD `160020bdeac4afa0cd3f25638169e657af55bc29`). It was **not among the files uploaded to this session** and no lyric table exists in production (no `lyric` tables; `lyrics_machine_v1` and `music_lyric_revisions_v1` are pending), so the machine never had it. The same is true for Red, Blue, Purple, White Team.
+- So the defect is a **text** mismatch (no sheet), and timing was computed against the wrong words. Passages that matched are where the recogniser heard correctly.
+- Fix: both sheets copied verbatim into `data/lyrics/src/` and aligned with the existing machine (`--sheet`, local CPU, no paid provider), output `reviewed:false` — shipped as a separate main PR (see Music row), not approved on the owner's behalf.
+
+### Music module (`9d7a7eed` reconciliation) — attempted, not yet integrated
+
+- `88f58527` + `9d7a7eed` (story branch) add private, immutable lyric revisions (`private.music_lyric_revisions`, pending `music_lyric_revisions_v1.sql`), server-checked approved export, and public-projection allowlisting for **uploaded (DB) releases**. Shelf tracks (`data/lyrics/*.json`, e.g. High Alert) are not affected by it.
+- Cherry-pick of `88f58527` onto this branch: **17 conflict hunks** — `js/control-room/lyrics-review.js` (12; both sides grew the same module: main added Core re-run + stems, the story branch added revision identity/approved export), `music-ops.js` (1; main's Stems tab vs the story branch's prepare/expected-hash review), `supabase/functions/music-access/index.ts` (1), `css/control-admin.css` (2). Aborted cleanly rather than resolved by picking a side; it needs a deliberate union (handed to a follow-up on this branch).
+- **Security finding on main (relevant to the correction):** main's `operator-lyrics-save` (`supabase/functions/music-access/index.ts` ~L221) writes `reviewed`, `reviewed_at`, `reviewed_by` **inside `creator_tracks.lyrics`**, the creator-editable, publicly readable JSON — the exact pattern `LYRIC-HISTORY-CORRECTION-20261101.md` identifies (a creator can set their own "reviewed" flag; history in the row is public). Not exploitable for audio release (the release guard is separate) and no production lyric data exists yet (no lyric tables; pending SQL unapplied), but it must not ship as the approval record. The correction above is the fix; until it lands, the Control "reviewed" mark on uploaded releases is advisory only.
+
+### Owner-directed music work (separate PRs on main, not this branch)
+
+- PR #690 `feature/prim3-artist`: PRIM3 its own artist (`MusicGroup` `…/prim3-artist.html#prim3-artist`), album "Cyber Security Specialist", artist page, label model as pending SQL (`music_label_artists_v1.sql`, `music_creator_managers`, `music_can_act_for()`), Control "Acting as" switcher (read-only until SQL applied). Credits not invented; slug/keys unchanged.
+- ISRC matching = pairing uploaded recordings/files with songs. **Blocked on source**: storage holds no ISRC/CSV/spreadsheet object and `music_isrc_allocations` is empty (read-only check); the owner has been asked where the file lives.
+
+### Regional intelligence / OVH (item 4)
+
+Implemented what is ready, on the owner globe only: PR #689 (`feature/world-markets`) — GDP (World Bank WDI + IMF, periodic, `is_live:false`, source/period/retrieved), 49 exchanges with open/closed by schedule (holidays not modelled, said), listings via a key-gated provider (`needs_key`, never fabricated; non-US price `needs_paid_feed`), GDELT finance headlines labelled unverified; owner-gated, cached, rate-capped, no model call per click. **Not done**: PRIM3 multi-agent missions, character voice, public privacy-preserving aggregates beyond what exists, OVH benchmarking — OVH capacity is unmeasured and no concurrency is promised. No tracking or posting was activated.
+
+### Whip Equipped (item 5)
+
+Spec preserved as given. `a3cde5de` not on the remote → not redone; WHIPFOUNDING100 is a proposal, not active; gross-vs-net for the house allocation unanswered; no live revenue routing.
+
+### Verification at this continuation's tip (2026-11-02 PM)
+
+The npm registry was reachable this time, so the dependency-blocked results above are superseded by real runs:
+
+| Suite | Result | Note |
+|---|---|---|
+| Root `node --test scripts/test/*.test.mjs` | **1,436 / 1,436 pass, 0 fail, 0 skip** | combined source after the main merge + Now Playing |
+| Worker `npm test` (`npm ci` + real `@electric-sql/pglite@0.5.10` via `PGLITE_DIR`) | **1,355 / 1,355 pass, 0 fail, 0 skip** | the 4 former dependency-load failures and the 4 PGlite-gated skips all ran and passed |
+| `editor-versioned-db.mjs` (real PGlite) | PASS 158 | |
+| `tile-editor-bridge-db.mjs` (real PGlite) | PASS 57 | |
+| `social-consumer-db.mjs` (real PGlite) | PASS 67 | |
+| `domain-trial-db.mjs` (real PGlite) | PASS 103 | |
+| `prepared-foundation-db.mjs` / `free-site-minimum-db.mjs` (real PGlite) | PASS 28 / PASS | |
+| `now-playing-continuity.e2e` (new, Playwright 1.58.2) | 18 / 18 | 390px |
+| `lyrics-sync.e2e` / `music-world-continuity.e2e` / `control-room-nav.e2e` | 328/328 · 117/117 · 218/218 | |
+| `member-front-auth.e2e` | 5 / 5 | |
+| `member-front.e2e` / `control-front-page.e2e` | **24/27 · 50/52 (FAIL)** | identical on the pre-merge tip `6df05e3d` (git-archive check) → pre-existing, not caused by this cycle; open |
+| Equity Uprise verifiers (repo sources, program coverage, authority hygiene) | PASS | |
+| Not run | Python suite, native-PG race drivers (`*-native.py`), `control-workspace` e2e (needs `CESIUM_DIR`) | no claim made for them this cycle |
+
+Remote: review branch tip is recorded by the commit that adds this section (see the commit log; full SHA reported with the handoff reply).
