@@ -16,11 +16,15 @@ import { createOperativeKit } from './operatives3d.mjs';
 
 const PBR_ROOT = new URL('../../assets/3d/prim3-tactics/', import.meta.url);
 const MODEL_ROOT = new URL('../../assets/3d/prim3-operators/', import.meta.url);
+// The White Industrial kit (owner-supplied, 2026-11-02): original procedural GLBs with a catalog of footprints.
+const KIT_ROOT = new URL('../../assets/3d/prim3-kit/white-industrial/', import.meta.url);
 const TEAMS = {
+  day: { PLAYER: 0x14b8c8, THREAT: 0xd81f2a },
   field: { PLAYER: 0x2fe0f0, THREAT: 0xff3b3b },
   studio: { PLAYER: 0xff2a3a, THREAT: 0x3d8bff }
 };
 const OVER = {
+  day: { reach: 0x0fb2c4, path: 0xf29d17, line: 0xe8890a, dest: 0xe8890a },
   field: { reach: 0x22d3e6, path: 0xffb547, line: 0xffb547, dest: 0xffb547 },
   studio: { reach: 0x30373c, path: 0x0e1113, line: 0x0e1113, dest: 0x0e1113 }
 };
@@ -67,7 +71,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 400);
   const cx = W / 2, cz = H / 2;
-  let curLook = look === 'studio' ? 'studio' : 'field';
+  const normLook = (lk) => (lk === 'studio' || lk === 'field' ? lk : 'day');
+  let curLook = normLook(look);
 
   /* ---------- materials: every environment material remembers its field look ---------- */
   const envMats = [];
@@ -209,12 +214,14 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   }
 
   /* ---------- props: containers, barriers, crates, tent, fence and gate, relay, extraction ---------- */
+  const proc = { container: new THREE.Group(), barrier: new THREE.Group(), crate: new THREE.Group(), hvac: new THREE.Group(), tree: new THREE.Group() };
+  for (const g of Object.values(proc)) world.add(g);
   for (const c of SCENE.containers) {
     const hh = M(c.h), m = containerMat(c.color);
-    add(boxUV(c.w - 0.05, hh, c.d - 0.05, 2.4), m, c.x + c.w / 2 - 0.5, hh / 2, c.y + c.d / 2 - 0.5);
+    add(boxUV(c.w - 0.05, hh, c.d - 0.05, 2.4), m, c.x + c.w / 2 - 0.5, hh / 2, c.y + c.d / 2 - 0.5, { parent: proc.container });
     for (const e of [-1, 1]) { // corner posts
       const long = c.w >= c.d;
-      add(new THREE.BoxGeometry(long ? 0.08 : c.w, hh, long ? c.d : 0.08), M_IRON, c.x + c.w / 2 - 0.5 + (long ? e * (c.w / 2 - 0.05) : 0), hh / 2, c.y + c.d / 2 - 0.5 + (long ? 0 : e * (c.d / 2 - 0.05)), { cast: false });
+      add(new THREE.BoxGeometry(long ? 0.08 : c.w, hh, long ? c.d : 0.08), M_IRON, c.x + c.w / 2 - 0.5 + (long ? e * (c.w / 2 - 0.05) : 0), hh / 2, c.y + c.d / 2 - 0.5 + (long ? 0 : e * (c.d / 2 - 0.05)), { cast: false, parent: proc.container });
     }
   }
   const jersey = (() => { const s = new THREE.Shape(); s.moveTo(-0.24, 0); s.lineTo(0.24, 0); s.lineTo(0.1, M(0.4)); s.lineTo(0.08, M(1.1)); s.lineTo(-0.08, M(1.1)); s.lineTo(-0.1, M(0.4)); s.closePath(); return s; })();
@@ -222,15 +229,15 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     const long = b.w >= b.d, n = long ? b.w : b.d;
     for (let i = 0; i < n; i += 1) {
       const geo = new THREE.ExtrudeGeometry(jersey, { depth: 0.96, bevelEnabled: false }); geo.translate(0, 0, -0.48);
-      const o = add(geo, M_CONC, b.x + (long ? i : 0), 0, b.y + (long ? 0 : i)); o.rotation.y = long ? Math.PI / 2 : 0;
-      add(new THREE.BoxGeometry(long ? 0.94 : 0.18, 0.06, long ? 0.18 : 0.94), M_HAZ, o.position.x, M(0.85), o.position.z, { cast: false });
+      const o = add(geo, M_CONC, b.x + (long ? i : 0), 0, b.y + (long ? 0 : i), { parent: proc.barrier }); o.rotation.y = long ? Math.PI / 2 : 0;
+      add(new THREE.BoxGeometry(long ? 0.94 : 0.18, 0.06, long ? 0.18 : 0.94), M_HAZ, o.position.x, M(0.85), o.position.z, { cast: false, parent: proc.barrier });
     }
   }
   const cr = rng(31);
   for (const c of SCENE.crates) for (let y = c.y; y < c.y + c.d; y += 1) for (let x = c.x; x < c.x + c.w; x += 1) {
     const s1 = 0.86, s2 = 0.6;
-    add(boxUV(s1, M(1.0), s1, 1), M_WOOD, x, M(0.5), y).rotation.y = (cr() - 0.5) * 0.3;
-    add(boxUV(s2, M(0.8), s2, 1), M_WOOD, x + (cr() - 0.5) * 0.15, M(1.0) + M(0.4), y + (cr() - 0.5) * 0.15).rotation.y = (cr() - 0.5) * 0.8;
+    add(boxUV(s1, M(1.0), s1, 1), M_WOOD, x, M(0.5), y, { parent: proc.crate }).rotation.y = (cr() - 0.5) * 0.3;
+    add(boxUV(s2, M(0.8), s2, 1), M_WOOD, x + (cr() - 0.5) * 0.15, M(1.0) + M(0.4), y + (cr() - 0.5) * 0.15, { parent: proc.crate }).rotation.y = (cr() - 0.5) * 0.8;
   }
   if (SCENE.tent) { // a field tent: a ridged canvas prism with a painted MED panel
     const t = SCENE.tent, hh = M(t.h);
@@ -275,8 +282,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   }
   for (const r of SCENE.rooftop || []) { // AC units and vents
     const hh = M(r.h), base = surfaceHeight(r.x, r.y, 1);
-    add(boxUV(r.w - 0.1, hh, r.d - 0.1, 1), M_CORR, r.x + r.w / 2 - 0.5, base + hh / 2, r.y + r.d / 2 - 0.5);
-    add(new THREE.CylinderGeometry(Math.min(r.w, r.d) * 0.3, Math.min(r.w, r.d) * 0.3, 0.06, 20), M_IRON, r.x + r.w / 2 - 0.5, base + hh + 0.03, r.y + r.d / 2 - 0.5);
+    add(boxUV(r.w - 0.1, hh, r.d - 0.1, 1), M_CORR, r.x + r.w / 2 - 0.5, base + hh / 2, r.y + r.d / 2 - 0.5, { parent: proc.hvac });
+    add(new THREE.CylinderGeometry(Math.min(r.w, r.d) * 0.3, Math.min(r.w, r.d) * 0.3, 0.06, 20), M_IRON, r.x + r.w / 2 - 0.5, base + hh + 0.03, r.y + r.d / 2 - 0.5, { parent: proc.hvac });
   }
   function blob(radius, seed) {
     const geo = new THREE.SphereGeometry(radius, 16, 12), pos = geo.attributes.position, v = new THREE.Vector3(), r = rng(seed), k = [r() * 6, r() * 6, r() * 6];
@@ -284,9 +291,9 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     geo.computeVertexNormals(); return geo;
   }
   for (const t of SCENE.trees || []) {
-    add(new THREE.CylinderGeometry(0.08, 0.13, M(3), 8), M_BARK, t.x, M(1.5), t.y);
+    add(new THREE.CylinderGeometry(0.08, 0.13, M(3), 8), M_BARK, t.x, M(1.5), t.y, { parent: proc.tree });
     const r = rng(t.x * 31 + t.y);
-    for (let i = 0; i < 5; i += 1) add(blob(0.7 + r() * 0.5, i + t.x), i % 2 ? M_LEAF : M_LEAF2, t.x + (r() - 0.5) * 1.2, M(3.2) + r() * 1.2, t.y + (r() - 0.5) * 1.2);
+    for (let i = 0; i < 5; i += 1) add(blob(0.7 + r() * 0.5, i + t.x), i % 2 ? M_LEAF : M_LEAF2, t.x + (r() - 0.5) * 1.2, M(3.2) + r() * 1.2, t.y + (r() - 0.5) * 1.2, { parent: proc.tree });
   }
   // the city beyond the fence line: dark blocks with scattered lit windows (depth, never on the board)
   { const r = rng(77);
@@ -396,7 +403,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   /* ---------- the two looks ---------- */
   let composer = null, bloomPass = null, hdrTex = null, studioEnv = null, fieldEnv = null;
   function applyLook(lk) {
-    curLook = lk === 'studio' ? 'studio' : 'field';
+    curLook = normLook(lk);
+    const day = curLook === 'day';
     const studio = curLook === 'studio';
     for (const m of envMats) {
       if (m.userData.keepColor) continue;
@@ -411,18 +419,22 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       }
       m.needsUpdate = true;
     }
-    scene.background = studio ? new THREE.Color(0xe9ebec) : (hdrTex || new THREE.Color(0x0b1016));
-    if (!studio && hdrTex) { scene.backgroundBlurriness = 0.4; scene.backgroundIntensity = 0.25; }
-    scene.fog = studio ? new THREE.Fog(0xe9ebec, 90, 200) : new THREE.FogExp2(0x121b24, 0.0055);
-    scene.environment = studio ? studioEnv : fieldEnv;
-    scene.environmentIntensity = studio ? 0.25 : 0.45;
-    renderer.toneMappingExposure = studio ? 0.95 : 1.2;
-    hemi.color.set(studio ? 0xffffff : 0x8fa6c4); hemi.groundColor.set(studio ? 0xb9bec2 : 0x1a1c1f); hemi.intensity = studio ? 0.85 : (fieldEnv ? 0.75 : 1.15);
-    moon.color.set(studio ? 0xfffaf2 : 0xbfd2ff); moon.intensity = studio ? 2.0 : 1.7;
-    for (const l of lampLights) l.visible = !studio; for (const s of lampSprites) s.visible = !studio;
-    relayLight.visible = !studio; rain.visible = !studio && !reducedMotion;
-    gridMat.color.set(studio ? 0x2a3136 : 0x5fe6f2); gridMat.opacity = studio ? 0.28 : 0.42; gridMajor.color.set(studio ? 0x0e1113 : 0x9ff3fb); gridMajor.opacity = studio ? 0.5 : 0.7;
-    if (bloomPass) bloomPass.enabled = !studio;
+    scene.background = studio ? new THREE.Color(0xe9ebec) : day ? new THREE.Color(0xbcd3e2) : (hdrTex || new THREE.Color(0x0b1016));
+    if (!studio && !day && hdrTex) { scene.backgroundBlurriness = 0.4; scene.backgroundIntensity = 0.25; }
+    scene.fog = studio ? new THREE.Fog(0xe9ebec, 90, 200) : day ? new THREE.Fog(0xcadbe6, 80, 210) : new THREE.FogExp2(0x121b24, 0.0055);
+    scene.environment = studio || day ? studioEnv : fieldEnv;
+    scene.environmentIntensity = studio ? 0.25 : day ? 0.55 : 0.45;
+    renderer.toneMappingExposure = studio ? 0.95 : day ? 1.0 : 1.2;
+    hemi.color.set(studio || day ? 0xffffff : 0x8fa6c4); hemi.groundColor.set(studio ? 0xb9bec2 : day ? 0x8e9284 : 0x1a1c1f); hemi.intensity = studio ? 0.85 : day ? 1.05 : (fieldEnv ? 0.75 : 1.15);
+    moon.color.set(studio ? 0xfffaf2 : day ? 0xfff1dc : 0xbfd2ff); moon.intensity = studio ? 2.0 : day ? 2.7 : 1.7;
+    if (!studio) M_WATER.color.set(day ? 0x1f8a90 : M_WATER.userData.orig ? M_WATER.userData.orig.color : 0x0b2a30);
+    if (!studio) { const asph = day ? 0xd9dad5 : 0x9a9fa3; if (M_ASPHALT.map) M_ASPHALT.color.set(asph); M_ASPHALT.roughness = day ? 0.85 : 0.42; }
+    for (const l of lampLights) l.visible = !studio && !day; for (const s of lampSprites) s.visible = !studio && !day;
+    relayLight.visible = !studio && !day; rain.visible = !studio && !day && !reducedMotion;
+    for (const m of [M_LIT]) m.emissiveIntensity = studio ? 0 : day ? 0.25 : (m.userData.orig ? m.userData.orig.emissiveIntensity : 1.8);
+    gridMat.color.set(studio ? 0x2a3136 : day ? 0x1fb6c6 : 0x5fe6f2); gridMat.opacity = studio ? 0.28 : day ? 0.5 : 0.42; gridMajor.color.set(studio ? 0x0e1113 : day ? 0x0b8fa0 : 0x9ff3fb); gridMajor.opacity = studio ? 0.5 : day ? 0.8 : 0.7;
+    if (bloomPass) bloomPass.enabled = !studio && !day;
+    if (day) for (const m of [M_CONC, M_CORR, M_ROOF, M_GRATE]) m.color.set(m === M_ROOF ? 0xf3f3ef : 0xeeeeea); // white industrial by day
     const ov = OVER[curLook];
     reachMesh.material.color.set(ov.reach); reachEdge.material.color.set(ov.reach); pathMesh.material.color.set(ov.path);
     pathLine.material.color.set(ov.line); destFrame.material.color.set(ov.dest);
@@ -446,7 +458,6 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       m.userData.orig = null; // re-capture the field look with the photographed maps
     }
     // the yard reads wet: glossier than the scan, so the lamps and the sky shine in it
-    M_ASPHALT.roughness = 0.42; M_ASPHALT.color.set(0x9a9fa3);
     applyLook(curLook);
   }
   async function loadEnv() {
@@ -495,6 +506,48 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       for (const [id, a] of actors) { unitsGroup.remove(a.g); actors.delete(id); }
       if (model) update(model);
     } catch (e) { /* stand-ins */ }
+  }
+
+  /* ---------- the White Industrial kit: authored models replace the stand-ins they match ----------
+     Each instance is fitted to the footprint and height of the object it stands for, so the rules
+     (blockers, cover, heights) stay exactly what the level declares; the kit only changes the look. */
+  async function loadKit() {
+    try {
+      const res = await fetch(new URL('catalog.json', KIT_ROOT)); if (!res.ok) return;
+      const cat = await res.json(); if (destroyed) return;
+      const byId = Object.fromEntries((cat.assets || []).map((a) => [a.id, a]));
+      const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+      const loader = new GLTFLoader(), cache = {};
+      const model = async (id) => cache[id] || (cache[id] = loader.loadAsync(new URL(byId[id].model, KIT_ROOT).href).then((g) => g.scene));
+      const kitGroup = new THREE.Group(); world.add(kitGroup);
+      // place(id, centre x/z, width (x), depth (z), height (world units), base y, yaw)
+      const UNIFORM = new Set(['tree-8', 'rock-cluster', 'pipe-stack-6']);
+      async function place(id, x, z, w, d, h, y = 0, yaw = 0) {
+        if (!byId[id]) return;
+        const src = await model(id), a = byId[id], o = src.clone(true);
+        const fw = a.footprint?.width || a.width, fd = a.footprint?.depth || a.depth;
+        const swap = Math.abs(yaw % Math.PI) > 0.1;
+        if (UNIFORM.has(id)) o.scale.setScalar(h / a.height); // organic shapes keep their proportions
+        else o.scale.set((swap ? d : w) / fw, h / a.height, (swap ? w : d) / fd);
+        o.rotation.y = yaw; o.position.set(x, y, z);
+        o.traverse((m) => { if (m.isMesh) { m.castShadow = tier !== 'low'; m.receiveShadow = true; } });
+        kitGroup.add(o);
+      }
+      const jobs = [];
+      for (const c of SCENE.containers) { const long = c.w >= c.d; jobs.push(place('container-12', c.x + c.w / 2 - 0.5, c.y + c.d / 2 - 0.5, long ? c.w - 0.05 : c.d - 0.05, long ? c.d - 0.05 : c.w - 0.05, M(c.h), 0, long ? 0 : Math.PI / 2)); }
+      for (const b of SCENE.barricades) { const long = b.w >= b.d; jobs.push(place('low-barrier-4', b.x + b.w / 2 - 0.5, b.y + b.d / 2 - 0.5, (long ? b.w : b.d) - 0.04, 0.6, M(1.1), 0, long ? 0 : Math.PI / 2)); }
+      for (const c of SCENE.crates) for (let y = c.y; y < c.y + c.d; y += 1) for (let x = c.x; x < c.x + c.w; x += 1) jobs.push(place('crate-2', x, y, 0.92, 0.92, M(1.8)));
+      for (const r of SCENE.rooftop || []) jobs.push(place('hvac-3', r.x + r.w / 2 - 0.5, r.y + r.d / 2 - 0.5, r.w - 0.1, r.d - 0.1, M(r.h), surfaceHeight(r.x, r.y, 1)));
+      for (const t of SCENE.trees || []) jobs.push(place('tree-8', t.x, t.y, 2.6, 2.6, M(6.5)));
+      if (SCENE.relay) jobs.push(place('relay-terminal', SCENE.relay.x, SCENE.relay.y, 0.9, 0.9, M(2.2)));
+      // dressing beyond the playable edge only (never on a tile the rules use)
+      for (const [id, x, z, w, d, h, yaw] of [['pipe-stack-6', -4, 18, 2, 4, 1.1, 0], ['rock-cluster', 67, 38, 3, 2, 1.1, 0.4], ['rock-cluster', -5, 52, 2.6, 1.7, 0.9, 1.2], ['pipe-stack-6', 68, 12, 2, 4, 1.1, Math.PI / 2], ['tree-8', -6, 30, 2.8, 2.8, 4.2, 0], ['tree-8', 70, 56, 3, 3, 4.6, 0]]) jobs.push(place(id, x, z, w, d, h, 0, yaw));
+      await Promise.all(jobs);
+      if (destroyed) return;
+      for (const g of [proc.container, proc.barrier, proc.crate, proc.hvac, proc.tree]) g.visible = false;
+      for (const m of relayGroup.children) if (m !== beacon && !(m.userData && m.userData.overlay)) m.visible = false;
+      needs = true;
+    } catch (e) { /* the procedural stand-ins stay */ }
   }
 
   /* ---------- labels ---------- */
@@ -605,7 +658,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   raf = requestAnimationFrame(frame);
   const ro = new ResizeObserver(() => { needs = true; }); ro.observe(host);
   applyLook(curLook);
-  loadPBR(); loadEnv(); loadFx(); loadModels();
+  loadPBR(); loadEnv(); loadFx(); loadModels(); loadKit();
 
   /* ---------- shots: a queue, so overwatch volleys and threat turns play in order ---------- */
   function tracer(from, to, color) {
