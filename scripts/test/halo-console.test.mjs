@@ -17,16 +17,16 @@ test('the globe loads Halo only for the owner the Worker names, only on the full
   assert.match(sync, /if\(HALO_OPEN===null\)return;/, 'the view opens only from a Halo link (?halo=…)');
   assert.ok(sync.indexOf('if(!owner)') < sync.indexOf('haloScript('), 'no Halo code is fetched before the owner answer');
   assert.match(sync, /enter\.hidden=!owner\|\|HALO_OPEN!==null;/, 'the header door shows for the owner only');
-  assert.match(sync, /Promise\.all\(\['css\/halo\.css','css\/halo-hud\.css'\]\.map\(haloStyle\)\)/, 'the styles land before the view mounts');
+  assert.match(sync, /Promise\.all\(\['css\/halo\.css','css\/halo-hud\.css','css\/halo-markets\.css'\]\.map\(haloStyle\)\)/, 'the styles land before the view mounts');
   assert.match(js, /paintLayerCredits\(\);haloSync\(\)\}/, 'every access repaint re-decides');
   assert.match(js, /const e=pickSolid\(p\.position\);if\(window\.HaloConsole&&HaloConsole\.pick\(e\)\)return;/, 'picks go to Halo first');
   assert.match(js, /halo\.id='ctlHalo';halo\.className='globe-ctl';halo\.hidden=true;halo\.href='action-globe\.html\?explore=1&halo=1';halo\.target='_top'/);
   assert.match(js, /const HU_V=\(\(\)=>\{try\{return new URL\(document\.currentScript\.src\)\.searchParams\.get\('v'\)\|\|''\}catch\(e\)\{return ''\}\}\)\(\);/);
-  for (const f of ['vision', 'hud', 'layers', 'data', 'chart', 'halo']) assert.ok(sync.includes("'js/halo/" + f + ".js'"), f + ' is loaded');
+  for (const f of ['vision', 'hud', 'layers', 'data', 'chart', 'markets', 'halo']) assert.ok(sync.includes("'js/halo/" + f + ".js'"), f + ' is loaded');
 });
 
 test('the view talks only to the Worker, through the globe bridge', () => {
-  for (const f of ['js/halo/halo.js', 'js/halo/layers.js', 'js/halo/data.js', 'js/halo/chart.js']) {
+  for (const f of ['js/halo/halo.js', 'js/halo/layers.js', 'js/halo/data.js', 'js/halo/chart.js', 'js/halo/markets.js']) {
     const js = read(f);
     assert.doesNotMatch(js, /https:\/\//, f + ' names no provider to call (official links are checked as patterns only)');
     assert.doesNotMatch(js, /fetch\((?!G\.api)/, f + ' fetches only G.api');

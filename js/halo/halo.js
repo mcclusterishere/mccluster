@@ -61,7 +61,8 @@
     db: svg('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>'),
     flag: svg('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
     lock: svg('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
-    expand: svg('<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>')
+    expand: svg('<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>'),
+    chart: svg('<path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/>')
   };
 
   /* WORLD DATA: only implemented sources belong in the operational layer picker. */
@@ -70,14 +71,16 @@
     { id: 'earth', name: 'Earth & weather', icon: 'cloud', items: [{ id: 'weather', label: 'Weather alerts (NOAA)', short: 'Alerts' }, { id: 'natural', label: 'Natural events (NASA)', short: 'Natural events' }, { id: 'quakes', label: 'Earthquakes', short: 'Quakes' }, { id: 'fires', label: 'Thermal hotspots (NASA FIRMS)', short: 'Thermal' }, { id: 'tides', label: 'Water levels (NOAA)', short: 'NOAA' }, { id: 'cyclones', label: 'Tropical cyclones (NOAA)', short: 'Cyclones' }, { id: 'perimeters', label: 'Wildfire perimeters', short: 'Perimeters' }] },
     { id: 'space', name: 'Space', icon: 'sat', items: [{ id: 'satellites', label: 'Satellites', core: true }, { id: 'launches', label: 'Launches', core: true }] },
     { id: 'places', name: 'Places & media', icon: 'camera', items: [{ id: 'cctv', label: 'Cameras (CCTV)', short: 'Cameras', core: true }] },
-    { id: 'ops', name: 'Field operations', icon: 'people', items: [{ id: 'missions', label: 'Missions', own: true }, { id: 'regions', label: 'Member regions (5 or more)', short: 'People', globe: true }, { id: 'intel', label: 'Intel events (evidence)', short: 'Evidence', core: true }] }
+    { id: 'ops', name: 'Field operations', icon: 'people', items: [{ id: 'missions', label: 'Missions', own: true }, { id: 'regions', label: 'Member regions (5 or more)', short: 'People', globe: true }, { id: 'intel', label: 'Intel events (evidence)', short: 'Evidence', core: true }] },
+    /* Markets (js/halo/markets.js): exchanges at their cities, and a country's GDP, listings and market news on a tap */
+    { id: 'markets', name: 'Markets', icon: 'chart', items: [{ id: 'markets', label: 'Exchanges, GDP and listings', short: 'Exchanges', mkt: true }] }
   ];
   const CONTEXT = ['Satellite imagery', 'Street map', 'Photoreal 3D cities', 'Country borders'];
   const ALL_ITEMS = GROUPS.flatMap((g) => g.items);
   const TONE = { cyan: '#45b8f4', amber: '#f2b448', red: '#ff7a7a', green: '#4fdf98', mute: '#7f90a6', white: '#eef3f9' };
 
   let G = null, V = null, C = null, mounted = false;
-  let ui = {}, vision = null, hud = null, layers = null, data = null, offs = [];
+  let ui = {}, vision = null, hud = null, layers = null, data = null, markets = null, offs = [];
   let routeReady = false, restoringRoute = false;
   let view = 'world', sel = null, dtab = 'overview';
   let tabs = { missions: 'active', people: 'all', intel: 'feed' }, sorts = { missions: 'priority', people: 'activity' }, query = { missions: '', people: '', intel: '' };
@@ -153,12 +156,18 @@
     if (it.planned) return false;
     if (it.own) return missionsOn;
     if (it.globe) return !!(G.regions && G.regions.shown());
+    if (it.mkt) return !!(markets && markets.on());
     return it.core ? G.layer.on(it.id) : !!(layers && layers.on(it.id));
   }
   function stateOf(it) {
     if (it.planned) return { state: 'planned', text: 'Planned' };
     if (it.own) { const s = data.peek('missions'), k = missions().filter(placed).length; return { state: missionsOn ? (s.error && !s.body ? 'error' : 'on') : 'off', text: missionsOn ? (s.body ? n(k) : s.error ? 'Unavailable' : 'Loading…') : '', fetched: s.at }; }
     if (it.globe) return { state: isOn(it) ? 'on' : 'off', text: isOn(it) ? 'Shown' : '' };
+    if (it.mkt) {
+      const m = markets ? markets.status() : { state: 'off' };
+      const words = { off: '', loading: 'Loading…', locked: 'Owner only', error: 'Unavailable' };
+      return { state: m.state, text: m.state === 'on' ? n(m.open) + ' open / ' + n(m.count) : words[m.state] || '', fetched: m.fetched };
+    }
     if (it.core) {
       if (G.layer.locked(it.id)) return { state: 'locked', text: 'Locked' };
       const on = G.layer.on(it.id), c = G.layer.count(it.id);
@@ -175,6 +184,7 @@
     if (it.planned || isOn(it) === !!on) return;
     if (it.own) { missionsOn = !!on; markSig = ''; }
     else if (it.globe) { if (G.regions) G.regions.show(!!on); }
+    else if (it.mkt) { if (markets) await markets.set(!!on); }
     else if (it.core) { if (!G.layer.locked(it.id)) await G.layer.toggle(it.id); }
     else if (layers) await layers.set(it.id, !!on);
     savePrefs(); schedulePaint();
@@ -183,6 +193,7 @@
   function health(it) {
     const s = stateOf(it);
     if (it.own) return dataHealth('missions');
+    if (it.mkt && s.state === 'on') return { tone: 'hollow', text: 'Hours from the regular schedule · tap a country for GDP and listings' };
     if (it.id === 'cctv') return { tone: 'hollow', text: 'Catalog loaded · snapshots checked when opened' };
     if (it.core && it.id !== 'satellites') return { tone: 'hollow', text: 'Snapshot loaded · freshness varies by source' };
     if (it.id === 'satellites') return { tone: 'cyan', text: 'Calculated from orbital elements' };
@@ -374,6 +385,7 @@
   function pick(e) {
     if (!mounted || !e) return false;
     const id = e.id && e.id.haloObjectPick || e.id;
+    if (id && id.marketPick && markets) return markets.pick(id);
     if (id && id.haloPick && id.layer === 'halo-mark' && id.sel) { select(id.sel); openSheetIfPhone(); return true; }
     if (id && id.haloPick && layers) {
       const d = layers.describe(id);
@@ -1101,7 +1113,7 @@
         setView(next); $('#hxTab-' + next).focus();
       };
     });
-    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
+    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);if(markets&&markets.on())await markets.refresh();}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
     ui.operator.onclick = () => { const chip = document.getElementById('mccAuthChip'); if (chip) chip.click(); else location.href = 'account.html'; };
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }
@@ -1238,6 +1250,7 @@
     vision = V && window.HaloVision ? HaloVision.mount(V) : null;
     layers = V && window.HaloLayers ? HaloLayers.create(G) : null;
     data = window.HaloData ? HaloData.create(G) : null;
+    markets = V && window.HaloMarkets ? HaloMarkets.create(G, { changed: () => schedulePaint() }) : null;
     build(); window.MCC_SHELL?.haloReady();
     setMapFocus(false);
     hud = V && window.HaloHud ? HaloHud.mount(V, ui.hudHost) : null;
@@ -1280,12 +1293,13 @@
     if (marks) { V.scene.primitives.remove(marks.points); V.scene.primitives.remove(marks.labels); marks = null; }
     if(G.objects)G.objects.stop();
     if (layers) layers.destroy();
+    if (markets) markets.destroy();
     if (vision) vision.destroy();
     if (hud) hud.destroy();
     if (data) data.destroy();
     if (saved) { if (V.scene.skyBox && saved.sky !== null) V.scene.skyBox.show = saved.sky; V.scene.backgroundColor = saved.bg; if (G.missions && saved.missions !== null) G.missions.show(saved.missions); saved = null; }
     G.closeSheet(); if (ui.root) ui.root.remove();
-    ui = {}; layers = null; vision = null; hud = null; data = null; sel = null; mapFocus = false;
+    ui = {}; layers = null; markets = null; vision = null; hud = null; data = null; sel = null; mapFocus = false;
     const html = document.documentElement;
     html.classList.remove('halo-on', 'halo-no-map'); delete html.dataset.haloView; delete html.dataset.haloDetail; delete html.dataset.haloMap;
     requestAnimationFrame(() => { try { V.resize(); } catch (e) { /* gone */ } });
