@@ -260,3 +260,25 @@ Remote: review branch tip is recorded by the commit that adds this section (see 
 | Equity Uprise verifiers | PASS |
 
 - **Not done.** No server route, persistence or LMS mastery write. No hex adapter. Pathfinding is the resolver's (none). Objective positions require `battlefield.objectiveTiles`.
+
+### Supplemental handoff (README received 2026-11-02 18:49 UTC)
+
+- **Only the README arrived.** Its eight payloads were **not** in the upload:
+  - `whip/PARTIAL-WHIP-CUSTOMER-SLICE-20261102.md`
+  - `whip/customer_coupon_v1.sql`
+  - `recovery/LYRICS-ACTOR-SAVED-HANDOFF.md`
+  - the three `research/*` audits
+  - `research/data-breach-audio-FINDINGS.md`
+  - `game/CURRENT-OPTIONAL-HINT-CLAUDE-HANDOFF.md`
+  - `SHA256SUMS` and `PROVENANCE.json`
+
+  Nothing is reconstructed from their names. Hash verification (`sha256sum -c SHA256SUMS`) is pending until they arrive.
+- **Direction 1 applied: the sleep timer is removed.**
+  - Removed code: the timer block in `js/label.js`, its CSS in `album.html`, and its two measurement-dictionary rows.
+  - Now Playing's only extra action is License this track (44px).
+  - e2e `now-playing-continuity` 16/16 asserts no timer anywhere; root 1438/1438; Worker 1351/1351 (4 PGlite-gated skips without `PGLITE_DIR`).
+- **Directions 3 and 6** match what is already built: PRIM3 is the artist and Cyber Security Specialist the album (PR #690), and hints are optional (Prim3 `7d6bd316`).
+- **Directions 2, 4 and 5** are honoured:
+  - Nothing is described as live.
+  - The Whip showcase credit and artwork are untouched; no fee, percentage or payout is set.
+  - No lyric or actor patch is described as recovered.

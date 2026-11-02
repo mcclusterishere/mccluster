@@ -3,8 +3,8 @@
    - natural ended -> next: the OPEN sheet's title, artist, credit, license target and lyrics change with the deck,
      with no tap and no timer, and the deck advances exactly once;
    - manual next/previous update the sheet synchronously;
-   - the sheet's extra actions are License this track and the sleep timer only (no studio booking, no catalog link),
-     and the timer says what it will do and can be turned off;
+   - the sheet's extra action is License this track only (no studio booking, no catalog link; the sleep timer
+     was removed on the owner's direction 2026-11-02);
    - a license request is saved as a house lead naming the rights holder, and the confirmation does not claim an email.
    album.html has no repeat or shuffle control, so neither is tested.
    PLAYWRIGHT_DIR=<node_modules> node scripts/e2e/now-playing-continuity.e2e.mjs [outDir] */
@@ -107,15 +107,9 @@ const syncPrev=await page.evaluate(()=>{const d=document.getElementById('deck');
 check('manual','Previous updates the sheet synchronously',syncPrev===tracks[1].title,syncPrev);
 /* the extra actions */
 const doors=await page.evaluate(()=>[...document.querySelectorAll('.now__doors > *')].filter(x=>!x.hidden).map(x=>({id:x.id,text:x.textContent.trim(),href:x.getAttribute('href')})));
-check('actions','only License this track and the sleep timer remain',doors.length===2&&doors[0].id==='ecoLic'&&doors[1].id==='nowNap',doors);
+check('actions','only License this track remains (sleep timer removed, owner 2026-11-02)',doors.length===1&&doors[0].id==='ecoLic',doors);
 check('actions','no studio booking or catalog link on the sheet',!(await page.evaluate(()=>!!document.querySelector('.now__doors a[href*="hire.html"],.now__doors a[href*="catalogue.html"]'))));
-check('actions','the timer says it is off',doors[1]&&doors[1].text==='Sleep timer: off',doors[1]);
-await page.locator('#nowNap').click();await page.locator('#nowNap').click();
-const nap=await page.evaluate(()=>({t:document.getElementById('nowNap').textContent,off:!document.getElementById('nowNapOff').hidden}));
-check('actions','the timer names the stop time and offers Turn off',nap.t==='Stop playback after 30 minutes'&&nap.off,nap);
-await page.locator('#nowNapOff').click();
-const napOff=await page.evaluate(()=>({t:document.getElementById('nowNap').textContent,off:document.getElementById('nowNapOff').hidden}));
-check('actions','Turn off timer turns it off',napOff.t==='Sleep timer: off'&&napOff.off,napOff);
+check('actions','no sleep timer anywhere on the page',!(await page.evaluate(()=>!!document.querySelector('#nowNap,#nowNapOff')||typeof window.MCC_NIGHTCAP!=='undefined')));
 const h=await page.evaluate(()=>[...document.querySelectorAll('.now__doors > *')].filter(x=>!x.hidden).map(x=>x.getBoundingClientRect().height));
 check('actions','the actions are 44px tap targets',h.every(x=>x>=44),h);
 /* license request */
