@@ -17,3 +17,15 @@ body.customer-site { margin:0; background:var(--ink,#0a0807); color:var(--cream,
 #projectCreate input,#artistBindings select { display:block; min-height:44px; width:100%; padding:10px 12px; margin-top:6px; border:1px solid #ffffff55; border-radius:6px; background:#171412; color:inherit; font:inherit; font-size:16px; }
 .site-hub ul { padding-left:20px; overflow-wrap:anywhere; }
 @media(min-width:720px) { .site-hub { padding-top:48px; } .site-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+/* platform access projection (js/platform-access.js): what is allowed, what is not, and why; denied stays visible */
+.pa-caps { display:grid; gap:6px; margin:8px 0; }
+.pa-cap { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 10px; align-items:baseline; padding:8px 10px; border-radius:10px; background:rgba(255,255,255,.04); }
+.pa-cap small { grid-column:1 / -1; opacity:.8; }
+.pa-cap__state { font-weight:700; }
+.pa-cap.is-denied { opacity:.72; }
+.pa-cap.is-denied .pa-cap__state { color:#f7cd86; }
+.pa-cap.is-allowed .pa-cap__state { color:#9ef0c4; }
+.pa-note, .pa-hosting, .pa-domain, .pa-trial { margin:6px 0; }
+.pa-actions { display:grid; gap:8px; margin-top:8px; }
+.pa-result form, .site-card form { display:grid; gap:8px; }
+.site-card select, .pa-actions select { font-size:max(16px,1rem); max-width:100%; }

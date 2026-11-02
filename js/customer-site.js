@@ -89,6 +89,7 @@
       });
     }
     action(actions(c), 'Plans & seller setup', 'customer-commerce.html');
+    renderAccess(grid, result);
     var domains = card(grid, 'Your domain');
     domains.appendChild(el('p', 'Connect a domain you own and check ownership, DNS, and HTTPS status. Domain purchase and renewal availability is shown there.'));
     action(actions(domains), 'Manage domains', 'customer-domains.html');
@@ -99,6 +100,31 @@
     var world = card(grid, 'Share in World');
     world.appendChild(el('p', 'Post to the site’s World feed. External social connections and publishing have separate setup and provider requirements.'));
     action(actions(world), 'Open World', 'mnet.html?view=feed');
+  }
+  /* what each workspace may use now, from the server's projection (js/platform-access.js); never inferred */
+  function renderAccess(grid, entitlement) {
+    var PA = window.MCC_PLATFORM_ACCESS; if (!PA) return;
+    var c = card(grid, 'Platform access');
+    c.appendChild(el('p', 'Per workspace and app: what is yours already, what an included platform month or a paid subscription covers, and what is not available. Checked on the server; nothing here is a promise.'));
+    var workspaces = entitlement.ok && entitlement.data && Array.isArray(entitlement.data.workspaces) ? entitlement.data.workspaces.filter(function (w) { return w && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(w.org_id); }) : [];
+    if (!workspaces.length) { c.appendChild(el('p', 'No workspace yet. A workspace is created with a paid plan or an included platform month; your free front page needs neither.', 'site-status')); return; }
+    var form = el('form'), ws = el('select'), app = el('select'), go = el('button', 'Check access', 'site-action'), out = el('div', '', 'pa-result');
+    ws.setAttribute('aria-label', 'Workspace'); app.setAttribute('aria-label', 'App'); go.type = 'submit';
+    workspaces.forEach(function (w) { var o = el('option', 'Workspace ' + w.org_id); o.value = w.org_id; ws.appendChild(o); });
+    var loading = el('option', 'Loading apps…'); loading.value = ''; app.appendChild(loading); app.disabled = true;
+    form.append(ws, app, go); c.append(form, out);
+    var mySession = window.MCC.session();
+    PA.apps(controller.signal).then(function (apps) {
+      app.replaceChildren();
+      if (!apps || !apps.length) { var none = el('option', 'App catalogue unavailable'); none.value = ''; app.appendChild(none); return; }
+      apps.forEach(function (a) { if (!/^[a-z0-9][a-z0-9._-]{1,99}$/.test(a.app_key || '')) return; var o = el('option', a.name || a.app_key); o.value = a.app_key; app.appendChild(o); });
+      app.disabled = false;
+    });
+    form.onsubmit = function (e) {
+      e.preventDefault(); if (!app.value) return; go.disabled = true; out.replaceChildren(el('p', 'Checking…'));
+      var s = window.MCC.session(); if (!s || !s.access_token) { out.replaceChildren(el('p', 'Sign in again to check access.')); go.disabled = false; return; }
+      PA.access(s.access_token, app.value, ws.value, controller.signal).then(function (r) { if (window.MCC.session() !== mySession && (window.MCC.session() || {}).access_token !== s.access_token) return; PA.render(out, r, {}); }).then(function () { go.disabled = false; });
+    };
   }
   function renderModules(result, token, id) {
     var c=card(root,'Website modules');
