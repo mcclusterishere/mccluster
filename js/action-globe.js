@@ -626,7 +626,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}});loadNewsHeat();loadMembers()}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});loadNewsHeat();loadMembers()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
@@ -980,7 +980,7 @@ function haloSync(){const owner=isOwner()&&!ANALYTICS&&EDITORIAL,door=$('ctlHalo
  if(HALO_OPEN===null)return;
  if(window.HaloConsole){HaloConsole.mount(window.HuGlobe,{view:HALO_VIEW});return}
  /* the view lays the Earth out by its stylesheet, so the styles land before the view mounts */
- if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css'].map(haloStyle)))
+ if(!haloLoad){haloLoad=['js/halo/events.js','js/halo/objects.js','js/halo/vision.js','js/halo/hud.js','js/halo/layers.js','js/halo/data.js','js/halo/chart.js','js/halo/markets.js','js/halo/halo.js'].reduce((p,src)=>p.then(()=>haloScript(src)),Promise.all(['css/halo.css','css/halo-hud.css','css/halo-markets.css'].map(haloStyle)))
    .then(()=>haloSync(),e=>{haloLoad=null;try{console.warn('[halo] '+(e&&e.message||e))}catch(_){}})}}
 /* what the Halo console may use of this globe; nothing here widens what the owner's session can read */
 window.HuGlobe=Object.freeze({
