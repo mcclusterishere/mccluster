@@ -4,6 +4,7 @@ import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from '.
 import whip from './whip/booking-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
+import { handleMissionDrafts, MISSION_DRAFTS_PATH } from './prim3/mission-drafts.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
@@ -146,6 +147,11 @@ export default {
 
       if (path === '/v1' && request.method === 'GET') {
         return reply(request, env, CATALOG);
+      }
+
+      /* PRIM3 mission drafts from a stored headline: owner only, queued on Core (./prim3/mission-drafts.js) */
+      if (path === MISSION_DRAFTS_PATH || path.startsWith(MISSION_DRAFTS_PATH + '/')) {
+        return handleMissionDrafts(request, env, { requireHouseOwner });
       }
 
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
