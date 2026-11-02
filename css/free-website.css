@@ -1,0 +1,50 @@
+/* The song-led door to the free builder (free-website.html, js/free-website.js). Phone first: one column at 390px,
+   room added from 720px and 1100px. min-width queries only; minmax(0,1fr); controls at max(16px,1rem). */
+.free-website{background:#0b0908;color:#f5efe6}
+.fw{display:grid;gap:28px;max-width:1100px;margin:0 auto;padding:20px 16px 150px;font:16px/1.55 system-ui,sans-serif}
+.fw h1,.fw h2,.fw h3{margin:0}
+.fw-hero{display:grid;gap:14px}
+.fw-eyebrow{margin:0;color:#e5383b;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.fw-eyebrow em{font-style:italic;letter-spacing:0;text-transform:none}
+.fw-title{font:400 clamp(2.4rem,11vw,5rem)/.95 "Anton",Impact,sans-serif;letter-spacing:.01em;text-transform:uppercase}
+.fw-title span{color:#e5383b}
+.fw-lede{margin:0;max-width:40rem;color:#d8cfc3;font-size:17px}
+.fw-sound{display:grid;gap:10px;padding:14px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.03)}
+.fw-note{margin:0;color:#b9ada0;font-size:13px}
+.fw-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 18px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.05);color:#f5efe6;font:700 max(16px,1rem)/1.2 system-ui,sans-serif;text-decoration:none;cursor:pointer;overflow-wrap:anywhere;text-align:center}
+.fw-btn--primary{background:#e5383b;border-color:#e5383b;color:#fff}
+.fw-btn--ghost{background:transparent}
+.fw-btn--sound[aria-pressed="true"]{background:#e5383b;border-color:#e5383b;color:#fff}
+.fw-btn:focus-visible{outline:3px solid #f7cd86;outline-offset:3px}
+.fw-sound .fw-btn{width:100%}
+.fw-captions{min-height:1.6em;color:#f7cd86;font-size:15px}
+.fw-lyrics{display:grid;gap:4px;max-height:16rem;overflow:auto;padding:10px;border-radius:10px;background:rgba(0,0,0,.35);color:#d8cfc3;font-size:14px}
+.fw-lyrics[hidden]{display:none}
+.fw-lyrics p{margin:0}
+.fw-actions{display:grid;gap:10px}
+.fw-demo,.fw-pick,.fw-truth{display:grid;gap:12px}
+.fw-demo p,.fw-pick p{margin:0;color:#d8cfc3}
+.fw-templates{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.fw-template{display:grid;gap:10px;padding:16px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.03)}
+.fw-template p{margin:0;color:#d8cfc3;font-size:15px}
+.fw-template .fw-btn{width:100%}
+.fw-facts{margin:0;padding:0 0 0 1.1em;display:grid;gap:8px;color:#d8cfc3}
+.fw-facts code{font-size:.92em}
+.fw-foot{color:#b9ada0;font-size:13px}
+.fw-foot a{color:#f5efe6}
+@media (min-width:720px){
+  .fw{padding:32px 24px 160px}
+  .fw-sound{grid-template-columns:auto auto minmax(0,1fr);align-items:center}
+  .fw-sound .fw-btn{width:auto}
+  .fw-sound .fw-note{grid-column:3}
+  .fw-captions,.fw-lyrics,.fw-sound audio{grid-column:1 / -1}
+  .fw-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fw-templates{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (min-width:1100px){
+  .fw{gap:40px}
+  .fw-hero{grid-template-columns:minmax(0,3fr) minmax(0,2fr);align-items:end}
+  .fw-hero .fw-eyebrow,.fw-hero .fw-title,.fw-hero .fw-lede{grid-column:1}
+  .fw-hero .fw-sound{grid-column:2;grid-row:1 / span 3;align-self:center}
+}
+@media (prefers-reduced-motion:no-preference){.fw-btn--primary{transition:transform .15s ease}.fw-btn--primary:hover{transform:translateY(-1px)}}

@@ -17,7 +17,11 @@
   var ownPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/edit" : "/v1/fronts/me";
   var publishedPath = projectMode ? "/v1/projects/" + encodeURIComponent(projectSlug || "") + "/published" : "/v1/fronts/me/published";
   var editorReturn = projectMode ? "project-studio.html?project=" + encodeURIComponent(projectSlug || "") : "front-studio.html";
-  var offersTemplate=new URLSearchParams(location.search).get('template')==='offers';
+  /* the template chosen on the song-led door (free-website.html) survives sign-in in the return URL; the stored intent
+     is a fallback for a return that lost its query, and is cleared once it has been honoured */
+  var kept='';try{kept=w.sessionStorage.getItem('free-website-intent')||'';}catch(_){}
+  var offersTemplate=new URLSearchParams(location.search).get('template')==='offers'||(!new URLSearchParams(location.search).has('template')&&kept==='offers');
+  try{if(kept)w.sessionStorage.removeItem('free-website-intent');}catch(_){}
   if(offersTemplate)editorReturn+=(editorReturn.indexOf('?')>=0?'&':'?')+'template=offers';
   function publicUrl(handle) { return projectMode ? "front.html?project=" + encodeURIComponent(projectSlug) : "front.html?u=" + encodeURIComponent(handle); }
 

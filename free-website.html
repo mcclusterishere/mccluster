@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Build yourself a free website · Matthew McCluster</title>
+  <meta name="description" content="The page you are hearing Antisocial on was built with the same tools you get with a free M Account: your words, your media, your own page at a McCluster address.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/free-website.css?v=__STAMP__">
+  <!-- Antisocial · I AM HERE (QT6KV2600005) is Matthew McCluster's own recording, played from this repository's
+       assets/audio/antisocial.mp3 with its own captions (assets/captions/antisocial.en.vtt). It is a front door to
+       Matthew's house (AGENTS.md → two properties); the builder it points to is the McCluster Platform's.
+       No campaign, spend or ad publication is authorised by this page existing: docs/productization/20261102-claude/ANTI-SOCIAL-CAMPAIGN.md -->
+  <script defer src="js/backend.js?v=__STAMP__"></script>
+  <script defer src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/free-website.js?v=__STAMP__"></script>
+</head>
+<body class="free-website">
+  <a class="skip" href="#main">Skip to content</a>
+  <main id="main" class="fw">
+    <header class="fw-hero">
+      <p class="fw-eyebrow">Antisocial · from <em>I AM HERE</em> · Matthew McCluster</p>
+      <h1 class="fw-title">Build yourself a <span>free website.</span></h1>
+      <p class="fw-lede">This song plays on a page Matthew built himself: words, films, a 360 room, a soundtrack. The same editor is yours with a free M Account. Your page, at a McCluster address, until you want more.</p>
+      <div class="fw-sound" id="fwSound">
+        <button type="button" class="fw-btn fw-btn--sound" id="fwPlay" aria-pressed="false" aria-describedby="fwSoundNote">Play Antisocial</button>
+        <button type="button" class="fw-btn fw-btn--ghost" id="fwTranscript" aria-expanded="false" aria-controls="fwLyrics">Show the words</button>
+        <p class="fw-note" id="fwSoundNote">Sound starts only when you press play. Captions come from the song's own caption file.</p>
+        <audio id="fwAudio" preload="none" crossorigin="anonymous">
+          <source src="assets/audio/antisocial.mp3" type="audio/mpeg">
+          <track kind="captions" src="assets/captions/antisocial.en.vtt" srclang="en" label="English" default>
+        </audio>
+        <div class="fw-captions" id="fwCaptionLine" aria-live="polite"></div>
+        <section class="fw-lyrics" id="fwLyrics" hidden aria-label="Words of Antisocial, from its caption file"></section>
+      </div>
+    </header>
+
+    <section class="fw-demo" aria-labelledby="fwDemoTitle">
+      <h2 id="fwDemoTitle">See the real thing first</h2>
+      <p>Not a mock-up: the live page every visitor gets, and the three-tile demonstration built with the same template you can use.</p>
+      <div class="fw-actions">
+        <a class="fw-btn" href="index.html" data-cta="free-website-demo-front">Open Matthew's front page</a>
+        <a class="fw-btn fw-btn--ghost" href="website-studio.html" data-cta="free-website-demo-tiles">Open the three-tile demonstration</a>
+      </div>
+    </section>
+
+    <section class="fw-pick" aria-labelledby="fwPickTitle">
+      <h2 id="fwPickTitle">Choose how your page starts</h2>
+      <p>Pick a template now. Sign in or create your M Account next; you come straight back to the editor with this choice kept.</p>
+      <div class="fw-templates" role="list">
+        <article class="fw-template" role="listitem">
+          <h3>Cinematic front</h3>
+          <p>Matthew's layout: your opening film, scene films, a 360 room, a soundtrack and your links. Your browser cuts your videos into frames; nothing is sent away to be processed.</p>
+          <a class="fw-btn fw-btn--primary" href="account.html?next=front-studio.html" data-template="cinematic" data-cta="free-website-start-cinematic">Start with the cinematic front</a>
+        </article>
+        <article class="fw-template" role="listitem">
+          <h3>Words, images and offers</h3>
+          <p>A headline, an introduction, up to six offers with images and links. No paid plan and no media preparation allowance needed.</p>
+          <a class="fw-btn fw-btn--primary" href="account.html?next=front-studio.html%3Ftemplate%3Doffers" data-template="offers" data-cta="free-website-start-offers">Start with words and offers</a>
+        </article>
+        <article class="fw-template" role="listitem">
+          <h3>Three tiles</h3>
+          <p>Music, a native video and a 360 panorama as three tiles. Lives on a named project; media preparation has its own allowance, shown in your dashboard before you need it.</p>
+          <a class="fw-btn fw-btn--primary" href="account.html?next=customer-projects.html" data-template="tiles" data-cta="free-website-start-tiles">Start with three tiles</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="fw-truth" aria-labelledby="fwTruthTitle">
+      <h2 id="fwTruthTitle">What free means here</h2>
+      <ul class="fw-facts">
+        <li><b>Your account.</b> One free M Account; a handle gives your page its address (<code>front.html?u=you</code>). Your profile must be public for the page to be public; you choose that.</li>
+        <li><b>Your words and media.</b> Uploads count against the storage allowance shown in your dashboard before you upload. What you upload to a public page is public, even while it is a draft.</li>
+        <li><b>Save, preview, publish, take down.</b> Drafts are kept with their history. Publishing is a separate, deliberate step; taking a page down keeps your draft.</li>
+        <li><b>Only you edit it.</b> Another account cannot open or change your page. Building a page does not make anyone a McCluster administrator.</li>
+        <li><b>Optional, separate.</b> A domain of your own and paid modules are optional purchases with their own terms, shown before any charge. Nothing on this page charges you.</li>
+      </ul>
+      <p class="fw-note">How long a first page takes depends on your media and your words; this page makes no promise about that.</p>
+    </section>
+
+    <footer class="fw-foot">
+      <p>Antisocial is Matthew McCluster's recording (I AM HERE, ISRC QT6KV2600005). The editor and hosting are the McCluster Platform, operated by McCluster Corp. <a href="privacy.html">Privacy</a> · <a href="album.html">The album</a> · <a href="matthew-mccluster.html">Matthew</a></p>
+    </footer>
+  </main>
+</body>
+</html>
