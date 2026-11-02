@@ -34,6 +34,8 @@ test('from the squad start, the relay, the gate, both roofs and the extraction p
   assert.ok(can(30, 12, 1), 'B-1 roof by its stair');
   assert.ok(can(8, 28, 1), 'A-2 roof by its stair');
   assert.ok(can(17, 10, 1), 'the skybridge');
+  // every building can be climbed (owner, 2026-11-02): each roof is reachable from the squad's start
+  for (const b of L.SCENE.buildings) assert.ok(b.roof && can(b.x + Math.floor(b.w / 2), b.y + Math.floor(b.d / 2), 1), `${b.id} roof is reachable`);
   assert.ok(can(L.SCENE.extraction.x, L.SCENE.extraction.y), 'the extraction pad');
   assert.ok(cfg.links.every((l) => l.cost >= 1));
 });
@@ -44,6 +46,17 @@ test('the player sees only the squad at the start, and hints report signed coord
   assert.deepEqual(L.toDisplay(L.SCENE.relay.x, L.SCENE.relay.y), { X: -1, Y: 1 });
   const r = knownPaths(p, 'T1');
   assert.ok(r.dist.size > 20);
+});
+
+test('climbing: a stair is a real move onto the roof, and the operative stands up there', () => {
+  let s = start();
+  const st = L.SCENE.stairs.find((x) => x.id === 'b1-stair');
+  s = place(s, 'T1', st.from.x, st.from.y);
+  const r = knownPaths(playerProjection(s), 'T1');
+  const path = r.pathTo(st.to.x, st.to.y, 1);
+  assert.ok(path && path.some((p) => p.z === 1), 'the preview climbs');
+  s = R.moveUnit(s, 'T1', { x: st.to.x, y: st.to.y, z: 1 }, 'MOVE', { path });
+  assert.deepEqual([at(s, 'T1').x, at(s, 'T1').y, at(s, 'T1').z], [st.to.x, st.to.y, 1]);
 });
 
 test('a previewed route is the route the engine walks (preview = execution)', () => {
@@ -101,6 +114,7 @@ test('the page offers the level from the tactics menu, is noindex and never ship
   const page = await readFile(new URL('../../js/prim3-tactics/transit.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(page, /getRandomValues|Math\.random/, 'rolls come only from the engine seed saved with the state');
   assert.match(page, /An unseen shooter/, 'the log never names a hostile the player cannot see');
+  assert.doesNotMatch(page, /pathTo\.length|key\.length/, 'roof taps must pass the floor to the route finder (z is an optional argument, so .length lies)');
   assert.match(page, /hasLineOfSight\(state, a, b\)/, 'the fog of war uses the engine\'s own sight rule');
   assert.match(page, /r3\.update\(boardModel\(\)\)/);
   assert.match(page, /p\.units\.filter\(\(u\) => !extracted\(u\)\)/, 'the board draws only the player projection');

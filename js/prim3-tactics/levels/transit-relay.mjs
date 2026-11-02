@@ -32,14 +32,17 @@ export const SCENE = {
     { id: 'A-1', label: 'A-1', x: 2, y: 4, w: 12, d: 11, h: 9, roof: true, wall: 'concrete' },
     { id: 'A-2', label: 'A-2', x: 2, y: 22, w: 11, d: 14, h: 8, roof: true, wall: 'concrete', door: { side: 'E', at: 29 } },
     { id: 'B-1', label: 'B-1', x: 22, y: 6, w: 15, d: 13, h: 9, roof: true, wall: 'corrugated', door: { side: 'S', at: 29 } },
-    { id: 'C-3', label: 'C-3', x: 46, y: 3, w: 14, d: 14, h: 13, roof: false, wall: 'concrete' },
-    { id: 'D-4', label: 'D-4', x: 54, y: 51, w: 9, d: 10, h: 6, roof: false, wall: 'corrugated' }
+    { id: 'C-3', label: 'C-3', x: 46, y: 3, w: 14, d: 14, h: 13, roof: true, wall: 'concrete' },
+    { id: 'D-4', label: 'D-4', x: 54, y: 51, w: 9, d: 10, h: 6, roof: true, wall: 'corrugated' }
   ],
   skybridge: { id: 'skybridge', x: 14, y: 10, w: 8, d: 2, h: 9 },
   // stairs: ground foot (z0) ↔ roof landing (z1); cost = movement steps, the climb included
   stairs: [
     { id: 'b1-stair', from: { x: 38, y: 18, z: 0 }, to: { x: 36, y: 15, z: 1 }, cost: 6, side: 'E' },
-    { id: 'a2-stair', from: { x: 7, y: 38, z: 0 }, to: { x: 7, y: 35, z: 1 }, cost: 6, side: 'S' }
+    { id: 'a2-stair', from: { x: 7, y: 38, z: 0 }, to: { x: 7, y: 35, z: 1 }, cost: 6, side: 'S' },
+    // every building is climbable (owner, 2026-11-02): a tall ladder up C-3, a stair up D-4
+    { id: 'c3-ladder', from: { x: 44, y: 12, z: 0 }, to: { x: 46, y: 12, z: 1 }, cost: 7, side: 'W', kind: 'ladder' },
+    { id: 'd4-stair', from: { x: 52, y: 57, z: 0 }, to: { x: 54, y: 57, z: 1 }, cost: 5, side: 'W' }
   ],
   containers: [
     { id: 'c-west', x: 16, y: 37, w: 5, d: 2, h: 2.6, color: 0x8e4a33 },
