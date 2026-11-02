@@ -1,0 +1,8 @@
+{
+  "name": "@electric-sql/pglite",
+  "version": "0.0.0-native-shim",
+  "description": "Native PostgreSQL (psql) stand-in for the PGlite surface used by McCluster SQL fixtures. Not PGlite.",
+  "main": "index.cjs",
+  "license": "MIT",
+  "private": true
+}

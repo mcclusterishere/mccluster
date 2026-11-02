@@ -4731,9 +4731,9 @@ ok 788 - a rollback deletes uploads only when no saved release still uses them
   duration_ms: 1.837217
   type: 'test'
   ...
-# (node:5987) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/wt/whole/supabase/functions/_shared/music-direct.ts is not specified and it doesn't parse as CommonJS.
+# (node:5987) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file://<repo>/supabase/functions/_shared/music-direct.ts is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-# To eliminate this warning, add "type": "module" to /home/claude/wt/whole/package.json.
+# To eliminate this warning, add "type": "module" to <repo>/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: the order's own paid platform session fulfils it
 ok 789 - the order's own paid platform session fulfils it
@@ -4873,9 +4873,9 @@ ok 811 - the buyer is told the real format: the file is delivered unconverted
   duration_ms: 3.81022
   type: 'test'
   ...
-# (node:5998) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/wt/whole/supabase/functions/_shared/checkout-binding.ts is not specified and it doesn't parse as CommonJS.
+# (node:5998) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file://<repo>/supabase/functions/_shared/checkout-binding.ts is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-# To eliminate this warning, add "type": "module" to /home/claude/wt/whole/package.json.
+# To eliminate this warning, add "type": "module" to <repo>/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a paid platform session that is the order's own fulfils it
 ok 812 - a paid platform session that is the order's own fulfils it
@@ -5207,9 +5207,9 @@ ok 866 - root owns one auth provider across all routes
   duration_ms: 0.848122
   type: 'test'
   ...
-# (node:6027) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/wt/whole/native/src/sessionPolicy.ts is not specified and it doesn't parse as CommonJS.
+# (node:6027) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file://<repo>/native/src/sessionPolicy.ts is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-# To eliminate this warning, add "type": "module" to /home/claude/wt/whole/native/package.json.
+# To eliminate this warning, add "type": "module" to <repo>/native/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a failed proof submission discards only an upload nothing references
 ok 867 - a failed proof submission discards only an upload nothing references
@@ -6454,9 +6454,9 @@ ok 1073 - Control has the owner view of the answers
   duration_ms: 3.080742
   type: 'test'
   ...
-# (node:6905) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/wt/whole/supabase/functions/stripe-webhook/commerce.ts is not specified and it doesn't parse as CommonJS.
+# (node:6905) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file://<repo>/supabase/functions/stripe-webhook/commerce.ts is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-# To eliminate this warning, add "type": "module" to /home/claude/wt/whole/package.json.
+# To eliminate this warning, add "type": "module" to <repo>/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a paid offering checkout maps to one ledger record
 ok 1074 - a paid offering checkout maps to one ledger record

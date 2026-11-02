@@ -18,7 +18,7 @@ Status words used below, as WHOLE-SITE-ACCEPTANCE.md defines them: `uninspected`
 ## Session gates (environment, not product)
 
 - npm and PyPI registries are refused by this session's egress policy (DNS fails; proxy 403). Consequences: the pinned PGlite tools could not be installed; 4 Worker test files that import `@cfworker/json-schema` / `@fal-ai/client` fail to load (`cloudflare-registration`, `registration-contact-vault`, `travel-routing`, one `observability-instrumentation` case). They are dependency-load failures, not source regressions (same code passed 1,338/0 in the v4 run with dependencies present).
-- In their place: `scripts/test/pg-native-shim` is a psql-backed stand-in for the four PGlite calls the fixtures use, run against a disposable local PostgreSQL 16 cluster. Evidence produced through it is **native PostgreSQL**, labelled as such, never "PGlite". `domain-purchase-native.py` gained a `--local` mode equal to the other three native drivers (Docker daemon absent here).
+- In their place: `scripts/test/pg-native-shim` (source `pglite/index.cjs`, linked into a gitignored `node_modules` path by `link.sh`) is a psql-backed stand-in for the four PGlite calls the fixtures use, run against a disposable local PostgreSQL 16 cluster. Evidence produced through it is **native PostgreSQL**, labelled as such, never "PGlite". `domain-purchase-native.py` gained a `--local` mode equal to the other three native drivers (Docker daemon absent here).
 - Cloudflare: the connected MCP server is the deprecated bindings server and returns only the Worker's name/id, so the deployed-binding inspection could not be refreshed; the v4 read-only evidence (`../20261102-domain/evidence/deployed-binding-metadata.json`, 18 candidate bindings absent, 03:30 UTC) stands and is cited, not restated as new.
 - Playwright absent → `scripts/e2e/cdp-lite.mjs` drives Chrome for Testing 153 over raw CDP for the 390px proof.
 
@@ -28,7 +28,7 @@ Status words used below, as WHOLE-SITE-ACCEPTANCE.md defines them: `uninspected`
 |---|---|---|
 | Root `node --test scripts/test/*.test.mjs` | **1,384 / 1,384** | includes 7 new harnesses (front-studio 10, Control front page 6, inline editor 3, Studio bridge 7, proposal 5, platform access 5, member fronts 4) and the validator-copy parity test |
 | Root Python | 7 / 7 | |
-| Worker `npm test` (with shim, formerly skipped PGlite suites executed) | 1,309 / 1,313 | 4 dependency-load failures (above) |
+| Worker `npm test` (with shim, formerly skipped PGlite suites executed) | **1,309 passed · 4 failed (dependency-load, not source) · 0 skipped** of 1,313 — not a fully passing run | the 4 are `test/cloudflare-registration.test.mjs`, `test/registration-contact-vault.test.mjs`, `test/travel-routing.test.mjs` (cannot resolve `@cfworker/json-schema`) and one `observability-instrumentation` case (`fal gateway client is not installed`); they pass where `npm ci` can reach the registry (v4 evidence: 1,338/0) |
 | `editor-versioned-db.mjs` | 144 assertions PASS (free-builder journey + editor contract) | native PG via shim |
 | `tile-editor-bridge-db.mjs` | 57 PASS | native PG via shim |
 | `domain-trial-db.mjs` | 103 SQL/Worker assertions PASS | native PG via shim |

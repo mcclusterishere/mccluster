@@ -3,10 +3,13 @@
 A drop-in for the tiny `@electric-sql/pglite` surface the SQL fixtures use (`new PGlite()`, `exec`, `query`, `close`, `error.code`), backed by a **real local PostgreSQL** through a persistent `psql` session per instance. Use it when the npm registry is unreachable but `psql` and a disposable localhost cluster exist.
 
 ```sh
+sh scripts/test/pg-native-shim/link.sh      # links ./pglite into a gitignored node_modules path
 # disposable cluster (never an operational server)
 PGHOST=127.0.0.1 PGUSER=postgres PGLITE_DIR="$PWD/scripts/test/pg-native-shim/node_modules" \
   node scripts/test/editor-versioned-db.mjs
 ```
+
+The source is `pglite/index.cjs` (committed); `node_modules/` here is only the link target and is gitignored.
 
 Each `PGlite` instance creates and drops its own `shim_<random>` database. Only `localhost` / `127.0.0.1` / `::1` is accepted; `PGSERVICE`, `PGSERVICEFILE` and `PGHOSTADDR` are refused.
 
