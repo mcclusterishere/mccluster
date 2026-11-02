@@ -108,6 +108,17 @@ Rollback files sit beside the ones that have them.
 
 ## 3. Fixes and performance, no caller change
 
+**Unapplied branch correction, 2026-11-01:** `music_lyric_revisions_v1.sql` needs
+`20261030001000_music_release_payment_integrity_v1.sql` and the existing
+`control_authorize_service` contract first. Unlike the performance entries
+below, it has new callers: `music_lyrics_get`, `music_lyrics_save`,
+`music_lyrics_export`. Review/apply SQL before the corresponding `music-access`
+function and Control editor release; without it those operations return an
+explicit unavailable response. Private append-only history and public payload
+cleanup are tested against a disposable database with the real release guard
+by `scripts/test-music-lyric-revisions-db.mjs`. This branch authorizes no
+production SQL, merge or deployment.
+
 | File | What | Proof |
 |---|---|---|
 | `action_bounty_claim_existing_row_guard_v1.sql` | replaces `claim_action_bounty()` so an aggregate `SELECT INTO` cannot fake an existing claim | `scripts/test-action-bounty-claim-db.sh` (also `.github/workflows/bounty-claim-guard-db.yml`) |

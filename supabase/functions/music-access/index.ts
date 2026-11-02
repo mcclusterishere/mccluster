@@ -1,4 +1,4 @@
-import { lyricSnapshot, saveLyricRevision } from './lyrics-revisions.ts';
+import { getLyricRevision, saveLyricRevision, exportApprovedLyricRevision } from './lyrics-revisions.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { DependencyMissing, purchasedDownload, recordUpload, streamTarget, type MusicDb } from "./delivery.ts";
@@ -184,18 +184,20 @@ Deno.serve(async (req) => {
     }
 
     // Owner lyric authoring, reconciled from PR 684 into this existing service.
-    if (action === "operator-lyrics-get" || action === "operator-lyrics-save") {
+    if (action === "operator-lyrics-get" || action === "operator-lyrics-save" || action === "operator-lyrics-export") {
       if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
       const trackId = clean(body.track_id, 80);
       if (!trackId) return json({ error: "track_id required" }, 400);
       try {
         if (action === "operator-lyrics-save") return json({ ok: true, ...await saveLyricRevision(admin, trackId, body, who.user.id) });
+        if (action === "operator-lyrics-export") return json({ ok: true, ...await exportApprovedLyricRevision(admin, trackId, body, who.user.id) });
+        const snapshot = await getLyricRevision(admin, trackId, who.user.id);
         const { data: t, error } = await admin.from("creator_tracks")
-          .select("id,title,artist,lyrics,master_bucket,master_path,audio_url,updated_at").eq("id", trackId).maybeSingle();
+          .select("id,title,artist,master_bucket,master_path,audio_url").eq("id", trackId).maybeSingle();
         if (error) throw error;
         if (!t) return json({ error: "track not found" }, 404);
         const listen = t.master_bucket && t.master_path ? await signDownload(t.master_bucket, t.master_path, undefined, 900) : (t.audio_url || null);
-        return json({ ok: true, track_id: t.id, ...await lyricSnapshot(t.lyrics), expected_updated_at: t.updated_at, listen_url: listen });
+        return json({ ok: true, ...snapshot, listen_url: listen });
       } catch (error) {
         if (error && typeof error === "object" && "status" in error) return json({error: String((error as Error).message)}, Number(error.status));
         throw error;

@@ -6,6 +6,7 @@ on:
     paths:
       - 'supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql'
       - 'supabase/pending/music_release_payment_integrity_v1.rollback.sql'
+      - 'supabase/pending/music_lyric_revisions_v1.sql'
       - 'supabase/migrations/20260920041011_music_creator_platform_v1.sql'
       - 'supabase/migrations/20260920041250_music_commerce_v1.sql'
       - 'supabase/tests/music_release_payment_integrity.*.sql'
@@ -21,6 +22,10 @@ on:
       - 'supabase/functions/l3-download/**'
       - 'js/music-admin.js'
       - 'scripts/test-music-release-integrity-db.sh'
+      - 'scripts/test-music-lyric-revisions-db.mjs'
+      - 'scripts/test/music-lyric-db-fixture.mjs'
+      - 'scripts/test/lyrics-revisions.test.mjs'
+      - 'js/control-room/lyrics-review.js'
       - 'scripts/test/music-payment-integrity.test.mjs'
       - '.github/workflows/music-release-integrity-db.yml'
   workflow_dispatch:
@@ -57,3 +62,11 @@ jobs:
         run: node --test scripts/test/music-payment-integrity.test.mjs
       - name: Isolated PostgreSQL guards, storage policies and backfill
         run: bash scripts/test-music-release-integrity-db.sh
+      - name: Install isolated lyric SQL test dependency
+        run: npm install --prefix "$RUNNER_TEMP/lyric-db-tools" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.10
+      - name: Private lyric revisions and public projection
+        env:
+          PGLITE_MODULE_PATH: ${{ runner.temp }}/lyric-db-tools/node_modules/@electric-sql/pglite/dist/index.js
+        run: |
+          node --test scripts/test/lyrics-revisions.test.mjs
+          node scripts/test-music-lyric-revisions-db.mjs

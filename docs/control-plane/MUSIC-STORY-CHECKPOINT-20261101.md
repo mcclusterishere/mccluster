@@ -2,13 +2,32 @@
 
 This extends the existing Control music view and `front.html` landing engine. No separate music editor or show backend is added. Source changes remain local; live persistence, audio listening and publishing are not claimed.
 
+**Corrective checkpoint:** the initial embedded lyric-history design below was
+replaced before release after independent review. See
+[Lyric history correction](LYRIC-HISTORY-CORRECTION-20261101.md). The branch is
+published for source review; it is not deployed. Private history SQL remains
+unapplied and is a prerequisite for the corrected lyric endpoints.
+
 ## Lyrics
 
 `control.html#create:music` → Lyrics mounts `CR.lyricsReview` and `js/lyrics-sync.js` from the inspected PR 684, with narrow integration and correction safety. PRs 684–687 were not merged wholesale. The review section now uses the existing `operator-review-prepare` flow, and sends the backend-required timestamp and pinned master hash with Publish. A lyric save clears any prior prepared approval in Control.
 
-Uploaded release edits use the existing `creator_tracks.lyrics` JSON and owner-only `music-access` actions. Read returns revision, content hash and release timestamp. Save checks all three and uses a timestamp compare-and-swap. History is retained inside the same existing JSON field, with an explicit storage bound. No master/audio column is updated. Word or timing changes clear the reviewed mark. Retimed words after a changed word count are explicitly estimated until the owner listens and reviews.
+Uploaded release edits use existing `music-access` actions and a protected
+append-only `private.music_lyric_revisions` store. `creator_tracks.lyrics`
+contains only the current public playback projection, with no review authority
+or history. Read returns revision, content hash and release timestamp. Save
+checks all three under the track row lock; approval metadata is bound to the
+authorized actor outside the lyric payload. No master/audio column is updated.
+Word or timing changes clear the reviewed mark. Retimed words after a changed
+word count are explicitly estimated until the owner listens and reviews.
 
-Approved exports select a saved approved revision, including a historical one, and carry its revision/hash/track ID. Working changes are excluded. Draft download and download-before-reload preserve unsaved corrections. Shelf tracks remain repository files: their corrected JSON is downloaded for a reviewed repo edit, not silently published or falsely reported as a backend save. Automatic alignment/stem generation is not enabled by this slice; those unmerged Core/schema changes still need reconciliation before activation.
+Approved exports are fetched through an authorized server endpoint that checks
+the selected immutable revision, its approval and expected hash. Browser-held
+history and reviewed flags are never authority. Working changes are excluded.
+Draft download and download-before-reload preserve unsaved corrections. Shelf
+tracks remain repository files: their corrected JSON is downloaded for a
+reviewed repo edit, not silently published or falsely reported as a backend
+save. Automatic alignment/stem generation is not enabled by this slice.
 
 Coverage on inspected main catalog: **20 tracks; 8 timed lyric files, 2 plain-only files, 10 unwired**. This counts file wiring only. Neither existing timing nor word correctness was audited by listening to every recording. PR 687's additional tracks remain unmerged here.
 

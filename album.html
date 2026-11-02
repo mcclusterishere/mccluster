@@ -1033,7 +1033,7 @@
       fetch("data/catalogue.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
       Promise.resolve().then(function () {
         if (!TRACK) return null;
-        return fetch(SB_URL + "/rest/v1/creator_tracks?id=eq." + encodeURIComponent(TRACK) + "&select=*&limit=1", {
+        return fetch(SB_URL + "/rest/v1/creator_tracks?id=eq." + encodeURIComponent(TRACK) + "&select=id,title,artist,audio_url,poster_url,music_video_url,lyrics,lyrics_url,reel,experience&limit=1", {
           headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
         }).then(function (r) { return r.ok ? r.json() : []; })
           .then(function (rows) { return rows && rows[0] ? rows[0] : null; })

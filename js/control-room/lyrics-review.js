@@ -120,7 +120,7 @@
       +(flagged?'<small class="crl-heard">'+(l.heard?"Heard: “"+e(l.heard)+"”":l.added?"Sung, but not on your sheet":"Timing guessed: check it")+(l.sheet?" · your sheet: “"+e(l.sheet)+"”":"")+'</small>':"")
       +(l.timing_estimated?'<small>Word timing was estimated after this edit. Listen before marking reviewed.</small>':'')+'</li>';
   }
-  function approvedVersions(){if(!L.identity)return[];return [{revision:L.identity.revision,hash:L.identity.hash,lyrics:L.saved}].concat(L.identity.history||[]).filter(function(x){return x.lyrics&&x.lyrics.reviewed;});}
+  function approvedVersions(){return L.identity&&Array.isArray(L.identity.approved_versions)?L.identity.approved_versions:[];}
   function editor(){
     if(!L.track)return'<p class="cro-meta">Pick a track to check its lyrics against the music.</p>';
     if(!L.doc)return'<div class="cro-note">'+e(L.msg||"…")+'</div>';
@@ -194,13 +194,17 @@
     var version=root.querySelector('[data-crl-export-revision]');if(version){L.exportRevision=version.value;version.onchange=function(){L.exportRevision=version.value;};}
     var approved=root.querySelector('[data-crl-approved]');if(approved)approved.onclick=function(){
       var selected=approvedVersions().find(function(x){return String(x.revision)===String(L.exportRevision);});if(!selected){say('Save and approve a revision before exporting it.');return;}
-      var doc=JSON.parse(JSON.stringify(selected.lyrics));doc._revision={number:selected.revision,sha256:selected.hash,track_id:L.track.id};
-      var a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(doc,null,2)+'\n'],{type:'application/json'}));a.href=url;a.download='lyrics-approved-r'+selected.revision+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);say('Exported saved approved revision '+selected.revision+'. Working changes were excluded.');
+      lock(true);var gen=L.gen,trackId=L.track.id;
+      musicCall('operator-lyrics-export',{track_id:trackId,revision:selected.revision,expected_hash:selected.hash}).then(function(j){
+        if(gen!==L.gen)return;var doc=j.lyrics;
+        if(!doc||!doc._revision||doc._revision.number!==selected.revision||doc._revision.sha256!==selected.hash||doc._revision.track_id!==trackId)throw new Error('Export identity did not match the selected revision');
+        var a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(doc,null,2)+'\n'],{type:'application/json'}));a.href=url;a.download='lyrics-approved-r'+selected.revision+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);say('Exported saved approved revision '+selected.revision+'. Working changes were excluded.');
+      }).catch(function(err){say(err.message||'Export refused');}).finally(function(){lock(false);});
     };
   }
   window.CR.lyricsReview={
     render:function(){return'<div data-crl-host></div>';},
     bind:function(root){var host=root&&root.querySelector("[data-crl-host]");if(!host)return;if(!L.node)paint();host.appendChild(L.node);},
-    state:L,_test:{setText:setText,shift:shift,problems:problems,output:output}
+    state:L,_test:{setText:setText,shift:shift,problems:problems,output:output,approvedVersions:approvedVersions}
   };
 })();

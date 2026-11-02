@@ -3,6 +3,18 @@
 Read `PROMOTION-ORDER.md` (in this folder) for the order in which the files here
 are meant to be applied, what each needs first, and how each is tested.
 
+`music_lyric_revisions_v1.sql` is a **review-only, unapplied** correction for the
+story/studio branch. It requires the existing music release-integrity and
+Control authorization contracts. It moves lyric history/approvals out of the
+creator-writable public row into `private.music_lyric_revisions`, with immutable
+rows and capability-checked service RPCs. Old embedded JSON is retained as
+untrusted private evidence, never imported as approval. Cleanup also removes
+history from `reviewed_snapshot.lyrics`; affected releases return to review.
+No master bytes or paths change. Apply/review the SQL before deploying the
+new lyric endpoints; missing RPCs deliberately fail closed. See
+`docs/control-plane/LYRIC-HISTORY-CORRECTION-20261101.md` for local evidence and
+release gates. No production application is authorized by this file.
+
 `live-callers.json` lists every RPC, table and bucket that shipped code (`js/`,
 root pages, `workers/mccluster/src`, `workers/mccluster-mcp/src`,
 `supabase/functions/`) calls but that is not deployed. Since 2026-10-29 a name

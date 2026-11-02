@@ -318,6 +318,27 @@
         "workers/mccluster/src/music/router.js"
       ]
     },
+    "music_lyrics_export": {
+      "kind": "function",
+      "pending": "music_lyric_revisions_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/lyrics-revisions.ts"
+      ]
+    },
+    "music_lyrics_get": {
+      "kind": "function",
+      "pending": "music_lyric_revisions_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/lyrics-revisions.ts"
+      ]
+    },
+    "music_lyrics_save": {
+      "kind": "function",
+      "pending": "music_lyric_revisions_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/lyrics-revisions.ts"
+      ]
+    },
     "network_audio_assign_speaker": {
       "kind": "function",
       "pending": "20261019235000_network_sfu_audio_rooms.sql",
