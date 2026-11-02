@@ -55,6 +55,8 @@ async function setup(viewport){
   /* music_orders: the first read fails, later reads return whatever MUSIC holds now, so the test can prove Refresh refetches */
   const music={calls:0,rows:MUSIC_FIRST.slice()};
   await ctx.addInitScript(({OWNER})=>{
+    /* record haptics: the Control button ticks once for a tap, twice for a double tap */
+    try{Object.defineProperty(navigator,'vibrate',{configurable:true,value:p=>{(window.__vib=window.__vib||[]).push(p);return true;}});}catch(_){}
     localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     const exp=Math.floor(Date.now()/1000)+3600;
     localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:OWNER,email:'owner@fixture.invalid'})).replace(/=+$/,'')+'.y',refresh_token:'fixture-only',expires_at:exp,user:{id:OWNER,email:'owner@fixture.invalid'}}));
@@ -203,6 +205,40 @@ try{
       if(vp.width===390)await page.screenshot({path:join(OUT,'more-390.png')});
       await page.keyboard.press('Escape');
       check(scope,'Escape closes More',await page.locator('#crMoreSheet').isHidden());
+    }
+    /* THE SHARED BAR'S CONTROL BUTTON (owner, 2026-11-02): one tap opens the sections panel, two taps go to Today */
+    if(vp.width===390){
+      for(const where of ['control','other']){
+        if(where==='other'){await page.goto(BASE+'/license.html',{waitUntil:'domcontentloaded'});}
+        else{await page.goto(BASE+'/control.html#sell:orders:all',{waitUntil:'domcontentloaded'});await settle(page);}
+        await page.waitForSelector('#mccControlToggle',{timeout:20000});
+        await page.evaluate(()=>{window.__vib=[];});
+        await page.locator('#mccControlToggle').click();
+        await page.locator('#mccDestinations:popover-open').waitFor();
+        await page.waitForTimeout(400); /* past the double-tap gap */
+        const panel=await page.evaluate(()=>({ids:[...document.querySelectorAll('#mccSections [data-control-section]')].map(a=>a.dataset.controlSection),nav:CR.nav.NAV.map(s=>s.id),
+          small:[...document.querySelectorAll('#mccSections [data-control-section]')].filter(a=>{const r=a.getBoundingClientRect();return r.height<44||r.width<44;}).length,vib:window.__vib.slice(),
+          badge:document.querySelector('#mccSections [data-control-section="people"] .mcc-section__badge')?.textContent||null}));
+        check(scope+' '+where,'one tap: a haptic tick and the six NAV sections above the bar',JSON.stringify(panel.ids)===JSON.stringify(panel.nav)&&JSON.stringify(panel.vib)==='[10]',panel);
+        check(scope+' '+where,'section targets are at least 44px',panel.small===0,panel.small);
+        if(where==='control')check(scope,'the panel carries Control\'s live People count',panel.badge==='2',panel.badge);
+        check(scope+' '+where,'one bottom bar with the panel open',await page.locator('.appbar').count()===1&&(where!=='control'||await page.locator('#crSections').evaluate(el=>getComputedStyle(el).position!=='fixed')));
+        check(scope+' '+where,'no horizontal overflow with the panel open',await overflow(page)===0,await overflow(page));
+        await page.screenshot({path:join(OUT,where==='control'?'bar-panel-390.png':'bar-panel-other-390.png')});
+        await page.keyboard.press('Escape');
+        check(scope+' '+where,'Escape closes the panel and returns focus to Control',await page.locator('#mccDestinations:popover-open').count()===0&&await page.locator('#mccControlToggle').evaluate(el=>document.activeElement===el));
+        await page.locator('#mccControlToggle').click();await page.locator('#mccDestinations:popover-open').waitFor();await page.waitForTimeout(400);
+        await page.locator('#mccSections [data-control-section="people"]').click();
+        await page.waitForFunction(()=>/\/control\.html$/.test(location.pathname)&&location.hash.startsWith('#people'),null,{timeout:20000});
+        check(scope+' '+where,'choosing People lands on #people…',(await page.evaluate(()=>location.hash)).startsWith('#people'));
+        if(where==='other')await settle(page);
+        if(where==='other'){await page.goto(BASE+'/license.html',{waitUntil:'domcontentloaded'});await page.waitForSelector('#mccControlToggle',{timeout:20000});}
+        await page.evaluate(()=>{window.__vib=[];});
+        await page.locator('#mccControlToggle').dblclick();
+        await page.waitForFunction(()=>/\/control\.html$/.test(location.pathname)&&location.hash==='#home:today',null,{timeout:20000}).catch(()=>{});
+        check(scope+' '+where,'two taps go straight to Control → Today',await page.evaluate(()=>location.pathname.endsWith('/control.html')&&location.hash==='#home:today'),await page.evaluate(()=>location.href));
+        if(where==='control')check(scope,'two taps: a tick then a double tick',JSON.stringify(await page.evaluate(()=>window.__vib))==='[10,[12,40,12]]',await page.evaluate(()=>window.__vib));
+      }
     }
     check(scope,'no console errors',errors.length===0,errors);
     await ctx.close();

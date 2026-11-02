@@ -14,6 +14,15 @@ This avoids shrinking dozens of buttons into one row. Its groups swipe
 horizontally and its destination list scrolls independently; the page and bar
 stay in place.
 
+Owner, 2026-11-02: "you tap it once and it'll open up the bar and then you tap
+it twice, it actually goes to the situation." One tap on the bar's Control
+button gives a light haptic tick and opens the panel, which leads with the six
+Control sections from NAV (with Control's live People and Sell counts when
+Control is the page underneath). Two taps within 350 ms (the World globe's
+double-tap gap) give a double tick and go straight to Control → Home → Today.
+Haptics use `navigator.vibrate` where it exists and are skipped under
+`prefers-reduced-motion`. There is still one bottom bar.
+
 ## One Control navigation definition
 
 Owner, 2026-10-30 (the consolidation mockup: "get that control room under

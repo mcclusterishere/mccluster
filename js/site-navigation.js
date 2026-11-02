@@ -7,7 +7,7 @@
   const {root, house, world, go} = bar.navigation;
   const dock = document.querySelector('.appbar');
   const get = id => document.getElementById(id);
-  let coreReady, panel, profile, installed = false, group = 'All', opening = 0;
+  let coreReady, panel, profile, installed = false, group = 'All', opening = 0, lastControlTap = null;
   // The six Control sections come from NAV (js/control-room/nav.js); Products are the product doors.
   const groups = ['All', 'Home', 'People', 'Sell', 'Create', 'Insights', 'System', 'Products'];
   function element(tag, className, text) {
@@ -51,14 +51,34 @@
     ]);
   }
   function closePanel(focus = false) {
-    ++opening;
+    ++opening; lastControlTap = null; // a double tap is two taps with nothing chosen or closed between them
     if (panel?.matches(':popover-open')) panel.hidePopover();
     const button = get('mccControlToggle');
     button?.setAttribute('aria-expanded', 'false');
     if (focus) button?.focus();
   }
+  /* The six Control sections, straight from NAV, with the live counts Control
+     publishes when it is the page underneath (window.CR.navBadges). */
+  function renderSections() {
+    const host = get('mccSections'), N = window.CR?.nav;
+    if (!host || !N) return;
+    const here = /\/control\.html$/.test(location.pathname) ? window.CR.workspaceCore.resolve(location.hash).section : null;
+    const badges = window.CR.navBadges || {};
+    host.replaceChildren();
+    N.NAV.forEach(section => {
+      const link = element('a', 'mcc-section'); link.href = controlHref(section.route);
+      link.dataset.controlSection = section.id;
+      link.innerHTML = N.icon(section.icon);
+      link.append(element('strong', '', section.label));
+      const count = Number(badges[section.id]) || 0;
+      if (count) { const b = element('span', 'mcc-section__badge', count > 99 ? '99+' : String(count)); b.setAttribute('aria-label', count + ' waiting'); link.append(b); }
+      if (here === section.id) link.setAttribute('aria-current', 'true');
+      host.appendChild(link);
+    });
+  }
   function render() {
     if (!panel) return;
+    renderSections();
     const query = get('mccDestinationSearch').value.trim().toLowerCase();
     const items = entries().filter(item => (group === 'All' || item.group === group) &&
       query.split(/\s+/).every(word => `${item.label} ${item.group} ${item.context} ${item.hash || ''}`.toLowerCase().includes(word)));
@@ -86,8 +106,9 @@
     panel = element('section', 'mcc-destinations'); panel.id = 'mccDestinations';
     panel.setAttribute('popover', 'auto'); panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-label', 'Control destinations');
-    panel.innerHTML = '<header><div><small>CONTROL ROOM</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
+    panel.innerHTML = '<header><div><small>CONTROL ROOM · TAP TWICE FOR TODAY</small><h2>Where do you want to go?</h2></div><button type="button" id="mccDestinationsClose" aria-label="Close destinations">×</button></header>' +
       '<label class="mcc-destinations__search">Find a destination<input id="mccDestinationSearch" type="search" placeholder="People, missions, publishing…" autocomplete="off"></label>' +
+      '<nav class="mcc-sections" id="mccSections" aria-label="Control sections"></nav>' +
       '<div class="mcc-destinations__groups" role="group" aria-label="Destination groups"></div>' +
       '<nav id="mccDestinationList" aria-label="Admin destinations"></nav><p id="mccDestinationCount" role="status" aria-live="polite"></p>';
     groups.forEach(name => {
@@ -109,6 +130,35 @@
         const main = get('crMain'); if (main) {main.tabIndex = -1; main.focus({preventScroll:true});}
       });
     });
+  }
+  /* THE CONTROL BUTTON, ONE TAP AND TWO (owner, 2026-11-02: "you tap it once
+     and it'll open up the bar and then you tap it twice, it actually goes to
+     the situation"). One tap: a light haptic tick and the sections panel,
+     drawn from NAV (js/control-room/nav.js). Two taps inside DOUBLE_TAP_MS
+     (the same 350 ms gap the World's globe double tap uses,
+     js/world-countries.js TAP_GAP): a double tick and straight to Control →
+     Home → Today. The vibration is a no-op where the platform has none, and
+     is skipped when the person asked for reduced motion. */
+  const DOUBLE_TAP_MS = 350;
+  function haptic(pattern) {
+    try {
+      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (_) {}
+  }
+  function controlTap(event) {
+    const now = event && event.timeStamp ? event.timeStamp : performance.now();
+    const double = lastControlTap !== null && now - lastControlTap <= DOUBLE_TAP_MS;
+    lastControlTap = double ? null : now;
+    if (double) {
+      haptic([12, 40, 12]);
+      closePanel();
+      if (!bar.admin()) return;
+      go(controlHref('#home:today'));
+      return;
+    }
+    haptic(10);
+    openPanel();
   }
   async function openPanel() {
     if (panel?.matches(':popover-open')) {closePanel(true); return;}
@@ -138,9 +188,9 @@
       button.id = 'mccControlToggle'; button.dataset.appnav = 'admin-home';
       button.innerHTML = old.innerHTML;
       button.querySelector('span').textContent = 'Control';
-      button.setAttribute('aria-label', 'Open all Control destinations');
+      button.setAttribute('aria-label', 'Control: tap for sections, tap twice for Today');
       button.setAttribute('aria-expanded', 'false'); button.setAttribute('aria-controls', 'mccDestinations');
-      button.setAttribute('aria-haspopup', 'dialog'); button.onclick = openPanel;
+      button.setAttribute('aria-haspopup', 'dialog'); button.onclick = controlTap;
       old.replaceWith(button);
     }
     installed = true; document.body.dataset.adminNavigation = 'ready';

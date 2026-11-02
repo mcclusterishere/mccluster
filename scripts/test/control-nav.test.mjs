@@ -103,3 +103,15 @@ test('every navigation surface reads NAV; none keeps its own list',async()=>{
   assert.doesNotMatch(v2,/\["Work · Inbox"|var SURFACES = \[/);
   assert.ok(N.resolve('#system:overview').entry.leaf.route==='#system:overview'&&polish.includes('#system:overview'),'polish hops to a live NAV route');
 });
+
+test('the shared bar\'s Control button: one tap opens the NAV sections, two taps go to Today, with a haptic tick',async()=>{
+  const [site,css]=await Promise.all([read('js/site-navigation.js'),read('css/site-navigation.css')]);
+  assert.match(site,/button\.onclick = controlTap;/);
+  assert.match(site,/const DOUBLE_TAP_MS = 350;/);
+  assert.match(site,/lastControlTap !== null && now - lastControlTap <= DOUBLE_TAP_MS/,'a first tap right after load is never a double tap');
+  assert.match(site,/go\(controlHref\('#home:today'\)\)/);
+  assert.match(site,/prefers-reduced-motion: reduce\)'\)\.matches\) return;\s*if \(navigator\.vibrate\)/,'haptics respect reduced motion and are optional');
+  assert.match(site,/N\.NAV\.forEach\(section =>/,'the panel\'s sections come from NAV');
+  assert.match(css,/\.mcc-section\{[^}]*min-height:62px/);
+  assert.match(css,/\.mcc-sections\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+});

@@ -2355,6 +2355,8 @@
     var host = $("crSections");
     var current = state.leaf || NAVI.resolve(state.route);
     var sec = current.section ? current.section.id : "home";
+    /* the shared bar's Control panel shows the same counts as the sections */
+    window.CR.navBadges = { people: sectionBadge("people"), sell: sectionBadge("sell") };
     if (host) {
       var items = NAV.map(function (s) {
         var on = s.id === sec, badge = sectionBadge(s.id);
