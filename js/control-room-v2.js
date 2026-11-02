@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "desk-bot", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "front-page", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
+  var CREATE_VIEWS = ["projects", "front-page", "member-fronts", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test", "build"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -827,6 +827,7 @@
     if (["grants", "opportunity-intelligence", "bounties-funding"].indexOf(v) >= 0) return "funding";
     if (["build-code", "code"].indexOf(v) >= 0) return "build";
     if (["front", "site", "homepage", "home-page", "index"].indexOf(v) >= 0) return "front-page";
+    if (["members", "member-front", "moderation", "takedown"].indexOf(v) >= 0) return "member-fronts";
     return "projects";
   }
   function normalizeSystemView(v) {
@@ -1721,6 +1722,8 @@
         ? (window.CR.buildCode ? window.CR.buildCode.render() : empty("Build unavailable", "The native Control module did not load."))
       : state.createView === "front-page"
         ? (window.CR.frontPage ? window.CR.frontPage.render() : empty("Front page unavailable", "The native Control module did not load."))
+      : state.createView === "member-fronts"
+        ? (window.CR.memberFronts ? window.CR.memberFronts.render() : empty("Member fronts unavailable", "The native Control module did not load."))
         : renderSchedule();
     return renderHeader("Create", "Your front page, projects, assets, publishing, channels, music operations, clipping and Equity Uprise campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
@@ -3394,6 +3397,7 @@
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
     if (window.CR.buildCode) window.CR.buildCode.bind($("crSurface"));
     if (window.CR.frontPage) window.CR.frontPage.bind($("crSurface"));
+    if (window.CR.memberFronts) window.CR.memberFronts.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
     var search = $("crWorkSearch");

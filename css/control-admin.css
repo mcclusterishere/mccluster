@@ -143,3 +143,12 @@
 .cfp-revisions li{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);font-size:14px}
 .cfp-revisions small{opacity:.75}
 .cfp-revisions .cr-btn{min-height:36px;padding:6px 12px;margin-left:auto}
+/* member fronts (moderation): one record, one reason, one takedown */
+.cmf{display:grid;gap:12px}
+.cmf-form{gap:8px}
+.cmf-reason{display:grid;gap:4px}
+.cmf-reason textarea{width:100%;min-height:80px;font:400 max(16px,1rem)/1.4 system-ui,sans-serif}
+.cmf-history{margin-top:10px}
+.cmf-revisions{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.cmf-revisions li{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);font-size:14px}
+.cmf-revisions small{opacity:.75}
