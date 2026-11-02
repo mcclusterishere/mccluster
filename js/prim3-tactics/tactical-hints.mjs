@@ -87,10 +87,11 @@ export function stateFingerprint(projection, unitId) {
   return stableHash({ v: HINT_VERSION, unitId, p: projection });
 }
 
-export function bindingKey({ tenantId, playerId, missionId }, projection, unitId) {
+export function bindingKey({ tenantId, playerId, missionId }, projection, unitId, target = null) {
   if (!tenantId || !playerId || !missionId) throw new Error('tenantId, playerId and missionId are required');
   return stableHash({ tenantId: String(tenantId), playerId: String(playerId), missionId: String(missionId),
-    round: projection.round, unitId: String(unitId), fp: stateFingerprint(projection, unitId) });
+    round: projection.round, unitId: String(unitId), fp: stateFingerprint(projection, unitId),
+    target: target ? { x: Number(target.x), y: Number(target.y) } : null });
 }
 
 // ---------- exact answers ----------
@@ -140,7 +141,7 @@ const GENERATORS = {
     (ctx, rnd) => { // grid distance on THIS board (the resolver's own rule)
       const u = ctx.unit, t = ctx.target;
       const d = Math.abs(u.x - t.x) + Math.abs(u.y - t.y);
-      return { skill: 'math.manhattan-distance', prompt: `Your unit is at (${u.x}, ${u.y}). The ${t.label} is at (${t.x}, ${t.y}). Moving only along rows and columns, how many tiles apart are they?`,
+      return { skill: 'math.manhattan-distance', geometry: { origin: { x: u.x, y: u.y }, target: { x: t.x, y: t.y }, dx: Math.abs(u.x - t.x), dy: Math.abs(u.y - t.y) }, prompt: `Your unit is at (${u.x}, ${u.y}). The ${t.label} is at (${t.x}, ${t.y}). Moving only along rows and columns, how many tiles apart are they?`,
         answer: { kind: 'num', value: rat(d) },
         steps: [`Count the column difference: |${u.x} − ${t.x}|.`, `Count the row difference: |${u.y} − ${t.y}|.`, `Add them: ${Math.abs(u.x - t.x)} + ${Math.abs(u.y - t.y)}.`],
         explain: `|${u.x}−${t.x}| + |${u.y}−${t.y}| = ${d}` };
@@ -187,28 +188,32 @@ const GENERATORS = {
   ]
 };
 
-function challengeContext(projection, unit) {
+function challengeContext(projection, unit, target) {
+  if (target) return { unit, target: { x: Number(target.x), y: Number(target.y), label: 'previewed destination' } };
   const tiles = projection.objectiveTiles.filter((t) => isOpenObjective(projection, t.id));
   const enemies = projection.units.filter((u) => u.faction !== 'PLAYER' && !u.dead);
-  const target = tiles[0] ? { ...tiles[0], label: 'objective' }
+  const goal = tiles[0] ? { ...tiles[0], label: 'objective' }
     : enemies[0] ? { x: enemies[0].x, y: enemies[0].y, label: 'known hostile' }
     : { x: Math.min(projection.width - 1, unit.x + 3), y: unit.y, label: 'waypoint' };
-  return { unit, target };
+  return { unit, target: goal };
 }
 
 // mastery: 0..3. Higher mastery unlocks the harder generator of the field (and richer guidance).
-export function createChallenge(binding, projection, unitId, { mastery = 0, field = null } = {}) {
+export function createChallenge(binding, projection, unitId, { mastery = 0, field = null, target = null } = {}) {
   const unit = projection.units.find((u) => u.id === unitId && u.faction === 'PLAYER');
   if (!unit) throw new Error('UNKNOWN_OR_FOREIGN_UNIT');
-  const key = bindingKey(binding, projection, unitId);
+  if (target && (target.x < 0 || target.y < 0 || target.x >= projection.width || target.y >= projection.height)) throw new Error('TARGET_OUT_OF_BOUNDS');
+  const key = bindingKey(binding, projection, unitId, target);
   const chosenField = field || FIELD_OF_ROLE[unit.role] || 'MATH';
   const list = GENERATORS[chosenField];
   const rnd = seeded(key);
   const gen = list[mastery >= 2 ? Math.min(1, list.length - 1) : 0]; // higher mastery: the harder generator
-  const c = gen(challengeContext(projection, unit), rnd);
+  const c = gen(challengeContext(projection, unit, target), rnd);
   return {
     // public part: safe to show
-    public: { challengeId: stableHash({ key, skill: c.skill }), bindingKey: key, unitId, round: projection.round, field: chosenField, skill: c.skill, prompt: c.prompt },
+    public: { challengeId: stableHash({ key, skill: c.skill }), bindingKey: key, unitId, round: projection.round, field: chosenField, skill: c.skill, prompt: c.prompt,
+      // what the board should highlight so the math is visible (origin → target); null when not spatial
+      geometry: c.skill === 'math.manhattan-distance' ? c.geometry : null },
     // server-held part: never sent to the browser before a correct answer
     secret: { answer: c.answer, steps: c.steps, explain: c.explain }
   };
@@ -237,20 +242,47 @@ function expectedDamage(preview) {
   return p * ((1 - c) * preview.damage + c * preview.critDamage);
 }
 
-export function legalCandidates(projection, unitId) {
+// Orthogonal step paths over KNOWN geometry: walls (blockers) and known units block a step. The
+// resolver's moveUnit only checks destination distance; the hint and the phone preview are stricter
+// (they never offer a tile you could only reach by walking through a wall you can see). Unknown
+// hostiles cannot be accounted for: the real move still applies the resolver's own checks.
+export function knownPaths(projection, unitId) {
   const unit = projection.units.find((u) => u.id === unitId);
-  const out = [{ action: 'HOLD', x: unit.x, y: unit.y, z: unit.z, apCost: 0 }];
-  if (unit.ap < 1 || unit.dead || unit.downed) return out;
   const blocked = new Set(projection.blockers.map((b) => `${b.x}:${b.y}:${b.z}`));
   const taken = new Set(projection.units.filter((u) => !u.dead && u.id !== unit.id).map((u) => `${u.x}:${u.y}:${u.z}`));
+  const key = (x, y) => `${x}:${y}:${unit.z}`;
+  const dist = new Map([[key(unit.x, unit.y), 0]]), prev = new Map();
+  const queue = [{ x: unit.x, y: unit.y }];
+  while (queue.length) {
+    const c = queue.shift(), d = dist.get(key(c.x, c.y));
+    if (d >= unit.moveRange) continue;
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) { // N E S W, fixed order: deterministic paths
+      const x = c.x + dx, y = c.y + dy, k = key(x, y);
+      if (x < 0 || y < 0 || x >= projection.width || y >= projection.height) continue;
+      if (blocked.has(k) || taken.has(k) || dist.has(k)) continue;
+      dist.set(k, d + 1); prev.set(k, key(c.x, c.y)); queue.push({ x, y });
+    }
+  }
+  const pathTo = (x, y) => {
+    let k = key(x, y); if (!dist.has(k)) return null;
+    const out = []; while (k !== key(unit.x, unit.y)) { const [px, py] = k.split(':').map(Number); out.unshift({ x: px, y: py }); k = prev.get(k); }
+    return out;
+  };
+  return { dist, pathTo, key };
+}
+
+export function legalCandidates(projection, unitId) {
+  const unit = projection.units.find((u) => u.id === unitId);
+  const out = [{ action: 'HOLD', x: unit.x, y: unit.y, z: unit.z, apCost: 0, steps: 0 }];
+  if (unit.ap < 1 || unit.dead || unit.downed) return out;
+  const { dist, key } = knownPaths(projection, unitId);
   for (let y = 0; y < projection.height; y += 1) {
     for (let x = 0; x < projection.width; x += 1) {
-      const tile = { x, y, z: unit.z };
       if (x === unit.x && y === unit.y) continue;
-      const d = gridDistance(unit, tile);
-      if (d > unit.moveRange) continue; // resolver MOVE rule: Manhattan distance ≤ moveRange, 1 AP
-      if (blocked.has(`${x}:${y}:${unit.z}`) || taken.has(`${x}:${y}:${unit.z}`)) continue;
-      out.push({ action: 'MOVE', x, y, z: unit.z, apCost: 1 });
+      const steps = dist.get(key(x, y));
+      if (steps === undefined) continue; // no known path within moveRange
+      // resolver MOVE rule also holds: Manhattan distance ≤ steps ≤ moveRange, 1 AP
+      out.push({ action: 'MOVE', x, y, z: unit.z, apCost: 1, steps });
     }
   }
   return out;
@@ -292,7 +324,7 @@ function round2(v) { return Math.round(v * 100) / 100; }
 
 function explainSuggestion(result, projection) {
   const t = result.top, f = t.features, lines = [];
-  lines.push(t.action === 'HOLD' ? `Hold position at (${t.x}, ${t.y}).` : `Move to (${t.x}, ${t.y}) — 1 action point (Manhattan distance ${Math.abs(t.x - result.unitAt.x) + Math.abs(t.y - result.unitAt.y)} ≤ move range ${result.moveRange}).`);
+  lines.push(t.action === 'HOLD' ? `Hold position at (${t.x}, ${t.y}).` : `Move to (${t.x}, ${t.y}) — 1 action point, ${t.steps} step${t.steps === 1 ? '' : 's'} around known walls (move range ${result.moveRange}).`);
   if (Number.isFinite(f.objectiveDistance)) lines.push(`Objective: ${f.objectiveDistance} tiles away after this (${f.objectiveProgress >= 0 ? 'closer by ' + f.objectiveProgress : 'farther by ' + (-f.objectiveProgress)}).`);
   else lines.push('No reachable objective tile is known on this floor; the suggestion weighs safety and shots only.');
   lines.push(f.exposedTo.length ? `Known hostiles that could shoot you there: expected ${f.incomingExpected} damage (sum of hit% × damage, crits included).` : 'No known hostile has a shot at that tile.');
@@ -312,13 +344,13 @@ export function openHint(binding, state, unitId, opts = {}) {
   const unit = projection.units.find((u) => u.id === unitId);
   if (!unit || unit.faction !== 'PLAYER') throw new Error('UNKNOWN_OR_FOREIGN_UNIT');
   const ch = createChallenge(binding, projection, unitId, opts);
-  return { session: { binding: { ...binding }, unitId, bindingKey: ch.public.bindingKey, challenge: ch, attempts: 0, solved: false, revealed: false, rewardIssued: false }, response: ch.public };
+  return { session: { binding: { ...binding }, unitId, target: opts.target ? { x: Number(opts.target.x), y: Number(opts.target.y) } : null, bindingKey: ch.public.bindingKey, challenge: ch, attempts: 0, solved: false, revealed: false, rewardIssued: false }, response: ch.public };
 }
 
 export function answerHint(session, binding, state, input, opts = {}) {
   for (const k of ['tenantId', 'playerId', 'missionId']) if (String(session.binding[k]) !== String(binding[k])) return { session, response: { ok: false, code: 'NOT_YOUR_HINT' } };
   const projection = playerProjection(state, opts);
-  if (state.phase !== 'PLAYER' || bindingKey(binding, projection, session.unitId) !== session.bindingKey) {
+  if (state.phase !== 'PLAYER' || bindingKey(binding, projection, session.unitId, session.target) !== session.bindingKey) {
     return { session, response: { ok: false, code: 'STALE_BOARD', message: 'The board changed since this hint was opened. Ask again for a fresh one.' } };
   }
   const next = { ...session };

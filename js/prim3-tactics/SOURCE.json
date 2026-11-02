@@ -2,9 +2,15 @@
   "note": "Exact copies of the PRIM3 tactical engine files, vendored for the hint preview page. Do not edit here; change them in mcclusterishere/Prim3 and re-copy. scripts/test/prim3-tactics-vendor.test.mjs checks these hashes.",
   "repository": "mcclusterishere/Prim3",
   "ref": "claude/tactical-hints-20261102",
-  "commit": "7d6bd3169239ea5e732fc2903d8931ffb233d7c6",
+  "commit": "f4aac22386b938ffc6b74c89eab90911636733d8",
   "files": {
-    "tactical-resolver.mjs": { "from": "game/runtime/tactical-resolver.mjs", "sha256": "2034f4c3218021aee6a1043dd822c6831b627841b3148fb77fa1e35fc473b6cc" },
-    "tactical-hints.mjs": { "from": "game/runtime/tactical-hints.mjs", "sha256": "63af071cfc4f2e4a3e26eb7a9b4acb1b2ae0d11bdc914fb3e584159801d6bb8b" }
+    "tactical-resolver.mjs": {
+      "from": "game/runtime/tactical-resolver.mjs",
+      "sha256": "2034f4c3218021aee6a1043dd822c6831b627841b3148fb77fa1e35fc473b6cc"
+    },
+    "tactical-hints.mjs": {
+      "from": "game/runtime/tactical-hints.mjs",
+      "sha256": "ce5914938b0a5d6bbb36756259bc5db07ecb0ec2a04fc21db1676945a49b9c1d"
+    }
   }
 }
