@@ -188,6 +188,16 @@ try{
     await page.goto(BASE+'/control.html#work:pipeline',{waitUntil:'domcontentloaded'});await settle(page);
     check(scope,'a cold load of an old route is replaced, not stacked',await page.evaluate(()=>location.hash)==='#people:deals:pipeline');
 
+    /* owner, 2026-11-02: always a way back to Control's home from the top bar */
+    const crumb=page.locator('#crTopTitle a.cr-crumb__home');
+    check(scope,'the top bar reads Control › People away from home',(await page.locator('#crTopTitle').innerText()).replace(/\s+/g,' ').trim()==='Control › People',await page.locator('#crTopTitle').innerText());
+    const cb=await crumb.boundingBox();
+    check(scope,'the Control crumb is visible and at least 44px tall',!!cb&&cb.height>=44&&cb.width>0,cb);
+    await crumb.click();await page.waitForTimeout(400);
+    check(scope,'the Control crumb goes to Home → Today',await page.evaluate(()=>location.hash)==='#home:today');
+    check(scope,'at home the crumb is plain Control, not a link',await page.evaluate(()=>{const t=document.getElementById('crTopTitle');return !t.querySelector('a')&&t.textContent.trim()==='Control';}));
+    check(scope,'no horizontal overflow with the crumb',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+
     /* palette entries come from NAV and find old names */
     await page.locator('#crCommandOpen').click();await page.waitForTimeout(200);
     const pal=await page.evaluate(()=>({n:document.querySelectorAll('#crPaletteResults [data-palette-route]').length,leaves:CR.nav.leaves().length}));

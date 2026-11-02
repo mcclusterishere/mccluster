@@ -2383,7 +2383,20 @@
         });
       });
     }
-    if ($("crTopTitle")) $("crTopTitle").textContent = current.section ? current.section.label : "Home";
+    /* Owner, 2026-11-02: always a way back to Control's home. The title is
+       a crumb: "Control" (a link to Home → Today) then the section you're in. */
+    var title = $("crTopTitle");
+    if (title) {
+      var atHome = sec === "home" && (!current.item || current.item.id === "today");
+      title.innerHTML = atHome
+        ? '<span class="cr-crumb__home" aria-current="page">Control</span>'
+        : '<a class="cr-crumb__home" href="#home:today" data-nav-route="#home:today">Control</a><span class="cr-crumb__sep" aria-hidden="true">›</span><span class="cr-crumb__here">' + esc(current.section ? current.section.label : "Home") + '</span>';
+      var back = title.querySelector("a[data-nav-route]");
+      if (back) back.addEventListener("click", function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+        e.preventDefault(); go("#home:today");
+      });
+    }
   }
   function openMore() {
     var sheet = $("crMoreSheet"); if (!sheet) return;

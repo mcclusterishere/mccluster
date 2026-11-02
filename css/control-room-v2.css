@@ -296,6 +296,13 @@ body.cr .cr-topbar{grid-area:top;padding:8px 16px;gap:10px;min-width:0}
 /* Supplied artwork, scaled whole, never cropped. */
 .cr-topbar__brand img{height:28px;width:auto;object-fit:contain;display:block}
 body.cr .cr-topbar__title{display:block;font-size:16px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* the crumb back to Control's home: a 44px tap target, on every width */
+body.cr .cr-topbar__title{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.cr-crumb__home{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;margin-left:-4px;color:inherit;font-weight:800;text-decoration:none;border-radius:8px}
+a.cr-crumb__home{color:var(--cr-dim)}
+a.cr-crumb__home:hover,a.cr-crumb__home:focus-visible{color:var(--cr-text);text-decoration:underline;text-underline-offset:3px}
+.cr-crumb__sep{color:var(--cr-dim);flex:none}
+.cr-crumb__here{min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:800}
 body.cr .cr-command{margin:0;width:auto;min-width:0;height:40px;flex:none;gap:8px;padding:0 11px}
 body.cr .cr-command span,body.cr .cr-command kbd,body.cr .cr-env{display:none}
 body.cr .cr-topbar__meta{margin-left:auto;flex:none}

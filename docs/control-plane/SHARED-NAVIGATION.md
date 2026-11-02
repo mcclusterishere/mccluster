@@ -23,6 +23,11 @@ double-tap gap) give a double tick and go straight to Control → Home → Today
 Haptics use `navigator.vibrate` where it exists and are skipped under
 `prefers-reduced-motion`. There is still one bottom bar.
 
+Owner, 2026-11-02: "make sure there's a navigation back to … the main home of
+control." Inside Control the top bar's title is a crumb, `Control › <section>`;
+"Control" is a 44px link to Home → Today on every width. On Today it reads
+plain "Control".
+
 ## One Control navigation definition
 
 Owner, 2026-10-30 (the consolidation mockup: "get that control room under
