@@ -862,6 +862,13 @@
       ],
       "pending": "policy_fellowship_ladder_v1.sql"
     },
+    "site_content_v2": {
+      "kind": "function",
+      "pending": "editor_versioned_contracts_v1.sql",
+      "callers": [
+        "js/editor-revisions.js"
+      ]
+    },
     "studio_finish_v2": {
       "kind": "function",
       "callers": [
