@@ -367,6 +367,14 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     const seg = (arr, m) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, m); l.renderOrder = 1; l.frustumCulled = false; gridGroup.add(l); };
     seg(minor, gridMat); seg(major, gridMajor); }
 
+  /* ---------- fog of war: a per-tile shade over the ground, fed by the page from the engine's sight ---------- */
+  const fogData = new Uint8Array(W * H * 4).fill(255);
+  const fogTex = new THREE.DataTexture(fogData, W, H, THREE.RGBAFormat); fogTex.magFilter = THREE.LinearFilter; fogTex.minFilter = THREE.LinearFilter; fogTex.needsUpdate = true;
+  const fogMat = new THREE.MeshBasicMaterial({ color: 0x0b1218, alphaMap: fogTex, transparent: true, opacity: 0.62, depthWrite: false, toneMapped: false });
+  const fogPlane = new THREE.Mesh(new THREE.PlaneGeometry(W, H).rotateX(-Math.PI / 2), fogMat);
+  fogPlane.position.set(cx - 0.5, 0.06, cz - 0.5); fogPlane.renderOrder = 2; fogPlane.visible = false; scene.add(fogPlane);
+  let fogOn = false;
+
   /* ---------- operatives ---------- */
   const haloTex = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 4, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(0.55, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
   const kit = createOperativeKit(THREE, { team: TEAMS[curLook], haloTex, reducedMotion });
@@ -432,6 +440,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     for (const l of lampLights) l.visible = !studio && !day; for (const s of lampSprites) s.visible = !studio && !day;
     relayLight.visible = !studio && !day; rain.visible = !studio && !day && !reducedMotion;
     for (const m of [M_LIT]) m.emissiveIntensity = studio ? 0 : day ? 0.25 : (m.userData.orig ? m.userData.orig.emissiveIntensity : 1.8);
+    fogMat.color.set(studio ? 0x8c9399 : day ? 0x31414c : 0x05080b); fogMat.opacity = studio ? 0.45 : day ? 0.5 : 0.66;
+    scene.userData.fogNear = scene.fog && scene.fog.isFog ? scene.fog.near : 0; scene.userData.fogFar = scene.fog && scene.fog.isFog ? scene.fog.far : 0;
     gridMat.color.set(studio ? 0x2a3136 : day ? 0x1fb6c6 : 0x5fe6f2); gridMat.opacity = studio ? 0.28 : day ? 0.5 : 0.42; gridMajor.color.set(studio ? 0x0e1113 : day ? 0x0b8fa0 : 0x9ff3fb); gridMajor.opacity = studio ? 0.5 : day ? 0.8 : 0.7;
     if (bloomPass) bloomPass.enabled = !studio && !day;
     if (day) for (const m of [M_CONC, M_CORR, M_ROOF, M_GRATE]) m.color.set(m === M_ROOF ? 0xf3f3ef : 0xeeeeea); // white industrial by day
@@ -590,15 +600,19 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
 
   /* ---------- camera ---------- */
   const HOME = { dist: 44, pitch: 0.86 };
-  const view = { dist: HOME.dist, minDist: 9, maxDist: 78, target: new THREE.Vector3(cx, 0, cz), goal: new THREE.Vector3(cx, 0, cz), pitch: HOME.pitch, yaw: 0, yawGoal: 0, distGoal: HOME.dist };
+  const view = { dist: HOME.dist, minDist: 9, maxDist: 118, target: new THREE.Vector3(cx, 0, cz), goal: new THREE.Vector3(cx, 0, cz), pitch: HOME.pitch, yaw: 0, yawGoal: 0, distGoal: HOME.dist };
   let shotCam = null;
   const camPos = new THREE.Vector3(), lookAt = new THREE.Vector3();
   function placeCamera() {
     const r = host.getBoundingClientRect(), w = Math.max(1, r.width), h = Math.max(1, r.height);
     if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); if (composer) composer.setSize(w, h); }
     camera.aspect = w / h; camera.fov = h > w * 1.05 ? 46 : 34; camera.updateProjectionMatrix();
-    const hd = Math.cos(view.pitch) * view.dist;
-    camPos.set(view.target.x + Math.sin(view.yaw) * hd, view.target.y + Math.sin(view.pitch) * view.dist, view.target.z + Math.cos(view.yaw) * hd);
+    // zooming out tilts toward a top-down tactical map, so the whole compound fits on a phone
+    const zt = Math.min(1, Math.max(0, (view.dist - 44) / (112 - 44))), pitch = view.pitch + (1.3 - view.pitch) * zt * zt * (3 - 2 * zt);
+    const hd = Math.cos(pitch) * view.dist;
+    camPos.set(view.target.x + Math.sin(view.yaw) * hd, view.target.y + Math.sin(pitch) * view.dist, view.target.z + Math.cos(view.yaw) * hd);
+    if (scene.fog && scene.fog.isFog) { scene.fog.near = Math.max(scene.userData.fogNear || 80, view.dist * 0.8 + 40); scene.fog.far = Math.max(scene.userData.fogFar || 200, view.dist * 1.4 + 150); }
+    else if (scene.fog && scene.fog.isFogExp2) scene.fog.density = 0.0055 * 44 / Math.max(44, view.dist);
     lookAt.copy(view.target);
     if (shotCam) { const k = shotCam.k * shotCam.k * (3 - 2 * shotCam.k); camPos.lerp(shotCam.from, k); lookAt.lerp(shotCam.look, k); }
     camera.position.copy(camPos); camera.lookAt(lookAt);
@@ -809,7 +823,9 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     canZoom() { return { in: view.distGoal > view.minDist + 0.01, out: view.distGoal < view.maxDist - 0.01 }; },
     rotate(step) { view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
     resetView() { view.distGoal = HOME.dist; view.yawGoal = 0; needs = true; },
-    overview() { view.goal.set(cx, 0, cz + 4); view.distGoal = 64; needs = true; },
+    overview() { view.goal.set(cx - 0.5, 0, cz - 0.5); view.distGoal = view.maxDist - 4; needs = true; },
+    // fog of war from the page: alpha per tile, 0 = seen now, 1 = never seen (engine y rows)
+    setFog(cells) { fogOn = !!cells; fogPlane.visible = fogOn; if (cells) { for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) fogData[((H - 1 - y) * W + x) * 4 + 1] = Math.round(255 * cells[y * W + x]); fogTex.needsUpdate = true; } needs = true; },
     focus(x, y, z = 0, dist = 24) { focusTile(x, y, z, dist); },
     // play shots the engine already resolved, in order; done() when this one has played
     fire(attackerId, targetId, result, done, { cinematic = true } = {}) { fireQueue.push({ attackerId, targetId, result: result || {}, done, cinematic }); needs = true; },

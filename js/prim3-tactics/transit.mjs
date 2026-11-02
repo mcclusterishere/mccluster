@@ -8,7 +8,7 @@
    What the player sees is the engine's player projection (fog of war): unseen hostiles are never
    drawn, listed, animated or used for previews. */
 import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase, moveUnit, fireWeapon,
-  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete, drawRolls } from './tactical-resolver.mjs';
+  enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete, drawRolls, hasLineOfSight, gridDistance } from './tactical-resolver.mjs';
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
 import { runThreatPhase } from './tactical-threat-ai.mjs';
 import * as LEVEL from './levels/transit-relay.mjs';
@@ -70,6 +70,29 @@ function reach(u, dash) {
   return { tiles, pathTo, stepsTo };
 }
 
+/* ---------- fog of war: what the squad can see now, by the engine's own sight rule ----------
+   A tile is lit if a living, deployed operative is within its detection radius and has line of sight
+   to it (the same test the engine uses to spot units). Tiles seen before stay half-lit (explored).
+   Only the shade is drawn from this; hostiles are still shown only through the player projection. */
+let explored = new Uint8Array(W * H);
+function visibleTiles() {
+  const vis = new Uint8Array(W * H);
+  for (const u of state.units) {
+    if (u.faction !== 'PLAYER' || u.dead || u.downed || extracted(u)) continue;
+    const r = u.detectionRadius;
+    for (let y = Math.max(0, u.y - r); y <= Math.min(H - 1, u.y + r); y += 1) for (let x = Math.max(0, u.x - r); x <= Math.min(W - 1, u.x + r); x += 1) {
+      const i = y * W + x; if (vis[i]) continue;
+      const t = { x, y, z: 0 };
+      if (gridDistance(u, t, state) <= r && (x === u.x && y === u.y || safeLos(u, t))) vis[i] = 1;
+    }
+  }
+  for (let i = 0; i < vis.length; i += 1) if (vis[i]) explored[i] = 1;
+  return vis;
+}
+function safeLos(a, b) { try { return hasLineOfSight(state, a, b); } catch (e) { return false; } }
+function fogCells(vis) { const f = new Float32Array(W * H); for (let i = 0; i < f.length; i += 1) f[i] = vis[i] ? 0 : explored[i] ? 0.55 : 1; return f; }
+let fogKey = '', lastVis = null;
+
 /* ---------- legality: dry-run the engine ---------- */
 const tryRun = (fn) => { try { const out = fn(); const st = out && out.state ? out.state : out; return out && out.accepted === false ? null : st; } catch (e) { return null; } };
 function knownHostiles() { return view().units.filter((x) => x.faction !== 'PLAYER' && !x.dead); }
@@ -106,7 +129,7 @@ function ensure3d() {
   if (r3 || r3loading || !webgl()) return;
   r3loading = import('./level3d.mjs').then((mod) => {
     r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
-    r3loading = null;
+    r3loading = null; fogKey = ''; // a new board needs its fog
     r3.setGrid(gridOn);
     const s = unitOf(ui.sel); if (s) r3.focus((s.x + SCENE.relay.x) / 2, (s.y + SCENE.relay.y) / 2 + 4, 0, 46);
     render();
@@ -132,6 +155,7 @@ function render() {
   const sel = unitOf(ui.sel);
   if (!r3 && !r3loading) ensure3d();
   if (r3 && !ui.holdBoard) r3.update(boardModel()); // frozen while engine events play out
+  if (r3 && !ui.holdBoard) { const k = state.units.filter((u) => u.faction === 'PLAYER').map((u) => `${u.x},${u.y},${u.z},${u.dead},${u.downed}`).join('|') + state.round; if (k !== fogKey) { fogKey = k; lastVis = visibleTiles(); r3.setFog(fogCells(lastVis)); } }
   // top bar
   $('txTurn').textContent = String(state.round).padStart(2, '0');
   const ph = $('txPhase'); ph.textContent = ui.ended ? (ui.ended === 'win' ? 'Complete' : 'Failed') : state.phase === 'PLAYER' && !ui.busy ? 'Your move' : 'Threat move';
@@ -219,6 +243,7 @@ function drawMap() {
   // reach and path
   if (ui.reach && (ui.mode === 'move' || ui.mode === 'dash')) { g.fillStyle = studio ? 'rgba(20,25,28,.12)' : 'rgba(47,224,240,.16)'; for (const t of ui.reach.tiles) g.fillRect(t.x * S, t.y * S, S, S); }
   if (ui.preview && ui.preview.kind === 'move') { const sel = unitOf(ui.sel); g.strokeStyle = col.amber; g.setLineDash([S, S * 0.6]); g.lineWidth = 2; g.beginPath(); g.moveTo((sel.x + 0.5) * S, (sel.y + 0.5) * S); for (const p of ui.preview.path) g.lineTo((p.x + 0.5) * S, (p.y + 0.5) * S); g.stroke(); g.setLineDash([]); }
+  if (lastVis) { for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) { const i = y * W + x; if (lastVis[i]) continue; g.fillStyle = explored[i] ? (studio || day ? 'rgba(30,40,48,.18)' : 'rgba(0,0,0,.35)') : (studio || day ? 'rgba(30,40,48,.34)' : 'rgba(0,0,0,.6)'); g.fillRect(x * S, y * S, S, S); } }
   // units: squad and only the hostiles the player knows about
   for (const u of view().units) {
     if (u.dead || extracted(u)) continue;
@@ -405,6 +430,7 @@ function afterChange() {
 }
 function restart() {
   try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  explored = new Uint8Array(W * H); fogKey = '';
   state = fresh(); log = []; ui = { ...ui, sel: 'T1', mode: null, preview: null, reach: null, busy: false, ended: null };
   $('txEnd').hidden = true; say('Deployed. Secure the relay.');
   if (r3) { r3.destroy(); r3 = null; }
