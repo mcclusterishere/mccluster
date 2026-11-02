@@ -4,6 +4,7 @@ import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from '.
 import whip from './whip/booking-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
+import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
@@ -146,6 +147,10 @@ export default {
 
       if (path === '/v1' && request.method === 'GET') {
         return reply(request, env, CATALOG);
+      }
+
+      if (path === PRIM3_LEVELS_PREFIX || path.startsWith(`${PRIM3_LEVELS_PREFIX}/`)) {
+        return handlePrim3Levels(request, env, { requireHouseOwner });
       }
 
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
