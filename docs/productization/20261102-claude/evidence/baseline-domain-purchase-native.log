@@ -1,11 +1,4 @@
-Traceback (most recent call last):
-  File "/home/claude/wt/whole/scripts/test/domain-purchase-native.py", line 40, in <module>
-    sql(("" if local else "create role anon;create role authenticated;create role service_role bypassrls;")+f"create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('{A}'),('{B}');")
-    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/claude/wt/whole/scripts/test/domain-purchase-native.py", line 26, in sql
-    return subprocess.run(prefix+['-X','-q','-A','-t','-v','ON_ERROR_STOP=1','-d',database or DB],input=text,text=True,capture_output=True,check=check)
-           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.13/subprocess.py", line 578, in run
-    raise CalledProcessError(retcode, process.args,
-                             output=stdout, stderr=stderr)
-subprocess.CalledProcessError: Command '['psql', '-h', '127.0.0.1', '-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-d', 'domain_proof_d69a1a0bd6']' returned non-zero exit status 3.
+PASS concurrent duplicate funding: one recorded paid order, idempotent status
+PASS concurrent same-host claims: one durable attempt; loser rolls back funded state, no second provider submit authority
+PASS concurrent same-order claims: exactly one submission authority
+exit=0

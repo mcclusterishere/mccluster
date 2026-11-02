@@ -37,7 +37,7 @@ try:
  else:
   subprocess.run(['docker','run','-d','--name',name,'--network','none','-e','POSTGRES_PASSWORD=disposable-test-only',IMAGE],check=True,capture_output=True)
   subprocess.run(['docker','exec',name,'bash','-c','for n in {1..30}; do pg_isready -h 127.0.0.1 -U postgres >/dev/null && exit 0; sleep 1; done; exit 1'],check=True)
- sql(("" if local else "create role anon;create role authenticated;create role service_role bypassrls;")+f"create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('{A}'),('{B}');")
+ sql(("" if local else "create role anon;create role authenticated;create role service_role bypassrls;")+f"create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('{A}'),('{B}');")
  for file in ['creator_domain_orders_v1.sql','creator_cf_registration_attempts_v1.sql']:sql((ROOT/'supabase/pending'/file).read_text())
  first=seed(A,'race.org','first');second=seed(B,'race.org','second')
  funding=f"set role service_role;select fund_creator_domain_order('{first}','{A}','evt_first','cs_first',1200,'USD',now());"
