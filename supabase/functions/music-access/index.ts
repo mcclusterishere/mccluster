@@ -244,6 +244,48 @@ Deno.serve(async (req) => {
       return json({ ok: true, queued: true, job_id: job.id });
     }
 
+    /* STEMS, owner only (Control → Create → Music → Stems). The stems are the
+       owner's unreleased material in the private bucket; list signs one
+       short-lived URL per stem (to play) and per download, queue asks
+       McCluster Core to separate (or re-separate) the track. */
+    if (action === "operator-stems-list" || action === "operator-stems-queue") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const trackId = clean(body.track_id, 80).toLowerCase();
+      const creator = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(trackId);
+      const trackKey = creator ? `ct-${trackId}` : clean(body.track_key, 80);
+      if (!creator && !/^[a-z0-9][a-z0-9-]{0,79}$/.test(trackKey)) return json({ error: "track_key or track_id required" }, 400);
+      if (action === "operator-stems-list") {
+        const { data: set, error } = await admin.from("music_stem_sets")
+          .select("track_key,model,format,seconds,manifest,status,updated_at").eq("track_key", trackKey).maybeSingle();
+        if (error) throw error;
+        if (!set || set.status !== "ready") return json({ ok: true, track_key: trackKey, stems: [] });
+        type Stem = { stem: string; file: string; path: string; bytes: number; seconds: number; peak_dbfs?: number; rms_dbfs?: number };
+        const list = (((set.manifest || {}) as { stems?: Stem[] }).stems || []).filter((x) => /^stems\/[a-z0-9-]+\/(r\d{14}-[0-9a-f]{6}\/)?[a-z]+\.(mp3|flac|wav)$/.test(String(x.path || "")));
+        const stems = [];
+        for (const x of list) {
+          stems.push({
+            stem: x.stem, bytes: x.bytes, seconds: x.seconds, peak_dbfs: x.peak_dbfs ?? null, rms_dbfs: x.rms_dbfs ?? null,
+            url: await signDownload("mcc-gated-audio", x.path, undefined, 900),
+            download_url: await signDownload("mcc-gated-audio", x.path, `${trackKey}-${x.file}`, 900),
+          });
+        }
+        return json({ ok: true, track_key: trackKey, model: set.model, format: set.format, seconds: set.seconds, updated_at: set.updated_at, stems, expires_in: 900 });
+      }
+      const src = clean(body.src, 200);
+      if (!creator && src && !/^assets\/audio\/[a-z0-9][a-z0-9-]*\.(mp3|m4a|wav|flac)$/.test(src)) return json({ error: "src must be assets/audio/<slug>.<ext>" }, 400);
+      const { data: org } = await admin.from("orgs").select("id").eq("slug", "mccluster").limit(1).maybeSingle();
+      if (!org?.id) return json({ error: "house org missing" }, 500);
+      const { count } = await admin.from("ops_agent_jobs").select("id", { count: "exact", head: true })
+        .eq("org_id", org.id).eq("job_type", "stems_separate").eq("target_id", trackKey).eq("status", "queued");
+      if (Number(count || 0) > 0) return json({ ok: true, queued: false, already: true });
+      const input = creator ? { source: "creator", track_id: trackId, requested_by: who.user.id } : { source: "shelf", track_key: trackKey, src: src || undefined, requested_by: who.user.id };
+      const { data: job, error } = await admin.from("ops_agent_jobs").insert({
+        org_id: org.id, job_type: "stems_separate", target_type: "stems", target_id: trackKey, priority: 35, max_attempts: 2, input,
+      }).select("id").single();
+      if (error) throw error;
+      return json({ ok: true, queued: true, job_id: job.id });
+    }
+
     /* (f) The reviewer's step before a decision: pin the master under review,
        hash its exact bytes once (streaming, size-capped, fail closed), and
        hand back a player URL for THAT pinned object and its hash. The

@@ -165,6 +165,13 @@ try {
     let geometry = await controls(page);
     check(scope, 'normal map controls are 44px, inside the map, clear of Fullscreen, modes and dock', !geometry.hits.length && geometry.inside && geometry.buttons.every(b => b.rect.width >= 44 && b.rect.height >= 44), geometry);
     check(scope, 'no horizontal document overflow', geometry.scrollWidth === geometry.clientWidth, geometry);
+    /* the World's music writes the current lyric line into the headline (js/world-audio-continuity.js), and a long one wraps
+       over the map on a phone; the globe re-places its controls on the next resize, and they must never land under the tabs */
+    const headline = await page.evaluate(() => { const h = document.querySelector('.wt-headline'), was = h.textContent; h.textContent = 'A lyric line long enough to wrap this headline across the map on a phone'; h.classList.add('is-lyric'); dispatchEvent(new Event('resize')); return was; });
+    geometry = await settled(page, frame);
+    check(scope, 'a wrapped lyric headline never moves the map controls under the modes or dock', !geometry.hits.length && geometry.inside, geometry);
+    await page.evaluate(was => { const h = document.querySelector('.wt-headline'); h.textContent = was; h.classList.remove('is-lyric'); dispatchEvent(new Event('resize')); }, headline);
+    await settled(page, frame);
     await page.locator('.mn__world-expand').click();
     await page.waitForFunction(() => document.documentElement.classList.contains('wt-expanded'));
     geometry = await settled(page, frame);

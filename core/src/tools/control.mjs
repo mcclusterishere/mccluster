@@ -87,6 +87,11 @@ const BASE_TOOLS = [
     inputSchema: { type: 'object', required: ['org_id', 'track_id'], properties: { org_id: { type: 'string' }, track_id: { type: 'string' }, priority: { type: 'number' } }, additionalProperties: false }
   },
   {
+    name: 'core.stems.separate', title: 'Separate a track into stems',
+    description: 'Queue owned Demucs separation of one track into every instrument (vocals, drums, bass, guitar, piano, other) plus an instrumental, stored privately in mcc-gated-audio/stems/<track_key>/ with a manifest. Shelf tracks by slug, uploads by creator track id.',
+    inputSchema: { type: 'object', required: ['org_id'], properties: { org_id: { type: 'string' }, track_key: { type: 'string' }, src: { type: 'string' }, track_id: { type: 'string' }, priority: { type: 'number' } }, additionalProperties: false }
+  },
+  {
     name: 'core.code.build', title: 'Build code change',
     description: 'Queue an isolated autonomous code change that can produce a draft branch/PR but never auto-merge.',
     inputSchema: { type: 'object', required: ['org_id', 'repository', 'task'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, task: { type: 'string' }, title: { type: 'string' }, allowed_paths: { type: 'array', items: { type: 'string' } }, priority: { type: 'number' } } }
@@ -202,6 +207,17 @@ export async function callControlTool(name, args = {}, options = {}) {
     if (!/^[0-9a-f-]{36}$/i.test(trackId)) throw Object.assign(new Error('track_id must be a creator track uuid'), { status: 400 });
     const job = await enqueueJob({ orgId, jobType: 'lyrics_align', targetType: 'creator_track', targetId: trackId, priority: Math.min(100, Math.max(0, Number(args.priority ?? 40))), maxAttempts: 2, input: { track_id: trackId, trigger: 'tool' } });
     return { queued: true, job_id: job.id, job_type: job.job_type, track_id: trackId, safety: { paid_provider: false, overwrites_reviewed_lyrics: false } };
+  }
+
+  if (name === 'core.stems.separate') {
+    const orgId = requireOrg(args.org_id);
+    const trackId = text(args.track_id, 80);
+    const creator = /^[0-9a-f-]{36}$/i.test(trackId);
+    const trackKey = creator ? `ct-${trackId.toLowerCase()}` : text(args.track_key, 80);
+    if (!creator && !/^[a-z0-9][a-z0-9-]{0,79}$/.test(trackKey)) throw Object.assign(new Error('track_key (shelf slug) or track_id (upload) is required'), { status: 400 });
+    const input = creator ? { source: 'creator', track_id: trackId } : { source: 'shelf', track_key: trackKey, src: text(args.src, 200) || undefined };
+    const job = await enqueueJob({ orgId, jobType: 'stems_separate', targetType: 'stems', targetId: trackKey, priority: Math.min(100, Math.max(0, Number(args.priority ?? 35))), maxAttempts: 2, input });
+    return { queued: true, job_id: job.id, job_type: job.job_type, track_key: trackKey, safety: { public: false, paid_provider: false } };
   }
 
   if (name === 'core.code.build') {

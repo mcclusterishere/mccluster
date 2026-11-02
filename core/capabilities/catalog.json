@@ -1986,6 +1986,55 @@
         "audio",
         "self-hosted"
       ]
+    },
+    {
+      "id": "stems.separate",
+      "title": "Separate a track into stems",
+      "description": "Split one track into every instrument with owned Demucs weights (htdemucs_6s: vocals, drums, bass, guitar, piano, other; htdemucs: four stems) plus an instrumental mix. Stems are stored privately in mcc-gated-audio/stems/<track_key>/ with a manifest in public.music_stem_sets, and served to the owner only through short-lived signed URLs.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "track_key": {
+            "type": "string"
+          },
+          "src": {
+            "type": "string"
+          },
+          "track_id": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "music",
+        "stems",
+        "audio",
+        "self-hosted",
+        "private"
+      ]
     }
   ],
   "bindings": [
@@ -2742,6 +2791,25 @@
         "separator": "demucs htdemucs_6s",
         "asr": "faster-whisper",
         "aligner": "wav2vec2-ctc",
+        "paid_provider": false
+      }
+    },
+    {
+      "id": "core.stems-separate",
+      "capability": "stems.separate",
+      "provider": "mccluster-core",
+      "tool": "core.stems.separate",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "separator": "demucs htdemucs_6s",
+        "private_storage": true,
         "paid_provider": false
       }
     }
