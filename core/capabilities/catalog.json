@@ -1943,6 +1943,49 @@
           }
         }
       }
+    },
+    {
+      "id": "lyrics.align",
+      "title": "Time lyrics to audio",
+      "description": "Produce line- and word-timed lyrics for one release with the owned lyric machine: Demucs vocal separation, faster-whisper recognition on the vocal, the creator's lyric sheet (or DistroKid TTML / LRC) mapped to what is sung, and wav2vec2 CTC word alignment. Output is the data/lyrics JSON every player reads, marked reviewed:false; lyrics the owner reviewed are never replaced.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "track_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "track_id": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "music",
+        "lyrics",
+        "audio",
+        "self-hosted"
+      ]
     }
   ],
   "bindings": [
@@ -2680,6 +2723,26 @@
       "features": {
         "read_only": false,
         "self_hosted": true
+      }
+    },
+    {
+      "id": "core.lyrics-align",
+      "capability": "lyrics.align",
+      "provider": "mccluster-core",
+      "tool": "core.lyrics.align",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "separator": "demucs htdemucs_6s",
+        "asr": "faster-whisper",
+        "aligner": "wav2vec2-ctc",
+        "paid_provider": false
       }
     }
   ]

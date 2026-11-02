@@ -346,6 +346,38 @@
    "by": "Scored by Dealer Plates.",
    "tracks": [
     {
+     "title": "Test Drive",
+     "src": "assets/audio/test-drive.mp3",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/test-drive.json",
+     "story": "A triple entendre: a man shows a woman the whole game, from fob cloning to fake test drives, and how to drive off calm.",
+     "seconds": 95.2
+    },
+    {
+     "title": "Salvage Title (B-Side)",
+     "src": "assets/audio/salvage-title-b-side.m4a",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/salvage-title-b-side.json",
+     "story": "You came with a salvage title; he tried to rebuild you. The car goes back to the streets.",
+     "seconds": 89.1
+    },
+    {
+     "title": "Repo Guy (B-Side)",
+     "src": "assets/audio/repo-guy-b-side.mp3",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/repo-guy-b-side.json",
+     "story": "McCluster gears up to repossess the car Rico sold to the street, and a standoff ends in ten seconds with no shots fired.",
+     "seconds": 120.2
+    },
+    {
+     "title": "Hundun (B-Side)",
+     "src": "assets/audio/hundun-b-side.mp3",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/hundun-b-side.json",
+     "story": "Back at the penthouse with Majid: first get your monyon, then stack a hundun, then make a run for it.",
+     "seconds": 143
+    },
+    {
      "title": "Dealer Plates (A-Side)",
      "credit": "Prod. Zakir & McCluster",
      "src": "assets/audio/dealer-plates.mp3",
@@ -353,7 +385,8 @@
      "lyrics": "data/lyrics/dealer-plates.json",
      "reel": "data/reels/dealer-plates.json",
      "music_video": "assets/video/whip.mp4",
-     "seconds": 97.4
+     "seconds": 97.4,
+     "story": "Legit business meets the other kind: the celebration of McCluster finally getting free of the dealer mafia."
     },
     {
      "title": "Dealer Plates (B-Side)",
@@ -361,7 +394,48 @@
      "src": "assets/audio/dealer-plates-b.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "music_video": "assets/video/dealer-plates-b-video.mp4",
-     "seconds": 97.4
+     "seconds": 97.4,
+     "story": "Legit business meets the other kind: the celebration of McCluster finally getting free of the dealer mafia."
+    },
+    {
+     "title": "Towyard Killer",
+     "src": "assets/audio/towyard-killer.m4a",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/towyard-killer.json",
+     "story": "A crew member's car is impounded; McCluster gets it out and shows the lil homies how to beat inflated fees legally.",
+     "seconds": 65.7
+    },
+    {
+     "title": "Mr. Lock Changer (Remix)",
+     "src": "assets/audio/mr-lock-changer-remix.mp3",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/mr-lock-changer-remix.json",
+     "story": "A lil homie in a ski mask borrows a key fob copier and advertises his lockout service.",
+     "seconds": 108.1
+    },
+    {
+     "title": "Lana (B-Side)",
+     "src": "assets/audio/lana-b-side.mp3",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/lana-b-side.json",
+     "story": "McCluster makes it to ATL to pick up his plates, set up the office and see family, with danger never far behind.",
+     "seconds": 85.3
+    },
+    {
+     "title": "Stand On Business (B-Side)",
+     "src": "assets/audio/stand-on-business-b-side.m4a",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/stand-on-business-b-side.json",
+     "story": "The journey so far, with scenes from almost every video: the business acumen behind it all.",
+     "seconds": 120.7
+    },
+    {
+     "title": "All in the Details",
+     "src": "assets/audio/all-in-the-details.mp3",
+     "poster": "assets/img/wing-whip-poster.jpg",
+     "lyrics": "data/lyrics/all-in-the-details.json",
+     "story": "I got a dealership, it's retail: give me a call if you need a whip or a detail.",
+     "seconds": 155
     }
    ]
   },

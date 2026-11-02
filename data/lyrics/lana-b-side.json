@@ -1,0 +1,1668 @@
+{
+ "duration_seconds": 85,
+ "language": "en",
+ "songTitle": "Lana (B-Side)",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:30:02.277Z",
+  "confidence": 0.762,
+  "mismatched_lines": 4,
+  "sheet_lines": 19,
+  "heard_words": 294,
+  "ctc_aligned_lines": 24,
+  "timing": {
+   "align_seconds": 40.1,
+   "separate_seconds": 45.9,
+   "asr_seconds": 164.6,
+   "map_seconds": 0.2
+  }
+ },
+ "plain": "La na na. Love with Atlanta.\n\nI fell in love with Alana I fell in love with Atlanta\n\nI fell in love with Alana oooh I fell in love with Alana\nI fell in love with the high-rise I fell in love with the glamour\nI fell in love with the dollar signs, in love with the scammers\nIf you ain't talking that monyon yon I don't understand yah\n\nPockets like ha-ha-ha when I hit bank now\nHit the track drive the fa-ra-rari shit is a play ground\nTake a visit to my Grandma-ma she live in the A town\nEven took a trip to Savannah to visit the lake house\nFrom a dealer to a car dealer not a rapper\nDoubled my worth in Acworth\nAll of my rentals got trackers\nSo who are you trying to run off on?\nI pray you get bagged first\nCause I'll put the cash on your head and you'll meet the pastor.\n\nI fell in love with the La -na -na,\n\nI fell in love with Alana I fell in love with Atlanta\n\nI fell in love with the high-rise I fell in love with the glamour\nI fell in love with the dollar signs, in love with the scammers\nIf you ain't talking that monyon yon I don't understand yah\n\nPockets like ha-ha-ha when I hit bank now\nlove with La\n\nI fell in love with the high-rise I fell in love with the glamour\nI fell in love with the dollar signs, in love with the scammers\nIf you ain't talking that monyon yon I don't understand yah",
+ "timed": {
+  "line": [
+   {
+    "begin": 1.107,
+    "end": 1.942,
+    "content": "La na na. Love with Atlanta.",
+    "confidence": 0.97,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 1.107,
+      "end": 1.228,
+      "content": "La"
+     },
+     {
+      "begin": 1.389,
+      "end": 1.49,
+      "content": "na"
+     },
+     {
+      "begin": 1.691,
+      "end": 1.942,
+      "content": "na."
+     },
+     {
+      "begin": 1.942,
+      "end": 1.942,
+      "content": "Love"
+     },
+     {
+      "begin": 1.942,
+      "end": 1.942,
+      "content": "with"
+     },
+     {
+      "begin": 1.942,
+      "end": 1.942,
+      "content": "Atlanta."
+     }
+    ],
+    "align_score": 0.252
+   },
+   {
+    "begin": 1.942,
+    "end": 6.32,
+    "content": "I fell in love with Alana I fell in love with Atlanta",
+    "confidence": 0.717,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 1.942,
+      "end": 1.962,
+      "content": "I"
+     },
+     {
+      "begin": 2.022,
+      "end": 2.122,
+      "content": "fell"
+     },
+     {
+      "begin": 2.183,
+      "end": 2.223,
+      "content": "in"
+     },
+     {
+      "begin": 2.263,
+      "end": 2.444,
+      "content": "love"
+     },
+     {
+      "begin": 2.524,
+      "end": 2.705,
+      "content": "with"
+     },
+     {
+      "begin": 2.765,
+      "end": 3.066,
+      "content": "Alana"
+     },
+     {
+      "begin": 4.412,
+      "end": 4.432,
+      "content": "I"
+     },
+     {
+      "begin": 4.593,
+      "end": 4.914,
+      "content": "fell"
+     },
+     {
+      "begin": 5.235,
+      "end": 5.276,
+      "content": "in"
+     },
+     {
+      "begin": 5.517,
+      "end": 5.637,
+      "content": "love"
+     },
+     {
+      "begin": 5.657,
+      "end": 5.758,
+      "content": "with"
+     },
+     {
+      "begin": 6.059,
+      "end": 6.32,
+      "content": "Atlanta"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.251
+   },
+   {
+    "begin": 13.024,
+    "end": 15.522,
+    "content": "I fell in love with Alana oooh I fell in love with Alana",
+    "confidence": 0.824,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 13.024,
+      "end": 13.044,
+      "content": "I"
+     },
+     {
+      "begin": 13.105,
+      "end": 13.245,
+      "content": "fell"
+     },
+     {
+      "begin": 13.285,
+      "end": 13.326,
+      "content": "in"
+     },
+     {
+      "begin": 13.386,
+      "end": 13.507,
+      "content": "love"
+     },
+     {
+      "begin": 13.527,
+      "end": 13.687,
+      "content": "with"
+     },
+     {
+      "begin": 13.748,
+      "end": 14.069,
+      "content": "Alana"
+     },
+     {
+      "begin": 14.15,
+      "end": 14.391,
+      "content": "oooh"
+     },
+     {
+      "begin": 14.612,
+      "end": 14.632,
+      "content": "I"
+     },
+     {
+      "begin": 14.773,
+      "end": 14.893,
+      "content": "fell"
+     },
+     {
+      "begin": 14.933,
+      "end": 14.974,
+      "content": "in"
+     },
+     {
+      "begin": 15.014,
+      "end": 15.114,
+      "content": "love"
+     },
+     {
+      "begin": 15.134,
+      "end": 15.335,
+      "content": "with"
+     },
+     {
+      "begin": 15.522,
+      "end": 15.522,
+      "content": "Alana"
+     }
+    ],
+    "align_score": 0.339
+   },
+   {
+    "begin": 15.522,
+    "end": 19.344,
+    "content": "I fell in love with the high-rise I fell in love with the glamour",
+    "confidence": 0.926,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 15.522,
+      "end": 15.542,
+      "content": "I"
+     },
+     {
+      "begin": 16.285,
+      "end": 16.406,
+      "content": "fell"
+     },
+     {
+      "begin": 16.426,
+      "end": 16.466,
+      "content": "in"
+     },
+     {
+      "begin": 16.526,
+      "end": 16.647,
+      "content": "love"
+     },
+     {
+      "begin": 16.687,
+      "end": 16.767,
+      "content": "with"
+     },
+     {
+      "begin": 16.807,
+      "end": 16.868,
+      "content": "the"
+     },
+     {
+      "begin": 16.968,
+      "end": 17.511,
+      "content": "high-rise"
+     },
+     {
+      "begin": 17.631,
+      "end": 17.651,
+      "content": "I"
+     },
+     {
+      "begin": 17.892,
+      "end": 18.033,
+      "content": "fell"
+     },
+     {
+      "begin": 18.073,
+      "end": 18.133,
+      "content": "in"
+     },
+     {
+      "begin": 18.174,
+      "end": 18.294,
+      "content": "love"
+     },
+     {
+      "begin": 18.334,
+      "end": 18.415,
+      "content": "with"
+     },
+     {
+      "begin": 18.495,
+      "end": 18.696,
+      "content": "the"
+     },
+     {
+      "begin": 19.344,
+      "end": 19.344,
+      "content": "glamour"
+     }
+    ],
+    "align_score": 0.452
+   },
+   {
+    "begin": 19.344,
+    "end": 22.482,
+    "content": "I fell in love with the dollar signs, in love with the scammers",
+    "confidence": 0.99,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 19.344,
+      "end": 19.364,
+      "content": "I"
+     },
+     {
+      "begin": 19.424,
+      "end": 19.545,
+      "content": "fell"
+     },
+     {
+      "begin": 19.605,
+      "end": 19.645,
+      "content": "in"
+     },
+     {
+      "begin": 19.686,
+      "end": 19.786,
+      "content": "love"
+     },
+     {
+      "begin": 19.826,
+      "end": 19.907,
+      "content": "with"
+     },
+     {
+      "begin": 19.947,
+      "end": 20.007,
+      "content": "the"
+     },
+     {
+      "begin": 20.107,
+      "end": 20.509,
+      "content": "dollar"
+     },
+     {
+      "begin": 20.67,
+      "end": 21.052,
+      "content": "signs,"
+     },
+     {
+      "begin": 21.112,
+      "end": 21.152,
+      "content": "in"
+     },
+     {
+      "begin": 21.293,
+      "end": 21.514,
+      "content": "love"
+     },
+     {
+      "begin": 21.674,
+      "end": 22.016,
+      "content": "with"
+     },
+     {
+      "begin": 22.458,
+      "end": 22.482,
+      "content": "the"
+     },
+     {
+      "begin": 22.482,
+      "end": 22.482,
+      "content": "scammers"
+     }
+    ],
+    "align_score": 0.426
+   },
+   {
+    "begin": 22.482,
+    "end": 25.419,
+    "content": "If you ain't talking that monyon yon I don't understand yah",
+    "confidence": 0.487,
+    "mismatch": true,
+    "section": "Chorus",
+    "heard": "money y 'all and",
+    "words": [
+     {
+      "begin": 22.482,
+      "end": 22.523,
+      "content": "If"
+     },
+     {
+      "begin": 22.563,
+      "end": 22.623,
+      "content": "you"
+     },
+     {
+      "begin": 22.663,
+      "end": 22.784,
+      "content": "ain't"
+     },
+     {
+      "begin": 22.824,
+      "end": 23.046,
+      "content": "talking"
+     },
+     {
+      "begin": 23.086,
+      "end": 23.186,
+      "content": "that"
+     },
+     {
+      "begin": 23.247,
+      "end": 23.709,
+      "content": "monyon"
+     },
+     {
+      "begin": 23.81,
+      "end": 24.252,
+      "content": "yon"
+     },
+     {
+      "begin": 24.333,
+      "end": 24.353,
+      "content": "I"
+     },
+     {
+      "begin": 24.413,
+      "end": 24.574,
+      "content": "don't"
+     },
+     {
+      "begin": 24.614,
+      "end": 25.077,
+      "content": "understand"
+     },
+     {
+      "begin": 25.157,
+      "end": 25.419,
+      "content": "yah"
+     }
+    ],
+    "align_score": 0.778
+   },
+   {
+    "begin": 26.385,
+    "end": 28.02,
+    "content": "Pockets like ha-ha-ha when I hit bank now",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 26.385,
+      "end": 26.666,
+      "content": "Pockets"
+     },
+     {
+      "begin": 26.767,
+      "end": 26.847,
+      "content": "like"
+     },
+     {
+      "begin": 26.928,
+      "end": 27.511,
+      "content": "ha-ha-ha"
+     },
+     {
+      "begin": 27.531,
+      "end": 27.632,
+      "content": "when"
+     },
+     {
+      "begin": 27.692,
+      "end": 27.712,
+      "content": "I"
+     },
+     {
+      "begin": 27.793,
+      "end": 27.933,
+      "content": "hit"
+     },
+     {
+      "begin": 28.02,
+      "end": 28.02,
+      "content": "bank"
+     },
+     {
+      "begin": 28.02,
+      "end": 28.02,
+      "content": "now"
+     }
+    ],
+    "align_score": 0.511
+   },
+   {
+    "begin": 28.02,
+    "end": 31.141,
+    "content": "Hit the track drive the fa-ra-rari shit is a play ground",
+    "confidence": 0.587,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 28.02,
+      "end": 28.221,
+      "content": "Hit"
+     },
+     {
+      "begin": 28.884,
+      "end": 28.965,
+      "content": "the"
+     },
+     {
+      "begin": 29.005,
+      "end": 29.166,
+      "content": "track"
+     },
+     {
+      "begin": 29.306,
+      "end": 29.407,
+      "content": "drive"
+     },
+     {
+      "begin": 29.427,
+      "end": 29.487,
+      "content": "the"
+     },
+     {
+      "begin": 29.548,
+      "end": 30.713,
+      "content": "fa-ra-rari"
+     },
+     {
+      "begin": 30.773,
+      "end": 30.894,
+      "content": "shit"
+     },
+     {
+      "begin": 30.954,
+      "end": 31.015,
+      "content": "is"
+     },
+     {
+      "begin": 31.075,
+      "end": 31.095,
+      "content": "a"
+     },
+     {
+      "begin": 31.141,
+      "end": 31.141,
+      "content": "play"
+     },
+     {
+      "begin": 31.141,
+      "end": 31.141,
+      "content": "ground"
+     }
+    ],
+    "align_score": 0.395
+   },
+   {
+    "begin": 31.141,
+    "end": 35.164,
+    "content": "Take a visit to my Grandma-ma she live in the A town",
+    "confidence": 0.952,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 31.141,
+      "end": 31.502,
+      "content": "Take"
+     },
+     {
+      "begin": 31.964,
+      "end": 31.985,
+      "content": "a"
+     },
+     {
+      "begin": 32.206,
+      "end": 32.406,
+      "content": "visit"
+     },
+     {
+      "begin": 32.447,
+      "end": 32.507,
+      "content": "to"
+     },
+     {
+      "begin": 32.567,
+      "end": 32.627,
+      "content": "my"
+     },
+     {
+      "begin": 32.708,
+      "end": 33.612,
+      "content": "Grandma-ma"
+     },
+     {
+      "begin": 33.813,
+      "end": 33.873,
+      "content": "she"
+     },
+     {
+      "begin": 33.953,
+      "end": 34.074,
+      "content": "live"
+     },
+     {
+      "begin": 34.114,
+      "end": 34.154,
+      "content": "in"
+     },
+     {
+      "begin": 34.215,
+      "end": 34.295,
+      "content": "the"
+     },
+     {
+      "begin": 34.456,
+      "end": 34.476,
+      "content": "A"
+     },
+     {
+      "begin": 35.164,
+      "end": 35.164,
+      "content": "town"
+     }
+    ],
+    "align_score": 0.692
+   },
+   {
+    "begin": 35.164,
+    "end": 37.997,
+    "content": "Even took a trip to Savannah to visit the lake house",
+    "confidence": 0.782,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 35.164,
+      "end": 35.305,
+      "content": "Even"
+     },
+     {
+      "begin": 35.365,
+      "end": 35.486,
+      "content": "took"
+     },
+     {
+      "begin": 35.566,
+      "end": 35.586,
+      "content": "a"
+     },
+     {
+      "begin": 35.606,
+      "end": 35.747,
+      "content": "trip"
+     },
+     {
+      "begin": 35.767,
+      "end": 35.827,
+      "content": "to"
+     },
+     {
+      "begin": 35.887,
+      "end": 36.872,
+      "content": "Savannah"
+     },
+     {
+      "begin": 36.952,
+      "end": 36.992,
+      "content": "to"
+     },
+     {
+      "begin": 37.073,
+      "end": 37.254,
+      "content": "visit"
+     },
+     {
+      "begin": 37.294,
+      "end": 37.354,
+      "content": "the"
+     },
+     {
+      "begin": 37.454,
+      "end": 37.756,
+      "content": "lake"
+     },
+     {
+      "begin": 37.796,
+      "end": 37.997,
+      "content": "house"
+     }
+    ],
+    "align_score": 0.534
+   },
+   {
+    "begin": 39.045,
+    "end": 41.036,
+    "content": "From a dealer to a car dealer not a rapper",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 39.045,
+      "end": 39.166,
+      "content": "From"
+     },
+     {
+      "begin": 39.266,
+      "end": 39.286,
+      "content": "a"
+     },
+     {
+      "begin": 39.327,
+      "end": 39.548,
+      "content": "dealer"
+     },
+     {
+      "begin": 39.588,
+      "end": 39.669,
+      "content": "to"
+     },
+     {
+      "begin": 39.769,
+      "end": 39.789,
+      "content": "a"
+     },
+     {
+      "begin": 39.85,
+      "end": 40.031,
+      "content": "car"
+     },
+     {
+      "begin": 40.111,
+      "end": 40.373,
+      "content": "dealer"
+     },
+     {
+      "begin": 40.413,
+      "end": 40.533,
+      "content": "not"
+     },
+     {
+      "begin": 40.594,
+      "end": 40.614,
+      "content": "a"
+     },
+     {
+      "begin": 40.694,
+      "end": 41.036,
+      "content": "rapper"
+     }
+    ],
+    "align_score": 0.626
+   },
+   {
+    "begin": 41.383,
+    "end": 42.52,
+    "content": "Doubled my worth in Acworth",
+    "confidence": 0.743,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 41.383,
+      "end": 41.585,
+      "content": "Doubled"
+     },
+     {
+      "begin": 41.605,
+      "end": 41.706,
+      "content": "my"
+     },
+     {
+      "begin": 41.807,
+      "end": 42.029,
+      "content": "worth"
+     },
+     {
+      "begin": 42.089,
+      "end": 42.13,
+      "content": "in"
+     },
+     {
+      "begin": 42.311,
+      "end": 42.52,
+      "content": "Acworth"
+     }
+    ],
+    "align_score": 0.308
+   },
+   {
+    "begin": 42.52,
+    "end": 43.76,
+    "content": "All of my rentals got trackers",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 42.52,
+      "end": 42.601,
+      "content": "All"
+     },
+     {
+      "begin": 43.004,
+      "end": 43.065,
+      "content": "of"
+     },
+     {
+      "begin": 43.105,
+      "end": 43.166,
+      "content": "my"
+     },
+     {
+      "begin": 43.246,
+      "end": 43.508,
+      "content": "rentals"
+     },
+     {
+      "begin": 43.529,
+      "end": 43.69,
+      "content": "got"
+     },
+     {
+      "begin": 43.76,
+      "end": 43.76,
+      "content": "trackers"
+     }
+    ],
+    "align_score": 0.596
+   },
+   {
+    "begin": 43.76,
+    "end": 46.383,
+    "content": "So who are you trying to run off on?",
+    "confidence": 0.519,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 43.76,
+      "end": 43.841,
+      "content": "So"
+     },
+     {
+      "begin": 43.941,
+      "end": 44.142,
+      "content": "who"
+     },
+     {
+      "begin": 44.243,
+      "end": 44.726,
+      "content": "are"
+     },
+     {
+      "begin": 44.887,
+      "end": 44.967,
+      "content": "you"
+     },
+     {
+      "begin": 45.108,
+      "end": 45.249,
+      "content": "trying"
+     },
+     {
+      "begin": 45.269,
+      "end": 45.33,
+      "content": "to"
+     },
+     {
+      "begin": 45.41,
+      "end": 45.531,
+      "content": "run"
+     },
+     {
+      "begin": 45.772,
+      "end": 45.893,
+      "content": "off"
+     },
+     {
+      "begin": 46.316,
+      "end": 46.383,
+      "content": "on?"
+     }
+    ],
+    "align_score": 0.51
+   },
+   {
+    "begin": 46.383,
+    "end": 47.835,
+    "content": "I pray you get bagged first",
+    "confidence": 0.637,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 46.383,
+      "end": 46.403,
+      "content": "I"
+     },
+     {
+      "begin": 46.564,
+      "end": 46.665,
+      "content": "pray"
+     },
+     {
+      "begin": 46.685,
+      "end": 46.746,
+      "content": "you"
+     },
+     {
+      "begin": 46.806,
+      "end": 46.907,
+      "content": "get"
+     },
+     {
+      "begin": 46.968,
+      "end": 47.512,
+      "content": "bagged"
+     },
+     {
+      "begin": 47.573,
+      "end": 47.835,
+      "content": "first"
+     }
+    ],
+    "align_score": 0.383
+   },
+   {
+    "begin": 48.024,
+    "end": 50.477,
+    "content": "Cause I'll put the cash on your head and you'll meet the pastor.",
+    "confidence": 0.875,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 48.024,
+      "end": 48.145,
+      "content": "Cause"
+     },
+     {
+      "begin": 48.165,
+      "end": 48.265,
+      "content": "I'll"
+     },
+     {
+      "begin": 48.285,
+      "end": 48.366,
+      "content": "put"
+     },
+     {
+      "begin": 48.386,
+      "end": 48.446,
+      "content": "the"
+     },
+     {
+      "begin": 48.507,
+      "end": 49.07,
+      "content": "cash"
+     },
+     {
+      "begin": 49.15,
+      "end": 49.19,
+      "content": "on"
+     },
+     {
+      "begin": 49.251,
+      "end": 49.351,
+      "content": "your"
+     },
+     {
+      "begin": 49.411,
+      "end": 49.572,
+      "content": "head"
+     },
+     {
+      "begin": 49.612,
+      "end": 49.673,
+      "content": "and"
+     },
+     {
+      "begin": 49.693,
+      "end": 49.834,
+      "content": "you'll"
+     },
+     {
+      "begin": 49.854,
+      "end": 49.954,
+      "content": "meet"
+     },
+     {
+      "begin": 49.974,
+      "end": 50.035,
+      "content": "the"
+     },
+     {
+      "begin": 50.095,
+      "end": 50.477,
+      "content": "pastor."
+     }
+    ],
+    "align_score": 0.581
+   },
+   {
+    "begin": 50.927,
+    "end": 52.66,
+    "content": "I fell in love with the La -na -na,",
+    "confidence": 0.771,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 50.927,
+      "end": 50.947,
+      "content": "I"
+     },
+     {
+      "begin": 51.007,
+      "end": 51.148,
+      "content": "fell"
+     },
+     {
+      "begin": 51.188,
+      "end": 51.228,
+      "content": "in"
+     },
+     {
+      "begin": 51.289,
+      "end": 51.389,
+      "content": "love"
+     },
+     {
+      "begin": 51.41,
+      "end": 51.51,
+      "content": "with"
+     },
+     {
+      "begin": 51.55,
+      "end": 51.611,
+      "content": "the"
+     },
+     {
+      "begin": 51.671,
+      "end": 52.054,
+      "content": "La"
+     },
+     {
+      "begin": 52.275,
+      "end": 52.496,
+      "content": "-na"
+     },
+     {
+      "begin": 52.66,
+      "end": 52.66,
+      "content": "-na,"
+     }
+    ],
+    "added": true,
+    "align_score": 0.637
+   },
+   {
+    "begin": 52.66,
+    "end": 53,
+    "content": "I fell in love with Alana I fell in love with Atlanta",
+    "confidence": 0.976,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 52.66,
+      "end": 52.74,
+      "content": "I"
+     },
+     {
+      "begin": 52.74,
+      "end": 52.74,
+      "content": "fell"
+     },
+     {
+      "begin": 52.74,
+      "end": 53,
+      "content": "in"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "love"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "with"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "Alana"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "I"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "fell"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "in"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "love"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "with"
+     },
+     {
+      "begin": 53,
+      "end": 53,
+      "content": "Atlanta"
+     }
+    ],
+    "align_score": 0.112
+   },
+   {
+    "begin": 53,
+    "end": 57.224,
+    "content": "I fell in love with the high-rise I fell in love with the glamour",
+    "confidence": 0.929,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 53,
+      "end": 53.02,
+      "content": "I"
+     },
+     {
+      "begin": 54.185,
+      "end": 54.306,
+      "content": "fell"
+     },
+     {
+      "begin": 54.326,
+      "end": 54.366,
+      "content": "in"
+     },
+     {
+      "begin": 54.426,
+      "end": 54.547,
+      "content": "love"
+     },
+     {
+      "begin": 54.587,
+      "end": 54.667,
+      "content": "with"
+     },
+     {
+      "begin": 54.708,
+      "end": 54.768,
+      "content": "the"
+     },
+     {
+      "begin": 54.848,
+      "end": 55.391,
+      "content": "high-rise"
+     },
+     {
+      "begin": 55.551,
+      "end": 55.571,
+      "content": "I"
+     },
+     {
+      "begin": 55.772,
+      "end": 55.913,
+      "content": "fell"
+     },
+     {
+      "begin": 55.953,
+      "end": 55.993,
+      "content": "in"
+     },
+     {
+      "begin": 56.053,
+      "end": 56.154,
+      "content": "love"
+     },
+     {
+      "begin": 56.174,
+      "end": 56.254,
+      "content": "with"
+     },
+     {
+      "begin": 56.274,
+      "end": 56.335,
+      "content": "the"
+     },
+     {
+      "begin": 56.375,
+      "end": 57.224,
+      "content": "glamour"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.514
+   },
+   {
+    "begin": 57.224,
+    "end": 60.383,
+    "content": "I fell in love with the dollar signs, in love with the scammers",
+    "confidence": 0.99,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 57.224,
+      "end": 57.244,
+      "content": "I"
+     },
+     {
+      "begin": 57.324,
+      "end": 57.445,
+      "content": "fell"
+     },
+     {
+      "begin": 57.505,
+      "end": 57.545,
+      "content": "in"
+     },
+     {
+      "begin": 57.585,
+      "end": 57.686,
+      "content": "love"
+     },
+     {
+      "begin": 57.726,
+      "end": 57.806,
+      "content": "with"
+     },
+     {
+      "begin": 57.847,
+      "end": 57.907,
+      "content": "the"
+     },
+     {
+      "begin": 58.007,
+      "end": 58.409,
+      "content": "dollar"
+     },
+     {
+      "begin": 58.57,
+      "end": 58.951,
+      "content": "signs,"
+     },
+     {
+      "begin": 59.112,
+      "end": 59.152,
+      "content": "in"
+     },
+     {
+      "begin": 59.192,
+      "end": 59.373,
+      "content": "love"
+     },
+     {
+      "begin": 59.574,
+      "end": 59.875,
+      "content": "with"
+     },
+     {
+      "begin": 60.383,
+      "end": 60.383,
+      "content": "the"
+     },
+     {
+      "begin": 60.383,
+      "end": 60.383,
+      "content": "scammers"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.452
+   },
+   {
+    "begin": 60.383,
+    "end": 63.279,
+    "content": "If you ain't talking that monyon yon I don't understand yah",
+    "confidence": 0.672,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 60.383,
+      "end": 60.424,
+      "content": "If"
+     },
+     {
+      "begin": 60.464,
+      "end": 60.524,
+      "content": "you"
+     },
+     {
+      "begin": 60.564,
+      "end": 60.685,
+      "content": "ain't"
+     },
+     {
+      "begin": 60.725,
+      "end": 60.946,
+      "content": "talking"
+     },
+     {
+      "begin": 60.967,
+      "end": 61.087,
+      "content": "that"
+     },
+     {
+      "begin": 61.147,
+      "end": 61.61,
+      "content": "monyon"
+     },
+     {
+      "begin": 61.71,
+      "end": 62.133,
+      "content": "yon"
+     },
+     {
+      "begin": 62.233,
+      "end": 62.253,
+      "content": "I"
+     },
+     {
+      "begin": 62.314,
+      "end": 62.454,
+      "content": "don't"
+     },
+     {
+      "begin": 62.515,
+      "end": 62.957,
+      "content": "understand"
+     },
+     {
+      "begin": 63.058,
+      "end": 63.279,
+      "content": "yah"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.787
+   },
+   {
+    "begin": 63.32,
+    "end": 63.62,
+    "content": "Pockets like ha-ha-ha when I hit bank now",
+    "confidence": 0.125,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "y 'all fell",
+    "words": [
+     {
+      "begin": 63.32,
+      "end": 63.32,
+      "content": "Pockets"
+     },
+     {
+      "begin": 63.32,
+      "end": 63.32,
+      "content": "like"
+     },
+     {
+      "begin": 63.32,
+      "end": 63.32,
+      "content": "ha-ha-ha"
+     },
+     {
+      "begin": 63.32,
+      "end": 63.32,
+      "content": "when"
+     },
+     {
+      "begin": 63.32,
+      "end": 63.62,
+      "content": "I"
+     },
+     {
+      "begin": 63.62,
+      "end": 63.62,
+      "content": "hit"
+     },
+     {
+      "begin": 63.62,
+      "end": 63.62,
+      "content": "bank"
+     },
+     {
+      "begin": 63.62,
+      "end": 63.62,
+      "content": "now"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.012
+   },
+   {
+    "begin": 63.927,
+    "end": 64.453,
+    "content": "love with La",
+    "confidence": 0.091,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "love with La",
+    "sheet": "Hit the track drive the fa-ra-rari shit is a play ground",
+    "words": [
+     {
+      "begin": 63.927,
+      "end": 64.028,
+      "content": "love"
+     },
+     {
+      "begin": 64.048,
+      "end": 64.21,
+      "content": "with"
+     },
+     {
+      "begin": 64.311,
+      "end": 64.453,
+      "content": "La"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.498
+   },
+   {
+    "begin": 66.223,
+    "end": 69.417,
+    "content": "I fell in love with the high-rise I fell in love with the glamour",
+    "confidence": 0.929,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 66.223,
+      "end": 66.243,
+      "content": "I"
+     },
+     {
+      "begin": 66.805,
+      "end": 66.926,
+      "content": "fell"
+     },
+     {
+      "begin": 66.946,
+      "end": 67.006,
+      "content": "in"
+     },
+     {
+      "begin": 67.066,
+      "end": 67.187,
+      "content": "love"
+     },
+     {
+      "begin": 67.227,
+      "end": 67.307,
+      "content": "with"
+     },
+     {
+      "begin": 67.327,
+      "end": 67.388,
+      "content": "the"
+     },
+     {
+      "begin": 67.488,
+      "end": 68.031,
+      "content": "high-rise"
+     },
+     {
+      "begin": 68.171,
+      "end": 68.191,
+      "content": "I"
+     },
+     {
+      "begin": 68.412,
+      "end": 68.553,
+      "content": "fell"
+     },
+     {
+      "begin": 68.593,
+      "end": 68.633,
+      "content": "in"
+     },
+     {
+      "begin": 68.693,
+      "end": 68.794,
+      "content": "love"
+     },
+     {
+      "begin": 68.814,
+      "end": 68.894,
+      "content": "with"
+     },
+     {
+      "begin": 68.914,
+      "end": 68.975,
+      "content": "the"
+     },
+     {
+      "begin": 69.015,
+      "end": 69.417,
+      "content": "glamour"
+     }
+    ],
+    "align_score": 0.534
+   },
+   {
+    "begin": 69.864,
+    "end": 72.3,
+    "content": "I fell in love with the dollar signs, in love with the scammers",
+    "confidence": 0.99,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 69.864,
+      "end": 69.884,
+      "content": "I"
+     },
+     {
+      "begin": 69.944,
+      "end": 70.065,
+      "content": "fell"
+     },
+     {
+      "begin": 70.125,
+      "end": 70.165,
+      "content": "in"
+     },
+     {
+      "begin": 70.206,
+      "end": 70.326,
+      "content": "love"
+     },
+     {
+      "begin": 70.346,
+      "end": 70.447,
+      "content": "with"
+     },
+     {
+      "begin": 70.467,
+      "end": 70.527,
+      "content": "the"
+     },
+     {
+      "begin": 70.627,
+      "end": 71.029,
+      "content": "dollar"
+     },
+     {
+      "begin": 71.21,
+      "end": 71.572,
+      "content": "signs,"
+     },
+     {
+      "begin": 71.632,
+      "end": 71.672,
+      "content": "in"
+     },
+     {
+      "begin": 71.833,
+      "end": 72.054,
+      "content": "love"
+     },
+     {
+      "begin": 72.215,
+      "end": 72.3,
+      "content": "with"
+     },
+     {
+      "begin": 72.3,
+      "end": 72.3,
+      "content": "the"
+     },
+     {
+      "begin": 72.3,
+      "end": 72.3,
+      "content": "scammers"
+     }
+    ],
+    "align_score": 0.44
+   },
+   {
+    "begin": 72.3,
+    "end": 75.977,
+    "content": "If you ain't talking that monyon yon I don't understand yah",
+    "confidence": 0.752,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 72.3,
+      "end": 72.421,
+      "content": "If"
+     },
+     {
+      "begin": 72.984,
+      "end": 73.064,
+      "content": "you"
+     },
+     {
+      "begin": 73.184,
+      "end": 73.305,
+      "content": "ain't"
+     },
+     {
+      "begin": 73.345,
+      "end": 73.586,
+      "content": "talking"
+     },
+     {
+      "begin": 73.606,
+      "end": 73.707,
+      "content": "that"
+     },
+     {
+      "begin": 73.787,
+      "end": 74.249,
+      "content": "monyon"
+     },
+     {
+      "begin": 74.35,
+      "end": 74.772,
+      "content": "yon"
+     },
+     {
+      "begin": 74.852,
+      "end": 74.872,
+      "content": "I"
+     },
+     {
+      "begin": 74.932,
+      "end": 75.093,
+      "content": "don't"
+     },
+     {
+      "begin": 75.154,
+      "end": 75.596,
+      "content": "understand"
+     },
+     {
+      "begin": 75.676,
+      "end": 75.977,
+      "content": "yah"
+     }
+    ],
+    "align_score": 0.646
+   }
+  ]
+ }
+}

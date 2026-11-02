@@ -123,7 +123,9 @@ test('offer keys and catalogue keys join the album page to the catalogue', () =>
 
 test('every track in data/albums.json maps to a catalogue key of the shape the database keys', async () => {
   const albums = JSON.parse(await read('data/albums.json')).albums;
-  const seed = await read('supabase/migrations/20261003233747_action_network_live_governance_v1.sql');
+  /* the original seed, plus the pending seed for the Whip Equipped tracks added 2026-10-31 */
+  const seed = await read('supabase/migrations/20261003233747_action_network_live_governance_v1.sql')
+    + await read('supabase/pending/20261031180100_whip_equipped_catalog_objects.sql');
   for (const a of albums) for (const t of a.tracks) {
     const key = catalogKeyOf(a.slug, t.title);
     assert.match(key, /^[a-z0-9-]+:[a-z0-9-]+$/);
