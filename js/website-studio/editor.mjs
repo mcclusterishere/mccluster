@@ -3,14 +3,57 @@ import {renderWebsite} from './renderer.mjs';
 const $=id=>document.getElementById(id),API='https://api.mccluster.org/v1/creator-sites/studio';
 const project=new URLSearchParams(location.search).get('project')||'',validProject=/^[a-z0-9][a-z0-9-]{2,39}$/.test(project);let authEpoch=0;
 const projectAPI='https://api.mccluster.org/v1/projects/'+encodeURIComponent(project)+'/tiles';
+const bridgeAPI='https://api.mccluster.org/v2/projects/'+encodeURIComponent(project)+'/tiles';
 let definition,doc,draftID,revision=0,assets=[],processing={can_prepare:false,blockers:[]},dispose=()=>{},dirty=false,busy=false;
+/* The dual-revision Tile bridge (docs/productization/20261102-tile-bridge/HANDOFF.md): once the project is enrolled in the
+   versioned editor, every save/publish/unpublish/withdraw/recover/switch carries BOTH the editor-head revision and the
+   Studio draft revision; a stale pair is a 409 that keeps the edits here. Legacy v1 writes remain only where the bridge
+   reports itself unconfigured, with the existing single expected_revision. */
+let bridge=null;   // null: legacy; otherwise {editor_revision, owner_withdrawn, presentation, removed}
+let conflict=null; // a stale write waiting for a decision: {what, fn}
 const status=(s,error=false)=>{$('status').textContent=s;$('status').classList.toggle('ws-error',error);};
 async function api(path,init={}){
  const epoch=authEpoch;await window.MCC?.refreshIfNeeded?.();if(epoch!==authEpoch)throw Error('Account changed');
  const token=window.MCC?.session()?.access_token;
- let endpoint=/^\/(assets|uploads)/.test(path)?API+path:path==='/workspaces'?'https://api.mccluster.org/v1/creator-billing/entitlement':projectAPI+(path==='/templates'?path:path.endsWith('/preview')?'/preview':path.endsWith('/publish')?'/publish':'');
+ let endpoint=/^\/(assets|uploads)/.test(path)?API+path:path==='/workspaces'?'https://api.mccluster.org/v1/creator-billing/entitlement':path.startsWith('/v2')?bridgeAPI+path.slice(3):projectAPI+(path==='/templates'?path:path.endsWith('/preview')?'/preview':path.endsWith('/publish')?'/publish':'');
  const r=await fetch(endpoint,{method:init.method||'GET',headers:{...(token?{authorization:'Bearer '+token}:{}),...(init.body?{'content-type':'application/json'}:{})},body:init.body?JSON.stringify(init.body):undefined,cache:'no-store',signal:AbortSignal.timeout(15000)});
- const d=await r.json().catch(()=>({}));if(epoch!==authEpoch||window.MCC?.session()?.access_token!==token)throw Error('Account changed');if(!r.ok)throw Error(d.error||'Studio is unavailable');return d;
+ const d=await r.json().catch(()=>({}));if(epoch!==authEpoch||window.MCC?.session()?.access_token!==token)throw Error('Account changed');if(!r.ok)throw Object.assign(Error(d.error||'Studio is unavailable'),{status:r.status,body:d});return d;
+}
+const kindOf=e=>e&&e.status===409?'conflict':e&&e.status===503&&/not enabled|unconfigured/i.test((e.body&&(e.body.error||e.body.code))||'')?'unconfigured':e&&typeof e.status==='number'?'other':'network';
+function tokens(){return bridge?{expected_editor_revision:bridge.editor_revision,expected_revision:revision}:{expected_revision:revision};}
+function adoptBridge(d){if(!d||typeof d.editor_revision!=='number')return;bridge={editor_revision:d.editor_revision,owner_withdrawn:!!d.owner_withdrawn,presentation:d.presentation||(bridge&&bridge.presentation)||'tiles',removed:!!d.removed};if(typeof d.studio_revision==='number')revision=d.studio_revision;}
+/* after a lost response: the record is read back; the write counts only if both revisions moved by exactly one and the draft is what was sent */
+async function readback(what,sent){
+ status('Checking what was saved…');const now=await api('/v2');
+ const moved=now.editor_revision===bridge.editor_revision+1&&now.studio_revision===revision+1,same=!sent||JSON.stringify(now.draft?.document)===JSON.stringify(sent);
+ if(moved&&same){adoptBridge(now);if(sent)dirty=false;status('Confirmed: it was '+what+' before the connection dropped · revision '+revision);return true;}
+ if(now.editor_revision===bridge.editor_revision&&now.studio_revision===revision){status('Not '+what+': the connection dropped and nothing reached the server. Your edits are kept; try again.',true);return false;}
+ adoptBridge(now);status('Could not confirm whether it was '+what+': this project changed meanwhile. Your edits are kept; load the latest saved draft, or save again to overwrite that change.',true);return false;
+}
+function manage(){
+ const m=$('manage');if(!m)return;m.replaceChildren();if(!bridge){m.hidden=true;return;}m.hidden=false;
+ const b=(text,fn)=>{const x=node('button',text);x.type='button';x.onclick=()=>guard(fn);m.append(x);return x;};
+ if(bridge.owner_withdrawn){m.append(node('p','You withdrew this project: it is not public. Its drafts, history and address are kept.'));b('Recover project (stays unpublished)',async()=>{adoptBridge(await write('/v2/recover',{},'recovered'));status('Recovered. Nothing is published until you publish again.');manage();});return;}
+ if(bridge.removed){m.append(node('p','McCluster took this project down. Its drafts are kept; it cannot be recovered from here.'));return;}
+ b('Take the published website down',async()=>{if(!confirm('Take the published website down? Your drafts and history are kept.'))return;adoptBridge(await write('/v2/unpublish',{},'taken down'));$('published').replaceChildren();status('Taken down · revision '+revision);manage();});
+ b('Switch to the front-page presentation (unpublished)',async()=>{if(!confirm('Switch this project to its retained front-page draft? Nothing is published by the switch; the tile drafts stay.'))return;adoptBridge(await write('/v2/switch-front',{},'switched'));status('Switched to the front presentation, unpublished. Edit it in Project Studio; the tile drafts are kept here.');manage();});
+ b('Withdraw project',async()=>{if(!confirm('Withdraw this project? Its page stops being public; drafts, history and address are kept and you can recover it.'))return;adoptBridge(await write('/v2/withdraw',{},'withdrawn'));$('published').replaceChildren();status('Withdrawn · not public · drafts kept');manage();});
+}
+/* one versioned write; a 409 keeps the edits and offers the decision; a lost response is read back */
+async function write(path,body,what){
+ conflict=null;$('keepMine')?.remove();
+ try{return await api(path,{method:path==='/v2'?'PUT':'POST',body:{...tokens(),...body}});}
+ catch(e){
+  const k=kindOf(e);
+  if(k==='conflict'){
+   const now=await api('/v2').catch(()=>null);
+   status('Not '+what+': this project was saved somewhere else since you opened it'+(now?' (editor revision '+now.editor_revision+', draft revision '+now.studio_revision+')':'')+'. Your edits are kept here. Load the latest saved draft to take theirs, or keep yours and save over it.',true);
+   const keep=node('button','Keep mine and save over it');keep.id='keepMine';keep.type='button';keep.onclick=()=>guard(async()=>{if(!now)throw Error('The latest revisions could not be read; try again.');adoptBridge({...now,studio_revision:now.studio_revision});keep.remove();const r=await write(path,body,what);if(path==='/v2'){adoptBridge(r);dirty=false;status('Saved over the other change · revision '+revision);}else{adoptBridge(r);status(what.charAt(0).toUpperCase()+what.slice(1)+' · revision '+revision);manage();}});
+   $('status').after(keep);throw Object.assign(Error(''),{handled:true});
+  }
+  if(k==='network'&&bridge){if(await readback(what,path==='/v2'?body.document:null))return null;throw Object.assign(Error(''),{handled:true});}
+  throw e;
+ }
 }
 function pending(){sessionStorage.setItem('studio-template-intent','motion-portfolio');}
 function changed(){dirty=true;status('Unsaved edits. Save before previewing or publishing.');}
@@ -42,7 +85,7 @@ function renderEditor(){
  });
 }
 function transition(key,s){return {asset_ref:{type:'media_asset',key},in_ms:s.in_ms,out_ms:s.out_ms,pace:'standard',focal:{desktop:{x:s.focal_x??.5,y:s.focal_y??.5},mobile:{x:s.focal_x??.5,y:s.focal_y??.5}}};}
-async function guard(fn){if(busy)return;busy=true;try{await fn();}catch(e){status(e.message,true);}finally{busy=false;}}
+async function guard(fn){if(busy)return;busy=true;try{await fn();}catch(e){if(!e||!e.handled)status(e.message,true);}finally{busy=false;}}
 async function upload(file,settings,select){if(!file)return;return guard(async()=>{if(!confirm('Do you own this media or have permission to use it?'))return;
  const epoch=authEpoch;status('Registering upload…');const r=await api('/uploads',{method:'POST',body:{bytes:file.size,settings,rights_confirmed:true}});
  status('Uploading. Keep this page open.');const u=new URL(r.upload_url);if(u.origin!=='https://api.mccluster.org'||u.pathname!=='/v1/customer-site/media'||r.upload_method!=='POST'||r.requires_authorization!==true)throw Error('Unexpected upload destination');
@@ -55,6 +98,8 @@ async function start(){
  $('auth').hidden=true;const rows=(await api('/templates')).templates;if(!rows?.length)throw Error('The template is not enabled yet.');definition=rows[0];
  $('guidance').textContent='Publishing requires an active paid workspace and a public profile. Private media preparation remains separately gated; no processing allowance is granted here. '+definition.guidance.transition.help;
  const saved=await api('');doc=structuredClone(saved.draft?.document||definition.definition);draftID=saved.draft?.id||'project';revision=saved.draft?.revision||0;dirty=!revision;
+ bridge=null;try{adoptBridge(await api('/v2'));}catch(e){if(kindOf(e)!=='unconfigured')status(e.message,true);}
+ manage();
  $('editor').hidden=false;$('load').hidden=false;await media();
  $('guidance').textContent=(saved.free_publication?'Publish your owned website for free with a public profile.':'Publishing requires an active paid workspace and a public profile.')+' Media approval and preparation allowances remain separate. '+definition.guidance.transition.help;
  $('workspace').closest('label').hidden=saved.free_publication===true;
@@ -64,12 +109,14 @@ async function start(){
 $('useTemplate').onclick=()=>guard(start);
 $('authLink').href='account.html?next='+encodeURIComponent('website-studio.html?project='+project);
 $('title').oninput=()=>{doc.title=$('title').value;changed();};$('mode').onchange=()=>{doc.mode=$('mode').value;changed();};
-$('save').onclick=()=>guard(async()=>{assertDocument(doc);const d=await api('/drafts/'+draftID,{method:'PUT',body:{expected_revision:revision,document:doc}});revision=d.revision;dirty=false;status('Saved to your account · revision '+revision);});
-$('load').onclick=()=>guard(async()=>{if(dirty&&!confirm('Replace unsaved edits with the latest saved draft?'))return;const d=(await api('')).draft;if(!d)throw Error('No saved draft yet.');doc=d.document;draftID=d.id;revision=d.revision;dirty=false;$('editor').hidden=false;await media();status('Loaded saved revision '+revision);});
+$('save').onclick=()=>guard(async()=>{assertDocument(doc);
+ if(bridge){const d=await write('/v2',{document:doc},'saved');if(d){adoptBridge(d);dirty=false;status('Saved to your account · draft revision '+revision+' · editor revision '+bridge.editor_revision);}return;}
+ const d=await api('/drafts/'+draftID,{method:'PUT',body:{expected_revision:revision,document:doc}});revision=d.revision;dirty=false;status('Saved to your account · revision '+revision);});
+$('load').onclick=()=>guard(async()=>{if(dirty&&!confirm('Replace unsaved edits with the latest saved draft?'))return;const latest=await api('');const d=latest.draft;if(!d)throw Error('No saved draft yet.');doc=d.document;draftID=d.id;revision=d.revision;dirty=false;$('keepMine')?.remove();if(bridge)adoptBridge(await api('/v2').catch(()=>null));manage();$('editor').hidden=false;await media();status('Loaded saved revision '+revision);});
 const show=p=>{dispose();$('previewPanel').hidden=false;dispose=renderWebsite($('previewHost'),p);$('previewPanel').scrollIntoView();};
 $('preview').onclick=()=>guard(async()=>{if(dirty||!revision)throw Error('Save the draft before previewing.');show(await api('/drafts/'+draftID+'/preview',{method:'POST',body:{}}));});
 $('back').onclick=()=>{dispose();$('previewPanel').hidden=true;window.scrollTo(0,0);};$('refreshMedia').onclick=()=>guard(media);
-$('publish').onclick=()=>guard(async()=>{if(dirty||!revision)throw Error('Save and review the latest draft first.');if(!confirm('Publish this saved version? Media will be visible publicly.'))return;const r=await api('/drafts/'+draftID+'/publish',{method:'POST',body:{expected_revision:revision,confirm_public:true,org_id:$('workspace').value}});if(r.published!==true)throw Error('Publication not confirmed');const u=new URL(r.url);if(u.origin!=='https://matthew.mccluster.org'||u.pathname!=='/website-studio-view.html')throw Error('Unexpected published destination');const a=node('a','Open published website');a.href=u.href;$('published').replaceChildren(a);status('Published revision '+r.revision);});
+$('publish').onclick=()=>guard(async()=>{if(dirty||!revision)throw Error('Save and review the latest draft first.');if(!confirm('Publish this saved version? Media will be visible publicly.'))return;const r=bridge?await write('/v2/publish',{confirm_public:true,org_id:$('workspace').value},'published'):await api('/drafts/'+draftID+'/publish',{method:'POST',body:{expected_revision:revision,confirm_public:true,org_id:$('workspace').value}});if(!r)return;if(bridge)adoptBridge(r);if(r.published!==true)throw Error('Publication not confirmed');const u=new URL(r.url);if(u.origin!=='https://matthew.mccluster.org'||u.pathname!=='/website-studio-view.html')throw Error('Unexpected published destination');const a=node('a','Open published website');a.href=u.href;$('published').replaceChildren(a);status('Published revision '+(r.revision??revision));manage();});
 $('demo').onclick=()=>guard(async()=>{const p=await(await fetch('data/website-studio/demo-v1.json')).json();status('McCluster demonstration. Your own template starts without this footage or wording.');show(p);});
 window.addEventListener('pagehide',()=>dispose());
 window.addEventListener('mcc:auth-changed',()=>{authEpoch++;dispose();doc=null;assets=[];revision=0;draftID=null;$('tiles').replaceChildren();$('editor').hidden=true;$('previewPanel').hidden=true;$('published').replaceChildren();status('Account changed. Reopening your project.');location.reload();});
