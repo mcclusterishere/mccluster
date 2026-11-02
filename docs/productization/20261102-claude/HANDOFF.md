@@ -4,6 +4,8 @@
 
 Status words used below, as WHOLE-SITE-ACCEPTANCE.md defines them: `uninspected` · `blocked` · `implemented locally` · `verified locally` (local fixtures/harness) · `deployed attested` · `functionally verified` (real service). Source / pushed / merged / deployed / functional are separate fields and none of the last three is claimed anywhere.
 
+The finish-line view (stages, journeys by evidence class, owner/provider decisions D1–D10, release plan): [COMPLETION-LEDGER.md](COMPLETION-LEDGER.md).
+
 ## Per-module ledger (2026-11-02 09:05 ET) — the platform is NOT finished because the editors pass
 
 Status words: **implemented** (code in this branch) · **tested locally** (runtime harness / real-SQL fixture / native proof in this branch) · **blocked — dependency** (exact gate) · **not implemented** (in scope, not started here). "Live-verified" appears nowhere below: no real Supabase Auth/Storage/browser/provider acceptance was performed.

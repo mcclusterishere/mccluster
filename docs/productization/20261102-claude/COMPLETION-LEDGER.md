@@ -1,0 +1,75 @@
+# Productization finish line — one platform, one completion ledger (2026-11-02 09:36 ET)
+
+**DONE** means a real customer can buy and use the advertised platform and the owner can operate it. Nothing below is DONE by that definition. This ledger says exactly how far each stage is, what evidence exists, what kind of evidence it is, and who holds the next move. Source: review branch `claude/whole-platform-20261102` (see `HANDOFF.md` for the per-surface detail); no main merge, production SQL, activation, deployment, purchase or spend has occurred or is requested here.
+
+Evidence classes used throughout: **local-fixture** (real SQL + real Worker handlers on a disposable PostgreSQL, synthetic Auth/Storage/provider) · **local-runtime** (the real page scripts driven in a harness) · **local-browser** (Chrome at 390/1280 over the static tree, signed out) · **sandbox** (a provider's sandbox, with its own evidence) · **live** (the production service, a real customer). Only **live** counts toward DONE.
+
+## 1. One current build — OPEN
+
+| Item | State | Evidence / next move |
+|---|---|---|
+| Claude implementation published | done (review branch) | remote tip `edd8cdd8be4d07fa674071a9b151045bf7cfc94c`, 88 commits ahead of `main` `e80cb0a1`, 0 behind |
+| Backend snapshot published | **open — no remote proof** | at 09:36 ET: `main` = `e80cb0a1`; no new `codex/*` / integration refs; newest open PR is #687 (10-31). The v5 bundle (`e55b9be0`, `pushed:false`) is the last backend source I have and is **not assumed current** |
+| One combined pinned revision | **blocked on the above** | when the backend commit is on the remote: verify its SHA, that `e80cb0a1` and `5e020833` are ancestors, hash its pending SQL/Worker files against `SOURCE-HASHES.json`-style pins, compare `supabase/pending/live-callers.json`, `schema-manifest.json`, `production-ledger.json` (must still be 355 + exact pending versions), then merge it into this branch (no history rewrite), rerun every suite, and record the combined SHA here |
+| Code/dependency/migration versions verified | partial | Node 22 locally; Worker lockfile pinned (`@cfworker/json-schema 4.1.1`, `@fal-ai/client 1.10.1`, msgpack, eventsource-parser, robot3); **npm/pip unreachable in this session**, so 4 Worker test files are dependency-blocked (not failing on source); pending SQL hashes in `HANDOFF.md` |
+
+## 2. Module-by-module — explicit result for every module in the master assignment
+
+| Module | Implementation (this branch + existing engine) | Test result | Blockers / unfinished |
+|---|---|---|---|
+| Account / login / return-to-draft | existing M Account; template intent kept via `account.html?next=`; account-switch guard | local-runtime: account switch drops draft, nothing saved | **live Auth not exercised**; profile restoration source `1fdef132` not on remote |
+| Builder / publishing (front, project, three tiles) | revision-aware save/publish/unpublish/withdraw/recover/history/restore; fail-closed; history-verified readback; recovered-success contract | local-fixture 158 (editor), 57 (Tile bridge), native races; local-runtime 15 + 18 + 6 + 3; local-browser 14/14 | flags off; SQL pending; **real Storage bytes / renderer not live-tested** |
+| Domain checkout / fulfillment | existing adapters; honest status vocabulary; term/renewal disclosure; 24h provider-lapse surfaced | Worker units; native: duplicate funding → one payment, same-host claims → one attempt, same-order → one authority | **registrar sandbox-only; live mode refused by factory; 18 bindings absent on inspected deployment; refund settlement, renewal, transfer absent; apex/TLS; no scheduled refresh** |
+| Trial / billing / entitlements | v5 projection UI; authenticated cancel; expiry wording retains site/data/control | local-fixture 103 + native; local-runtime 5 | **flag off; policy unseeded; grant blocked on registrar readback adapter; order id missing from projection (Codex req. 2); no module price mapping** |
+| Social / community / shop | — (existing engines unchanged) | existing regressions | **trial social publishing must not be claimed**: atomic consumer + `customer_social_paid` guard (Codex); provider publish live; shop/direct-music flaws (Codex) |
+| Admin operations (Control) | Member fronts moderation view; Control homepage revisions; module switches server-confirmed | local-runtime 5 + 6 + 4 | #686 shell: 5 conflicts + bottom-bar decision (owner) |
+| Music / lyrics / releases / stems | — | — | #684/#685/#687 + `9d7a7eed` need the lyric approval/export security correction (Codex) before any UI; **not silently omitted: not started** |
+| Navigation | existing bottom bar kept; Member fronts route home added | appbar/route suites green | #686 adoption is an owner decision |
+| Learning (private math LMS, PRIM3 progress) | — | — | source `5d76d704` not on remote; own-writable scores = personal practice only (not certification) |
+| Story / game / profile integration | — | — | `edaf4e09` / `e5d11804` / `1fdef132` not on remote; holds persist |
+| AI proposal route (owned assistance) | full host slice; owner-typed source works | 5 pure + 3 runtime | **`POST /v1/ai/tile-proposal` does not exist on the plane (Codex req. 1)**; "Ask McCluster" says so honestly |
+| OVH character controls | — | — | `baa92490` uninspected; `publication_eligible:false`; CLI Forbidden |
+| Analytics / privacy | — | existing suites | #640/#642 uninspected together |
+| Operations / release tooling | pg-native-shim, cdp-lite audit, evidence logs | all suites at tip | deployed attestation; monitoring/support runbook (stage 5) |
+
+## 3. Customer journeys — what is proven, and by what kind of evidence
+
+Two synthetic customers (A, B), the house owner and an anonymous session exist in the fixtures. **No real customer account has been created or used; no live journey has run.**
+
+| Step | Evidence class | Where | Live? |
+|---|---|---|---|
+| Sign up | — | `account.html` exists; fixture Auth only | **no** |
+| Build / save / preview / publish | local-fixture + local-runtime | editor suite "free-builder journey" (create → save → resume → publish → public read 200 → withdraw → public 404 → recover → still 404); harnesses | no |
+| Return / edit (two tabs, lost responses) | local-fixture + local-runtime | native PT409 races; readback-contract block; harness two-tab race | no |
+| Cross-account isolation | local-fixture | B reading/restoring/taking down A's record → 404/P0002/42501; B's access to A's org → 403 | no |
+| Purchase a domain | **sandbox-only, not run live** | checkout session binding; quote identity checks; `registered_pending_reconciliation` honest | **no** |
+| Receive a registered domain | — | adapter reports `charge_readback=false`, `registrant_readback=false` | **no** |
+| Connect DNS / HTTPS | local-fixture | provider-binding recovery fixture; UI lapse notice | **no** (CNAME-only; apex unverified) |
+| Receive the included month | local-fixture | `creator_domain_trial_record_v1` with trusted evidence; idempotent replay; native duplicate-grant-once | **no** (grant adapter blocked) |
+| Add / cancel modules | local-fixture + local-runtime | cancel route 200 + idempotent; projection flips | no |
+| Expire advanced access, retain site/control/data | local-fixture | expiry/cancel states deny advanced, `base_manage` stays allowed, drafts retained | no |
+| Failed / duplicate payments | native | duplicate funding → one payment; failed order → `refund_required` (not a refund) | no |
+| Signed-out public read of a published page | local-fixture | public read 200 only when published, profile public, not removed | no |
+
+## 4. Owner and provider gates — decisions needed together (none can be made by an agent)
+
+| # | Decision | Why it blocks | Options on the table |
+|---|---|---|---|
+| D1 | Registrar / resale permission and account | live purchase is refused by the factory until a reviewed registrar account with registrant + charge readback exists | Cloudflare Registrar (current adapter, sandbox proven; resale terms to confirm) vs another provider (new adapter) |
+| D2 | Secure configuration of the 18 absent bindings | nothing can be fulfilled without them; **no keys in chat** | owner sets them in the Worker's settings; agents verify presence by name only (read-only), never values |
+| D3 | Post-trial prices and app↔price mapping | `creator_domain_trial_modules` is unseeded; UI cannot show a price it does not have | per-app monthly/annual Stripe prices; which apps are "advanced" vs "white-label" |
+| D4 | Baseline hosting after the trial | projection says `economics_policy_unresolved`; the UI promises nothing | free static hosting at the McCluster address retained / paid hosting module / time-boxed grace |
+| D5 | Trial policy | SQL supports both; policy row unseeded | `calendar_month_utc` vs `fixed_30_days`; `once_per_org`; evidence freshness window; sandbox allowed? |
+| D6 | Renewal and cancellation policy | adapter has `renew:false`, `auto_renew:false`; no renewal price disclosed | manual renewal only (current) vs auto-renew with explicit consent capture |
+| D7 | Operating costs and refund settlement | `refund_required` is a state, not a refund; registrar fees are owner's | who absorbs failed-registration refunds; markup (`CREATOR_DOMAIN_MARKUP_CENTS`) |
+| D8 | #686 navigation | 5 conflicts + "no bottom bar" assertion vs AGENTS.md bottom bar | adopt NAV with the bottom bar kept / defer #686 |
+| D9 | Anti-Social rights checklist | no ad creative until answered | the 10 lines in `ANTI-SOCIAL-CAMPAIGN.md` |
+| D10 | Retention / export terms | required before any paid activation | keep-forever at free tier vs export window |
+
+## 5. Release and verify — prepared, not requested
+
+Exact code: this branch at `edd8cdd8…` merged with the backend commit once published (stage 1). Database: the four pending SQL files by hash (`HANDOFF.md`), applied by Codex in the documented chain with backup of source tables + `private.editor_versions` + heads; no drop/truncate. Rollout: flags stay off at deploy; enable `EDITOR_V2_ENABLED` only together with this frontend; `WEBSITE_STUDIO_ENABLED` and `CREATOR_DOMAIN_TRIAL_ENABLED` after D1–D5. Recovery: `HANDOFF.md` → "Rollback and recovery for enrolled records" (flag containment, forward fix, Restore, backup restore; never protection removal). Post-release verification, in order, with a real customer account: sign up → publish → signed-out read → two-tab conflict → purchase (D1/D2) → registration readback → DNS/HTTPS → included month → cancel → expiry; admin: moderation takedown, Control homepage restore, module switches; operations: Worker logs for PT409 rates and readback outcomes, support path for "saving paused" states. **None of this is authorized by this ledger.**
+
+## Engineering still open for agents (not owner decisions)
+
+Codex: backend publication (stage 1); requests 1–6 in `HANDOFF.md` (tile-proposal route; order id in projection; module manager contract; lyric security correction; PT409→409 mapping). Claude: reconcile the backend commit when published and rerun acceptance against the combined source; #686 adoption if D8 says so; music/LMS/story UI once their sources and corrections exist.
