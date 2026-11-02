@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 533,
+  "candidate_count": 527,
   "capability_source_count": 102,
-  "support_only_count": 431,
-  "checks_total": 2032,
-  "checks_passed": 2032,
+  "support_only_count": 425,
+  "checks_total": 2008,
+  "checks_passed": 2008,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -77,7 +77,6 @@
     "cohort-profile.html",
     "control.html",
     "create.html",
-    "crm.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
     "css/mission-swipe-deck.css",
@@ -115,7 +114,6 @@
     "data/seo/sitemap-pages.json",
     "data/sites.json",
     "demos/shiloh/data/impact.json",
-    "desk.html",
     "docket-516.html",
     "docket-516r-cohort.html",
     "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
@@ -235,6 +233,7 @@
     "js/control-room/clipping.js",
     "js/control-room/identity-review.js",
     "js/control-room/instagram.js",
+    "js/control-room/nav.js",
     "js/control-room/profile-edit-review.js",
     "js/control-room/social-compose.js",
     "js/create.js",
@@ -257,20 +256,16 @@
     "js/mnet.js",
     "js/music-creator-profile.js",
     "js/offers.js",
-    "js/office.js",
     "js/onboard.js",
     "js/payments.js",
     "js/policy-fellowship-ladder.js",
     "js/site-navigation.js",
-    "js/socials-room.js",
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
     "js/world-audio-continuity.js",
-    "lanes.html",
     "listen.html",
     "live-mission.html",
     "llms.txt",
-    "management.html",
     "matthew-mccluster.html",
     "mccluster-corp.html",
     "mccluster-platform.html",
@@ -510,7 +505,6 @@
     "tools/build-newsroom.mjs",
     "tools/eu-export-seed.sh",
     "tools/verify-llms.py",
-    "vault.html",
     "vendor/supabase-js-2.57.0.mjs",
     "walls/eu-rally.html",
     "workers/mccluster/src/ai/envelope.js",
@@ -547,7 +541,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "533 entries"
+      "detail": "527 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1440,26 +1434,6 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "crm.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "crm.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "crm.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "crm.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "css/equity-uprise-app.css capability ids known",
       "passed": true,
       "detail": ""
@@ -2116,26 +2090,6 @@
     },
     {
       "name": "demos/shiloh/data/impact.json support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "desk.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "desk.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "desk.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "desk.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4225,26 +4179,6 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "js/office.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/office.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "js/office.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "js/office.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "js/onboard.js capability ids known",
       "passed": true,
       "detail": ""
@@ -4351,26 +4285,6 @@
     },
     {
       "name": "js/world-audio-continuity.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "lanes.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "lanes.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "lanes.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "lanes.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8225,26 +8139,6 @@
       "detail": ""
     },
     {
-      "name": "vault.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "vault.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "vault.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "vault.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "vendor/supabase-js-2.57.0.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -10145,26 +10039,6 @@
       "detail": ""
     },
     {
-      "name": "js/socials-room.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "js/socials-room.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "js/socials-room.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "js/socials-room.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "live-mission.html capability ids known",
       "passed": true,
       "detail": ""
@@ -10181,26 +10055,6 @@
     },
     {
       "name": "live-mission.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "management.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "management.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "management.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "management.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10701,6 +10555,26 @@
     },
     {
       "name": "docs/releases/mission-content-cleanup-2026-10-31.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/nav.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/nav.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/nav.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/nav.js support rationale present",
       "passed": true,
       "detail": ""
     }
