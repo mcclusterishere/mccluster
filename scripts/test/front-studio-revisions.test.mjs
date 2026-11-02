@@ -9,7 +9,8 @@ import { readFileSync } from 'node:fs';
 const REVISIONS = readFileSync('js/editor-revisions.js', 'utf8');
 const STUDIO = readFileSync('js/front-studio.js', 'utf8');
 const flush = async () => { for (let i = 0; i < 12; i++) await new Promise(r => setImmediate(r)); };
-const TOKEN = 'h.' + Buffer.from(JSON.stringify({ sub: '11111111-1111-4111-8111-111111111111' })).toString('base64url') + '.s';
+const tokenFor = sub => 'h.' + Buffer.from(JSON.stringify({ sub })).toString('base64url') + '.s';
+const TOKEN = tokenFor('11111111-1111-4111-8111-111111111111');
 
 /* A page is a string of ids and buttons to this editor: enough DOM to register what it draws and press what it drew. */
 function page({ routes, project = null }) {
@@ -41,6 +42,7 @@ function page({ routes, project = null }) {
   }
   nodes.set('fsRoot', element('div', { id: 'fsRoot' }));
   const document = { getElementById: id => nodes.get(id) || null, querySelector: () => null, createElement: t => element(t) };
+  let currentToken = TOKEN;
   const location = { origin: 'https://matthew.mccluster.org', search: '', reload() { calls.push(['reload']); } };
   const fetch = async (url, init) => {
     const path = url.replace('https://api.mccluster.org', ''), method = (init && init.method) || 'GET', body = init && init.body ? JSON.parse(init.body) : null;
@@ -52,7 +54,7 @@ function page({ routes, project = null }) {
     return { ok: r.status < 400, status: r.status, json: async () => r.body };
   };
   const window = {
-    __MCC_PROJECT_STUDIO: !!project, __MCC_PROJECT_STUDIO_SLUG: project, MCC_SUPA: { token: async () => TOKEN }, MCC_FRONT_MEDIA: null,
+    __MCC_PROJECT_STUDIO: !!project, __MCC_PROJECT_STUDIO_SLUG: project, MCC_SUPA: { token: async () => currentToken }, MCC_FRONT_MEDIA: null,
     addEventListener(t, f) { (winListeners[t] ||= []).push(f); }, matchMedia: () => ({ matches: false }), confirm: () => true, location, document
   };
   const ctx = { window, document, location, fetch, atob: s => Buffer.from(s, 'base64').toString('binary'), URLSearchParams, JSON, Date, Promise, String, Number, Object, Array, Math, isFinite, Error, TypeError, CustomEvent: class {}, setTimeout: () => 0, clearTimeout() {}, console };
@@ -65,7 +67,8 @@ function page({ routes, project = null }) {
     enabled(act) { const b = buttons.find(x => x.attrs['data-act'] === act); return !!b && !b.disabled && !(b.attrs.id && nodes.get(b.attrs.id) && nodes.get(b.attrs.id).hidden); },
     status() { return nodes.get('fsStatus') ? nodes.get('fsStatus').innerHTML : ''; },
     live() { return nodes.get('fsLive') ? nodes.get('fsLive').textContent : ''; },
-    wrote: (method, prefix) => calls.filter(c => c[0] === method && c[1].startsWith(prefix))
+    wrote: (method, prefix) => calls.filter(c => c[0] === method && c[1].startsWith(prefix)),
+    switchAccount(sub) { currentToken = tokenFor(sub); }, reloads: () => calls.filter(c => c[0] === 'reload').length
   };
 }
 const me = (extra = {}) => ({ status: 200, body: { ok: true, handle: 'alice', name: 'Alice', draft: { schema: 'mccluster-front/v1', words: { eyebrow: 'hi' } }, published: null, published_at: null, media_prefix: 'https://x.supabase.co/storage/v1/object/public/front-media/1111/', updated_at: '2026-11-01T00:00:00Z', ...extra } });
@@ -184,4 +187,32 @@ test('a withdrawn project keeps its draft visible but cannot save, publish or ta
   const S = await p.boot();
   assert.equal(S.v2.owner_withdrawn, true); assert.match(p.status(), /You withdrew this project/);
   assert.ok(!p.enabled('save')); assert.ok(!p.enabled('publish'));
+});
+
+test('two editors on one page: the second tab sees the first save as a conflict, never overwrites it, and can adopt it', async () => {
+  // one record, two tabs: both open at revision 3; tab A saves (→4); tab B's save at 3 is refused and B sees A's words
+  let server = { revision: 3, draft: { schema: 'mccluster-front/v1', words: { eyebrow: 'original' } } };
+  const routes = { 'GET /v1/fronts/me': () => me({ draft: server.draft }), 'GET /v2/fronts/me/edit': () => v2(server.revision, server.draft),
+    'POST /v2/fronts/me/edit': b => { if (b.expected_revision !== server.revision) return { status: 409, body: { code: 'editor_revision_conflict' } }; server = { revision: server.revision + 1, draft: b.config }; return v2(server.revision, server.draft); } };
+  const A = page({ routes }), B = page({ routes });
+  const SA = await A.boot(), SB = await B.boot();
+  assert.equal(SA.v2.revision, 3); assert.equal(SB.v2.revision, 3);
+  SA.draft.words = { eyebrow: 'from A' }; SA.dirty = true; await A.press('save');
+  assert.equal(server.revision, 4); assert.equal(server.draft.words.eyebrow, 'from A');
+  SB.draft.words = { eyebrow: 'from B' }; SB.dirty = true; await B.press('save');
+  assert.equal(server.revision, 4, 'B wrote nothing'); assert.equal(server.draft.words.eyebrow, 'from A');
+  assert.ok(SB.conflict); assert.equal(SB.conflict.latest.revision, 4); assert.equal(SB.conflict.latest.snapshot.draft.words.eyebrow, 'from A', 'B is shown what A saved');
+  await B.press('conflict-load');
+  assert.equal(SB.draft.words.eyebrow, 'from A'); assert.equal(SB.v2.revision, 4); assert.equal(SB.dirty, false);
+});
+
+test('an account switch mid-edit drops the draft and reloads instead of saving under the new account', async () => {
+  const p = page({ routes: { 'GET /v1/fronts/me': me(), 'GET /v2/fronts/me/edit': v2(2, { schema: 'mccluster-front/v1' }), 'POST /v2/fronts/me/edit': () => { throw new Error('must not be called'); } } });
+  const S = await p.boot();
+  S.draft.words = { eyebrow: 'typed' }; S.dirty = true;
+  // the session now belongs to someone else: the next api() call must refuse and the page reloads
+  p.switchAccount('22222222-2222-4222-8222-222222222222');
+  await p.press('save');
+  assert.equal(S.draft, null, 'the previous account\'s draft is gone'); assert.ok(p.reloads() >= 1, 'the page reloads (a real browser stops at the first)');
+  assert.equal(p.wrote('POST', '/v2/').length, 0, 'nothing was saved');
 });
