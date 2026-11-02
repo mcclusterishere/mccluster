@@ -1,6 +1,6 @@
 # Whole-platform implementation — Claude frontend handoff (2026-11-02)
 
-**Release decision: gated, unchanged.** Everything here is local, on branch `claude/whole-platform-20261102` in an isolated worktree. No push, PR, merge, deploy, production SQL, flag, credential, purchase, charge, provider call, ad or external message occurred. Backend sources from the v5 bundle are byte-identical in this branch (hashes checked against `SOURCE-HASHES.json`); Codex owns them.
+**Release decision: gated, unchanged.** Published for review only: branch `claude/whole-platform-20261102` on `mcclusterishere/mccluster` (owner authorisation 2026-11-02 08:26 ET, review-branch publication only; pushed without force, no pre-existing remote branch). No PR, merge, deploy, production SQL, flag, credential, purchase, charge, provider call, ad or external message occurred. Backend sources from the v5 bundle are byte-identical in this branch (hashes checked against `SOURCE-HASHES.json`); Codex owns them.
 
 Status words used below, as WHOLE-SITE-ACCEPTANCE.md defines them: `uninspected` · `blocked` · `implemented locally` · `verified locally` (local fixtures/harness) · `deployed attested` · `functionally verified` (real service). Source / pushed / merged / deployed / functional are separate fields and none of the last three is claimed anywhere.
 
@@ -86,6 +86,11 @@ Target if ever approved: Supabase `zmnhbrjyhxzhkxmhkexs`; applied by this branch
 | `supabase/pending/creator_domain_orders_v1.sql` | `cd82c370a0707ee445f1e0360f964d93a832c510684236c929314715a0918ccc` |
 
 Coordination that the frontend now requires: **every legacy writer in this branch degrades to the versioned API the moment it answers**, so enrolling a record (first v2 mutation) is safe for these callers; a deployment that enables `EDITOR_V2_ENABLED` must ship this frontend (or newer) in the same release, or older browsers' blind legacy writes will receive PT409 by design. Rollback = disable the flags; keep histories; this frontend keeps working on the legacy path with its readback guard.
+
+## Remote state at publication (2026-11-02, checked read-only)
+
+- `main` still `e80cb0a1`; the review branch is 82 commits ahead, 0 behind (GitHub compare).
+- No newer authoritative backend integration branch is advertised yet. The only `codex/*` refs are `actor-evidence-preview-20261101` (`baa92490`), `onboarding-integration-20261031` (= exact #681 `5e020833`), `reflection-health-read-20261031`, `end-racism-reel-funnel-v1`; `claude/backend-control-integration-601s0k` is a September Channels view, unrelated. The owner reports backend corrections (social enforcement, lyric fixes) made after the v5 snapshot: **v5 is therefore not assumed current.** When the integration commit is supplied, the delta is reconciled here only after verifying its exact commit, ancestry over `e80cb0a1`/`5e020833`, `SOURCE-HASHES.json`-style source hashes and the pending SQL/API versions; nothing in this branch's bundle-sourced backend files (`editor-versioned.js`, `project-tiles.js`, `platform-module-access.js`, the four pending SQL files) is to be kept over a newer Codex version, and none of them was modified here.
 
 ## Owner decisions still open (unchanged)
 
