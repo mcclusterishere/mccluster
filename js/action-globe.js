@@ -165,12 +165,14 @@ function wireTravelGestures(){
  for(const id of ['ctlZoomIn','ctlZoomOut'])$(id)?.addEventListener('click',pauseTravelFollow,{capture:true});
 }
 /* Parent and iframe controls share one phone canvas: the page's own bar, tabs and buttons that lie over this frame.
-   Words the page lays over the map without taking a touch (pointer-events:none, the headline above all, which the World's
+   Words the page lays over the map without taking a touch (pointer-events:none on it and everything inside it, the headline above all, which the World's
    music rewrites with each lyric line) are SOFT: a control keeps clear of them when it can, and sits over them when the
    alternative is a slot under a tab or button, because a tap passes through words and never through a tab */
 function frameObstacles(){
  const frame=window.frameElement.getBoundingClientRect(),doc=parentFrame.document;
- const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?{left:r.left,right:r.right,top:r.top,bottom:r.bottom,soft:style.pointerEvents==='none'}:null};
+ // soft only when nothing in it takes a touch: the top header is pointer-events:none, but its mark, bell and avatar are not
+ const untouchable=(el,style)=>style.pointerEvents==='none'&&[...el.querySelectorAll('*')].every(child=>parentFrame.getComputedStyle(child).pointerEvents==='none');
+ const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect(),style=el&&parentFrame.getComputedStyle(el);return r&&r.width&&r.height&&style.display!=='none'&&style.visibility!=='hidden'?{left:r.left,right:r.right,top:r.top,bottom:r.bottom,soft:untouchable(el,style)}:null};
  const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
  const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
  const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
