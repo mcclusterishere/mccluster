@@ -69,6 +69,33 @@ test('Whip Equipped: the story order, every track playable, timed, metadata stri
   }
 });
 
+test('PRIM3: Got WiFi? first, then the course order, every track playable, timed, metadata stripped', () => {
+  const p3 = albums.albums.find((a) => a.slug === 'prim3');
+  /* after Got WiFi?, the sequence of mcclusterishere/Prim3 learning/course/course-feed.json (S01E01..S07E03) */
+  assert.deepEqual(p3.tracks.map((t) => t.title), [
+    'Got WiFi?', 'High Alert', 'OSINT', 'Anti-Social Engineering (Draft)', 'Red, Blue, Purple, White Team',
+    'Data Breach', 'App Attacks', 'Dive In', 'IOT (Draft)', 'Per Diem (Draft)', 'RAID (Hot Site)',
+    'Evil Twin (Middle Man)', 'Ghost in the Wires',
+  ]);
+  for (const t of p3.tracks.slice(1)) {
+    assert.ok(existsSync(join(ROOT, t.src)), `${t.title}: ${t.src} exists`);
+    assert.ok(t.seconds > 30, `${t.title}: measured length`);
+    /* the Dive In upload is the instrumental (its vocal stem is silence): the sheet waits in
+       data/lyrics/src/dive-in.txt for the vocal take, and nothing is timed against a beat */
+    if (t.title === 'Dive In') { assert.ok(!t.lyrics, 'Dive In: no lyrics until the vocal take'); continue; }
+    assert.ok(t.lyrics && existsSync(join(ROOT, t.lyrics)), `${t.title}: has lyrics`);
+    assert.equal(json(t.lyrics).reviewed, false, `${t.title}: machine lyrics wait for the owner's review`);
+    const all = readFileSync(join(ROOT, t.src));
+    if (t.src.endsWith('.mp3')) assert.notEqual(all.subarray(0, 3).toString('latin1'), 'ID3', `${t.title}: no ID3 tag (title/art stripped)`);
+    if (t.src.endsWith('.m4a')) for (const atom of ['covr', '©nam', '©ART']) assert.ok(all.indexOf(Buffer.from(atom, 'latin1')) < 0, `${t.title}: no ${atom} atom`);
+  }
+  /* sheets with no recording yet are kept for later, not wired to a track */
+  for (const s of ['white-grey-black-hat', 'cap-ex-vs-op-ex', 'patch-work', 'iaas-saas-paas']) {
+    assert.ok(existsSync(join(ROOT, `data/lyrics/src/${s}.txt`)), `data/lyrics/src/${s}.txt kept`);
+    assert.ok(!shelf.some((t) => (t.src || '').includes(`/${s}.`)), `${s}: no audio yet, so not on the shelf`);
+  }
+});
+
 test('lyric sheets are plain text in the repo, never the owner\'s .docx', () => {
   const src = readdirSync(join(ROOT, 'data/lyrics/src'));
   assert.ok(src.length >= 9);

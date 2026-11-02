@@ -1,0 +1,1707 @@
+{
+ "duration_seconds": 88,
+ "language": "en",
+ "songTitle": "Red, Blue, Purple, White Team",
+ "source": "auto",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T19:08:58.188Z",
+  "confidence": 0.83,
+  "mismatched_lines": 2,
+  "sheet_lines": 0,
+  "heard_words": 265,
+  "ctc_aligned_lines": 35,
+  "timing": {
+   "align_seconds": 8.7,
+   "separate_seconds": 47.1,
+   "asr_seconds": 23.6,
+   "map_seconds": 0
+  }
+ },
+ "plain": "You know I do the most, oh yes With\nevery line of hope, I'm the best\nIf murder's what I wrote, you're dead, you're dead\nRed blue, purple, white team Yellow two, orange, light\ngreen Get a crew working IT Get the new\nversion, light speed Red blue, purple, white team Yellow\ntwo, orange, light green Get a crew working IT\nGet the new version, light speed Red teams on\noffense Planning how they'll breach systems Blue team block\nall the tips Can't be out here defenseless Purple\nteam is a solid mix They use both techniques\nin it White team write the pen test With\nthe rules they gon' referee niggas Yellow team is\ncoded to legit Red and yellow's orange That's easy\nOrange rice cold for the lick Blue and yellow\nmorph will get green And green rice cold for\nthe fence We all know corporate gets greedy We\ngon' all be more than rich We cannot afford\nto get greasy Red, blue, purple, white team Yellow\nto orange, light green Yeah, the crew work in\nIT Get the new version light speed Red, blue,\npurple, white team Yellow to orange like green get\na crew working 80 get the new version light\nspeed.\nI Told you I told you I'm cold with\nthis.\nIt's like 20 below I don't hold a pin\noff the dome with this yet shocking.\nNobody can stop me.\nI'll be on all teams.\nAh\nNo, I'm saying\nThis man You better get your studies on boy\nIf you really want to know passes test download\nout Whoo!",
+ "timed": {
+  "line": [
+   {
+    "begin": 1.364,
+    "end": 4.598,
+    "content": "You know I do the most, oh yes With",
+    "confidence": 0.826,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 1.364,
+      "end": 1.465,
+      "content": "You"
+     },
+     {
+      "begin": 1.525,
+      "end": 1.666,
+      "content": "know"
+     },
+     {
+      "begin": 1.826,
+      "end": 1.846,
+      "content": "I"
+     },
+     {
+      "begin": 1.947,
+      "end": 2.027,
+      "content": "do"
+     },
+     {
+      "begin": 2.107,
+      "end": 2.208,
+      "content": "the"
+     },
+     {
+      "begin": 2.328,
+      "end": 2.609,
+      "content": "most,"
+     },
+     {
+      "begin": 2.931,
+      "end": 3.011,
+      "content": "oh"
+     },
+     {
+      "begin": 3.071,
+      "end": 3.312,
+      "content": "yes"
+     },
+     {
+      "begin": 4.457,
+      "end": 4.598,
+      "content": "With"
+     }
+    ],
+    "align_score": 0.769
+   },
+   {
+    "begin": 4.725,
+    "end": 6.516,
+    "content": "every line of hope, I'm the best",
+    "confidence": 0.822,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 4.725,
+      "end": 4.906,
+      "content": "every"
+     },
+     {
+      "begin": 5.027,
+      "end": 5.248,
+      "content": "line"
+     },
+     {
+      "begin": 5.288,
+      "end": 5.329,
+      "content": "of"
+     },
+     {
+      "begin": 5.429,
+      "end": 5.651,
+      "content": "hope,"
+     },
+     {
+      "begin": 5.872,
+      "end": 5.932,
+      "content": "I'm"
+     },
+     {
+      "begin": 5.993,
+      "end": 6.073,
+      "content": "the"
+     },
+     {
+      "begin": 6.194,
+      "end": 6.516,
+      "content": "best"
+     }
+    ],
+    "align_score": 0.758
+   },
+   {
+    "begin": 7.583,
+    "end": 11.157,
+    "content": "If murder's what I wrote, you're dead, you're dead",
+    "confidence": 0.906,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 7.583,
+      "end": 7.623,
+      "content": "If"
+     },
+     {
+      "begin": 7.764,
+      "end": 8.085,
+      "content": "murder's"
+     },
+     {
+      "begin": 8.145,
+      "end": 8.286,
+      "content": "what"
+     },
+     {
+      "begin": 8.406,
+      "end": 8.426,
+      "content": "I"
+     },
+     {
+      "begin": 8.507,
+      "end": 8.667,
+      "content": "wrote,"
+     },
+     {
+      "begin": 9.069,
+      "end": 9.249,
+      "content": "you're"
+     },
+     {
+      "begin": 9.29,
+      "end": 9.49,
+      "content": "dead,"
+     },
+     {
+      "begin": 10.635,
+      "end": 10.836,
+      "content": "you're"
+     },
+     {
+      "begin": 10.876,
+      "end": 11.157,
+      "content": "dead"
+     }
+    ],
+    "align_score": 0.701
+   },
+   {
+    "begin": 12.407,
+    "end": 14.802,
+    "content": "Red blue, purple, white team Yellow two, orange, light",
+    "confidence": 0.697,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 12.407,
+      "end": 12.567,
+      "content": "Red"
+     },
+     {
+      "begin": 12.668,
+      "end": 12.869,
+      "content": "blue,"
+     },
+     {
+      "begin": 12.949,
+      "end": 13.21,
+      "content": "purple,"
+     },
+     {
+      "begin": 13.29,
+      "end": 13.491,
+      "content": "white"
+     },
+     {
+      "begin": 13.531,
+      "end": 13.732,
+      "content": "team"
+     },
+     {
+      "begin": 13.973,
+      "end": 14.194,
+      "content": "Yellow"
+     },
+     {
+      "begin": 14.274,
+      "end": 14.395,
+      "content": "two,"
+     },
+     {
+      "begin": 14.616,
+      "end": 14.802,
+      "content": "orange,"
+     },
+     {
+      "begin": 14.802,
+      "end": 14.802,
+      "content": "light"
+     }
+    ],
+    "align_score": 0.854
+   },
+   {
+    "begin": 14.802,
+    "end": 17.497,
+    "content": "green Get a crew working IT Get the new",
+    "confidence": 0.854,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 14.802,
+      "end": 15.305,
+      "content": "green"
+     },
+     {
+      "begin": 15.526,
+      "end": 15.647,
+      "content": "Get"
+     },
+     {
+      "begin": 15.707,
+      "end": 15.727,
+      "content": "a"
+     },
+     {
+      "begin": 15.808,
+      "end": 16.009,
+      "content": "crew"
+     },
+     {
+      "begin": 16.089,
+      "end": 16.411,
+      "content": "working"
+     },
+     {
+      "begin": 16.511,
+      "end": 16.652,
+      "content": "IT"
+     },
+     {
+      "begin": 17.054,
+      "end": 17.175,
+      "content": "Get"
+     },
+     {
+      "begin": 17.235,
+      "end": 17.316,
+      "content": "the"
+     },
+     {
+      "begin": 17.376,
+      "end": 17.497,
+      "content": "new"
+     }
+    ],
+    "align_score": 0.72
+   },
+   {
+    "begin": 17.603,
+    "end": 20.397,
+    "content": "version, light speed Red blue, purple, white team Yellow",
+    "confidence": 0.965,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 17.603,
+      "end": 17.865,
+      "content": "version,"
+     },
+     {
+      "begin": 17.945,
+      "end": 18.126,
+      "content": "light"
+     },
+     {
+      "begin": 18.146,
+      "end": 18.367,
+      "content": "speed"
+     },
+     {
+      "begin": 18.629,
+      "end": 18.789,
+      "content": "Red"
+     },
+     {
+      "begin": 18.87,
+      "end": 19.071,
+      "content": "blue,"
+     },
+     {
+      "begin": 19.171,
+      "end": 19.433,
+      "content": "purple,"
+     },
+     {
+      "begin": 19.513,
+      "end": 19.694,
+      "content": "white"
+     },
+     {
+      "begin": 19.734,
+      "end": 19.915,
+      "content": "team"
+     },
+     {
+      "begin": 20.176,
+      "end": 20.397,
+      "content": "Yellow"
+     }
+    ],
+    "align_score": 0.829
+   },
+   {
+    "begin": 20.464,
+    "end": 22.722,
+    "content": "two, orange, light green Get a crew working IT",
+    "confidence": 0.994,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 20.464,
+      "end": 20.585,
+      "content": "two,"
+     },
+     {
+      "begin": 20.786,
+      "end": 20.987,
+      "content": "orange,"
+     },
+     {
+      "begin": 21.047,
+      "end": 21.228,
+      "content": "light"
+     },
+     {
+      "begin": 21.268,
+      "end": 21.509,
+      "content": "green"
+     },
+     {
+      "begin": 21.69,
+      "end": 21.891,
+      "content": "Get"
+     },
+     {
+      "begin": 21.952,
+      "end": 21.972,
+      "content": "a"
+     },
+     {
+      "begin": 22.032,
+      "end": 22.233,
+      "content": "crew"
+     },
+     {
+      "begin": 22.293,
+      "end": 22.722,
+      "content": "working"
+     },
+     {
+      "begin": 22.722,
+      "end": 22.722,
+      "content": "IT"
+     }
+    ],
+    "align_score": 0.703
+   },
+   {
+    "begin": 22.722,
+    "end": 24.92,
+    "content": "Get the new version, light speed Red teams on",
+    "confidence": 0.931,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 22.722,
+      "end": 23.365,
+      "content": "Get"
+     },
+     {
+      "begin": 23.426,
+      "end": 23.506,
+      "content": "the"
+     },
+     {
+      "begin": 23.566,
+      "end": 23.667,
+      "content": "new"
+     },
+     {
+      "begin": 23.808,
+      "end": 24.069,
+      "content": "version,"
+     },
+     {
+      "begin": 24.15,
+      "end": 24.31,
+      "content": "light"
+     },
+     {
+      "begin": 24.33,
+      "end": 24.572,
+      "content": "speed"
+     },
+     {
+      "begin": 24.833,
+      "end": 24.92,
+      "content": "Red"
+     },
+     {
+      "begin": 24.92,
+      "end": 24.92,
+      "content": "teams"
+     },
+     {
+      "begin": 24.92,
+      "end": 24.92,
+      "content": "on"
+     }
+    ],
+    "align_score": 0.839
+   },
+   {
+    "begin": 24.92,
+    "end": 28.262,
+    "content": "offense Planning how they'll breach systems Blue team block",
+    "confidence": 0.795,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 24.92,
+      "end": 25.905,
+      "content": "offense"
+     },
+     {
+      "begin": 26.307,
+      "end": 26.588,
+      "content": "Planning"
+     },
+     {
+      "begin": 26.648,
+      "end": 26.749,
+      "content": "how"
+     },
+     {
+      "begin": 26.849,
+      "end": 27.05,
+      "content": "they'll"
+     },
+     {
+      "begin": 27.09,
+      "end": 27.311,
+      "content": "breach"
+     },
+     {
+      "begin": 27.351,
+      "end": 27.653,
+      "content": "systems"
+     },
+     {
+      "begin": 27.914,
+      "end": 28.095,
+      "content": "Blue"
+     },
+     {
+      "begin": 28.135,
+      "end": 28.262,
+      "content": "team"
+     },
+     {
+      "begin": 28.262,
+      "end": 28.262,
+      "content": "block"
+     }
+    ],
+    "align_score": 0.534
+   },
+   {
+    "begin": 28.262,
+    "end": 31.224,
+    "content": "all the tips Can't be out here defenseless Purple",
+    "confidence": 0.858,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 28.262,
+      "end": 28.463,
+      "content": "all"
+     },
+     {
+      "begin": 28.764,
+      "end": 28.845,
+      "content": "the"
+     },
+     {
+      "begin": 28.905,
+      "end": 29.126,
+      "content": "tips"
+     },
+     {
+      "begin": 29.408,
+      "end": 29.609,
+      "content": "Can't"
+     },
+     {
+      "begin": 29.629,
+      "end": 29.689,
+      "content": "be"
+     },
+     {
+      "begin": 29.77,
+      "end": 29.87,
+      "content": "out"
+     },
+     {
+      "begin": 29.951,
+      "end": 30.112,
+      "content": "here"
+     },
+     {
+      "begin": 30.172,
+      "end": 30.755,
+      "content": "defenseless"
+     },
+     {
+      "begin": 30.956,
+      "end": 31.224,
+      "content": "Purple"
+     }
+    ],
+    "align_score": 0.5
+   },
+   {
+    "begin": 31.224,
+    "end": 33.363,
+    "content": "team is a solid mix They use both techniques",
+    "confidence": 0.9,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 31.224,
+      "end": 31.426,
+      "content": "team"
+     },
+     {
+      "begin": 31.526,
+      "end": 31.566,
+      "content": "is"
+     },
+     {
+      "begin": 31.647,
+      "end": 31.667,
+      "content": "a"
+     },
+     {
+      "begin": 31.727,
+      "end": 31.969,
+      "content": "solid"
+     },
+     {
+      "begin": 32.029,
+      "end": 32.15,
+      "content": "mix"
+     },
+     {
+      "begin": 32.411,
+      "end": 32.492,
+      "content": "They"
+     },
+     {
+      "begin": 32.592,
+      "end": 32.713,
+      "content": "use"
+     },
+     {
+      "begin": 32.793,
+      "end": 32.974,
+      "content": "both"
+     },
+     {
+      "begin": 33.055,
+      "end": 33.363,
+      "content": "techniques"
+     }
+    ],
+    "align_score": 0.746
+   },
+   {
+    "begin": 33.363,
+    "end": 35.262,
+    "content": "in it White team write the pen test With",
+    "confidence": 0.823,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 33.363,
+      "end": 33.645,
+      "content": "in"
+     },
+     {
+      "begin": 33.726,
+      "end": 33.766,
+      "content": "it"
+     },
+     {
+      "begin": 34.048,
+      "end": 34.229,
+      "content": "White"
+     },
+     {
+      "begin": 34.289,
+      "end": 34.49,
+      "content": "team"
+     },
+     {
+      "begin": 34.551,
+      "end": 34.712,
+      "content": "write"
+     },
+     {
+      "begin": 34.772,
+      "end": 34.832,
+      "content": "the"
+     },
+     {
+      "begin": 34.873,
+      "end": 35.014,
+      "content": "pen"
+     },
+     {
+      "begin": 35.054,
+      "end": 35.262,
+      "content": "test"
+     },
+     {
+      "begin": 35.262,
+      "end": 35.262,
+      "content": "With"
+     }
+    ],
+    "align_score": 0.765
+   },
+   {
+    "begin": 35.262,
+    "end": 37.724,
+    "content": "the rules they gon' referee niggas Yellow team is",
+    "confidence": 0.87,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 35.262,
+      "end": 35.564,
+      "content": "the"
+     },
+     {
+      "begin": 35.624,
+      "end": 35.866,
+      "content": "rules"
+     },
+     {
+      "begin": 35.886,
+      "end": 35.966,
+      "content": "they"
+     },
+     {
+      "begin": 36.007,
+      "end": 36.107,
+      "content": "gon'"
+     },
+     {
+      "begin": 36.148,
+      "end": 36.59,
+      "content": "referee"
+     },
+     {
+      "begin": 36.61,
+      "end": 36.932,
+      "content": "niggas"
+     },
+     {
+      "begin": 37.174,
+      "end": 37.395,
+      "content": "Yellow"
+     },
+     {
+      "begin": 37.415,
+      "end": 37.556,
+      "content": "team"
+     },
+     {
+      "begin": 37.724,
+      "end": 37.724,
+      "content": "is"
+     }
+    ],
+    "align_score": 0.493
+   },
+   {
+    "begin": 37.724,
+    "end": 40.217,
+    "content": "coded to legit Red and yellow's orange That's easy",
+    "confidence": 0.868,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 37.724,
+      "end": 37.965,
+      "content": "coded"
+     },
+     {
+      "begin": 38.005,
+      "end": 38.086,
+      "content": "to"
+     },
+     {
+      "begin": 38.146,
+      "end": 38.488,
+      "content": "legit"
+     },
+     {
+      "begin": 38.729,
+      "end": 38.87,
+      "content": "Red"
+     },
+     {
+      "begin": 38.91,
+      "end": 38.991,
+      "content": "and"
+     },
+     {
+      "begin": 39.011,
+      "end": 39.272,
+      "content": "yellow's"
+     },
+     {
+      "begin": 39.373,
+      "end": 39.554,
+      "content": "orange"
+     },
+     {
+      "begin": 39.634,
+      "end": 39.815,
+      "content": "That's"
+     },
+     {
+      "begin": 39.976,
+      "end": 40.217,
+      "content": "easy"
+     }
+    ],
+    "align_score": 0.765
+   },
+   {
+    "begin": 40.305,
+    "end": 42.317,
+    "content": "Orange rice cold for the lick Blue and yellow",
+    "confidence": 0.83,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 40.305,
+      "end": 40.506,
+      "content": "Orange"
+     },
+     {
+      "begin": 40.567,
+      "end": 40.748,
+      "content": "rice"
+     },
+     {
+      "begin": 40.828,
+      "end": 41.049,
+      "content": "cold"
+     },
+     {
+      "begin": 41.13,
+      "end": 41.23,
+      "content": "for"
+     },
+     {
+      "begin": 41.271,
+      "end": 41.331,
+      "content": "the"
+     },
+     {
+      "begin": 41.412,
+      "end": 41.573,
+      "content": "lick"
+     },
+     {
+      "begin": 41.774,
+      "end": 41.935,
+      "content": "Blue"
+     },
+     {
+      "begin": 41.995,
+      "end": 42.055,
+      "content": "and"
+     },
+     {
+      "begin": 42.096,
+      "end": 42.317,
+      "content": "yellow"
+     }
+    ],
+    "align_score": 0.776
+   },
+   {
+    "begin": 42.364,
+    "end": 43.8,
+    "content": "morph will get green And green rice cold for",
+    "confidence": 0.831,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 42.364,
+      "end": 42.525,
+      "content": "morph"
+     },
+     {
+      "begin": 42.546,
+      "end": 42.686,
+      "content": "will"
+     },
+     {
+      "begin": 42.727,
+      "end": 42.888,
+      "content": "get"
+     },
+     {
+      "begin": 42.948,
+      "end": 43.169,
+      "content": "green"
+     },
+     {
+      "begin": 43.25,
+      "end": 43.31,
+      "content": "And"
+     },
+     {
+      "begin": 43.35,
+      "end": 43.592,
+      "content": "green"
+     },
+     {
+      "begin": 43.652,
+      "end": 43.8,
+      "content": "rice"
+     },
+     {
+      "begin": 43.8,
+      "end": 43.8,
+      "content": "cold"
+     },
+     {
+      "begin": 43.8,
+      "end": 43.8,
+      "content": "for"
+     }
+    ],
+    "align_score": 0.729
+   },
+   {
+    "begin": 43.8,
+    "end": 46.021,
+    "content": "the fence We all know corporate gets greedy We",
+    "confidence": 0.898,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 43.8,
+      "end": 44.424,
+      "content": "the"
+     },
+     {
+      "begin": 44.484,
+      "end": 44.706,
+      "content": "fence"
+     },
+     {
+      "begin": 44.927,
+      "end": 44.987,
+      "content": "We"
+     },
+     {
+      "begin": 45.068,
+      "end": 45.168,
+      "content": "all"
+     },
+     {
+      "begin": 45.209,
+      "end": 45.329,
+      "content": "know"
+     },
+     {
+      "begin": 45.45,
+      "end": 45.752,
+      "content": "corporate"
+     },
+     {
+      "begin": 45.772,
+      "end": 45.973,
+      "content": "gets"
+     },
+     {
+      "begin": 46.021,
+      "end": 46.021,
+      "content": "greedy"
+     },
+     {
+      "begin": 46.021,
+      "end": 46.021,
+      "content": "We"
+     }
+    ],
+    "align_score": 0.644
+   },
+   {
+    "begin": 46.021,
+    "end": 48.362,
+    "content": "gon' all be more than rich We cannot afford",
+    "confidence": 0.959,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 46.021,
+      "end": 46.343,
+      "content": "gon'"
+     },
+     {
+      "begin": 46.825,
+      "end": 46.926,
+      "content": "all"
+     },
+     {
+      "begin": 47.007,
+      "end": 47.107,
+      "content": "be"
+     },
+     {
+      "begin": 47.308,
+      "end": 47.449,
+      "content": "more"
+     },
+     {
+      "begin": 47.469,
+      "end": 47.57,
+      "content": "than"
+     },
+     {
+      "begin": 47.61,
+      "end": 47.771,
+      "content": "rich"
+     },
+     {
+      "begin": 47.972,
+      "end": 48.053,
+      "content": "We"
+     },
+     {
+      "begin": 48.113,
+      "end": 48.362,
+      "content": "cannot"
+     },
+     {
+      "begin": 48.362,
+      "end": 48.362,
+      "content": "afford"
+     }
+    ],
+    "align_score": 0.699
+   },
+   {
+    "begin": 48.362,
+    "end": 51.337,
+    "content": "to get greasy Red, blue, purple, white team Yellow",
+    "confidence": 0.939,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 48.362,
+      "end": 48.623,
+      "content": "to"
+     },
+     {
+      "begin": 48.864,
+      "end": 49.025,
+      "content": "get"
+     },
+     {
+      "begin": 49.085,
+      "end": 49.467,
+      "content": "greasy"
+     },
+     {
+      "begin": 49.528,
+      "end": 49.689,
+      "content": "Red,"
+     },
+     {
+      "begin": 49.789,
+      "end": 49.99,
+      "content": "blue,"
+     },
+     {
+      "begin": 50.091,
+      "end": 50.372,
+      "content": "purple,"
+     },
+     {
+      "begin": 50.453,
+      "end": 50.634,
+      "content": "white"
+     },
+     {
+      "begin": 50.694,
+      "end": 50.875,
+      "content": "team"
+     },
+     {
+      "begin": 51.136,
+      "end": 51.337,
+      "content": "Yellow"
+     }
+    ],
+    "align_score": 0.928
+   },
+   {
+    "begin": 51.404,
+    "end": 53.624,
+    "content": "to orange, light green Yeah, the crew work in",
+    "confidence": 0.738,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 51.404,
+      "end": 51.545,
+      "content": "to"
+     },
+     {
+      "begin": 51.746,
+      "end": 51.948,
+      "content": "orange,"
+     },
+     {
+      "begin": 52.008,
+      "end": 52.189,
+      "content": "light"
+     },
+     {
+      "begin": 52.229,
+      "end": 52.43,
+      "content": "green"
+     },
+     {
+      "begin": 52.652,
+      "end": 52.772,
+      "content": "Yeah,"
+     },
+     {
+      "begin": 52.792,
+      "end": 52.853,
+      "content": "the"
+     },
+     {
+      "begin": 52.933,
+      "end": 53.154,
+      "content": "crew"
+     },
+     {
+      "begin": 53.235,
+      "end": 53.376,
+      "content": "work"
+     },
+     {
+      "begin": 53.624,
+      "end": 53.624,
+      "content": "in"
+     }
+    ],
+    "align_score": 0.558
+   },
+   {
+    "begin": 53.624,
+    "end": 56.283,
+    "content": "IT Get the new version light speed Red, blue,",
+    "confidence": 0.861,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 53.624,
+      "end": 53.744,
+      "content": "IT"
+     },
+     {
+      "begin": 54.207,
+      "end": 54.327,
+      "content": "Get"
+     },
+     {
+      "begin": 54.368,
+      "end": 54.448,
+      "content": "the"
+     },
+     {
+      "begin": 54.508,
+      "end": 54.629,
+      "content": "new"
+     },
+     {
+      "begin": 54.75,
+      "end": 55.011,
+      "content": "version"
+     },
+     {
+      "begin": 55.091,
+      "end": 55.252,
+      "content": "light"
+     },
+     {
+      "begin": 55.292,
+      "end": 55.534,
+      "content": "speed"
+     },
+     {
+      "begin": 55.795,
+      "end": 55.956,
+      "content": "Red,"
+     },
+     {
+      "begin": 56.016,
+      "end": 56.283,
+      "content": "blue,"
+     }
+    ],
+    "align_score": 0.839
+   },
+   {
+    "begin": 56.283,
+    "end": 58.943,
+    "content": "purple, white team Yellow to orange like green get",
+    "confidence": 0.73,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 56.283,
+      "end": 56.565,
+      "content": "purple,"
+     },
+     {
+      "begin": 56.625,
+      "end": 56.806,
+      "content": "white"
+     },
+     {
+      "begin": 56.866,
+      "end": 57.087,
+      "content": "team"
+     },
+     {
+      "begin": 57.288,
+      "end": 57.509,
+      "content": "Yellow"
+     },
+     {
+      "begin": 57.59,
+      "end": 57.71,
+      "content": "to"
+     },
+     {
+      "begin": 57.952,
+      "end": 58.092,
+      "content": "orange"
+     },
+     {
+      "begin": 58.173,
+      "end": 58.354,
+      "content": "like"
+     },
+     {
+      "begin": 58.414,
+      "end": 58.675,
+      "content": "green"
+     },
+     {
+      "begin": 58.943,
+      "end": 58.943,
+      "content": "get"
+     }
+    ],
+    "align_score": 0.695
+   },
+   {
+    "begin": 58.943,
+    "end": 61.124,
+    "content": "a crew working 80 get the new version light",
+    "confidence": 0.758,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 58.943,
+      "end": 58.963,
+      "content": "a"
+     },
+     {
+      "begin": 59.144,
+      "end": 59.385,
+      "content": "crew"
+     },
+     {
+      "begin": 59.446,
+      "end": 59.727,
+      "content": "working"
+     },
+     {
+      "begin": 59.768,
+      "end": 60.109,
+      "content": "80"
+     },
+     {
+      "begin": 60.411,
+      "end": 60.532,
+      "content": "get"
+     },
+     {
+      "begin": 60.592,
+      "end": 60.653,
+      "content": "the"
+     },
+     {
+      "begin": 60.713,
+      "end": 60.854,
+      "content": "new"
+     },
+     {
+      "begin": 60.974,
+      "end": 61.124,
+      "content": "version"
+     },
+     {
+      "begin": 61.124,
+      "end": 61.124,
+      "content": "light"
+     }
+    ],
+    "align_score": 0.536
+   },
+   {
+    "begin": 61.124,
+    "end": 61.935,
+    "content": "speed.",
+    "confidence": 0.776,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 61.124,
+      "end": 61.935,
+      "content": "speed."
+     }
+    ],
+    "align_score": 0.25
+   },
+   {
+    "begin": 63.366,
+    "end": 65.36,
+    "content": "I Told you I told you I'm cold with",
+    "confidence": 0.951,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 63.366,
+      "end": 63.386,
+      "content": "I"
+     },
+     {
+      "begin": 63.527,
+      "end": 63.868,
+      "content": "Told"
+     },
+     {
+      "begin": 63.929,
+      "end": 64.009,
+      "content": "you"
+     },
+     {
+      "begin": 64.13,
+      "end": 64.15,
+      "content": "I"
+     },
+     {
+      "begin": 64.311,
+      "end": 64.612,
+      "content": "told"
+     },
+     {
+      "begin": 64.673,
+      "end": 64.773,
+      "content": "you"
+     },
+     {
+      "begin": 64.834,
+      "end": 64.954,
+      "content": "I'm"
+     },
+     {
+      "begin": 65.035,
+      "end": 65.296,
+      "content": "cold"
+     },
+     {
+      "begin": 65.316,
+      "end": 65.36,
+      "content": "with"
+     }
+    ],
+    "align_score": 0.779
+   },
+   {
+    "begin": 65.36,
+    "end": 65.469,
+    "content": "It's like 20 below I don't hold a pin",
+    "confidence": 0.879,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 65.36,
+      "end": 65.469,
+      "content": "It's"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "like"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "20"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "below"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "I"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "don't"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "hold"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "a"
+     },
+     {
+      "begin": 65.469,
+      "end": 65.469,
+      "content": "pin"
+     }
+    ],
+    "align_score": 0.656
+   },
+   {
+    "begin": 65.469,
+    "end": 65.773,
+    "content": "this.",
+    "confidence": 0.998,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 65.469,
+      "end": 65.773,
+      "content": "this."
+     }
+    ],
+    "align_score": 0.769
+   },
+   {
+    "begin": 68.22,
+    "end": 70.943,
+    "content": "off the dome with this yet shocking.",
+    "confidence": 0.879,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 68.22,
+      "end": 68.522,
+      "content": "off"
+     },
+     {
+      "begin": 69.468,
+      "end": 69.548,
+      "content": "the"
+     },
+     {
+      "begin": 69.649,
+      "end": 69.87,
+      "content": "dome"
+     },
+     {
+      "begin": 69.931,
+      "end": 70.031,
+      "content": "with"
+     },
+     {
+      "begin": 70.092,
+      "end": 70.232,
+      "content": "this"
+     },
+     {
+      "begin": 70.313,
+      "end": 70.474,
+      "content": "yet"
+     },
+     {
+      "begin": 70.554,
+      "end": 70.943,
+      "content": "shocking."
+     }
+    ],
+    "align_score": 0.645
+   },
+   {
+    "begin": 70.943,
+    "end": 72.515,
+    "content": "Nobody can stop me.",
+    "confidence": 0.997,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 70.943,
+      "end": 71.729,
+      "content": "Nobody"
+     },
+     {
+      "begin": 71.81,
+      "end": 71.951,
+      "content": "can"
+     },
+     {
+      "begin": 72.052,
+      "end": 72.314,
+      "content": "stop"
+     },
+     {
+      "begin": 72.414,
+      "end": 72.515,
+      "content": "me."
+     }
+    ],
+    "align_score": 0.875
+   },
+   {
+    "begin": 72.866,
+    "end": 74.026,
+    "content": "I'll be on all teams.",
+    "confidence": 0.916,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 72.866,
+      "end": 72.987,
+      "content": "I'll"
+     },
+     {
+      "begin": 73.068,
+      "end": 73.189,
+      "content": "be"
+     },
+     {
+      "begin": 73.471,
+      "end": 73.531,
+      "content": "on"
+     },
+     {
+      "begin": 73.733,
+      "end": 73.853,
+      "content": "all"
+     },
+     {
+      "begin": 73.894,
+      "end": 74.026,
+      "content": "teams."
+     }
+    ],
+    "align_score": 0.514
+   },
+   {
+    "begin": 74.026,
+    "end": 74.491,
+    "content": "Ah",
+    "confidence": 0.271,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 74.026,
+      "end": 74.491,
+      "content": "Ah"
+     }
+    ],
+    "align_score": 0.341
+   },
+   {
+    "begin": 76.029,
+    "end": 76.513,
+    "content": "No, I'm saying",
+    "confidence": 0.79,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 76.029,
+      "end": 76.11,
+      "content": "No,"
+     },
+     {
+      "begin": 76.13,
+      "end": 76.211,
+      "content": "I'm"
+     },
+     {
+      "begin": 76.231,
+      "end": 76.513,
+      "content": "saying"
+     }
+    ],
+    "align_score": 0.252
+   },
+   {
+    "begin": 77.08,
+    "end": 81,
+    "content": "This man You better get your studies on boy",
+    "confidence": 0.755,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 77.08,
+      "end": 77.201,
+      "content": "This"
+     },
+     {
+      "begin": 78.325,
+      "end": 78.486,
+      "content": "man"
+     },
+     {
+      "begin": 79.712,
+      "end": 79.792,
+      "content": "You"
+     },
+     {
+      "begin": 79.872,
+      "end": 80.013,
+      "content": "better"
+     },
+     {
+      "begin": 80.033,
+      "end": 80.133,
+      "content": "get"
+     },
+     {
+      "begin": 80.174,
+      "end": 80.254,
+      "content": "your"
+     },
+     {
+      "begin": 80.294,
+      "end": 80.535,
+      "content": "studies"
+     },
+     {
+      "begin": 80.616,
+      "end": 80.776,
+      "content": "on"
+     },
+     {
+      "begin": 80.837,
+      "end": 81,
+      "content": "boy"
+     }
+    ],
+    "align_score": 0.797
+   },
+   {
+    "begin": 81,
+    "end": 84.683,
+    "content": "If you really want to know passes test download",
+    "confidence": 0.804,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 81,
+      "end": 81.06,
+      "content": "If"
+     },
+     {
+      "begin": 82.145,
+      "end": 82.205,
+      "content": "you"
+     },
+     {
+      "begin": 82.266,
+      "end": 82.447,
+      "content": "really"
+     },
+     {
+      "begin": 82.487,
+      "end": 82.587,
+      "content": "want"
+     },
+     {
+      "begin": 82.607,
+      "end": 82.668,
+      "content": "to"
+     },
+     {
+      "begin": 82.688,
+      "end": 82.788,
+      "content": "know"
+     },
+     {
+      "begin": 83.109,
+      "end": 83.431,
+      "content": "passes"
+     },
+     {
+      "begin": 83.511,
+      "end": 83.752,
+      "content": "test"
+     },
+     {
+      "begin": 84.596,
+      "end": 84.683,
+      "content": "download"
+     }
+    ],
+    "align_score": 0.833
+   },
+   {
+    "begin": 84.683,
+    "end": 86.576,
+    "content": "out Whoo!",
+    "confidence": 0.39,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 84.683,
+      "end": 85.045,
+      "content": "out"
+     },
+     {
+      "begin": 86.334,
+      "end": 86.576,
+      "content": "Whoo!"
+     }
+    ],
+    "align_score": 0.616
+   }
+  ]
+ }
+}

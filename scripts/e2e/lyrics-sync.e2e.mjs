@@ -119,7 +119,7 @@ for(const a of albums.albums){
     }
   }
 }
-check('shelf',`every track with lyrics was played (${tracks})`,tracks>=19,{tracks});
+check('shelf',`every track with lyrics was played (${tracks})`,tracks>=30,{tracks});
 check('shelf','no page errors',errors.length===0,errors.slice(0,5));
 await ctx.close();
 

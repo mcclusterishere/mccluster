@@ -36,6 +36,66 @@ export const TRACKS = {
     "album": "prim3",
     "seconds": 92.4
   },
+  "high-alert": {
+    "title": "High Alert",
+    "album": "prim3",
+    "seconds": 167.6
+  },
+  "osint": {
+    "title": "OSINT",
+    "album": "prim3",
+    "seconds": 97
+  },
+  "anti-social-engineering": {
+    "title": "Anti-Social Engineering (Draft)",
+    "album": "prim3",
+    "seconds": 109.7
+  },
+  "red-blue-purple-white-team": {
+    "title": "Red, Blue, Purple, White Team",
+    "album": "prim3",
+    "seconds": 87.7
+  },
+  "data-breach": {
+    "title": "Data Breach",
+    "album": "prim3",
+    "seconds": 256.1
+  },
+  "app-attacks": {
+    "title": "App Attacks",
+    "album": "prim3",
+    "seconds": 86.1
+  },
+  "dive-in": {
+    "title": "Dive In",
+    "album": "prim3",
+    "seconds": 163.9
+  },
+  "iot": {
+    "title": "IOT (Draft)",
+    "album": "prim3",
+    "seconds": 72.1
+  },
+  "per-diem": {
+    "title": "Per Diem (Draft)",
+    "album": "prim3",
+    "seconds": 85.2
+  },
+  "raid-hot-site": {
+    "title": "RAID (Hot Site)",
+    "album": "prim3",
+    "seconds": 219.5
+  },
+  "evil-twin-middle-man": {
+    "title": "Evil Twin (Middle Man)",
+    "album": "prim3",
+    "seconds": 219.5
+  },
+  "ghost-in-the-wires": {
+    "title": "Ghost in the Wires",
+    "album": "prim3",
+    "seconds": 249.8
+  },
   "environmental-injustice": {
     "title": "Environmental Injustice",
     "album": "equity-uprise",
