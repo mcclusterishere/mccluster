@@ -1,7 +1,7 @@
 {
  "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 29,
+ "count": 41,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -86,6 +86,138 @@
    "available": true,
    "no": 7,
    "isrc": "QT6KV2600007"
+  },
+  {
+   "slug": "high-alert",
+   "title": "High Alert",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "2:48",
+   "available": true,
+   "no": 19
+  },
+  {
+   "slug": "osint",
+   "title": "OSINT",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "1:37",
+   "available": true,
+   "no": 20
+  },
+  {
+   "slug": "anti-social-engineering",
+   "title": "Anti-Social Engineering (Draft)",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "1:50",
+   "available": true,
+   "no": 21
+  },
+  {
+   "slug": "red-blue-purple-white-team",
+   "title": "Red, Blue, Purple, White Team",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "1:28",
+   "available": true,
+   "no": 22
+  },
+  {
+   "slug": "data-breach",
+   "title": "Data Breach",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "4:16",
+   "available": true,
+   "no": 23
+  },
+  {
+   "slug": "app-attacks",
+   "title": "App Attacks",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "1:26",
+   "available": true,
+   "no": 24
+  },
+  {
+   "slug": "dive-in",
+   "title": "Dive In",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "2:44",
+   "available": true,
+   "no": 25
+  },
+  {
+   "slug": "iot",
+   "title": "IOT (Draft)",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "1:12",
+   "available": true,
+   "no": 26
+  },
+  {
+   "slug": "per-diem",
+   "title": "Per Diem (Draft)",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "1:25",
+   "available": true,
+   "no": 27
+  },
+  {
+   "slug": "raid-hot-site",
+   "title": "RAID (Hot Site)",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "3:40",
+   "available": true,
+   "no": 28
+  },
+  {
+   "slug": "evil-twin-middle-man",
+   "title": "Evil Twin (Middle Man)",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "3:40",
+   "available": true,
+   "no": 29
+  },
+  {
+   "slug": "ghost-in-the-wires",
+   "title": "Ghost in the Wires",
+   "credit": "",
+   "album": "PRIM3",
+   "albumSlug": "prim3",
+   "page": "album.html?album=prim3",
+   "length": "4:10",
+   "available": true,
+   "no": 30
   },
   {
    "slug": "environmental-injustice",
@@ -180,7 +312,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "1:35",
    "available": true,
-   "no": 19
+   "no": 31
   },
   {
    "slug": "salvage-title-b-side",
@@ -191,7 +323,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "1:29",
    "available": true,
-   "no": 20
+   "no": 32
   },
   {
    "slug": "repo-guy-b-side",
@@ -202,7 +334,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "2:00",
    "available": true,
-   "no": 21
+   "no": 33
   },
   {
    "slug": "hundun-b-side",
@@ -213,7 +345,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "2:23",
    "available": true,
-   "no": 22
+   "no": 34
   },
   {
    "slug": "dealer-plates",
@@ -248,7 +380,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "1:06",
    "available": true,
-   "no": 23
+   "no": 35
   },
   {
    "slug": "mr-lock-changer-remix",
@@ -259,7 +391,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "1:48",
    "available": true,
-   "no": 24
+   "no": 36
   },
   {
    "slug": "lana-b-side",
@@ -270,7 +402,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "1:25",
    "available": true,
-   "no": 25
+   "no": 37
   },
   {
    "slug": "stand-on-business-b-side",
@@ -281,7 +413,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "2:01",
    "available": true,
-   "no": 26
+   "no": 38
   },
   {
    "slug": "all-in-the-details",
@@ -292,7 +424,7 @@
    "page": "album.html?album=whip-equipped",
    "length": "2:35",
    "available": true,
-   "no": 27
+   "no": 39
   },
   {
    "slug": "upset",
@@ -315,7 +447,7 @@
    "page": "album.html?album=cia-mind-control",
    "length": "3:53",
    "available": true,
-   "no": 28
+   "no": 40
   },
   {
    "slug": "pull-up",
@@ -326,7 +458,7 @@
    "page": "album.html?album=cia-mind-control",
    "length": "2:30",
    "available": true,
-   "no": 29
+   "no": 41
   },
   {
    "slug": "niggy-nigg",
