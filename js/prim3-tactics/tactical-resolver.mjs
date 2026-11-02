@@ -256,26 +256,94 @@ function detectAtPosition(state, mover) {
   });
 }
 
-function moveUnit(state, unitId, destination, mode = 'MOVE') {
+function isBlockedCell(state, x, y, z) {
+  return state.blockers.some((item) => item.x === x && item.y === y && item.z === z);
+}
+
+// Shortest orthogonal route on one floor around walls and every unit, within maxSteps.
+// Authoritative (sees the whole state); a client should plan with knownPaths and pass its route
+// to moveUnit, so a refusal never reveals a unit the player cannot see.
+function findPath(state, unitId, destination, maxSteps = Infinity) {
+  const unit = unitById(state, unitId);
+  const dest = { x: Number(destination.x), y: Number(destination.y), z: Number(destination.z || 0) };
+  if (dest.z !== unit.z) return null;
+  const key = (x, y) => `${x}:${y}`;
+  const prev = new Map([[key(unit.x, unit.y), null]]);
+  let frontier = [{ x: unit.x, y: unit.y }];
+  for (let steps = 0; frontier.length && steps < maxSteps; steps += 1) {
+    const nextFrontier = [];
+    for (const cell of frontier) {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const x = cell.x + dx, y = cell.y + dy, k = key(x, y);
+        if (prev.has(k) || !inBounds(state, x, y, unit.z) || isBlockedCell(state, x, y, unit.z) || occupied(state, x, y, unit.z, unit.id)) continue;
+        prev.set(k, cell);
+        if (x === dest.x && y === dest.y) {
+          const path = [{ x, y, z: unit.z }];
+          for (let at = cell; at && !(at.x === unit.x && at.y === unit.y); at = prev.get(key(at.x, at.y))) path.unshift({ x: at.x, y: at.y, z: unit.z });
+          return path;
+        }
+        nextFrontier.push({ x, y });
+      }
+    }
+    frontier = nextFrontier;
+  }
+  return null;
+}
+
+// options.path: the route the player chose (from the start or its first step, ending at the destination).
+// It is checked step by step against walls, bounds, adjacency and range. If a step meets a unit the
+// mover's side could not know about, the move is interrupted on the last free tile: the AP is spent,
+// and nothing is revealed before contact.
+function moveUnit(state, unitId, destination, mode = 'MOVE', options = {}) {
   const next = copyState(state);
   const unit = unitById(next, unitId);
   if (next.phase !== (unit.faction === 'PLAYER' ? 'PLAYER' : 'THREAT')) throw new Error('Unit cannot act outside its phase');
   if (unit.dead || unit.downed) throw new Error('Unit cannot move');
   const dest = { x: Number(destination.x), y: Number(destination.y), z: Number(destination.z || 0) };
+  if (![dest.x, dest.y, dest.z].every(Number.isInteger)) throw new Error('Destination must be a whole tile');
   if (!inBounds(next, dest.x, dest.y, dest.z)) throw new Error('Destination out of bounds');
-  if (occupied(next, dest.x, dest.y, dest.z, unit.id)) throw new Error('Destination occupied');
-  const distance = gridDistance(unit, dest);
+  if (dest.z !== unit.z) throw new Error('Destination is on another floor');
+  if (isBlockedCell(next, dest.x, dest.y, dest.z)) throw new Error('Destination is a wall');
+  if (dest.x === unit.x && dest.y === unit.y) throw new Error('Unit is already there');
   const isDash = mode === 'DASH';
   const maxDistance = unit.moveRange * (isDash ? 2 : 1);
   const cost = isDash ? 2 : 1;
-  if (!Number.isFinite(distance) || distance > maxDistance) throw new Error('Destination outside movement range');
+  if (unit.ap < cost) throw new Error('Not enough action points');
+  let path;
+  if (options.path) {
+    path = options.path.map((c) => ({ x: Number(c.x), y: Number(c.y), z: Number(c.z ?? unit.z) }));
+    if (path.length && path[0].x === unit.x && path[0].y === unit.y) path = path.slice(1);
+    if (!path.length || path.length > maxDistance) throw new Error('Route outside movement range');
+    const end = path[path.length - 1];
+    if (end.x !== dest.x || end.y !== dest.y || end.z !== dest.z) throw new Error('Route does not end at the destination');
+    let at = unit;
+    for (const step of path) {
+      if (![step.x, step.y, step.z].every(Number.isInteger) || step.z !== unit.z) throw new Error('Route leaves the floor or the grid');
+      if (Math.abs(step.x - at.x) + Math.abs(step.y - at.y) !== 1) throw new Error('Route is not a connected path');
+      if (!inBounds(next, step.x, step.y, step.z) || isBlockedCell(next, step.x, step.y, step.z)) throw new Error('Route crosses a wall');
+      at = step;
+    }
+  } else {
+    if (occupied(next, dest.x, dest.y, dest.z, unit.id)) throw new Error('Destination occupied');
+    path = findPath(next, unit.id, dest, maxDistance);
+    if (!path) throw new Error('No traversable path within movement range');
+  }
   spendAp(unit, cost);
-  unit.x = dest.x; unit.y = dest.y; unit.z = dest.z;
+  let walked = [];
+  let interruptedBy = null;
+  for (const step of path) {
+    const blocker = next.units.find((other) => !other.dead && other.id !== unit.id && other.x === step.x && other.y === step.y && other.z === step.z);
+    if (blocker) { interruptedBy = { x: step.x, y: step.y, z: step.z }; break; }
+    walked.push(step);
+  }
+  const stop = walked.length ? walked[walked.length - 1] : { x: unit.x, y: unit.y, z: unit.z };
+  unit.x = stop.x; unit.y = stop.y; unit.z = stop.z;
   if (unit.concealed && detectAtPosition(next, unit)) {
     unit.concealed = false;
     next.events.push({ type: 'CONCEALMENT_BROKEN', unitId: unit.id, reason: 'DETECTION' });
   }
-  next.events.push({ type: isDash ? 'DASH' : 'MOVE', unitId: unit.id, destination: dest, apRemaining: unit.ap });
+  if (interruptedBy) next.events.push({ type: 'MOVE_INTERRUPTED', unitId: unit.id, at: { ...stop }, blockedAt: interruptedBy, path: walked, apRemaining: unit.ap });
+  else next.events.push({ type: isDash ? 'DASH' : 'MOVE', unitId: unit.id, destination: dest, path, apRemaining: unit.ap });
   return next;
 }
 
@@ -439,6 +507,7 @@ export {
   coverForAttack,
   shotPreview,
   moveUnit,
+  findPath,
   enterOverwatch,
   hunkerDown,
   reload,
