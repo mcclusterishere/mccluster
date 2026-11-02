@@ -21,6 +21,7 @@
   var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var OWNER = "matthew@mccluster.org";
   var PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  var OWN_SRC = (d.currentScript && d.currentScript.src) || "", STAMP = (OWN_SRC.match(/[?&]v=([^&]+)/) || [])[1] || "";
 
   function session() {
     try { return JSON.parse(localStorage.getItem("mccdb_session") || "null"); }
@@ -51,11 +52,46 @@
       body: JSON.stringify(body)
     }).then(function (r) {
       return r.text().then(function (t) {
-        if (!r.ok) throw new Error(t || ("HTTP " + r.status));
-        return t ? JSON.parse(t) : null;
+        var b = null; try { b = t ? JSON.parse(t) : null; } catch (_) {}
+        if (!r.ok) throw Object.assign(new Error((b && (b.message || b.error)) || t || ("HTTP " + r.status)), { status: r.status, body: b });
+        return b;
       });
     });
   }
+  /* REVISIONS. Every slot write carries the revision it was read at (site_content_v2 through
+     js/editor-revisions.js). A slot that changed under the hand typing in it is not overwritten:
+     the page says so and keeps what was typed on screen until it is reloaded. Where that RPC is
+     not installed, the legacy RPCs remain, but only after the slot's updated_at is read back. */
+  /* the shared client is loaded here (owner-only code on 60+ pages), not wired into every page */
+  var loadingV2 = null;
+  function V2() { return w.MCC_EDITOR_V2 || null; }
+  function ensureV2() {
+    if (V2()) return Promise.resolve(V2());
+    if (!loadingV2) loadingV2 = new Promise(function (resolve) {
+      var sc = d.createElement("script"); sc.src = OWN_SRC.replace(/[^/]*$/, "") .replace(/\?.*$/, "") + "editor-revisions.js" + (STAMP ? "?v=" + STAMP : "");
+      sc.onload = function () { resolve(V2()); }; sc.onerror = function () { resolve(null); }; d.head.appendChild(sc);
+    });
+    return loadingV2;
+  }
+  function slotClient(slot) { var v = V2(); return v ? v.site(rpc, PAGE, slot) : null; }
+  function publicRow(slot) {
+    return fetch(SB + "/rest/v1/site_content?select=updated_at&page=eq." + encodeURIComponent(PAGE) + "&slot=eq." + encodeURIComponent(slot) + "&limit=1", { headers: { apikey: KEY }, cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(function (rows) { var row = Array.isArray(rows) && rows[0]; return row ? row.updated_at || null : null; });
+  }
+  /* the slot's head when editing begins: {revision} from v2, or {legacy:true, updated_at} */
+  function openSlot(slot) {
+    return ensureV2().then(function (v) {
+      var c = slotClient(slot);
+      if (!c) return publicRow(slot).then(function (at) { return { legacy: true, updated_at: at }; });
+      return c.read().then(function (r) { return { revision: r.revision, snapshot: r.snapshot }; }).catch(function (err) {
+        var k = v.classify(err).kind;
+        if (k === "unconfigured") return publicRow(slot).then(function (at) { return { legacy: true, updated_at: at }; });
+        throw err;
+      });
+    });
+  }
+  function explain(err, what) { var v = V2(); return v ? v.explain(v.classify(err), what) : (err.message || String(err)); }
+  function isConflict(err) { var v = V2(); return v ? v.classify(err).kind === "conflict" : (err && err.status === 409); }
 
   var on = false, current = null;
 
@@ -108,6 +144,7 @@
     return node.getAttribute("data-edit") || w.MCC_SLOT_PATH(node);
   }
 
+  var heads = {};   /* slot → head read when its edit began */
   function beginEdit(node) {
     if (current) return;
     current = node;
@@ -116,6 +153,10 @@
     node.focus();
     d.getElementById("mccEditRevert").hidden = false;
     say(node.getAttribute("data-edit") ? "tagged slot" : "position-keyed — may drift");
+    var slot = slotFor(node);
+    heads[slot] = null;
+    openSlot(slot).then(function (h) { heads[slot] = h; if (current === node) say((h.legacy ? "" : "rev " + h.revision + " · ") + (node.getAttribute("data-edit") ? "tagged slot" : "position-keyed — may drift")); })
+      .catch(function (e) { heads[slot] = { error: e }; if (current === node) say("cannot save: " + explain(e, "opened").slice(0, 60)); });
 
     var before = node.textContent;
     function finish(save) {
@@ -127,17 +168,21 @@
       current = null;
       d.getElementById("mccEditRevert").hidden = true;
       if (!save || after === before) { node.textContent = before; say(""); return; }
+      var head = heads[slot];
+      if (!head || head.error) { node.textContent = before; say(head ? "not saved: the slot could not be read" : "not saved: still reading the slot; tap it again"); return; }
       say("saving…");
-      rpc("site_content_set", {
-        p_page: PAGE, p_slot: slotFor(node), p_value: after,
-        p_kind: "text",
-        /* original is what SHIPPED, so it is only meaningful the first
-           time; the function keeps the first one it is given. */
-        p_original: node.getAttribute("data-original") || before,
-        p_fragile: !node.getAttribute("data-edit"),
-        p_via: "editor"
-      }).then(function () { say("saved"); setTimeout(function () { say(""); }, 1500); })
-        .catch(function (e) { node.textContent = before; say("failed: " + e.message.slice(0, 40)); });
+      var data = { value: after, kind: "text",
+        /* original is what SHIPPED, so it is only meaningful the first time; the function keeps the first one it is given. */
+        original: node.getAttribute("data-original") || before, fragile: !node.getAttribute("data-edit") };
+      var write = head.legacy
+        ? publicRow(slot).then(function (at) { if ((at || null) !== (head.updated_at || null)) throw Object.assign(new Error("changed elsewhere"), { status: 409, body: { code: "conflict" } });
+            return rpc("site_content_set", { p_page: PAGE, p_slot: slot, p_value: after, p_kind: "text", p_original: data.original, p_fragile: data.fragile, p_via: "editor" }); })
+        : slotClient(slot).save(head.revision, data);
+      write.then(function (v) { say(v && typeof v.revision === "number" ? "saved · rev " + v.revision : "saved"); setTimeout(function () { say(""); }, 1500); })
+        .catch(function (e) {
+          if (isConflict(e)) { say("not saved: changed elsewhere — reload, then edit again"); return; } /* what was typed stays on screen */
+          node.textContent = before; say("failed: " + explain(e, "saved").slice(0, 60));
+        });
     }
     function onBlur() { finish(true); }
     function onKey(e) {
@@ -160,10 +205,13 @@
 
   d.getElementById("mccEditRevert").addEventListener("click", function () {
     if (!current) return;
-    var node = current, slot = slotFor(node);
-    rpc("site_content_revert", { p_page: PAGE, p_slot: slot })
-      .then(function () { say("reverted — reload to see the original"); })
-      .catch(function (e) { say("failed: " + e.message.slice(0, 40)); });
+    var node = current, slot = slotFor(node), head = heads[slot];
+    if (!head || head.error) { say(head ? "not reverted: the slot could not be read" : "not reverted: still reading the slot"); return; }
+    var write = head.legacy
+      ? publicRow(slot).then(function (at) { if ((at || null) !== (head.updated_at || null)) throw Object.assign(new Error("changed elsewhere"), { status: 409, body: { code: "conflict" } }); return rpc("site_content_revert", { p_page: PAGE, p_slot: slot }); })
+      : slotClient(slot).reset(head.revision);
+    write.then(function () { say("reverted — reload to see the original"); })
+      .catch(function (e) { say(isConflict(e) ? "not reverted: changed elsewhere — reload first" : "failed: " + explain(e, "reverted").slice(0, 60)); });
   });
 
   d.addEventListener("click", function (e) {
