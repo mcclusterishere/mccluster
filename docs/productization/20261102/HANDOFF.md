@@ -7,6 +7,8 @@ The existing McCluster plane is the implementation target: Control and its curre
 
 ## Current assignment and implementation updates
 
+Claude frontend implementation of the whole-platform assignment, with its coverage table, verification, session gates, Codex requests and migration plan: [20261102-claude/HANDOFF.md](../20261102-claude/HANDOFF.md). Local only; nothing pushed, merged, deployed or applied.
+
 Latest local increment: [default-off annual-registration/trial SQL](../20261102-domain-trial/HANDOFF.md) and [Worker contracts/limits](../20261102-trial/WORKER-CONTRACT.md). Verified registration receipts, scoped capability metadata/require/cancel and conservative social enforcement are prepared. Policy is unseeded, current registrar cannot grant, and consumer integration remains gated. See the v5 bundle checkpoint for the exact source identity.
 
 Product scope: the platform is the first product, with segmented purchasable modules; the builder is its entry door. A separately paid domain plus one month of platform access is the requested offer, not free domain or automatic paid conversion. After trial expiry, customers retain site/data/control and advanced modules disable; annual domain registration is independent. Detailed renewal/hosting/retention terms remain gated. Actual domain purchase completion is a priority, with no live financial action authorized.

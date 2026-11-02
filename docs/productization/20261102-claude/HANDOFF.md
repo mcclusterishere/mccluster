@@ -1,0 +1,92 @@
+# Whole-platform implementation — Claude frontend handoff (2026-11-02)
+
+**Release decision: gated, unchanged.** Everything here is local, on branch `claude/whole-platform-20261102` in an isolated worktree. No push, PR, merge, deploy, production SQL, flag, credential, purchase, charge, provider call, ad or external message occurred. Backend sources from the v5 bundle are byte-identical in this branch (hashes checked against `SOURCE-HASHES.json`); Codex owns them.
+
+Status words used below, as WHOLE-SITE-ACCEPTANCE.md defines them: `uninspected` · `blocked` · `implemented locally` · `verified locally` (local fixtures/harness) · `deployed attested` · `functionally verified` (real service). Source / pushed / merged / deployed / functional are separate fields and none of the last three is claimed anywhere.
+
+## Exact sources
+
+| What | Identity |
+|---|---|
+| Audited main | `e80cb0a137683393f19ba251f9beb9e66577ce64` (clone HEAD at start; now a true ancestor) |
+| Consolidated customer candidate | PR #681 `5e020833534b68b31e191b137e9a30da8b58314f` (fetched `refs/pull/681/head`) |
+| v5 bundle | `backend-productization-source-v5-20261102.zip` → `CHECKPOINT.json` commit `e55b9be0`, branch `codex/domain-trial-worker-20261102`, `pushed:false`; applied as `implementation.patch` on exact #681 → `38805bd6` |
+| Main merge | `f61c7323`: four conflicts resolved to the v4-reconciled union; `supabase/migrations` + `production-ledger.json` byte-identical to main (355 ledger) |
+| This branch's tip | see `git log 5e020833..HEAD`; frontend commits `943ecd7d` … `4130fcf9` |
+| Other workers | #684 `21c92673`, #685 `bdb8a945`, #686 `86a90f71`, #687 `a2a32da1`, #493 `9ad0503e`, #636 `a5efd156`, #640 `431da5bd`, #642 `327625eb`, `9d7a7eed` (`story/cluster-fucked-workspace-20261101`), `baa92490` (`codex/actor-evidence-preview-20261101`) — all fetched/resolved read-only; **not integrated** (below). `1fdef132` (profile restoration), `5d76d704` (private math LMS), `edaf4e09` (PRIM3 story), `c1505931`/`ba06fed8`/`e1eeacec`/`cded251c` (local checkpoints) are not advertised by the remote: **blocked, inaccessible from this session**; nothing was substituted for them. |
+
+## Session gates (environment, not product)
+
+- npm and PyPI registries are refused by this session's egress policy (DNS fails; proxy 403). Consequences: the pinned PGlite tools could not be installed; 4 Worker test files that import `@cfworker/json-schema` / `@fal-ai/client` fail to load (`cloudflare-registration`, `registration-contact-vault`, `travel-routing`, one `observability-instrumentation` case). They are dependency-load failures, not source regressions (same code passed 1,338/0 in the v4 run with dependencies present).
+- In their place: `scripts/test/pg-native-shim` is a psql-backed stand-in for the four PGlite calls the fixtures use, run against a disposable local PostgreSQL 16 cluster. Evidence produced through it is **native PostgreSQL**, labelled as such, never "PGlite". `domain-purchase-native.py` gained a `--local` mode equal to the other three native drivers (Docker daemon absent here).
+- Cloudflare: the connected MCP server is the deprecated bindings server and returns only the Worker's name/id, so the deployed-binding inspection could not be refreshed; the v4 read-only evidence (`../20261102-domain/evidence/deployed-binding-metadata.json`, 18 candidate bindings absent, 03:30 UTC) stands and is cited, not restated as new.
+- Playwright absent → `scripts/e2e/cdp-lite.mjs` drives Chrome for Testing 153 over raw CDP for the 390px proof.
+
+## Verification (final run on this branch tip)
+
+| Suite | Result | Scope |
+|---|---|---|
+| Root `node --test scripts/test/*.test.mjs` | **1,384 / 1,384** | includes 7 new harnesses (front-studio 10, Control front page 6, inline editor 3, Studio bridge 7, proposal 5, platform access 5, member fronts 4) and the validator-copy parity test |
+| Root Python | 7 / 7 | |
+| Worker `npm test` (with shim, formerly skipped PGlite suites executed) | 1,309 / 1,313 | 4 dependency-load failures (above) |
+| `editor-versioned-db.mjs` | 144 assertions PASS (free-builder journey + editor contract) | native PG via shim |
+| `tile-editor-bridge-db.mjs` | 57 PASS | native PG via shim |
+| `domain-trial-db.mjs` | 103 SQL/Worker assertions PASS | native PG via shim |
+| `prepared-foundation-db.mjs` / `free-site-minimum-db.mjs` | 28 PASS / PASS | native PG via shim |
+| `editor-versioned-native.py`, `tile-editor-bridge-native.py`, `domain-trial-native.py`, `domain-purchase-native.py --local` | all PASS (two-session races: one commit/one PT409; lock order; duplicate funding/claims) | native PG 16.15 |
+| `scripts/e2e/mobile-overflow-audit.mjs` | 14/14 page×width checks PASS (390 and 1280; scrollWidth === clientWidth; no script errors) | signed-out gates; screenshots in `evidence/mobile/` |
+
+Logs: `evidence/baseline-*.log` (combined baseline before frontend work) and the same suites rerun at the tip (`evidence/final-*.log`). Not performed here, as a matter of record: real Supabase Auth sign-in, managed Storage bytes, browser session/account switch against the live API, paid-provider sandbox, deployed attestation. Those remain the functional gates for every row below.
+
+## Coverage by surface
+
+| Surface / entry | Source | Implemented locally (this branch) | Verified locally | Backend / owner gate |
+|---|---|---|---|---|
+| Personal + project front editor `js/front-studio.js` (`front-studio.html`, `project-studio.html`) | v2 API (`editor-versioned.js`, bundle) | revision-carrying save/publish/unpublish; 409 → "replace mine / keep mine (one deliberate overwrite) / decide later" with the latest revision read; lost response → readback (committed / not committed / unknown→conflict); History panel + Restore to draft (new revision, never publishes); withdrawn projects read-only; tiles presentation routed to Website Studio; client-side preflight names refused settings via a published, parity-tested copy of `packages/front-config`; legacy write only on `503 unconfigured`, behind an `updated_at` readback guard | harness 10/10; member-front test updated to the contract | `EDITOR_V2_ENABLED` off; `editor_versioned_contracts_v1.sql` pending; real Auth/Storage/renderer |
+| Project list `js/customer-projects.js` | v2 withdraw/recover (v3) | Remove → **Withdraw** carrying the revision (draft/history/address/ID kept); **Recover** for owner-withdrawn projects; legacy DELETE only when unconfigured and only after the list's `updated_at` readback | covered by the shared client tests; no DOM harness for this page | same |
+| Control homepage `js/control-room/front-page.js` | `site_content_v2` RPC (bundle) | save/reset carry `p_expected`; conflict decision; readback; History + explicit **live** restore (confirmed; new revision); legacy RPCs only when `PGRST202` (RPC absent) after public-row readback | harness 6/6; `front-cabin-first`, `control-surface`, `account-identity-gate` green | RPC pending; admin session |
+| Inline pencil editor `js/site-editor.js` (60+ pages) | `site_content_v2` | per-slot revision read at edit start, saved with it; a slot changed meanwhile keeps the typed text on screen and is not overwritten; revert carries the revision; the shared client is lazy-loaded by the editor (no page edits) | harness 3/3 | same |
+| Website Studio `js/website-studio/editor.mjs` | dual-revision Tile bridge (`project_tile_editor_v2`, bundle) | GET/PUT/publish/unpublish/withdraw/recover/switch-front on `/v2/projects/{slug}/tiles` with BOTH tokens; stale pair keeps edits + "keep mine" decision; readback; manage panel (`#manage`); legacy single-token PUT only when unconfigured | harness 7/7; bridge SQL 57 + native lock-order proofs | `EDITOR_V2_ENABLED`, `WEBSITE_STUDIO_ENABLED` off; SQL pending; media/entitlement real-service |
+| Owned proposal slice `js/website-studio/proposal.mjs` + Studio `#assist` | OWNED-ARCHITECTURE.md | capture (project, both revisions, SHA-256 digest) → host envelope → bounded headline/body changes (unknown field / empty / >8 KiB / markup / non-text / too long / no-op **rejected**) → candidate by stable tile id re-validated by `assertDocument` → field diff + real renderer preview (pure) → explicit **Apply** = the one dual-revision save → one **Undo** entry = new deliberate save on the returned tokens; dirty draft / moved revisions / project switch invalidate; late output after cancel discarded; publish untouched. Sources: owner-typed (works now) and McCluster (`POST /v1/ai/tile-proposal`, not registered → said plainly, no fake success) | 5 pure + 2 harness tests | Codex request 1 below; no paid inference; no streaming |
+| Control **Member fronts** (moderation) `js/control-room/member-fronts.js` | `/v2/fronts/{handle}/edit|history|takedown` | new view (`#create:member-fronts`, route home added): house-owner read with revision, takedown with recorded reason carrying `expected_revision`, re-read on 409, legacy unconditional route labelled | harness 4/4 | house-owner session; v2 flag |
+| Platform access / entitlements `js/platform-access.js` on `customer-site.html` and `customer-domain-purchases.html` | v5 `GET /v2/platform/apps/{app}/access`, `POST /v2/platform/domain-trials/{order}/cancel` | capability lines with the server's reason (denied stays visible, greyed); trial state/expiry and annual domain expiry kept distinct; hosting "economics_policy_unresolved"; "no automatic paid conversion"; unconfigured/401/403/404 said plainly; cancel with exactly `{org_id}` after confirmation; malformed scope never leaves the browser | harness 5/5 | `CREATOR_DOMAIN_TRIAL_ENABLED` off; policy unseeded; Codex request 2 (order id in projection) |
+| Domain purchases `js/customer-domain-purchases.js` | existing adapters (sandbox only) | status vocabulary that never overstates (funded ≠ registered; `registered_pending_reconciliation` = not confirmed; `refund_required` = not refunded); quoted-term + no-renewal disclosure; annual term shown as independent of the included month | existing unit regressions; native domain proofs | registrar bindings absent on inspected deployment; live mode refused by factory; renewal/transfer/refund settlement absent |
+| Anti-Social door `free-website.html` (+js/css) | asset in tree | sound on press only; captions from `assets/captions/antisocial.en.vtt` at runtime; real demos linked (`index.html`, Studio demo); three template doors with intent kept via `account.html?next=…` and a one-shot `sessionStorage` fallback honoured by front-studio; "what free means" from existing contracts; no time promise; `data-cta` only (consent-gated collector) | page-wide tests green; 390/1280 audit; screenshot reviewed | brief + rights checklist `ANTI-SOCIAL-CAMPAIGN.md`; **no campaign/spend/publication** |
+| Shared revision client `js/editor-revisions.js` | — | one contract for all writers: classify (conflict/signin/forbidden/notfound/unconfigured/toolarge/invalid/network), explain, `reconcile` after lost responses, owned + site clients; registered in `live-callers.json` as pending-only caller of `site_content_v2` | exercised by every harness | — |
+
+### Not changed in this branch (status recorded, not claimed)
+
+| Area | Status | Why / what it needs |
+|---|---|---|
+| Control shell #686 (six sections, NAV-derived views) | inspected; **not integrated** | trial merge: 5 conflicts (`control-room-v2.js` ×3, `workspace-core.js`, `control-surface.test.mjs`) — #686 derives routes from `js/control-room/nav.js` and asserts "no hand-written rail or bottom bar" while AGENTS.md/SHARED-NAVIGATION.md require the shared bottom control bar: an owner navigation decision before adoption. When adopted, NAV must gain `create.member-fronts` and keep every #681 Create view (all present except `member-fronts`); INTEGRATION-ORDER step 5. |
+| Music #684/#685/#687 and `9d7a7eed` | inspected (heads fetched); **not integrated** | carry pending SQL (`lyrics_machine_v1`, `whip_equipped_catalog_objects`) and `music-access` Edge changes; INTEGRATION-ORDER step 6 requires the private immutable revision / approved export security correction reviewed with them (Codex). No UI cherry-picked without its SQL. |
+| Analytics #640/#642 | uninspected beyond heads | 21 shared files; review together; no behavioural claim |
+| OVH actors `baa92490` | head resolved; uninspected | `publication_eligible:false`; direct CLI Forbidden; display-only review flow not built here |
+| Private math LMS / PRIM3 story / profile restoration | **blocked** | sources not advertised by the remote; the old public LMS branch is not a substitute (CONTRACTS.md) |
+| Customer modules (world / world_discovery) | existing UI unchanged | not a platform module manager; Codex request 3 |
+| Social, Studio media jobs, billing/storefront, direct music commerce | existing UI unchanged | their backend gates are unchanged (BACKEND-READINESS.md); the social trial guard needs the atomic consumer integration before any UI claims trial publishing |
+
+## Backend requests for Codex (exact, with callers)
+
+1. **Tile proposal capability on the one plane.** Caller: `js/website-studio/editor.mjs` → `POST https://api.mccluster.org/v1/ai/tile-proposal` (member bearer). Current state: `/v1/ai/*` serves owner jobs only (`ai/router.js`, `OWNER_JOB_TYPES`), `/v1/compute/run` needs an API-key principal with `compute:write` and charges credits; no member-session route exists. Requested semantics: nonstreaming, one in-flight run per session (429 otherwise), request `{schema:'mccluster-tile-proposal/v1', proposal_id, run_id, target:{projectId,tileId}, base_revision:{editor,studio}, base_document_digest, request≤2000 chars, tile:{kind,headline,body}}`; the Worker verifies Auth + project ownership (slug) and only then calls Core's bounded qwen3 path (`core/src/compute/ollama-adapter.mjs`, stream:false, max_concurrency 1); response `{proposal_id, run_id, status:'complete'|'failed'|'cancelled', changes:{headline?,body?}}` and nothing else (no tools, no components); 404/501 until registered. Authorization/data impact: no persistence, no credits for members unless the owner decides; Core audit/cost boundaries apply. Acceptance: wrong owner 404; mismatched run ids discarded client-side (test exists); oversized/markup refused server-side too; interrupted → `failed`, never a partial patch. Also: expose `project_id` (immutable UUID) in the bridge read so proposals bind to it rather than the slug.
+2. **Trial order identity in the access projection.** Caller: `js/platform-access.js`. `creator_platform_access_at_v1` returns `trial.*` and `domain.*` but not the receipt's `order_id`; the cancel route needs it. Request: add `trial.order_id` (uuid|null) to the projection; add `hostname` to the `/v1/creator-domain-orders` list projection (`creator-domain-orders.js` line 36 select) so an order card can name its domain. Impact: read-only fields; no policy change. Acceptance: cross-org read still 403; order id only for the caller's own receipt.
+3. **Platform module manager contract** (unchanged from PLATFORM-CONTRACT-QUEUE.md): dependency/version/disable/drain semantics and tenant-scoped admin catalog authorization; the current `customer_site_modules` switches remain the only UI.
+4. **Durable idempotency receipt for Apply** — only if required: CAS suffices for exactly-once in the harness; a request-receipt ledger is not requested now.
+5. **Lyric revision/approval security correction** to accompany #684–#687 before any frontend adoption (INTEGRATION-ORDER 6).
+
+## Migration / application / recovery plan (prepared, not requested)
+
+Target if ever approved: Supabase `zmnhbrjyhxzhkxmhkexs`; applied by this branch: **none**; ledger unchanged at 355. Prerequisite chain and containment are as in `../20261102/MIGRATIONS.md`, `../20261102-v2/migration-manifest.json`, `../20261102-tile-bridge/migration-manifest.json`, `../20261102-domain-trial/HANDOFF.md`. Exact pending SQL in this tree (SHA-256, unchanged from the bundle):
+
+| File | SHA-256 |
+|---|---|
+| `supabase/pending/editor_versioned_contracts_v1.sql` | `35e654322b78a45ea828a5d038a171f12840d0bc80367ce38a60e821c42c48b2` |
+| `supabase/pending/project_tile_editor_v2.sql` | `affb44cad38da1635c519da1df2cca411f8d103e436d5718f7b3ae9dec1b9898` |
+| `supabase/pending/creator_domain_trial_v1.sql` | `d8c6736232ad3e9d8441a2bff316d556b5bc19a4786b3606586c07f129756426` |
+| `supabase/pending/creator_domain_orders_v1.sql` | `cd82c370a0707ee445f1e0360f964d93a832c510684236c929314715a0918ccc` |
+
+Coordination that the frontend now requires: **every legacy writer in this branch degrades to the versioned API the moment it answers**, so enrolling a record (first v2 mutation) is safe for these callers; a deployment that enables `EDITOR_V2_ENABLED` must ship this frontend (or newer) in the same release, or older browsers' blind legacy writes will receive PT409 by design. Rollback = disable the flags; keep histories; this frontend keeps working on the legacy path with its readback guard.
+
+## Owner decisions still open (unchanged)
+
+Trial policy (calendar month vs 720 h, once-per-org, freshness, sandbox), app↔price mapping, hosting economics, renewal consent/prices, retention/export terms, pricing/commission, #686 navigation adoption, branch protection / HTTPS / Access / password / extension moves, campaign budget/platforms, the Anti-Social rights checklist answers.
