@@ -98,7 +98,8 @@
       ] }),
       v("music", "Music", null, [], { views: [
         v("catalog", "Review & catalog", "create.music", ["#create:music", "Create · Music", "music review", "catalogue", "isrc", "distribution", "rights", "vault", "lanes", "music-admin.html", "vault.html", "lanes.html"]),
-        v("lyrics", "Lyrics & stems", "slot", ["Lyrics review", "stems"], { module: "lyrics" })
+        v("lyrics", "Lyrics & stems", "slot", ["Lyrics review", "stems"], { module: "lyrics" }),
+        v("artists", "Artists", "slot", ["Acting as", "label", "artist switcher", "managed artists", "my artists"], { module: "musicLabel" })
       ] })
     ] },
     { id: "create", label: "Create", icon: "create", phone: true, blurb: "Make it, then publish it.", items: [

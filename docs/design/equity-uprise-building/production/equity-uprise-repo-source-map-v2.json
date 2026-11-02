@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 527,
+  "candidate_count": 533,
   "capability_source_count": 102,
-  "support_only_count": 425,
+  "support_only_count": 431,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3958,6 +3958,48 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "The one Control Room navigation definition; names the existing Equity Uprise operations views (missions, fellows, funding) as a System section entry and adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room/music-label.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/music_label_artists_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending SQL (not applied): music_creator_managers, music_can_act_for() and the creator guards and policies widened to managed artists; seeds PRIM3 and Equity Uprise's music act as login-less artists. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "supabase/tests/music_label_artists.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Behaviour test for the pending label SQL. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "scripts/test-music-label-db.sh",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-Postgres runner for the pending label SQL and its rollback. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "scripts/test/music-label.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Contract test for PRIM3 as its own artist and the label model. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "scripts/e2e/prim3-artist.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser proof of the PRIM3 artist page and the Acting-as switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 527,
+  "candidate_count": 533,
   "capability_source_count": 102,
-  "support_only_count": 425,
-  "checks_total": 2008,
-  "checks_passed": 2008,
+  "support_only_count": 431,
+  "checks_total": 2032,
+  "checks_passed": 2032,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -233,6 +233,7 @@
     "js/control-room/clipping.js",
     "js/control-room/identity-review.js",
     "js/control-room/instagram.js",
+    "js/control-room/music-label.js",
     "js/control-room/nav.js",
     "js/control-room/profile-edit-review.js",
     "js/control-room/social-compose.js",
@@ -298,12 +299,14 @@
     "receipt.html",
     "resume-it-support.html",
     "scripts/e2e/fixtures/axe-baseline.json",
+    "scripts/e2e/prim3-artist.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
     "scripts/stage-cloudflare-pages.mjs",
+    "scripts/test-music-label-db.sh",
     "scripts/test-schema-hygiene-db.sh",
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-mission-curation.test.mjs",
@@ -324,6 +327,7 @@
     "scripts/test/mnet-real-network.test.mjs",
     "scripts/test/mobile-rule.test.mjs",
     "scripts/test/music-direct-sales.test.mjs",
+    "scripts/test/music-label.test.mjs",
     "scripts/test/native-action-network.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/product-context.test.mjs",
@@ -437,6 +441,7 @@
     "supabase/pending/live-callers.json",
     "supabase/pending/live_missions_v1.sql",
     "supabase/pending/mission_admin_approval_v1.sql",
+    "supabase/pending/music_label_artists_v1.sql",
     "supabase/pending/policy_fellowship_ladder_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
@@ -490,6 +495,7 @@
     "supabase/tests/eu_runtime_and_media_rollup_v1.stub.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
+    "supabase/tests/music_label_artists.behaviour.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
     "supabase/tests/privilege_hygiene_v1.behaviour.sql",
     "supabase/tests/privilege_hygiene_v1.stub.sql",
@@ -541,7 +547,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "527 entries"
+      "detail": "533 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -10575,6 +10581,126 @@
     },
     {
       "name": "js/control-room/nav.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/music-label.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/music-label.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/music-label.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/music-label.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/music_label_artists_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/music_label_artists.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-music-label-db.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-music-label-db.sh classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test-music-label-db.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test-music-label-db.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/music-label.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/prim3-artist.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
