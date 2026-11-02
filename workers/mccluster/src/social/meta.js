@@ -84,6 +84,18 @@ export async function tokenFor(env, account) {
   if (!parsed) return null;
   if (parsed.kind === 'env') return env[parsed.name] || null;
   if (parsed.kind === 'vault') {
+    if (env.CREATOR_SOCIAL_MODULE_ACCESS_ENABLED === 'true' && env.CUSTOMER_SOCIAL_ENABLED === 'true') {
+      // Managed token read and entitlement decision share one SQL transaction.
+      // Operator credentials retain their existing path; no new provider call.
+      const result = await db(env, 'rpc/customer_social_token_v2', {
+        method: 'POST', body: JSON.stringify({ p_org: account.org_id, p_secret: parsed.id })
+      });
+      if (typeof result?.managed !== 'boolean') throw Object.assign(new Error('Social credential authorization unavailable'), { status: 503 });
+      if (result.managed) {
+        if (!['legacy_paid', 'module'].includes(result.mode) || typeof result.token !== 'string' || !result.token) throw Object.assign(new Error('Social credential authorization denied'), { status: 403 });
+        return result.token;
+      }
+    }
     // The private registry is authoritative; neither account settings nor job payload
     // can remove a customer's entitlement gate. Also prevents copying a Vault id
     // into a different organization owned by the same user.
@@ -98,8 +110,8 @@ export async function tokenFor(env, account) {
       if (error.detail?.code !== 'PGRST202') throw error;
       if (env.CUSTOMER_SOCIAL_ENABLED === 'true') throw error;
     }
-    if (access?.managed && (env.CUSTOMER_SOCIAL_ENABLED !== 'true' || !access.allowed)) {
-      throw Object.assign(new Error('Customer Instagram publishing requires an enabled service and active site plan; reconnect if access expired'), { status: 402 });
+    if (access?.managed && (env.CUSTOMER_SOCIAL_ENABLED !== 'true' || !access.allowed || (access.mode === 'module' && env.CREATOR_SOCIAL_MODULE_ACCESS_ENABLED !== 'true'))) {
+      throw Object.assign(new Error('Customer Instagram publishing requires an enabled service and current authorization; reconnect if access expired'), { status: 402 });
     }
     const token = await db(env, 'rpc/vault_secret', {
       method: 'POST',

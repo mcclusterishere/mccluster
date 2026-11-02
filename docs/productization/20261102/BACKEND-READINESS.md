@@ -1,3 +1,5 @@
+> Current publication supplement: see [the frozen source manifest and continuation](../20261102-current/SNAPSHOT.md). Historical local-only/no-push wording below describes earlier checkpoints and is superseded only for authorized non-force review-branch publication. No main merge, production migration, deployment, credential change or spending is authorized. Claude's implementation is preserved from `edd8cdd8be4d07fa674071a9b151045bf7cfc94c`; see [its handoff](../20261102-claude/HANDOFF.md). This snapshot publishes reviewed source corrections; complete combined acceptance remains outstanding.
+
 # Backend readiness matrix
 
 Current overlay: the table below records the original production/source audit. Missing production CAS is now addressed in local c150/v3 contracts, not deployed. See [v4 integrated proof and remaining caller/real-service gates](../20261102-v4/HANDOFF.md) and [whole-site acceptance](WHOLE-SITE-ACCEPTANCE.md). The whole website is the assignment; the editor is one slice.
@@ -40,3 +42,7 @@ Private work is recorded from the delegation as status evidence, not as a claim 
 | Expiry/cancel/refund | Advanced denied, existing base controls/data retained | Hosting economics and detailed commercial policy unresolved |
 | Social server guard | Additional default-off check before mutation; recovery retained | Existing paid-only SQL still applies; atomic consumer integration/queue policy needed |
 | Production state | Unchanged | No SQL, flags, billing, credentials, push or deployment authorized |
+
+## Local v6 social consumer increment
+
+Customer social service mutations and managed job admission use transactional entitlement checks; managed token authorization/read is one service-only RPC. Explicit SQL consumer mode and Worker feature flag remain default-off. Snapshot grandfathering, cancellation, app/global safety and mapped paid behavior are tested locally. See ../20261102-social-consumer/CONSUMER-LEDGER.md for every other consumer; metadata is not execution enforcement. Production remains unchanged.
