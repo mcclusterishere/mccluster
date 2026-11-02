@@ -89,7 +89,7 @@ The concept image is a mockup, not proof of working code. What exists now:
 | 2D grid | implemented · verified | The "2D grid" toggle (also `?view=2d`) shows the same board as labelled buttons. It is the accessible view and the fallback. e2e: with three.js blocked, the page falls back to 2D, says why, and still plays. |
 | Hidden information in 3D | verified | The unseen hostile is neither drawn nor labelled (e2e). |
 
-Tests: `scripts/e2e/prim3-tactics-hints.e2e.mjs` **96/96**. That is 65 checks on the 2D grid, 14 in 3D at 390 and 1280 (WebGL via SwiftShader), and 3 for the fallback. The 3D checks need three@0.180.0 installed locally (`THREE_DIR`); without it they print SKIP and are not counted.
+Tests at the time of the first 3D pass: **96/96** (superseded below). That is 65 checks on the 2D grid, 14 in 3D at 390 and 1280 (WebGL via SwiftShader), and 3 for the fallback. The 3D checks need three@0.180.0 installed locally (`THREE_DIR`); without it they print SKIP and are not counted.
 
 Still designed only:
 - authored character models (GLB) and animation;
@@ -98,3 +98,38 @@ Still designed only:
 - camera rotation;
 - a fog-of-war shroud rendered over unknown tiles;
 - a real-device performance budget for low-end phones (not measured).
+
+## 3D pass v2 (owner, 2026-11-02: "not 3D enough … XCOM … that level of game", and "check the PRIM3 repository for the mannequin photos")
+
+**What the Prim3 repo holds.** The search covered all 16 Prim3 branches and their history, this repo, Supabase storage and Drive. The mannequin pictures are:
+- `MCC-SOI-01` Security Officer (the Defense phenotype);
+- `MCC-CFI-01` / `CFI-02` corporate fits (Wear-01 Company Black, which is the Cohort-02 Trainee default);
+- `MCC-EI-01` Executive;
+- the protected Prime −1 sheet.
+
+There are **no committed pictures for Field E/R/T**: only their written briefs.
+
+| Item | Status | Evidence / note |
+|---|---|---|
+| Canon characters | implemented | The squad are faceless matte-black mannequins in Company Black (per CFI-01). The owner said starting characters can be mannequins. Known hostiles are SOI-01 security officers: vest, body camera with a red light, one holstered sidearm, a cyberdeck, short sleeves; no helmet or long gun (the SOI style sheet's exclusions). R carries the scoped long gun and T the deck. No mark is drawn on any garment ("omit a mark rather than approximate it"). |
+| Articulated rigs and animation | implemented · verified | **Rig:** hips, spine, chest, neck, arms and forearms, thighs and shins. **Motion:** a breathing idle; a walk along the engine's path after Confirm; a crouch behind low cover and a brace at high cover; facing the nearest known opposing unit. e2e checks that the body animates after Confirm and that the walk ends exactly on the engine's tile. |
+| Shot sequence | implemented · verified | **Sequence:** the shooter turns and shoulders the weapon; the camera eases over the shoulder; a three-round burst with muzzle flash, light, tracers, and sparks on a hit or near-misses on a miss; a fall if the resolver killed the target; then control returns. **What it does not do:** the animation never rolls anything. It plays the result `fireWeapon` already returned. e2e checks the outcome equals the resolver's event and that control comes back. |
+| Lighting and post-processing | implemented · partly verified | **Lighting and scene:** a dusk courtyard with a warm low sun, cool rim light, sodium lamps and a lit relay. Procedural wet flagstone, brick and window textures; no image downloads. **Tiers:** high = image-based light + GTAO ambient occlusion + bloom + SMAA; mid (phones) = without GTAO; low (software GL, or when the addons can't load) = the plain render. `?fx=` forces a tier. **Checks:** e2e runs the high tier under SwiftShader and checks the frame renders with no page errors. Real-phone frame rate is **not measured**. |
+| Courtyard | implemented | Brick facade with lit windows, cornice, doorway and awning; steps and railing; a concrete-and-glass side; a planter wall; trees; benches; crates; puddles. Board props: brick pillars with caps; jersey barriers with a hazard band (high cover); planter boxes with shrubs (low cover); a relay cabinet with a mast and beacon. All set dressing sits off the tiles. |
+| Camera | implemented · verified | Lower, closer framing. The camera eases toward the selected unit. Quarter-turn rotation (new dock button); taps still raycast correctly after rotating (e2e). The floating menu follows the camera. |
+| Authored models | designed + slot implemented | `assets/3d/prim3-operators/manifest.json` (empty) + `README.md`. A listed GLB (E, R, T, H) replaces the mannequin for that role. **Not generated:** this session's McCluster Core connector returned "Authentication required", so no fal spend happened. Generation goes through McCluster `model3d.generate` (Worker `mccluster` media gateway, fal) with a budget cap, from the mannequin panels, with marks omitted. |
+
+Tests: `scripts/e2e/prim3-tactics-hints.e2e.mjs` **110/110**:
+- 65 on the 2D grid;
+- 19 in 3D at each of 390 and 1280 (WebGL via SwiftShader), including walk, rotate and raycast;
+- 6 for fire and the high tier;
+- 3 for the fallback.
+
+`scripts/test/prim3-tactics-vendor.test.mjs` 2/2. Screenshots: `evidence/prim3-mobile/390-3d-v2-*.jpg`.
+
+Still designed only:
+- authored GLBs (needs the connector authenticated, or the owner's pipeline);
+- Field E/R/T mannequin pictures;
+- a fog-of-war shroud;
+- hostile AI;
+- a real-device performance budget.

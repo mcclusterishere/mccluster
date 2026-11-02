@@ -131,7 +131,9 @@
     .dock-token{width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;font:800 20px/1 system-ui,sans-serif;background:radial-gradient(circle at 35% 30%,#2b3d49,#0d151b);box-shadow:inset 0 0 0 2px var(--p3-cyan)}
     .dock-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .dock-ap{justify-self:end;padding:6px 12px;border-radius:999px;border:1px solid var(--p3-cyan);color:var(--p3-cyan);font:800 15px/1 system-ui,sans-serif}
-    .dock-tools{display:flex;gap:6px}
+    .dock-tools{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+    .dock-tools .tbtn{flex:none;white-space:nowrap}
+    .tbtn svg{width:20px;height:20px;display:block;margin:auto}
     .p3-dock .tbtn--end{min-height:52px;font-size:18px;color:#fff;border:0;background:linear-gradient(180deg,#d8323e,#9c1621);box-shadow:0 8px 20px -8px rgba(216,50,62,.7)}
     .tbtn--view{font-size:14px}
 
@@ -156,7 +158,7 @@
     <footer class="p3-dock" aria-label="Selected operative">
       <span class="dock-unit" id="hudUnit"></span>
       <span class="dock-ap" id="hudAp"></span>
-      <span class="dock-tools"><button type="button" class="tbtn tbtn--zoom" id="zoomOut" aria-label="Zoom out">−</button><button type="button" class="tbtn tbtn--zoom" id="zoomIn" aria-label="Zoom in">+</button><button type="button" class="tbtn tbtn--view" id="tacView" aria-pressed="false">2D grid</button></span>
+      <span class="dock-tools"><button type="button" class="tbtn tbtn--zoom" id="zoomOut" aria-label="Zoom out">−</button><button type="button" class="tbtn tbtn--zoom" id="zoomIn" aria-label="Zoom in">+</button><button type="button" class="tbtn tbtn--zoom" id="tacRotate" aria-label="Rotate the camera a quarter turn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button><button type="button" class="tbtn tbtn--view" id="tacView" aria-pressed="false">2D grid</button></span>
       <button type="button" class="tbtn tbtn--end" id="tacEnd">End turn</button>
     </footer>
     <details class="tac-about">
@@ -167,7 +169,7 @@
       <p>Progress is saved in this browser. <button type="button" class="ts-btn" id="tacReset">Start over</button></p>
     </details>
   </main>
-  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
   <script type="module" src="js/prim3-tactics/preview.mjs"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>
