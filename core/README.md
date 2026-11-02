@@ -14,6 +14,8 @@ Allowlisted executors:
 
 - `lyrics_align` — the lyric machine for an uploaded release (`core/src/executors/lyrics-align.mjs`, engine in `core/src/lyrics/`): downloads the master with the service key into a private temp dir, separates the vocal with Demucs, recognises it with faster-whisper, maps the creator's lyric sheet (or DistroKid TTML / LRC) onto what is sung, refines word times with wav2vec2 CTC forced alignment, and writes `creator_tracks.lyrics` unreviewed. It never replaces lyrics the owner reviewed. Queued by the trigger in `supabase/pending/20261031180000_lyrics_machine_v1.sql`, by Control's "Re-run machine", or by the `lyrics.align` capability. See "Lyric machine runtime" below.
 
+- `stems_separate` — every instrument of one track (`core/src/executors/stems-separate.mjs`): Demucs `htdemucs_6s` (vocals, drums, bass, guitar, piano, other) plus an instrumental, 320 kbps MP3 with one shared gain so nothing clips, uploaded to the private bucket `mcc-gated-audio/stems/<track_key>/` with the manifest in `public.music_stem_sets` (`supabase/pending/20261031190000_music_stem_sets_v1.sql`). Shelf tracks are read from `https://matthew.mccluster.org/assets/audio/` only; uploads from their master. `lyrics_align` stores the stems its own separation made. The owner plays, solos, mutes and downloads them in Control → Create → Music → Stems.
+
 Existing unsupported queue types remain queued. Core does not fake completion for jobs whose real data/tool adapter has not been built yet.
 
 ## Capability registry and tool bus
