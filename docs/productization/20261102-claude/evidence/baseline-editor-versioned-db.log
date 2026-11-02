@@ -1,0 +1,4 @@
+BASELINE BEFORE BRIDGE: enrolled front-to-Tile writes conflict atomically; no Studio draft leaks. Dedicated bridge suite tests the additive solution.
+PASS free-builder backend journey: actual create/save/resume/publish/public-read/withdraw/recover handlers with SQL; no ordinary-user admin grant. Auth, image bytes and browser renderer remain real-service gates.
+PASS: 144 assertions; SQL roles/ACLs, own/cross-account, first/stale/legacy writes, restore/audit, rollback, private publication, personal takedown fencing, real HTTP adapter over SQL. Native simultaneous sessions tested separately.
+exit=0

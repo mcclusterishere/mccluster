@@ -1,0 +1,2 @@
+PASS 103 domain trial SQL/Worker assertions; local PGlite only, no production changes
+exit=0
