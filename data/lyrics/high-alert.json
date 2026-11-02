@@ -2,7 +2,7 @@
  "duration_seconds": 168,
  "language": "en",
  "songTitle": "High Alert",
- "source": "auto",
+ "source": "aligned",
  "reviewed": false,
  "machine": {
   "version": "lyrics-machine/1",
@@ -11,463 +11,395 @@
    "asr": "faster-whisper small.en",
    "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
   },
-  "generated_at": "2026-10-31T19:06:18.095Z",
-  "confidence": 0.806,
-  "mismatched_lines": 3,
-  "sheet_lines": 0,
+  "generated_at": "2026-11-02T18:09:04.690Z",
+  "confidence": 0.794,
+  "mismatched_lines": 5,
+  "sheet_lines": 40,
   "heard_words": 462,
-  "ctc_aligned_lines": 59,
+  "ctc_aligned_lines": 50,
   "timing": {
-   "align_seconds": 89.2,
-   "separate_seconds": 84,
-   "asr_seconds": 50.5,
-   "map_seconds": 0
-  }
- },
- "plain": "Yeah, hit house,\nhit man,\nyeah, we on Hylar,\nHylar,\nsleep on me the rest you made when you\nTerved you with the scope of my work, I'm\non high alert Yeah, I got nerve, don't work\nthem Quick while you ahead before they fire first\nI'm on high alert I don't even need the\nnine I'm the one twice over, I'm who they\ndie first I'm on high alert I don't need\nto move text or packs I move tech packs\nand design merch, woo\nI hit a choir church, I'm on my high\npurpose I'm just glad I found a path, brothers\ndie searching Send the angels out to slide on\na sly serpent Catching demons like and that's a\nsuit and tie service Another dame, another dime, another\ndivergent Never screwing over gang, rather divergent Man I'm\nso about the bag, I design purses If my\nname ain't on the sign, it's not the right\nmerchant If you buy versus, I'm the guy to\nwork with I'm potent, the contact high is perfect\nAnd I'm known to raise a bar above the\nhighest purchase It's a higher purchase, but my price\nis worth it FBI lurking, got me wire nervous\nSo I may not let you win if you\ndecline searches ain't afraid to check it's him You\nwant to fight perfect fetch the waivers and submit\nso we have paper evidence.\nI'll even pay the rep for this You got\nthe right person.\nI see my haters checking and they be online\nhurting I'm online working and on the grind in\nperson need to get overclocking because they time worthless\nI conduct myself shockingly man.\nI fry circus.\nI got the formula baby you infantile burp them\nfeeling like an all -pair Who's saying we software?\nMy team is paying in full and y 'all\nthe trials first.\nSleep on me, the rest you mad When you\ninterview the scope of my work I'm on high\nalert Yeah, I got nerve, don't work them Quick\nwhile you ahead before they buy first I'm on\nhigh alert I don't even need the nine I'm\nthe one twice over I'm who they dial first\nI'm on high alert I don't need to move\ntechs to packs I move tech packs and design\nmerch\nSleep on me, the rest you mad When you\ninterview with the scope of my work I'm on\nHylar Yeah, got nerve, don't work them Quick while\nyou ahead before they fire first I'm on Hylar\nI don't even need the nine I'm the one\ntwice over I'm who they dial first I'm on\nHylar I don't need to move techs or packs\nI move tech packs and design merch\nI don't even need the nine\nYou",
- "timed": {
-  "line": [
+   "align_seconds": 44.5,
+   "separate_seconds": 125.7,
+   "map_seconds": 0.3
+  },
+  "unsheeted_passages": [
    {
     "begin": 2.61,
     "end": 3.496,
-    "content": "Yeah, hit house,",
-    "confidence": 0.464,
-    "mismatch": true,
-    "words": [
-     {
-      "begin": 2.61,
-      "end": 2.751,
-      "content": "Yeah,"
-     },
-     {
-      "begin": 3.033,
-      "end": 3.174,
-      "content": "hit"
-     },
-     {
-      "begin": 3.234,
-      "end": 3.496,
-      "content": "house,"
-     }
-    ],
-    "align_score": 0.566
+    "heard": "Yeah, hit house,"
    },
    {
     "begin": 5.843,
     "end": 8.497,
-    "content": "hit man,",
-    "confidence": 0.708,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 5.843,
-      "end": 8.215,
-      "content": "hit"
-     },
-     {
-      "begin": 8.296,
-      "end": 8.497,
-      "content": "man,"
-     }
-    ],
-    "align_score": 0.607
+    "heard": "hit man,"
    },
    {
     "begin": 10.904,
     "end": 16.138,
-    "content": "yeah, we on Hylar,",
-    "confidence": 0.679,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 10.904,
-      "end": 11.225,
-      "content": "yeah,"
-     },
-     {
-      "begin": 11.927,
-      "end": 12.147,
-      "content": "we"
-     },
-     {
-      "begin": 15.336,
-      "end": 15.416,
-      "content": "on"
-     },
-     {
-      "begin": 15.517,
-      "end": 16.138,
-      "content": "Hylar,"
-     }
-    ],
-    "align_score": 0.388
+    "heard": "yeah, we on Hylar,"
    },
    {
     "begin": 19.603,
     "end": 20.914,
-    "content": "Hylar,",
-    "confidence": 0.919,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 19.603,
-      "end": 20.914,
-      "content": "Hylar,"
-     }
-    ],
-    "align_score": 0.273
-   },
+    "heard": "Hylar,"
+   }
+  ],
+  "note": "Words are the owner's sheet only. Passages sung but not on the sheet are listed in unsheeted_passages with what the recogniser heard; they are NOT shown to listeners until the owner supplies their words."
+ },
+ "plain": "Sleep on me, then rest you may (resume) when you enter view (interview) of the scope of my work.\n\nI’m on High Alert.\n\nYeah I got nerves don’t work em! Quit while you're ahead before they fire first.\n\nI’m on high alert.\n\nI don’t even need a 9. I'm the 1 twice over, I’m who they dial first.\n\nI’m on High Alert.\n\nI don’t need to move techs or packs I move tech packs design merch.\n\nWHOO!\n\nI hear the choir, church. I’m on my higher purpose.\n\nI’m just glad I found a path, brothers die searching.\n\nSend my angels out to ride on a sly serpent.\n\nCatch a demon slacking, that's a suit and tie service.\n\nAnother dame, another dime, another diversion.\n\nNever screwing over gang; rather die a virgin.\n\nMan I’m so about the bag, I design purses.\n\nIf my name ain’t on the sign it’s not the right merchant.\n\nIf you buy verses, I’m the guy to work with.\n\nI’m potent. The contact high is perfect.\n\nI’m known to raise the bar far above the highest perches.\n\nIt’s a higher purchase but the price is worth it.\n\nFBI Lurkin’; got me wire nervous.\n\nSo I may not let you in if you decline searches.\n\nAin’t afraid to check your chin you wanna fight? Perfect.\n\nFetch the waivers and the mitts, so we have paper evidence,\n\nI’ll even pay to ref for this you got the right person.\n\nI see my haters checking in they be online hurting;\n\nI’m online working and on the grind in person.\n\nThey need to get over clocking me cause their time worthless.\n\nI conduct myself so shockingly I fry circuits.\n\nI got the formula baby you infant I’ll (infantile) burb em\n\nFeeling like an aupair, who saying we soft, where? (Software)\n\nMy team paid in full and y’all the trail version.\n\nSleep on me, then rest you may (resume) when you enter view (interview) of the scope of my work.\n\nI’m on High Alert.\n\nYeah I got nerves don’t work em! Quit while you're ahead before they fire first.\n\nI’m on high alert.\n\nI don’t even need a 9. I'm the 1 twice over, I’m who they dial first.\n\nI’m on High Alert.\n\nI don’t need to move techs or packs I move tech packs design merch.\n\nOutro:\n\nI don’t even need the 9…",
+ "timed": {
+  "line": [
    {
-    "begin": 22.704,
-    "end": 25.363,
-    "content": "sleep on me the rest you made when you",
-    "confidence": 0.854,
+    "begin": 22.703,
+    "end": 27.021,
+    "content": "Sleep on me, then rest you may (resume) when you enter view (interview) of the scope of my work.",
+    "confidence": 0.663,
     "mismatch": false,
     "words": [
      {
-      "begin": 22.704,
-      "end": 23.006,
-      "content": "sleep"
+      "begin": 22.703,
+      "end": 23.004,
+      "content": "Sleep"
      },
      {
-      "begin": 23.227,
-      "end": 23.267,
+      "begin": 23.225,
+      "end": 23.265,
       "content": "on"
      },
      {
-      "begin": 23.388,
-      "end": 23.508,
-      "content": "me"
+      "begin": 23.385,
+      "end": 23.506,
+      "content": "me,"
      },
      {
-      "begin": 23.689,
-      "end": 23.789,
-      "content": "the"
+      "begin": 23.686,
+      "end": 23.807,
+      "content": "then"
      },
      {
-      "begin": 23.91,
-      "end": 24.111,
+      "begin": 23.887,
+      "end": 24.108,
       "content": "rest"
      },
      {
-      "begin": 24.151,
-      "end": 24.252,
+      "begin": 24.148,
+      "end": 24.248,
       "content": "you"
      },
      {
-      "begin": 24.372,
-      "end": 24.674,
-      "content": "made"
+      "begin": 24.368,
+      "end": 24.589,
+      "content": "may"
      },
      {
-      "begin": 24.754,
-      "end": 25.256,
+      "begin": 24.609,
+      "end": 24.73,
+      "content": "(resume)"
+     },
+     {
+      "begin": 24.75,
+      "end": 24.85,
       "content": "when"
      },
      {
-      "begin": 25.363,
-      "end": 25.363,
-      "content": "you"
-     }
-    ],
-    "align_score": 0.699
-   },
-   {
-    "begin": 25.363,
-    "end": 27.08,
-    "content": "Terved you with the scope of my work, I'm",
-    "confidence": 0.851,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 25.363,
-      "end": 25.645,
-      "content": "Terved"
-     },
-     {
-      "begin": 25.725,
-      "end": 25.866,
+      "begin": 24.91,
+      "end": 24.991,
       "content": "you"
      },
      {
-      "begin": 25.967,
-      "end": 26.067,
-      "content": "with"
+      "begin": 25.191,
+      "end": 25.572,
+      "content": "enter"
      },
      {
-      "begin": 26.087,
-      "end": 26.148,
-      "content": "the"
+      "begin": 25.613,
+      "end": 25.753,
+      "content": "view"
      },
      {
-      "begin": 26.188,
-      "end": 26.47,
-      "content": "scope"
+      "begin": 25.773,
+      "end": 25.974,
+      "content": "(interview)"
      },
      {
-      "begin": 26.53,
-      "end": 26.57,
+      "begin": 25.994,
+      "end": 26.054,
       "content": "of"
      },
      {
-      "begin": 26.631,
-      "end": 26.812,
+      "begin": 26.074,
+      "end": 26.154,
+      "content": "the"
+     },
+     {
+      "begin": 26.195,
+      "end": 26.475,
+      "content": "scope"
+     },
+     {
+      "begin": 26.536,
+      "end": 26.576,
+      "content": "of"
+     },
+     {
+      "begin": 26.636,
+      "end": 26.796,
       "content": "my"
      },
      {
-      "begin": 26.952,
-      "end": 27.08,
-      "content": "work,"
-     },
-     {
-      "begin": 27.08,
-      "end": 27.08,
-      "content": "I'm"
+      "begin": 26.957,
+      "end": 27.021,
+      "content": "work."
      }
     ],
-    "align_score": 0.547
+    "align_score": 0.592
    },
    {
-    "begin": 27.08,
-    "end": 29.882,
-    "content": "on high alert Yeah, I got nerve, don't work",
-    "confidence": 0.625,
+    "begin": 27.021,
+    "end": 28.161,
+    "content": "I’m on High Alert.",
+    "confidence": 0.863,
     "mismatch": false,
     "words": [
      {
-      "begin": 27.08,
-      "end": 27.221,
+      "begin": 27.021,
+      "end": 27.202,
+      "content": "I’m"
+     },
+     {
+      "begin": 27.747,
+      "end": 27.788,
       "content": "on"
      },
      {
-      "begin": 27.945,
-      "end": 28.287,
-      "content": "high"
+      "begin": 27.949,
+      "end": 28.161,
+      "content": "High"
      },
      {
-      "begin": 28.307,
-      "end": 28.548,
-      "content": "alert"
-     },
-     {
-      "begin": 28.689,
-      "end": 28.95,
-      "content": "Yeah,"
-     },
-     {
-      "begin": 28.97,
-      "end": 28.99,
-      "content": "I"
-     },
-     {
-      "begin": 29.051,
-      "end": 29.272,
-      "content": "got"
-     },
-     {
-      "begin": 29.372,
-      "end": 29.634,
-      "content": "nerve,"
-     },
-     {
-      "begin": 29.714,
-      "end": 29.882,
-      "content": "don't"
-     },
-     {
-      "begin": 29.882,
-      "end": 29.882,
-      "content": "work"
+      "begin": 28.161,
+      "end": 28.161,
+      "content": "Alert."
      }
     ],
-    "align_score": 0.586
+    "align_score": 0.356
    },
    {
-    "begin": 29.882,
+    "begin": 28.161,
     "end": 32.381,
-    "content": "them Quick while you ahead before they fire first",
-    "confidence": 0.675,
+    "content": "Yeah I got nerves don’t work em! Quit while you're ahead before they fire first.",
+    "confidence": 0.811,
     "mismatch": false,
     "words": [
      {
-      "begin": 29.882,
-      "end": 30.384,
-      "content": "them"
+      "begin": 28.161,
+      "end": 28.643,
+      "content": "Yeah"
      },
      {
-      "begin": 30.706,
-      "end": 30.887,
-      "content": "Quick"
+      "begin": 28.803,
+      "end": 28.823,
+      "content": "I"
      },
      {
-      "begin": 30.967,
-      "end": 31.128,
+      "begin": 29.024,
+      "end": 29.265,
+      "content": "got"
+     },
+     {
+      "begin": 29.365,
+      "end": 29.646,
+      "content": "nerves"
+     },
+     {
+      "begin": 29.706,
+      "end": 29.927,
+      "content": "don’t"
+     },
+     {
+      "begin": 29.987,
+      "end": 30.208,
+      "content": "work"
+     },
+     {
+      "begin": 30.349,
+      "end": 30.389,
+      "content": "em!"
+     },
+     {
+      "begin": 30.69,
+      "end": 30.891,
+      "content": "Quit"
+     },
+     {
+      "begin": 30.971,
+      "end": 31.132,
       "content": "while"
      },
      {
-      "begin": 31.148,
-      "end": 31.229,
-      "content": "you"
+      "begin": 31.172,
+      "end": 31.332,
+      "content": "you're"
      },
      {
-      "begin": 31.389,
-      "end": 31.651,
+      "begin": 31.393,
+      "end": 31.654,
       "content": "ahead"
      },
      {
-      "begin": 31.731,
-      "end": 31.993,
+      "begin": 31.734,
+      "end": 31.995,
       "content": "before"
      },
      {
-      "begin": 32.033,
-      "end": 32.133,
+      "begin": 32.035,
+      "end": 32.135,
       "content": "they"
      },
      {
-      "begin": 32.214,
+      "begin": 32.216,
       "end": 32.381,
       "content": "fire"
      },
      {
       "begin": 32.381,
       "end": 32.381,
-      "content": "first"
+      "content": "first."
      }
     ],
-    "align_score": 0.79
+    "align_score": 0.733
    },
    {
     "begin": 32.381,
-    "end": 35.437,
-    "content": "I'm on high alert I don't even need the",
-    "confidence": 0.938,
+    "end": 33.801,
+    "content": "I’m on high alert.",
+    "confidence": 1,
     "mismatch": false,
     "words": [
      {
       "begin": 32.381,
-      "end": 32.783,
-      "content": "I'm"
+      "end": 32.704,
+      "content": "I’m"
      },
      {
-      "begin": 33.406,
-      "end": 33.466,
+      "begin": 33.409,
+      "end": 33.47,
       "content": "on"
      },
      {
-      "begin": 33.587,
-      "end": 33.909,
+      "begin": 33.591,
+      "end": 33.801,
       "content": "high"
      },
      {
-      "begin": 33.929,
-      "end": 34.19,
-      "content": "alert"
-     },
-     {
-      "begin": 34.291,
-      "end": 34.311,
-      "content": "I"
-     },
-     {
-      "begin": 34.371,
-      "end": 34.633,
-      "content": "don't"
-     },
-     {
-      "begin": 34.733,
-      "end": 34.894,
-      "content": "even"
-     },
-     {
-      "begin": 34.994,
-      "end": 35.276,
-      "content": "need"
-     },
-     {
-      "begin": 35.356,
-      "end": 35.437,
-      "content": "the"
+      "begin": 33.801,
+      "end": 33.801,
+      "content": "alert."
      }
     ],
-    "align_score": 0.482
+    "align_score": 0.416
    },
    {
-    "begin": 35.524,
-    "end": 37.743,
-    "content": "nine I'm the one twice over, I'm who they",
-    "confidence": 0.947,
+    "begin": 33.801,
+    "end": 37.901,
+    "content": "I don’t even need a 9. I'm the 1 twice over, I’m who they dial first.",
+    "confidence": 0.75,
     "mismatch": false,
     "words": [
      {
-      "begin": 35.524,
-      "end": 36.027,
-      "content": "nine"
+      "begin": 33.801,
+      "end": 33.821,
+      "content": "I"
      },
      {
-      "begin": 36.107,
-      "end": 36.168,
+      "begin": 34.162,
+      "end": 34.624,
+      "content": "don’t"
+     },
+     {
+      "begin": 34.724,
+      "end": 34.885,
+      "content": "even"
+     },
+     {
+      "begin": 34.985,
+      "end": 35.266,
+      "content": "need"
+     },
+     {
+      "begin": 35.407,
+      "end": 35.427,
+      "content": "a"
+     },
+     {
+      "begin": 35.527,
+      "end": 36.029,
+      "content": "9."
+     },
+     {
+      "begin": 36.109,
+      "end": 36.19,
       "content": "I'm"
      },
      {
-      "begin": 36.228,
-      "end": 36.288,
+      "begin": 36.23,
+      "end": 36.29,
       "content": "the"
      },
      {
-      "begin": 36.429,
-      "end": 36.55,
-      "content": "one"
+      "begin": 36.431,
+      "end": 36.551,
+      "content": "1"
      },
      {
-      "begin": 36.61,
+      "begin": 36.611,
       "end": 36.852,
       "content": "twice"
      },
      {
       "begin": 37.033,
-      "end": 37.214,
+      "end": 37.234,
       "content": "over,"
      },
      {
-      "begin": 37.234,
-      "end": 37.334,
-      "content": "I'm"
+      "begin": 37.294,
+      "end": 37.354,
+      "content": "I’m"
      },
      {
-      "begin": 37.435,
+      "begin": 37.414,
       "end": 37.515,
       "content": "who"
      },
      {
-      "begin": 37.596,
-      "end": 37.743,
+      "begin": 37.595,
+      "end": 37.675,
       "content": "they"
+     },
+     {
+      "begin": 37.755,
+      "end": 37.901,
+      "content": "dial"
+     },
+     {
+      "begin": 37.901,
+      "end": 37.901,
+      "content": "first."
      }
     ],
-    "align_score": 0.642
+    "align_score": 0.655
    },
    {
-    "begin": 37.743,
-    "end": 40.403,
-    "content": "die first I'm on high alert I don't need",
-    "confidence": 0.937,
+    "begin": 37.901,
+    "end": 39.341,
+    "content": "I’m on High Alert.",
+    "confidence": 1,
     "mismatch": false,
     "words": [
      {
-      "begin": 37.743,
-      "end": 38.005,
-      "content": "die"
-     },
-     {
-      "begin": 38.105,
-      "end": 38.387,
-      "content": "first"
-     },
-     {
-      "begin": 38.769,
-      "end": 38.849,
-      "content": "I'm"
+      "begin": 37.901,
+      "end": 38.123,
+      "content": "I’m"
      },
      {
       "begin": 39.01,
@@ -476,538 +408,543 @@
      },
      {
       "begin": 39.191,
-      "end": 39.452,
-      "content": "high"
+      "end": 39.341,
+      "content": "High"
      },
      {
-      "begin": 39.472,
-      "end": 39.673,
-      "content": "alert"
-     },
-     {
-      "begin": 39.693,
-      "end": 39.713,
-      "content": "I"
-     },
-     {
-      "begin": 39.734,
-      "end": 40.403,
-      "content": "don't"
-     },
-     {
-      "begin": 40.403,
-      "end": 40.403,
-      "content": "need"
+      "begin": 39.341,
+      "end": 39.341,
+      "content": "Alert."
      }
     ],
-    "align_score": 0.465
+    "align_score": 0.256
    },
    {
-    "begin": 40.403,
-    "end": 42.743,
-    "content": "to move text or packs I move tech packs",
-    "confidence": 0.75,
+    "begin": 39.341,
+    "end": 43.703,
+    "content": "I don’t need to move techs or packs I move tech packs design merch.",
+    "confidence": 0.915,
     "mismatch": false,
     "words": [
      {
-      "begin": 40.403,
-      "end": 40.464,
+      "begin": 39.341,
+      "end": 39.361,
+      "content": "I"
+     },
+     {
+      "begin": 39.461,
+      "end": 39.702,
+      "content": "don’t"
+     },
+     {
+      "begin": 40.104,
+      "end": 40.364,
+      "content": "need"
+     },
+     {
+      "begin": 40.405,
+      "end": 40.465,
       "content": "to"
      },
      {
-      "begin": 40.544,
-      "end": 40.785,
+      "begin": 40.545,
+      "end": 40.786,
       "content": "move"
      },
      {
-      "begin": 40.906,
-      "end": 41.107,
-      "content": "text"
+      "begin": 40.886,
+      "end": 41.208,
+      "content": "techs"
      },
      {
       "begin": 41.308,
-      "end": 41.349,
+      "end": 41.348,
       "content": "or"
      },
      {
-      "begin": 41.469,
-      "end": 41.771,
+      "begin": 41.468,
+      "end": 41.77,
       "content": "packs"
      },
      {
-      "begin": 41.871,
-      "end": 41.891,
+      "begin": 41.87,
+      "end": 41.89,
       "content": "I"
      },
      {
-      "begin": 41.972,
-      "end": 42.193,
+      "begin": 41.97,
+      "end": 42.191,
       "content": "move"
      },
      {
-      "begin": 42.294,
-      "end": 42.495,
+      "begin": 42.291,
+      "end": 42.492,
       "content": "tech"
      },
      {
-      "begin": 42.636,
-      "end": 42.743,
+      "begin": 42.633,
+      "end": 42.934,
       "content": "packs"
-     }
-    ],
-    "align_score": 0.524
-   },
-   {
-    "begin": 42.743,
-    "end": 44.476,
-    "content": "and design merch, woo",
-    "confidence": 0.716,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 42.743,
-      "end": 43.126,
-      "content": "and"
      },
      {
-      "begin": 43.166,
-      "end": 43.63,
+      "begin": 43.175,
+      "end": 43.656,
       "content": "design"
      },
      {
-      "begin": 43.73,
-      "end": 43.992,
-      "content": "merch,"
-     },
-     {
-      "begin": 44.355,
-      "end": 44.476,
-      "content": "woo"
+      "begin": 43.703,
+      "end": 43.703,
+      "content": "merch."
      }
     ],
-    "align_score": 0.725
+    "align_score": 0.522
    },
    {
-    "begin": 45.666,
-    "end": 47.737,
-    "content": "I hit a choir church, I'm on my high",
-    "confidence": 0.827,
+    "begin": 43.703,
+    "end": 44.472,
+    "content": "WHOO!",
+    "confidence": 0.681,
     "mismatch": false,
     "words": [
      {
-      "begin": 45.666,
-      "end": 45.686,
+      "begin": 43.703,
+      "end": 44.472,
+      "content": "WHOO!"
+     }
+    ],
+    "align_score": 0.201
+   },
+   {
+    "begin": 45.665,
+    "end": 48.338,
+    "content": "I hear the choir, church. I’m on my higher purpose.",
+    "confidence": 0.753,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 45.665,
+      "end": 45.685,
       "content": "I"
      },
      {
       "begin": 45.786,
-      "end": 45.927,
-      "content": "hit"
+      "end": 45.926,
+      "content": "hear"
      },
      {
-      "begin": 45.987,
-      "end": 46.008,
-      "content": "a"
-     },
-     {
-      "begin": 46.108,
-      "end": 46.39,
-      "content": "choir"
-     },
-     {
-      "begin": 46.47,
-      "end": 46.752,
-      "content": "church,"
-     },
-     {
-      "begin": 47.073,
-      "end": 47.134,
-      "content": "I'm"
-     },
-     {
-      "begin": 47.214,
-      "end": 47.254,
-      "content": "on"
-     },
-     {
-      "begin": 47.335,
-      "end": 47.435,
-      "content": "my"
-     },
-     {
-      "begin": 47.536,
-      "end": 47.737,
-      "content": "high"
-     }
-    ],
-    "align_score": 0.626
-   },
-   {
-    "begin": 47.884,
-    "end": 50.277,
-    "content": "purpose I'm just glad I found a path, brothers",
-    "confidence": 0.96,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 47.884,
-      "end": 48.327,
-      "content": "purpose"
-     },
-     {
-      "begin": 48.588,
-      "end": 48.668,
-      "content": "I'm"
-     },
-     {
-      "begin": 48.709,
-      "end": 48.829,
-      "content": "just"
-     },
-     {
-      "begin": 48.87,
-      "end": 49.071,
-      "content": "glad"
-     },
-     {
-      "begin": 49.131,
-      "end": 49.151,
-      "content": "I"
-     },
-     {
-      "begin": 49.252,
-      "end": 49.433,
-      "content": "found"
-     },
-     {
-      "begin": 49.493,
-      "end": 49.513,
-      "content": "a"
-     },
-     {
-      "begin": 49.593,
-      "end": 49.875,
-      "content": "path,"
-     },
-     {
-      "begin": 49.996,
-      "end": 50.277,
-      "content": "brothers"
-     }
-    ],
-    "align_score": 0.973
-   },
-   {
-    "begin": 50.344,
-    "end": 52.662,
-    "content": "die searching Send the angels out to slide on",
-    "confidence": 0.774,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 50.344,
-      "end": 50.585,
-      "content": "die"
-     },
-     {
-      "begin": 50.706,
-      "end": 51.128,
-      "content": "searching"
-     },
-     {
-      "begin": 51.429,
-      "end": 51.57,
-      "content": "Send"
-     },
-     {
-      "begin": 51.61,
-      "end": 51.691,
+      "begin": 45.966,
+      "end": 46.027,
       "content": "the"
      },
      {
-      "begin": 51.791,
-      "end": 52.053,
+      "begin": 46.107,
+      "end": 46.388,
+      "content": "choir,"
+     },
+     {
+      "begin": 46.469,
+      "end": 46.75,
+      "content": "church."
+     },
+     {
+      "begin": 47.072,
+      "end": 47.132,
+      "content": "I’m"
+     },
+     {
+      "begin": 47.212,
+      "end": 47.253,
+      "content": "on"
+     },
+     {
+      "begin": 47.333,
+      "end": 47.433,
+      "content": "my"
+     },
+     {
+      "begin": 47.534,
+      "end": 47.795,
+      "content": "higher"
+     },
+     {
+      "begin": 47.876,
+      "end": 48.338,
+      "content": "purpose."
+     }
+    ],
+    "align_score": 0.634
+   },
+   {
+    "begin": 48.585,
+    "end": 50.701,
+    "content": "I’m just glad I found a path, brothers die searching.",
+    "confidence": 0.992,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 48.585,
+      "end": 48.665,
+      "content": "I’m"
+     },
+     {
+      "begin": 48.705,
+      "end": 48.846,
+      "content": "just"
+     },
+     {
+      "begin": 48.866,
+      "end": 49.067,
+      "content": "glad"
+     },
+     {
+      "begin": 49.127,
+      "end": 49.147,
+      "content": "I"
+     },
+     {
+      "begin": 49.248,
+      "end": 49.429,
+      "content": "found"
+     },
+     {
+      "begin": 49.489,
+      "end": 49.509,
+      "content": "a"
+     },
+     {
+      "begin": 49.59,
+      "end": 49.871,
+      "content": "path,"
+     },
+     {
+      "begin": 49.992,
+      "end": 50.293,
+      "content": "brothers"
+     },
+     {
+      "begin": 50.333,
+      "end": 50.595,
+      "content": "die"
+     },
+     {
+      "begin": 50.701,
+      "end": 50.701,
+      "content": "searching."
+     }
+    ],
+    "align_score": 0.932
+   },
+   {
+    "begin": 50.701,
+    "end": 54.205,
+    "content": "Send my angels out to ride on a sly serpent.",
+    "confidence": 0.841,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 50.701,
+      "end": 51.565,
+      "content": "Send"
+     },
+     {
+      "begin": 51.646,
+      "end": 51.686,
+      "content": "my"
+     },
+     {
+      "begin": 51.787,
+      "end": 52.048,
       "content": "angels"
      },
      {
-      "begin": 52.113,
-      "end": 52.173,
+      "begin": 52.108,
+      "end": 52.168,
       "content": "out"
      },
      {
-      "begin": 52.234,
-      "end": 52.294,
+      "begin": 52.229,
+      "end": 52.289,
       "content": "to"
      },
      {
-      "begin": 52.374,
-      "end": 52.662,
-      "content": "slide"
+      "begin": 52.369,
+      "end": 52.772,
+      "content": "ride"
      },
      {
-      "begin": 52.662,
-      "end": 52.662,
+      "begin": 52.852,
+      "end": 52.912,
       "content": "on"
-     }
-    ],
-    "align_score": 0.815
-   },
-   {
-    "begin": 52.662,
-    "end": 55.523,
-    "content": "a sly serpent Catching demons like and that's a",
-    "confidence": 0.763,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 52.662,
-      "end": 52.682,
+      "begin": 52.993,
+      "end": 53.013,
       "content": "a"
      },
      {
-      "begin": 53.064,
-      "end": 53.305,
+      "begin": 53.073,
+      "end": 53.314,
       "content": "sly"
      },
      {
-      "begin": 53.486,
-      "end": 53.949,
-      "content": "serpent"
+      "begin": 53.495,
+      "end": 54.205,
+      "content": "serpent."
+     }
+    ],
+    "align_score": 0.767
+   },
+   {
+    "begin": 54.205,
+    "end": 56.643,
+    "content": "Catch a demon slacking, that's a suit and tie service.",
+    "confidence": 0.73,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 54.205,
+      "end": 54.366,
+      "content": "Catch"
      },
      {
-      "begin": 54.21,
-      "end": 54.491,
-      "content": "Catching"
+      "begin": 54.426,
+      "end": 54.446,
+      "content": "a"
      },
      {
-      "begin": 54.512,
-      "end": 54.833,
-      "content": "demons"
+      "begin": 54.506,
+      "end": 54.788,
+      "content": "demon"
      },
      {
-      "begin": 54.894,
-      "end": 55.054,
-      "content": "like"
+      "begin": 54.808,
+      "end": 55.19,
+      "content": "slacking,"
      },
      {
-      "begin": 55.135,
-      "end": 55.235,
-      "content": "and"
-     },
-     {
-      "begin": 55.356,
-      "end": 55.523,
+      "begin": 55.21,
+      "end": 55.37,
       "content": "that's"
      },
      {
-      "begin": 55.523,
-      "end": 55.523,
+      "begin": 55.431,
+      "end": 55.451,
       "content": "a"
-     }
-    ],
-    "align_score": 0.57
-   },
-   {
-    "begin": 55.523,
-    "end": 58.638,
-    "content": "suit and tie service Another dame, another dime, another",
-    "confidence": 0.761,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 55.523,
-      "end": 55.704,
+      "begin": 55.531,
+      "end": 55.712,
       "content": "suit"
      },
      {
-      "begin": 55.744,
-      "end": 55.824,
+      "begin": 55.752,
+      "end": 55.833,
       "content": "and"
      },
      {
-      "begin": 55.905,
-      "end": 56.186,
+      "begin": 55.913,
+      "end": 56.194,
       "content": "tie"
      },
      {
-      "begin": 56.307,
-      "end": 56.749,
-      "content": "service"
-     },
-     {
-      "begin": 56.97,
-      "end": 57.291,
-      "content": "Another"
-     },
-     {
-      "begin": 57.331,
-      "end": 57.673,
-      "content": "dame,"
-     },
-     {
-      "begin": 57.753,
-      "end": 57.934,
-      "content": "another"
-     },
-     {
-      "begin": 57.974,
-      "end": 58.296,
-      "content": "dime,"
-     },
-     {
-      "begin": 58.316,
-      "end": 58.638,
-      "content": "another"
+      "begin": 56.315,
+      "end": 56.643,
+      "content": "service."
      }
     ],
-    "align_score": 0.613
+    "align_score": 0.534
    },
    {
-    "begin": 58.683,
-    "end": 62.818,
-    "content": "divergent Never screwing over gang, rather divergent Man I'm",
-    "confidence": 0.93,
+    "begin": 56.643,
+    "end": 59.1,
+    "content": "Another dame, another dime, another diversion.",
+    "confidence": 0.783,
     "mismatch": false,
     "words": [
      {
-      "begin": 58.683,
-      "end": 59.566,
-      "content": "divergent"
+      "begin": 56.643,
+      "end": 57.288,
+      "content": "Another"
      },
      {
-      "begin": 59.807,
+      "begin": 57.328,
+      "end": 57.67,
+      "content": "dame,"
+     },
+     {
+      "begin": 57.771,
+      "end": 57.952,
+      "content": "another"
+     },
+     {
+      "begin": 57.972,
+      "end": 58.335,
+      "content": "dime,"
+     },
+     {
+      "begin": 58.435,
+      "end": 58.637,
+      "content": "another"
+     },
+     {
+      "begin": 58.677,
+      "end": 59.1,
+      "content": "diversion."
+     }
+    ],
+    "align_score": 0.45
+   },
+   {
+    "begin": 59.484,
+    "end": 61.94,
+    "content": "Never screwing over gang; rather die a virgin.",
+    "confidence": 0.625,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 59.484,
       "end": 59.987,
       "content": "Never"
      },
      {
-      "begin": 60.048,
-      "end": 60.409,
+      "begin": 60.047,
+      "end": 60.41,
       "content": "screwing"
      },
      {
-      "begin": 60.489,
-      "end": 60.65,
+      "begin": 60.49,
+      "end": 60.671,
       "content": "over"
      },
      {
-      "begin": 60.75,
-      "end": 61.071,
-      "content": "gang,"
+      "begin": 60.752,
+      "end": 61.074,
+      "content": "gang;"
      },
      {
-      "begin": 61.192,
-      "end": 61.413,
+      "begin": 61.175,
+      "end": 61.416,
       "content": "rather"
      },
      {
-      "begin": 61.513,
-      "end": 62.336,
-      "content": "divergent"
+      "begin": 61.517,
+      "end": 61.578,
+      "content": "die"
      },
      {
-      "begin": 62.577,
-      "end": 62.677,
+      "begin": 61.719,
+      "end": 61.739,
+      "content": "a"
+     },
+     {
+      "begin": 61.799,
+      "end": 61.94,
+      "content": "virgin."
+     }
+    ],
+    "align_score": 0.656
+   },
+   {
+    "begin": 62.122,
+    "end": 64.46,
+    "content": "Man I’m so about the bag, I design purses.",
+    "confidence": 0.975,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 62.122,
+      "end": 62.283,
       "content": "Man"
      },
      {
-      "begin": 62.758,
-      "end": 62.818,
-      "content": "I'm"
-     }
-    ],
-    "align_score": 0.728
-   },
-   {
-    "begin": 62.863,
-    "end": 65.597,
-    "content": "so about the bag, I design purses If my",
-    "confidence": 0.818,
-    "mismatch": false,
-    "words": [
+      "begin": 62.604,
+      "end": 62.805,
+      "content": "I’m"
+     },
      {
-      "begin": 62.863,
-      "end": 63.004,
+      "begin": 62.866,
+      "end": 63.006,
       "content": "so"
      },
      {
-      "begin": 63.145,
-      "end": 63.346,
+      "begin": 63.147,
+      "end": 63.348,
       "content": "about"
      },
      {
-      "begin": 63.406,
-      "end": 63.466,
+      "begin": 63.408,
+      "end": 63.469,
       "content": "the"
      },
      {
-      "begin": 63.567,
-      "end": 63.888,
+      "begin": 63.569,
+      "end": 63.891,
       "content": "bag,"
      },
      {
-      "begin": 64.009,
-      "end": 64.029,
+      "begin": 64.012,
+      "end": 64.032,
       "content": "I"
      },
      {
-      "begin": 64.109,
-      "end": 64.532,
+      "begin": 64.112,
+      "end": 64.46,
       "content": "design"
      },
      {
-      "begin": 64.672,
-      "end": 65.054,
-      "content": "purses"
-     },
-     {
-      "begin": 65.396,
-      "end": 65.436,
-      "content": "If"
-     },
-     {
-      "begin": 65.496,
-      "end": 65.597,
-      "content": "my"
+      "begin": 64.46,
+      "end": 64.46,
+      "content": "purses."
      }
     ],
-    "align_score": 0.951
+    "align_score": 0.845
    },
    {
-    "begin": 65.644,
-    "end": 67.276,
-    "content": "name ain't on the sign, it's not the right",
-    "confidence": 0.96,
+    "begin": 64.46,
+    "end": 67.16,
+    "content": "If my name ain’t on the sign it’s not the right merchant.",
+    "confidence": 1,
     "mismatch": false,
     "words": [
      {
-      "begin": 65.644,
-      "end": 65.806,
+      "begin": 64.46,
+      "end": 64.52,
+      "content": "If"
+     },
+     {
+      "begin": 65.505,
+      "end": 65.586,
+      "content": "my"
+     },
+     {
+      "begin": 65.646,
+      "end": 65.807,
       "content": "name"
      },
      {
-      "begin": 65.886,
-      "end": 66.007,
-      "content": "ain't"
+      "begin": 65.887,
+      "end": 66.008,
+      "content": "ain’t"
      },
      {
       "begin": 66.088,
-      "end": 66.128,
+      "end": 66.149,
       "content": "on"
      },
      {
-      "begin": 66.168,
+      "begin": 66.169,
       "end": 66.229,
       "content": "the"
      },
      {
-      "begin": 66.349,
-      "end": 66.551,
-      "content": "sign,"
+      "begin": 66.35,
+      "end": 66.571,
+      "content": "sign"
      },
      {
       "begin": 66.611,
       "end": 66.712,
-      "content": "it's"
+      "content": "it’s"
      },
      {
       "begin": 66.772,
@@ -1015,724 +952,719 @@
       "content": "not"
      },
      {
-      "begin": 66.954,
-      "end": 67.014,
+      "begin": 66.933,
+      "end": 67.013,
       "content": "the"
      },
      {
-      "begin": 67.115,
-      "end": 67.276,
+      "begin": 67.114,
+      "end": 67.16,
       "content": "right"
+     },
+     {
+      "begin": 67.16,
+      "end": 67.16,
+      "content": "merchant."
      }
     ],
-    "align_score": 0.795
+    "align_score": 0.705
    },
    {
-    "begin": 67.384,
-    "end": 70.183,
-    "content": "merchant If you buy versus, I'm the guy to",
-    "confidence": 0.931,
+    "begin": 67.16,
+    "end": 70.984,
+    "content": "If you buy verses, I’m the guy to work with.",
+    "confidence": 0.98,
     "mismatch": false,
     "words": [
      {
-      "begin": 67.384,
-      "end": 67.826,
-      "content": "merchant"
-     },
-     {
-      "begin": 68.167,
-      "end": 68.208,
+      "begin": 67.16,
+      "end": 68.205,
       "content": "If"
      },
      {
-      "begin": 68.268,
-      "end": 68.348,
+      "begin": 68.265,
+      "end": 68.346,
       "content": "you"
      },
      {
-      "begin": 68.469,
-      "end": 68.61,
+      "begin": 68.487,
+      "end": 68.607,
       "content": "buy"
      },
      {
-      "begin": 68.79,
-      "end": 69.233,
-      "content": "versus,"
+      "begin": 68.788,
+      "end": 69.23,
+      "content": "verses,"
      },
      {
-      "begin": 69.554,
-      "end": 69.635,
-      "content": "I'm"
+      "begin": 69.552,
+      "end": 69.632,
+      "content": "I’m"
      },
      {
-      "begin": 69.715,
-      "end": 69.775,
+      "begin": 69.712,
+      "end": 69.773,
       "content": "the"
      },
      {
-      "begin": 69.836,
-      "end": 69.976,
+      "begin": 69.833,
+      "end": 69.974,
       "content": "guy"
      },
      {
-      "begin": 70.077,
-      "end": 70.183,
+      "begin": 70.074,
+      "end": 70.134,
       "content": "to"
-     }
-    ],
-    "align_score": 0.763
-   },
-   {
-    "begin": 70.183,
-    "end": 73.706,
-    "content": "work with I'm potent, the contact high is perfect",
-    "confidence": 0.93,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 70.183,
-      "end": 70.384,
+      "begin": 70.215,
+      "end": 70.396,
       "content": "work"
      },
      {
-      "begin": 70.484,
-      "end": 70.665,
-      "content": "with"
+      "begin": 70.496,
+      "end": 70.984,
+      "content": "with."
+     }
+    ],
+    "align_score": 0.8
+   },
+   {
+    "begin": 70.984,
+    "end": 73.381,
+    "content": "I’m potent. The contact high is perfect.",
+    "confidence": 0.991,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 70.984,
+      "end": 71.105,
+      "content": "I’m"
      },
      {
-      "begin": 70.986,
-      "end": 71.107,
-      "content": "I'm"
+      "begin": 71.206,
+      "end": 71.628,
+      "content": "potent."
      },
      {
-      "begin": 71.207,
-      "end": 71.629,
-      "content": "potent,"
+      "begin": 71.809,
+      "end": 71.889,
+      "content": "The"
      },
      {
-      "begin": 71.81,
-      "end": 71.891,
-      "content": "the"
-     },
-     {
-      "begin": 71.971,
-      "end": 72.513,
+      "begin": 71.97,
+      "end": 72.512,
       "content": "contact"
      },
      {
-      "begin": 72.614,
-      "end": 72.835,
+      "begin": 72.613,
+      "end": 72.834,
       "content": "high"
      },
      {
-      "begin": 72.895,
+      "begin": 72.894,
       "end": 72.975,
       "content": "is"
      },
      {
-      "begin": 73.036,
-      "end": 73.706,
-      "content": "perfect"
+      "begin": 73.035,
+      "end": 73.381,
+      "content": "perfect."
      }
     ],
-    "align_score": 0.711
+    "align_score": 0.764
    },
    {
-    "begin": 73.706,
-    "end": 75.423,
-    "content": "And I'm known to raise a bar above the",
-    "confidence": 0.946,
+    "begin": 73.381,
+    "end": 76.545,
+    "content": "I’m known to raise the bar far above the highest perches.",
+    "confidence": 0.784,
     "mismatch": false,
     "words": [
      {
-      "begin": 73.706,
-      "end": 73.786,
-      "content": "And"
+      "begin": 73.381,
+      "end": 73.924,
+      "content": "I’m"
      },
      {
-      "begin": 73.826,
-      "end": 73.927,
-      "content": "I'm"
-     },
-     {
-      "begin": 73.967,
-      "end": 74.148,
+      "begin": 73.964,
+      "end": 74.145,
       "content": "known"
      },
      {
-      "begin": 74.209,
-      "end": 74.269,
+      "begin": 74.226,
+      "end": 74.266,
       "content": "to"
      },
      {
-      "begin": 74.33,
-      "end": 74.531,
+      "begin": 74.326,
+      "end": 74.527,
       "content": "raise"
      },
      {
-      "begin": 74.632,
-      "end": 74.652,
-      "content": "a"
+      "begin": 74.568,
+      "end": 74.648,
+      "content": "the"
      },
      {
-      "begin": 74.692,
-      "end": 74.893,
+      "begin": 74.688,
+      "end": 74.769,
       "content": "bar"
      },
      {
-      "begin": 74.994,
-      "end": 75.235,
+      "begin": 74.809,
+      "end": 74.889,
+      "content": "far"
+     },
+     {
+      "begin": 74.99,
+      "end": 75.231,
       "content": "above"
      },
      {
-      "begin": 75.423,
-      "end": 75.423,
+      "begin": 75.292,
+      "end": 75.352,
       "content": "the"
-     }
-    ],
-    "align_score": 0.903
-   },
-   {
-    "begin": 75.423,
-    "end": 78.362,
-    "content": "highest purchase It's a higher purchase, but my price",
-    "confidence": 0.977,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 75.423,
-      "end": 75.745,
+      "begin": 75.432,
+      "end": 75.754,
       "content": "highest"
      },
      {
-      "begin": 75.805,
-      "end": 76.247,
-      "content": "purchase"
+      "begin": 75.815,
+      "end": 76.545,
+      "content": "perches."
+     }
+    ],
+    "align_score": 0.773
+   },
+   {
+    "begin": 76.545,
+    "end": 78.66,
+    "content": "It’s a higher purchase but the price is worth it.",
+    "confidence": 0.9,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 76.545,
+      "end": 76.645,
+      "content": "It’s"
      },
      {
-      "begin": 76.548,
-      "end": 76.649,
-      "content": "It's"
-     },
-     {
-      "begin": 76.729,
-      "end": 76.749,
+      "begin": 76.725,
+      "end": 76.745,
       "content": "a"
      },
      {
-      "begin": 76.81,
-      "end": 77.111,
+      "begin": 76.806,
+      "end": 77.107,
       "content": "higher"
      },
      {
-      "begin": 77.211,
-      "end": 77.674,
-      "content": "purchase,"
+      "begin": 77.208,
+      "end": 77.67,
+      "content": "purchase"
      },
      {
-      "begin": 77.915,
-      "end": 78.015,
+      "begin": 77.911,
+      "end": 78.012,
       "content": "but"
      },
      {
-      "begin": 78.076,
-      "end": 78.156,
-      "content": "my"
+      "begin": 78.072,
+      "end": 78.152,
+      "content": "the"
      },
      {
-      "begin": 78.236,
-      "end": 78.362,
+      "begin": 78.233,
+      "end": 78.474,
       "content": "price"
-     }
-    ],
-    "align_score": 0.805
-   },
-   {
-    "begin": 78.362,
-    "end": 81.778,
-    "content": "is worth it FBI lurking, got me wire nervous",
-    "confidence": 0.91,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 78.362,
-      "end": 78.624,
+      "begin": 78.554,
+      "end": 78.635,
       "content": "is"
      },
      {
-      "begin": 78.664,
-      "end": 78.965,
+      "begin": 78.66,
+      "end": 78.66,
       "content": "worth"
      },
      {
-      "begin": 79.367,
-      "end": 79.407,
-      "content": "it"
-     },
+      "begin": 78.66,
+      "end": 78.66,
+      "content": "it."
+     }
+    ],
+    "align_score": 0.781
+   },
+   {
+    "begin": 78.66,
+    "end": 81.777,
+    "content": "FBI Lurkin’; got me wire nervous.",
+    "confidence": 0.973,
+    "mismatch": false,
+    "words": [
      {
-      "begin": 79.508,
-      "end": 79.869,
+      "begin": 78.66,
+      "end": 79.847,
       "content": "FBI"
      },
      {
-      "begin": 80.01,
-      "end": 80.391,
-      "content": "lurking,"
+      "begin": 80.028,
+      "end": 80.37,
+      "content": "Lurkin’;"
      },
      {
-      "begin": 80.693,
-      "end": 80.813,
+      "begin": 80.691,
+      "end": 80.812,
       "content": "got"
      },
      {
-      "begin": 80.874,
-      "end": 80.934,
+      "begin": 80.872,
+      "end": 80.933,
       "content": "me"
      },
      {
-      "begin": 81.034,
-      "end": 81.336,
+      "begin": 81.033,
+      "end": 81.335,
       "content": "wire"
      },
      {
-      "begin": 81.416,
-      "end": 81.778,
-      "content": "nervous"
+      "begin": 81.415,
+      "end": 81.777,
+      "content": "nervous."
      }
     ],
-    "align_score": 0.611
+    "align_score": 0.608
    },
    {
-    "begin": 82.086,
-    "end": 83.536,
-    "content": "So I may not let you win if you",
-    "confidence": 0.79,
+    "begin": 82.085,
+    "end": 84.617,
+    "content": "So I may not let you in if you decline searches.",
+    "confidence": 0.936,
     "mismatch": false,
     "words": [
      {
-      "begin": 82.086,
-      "end": 82.187,
+      "begin": 82.085,
+      "end": 82.185,
       "content": "So"
      },
      {
-      "begin": 82.308,
-      "end": 82.328,
+      "begin": 82.306,
+      "end": 82.326,
       "content": "I"
      },
      {
-      "begin": 82.409,
-      "end": 82.529,
+      "begin": 82.406,
+      "end": 82.507,
       "content": "may"
      },
      {
-      "begin": 82.59,
-      "end": 82.69,
+      "begin": 82.587,
+      "end": 82.688,
       "content": "not"
      },
      {
-      "begin": 82.731,
-      "end": 82.872,
+      "begin": 82.728,
+      "end": 82.869,
       "content": "let"
      },
      {
-      "begin": 82.912,
-      "end": 83.013,
+      "begin": 82.909,
+      "end": 83.009,
       "content": "you"
      },
      {
-      "begin": 83.093,
-      "end": 83.214,
-      "content": "win"
+      "begin": 83.15,
+      "end": 83.21,
+      "content": "in"
      },
      {
-      "begin": 83.314,
-      "end": 83.355,
+      "begin": 83.311,
+      "end": 83.351,
       "content": "if"
      },
      {
-      "begin": 83.415,
-      "end": 83.536,
+      "begin": 83.411,
+      "end": 83.532,
       "content": "you"
-     }
-    ],
-    "align_score": 0.742
-   },
-   {
-    "begin": 83.623,
-    "end": 86.237,
-    "content": "decline searches ain't afraid to check it's him You",
-    "confidence": 0.776,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 83.623,
-      "end": 84.086,
+      "begin": 83.633,
+      "end": 84.095,
       "content": "decline"
      },
      {
-      "begin": 84.186,
-      "end": 84.608,
-      "content": "searches"
+      "begin": 84.195,
+      "end": 84.617,
+      "content": "searches."
+     }
+    ],
+    "align_score": 0.809
+   },
+   {
+    "begin": 84.965,
+    "end": 87.644,
+    "content": "Ain’t afraid to check your chin you wanna fight? Perfect.",
+    "confidence": 0.744,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 84.965,
+      "end": 85.086,
+      "content": "Ain’t"
      },
      {
-      "begin": 84.97,
-      "end": 85.071,
-      "content": "ain't"
-     },
-     {
-      "begin": 85.151,
-      "end": 85.413,
+      "begin": 85.146,
+      "end": 85.407,
       "content": "afraid"
      },
      {
-      "begin": 85.433,
-      "end": 85.493,
+      "begin": 85.427,
+      "end": 85.488,
       "content": "to"
      },
      {
-      "begin": 85.594,
-      "end": 85.774,
+      "begin": 85.588,
+      "end": 85.769,
       "content": "check"
      },
      {
-      "begin": 85.815,
-      "end": 85.935,
-      "content": "it's"
+      "begin": 85.789,
+      "end": 85.87,
+      "content": "your"
      },
      {
-      "begin": 85.996,
-      "end": 86.096,
-      "content": "him"
+      "begin": 85.97,
+      "end": 86.091,
+      "content": "chin"
      },
      {
-      "begin": 86.176,
-      "end": 86.237,
-      "content": "You"
+      "begin": 86.171,
+      "end": 86.251,
+      "content": "you"
+     },
+     {
+      "begin": 86.312,
+      "end": 86.533,
+      "content": "wanna"
+     },
+     {
+      "begin": 86.633,
+      "end": 86.854,
+      "content": "fight?"
+     },
+     {
+      "begin": 86.975,
+      "end": 87.644,
+      "content": "Perfect."
      }
     ],
-    "align_score": 0.663
+    "align_score": 0.622
    },
    {
-    "begin": 86.303,
-    "end": 88.321,
-    "content": "want to fight perfect fetch the waivers and submit",
-    "confidence": 0.919,
+    "begin": 87.644,
+    "end": 90.103,
+    "content": "Fetch the waivers and the mitts, so we have paper evidence,",
+    "confidence": 0.818,
     "mismatch": false,
     "words": [
      {
-      "begin": 86.303,
-      "end": 86.444,
-      "content": "want"
+      "begin": 87.644,
+      "end": 87.825,
+      "content": "Fetch"
      },
      {
-      "begin": 86.464,
-      "end": 86.525,
-      "content": "to"
-     },
-     {
-      "begin": 86.625,
-      "end": 86.846,
-      "content": "fight"
-     },
-     {
-      "begin": 86.967,
-      "end": 87.309,
-      "content": "perfect"
-     },
-     {
-      "begin": 87.631,
-      "end": 87.832,
-      "content": "fetch"
-     },
-     {
-      "begin": 87.912,
-      "end": 87.972,
+      "begin": 87.906,
+      "end": 87.986,
       "content": "the"
      },
      {
-      "begin": 88.033,
-      "end": 88.321,
+      "begin": 88.026,
+      "end": 88.368,
       "content": "waivers"
      },
      {
-      "begin": 88.321,
-      "end": 88.321,
+      "begin": 88.428,
+      "end": 88.509,
       "content": "and"
      },
      {
-      "begin": 88.321,
-      "end": 88.321,
-      "content": "submit"
-     }
-    ],
-    "align_score": 0.776
-   },
-   {
-    "begin": 88.321,
-    "end": 90.104,
-    "content": "so we have paper evidence.",
-    "confidence": 0.938,
-    "mismatch": false,
-    "words": [
+      "begin": 88.549,
+      "end": 88.649,
+      "content": "the"
+     },
      {
-      "begin": 88.321,
-      "end": 88.643,
+      "begin": 88.73,
+      "end": 88.891,
+      "content": "mitts,"
+     },
+     {
+      "begin": 88.911,
+      "end": 88.991,
       "content": "so"
      },
      {
-      "begin": 89.067,
-      "end": 89.127,
+      "begin": 89.072,
+      "end": 89.132,
       "content": "we"
      },
      {
-      "begin": 89.188,
-      "end": 89.309,
+      "begin": 89.192,
+      "end": 89.313,
       "content": "have"
      },
      {
-      "begin": 89.369,
-      "end": 89.692,
+      "begin": 89.373,
+      "end": 89.715,
       "content": "paper"
      },
      {
-      "begin": 89.793,
-      "end": 90.104,
-      "content": "evidence."
+      "begin": 89.815,
+      "end": 90.103,
+      "content": "evidence,"
      }
     ],
-    "align_score": 0.664
+    "align_score": 0.628
    },
    {
-    "begin": 90.104,
-    "end": 91.946,
-    "content": "I'll even pay the rep for this You got",
-    "confidence": 0.791,
+    "begin": 90.103,
+    "end": 92.857,
+    "content": "I’ll even pay to ref for this you got the right person.",
+    "confidence": 0.857,
     "mismatch": false,
     "words": [
      {
-      "begin": 90.104,
-      "end": 90.406,
-      "content": "I'll"
+      "begin": 90.103,
+      "end": 90.404,
+      "content": "I’ll"
      },
      {
-      "begin": 90.486,
-      "end": 90.647,
+      "begin": 90.485,
+      "end": 90.646,
       "content": "even"
      },
      {
-      "begin": 90.768,
-      "end": 90.909,
+      "begin": 90.766,
+      "end": 90.907,
       "content": "pay"
      },
      {
-      "begin": 91.01,
-      "end": 91.07,
-      "content": "the"
+      "begin": 91.008,
+      "end": 91.068,
+      "content": "to"
      },
      {
-      "begin": 91.131,
-      "end": 91.251,
-      "content": "rep"
+      "begin": 91.128,
+      "end": 91.249,
+      "content": "ref"
      },
      {
-      "begin": 91.312,
-      "end": 91.392,
+      "begin": 91.309,
+      "end": 91.389,
       "content": "for"
      },
      {
-      "begin": 91.453,
-      "end": 91.594,
+      "begin": 91.45,
+      "end": 91.591,
       "content": "this"
      },
      {
-      "begin": 91.654,
-      "end": 91.735,
-      "content": "You"
+      "begin": 91.651,
+      "end": 91.731,
+      "content": "you"
      },
      {
-      "begin": 91.855,
-      "end": 91.946,
+      "begin": 91.852,
+      "end": 91.993,
       "content": "got"
-     }
-    ],
-    "align_score": 0.812
-   },
-   {
-    "begin": 91.946,
-    "end": 92.854,
-    "content": "the right person.",
-    "confidence": 0.994,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 91.946,
-      "end": 92.127,
+      "begin": 92.053,
+      "end": 92.133,
       "content": "the"
      },
      {
-      "begin": 92.188,
-      "end": 92.39,
+      "begin": 92.194,
+      "end": 92.375,
       "content": "right"
      },
      {
-      "begin": 92.491,
-      "end": 92.854,
+      "begin": 92.495,
+      "end": 92.857,
       "content": "person."
      }
     ],
-    "align_score": 0.882
+    "align_score": 0.804
    },
    {
-    "begin": 93.165,
-    "end": 95.324,
-    "content": "I see my haters checking and they be online",
-    "confidence": 0.881,
+    "begin": 93.164,
+    "end": 95.161,
+    "content": "I see my haters checking in they be online hurting;",
+    "confidence": 0.9,
     "mismatch": false,
     "words": [
      {
-      "begin": 93.165,
+      "begin": 93.164,
       "end": 93.185,
       "content": "I"
      },
      {
-      "begin": 93.266,
+      "begin": 93.265,
       "end": 93.386,
       "content": "see"
      },
      {
-      "begin": 93.447,
-      "end": 93.527,
+      "begin": 93.446,
+      "end": 93.526,
       "content": "my"
      },
      {
-      "begin": 93.608,
-      "end": 93.869,
+      "begin": 93.607,
+      "end": 93.868,
       "content": "haters"
      },
      {
-      "begin": 93.929,
-      "end": 94.231,
+      "begin": 93.928,
+      "end": 94.23,
       "content": "checking"
      },
      {
-      "begin": 94.332,
-      "end": 94.412,
-      "content": "and"
+      "begin": 94.33,
+      "end": 94.371,
+      "content": "in"
      },
      {
-      "begin": 94.432,
-      "end": 94.553,
+      "begin": 94.431,
+      "end": 94.572,
       "content": "they"
      },
      {
-      "begin": 94.634,
-      "end": 94.694,
+      "begin": 94.632,
+      "end": 94.692,
       "content": "be"
      },
      {
-      "begin": 94.835,
-      "end": 95.324,
+      "begin": 94.813,
+      "end": 95.161,
       "content": "online"
+     },
+     {
+      "begin": 95.161,
+      "end": 95.161,
+      "content": "hurting;"
      }
     ],
-    "align_score": 0.611
+    "align_score": 0.639
    },
    {
-    "begin": 95.324,
-    "end": 98.123,
-    "content": "hurting I'm online working and on the grind in",
-    "confidence": 0.825,
+    "begin": 95.161,
+    "end": 98.061,
+    "content": "I’m online working and on the grind in person.",
+    "confidence": 0.992,
     "mismatch": false,
     "words": [
      {
-      "begin": 95.324,
-      "end": 95.685,
-      "content": "hurting"
+      "begin": 95.161,
+      "end": 95.643,
+      "content": "I’m"
      },
      {
-      "begin": 96.007,
-      "end": 96.108,
-      "content": "I'm"
-     },
-     {
-      "begin": 96.228,
-      "end": 96.67,
+      "begin": 96.226,
+      "end": 96.668,
       "content": "online"
      },
      {
-      "begin": 96.751,
-      "end": 97.092,
+      "begin": 96.749,
+      "end": 97.09,
       "content": "working"
      },
      {
-      "begin": 97.293,
-      "end": 97.414,
+      "begin": 97.291,
+      "end": 97.412,
       "content": "and"
      },
      {
-      "begin": 97.494,
-      "end": 97.555,
+      "begin": 97.512,
+      "end": 97.553,
       "content": "on"
      },
      {
-      "begin": 97.595,
-      "end": 97.675,
+      "begin": 97.593,
+      "end": 97.673,
       "content": "the"
      },
      {
-      "begin": 97.715,
-      "end": 97.936,
+      "begin": 97.713,
+      "end": 97.935,
       "content": "grind"
      },
      {
-      "begin": 98.123,
-      "end": 98.123,
+      "begin": 97.995,
+      "end": 98.035,
       "content": "in"
+     },
+     {
+      "begin": 98.061,
+      "end": 98.061,
+      "content": "person."
      }
     ],
-    "align_score": 0.799
+    "align_score": 0.814
    },
    {
-    "begin": 98.123,
-    "end": 101.358,
-    "content": "person need to get overclocking because they time worthless",
-    "confidence": 0.901,
+    "begin": 98.061,
+    "end": 101.398,
+    "content": "They need to get over clocking me cause their time worthless.",
+    "confidence": 0.635,
     "mismatch": false,
     "words": [
      {
-      "begin": 98.123,
-      "end": 98.444,
-      "content": "person"
+      "begin": 98.061,
+      "end": 98.322,
+      "content": "They"
      },
      {
-      "begin": 98.766,
-      "end": 98.927,
+      "begin": 98.785,
+      "end": 98.925,
       "content": "need"
      },
      {
-      "begin": 99.007,
-      "end": 99.047,
+      "begin": 99.006,
+      "end": 99.046,
       "content": "to"
      },
      {
-      "begin": 99.128,
-      "end": 99.268,
+      "begin": 99.126,
+      "end": 99.267,
       "content": "get"
      },
      {
-      "begin": 99.369,
-      "end": 100.012,
-      "content": "overclocking"
+      "begin": 99.368,
+      "end": 99.549,
+      "content": "over"
      },
      {
-      "begin": 100.052,
-      "end": 100.333,
-      "content": "because"
+      "begin": 99.649,
+      "end": 100.011,
+      "content": "clocking"
+     },
+     {
+      "begin": 100.051,
+      "end": 100.131,
+      "content": "me"
+     },
+     {
+      "begin": 100.172,
+      "end": 100.332,
+      "content": "cause"
      },
      {
       "begin": 100.373,
-      "end": 100.474,
-      "content": "they"
+      "end": 100.533,
+      "content": "their"
      },
      {
       "begin": 100.594,
@@ -1740,78 +1672,68 @@
       "content": "time"
      },
      {
-      "begin": 100.916,
-      "end": 101.358,
-      "content": "worthless"
+      "begin": 100.915,
+      "end": 101.398,
+      "content": "worthless."
      }
     ],
-    "align_score": 0.74
+    "align_score": 0.609
    },
    {
-    "begin": 101.667,
-    "end": 102.702,
-    "content": "I conduct myself shockingly man.",
-    "confidence": 0.815,
+    "begin": 101.665,
+    "end": 103.782,
+    "content": "I conduct myself so shockingly I fry circuits.",
+    "confidence": 0.813,
     "mismatch": false,
     "words": [
      {
-      "begin": 101.667,
-      "end": 101.687,
+      "begin": 101.665,
+      "end": 101.685,
       "content": "I"
      },
      {
-      "begin": 101.767,
-      "end": 102.049,
+      "begin": 101.766,
+      "end": 102.047,
       "content": "conduct"
      },
      {
-      "begin": 102.089,
-      "end": 102.351,
+      "begin": 102.087,
+      "end": 102.349,
       "content": "myself"
      },
      {
-      "begin": 102.432,
-      "end": 102.702,
+      "begin": 102.369,
+      "end": 102.409,
+      "content": "so"
+     },
+     {
+      "begin": 102.429,
+      "end": 102.891,
       "content": "shockingly"
      },
      {
-      "begin": 102.702,
-      "end": 102.702,
-      "content": "man."
-     }
-    ],
-    "align_score": 0.908
-   },
-   {
-    "begin": 102.702,
-    "end": 103.782,
-    "content": "I fry circus.",
-    "confidence": 0.64,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 102.702,
-      "end": 102.722,
+      "begin": 103.032,
+      "end": 103.052,
       "content": "I"
      },
      {
-      "begin": 103.368,
-      "end": 103.53,
+      "begin": 103.354,
+      "end": 103.535,
       "content": "fry"
      },
      {
-      "begin": 103.711,
+      "begin": 103.715,
       "end": 103.782,
-      "content": "circus."
+      "content": "circuits."
      }
     ],
-    "align_score": 0.425
+    "align_score": 0.742
    },
    {
     "begin": 103.782,
     "end": 106.561,
-    "content": "I got the formula baby you infantile burp them",
-    "confidence": 0.804,
+    "content": "I got the formula baby you infant I’ll (infantile) burb em",
+    "confidence": 0.699,
     "mismatch": false,
     "words": [
      {
@@ -1820,18 +1742,18 @@
       "content": "I"
      },
      {
-      "begin": 104.384,
+      "begin": 104.385,
       "end": 104.525,
       "content": "got"
      },
      {
-      "begin": 104.565,
+      "begin": 104.566,
       "end": 104.646,
       "content": "the"
      },
      {
       "begin": 104.706,
-      "end": 105.168,
+      "end": 105.169,
       "content": "formula"
      },
      {
@@ -1840,39 +1762,49 @@
       "content": "baby"
      },
      {
-      "begin": 105.59,
+      "begin": 105.591,
       "end": 105.691,
       "content": "you"
      },
      {
-      "begin": 105.791,
-      "end": 106.374,
-      "content": "infantile"
+      "begin": 105.792,
+      "end": 106.133,
+      "content": "infant"
+     },
+     {
+      "begin": 106.254,
+      "end": 106.375,
+      "content": "I’ll"
      },
      {
       "begin": 106.561,
       "end": 106.561,
-      "content": "burp"
+      "content": "(infantile)"
      },
      {
       "begin": 106.561,
       "end": 106.561,
-      "content": "them"
+      "content": "burb"
+     },
+     {
+      "begin": 106.561,
+      "end": 106.561,
+      "content": "em"
      }
     ],
-    "align_score": 0.688
+    "align_score": 0.473
    },
    {
     "begin": 106.561,
     "end": 109.64,
-    "content": "feeling like an all -pair Who's saying we software?",
-    "confidence": 0.671,
+    "content": "Feeling like an aupair, who saying we soft, where? (Software)",
+    "confidence": 0.694,
     "mismatch": false,
     "words": [
      {
       "begin": 106.561,
       "end": 107.505,
-      "content": "feeling"
+      "content": "Feeling"
      },
      {
       "begin": 107.546,
@@ -1886,18 +1818,13 @@
      },
      {
       "begin": 107.988,
-      "end": 108.109,
-      "content": "all"
-     },
-     {
-      "begin": 108.229,
       "end": 108.45,
-      "content": "-pair"
+      "content": "aupair,"
      },
      {
       "begin": 108.551,
-      "end": 108.692,
-      "content": "Who's"
+      "end": 108.651,
+      "content": "who"
      },
      {
       "begin": 108.732,
@@ -1911,17 +1838,27 @@
      },
      {
       "begin": 109.295,
+      "end": 109.576,
+      "content": "soft,"
+     },
+     {
+      "begin": 109.636,
       "end": 109.64,
-      "content": "software?"
+      "content": "where?"
+     },
+     {
+      "begin": 109.64,
+      "end": 109.64,
+      "content": "(Software)"
      }
     ],
-    "align_score": 0.527
+    "align_score": 0.467
    },
    {
     "begin": 109.64,
-    "end": 111.486,
-    "content": "My team is paying in full and y 'all",
-    "confidence": 0.804,
+    "end": 112.02,
+    "content": "My team paid in full and y’all the trail version.",
+    "confidence": 0.648,
     "mismatch": false,
     "words": [
      {
@@ -1931,1011 +1868,1060 @@
      },
      {
       "begin": 110.245,
-      "end": 110.467,
+      "end": 110.466,
       "content": "team"
      },
      {
-      "begin": 110.547,
-      "end": 110.608,
-      "content": "is"
+      "begin": 110.688,
+      "end": 110.869,
+      "content": "paid"
      },
      {
-      "begin": 110.689,
-      "end": 110.91,
-      "content": "paying"
-     },
-     {
-      "begin": 110.951,
-      "end": 110.991,
+      "begin": 110.95,
+      "end": 110.99,
       "content": "in"
      },
      {
       "begin": 111.051,
-      "end": 111.314,
+      "end": 111.212,
       "content": "full"
      },
      {
-      "begin": 111.475,
-      "end": 111.486,
+      "begin": 111.232,
+      "end": 111.353,
       "content": "and"
      },
      {
-      "begin": 111.486,
-      "end": 111.486,
-      "content": "y"
+      "begin": 111.393,
+      "end": 111.575,
+      "content": "y’all"
      },
      {
-      "begin": 111.486,
-      "end": 111.486,
-      "content": "'all"
-     }
-    ],
-    "align_score": 0.393
-   },
-   {
-    "begin": 111.486,
-    "end": 112.04,
-    "content": "the trials first.",
-    "confidence": 0.569,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 111.486,
-      "end": 111.587,
+      "begin": 111.595,
+      "end": 111.655,
       "content": "the"
      },
      {
-      "begin": 111.708,
-      "end": 112.04,
-      "content": "trials"
+      "begin": 111.716,
+      "end": 111.958,
+      "content": "trail"
      },
      {
-      "begin": 112.04,
-      "end": 112.04,
-      "content": "first."
+      "begin": 111.998,
+      "end": 112.02,
+      "content": "version."
      }
     ],
-    "align_score": 0.461
+    "align_score": 0.295
    },
    {
-    "begin": 112.04,
-    "end": 114.483,
-    "content": "Sleep on me, the rest you mad When you",
-    "confidence": 0.728,
+    "begin": 112.02,
+    "end": 116.041,
+    "content": "Sleep on me, then rest you may (resume) when you enter view (interview) of the scope of my work.",
+    "confidence": 0.718,
     "mismatch": false,
     "words": [
      {
-      "begin": 112.04,
-      "end": 112.342,
+      "begin": 112.02,
+      "end": 112.341,
       "content": "Sleep"
      },
      {
-      "begin": 112.524,
-      "end": 112.584,
+      "begin": 112.522,
+      "end": 112.582,
       "content": "on"
      },
      {
-      "begin": 112.685,
-      "end": 112.826,
+      "begin": 112.703,
+      "end": 112.823,
       "content": "me,"
      },
      {
-      "begin": 112.987,
-      "end": 113.087,
-      "content": "the"
+      "begin": 112.984,
+      "end": 113.104,
+      "content": "then"
      },
      {
-      "begin": 113.208,
-      "end": 113.43,
+      "begin": 113.205,
+      "end": 113.406,
       "content": "rest"
      },
      {
-      "begin": 113.49,
-      "end": 113.551,
+      "begin": 113.466,
+      "end": 113.526,
       "content": "you"
      },
      {
-      "begin": 113.671,
-      "end": 113.953,
-      "content": "mad"
+      "begin": 113.667,
+      "end": 113.887,
+      "content": "may"
      },
      {
-      "begin": 114.074,
-      "end": 114.483,
-      "content": "When"
+      "begin": 113.907,
+      "end": 114.028,
+      "content": "(resume)"
      },
      {
-      "begin": 114.483,
-      "end": 114.483,
+      "begin": 114.048,
+      "end": 114.169,
+      "content": "when"
+     },
+     {
+      "begin": 114.209,
+      "end": 114.289,
       "content": "you"
-     }
-    ],
-    "align_score": 0.49
-   },
-   {
-    "begin": 114.483,
-    "end": 117.161,
-    "content": "interview the scope of my work I'm on high",
-    "confidence": 0.774,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 114.483,
-      "end": 115.187,
-      "content": "interview"
      },
      {
-      "begin": 115.307,
-      "end": 115.428,
-      "content": "the"
+      "begin": 114.49,
+      "end": 114.871,
+      "content": "enter"
      },
      {
-      "begin": 115.488,
-      "end": 115.769,
-      "content": "scope"
+      "begin": 114.891,
+      "end": 114.972,
+      "content": "view"
      },
      {
-      "begin": 115.83,
-      "end": 115.87,
+      "begin": 114.992,
+      "end": 115.192,
+      "content": "(interview)"
+     },
+     {
+      "begin": 115.293,
+      "end": 115.333,
       "content": "of"
      },
      {
-      "begin": 115.93,
-      "end": 116.091,
-      "content": "my"
-     },
-     {
-      "begin": 116.252,
-      "end": 116.513,
-      "content": "work"
-     },
-     {
-      "begin": 116.814,
-      "end": 116.874,
-      "content": "I'm"
-     },
-     {
-      "begin": 117.035,
-      "end": 117.095,
-      "content": "on"
-     },
-     {
-      "begin": 117.161,
-      "end": 117.161,
-      "content": "high"
-     }
-    ],
-    "align_score": 0.754
-   },
-   {
-    "begin": 117.161,
-    "end": 120.197,
-    "content": "alert Yeah, I got nerve, don't work them Quick",
-    "confidence": 0.671,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 117.161,
-      "end": 117.865,
-      "content": "alert"
-     },
-     {
-      "begin": 117.986,
-      "end": 118.247,
-      "content": "Yeah,"
-     },
-     {
-      "begin": 118.287,
-      "end": 118.307,
-      "content": "I"
-     },
-     {
-      "begin": 118.348,
-      "end": 118.569,
-      "content": "got"
-     },
-     {
-      "begin": 118.669,
-      "end": 118.931,
-      "content": "nerve,"
-     },
-     {
-      "begin": 119.011,
-      "end": 119.232,
-      "content": "don't"
-     },
-     {
-      "begin": 119.292,
-      "end": 119.514,
-      "content": "work"
-     },
-     {
-      "begin": 119.574,
-      "end": 119.674,
-      "content": "them"
-     },
-     {
-      "begin": 120.036,
-      "end": 120.197,
-      "content": "Quick"
-     }
-    ],
-    "align_score": 0.505
-   },
-   {
-    "begin": 120.264,
-    "end": 122.904,
-    "content": "while you ahead before they buy first I'm on",
-    "confidence": 0.838,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 120.264,
-      "end": 120.425,
-      "content": "while"
-     },
-     {
-      "begin": 120.465,
-      "end": 120.545,
-      "content": "you"
-     },
-     {
-      "begin": 120.686,
-      "end": 120.947,
-      "content": "ahead"
-     },
-     {
-      "begin": 121.028,
-      "end": 121.289,
-      "content": "before"
-     },
-     {
-      "begin": 121.329,
-      "end": 121.43,
-      "content": "they"
-     },
-     {
-      "begin": 121.51,
-      "end": 121.792,
-      "content": "buy"
-     },
-     {
-      "begin": 121.872,
-      "end": 122.113,
-      "content": "first"
-     },
-     {
-      "begin": 122.495,
-      "end": 122.616,
-      "content": "I'm"
-     },
-     {
-      "begin": 122.904,
-      "end": 122.904,
-      "content": "on"
-     }
-    ],
-    "align_score": 0.648
-   },
-   {
-    "begin": 122.904,
-    "end": 124.92,
-    "content": "high alert I don't even need the nine I'm",
-    "confidence": 0.952,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 122.904,
-      "end": 123.205,
-      "content": "high"
-     },
-     {
-      "begin": 123.225,
-      "end": 123.446,
-      "content": "alert"
-     },
-     {
-      "begin": 123.466,
-      "end": 123.487,
-      "content": "I"
-     },
-     {
-      "begin": 123.587,
-      "end": 123.929,
-      "content": "don't"
-     },
-     {
-      "begin": 124.009,
-      "end": 124.21,
-      "content": "even"
-     },
-     {
-      "begin": 124.291,
-      "end": 124.572,
-      "content": "need"
-     },
-     {
-      "begin": 124.673,
-      "end": 124.733,
+      "begin": 115.353,
+      "end": 115.433,
       "content": "the"
      },
      {
-      "begin": 124.833,
-      "end": 124.92,
-      "content": "nine"
+      "begin": 115.494,
+      "end": 115.775,
+      "content": "scope"
      },
      {
-      "begin": 124.92,
-      "end": 124.92,
+      "begin": 115.835,
+      "end": 115.875,
+      "content": "of"
+     },
+     {
+      "begin": 115.935,
+      "end": 116.041,
+      "content": "my"
+     },
+     {
+      "begin": 116.041,
+      "end": 116.041,
+      "content": "work."
+     }
+    ],
+    "align_score": 0.494
+   },
+   {
+    "begin": 116.041,
+    "end": 117.461,
+    "content": "I’m on High Alert.",
+    "confidence": 0.962,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 116.041,
+      "end": 116.505,
+      "content": "I’m"
+     },
+     {
+      "begin": 117.029,
+      "end": 117.089,
+      "content": "on"
+     },
+     {
+      "begin": 117.271,
+      "end": 117.461,
+      "content": "High"
+     },
+     {
+      "begin": 117.461,
+      "end": 117.461,
+      "content": "Alert."
+     }
+    ],
+    "align_score": 0.338
+   },
+   {
+    "begin": 117.461,
+    "end": 121.681,
+    "content": "Yeah I got nerves don’t work em! Quit while you're ahead before they fire first.",
+    "confidence": 0.784,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 117.461,
+      "end": 117.782,
+      "content": "Yeah"
+     },
+     {
+      "begin": 118.103,
+      "end": 118.123,
+      "content": "I"
+     },
+     {
+      "begin": 118.344,
+      "end": 118.565,
+      "content": "got"
+     },
+     {
+      "begin": 118.665,
+      "end": 118.946,
+      "content": "nerves"
+     },
+     {
+      "begin": 119.006,
+      "end": 119.227,
+      "content": "don’t"
+     },
+     {
+      "begin": 119.287,
+      "end": 119.508,
+      "content": "work"
+     },
+     {
+      "begin": 119.629,
+      "end": 119.669,
+      "content": "em!"
+     },
+     {
+      "begin": 120.03,
+      "end": 120.191,
+      "content": "Quit"
+     },
+     {
+      "begin": 120.271,
+      "end": 120.432,
+      "content": "while"
+     },
+     {
+      "begin": 120.472,
+      "end": 120.773,
+      "content": "you're"
+     },
+     {
+      "begin": 120.793,
+      "end": 120.954,
+      "content": "ahead"
+     },
+     {
+      "begin": 121.034,
+      "end": 121.295,
+      "content": "before"
+     },
+     {
+      "begin": 121.335,
+      "end": 121.435,
+      "content": "they"
+     },
+     {
+      "begin": 121.516,
+      "end": 121.681,
+      "content": "fire"
+     },
+     {
+      "begin": 121.681,
+      "end": 121.681,
+      "content": "first."
+     }
+    ],
+    "align_score": 0.632
+   },
+   {
+    "begin": 121.681,
+    "end": 123.101,
+    "content": "I’m on high alert.",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 121.681,
+      "end": 122.084,
+      "content": "I’m"
+     },
+     {
+      "begin": 122.709,
+      "end": 122.77,
+      "content": "on"
+     },
+     {
+      "begin": 122.911,
+      "end": 123.101,
+      "content": "high"
+     },
+     {
+      "begin": 123.101,
+      "end": 123.101,
+      "content": "alert."
+     }
+    ],
+    "align_score": 0.462
+   },
+   {
+    "begin": 123.101,
+    "end": 127.504,
+    "content": "I don’t even need a 9. I'm the 1 twice over, I’m who they dial first.",
+    "confidence": 0.812,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 123.101,
+      "end": 123.121,
+      "content": "I"
+     },
+     {
+      "begin": 123.583,
+      "end": 123.924,
+      "content": "don’t"
+     },
+     {
+      "begin": 124.024,
+      "end": 124.205,
+      "content": "even"
+     },
+     {
+      "begin": 124.285,
+      "end": 124.586,
+      "content": "need"
+     },
+     {
+      "begin": 124.707,
+      "end": 124.727,
+      "content": "a"
+     },
+     {
+      "begin": 124.827,
+      "end": 125.349,
+      "content": "9."
+     },
+     {
+      "begin": 125.409,
+      "end": 125.47,
       "content": "I'm"
+     },
+     {
+      "begin": 125.53,
+      "end": 125.59,
+      "content": "the"
+     },
+     {
+      "begin": 125.731,
+      "end": 125.851,
+      "content": "1"
+     },
+     {
+      "begin": 125.911,
+      "end": 126.152,
+      "content": "twice"
+     },
+     {
+      "begin": 126.313,
+      "end": 126.514,
+      "content": "over,"
+     },
+     {
+      "begin": 126.574,
+      "end": 126.634,
+      "content": "I’m"
+     },
+     {
+      "begin": 126.714,
+      "end": 126.815,
+      "content": "who"
+     },
+     {
+      "begin": 126.895,
+      "end": 126.995,
+      "content": "they"
+     },
+     {
+      "begin": 127.076,
+      "end": 127.296,
+      "content": "dial"
+     },
+     {
+      "begin": 127.417,
+      "end": 127.504,
+      "content": "first."
      }
     ],
     "align_score": 0.579
    },
    {
-    "begin": 124.92,
-    "end": 127.502,
-    "content": "the one twice over I'm who they dial first",
-    "confidence": 0.904,
+    "begin": 127.504,
+    "end": 128.641,
+    "content": "I’m on High Alert.",
+    "confidence": 1,
     "mismatch": false,
     "words": [
      {
-      "begin": 124.92,
-      "end": 125.343,
-      "content": "the"
+      "begin": 127.504,
+      "end": 128.149,
+      "content": "I’m"
      },
      {
-      "begin": 125.725,
-      "end": 125.846,
-      "content": "one"
-     },
-     {
-      "begin": 125.906,
-      "end": 126.147,
-      "content": "twice"
-     },
-     {
-      "begin": 126.308,
-      "end": 126.51,
-      "content": "over"
-     },
-     {
-      "begin": 126.57,
-      "end": 126.63,
-      "content": "I'm"
-     },
-     {
-      "begin": 126.711,
-      "end": 126.811,
-      "content": "who"
-     },
-     {
-      "begin": 126.892,
-      "end": 126.992,
-      "content": "they"
-     },
-     {
-      "begin": 127.053,
-      "end": 127.314,
-      "content": "dial"
-     },
-     {
-      "begin": 127.415,
-      "end": 127.502,
-      "content": "first"
-     }
-    ],
-    "align_score": 0.622
-   },
-   {
-    "begin": 127.502,
-    "end": 129.701,
-    "content": "I'm on high alert I don't need to move",
-    "confidence": 0.979,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 127.502,
-      "end": 128.146,
-      "content": "I'm"
-     },
-     {
-      "begin": 128.307,
-      "end": 128.367,
+      "begin": 128.31,
+      "end": 128.37,
       "content": "on"
      },
      {
-      "begin": 128.488,
-      "end": 128.749,
-      "content": "high"
+      "begin": 128.491,
+      "end": 128.641,
+      "content": "High"
      },
      {
-      "begin": 128.769,
-      "end": 128.991,
-      "content": "alert"
-     },
+      "begin": 128.641,
+      "end": 128.641,
+      "content": "Alert."
+     }
+    ],
+    "align_score": 0.294
+   },
+   {
+    "begin": 128.641,
+    "end": 132.22,
+    "content": "I don’t need to move techs or packs I move tech packs design merch.",
+    "confidence": 0.765,
+    "mismatch": false,
+    "words": [
      {
-      "begin": 129.292,
-      "end": 129.312,
+      "begin": 128.641,
+      "end": 128.661,
       "content": "I"
      },
      {
-      "begin": 129.353,
-      "end": 129.473,
-      "content": "don't"
+      "begin": 128.782,
+      "end": 129.465,
+      "content": "don’t"
      },
      {
-      "begin": 129.513,
-      "end": 129.674,
+      "begin": 129.505,
+      "end": 129.666,
       "content": "need"
      },
      {
-      "begin": 129.701,
-      "end": 129.701,
+      "begin": 129.706,
+      "end": 129.786,
       "content": "to"
      },
      {
-      "begin": 129.701,
-      "end": 129.701,
+      "begin": 129.847,
+      "end": 130.088,
       "content": "move"
-     }
-    ],
-    "align_score": 0.447
-   },
-   {
-    "begin": 129.701,
-    "end": 132.937,
-    "content": "techs to packs I move tech packs and design",
-    "confidence": 0.761,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 129.701,
-      "end": 130.043,
+      "begin": 130.208,
+      "end": 130.53,
       "content": "techs"
      },
      {
-      "begin": 130.204,
-      "end": 130.646,
-      "content": "to"
+      "begin": 130.63,
+      "end": 130.67,
+      "content": "or"
      },
      {
-      "begin": 130.766,
-      "end": 131.068,
+      "begin": 130.771,
+      "end": 131.092,
       "content": "packs"
      },
      {
-      "begin": 131.168,
-      "end": 131.188,
+      "begin": 131.173,
+      "end": 131.193,
       "content": "I"
      },
      {
-      "begin": 131.269,
-      "end": 131.49,
+      "begin": 131.273,
+      "end": 131.494,
       "content": "move"
      },
      {
-      "begin": 131.611,
-      "end": 131.812,
+      "begin": 131.615,
+      "end": 131.815,
       "content": "tech"
      },
      {
-      "begin": 131.952,
-      "end": 132.254,
+      "begin": 131.936,
+      "end": 132.22,
       "content": "packs"
      },
      {
-      "begin": 132.354,
-      "end": 132.435,
-      "content": "and"
+      "begin": 132.22,
+      "end": 132.22,
+      "content": "design"
      },
      {
-      "begin": 132.475,
-      "end": 132.937,
-      "content": "design"
+      "begin": 132.22,
+      "end": 132.22,
+      "content": "merch."
      }
     ],
-    "align_score": 0.522
+    "repeat": true,
+    "align_score": 0.448
    },
    {
-    "begin": 133.029,
-    "end": 133.272,
-    "content": "merch",
-    "confidence": 0.347,
+    "begin": 132.22,
+    "end": 132.42,
+    "content": "My team paid in full and y’all the trail version.",
+    "confidence": 0.1,
     "mismatch": true,
     "words": [
      {
-      "begin": 133.029,
-      "end": 133.272,
-      "content": "merch"
+      "begin": 132.22,
+      "end": 132.22,
+      "content": "My"
+     },
+     {
+      "begin": 132.22,
+      "end": 132.22,
+      "content": "team"
+     },
+     {
+      "begin": 132.22,
+      "end": 132.22,
+      "content": "paid"
+     },
+     {
+      "begin": 132.22,
+      "end": 132.22,
+      "content": "in"
+     },
+     {
+      "begin": 132.22,
+      "end": 132.22,
+      "content": "full"
+     },
+     {
+      "begin": 132.22,
+      "end": 132.42,
+      "content": "and"
+     },
+     {
+      "begin": 132.42,
+      "end": 132.42,
+      "content": "y’all"
+     },
+     {
+      "begin": 132.42,
+      "end": 132.42,
+      "content": "the"
+     },
+     {
+      "begin": 132.42,
+      "end": 132.42,
+      "content": "trail"
+     },
+     {
+      "begin": 132.42,
+      "end": 132.42,
+      "content": "version."
      }
     ],
-    "align_score": 0.604
+    "repeat": true,
+    "align_score": 0.085
    },
    {
-    "begin": 134.325,
-    "end": 136.617,
-    "content": "Sleep on me, the rest you mad When you",
-    "confidence": 0.873,
+    "begin": 134.343,
+    "end": 138.838,
+    "content": "Sleep on me, then rest you may (resume) when you enter view (interview) of the scope of my work.",
+    "confidence": 0.743,
     "mismatch": false,
     "words": [
      {
-      "begin": 134.325,
-      "end": 134.646,
+      "begin": 134.343,
+      "end": 134.644,
       "content": "Sleep"
      },
      {
-      "begin": 134.867,
-      "end": 134.908,
+      "begin": 134.865,
+      "end": 134.905,
       "content": "on"
      },
      {
-      "begin": 135.028,
-      "end": 135.149,
+      "begin": 135.005,
+      "end": 135.146,
       "content": "me,"
      },
      {
-      "begin": 135.33,
-      "end": 135.43,
-      "content": "the"
+      "begin": 135.326,
+      "end": 135.427,
+      "content": "then"
      },
      {
-      "begin": 135.531,
-      "end": 135.732,
+      "begin": 135.527,
+      "end": 135.728,
       "content": "rest"
      },
      {
-      "begin": 135.772,
-      "end": 135.893,
+      "begin": 135.768,
+      "end": 135.888,
       "content": "you"
      },
      {
-      "begin": 136.013,
-      "end": 136.235,
-      "content": "mad"
+      "begin": 136.009,
+      "end": 136.209,
+      "content": "may"
      },
      {
-      "begin": 136.375,
-      "end": 136.476,
-      "content": "When"
+      "begin": 136.229,
+      "end": 136.35,
+      "content": "(resume)"
      },
      {
-      "begin": 136.536,
-      "end": 136.617,
+      "begin": 136.37,
+      "end": 136.47,
+      "content": "when"
+     },
+     {
+      "begin": 136.53,
+      "end": 136.59,
       "content": "you"
-     }
-    ],
-    "align_score": 0.901
-   },
-   {
-    "begin": 136.804,
-    "end": 139.583,
-    "content": "interview with the scope of my work I'm on",
-    "confidence": 0.862,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 136.804,
-      "end": 137.527,
-      "content": "interview"
      },
      {
-      "begin": 137.608,
-      "end": 137.688,
-      "content": "with"
+      "begin": 136.811,
+      "end": 137.213,
+      "content": "enter"
      },
      {
-      "begin": 137.708,
-      "end": 137.768,
-      "content": "the"
+      "begin": 137.273,
+      "end": 137.373,
+      "content": "view"
      },
      {
-      "begin": 137.829,
-      "end": 138.09,
-      "content": "scope"
+      "begin": 137.433,
+      "end": 137.614,
+      "content": "(interview)"
      },
      {
-      "begin": 138.15,
-      "end": 138.191,
+      "begin": 137.634,
+      "end": 137.674,
       "content": "of"
      },
      {
-      "begin": 138.251,
-      "end": 138.412,
+      "begin": 137.694,
+      "end": 137.774,
+      "content": "the"
+     },
+     {
+      "begin": 137.815,
+      "end": 138.095,
+      "content": "scope"
+     },
+     {
+      "begin": 138.156,
+      "end": 138.196,
+      "content": "of"
+     },
+     {
+      "begin": 138.276,
+      "end": 138.417,
       "content": "my"
      },
      {
-      "begin": 138.572,
-      "end": 138.834,
-      "content": "work"
-     },
-     {
-      "begin": 139.155,
-      "end": 139.276,
-      "content": "I'm"
-     },
-     {
-      "begin": 139.583,
-      "end": 139.583,
-      "content": "on"
+      "begin": 138.577,
+      "end": 138.838,
+      "content": "work."
      }
     ],
-    "align_score": 0.697
+    "repeat": true,
+    "align_score": 0.61
    },
    {
-    "begin": 139.583,
-    "end": 142.663,
-    "content": "Hylar Yeah, got nerve, don't work them Quick while",
-    "confidence": 0.652,
+    "begin": 138.86,
+    "end": 139.5,
+    "content": "I’m on High Alert.",
+    "confidence": 0.5,
     "mismatch": false,
     "words": [
      {
-      "begin": 139.583,
-      "end": 140.105,
-      "content": "Hylar"
+      "begin": 138.86,
+      "end": 139.3,
+      "content": "I’m"
      },
      {
-      "begin": 140.326,
-      "end": 140.568,
-      "content": "Yeah,"
+      "begin": 139.3,
+      "end": 139.5,
+      "content": "on"
      },
      {
-      "begin": 140.668,
-      "end": 140.889,
+      "begin": 139.5,
+      "end": 139.5,
+      "content": "High"
+     },
+     {
+      "begin": 139.5,
+      "end": 139.5,
+      "content": "Alert."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.112
+   },
+   {
+    "begin": 139.761,
+    "end": 144.285,
+    "content": "Yeah I got nerves don’t work em! Quit while you're ahead before they fire first.",
+    "confidence": 0.778,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 139.761,
+      "end": 140.283,
+      "content": "Yeah"
+     },
+     {
+      "begin": 140.423,
+      "end": 140.443,
+      "content": "I"
+     },
+     {
+      "begin": 140.664,
+      "end": 140.885,
       "content": "got"
      },
      {
-      "begin": 141.01,
-      "end": 141.271,
-      "content": "nerve,"
+      "begin": 141.005,
+      "end": 141.286,
+      "content": "nerves"
      },
      {
-      "begin": 141.351,
-      "end": 141.552,
-      "content": "don't"
+      "begin": 141.327,
+      "end": 141.547,
+      "content": "don’t"
      },
      {
-      "begin": 141.612,
-      "end": 141.833,
+      "begin": 141.608,
+      "end": 141.828,
       "content": "work"
      },
      {
-      "begin": 141.914,
-      "end": 142.014,
-      "content": "them"
+      "begin": 141.969,
+      "end": 142.009,
+      "content": "em!"
      },
      {
-      "begin": 142.315,
-      "end": 142.516,
-      "content": "Quick"
+      "begin": 142.33,
+      "end": 142.511,
+      "content": "Quit"
      },
      {
-      "begin": 142.617,
-      "end": 142.663,
+      "begin": 142.611,
+      "end": 142.752,
       "content": "while"
-     }
-    ],
-    "align_score": 0.515
-   },
-   {
-    "begin": 142.663,
-    "end": 145.442,
-    "content": "you ahead before they fire first I'm on Hylar",
-    "confidence": 0.858,
-    "mismatch": false,
-    "words": [
-     {
-      "begin": 142.663,
-      "end": 142.884,
-      "content": "you"
      },
      {
-      "begin": 143.024,
-      "end": 143.265,
+      "begin": 142.792,
+      "end": 142.952,
+      "content": "you're"
+     },
+     {
+      "begin": 143.033,
+      "end": 143.274,
       "content": "ahead"
      },
      {
-      "begin": 143.346,
-      "end": 143.627,
+      "begin": 143.354,
+      "end": 143.635,
       "content": "before"
      },
      {
-      "begin": 143.667,
-      "end": 143.748,
+      "begin": 143.655,
+      "end": 143.755,
       "content": "they"
      },
      {
-      "begin": 143.828,
-      "end": 144.109,
+      "begin": 143.836,
+      "end": 144.117,
       "content": "fire"
      },
      {
-      "begin": 144.19,
-      "end": 144.451,
-      "content": "first"
+      "begin": 144.197,
+      "end": 144.285,
+      "content": "first."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.628
+   },
+   {
+    "begin": 144.285,
+    "end": 145.441,
+    "content": "I’m on high alert.",
+    "confidence": 0.5,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 144.285,
+      "end": 144.426,
+      "content": "I’m"
      },
      {
-      "begin": 144.813,
-      "end": 144.873,
-      "content": "I'm"
-     },
-     {
-      "begin": 145.054,
-      "end": 145.114,
+      "begin": 145.053,
+      "end": 145.113,
       "content": "on"
      },
      {
       "begin": 145.235,
-      "end": 145.442,
-      "content": "Hylar"
+      "end": 145.441,
+      "content": "high"
+     },
+     {
+      "begin": 145.441,
+      "end": 145.441,
+      "content": "alert."
      }
     ],
-    "align_score": 0.613
+    "repeat": true,
+    "align_score": 0.347
    },
    {
-    "begin": 145.442,
-    "end": 147.842,
-    "content": "I don't even need the nine I'm the one",
-    "confidence": 0.925,
+    "begin": 145.441,
+    "end": 149.825,
+    "content": "I don’t even need a 9. I'm the 1 twice over, I’m who they dial first.",
+    "confidence": 0.812,
     "mismatch": false,
     "words": [
      {
-      "begin": 145.442,
-      "end": 145.462,
+      "begin": 145.441,
+      "end": 145.461,
       "content": "I"
      },
      {
-      "begin": 146.005,
-      "end": 146.266,
-      "content": "don't"
+      "begin": 146.003,
+      "end": 146.244,
+      "content": "don’t"
      },
      {
-      "begin": 146.347,
-      "end": 146.528,
+      "begin": 146.344,
+      "end": 146.525,
       "content": "even"
      },
      {
-      "begin": 146.608,
-      "end": 146.91,
+      "begin": 146.625,
+      "end": 146.906,
       "content": "need"
      },
      {
-      "begin": 146.99,
-      "end": 147.071,
-      "content": "the"
+      "begin": 147.027,
+      "end": 147.047,
+      "content": "a"
      },
      {
-      "begin": 147.171,
-      "end": 147.674,
-      "content": "nine"
+      "begin": 147.167,
+      "end": 147.669,
+      "content": "9."
      },
      {
-      "begin": 147.734,
-      "end": 147.795,
+      "begin": 147.75,
+      "end": 147.81,
       "content": "I'm"
      },
      {
-      "begin": 147.842,
-      "end": 147.842,
+      "begin": 147.85,
+      "end": 147.91,
       "content": "the"
      },
      {
-      "begin": 147.842,
-      "end": 147.842,
-      "content": "one"
-     }
-    ],
-    "align_score": 0.778
-   },
-   {
-    "begin": 147.842,
-    "end": 150.804,
-    "content": "twice over I'm who they dial first I'm on",
-    "confidence": 0.91,
-    "mismatch": false,
-    "words": [
+      "begin": 148.051,
+      "end": 148.171,
+      "content": "1"
+     },
      {
-      "begin": 147.842,
-      "end": 148.465,
+      "begin": 148.231,
+      "end": 148.472,
       "content": "twice"
      },
      {
-      "begin": 148.626,
-      "end": 148.807,
-      "content": "over"
+      "begin": 148.633,
+      "end": 148.854,
+      "content": "over,"
      },
      {
-      "begin": 148.907,
-      "end": 148.968,
-      "content": "I'm"
+      "begin": 148.914,
+      "end": 148.974,
+      "content": "I’m"
      },
      {
-      "begin": 149.028,
-      "end": 149.149,
+      "begin": 149.034,
+      "end": 149.155,
       "content": "who"
      },
      {
-      "begin": 149.229,
-      "end": 149.309,
+      "begin": 149.215,
+      "end": 149.315,
       "content": "they"
      },
      {
-      "begin": 149.39,
-      "end": 149.631,
+      "begin": 149.396,
+      "end": 149.616,
       "content": "dial"
      },
      {
-      "begin": 149.732,
-      "end": 150.013,
-      "content": "first"
-     },
-     {
-      "begin": 150.415,
-      "end": 150.536,
-      "content": "I'm"
-     },
-     {
-      "begin": 150.804,
-      "end": 150.804,
-      "content": "on"
+      "begin": 149.737,
+      "end": 149.825,
+      "content": "first."
      }
     ],
-    "align_score": 0.523
+    "repeat": true,
+    "align_score": 0.651
    },
    {
-    "begin": 150.804,
-    "end": 153.223,
-    "content": "Hylar I don't need to move techs or packs",
-    "confidence": 0.884,
+    "begin": 149.825,
+    "end": 150.981,
+    "content": "I’m on High Alert.",
+    "confidence": 0.5,
     "mismatch": false,
     "words": [
      {
-      "begin": 150.804,
-      "end": 151.286,
-      "content": "Hylar"
+      "begin": 149.825,
+      "end": 150.491,
+      "content": "I’m"
      },
      {
-      "begin": 151.306,
-      "end": 151.326,
+      "begin": 150.653,
+      "end": 150.693,
+      "content": "on"
+     },
+     {
+      "begin": 150.815,
+      "end": 150.981,
+      "content": "High"
+     },
+     {
+      "begin": 150.981,
+      "end": 150.981,
+      "content": "Alert."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.442
+   },
+   {
+    "begin": 150.981,
+    "end": 155.598,
+    "content": "I don’t need to move techs or packs I move tech packs design merch.",
+    "confidence": 0.981,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 150.981,
+      "end": 151.001,
       "content": "I"
      },
      {
-      "begin": 151.346,
-      "end": 151.809,
-      "content": "don't"
+      "begin": 151.342,
+      "end": 151.804,
+      "content": "don’t"
      },
      {
-      "begin": 151.849,
-      "end": 151.99,
+      "begin": 151.844,
+      "end": 151.985,
       "content": "need"
      },
      {
-      "begin": 152.03,
-      "end": 152.11,
+      "begin": 152.045,
+      "end": 152.105,
       "content": "to"
      },
      {
-      "begin": 152.171,
-      "end": 152.412,
+      "begin": 152.165,
+      "end": 152.406,
       "content": "move"
      },
      {
-      "begin": 152.533,
-      "end": 152.854,
+      "begin": 152.527,
+      "end": 152.848,
       "content": "techs"
      },
      {
-      "begin": 152.955,
-      "end": 152.995,
+      "begin": 152.948,
+      "end": 152.988,
       "content": "or"
      },
      {
-      "begin": 153.096,
-      "end": 153.223,
+      "begin": 153.089,
+      "end": 153.39,
       "content": "packs"
-     }
-    ],
-    "align_score": 0.515
-   },
-   {
-    "begin": 153.223,
-    "end": 155.576,
-    "content": "I move tech packs and design merch",
-    "confidence": 0.841,
-    "mismatch": false,
-    "words": [
+     },
      {
-      "begin": 153.223,
-      "end": 153.243,
+      "begin": 153.49,
+      "end": 153.51,
       "content": "I"
      },
      {
-      "begin": 153.505,
-      "end": 153.826,
+      "begin": 153.611,
+      "end": 153.831,
       "content": "move"
      },
      {
-      "begin": 153.927,
-      "end": 154.108,
+      "begin": 153.932,
+      "end": 154.173,
       "content": "tech"
      },
      {
-      "begin": 154.249,
-      "end": 154.551,
+      "begin": 154.253,
+      "end": 154.554,
       "content": "packs"
      },
      {
-      "begin": 154.671,
-      "end": 154.752,
-      "content": "and"
-     },
-     {
-      "begin": 154.812,
-      "end": 155.275,
+      "begin": 154.795,
+      "end": 155.277,
       "content": "design"
      },
      {
-      "begin": 155.335,
-      "end": 155.576,
-      "content": "merch"
+      "begin": 155.337,
+      "end": 155.598,
+      "content": "merch."
      }
     ],
-    "align_score": 0.583
+    "align_score": 0.585
    },
    {
-    "begin": 159.807,
-    "end": 161.597,
-    "content": "I don't even need the nine",
-    "confidence": 0.895,
+    "begin": 159.788,
+    "end": 161.56,
+    "content": "I don’t even need the 9…",
+    "confidence": 0.805,
     "mismatch": false,
+    "section": "Outro",
     "words": [
      {
-      "begin": 159.807,
-      "end": 159.827,
+      "begin": 159.788,
+      "end": 159.809,
       "content": "I"
      },
      {
-      "begin": 159.908,
-      "end": 160.129,
-      "content": "don't"
+      "begin": 159.909,
+      "end": 160.131,
+      "content": "don’t"
      },
      {
-      "begin": 160.21,
-      "end": 160.391,
+      "begin": 160.211,
+      "end": 160.392,
       "content": "even"
      },
      {
-      "begin": 160.491,
-      "end": 160.773,
+      "begin": 160.473,
+      "end": 160.775,
       "content": "need"
      },
      {
-      "begin": 160.833,
-      "end": 160.914,
+      "begin": 160.835,
+      "end": 160.916,
       "content": "the"
      },
      {
-      "begin": 161.034,
-      "end": 161.597,
-      "content": "nine"
+      "begin": 161.036,
+      "end": 161.56,
+      "content": "9…"
      }
     ],
-    "align_score": 0.766
-   },
-   {
-    "begin": 166.28,
-    "end": 167.54,
-    "content": "You",
-    "confidence": 0.065,
-    "mismatch": true,
-    "words": [
-     {
-      "begin": 166.28,
-      "end": 167.54,
-      "content": "You"
-     }
-    ],
-    "align_score": 0.011
+    "align_score": 0.787
    }
   ]
  }
