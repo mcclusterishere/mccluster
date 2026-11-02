@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 561,
+  "candidate_count": 562,
   "capability_source_count": 102,
-  "support_only_count": 459,
-  "checks_total": 2144,
-  "checks_passed": 2144,
+  "support_only_count": 460,
+  "checks_total": 2148,
+  "checks_passed": 2148,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -196,6 +196,7 @@
     "docs/music-platform.md",
     "docs/pay-now.md",
     "docs/productization/20261102-claude/ANTI-SOCIAL-CAMPAIGN.md",
+    "docs/productization/20261102-claude/HANDOFF.md",
     "docs/productization/20261102/CLAUDE-PROMPT.md",
     "docs/productization/20261102/PR-INVENTORY.md",
     "docs/productization/20261102/WHOLE-SITE-ACCEPTANCE.md",
@@ -575,7 +576,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "561 entries"
+      "detail": "562 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -11289,6 +11290,26 @@
     },
     {
       "name": "docs/productization/20261102-claude/ANTI-SOCIAL-CAMPAIGN.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/productization/20261102-claude/HANDOFF.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/productization/20261102-claude/HANDOFF.md classified",
+      "passed": true,
+      "detail": "classification='operational_support'"
+    },
+    {
+      "name": "docs/productization/20261102-claude/HANDOFF.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/productization/20261102-claude/HANDOFF.md support rationale present",
       "passed": true,
       "detail": ""
     }

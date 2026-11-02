@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 561,
+  "candidate_count": 562,
   "capability_source_count": 102,
-  "support_only_count": 459,
+  "support_only_count": 460,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4192,6 +4192,13 @@
     },
     {
       "path": "docs/productization/20261102-claude/ANTI-SOCIAL-CAMPAIGN.md",
+      "classification": "operational_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Productization audit, source evidence or disposable permission fixture; references existing Equity Uprise identities without introducing or changing a building capability."
+    },
+    {
+      "path": "docs/productization/20261102-claude/HANDOFF.md",
       "classification": "operational_support",
       "capability_ids": [],
       "support_only": true,

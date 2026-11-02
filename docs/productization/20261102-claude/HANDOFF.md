@@ -233,3 +233,30 @@ The npm registry was reachable this time, so the dependency-blocked results abov
 | Not run | Python suite, native-PG race drivers (`*-native.py`), `control-workspace` e2e (needs `CESIUM_DIR`) | no claim made for them this cycle |
 
 Remote: review branch tip is recorded by the commit that adds this section (see the commit log; full SHA reported with the handoff reply).
+
+### PRIM3 optional learning-unlocked tactical hints (owner priority, 2026-11-02)
+
+- **Source inspected first.** The turn-based engine is `mcclusterishere/Prim3` `game/runtime/tactical-resolver.mjs` (main `160020bd`): square grid, Manhattan `gridDistance`, Bresenham line of sight, directional cover, `shotPreview`, detection, PLAYER/THREAT/CLOCK phases. `prim3-range.html` in this repo is an evidence-classification range with no board, so it was not the target. The private math LMS (`5d76d704`) is not on the remote, so no verified generator could be reused; that ref is still needed.
+- **Built in the engine's home:** Prim3 branch `claude/tactical-hints-20261102` = `7d6bd3169239ea5e732fc2903d8931ffb233d7c6`. It adds `game/runtime/tactical-hints.mjs`, its tests and `game/TACTICAL-HINTS.md` (DRAFT). It was pushed without force; no PR or main merge.
+- **Behaviour:**
+  - Baseline play is untouched and needs no challenge.
+  - A hint is optional and only available in the PLAYER phase for an own unit.
+  - The field challenge comes from the board or the curriculum: E is math, R is science, T is IT, and the host may override the field. Answers are checked with exact rational arithmetic (`1.8 = 9/5 = 1.80`); no LLM decides correctness.
+  - A wrong answer gets a progressive step; play is never frozen.
+  - A reveal is allowed after all steps, and a revealed answer never counts as mastery. Mastery evidence is recorded once and marked `independent:false` after retries.
+  - A correct answer returns the top LEGAL candidate: HOLD, or a MOVE that obeys the resolver's rules (in bounds, Manhattan ≤ moveRange, 1 AP), excluding blockers and known occupancy.
+  - Candidates are scored with explicit `WEIGHTS`: objective progress, expected incoming damage, expected outgoing damage and concealment break, all computed with the resolver's own `shotPreview`. Ties, alternatives and limits are stated, and the wording never says perfect or guaranteed.
+  - The hint never acts (`autoAction:false`; no AP spent).
+- **Fog of war.** The evaluator only sees `playerProjection`: own squad, board, and the hostiles the player knows. "Known" defaults to squad line of sight within `detectionRadius`; a host fog layer can override it. Hidden units, technical truth and RNG are excluded, and a test shows that adding a hidden hostile changes nothing.
+- **Binding.** Each hint is bound to `stableHash(tenant, player, mission, round, unit, projection fingerprint)`. Any board change answers `STALE_BOARD`; a foreign tenant or player answers `NOT_YOUR_HINT`; a hostile unit is refused.
+- **Preview.** `prim3-tactics-preview.html` (noindex, with the shared app bar) runs exact copies in `js/prim3-tactics/`, hash-pinned in `SOURCE.json` and checked by `scripts/test/prim3-tactics-vendor.test.mjs`. The page holds the session in the browser for offline trial; a production route must keep `secret` server-side. That route is not built and no Worker change was made.
+- **Evidence:**
+
+| Suite | Result |
+|---|---|
+| Prim3 `node --test game/runtime/*.test.mjs` | 39/39 |
+| `scripts/e2e/prim3-tactics-hints.e2e.mjs` (390/1280) | 22/22 |
+| Root `node --test scripts/test/*.test.mjs` | 1438/1438 |
+| Equity Uprise verifiers | PASS |
+
+- **Not done.** No server route, persistence or LMS mastery write. No hex adapter. Pathfinding is the resolver's (none). Objective positions require `battlefield.objectiveTiles`.
