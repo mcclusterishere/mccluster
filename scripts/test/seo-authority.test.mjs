@@ -53,7 +53,7 @@ test("SEO/AEO authority surfaces stay coherent",()=>{
  assert.match(h,/SEO-HIRE:START/); assert.doesNotMatch(h,/The Limited Offer|Photo & Video Shoot Day|Southern Connecticut State University/);
  for(const x of v.items.filter(x=>x.publish)) assert.equal(x.verification_status,"verified");
  for(const u of ["https://matthew.mccluster.org/newsroom.html","https://matthew.mccluster.org/services.html","https://matthew.mccluster.org/engineering/"]) assert.ok(s.pages.some(x=>x.url===u),u);
- assert.match(l,/20 registered tracks, 18 with ISRCs/); assert.match(l,/21 items/); assert.doesNotMatch(l,/registered Connecticut public charity/);
+ assert.match(l,/29 registered tracks, 18 with ISRCs/); assert.match(l,/21 items/); assert.doesNotMatch(l,/registered Connecticut public charity/);
  assert.doesNotMatch(w,/writeFileSync\(smPath/);
 });
 test("SEO generators reproduce committed outputs",()=>{

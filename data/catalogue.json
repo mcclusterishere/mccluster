@@ -1,7 +1,7 @@
 {
  "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 20,
+ "count": 29,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -172,6 +172,50 @@
    "isrc": "QT6KV2600014"
   },
   {
+   "slug": "test-drive",
+   "title": "Test Drive",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "1:35",
+   "available": true,
+   "no": 19
+  },
+  {
+   "slug": "salvage-title-b-side",
+   "title": "Salvage Title (B-Side)",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "1:29",
+   "available": true,
+   "no": 20
+  },
+  {
+   "slug": "repo-guy-b-side",
+   "title": "Repo Guy (B-Side)",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "2:00",
+   "available": true,
+   "no": 21
+  },
+  {
+   "slug": "hundun-b-side",
+   "title": "Hundun (B-Side)",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "2:23",
+   "available": true,
+   "no": 22
+  },
+  {
    "slug": "dealer-plates",
    "title": "Dealer Plates (A-Side)",
    "credit": "Prod. Zakir & McCluster",
@@ -196,6 +240,61 @@
    "isrc": "QT6KV2600016"
   },
   {
+   "slug": "towyard-killer",
+   "title": "Towyard Killer",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "1:06",
+   "available": true,
+   "no": 23
+  },
+  {
+   "slug": "mr-lock-changer-remix",
+   "title": "Mr. Lock Changer (Remix)",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "1:48",
+   "available": true,
+   "no": 24
+  },
+  {
+   "slug": "lana-b-side",
+   "title": "Lana (B-Side)",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "1:25",
+   "available": true,
+   "no": 25
+  },
+  {
+   "slug": "stand-on-business-b-side",
+   "title": "Stand On Business (B-Side)",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "2:01",
+   "available": true,
+   "no": 26
+  },
+  {
+   "slug": "all-in-the-details",
+   "title": "All in the Details",
+   "credit": "",
+   "album": "Whip Equipped",
+   "albumSlug": "whip-equipped",
+   "page": "album.html?album=whip-equipped",
+   "length": "2:35",
+   "available": true,
+   "no": 27
+  },
+  {
    "slug": "upset",
    "title": "Upset",
    "credit": "Hitman Halo × Raheem × Rahndrx",
@@ -216,7 +315,7 @@
    "page": "album.html?album=cia-mind-control",
    "length": "3:53",
    "available": true,
-   "no": 19
+   "no": 28
   },
   {
    "slug": "pull-up",
@@ -227,7 +326,7 @@
    "page": "album.html?album=cia-mind-control",
    "length": "2:30",
    "available": true,
-   "no": 20
+   "no": 29
   },
   {
    "slug": "niggy-nigg",

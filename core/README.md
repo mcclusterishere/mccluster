@@ -12,6 +12,8 @@ Allowlisted executors:
 - `local_analysis` — sends a bounded analysis task to the local Ollama model. Its evidence scope is explicitly `job_input_only`.
 - `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.
 
+- `lyrics_align` — the lyric machine for an uploaded release (`core/src/executors/lyrics-align.mjs`, engine in `core/src/lyrics/`): downloads the master with the service key into a private temp dir, separates the vocal with Demucs, recognises it with faster-whisper, maps the creator's lyric sheet (or DistroKid TTML / LRC) onto what is sung, refines word times with wav2vec2 CTC forced alignment, and writes `creator_tracks.lyrics` unreviewed. It never replaces lyrics the owner reviewed. Queued by the trigger in `supabase/pending/20261031180000_lyrics_machine_v1.sql`, by Control's "Re-run machine", or by the `lyrics.align` capability. See "Lyric machine runtime" below.
+
 Existing unsupported queue types remain queued. Core does not fake completion for jobs whose real data/tool adapter has not been built yet.
 
 ## Capability registry and tool bus
@@ -201,6 +203,20 @@ sudo journalctl -u mccluster-core-runner -u mccluster-opencode -u mccluster-core
 ```
 
 The runner logs one JSON object per lifecycle event, so journald can be shipped later without changing the application protocol.
+
+## Lyric machine runtime
+
+`lyrics_align` needs ffmpeg and a Python with the open models' runtime (CPU is enough). Owned, self-hosted weights only; no paid API:
+
+```bash
+sudo apt-get install -y ffmpeg python3-venv
+sudo -u mccluster-core python3 -m venv /var/lib/mccluster-core/lyrics-venv
+sudo -u mccluster-core /var/lib/mccluster-core/lyrics-venv/bin/pip install --no-cache-dir \
+  torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu
+sudo -u mccluster-core /var/lib/mccluster-core/lyrics-venv/bin/pip install --no-cache-dir faster-whisper==1.2.1 demucs==4.1.0 soundfile
+```
+
+Then in `/etc/mccluster/core.env`: `LYRICS_PYTHON=/var/lib/mccluster-core/lyrics-venv/bin/python` (optional: `LYRICS_ASR_MODEL=large-v3-turbo` (default) or `medium.en` on a small host, `LYRICS_SEPARATOR_MODEL=htdemucs_6s` (default) or `htdemucs`, `LYRICS_ASR_THREADS`). First use downloads the weights into the service user's cache (~1.6 GB Whisper large-v3-turbo, ~80 MB Demucs, ~360 MB wav2vec2). Measured on a 4-vCPU container per ~2-minute track: separation 50–80 s, medium.en recognition on the vocal 50–140 s, CTC alignment ~10 s. Only after this is in place should the pending trigger be applied; until then Core quarantines `lyrics_align` jobs as unsupported.
 
 ## Queue examples
 
