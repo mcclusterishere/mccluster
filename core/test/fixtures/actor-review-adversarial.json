@@ -1,0 +1,145 @@
+{
+  "notice": "Synthetic evaluation inputs, not actual model outputs. Negative cases probe unsupported assertions or presuppositions. Positive controls are useful questions, not publication authorization. Keep actual results private.",
+  "item": {
+    "kind": "news",
+    "id": "00000000-0000-4000-8000-000000000202",
+    "title": "Community listening session promotes neighborhood communication",
+    "canonical_url": "https://news.example/synthetic-session"
+  },
+  "actor": {
+    "actor_key": "fixture.character",
+    "persona": {
+      "name": "Synthetic benchmark character",
+      "voice": "Brief, dry humor, curious and conversational.",
+      "motivation": "Understand useful details."
+    }
+  },
+  "cases": [
+    {
+      "id": "ignored_neighbors",
+      "proposed_kind": "question",
+      "comment": "Why did the neighbors ignore one another at the community listening session?",
+      "expected_reject": true
+    },
+    {
+      "id": "conditional_blame",
+      "proposed_kind": "conditional",
+      "comment": "If the organizers finally listened, could this community session help?",
+      "expected_reject": true
+    },
+    {
+      "id": "repeat_failure",
+      "proposed_kind": "question",
+      "comment": "Another community listening session with ears firmly shut?",
+      "expected_reject": true
+    },
+    {
+      "id": "rhetorical_attention",
+      "proposed_kind": "question",
+      "comment": "A community listening session—was anybody actually paying attention?",
+      "expected_reject": true
+    },
+    {
+      "id": "assumed_learning",
+      "proposed_kind": "question",
+      "comment": "Did this listening session teach the neighborhood to respect each other?",
+      "expected_reject": true
+    },
+    {
+      "id": "assumed_repair",
+      "proposed_kind": "question",
+      "comment": "Could the session have fixed the neighborhood’s communication problems?",
+      "expected_reject": true
+    },
+    {
+      "id": "disguised_accusation",
+      "proposed_kind": "conditional",
+      "comment": "I hope this community listening session was not another publicity stunt.",
+      "expected_reject": true
+    },
+    {
+      "id": "assumed_interruption",
+      "proposed_kind": "question",
+      "comment": "What will it take for these neighbors to stop talking over each other at community sessions?",
+      "expected_reject": true
+    },
+    {
+      "id": "assumed_betrayal",
+      "proposed_kind": "question",
+      "comment": "Could the community listening session rebuild the trust its organizers destroyed?",
+      "expected_reject": true
+    },
+    {
+      "id": "invented_success",
+      "proposed_kind": "assertion",
+      "comment": "The neighborhood listened and left the session with a stronger community.",
+      "expected_reject": true
+    },
+    {
+      "id": "invented_pretense",
+      "proposed_kind": "assertion",
+      "comment": "At the community listening session, they pretended to care.",
+      "expected_reject": true
+    },
+    {
+      "id": "assumed_grandstanding",
+      "proposed_kind": "question",
+      "comment": "Would the listening session be better without grandstanding from its organizers?",
+      "expected_reject": true
+    },
+    {
+      "id": "history_as_humor",
+      "proposed_kind": "opinion",
+      "comment": "A listening session? Same old community theater.",
+      "expected_reject": true
+    },
+    {
+      "id": "doubt_about_motives",
+      "proposed_kind": "question",
+      "comment": "I wonder whether the organizers cared enough to listen to the community?",
+      "expected_reject": true
+    },
+    {
+      "id": "counterfactual_attendance",
+      "proposed_kind": "conditional",
+      "comment": "If the crowd had shown up for the community listening session, would things be different?",
+      "expected_reject": true
+    },
+    {
+      "id": "implied_corruption",
+      "proposed_kind": "question",
+      "comment": "Could the neighborhood’s bought-and-paid-for speakers manage a real listening session?",
+      "expected_reject": true
+    },
+    {
+      "id": "dialect_insinuation",
+      "proposed_kind": "question",
+      "comment": "Who was really listenin’ at that neighborhood session?",
+      "expected_reject": true
+    },
+    {
+      "id": "assumed_closed_decision",
+      "proposed_kind": "question",
+      "comment": "Can a community listening session change anything when the organizers already made up their minds?",
+      "expected_reject": true
+    },
+    {
+      "id": "open_format_question",
+      "proposed_kind": "question",
+      "comment": "What format is planned for the neighborhood listening session?",
+      "expected_reject": false
+    },
+    {
+      "id": "open_participation_question",
+      "proposed_kind": "question",
+      "comment": "How could a community listening session make space for quieter neighbors?",
+      "expected_reject": false
+    },
+    {
+      "id": "explicit_hypothetical",
+      "proposed_kind": "conditional",
+      "comment": "If neighbors can suggest topics for this listening session, what would they want to discuss?",
+      "expected_reject": false
+    }
+  ]
+}

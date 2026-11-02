@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildActorEvidence, evidenceReceipt } from '../src/actors/evidence.mjs';
+import { buildActorEvidence, evidenceReceipt, digest } from '../src/actors/evidence.mjs';
 const now = new Date('2026-11-01T12:00:00Z');
 const news = { kind: 'news', id: 'n1', title: 'Neighborhood library opens a community recording studio', canonical_url: 'https://publisher.example/story', published_at: now.toISOString() };
 const grant = { id: 'test-owned-license', reviewer: 'fixture-reviewer', status: 'approved', reviewed_at: '2026-10-01', expires_at: '2026-12-01', terms_url: 'https://publisher.example/terms', basis: 'owned', scope: 'article', canonical_url: news.canonical_url, adapter_ids: ['fixture'], native_layout: true, full_text_display: true, storage: true, automated_ingestion: true, attribution_required: true };
@@ -65,4 +65,34 @@ test('posts exclude private, group and deleted context, and attribute public rep
   for (const change of [{ visibility: 'private' }, { group_id: 'g' }, { deleted_at: '2026-11-01' }]) {
     assert.equal(buildActorEvidence({ ...post, ...change }, { now }).sources.length, 0);
   }
+});
+
+test('reply provenance hashes the full 1000-character source before its 600-byte context cap', () => {
+  const build = body => buildActorEvidence({ kind: 'post', id: 'p1', visibility: 'public', body: 'Workshop planning.',
+    replies: [{ id: 'r1', visibility: 'public', body }] }, { now });
+  const original = 'a'.repeat(999) + 'A', changed = 'a'.repeat(999) + 'B';
+  const a = build(original), b = build(changed), x = a.sources[1], y = b.sources[1];
+  assert.equal(x.text.length, 600); assert.equal(x.truncated, true); assert.equal(x.source_bytes, 1000);
+  assert.equal(x.content_sha256, digest(original)); assert.equal(y.content_sha256, digest(changed));
+  assert.equal(x.context_sha256, y.context_sha256); assert.equal(x.text, y.text);
+  assert.notEqual(x.source_id, y.source_id); assert.notEqual(a.evidence_sha256, b.evidence_sha256);
+  assert.equal(evidenceReceipt(a).sources[1].context_bytes, 600);
+});
+test('reply byte caps preserve multibyte boundaries and accurate full-source identity', () => {
+  for (const [text, truncated] of [['é'.repeat(300), false], ['é'.repeat(301), true], ['🎵'.repeat(999) + '終', true]]) {
+    const p = buildActorEvidence({ kind: 'post', id: 'p1', visibility: 'public', body: 'Public workshop.',
+      replies: [{ id: 'r1', visibility: 'public', body: text }] }, { now });
+    const source = p.sources[1];
+    assert.equal(source.truncated, truncated); assert.ok(Buffer.byteLength(source.text) <= 600);
+    assert.equal(source.source_bytes, Buffer.byteLength(text)); assert.equal(source.content_sha256, digest(text));
+    assert.ok(!source.text.includes('\uFFFD')); assert.equal(Buffer.from(source.text).toString('utf8'), source.text);
+  }
+});
+test('remaining packet budget does not change a reply full-source hash', () => {
+  const item = { kind: 'post', id: 'p1', visibility: 'public', body: 'p'.repeat(200), replies: [{ id: 'r1', visibility: 'public', body: 'é'.repeat(400) }] };
+  const full = buildActorEvidence(item, { now }), limited = buildActorEvidence(item, { now, maxBytes: 256 });
+  assert.equal(limited.sources[1].content_sha256, full.sources[1].content_sha256);
+  assert.equal(limited.sources[1].source_id, full.sources[1].source_id);
+  assert.notEqual(limited.sources[1].context_sha256, full.sources[1].context_sha256);
+  assert.equal(Buffer.byteLength(limited.sources[1].text), 56); assert.equal(limited.sources[1].truncated, true);
 });

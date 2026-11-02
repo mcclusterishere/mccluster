@@ -1,5 +1,5 @@
 import { rest, resolveHouseOrgId } from '../supabase.mjs';
-import { previewActorComment } from '../actors/generate.mjs';
+import { previewActorComment, PROMPT_VERSION } from '../actors/generate.mjs';
 import { digest } from '../actors/evidence.mjs';
 import { personaConfigFromActors } from '../actors/persona.mjs';
 
@@ -40,9 +40,15 @@ export async function actorCommentPreview(job, { query = rest, resolveOrg = reso
   if (job.org_id !== org || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(job.target_id || '')) throw new Error('Actor preview outside Core authority');
   const { kind, item_id: itemId, expected_revision: revision } = job.input || {};
   if (!UUID.test(itemId || '') || !['news', 'song', 'post'].includes(kind)) throw new Error('Invalid actor preview source');
+  const thinContextMode = job.input?.thin_context_mode ?? 'abstain';
+  if (!['abstain', 'question_preview'].includes(thinContextMode)) throw new Error('Invalid thin-context mode');
+  const base = { executor: 'actor_comment_preview:v1', published: false, preview: true, actor_key: job.target_id, source_item_id: itemId, kind,
+    publication_eligible: false, semantic_gate: 'not_validated', prompt_version: PROMPT_VERSION, expected_prompt_version: job.input?.prompt_version ?? null };
+  if (Object.hasOwn(job.input, 'prompt_version') && job.input.prompt_version !== PROMPT_VERSION) {
+    return { ...base, status: 'withheld', reason: 'prompt_version_mismatch', review: { approved: false, issues: [] } };
+  }
   const { body: actors = [] } = await query(`ops_platform_actors?actor_key=eq.${job.target_id}&org_id=eq.${org}&select=actor_key,m_uid,persona,enabled&limit=1`);
   const item = actors[0] ? await loadPreviewItem(kind, itemId, query, { actorMuid: actors[0].m_uid }) : null;
-  const base = { executor: 'actor_comment_preview:v1', published: false, preview: true, actor_key: job.target_id, source_item_id: itemId, kind };
   if (!actors[0] || !item) return { ...base, status: 'withheld', reason: !actors[0] ? 'actor_unavailable' : 'source_unavailable', review: { approved: false, issues: [] } };
   personaConfig ||= personaConfigFromActors(actors);
   if (personaConfig && !personaConfig.selected_cast.includes(job.target_id)) return { ...base, status: 'withheld', reason: 'actor_outside_selected_cast', review: { approved: false, issues: [] } };
@@ -52,6 +58,7 @@ export async function actorCommentPreview(job, { query = rest, resolveOrg = reso
   }
   // No source text, grants, persona, model override or publish flag is accepted
   // from job.input. Production policy/config is a server dependency.
-  return previewActorComment({ item: { ...item, expected_revision: revision }, actor: actors[0],
-    personaConfig, evidenceOptions: { now }, jobId: job.id }, { chat });
+  const output = await previewActorComment({ item: { ...item, expected_revision: revision }, actor: actors[0],
+    personaConfig, evidenceOptions: { now }, jobId: job.id, thinContextMode }, { chat });
+  return { ...output, expected_prompt_version: base.expected_prompt_version };
 }

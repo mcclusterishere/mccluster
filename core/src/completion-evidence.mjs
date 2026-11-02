@@ -78,11 +78,14 @@ function policyEvidence(job, output) {
 
   switch (type) {
     case 'actor_comment_preview': {
-      requireValue(job, output.actor_key === job.target_id && output.preview === true && output.published === false, 'actor preview cannot publish');
+      requireValue(job, output.actor_key === job.target_id && output.preview === true && output.published === false && output.publication_eligible === false, 'actor preview cannot publish');
       requireValue(job, output.source_item_id === job.input?.item_id && output.kind === job.input?.kind, 'preview must match source');
-      requireValue(job, ['withheld', 'ready_for_owner_review'].includes(output.status) && Boolean(text(output.reason)), 'preview needs a bounded outcome');
-      if (output.status === 'ready_for_owner_review') {
-        requireValue(job, output.review?.approved === true && Boolean(text(output.provenance?.evidence_sha256)) && Boolean(text(output.metrics?.generation?.model)) && output.disclosure?.is_ai === true, 'ready preview needs provenance, local model, review and identity');
+      requireValue(job, ['withheld', 'needs_owner_review'].includes(output.status) && Boolean(text(output.reason)), 'preview needs a bounded outcome');
+      if (output.status === 'needs_owner_review') {
+        requireValue(job, output.review?.approved === false && output.review?.structural_valid === true && output.review?.semantic_status === 'unverified' &&
+          nonEmptyArray(output.claim_audit) && output.claim_audit.every(c => c.entailment === 'unverified') &&
+          Boolean(text(output.provenance?.evidence_sha256)) && Boolean(text(output.metrics?.generation?.model)) && Boolean(text(output.metrics?.review?.model)) && output.disclosure?.is_ai === true,
+        'owner-review preview needs structural provenance, unverified claims, local models and identity; it is not approved');
       }
       records.push({ kind: 'actor_preview', source_item_id: output.source_item_id, status: output.status, reason: output.reason });
       break;

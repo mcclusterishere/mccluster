@@ -17,7 +17,7 @@ export function isNewsCandidate(article) {
 
 export const validateActorComment = validateCommentFormat;
 
-export async function actorNewsComment(job, { query = rest, chat = localAiChat, resolveOrg = resolveHouseOrgId, now = new Date() } = {}) {
+export async function actorNewsComment(job, { query = rest, chat = localAiChat, resolveOrg = resolveHouseOrgId, now = new Date(), thinContextMode = 'abstain' } = {}) {
   const orgId = await resolveOrg();
   if (job.org_id !== orgId || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(job.target_id || '')) throw new Error('Actor job outside Core authority');
   const actorKey = job.target_id;
@@ -40,18 +40,24 @@ export async function actorNewsComment(job, { query = rest, chat = localAiChat, 
   if (!article) return {...base,published:false,reason:'no_recent_article'};
   const preview = await previewActorComment({
     item: { ...article, kind: 'news' }, actor: { ...actor, actor_key: actorKey },
-    previous: recent.map(r => r.body), jobId: job.id, evidenceOptions: { now }, personaConfig,
+    previous: recent.map(r => r.body), jobId: job.id, evidenceOptions: { now }, personaConfig, thinContextMode,
   }, { chat });
   const audit = { provenance: preview.provenance, persona: preview.persona, disclosure: preview.disclosure,
-    prompt_version: preview.prompt_version, prompt_sha256: preview.prompt_sha256, metrics: preview.metrics, review: preview.review };
-  if (preview.status !== 'ready_for_owner_review') return { ...base, ...audit, published: false, reason: 'review_withheld', withheld_reason: preview.reason };
-  // The immutable preview path above cannot publish. Only this existing executor
-  // calls the original atomic, capped RPC. No songs/posts/backfill enter it.
+    prompt_version: preview.prompt_version, prompt_sha256: preview.prompt_sha256, metrics: preview.metrics, review: preview.review,
+    publication_eligible: false, semantic_gate: preview.semantic_gate,
+    ...(preview.comment ? { candidate: { comment: preview.comment, evidence: preview.evidence, claim_audit: preview.claim_audit } } : preview.candidate ? { candidate: preview.candidate } : {}) };
+  if (preview.status !== 'needs_owner_review') return { ...base, ...audit, published: false, reason: 'review_withheld', withheld_reason: preview.reason };
   const model = preview.metrics.generation.model;
   if (!model) return { ...base, ...audit, published: false, reason: 'review_withheld', withheld_reason: 'model_identity_missing' };
   const { body: current = [] } = await query(`media_news_articles?id=eq.${encodeURIComponent(article.id)}&select=id,title,canonical_url,published_at&limit=1`);
   if (!current[0] || buildActorEvidence({ ...current[0], kind: 'news' }, { now }).evidence_sha256 !== buildActorEvidence({ ...article, kind: 'news' }, { now }).evidence_sha256) {
     return { ...base, ...audit, published: false, reason: 'review_withheld', withheld_reason: 'source_changed_before_publish' };
+  }
+  // Current calibration does not establish a trusted semantic gate. A matching
+  // quote or local-model approval is NEVER owner approval. v3 deliberately cannot
+  // reach the existing publisher; no job input can override this release gate.
+  if (preview.publication_eligible !== true || preview.review?.approved !== true) {
+    return { ...base, ...audit, published: false, reason: 'review_withheld', withheld_reason: 'semantic_review_not_validated' };
   }
   const {body:receipt}=await query('rpc/ops_actor_publish_comment',{method:'POST',body:JSON.stringify({p_org_id:orgId,p_actor_key:actorKey,p_article_id:article.id,p_job_id:job.id,p_body:preview.comment,p_model:model})});
   return {...base,...receipt,...audit,model,usage:preview.metrics.generation.usage};

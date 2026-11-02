@@ -82,7 +82,8 @@
           "voice": "Concise, dry humor, practical questions.",
           "motivation": "Understand what is useful to the community."
         }
-      }
+      },
+      "thinContextMode": "question_preview"
     },
     {
       "item": {

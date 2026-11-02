@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readerSourceDecision, readerArticleDecision } from './news-reader-policy.mjs';
 
-export const EVIDENCE_VERSION = 'actor-evidence/v1';
+export const EVIDENCE_VERSION = 'actor-evidence/v2';
 export const digest = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 const str = (value, max = 500) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const date = value => value && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : null;
@@ -25,12 +25,14 @@ export function buildActorEvidence(item, { readerGrants = [], contentGrants = []
     updated_at: date(item.updated_at) }, access: { level: 'unavailable', reason: 'no_content', full_text_received: false,
       full_text_in_context: false, audio_observed: false }, sources: [], unknowns: [], captured_at: date(now) };
   let remaining = maxBytes;
-  const add = (type, text, provenance = {}) => {
+  const add = (type, text, provenance = {}, sourceBudget = remaining) => {
     if (!str(text, 1) || remaining <= 0) return false;
-    const kept = boundedText(text, remaining); remaining -= Buffer.byteLength(kept);
+    // Hash the complete supplied source before either per-source or packet caps.
+    // A tail edit must change source identity even when the visible prefix stays.
+    const kept = boundedText(text, Math.min(remaining, sourceBudget)); remaining -= Buffer.byteLength(kept);
     const contentHash = digest(text);
     packet.sources.push({ source_id: `${item.kind}:${item.id}:${type}:${contentHash.slice(0, 16)}`, type, text: kept,
-      content_sha256: contentHash, context_sha256: digest(kept), truncated: kept !== text, ...provenance });
+      content_sha256: contentHash, source_bytes: Buffer.byteLength(text), context_sha256: digest(kept), truncated: kept !== text, ...provenance });
     return kept === text;
   };
   const meta = type => ({ revision, attribution: str(item.attribution || item.artist_name, 500) || null,
@@ -84,7 +86,7 @@ export function buildActorEvidence(item, { readerGrants = [], contentGrants = []
         packet.access.level = fits ? 'full' : 'partial'; packet.access.reason = 'public_post'; }
       for (const reply of (Array.isArray(item.replies) ? item.replies : []).slice(-6)) {
         if (reply.visibility !== 'public' || reply.deleted_at || !str(reply.id)) continue;
-        add(`reply:${str(reply.id, 160)}`, boundedText(reply.body, 600), { ...meta('public_reply_statement'), author_id: str(reply.author_m_uid, 160) || null });
+        add(`reply:${str(reply.id, 160)}`, reply.body, { ...meta('public_reply_statement'), author_id: str(reply.author_m_uid, 160) || null }, 600);
       }
       packet.unknowns.push('author_statements_not_independently_verified');
     }
