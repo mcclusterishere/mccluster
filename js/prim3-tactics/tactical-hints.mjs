@@ -10,12 +10,16 @@
 // - Fog of war: the evaluator only ever sees playerProjection(): own units, board, and the enemies
 //   the player knows about. Hidden enemies, unrevealed tiles, technical truth and RNG never enter it.
 // - Correctness of answers is exact arithmetic here (rationals), never a language model.
-// - Geometry is the resolver's square grid: Manhattan gridDistance, Bresenham line of sight,
-//   same-floor only. A hex adapter would be a separate, separately verified module.
+// - Geometry is the resolver's square grid: Manhattan gridDistance, Bresenham line of sight, and
+//   (when the state declares walkable surfaces and floor links) the resolver's own heights, roofs and
+//   stairs. A hex adapter would be a separate, separately verified module.
+// - Display frame: battlefield.coordinateFrame = { x0, y0, yUp } changes only how coordinates are
+//   WRITTEN for the player (X = x − x0, Y = yUp ? y0 − y : y − y0). Engine cells, distances and answers
+//   are unchanged; geometry keeps engine cells and adds `display`.
 // - The suggestion is "strong given what you know", never "perfect" or "guaranteed".
 // - Bounded game rules only; nothing here is real-world weapon or trajectory guidance.
 
-import { createState, gridDistance, hasLineOfSight, shotPreview, stableHash } from './tactical-resolver.mjs';
+import { createState, gridDistance, hasLineOfSight, shotPreview, stableHash, computeReach } from './tactical-resolver.mjs';
 
 export const HINT_VERSION = 'tactical-hints/0.1.0';
 
@@ -41,7 +45,7 @@ export function knownEnemyIds(state, knownEnemyIdsFromHost = null) {
   const known = new Set();
   for (const enemy of state.units) {
     if (enemy.faction === 'PLAYER' || enemy.dead) continue;
-    if (players.some((p) => gridDistance(p, enemy) <= p.detectionRadius && hasLineOfSight(state, p, enemy))) known.add(enemy.id);
+    if (players.some((p) => gridDistance(p, enemy, state) <= p.detectionRadius && hasLineOfSight(state, p, enemy))) known.add(enemy.id);
   }
   return known;
 }
@@ -66,15 +70,43 @@ export function playerProjection(state, { knownEnemyIds: hostKnown = null } = {}
     objectiveTiles: Array.isArray(state.battlefield && state.battlefield.objectiveTiles)
       ? state.battlefield.objectiveTiles.map((t) => ({ id: String(t.id), x: Number(t.x), y: Number(t.y), z: Number(t.z || 0) }))
       : [],
-    mission: { clock: state.mission.clock, escalation: state.mission.escalation }
+    mission: { clock: state.mission.clock, escalation: state.mission.escalation },
+    // multi-floor geometry and the display frame: present only when the state declares them, so a
+    // projection (and every binding) of an older board is byte-for-byte what it was
+    ...(Array.isArray(state.surfaces) ? { surfaces: state.surfaces.map((x) => ({ ...x })) } : {}),
+    ...(Array.isArray(state.links) && state.links.length ? { links: state.links.map((l) => ({ ...l, from: { ...l.from }, to: { ...l.to } })) } : {}),
+    ...(frameOf(state.battlefield) ? { coordinateFrame: { ...frameOf(state.battlefield) } } : {})
   };
+}
+
+function frameOf(battlefield) {
+  const f = battlefield && battlefield.coordinateFrame;
+  if (!f) return null;
+  return { x0: Number(f.x0 || 0), y0: Number(f.y0 || 0), yUp: Boolean(f.yUp) };
+}
+
+// Engine cell -> the coordinates the player reads. Identity without a frame.
+export function displayPoint(projection, point) {
+  const f = projection && projection.coordinateFrame;
+  if (!f) return { x: point.x, y: point.y };
+  return { x: point.x - f.x0, y: f.yUp ? f.y0 - point.y : point.y - f.y0 };
+}
+
+function fmt(projection, point) {
+  const d = displayPoint(projection, point);
+  return `(${d.x}, ${d.y})`;
+}
+
+function multiFloor(projection) {
+  return Array.isArray(projection.surfaces) || Array.isArray(projection.links);
 }
 
 // A resolver state rebuilt from the projection, so the resolver's own functions (shotPreview,
 // hasLineOfSight) run on exactly what the player knows and nothing else.
 function projectedState(projection) {
   const s = createState({ width: projection.width, height: projection.height, floors: projection.floors,
-    units: projection.units, cover: projection.cover, blockers: projection.blockers, objectives: projection.objectives });
+    units: projection.units, cover: projection.cover, blockers: projection.blockers, objectives: projection.objectives,
+    ...(projection.surfaces ? { surfaces: projection.surfaces } : {}), ...(projection.links ? { links: projection.links } : {}) });
   s.round = projection.round; s.phase = projection.phase;
   // createState normalises units; keep the projected flags exactly
   s.units = projection.units.map((u) => ({ ...u, statuses: [...u.statuses] }));
@@ -141,10 +173,14 @@ const GENERATORS = {
     (ctx, rnd) => { // grid distance on THIS board (the resolver's own rule)
       const u = ctx.unit, t = ctx.target;
       const d = Math.abs(u.x - t.x) + Math.abs(u.y - t.y);
-      return { skill: 'math.manhattan-distance', geometry: { origin: { x: u.x, y: u.y }, target: { x: t.x, y: t.y }, dx: Math.abs(u.x - t.x), dy: Math.abs(u.y - t.y) }, prompt: `Your unit is at (${u.x}, ${u.y}). The ${t.label} is at (${t.x}, ${t.y}). Moving only along rows and columns, how many tiles apart are they?`,
+      // what the player reads (a display frame shifts/flips the numbers; the differences are the same)
+      const U = ctx.display(u), T = ctx.display(t);
+      const geometry = { origin: { x: u.x, y: u.y }, target: { x: t.x, y: t.y }, dx: Math.abs(u.x - t.x), dy: Math.abs(u.y - t.y) };
+      if (ctx.framed) geometry.display = { origin: U, target: T };
+      return { skill: 'math.manhattan-distance', geometry, prompt: `Your unit is at (${U.x}, ${U.y}). The ${t.label} is at (${T.x}, ${T.y}). Moving only along rows and columns, how many tiles apart are they?`,
         answer: { kind: 'num', value: rat(d) },
-        steps: [`Count the column difference: |${u.x} − ${t.x}|.`, `Count the row difference: |${u.y} − ${t.y}|.`, `Add them: ${Math.abs(u.x - t.x)} + ${Math.abs(u.y - t.y)}.`],
-        explain: `|${u.x}−${t.x}| + |${u.y}−${t.y}| = ${d}` };
+        steps: [`Count the column difference: |${U.x} − ${T.x}|.`, `Count the row difference: |${U.y} − ${T.y}|.`, `Add them: ${Math.abs(U.x - T.x)} + ${Math.abs(U.y - T.y)}.`],
+        explain: `|${U.x}−${T.x}| + |${U.y}−${T.y}| = ${d}` };
     },
     (ctx, rnd) => { // expected damage = probability × damage (exact)
       const p = [25, 40, 50, 60, 75, 80][rnd() % 6], dmg = 2 + (rnd() % 4);
@@ -189,13 +225,14 @@ const GENERATORS = {
 };
 
 function challengeContext(projection, unit, target) {
-  if (target) return { unit, target: { x: Number(target.x), y: Number(target.y), label: 'previewed destination' } };
+  const base = { display: (p) => displayPoint(projection, p), framed: Boolean(projection.coordinateFrame) };
+  if (target) return { ...base, unit, target: { x: Number(target.x), y: Number(target.y), label: 'previewed destination' } };
   const tiles = projection.objectiveTiles.filter((t) => isOpenObjective(projection, t.id));
   const enemies = projection.units.filter((u) => u.faction !== 'PLAYER' && !u.dead);
   const goal = tiles[0] ? { ...tiles[0], label: 'objective' }
     : enemies[0] ? { x: enemies[0].x, y: enemies[0].y, label: 'known hostile' }
     : { x: Math.min(projection.width - 1, unit.x + 3), y: unit.y, label: 'waypoint' };
-  return { unit, target: goal };
+  return { ...base, unit, target: goal };
 }
 
 // mastery: 0..3. Higher mastery unlocks the harder generator of the field (and richer guidance).
@@ -230,7 +267,7 @@ function nearestObjectiveDistance(projection, at) {
   let best = Infinity, id = null;
   for (const t of projection.objectiveTiles) {
     if (!isOpenObjective(projection, t.id)) continue;
-    const d = gridDistance(at, t);
+    const d = gridDistance(at, t, projection);
     if (d < best) { best = d; id = t.id; }
   }
   return { distance: best, objectiveId: id };
@@ -242,31 +279,23 @@ function expectedDamage(preview) {
   return p * ((1 - c) * preview.damage + c * preview.critDamage);
 }
 
-// Orthogonal step paths over KNOWN geometry: walls (blockers) and known units block a step. The
-// resolver's moveUnit only checks destination distance; the hint and the phone preview are stricter
-// (they never offer a tile you could only reach by walking through a wall you can see). Unknown
-// hostiles cannot be accounted for: the real move still applies the resolver's own checks.
+// Step paths over KNOWN geometry: walls (blockers), unwalkable upper-floor cells and known units block
+// a step. It is the resolver's own weighted reach (computeReach: orthogonal step = 1, declared link =
+// link.cost), run on the player's projection only, with a fixed N E S W neighbour order so paths are
+// deterministic. Pass pathTo(...) as moveUnit's options.path and the preview is the execution.
+// Unknown hostiles cannot be accounted for: the real move still applies the resolver's own checks.
+// Steps are {x, y}; on a multi-floor board (surfaces or links declared) every step also carries z.
 export function knownPaths(projection, unitId) {
   const unit = projection.units.find((u) => u.id === unitId);
-  const blocked = new Set(projection.blockers.map((b) => `${b.x}:${b.y}:${b.z}`));
-  const taken = new Set(projection.units.filter((u) => !u.dead && u.id !== unit.id).map((u) => `${u.x}:${u.y}:${u.z}`));
-  const key = (x, y) => `${x}:${y}:${unit.z}`;
-  const dist = new Map([[key(unit.x, unit.y), 0]]), prev = new Map();
-  const queue = [{ x: unit.x, y: unit.y }];
-  while (queue.length) {
-    const c = queue.shift(), d = dist.get(key(c.x, c.y));
-    if (d >= unit.moveRange) continue;
-    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) { // N E S W, fixed order: deterministic paths
-      const x = c.x + dx, y = c.y + dy, k = key(x, y);
-      if (x < 0 || y < 0 || x >= projection.width || y >= projection.height) continue;
-      if (blocked.has(k) || taken.has(k) || dist.has(k)) continue;
-      dist.set(k, d + 1); prev.set(k, key(c.x, c.y)); queue.push({ x, y });
-    }
-  }
-  const pathTo = (x, y) => {
-    let k = key(x, y); if (!dist.has(k)) return null;
-    const out = []; while (k !== key(unit.x, unit.y)) { const [px, py] = k.split(':').map(Number); out.unshift({ x: px, y: py }); k = prev.get(k); }
-    return out;
+  const reach = computeReach(projectedState(projection), unitId, unit.moveRange, { order: 'NESW' });
+  const key = (x, y, z = unit.z) => `${x}:${y}:${z}`;
+  const dist = new Map([[key(unit.x, unit.y), 0]]);
+  for (const c of reach.cells) dist.set(key(c.x, c.y, c.z), c.cost);
+  const withZ = multiFloor(projection);
+  const pathTo = (x, y, z = unit.z) => {
+    const path = reach.pathTo(x, y, z);
+    if (!path) return x === unit.x && y === unit.y && z === unit.z ? [] : null;
+    return path.map((c) => (withZ ? { x: c.x, y: c.y, z: c.z } : { x: c.x, y: c.y }));
   };
   return { dist, pathTo, key };
 }
@@ -276,13 +305,16 @@ export function legalCandidates(projection, unitId) {
   const out = [{ action: 'HOLD', x: unit.x, y: unit.y, z: unit.z, apCost: 0, steps: 0 }];
   if (unit.ap < 1 || unit.dead || unit.downed) return out;
   const { dist, key } = knownPaths(projection, unitId);
-  for (let y = 0; y < projection.height; y += 1) {
-    for (let x = 0; x < projection.width; x += 1) {
-      if (x === unit.x && y === unit.y) continue;
-      const steps = dist.get(key(x, y));
-      if (steps === undefined) continue; // no known path within moveRange
-      // resolver MOVE rule also holds: Manhattan distance ≤ steps ≤ moveRange, 1 AP
-      out.push({ action: 'MOVE', x, y, z: unit.z, apCost: 1, steps });
+  const floors = multiFloor(projection) ? [...Array(projection.floors).keys()] : [unit.z];
+  for (const z of floors) {
+    for (let y = 0; y < projection.height; y += 1) {
+      for (let x = 0; x < projection.width; x += 1) {
+        if (x === unit.x && y === unit.y && z === unit.z) continue;
+        const steps = dist.get(key(x, y, z));
+        if (steps === undefined) continue; // no known path within moveRange
+        // resolver MOVE rule also holds: movement cost (steps; a link counts its cost) ≤ moveRange, 1 AP
+        out.push({ action: 'MOVE', x, y, z, apCost: 1, steps });
+      }
     }
   }
   return out;
@@ -306,7 +338,7 @@ export function evaluate(projection, unitId, weights = WEIGHTS) {
         const out = expectedDamage(pv);
         if (out > outgoing) { outgoing = out; bestShot = { targetId: e.id, hitChance: pv.hitChance, damage: pv.damage, cover: pv.cover, flanked: pv.flanked }; }
       }
-      if (unit.concealed && gridDistance(e, cand) <= e.detectionRadius && hasLineOfSight(s, e, cand)) detected = true;
+      if (unit.concealed && gridDistance(e, cand, s) <= e.detectionRadius && hasLineOfSight(s, e, cand)) detected = true;
     }
     const obj = nearestObjectiveDistance(projection, cand);
     const progress = Number.isFinite(startObj.distance) && Number.isFinite(obj.distance) ? startObj.distance - obj.distance : 0;
@@ -314,7 +346,7 @@ export function evaluate(projection, unitId, weights = WEIGHTS) {
       + weights.outgoingExpectedDamage * outgoing - (detected ? weights.concealmentBreak : 0);
     return { ...cand, score: round2(score), features: { objectiveProgress: progress, objectiveDistance: obj.distance, incomingExpected: round2(incoming), exposedTo, outgoingExpected: round2(outgoing), bestShot, breaksConcealment: detected, apLeft } };
   });
-  scored.sort((a, b) => b.score - a.score || a.y - b.y || a.x - b.x || (a.action === 'HOLD' ? -1 : 1));
+  scored.sort((a, b) => b.score - a.score || a.y - b.y || a.x - b.x || a.z - b.z || (a.action === 'HOLD' ? -1 : 1));
   const top = scored[0];
   const ties = scored.filter((c) => top.score - c.score <= weights.tieEpsilon);
   return { top, ties, candidates: scored, objective: startObj };
@@ -324,7 +356,8 @@ function round2(v) { return Math.round(v * 100) / 100; }
 
 function explainSuggestion(result, projection) {
   const t = result.top, f = t.features, lines = [];
-  lines.push(t.action === 'HOLD' ? `Hold position at (${t.x}, ${t.y}).` : `Move to (${t.x}, ${t.y}) — 1 action point, ${t.steps} step${t.steps === 1 ? '' : 's'} around known walls (move range ${result.moveRange}).`);
+  const floorNote = multiFloor(projection) && t.z !== result.unitAt.z ? ` on floor ${t.z}` : '';
+  lines.push(t.action === 'HOLD' ? `Hold position at ${fmt(projection, t)}.` : `Move to ${fmt(projection, t)}${floorNote} — 1 action point, ${t.steps} step${t.steps === 1 ? '' : 's'} around known walls (move range ${result.moveRange}).`);
   if (Number.isFinite(f.objectiveDistance)) lines.push(`Objective: ${f.objectiveDistance} tiles away after this (${f.objectiveProgress >= 0 ? 'closer by ' + f.objectiveProgress : 'farther by ' + (-f.objectiveProgress)}).`);
   else lines.push('No reachable objective tile is known on this floor; the suggestion weighs safety and shots only.');
   lines.push(f.exposedTo.length ? `Known hostiles that could shoot you there: expected ${f.incomingExpected} damage (sum of hit% × damage, crits included).` : 'No known hostile has a shot at that tile.');
@@ -378,10 +411,13 @@ export function revealAnswer(session) {
 function suggestion(projection, unitId, session) {
   const result = evaluate(projection, unitId);
   const unit = projection.units.find((u) => u.id === unitId);
-  result.unitAt = { x: unit.x, y: unit.y }; result.moveRange = unit.moveRange;
+  result.unitAt = { x: unit.x, y: unit.y, z: unit.z }; result.moveRange = unit.moveRange;
   return {
-    suggestion: { action: result.top.action, x: result.top.x, y: result.top.y, z: result.top.z, score: result.top.score, features: result.top.features },
-    alternatives: result.ties.slice(1, 4).map((c) => ({ action: c.action, x: c.x, y: c.y, score: c.score })),
+    suggestion: { action: result.top.action, x: result.top.x, y: result.top.y, z: result.top.z, score: result.top.score, features: result.top.features,
+      ...(projection.coordinateFrame ? { display: displayPoint(projection, result.top) } : {}),
+      ...(multiFloor(projection) && result.top.action === 'MOVE' ? { path: knownPaths(projection, unitId).pathTo(result.top.x, result.top.y, result.top.z) } : {}) },
+    alternatives: result.ties.slice(1, 4).map((c) => ({ action: c.action, x: c.x, y: c.y, ...(multiFloor(projection) ? { z: c.z } : {}), score: c.score,
+      ...(projection.coordinateFrame ? { display: displayPoint(projection, c) } : {}) })),
     why: explainSuggestion(result, projection),
     weights: WEIGHTS,
     autoAction: false // the hint never moves the unit or spends AP

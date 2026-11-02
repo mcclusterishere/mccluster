@@ -481,6 +481,9 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     const src = glbs[u.faction === 'PLAYER' ? u.role : 'H']; if (!src) return null;
     const g = new THREE.Group(); g.userData.unitId = u.id;
     const m = src.scene.clone(true); m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    // generated models arrive at their own scale: stand them at the stand-in's height, feet at the origin
+    const box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3()), s = 2.15 / Math.max(0.001, size.y);
+    m.scale.setScalar(s); m.position.set(-(box.min.x + size.x / 2) * s, -box.min.y * s, -(box.min.z + size.z / 2) * s);
     g.add(m); return { g, rig: null, mixer: null };
   }
 

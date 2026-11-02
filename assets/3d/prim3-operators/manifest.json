@@ -1,4 +1,23 @@
 {
-  "note": "Authored operator models for the PRIM3 tactics preview. board3d.mjs loads a GLB only when it is listed here; an empty list keeps the procedural mannequins. Keys: E, R, T (squad roles) and H (known hostile, SOI-01 security officer). Paths are relative to this folder. See README.md.",
-  "models": {}
+  "note": "Authored operator models for the PRIM3 tactics preview. board3d.mjs loads a GLB only when it is listed here; an empty list keeps the procedural mannequins; models are scaled to operator height with their feet at the origin. Keys: E, R, T (squad roles) and H (known hostile, SOI-01 security officer). Paths are relative to this folder. See README.md.",
+  "models": {
+    "E": "E.glb",
+    "R": "R.glb",
+    "T": "T.glb"
+  },
+  "sources": {
+    "E": {
+      "reference": "mcclusterishere/Prim3@design/operator-loadouts-20261102:assets/reference/field-entry/FO-E-AE-mannequin-v01.png",
+      "media_job": "9b0bd3c5-da8a-4793-b979-b871a46c7972"
+    },
+    "R": {
+      "reference": "mcclusterishere/Prim3@design/operator-loadouts-20261102:assets/reference/field-recon/FO-R-SO-mannequin-v02.png",
+      "media_job": "75f65b11-bdf0-42e8-b777-c8e483ae65fc"
+    },
+    "T": {
+      "reference": "assets/3d/prim3-operators/refs/FO-T-STD-mannequin-v01-nomarks.png (Prim3 FO-T-STD-mannequin-v01 with the recorder stripes removed)",
+      "media_job": "fd673ab4-3099-4c86-aa56-3c0c9bd8c7e1"
+    }
+  },
+  "generator": "fal-ai/hunyuan3d-v3/image-to-3d through McCluster model3d.generate (Normal, PBR, 40,000 faces; 67.5 cents each). Textures re-encoded to 1024/512 px JPEG and the generator's doubled specular removed; geometry unchanged."
 }

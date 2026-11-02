@@ -37,4 +37,12 @@ The procedural mannequins draw no marks.
 4. Save it here as `E.glb` / `R.glb` / `T.glb` / `H.glb` and list it in `manifest.json`, for example `"models": { "H": "H.glb" }`.
 5. Run `scripts/e2e/prim3-tactics-hints.e2e.mjs` with `THREE_DIR` set. It must stay green.
 
-Status (2026-11-02): no GLB has been generated. Two sessions have now been blocked the same way: the McCluster Core connector answers `system_health` but every media tool (`media_models_search`, `media_model_recommend`, `model3d_generate`) returns "Authentication required". No fal spend has happened. The connector has to be re-authorized before generation can run.
+Status (2026-11-02): **E, R and T are generated** and listed in `manifest.json`; H is still the procedural stand-in.
+
+| Role | Reference (image-to-3D input) | McCluster media job | Cost |
+|---|---|---|---|
+| E | Prim3 `FO-E-AE-mannequin-v01.png` | `9b0bd3c5-da8a-4793-b979-b871a46c7972` | 67.5¢ |
+| R | Prim3 `FO-R-SO-mannequin-v02.png` | `75f65b11-bdf0-42e8-b777-c8e483ae65fc` | 67.5¢ |
+| T | `refs/FO-T-STD-mannequin-v01-nomarks.png` (the recorder's red stripes removed first) | `fd673ab4-3099-4c86-aa56-3c0c9bd8c7e1` | 67.5¢ |
+
+Generator: `fal-ai/hunyuan3d-v3/image-to-3d` through `model3d.generate` (Normal, PBR, 40,000 faces), each call capped at a 70¢ budget; $2.03 in total. fal returned 22–28 MB files; the embedded textures were re-encoded to 1024/512 px JPEG and the generator's doubled specular removed (geometry unchanged), so each GLB is about 1.3 MB. `*-preview.png` are fal's thumbnails. Both renderers scale a GLB to operator height with its feet at the origin. Known gap: in the courtyard (`board3d.mjs`) a generated model has no ground team-glow ring yet; Transit / Relay (`level3d.mjs`) draws one.

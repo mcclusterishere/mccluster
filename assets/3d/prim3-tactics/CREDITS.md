@@ -9,5 +9,11 @@ All files here come from [Poly Haven](https://polyhaven.com) and are **CC0** (pu
 | `pbr/cobblestone_square_*` | [Cobblestone Square](https://polyhaven.com/a/cobblestone_square) | Plaza around the board |
 | `pbr/red_brick_03_*` | [Red Brick 03](https://polyhaven.com/a/red_brick_03) | Facade and wall pillars |
 | `pbr/concrete_wall_006_*` | [Concrete Wall 006](https://polyhaven.com/a/concrete_wall_006) | Barriers, caps, sills, planters |
+| `pbr/asphalt_02_*` | [Asphalt 02](https://polyhaven.com/a/asphalt_02) | Transit / Relay: yard and roads |
+| `pbr/container_side_*` | [Container Side](https://polyhaven.com/a/container_side) | Transit / Relay: shipping containers |
+| `pbr/corrugated_iron_02_*` | [Corrugated Iron 02](https://polyhaven.com/a/corrugated_iron_02) | Transit / Relay: warehouse walls |
+| `pbr/metal_grate_rusty_*` | [Metal Grate Rusty](https://polyhaven.com/a/metal_grate_rusty) | Transit / Relay: stairs, bridge decks, skybridge |
+| `pbr/concrete_floor_worn_001_*` | [Concrete Floor Worn 001](https://polyhaven.com/a/concrete_floor_worn_001) | Transit / Relay: roofs and canal walls |
+| `pbr/brown_planks_05_*` | [Brown Planks 05](https://polyhaven.com/a/brown_planks_05) | Transit / Relay: crates and pallets |
 
 **Texture maps:** `_diff` is the colour (sRGB), `_nor_gl` the OpenGL normal map and `_rough` the roughness map. They were downscaled from the 1K originals to 512 px JPEG so a phone loads them quickly. `js/prim3-tactics/board3d.mjs` loads them after first paint; until then, or if they fail, procedural textures stand in.
