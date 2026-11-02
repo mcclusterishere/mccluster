@@ -29,8 +29,8 @@
     if (s === 409 || /conflict|pt409|40001/.test(tag)) return { kind: "conflict", code: code || "conflict", status: s };
     if (s === 401 || /signin/.test(tag)) return { kind: "signin", code: code || "signin", status: s };
     if (s === 403 || /42501|forbidden|not_authorized|private_profile|editor_removed|not_owner_withdrawn/.test(tag)) return { kind: "forbidden", code: code || "forbidden", status: s, reason: reason(tag) };
+    if ((s === 503 && /unconfigured|not enabled/.test(tag)) || /pgrst202/.test(tag)) return { kind: "unconfigured", code: "unconfigured", status: s };
     if (s === 404 || /p0002|not_found/.test(tag)) return { kind: "notfound", code: code || "notfound", status: s };
-    if (s === 503 && /unconfigured|not enabled/.test(tag)) return { kind: "unconfigured", code: "unconfigured", status: s };
     if (s === 413 || /too_large/.test(tag)) return { kind: "toolarge", code: "too_large", status: s };
     if (s === 400 || /22023|invalid/.test(tag)) return { kind: "invalid", code: code || "invalid", status: s };
     if (!s) return { kind: "network", code: "network", status: 0 };
