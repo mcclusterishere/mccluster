@@ -140,8 +140,27 @@ function capabilityForSemanticTool(name, args) {
   return null;
 }
 
-function providerInputForSemanticTool(name, args) {
-  const input = { prompt: args.prompt };
+// A catalog row may say how its provider takes a semantic request, so the
+// tool follows the catalog instead of assuming every provider's field names:
+//   parameter_schema['x-reference-field']  where the first reference URL goes
+//                                          (default image_url)
+//   parameter_schema['x-fixed-input']      provider options this row is priced
+//                                          for (e.g. PBR on, a face count)
+// A prompt is sent only when the schema accepts one.
+function catalogHints(model) {
+  const schema = model?.parameter_schema && typeof model.parameter_schema === 'object' ? model.parameter_schema : {};
+  const fixed = schema['x-fixed-input'] && typeof schema['x-fixed-input'] === 'object' && !Array.isArray(schema['x-fixed-input'])
+    ? schema['x-fixed-input'] : {};
+  const refField = typeof schema['x-reference-field'] === 'string' && /^[a-z0-9_]+_url$/i.test(schema['x-reference-field'])
+    ? schema['x-reference-field'] : 'image_url';
+  const closed = schema.additionalProperties === false && schema.properties && typeof schema.properties === 'object';
+  const acceptsPrompt = !closed || Object.prototype.hasOwnProperty.call(schema.properties, 'prompt');
+  return { fixed, refField, acceptsPrompt };
+}
+
+export function providerInputForSemanticTool(name, args, model = null) {
+  const hints = catalogHints(model);
+  const input = hints.acceptsPrompt ? { prompt: args.prompt } : {};
   if (name === 'video.generate') {
     if (args.duration_seconds !== undefined) input.duration = args.duration_seconds;
     if (args.aspect_ratio) input.aspect_ratio = args.aspect_ratio;
@@ -149,9 +168,9 @@ function providerInputForSemanticTool(name, args) {
   if (Array.isArray(args.references) && args.references.length) {
     const first = args.references[0];
     const url = typeof first === 'string' ? first : first?.url;
-    if (url) input.image_url = url;
+    if (url) input[hints.refField] = url;
   }
-  return input;
+  return { ...input, ...hints.fixed };
 }
 
 async function semanticGenerate(name, args, request, env, user) {
@@ -178,7 +197,7 @@ async function semanticGenerate(name, args, request, env, user) {
       org_id: args.org_id,
       model_id: model.id,
       prompt: args.prompt,
-      input: providerInputForSemanticTool(name, args),
+      input: providerInputForSemanticTool(name, args, model),
       budget_cents: args.budget_cents,
       strategy: `semantic:${name}`
     }
