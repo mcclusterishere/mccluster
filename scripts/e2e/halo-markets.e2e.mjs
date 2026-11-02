@@ -111,20 +111,20 @@ try{
     check(scope,'no horizontal overflow (scrollWidth === clientWidth)',(await overflow(page))===0,await overflow(page));
     const inner=await page.evaluate(()=>{const b=document.querySelector('#haloMarkets [data-body]');return b.scrollWidth-b.clientWidth;});
     check(scope,'the card itself does not scroll sideways',inner===0,inner);
-    await page.screenshot({path:join(OUT,`halo-markets-us-${vp.width}.png`)});
+    await page.screenshot({path:join(OUT,`halo-markets-us-${vp.width}.png`),timeout:120000});
     await page.evaluate(()=>{document.querySelector('#haloMarkets [data-body]').scrollTop=1e5;});
-    await page.screenshot({path:join(OUT,`halo-markets-us-news-${vp.width}.png`)});
+    await page.screenshot({path:join(OUT,`halo-markets-us-news-${vp.width}.png`),timeout:120000});
     /* a country tap on the globe (the countries layer announces it) opens a non-US card: prices need the paid feed */
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('hu:country',{detail:{code:'GB',name:'United Kingdom'}})));
     await page.waitForFunction(()=>document.querySelector('#haloMarkets h2').textContent==='United Kingdom'&&document.querySelectorAll('#haloMarkets [data-symbol]').length===2,null,{timeout:10000}).catch(()=>{});
     const gb=await page.evaluate(()=>[...document.querySelectorAll('#haloMarkets .hm__px')].map(x=>x.textContent));
     check(scope,'a country tap opens its card; non-US prices say they need a paid feed, never a number',gb.length===2&&gb.every(t=>t==='Price needs paid feed'),gb);
-    await page.screenshot({path:join(OUT,`halo-markets-gb-${vp.width}.png`)});
+    await page.screenshot({path:join(OUT,`halo-markets-gb-${vp.width}.png`),timeout:120000});
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('hu:country',{detail:{code:'JP',name:'Japan'}})));
     await page.waitForFunction(()=>document.querySelector('#haloMarkets h2').textContent==='Japan'&&/FINNHUB_API_KEY/.test(document.querySelector('#haloMarkets [data-list-note]').textContent),null,{timeout:10000}).catch(()=>{});
     const jp=await page.evaluate(()=>({note:document.querySelector('#haloMarkets [data-list-note]').textContent,rows:document.querySelectorAll('#haloMarkets [data-symbol]').length,closed:[...document.querySelectorAll('#haloMarkets .hm__ex-state b')].map(b=>b.textContent)}));
     check(scope,'without a key the card says which secret is missing and shows no rows',/FINNHUB_API_KEY secret on Worker mccluster/.test(jp.note)&&jp.rows===0&&jp.closed.join()==='Closed',jp);
-    if(vp.width===390)await page.screenshot({path:join(OUT,`halo-markets-jp-${vp.width}.png`)});
+    if(vp.width===390)await page.screenshot({path:join(OUT,`halo-markets-jp-${vp.width}.png`),timeout:120000});
     await page.click('#haloMarkets [data-close]');
     const closed=await page.evaluate(()=>document.getElementById('haloMarkets').hidden);
     check(scope,'the card closes',closed,closed);
