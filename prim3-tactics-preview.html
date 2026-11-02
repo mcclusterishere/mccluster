@@ -136,14 +136,45 @@
     .tbtn svg{width:20px;height:20px;display:block;margin:auto}
     .p3-dock .tbtn--end{min-height:52px;font-size:18px;color:#fff;border:0;background:linear-gradient(180deg,#d8323e,#9c1621);box-shadow:0 8px 20px -8px rgba(216,50,62,.7)}
     .tbtn--view{font-size:14px}
+    /* main menu: a 3D pedestal scene above real buttons; the scene only decorates them */
+    .p3-menu[hidden]{display:none}
+    .tac.menu-open>:not(.p3-menu){display:none}
+    .p3-menu{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+    .pm-head{display:flex;align-items:center;gap:12px}
+    .pm-head img{width:56px;height:56px;object-fit:contain;flex:none}
+    .pm-head h2{margin:0;font:800 28px/1.05 system-ui,sans-serif;letter-spacing:.01em}
+    .pm-head p{margin:2px 0 0;color:var(--p3-dim,#9fb3c0);font-size:14px}
+    .pm-stage{position:relative;aspect-ratio:1/1;max-height:62vh;width:100%;border-radius:var(--p3-r);overflow:hidden;border:1px solid var(--p3-line);background:radial-gradient(120% 90% at 50% 20%,#24364a 0,#121c26 55%,#0a1117 100%)}
+    .pm-stage .m3-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+    .pm-stage.no-3d::after{content:"";position:absolute;inset:0;background:url(assets/img/prim3-logo.png) center/40% no-repeat;opacity:.5}
+    .pm-list{display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
+    .pm-opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:56px;padding:10px 14px;border-radius:14px;border:1px solid var(--p3-line);background:rgba(255,255,255,.04);color:inherit;text-align:left;cursor:pointer;font:700 17px/1.2 system-ui,sans-serif}
+    .pm-opt small{font:500 13px/1.3 system-ui,sans-serif;color:var(--p3-dim,#9fb3c0)}
+    .pm-opt[aria-pressed="true"]{border-color:var(--p3-cyan);background:linear-gradient(90deg,rgba(54,214,231,.16),rgba(54,214,231,.04));box-shadow:inset 3px 0 0 var(--p3-cyan)}
+    .pm-go{min-height:56px;border:0;border-radius:14px;font:800 19px/1 system-ui,sans-serif;color:#061015;background:linear-gradient(180deg,#5ff2d6,#2fbfc9);box-shadow:0 10px 24px -10px rgba(95,242,214,.7);cursor:pointer}
+    .pm-note{margin:0;font-size:12px;color:var(--p3-dim,#9fb3c0)}
+    .tbtn--menu{font-size:14px}
+    @media (min-width:900px){
+      .p3-menu{grid-column:1/-1;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(0,1fr);align-items:start;column-gap:20px}
+      .pm-head{grid-column:1/-1}
+      .pm-stage{grid-row:2/span 4;max-height:none}
+    }
 
   </style>
 </head>
 <body>
   <main class="tac">
     <h1>PRIM3 tactical preview</h1>
+    <section class="p3-menu" id="p3Menu" aria-label="Main menu" hidden>
+      <header class="pm-head"><img src="assets/img/prim3-logo.png" alt="PRIM3" width="56" height="56"><div><h2>Tactics</h2><p>Secure the relay · squad of three</p></div></header>
+      <div class="pm-stage" id="menu3d"></div>
+      <div class="pm-list" id="pmList"></div>
+      <button type="button" class="pm-go" id="pmGo">Deploy</button>
+      <p class="pm-note">Review-branch preview. Progress stays in this browser.</p>
+    </section>
     <header class="p3-top" aria-label="Turn">
       <img class="p3-mark" src="assets/img/prim3-logo.png" alt="PRIM3" width="44" height="44">
+      <button type="button" class="tbtn tbtn--menu" id="tacMenuOpen">Menu</button>
       <span class="p3-turn"><b id="hudRound"></b><span id="hudPhase"></span></span>
     </header>
     <p class="p3-obj"><i aria-hidden="true">◇</i><span id="hudObj"></span></p>
