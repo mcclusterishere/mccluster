@@ -12,6 +12,7 @@ import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
 import { runThreatPhase } from './tactical-threat-ai.mjs';
 import * as LEVEL from './levels/transit-relay.mjs';
+import { DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission } from '../prim3-world/missions.mjs';
 
 const { SCENE, W, H, toDisplay } = LEVEL;
 const SAVE_KEY = 'prim3.transit.v1';
@@ -39,6 +40,12 @@ function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, at
 let state = (PARAMS.get('new') === '1' ? null : load()) || fresh();
 let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return (s && s.log) || []; } catch (e) { return []; } })();
 let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null };
+/* A World mission (prim3-world.html → ?mission=<id>&new=1) only dresses this level: its title, character and briefing go in
+   the objective card and the first log line. Rules, map and saves are the level's own. An unknown id is ignored. */
+const MISSION_ID = PARAMS.get('mission');
+let MISSION = null;
+if (MISSION_ID && PARAMS.get('new') === '1') log = []; // a fresh deploy starts a fresh log, as it starts a fresh state
+const missionLine = (m) => `T01 · Mission: ${m.title} · ${m.character.name}. ${m.briefing}`;
 // Day is the default (owner, 2026-11-02); Night ('field') and Studio stay selectable
 const LOOKS = ['day', 'field', 'studio'];
 let look = (() => { try { const v = localStorage.getItem(LOOK_KEY); return LOOKS.includes(v) ? v : 'day'; } catch (e) { return 'day'; } })();
@@ -168,9 +175,10 @@ function render() {
   // objective
   const links = relayLinks();
   const clock = state.mission ? `${state.mission.escalation} · clock ${state.mission.clock}` : '';
-  $('txObj').innerHTML = nodeState('RELAY') === 'VERIFIED'
+  $('txObj').innerHTML = (MISSION ? `<small>${MISSION.deployment === 'wildcard-call' ? 'Wildcard call' : 'Mission'} · ${esc(MISSION.character.name)}</small><b>${esc(MISSION.title)}</b><span class="tx-brief" id="txBrief">${esc(MISSION.briefing)}</span>` : '') + (nodeState('RELAY') === 'VERIFIED'
     ? `<small>Objective</small><b>Extract</b><span>Relay linked. Everyone standing to the yellow pad ${D(SCENE.extraction.x, SCENE.extraction.y)}. ${esc(clock)}</span>`
-    : `<small>Objective</small><b>Secure the relay</b><span>T must connect twice. Link ${links}/2. ${esc(clock)}</span>`;
+    : `<small>Objective</small><b>Secure the relay</b><span>T must connect twice. Link ${links}/2. ${esc(clock)}</span>`);
+  $('txObj').classList.toggle('has-mission', !!MISSION);
   // selected operative
   if (sel) {
     const R = ROLE[sel.role];
@@ -435,6 +443,7 @@ function restart() {
   explored = new Uint8Array(W * H); fogKey = '';
   state = fresh(); log = []; ui = { ...ui, sel: 'T1', mode: null, preview: null, reach: null, busy: false, ended: null };
   $('txEnd').hidden = true; say('Deployed. Secure the relay.');
+  if (MISSION) log.unshift(missionLine(MISSION));
   if (r3) { r3.destroy(); r3 = null; }
   save(); render();
 }
@@ -463,4 +472,17 @@ document.addEventListener('keydown', (e) => {
 });
 if (!log.length) say('Deployed. Secure the relay.');
 render();
+if (MISSION_ID) {
+  const fromDraft = () => { try { return findMission(JSON.parse(localStorage.getItem(WORLD_DRAFTS) || 'null'), MISSION_ID); } catch (e) { return null; } };
+  fetch(WORLD_MISSIONS).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+    .then((d) => findMission(d, MISSION_ID) || fromDraft())
+    .then((m) => {
+      if (!m || typeof m.title !== 'string' || !m.character || typeof m.briefing !== 'string') return;
+      MISSION = m;
+      document.title = `${m.title} · PRIM3 Transit / Relay`;
+      if (!log.some((l) => l.startsWith(`T01 · Mission: ${m.title} ·`))) { log.unshift(missionLine(m)); save(); }
+      render();
+    });
+}
+$('txObj').addEventListener('click', () => { if (MISSION) $('txObj').classList.toggle('is-open'); });
 window.__tx = { get state() { return state; }, get ui() { return ui; }, get r3() { return r3; }, get busy() { return ui.busy || !!(r3 && r3.isAnimating()); }, select, onAct, onSheet, onTap, endTurn, restart, reach: () => ui.reach, SAVE_KEY };
