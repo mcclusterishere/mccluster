@@ -170,3 +170,13 @@ The handoff's ordered steps, and what happened to each:
 | Operatives built from the loadout photographs | implemented | Black faceless mannequins with all gear in black, per Prim3 `phenotypes/operators/LOADOUTS.md`. **E:** carrier, knee pads, over-ear headset, body camera with a red record light, belt pouches, right-hip holster, entry tool at the thigh, compact carbine slung left. **R:** light chest rig with binoculars in the sternum pouch, recorder, one-ear headset, belt radio, holster, scoped rifle slung left. **T:** short sleeves with mannequin forearms, zip soft vest, centre recorder, radio on the left strap, deck sling, open cyberdeck held at the waist, belt pouches, sidearm. **Known hostiles:** SOI-01 officers. Arms hang relaxed and swing when walking; long guns come off the sling only to shoot, and T fires the sidearm. No marks. **Still procedural:** these are not authored GLBs; the model slot is unchanged. |
 | T reference | done | Owner's FO-T Standard mannequin and loadout added to the Prim3 loadout index (branch `design/operator-loadouts-20261102`), so E, R and T are complete. |
 | Pre-mission loadout editor ("like Call of Duty … upgrade the loadouts … mission points") | designed only | Next: see the proposal in HANDOFF / the next turn. |
+
+### Refinement (owner, 2026-11-02): grayscale game, team glows, nature in colour
+
+> "Just a black and white game with grays … you can see the coordinates on the gray lines … you can only tell the teams between the color of the glow … I want the environment to be white except for … trees and nature … pavement should still have the texture of pavement. It's just white with that texture."
+
+- **Grayscale marks.** Every game mark is a grey or black tint: reach, path, destination, hint frames, the origin and target rings, and the step tiles in the math trace. The relay is a black beacon. The page chrome, the 2D grid fallback and the menu are neutral greys.
+- **Teams by glow only.** Each operative has small glowing accent tabs on its kit (sides, shoulder, boot heels, like the red tabs on T's loadout) and a soft ground glow in its team colour. The squad is red (`#ff2a3a`); the opposition is blue (`#3d8bff`). Selecting a unit brightens its glow. The old hostile ring and the selection ring are gone. Unit labels carry the same glow. Both colours are single constants (`TEAM` in `board3d.mjs`), so they are easy to change.
+- **Nature keeps its colour:** tree foliage and bark, shrubs, planter grass beds, the hedge run. Everything inorganic stays white, keeping its scanned texture.
+- **Coordinates** run on all four board edges in dark grey over grey grid lines.
+- e2e 146/146.
