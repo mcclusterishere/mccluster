@@ -7,7 +7,12 @@
 | `E`, `R`, `T` | The squad. Cohort-02 Trainee in Wear-01 Company Black (the owner said 2026-11-02 that starting characters can be mannequins) | `assets/canon/brands/mccluster-corp/corporate-fits-identity/MCC-CFI-01-authority-black-v01.jpg` (left panel: full-body mannequin) |
 | `H` | A known hostile. Defense / SOI-01 security officer: shirt, ultra-thin vest, body camera, one holstered sidearm, cyberdeck; no helmet, no long gun | `assets/canon/brands/mccluster-corp/security-officer-identity/MCC-SOI-01-authority-black-v01.jpg` (left panel) |
 
-**Not available yet:** the Field E/R/T phenotypes (`phenotypes/operators/field-*`) have written briefs but no committed pictures. A search on 2026-11-02 covered all 16 Prim3 branches and their history, this repo, Supabase storage and Drive. Prime −1 (`assets/canon/characters/prime-negative-one/`) is protected: never generate, trace or approximate the M helmet.
+**Field operator looks:** the dressed mannequin and labeled loadout for each operator live in one place, Prim3 [`phenotypes/operators/LOADOUTS.md`](https://github.com/mcclusterishere/Prim3/blob/design/operator-loadouts-20261102/phenotypes/operators/LOADOUTS.md) (branch `design/operator-loadouts-20261102` until merged). As of 2026-11-02:
+- **Entry (FO-E-AE):** photographed; owner-supplied.
+- **Recon (FO-R-SO):** photographed; Codex, Prim3 PR #17.
+- **Technical:** not photographed yet.
+
+Use the mannequin photograph as the image-to-3D reference for that role. Prime −1 (`assets/canon/characters/prime-negative-one/`) is protected: never generate, trace or approximate the M helmet.
 
 ## Marks
 
