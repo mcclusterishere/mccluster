@@ -55,7 +55,10 @@ Spatial Intelligence. PRIM3 World (`prim3-world.html`, owner 2026-11-02: the
 mission globe and World builder, "its own tab … only admin can see as its own
 app") is listed beside PRIM3 under Products. It is a door in this owner-only
 panel, not a sixth tab, and the page repeats the `/v1/status` owner check
-itself before it shows anything. Registered tenant apps remain in System → Apps; no
+itself before it shows anything. The Game Hub (`game-hub.html`, owner 2026-11-03:
+"the learning hub is now the game hub") is listed beside PRIM3 under Products: a
+mini game per course with each course's paired music (`docs/game-hub/README.md`).
+Registered tenant apps remain in System → Apps; no
 unverified app URL is added to the global bar automatically.
 
 While already in Control, navigation changes the hash on the same document. The
