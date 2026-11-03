@@ -1,3 +1,5 @@
+import { cityPlaces, citySurfaces, storyArcs, storyBeat } from './content.mjs';
+
 export const STATE_KEY = 'here.universe.mccluster-fictional-city.state';
 export const STATE_VERSION = 1;
 const integer = (value, fallback, max = 1000000) => Number.isSafeInteger(value) && value >= 0 && value <= max ? value : fallback;
@@ -8,14 +10,14 @@ export function initialState(manifest) {
     version: STATE_VERSION, revision: manifest.revision,
     credits: manifest.district.currency.startingBalance,
     position: { x: manifest.district.spawn[0], z: manifest.district.spawn[1], interior: null },
-    inventory: {}, met: [], visited: [], receipts: [], story: { chapter: null }
+    inventory: {}, met: [], visited: [], receipts: [], story: { chapter: null }, arcs: {}
   };
 }
 
 export function sanitizeState(raw, manifest) {
   const state = initialState(manifest);
   if (!raw || raw.version !== STATE_VERSION) return state;
-  const buildings = new Set([...manifest.businesses, manifest.garage].map(b => b.id));
+  const buildings = new Set(cityPlaces(manifest).map(b => b.id));
   const people = new Set([...manifest.npcs, ...manifest.garageCrew].map(n => n.id));
   const items = new Map(manifest.items.map(i => [i.id, i]));
   state.credits = integer(raw.credits, state.credits);
@@ -28,13 +30,26 @@ export function sanitizeState(raw, manifest) {
   }
   // Spatial collision validation occurs again inside the scene. Persist only finite bounded coordinates.
   const p = raw.position;
-  if (p && Number.isFinite(p.x) && Number.isFinite(p.z) && Math.abs(p.x) <= 100 && p.z >= -70 && p.z <= 120) {
+  const inExtension = p && citySurfaces(manifest).some(s => p.x >= s.minX && p.x <= s.maxX && p.z >= s.minZ && p.z <= s.maxZ);
+  if (p && Number.isFinite(p.x) && Number.isFinite(p.z) && ((Math.abs(p.x) <= 100 && p.z >= -70 && p.z <= 120) || inExtension)) {
     state.position = { x: p.x, z: p.z, interior: buildings.has(p.interior) ? p.interior : null };
   }
   state.receipts = (Array.isArray(raw.receipts) ? raw.receipts : []).filter(r =>
     r && items.has(r.itemId) && r.price === items.get(r.itemId).price && Number.isSafeInteger(r.at) && r.at >= 0
   ).slice(-50).map(r => ({ itemId: r.itemId, price: r.price, at: r.at }));
   if (typeof raw.story?.chapter === 'string' && /^[a-z0-9-]{1,60}$/.test(raw.story.chapter)) state.story.chapter = raw.story.chapter;
+  // Only a contiguous prefix survives: a newer/partial/corrupt save cannot skip
+  // to the funeral or splice a discarded draft into the current story.
+  for (const arc of storyArcs(manifest)) {
+    const saved = raw.arcs?.[arc.id]?.completed;
+    if (!Array.isArray(saved)) continue;
+    const completed = [];
+    for (const beat of arc.beats) {
+      if (saved[completed.length] !== beat.id) break;
+      completed.push(beat.id);
+    }
+    if (completed.length) state.arcs[arc.id] = { completed };
+  }
   return state;
 }
 
@@ -62,6 +77,26 @@ export function recordMeeting(state, id, manifest) {
   return { ...state, met: [...state.met, id] };
 }
 export function recordVisit(state, id, manifest) {
-  if (![...manifest.businesses, manifest.garage].some(b => b.id === id) || state.visited.includes(id)) return state;
+  if (!cityPlaces(manifest).some(b => b.id === id) || state.visited.includes(id)) return state;
   return { ...state, visited: [...state.visited, id] };
+}
+
+export function storyProgress(state, arc) {
+  const completed = state.arcs?.[arc.id]?.completed || [];
+  return { completed, next: arc.beats[completed.length] || null, finished: completed.length === arc.beats.length };
+}
+
+export function atStoryBeat(state, beat) {
+  const p = state.position;
+  return (beat.allowInterior === true && p.interior === beat.placeId) || (!p.interior && Math.hypot(p.x - beat.position[0], p.z - beat.position[1]) <= 4.2);
+}
+
+export function completeStoryBeat(state, id, manifest) {
+  const found = storyBeat(manifest, id);
+  if (!found) return { ok: false, reason: 'unknown-beat', state };
+  const { arc, beat } = found, { completed, next } = storyProgress(state, arc);
+  if (completed.includes(id)) return { ok: true, unchanged: true, state };
+  if (next?.id !== id) return { ok: false, reason: 'out-of-order', state };
+  if (!atStoryBeat(state, beat)) return { ok: false, reason: 'visit-location', state };
+  return { ok: true, state: { ...state, arcs: { ...state.arcs, [arc.id]: { completed: [...completed, id] } } } };
 }
