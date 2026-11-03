@@ -21,6 +21,18 @@ This is the stable entrypoint for the Whip Equipped album, film, and narrative g
 
 The latest explicit owner decisions control creative continuity. Owner lyric sheets and the original treatment supply song meaning and imagery where later instructions have not changed them. The screenplay realizes that material through newly written dialogue and staging. Its preservation does not make each invented line a quotation from the owner or a claim about real life. The archive remains useful evidence of the project's development; conflicting older decisions do not override this guide or the current manifest.
 
+## Additional Connecticut chapter: Get It Back
+
+The owner has added **Get It Back** as a distinct Connecticut chapter/song direction. Its [complete authored screenplay draft](./whip-equipped/GET-IT-BACK-CROSSOVER-DRAFT-2026-11-03.md) stands separately from the Acworth **Repo Guy** chapter. The current numbered core and timing totals below remain the measured base; Get It Back has no assigned recording, lyrics, duration, numbered position, or release claim yet.
+
+**Owner-approved fictional character direction:** Dave the Slasher, also called Dave the Warrior or The Slasher, chooses personal recovery and reform, participates in a recovery program, survives, retires early while wealthy, and later moves to Miami. The plot hands off directly to him after the Get It Back recording slot. These outcomes are controlling creative direction, not optional tragic alternatives. Exact dialogue, staging, program details, elapsed time and source of wealth remain part of the new adaptation or unresolved production work. This Dave is not the canonical Dave in the original Robbery 1s custody chain.
+
+**This episode's closing scene:** after his reform, Slasher cooks with the fictionalized Great Plates team and brings carefully made meals to an invented shelter. Two unnamed adult women argue; one is struck in the chest with ziti. Slasher's reaction closes this episode. The scene does not allege events involving a real nonprofit or identifiable residents, and does not depict unhoused people as monsters. His later wealthy early retirement and Miami move remain the approved longer-term outcome, not a replacement for this episode's final reaction. The owner reports cooking footage exists; none has been reviewed here, and no media rights or release are verified by that report.
+
+Tazi J and Yaya are retained as owner-supplied fictional character names with scene roles unassigned. Do not infer that either is a renter, wrong-car owner, witness, offender, or an existing cast member. Personal recollection and the owner's consent assurance are not independent factual or rights verification. The published work is dramatization, with unnecessary identifiers and allegations omitted.
+
+The stories each stand alone. A visibly repaired, clearly labeled commercial Robbery 1s replica can carry a clue across them without granting it a curse or moving the original pair. Preserve **Dave → donation bin → Malik → Harold → altar**, the unresolved pastor, and the current final sequence **Dealer Plates → Tears Won't Fall → Salvage Title**. Do not invent a Rico visit to Connecticut to join the chapters. A later Hitman/PRIM3 identity is still unassigned. The new direction is recorded in the [Get It Back decision ledger](./whip-equipped/GET-IT-BACK-DECISIONS-2026-11-03.md). Existing structured canon arrays and timing totals remain unchanged; the additional chapter's structured integration is pending.
+
 ## Approved narrative order
 
 The core has **twelve numbered songs**. The controlling ending is **Dealer Plates → Tears Won't Fall → Salvage Title**.

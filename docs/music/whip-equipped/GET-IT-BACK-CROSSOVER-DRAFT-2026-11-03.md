@@ -4,15 +4,15 @@
 
 **Status:** A proposed additional Whip Equipped chapter built around the owner's newly supplied song title, **Get It Back**. This replaces the earlier shoe-crossover draft and its speculative Rico visit. **Repo Guy remains the separate Acworth story about Rico's illegal resale of the same financed salvage car. Nothing below is inserted into or used to explain that chapter.**
 
-Get It Back follows an unsuccessful attempt to recover an overdue rental, the embarrassment of identifying the wrong vehicle, and a later report that the missing vehicle may have crashed. Its characters have to return without the car and give an honest account of what they know. The shoes accompany that failure; they do not cause or cure it.
+Get It Back follows an unsuccessful attempt to recover an overdue rental, the embarrassment of identifying the wrong vehicle, and a later report that the missing vehicle may have crashed. Its characters have to return without the car and give an honest account of what they know. The shoes accompany that failure; they do not cause or cure it. Immediately after the song, the story hands the next choice to **Slasher**, who chooses personal recovery and reform. His owner-directed outcome is controlling fiction canon: he reforms, participates in a recovery program, survives, retires early with substantial wealth, and later moves to Miami. The exact scenes and placement remain newly written adaptation.
 
 ## Source and fiction boundary
 
-The starting material is an **unverified private owner recollection**. This is a fictional adaptation, not an investigative account or a claim that identifiable people committed crimes. The vehicle, supporting people, businesses, surroundings, dialogue, timing, and encounters below are composites or newly invented. No real renter, witness, employer, ethnicity, private address, vehicle identifier, alleged threat, or identifying accusation is reproduced. The screenplay's McCluster remains the fictional protagonist.
+The starting material is an **unverified private owner recollection**. This is a fictional adaptation, not an investigative account or a claim that identifiable people committed crimes. The vehicle, supporting people, businesses, surroundings, dialogue, timing, and encounters below are composites or newly invented. No identifying accusation about a real renter or witness, employer detail, ethnicity, private address, vehicle identifier, or alleged threat is reproduced. The supplied names **Tazi J**, **Yaya**, and **Dave the Warrior / Dave the Slasher** are retained as fictional dramatized character names. The owner explicitly identifies Dave the Warrior / Dave the Slasher as **Slasher**; it does not establish an accusation or verified biography about a real person. The screenplay's McCluster remains the fictional protagonist.
 
 The carried-over dramatic premises are limited: a rental is not returned; a search does not recover it; a similar vehicle proves to be the wrong one when its vehicle identification number does not match; a crash is subsequently reported. The crash remains **reported, not verified**. Its occupants, cause, injuries, responsibility, exact site, and the missing vehicle's final location are not established.
 
-Any person named in the private recollection is separate from the Designer Kicks cast. In particular, no recollection establishes an identity with canonical Dave. There is no Rico appearance, Connecticut side mission for Rico, old-pilot cast import, or explanation of the original shoes' curse.
+Any person named in the private recollection is separate from the Designer Kicks cast. In particular, **Dave the Warrior / Dave the Slasher is distinct from canonical Dave in the cursed-pair Designer Kicks story**. Their shared first name establishes no shared identity, shoe custody, or event. There is no Rico appearance, Connecticut side mission for Rico, old-pilot cast import, or explanation of the original shoes' curse.
 
 ## Placement, recording, and casting
 
@@ -20,7 +20,8 @@ Any person named in the private recollection is separate from the Designer Kicks
 - **Chronology:** Before the fatal-flight finale, with its precise position among the other chapters **unassigned**. It could be developed as a separate Connecticut chapter without disrupting the current sequence. This draft does not make its events part of the remembered camper, G20, or Econoline journeys.
 - **Music:** The title Get It Back is supplied. Audio, lyrics, master, duration, musical structure, and release status are not supplied here. The recording slot below is an authoring placeholder, not a finished song or fabricated lyric sheet.
 - **Timing:** Before dialogue → complete recording slot → after dialogue. Once duration T is known, rehearse and revise toward the existing 2T → T → 2T contract. This draft does not claim that its dialogue already meets an unknown duration. The twelve-song core, present counts, timing totals, and manifest remain unchanged.
-- **New roles:** CREW MEMBER, STORE FITTER, DESK LEAD, and CAR OWNER are adult composite roles with casting open. The crew member is **not assigned to Gunny, Majid, or any existing character**. June Park, Leo Mercer, and Samira Diallo retain their existing adult Exchange roles. No new Hitman/PRIM3 identity is selected.
+- **New roles:** **Dave the Warrior / Dave the Slasher**, called **Slasher**, is the newly owner-named fictional character. Slasher is explicitly distinct from Designer Kicks’ cursed-pair Dave and is not identified as Rico, Gunny, Majid, the uncast crew member, or any current PRIM3 character. **Tazi J** and **Yaya** remain named character slots with their roles and scene assignments open; neither is assigned as the renter, witness, antagonist, or criminal. CREW MEMBER, STORE FITTER, DESK LEAD, and CAR OWNER are adult composite roles with casting open. The crew member is **not assigned to Gunny, Majid, or any existing character**. June Park, Leo Mercer, and Samira Diallo retain their existing adult Exchange roles. No new Hitman/PRIM3 identity is selected.
+- **Slasher arc:** The choice of personal recovery/reform, participation in a recovery program, survival, wealthy early retirement, and later Miami move is owner-approved controlling fiction direction. The exact conversations and connective events below are proposed dramatization. Personal recovery means changing how Slasher lives; it is not recovery of the missing rental and does not establish a medical diagnosis.
 - **Shoes:** McCluster gets an ordinary work pair whose model remains **unassigned**. The crew member wears a commercial Robbery 1s replica bought from the existing Exchange. The draft does not settle McCluster's pair as Hamden Repo Elevens, assign abilities, or give either character the original cursed pair.
 
 ---
@@ -221,7 +222,89 @@ The proposed final image is McCluster coming back to that space without the car.
 
 # After the song
 
-## 1. What came back
+## 1. Slasher makes the next choice
+
+*EXT. COMPOSITE WHIP WORK OFFICE — CONNECTICUT — NIGHT.*
+
+*The complete Get It Back recording ends. No dialogue overlaps it.*
+
+*McCluster and the crew member return without the missing rental. SLASHER, also named Dave the Warrior / Dave the Slasher, waits beside the office entrance. This is the new owner-named adult fictional character, not the renter, not Designer Kicks’ Dave, and not an identification of any earlier cast member.*
+
+**MCCLUSTER:** You got some news?
+
+**SLASHER:** No. I came to talk to you.
+
+*McCluster looks at the empty return space, then at the light still on inside.*
+
+**MCCLUSTER:** It's been a long day.
+
+**SLASHER:** I know. I nearly used that to leave.
+
+*Slasher's phone rings. Slasher looks at it and declines the call.*
+
+**MCCLUSTER:** What's going on?
+
+**SLASHER:** I keep saying I'm going to get myself together. Then somebody calls, and I let that become what I'm doing instead.
+
+**MCCLUSTER:** What do you want to do?
+
+**SLASHER:** Recover. Get my own life back. Stop making the same choices and calling them something that happened to me.
+
+*McCluster puts the old-shoe box on the step so he can listen without holding something between them.*
+
+**SLASHER:** I'm stepping away. I told them no tonight.
+
+**MCCLUSTER:** And tomorrow?
+
+**SLASHER:** Tomorrow I tell them it wasn't just tonight.
+
+*The phone rings again. Slasher switches it to silent.*
+
+**MCCLUSTER:** You want me to talk to somebody?
+
+**SLASHER:** No. I need to say it. I want you to ask me afterward whether I did.
+
+**MCCLUSTER:** I can do that.
+
+**SLASHER:** Don't let me give you a whole story instead of an answer.
+
+*The crew member shifts weight. Slasher notices the scuffed replica.*
+
+**SLASHER:** What happened there?
+
+**CREW MEMBER:** A curb. We thought we found the rental. It was somebody else's car.
+
+**SLASHER:** You left it alone?
+
+**MCCLUSTER:** Number didn't match. We apologized and got out of the way. Ours is still missing.
+
+*Slasher nods. The two kinds of getting something back remain distinct. No car has appeared because someone chose to change.*
+
+**CREW MEMBER:** I'm taking this to the Exchange tomorrow. Leo can probably fix the edge.
+
+**SLASHER:** What time?
+
+**CREW MEMBER:** Morning.
+
+**SLASHER:** I'll meet you there. I need somewhere to go after I make that call. Otherwise I'll sit there finding a reason to call back.
+
+**CREW MEMBER:** Come by. I'm only dropping off a shoe.
+
+**SLASHER:** That sounds good.
+
+*The desk lead appears in the doorway, sees McCluster, and hesitates.*
+
+**DESK LEAD:** There's a message about the rental. You need to see it.
+
+*McCluster picks up the box. Slasher steps aside to let him pass, then stays long enough to make tomorrow a real arrangement.*
+
+**SLASHER:** The Exchange. Morning. I'll be there.
+
+**CREW MEMBER:** See you there.
+
+*McCluster enters the office. Slasher leaves under his own power, carrying the unanswered phone. The scene follows a decision, not a forced rescue, punishment, diagnosis, death, or miracle.*
+
+## 2. What came back
 
 *INT. COMPOSITE WHIP WORK OFFICE — NIGHT.*
 
@@ -333,11 +416,35 @@ The proposed final image is McCluster coming back to that space without the car.
 
 *They go. The desk lead completes the note: NO VEHICLE RECOVERED. The crash remains a separate, unconfirmed report. The lamp goes off after the work is finished.*
 
-## 2. The small thing that can be fixed
+## 3. Keep the morning
 
-*INT. ROBBERY 1s EXCHANGE — BRIDGEPORT — ANOTHER DAY.*
+*INT. ROBBERY 1s EXCHANGE — BRIDGEPORT — THE FOLLOWING MORNING.*
 
 *Leo Mercer turns a commercial replica over at the repair counter. The crew member waits. The original-pair display remains empty.*
+
+*Slasher arrives. The crew member checks the clock, then thinks better of making a joke about being on time.*
+
+**CREW MEMBER:** You made the call?
+
+**SLASHER:** I did.
+
+**CREW MEMBER:** How'd it go?
+
+**SLASHER:** They asked what I wanted. I told them I wanted out. They asked again like I'd given the wrong answer.
+
+**CREW MEMBER:** What did you say?
+
+**SLASHER:** Same thing. I'm done.
+
+*Slasher's phone lights up. The screen is turned inward; no name or message is shown. Slasher puts it away.*
+
+**SLASHER:** I thought I'd feel better straightaway.
+
+**CREW MEMBER:** You can still be glad you said it.
+
+**SLASHER:** I am.
+
+*Leo waits until Slasher has finished before returning to the shoe.*
 
 **LEO:** Caught the curb?
 
@@ -377,17 +484,167 @@ The proposed final image is McCluster coming back to that space without the car.
 
 *The crew member folds the ticket into a wallet. Leo puts the shoe on an ordinary repair shelf. The mark remains visible beside the commercial replica label.*
 
-*The original-pair plinth stays empty.*
+*June Park comes through with an awkward box of folded packing material. Slasher holds the interior door for her without being asked.*
+
+**JUNE:** Thank you.
+
+**SLASHER:** Where do you want that?
+
+**JUNE:** I've got it. Just hold the door a second.
+
+*Slasher does. June sets the box on her side of the counter. It is a small favor, completed on the terms of the person who needed it.*
+
+*McCluster calls. Slasher answers.*
+
+**SLASHER — PHONE:** I made the call.
+
+**MCCLUSTER — PHONE:** All right.
+
+**SLASHER — PHONE:** Told them I'm stepping away. I'm at the Exchange now.
+
+**MCCLUSTER — PHONE:** You eating?
+
+**SLASHER — PHONE:** That's next.
+
+**MCCLUSTER — PHONE:** Then do that.
+
+*Slasher hangs up. Nothing about the missing rental is resolved by the call. Slasher's decision has acquired a morning, a place, and someone who asked whether it happened.*
+
+**SLASHER:** You ready?
+
+**CREW MEMBER:** Yeah.
+
+*They leave for breakfast. Leo returns to his work. The commercial replica stays on the repair shelf, and the original-pair plinth stays empty.*
 
 ---
 
-## A breadcrumb, not a second ending
+## 4. He keeps going
 
-The Exchange repair shelf provides a concrete visual clue for a later Designer Kicks scene: **a labeled commercial replica with the same scuffed edge and repair ticket**. A viewer who has watched Get It Back recognizes the difficult day behind an otherwise ordinary repair. A viewer who has not simply sees a working shoe shop. No character has to recap the chapter or reveal another story's ending.
+**Controlling outcome, newly written scene.** After the rental incident, Slasher reforms and participates in a recovery program by choice. The program, location, schedule, treatment details, and elapsed interval are not supplied; no diagnosis, substance, provider, or real institution is invented.
+
+*INT. ROBBERY 1s EXCHANGE — A LATER VISIT.*
+
+*Slasher waits while the crew member collects the repaired commercial replica. The small scuff is still visible. Nothing about the original cursed pair has moved.*
+
+**CREW MEMBER:** You free tomorrow morning?
+
+**SLASHER:** After my program. I told you about it.
+
+**CREW MEMBER:** I remember. Didn't know you were still going.
+
+**SLASHER:** I am. That's part of getting better for me. I don't want one good week to be the whole plan.
+
+**CREW MEMBER:** All right. After, then.
+
+*Slasher nods. No one asks for private details, a confession, or proof of suffering. The conversation carries on with the next ordinary day.*
+
+## 5. Made with love
+
+**This is the episode's closing scene.** The owner directs Slasher to cook with a fictionalized **Great Plates** team, bring the meals to a fictional shelter, witness a dispute between two adult women in which one is struck in the chest with ziti, and close on his reaction. The owner says relevant footage exists; none has been provided or viewed for this draft. The dialogue and staging below are newly written, not a reconstruction of verified footage.
+
+*INT. GREAT PLATES TEAM KITCHEN — CONNECTICUT — DAY. LATER, AFTER SLASHER'S REFORM.*
+
+*An invented working kitchen. Great Plates is used here as a fictionalized team label. The adult cooks are uncast composite roles; no real employees or premises are depicted.*
+
+*Slasher stands beside a tray of baked ziti. A TEAM COOK reaches for a lid.*
+
+**SLASHER:** Let me look at it first.
+
+**TEAM COOK:** You've looked at it through the oven door for twenty minutes.
+
+**SLASHER:** Through the door isn't the same.
+
+*The cook waits. Slasher examines the browned cheese, then nods with more seriousness than the inspection requires.*
+
+**TEAM COOK:** We can send it out now?
+
+**SLASHER:** Yeah. That one's good.
+
+*At the next table, another cook adds utensils and napkins to the meal supplies. Slasher notices a lid that has not settled properly and presses it closed.*
+
+**TEAM COOK:** You cooking for people or entering something?
+
+**SLASHER:** They're going to eat it. I want it right.
+
+*The cook nods and passes him another tray. They work together. The sequence gives the chopping, waiting, packing, and cleanup enough time to feel like work. It gives Slasher a way to care for other people without making them an audience for his reform.*
+
+*INT. FICTIONAL SHELTER COMMUNITY DINING ROOM — LATER.*
+
+*An entirely invented shelter with adult guests and staff. No real nonprofit, resident, location, or incident is identified. The room contains ordinary conversations, bags kept close, someone helping another person make room, and a guest checking whether a meal contains an ingredient they cannot eat.*
+
+*Slasher and the Great Plates team bring in the covered trays. A SHELTER WORKER directs them to the serving table.*
+
+**SHELTER WORKER:** Thank you. Put those here. We'll bring people through this side.
+
+**SLASHER:** There's more in the next tray if we run low.
+
+**SHELTER WORKER:** Good. Stay with me a minute. I'll show you where everything goes.
+
+*Slasher follows the worker's lead. The team serves the meals. An ADULT GUEST tries a forkful, then looks back at Slasher.*
+
+**GUEST:** You made this?
+
+**SLASHER:** With them. Great Plates. I watched the cheese like it owed me something.
+
+**GUEST:** You watched it the right amount.
+
+*Slasher grins. He notices someone at the end of the line needs a fork and brings one over.*
+
+*At a nearby table, TWO ADULT WOMEN disagree about a seat. Their names and histories are not assigned. Neither stands for the other guests or for people experiencing homelessness.*
+
+**WOMAN ONE:** My bag was there.
+
+**WOMAN TWO:** I moved it onto the next chair. I didn't take anything.
+
+**WOMAN ONE:** I didn't say you did. I said that was my seat.
+
+**WOMAN TWO:** There's a whole chair right there.
+
+*The shelter worker comes toward them. Slasher has stopped with a stack of napkins in his hands.*
+
+**SHELTER WORKER:** We can make room. Let's put the food down first.
+
+**WOMAN ONE:** Don't tell me where to sit because you moved my stuff.
+
+**WOMAN TWO:** Then take the damn chair.
+
+*Woman Two flings her portion of ziti. It strikes Woman One in the chest and falls onto the table and floor. The moment is brief and non-graphic. There is no invented injury, fight choreography, or delighted crowd.*
+
+*The shelter worker immediately steps beside Woman One, checks on her, and separates the women. Another staff member clears space. The camera does not linger on anyone's stained clothing or distress for a joke.*
+
+*Cut to Slasher. His serving smile is gone. He looks at the scattered pasta, then toward the Great Plates cook, who saw how long he stood at that oven.*
+
+**SLASHER:** I made that with love.
+
+*He looks down at the unused napkins still in his hands. His mouth opens as if there is something else to say. Nothing comes out.*
+
+*Hold on Slasher's stunned, exhausted disbelief. Cut to black.*
+
+**END OF THIS EPISODE.**
+
+*The humor lands on the painful absurdity of Slasher's lovingly prepared meal becoming a projectile, not on homelessness, hunger, women's distress, or the people the team came to serve. No further dramatic scene, Miami flash-forward, outbreak, or supernatural explanation follows this reaction in this episode.*
+
+---
+
+## Direct handoff, shared clue, separate stories
+
+Slasher takes the next dramatic action immediately after the song: choosing personal recovery, making the difficult call, and keeping the following morning's arrangement. The Exchange scene pays off that choice instead of leaving it as a vague promise. The rental remains missing and its crash report remains unverified.
+
+The Exchange repair shelf also provides a concrete visual clue for a later Designer Kicks scene: **a labeled commercial replica with the same scuffed edge and repair ticket**. A viewer who has watched Get It Back recognizes the difficult day behind an otherwise ordinary repair. A viewer who has not simply sees a working shoe shop. No character has to recap the chapter or reveal another story's ending.
 
 This is **proposed new connective material**, not a source-backed explanation for the original pair's history, Malik's choices, or the crash report. The original chain remains **Dave → donation bin → Malik → Harold → altar**. No new wearer, custody stop, shoe power, factory origin, or resolved pastor reveal is added. Malik and Kiara remain 16–18 as written and do not participate in the rental search or retail transaction.
 
-A later fictional Hitman/PRIM3 connection remains available for a separately cast adult role, but this chapter does not choose that person, recruit a crew, or import an existing character. The current Halo source does not establish an identity match or a gang roster. Halo Ops operational records remain outside fiction. The breadcrumb is the repaired commercial shoe, not private intelligence or proof of shared criminal membership.
+A later fictional Hitman/PRIM3 connection remains available for a separately cast adult role, but this chapter does not choose that person, recruit a crew, or import an existing character. Slasher's presence does not establish Hitman membership or merge Slasher with an existing Whip or Designer Kicks identity. The current Halo source does not establish an identity match or a gang roster. Halo Ops operational records remain outside fiction. The breadcrumb is the repaired commercial shoe, not private intelligence or proof of shared criminal membership.
+
+## Slasher's later canonical destination
+
+**Controlling owner-directed fictional outcome, not a post-credits scene here:** Dave the Warrior / Dave the Slasher reforms, participates in a recovery program, survives, retires early while wealthy, and later moves to Miami. Exact dates, elapsed time, age, wealth source, and the eventual retirement episode remain open. Do not kill him off, turn reform into a fake-out, or append a Miami scene after this episode's closing reaction.
+
+The food-service closing belongs to this Get It Back episode. It does not replace the separate Whip Equipped ending, **Dealer Plates → Tears Won't Fall → Salvage Title**. The episode's comic surprise and Slasher's later happy ending can coexist without making the shelter guests obstacles to his survival or the targets of a supernatural plot.
+
+## Performer and compositing note
+
+The owner states that the intended participants are on board and consented to appearing under the supplied names as fictional dramatized characters. That reported consent is not independently verified here. A proposed production approach is to use each participating performer's own supplied face, their own performed lines, and their own reactions in AI-assisted compositing. The owner says Great Plates footage exists, but no footage has been supplied or inspected here; no actual diner, shelter guest, or vulnerable person's likeness is authorized by this draft. This draft verifies no likeness or performance rights, authorizes no voice cloning, and transmits no real source media. Confirm the relevant permissions, exact uses, and approved materials before production or any external upload.
 
 ## Collection context retained
 
@@ -399,10 +656,10 @@ The names are fictional collection choices, not crime-rate rankings or allegatio
 
 - **Repo Guy stays unchanged:** Acworth; Rico; the same illegally resold financed salvage car; the established street buyer; no shots fired. Get It Back uses a missing rental and a failed recovery, not a second version of that financed-car dispute.
 - **The current ending stays unchanged:** Dealer Plates → Tears Won't Fall → Salvage Title. Alana's identity and fate, McCluster's independent responsibility, Prime's warning rather than command, the cousin's tablet theft, and Darrel's betrayal and death at Madé's hands remain intact.
-- **The current music manifest stays unchanged:** no thirteenth numbered core song, invented lyrics, duration, audio asset, new measured runtime, or completed video is asserted. Adoption and placement need a later continuity decision; timing needs the actual recording.
+- **The existing music sequence and recordings stay unchanged:** no thirteenth numbered core song, invented lyrics, duration, audio asset, new measured runtime, or completed video is asserted. Numbered placement needs a later continuity decision; timing needs the actual recording. The owner-approved Slasher direction is recorded in the [additional Get It Back decision ledger](GET-IT-BACK-DECISIONS-2026-11-03.md); the existing core arrays remain unchanged.
 - **The earlier speculative Rico/donation-bin attempt is withdrawn from this draft.** It is not an unseen event, a backstory reference, or a bridge between Bridgeport and Acworth.
-- **Private recollection stays private:** no raw account, identifying accusations, private source links, real VIN, or real message transcript belongs in the published chapter. Composite dialogue is not presented as a quotation from a real person.
-- **This is an authored review artifact:** the scenes are complete draft material, while recording, placement, casting, final footwear selection, and any later cross-series adoption remain open. No runtime implementation or canon promotion is claimed by this file's publication.
+- **Private recollection stays private:** no raw account, identifying accusations, private source links, real VIN, or real message transcript belongs in the published chapter. The supplied Tazi J, Yaya, and Dave the Warrior / Dave the Slasher names are used as fictional character naming; Tazi J and Yaya receive no invented role or accusation. Composite dialogue is not presented as a quotation from a real person.
+- **This is an authored review artifact:** the scenes are complete draft material, while recording, placement, casting, final footwear selection, and any later cross-series adoption remain open. No runtime implementation or adoption of every invented line is claimed by this file's publication. Slasher's explicitly approved reform, recovery-program participation, survival, wealthy early retirement, Miami destination, and this episode's food-service closing are controlling fictional outcomes. Exact dialogue, staging, elapsed time, and core-song placement remain open.
 
 ## Repository source anchors
 
