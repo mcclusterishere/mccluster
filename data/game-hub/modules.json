@@ -13,7 +13,8 @@
       "icon": { "kind": "image", "src": "assets/img/prim3-mark-180.png", "width": 180, "height": 180 },
       "music": { "album": "prim3", "role": "rhythm", "label": "Rhythm · the PRIM3 study tapes" },
       "games": [
-        { "id": "prim3-transit", "kind": "link", "title": "Transit / Relay", "tag": "Tactics", "href": "prim3-transit.html", "blurb": "Lead Entry, Recon and Technical across a canal compound at night. Turn-based, on the canonical PRIM3 rules." },
+        { "id": "prim3-transit", "kind": "link", "title": "Transit / Relay", "tag": "Tactics", "href": "prim3-transit.html", "blurb": "Lead Entry, Recon and Technical across a canal compound. Turn-based, on the canonical PRIM3 rules." },
+        { "id": "prim3-equity-uprise-hq", "kind": "link", "title": "Equity Uprise HQ", "tag": "Drill", "href": "prim3-transit.html?level=equity-uprise-hq", "blurb": "An emergency exercise in the Equity Uprise building, laid out from its own floor plans: enter, report in, open the stair exit, assemble." },
         { "id": "prim3-course", "kind": "link", "title": "The PRIM3 course", "tag": "Course", "href": "prim3.html", "blurb": "Principles, Rhythm, Immersion, Missions: the full course, with progress on your M Account." },
         { "id": "prim3-world", "kind": "link", "title": "PRIM3 World", "tag": "Owner", "href": "prim3-world.html", "gate": "owner", "blurb": "The mission globe and World builder. Shown to the house owner only; the page checks again itself." }
       ]
