@@ -58,12 +58,22 @@ with six enclosed occupied floors and an open roof. Its doorway opens the existi
 building geometry and its own controls. This is not an alternative building-authority package. Read the building's local contract
 before changing its geometry, program, entrances, floors, signs or canonical viewers.
 
+The wider city's geography has its own authority, `core/data/fictional-city/places.v1.json`
+(see `EXPANSION.md`): land, streets, neighbourhoods, parcels, entrances, anchors, landmarks and
+chunk IDs. Lore and geography are joined only by stable IDs; never put coordinates in the lore
+file or names/people in the places file. The original block's coordinates are frozen (mirrored as
+`legacyParcels` and tested). Keep the frames distinct: city metres Y-up, HQ GLBs metres Z-up, HQ
+cells 12 ft, PRIM3 tiles 3.54 m; never resize the HQ. Render chunks are derived by the publisher;
+collision is always resident. Every new published file needs a path in `deploy-pages.yml` and the
+publication test.
+
 ## Verification
 
 Check manifest references, 3-per-business / 24-new-resident counts, walkable approaches, patrol
 routes, item prices and state restoration. Exercise keyboard and touch controls, enter/exit,
 dialogue topics, purchases, insufficient funds, story-reader order, owner/non-owner gating, and
-390 px overflow. Report measured render metrics with the test environment; never infer real-device
+390 px overflow, v1→v2 save migration, chunk load/unload/failure, B1 traversal through the HQ
+doorway's level, and that minors never offer a paid interaction. Report measured render metrics with the test environment; never infer real-device
 frame rates from a software-rendered browser. New actors/shops should preserve the one-source export.
 
 For Bridgeport, run `scripts/test/bridgeport-story.test.mjs` plus city spatial/publication tests.

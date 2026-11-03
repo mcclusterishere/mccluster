@@ -28,8 +28,20 @@ export function yardFixtures(b) {
   ];
 }
 
-export function createSpatialWorld(buildings, hq = null, extraSurfaces = [], storyBeats = []) {
+/* `places` (places.v1.json) adds the expanded city's land, quays, piers and parcel footprints; `extraSurfaces`
+   and `storyBeats` carry the Bridgeport neighbourhood's walk surfaces and props. With neither, the world is
+   exactly the original block, bridge and island. For older callers a places object may be the third argument. */
+export function createSpatialWorld(buildings, hq = null, extraSurfaces = [], storyBeats = [], places = null) {
+  if (extraSurfaces && !Array.isArray(extraSurfaces) && Array.isArray(extraSurfaces.surfaces)) { places = extraSurfaces; extraSurfaces = []; }
   const blockers = buildings.filter(b => b.style !== 'yard').map(buildingBounds);
+  if (places?.parcels) {
+    const known = new Set(blockers.map(b => b.id));
+    for (const p of places.parcels) {
+      if (known.has(p.id)) continue;
+      const [x, z] = p.footprint.center, [w, d] = p.footprint.size;
+      blockers.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, id: p.id });
+    }
+  }
   for (const b of buildings.filter(b => b.style === 'yard')) for (const f of yardFixtures(b)) {
     blockers.push({ minX: f.x - f.w / 2, maxX: f.x + f.w / 2, minZ: f.z - f.d / 2, maxZ: f.z + f.d / 2, id: f.id });
   }
@@ -41,9 +53,10 @@ export function createSpatialWorld(buildings, hq = null, extraSurfaces = [], sto
     const [w, d] = hq.footprintMeters;
     blockers.push({ minX: -w / 2, maxX: w / 2, minZ: 88 - d / 2, maxZ: 88 + d / 2, id: 'equity-uprise-hq' });
   }
-  const extensions = extraSurfaces.filter(s => s && ['minX', 'maxX', 'minZ', 'maxZ'].every(k => Number.isFinite(s[k]))
+  const extensions = (extraSurfaces || []).filter(s => s && ['minX', 'maxX', 'minZ', 'maxZ'].every(k => Number.isFinite(s[k]))
     && s.minX < s.maxX && s.minZ < s.maxZ);
-  return { surfaces: [...DISTRICT_SURFACES, ...extensions], blockers };
+  const base = places?.surfaces?.length ? places.surfaces.map(({ minX, maxX, minZ, maxZ }) => ({ minX, maxX, minZ, maxZ })) : DISTRICT_SURFACES;
+  return { surfaces: [...base, ...extensions], blockers };
 }
 
 export function interiorWorld(garage = false, style = '') {

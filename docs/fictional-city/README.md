@@ -49,6 +49,13 @@ crypto, a real checkout, or a tamper-proof online economy.
 
 ## Spatial program
 
+**The city (2026-11-03 expansion).** The original block now sits in a larger harbor city built around
+the Equity Uprise HQ island: Civic Center to the west, the HQ Waterfront to the east and along the east
+wharf, Northside's homes and public school to the north, and Workshop Wharf on the west wharf. Two
+wharf walks and two piers face the island across the bay; the footbridge is still the only way over.
+The plan, the placement contract, lore binding, streaming and before/after counts are in
+[`EXPANSION.md`](EXPANSION.md).
+
 The first block has two facing rows on Harbor Boulevard, a garage behind the north row, a south
 harbor promenade, a footbridge and a small island:
 
@@ -76,7 +83,7 @@ the actual runtime uses the existing house convention of Three 0.180.0.
 Collision checks cover buildings, indoor counters/garage props, water and the union of land,
 bridge and island. Tap walking uses bounded A* paths. NPCs follow authored sidewalk patrols.
 These are scripted recurring residents, not autonomous generative agents. Vehicles are set dressing;
-driving, traffic, combat, full-body voice performances and a large streamed city are later systems.
+driving, traffic, combat and full-body voice performances are later systems. The expanded city streams render detail in 64 m chunks (see `EXPANSION.md`).
 
 ## Existing systems reused
 
@@ -151,6 +158,11 @@ Raw private chats, private source access URLs and `ai_context` are not published
 - Capability binding: `core/capabilities/catalog.json`, `core/src/tools/control.mjs`
 - Deliberate existing bridge exposure: `workers/mccluster-mcp/src/mcp.js`
 - Static export: `tools/publish-fictional-city.mjs`, `.github/workflows/deploy-pages.yml`
+- City geography (authority): `core/data/fictional-city/places.v1.json`
+- Places resolver and lore binding: `js/fictional-city/places.mjs`
+- Render chunks (derived, streamed): `js/fictional-city/chunks.mjs` → `data/fictional-city/chunks/`
+- PRIM3 boards from the same places: `js/fictional-city/tactical.mjs`; #711 converter mapping:
+  `tools/prim3-city/places-adapter.mjs`
 
 State is stored under `here.universe.mccluster-fictional-city.state`. It includes position/interior,
 visited shops, met residents, inventory, receipts and last-read story chapter. Corrupt/old saves are
@@ -163,7 +175,7 @@ Run:
 
 ```sh
 node tools/publish-fictional-city.mjs
-node --test scripts/test/bridgeport-story.test.mjs scripts/test/fictional-city*.test.mjs
+node --test scripts/test/bridgeport-story.test.mjs scripts/test/fictional-city*.test.mjs scripts/test/equity-uprise-mission-screens.test.mjs
 node --test scripts/test/owner-only.test.mjs scripts/test/publish-strip-parity.test.mjs
 npm --prefix core run check
 npm --prefix core test

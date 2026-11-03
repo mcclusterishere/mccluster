@@ -107,6 +107,9 @@ export function engineConfig(pkg, { side = 'defend', seed = 20261103 } = {}) {
 /* ---------- the technical layer ---------- */
 const euOf = (s) => s.battlefield.eu;
 const withEu = (s, patch) => ({ ...s, battlefield: { ...s.battlefield, eu: { ...euOf(s), ...patch } } });
+/* The mission's live sandbox outages, in the building screens' fault shape (js/eu-screens/state.mjs
+   setMissionFaults): what the game actually did to B1, not the screens' fixed preset. */
+export function screenFaults(s) { return euOf(s).ledger.map((f) => ({ fault_id: f.fault_id, target_selectors: [f.target] })); }
 export function liveCameras(pkg, s) { const v = sandboxView(pkg, euOf(s).ledger); return euOf(s).cameras.filter((id) => availability(v, id) !== 'unavailable'); }
 export const pictureLive = (pkg, s) => liveCameras(pkg, s).length > 0;
 

@@ -99,6 +99,8 @@
         }
       ],
       "portalData": "core/data/fictional-city/district.v1.json#/portals",
+      "placesData": "core/data/fictional-city/places.v1.json",
+      "placesNote": "Geography authority: the original block and island plus Civic Center, HQ Waterfront, Northside and Workshop Wharf; lore binds by parcel/anchor ID. Save v2 keeps the v1 fields and adds discoveries and payments; the saved position stays a bounded local city position.",
       "portals": [
         {
           "id": "city.departure-desk",
