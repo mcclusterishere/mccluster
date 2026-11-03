@@ -9,8 +9,8 @@
 
    iso is ISO 3166-1; fips is GDELT's FIPS 10-4 code, which is what
    media_news_articles.location_country_fips stores (Japan is JA, not JP).
-   All of this is fiction voiced by McCluster about real headlines: real
-   countries and real people are never enemies. */
+   Each agent speaks as itself about real headlines; real countries and real
+   people are never enemies. */
 
 export const PRIM3_AGENTS = Object.freeze([
   { key: 'aya-shinoda', name: 'Aya Shinoda', iso: 'JP', fips: 'JA', country: 'Japan', role: 'Field-T Technical Operator', lane: 'T', voice: 'precise, dry, quietly funny; reads everything as systems and signals' },
