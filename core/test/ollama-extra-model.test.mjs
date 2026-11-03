@@ -53,3 +53,31 @@ test('a missing extra model falls back to the default model and says so', { time
     assert.deepEqual(requests.map(r => r.model), ['fast:4b', 'qwen3:8b']);
   });
 });
+
+import { aiDiagnostics } from '../src/executors/ai-diagnostics.mjs';
+test('diagnostics can install a missing allowlisted model and report the daemon answer', async () => {
+  let inspected = 0; const pulled = [];
+  const out = await aiDiagnostics({ id: 'j', input: { pull_missing: true } }, {
+    run: async () => ({ stdout: '' }),
+    inspect: async () => { inspected += 1; return { ollama_version: 'v', digest: 'd', extra_models: [{ name: 'fast:4b', installed: inspected > 1 }] }; },
+    pull: async (name) => { pulled.push(name); return { ok: true, model: name, status: 'success' }; },
+  });
+  assert.deepEqual(pulled, ['fast:4b']);
+  assert.equal(out.pulls[0].ok, true);
+  assert.equal(out.installed.extra_models[0].installed, true);
+});
+
+test('the adapter refuses to pull a model outside the allowlist', { timeout: 15000 }, async () => {
+  const http2 = await import('node:http');
+  const reservation = http2.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
+  const port = reservation.address().port; await new Promise(r => reservation.close(r));
+  const child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: 'http://127.0.0.1:9', MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  try {
+    await once(child.stdout, 'data');
+    const res = await fetch(`http://127.0.0.1:${port}/models/pull`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: 'huge:70b' }) });
+    assert.equal(res.status, 400);
+    const ok = await fetch(`http://127.0.0.1:${port}/models/pull`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: 'fast:4b' }) }).then(r => r.json());
+    assert.equal(ok.ok, false, 'an unreachable daemon is reported, not hidden');
+    assert.ok(ok.error);
+  } finally { child.kill(); await once(child, 'exit'); }
+});
