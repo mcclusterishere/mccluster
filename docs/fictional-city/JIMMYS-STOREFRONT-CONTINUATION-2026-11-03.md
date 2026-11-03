@@ -93,3 +93,11 @@ Use official comparable offense data and year/coverage/population denominators b
 6. **Report:** full review artifact, exact commit/branch, screenshots of exterior/showroom/backroom/factory, measured tests/performance, remaining gaps, and handoff to the ongoing agent. No claim of finished/live work from a source commit alone.
 
 The original #729 plan and existing cinematic production roadmap remain active alongside this addition.
+
+## Published 3D review component
+
+[Draft PR #730](https://github.com/mcclusterishere/mccluster/pull/730) provides the additive model foundation on `feature/jimmys-store-model-review-20261103`, commit `f36911b83a91c54d71378f72109c332b373f108e`. [Start with its README](https://github.com/mcclusterishere/mccluster/blob/feature/jimmys-store-model-review-20261103/review-components/shoe-store/README.md).
+
+It contains procedural showroom/backroom and basement factory models, one collision/layout definition, a reciprocal floor adapter, all thirteen approved creative labels, a portable 252,784-byte GLB (3,848 triangles, 27 material batches), two CPU mesh views and a structural validation report. All 12 remote blob hashes were checked against the reviewed local files. Four component tests and nineteen existing story/spatial tests pass (23/23).
+
+This is an **unplaced low-poly review component**, not a replacement game or activated shop. The factory landing is an explicit transition marker, not continuous stairs. Existing production source, tenants, save keys, inventory and balance are untouched. Resolve the parcel/region conflict above before activation; finish the luxury art pass and connect the existing city's systems. Browser launch was blocked before page load by Chromium process-singleton socket permissions even after one approved escalation. CPU views are not browser screenshots. Browser/phone QA, owner-gate checks, device performance, Blender import and Khronos validation remain outstanding. Do not bypass the environment restriction or claim a live result.
