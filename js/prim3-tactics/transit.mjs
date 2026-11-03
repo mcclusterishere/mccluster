@@ -65,8 +65,10 @@ function reach(u, dash) {
   const r = knownPaths(p, u.id);
   const tiles = [];
   for (const [k, steps] of r.dist) { const t = parseKey(k); if (steps > 0) tiles.push({ ...t, steps }); }
-  const pathTo = (x, y, z = 0) => r.pathTo.length >= 3 ? r.pathTo(x, y, z) : r.pathTo(x, y);
-  const stepsTo = (x, y, z = 0) => { const k = r.key.length >= 3 ? r.key(x, y, z) : r.key(x, y); return r.dist.get(k); };
+  // always pass the floor: the engine's key/pathTo take z as an optional argument (so .length is 2);
+  // dropping it asked about the ground under a roof, which made every roof tap 'unreachable'
+  const pathTo = (x, y, z = 0) => r.pathTo(x, y, z);
+  const stepsTo = (x, y, z = 0) => r.dist.get(r.key(x, y, z));
   return { tiles, pathTo, stepsTo };
 }
 
