@@ -1,6 +1,8 @@
 /* PRIM3 operatives: articulated procedural mannequins in the Prim3 Field loadouts (LOADOUTS.md).
    Shared by the tactics renderers. Extracted unchanged from board3d.mjs's operative()/pose(); the
-   only differences are that the materials, helpers and team colours come in as parameters. */
+   only differences are that the materials, helpers and team colours come in as parameters.
+   The figure is modelled in metres and stood at the height the caller asks for (world units, from
+   scale.mjs operatorHeight()); its ground glow keeps the radius the caller asks for, whatever the scale. */
 export function createOperativeKit(THREE, { team, haloTex, reducedMotion = false }) {
   const TEAM = team;
   const std = (o) => new THREE.MeshStandardMaterial(o);
@@ -24,7 +26,7 @@ export function createOperativeKit(THREE, { team, haloTex, reducedMotion = false
   //   H · SOI-01   short sleeves, thin vest, body camera, holstered sidearm, cyberdeck; no helmet
   // No marks are drawn (the canon omits a mark rather than approximating it). Long guns hang on the
   // sling at rest and come to the hands only to shoot.
-  function operative(u) {
+  function operative(u, { height = null, haloRadius = 0.45 } = {}) {
     const ally = u.faction === 'PLAYER', role = ally ? u.role : 'H';
     const body = std({ color: 0x0a0a0b, roughness: 0.32, metalness: 0.08 });   // mannequin
     const cloth = std({ color: 0x111214, roughness: 0.93 });                    // field fabric
@@ -147,10 +149,12 @@ export function createOperativeKit(THREE, { team, haloTex, reducedMotion = false
     for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.012, 0.05, 0.05), accent, sx * 0.19, 0.17, 0.05, { parent: chest, cast: false });   // side tabs
     add(new THREE.BoxGeometry(0.04, 0.012, 0.012), accent, 0.12, 0.43, 0.02, { parent: chest, cast: false });                                 // shoulder
     for (const sh of [shinL, shinR]) add(new THREE.BoxGeometry(0.03, 0.03, 0.012), accent, 0, -0.39, -0.045, { parent: sh, cast: false });  // boot heels
-    const halo = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40), new THREE.MeshBasicMaterial({ map: haloTex, color: teamColor, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
-    halo.rotation.x = -Math.PI / 2; halo.position.y = 0.015; halo.renderOrder = 3; g.add(halo);
+    // stand the figure at the requested height: measure the modelled body (metres), then scale once
+    const s = height ? height / Math.max(0.001, new THREE.Box3().setFromObject(g).max.y) : 1;
+    const halo = new THREE.Mesh(new THREE.CircleGeometry(haloRadius / s, 40), new THREE.MeshBasicMaterial({ map: haloTex, color: teamColor, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    halo.rotation.x = -Math.PI / 2; halo.position.y = 0.015 / s; halo.renderOrder = 3; g.add(halo);
     Object.assign(rig, { accent, halo });
-    g.scale.setScalar(1.18);
+    g.scale.setScalar(s);
     return { g, rig };
   }
   function pose(a, t) { // drive the rig from walk / crouch / breath / recoil / flinch / death

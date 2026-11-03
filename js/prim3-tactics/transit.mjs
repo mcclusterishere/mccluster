@@ -1,4 +1,5 @@
-/* PRIM3 · Transit / Relay — the page (review branch; not public canon).
+/* PRIM3 · tactics levels — the page (review branch; not public canon). Transit / Relay by default;
+   ?level=<id> loads another level module from levels/index.mjs (e.g. equity-uprise-hq).
 
    Rules: js/prim3-tactics/tactical-resolver.mjs, tactical-hints.mjs and tactical-threat-ai.mjs are exact
    copies of mcclusterishere/Prim3 (SOURCE.json). This page never decides a rule. An action is offered
@@ -11,11 +12,37 @@ import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase
   enterOverwatch, hunkerDown, reload, shotPreview, stabilize, technicalAction, extractUnit, missionComplete, drawRolls, hasLineOfSight, gridDistance } from './tactical-resolver.mjs';
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
 import { runThreatPhase } from './tactical-threat-ai.mjs';
-import * as LEVEL from './levels/transit-relay.mjs';
+import { loadLevel } from './levels/index.mjs';
+import { operatorHeight } from './scale.mjs';
 import { DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission } from '../prim3-world/missions.mjs';
 
+const LEVEL = await loadLevel(new URLSearchParams(location.search).get('level'));
 const { SCENE, W, H, toDisplay } = LEVEL;
+// each level keeps its own save; Transit keeps the key it always had
 const SAVE_KEY = 'prim3.transit.v1';
+const SAVE = LEVEL.LEVEL_ID === 'transit-relay' ? SAVE_KEY : `prim3.level.${LEVEL.LEVEL_ID}.v1`;
+// level copy: Transit's words are the defaults, so that level reads exactly as before
+const LM = LEVEL.MISSION || {};
+const OBJ_NODE = LM.node || 'RELAY', SIDE_NODE = LM.sideNode || 'GATE';
+const OBJ = SCENE.relay || SCENE.objective;
+const TXT = {
+  title: LM.title || 'Transit / Relay', objective: LM.objective || 'Secure the relay', noun: LM.nodeLabel || 'Relay',
+  link: LM.linkWord || 'Link', extract: LM.extractWord || 'Extract', pad: LM.extractPlace || 'the yellow pad',
+  objLine: LM.objectiveLine || 'T must connect twice.', doneLine: LM.doneLine || 'Relay linked.',
+  logLink: LM.logLink || ((n) => `T links the relay (${n}/2).`), logDone: LM.logDone || 'Relay linked. Extract at the south-west pad.',
+  logBreach: LM.logBreach || 'E breaches the service gate.', held: LM.held || 'The gate held', refused: LM.refused || 'The relay refused the link',
+  doneTitle: LM.doneTitle || 'Relay secured', failT: LM.failT || 'Technical was lost. The relay cannot be linked.'
+};
+const floorName = (z) => (LEVEL.floorName ? LEVEL.floorName(z) : z ? 'roof' : '');
+if (LEVEL.LEVEL_ID !== 'transit-relay') { // the page's own headings follow the level
+  document.title = `PRIM3 ${TXT.title}`;
+  const h = document.querySelector('.tx-title b'); if (h) h.textContent = TXT.title;
+  const h1 = document.querySelector('main.tx h1'); if (h1) h1.textContent = `PRIM3 · ${TXT.title}`;
+  const lg = document.querySelector('.lg--re'); if (lg) lg.lastChild.textContent = TXT.noun;
+  const mh = document.querySelector('.tx-maphead small'); if (mh) mh.textContent = `${W} × ${H} · tap to look`;
+  const help = document.querySelectorAll('.tx-about p'); // the level's own objective and coordinate lines
+  if (LM.help && help.length >= 4) { help[2].innerHTML = LM.help[0]; help[3].innerHTML = LM.help[1]; }
+}
 const LOOK_KEY = 'prim3.tactics.look';
 const GFX_KEY = 'prim3.tactics.preview.gfx';
 const PARAMS = new URLSearchParams(location.search);
@@ -25,6 +52,7 @@ const ROLE = {
   R: { name: 'Recon', line: 'Overwatch. Longest sight and the scoped rifle.', img: 'assets/img/prim3-operators/R-portrait.jpg' },
   T: { name: 'Tech', line: 'Reach the relay and link it twice. Keep T alive.', img: 'assets/img/prim3-operators/T-portrait.jpg' }
 };
+for (const [k, line] of Object.entries(LM.roles || {})) if (ROLE[k]) ROLE[k].line = line;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const D = (x, y) => { const d = toDisplay(x, y); return `(${d.X}, ${d.Y})`; };
@@ -34,11 +62,11 @@ const D = (x, y) => { const d = toDisplay(x, y); return `(${d.X}, ${d.Y})`; };
 /* ---------- state, save ---------- */
 function fresh() { return beginPlayerPhase(createState(LEVEL.engineConfig({ seed: Number(PARAMS.get('seed')) || (Date.now() % 1e9) }))); }
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return s && s.v === 1 && s.state && Array.isArray(s.state.units) ? s.state : null; } catch (e) { return null; }
+  try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return s && s.v === 1 && s.state && Array.isArray(s.state.units) ? s.state : null; } catch (e) { return null; }
 }
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60) })); } catch (e) {} }
+function save() { try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60) })); } catch (e) {} }
 let state = (PARAMS.get('new') === '1' ? null : load()) || fresh();
-let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return (s && s.log) || []; } catch (e) { return []; } })();
+let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return (s && s.log) || []; } catch (e) { return []; } })();
 let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null };
 /* A World mission (prim3-world.html → ?mission=<id>&new=1) only dresses this level: its title, character and briefing go in
    the objective card and the first log line. Rules, map and saves are the level's own. An unknown id is ignored. */
@@ -60,8 +88,8 @@ const unitOf = (id) => state.units.find((u) => u.id === id);
 const view = () => playerProjection(state);
 const extracted = (u) => (u.statuses || []).includes('EXTRACTED');
 const nodeState = (id) => (state.nodes.find((n) => n.id === id) || {}).state;
-const relayLinks = () => ({ OBSERVED: 0, WORK_IN_PROGRESS: 1, VERIFIED: 2 }[nodeState('RELAY')] ?? 0);
-const gateOpen = () => nodeState('GATE') === 'VERIFIED';
+const relayLinks = () => ({ OBSERVED: 0, WORK_IN_PROGRESS: 1, VERIFIED: 2 }[nodeState(OBJ_NODE)] ?? 0);
+const gateOpen = () => nodeState(SIDE_NODE) === 'VERIFIED';
 function say(msg) { log.push(`T${String(state.round).padStart(2, '0')} · ${msg}`); if (log.length > 120) log = log.slice(-120); }
 
 /* ---------- reach: the hint module's player-knowledge pathing (link- and floor-aware) ---------- */
@@ -91,7 +119,7 @@ function visibleTiles() {
     const r = u.detectionRadius;
     for (let y = Math.max(0, u.y - r); y <= Math.min(H - 1, u.y + r); y += 1) for (let x = Math.max(0, u.x - r); x <= Math.min(W - 1, u.x + r); x += 1) {
       const i = y * W + x; if (vis[i]) continue;
-      const t = { x, y, z: 0 };
+      const t = { x, y, z: LEVEL.fogFloor ? LEVEL.fogFloor(x, y) : 0 };
       if (gridDistance(u, t, state) <= r && (x === u.x && y === u.y || safeLos(u, t))) vis[i] = 1;
     }
   }
@@ -118,16 +146,16 @@ function actionsFor(u) {
   add('watch', 'Watch', '1 AP', u && u.ap >= 1 && !u.overwatch && u.ammo > 0);
   add('hunker', 'Hunker', '1 AP', u && u.ap >= 1 && !u.hunkered);
   add('reload', 'Reload', '1 AP', u && u.ap >= 1 && u.ammo < u.magazineSize && u.reserveAmmo > 0);
-  if (u && u.role === 'T' && nodeState('RELAY') !== 'VERIFIED') {
-    const act = nodeState('RELAY') === 'OBSERVED' ? 'LINK_1' : 'LINK_2';
-    const can = ok && !!tryRun(() => technicalAction(state, u.id, 'RELAY', act));
-    if (can) add('link', `Link ${relayLinks() + 1}/2`, '1 AP', true, true);
+  if (u && u.role === 'T' && nodeState(OBJ_NODE) !== 'VERIFIED') {
+    const act = nodeState(OBJ_NODE) === 'OBSERVED' ? 'LINK_1' : 'LINK_2';
+    const can = ok && !!tryRun(() => technicalAction(state, u.id, OBJ_NODE, act));
+    if (can) add('link', `${TXT.link} ${relayLinks() + 1}/2`, '1 AP', true, true);
   }
-  if (u && u.role === 'E' && !gateOpen() && ok && tryRun(() => technicalAction(state, u.id, 'GATE', 'BREACH'))) add('breach', 'Breach', '1 AP', true, true);
+  if (u && u.role === 'E' && !gateOpen() && ok && tryRun(() => technicalAction(state, u.id, SIDE_NODE, 'BREACH'))) add('breach', LM.breachWord || 'Breach', '1 AP', true, true);
   if (u && ok) for (const d of state.units.filter((x) => x.faction === 'PLAYER' && x.downed && !x.dead && x.id !== u.id)) {
     if (tryRun(() => stabilize(state, u.id, d.id))) add('stab:' + d.id, 'Stabilize ' + d.role, '1 AP', true, true);
   }
-  if (u && ok && nodeState('RELAY') === 'VERIFIED' && tryRun(() => extractUnit(state, u.id))) add('extract', 'Extract', 'free', true, true);
+  if (u && ok && nodeState(OBJ_NODE) === 'VERIFIED' && tryRun(() => extractUnit(state, u.id))) add('extract', TXT.extract, 'free', true, true);
   return A;
 }
 
@@ -140,7 +168,7 @@ function ensure3d() {
     r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
     r3loading = null; fogKey = ''; // a new board needs its fog
     r3.setGrid(gridOn);
-    const s = unitOf(ui.sel); if (s) r3.focus((s.x + SCENE.relay.x) / 2, (s.y + SCENE.relay.y) / 2 + 4, 0, 46);
+    const s = unitOf(ui.sel); if (s) r3.focus((s.x + OBJ.x) / 2, (s.y + OBJ.y) / 2 + Math.min(4, H / 16), 0, Math.min(30, Math.max(W, H) * 1.2));
     render();
   }).catch((e) => { r3loading = null; toast('The 3D view could not load here. ' + esc(e.message || '')); });
 }
@@ -152,9 +180,9 @@ function boardModel() {
   if (ui.mode === 'move' || ui.mode === 'dash') { m.reach = ui.reach.tiles; }
   if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = ui.preview.dest; m.pathLine = [{ x: sel.x, y: sel.y, z: sel.z }, ...ui.preview.path]; }
   if (ui.preview && ui.preview.kind === 'fire') m.target = ui.preview.target;
-  for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: 1.55, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
-  m.labels.push({ x: SCENE.relay.x, y: SCENE.relay.y, h: 2.6, kind: 'obj', text: `Relay ${relayLinks()}/2` });
-  if (nodeState('RELAY') === 'VERIFIED') m.labels.push({ x: SCENE.extraction.x, y: SCENE.extraction.y, h: 0.4, kind: 'obj', text: 'Extract' });
+  for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
+  m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: 2.6, kind: 'obj', text: `${TXT.noun} ${relayLinks()}/2` });
+  if (nodeState(OBJ_NODE) === 'VERIFIED') m.labels.push({ x: SCENE.extraction.x, y: SCENE.extraction.y, h: 0.4, kind: 'obj', text: TXT.extract });
   if (ui.preview && ui.preview.kind === 'move') { const d = ui.preview.dest; m.labels.push({ x: d.x, y: d.y, z: d.z, h: 0.1, kind: 'info', text: `${D(d.x, d.y)} · ${ui.preview.steps} steps` }); }
   return m;
 }
@@ -170,19 +198,19 @@ function render() {
   const ph = $('txPhase'); ph.textContent = ui.ended ? (ui.ended === 'win' ? 'Complete' : 'Failed') : state.phase === 'PLAYER' && !ui.busy ? 'Your move' : 'Threat move';
   ph.classList.toggle('is-threat', !!ui.busy || state.phase !== 'PLAYER');
   $('txBusy').hidden = !ui.busy;
-  $('txCoord').textContent = sel ? (() => { const d = toDisplay(sel.x, sel.y); return `${sel.role} (${d.X}, ${d.Y}${sel.z ? ', roof' : ''})`; })() : '';
+  $('txCoord').textContent = sel ? (() => { const d = toDisplay(sel.x, sel.y); return `${sel.role} (${d.X}, ${d.Y}${sel.z ? ', ' + floorName(sel.z) : ''})`; })() : '';
   $('txGrid').setAttribute('aria-pressed', String(gridOn)); $('txGrid').lastChild.textContent = gridOn ? 'Grid on' : 'Grid off';
   // objective
   const links = relayLinks();
   const clock = state.mission ? `${state.mission.escalation} · clock ${state.mission.clock}` : '';
-  $('txObj').innerHTML = (MISSION ? `<small>${MISSION.deployment === 'wildcard-call' ? 'Wildcard call' : 'Mission'} · ${esc(MISSION.character.name)}</small><b>${esc(MISSION.title)}</b><span class="tx-brief" id="txBrief">${esc(MISSION.briefing)}</span>` : '') + (nodeState('RELAY') === 'VERIFIED'
-    ? `<small>Objective</small><b>Extract</b><span>Relay linked. Everyone standing to the yellow pad ${D(SCENE.extraction.x, SCENE.extraction.y)}. ${esc(clock)}</span>`
-    : `<small>Objective</small><b>Secure the relay</b><span>T must connect twice. Link ${links}/2. ${esc(clock)}</span>`);
+  $('txObj').innerHTML = (MISSION ? `<small>${MISSION.deployment === 'wildcard-call' ? 'Wildcard call' : 'Mission'} · ${esc(MISSION.character.name)}</small><b>${esc(MISSION.title)}</b><span class="tx-brief" id="txBrief">${esc(MISSION.briefing)}</span>` : '') + (nodeState(OBJ_NODE) === 'VERIFIED'
+    ? `<small>Objective</small><b>${TXT.extract}</b><span>${TXT.doneLine} Everyone standing to ${TXT.pad} ${D(SCENE.extraction.x, SCENE.extraction.y)}. ${esc(clock)}</span>`
+    : `<small>Objective</small><b>${TXT.objective}</b><span>${TXT.objLine} ${TXT.link} ${links}/2. ${esc(clock)}</span>`);
   $('txObj').classList.toggle('has-mission', !!MISSION);
   // selected operative
   if (sel) {
     const R = ROLE[sel.role];
-    const st = [sel.downed ? 'downed' : '', sel.overwatch ? 'overwatch' : '', sel.hunkered ? 'hunkered' : '', extracted(sel) ? 'extracted' : '', sel.z ? 'on the roof' : ''].filter(Boolean).join(' · ');
+    const st = [sel.downed ? 'downed' : '', sel.overwatch ? 'overwatch' : '', sel.hunkered ? 'hunkered' : '', extracted(sel) ? 'extracted' : '', sel.z ? (LEVEL.floorName ? 'on ' + floorName(sel.z) : 'on the roof') : ''].filter(Boolean).join(' · ');
     $('txSel').innerHTML = `<img src="${R.img}" alt="${sel.role}: ${R.name} operator, faceless mannequin in field loadout" width="72" height="72">
       <div><h2>${sel.role} / ${R.name}</h2><p>${esc(R.line)}</p><p>${D(sel.x, sel.y)} · ammo ${sel.ammo}/${sel.magazineSize} (+${sel.reserveAmmo})${st ? ' · ' + st : ''}</p></div>
       <div class="tx-stats"><span class="chip">${sel.ap} AP</span><span class="chip chip--hp">${sel.hp} / ${sel.maxHp} HP</span></div>`;
@@ -213,7 +241,7 @@ function renderSheet() {
   if (pv && pv.kind === 'move') {
     const cv = state.cover.find((c) => c.x === pv.dest.x && c.y === pv.dest.y && (c.z || 0) === (pv.dest.z || 0));
     html = `<p class="sh-eye">${pv.dash ? 'Dash' : 'Move'} preview · ${sel.role}</p>
-      <p class="sh-main">${D(sel.x, sel.y)} → <b>${D(pv.dest.x, pv.dest.y)}</b>${pv.dest.z ? ' roof' : ''} · ${pv.steps} steps · ${pv.dash ? 2 : 1} AP${cv ? ' · ' + (cv.type === 'HIGH' ? 'high' : 'low') + ' cover' : ' · no cover'}</p>
+      <p class="sh-main">${D(sel.x, sel.y)} → <b>${D(pv.dest.x, pv.dest.y)}</b>${pv.dest.z ? ' ' + floorName(pv.dest.z) : ''} · ${pv.steps} steps · ${pv.dash ? 2 : 1} AP${cv ? ' · ' + (cv.type === 'HIGH' ? 'high' : 'low') + ' cover' : ' · no cover'}</p>
       <p class="sh-sub">${pv.exposure.length ? 'Known hostiles with a shot there: ' + pv.exposure.map((e) => `${e.id} ${e.hit}%`).join(', ') : 'No known hostile has a shot there.'}${pv.watchers ? ' Watch out: a hostile on overwatch may react.' : ''}</p>
       <div class="sh-row"><button type="button" class="sh-btn sh-btn--go" data-sheet="confirm-move">Confirm ${pv.dash ? 'dash' : 'move'}</button><button type="button" class="sh-btn" data-sheet="back">Back</button></div>`;
   } else if (ui.mode === 'fire' && sel) {
@@ -232,7 +260,7 @@ function renderSheet() {
 const mini = $('txMini'), mctx = mini.getContext('2d');
 function drawMap() {
   if ($('txMap').hidden && matchMedia('(max-width: 1099px)').matches) return;
-  const S = mini.width / W, g = mctx, studio = look === 'studio', day = look === 'day';
+  const S = Math.min(mini.width / W, mini.height / H), MK = Math.min(S, mini.width / 40), g = mctx, studio = look === 'studio', day = look === 'day';
   const col = day ? { bg: '#f4f6f6', ground: '#e7ebec', water: '#4fb3b8', bld: '#c2c8cb', roof: '#d3d8da', prop: '#cfd4d6', grid: 'rgba(20,40,50,.10)', ink: '#16202a', sq: '#0fa9ba', th: '#d81f2a', amber: '#d98a0a' }
     : studio ? { bg: '#eef0f1', ground: '#e2e5e7', water: '#c9d3d8', bld: '#a9b0b5', roof: '#8e979d', prop: '#bcc2c6', grid: 'rgba(0,0,0,.08)', ink: '#14191c', sq: '#ff2a3a', th: '#3d8bff', amber: '#2a3136' }
     : { bg: '#0b1116', ground: '#121a20', water: '#0e3a44', bld: '#3a444c', roof: '#4b565f', prop: '#2a333a', grid: 'rgba(120,220,235,.08)', ink: '#cfe3ea', sq: '#2fe0f0', th: '#ff3b3b', amber: '#ffb547' };
@@ -240,16 +268,19 @@ function drawMap() {
   g.fillStyle = col.ground; g.fillRect(0, 0, W * S, H * S);
   g.strokeStyle = col.grid; g.lineWidth = 1;
   for (let i = 0; i <= W; i += 4) { g.beginPath(); g.moveTo(i * S, 0); g.lineTo(i * S, H * S); g.stroke(); g.beginPath(); g.moveTo(0, i * S); g.lineTo(W * S, i * S); g.stroke(); }
+  if (SCENE.kind === 'building') drawBuildingMap(g, S, col);
+  else {
   g.fillStyle = col.water; g.fillRect(SCENE.canal.x * S, SCENE.canal.y * S, SCENE.canal.w * S, SCENE.canal.d * S);
   g.fillStyle = col.prop; for (const b of SCENE.bridges) g.fillRect(b.x * S, b.y * S, b.w * S, b.d * S);
   for (const b of SCENE.buildings) { g.fillStyle = b.roof ? col.roof : col.bld; g.fillRect(b.x * S, b.y * S, b.w * S, b.d * S); g.fillStyle = col.ink; g.font = `700 ${S * 1.8}px system-ui`; g.fillText(b.label, (b.x + 0.6) * S, (b.y + 2) * S); }
   const sb = SCENE.skybridge; g.fillStyle = col.roof; g.fillRect(sb.x * S, sb.y * S, sb.w * S, sb.d * S);
   g.fillStyle = col.prop; for (const c of [...SCENE.containers, ...SCENE.barricades, ...SCENE.crates, SCENE.tent]) g.fillRect(c.x * S, c.y * S, c.w * S, c.d * S);
   g.strokeStyle = gateOpen() ? col.prop : col.ink; g.lineWidth = 2; g.beginPath(); g.moveTo(SCENE.fence.x0 * S, (SCENE.fence.y + 0.5) * S); g.lineTo((SCENE.fence.x1 + 1) * S, (SCENE.fence.y + 0.5) * S); g.stroke();
-  // extraction, relay
+  }
+  // extraction, objective
   g.strokeStyle = '#ffd23a'; g.lineWidth = 2; g.beginPath(); g.arc((SCENE.extraction.x + 0.5) * S, (SCENE.extraction.y + 0.5) * S, (SCENE.extraction.r + 0.5) * S, 0, Math.PI * 2); g.stroke();
-  const rx = (SCENE.relay.x + 0.5) * S, ry = (SCENE.relay.y + 0.5) * S;
-  g.strokeStyle = col.amber; g.lineWidth = 3; g.beginPath(); g.moveTo(rx, ry - S * 1.4); g.lineTo(rx + S * 1.4, ry); g.lineTo(rx, ry + S * 1.4); g.lineTo(rx - S * 1.4, ry); g.closePath(); g.stroke();
+  const rx = (OBJ.x + 0.5) * S, ry = (OBJ.y + 0.5) * S, rk = MK * 1.4; // marks keep their size on a small map
+  g.strokeStyle = col.amber; g.lineWidth = 3; g.beginPath(); g.moveTo(rx, ry - rk); g.lineTo(rx + rk, ry); g.lineTo(rx, ry + rk); g.lineTo(rx - rk, ry); g.closePath(); g.stroke();
   // reach and path
   if (ui.reach && (ui.mode === 'move' || ui.mode === 'dash')) { g.fillStyle = studio ? 'rgba(20,25,28,.12)' : 'rgba(47,224,240,.16)'; for (const t of ui.reach.tiles) g.fillRect(t.x * S, t.y * S, S, S); }
   if (ui.preview && ui.preview.kind === 'move') { const sel = unitOf(ui.sel); g.strokeStyle = col.amber; g.setLineDash([S, S * 0.6]); g.lineWidth = 2; g.beginPath(); g.moveTo((sel.x + 0.5) * S, (sel.y + 0.5) * S); for (const p of ui.preview.path) g.lineTo((p.x + 0.5) * S, (p.y + 0.5) * S); g.stroke(); g.setLineDash([]); }
@@ -257,17 +288,31 @@ function drawMap() {
   // units: squad and only the hostiles the player knows about
   for (const u of view().units) {
     if (u.dead || extracted(u)) continue;
-    const ally = u.faction === 'PLAYER', x = u.x * S, y = u.y * S;
+    const ally = u.faction === 'PLAYER', x = (u.x + 0.5) * S - MK * 0.5, y = (u.y + 0.5) * S - MK * 0.5;
     g.strokeStyle = ally ? col.sq : col.th; g.lineWidth = 2; g.fillStyle = studio || day ? 'rgba(255,255,255,.92)' : 'rgba(5,8,11,.85)';
-    g.fillRect(x - S * 0.9, y - S * 0.9, S * 2.8, S * 2.8); g.strokeRect(x - S * 0.9, y - S * 0.9, S * 2.8, S * 2.8);
-    g.fillStyle = ally ? col.sq : col.th; g.font = `800 ${S * 1.7}px system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(ally ? u.role : u.id, x + S * 0.5, y + S * 0.5); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-    if (u.id === ui.sel) { g.strokeStyle = col.ink; g.strokeRect(x - S * 1.3, y - S * 1.3, S * 3.6, S * 3.6); }
+    g.fillRect(x - MK * 0.9, y - MK * 0.9, MK * 2.8, MK * 2.8); g.strokeRect(x - MK * 0.9, y - MK * 0.9, MK * 2.8, MK * 2.8);
+    g.fillStyle = ally ? col.sq : col.th; g.font = `800 ${MK * 1.7}px system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(ally ? u.role : u.id, x + MK * 0.5, y + MK * 0.5); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    if (u.id === ui.sel) { g.strokeStyle = col.ink; g.strokeRect(x - MK * 1.3, y - MK * 1.3, MK * 3.6, MK * 3.6); }
   }
 }
+// a building level's sector map: site zones, the plate, its closed rooms and cores, the doors
+function drawBuildingMap(g, S, col) {
+  const cell = (c, fill) => { g.fillStyle = fill; g.fillRect(c.x * S, c.y * S, S, S); };
+  const tone = { street: col.bld, walk: col.prop, service: col.prop, assembly: 'rgba(255,210,58,.28)' };
+  for (const z of SCENE.zones || []) for (const c of z.cells) cell(c, tone[z.kind] || col.prop);
+  const p = SCENE.plate; g.fillStyle = col.roof; g.fillRect(p.x * S, p.y * S, p.w * S, p.d * S);
+  for (const c of [...(SCENE.floor1Rooms || []), ...Object.values(SCENE.core || {}).flat()]) cell(c, col.bld);
+  g.fillStyle = col.ink; g.font = `700 ${Math.max(10, S * 0.32)}px system-ui`;
+  for (const s of SCENE.stairCores || []) { const c = s.cells[0]; g.fillText(s.name.replace('Stair ', 'S'), (c.x + 0.18) * S, (c.y + 0.62) * S); }
+  g.strokeStyle = col.ink; g.lineWidth = 2; g.strokeRect(p.x * S, p.y * S, p.w * S, p.d * S);
+  for (const d of SCENE.doors || []) { const open = d.open || gateOpen(); g.strokeStyle = open ? col.amber : col.ink; g.lineWidth = 4; const mx = (d.in.x + d.out.x + 1) / 2 * S, my = (d.in.y + d.out.y + 1) / 2 * S, v = d.in.x === d.out.x;
+    g.beginPath(); if (v) { g.moveTo(mx - S * 0.35, my); g.lineTo(mx + S * 0.35, my); } else { g.moveTo(mx, my - S * 0.35); g.lineTo(mx, my + S * 0.35); } g.stroke(); }
+}
 mini.addEventListener('click', (e) => {
-  const r = mini.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * W), y = Math.floor((e.clientY - r.top) / r.height * H);
-  if (r3) r3.focus(x, y, 0, 34);
+  const r = mini.getBoundingClientRect(), S = Math.min(mini.width / W, mini.height / H);
+  const x = Math.min(W - 1, Math.floor((e.clientX - r.left) / r.width * mini.width / S)), y = Math.min(H - 1, Math.floor((e.clientY - r.top) / r.height * mini.height / S));
+  if (r3) r3.focus(x, y, 0, Math.min(22, Math.max(W, H) * 1.2));
   $('txCursor').textContent = `Look ${D(x, y)}`;
 });
 
@@ -294,7 +339,7 @@ function onTap(t) {
   if (hostile && sel) { const tg = targetsFor(sel).find((x) => x.e.id === hostile.id); if (tg && sel.ap >= 1) { ui.mode = 'fire'; aim(hostile.id); return; } toast(`${hostile.id}: no shot from ${sel.role}'s position.`); }
 }
 function tryPreview(st, a, b) { try { const p = shotPreview(st, a, b); return p.legal ? p : null; } catch (e) { return null; } }
-function select(id) { ui.sel = id; ui.mode = null; ui.preview = null; toastMsg = ''; const u = unitOf(id); if (r3 && u) r3.focus(u.x, u.y, u.z, 42); render(); }
+function select(id) { ui.sel = id; ui.mode = null; ui.preview = null; toastMsg = ''; const u = unitOf(id); if (r3 && u) r3.focus(u.x, u.y, u.z, Math.min(22, Math.max(W, H) * 1.2)); render(); }
 function cancel() { ui.mode = null; ui.preview = null; ui.reach = null; toastMsg = ''; render(); }
 function aim(id) {
   const sel = unitOf(ui.sel), pv = shotPreview(state, sel.id, id);
@@ -313,8 +358,8 @@ async function onAct(id) {
     if (id === 'watch') { state = enterOverwatch(state, sel.id); say(`${sel.role} on overwatch.`); }
     else if (id === 'hunker') { state = hunkerDown(state, sel.id); say(`${sel.role} hunkers down.`); }
     else if (id === 'reload') { state = reload(state, sel.id); say(`${sel.role} reloads.`); }
-    else if (id === 'link') { const act = nodeState('RELAY') === 'OBSERVED' ? 'LINK_1' : 'LINK_2'; const out = technicalAction(state, sel.id, 'RELAY', act); if (!out.accepted) throw new Error('The relay refused the link'); state = out.state; say(`T links the relay (${relayLinks()}/2).`); if (relayLinks() === 2) say('Relay linked. Extract at the south-west pad.'); }
-    else if (id === 'breach') { const out = technicalAction(state, sel.id, 'GATE', 'BREACH'); if (!out.accepted) throw new Error('The gate held'); state = out.state; say('E breaches the service gate.'); }
+    else if (id === 'link') { const act = nodeState(OBJ_NODE) === 'OBSERVED' ? 'LINK_1' : 'LINK_2'; const out = technicalAction(state, sel.id, OBJ_NODE, act); if (!out.accepted) throw new Error(TXT.refused); state = out.state; say(TXT.logLink(relayLinks())); if (relayLinks() === 2) say(TXT.logDone); }
+    else if (id === 'breach') { const out = technicalAction(state, sel.id, SIDE_NODE, 'BREACH'); if (!out.accepted) throw new Error(TXT.held); state = out.state; say(TXT.logBreach); }
     else if (id.startsWith('stab:')) { const t = id.slice(5); state = stabilize(state, sel.id, t); say(`${sel.role} stabilizes ${unitOf(t).role}.`); }
     else if (id === 'extract') { state = extractUnit(state, sel.id); say(`${sel.role} extracts.`); const next = state.units.find((u) => u.faction === 'PLAYER' && !u.dead && !u.downed && !extracted(u)); if (next) ui.sel = next.id; }
   } catch (e) { state = before; toast('Refused: ' + esc(e.message)); return; }
@@ -431,18 +476,18 @@ function afterChange() {
     const squad = state.units.filter((u) => u.faction === 'PLAYER');
     const out = squad.filter(extracted).length;
     $('txEnd').innerHTML = end === 'win'
-      ? `<div><h2>Relay secured</h2><p>Turn ${state.round}. ${out} of ${squad.length} extracted.</p><button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Play again</button></div>`
-      : `<div><h2>Mission failed</h2><p>${end === 'lose-t' ? 'Technical was lost. The relay cannot be linked.' : 'No one is left standing.'}</p><button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Try again</button></div>`;
+      ? `<div><h2>${TXT.doneTitle}</h2><p>Turn ${state.round}. ${out} of ${squad.length} extracted.</p><button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Play again</button></div>`
+      : `<div><h2>Mission failed</h2><p>${end === 'lose-t' ? TXT.failT : 'No one is left standing.'}</p><button type="button" class="sh-btn sh-btn--go" data-sheet="restart">Try again</button></div>`;
     $('txEnd').hidden = false;
     say(end === 'win' ? 'Mission complete.' : 'Mission failed.');
   }
   save(); render();
 }
 function restart() {
-  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  try { localStorage.removeItem(SAVE); } catch (e) {}
   explored = new Uint8Array(W * H); fogKey = '';
   state = fresh(); log = []; ui = { ...ui, sel: 'T1', mode: null, preview: null, reach: null, busy: false, ended: null };
-  $('txEnd').hidden = true; say('Deployed. Secure the relay.');
+  $('txEnd').hidden = true; say(`Deployed. ${TXT.objective}.`);
   if (MISSION) log.unshift(missionLine(MISSION));
   if (r3) { r3.destroy(); r3 = null; }
   save(); render();
@@ -470,7 +515,7 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === '1' || e.key === '2' || e.key === '3') { const u = state.units.filter((x) => x.faction === 'PLAYER')[Number(e.key) - 1]; if (u) select(u.id); }
   else if (e.key === 'Enter' && ui.preview) onSheet(ui.preview.kind === 'move' ? 'confirm-move' : 'confirm-fire');
 });
-if (!log.length) say('Deployed. Secure the relay.');
+if (!log.length) say(`Deployed. ${TXT.objective}.`);
 render();
 if (MISSION_ID) {
   const fromDraft = () => { try { return findMission(JSON.parse(localStorage.getItem(WORLD_DRAFTS) || 'null'), MISSION_ID); } catch (e) { return null; } };
@@ -479,10 +524,10 @@ if (MISSION_ID) {
     .then((m) => {
       if (!m || typeof m.title !== 'string' || !m.character || typeof m.briefing !== 'string') return;
       MISSION = m;
-      document.title = `${m.title} · PRIM3 Transit / Relay`;
+      document.title = `${m.title} · PRIM3 ${TXT.title}`;
       if (!log.some((l) => l.startsWith(`T01 · Mission: ${m.title} ·`))) { log.unshift(missionLine(m)); save(); }
       render();
     });
 }
 $('txObj').addEventListener('click', () => { if (MISSION) $('txObj').classList.toggle('is-open'); });
-window.__tx = { get state() { return state; }, get ui() { return ui; }, get r3() { return r3; }, get busy() { return ui.busy || !!(r3 && r3.isAnimating()); }, select, onAct, onSheet, onTap, endTurn, restart, reach: () => ui.reach, SAVE_KEY };
+window.__tx = { get state() { return state; }, get ui() { return ui; }, get r3() { return r3; }, get busy() { return ui.busy || !!(r3 && r3.isAnimating()); }, select, onAct, onSheet, onTap, endTurn, restart, reach: () => ui.reach, SAVE_KEY: SAVE };
