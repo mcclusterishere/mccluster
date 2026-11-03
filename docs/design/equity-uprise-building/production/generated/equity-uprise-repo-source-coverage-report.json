@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 592,
+  "candidate_count": 595,
   "capability_source_count": 104,
-  "support_only_count": 488,
-  "checks_total": 2266,
-  "checks_passed": 2266,
+  "support_only_count": 491,
+  "checks_total": 2278,
+  "checks_passed": 2278,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -104,6 +104,7 @@
     "data/fellows.json",
     "data/gallery.json",
     "data/game-hub/modules.json",
+    "data/games/world.v1.json",
     "data/lyrics/money-or-the-power.json",
     "data/merch.json",
     "data/offers.json",
@@ -351,6 +352,7 @@
     "scripts/e2e/eu-screens.e2e.mjs",
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
+    "scripts/e2e/globe-games.e2e.mjs",
     "scripts/e2e/server-lab.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/funding/validate-register-db.mjs",
@@ -376,6 +378,7 @@
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/eu-screens.test.mjs",
     "scripts/test/fixtures/hq-drill-full-strength-win.json",
+    "scripts/test/games-world.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
@@ -606,7 +609,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "592 entries"
+      "detail": "595 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -11930,6 +11933,66 @@
     },
     {
       "name": "scripts/test/server-lab.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/games/world.v1.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/games/world.v1.json classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "data/games/world.v1.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/games/world.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/globe-games.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/games-world.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

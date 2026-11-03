@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 587,
+  "candidate_count": 590,
   "capability_source_count": 104,
-  "support_only_count": 483,
+  "support_only_count": 486,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4417,6 +4417,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Server Lab page contract test (owner gate, published runtime files, mobile rules, unbranded hardware)."
+    },
+    {
+      "path": "data/games/world.v1.json",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated owner-only Games overlay data (tools/publish-games-world.mjs) lists the existing Equity Uprise HQ exercise and B1 mission routes and quotes their briefs; data-only navigation to existing destinations, no building capability, geometry or access policy."
+    },
+    {
+      "path": "scripts/e2e/globe-games.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser checks for the owner-only globe Games overlay verify that its Bridgeport links reach the existing Equity Uprise HQ and B1 routes; verification support only, with no building program or geometry implementation."
+    },
+    {
+      "path": "scripts/test/games-world.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit checks that the Games overlay's Equity Uprise HQ and B1 entries resolve to existing routes and that B1 anchors match the mission spec; verification support only."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
