@@ -95,6 +95,14 @@ export async function localAiChat({
   };
 }
 
+export async function localAiPullModel(model, { fetchImpl = globalThis.fetch, timeoutMs = 1_560_000 } = {}) {
+  const response = await fetchImpl(`${ADAPTER}/models/pull`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: String(model || '') }), signal: AbortSignal.timeout(timeoutMs),
+  });
+  return response.json().catch(() => ({ ok: false, error: `adapter returned ${response.status}` }));
+}
+
 export async function localAiDiagnostics({ fetchImpl = globalThis.fetch } = {}) {
   const response = await fetchImpl(`${ADAPTER}/diagnostics`, { signal: AbortSignal.timeout(15_000) });
   const body = await response.json();

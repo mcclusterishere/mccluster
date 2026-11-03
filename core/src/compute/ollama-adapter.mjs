@@ -241,6 +241,27 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    // Install an allowlisted extra model (MCCLUSTER_OLLAMA_EXTRA_MODELS) through
+    // the Ollama daemon and report exactly what it said. Loopback only, like
+    // every route here; any other model name is refused.
+    if (req.method === 'POST' && req.url === '/models/pull') {
+      const body = await readJson(req);
+      const name = String(body.model || '');
+      if (!EXTRA_MODELS.includes(name)) return send(res, 400, { ok: false, error: 'model is not an allowlisted extra model', model: name });
+      const started = Date.now();
+      try {
+        const pulled = await fetch(`${OLLAMA}/api/pull`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ model: name, stream: false }),
+          signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_PULL_TIMEOUT_MS || 1_500_000)),
+        });
+        const data = await pulled.json().catch(() => null);
+        return send(res, pulled.ok ? 200 : 502, { ok: pulled.ok && data?.status === 'success', model: name, http_status: pulled.status, status: data?.status || null, error: data?.error || null, wall_ms: Date.now() - started });
+      } catch (error) {
+        return send(res, 502, { ok: false, model: name, error: String(error?.message || error).slice(0, 300), wall_ms: Date.now() - started });
+      }
+    }
+
     if (req.method === 'POST' && req.url === '/execute') {
       const body = await readJson(req);
       const caller = new AbortController();

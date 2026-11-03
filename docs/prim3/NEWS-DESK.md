@@ -21,6 +21,15 @@ McCluster about real headlines, written only from the headline (the article is
 not read), never published to the public feed by this path. Real countries and
 real people are never enemies.
 
+## Reaction length
+
+Owner, 2026-11-03: "the reviews it's giving are too short, make them twice as
+long." Each reaction is now 2 to 4 sentences (about 25 to 60 words): what the
+headline is about, then the agent's take. Twice the words is roughly twice the
+generation time per batch, so at the same tick budget fewer headlines are
+covered per day; the seeder skips agents whose jobs are still queued, so the
+box never piles up work.
+
 ## Capacity, honestly
 
 Measured on the box (8 vCPU EPYC-Milan, 24 GB, no GPU, Ollama capped at 6 CPUs,
