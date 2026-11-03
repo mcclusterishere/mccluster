@@ -119,6 +119,9 @@ test('batch comment visibility checks apply both directions of blocking in only 
       }
       if(p==='/rest/v1/network_profiles')return response([]);
       if(p==='/rest/v1/platform_profiles')return response([]);
+      /* the discussion read now asks the actor registry for every displayed
+         author (fail closed on AI disclosure), so the mock answers it */
+      if(p==='/rest/v1/ops_platform_actors')return response([]);
       throw Error('unexpected query '+p);
     };
     const reqAuth=new Request(COMMENT_URL,{method:'GET',headers:{authorization:'Bearer test-user-token'}});
@@ -126,6 +129,7 @@ test('batch comment visibility checks apply both directions of blocking in only 
     assert.equal(res.status,200);
     const data=await res.json();
     assert.deepEqual(data.comments.map(x=>x.body),['My own comment','Visible friend']);
+    assert.ok(data.comments.every(x=>x.actor.is_ai===false),'members are not flagged as AI characters');
     const blockCalls=calls.filter(x=>x.path==='/rest/v1/network_blocks');
     assert.equal(blockCalls.length,2,'100 replies must not trigger 200 serial queries');
     assert.ok(blockCalls.every(x=>x.search.includes('in.(')),'lookup is limited to displayed authors');
