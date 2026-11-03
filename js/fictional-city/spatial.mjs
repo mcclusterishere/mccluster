@@ -11,13 +11,26 @@ export function buildingBounds(b) {
   return { minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, id: b.id };
 }
 
-export function createSpatialWorld(buildings, hq = null) {
+/* `places` (places.v1.json) adds the expanded city's land, quays, piers and parcel footprints. Without it the
+   world is exactly the original block, bridge and island, so older callers and saves behave as before. */
+export function createSpatialWorld(buildings, hq = null, places = null) {
   const blockers = buildings.map(buildingBounds);
+  const surfaces = places?.surfaces?.length
+    ? places.surfaces.map(({ minX, maxX, minZ, maxZ }) => ({ minX, maxX, minZ, maxZ }))
+    : DISTRICT_SURFACES;
+  if (places?.parcels) {
+    const known = new Set(blockers.map(b => b.id));
+    for (const p of places.parcels) {
+      if (known.has(p.id)) continue;
+      const [x, z] = p.footprint.center, [w, d] = p.footprint.size;
+      blockers.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, id: p.id });
+    }
+  }
   if (hq?.footprintMeters) {
     const [w, d] = hq.footprintMeters;
     blockers.push({ minX: -w / 2, maxX: w / 2, minZ: 88 - d / 2, maxZ: 88 + d / 2, id: 'equity-uprise-hq' });
   }
-  return { surfaces: DISTRICT_SURFACES, blockers };
+  return { surfaces, blockers };
 }
 
 export function interiorWorld(garage = false) {
