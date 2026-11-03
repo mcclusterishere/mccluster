@@ -12,7 +12,8 @@ const read = (p) => readFile(resolve(ROOT, p), 'utf8');
 const readJson = async (p) => JSON.parse(await read(p));
 /* js/globe-games.js is a classic browser script; it exports HuGames onto globalThis outside a page */
 createRequire(import.meta.url)('../../js/globe-games.js');
-const { scheduleAt, findTown, townStorylines, routes } = globalThis.HuGames;
+const { scheduleAt, findTown, townStorylines, routes, resolveRequires } = globalThis.HuGames;
+const exists = (p) => access(resolve(ROOT, p)).then(() => true, () => false);
 
 const world = await readJson(OUTPUT);
 const registry = await readJson(REGISTRY);
@@ -51,7 +52,7 @@ test('schema: country → state → town, each town with real coordinates and at
         assert.ok(Math.abs(t.lat) <= 90 && Math.abs(t.lon) <= 180, t.id);
         assert.ok(t.entries.length, t.id + ' has nothing to start');
         for (const e of t.entries) {
-          assert.ok(['place', 'story', 'mission', 'game'].includes(e.kind), e.id);
+          assert.ok(['place', 'story', 'mission', 'game', 'lab'].includes(e.kind), e.id);
           assert.ok(e.title && e.route && e.blurb && e.blurb.text && e.blurb.source, e.id);
           if (e.neighborhood) assert.ok(t.neighborhoods.some((n) => n.id === e.neighborhood), e.id + ' names an unknown neighborhood');
         }
@@ -85,6 +86,10 @@ test('every link resolves to a file in this repository, and every query it carri
   assert.match(await read('js/city-arcade/app.mjs'), /get\('game'\)/, 'the arcade reads ?game=');
   const all = routes(world);
   assert.ok(all.length > 30);
+  /* a conditional slot's own query is checked only once the feature it waits for is in this checkout */
+  const pending = new Set();
+  for (const { t } of towns(world)) for (const e of t.entries) if (e.requires && !(await exists(e.requires.source))) pending.add(e.route);
+  const screenModes = JSON.stringify((await readJson('screens/data/screen-registry-v1.json')));
   for (const r of all) {
     const u = new URL(r, 'https://matthew.mccluster.org/');
     assert.ok(!/^[a-z]+:/i.test(r) && !r.startsWith('/'), 'relative route only: ' + r);
@@ -95,6 +100,8 @@ test('every link resolves to a file in this repository, and every query it carri
       if (q.has('side')) assert.match(b1, new RegExp(`SIDES = \\[[^\\]]*'${q.get('side')}'`), r);
       if (q.has('mission')) assert.ok(prim3.missions.some((m) => m.id === q.get('mission')), r);
     }
+    if (u.pathname.startsWith('/screens/') && q.has('mode')) assert.ok(screenModes.includes('"' + q.get('mode') + '"'), r + ' names a registered screen mode');
+    if (u.pathname === '/screens/terminal.html' && q.has('tab') && !pending.has(r)) assert.match(await read('js/eu-screens/apps/terminal.mjs'), new RegExp(`id: "${q.get('tab')}"`), r);
     if (u.pathname === '/city-arcade.html') assert.ok(arcade.games.some((g) => g.id === q.get('game') && g.status === 'playable'), r + ' is a playable arcade game');
     if (u.pathname === '/fictional-city.html' && q.has('entry')) assert.match(city, new RegExp(`entry === '${q.get('entry')}'`), r);
   }
@@ -106,7 +113,7 @@ test('Bridgeport, Connecticut carries the city, the Robbery 1s, the garage, the 
   assert.equal(world.countries[0].id, 'us', 'the United States is listed first');
   const r = f.town.entries.map((e) => e.route);
   for (const want of ['fictional-city.html', 'fictional-city.html?entry=bridgeport', 'fictional-city.html?entry=garage', 'prim3-transit.html?level=equity-uprise-hq',
-    'prim3-transit.html?level=equity-uprise-b1&side=defend', 'prim3-transit.html?level=equity-uprise-b1&side=attack']) assert.ok(r.includes(want), want);
+    'prim3-transit.html?level=equity-uprise-b1&side=defend', 'prim3-transit.html?level=equity-uprise-b1&side=attack', 'equity-uprise-server-lab-3d.html', 'screens/building.html']) assert.ok(r.includes(want), want);
   assert.deepEqual(townStorylines(world, 'us/connecticut/bridgeport').map((s) => s.id), ['robbery-1s', 'whip-equipped', 'b1-blind-the-floor']);
 });
 
@@ -203,4 +210,31 @@ test('schedule: now / next is deterministic, loops, and handles the scene edges'
       assert.equal(a.next.index, (a.now.index + 1) % real.scenes.length);
     }
   }
+});
+
+test('Equity Uprise HQ: the exercise, both sides of B1, the Server Lab and the Building Screens; the Workbench waits for its build', async () => {
+  const t = findTown(world, 'us/connecticut/bridgeport').town;
+  const hq = t.entries.filter((e) => e.neighborhood === 'equity-uprise-hq');
+  assert.deepEqual(hq.map((e) => e.route), ['prim3-transit.html?level=equity-uprise-hq', 'prim3-transit.html?level=equity-uprise-b1&side=defend', 'prim3-transit.html?level=equity-uprise-b1&side=attack',
+    'equity-uprise-server-lab-3d.html', 'screens/building.html', 'screens/terminal.html?tab=hardware&mode=TRAINING']);
+  const bench = hq.find((e) => e.id === 'eu-computer-workbench');
+  assert.equal(bench.requires.built, 'equity-uprise-preview/lab-runtime/equity-uprise-computer-workbench.mjs');
+  /* the build copies the source module there (deploy-pages copies lab-runtime into equity-uprise-preview/lab-runtime/) */
+  assert.ok(bench.requires.source.endsWith('/' + bench.requires.built.split('/').pop()));
+  assert.match(await read('.github/workflows/deploy-pages.yml'), /equity-uprise-preview\/lab-runtime\//);
+  assert.match(await read('equity-uprise-server-lab-3d.html'), /owner-only/);
+});
+
+test('resolveRequires omits a slot whose build file is missing and keeps it, unmarked, when it is served', async () => {
+  const absent = await resolveRequires(world, async () => false);
+  const present = await resolveRequires(world, async (p) => p === 'equity-uprise-preview/lab-runtime/equity-uprise-computer-workbench.mjs');
+  const failing = await resolveRequires(world, async () => { throw Error('offline'); });
+  const ids = (w) => findTown(w, 'us/connecticut/bridgeport').town.entries.map((e) => e.id);
+  assert.ok(!ids(absent).includes('eu-computer-workbench'));
+  assert.ok(!ids(failing).includes('eu-computer-workbench'), 'an unreachable check omits, never shows');
+  assert.ok(ids(present).includes('eu-computer-workbench'));
+  assert.ok(!JSON.stringify(present).includes('"requires"'), 'a met requirement is not shown to the panel');
+  assert.equal(ids(absent).length, ids(present).length - 1, 'nothing else changes');
+  assert.ok(findTown(absent, 'us/connecticut/bridgeport').town.neighborhoods.some((n) => n.id === 'equity-uprise-hq'));
+  assert.ok(JSON.stringify(world).includes('"requires"'), 'the input is not modified');
 });

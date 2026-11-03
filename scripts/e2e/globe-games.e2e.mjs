@@ -22,7 +22,7 @@ await mkdir(OUT, { recursive: true });
 const json = (r, b, s = 200) => r.fulfill({ status: s, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }, body: JSON.stringify(b) });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 const served = [];
-async function setup(viewport, who) {
+async function setup(viewport, who, { built = false } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, hasTouch: viewport.width < 1000, ignoreHTTPSErrors: true, serviceWorkers: 'block' });
   const errors = [], gamesFetches = [];
   const owner = who === OWNER;
@@ -45,10 +45,12 @@ async function setup(viewport, who) {
     if (u.hostname.endsWith('supabase.co')) { if (p === '/auth/v1/user') return who ? json(r, { id: who, email: who + '@fixture.invalid' }) : json(r, { error: 'no' }, 401); return json(r, []); }
     if (u.origin === BASE) {
       if (p === '/data/games/world.v1.json') gamesFetches.push(p);
+      /* the Computer Workbench module exists only in a deployed build that carries it (PR #728) */
+      if (p === '/equity-uprise-preview/lab-runtime/equity-uprise-computer-workbench.mjs') return built ? r.fulfill({ contentType: 'text/javascript', body: 'export {};' }) : r.fulfill({ status: 404, body: '' });
       const rel = p === '/' ? 'index.html' : decodeURIComponent(p.replace(/^\//, ''));
       const f = resolve(ROOT, rel); if (!f.startsWith(resolve(ROOT) + sep)) return r.abort();
       /* a destination is proven by where the browser lands, not by booting another game engine */
-      if (/^(fictional-city|prim3-transit|prim3-world)\.html$/.test(rel)) { served.push(rel + u.search); return r.fulfill({ contentType: 'text/html', body: '<!doctype html><title>destination</title><p id="landed">' + rel + '</p>' }); }
+      if (/^(fictional-city|prim3-transit|prim3-world|city-arcade|equity-uprise-server-lab-3d)\.html$|^screens\/(building|terminal)\.html$/.test(rel)) { served.push(rel + u.search); return r.fulfill({ contentType: 'text/html', body: '<!doctype html><title>destination</title><p id="landed">' + rel + '</p>' }); }
       try { return r.fulfill({ body: await readFile(f), contentType: TYPES[extname(f)] || 'application/octet-stream' }); } catch { return r.fulfill({ status: 404, body: '' }); }
     }
     return r.abort();
@@ -104,6 +106,8 @@ try {
       check(scope, 'United States → Connecticut → Bridgeport', town.title === 'Bridgeport' && /United States · Connecticut/.test(town.crumb), town);
       check(scope, 'Bridgeport shows its three storylines, each with what is playing now and what is next', town.stories.map((s) => s.id).join() === 'robbery-1s,whip-equipped,b1-blind-the-floor' && town.stories.every((s) => s.now.length > 3 && /then .+ in \d/.test(s.next)), town.stories);
       check(scope, 'and its missions: the city, Bridgeport, the garage, the HQ and both sides of B1', ['fictional-city.html', 'fictional-city.html?entry=bridgeport', 'fictional-city.html?entry=garage', 'prim3-transit.html?level=equity-uprise-hq', 'prim3-transit.html?level=equity-uprise-b1&side=defend', 'prim3-transit.html?level=equity-uprise-b1&side=attack'].every((h) => town.entries.includes(h)), town.entries);
+      const hq = await page.evaluate(() => { const h = [...document.querySelectorAll('#gamesSheet h4')].find((x) => x.textContent === 'Equity Uprise HQ'); const ul = h && h.nextElementSibling; return ul ? [...ul.querySelectorAll('.games-start')].map((a) => a.getAttribute('href')) : null; });
+      check(scope, 'under Equity Uprise HQ: the exercise, B1 defend and attack, the Server Lab and the Building Screens; no Workbench until its build exists', JSON.stringify(hq) === JSON.stringify(['prim3-transit.html?level=equity-uprise-hq', 'prim3-transit.html?level=equity-uprise-b1&side=defend', 'prim3-transit.html?level=equity-uprise-b1&side=attack', 'equity-uprise-server-lab-3d.html', 'screens/building.html']), hq);
       check(scope, 'the town view does not scroll the page sideways', (await overflow(page)) === 0, await overflow(page));
       const box = await page.evaluate(() => { const r = document.getElementById('gamesSheet').getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth }; });
       check(scope, 'the overlay sits inside the viewport', box.l >= 0 && box.r <= box.w, box);
@@ -111,6 +115,13 @@ try {
       if (vp.width === 390) {
         await page.evaluate(() => { const d = document.querySelector('#gamesSheet .games-scenes'); if (d) d.open = true; });
         await shot(page, join(OUT, `owner-${vp.width}-3-scenes.png`));
+      }
+      if (vp.width === 390) {
+        /* the "now playing" clock moves the cards in place: an open scene list and the Start link survive a refresh */
+        await page.evaluate(() => { const c = document.querySelector('#gamesSheet [data-storyline="robbery-1s"]'); c.querySelector('.games-scenes').open = true; window.__gamesMark = c.querySelector('.games-start'); });
+        await page.waitForTimeout(31500);
+        const kept = await page.evaluate(() => { const c = document.querySelector('#gamesSheet [data-storyline="robbery-1s"]'); return { same: window.__gamesMark === c.querySelector('.games-start') && window.__gamesMark.isConnected, open: c.querySelector('.games-scenes').open }; });
+        check(scope, 'after a clock refresh the same Start link and the open scene list are still there', kept.same && kept.open, kept);
       }
       check(scope, 'no page errors', errors.length === 0, errors);
       /* start one: the Robbery 1s lands on Bridgeport in the city */
@@ -120,10 +131,11 @@ try {
     }
     /* ---------- the owner's deep link opens a town directly; a mission starts from it ---------- */
     if (vp.width === 1440) {
-      const scope = 'owner-deeplink'; const { ctx, page, errors } = await setup(vp, OWNER);
+      const scope = 'owner-deeplink'; const { ctx, page, errors } = await setup(vp, OWNER, { built: true });
       await page.goto(BASE + '/action-globe.html?explore=1&games=us/connecticut/bridgeport', { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#gamesSheet .games-story', { timeout: 60000 }).catch(() => {});
       check(scope, '?games=us/connecticut/bridgeport opens Bridgeport', await page.evaluate(() => (document.querySelector('#gamesSheet h2') || {}).textContent === 'Bridgeport'));
+      check(scope, 'with the workbench module in the build, the Computer Workbench joins the HQ labs', await page.evaluate(() => (document.querySelector('#gamesSheet .games-entry[data-entry="eu-computer-workbench"] .games-start') || {}).getAttribute?.('href') === 'screens/terminal.html?tab=hardware&mode=TRAINING'));
       /* errors are read before leaving: the site opts pages into cross-document view transitions (css/style.css) and the game
          pages do not, so Chrome reports an aborted transition on the way out (see prim3-world.html) */
       check(scope, 'no page errors', errors.length === 0, errors);

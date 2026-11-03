@@ -49,14 +49,29 @@
     return out;
   }
 
+  /* an entry with requires.built is offered only when the deployed build serves that file; otherwise it is omitted
+     (never "coming soon"). exists(path) answers for the build; the result is a copy without the unmet entries. */
+  async function resolveRequires(world, exists) {
+    const out = JSON.parse(JSON.stringify(world)), seen = new Map();
+    const ok = (path) => { if (!seen.has(path)) seen.set(path, Promise.resolve().then(() => exists(path)).then((v) => v === true, () => false)); return seen.get(path); };
+    for (const c of out.countries || []) for (const s of c.states) for (const t of s.towns) {
+      const keep = await Promise.all(t.entries.map((e) => (e.requires && e.requires.built ? ok(e.requires.built) : true)));
+      t.entries = t.entries.filter((e, i) => keep[i]).map((e) => { if (e.requires) { const { requires, ...rest } = e; return rest; } return e; });
+      const used = new Set(t.entries.map((e) => e.neighborhood));
+      t.neighborhoods = (t.neighborhoods || []).filter((n) => used.has(n.id) || (out.storylines || []).some((x) => x.neighborhood === n.id));
+    }
+    return out;
+  }
+
   /* ---------- the panel ---------- */
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const clock = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const mins = (ms) => { const m = Math.max(1, Math.round(ms / 60000)); return m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min'; };
-  const KIND = { place: 'Place', story: 'Story', mission: 'Mission', game: 'Game' };
+  const KIND = { place: 'Place', story: 'Story', mission: 'Mission', game: 'Game', lab: 'Lab' };
 
   function mount(opts) {
-    const o = Object.assign({ dataUrl: 'data/games/world.v1.json', now: () => Date.now(), onFly: null, target: '', parent: document.body }, opts || {});
+    const o = Object.assign({ dataUrl: 'data/games/world.v1.json', now: () => Date.now(),
+      exists: (path) => fetch(path, { method: 'HEAD', cache: 'no-store' }).then((r) => r.ok, () => false), onFly: null, target: '', parent: document.body }, opts || {});
     let world = null, loading = null, path = [], timer = 0;
     const el = document.createElement('section');
     el.id = 'gamesSheet'; el.className = 'games-sheet'; el.hidden = true;
@@ -71,25 +86,42 @@
     function load() {
       if (world) return Promise.resolve(world);
       if (!loading) loading = fetch(o.dataUrl, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw Error('games ' + r.status); return r.json(); })
-        .then((d) => { world = d; return d; }, (e) => { loading = null; throw e; });
+        .then((d) => resolveRequires(d, o.exists)).then((d) => { world = d; return d; }, (e) => { loading = null; throw e; });
       return loading;
     }
     function list(items) { return '<ul class="games-list" role="list">' + items.join('') + '</ul>'; }
     function pick(kind, id, label, sub) {
       return '<li><button type="button" class="games-pick" data-' + kind + '="' + esc(id) + '"><span>' + esc(label) + '</span>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '<i aria-hidden="true">›</i></button></li>';
     }
+    const where = (sc) => sc.anchor && (sc.anchor.place || sc.anchor.device || sc.anchor.equipment || sc.anchor.door) || '';
+    /* the part of a storyline card that changes with the clock */
+    function livePart(at) {
+      const n = at.now.scene, x = at.next.scene;
+      return '<p class="games-now"><strong>' + esc((n.act ? 'Act ' + n.act + ' · ' : n.chapter ? n.chapter + ' · ' : '') + n.title) + '</strong>' + (where(n) ? ' <span>· ' + esc(where(n)) + '</span>' : '') + '</p>' +
+        (n.summary ? '<p class="games-sum">' + esc(n.summary) + '</p>' : '') +
+        '<p class="games-next">Until ' + esc(clock(at.now.endsAt)) + ' · then <b>' + esc(x.title) + '</b> in ' + esc(mins(at.now.remainingMs)) + '</p>';
+    }
     function storyCard(s) {
       const at = scheduleAt(s, o.now());
       if (!at) return '';
-      const n = at.now.scene, x = at.next.scene, start = n.route || s.start;
-      const where = (sc) => sc.anchor && (sc.anchor.place || sc.anchor.device || sc.anchor.equipment || sc.anchor.door) || '';
       return '<li class="games-story" data-storyline="' + esc(s.id) + '"><div class="games-story__top"><b>' + esc(s.title) + '</b><span class="games-live">Now playing</span></div>' +
-        '<p class="games-now"><strong>' + esc((n.act ? 'Act ' + n.act + ' · ' : n.chapter ? n.chapter + ' · ' : '') + n.title) + '</strong>' + (where(n) ? ' <span>· ' + esc(where(n)) + '</span>' : '') + '</p>' +
-        (n.summary ? '<p class="games-sum">' + esc(n.summary) + '</p>' : '') +
-        '<p class="games-next">Until ' + esc(clock(at.now.endsAt)) + ' · then <b>' + esc(x.title) + '</b> in ' + esc(mins(at.now.remainingMs)) + '</p>' +
+        '<div class="games-live-part" aria-live="polite">' + livePart(at) + '</div>' +
         '<details class="games-scenes"><summary>All ' + s.scenes.length + ' scenes · repeats every ' + esc(mins(s.loop.periodMs)) + '</summary><ol>' +
         s.scenes.map((sc, i) => '<li' + (i === at.now.index ? ' aria-current="true"' : '') + '>' + esc(sc.title) + (where(sc) ? ' <small>' + esc(where(sc)) + '</small>' : '') + '</li>').join('') + '</ol></details>' +
-        '<a class="games-start" data-start="' + esc(s.id) + '" href="' + esc(start) + '"' + tgt + '>Start ' + esc(s.title) + ' →</a></li>';
+        '<a class="games-start" data-start="' + esc(s.id) + '" href="' + esc(at.now.scene.route || s.start) + '"' + tgt + '>Start ' + esc(s.title) + ' →</a></li>';
+    }
+    /* the clock moves the cards in place: nothing is rebuilt, so an open scene list, the scroll and a pressed link stay put */
+    function refreshStories() {
+      if (el.hidden || !world) return;
+      body.querySelectorAll('.games-story').forEach((card) => {
+        const s = world.storylines.find((x) => x.id === card.dataset.storyline), at = s && scheduleAt(s, o.now());
+        if (!at) return;
+        const live = card.querySelector('.games-live-part'), html = livePart(at);
+        if (live && live.innerHTML !== html) live.innerHTML = html;
+        card.querySelectorAll('.games-scenes li').forEach((li, i) => { if (i === at.now.index) li.setAttribute('aria-current', 'true'); else li.removeAttribute('aria-current'); });
+        const a = card.querySelector('.games-start'), href = at.now.scene.route || s.start;
+        if (a && a.getAttribute('href') !== href) a.setAttribute('href', href);
+      });
     }
     function entryRow(e) {
       return '<li class="games-entry" data-entry="' + esc(e.id) + '"><div><span class="games-tag">' + esc(KIND[e.kind] || e.kind) + '</span><b>' + esc(e.title) + '</b>' +
@@ -113,7 +145,7 @@
         body.innerHTML = (stories.length ? '<h3>Storylines</h3><ul class="games-list" role="list">' + stories.map(storyCard).join('') + '</ul>' : '') +
           '<h3>' + (stories.length ? 'Missions and places' : 'Missions') + '</h3>' +
           groups.map((g) => (hoods.get(g.k) ? '<h4>' + esc(hoods.get(g.k).name) + '</h4>' : '') + '<ul class="games-list" role="list">' + g.items.map(entryRow).join('') + '</ul>').join('');
-        if (stories.length) timer = setInterval(() => { if (!el.hidden) render(); }, 30000);
+        if (stories.length) timer = setInterval(refreshStories, 30000);
         return;
       }
       if (s) { title.textContent = s.name; body.innerHTML = list(s.towns.map((x) => pick('town', x.id, x.name, x.entries.length + (x.entries.length === 1 ? ' mission' : ' missions') + (townStorylines(world, townPath(c, s, x)).length ? ' · storylines' : '')))); return; }
@@ -142,5 +174,5 @@
     return { open, close, isOpen: () => !el.hidden, element: el, path: () => path.join('/') };
   }
 
-  root.HuGames = Object.freeze({ scheduleAt, findTown, townStorylines, routes, mount });
+  root.HuGames = Object.freeze({ scheduleAt, findTown, townStorylines, routes, resolveRequires, mount });
 })(typeof window === 'undefined' ? globalThis : window);
