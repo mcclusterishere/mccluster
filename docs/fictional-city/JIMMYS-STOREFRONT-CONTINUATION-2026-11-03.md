@@ -57,11 +57,29 @@ Before placing the storefront, reconcile the existing authored local frame with 
 
 ## Collection and story guardrails
 
-The intended collection is **Bridgeport plus twelve other Connecticut locations: thirteen total slots**. Keep the count configurable. Final city choices, offense categories, Jordan release numbers, designs and abilities are not established. Do not assume Jordan 1–13 or assign the four #725 prototype pairs to real cities.
+The intended collection is **Bridgeport plus twelve other Connecticut locations: thirteen total slots**. Keep the count configurable. The owner approved the following creative names and city assignments on November 3; these supersede the earlier unnamed-slot/proposed-name language. They are fictional collection labels, **not statistical claims that a city leads an offense category**, verified real-brand products, or licensed Jordan merchandise.
+
+| City | Owner-approved collection name | Number |
+| --- | --- | --- |
+| Bridgeport | Robbery 1s | 1 |
+| Waterbury | Burglary Twos | 2 |
+| Hartford | Arson Threes | 3 |
+| New Haven | Hami Fours | 4 |
+| New Britain | Assault Fives | 5 |
+| Manchester | Stolen Sixes | 6 |
+| Orange | Larceny Sevens | 7 |
+| Derby | GTA Eights | 8 |
+| East Haven | Larceny Nines | 9 |
+| Norwich | Home Invasion Tens | 10 |
+| Hamden | Repo Elevens | 11 |
+| Meriden | Burglary Twelves | 12 |
+| Cromwell | Stolen Thirteens | 13 |
+
+The number/name mapping is now owner creative direction; popularity rankings, colorways, physical models, abilities and mission design remain unverified or pending. Home invasion and repo are creative labels here, not asserted FBI reporting categories. Do not merge the four #725 sandbox prototype pairs into this roster or invent powers from the names.
 
 The Robbery 1s → Bridgeport link is already story canon. The existing Robbery 1s Exchange remains a separate shop selling Clearly Labeled Replica 1s, Second Chance Laces and Unconfirmed, Issue One. Never move or duplicate the original cursed pair there or here. Preserve Dave → donation bin → Malik → Harold → altar, all 13 beats, ages, amounts and unresolved pastor reveal. Narrative scene count is unrelated to collection-slot count.
 
-Pending collection slots should have neutral IDs and an explicit pending status, with no price, purchase action, invented power, crime label or claimed statistical leadership. If sample merchandise is needed for the counter test, author plain unbranded cosmetic samples separately from the collection. Do not make a purchased sample the canonical pair or a new story wearer.
+Collection slots may now show the approved city/name/number above, while retaining stable internal IDs and an explicit design/implementation-pending status. Do not add a price, purchase action, invented power or claimed statistical leadership merely because a name is approved. If sample merchandise is needed for the counter test, author plain unbranded cosmetic samples separately from the collection. Do not make a purchased sample the canonical pair or a new story wearer.
 
 Use official comparable offense data and year/coverage/population denominators before ranking cities. Labor unemployment is not the same as employment rate. Missing or incomparable data stays unknown. Researched public city statistics are context for fictional design, not assertions about residents or allegations against a real business.
 
@@ -70,7 +88,7 @@ Use official comparable offense data and year/coverage/population denominators b
 1. **Reconcile / inventory:** exact refs, unique changes, government-canon correction, region placement decision, source evidence and a no-overwrite manifest diff.
 2. **Store assembly:** native 3D retail, backroom and basement models plus one layout manifest; clearly distinguish authored interiors from public footprint evidence.
 3. **Playable integration:** actual existing-city route and door, floors, collision, counter, save migration and mobile/no-WebGL controls. Retain existing stories, shops, transport, HQ and arcade.
-4. **Collection wiring:** thirteen pending slots now; insert reviewed research/design only after it exists. Keep this independent from the property/retail implementation.
+4. **Collection wiring:** thirteen named slots with the approved roster above, with models/abilities/mission integration pending; insert reviewed research/design only after it exists. Keep this independent from the property/retail implementation.
 5. **Verification:** publish exact source parity; Core validation; old saves; enter/re-enter/reload on each floor; touch/keyboard; insufficient funds/99-item caps; no original-pair transfer; no tenant replacement; original courts/streets/minor protections; 390px no-overflow; window/floor occlusion; memory after repeated entry; real-device profile and current city regression suites.
 6. **Report:** full review artifact, exact commit/branch, screenshots of exterior/showroom/backroom/factory, measured tests/performance, remaining gaps, and handoff to the ongoing agent. No claim of finished/live work from a source commit alone.
 
