@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 537,
+  "candidate_count": 540,
   "capability_source_count": 102,
-  "support_only_count": 435,
-  "checks_total": 2048,
-  "checks_passed": 2048,
+  "support_only_count": 438,
+  "checks_total": 2060,
+  "checks_passed": 2060,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -198,6 +198,7 @@
     "docs/music-platform.md",
     "docs/pay-now.md",
     "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md",
+    "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md",
     "docs/products/DISTRIBUTABLE-PRODUCT.md",
     "docs/releases/mission-content-cleanup-2026-10-31.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
@@ -336,6 +337,8 @@
     "scripts/test/native-action-network.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/prim3-equity-uprise-level.test.mjs",
+    "scripts/test/prim3-equity-uprise-model.test.mjs",
+    "scripts/test/prim3-transit-level.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/rpc-names-exist.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
@@ -551,7 +554,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "537 entries"
+      "detail": "540 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3449,6 +3452,26 @@
       "detail": ""
     },
     {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md capability ids known",
       "passed": true,
       "detail": ""
@@ -5300,6 +5323,46 @@
     },
     {
       "name": "scripts/test/prim3-equity-uprise-level.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-equity-uprise-model.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/prim3-transit-level.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

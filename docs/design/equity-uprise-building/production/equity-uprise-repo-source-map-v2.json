@@ -1203,6 +1203,13 @@
       "rationale": "Explains how the owner-only PRIM3 Equity Uprise HQ drill level is derived from the Core V2 building plans; a game projection that defers to REFERENCE-AUTHORITY.md and is never geometry authority."
     },
     {
+      "path": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Review note for the owner-only PRIM3 Equity Uprise HQ drill: which building models the game reads and its open decisions; a derived game view that defers to REFERENCE-AUTHORITY.md, never geometry authority."
+    },
+    {
       "path": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1947,6 +1954,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Checks that the PRIM3 Equity Uprise HQ drill level stays consistent with the Core V2 plan data it is derived from; adds no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-equity-uprise-model.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Checks that the PRIM3 HQ drill reads the building's own generated models within the Core V2 plan rectangles and that its manifest matches the publish workflow; adds no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-transit-level.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 Transit level tests; names the Equity Uprise HQ drill only as one loadable level. Adds no program capability."
     },
     {
       "path": "scripts/test/product-context.test.mjs",
