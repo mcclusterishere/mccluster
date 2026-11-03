@@ -1,0 +1,11 @@
+{
+  "note": "Exact copies of the PRIM3 tactical engine files, vendored for the tactics pages (courtyard preview and Transit / Relay). Do not edit here; change them in mcclusterishere/Prim3 and re-copy. scripts/test/prim3-tactics-vendor.test.mjs checks these hashes.",
+  "repository": "mcclusterishere/Prim3",
+  "ref": "claude/transit-relay-rules-20261102",
+  "commit": "72eadfb797c82f61ae41a3dd451a8d04040e0d32",
+  "files": {
+    "tactical-resolver.mjs": { "from": "game/runtime/tactical-resolver.mjs", "sha256": "9eeb98d73bbc3c30a281ed5f4fd8ffc552e407d5b4b26ef1b244dd5283d150e2" },
+    "tactical-hints.mjs": { "from": "game/runtime/tactical-hints.mjs", "sha256": "41628d65e140e8d6db7c7e8f67061b39b712daa8820c78fdc585e7cefbbf67b5" },
+    "tactical-threat-ai.mjs": { "from": "game/runtime/tactical-threat-ai.mjs", "sha256": "58558174338555a744b7d1dabab037bef9e761b102a3054288c166c688de9034" }
+  }
+}
