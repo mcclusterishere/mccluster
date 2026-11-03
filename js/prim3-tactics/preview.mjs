@@ -25,6 +25,8 @@ const MISSION = 'Secure the relay';
 // accessible view: every tile is a labelled button.
 let mode3d = new URLSearchParams(location.search).get('view') !== '2d';
 let board3d = null, loading3d = null;
+// ?fx=high|mid|low forces a presentation tier (otherwise chosen from the GPU); it never changes the game
+const FX = new URLSearchParams(location.search).get('fx');
 function webglAvailable() {
   try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
 }
@@ -33,7 +35,7 @@ function webglAvailable() {
 function ensure3d() {
   if (board3d || loading3d) return;
   loading3d = import('./board3d.mjs').then((mod) => {
-    board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, onTap: (x, y) => onBoardTap(x, y) });
+    board3d = mod.createBoard3D($('tac3d'), { width: W, height: H, reducedMotion: REDUCED, fx: FX, onTap: (x, y) => onBoardTap(x, y), onView: () => placeMenu() });
     loading3d = null; render(); syncZoom3d();
   }).catch(() => { loading3d = null; mode3d = false; ui.toast = 'The 3D view could not load here, so the board is shown as a 2D grid.'; render(); });
 }
@@ -166,7 +168,7 @@ function render() {
       m.labels.push({ x: geo.target.x, y: geo.target.y, h: 0, kind: 'target', text: `Target (${geo.target.x}, ${geo.target.y})` });
       for (const [k, v] of runs) { const parts = k.split(':'); if (parts.length === 3) m.labels.push({ x: +parts[0], y: +parts[1], h: 0.1, kind: 'step', text: v }); }
     }
-    for (const u of p.units) if (!u.dead) m.labels.push({ x: u.x, y: u.y, h: 1.85, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
+    for (const u of p.units) if (!u.dead) m.labels.push({ x: u.x, y: u.y, h: 2.2, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
     for (const t of p.objectiveTiles) m.labels.push({ x: t.x, y: t.y, h: 1.75, kind: 'obj', text: `Relay (${t.x}, ${t.y})` });
     if (ui.preview && ui.preview.kind === 'move') {
       const cv = p.cover.find((c) => c.x === ui.preview.x && c.y === ui.preview.y);
@@ -175,6 +177,7 @@ function render() {
     for (let x = 0; x < W; x += 1) m.labels.push({ x, y: -0.95, h: 0, kind: 'axis', text: String(x) });
     for (let y = 0; y < H; y += 1) m.labels.push({ x: -0.95, y, h: 0, kind: 'axis', text: String(y) });
     m.labels.push({ x: -0.95, y: -0.95, h: 0, kind: 'axis', text: 'y\\x' });
+    if (ui.lastMove) { m.moves = { [ui.lastMove.id]: ui.lastMove.path }; ui.lastMove = null; }
     board3d.update(m);
   }
   // HUD: turn + objective on top, the selected unit in the dock
@@ -185,6 +188,7 @@ function render() {
   $('hudUnit').innerHTML = sel ? `<span class="dock-token tb-role-${sel.role}">${sel.role}</span><span class="dock-name">${sel.role} · ${ROLE_NAME[sel.role] || ''}</span>` : 'Tap a squad member';
   $('hudAp').textContent = sel ? `${sel.ap} AP` : '';
   $('tacView').textContent = mode3d ? '2D grid' : '3D view';
+  $('tacRotate').hidden = !(mode3d && board3d);
   $('tacView').setAttribute('aria-pressed', String(!mode3d));
   renderMenu(); renderSheet();
 }
@@ -218,8 +222,14 @@ function renderMenu() {
     (more.length ? (ui.more ? more.map(btn).join('') : `<button type="button" class="tm-btn tm-btn--ghost" data-act="more"><span>More</span><small>${more.map((a) => a.label).join(' · ')}</small></button>`) : '') +
     `<button type="button" class="tm-btn tm-btn--ghost" data-act="close"><span>Close</span></button>`;
   menu.hidden = false;
+  placeMenu();
+}
+
+// 3D: float the menu beside the operative, kept inside the board; re-run whenever the camera moves
+function placeMenu() {
+  const menu = $('tacMenu'), sel = unitOf(ui.selected);
+  if (menu.hidden || !sel) return;
   if (!mode3d || !board3d) { menu.classList.remove('is-float'); menu.style.left = menu.style.top = ''; return; }
-  // 3D: float beside the operative, kept inside the board
   menu.classList.add('is-float');
   const vp = $('tacViewport').getBoundingClientRect(), pt = board3d.screenOf(sel.x, sel.y, 1.0);
   const mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -311,7 +321,7 @@ function onSheet(act) {
   if (act === 'back') { ui.preview = null; render(); return; }
   if (act === 'confirm-move') {
     const pv = ui.preview;
-    try { state = moveUnit(state, sel.id, { x: pv.x, y: pv.y, z: 0 }, pv.dash ? 'DASH' : 'MOVE'); ui.toast = `${sel.id} moved to (${pv.x}, ${pv.y}).`; }
+    try { state = moveUnit(state, sel.id, { x: pv.x, y: pv.y, z: 0 }, pv.dash ? 'DASH' : 'MOVE'); ui.toast = `${sel.id} moved to (${pv.x}, ${pv.y}).`; ui.lastMove = { id: sel.id, path: pv.path }; }
     catch (e) { ui.toast = 'The move was refused: ' + esc(e.message) + '.'; }
     ui.mode = null; ui.preview = null; afterChange(); return;
   }
@@ -319,7 +329,10 @@ function onSheet(act) {
     const roll = new Uint8Array(2); crypto.getRandomValues(roll);
     try {
       const out = fireWeapon(state, sel.id, ui.preview.target, roll[0] % 100, roll[1] % 100);
-      state = out.state; ui.toast = out.result.hit ? `Hit ${ui.preview.target} for ${out.result.damage}${out.result.critical ? ' (critical)' : ''}.` : `Missed ${ui.preview.target}.`;
+      state = out.state;
+      const tgt = state.units.find((u) => u.id === ui.preview.target);
+      if (mode3d && board3d) board3d.fire(sel.id, ui.preview.target, { ...out.result, killed: !!(tgt && (tgt.dead || tgt.hp <= 0)) });
+      ui.toast = out.result.hit ? `Hit ${ui.preview.target} for ${out.result.damage}${out.result.critical ? ' (critical)' : ''}.` : `Missed ${ui.preview.target}.`;
     } catch (e) { ui.toast = esc(e.message); }
     ui.preview = null; afterChange(); return;
   }
@@ -424,9 +437,10 @@ $('tacReset').addEventListener('click', () => { clearSave(); state = fresh(); ui
 $('zoomIn').addEventListener('click', () => { if (mode3d && board3d) { board3d.zoom(1); syncZoom3d(); } else setZoom(zoom.s + 0.5); });
 $('zoomOut').addEventListener('click', () => { if (mode3d && board3d) { board3d.zoom(-1); syncZoom3d(); } else setZoom(zoom.s - 0.5); });
 function syncZoom3d() { if (!board3d) return; const z = board3d.canZoom(); $('zoomIn').disabled = !z.in; $('zoomOut').disabled = !z.out; renderMenu(); }
+$('tacRotate').addEventListener('click', () => { if (board3d) board3d.rotate(1); });
 $('tacView').addEventListener('click', () => { mode3d = !mode3d; ui.menu = false; render(); if (mode3d) syncZoom3d(); else applyZoom(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (ui.preview) ui.preview = null; else if (ui.mode) ui.mode = null; else ui.menu = false; render(); } });
 if (REDUCED) document.documentElement.classList.add('reduce-motion');
 bindGestures();
 render();
-window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel() };
+window.__tac = { get state() { return state; }, get session() { return ui.session; }, get ui() { return ui; }, SAVE_KEY, get mode3d() { return mode3d && !!board3d; }, get loading3d() { return !!loading3d; }, screenOf: (x, y, h) => board3d && board3d.screenOf(x, y, h), zoomLevel: () => board3d && board3d.zoomLevel(), busy3d: () => !!(board3d && board3d.isAnimating()), get tier() { return board3d && board3d.tier; }, unitPosition: (id) => board3d && board3d.unitPosition(id) };

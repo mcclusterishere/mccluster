@@ -1,0 +1,4 @@
+{
+  "note": "Authored operator models for the PRIM3 tactics preview. board3d.mjs loads a GLB only when it is listed here; an empty list keeps the procedural mannequins. Keys: E, R, T (squad roles) and H (known hostile, SOI-01 security officer). Paths are relative to this folder. See README.md.",
+  "models": {}
+}

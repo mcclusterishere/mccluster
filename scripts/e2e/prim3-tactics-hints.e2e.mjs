@@ -178,7 +178,8 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${BASE}/prim3-tactics-preview.html`);
   await page.waitForFunction(()=>window.__tac&&window.__tac.mode3d,null,{timeout:20000});await page.waitForTimeout(400);
-  const tap=async(x,y,h=0)=>{const p=await page.evaluate(([x,y,h])=>window.__tac.screenOf(x,y,h),[x,y,h]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(150);};
+  const settle=async()=>{for(let i=0;i<60&&await page.evaluate(()=>window.__tac.busy3d());i++)await page.waitForTimeout(100);};
+  const tap=async(x,y,h=0)=>{await settle();const p=await page.evaluate(([x,y,h])=>window.__tac.screenOf(x,y,h),[x,y,h]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(150);};
   check(scope,'3D is the default view and draws into a WebGL canvas',await page.locator('#tac3d canvas').count()===1&&await page.evaluate(()=>getComputedStyle(document.getElementById('tacBoard')).display==='none'));
   const painted=await page.evaluate(()=>{const c=document.querySelector('#tac3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});
   check(scope,'the canvas actually renders the courtyard (centre pixel is not empty)',painted>30,painted);
@@ -195,6 +196,16 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   await tap(3,3);await page.locator('[data-sheet="confirm-move"]').click();
   const after=await unit(page,'E1');
   check(scope,'Confirm moves E1 through the resolver in the 3D view',after.x===3&&after.y===3&&after.ap===1,after);
+  check(scope,'the confirmed move plays as a walk (the body is animating right after Confirm)',await page.evaluate(()=>window.__tac.busy3d()));
+  await settle();
+  check(scope,'the walk ends on the engine\'s tile',JSON.stringify(await page.evaluate(()=>window.__tac.unitPosition('E1')))===JSON.stringify({x:3,y:3}),await page.evaluate(()=>window.__tac.unitPosition('E1')));
+  const sBefore=await page.evaluate(()=>window.__tac.screenOf(3,3,0));await page.locator('#tacRotate').click();await settle();
+  const sAfter=await page.evaluate(()=>window.__tac.screenOf(3,3,0));
+  check(scope,'rotate turns the camera a quarter turn',Math.hypot(sAfter.x-sBefore.x,sAfter.y-sBefore.y)>5,[sBefore,sAfter]);
+  await page.evaluate(()=>{window.__tac.ui.menu=false;});await tap(3,3,0.8);
+  check(scope,'after rotating, a tap on E1 still selects E1 (raycast follows the camera)',await page.evaluate(()=>window.__tac.ui.menu&&window.__tac.ui.selected==='E1'));
+  await page.locator('#tacMenu [data-act="close"]').click();
+  await page.locator('#tacRotate').click();await page.locator('#tacRotate').click();await page.locator('#tacRotate').click();await settle();
   await tap(3,3,0.8);await page.locator('[data-act="hint"]').click();
   const labels=await page.evaluate(()=>[...document.querySelectorAll('.b3-label')].map(l=>l.textContent));
   check(scope,'the challenge labels Origin and Target in the scene',labels.some(t=>/^Origin \(3, 3\)$/.test(t))&&labels.some(t=>/^Target \(/.test(t)),labels.filter(t=>/Origin|Target/.test(t)));
@@ -208,6 +219,47 @@ else for(const vp of [{width:390,height:844},{width:1280,height:900}]){
   check(scope,'no page errors',!errors.length,errors);
   await page.locator('#tacView').click();await page.waitForTimeout(300);
   await page.screenshot({path:join(OUT,`prim3-tactics-3d-${vp.width}.png`)});
+  await ctx.close();await browser3.close();
+}
+/* 3D fire: the shot the resolver already rolled plays out (turn, burst, tracer, camera), then hands back;
+   and the high presentation tier (image light, GTAO, bloom, SMAA) loads and renders without errors */
+if(THREE_DIR){
+  const scope='3d-fire';
+  const browser3=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const ctx=await browser3.newContext({viewport:{width:390,height:844},serviceWorkers:'block',hasTouch:true});
+  await ctx.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));}catch(e){}});
+  await ctx.route('**/*',async route=>{const u=new URL(route.request().url());
+    if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.startsWith('/npm/three@0.180.0/'))return route.fulfill({body:await readFile(join(THREE_DIR,u.pathname.replace('/npm/three@0.180.0/',''))),contentType:'text/javascript',headers:{'access-control-allow-origin':'*'}});
+    if(u.origin!==BASE)return route.abort();const f=resolve(ROOT,decodeURIComponent(u.pathname).slice(1));if(!f.startsWith(resolve(ROOT)+sep))return route.abort();
+    try{return route.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'})}catch{return route.fulfill({status:404,body:''})}});
+  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`${BASE}/prim3-tactics-preview.html?fx=high`);
+  await page.waitForFunction(()=>window.__tac&&window.__tac.mode3d,null,{timeout:20000});await page.waitForTimeout(2500);
+  check(scope,'the high tier is active when asked for',await page.evaluate(()=>window.__tac.tier)==='high');
+  const painted=await page.evaluate(()=>{const c=document.querySelector('#tac3d canvas');const g=c.getContext('webgl2')||c.getContext('webgl');const px=new Uint8Array(4);g.readPixels(Math.floor(c.width/2),Math.floor(c.height/2),1,1,g.RGBA,g.UNSIGNED_BYTE,px);return px[0]+px[1]+px[2];});
+  check(scope,'the post-processed frame renders (centre pixel not empty)',painted>30,painted);
+  const settle=async()=>{for(let i=0;i<300&&await page.evaluate(()=>window.__tac.busy3d());i++)await page.waitForTimeout(100);};
+  let shooter=null;
+  for(const id of ['E1','R1','T1']){
+    const u=await unit(page,id);if(!u)continue;await settle();
+    const p=await page.evaluate(([x,y])=>window.__tac.screenOf(x,y,0.8),[u.x,u.y]);await page.mouse.click(p.x,p.y);await page.waitForTimeout(200);
+    const acts=await page.evaluate(()=>[...document.querySelectorAll('#tacMenu [data-act]')].map(b=>b.dataset.act));
+    const f=acts.find(a=>a.startsWith('fire:'));if(f){shooter={id,act:f};break;}
+  }
+  if(!shooter)console.log('SKIP [3d-fire] no squad member has a legal shot at the start of this mission');
+  else{
+    await page.locator(`#tacMenu [data-act="${shooter.act}"]`).click();
+    const tid=shooter.act.slice(5);const hpOf=()=>page.evaluate(id=>{const u=window.__tac.state.units.find(u=>u.id===id);return u?{hp:u.hp}:null;},tid);const hp0=(await hpOf()).hp;
+    await page.locator('[data-sheet="confirm-fire"]').click();
+    check(scope,'Confirm fire plays the shot in the scene',await page.evaluate(()=>window.__tac.busy3d()));
+    const ev=await page.evaluate(()=>window.__tac.state.events.filter(e=>e.type==='FIRE').slice(-1)[0]);
+    const t=await hpOf();
+    check(scope,'the shot\'s outcome is the resolver\'s (hp changed only on a hit)',ev&&(ev.hit?(!t||t.hp===Math.max(0,hp0-ev.damage)):(t&&t.hp===hp0)),{ev,hp0,t});
+    await settle();
+    check(scope,'the shot hands control back (no animation left running)',!(await page.evaluate(()=>window.__tac.busy3d())));
+  }
+  await page.screenshot({path:join(OUT,'prim3-tactics-3d-fire-high.png')});
+  check(scope,'no page errors',!errors.length,errors);
   await ctx.close();await browser3.close();
 }
 /* three.js unreachable: the game falls back to the 2D grid and still plays */
