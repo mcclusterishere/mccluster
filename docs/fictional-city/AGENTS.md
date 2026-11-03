@@ -25,7 +25,7 @@ Uprise island. This is a new exploration universe, not a revival of the shelved 
   are purchased by this experience.
 - Portals are data. Existing target routes enforce their own permissions. Never turn on the archived
   Uprise experience or modify Site 0 geometry to satisfy a city request.
-- Schema revision 2 (2026-11-03) adds the wider city's lore beside the v1 arrays: `neighborhoods`,
+- Schema revision 2 (2026-11-03) adds the wider city's lore beside the v1 arrays: `expansionNeighborhoods`,
   `parcels`, `expansionBusinesses`, `expansionNpcs`, `families`, `expansionItems`. These records carry
   parcel IDs and route anchors, never coordinates; the spatial layer binds them. Expansion students
   are minors (`minor: true`): no sexual content, injury, purchases or bribes involving them. The

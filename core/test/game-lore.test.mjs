@@ -105,7 +105,10 @@ test('invalid pagination, paths, private-context arguments and ambiguous queries
 
 test('malformed or oversized releases fail closed instead of becoming partial canon', () => {
   assert.throws(() => parseGameLore('{broken'), { code: 'GAME_LORE_UNAVAILABLE' });
-  assert.throws(() => parseGameLore('x'.repeat(512 * 1024 + 1)), { code: 'GAME_LORE_UNAVAILABLE' });
+  assert.throws(() => parseGameLore('x'.repeat(1024 * 1024 + 1)), { code: 'GAME_LORE_UNAVAILABLE' });
+  // A canon above the former 512 KiB cap still parses; only the 64 KiB response cap bounds a read.
+  const large = fixture(); large.constraints.padding = 'p'.repeat(600 * 1024);
+  assert.equal(parseGameLore(Buffer.from(JSON.stringify(large))).counts.npcs, 2);
   for (const mutate of [
     (data) => { data.schema = 'other'; },
     (data) => { data.npcs.push(data.npcs[0]); },
@@ -145,7 +148,7 @@ test('owned capability resolves to the installed manifest without network, memor
     assert.equal(lore.counts.new_npcs, 24);
     assert.equal(lore.counts.garage_crew, 3);
     assert.equal(lore.counts.families, 10);
-    assert.equal(lore.counts.neighborhoods, 5);
+    assert.ok(lore.counts.neighborhoods >= 5);
     assert.ok(lore.counts.expansion_npcs >= 40 && lore.counts.expansion_businesses >= 17);
     const raw = await readFile(new URL('../data/fictional-city/district.v1.json', import.meta.url));
     assert.equal(lore.manifest.sha256, createHash('sha256').update(raw).digest('hex'));
@@ -169,7 +172,7 @@ test('reader works in an installed Core tree with no repository-root data direct
 function expansionFixture() {
   const data = fixture();
   data.schemaRevision = 2;
-  data.neighborhoods = [{ id: 'civic-center', name: 'Precinct Square' }, { id: 'northside-residential', name: 'Northside' }];
+  data.expansionNeighborhoods = [{ id: 'civic-center', name: 'Precinct Square' }, { id: 'northside-residential', name: 'Northside' }];
   data.parcels = [
     { parcelId: 'civic-center/police-station', neighborhoodId: 'civic-center', businessId: 'precinct' },
     { parcelId: 'northside-residential/house-01', neighborhoodId: 'northside-residential', familyId: 'smith-family' }

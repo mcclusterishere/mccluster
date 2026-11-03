@@ -4144,7 +4144,7 @@
       "description": "Open the existing album destination. The garage’s chapter desk carries the separate narrative reading experience."
     }
   ],
-  "neighborhoods": [
+  "expansionNeighborhoods": [
     {
       "id": "original-block",
       "name": "The Original Block",
@@ -4184,7 +4184,7 @@
     },
     {
       "id": "northside-residential",
-      "name": "Northside Cul-de-Sadness",
+      "name": "Cul-de-Sadness",
       "lore": "Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the precinct, the church and the shops, and who are tired of having their recycling bins tagged with the words 529 BOYZ in very neat handwriting. Municipal High School No. 9 is at the edge of the neighborhood, in a building that was a parking garage and still has the ramps.",
       "parcelIds": [
         "northside-residential/house-01",
@@ -4204,7 +4204,7 @@
     {
       "id": "workshop-waterfront",
       "name": "Rustbucket Wharf",
-      "lore": "The industrial harbor past the garage: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives. Whip Equipped knows every driveway here and pretends not to.",
+      "lore": "The industrial harbor on the far side of the city’s working waterfront: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives. Whip Equipped knows every driveway here and pretends not to.",
       "parcelIds": [
         "workshop-waterfront/shop-01",
         "workshop-waterfront/shop-02",
@@ -5484,11 +5484,11 @@
       "id": "gary-babbitt",
       "name": "Gary Babbitt",
       "age": 34,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Wiggers Anonymous member; “pharmaceutical entrepreneur” (sells oregano)",
       "businessId": "wiggers-anonymous",
       "familyId": "babbitt-family",
-      "backstory": "Gary lives in his mother’s basement on the Northside and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Precinct Zero has arrested him four times and released him four times, because nothing in the bag is illegal and because he pays the laminated-menu price anyway, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.",
+      "backstory": "Gary lives in his mother’s basement in Cul-de-Sadness and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Precinct Zero has arrested him four times and released him four times, because nothing in the bag is illegal and because he pays the laminated-menu price anyway, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.",
       "personality": "Self-important, broke, deeply loyal to his mom; the least dangerous dealer in America.",
       "appearance": {
         "shirt": "#bc7964",
@@ -6001,7 +6001,7 @@
       "id": "nour-haddad",
       "name": "Nour Haddad",
       "age": 19,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Register and actual management, Thugged Out Apparel",
       "businessId": "thugged-out-apparel",
       "familyId": "haddad-family",
@@ -6533,7 +6533,7 @@
       "id": "tucker-whitmore-sterling",
       "name": "Tucker Whitmore-Sterling",
       "age": 16,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Student, The School of Hard Knocks; founder of the 529 Boyz",
       "businessId": "school-of-hard-knocks",
       "familyId": "whitmore-sterling-family",
@@ -6567,7 +6567,7 @@
               },
               {
                 "speaker": "Tucker Whitmore-Sterling",
-                "text": "The hardest crew on the Northside. Named after our college funds."
+                "text": "The hardest crew in Cul-de-Sadness. Named after our college funds."
               },
               {
                 "speaker": "You",
@@ -6627,7 +6627,7 @@
       "id": "kensington-ashby",
       "name": "Kensington “K-Murda” Ashby",
       "age": 15,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Student, The School of Hard Knocks; self-titled enforcer of the 529 Boyz",
       "businessId": "school-of-hard-knocks",
       "familyId": "ashby-family",
@@ -6721,7 +6721,7 @@
       "id": "graham-vanderhoff",
       "name": "Graham Vanderhoff",
       "age": 17,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Student, The School of Hard Knocks; the 529 Boyz’ “strategist”",
       "businessId": "school-of-hard-knocks",
       "familyId": "vanderhoff-family",
@@ -6902,7 +6902,7 @@
       "id": "imani-abernathy",
       "name": "Imani Abernathy",
       "age": 16,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Junior, debate captain and archivist, Municipal High No. 9",
       "businessId": "municipal-high-9",
       "familyId": "abernathy-family",
@@ -6996,7 +6996,7 @@
       "id": "mateo-delgado",
       "name": "Mateo Delgado",
       "age": 14,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Freshman, Municipal High School No. 9",
       "businessId": "municipal-high-9",
       "familyId": "delgado-family",
@@ -7264,7 +7264,7 @@
       "id": "frank-mulrooney",
       "name": "Captain Frank Mulrooney",
       "age": 58,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Captain, Precinct Zero",
       "businessId": "precinct-zero",
       "familyId": "mulrooney-family",
@@ -7383,7 +7383,7 @@
       "id": "dale-pruitt",
       "name": "Officer Dale Pruitt",
       "age": 39,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Patrol officer, Precinct Zero",
       "businessId": "precinct-zero",
       "familyId": "pruitt-family",
@@ -8723,7 +8723,7 @@
               },
               {
                 "speaker": "Kayleigh Spurlock",
-                "text": "Invested. In her future. Her future is in a garage in the Northside, in boxes."
+                "text": "Invested. In her future. Her future is in a garage in Cul-de-Sadness, in boxes."
               }
             ]
           },
@@ -9116,7 +9116,7 @@
       "id": "tammy-pruitt",
       "name": "Tammy Pruitt",
       "age": 37,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Uplineage Silver Founder; precinct softball booster",
       "familyId": "pruitt-family",
       "backstory": "Tammy is a Silver Founder at Uplineage Essential Oils, down eleven thousand credits, with two thousand bottles of lavender stacked to the ceiling of the garage. She sells oils in the Tabernacle lobby between services, at precinct softball games and, once, at a funeral. Her husband writes tickets to cover her inventory. She has enrolled her children as junior founders. She is not a villain; she is a woman who believed a woman named Kayleigh, and now cannot stop.",
@@ -9209,7 +9209,7 @@
       "id": "linda-babbitt",
       "name": "Linda Babbitt",
       "age": 63,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Church secretary, Greater Prosperity Tabernacle; Gary’s mother",
       "familyId": "babbitt-family",
       "backstory": "Linda is the Tabernacle’s church secretary and the mother of Gary, thirty-four, who lives in her basement and believes he is a drug dealer. She prays for him by name, loudly, at every service, and has taped a prayer chain to the basement door. She drives him to Wiggers Anonymous every night and waits in the lot with the engine running so he can’t walk home. She makes his casserole at six and pays his bribes to Precinct Zero in cash, wrapped in a church bulletin, because she would rather he be respectful than right.",
@@ -9305,7 +9305,7 @@
       "origin": "Hartford, Connecticut, USA",
       "role": "Substitute teacher and Little League umpire",
       "familyId": "abernathy-family",
-      "backstory": "Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Precinct Zero softball team, which the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to the principal of Municipal High No. 9 and is the proudest father of a debate captain on the Northside.",
+      "backstory": "Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Precinct Zero softball team, which the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to the principal of Municipal High No. 9 and is the proudest father of a debate captain in Cul-de-Sadness.",
       "personality": "Calm, funny, principled; enjoys enforcing small rules on powerful people.",
       "appearance": {
         "shirt": "#4f7c78",
@@ -9487,7 +9487,7 @@
       "id": "peg-mulrooney",
       "name": "Peg Mulrooney",
       "age": 84,
-      "origin": "The city’s Northside",
+      "origin": "Cul-de-Sadness, McCluster City",
       "role": "Retired Precinct Zero bookkeeper; the captain’s mother",
       "familyId": "mulrooney-family",
       "backstory": "Peg ran the books at Precinct Zero for thirty years under her late husband and remembers the price of every favor in the city since 1971, adjusted for inflation. She thinks her son’s laminated menu is underpriced and tells him so at breakfast. She plays cards every Thursday with Gloria Benitez and Norma Klein, and between the three of them they hold the only complete record of how this city actually works. She is the only person in town Frank cannot bribe, because she taught him how.",
@@ -10262,7 +10262,7 @@
     "quests": "Cross-business situations in the lore are conversation hooks. Mission progression and reward logic are not implied unless implemented separately.",
     "storyContinuity": "Garage conversations are framed before the finale. Preserve Tears Won’t Fall before Salvage Title, the Alana/Atlanta identity and sacrifice, and the simultaneous legitimate/cousin perspectives of Mr. Lock Changer.",
     "realFlipChronology": "Retain the source chronicle’s approximate prices, model-year uncertainty, separate van buyers, and unknown costs. Do not turn gross spread into verified profit or real recollections into proof of fictional crime.",
-    "expansionSchema": "Schema revision 2 adds neighborhoods, parcels, expansionBusinesses, expansionNpcs, families and expansionItems beside the unchanged v1 arrays. The original eight businesses, 24 residents, three garage characters and 24 items keep their IDs, bytes and runtime placement. Expansion records carry parcel IDs, never coordinates; the spatial layer binds parcelId, homeParcelId and routeAnchors to geometry. Existing anchors usable in routes are the eight original business IDs, garage, hq-bridge and hq-doorway.",
+    "expansionSchema": "Schema revision 2 adds expansionNeighborhoods (lore-only neighborhoods, bound by parcel ID; the top-level neighborhoods array is reserved for playable geographic areas), parcels, expansionBusinesses, expansionNpcs, families and expansionItems beside the unchanged v1 arrays. The original eight businesses, 24 residents, three garage characters and 24 items keep their IDs, bytes and runtime placement. Expansion records carry parcel IDs, never coordinates; the spatial layer binds parcelId, homeParcelId and routeAnchors to geometry. Existing anchors usable in routes are the eight original business IDs, garage, hq-bridge and hq-doorway.",
     "expansionAuthorship": "Every neighborhood (other than the original block), business, resident, family and item added in schema revision 2 is new fiction written on 2026-11-03 from the owner’s brief; none is recovered history. Church attendance and cross-references to original residents are additive and do not change their biographies.",
     "expansionSatire": "Owner-directed adult satire. Wiggers Anonymous targets white men who wear a caricature of Black and hip-hop culture as a costume; the School of Hard Knocks targets a rich school and its students who turn other people’s lives into enrichment programming. The joke is always on the posers, the school, the store that sells the costume and the corrupt institutions, never on Black people or public-school students. No slurs beyond the owner-chosen business name, no n-word, no phonetic racial accent or dialect spelling, no real gang names, no real people or real businesses.",
     "expansionMinors": "Students at the School of Hard Knocks and Municipal High No. 9, and listed children in families, are minors and carry minor: true where they are residents. Their comedy is privilege, posturing and their school. No sexual content, no graphic injury, no bribes, purchases or adult transactions involving them.",
