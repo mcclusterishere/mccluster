@@ -1,0 +1,107 @@
+{
+  "schema": "here.city-arcade/v1",
+  "revision": "2026-11-03",
+  "title": "McCluster City Arcade",
+  "source": "Core fictional-city district.v1.json; shop ids are stable references, not duplicate lore",
+  "games": [
+    {
+      "id": "designer-kicks-sole-run",
+      "title": "Designer Kicks · Sole Run",
+      "scope": "city",
+      "placeId": null,
+      "status": "playable",
+      "genre": "Shoe-collecting strategy",
+      "length": "2–4 minutes",
+      "blurb": "Collect four supernatural pairs, equip abilities and manage police heat. A distinct sandbox, not the scripted Robbery 1s episode.",
+      "rating": "Teen candidate"
+    },
+    {
+      "id": "gauranfucking-tea-tea-rush",
+      "title": "Tea Rush",
+      "scope": "store",
+      "placeId": "gauranfucking-tea",
+      "status": "playable",
+      "genre": "Quick order matching",
+      "length": "1 minute",
+      "blurb": "Five customers, five blends, one streak. Serve the counter before everybody leaves.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "hordash-dispatch",
+      "title": "Dispatch Disaster",
+      "scope": "store",
+      "placeId": "hordash",
+      "status": "planned",
+      "genre": "Scheduling puzzle",
+      "length": "1–2 minutes",
+      "blurb": "Untangle fictional appointment mix-ups. No sexual services or real-person profiles.",
+      "rating": "Pending content review"
+    },
+    {
+      "id": "mike-hawk-ballot",
+      "title": "Campaign Chaos",
+      "scope": "store",
+      "placeId": "mike-hawk",
+      "status": "planned",
+      "genre": "Satirical sorting puzzle",
+      "length": "1–2 minutes",
+      "blurb": "Arrange fictional campaign posters and debate cards. No real officials or election claims.",
+      "rating": "Teen candidate"
+    },
+    {
+      "id": "robbery-1s-shoe-sort",
+      "title": "Shoe Sort",
+      "scope": "store",
+      "placeId": "robbery-1s",
+      "status": "planned",
+      "genre": "Pattern matching",
+      "length": "1 minute",
+      "blurb": "Match fictional sneaker designs without transferring the canonical cursed pair.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "hitman-gear-prop-lab",
+      "title": "Prop Lab",
+      "scope": "store",
+      "placeId": "hitman-gear",
+      "status": "planned",
+      "genre": "Wardrobe assembly",
+      "length": "1–2 minutes",
+      "blurb": "Dress a fictional film extra with safe costume props.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "real-camera-men-frame-it",
+      "title": "Frame It",
+      "scope": "store",
+      "placeId": "real-camera-men",
+      "status": "planned",
+      "genre": "Composition challenge",
+      "length": "1 minute",
+      "blurb": "Line up subject and camera angle for the perfect comic shot.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "pressure-tv-edit-rush",
+      "title": "Edit Rush",
+      "scope": "store",
+      "placeId": "pressure-tv",
+      "status": "planned",
+      "genre": "Video sequence puzzle",
+      "length": "1–2 minutes",
+      "blurb": "Put out-of-order fictional TV clips into a coherent scene.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "baddies-on-wheels-parking",
+      "title": "Parking Panic",
+      "scope": "store",
+      "placeId": "baddies-on-wheels",
+      "status": "planned",
+      "genre": "Vehicle parking puzzle",
+      "length": "1–2 minutes",
+      "blurb": "Navigate an abstract parking-lot grid against a clock.",
+      "rating": "Everyone candidate"
+    }
+  ]
+}
