@@ -1227,7 +1227,7 @@ Open: the B1 detailed builder places the telecom enclosure at X32–52 / Y22–3
 - Team play: ICS positions and building roles per action, role-gated, with an ICS-214 activity log; EEG P/S/M/U drafts, hotwash, draft AAR/IP (human finalises and assigns owners).
 - Every existing pack scenario now carries an `hseep` block (type, objectives, EEG, hotwash).
 - Federal bindings cleaned up (IS-238 off the queue surge; CISA OT courses off the IT check-in outage; IS-235.C rebound to planning; IS-139.A recorded as retired; IS-700.B, 800.D, 317.A, 907.A, the FEMA PDS series and CISA 100W/210W added; NFPA 1660 supersedes 1600; IRS records flagged for refresh by 2026-11-30). See `../equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md`.
-- `INDUSTRY-CERTIFICATION-MAP.json` maps all 40 IT labs to CompTIA A+/Network+/Security+/Server+ and BICSI INST1; `LEARNING-PATHWAYS.json` holds the seven pathways.
+- `INDUSTRY-CERTIFICATION-MAP.json` maps all 51 IT labs (the Step 4A ladder and the Server Lab IT-LAB-041..051) to CompTIA A+/Network+/Security+/Server+ and BICSI INST1; `LEARNING-PATHWAYS.json` holds the seven pathways.
 - Durable evidence: Supabase `learning_*` tables (migration `20261103182544_learning_evidence_v1.sql`, applied to production 2026-11-03 and recorded in `supabase/production-ledger.json`) through Worker routes `/v1/prim3/learning/*`, house owner only for now.
 
 Verification: `verify_hseep_scenarios_v1.mjs` PASS; all Step 1–9 verifiers PASS; `verify_federal_training_catalog.py` and `verify_learning_pathways.py` PASS.

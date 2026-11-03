@@ -89,4 +89,4 @@ Fixes to the V1 bindings, each enforced by `verify_federal_training_catalog.py`:
 
 Learner wording rule, everywhere: "prepares you for" plus the issuer link. Never "certified", never "earn your FEMA certificate here".
 
-Industry (non-federal) certifications live in `INDUSTRY-CERTIFICATION-MAP.json` (CompTIA A+ V15, Network+ N10-009, Security+ SY0-701 with V8 expected about 2026-11-17, Server+ SK0-005, BICSI INST1), mapped to all 40 IT labs at objective level where the repository holds the objectives. The seven learner pathways are `LEARNING-PATHWAYS.json`, verified by `verify_learning_pathways.py`.
+Industry (non-federal) certifications live in `INDUSTRY-CERTIFICATION-MAP.json` (CompTIA A+ V15, Network+ N10-009, Security+ SY0-701 with V8 expected about 2026-11-17, Server+ SK0-005, BICSI INST1), mapped to all 51 IT labs at objective level where the repository holds the objectives. The seven learner pathways are `LEARNING-PATHWAYS.json`, verified by `verify_learning_pathways.py`.

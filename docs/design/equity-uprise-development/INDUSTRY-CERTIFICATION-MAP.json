@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "status": "industry-certification-map-v1",
   "last_verified": "2026-11-03",
-  "purpose": "Maps the 40 Equity Uprise IT/OT labs to the industry certifications they help prepare for. These are not federal credentials and Equity Uprise issues none of them.",
+  "purpose": "Maps the 51 Equity Uprise IT/OT labs to the industry certifications they help prepare for. These are not federal credentials and Equity Uprise issues none of them.",
   "credential_is_not_competency": true,
   "authority_rules": [
     "Issuer pages and published exam objectives control exam codes, prices and renewal; prices here are approximate and secondary-sourced.",
@@ -998,6 +998,346 @@
           "objective_level": "domain"
         }
       ]
+    },
+    {
+      "lab_id": "IT-LAB-041",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.4",
+            "3.5",
+            "3.6"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "1.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-042",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.3",
+            "3.4",
+            "3.5",
+            "3.6"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1202",
+          "objectives": [
+            "4.4"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "1.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-043",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.4",
+            "3.5"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-NETPLUS",
+          "exam_code": "N10-009",
+          "objectives": [
+            "5.2"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "1.0",
+            "2.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-044",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.3",
+            "5.1"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "4.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-045",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.4",
+            "5.2"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SECPLUS",
+          "exam_code": "SY0-701",
+          "objectives": [
+            "3.4"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "3.0",
+            "4.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-046",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.6",
+            "5.1"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SECPLUS",
+          "exam_code": "SY0-701",
+          "objectives": [
+            "3.4"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "1.0",
+            "4.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-047",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "5.1"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1202",
+          "objectives": [
+            "4.5"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "4.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-048",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "5.5"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-NETPLUS",
+          "exam_code": "N10-009",
+          "objectives": [
+            "1.5",
+            "5.2"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "4.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-049",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.5",
+            "5.1"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-NETPLUS",
+          "exam_code": "N10-009",
+          "objectives": [
+            "3.4"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "2.0",
+            "4.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-050",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "3.5"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1202",
+          "objectives": [
+            "4.2"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SECPLUS",
+          "exam_code": "SY0-701",
+          "objectives": [
+            "4.1",
+            "4.3"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "2.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
+    },
+    {
+      "lab_id": "IT-LAB-051",
+      "alignments": [
+        {
+          "cert_id": "COMPTIA-APLUS",
+          "exam_code": "220-1201",
+          "objectives": [
+            "5.1",
+            "5.2"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SECPLUS",
+          "exam_code": "SY0-701",
+          "objectives": [
+            "3.4"
+          ],
+          "objective_level": "objective"
+        },
+        {
+          "cert_id": "COMPTIA-SERVERPLUS",
+          "exam_code": "SK0-005",
+          "objectives": [
+            "3.0",
+            "4.0"
+          ],
+          "objective_level": "domain"
+        }
+      ],
+      "note": "Server Lab (SERVER-LAB-SPEC.md, IT-LAB-041..051): rack and server hardware on the virtual MDF rack; A+ Core 1 hardware and Server+ SK0-005 at domain level."
     }
   ],
   "scenario_alignments": [
