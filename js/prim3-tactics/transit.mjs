@@ -168,20 +168,29 @@ function ensure3d() {
     r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
     r3loading = null; fogKey = ''; // a new board needs its fog
     r3.setGrid(gridOn);
-    const s = unitOf(ui.sel); if (s) r3.focus((s.x + OBJ.x) / 2, (s.y + OBJ.y) / 2 + Math.min(4, H / 16), 0, Math.min(30, Math.max(W, H) * 1.2));
+    const s = unitOf(ui.sel); if (s) r3.focus((s.x + OBJ.x) / 2, (s.y + OBJ.y) / 2 + Math.min(4, H / 16), 0, LEVEL.OPENING_DIST || Math.min(30, Math.max(W, H) * 1.2)); // a level may open wider (a tower)
     render();
   }).catch((e) => { r3loading = null; toast('The 3D view could not load here. ' + esc(e.message || '')); });
 }
 
+// a building level's cutaway: the storey of the selected operative; Floor 1 as soon as anyone is inside or a
+// move can reach inside; the whole building while the squad is still on the street
+function cutStorey(sel) {
+  if (!LEVEL.storeyOf) return undefined;
+  if (sel && !sel.dead && sel.z >= 1) return LEVEL.storeyOf(sel.z);
+  if ((ui.mode === 'move' || ui.mode === 'dash') && ui.reach && ui.reach.tiles.some((t) => t.z >= 1)) return LEVEL.storeyOf(1);
+  if (state.units.some((u) => u.faction === 'PLAYER' && !u.dead && !extracted(u) && u.z >= 1)) return LEVEL.storeyOf(1);
+  return null;
+}
 function boardModel() {
   const p = view(), sel = unitOf(ui.sel);
   const units = p.units.filter((u) => !extracted(u));
-  const m = { units, selected: ui.sel, labels: [], gateOpen: gateOpen(), coverAt: (u) => { const c = state.cover.find((k) => k.x === u.x && k.y === u.y && (k.z || 0) === (u.z || 0)); return c ? c.type : null; } };
+  const m = { units, selected: ui.sel, labels: [], gateOpen: gateOpen(), cut: cutStorey(sel), coverAt: (u) => { const c = state.cover.find((k) => k.x === u.x && k.y === u.y && (k.z || 0) === (u.z || 0)); return c ? c.type : null; } };
   if (ui.mode === 'move' || ui.mode === 'dash') { m.reach = ui.reach.tiles; }
   if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = ui.preview.dest; m.pathLine = [{ x: sel.x, y: sel.y, z: sel.z }, ...ui.preview.path]; }
   if (ui.preview && ui.preview.kind === 'fire') m.target = ui.preview.target;
-  for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
-  m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: 2.6, kind: 'obj', text: `${TXT.noun} ${relayLinks()}/2` });
+  for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.WORLD_M || LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
+  m.labels.push({ x: OBJ.x, y: OBJ.y, z: OBJ.z || 0, h: LEVEL.OBJ_LABEL_H || 2.6, kind: 'obj', text: `${TXT.noun} ${relayLinks()}/2` });
   if (nodeState(OBJ_NODE) === 'VERIFIED') m.labels.push({ x: SCENE.extraction.x, y: SCENE.extraction.y, h: 0.4, kind: 'obj', text: TXT.extract });
   if (ui.preview && ui.preview.kind === 'move') { const d = ui.preview.dest; m.labels.push({ x: d.x, y: d.y, z: d.z, h: 0.1, kind: 'info', text: `${D(d.x, d.y)} · ${ui.preview.steps} steps` }); }
   return m;

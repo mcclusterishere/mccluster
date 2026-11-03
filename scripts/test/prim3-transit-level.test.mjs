@@ -150,6 +150,10 @@ test('every renderer stands an operative at the one real height, never its own s
     assert.doesNotMatch(src, /BODY_SCALE|scale\.setScalar\(1\.18\)|2\.15 \//, `${name} has no private figure scale`);
   }
   assert.doesNotMatch(kit, /setScalar\(1\.18\)/);
-  assert.match(lvl, /const M = \(m\) => m \/ TILE_M/);
-  assert.match(page, /operatorHeight\(LEVEL\.TILE_M\)/, 'unit labels sit just above a real-height head');
+  // metres → world units on the shared tile, or on a level's own drawing scale (Equity Uprise HQ: its 12 ft plan tile),
+  // so a real thing and its operatives are always drawn at one scale
+  assert.match(lvl, /const UNIT_M = level\.WORLD_M \|\| TILE_M/);
+  assert.match(lvl, /const M = \(m\) => m \/ UNIT_M/);
+  assert.match(lvl, /operatorHeight\(UNIT_M\)/);
+  assert.match(page, /operatorHeight\(LEVEL\.WORLD_M \|\| LEVEL\.TILE_M\)/, 'unit labels sit just above a real-height head');
 });
