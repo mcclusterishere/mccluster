@@ -98,9 +98,11 @@ test('the model manifest names only files the building pipeline builds and publi
     if (!p.lazy && p.id !== 'floor-01') assert.ok(committed, `${p.file} is committed`);
     for (const [re, by] of p.replacedBy || []) assert.ok(re instanceof RegExp && L.MODEL.parts.some((q) => q.id === by), `${p.id}: ${by} is a part`);
   }
-  // the lazy floors are Floors 2–6, each at its finished floor
-  assert.deepEqual(L.MODEL.parts.filter((p) => p.lazy).map((p) => [p.storey, p.ffeFt]), [[2, 13.5], [3, 27], [4, 40.5], [5, 54], [6, 67.5]]);
-  assert.deepEqual([0, 1, 2, 6, 7, 9].map(L.storeyOf), [1, 1, 2, 6, 7, 7]);
+  // the lazy floors are Floors 2–6 and B1, each at its finished floor
+  assert.deepEqual(L.MODEL.parts.filter((p) => p.lazy).map((p) => [p.storey, p.ffeFt]), [[2, 13.5], [3, 27], [4, 40.5], [5, 54], [6, 67.5], [0, -13.5]]);
+  assert.deepEqual([0, 1, 2, 6, 7, 8].map(L.storeyOf), [1, 1, 2, 6, 7, 0]);
+  // a floor's identity-sign slot is never drawn by the game (the building's brand slot is not ours to render)
+  for (const p of L.MODEL.parts.filter((q) => /^floor-0/.test(q.id))) assert.ok(p.drop.test('F4-IDENTITY-SIGN-01::sign'), p.id);
 });
 
 test('when Floor 1 is built, its reception, vestibule and stair barriers land on the plan', async (t) => {

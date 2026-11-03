@@ -24,27 +24,32 @@
      z2…z6  Floors 2–6: their slabs, but only the landings inside Stair A and Stair B are open (the
             drill keeps the floor doors shut, so the rest of each floor is a closed, opaque volume)
      z7  Level 7, the open-air roof at 81 ft
-   B1 is not part of the drill: the Floor 1 stair barriers keep travel from Floor 1 down to B1 closed.
+     z8  B1 (−13.5 ft): a normal, staffed floor (owner, 2026-11-03: "We can have B1. Everybody's welcome to B1.
+         Make it normal."). Its cells, rooms and stairs come from the building package through the PRIM3 adapter
+         (adapters/equity-uprise/): both protected stairs go down to it; its plant rooms are shut like Floor 1's.
    Because the engine's walls are whole tiles, Floor 1 is a separate floor joined to the site only at
    its doors; its facade is glazing, so it stops movement but not sight. */
 
 import { TILE_M } from '../scale.mjs';
+import { loadPackage } from '../adapters/equity-uprise/pipeline.mjs';
+import * as EU from '../adapters/equity-uprise/adapter.mjs';
+const PKG = await loadPackage();
 export { TILE_M };
 
 export const LEVEL_ID = 'equity-uprise-hq';
 export const FT = 0.3048;
 export const FT_PER_TILE = 12;
-export const W = 12, H = 13, FLOORS = 8;
+export const W = 12, H = 13, FLOORS = 9;
 // the building's south-west corner (0, 0 ft) is the corner of tile (3, 8); +X east, +Y north
 export const ORIGIN = { x: 3, y: 9 };
 export const FRAME = { x0: 3, y0: 8, yUp: true };
 export const toDisplay = (x, y) => ({ X: x - FRAME.x0, Y: FRAME.y0 - y });
 export const STOREY_M = 13.5 * FT;
 export const LEVEL_Z = { site: 0, floor1: 1, roof: 7 };
-export const floorHeight = (z) => (z <= 1 ? 0 : (z - 1) * STOREY_M); // z7 → 81 ft
+export const floorHeight = (z) => (z === 8 ? -STOREY_M : z <= 1 ? 0 : (z - 1) * STOREY_M); // z7 → 81 ft, z8 (B1) → −13.5 ft
 // the fog of war is read on the floor a tile is walked on at street level: Floor 1 inside the plate
 export const fogFloor = (x, y) => (x >= 3 && x < 9 && y >= 3 && y < 9 ? 1 : 0);
-export const floorName = (z) => (z === 0 ? '' : z === 1 ? 'Floor 1' : z === 7 ? 'Level 7 roof' : `Stair, Floor ${z}`);
+export const floorName = (z) => (z === 0 ? '' : z === 1 ? 'Floor 1' : z === 7 ? 'Level 7 roof' : z === 8 ? 'B1' : `Stair, Floor ${z}`);
 
 /* ---------- canonical plan rectangles (feet, building coordinates) ---------- */
 export const PLAN = {
@@ -138,7 +143,8 @@ const receptionCells = rectTiles(PLAN.floor1.reception);
 export const SCENE = {
   kind: 'building',
   plan: PLAN, plate: PLATE, core: CORE, ftToTile, rectTiles,
-  levels: Array.from({ length: 8 }, (_, z) => ({ z, height: floorHeight(z) })),
+  levels: Array.from({ length: 9 }, (_, z) => ({ z, height: floorHeight(z) })),
+  basement: { z: 8, height: floorHeight(8) },
   // Floor 1 tiles the drill closes (rooms and shafts), with the height that blocks sight
   floor1Rooms: [
     ...['intakeRoom', 'restroomB', 'supportA', 'supportB'].flatMap((k) => rectTiles(PLAN.floor1[k]).map((c) => ({ ...c, id: k }))).filter((c) => !coreCell(c.x, c.y))
@@ -173,8 +179,12 @@ export function surfaces() {
   const out = [{ id: 'floor-1', z: 1, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: 0 }];
   for (let z = 2; z <= 6; z += 1) out.push({ id: `floor-${z}`, z, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: floorHeight(z) });
   out.push({ id: 'level-7', z: 7, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: floorHeight(7) });
+  out.push({ id: 'b1', z: 8, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: floorHeight(8) });
   return out;
 }
+// B1 from the building package, through the adapter: its rooms (shut, as Floor 1's are), shafts, cover, and the
+// two protected stairs down from Floor 1 (the same switchback the stairs keep above)
+export const B1 = (() => { const t = EU.traversal(PKG, { levels: [0, 1] }); return { blockers: t.blockers.filter((b) => b.z === 8), cover: t.cover.filter((c) => c.z === 8), links: t.links.filter((l) => l.kind === 'stair'), grid: t.grids[0] }; })();
 const inPlate = (x, y) => x >= PLATE.x && x < PLATE.x + PLATE.w && y >= PLATE.y && y < PLATE.y + PLATE.d;
 
 export function buildBlockers({ dischargeOpen = false } = {}) {
@@ -193,6 +203,7 @@ export function buildBlockers({ dischargeOpen = false } = {}) {
   // Level 7: overruns, MEP screen, mechanical units, the routing beacon
   for (const p of SCENE.roofProps) for (const c of p.cells) if (!isStair(c.x, c.y)) put(c.x, c.y, 7, p.h);
   put(SCENE.beacon.x, SCENE.beacon.y, 7, SCENE.beacon.h);
+  for (const b of B1.blockers) put(b.x, b.y, b.z);
   return [...out.values()];
 }
 
@@ -223,7 +234,8 @@ export function buildCover(blockers) {
 // (Floor 1 is at grade, on the ground grid; the rest of each closed floor is not a place to stand)
 SCENE.gridSurfaces = [
   ...[2, 3, 4, 5, 6].flatMap((z) => [...STAIRS.A, ...STAIRS.B].map((c) => ({ z, x: c.x, y: c.y, w: 1, d: 1, height: floorHeight(z) }))),
-  { z: 7, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: floorHeight(7) }
+  { z: 7, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: floorHeight(7) },
+  { z: 8, x: PLATE.x, y: PLATE.y, w: PLATE.w, d: PLATE.d, height: floorHeight(8) }
 ];
 
 /* ---------- the building's own 3D model: the look (the rules above stay on the plan data) ----------
@@ -243,7 +255,7 @@ const ROOT = new URL('../../../', import.meta.url);
 const floorPart = (n) => ({
   id: `floor-0${n}`, file: `equity-uprise-floor-0${n}-core-v2.glb`, ffeFt: (n - 1) * 13.5, storey: n, lazy: true,
   // the combined chassis supplies the shared cores; the facade supplies the perimeter (as the building viewer does)
-  drop: /^(stair_|pass_|freight_|mep)/,
+  drop: /^(stair_|pass_|freight_|mep)|IDENTITY-SIGN/, // the identity-sign slot is the building's brand slot: never drawn here
   replacedBy: [[/^(north_wall|west_wall|east_wall|south_mullion_)|^F[2-6]-SOUTH-GLAZING-01::pane-/, 'facade']]
 });
 export const MODEL = {
@@ -255,10 +267,11 @@ export const MODEL = {
   cutFt: 8,
   parts: [
     { id: 'chassis', file: 'equity-uprise-building-core-v2.glb', ffeFt: 0, required: true,
-      // never drawn: B1 and its stair runs (not in the drill), the diagnostic program pads, door/egress/equipment
-      // markers and every storey's program blocks (the detailed floors carry the real rooms)
-      drop: /^(L0_|B1_)|_L-13\.5_|^L[1-7]_(program|circle|support|sphere|zone)|^SITE_(door|discharge_barrier|equipment)/,
+      // never drawn: the diagnostic program pads, door/egress/equipment markers and every storey's program blocks
+      // (the detailed floors carry the real rooms). B1's chassis pieces give way to the detailed B1 model.
+      drop: /^B1_program|^L[0-7]_(program|circle|support|sphere|zone)|^SITE_(door|discharge_barrier|equipment)/,
       replacedBy: [
+        [/^(L0_|B1_)|_L-13\.5_/, 'basement'],
         [/^L1_/, 'floor-01'],
         [/^L7_(slab|parapet)/, 'roof'],
         ...[2, 3, 4, 5, 6].map((n) => [new RegExp(`^L${n}_slab`), `floor-0${n}`]),
@@ -267,13 +280,15 @@ export const MODEL = {
     { id: 'floor-01', file: 'equity-uprise-floor-01-core-v2.glb', ffeFt: 0, storey: 1,
       // the shared cores come from the chassis; the glazed perimeter from the facade (or plain glass on the battery
       // tier); the public entrance leaves stand open for the drill
-      drop: /^(stair_|passenger_|freight_|mep)|^(north|west|east)_exterior_wall|^south_exterior_(left|right)|^F1-ENTRY-DOOR-(OUTER|INNER)::leaf/ },
+      drop: /IDENTITY-SIGN|^(stair_|passenger_|freight_|mep)|^(north|west|east)_exterior_wall|^south_exterior_(left|right)|^F1-ENTRY-DOOR-(OUTER|INNER)::leaf/ },
     { id: 'roof', file: 'equity-uprise-floor-07-core-v2.glb', ffeFt: 81, storey: 7 },
     // the curtain wall, crown and entry; 2.5 MB, so not on the battery tier. Its signage reconstructs the
     // Equity Uprise mark and lettering from primitives: never drawn here (AGENTS.md, hard rule 11)
     { id: 'facade', file: 'equity-uprise-facade-core-v2.glb', ffeFt: 0, tiers: ['mid', 'high'],
       drop: /^FAC-SIGN-|^FAC-DOOR-LEAF-/ },
-    floorPart(2), floorPart(3), floorPart(4), floorPart(5), floorPart(6)
+    floorPart(2), floorPart(3), floorPart(4), floorPart(5), floorPart(6),
+    // B1, the detailed basement (in git; loads the first time the cutaway goes below grade)
+    { id: 'basement', file: 'equity-uprise-basement-b1-core-v2.glb', ffeFt: -13.5, storey: 0, lazy: true }
   ]
 };
 // the opening camera stands back far enough to show the whole tower from the public way
@@ -281,7 +296,7 @@ export const OPENING_DIST = 24;
 // the objective's label sits just over Floor 1's ceiling (11 ft), so it marks Floor 1 even when the whole tower is drawn
 export const OBJ_LABEL_H = 1.2;
 // the storey the cutaway shows for a unit on engine floor z (the site and Floor 1 are both storey 1)
-export const storeyOf = (z) => Math.max(1, Math.min(7, z || 1));
+export const storeyOf = (z) => (z === 8 ? 0 : Math.max(1, Math.min(7, z || 1)));
 
 export const DISCHARGE_CELLS = [{ x: dischargeOut.x, y: dischargeOut.y, z: 0 }];
 
@@ -321,7 +336,7 @@ export function engineConfig({ seed = 20261103 } = {}) {
   const links = [
     { id: 'public-entrance', from: { ...doorOut, z: 0 }, to: { ...doorIn, z: 1 }, cost: 1 },
     { id: 'stair-a-discharge', from: { ...dischargeOut, z: 0 }, to: { ...dischargeIn, z: 1 }, cost: 1 },
-    ...stairLinks('A'), ...stairLinks('B')
+    ...stairLinks('A'), ...stairLinks('B'), ...B1.links
   ];
   const obj = SCENE.objective;
   return {
@@ -331,7 +346,7 @@ export function engineConfig({ seed = 20261103 } = {}) {
     surfaces: surfaces(),
     links,
     blockers,
-    cover: buildCover(blockers),
+    cover: [...buildCover(blockers), ...B1.cover],
     units: [
       { id: 'E1', faction: 'PLAYER', role: 'E', x: 4, y: 11, hp: 8, maxHp: 8, moveRange: 6, aim: 72, weaponDamage: 3, ammo: 4, magazineSize: 4, reserveAmmo: 8, detectionRadius: 5 },
       { id: 'R1', faction: 'PLAYER', role: 'R', x: 3, y: 12, hp: 6, maxHp: 6, moveRange: 6, aim: 80, weaponDamage: 4, ammo: 3, magazineSize: 3, reserveAmmo: 6, detectionRadius: 7 },

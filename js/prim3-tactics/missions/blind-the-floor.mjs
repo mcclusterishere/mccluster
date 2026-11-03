@@ -185,6 +185,8 @@ export function outcome(s) {
   if (R.missionComplete(s)) return 'win';
   if (t && t.dead) return 'lose-t';
   if (squad.every((u) => u.dead || u.downed)) return 'lose-all';
+  // extraction counts every survivor, and a downed operative cannot walk out: the exercise is lost
+  if (s.mission.extractionRequired && squad.some((u) => u.downed && !u.dead)) return 'lose-downed';
   if (eu.side === 'attack' && eu.verified) return 'lose-verified';
   if (s.mission.escalation === 'TERMINAL') return 'lose-clock';
   return null;
