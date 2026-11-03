@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prim3AgentNews, parseComments, BATCH, COMMENT_SCHEMA } from '../src/executors/prim3-agent-news.mjs';
 import { PRIM3_AGENTS } from '../src/prim3/agents.mjs';
-import { fairShare } from '../src/prim3/news-desk-plan.mjs';
+import { planBatches } from '../src/prim3/news-desk-plan.mjs';
 import { buildCompletionEvidence } from '../src/completion-evidence.mjs';
 import { inferenceSettings } from '../src/compute/inference-settings.mjs';
 
@@ -96,12 +96,22 @@ test('unusable model output fails the job instead of writing nothing silently', 
   await assert.rejects(prim3AgentNews(job, fixture({ reply: '{"comments":[]}' })), /no usable comments/);
 });
 
-test('fair share covers small feeds fully and gives the rest to the busiest', () => {
-  const plan = fairShare({ et: 3, jp: 10, gb: 400, in: 300 }, 64);
-  assert.equal(plan.et, 3); assert.equal(plan.jp, 10);
-  assert.equal(plan.gb + plan.in, 51);
-  assert.equal(Object.values(plan).reduce((a, b) => a + b, 0), 64);
-  assert.equal(Object.values(fairShare({ a: 1, b: 2 }, 64)).reduce((a, b) => a + b, 0), 3);
+test('the plan spends whole batches, oldest-waiting country first, wrapping onto busy ones', () => {
+  const agents = [
+    { key: 'gb', backlog: 400, oldestWaitingMs: 10 },
+    { key: 'et', backlog: 3, oldestWaitingMs: 9000 },
+    { key: 'jp', backlog: 10, oldestWaitingMs: 500 },
+    { key: 'cd', backlog: 0, oldestWaitingMs: 0 },
+  ];
+  const plan = planBatches(agents, 40, 8); // 5 batches
+  assert.deepEqual(plan.et, [3]);
+  assert.deepEqual(plan.jp, [8, 2]);
+  assert.deepEqual(plan.gb, [8, 8]);
+  assert.deepEqual(plan.cd, []);
+  assert.equal(Object.values(plan).flat().length, 5);
+  assert.deepEqual(planBatches(agents, 7, 8), { gb: [], et: [], jp: [], cd: [] }, 'less than a batch spends nothing');
+  const small = planBatches(agents, 16, 8);
+  assert.deepEqual([small.et, small.jp, small.gb], [[3], [8], []], 'the longest wait is served first');
 });
 
 test('inference keeps one resident context and model warm', () => {
