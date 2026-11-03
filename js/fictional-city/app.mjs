@@ -30,7 +30,8 @@ const buildings = () => cityPlaces(manifest);
 const residents = () => [...manifest.npcs, ...manifest.garageCrew];
 // lore buildings first; a parcel no lore has claimed yet is a generic place with the same position fields
 const findBuilding = id => buildings().find(b => b.id === id) || vacant.find(p => p.id === id);
-const neighborhoodName = id => places?.neighborhoods.find(n => n.id === id)?.name || '';
+// display names are lore (expansionNeighborhoods); the places file's names are the plain fallback
+const neighborhoodName = id => (manifest?.expansionNeighborhoods || []).find(n => n.id === id)?.name || places?.neighborhoods.find(n => n.id === id)?.name || '';
 const findResident = id => coreResidents.get(id) || residents().find(n => n.id === id);
 
 function notify(message) {
@@ -110,8 +111,8 @@ function updateLocation(position) {
   const inside = position.interior && findBuilding(position.interior);
   const story = neighborhoodAt(manifest, position);
   const area = story ? null : bound?.index.neighborhoodAt(position.x, position.z);
-  $('city-location').textContent = inside ? inside.name : story ? 'Bridgeport · Downtown' : area ? area.name : position.z > 48 && Math.abs(position.x) < 22 ? 'Equity Uprise Island' : 'Harbor Boulevard';
-  if ($('city-area-label')) $('city-area-label').textContent = story ? 'BRIDGEPORT STORY BLOCK' : inside ? (neighborhoodName(inside.neighborhood) || 'COMMERCIAL DISTRICT').toUpperCase() : area?.kind === 'landmark' ? 'THE ISLAND' : area && area.id !== 'original-block' ? area.name.toUpperCase() : 'COMMERCIAL DISTRICT';
+  $('city-location').textContent = inside ? inside.name : story ? 'Bridgeport · Downtown' : area && area.id !== 'original-block' ? neighborhoodName(area.id) : position.z > 48 && Math.abs(position.x) < 22 ? 'Equity Uprise Island' : 'Harbor Boulevard';
+  if ($('city-area-label')) $('city-area-label').textContent = story ? 'BRIDGEPORT STORY BLOCK' : inside ? (neighborhoodName(inside.neighborhood) || 'COMMERCIAL DISTRICT').toUpperCase() : area?.kind === 'landmark' ? 'THE ISLAND' : area && area.id !== 'original-block' ? neighborhoodName(area.id).toUpperCase() : 'COMMERCIAL DISTRICT';
   if ($('city-stage-area')) $('city-stage-area').textContent = story ? 'BRIDGEPORT / 02' : 'HARBOR / 01';
   $('city-exit').hidden = !inside;
   if (inside) state = recordVisit(state, inside.id, manifest, places);
@@ -348,7 +349,7 @@ function drawCityMap(ns, svg) {
   }
   for (const n of places.neighborhoods) {
     const c = n.bounds;
-    const t = shape('text', { x: mx((c.minX + c.maxX) / 2), y: mz(n.id === 'hq-island' ? 106 : n.id === 'northside-residential' ? -141 : n.id === 'original-block' ? 30 : (c.minZ + c.maxZ) / 2 + (n.id.includes('waterfront') ? 20 : 0)), class: 'city-map-area' }, n.name.toUpperCase());
+    const t = shape('text', { x: mx((c.minX + c.maxX) / 2), y: mz(n.id === 'hq-island' ? 106 : n.id === 'northside-residential' ? -141 : n.id === 'original-block' ? 30 : (c.minZ + c.maxZ) / 2 + (n.id.includes('waterfront') ? 20 : 0)), class: 'city-map-area' }, neighborhoodName(n.id).toUpperCase());
     t.setAttribute('text-anchor', 'middle');
   }
   if (!state.position.interior) shape('circle', { cx: mx(state.position.x), cy: mz(state.position.z), r: 4, fill: '#eb763e', stroke: '#fff', 'stroke-width': 1.5 });
@@ -402,7 +403,7 @@ function openMap(areaId) {
     const inArea = vacant.filter(p => p.neighborhood === n.id && p.role !== 'scenery');
     if (!inArea.length) continue;
     const details = el('details', undefined, 'city-area-list');
-    details.append(el('summary', n.name + ' · ' + inArea.length + ' doors'));
+    details.append(el('summary', neighborhoodName(n.id) + ' · ' + inArea.length + ' doors'));
     const g = el('div', undefined, 'city-card-grid');
     for (const p of inArea) g.append(placeCard(p));
     details.append(g); root.append(details);
@@ -702,7 +703,7 @@ async function start() {
           state = recordDiscovery(state, id, places);
           if ((state.discoveries?.length || 0) > before) {
             const l = places?.landmarks.find(x => x.id === id) || places?.neighborhoods.find(x => x.id === id && x.status === 'new');
-            if (l) notify('Found: ' + l.name);
+            if (l) notify('Found: ' + (neighborhoodName(l.id) || l.name));
             clearTimeout(saveTimer); saveTimer = setTimeout(persist, 300);
           }
         },

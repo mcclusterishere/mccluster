@@ -300,7 +300,7 @@ try {
     await holdUntil(page, 'a', () => MCC_CITY.snapshot().position.x < -195);
     await settled(page);
     const s1 = await page.evaluate(() => ({ chunks: MCC_CITY.stats().chunks, p: MCC_CITY.snapshot(), area: document.querySelector('#city-location').textContent }));
-    check('walked from Civic Center across a neighbourhood and chunk edge into Northside', s1.area === 'Northside' && s1.p.discoveries.includes('northside-residential'), s1);
+    check('walked from Civic Center across a neighbourhood and chunk edge into Northside', s1.area === ((city.expansionNeighborhoods || []).find(n => n.id === 'northside-residential')?.name || 'Northside') && s1.p.discoveries.includes('northside-residential'), s1);
     check('chunks ahead loaded while walking (bounded active set)', s1.chunks.loads > s0.loads && s1.chunks.active <= 16, { s0, s1: s1.chunks });
     await page.locator('.city-stage').screenshot({ path: join(out, 'after-northside.png') });
     await measure(page, 'northside (1280)');
