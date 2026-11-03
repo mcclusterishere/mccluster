@@ -18,9 +18,30 @@ if (!threeDir) throw new Error('THREE180_DIR must contain exact three.module.js 
 const { chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES, 'package.json'))('playwright');
 await publishCity(root); await mkdir(out, { recursive: true });
 const city = JSON.parse(await readFile(join(root, 'core/data/fictional-city/district.v1.json'), 'utf8'));
+const places = JSON.parse(await readFile(join(root, 'core/data/fictional-city/places.v1.json'), 'utf8'));
+const STATE_KEY = 'here.universe.mccluster-fictional-city.state';
+const metrics = [];
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
 const results = [];
+const ready = page => page.waitForFunction(() => window.MCC_CITY && document.querySelector('#city-canvas')?.dataset.ready === 'true');
+const settled = page => page.waitForFunction(() => { const s = MCC_CITY.stats(); return s && s.chunks.loading === 0; });
+// a device save written before the page starts, exactly as an earlier visit would have left it
+async function withSave(context, save) {
+  await context.addInitScript(({ key, save }) => { if (!sessionStorage.getItem('fixture-save')) { sessionStorage.setItem('fixture-save', '1'); localStorage.setItem(key, JSON.stringify(save)); } }, { key: STATE_KEY, save });
+}
+const v2 = (position, extra = {}) => ({ version: 2, credits: 250, position, inventory: {}, met: [], visited: [], receipts: [], story: { chapter: null }, discoveries: [], payments: [], ...extra });
+async function holdUntil(page, key, predicate, arg, timeout = 90000) {
+  await page.locator('#city-canvas').focus();
+  await page.keyboard.down(key);
+  try { await page.waitForFunction(predicate, arg, { timeout }); } finally { await page.keyboard.up(key); }
+}
+async function measure(page, label) {
+  await settled(page); await page.waitForTimeout(400);
+  const m = await page.evaluate(() => ({ stats: MCC_CITY.stats(), heap: performance.memory?.usedJSHeapSize || null, bytes: performance.getEntriesByType('resource').filter(e => /fictional-city|three/.test(e.name)).reduce((n, e) => n + (e.encodedBodySize || e.transferSize || 0), 0), area: document.querySelector('#city-location').textContent, scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+  metrics.push({ label, area: m.area, drawCalls: m.stats.drawCalls, triangles: m.stats.triangles, geometries: m.stats.geometries, textures: m.stats.textures, activeChunks: m.stats.chunks.active, loads: m.stats.chunks.loads, unloads: m.stats.chunks.unloads, hqLod: m.stats.hqLod, visibleNpcs: m.stats.visibleNpcs, heapBytes: m.heap, cityBytes: m.bytes, viewport: m.stats.viewport, overflow: m.scroll - m.client });
+  return m;
+}
 function check(name, value, detail = {}) { results.push({ name, pass: !!value, ...detail }); console.log((value ? 'PASS ' : 'FAIL ') + name); assert.ok(value, name); }
 async function contextFor(width, role = 'owner') {
   const context = await browser.newContext({ viewport: { width, height: 1000 }, deviceScaleFactor: 1, hasTouch: width < 700, serviceWorkers: 'block', reducedMotion: 'reduce' });
@@ -183,7 +204,192 @@ try {
     check('late failed screenplay load cannot replace a newly opened resident conversation', await page.locator('#city-dialog-title').textContent() === 'Mike Hawk' && !(await page.locator('#city-dialog-body').textContent()).includes('could not'));
     await context.close();
   }
+  /* ---------------- the expanded city ---------------- */
+  {
+    // an existing v1 save, as the first district wrote it, loads intact under v2
+    const { context, page, errors } = await contextFor(390);
+    const item = city.items.find(i => i.businessId === 'hordash');
+    const v1 = { version: 1, revision: city.revision, credits: 199, position: { x: -16, z: -12.5, interior: null }, inventory: { [item.id]: 1 }, met: ['mike-hawk'], visited: ['hordash'], receipts: [{ itemId: item.id, price: item.price, at: 1762100000000 }], story: { chapter: 'tears-wont-fall' } };
+    await withSave(context, v1);
+    await page.goto(site + '/fictional-city.html'); await ready(page);
+    const s = await page.evaluate(() => MCC_CITY.snapshot());
+    check('v1 save migrates to v2 keeping credits, inventory, receipts, met, visited, chapter and position',
+      s.version === 2 && s.credits === 199 && s.inventory[item.id] === 1 && s.receipts.length === 1 && s.receipts[0].at === v1.receipts[0].at && s.met[0] === 'mike-hawk' && s.visited.includes('hordash') && s.story.chapter === 'tears-wont-fall' && s.position.x === -16 && Array.isArray(s.discoveries), s);
+    check('the city reports its geography: 5+1 neighbourhoods, 33 parcels, 36 chunks', JSON.stringify(await page.evaluate(() => MCC_CITY.places())) === JSON.stringify({ neighborhoods: 6, parcels: 33, vacant: 33, chunks: 36 }));
+    // all eight original businesses: enter and leave each one
+    for (const b of city.businesses) {
+      await page.getByRole('button', { name: 'District map' }).click();
+      await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: b.name, exact: true }) }).first().getByRole('button', { name: 'About this spot' }).click();
+      await page.getByRole('button', { name: 'Walk inside', exact: true }).click();
+      await page.waitForFunction(id => MCC_CITY.snapshot().position.interior === id, b.id);
+      await page.getByRole('button', { name: 'Leave building' }).click();
+      await page.waitForFunction(() => !MCC_CITY.snapshot().position.interior);
+    }
+    const visited = await page.evaluate(() => MCC_CITY.snapshot().visited);
+    check('all eight original businesses entered and left', city.businesses.every(b => visited.includes(b.id)), { visited });
+    // all 27 established people: every conversation opens from the directory
+    for (const n of [...city.npcs, ...city.garageCrew]) {
+      await page.getByRole('button', { name: 'Open the city directory' }).click();
+      await page.locator('#city-dialog-body button.city-person').filter({ hasText: n.name }).first().click();
+      await page.waitForFunction(name => document.querySelector('#city-dialog-title')?.textContent === name, n.name);
+      await page.getByRole('button', { name: 'Close panel' }).click();
+    }
+    check('all 27 established characters interacted with', (await page.evaluate(() => MCC_CITY.snapshot().met)).length === 27);
+    check('migrated device: no uncaught errors', errors.length === 0, { errors });
+    await context.close();
+  }
+  {
+    // insufficient funds are refused at the counter
+    const { context, page } = await contextFor(390);
+    await withSave(context, v2({ x: 0, z: 2.5, interior: null }, { credits: 3 }));
+    await page.goto(site + '/fictional-city.html'); await ready(page);
+    await page.getByRole('button', { name: 'District map' }).click();
+    await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: 'Hordash', exact: true }) }).getByRole('button', { name: 'About this spot' }).click();
+    await page.getByRole('button', { name: 'Browse the counter' }).click();
+    const buys = page.locator('#city-dialog-body button', { hasText: 'Buy' });
+    check('insufficient credits: every counter purchase is refused and nothing is charged', (await buys.count()) === 3 && await buys.evaluateAll(n => n.every(b => b.disabled)) && (await page.evaluate(() => MCC_CITY.snapshot().credits)) === 3);
+    await context.close();
+  }
+  {
+    // garage kiosk → existing globe route; bridge walk; HQ doorway; HQ assets warm on approach
+    const { context, page, requests } = await contextFor(1280);
+    await withSave(context, v2({ x: 5.4, z: 3.6, interior: 'whip-equipped-garage' }));
+    await page.goto(site + '/fictional-city.html'); await ready(page);
+    await page.waitForFunction(() => /transportation globe/i.test(document.querySelector('#city-prompt').textContent));
+    await page.getByRole('button', { name: 'Interact' }).click();
+    check('the garage globe kiosk opens the existing transportation globe route', await page.locator('#city-dialog-body a[href*="action-globe.html"]').count() === 1);
+    await page.getByRole('button', { name: 'Close panel' }).click();
+    await page.getByRole('button', { name: 'Leave building' }).click();
+    await page.getByRole('button', { name: 'District map' }).click();
+    await page.getByRole('button', { name: 'Walk to Equity Uprise Island' }).click();
+    await page.waitForFunction(() => Math.abs(MCC_CITY.snapshot().position.z - 73) < 1);
+    await page.waitForFunction(() => /Equity Uprise HQ/.test(document.querySelector('#city-prompt').textContent));
+    check('HQ assets are prefetched on approach, never rendered in the city', await page.locator('link[data-city-prefetch="hq"]').count() === 2);
+    await page.getByRole('button', { name: 'Interact' }).click();
+    check('HQ doorway opens the existing detailed HQ exercise', await page.locator('#city-dialog-body a[href*="prim3-transit.html?level=equity-uprise-hq"]').count() === 1);
+    await page.getByRole('button', { name: 'Close panel' }).click();
+    await measure(page, 'island (1280)');
+    await page.locator('.city-stage').screenshot({ path: join(out, 'after-island-hq.png') });
+    await context.close();
+  }
+  {
+    const { context, page } = await contextFor(1280);
+    await withSave(context, v2({ x: 0, z: 46, interior: null }));
+    await page.goto(site + '/fictional-city.html'); await ready(page);
+    // screen-relative keys: the camera turns to face the HQ as the island begins (z ≥ 67), so stop there
+    await holdUntil(page, 's', () => MCC_CITY.snapshot().position.z > 66.5);
+    const p = await page.evaluate(() => MCC_CITY.snapshot().position);
+    check('walked the footbridge from the harbor promenade to the island shore', p.z > 66.5 && Math.abs(p.x) < 5, p);
+    check('the island counts as found on foot', (await page.evaluate(() => MCC_CITY.snapshot().discoveries)).includes('hq-island'));
+    await context.close();
+  }
+  {
+    // walk across neighbourhood and chunk boundaries; water stops a body; doors and interiors in new areas
+    const { context, page, errors } = await contextFor(1280);
+    await withSave(context, v2({ x: -60, z: -50, interior: null }));
+    await page.goto(site + '/fictional-city.html'); await ready(page); await settled(page);
+    const s0 = await page.evaluate(() => MCC_CITY.stats().chunks);
+    await holdUntil(page, "w", () => MCC_CITY.snapshot().position.z < -70);
+    await settled(page);
+    const s1 = await page.evaluate(() => ({ chunks: MCC_CITY.stats().chunks, p: MCC_CITY.snapshot(), area: document.querySelector('#city-location').textContent }));
+    check('walked from the original block across a chunk edge into Northside', s1.area === 'Northside' && s1.p.discoveries.includes('northside-residential'), s1);
+    check('chunks ahead loaded while walking (bounded active set)', s1.chunks.loads > s0.loads && s1.chunks.active <= 16, { s0, s1: s1.chunks });
+    await page.locator('.city-stage').screenshot({ path: join(out, 'after-northside.png') });
+    await measure(page, 'northside (1280)');
+    // map travel to a far neighbourhood unloads what is behind
+    await page.getByRole('button', { name: 'District map' }).click();
+    await page.locator('details.city-area-list').filter({ hasText: 'Workshop Wharf' }).locator('summary').click();
+    const wharf = page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: 'Workshop' }) }).first();
+    await wharf.getByRole('button', { name: 'Go to the door' }).click();
+    await page.waitForFunction(() => MCC_CITY.snapshot().position.z > 60);
+    await settled(page); await page.waitForTimeout(700); await settled(page);
+    const s2 = await page.evaluate(() => MCC_CITY.stats().chunks);
+    check('far chunks unload with hysteresis; active set stays bounded', s2.unloads > 0 && s2.active <= 16, s2);
+    await page.waitForFunction(() => /Workshop/.test(document.querySelector('#city-prompt').textContent));
+    await page.getByRole('button', { name: 'Interact' }).click();
+    await page.waitForFunction(() => /^workshop-waterfront\//.test(MCC_CITY.snapshot().position.interior || ''));
+    check('a new-neighbourhood workshop is an entered interior', true);
+    await page.getByRole('button', { name: 'Leave building' }).click();
+    await page.waitForFunction(() => !MCC_CITY.snapshot().position.interior);
+    await page.locator('.city-stage').screenshot({ path: join(out, 'after-wharf.png') });
+    await measure(page, 'workshop wharf (1280)');
+    await context.close();
+    const sea = await contextFor(1280);
+    await withSave(sea.context, v2({ x: 100, z: 132, interior: null }));
+    await sea.page.goto(site + '/fictional-city.html'); await ready(sea.page);
+    await sea.page.locator('#city-canvas').focus(); await sea.page.keyboard.down('s'); await sea.page.waitForTimeout(4000); await sea.page.keyboard.up('s');
+    const q = await sea.page.evaluate(() => MCC_CITY.snapshot().position);
+    check('the sea wall stops a body at the quay edge', q.z < 140 && q.z > 135, q);
+    await measure(sea.page, 'hq waterfront (1280)');
+    await sea.page.locator('.city-stage').screenshot({ path: join(out, 'after-hq-waterfront.png') });
+    // HQ overlook: the landmark interaction
+    await sea.context.close();
+    const look = await contextFor(390);
+    await withSave(look.context, v2({ x: 36, z: 88, interior: null }));
+    await look.page.goto(site + '/fictional-city.html'); await ready(look.page);
+    await look.page.waitForFunction(() => /Equity Uprise HQ/.test(document.querySelector('#city-prompt').textContent));
+    await look.page.getByRole('button', { name: 'Interact' }).click();
+    check('the HQ overlook is an interaction with a route to the footbridge', await look.page.getByRole('button', { name: 'Go to the footbridge' }).count() === 1);
+    await look.page.getByRole('button', { name: 'Close panel' }).click();
+    await look.page.locator('.city-stage').screenshot({ path: join(out, 'after-hq-overlook-390.png') });
+    await look.context.close();
+    check('expansion walk: no uncaught errors', errors.length === 0, { errors });
+  }
+  {
+    // a failed chunk download falls back to massing (collision is never streamed) and recovers on retry
+    const { context, page } = await contextFor(1280);
+    let fail = true;
+    await context.route(url => url.pathname.endsWith('/data/fictional-city/chunks/c-2_-1.json'), route => fail ? route.fulfill({ status: 503, body: 'fixture outage' }) : route.fallback());
+    await withSave(context, v2({ x: -100, z: -16, interior: null }));
+    await page.goto(site + '/fictional-city.html'); await ready(page);
+    await page.waitForFunction(() => MCC_CITY.stats().chunks.fallback.includes('c-2_-1'));
+    check('failed chunk: massing fallback, doors still interactable', await page.evaluate(() => /Police|Enter/.test(document.querySelector('#city-prompt').textContent) || MCC_CITY.stats().chunks.failures > 0));
+    fail = false;
+    await page.waitForFunction(() => MCC_CITY.stats().chunks.ready.includes('c-2_-1'), undefined, { timeout: 30000 });
+    check('failed chunk recovers on retry with full detail', true);
+    await page.locator('.city-stage').screenshot({ path: join(out, 'after-civic.png') });
+    await measure(page, 'civic center (1280)');
+    await context.close();
+  }
+  {
+    // lore that names parcels lights up without code changes; a bribe spends city credits; refusal when short
+    const { context, page } = await contextFor(390);
+    const lore = structuredClone(city);
+    lore.businesses.push({ id: 'fixture-precinct', name: 'Fixture Precinct', category: 'Civic Center', parcelId: 'civic-center/police-station', staffIds: ['fixture-officer'], itemIds: [], tagline: '', description: 'Fixture lore for the binding test.', backstory: '' });
+    lore.npcs.push({ id: 'fixture-officer', name: 'Fixture Officer', role: 'Desk', age: 40, businessId: 'fixture-precinct', homeParcelId: 'northside-residential/house-02', routeAnchors: ['civic-center/police-station', 'junction/civic-plaza'], dialogue: { greeting: 'Evening.', topics: [] }, backstory: 'Fixture.', personality: 'Fixture.', interactions: [{ type: 'bribe', id: 'fixture-officer:look-away', cost: 40, label: 'Offer 40 credits' }] });
+    await context.route(url => url.pathname.endsWith('/data/fictional-city/district.v1.json'), route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(lore) }));
+    await page.goto(site + '/fictional-city.html'); await ready(page);
+    check('lore bound to a parcel claims it (no longer generic)', JSON.stringify(await page.evaluate(() => MCC_CITY.places())) === JSON.stringify({ neighborhoods: 6, parcels: 33, vacant: 32, chunks: 36 }));
+    await page.getByRole('button', { name: 'Open the city directory' }).click();
+    await page.locator('#city-dialog-body button.city-person').filter({ hasText: 'Fixture Officer' }).click();
+    await page.getByRole('button', { name: 'Offer 40 credits' }).click();
+    const paid = await page.evaluate(() => MCC_CITY.snapshot());
+    check('bribe interaction deducts city credits and records the payment', paid.credits === 210 && paid.payments.length === 1);
+    await page.reload(); await ready(page);
+    check('payment survives reload', (await page.evaluate(() => MCC_CITY.snapshot().payments.length)) === 1);
+    await context.close();
+    const broke = await contextFor(390);
+    await broke.context.route(url => url.pathname.endsWith('/data/fictional-city/district.v1.json'), route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(lore) }));
+    await withSave(broke.context, v2({ x: 0, z: 2.5, interior: null }, { credits: 12 }));
+    await broke.page.goto(site + '/fictional-city.html'); await ready(broke.page);
+    await broke.page.getByRole('button', { name: 'Open the city directory' }).click();
+    await broke.page.locator('#city-dialog-body button.city-person').filter({ hasText: 'Fixture Officer' }).click();
+    check('bribe refused when short of credits', await broke.page.getByRole('button', { name: 'Offer 40 credits' }).isDisabled() && (await broke.page.evaluate(() => MCC_CITY.snapshot().credits)) === 12);
+    await broke.context.close();
+  }
+  for (const width of [390, 768, 1440]) {
+    const { context, page } = await contextFor(width);
+    await page.goto(site + '/fictional-city.html'); await ready(page);
+    const m = await measure(page, 'opening view (' + width + ')');
+    check(width + ': no horizontal overflow on the expanded city', m.scroll === m.client, { scroll: m.scroll, client: m.client });
+    await page.getByRole('button', { name: 'District map' }).click();
+    await page.locator('.city-map').screenshot({ path: join(out, 'map-after-' + width + '.png') });
+    const dialogOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(width + ': the whole-city map fits without overflow', dialogOverflow === 0);
+    await context.close();
+  }
 } finally {
+  await writeFile(join(out, 'metrics.json'), JSON.stringify({ environment: 'Headless Chromium, SwiftShader software WebGL, device pixel ratio 1; not a physical device', metrics }, null, 2));
   await writeFile(join(out, 'results.json'), JSON.stringify({ environment: 'Chromium software WebGL; owner/API fixtures, actual Three 0.180 and authored content', results }, null, 2));
   await browser.close();
 }
