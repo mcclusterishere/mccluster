@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 587,
+  "candidate_count": 589,
   "capability_source_count": 104,
-  "support_only_count": 483,
+  "support_only_count": 485,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4168,6 +4168,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Fictional district lore distinguishes the Equity Uprise island landmark from the existing headquarters and preserves its authority boundary; narrative support only, with no building program or capability ownership."
+    },
+    {
+      "path": "docs/fictional-city/JIMMYS-STOREFRONT-CONTINUATION-2026-11-03.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City build brief for a downtown storefront; references the existing HQ only as a neighbouring landmark and adds no building program, geometry or capability authority."
+    },
+    {
+      "path": "docs/fictional-city/POST-MERGE-722-CORE-HANDOFF-2026-11-03.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Post-merge city performance and Core review handoff; restates existing HQ boundaries and ordinary B1 access, defines no building program or capability ownership."
     },
     {
       "path": "docs/fictional-city/README.md",
