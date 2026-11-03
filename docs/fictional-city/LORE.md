@@ -529,7 +529,7 @@ Mike built his campaign around the conviction that nobody forgets a promise if i
 
 #### Mike Hawk
 
-**Fictional candidate and street canvasser** · 45 · The fictional Bridgeport-inspired city
+**Candidate and street canvasser** · 45 · The fictional Bridgeport-inspired city
 
 Mike has spent most of his adult life turning small public appearances into occasions. He remembers shop openings, waits for cameras, and has a remarkable ability to make a basic promise sound like an intimate threat. He is not secretly a policy genius or only a walking name joke: he does care that the block’s broken pavement keeps hurting local trade, and he dislikes the patient work needed to fix it. Ada knows he listens better without a microphone. Noah suspects he could be useful if he would read his own briefing. Mike’s immediate goal is to earn one endorsement for something he actually completes. His temptation is to substitute another memorable line for that completion and trust everyone to applaud before asking when.
 

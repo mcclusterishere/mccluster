@@ -168,7 +168,7 @@ function openShop(id) {
     if (state.inventory[item.id]) card.append(el('p', 'In your pocket: ' + state.inventory[item.id]));
     grid.append(card);
   }
-  root.append(grid, el('p', 'These are fictional game items. City credits have no cash value.', 'city-bio-meta'));
+  root.append(grid, el('p', 'City credits have no cash value.', 'city-bio-meta'));
 }
 function openPocket() {
   const root = panel(state.credits + ' city credits', 'Your pocket');
