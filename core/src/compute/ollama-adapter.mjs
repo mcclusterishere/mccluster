@@ -75,11 +75,14 @@ async function execute(body, queuedAt, callerSignal) {
       think: settings.think,
       keep_alive: settings.keep_alive,
       tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
-      format: input.json === true ? 'json' : undefined,
+      // A JSON Schema object constrains decoding to that shape (Ollama structured
+      // outputs); plain json:true keeps the old free-form JSON mode.
+      format: input.schema && typeof input.schema === 'object' ? input.schema : (input.json === true ? 'json' : undefined),
       options: {
         temperature: settings.temperature,
         num_ctx: settings.num_ctx,
         num_predict: settings.num_predict,
+        ...(settings.num_thread ? { num_thread: settings.num_thread } : {}),
       },
     }),
     signal: callerSignal
