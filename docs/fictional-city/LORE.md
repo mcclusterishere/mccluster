@@ -8,7 +8,7 @@ The current set contains 81 topics and 486 spoken lines, plus greetings and fare
 
 **Schema revision 2 (same date) widens the city.** Four new neighborhoods around the original
 block and the Equity Uprise island add 21 businesses and civic buildings (Wiggers Anonymous,
-Thugged Out Apparel, a church, the School of Hard Knocks, the real Warren Harding High School, a
+Thugged Out Apparel, a church, the School of Hard Knocks, the real Harding High School, a
 private hospital, the real Bridgeport Police Department headquarters, a bail-bond office whose back-counter
 fixers sell a laminated menu of payoffs, and fourteen more joke businesses), 50 new residents, ten
 households and 24 more goods: 104 more topics and 624 more spoken lines. See
@@ -1936,9 +1936,10 @@ sexual content, no injury and no transactions.
 **Real places, real record (owner, November 3, 2026).** Real streets, the city and its government
 buildings keep their real, sourced names; fictional private businesses, occupants and people are the
 overlay. The parcel `civic-center/police-station` is the real **Bridgeport Police Department**
-(300 Congress Street) and `northside-residential/public-school` is the real **Warren Harding High
+(300 Congress Street) and `northside-residential/public-school` is the real **Harding High
 School** (379 Bond Street), each staffed in the game only by fictional civilians, teachers and
-students; the former IDs `precinct-zero` and `municipal-high-9` resolve to them through `idAliases`.
+students. Their identity and address are verified against the City of Bridgeport and Bridgeport Public
+Schools; their footprints and coordinates in this game are authored, not surveyed. The former IDs `precinct-zero` and `municipal-high-9` resolve to them through `idAliases`.
 No payoff touches a real institution or a real person: the laminated menu belongs to Mulrooney &
 Son Expediting, fictional fixers at the back counter of Bail Mary Bail Bonds, and the joke is that
 they reach nobody. The city’s real corruption cases are told only from the record, with sources, in
@@ -1952,7 +1953,7 @@ they reach nobody. The city’s real corruption cases are told only from the rec
 
 **Precinct Square** (`civic-center`). The city’s civic heart, in the sense that something is technically beating. The Bridgeport Police Department’s headquarters holds one corner under its own name; everything around it is private enterprise with ambitions. St. Copay’s, a private hospital, measures its emergency-room wait in fiscal quarters. The church shares a parking lot with the bank, a sermon schedule with the bank’s overdraft calendar, and a boot technician with Bail Mary’s expediting desk. The School of Hard Knocks sits behind an ivy-covered wall it imported from a richer city, and directly across the square, in a former dentist’s office, Wiggers Anonymous meets every night with fresh coffee and very low expectations.
 
-**Cul-de-Sadness** (`northside-residential`). Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the church and the shops, and who are tired of having their recycling bins tagged with the words BOND ST WILLY WHACKERS in very neat handwriting. The neighborhood’s teenagers go to Warren Harding High School on Bond Street, the real public high school the Willy Whackers have decided to “study.”
+**Cul-de-Sadness** (`northside-residential`). Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the church and the shops, and who are tired of having their recycling bins tagged with the words BOND ST WILLY WHACKERS in very neat handwriting. The neighborhood’s teenagers go to Harding High School on Bond Street, the real public high school the Willy Whackers have decided to “study.”
 
 **Rustbucket Wharf** (`workshop-waterfront`). The industrial harbor on the far side of the city’s working waterfront: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives. Whip Equipped knows every driveway here and pretends not to.
 
@@ -1984,7 +1985,7 @@ they reach nobody. The city’s real corruption cases are told only from the rec
 | `northside-residential/house-08` | Cul-de-Sadness | The Ledgers |
 | `northside-residential/house-09` | Cul-de-Sadness | The Mulrooneys |
 | `northside-residential/house-10` | Cul-de-Sadness | The Haddads |
-| `northside-residential/public-school` | Cul-de-Sadness | Warren Harding High School (real institution) |
+| `northside-residential/public-school` | Cul-de-Sadness | Harding High School (real institution) |
 | `workshop-waterfront/shop-01` | Rustbucket Wharf | Spin Cycle Laundromat & Money Laundering |
 | `workshop-waterfront/shop-02` | Rustbucket Wharf | Joyride Hand Car Wash |
 | `workshop-waterfront/shop-03` | Rustbucket Wharf | U-Hide Self Storage |
@@ -2597,7 +2598,7 @@ Parcel `civic-center/school-of-hard-knocks`.
 
 The most prestigious, most liberal-arts, most expensive private high school in the city, whose signature program teaches rich kids “the Black experience” as a curriculum, taught entirely by people who have never had it. Coursework includes Authentic Adversity, Code-Switching for Legacy Admissions, and a field practicum in being robbed.
 
-Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang as an extracurricular and named it the Bond Street Willy Whackers, after the street beside Warren Harding High School, the real public school they go to “study.” They tag its bike racks in calligraphy and “rob” its students of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.
+Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang as an extracurricular and named it the Bond Street Willy Whackers, after the street beside Harding High School, the real public school they go to “study.” They tag its bike racks in calligraphy and “rob” its students of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.
 
 **Interior:** A wood-panelled lobby, a donor wall, a framed photo of the founding class pretending to be in a gang, and a sign that says this campus is a safe space for narratives.
 
@@ -2754,7 +2755,7 @@ Bryce is exactly what Wiggers Anonymous was built for, and he knows it. He came 
 
 Walks: `civic-center/school-of-hard-knocks` → `northside-residential/public-school` → `hq-waterfront/thugged-out-apparel` → `northside-residential/house-01`.
 
-Tucker founded the Bond Street Willy Whackers, a “gang” named for the street beside Warren Harding High School, which they “study,” and, Tucker insists, for the municipal bonds in his trust. He wrote the bylaws. There are bylaws. He tags the public school’s bike racks in calligraphy, buys his colors at Thugged Out Apparel with his mother’s card, and keeps a reflection journal about the hardships he has scheduled. His sister Sloane, twelve, has read the journal and has notes. He is not dangerous. He is insufferable, and his school is billing for it.
+Tucker founded the Bond Street Willy Whackers, a “gang” named for the street beside Harding High School, which they “study,” and, Tucker insists, for the municipal bonds in his trust. He wrote the bylaws. There are bylaws. He tags the public school’s bike racks in calligraphy, buys his colors at Thugged Out Apparel with his mother’s card, and keeps a reflection journal about the hardships he has scheduled. His sister Sloane, twelve, has read the journal and has notes. He is not dangerous. He is insufferable, and his school is billing for it.
 
 **Temperament:** Entitled, performative, organized to a fault; mistakes logistics for street credibility.
 
@@ -2768,7 +2769,7 @@ Tucker founded the Bond Street Willy Whackers, a “gang” named for the street
 
 > **You:** What do you do?
 
-> **Tucker Whitmore-Sterling:** We rob kids at Warren Harding. Then we return everything with a reflection essay. It’s graded.
+> **Tucker Whitmore-Sterling:** We rob kids at Harding. Then we return everything with a reflection essay. It’s graded.
 
 > **You:** That’s just homework.
 
@@ -2796,7 +2797,7 @@ Tucker founded the Bond Street Willy Whackers, a “gang” named for the street
 
 Walks: `civic-center/school-of-hard-knocks` → `northside-residential/public-school` → `hq-waterfront/shop-02` → `northside-residential/house-02`.
 
-Kensington gave himself the name K-Murda after losing a fencing match, which is the most violent thing that has ever happened to him. He is the Willy Whackers’ enforcer, a role that consists of taking Mateo Delgado’s calculator every Tuesday and returning it Wednesday with a reflection essay. His father wants to put luxury condos across Bond Street from Warren Harding High School. Kensington wants a tattoo and is not allowed one until his eighteenth birthday, which his mother has already booked at a spa.
+Kensington gave himself the name K-Murda after losing a fencing match, which is the most violent thing that has ever happened to him. He is the Willy Whackers’ enforcer, a role that consists of taking Mateo Delgado’s calculator every Tuesday and returning it Wednesday with a reflection essay. His father wants to put luxury condos across Bond Street from Harding High School. Kensington wants a tattoo and is not allowed one until his eighteenth birthday, which his mother has already booked at a spa.
 
 **Temperament:** Loud, nervous, theatrical; his menace evaporates the moment anybody says no.
 
@@ -2818,7 +2819,7 @@ Kensington gave himself the name K-Murda after losing a fencing match, which is 
 
 **Conversation — Your dad wants Bond Street?**
 
-> **You:** Your father wants to build condos next to Warren Harding High?
+> **You:** Your father wants to build condos next to Harding High?
 
 > **Kensington “K-Murda” Ashby:** The Bond. Doorman, rooftop, and a view of the school he calls “authentic.”
 
@@ -2874,7 +2875,7 @@ Graham is the Willy Whackers’ strategist, which means he has noticed that the 
 
 **Farewell:** “If you see Tucker, don’t encourage him. Please.”
 
-### 13. Warren Harding High School
+### 13. Harding High School
 
 **Public high school, Bridgeport Public Schools** — 379 Bond Street, Bridgeport, Connecticut
 
@@ -2886,17 +2887,19 @@ Dr. Lorraine Abernathy teaches history and coaches debate here, and her students
 
 **Interior:** A classroom set up for debate practice: desks in two facing rows, a timer, and a stack of flow sheets.
 
-**Real institution:** Warren Harding High School, Bridgeport Public Schools, 379 Bond Street, Bridgeport, CT 06610. Real name, district and street address as the City of Bridgeport lists them; the 2018 building on a former General Electric plant site as reported. Its principal and real staff are not portrayed.
+**Real institution:** Harding High School, Bridgeport Public Schools, 379 Bond Street, Bridgeport, CT 06610. Exact name and street address as Bridgeport Public Schools’ Harding High School site lists them, matching the City of Bridgeport; the 2018 building on a former General Electric plant site as reported. Its principal and real staff are not portrayed.
 
-**Sources:** [Emergency Shelter Locations (high school addresses), City of Bridgeport](https://www.bridgeportct.gov/government/departments/emergency-management-homeland-security/weather-and-emergency-preparedness/emergency-shelter-locations) (2026-11-03); [Warren Harding High School opens to students for first time Thursday (News 12 Connecticut)](https://connecticut.news12.com/warren-harding-high-school-opens-to-students-for-first-time-thursday-38988014) (2018-08-29); [Connecticut High School Opens in Time for the New School Year (Spaces4Learning)](https://spaces4learning.com/articles/2018/09/07/harding-high-school.aspx) (2018-09-07).
+**Sources:** [Harding High School, Bridgeport Public Schools (school site, address 379 Bond St Bridgeport CT 06610)](https://harding.bridgeportedu.net/) (2026-11-03); [Emergency Shelter Locations (high school addresses), City of Bridgeport](https://www.bridgeportct.gov/government/departments/emergency-management-homeland-security/weather-and-emergency-preparedness/emergency-shelter-locations) (2026-11-03); [Warren Harding High School opens to students for first time Thursday (News 12 Connecticut)](https://connecticut.news12.com/warren-harding-high-school-opens-to-students-for-first-time-thursday-38988014) (2018-08-29); [Connecticut High School Opens in Time for the New School Year (Spaces4Learning)](https://spaces4learning.com/articles/2018/09/07/harding-high-school.aspx) (2018-09-07).
+
+**Field provenance:** verified: officialName, operator, address. Authored: footprint, coordinates, interior, staff. Game coordinates are authored and are not geocoded to the real address. Placing the landmark at its real location is a later, sourced geography change with CT footprint and OSM (ODbL) attribution.
 
 #### Dr. Lorraine Abernathy
 
-**History teacher and debate coach, Warren Harding High School** · 49 · Hartford, Connecticut, USA
+**History teacher and debate coach, Harding High School** · 49 · Hartford, Connecticut, USA
 
 Stays inside `northside-residential/public-school`.
 
-Lorraine has taught history and coached debate at Warren Harding High School for eleven years, and her students win tournaments against academies with planetariums. Every time the Willy Whackers roll down Bond Street, which is weekly, she writes it up for the boys’ headmaster and drops a copy at the police records window, and the headmaster has never answered one. She is not intimidated by Hollis Ashby’s plans for the lots across the street. She has already outlasted two headmasters at the School of Hard Knocks and a sinkhole.
+Lorraine has taught history and coached debate at Harding High School for eleven years, and her students win tournaments against academies with planetariums. Every time the Willy Whackers roll down Bond Street, which is weekly, she writes it up for the boys’ headmaster and drops a copy at the police records window, and the headmaster has never answered one. She is not intimidated by Hollis Ashby’s plans for the lots across the street. She has already outlasted two headmasters at the School of Hard Knocks and a sinkhole.
 
 **Temperament:** Exacting, warm, unbreakable; has no time for nonsense and makes time for every student.
 
@@ -2934,11 +2937,11 @@ Lorraine has taught history and coached debate at Warren Harding High School for
 
 #### Imani Abernathy
 
-**Junior, debate captain and archivist, Warren Harding High School** · 16 (minor) · Cul-de-Sadness, McCluster City
+**Junior, debate captain and archivist, Harding High School** · 16 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/public-school` → `northside-residential/house-07` → `civic-center/police-station` → `northside-residential/public-school`.
 
-Imani is the debate captain at Warren Harding High School and the keeper of the most complete record of the Bond Street Willy Whackers in existence: timestamps, photos of calligraphy tags, and returned-item condition reports. She hands a printed copy to the records window at police headquarters every Friday because her mother told her paperwork is power, and because Ms. Fairweather gives her a case number every time. She beat a School of Hard Knocks team at a tournament on the motion “This House Would Abolish Hardship Tourism” and has the trophy at Norma Klein’s pawn shop, on display, not for sale.
+Imani is the debate captain at Harding High School and the keeper of the most complete record of the Bond Street Willy Whackers in existence: timestamps, photos of calligraphy tags, and returned-item condition reports. She hands a printed copy to the records window at police headquarters every Friday because her mother told her paperwork is power, and because Ms. Fairweather gives her a case number every time. She beat a School of Hard Knocks team at a tournament on the motion “This House Would Abolish Hardship Tourism” and has the trophy at Norma Klein’s pawn shop, on display, not for sale.
 
 **Temperament:** Sharp, organized, deadpan; already more competent than every adult institution in the city.
 
@@ -2976,7 +2979,7 @@ Imani is the debate captain at Warren Harding High School and the keeper of the 
 
 #### Mateo Delgado
 
-**Freshman, Warren Harding High School** · 14 (minor) · Cul-de-Sadness, McCluster City
+**Freshman, Harding High School** · 14 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/house-04` → `northside-residential/public-school` → `hq-waterfront/shop-03` → `northside-residential/house-04`.
 
@@ -3140,6 +3143,8 @@ Odalys Fairweather has worked the records window for nineteen years and spends a
 **Real institution:** Bridgeport Police Department, City of Bridgeport, Connecticut, 300 Congress Street, Bridgeport, CT 06604. Real name, operator and street address only, as the City of Bridgeport publishes them. No invented policy, officer, rank, slogan or misconduct is attributed to the department.
 
 **Sources:** [Police Department, City of Bridgeport](https://www.bridgeportct.gov/government/departments/police-department) (2026-11-03).
+
+**Field provenance:** verified: officialName, operator, address. Authored: footprint, coordinates, interior, staff. Game coordinates are authored and are not geocoded to the real address. Placing the landmark at its real location is a later, sourced geography change with CT footprint and OSM (ODbL) attribution.
 
 #### Odalys Fairweather
 
@@ -4298,7 +4303,7 @@ Ainsley chairs the School of Hard Knocks gala, funds the Willy Whackers uniforms
 
 #### The Ashbys — `northside-residential/house-02`
 
-Hollis Ashby develops luxury condos and wants the lots across Bond Street from Warren Harding High School for a tower called The Bond. His wife Celeste left for a wellness retreat in 2023 and has extended it annually. Their son Kensington goes by K-Murda at school, a nickname he gave himself after losing a fencing match.
+Hollis Ashby develops luxury condos and wants the lots across Bond Street from Harding High School for a tower called The Bond. His wife Celeste left for a wellness retreat in 2023 and has extended it annually. Their son Kensington goes by K-Murda at school, a nickname he gave himself after losing a fencing match.
 
 | Member | Age | Role |
 | --- | ---: | --- |
@@ -4306,7 +4311,7 @@ Hollis Ashby develops luxury condos and wants the lots across Bond Street from W
 | Celeste Ashby | 50 | On a wellness retreat since 2023 |
 | Kensington Ashby (resident) | 15 (minor) | Willy Whackers, self-titled enforcer |
 
-**Ties to town:** Wants to redevelop the lots across Bond Street from Warren Harding High School; Tabernacle attendee for the tax receipt; Bail Mary Bombers softball sponsor.
+**Ties to town:** Wants to redevelop the lots across Bond Street from Harding High School; Tabernacle attendee for the tax receipt; Bail Mary Bombers softball sponsor.
 
 #### Hollis Ashby
 
@@ -4314,7 +4319,7 @@ Hollis Ashby develops luxury condos and wants the lots across Bond Street from W
 
 Walks: `northside-residential/house-02` → `northside-residential/public-school` → `civic-center/shop-01` → `civic-center/church` → `northside-residential/house-02`.
 
-Hollis develops luxury condos and wants the lots across Bond Street from Warren Harding High School for his next building, The Bond, which he plans to market as “school-adjacent.” He attends the Tabernacle for the tax receipt and the networking. He signed a lease at the Notary Republic for a condo site that is now a retention pond, and he owns a very expensive view of a duck. His wife has been on a wellness retreat since 2023. Patti Larkin knows where.
+Hollis develops luxury condos and wants the lots across Bond Street from Harding High School for his next building, The Bond, which he plans to market as “school-adjacent.” He attends the Tabernacle for the tax receipt and the networking. He signed a lease at the Notary Republic for a condo site that is now a retention pond, and he owns a very expensive view of a duck. His wife has been on a wellness retreat since 2023. Patti Larkin knows where.
 
 **Temperament:** Smooth, predatory, cheerfully tone-deaf; sees every block as an amenity in waiting.
 
@@ -4406,15 +4411,15 @@ Pierce manages the Vanderhoff portfolio, which is one cryptocurrency named after
 
 #### The Delgados — `northside-residential/house-04`
 
-Three generations in one small house. Rosa is the charge nurse who keeps St. Copay’s emergency room alive. Her son Mateo is a freshman at Warren Harding High School who has been “robbed” by the Bond Street Willy Whackers four times this semester, always of the same calculator. Grandpa Ignacio sits on the porch with a ledger, writing down every incident the School of Hard Knocks refuses to acknowledge.
+Three generations in one small house. Rosa is the charge nurse who keeps St. Copay’s emergency room alive. Her son Mateo is a freshman at Harding High School who has been “robbed” by the Bond Street Willy Whackers four times this semester, always of the same calculator. Grandpa Ignacio sits on the porch with a ledger, writing down every incident the School of Hard Knocks refuses to acknowledge.
 
 | Member | Age | Role |
 | --- | ---: | --- |
 | Rosa Delgado (resident) | 45 | ER charge nurse, St. Copay’s |
-| Mateo Delgado (resident) | 14 (minor) | Freshman, Warren Harding High School |
+| Mateo Delgado (resident) | 14 (minor) | Freshman, Harding High School |
 | Ignacio Delgado (resident) | 76 | Retired bus mechanic; porch historian |
 
-**Ties to town:** St. Copay’s emergency room; Warren Harding High School; Ignacio taught Gus Pappas to balance a tire.
+**Ties to town:** St. Copay’s emergency room; Harding High School; Ignacio taught Gus Pappas to balance a tire.
 
 #### Ignacio Delgado
 
@@ -4450,7 +4455,7 @@ Ignacio fixed the city’s buses for forty years, until his knees retired a week
 
 > **You:** Where does your grandson go to school?
 
-> **Ignacio Delgado:** Warren Harding, on Bond Street. They built it where the old GE plant was.
+> **Ignacio Delgado:** Harding, on Bond Street. They built it where the old GE plant was.
 
 > **You:** You knew the plant?
 
@@ -4582,15 +4587,15 @@ Linda is the Tabernacle’s church secretary and the mother of Gary, thirty-four
 
 #### The Abernathys — `northside-residential/house-07`
 
-Dr. Lorraine Abernathy teaches history and coaches debate at Warren Harding High School. Curtis Abernathy is a substitute teacher, Little League umpire and the most patient man in the city, a reputation he defends by never going near the School of Hard Knocks. Their daughter Imani is a junior, debate captain and the archivist of every Willy Whackers incident, with timestamps.
+Dr. Lorraine Abernathy teaches history and coaches debate at Harding High School. Curtis Abernathy is a substitute teacher, Little League umpire and the most patient man in the city, a reputation he defends by never going near the School of Hard Knocks. Their daughter Imani is a junior, debate captain and the archivist of every Willy Whackers incident, with timestamps.
 
 | Member | Age | Role |
 | --- | ---: | --- |
-| Lorraine Abernathy (resident) | 49 | History teacher and debate coach, Warren Harding High School |
+| Lorraine Abernathy (resident) | 49 | History teacher and debate coach, Harding High School |
 | Curtis Abernathy (resident) | 51 | Substitute teacher and umpire |
 | Imani Abernathy (resident) | 16 (minor) | Debate captain and archivist |
 
-**Ties to town:** Warren Harding High School; Reports every Willy Whackers incident to the headmaster and the police records window, weekly; Curtis umpires the Bail Mary Bombers’ softball games and calls every bribe a balk.
+**Ties to town:** Harding High School; Reports every Willy Whackers incident to the headmaster and the police records window, weekly; Curtis umpires the Bail Mary Bombers’ softball games and calls every bribe a balk.
 
 #### Curtis Abernathy
 
@@ -4598,7 +4603,7 @@ Dr. Lorraine Abernathy teaches history and coaches debate at Warren Harding High
 
 Walks: `northside-residential/house-07` → `northside-residential/public-school` → `hq-waterfront/shop-01` → `northside-residential/house-07`.
 
-Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Bail Mary Bombers, the softball team Frank Mulrooney captains and the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to Warren Harding High School’s debate coach and is the proudest father of a debate captain in Cul-de-Sadness.
+Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Bail Mary Bombers, the softball team Frank Mulrooney captains and the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to Harding High School’s debate coach and is the proudest father of a debate captain in Cul-de-Sadness.
 
 **Temperament:** Calm, funny, principled; enjoys enforcing small rules on powerful people.
 

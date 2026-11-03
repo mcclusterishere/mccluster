@@ -183,10 +183,12 @@ real-geography ingestion, region/planet travel, per-business interiors, cloud sa
   their own surfaces/roads/places and its validator; the new areas' geography lives here and lore stays in the
   expansion arrays, so there is one data contract per concern.
 - **Civic institutions.** The owner named them on 2026-11-03: `civic-center/police-station` is the real
-  Bridgeport Police Department (300 Congress Street) and `northside-residential/public-school` is the real Warren
-  Harding High School (379 Bond Street); `civic-center/church` stays the fictional Tabernacle. The two real
+  Bridgeport Police Department (300 Congress Street) and `northside-residential/public-school` is the real Harding
+  High School (379 Bond Street); `civic-center/church` stays the fictional Tabernacle. The two real
   institutions carry `realInstitution: true` on their parcels. Their parcels are in the authored harbor plan, not
-  at their surveyed locations; placing them at their real addresses is a later geography change. The lore's paid
+  at their surveyed locations: their identity and address are `verified` and their footprint and coordinates are
+  `authored` in each record's `realInstitution.fieldProvenance`. Placing them at their real addresses is a later,
+  sourced geography change (CT footprint plus OSM ODbL attribution). The lore's paid
   interactions now sit on `hq-waterfront/shop-01` (Bail Mary Bail Bonds), never on a real institution.
 - **Stable IDs for future portals.** Parcel IDs (`<neighbourhood>/<parcel>`) and the original business IDs are the
   stable place IDs a later `placeId` game portal can target; nothing here builds arcade or Designer Kicks mechanics.

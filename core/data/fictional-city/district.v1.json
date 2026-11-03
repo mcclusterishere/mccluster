@@ -4185,7 +4185,7 @@
     {
       "id": "northside-residential",
       "name": "Cul-de-Sadness",
-      "lore": "Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the church and the shops, and who are tired of having their recycling bins tagged with the words BOND ST WILLY WHACKERS in very neat handwriting. The neighborhood’s teenagers go to Warren Harding High School on Bond Street, the real public high school the Willy Whackers have decided to “study.”",
+      "lore": "Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the church and the shops, and who are tired of having their recycling bins tagged with the words BOND ST WILLY WHACKERS in very neat handwriting. The neighborhood’s teenagers go to Harding High School on Bond Street, the real public high school the Willy Whackers have decided to “study.”",
       "parcelIds": [
         "northside-residential/house-01",
         "northside-residential/house-02",
@@ -4390,7 +4390,7 @@
       "parcelId": "northside-residential/public-school",
       "neighborhoodId": "northside-residential",
       "kind": "civic",
-      "businessId": "warren-harding-high-school",
+      "businessId": "harding-high-school",
       "authorship": "new-2026-11-03",
       "realInstitution": true
     },
@@ -4618,7 +4618,7 @@
       "category": "Private academy, grades 9–12, tuition available on request (do not request)",
       "tagline": "Est. last spring. Experience the struggle, fully accredited.",
       "description": "The most prestigious, most liberal-arts, most expensive private high school in the city, whose signature program teaches rich kids “the Black experience” as a curriculum, taught entirely by people who have never had it. Coursework includes Authentic Adversity, Code-Switching for Legacy Admissions, and a field practicum in being robbed.",
-      "backstory": "Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang as an extracurricular and named it the Bond Street Willy Whackers, after the street beside Warren Harding High School, the real public school they go to “study.” They tag its bike racks in calligraphy and “rob” its students of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.",
+      "backstory": "Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang as an extracurricular and named it the Bond Street Willy Whackers, after the street beside Harding High School, the real public school they go to “study.” They tag its bike racks in calligraphy and “rob” its students of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.",
       "color": "#5f7a63",
       "staffIds": [
         "winthrop-ashcroft-pell",
@@ -4648,10 +4648,10 @@
       "secondaryBrands": [],
       "ads": [],
       "itemIds": [],
-      "id": "warren-harding-high-school",
+      "id": "harding-high-school",
       "parcelId": "northside-residential/public-school",
       "neighborhoodId": "northside-residential",
-      "name": "Warren Harding High School",
+      "name": "Harding High School",
       "category": "Public high school, Bridgeport Public Schools",
       "tagline": "379 Bond Street, Bridgeport, Connecticut",
       "description": "Bridgeport’s public high school on Bond Street, in a building that opened in 2018 on the site of a former General Electric plant. The Bond Street Willy Whackers from the School of Hard Knocks come here to “study” its students, who are mostly just trying to get through chemistry.",
@@ -4666,14 +4666,22 @@
       ],
       "realInstitution": {
         "kind": "public-high-school",
-        "officialName": "Warren Harding High School",
+        "officialName": "Harding High School",
         "operator": "Bridgeport Public Schools",
         "address": "379 Bond Street, Bridgeport, CT 06610",
-        "identity": "Real name, district and street address as the City of Bridgeport lists them; the 2018 building on a former General Electric plant site as reported. Its principal and real staff are not portrayed.",
+        "identity": "Exact name and street address as Bridgeport Public Schools’ Harding High School site lists them, matching the City of Bridgeport; the 2018 building on a former General Electric plant site as reported. Its principal and real staff are not portrayed.",
         "staffPolicy": "In-game staff are a fictional teacher and fictional students who hold no real office and do not portray any real employee or student.",
         "payoffs": "none",
         "replacesId": "municipal-high-9",
+        "alsoKnownAs": [
+          "Warren Harding High School"
+        ],
         "sources": [
+          {
+            "title": "Harding High School, Bridgeport Public Schools (school site, address 379 Bond St Bridgeport CT 06610)",
+            "url": "https://harding.bridgeportedu.net/",
+            "date": "2026-11-03"
+          },
           {
             "title": "Emergency Shelter Locations (high school addresses), City of Bridgeport",
             "url": "https://www.bridgeportct.gov/government/departments/emergency-management-homeland-security/weather-and-emergency-preparedness/emergency-shelter-locations",
@@ -4689,7 +4697,38 @@
             "url": "https://spaces4learning.com/articles/2018/09/07/harding-high-school.aspx",
             "date": "2018-09-07"
           }
-        ]
+        ],
+        "fieldProvenance": {
+          "officialName": {
+            "status": "verified",
+            "source": "https://harding.bridgeportedu.net/",
+            "note": "Bridgeport Public Schools’ own Harding High School site lists the exact name and 379 Bond St Bridgeport CT 06610; the City of Bridgeport shelter list agrees. 45 Lyon Terrace (district office) is not used."
+          },
+          "operator": {
+            "status": "verified",
+            "source": "https://harding.bridgeportedu.net/"
+          },
+          "address": {
+            "status": "verified",
+            "source": "https://harding.bridgeportedu.net/"
+          },
+          "footprint": {
+            "status": "authored",
+            "note": "The parcel geometry is the authored harbor-plan parcel in places.v1.json, not this building’s surveyed footprint. No CT 2023 LiDAR footprint is mapped to it yet."
+          },
+          "coordinates": {
+            "status": "authored",
+            "note": "Game coordinates are authored and are not geocoded to the real address. Placing the landmark at its real location is a later, sourced geography change with CT footprint and OSM (ODbL) attribution."
+          },
+          "interior": {
+            "status": "authored",
+            "note": "No real floor plan, door, security layout or operational detail is represented."
+          },
+          "staff": {
+            "status": "authored",
+            "note": "Fictional people only; no real employee, officer or student is portrayed."
+          }
+        }
       },
       "interior": {
         "style": "Debate classroom",
@@ -4760,7 +4799,38 @@
             "url": "https://www.bridgeportct.gov/government/departments/police-department",
             "date": "2026-11-03"
           }
-        ]
+        ],
+        "fieldProvenance": {
+          "officialName": {
+            "status": "verified",
+            "source": "https://www.bridgeportct.gov/government/departments/police-department",
+            "note": "The City of Bridgeport’s official Police Department page lists 300 Congress Street, Bridgeport, CT 06604."
+          },
+          "operator": {
+            "status": "verified",
+            "source": "https://www.bridgeportct.gov/government/departments/police-department"
+          },
+          "address": {
+            "status": "verified",
+            "source": "https://www.bridgeportct.gov/government/departments/police-department"
+          },
+          "footprint": {
+            "status": "authored",
+            "note": "The parcel geometry is the authored harbor-plan parcel in places.v1.json, not this building’s surveyed footprint. No CT 2023 LiDAR footprint is mapped to it yet."
+          },
+          "coordinates": {
+            "status": "authored",
+            "note": "Game coordinates are authored and are not geocoded to the real address. Placing the landmark at its real location is a later, sourced geography change with CT footprint and OSM (ODbL) attribution."
+          },
+          "interior": {
+            "status": "authored",
+            "note": "No real floor plan, door, security layout or operational detail is represented."
+          },
+          "staff": {
+            "status": "authored",
+            "note": "Fictional people only; no real employee, officer or student is portrayed."
+          }
+        }
       },
       "interior": {
         "style": "Public lobby and records window",
@@ -6408,7 +6478,7 @@
         "hq-waterfront/shop-02",
         "civic-center/school-of-hard-knocks"
       ],
-      "note": "Leads the weekly field trip to Bond Street, across from Warren Harding High School, and Wing Stop Crying.",
+      "note": "Leads the weekly field trip to Bond Street, across from Harding High School, and Wing Stop Crying.",
       "dialogue": {
         "greeting": "Hi. I want to acknowledge that I’m occupying this sidewalk. Anyway, we’re on a field trip.",
         "topics": [
@@ -6583,7 +6653,7 @@
       "businessId": "school-of-hard-knocks",
       "familyId": "whitmore-sterling-family",
       "minor": true,
-      "backstory": "Tucker founded the Bond Street Willy Whackers, a “gang” named for the street beside Warren Harding High School, which they “study,” and, Tucker insists, for the municipal bonds in his trust. He wrote the bylaws. There are bylaws. He tags the public school’s bike racks in calligraphy, buys his colors at Thugged Out Apparel with his mother’s card, and keeps a reflection journal about the hardships he has scheduled. His sister Sloane, twelve, has read the journal and has notes. He is not dangerous. He is insufferable, and his school is billing for it.",
+      "backstory": "Tucker founded the Bond Street Willy Whackers, a “gang” named for the street beside Harding High School, which they “study,” and, Tucker insists, for the municipal bonds in his trust. He wrote the bylaws. There are bylaws. He tags the public school’s bike racks in calligraphy, buys his colors at Thugged Out Apparel with his mother’s card, and keeps a reflection journal about the hardships he has scheduled. His sister Sloane, twelve, has read the journal and has notes. He is not dangerous. He is insufferable, and his school is billing for it.",
       "personality": "Entitled, performative, organized to a fault; mistakes logistics for street credibility.",
       "appearance": {
         "shirt": "#6d8f6a",
@@ -6620,7 +6690,7 @@
               },
               {
                 "speaker": "Tucker Whitmore-Sterling",
-                "text": "We rob kids at Warren Harding. Then we return everything with a reflection essay. It’s graded."
+                "text": "We rob kids at Harding. Then we return everything with a reflection essay. It’s graded."
               },
               {
                 "speaker": "You",
@@ -6677,7 +6747,7 @@
       "businessId": "school-of-hard-knocks",
       "familyId": "ashby-family",
       "minor": true,
-      "backstory": "Kensington gave himself the name K-Murda after losing a fencing match, which is the most violent thing that has ever happened to him. He is the Willy Whackers’ enforcer, a role that consists of taking Mateo Delgado’s calculator every Tuesday and returning it Wednesday with a reflection essay. His father wants to put luxury condos across Bond Street from Warren Harding High School. Kensington wants a tattoo and is not allowed one until his eighteenth birthday, which his mother has already booked at a spa.",
+      "backstory": "Kensington gave himself the name K-Murda after losing a fencing match, which is the most violent thing that has ever happened to him. He is the Willy Whackers’ enforcer, a role that consists of taking Mateo Delgado’s calculator every Tuesday and returning it Wednesday with a reflection essay. His father wants to put luxury condos across Bond Street from Harding High School. Kensington wants a tattoo and is not allowed one until his eighteenth birthday, which his mother has already booked at a spa.",
       "personality": "Loud, nervous, theatrical; his menace evaporates the moment anybody says no.",
       "appearance": {
         "shirt": "#5f7f9a",
@@ -6732,7 +6802,7 @@
             "lines": [
               {
                 "speaker": "You",
-                "text": "Your father wants to build condos next to Warren Harding High?"
+                "text": "Your father wants to build condos next to Harding High?"
               },
               {
                 "speaker": "Kensington “K-Murda” Ashby",
@@ -6861,10 +6931,10 @@
       "name": "Dr. Lorraine Abernathy",
       "age": 49,
       "origin": "Hartford, Connecticut, USA",
-      "role": "History teacher and debate coach, Warren Harding High School",
-      "businessId": "warren-harding-high-school",
+      "role": "History teacher and debate coach, Harding High School",
+      "businessId": "harding-high-school",
       "familyId": "abernathy-family",
-      "backstory": "Lorraine has taught history and coached debate at Warren Harding High School for eleven years, and her students win tournaments against academies with planetariums. Every time the Willy Whackers roll down Bond Street, which is weekly, she writes it up for the boys’ headmaster and drops a copy at the police records window, and the headmaster has never answered one. She is not intimidated by Hollis Ashby’s plans for the lots across the street. She has already outlasted two headmasters at the School of Hard Knocks and a sinkhole.",
+      "backstory": "Lorraine has taught history and coached debate at Harding High School for eleven years, and her students win tournaments against academies with planetariums. Every time the Willy Whackers roll down Bond Street, which is weekly, she writes it up for the boys’ headmaster and drops a copy at the police records window, and the headmaster has never answered one. She is not intimidated by Hollis Ashby’s plans for the lots across the street. She has already outlasted two headmasters at the School of Hard Knocks and a sinkhole.",
       "personality": "Exacting, warm, unbreakable; has no time for nonsense and makes time for every student.",
       "appearance": {
         "shirt": "#6d8f6a",
@@ -6948,11 +7018,11 @@
       "name": "Imani Abernathy",
       "age": 16,
       "origin": "Cul-de-Sadness, McCluster City",
-      "role": "Junior, debate captain and archivist, Warren Harding High School",
-      "businessId": "warren-harding-high-school",
+      "role": "Junior, debate captain and archivist, Harding High School",
+      "businessId": "harding-high-school",
       "familyId": "abernathy-family",
       "minor": true,
-      "backstory": "Imani is the debate captain at Warren Harding High School and the keeper of the most complete record of the Bond Street Willy Whackers in existence: timestamps, photos of calligraphy tags, and returned-item condition reports. She hands a printed copy to the records window at police headquarters every Friday because her mother told her paperwork is power, and because Ms. Fairweather gives her a case number every time. She beat a School of Hard Knocks team at a tournament on the motion “This House Would Abolish Hardship Tourism” and has the trophy at Norma Klein’s pawn shop, on display, not for sale.",
+      "backstory": "Imani is the debate captain at Harding High School and the keeper of the most complete record of the Bond Street Willy Whackers in existence: timestamps, photos of calligraphy tags, and returned-item condition reports. She hands a printed copy to the records window at police headquarters every Friday because her mother told her paperwork is power, and because Ms. Fairweather gives her a case number every time. She beat a School of Hard Knocks team at a tournament on the motion “This House Would Abolish Hardship Tourism” and has the trophy at Norma Klein’s pawn shop, on display, not for sale.",
       "personality": "Sharp, organized, deadpan; already more competent than every adult institution in the city.",
       "appearance": {
         "shirt": "#4f7c78",
@@ -7042,8 +7112,8 @@
       "name": "Mateo Delgado",
       "age": 14,
       "origin": "Cul-de-Sadness, McCluster City",
-      "role": "Freshman, Warren Harding High School",
-      "businessId": "warren-harding-high-school",
+      "role": "Freshman, Harding High School",
+      "businessId": "harding-high-school",
       "familyId": "delgado-family",
       "minor": true,
       "backstory": "Mateo is a freshman who has been “robbed” by the Bond Street Willy Whackers four times this semester, always of the same graphing calculator, always returned the next day with a reflection essay. He has started grading the essays. Kensington got a B-minus from his school and a D from Mateo. Mateo helps Gus Pappas at the tire shop on weekends and wants to be a mechanic or an engineer, depending on which one his grandfather lets him argue for at dinner.",
@@ -8988,7 +9058,7 @@
       "origin": "Charleston, South Carolina, USA",
       "role": "Luxury condo developer",
       "familyId": "ashby-family",
-      "backstory": "Hollis develops luxury condos and wants the lots across Bond Street from Warren Harding High School for his next building, The Bond, which he plans to market as “school-adjacent.” He attends the Tabernacle for the tax receipt and the networking. He signed a lease at the Notary Republic for a condo site that is now a retention pond, and he owns a very expensive view of a duck. His wife has been on a wellness retreat since 2023. Patti Larkin knows where.",
+      "backstory": "Hollis develops luxury condos and wants the lots across Bond Street from Harding High School for his next building, The Bond, which he plans to market as “school-adjacent.” He attends the Tabernacle for the tax receipt and the networking. He signed a lease at the Notary Republic for a condo site that is now a retention pond, and he owns a very expensive view of a duck. His wife has been on a wellness retreat since 2023. Patti Larkin knows where.",
       "personality": "Smooth, predatory, cheerfully tone-deaf; sees every block as an amenity in waiting.",
       "appearance": {
         "shirt": "#6d8f6a",
@@ -9227,7 +9297,7 @@
               },
               {
                 "speaker": "Ignacio Delgado",
-                "text": "Warren Harding, on Bond Street. They built it where the old GE plant was."
+                "text": "Harding, on Bond Street. They built it where the old GE plant was."
               },
               {
                 "speaker": "You",
@@ -9473,7 +9543,7 @@
       "origin": "Hartford, Connecticut, USA",
       "role": "Substitute teacher and Little League umpire",
       "familyId": "abernathy-family",
-      "backstory": "Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Bail Mary Bombers, the softball team Frank Mulrooney captains and the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to Warren Harding High School’s debate coach and is the proudest father of a debate captain in Cul-de-Sadness.",
+      "backstory": "Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Bail Mary Bombers, the softball team Frank Mulrooney captains and the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to Harding High School’s debate coach and is the proudest father of a debate captain in Cul-de-Sadness.",
       "personality": "Calm, funny, principled; enjoys enforcing small rules on powerful people.",
       "appearance": {
         "shirt": "#4f7c78",
@@ -9875,7 +9945,7 @@
       "name": "The Ashbys",
       "parcelId": "northside-residential/house-02",
       "representativeNpcId": "hollis-ashby",
-      "lore": "Hollis Ashby develops luxury condos and wants the lots across Bond Street from Warren Harding High School for a tower called The Bond. His wife Celeste left for a wellness retreat in 2023 and has extended it annually. Their son Kensington goes by K-Murda at school, a nickname he gave himself after losing a fencing match.",
+      "lore": "Hollis Ashby develops luxury condos and wants the lots across Bond Street from Harding High School for a tower called The Bond. His wife Celeste left for a wellness retreat in 2023 and has extended it annually. Their son Kensington goes by K-Murda at school, a nickname he gave himself after losing a fencing match.",
       "members": [
         {
           "name": "Hollis Ashby",
@@ -9897,7 +9967,7 @@
         }
       ],
       "ties": [
-        "Wants to redevelop the lots across Bond Street from Warren Harding High School",
+        "Wants to redevelop the lots across Bond Street from Harding High School",
         "Tabernacle attendee for the tax receipt",
         "Bail Mary Bombers softball sponsor"
       ],
@@ -9944,7 +10014,7 @@
       "name": "The Delgados",
       "parcelId": "northside-residential/house-04",
       "representativeNpcId": "ignacio-delgado",
-      "lore": "Three generations in one small house. Rosa is the charge nurse who keeps St. Copay’s emergency room alive. Her son Mateo is a freshman at Warren Harding High School who has been “robbed” by the Bond Street Willy Whackers four times this semester, always of the same calculator. Grandpa Ignacio sits on the porch with a ledger, writing down every incident the School of Hard Knocks refuses to acknowledge.",
+      "lore": "Three generations in one small house. Rosa is the charge nurse who keeps St. Copay’s emergency room alive. Her son Mateo is a freshman at Harding High School who has been “robbed” by the Bond Street Willy Whackers four times this semester, always of the same calculator. Grandpa Ignacio sits on the porch with a ledger, writing down every incident the School of Hard Knocks refuses to acknowledge.",
       "members": [
         {
           "name": "Rosa Delgado",
@@ -9956,7 +10026,7 @@
           "name": "Mateo Delgado",
           "age": 14,
           "minor": true,
-          "role": "Freshman, Warren Harding High School",
+          "role": "Freshman, Harding High School",
           "npcId": "mateo-delgado"
         },
         {
@@ -9968,7 +10038,7 @@
       ],
       "ties": [
         "St. Copay’s emergency room",
-        "Warren Harding High School",
+        "Harding High School",
         "Ignacio taught Gus Pappas to balance a tire"
       ],
       "authorship": "new-2026-11-03",
@@ -10047,12 +10117,12 @@
       "name": "The Abernathys",
       "parcelId": "northside-residential/house-07",
       "representativeNpcId": "curtis-abernathy",
-      "lore": "Dr. Lorraine Abernathy teaches history and coaches debate at Warren Harding High School. Curtis Abernathy is a substitute teacher, Little League umpire and the most patient man in the city, a reputation he defends by never going near the School of Hard Knocks. Their daughter Imani is a junior, debate captain and the archivist of every Willy Whackers incident, with timestamps.",
+      "lore": "Dr. Lorraine Abernathy teaches history and coaches debate at Harding High School. Curtis Abernathy is a substitute teacher, Little League umpire and the most patient man in the city, a reputation he defends by never going near the School of Hard Knocks. Their daughter Imani is a junior, debate captain and the archivist of every Willy Whackers incident, with timestamps.",
       "members": [
         {
           "name": "Lorraine Abernathy",
           "age": 49,
-          "role": "History teacher and debate coach, Warren Harding High School",
+          "role": "History teacher and debate coach, Harding High School",
           "npcId": "lorraine-abernathy"
         },
         {
@@ -10070,7 +10140,7 @@
         }
       ],
       "ties": [
-        "Warren Harding High School",
+        "Harding High School",
         "Reports every Willy Whackers incident to the headmaster and the police records window, weekly",
         "Curtis umpires the Bail Mary Bombers’ softball games and calls every bribe a balk"
       ],
@@ -10433,7 +10503,7 @@
     "expansionSchema": "Schema revision 2 adds expansionNeighborhoods (lore-only neighborhoods, bound by parcel ID; the top-level neighborhoods array is reserved for playable geographic areas), parcels, expansionBusinesses, expansionNpcs, families and expansionItems beside the unchanged v1 arrays. The original eight businesses, 24 residents, three garage characters and 24 items keep their IDs, bytes and runtime placement. Expansion records carry parcel IDs, never coordinates; the spatial layer binds parcelId, homeParcelId and routeAnchors to geometry. Existing anchors usable in routes are the eight original business IDs, garage, hq-bridge and hq-doorway.",
     "expansionAuthorship": "Every neighborhood (other than the original block), business, resident, family and item added in schema revision 2 is new fiction written on 2026-11-03 from the owner’s brief; none is recovered history. Church attendance and cross-references to original residents are additive and do not change their biographies.",
     "expansionSatire": "Owner-directed adult satire. Wiggers Anonymous targets white men who wear a caricature of Black and hip-hop culture as a costume; the School of Hard Knocks targets a rich school and its students who turn other people’s lives into enrichment programming. The joke is always on the posers, the school, the store that sells the costume and the middlemen who sell influence they do not have, never on Black people or public-school students. No slurs beyond the owner-chosen business name, no n-word, no phonetic racial accent or dialect spelling, no real gang names and no real businesses. Real people appear only in sourced public-record scenes (constraints.publicRecord).",
-    "expansionMinors": "Students at the School of Hard Knocks and Warren Harding High School, and listed children in families, are minors and carry minor: true where they are residents. Their comedy is privilege, posturing and their school. No sexual content, no graphic injury, no bribes, purchases or adult transactions involving them. The owner-chosen gang name is used as a name only; no joke elaborates on it.",
+    "expansionMinors": "Students at the School of Hard Knocks and Harding High School, and listed children in families, are minors and carry minor: true where they are residents. Their comedy is privilege, posturing and their school. No sexual content, no graphic injury, no bribes, purchases or adult transactions involving them. The owner-chosen gang name is used as a name only; no joke elaborates on it.",
     "expansionPolice": "Owner decision 2026-11-03: the payoff mechanic never attaches to the real police department, any real officer, any government office or any real person. Interactions of type bribe keep their price in City credits and belong only to fictional private middlemen: Mulrooney & Son Expediting at the back counter of Bail Mary Bail Bonds. Their joke is that they reach nobody: each fee buys a fictional receipt and a line of dialogue, never a record change, a real service or legal advice.",
     "expansionCount": "The owner asked for three suffering Wiggers Anonymous members and then named four jobs; the fellowship has four members, one per job.",
     "realInstitutions": "Owner decision 2026-11-03: real streets, towns, cities, municipal entities and government buildings keep their real, sourced names. Fictional private businesses, occupants and people are the overlay. No invented replacement police precinct, public school or government office. A real institution carries a realInstitution block (official name, operator, address-level identity and sources), hosts no payoff interaction, and is staffed in game only by fictional civilians or teachers who hold no real office. idAliases keeps replaced IDs resolvable.",
@@ -14870,7 +14940,7 @@
   "idAliases": {
     "note": "Replaced IDs stay resolvable for saves, Core reads and stacked PRs. Owner decision 2026-11-03: the invented police precinct and public school became the real institutions on the same parcels; the escort payoff keeps its internal ID bribe-police-escort for saved payment logs, but no longer involves police.",
     "precinct-zero": "bridgeport-police-department",
-    "municipal-high-9": "warren-harding-high-school"
+    "municipal-high-9": "harding-high-school"
   },
   "publicRecordArcs": [
     {

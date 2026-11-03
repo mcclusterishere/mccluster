@@ -198,7 +198,7 @@ test('expansion residents have biographies, appearance and playable conversation
       t.lines.forEach((l, i) => assert.equal(l.speaker, i % 2 ? n.name : 'You'));
     }
     assert.equal(n.age < 18, n.minor === true, n.id);
-    if (n.minor) assert.ok(['school-of-hard-knocks', 'warren-harding-high-school'].includes(n.businessId), n.id);
+    if (n.minor) assert.ok(['school-of-hard-knocks', 'harding-high-school'].includes(n.businessId), n.id);
   }
   const text = JSON.stringify([city.expansionBusinesses, expansionPeople, city.families, city.expansionNeighborhoods, city.expansionItems]);
   assert.doesNotMatch(text, /\bnigg/i);
@@ -233,7 +233,7 @@ test('church, schools and hospital are wired with attendees and students; payoff
   const extortionist = everyone.get('bryce-lundqvist');
   assert.ok(sohk.staffIds.includes(extortionist.id)); assert.equal(extortionist.group.status, 'refuses'); assert.ok(extortionist.age >= 18);
   assert.equal(sohk.studentIds.length, 3); assert.ok(sohk.studentIds.every(id => everyone.get(id).minor));
-  assert.ok(expansionBusiness('warren-harding-high-school').studentIds.every(id => everyone.get(id).minor));
+  assert.ok(expansionBusiness('harding-high-school').studentIds.every(id => everyone.get(id).minor));
   assert.ok(expansionBusiness('st-copays-general').staffIds.length >= 2);
   const desk = expansionBusiness('bail-mary-bonds');
   assert.ok(desk.interactions.length >= 3);
@@ -241,7 +241,7 @@ test('church, schools and hospital are wired with attendees and students; payoff
     assert.equal(i.type, 'bribe'); assert.ok(Number.isSafeInteger(i.price) && i.price > 0 && i.price <= 250);
     assert.ok(i.npcIds.every(id => everyone.get(id).businessId === 'bail-mary-bonds' && everyone.get(id).acceptsBribes && !everyone.get(id).minor));
   }
-  const civic = new Set(['wiggers-anonymous', 'thugged-out-apparel', 'greater-prosperity-tabernacle', 'school-of-hard-knocks', 'warren-harding-high-school', 'st-copays-general', 'bridgeport-police-department']);
+  const civic = new Set(['wiggers-anonymous', 'thugged-out-apparel', 'greater-prosperity-tabernacle', 'school-of-hard-knocks', 'harding-high-school', 'st-copays-general', 'bridgeport-police-department']);
   assert.ok(city.expansionBusinesses.filter(b => !civic.has(b.id)).length >= 10, 'extra joke businesses');
 });
 
@@ -256,15 +256,21 @@ const source = s => s && typeof s.title === 'string' && s.title.length > 3 && /^
 const realInstitutions = city.expansionBusinesses.filter(b => b.realInstitution);
 
 test('real government places keep their real, sourced identity and no invented replacement remains', () => {
-  const police = expansionBusiness('bridgeport-police-department'), school = expansionBusiness('warren-harding-high-school');
+  const police = expansionBusiness('bridgeport-police-department'), school = expansionBusiness('harding-high-school');
   assert.equal(city.parcels.find(p => p.parcelId === 'civic-center/police-station').businessId, police.id);
   assert.equal(city.parcels.find(p => p.parcelId === 'northside-residential/public-school').businessId, school.id);
   assert.equal(police.name, 'Bridgeport Police Department'); assert.match(police.realInstitution.address, /^300 Congress Street, Bridgeport, CT 06604$/);
-  assert.equal(school.name, 'Warren Harding High School'); assert.match(school.realInstitution.address, /^379 Bond Street, Bridgeport, CT 06610$/);
-  assert.deepEqual(realInstitutions.map(b => b.id).sort(), ['bridgeport-police-department', 'warren-harding-high-school']);
+  assert.equal(school.name, 'Harding High School'); assert.match(school.realInstitution.address, /^379 Bond Street, Bridgeport, CT 06610$/);
+  assert.ok(police.realInstitution.sources.some(s => s.url.startsWith('https://www.bridgeportct.gov/')), 'police verified on the City of Bridgeport site');
+  assert.ok(school.realInstitution.sources.some(s => s.url.startsWith('https://harding.bridgeportedu.net/')), 'school verified on Bridgeport Public Schools');
+  assert.doesNotMatch(school.realInstitution.address, /Lyon Terrace/);
+  assert.deepEqual(realInstitutions.map(b => b.id).sort(), ['bridgeport-police-department', 'harding-high-school']);
   for (const b of realInstitutions) {
     assert.equal(b.provenance, 'real_institution'); assert.equal(b.name, b.realInstitution.officialName);
     assert.ok(b.realInstitution.sources.length >= 1 && b.realInstitution.sources.every(source), b.id);
+    const fp = b.realInstitution.fieldProvenance;
+    for (const field of ['officialName', 'operator', 'address']) assert.ok(fp[field].status === 'verified' && b.realInstitution.sources.some(s => s.url === fp[field].source), `${b.id}.${field}`);
+    for (const field of ['footprint', 'coordinates', 'interior', 'staff']) assert.equal(fp[field].status, 'authored', `${b.id}.${field}`);
     assert.equal(b.realInstitution.payoffs, 'none'); assert.equal(b.interactions, undefined, b.id); assert.deepEqual(b.ads, []);
     assert.equal(city.parcels.find(p => p.parcelId === b.parcelId).realInstitution, true);
     for (const id of [...b.staffIds, ...(b.studentIds || [])]) {
@@ -318,9 +324,9 @@ test('payoff interactions belong only to fictional private middlemen and never r
 });
 
 test('the private-school gang is the Bond Street Willy Whackers, named for the real school’s street', () => {
-  const school = expansionBusiness('warren-harding-high-school');
+  const school = expansionBusiness('harding-high-school');
   assert.match(school.realInstitution.address, /Bond Street/);
-  assert.match(expansionBusiness('school-of-hard-knocks').backstory, /Bond Street Willy Whackers, after the street beside Warren Harding High School/);
+  assert.match(expansionBusiness('school-of-hard-knocks').backstory, /Bond Street Willy Whackers, after the street beside Harding High School/);
   assert.match(everyone.get('tucker-whitmore-sterling').role, /founder of the Bond Street Willy Whackers/);
   assert.equal(city.expansionItems.find(i => i.id === 'sohk-varsity-gang-jacket').name, 'Bond Street Willy Whackers Varsity Jacket');
   assert.doesNotMatch(bytes.toString('utf8'), /529 ?Boy|529 BOYZ/i);

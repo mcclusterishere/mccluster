@@ -276,7 +276,7 @@ test('installed city canon keeps the real department and school, middleman payof
   const source = parseGameLore(raw);
   const police = queryGameLore(source, { section: 'businesses', id: 'precinct-zero' }).records[0];
   assert.equal(police.name, 'Bridgeport Police Department'); assert.equal(police.interactions, undefined);
-  assert.equal(queryGameLore(source, { section: 'businesses', id: 'municipal-high-9' }).records[0].name, 'Warren Harding High School');
+  assert.equal(queryGameLore(source, { section: 'businesses', id: 'municipal-high-9' }).records[0].name, 'Harding High School');
   const desk = queryGameLore(source, { section: 'businesses', id: 'bail-mary-bonds' }).records[0];
   assert.ok(desk.interactions.length >= 3 && desk.interactions.every((row) => row.payee === 'private-middleman'));
   const data = JSON.parse(raw);

@@ -43,7 +43,7 @@ Retain CT source metadata and visible OpenStreetMap attribution for derived road
 - Real places (owner, 2026-11-03): real streets, the city and its government buildings keep their real,
   sourced names; fictional private businesses, occupants and people are the overlay. No invented police
   precinct, public school or government office. `civic-center/police-station` is the Bridgeport Police
-  Department and `northside-residential/public-school` is Warren Harding High School, each with a sourced
+  Department and `northside-residential/public-school` is Harding High School, each with a sourced
   `realInstitution` block, staffed only by fictional civilians, teachers and students; `idAliases` keeps
   `precinct-zero` and `municipal-high-9` resolvable. Payoff interactions (`type: "bribe"`, `price` in
   credits) belong only to fictional private middlemen (Bail Mary's expediting desk), never to a real
