@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createStoreLayout, storeFloor, transitionStoreFloor, COLLECTION_LABELS } from './layout.mjs';
 import { buildStoreFloorModel } from './model.mjs';
-import { isWalkable, findWalkingPath, moveWithCollisions } from '../../js/fictional-city/spatial.mjs';
+import { isWalkable, findWalkingPath, moveWithCollisions } from '../../../../js/fictional-city/spatial.mjs';
 
 test('thirteen owner labels are configurable without claiming designs, crime rankings, or purchases', () => {
   const layout = createStoreLayout(); assert.equal(layout.collection.length, 13);

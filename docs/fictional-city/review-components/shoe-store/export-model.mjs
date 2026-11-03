@@ -5,7 +5,7 @@ import { resolve, dirname } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createStoreLayout } from './layout.mjs';
 import { buildStoreFloorModel } from './model.mjs';
-const here=dirname(fileURLToPath(import.meta.url)), root=resolve(here,'../..');
+const here=dirname(fileURLToPath(import.meta.url)), root=resolve(here,'../../../..');
 const threePath=process.env.THREE180_DIR;
 if(!threePath)throw new Error('THREE180_DIR must point to the verified Three 0.180 build');
 const threeUrl=pathToFileURL(resolve(threePath,'three.module.js')).href;
