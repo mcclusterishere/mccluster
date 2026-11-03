@@ -17,6 +17,14 @@ REPORT=OUTDIR/"equity-uprise-floor-06-core-v2-report.json"
 INV_PATH=HERE/"floor-06-object-inventory.json"
 inventory=json.loads(INV_PATH.read_text()); INV={o["id"]:o for o in inventory["objects"]}
 scene=trimesh.Scene(); modeled=set()
+import sys
+sys.path.insert(0,str(HERE.parent/"interiors")); sys.path.insert(0,str(HERE.parent/"brand"))
+from eu_furniture_kit import FurnitureKit, load_layout
+from eu_brand_slots import slots_for, add_brand_slots
+LAYOUT=load_layout(HERE/"floor-06-interior-layout-v3.json")
+# Inventory furniture realized by the v3 layout is built ONLY by the shared kit;
+# the legacy per-floor box furniture for those ids is suppressed here.
+_REALIZED={i["realizes_inventory_id"] for i in LAYOUT["items"] if i.get("realizes_inventory_id")}
 
 H=11.0
 PASS=(54.,34.,62.,44.); FREIGHT=(0.,60.,8.,72.); SB=(8.,54.,18.,72.); SA=(60.,54.,72.,72.); MEP=(50.,66.,60.,72.)
@@ -33,6 +41,7 @@ def mark(i):
         modeled.add(i)
 
 def box(name,b,h,z=0,color=None,inv=None):
+    if name.split("::")[0] in _REALIZED: return None
     x1,y1,x2,y2=map(float,b)
     m=trimesh.creation.box(extents=((x2-x1)*FT,(y2-y1)*FT,h*FT))
     m.apply_translation((((x1+x2)/2)*FT,((y1+y2)/2)*FT,(z+h/2)*FT))
@@ -40,12 +49,14 @@ def box(name,b,h,z=0,color=None,inv=None):
     scene.add_geometry(m,node_name=name,geom_name=name); mark(inv); return m
 
 def cyl(name,xy,r,h,z=0,color=None,inv=None,sections=28):
+    if name.split("::")[0] in _REALIZED: return None
     m=trimesh.creation.cylinder(radius=r*FT,height=h*FT,sections=sections)
     m.apply_translation((xy[0]*FT,xy[1]*FT,(z+h/2)*FT))
     m.visual.face_colors=color or C["part"]
     scene.add_geometry(m,node_name=name,geom_name=name); mark(inv); return m
 
 def sphere(name,xyz,r,color=None,inv=None,subdiv=3):
+    if name.split("::")[0] in _REALIZED: return None
     m=trimesh.creation.icosphere(subdivisions=subdiv,radius=r*FT)
     m.apply_translation((xyz[0]*FT,xyz[1]*FT,xyz[2]*FT))
     m.visual.face_colors=color or C["halo"]
@@ -134,12 +145,17 @@ box("east_wall",(71.25,0,72,72),H,0,C["wall"])
 
 # South glazing
 for k in range(8): box(f"F6-SOUTH-GLAZING-01::pane-{k+1}",(k*9,.22,(k+1)*9,.42),H,0,C["glass"],"F6-SOUTH-GLAZING-01")
+
+# v3 interior furnishing layer (shared catalog + floor-06-interior-layout-v3.json)
+KIT=FurnitureKit(scene,LAYOUT["palette"],"F6",0.0,mark)
+KIT.build_layout(LAYOUT)
 for x in range(0,73,9): box(f"south_mullion_{x}",(max(0,x-.08),0,min(72,x+.08),.68),H,0,C["core"])
 
 # Command wall / table
 box("F6-COMMAND-WALL-01::wall",(22,52.1,50,52.85),10.55,0,C["stone"],"F6-COMMAND-WALL-01")
 for i in ("F6-DISPLAY-NOW","F6-DISPLAY-PAST","F6-DISPLAY-JOIN"): screen(i,bounds(i),3.2,4.8)
-box("F6-IDENTITY-SIGN-01::sign",(29.5,52.0,42.5,52.16),1.2,8.9,C["stone_top"],"F6-IDENTITY-SIGN-01")
+# Identity: runtime brand slot only (no plate, no drawn mark).
+BRAND_SLOTS=add_brand_slots(scene,slots_for("interior/F6/"),67.5,mark)
 box("command_wall_plinth",(22,51.72,50,52.05),.55,0,C["black"])
 for n,x0 in enumerate((22.6,25.1,47.3,49.0),1): box(f"command_wall_acoustic_fin_{n}",(x0,51.86,x0+.16,52.08),7.5,1.0,C["acoustic"])
 
@@ -182,7 +198,9 @@ for name,x1,x2,glassid,doorid in rooms:
     box(name+"_east",(x2-.2,4,x2+.2,16),H,0,C["part"])
     db=INV[doorid]["placement"]["bounds_ft"]
     wh(glassid+"::north",x1,x2,16,.18,H,[(db["x1"],db["x2"])],C["glass"])
-    box(glassid+"::privacy",(x1,15.82,x2,15.98),1.8,3.25,C["glass_priv"],glassid)
+    # privacy band stops at the door jambs (it used to run straight across the doorway)
+    box(glassid+"::privacy-w",(x1,15.82,db["x1"],15.98),1.8,3.25,C["glass_priv"],glassid)
+    box(glassid+"::privacy-e",(db["x2"],15.82,x2,15.98),1.8,3.25,C["glass_priv"],glassid)
     box(doorid+"::door",bounds(doorid),8.5,0,C["core"],doorid)
     box(name+"_door_header",(db["x1"]-.15,15.72,db["x2"]+.15,15.9),.45,8.5,C["core"])
 
@@ -281,6 +299,10 @@ ck("72ft width",abs(ext[0]-72)<.05,ext[0],72)
 ck("72ft depth",abs(ext[1]-72)<.05,ext[1],72)
 ck("inventory summary matches records",inventory["summary"]["object_records"]==len(INV),len(INV),inventory["summary"]["object_records"])
 ck("all inventory records modeled",not missing,len(modeled),len(INV))
+ck("feature-wall identity is a brand slot",len(BRAND_SLOTS)==1)
+_lay_inv={i.get("realizes_inventory_id") for i in LAYOUT["items"]}-{None}
+_furn={k for k,o in INV.items() if o["category"] in ("furniture","decorative_functional")}
+ck("v3 layout realizes every inventory furniture record",_furn<=_lay_inv,sorted(_furn-_lay_inv))
 ck("six command chairs",all(f"F6-COMMAND-CHAIR-{i:02d}" in modeled for i in range(1,7)))
 ck("command wall modeled","F6-COMMAND-WALL-01" in modeled and all(x in modeled for x in ("F6-DISPLAY-NOW","F6-DISPLAY-PAST","F6-DISPLAY-JOIN")))
 ck("Halo globe modeled","F6-HALO-GLOBE-01" in modeled and "F6-HALO-CEILING-FEED-01" in modeled)
@@ -303,7 +325,7 @@ ck("desk systems visibly equipped",sum("desk_system_device_" in x for x in gkeys
 ck("support ceilings modeled",all(any(tag in x for x in gkeys) for tag in ("support_ceiling_west","support_ceiling_east","north_corridor_ceiling","elevator_lobby_ceiling")))
 ck("roof direction physically visible",all(any(tag in x for x in gkeys) for tag in ("roof_marker_a","roof_marker_b")))
 failed=[x for x in checks if not x["passed"]]
-report={"scene_id":"equity-uprise-floor-06","version":"penthouse-command-hybrid-v1","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"visual_completion_gate":"penthouse-command-halo-roof-transition-detail-v1","checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
+report={"scene_id":"equity-uprise-floor-06","interior_layout":"floor-06-interior-layout-v3.json","furniture":KIT.summary(),"furniture_placements":KIT.placed,"brand_slots":BRAND_SLOTS,"triangles":int(sum(len(scene.geometry[scene.graph[_n][1]].faces) for _n in scene.graph.nodes_geometry)),"version":"penthouse-command-hybrid-v1","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"visual_completion_gate":"penthouse-command-halo-roof-transition-detail-v1","checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
 REPORT.write_text(json.dumps(report,indent=2)+"\n")
 print(json.dumps({k:report[k] for k in ("version","mesh_count","inventory_records","inventory_records_modeled","checks_passed","checks_total","passed")},indent=2))
 if failed: raise SystemExit(1)

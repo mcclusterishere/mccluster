@@ -90,9 +90,32 @@ function glbNodeBounds(rel) {
       for (let i = 0; i < 3; i++) { mn[i] = Math.min(mn[i], acc.min[i]); mx[i] = Math.max(mx[i], acc.max[i]); }
     }
     if (!Number.isFinite(mn[0])) continue;
+    /* instanced furniture carries a node transform (matrix or TRS): bound the transformed box corners */
+    const m = nodeMatrix(node);
+    if (m) {
+      const tmn = [Infinity, Infinity, Infinity], tmx = [-Infinity, -Infinity, -Infinity];
+      for (let c = 0; c < 8; c++) {
+        const p = [c & 1 ? mx[0] : mn[0], c & 2 ? mx[1] : mn[1], c & 4 ? mx[2] : mn[2]];
+        for (let i = 0; i < 3; i++) { const v = m[i] * p[0] + m[4 + i] * p[1] + m[8 + i] * p[2] + m[12 + i]; tmn[i] = Math.min(tmn[i], v); tmx[i] = Math.max(tmx[i], v); }
+      }
+      mn = tmn; mx = tmx;
+    }
     out.set(node.name, { min: mn.map((v) => v / FT), max: mx.map((v) => v / FT) });
   }
   return out;
+}
+
+/* column-major 4x4 for a glTF node, or null when it has no transform */
+function nodeMatrix(node) {
+  if (Array.isArray(node.matrix)) return node.matrix;
+  if (!node.translation && !node.rotation && !node.scale) return null;
+  const [tx, ty, tz] = node.translation || [0, 0, 0], [x, y, z, w] = node.rotation || [0, 0, 0, 1], [sx, sy, sz] = node.scale || [1, 1, 1];
+  return [
+    (1 - 2 * (y * y + z * z)) * sx, (2 * (x * y + z * w)) * sx, (2 * (x * z - y * w)) * sx, 0,
+    (2 * (x * y - z * w)) * sy, (1 - 2 * (x * x + z * z)) * sy, (2 * (y * z + x * w)) * sy, 0,
+    (2 * (x * z + y * w)) * sz, (2 * (y * z - x * w)) * sz, (1 - 2 * (x * x + y * y)) * sz, 0,
+    tx, ty, tz, 1,
+  ];
 }
 
 function unionBounds(nodes, id) {
@@ -266,6 +289,8 @@ export function buildScreenRegistry() {
       thin = (glb.x2 - glb.x1) < (glb.y2 - glb.y1) ? "x" : "y"; width_ft = Math.max(glb.x2 - glb.x1, glb.y2 - glb.y1);
       source = glb.screen_node ? "b1_glb.screen_node_bounds" : bay !== undefined ? "b1_glb.telecom_rack_bay" : "b1_glb.node_bounds";
       if (bay !== undefined) { z = KIND_Z[cls.kind] || z; thin = "y"; }
+      /* a console modelled as its desk (no "::screen" node): the screen sits at console height above it */
+      else if (!glb.screen_node && /console/.test(cls.kind)) z = Math.max(KIND_Z[cls.kind] || z, glb.z2 + 0.9);
     } else if (Array.isArray(c) && c.length >= 2) {
       x = c[0]; y = c[1]; if (c.length >= 3 && c[2] > 0.5) z = c[2];
       source = "asset_registry.location.center_ft";

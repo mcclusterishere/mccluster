@@ -17,7 +17,7 @@
     ]
   },
   "source_revisions": {
-    "asset_registry": "sha256:12d3aafe35926f6da8f8b3c3ac110740082e7b6d5a043692a15c81e0fefbd0ae",
+    "asset_registry": "sha256:a93bbd710409534331d653c1647adfc9578c9edcf36506e6f1e4ac4f508eff52",
     "registry_version": "step4b-physical-installation-fabric-v1"
   },
   "modes": [
@@ -741,29 +741,29 @@
       "position": {
         "frame": "core-v2-local-ft",
         "x": 47.5,
-        "y": 40.35,
-        "z_aff": 4.3,
+        "y": 39.25,
+        "z_aff": 4.83,
         "elevation_ft": -13.5,
-        "z_abs": -9.2,
+        "z_abs": -8.67,
         "facing": "south",
-        "width_ft": 3,
-        "source": "b1_glb.screen_node_bounds"
+        "width_ft": 5,
+        "source": "b1_glb.node_bounds"
       },
       "approach": {
         "eye_ft": [
           47.5,
-          27.35,
+          26.25,
           24
         ],
         "standing_eye_ft": [
           47.5,
-          34.85,
+          33.75,
           5.25
         ],
         "look_ft": [
           47.5,
-          40.35,
-          4.3
+          39.25,
+          4.83
         ]
       },
       "modes": [
@@ -1244,30 +1244,30 @@
       "host": null,
       "position": {
         "frame": "core-v2-local-ft",
-        "x": 44.5,
-        "y": 59.8,
-        "z_aff": 4.25,
+        "x": 44.25,
+        "y": 59.2,
+        "z_aff": 4.83,
         "elevation_ft": -13.5,
-        "z_abs": -9.25,
+        "z_abs": -8.67,
         "facing": "south",
-        "width_ft": 3,
-        "source": "b1_glb.screen_node_bounds"
+        "width_ft": 4.5,
+        "source": "b1_glb.node_bounds"
       },
       "approach": {
         "eye_ft": [
-          44.5,
-          46.8,
+          44.25,
+          46.2,
           24
         ],
         "standing_eye_ft": [
-          44.5,
-          54.3,
+          44.25,
+          53.7,
           5.25
         ],
         "look_ft": [
-          44.5,
-          59.8,
-          4.25
+          44.25,
+          59.2,
+          4.83
         ]
       },
       "modes": [
@@ -1749,29 +1749,29 @@
       "position": {
         "frame": "core-v2-local-ft",
         "x": 37.5,
-        "y": 24.8,
-        "z_aff": 4.1,
+        "y": 32.75,
+        "z_aff": 4.83,
         "elevation_ft": -13.5,
-        "z_abs": -9.4,
+        "z_abs": -8.67,
         "facing": "north",
-        "width_ft": 3,
-        "source": "b1_glb.screen_node_bounds"
+        "width_ft": 7,
+        "source": "b1_glb.node_bounds"
       },
       "approach": {
         "eye_ft": [
           37.5,
-          37.8,
+          45.75,
           24
         ],
         "standing_eye_ft": [
           37.5,
-          30.3,
+          38.25,
           5.25
         ],
         "look_ft": [
           37.5,
-          24.8,
-          4.1
+          32.75,
+          4.83
         ]
       },
       "modes": [
@@ -4255,28 +4255,28 @@
       "host": "f3-interview-a-display1-dec",
       "position": {
         "frame": "core-v2-local-ft",
-        "x": 8,
+        "x": 5.7,
         "y": 15.88,
         "z_aff": 5.5,
         "elevation_ft": 27,
         "z_abs": 32.5,
         "facing": "north",
-        "width_ft": 6,
+        "width_ft": 5.8,
         "source": "inventory.placement.bounds_ft"
       },
       "approach": {
         "eye_ft": [
-          8,
+          5.7,
           28.88,
           24
         ],
         "standing_eye_ft": [
-          8,
+          5.7,
           21.38,
           5.25
         ],
         "look_ft": [
-          8,
+          5.7,
           15.88,
           5.5
         ]
@@ -4317,28 +4317,28 @@
       "host": "f3-interview-b-display1-dec",
       "position": {
         "frame": "core-v2-local-ft",
-        "x": 22,
+        "x": 19.7,
         "y": 15.88,
         "z_aff": 5.5,
         "elevation_ft": 27,
         "z_abs": 32.5,
         "facing": "north",
-        "width_ft": 6,
+        "width_ft": 5.8,
         "source": "inventory.placement.bounds_ft"
       },
       "approach": {
         "eye_ft": [
-          22,
+          19.7,
           28.88,
           24
         ],
         "standing_eye_ft": [
-          22,
+          19.7,
           21.38,
           5.25
         ],
         "look_ft": [
-          22,
+          19.7,
           15.88,
           5.5
         ]

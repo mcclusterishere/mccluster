@@ -16,6 +16,14 @@ REPORT=OUTDIR/"equity-uprise-floor-04-core-v2-report.json"
 INV_PATH=HERE/"floor-04-object-inventory.json"
 inventory=json.loads(INV_PATH.read_text()); INV={o["id"]:o for o in inventory["objects"]}
 scene=trimesh.Scene(); modeled=set()
+import sys
+sys.path.insert(0,str(HERE.parent/"interiors")); sys.path.insert(0,str(HERE.parent/"brand"))
+from eu_furniture_kit import FurnitureKit, load_layout
+from eu_brand_slots import slots_for, add_brand_slots
+LAYOUT=load_layout(HERE/"floor-04-interior-layout-v3.json")
+# Inventory furniture realized by the v3 layout is built ONLY by the shared kit;
+# the legacy per-floor box furniture for those ids is suppressed here.
+_REALIZED={i["realizes_inventory_id"] for i in LAYOUT["items"] if i.get("realizes_inventory_id")}
 
 H=11.0
 PASS=(54.,34.,62.,44.); FREIGHT=(0.,60.,8.,72.); SB=(8.,54.,18.,72.); SA=(60.,54.,72.,72.); MEP=(50.,66.,60.,72.)
@@ -32,6 +40,7 @@ def mark(i):
         modeled.add(i)
 
 def box(name,b,h,z=0,color=None,inv=None):
+    if name.split("::")[0] in _REALIZED: return None
     x1,y1,x2,y2=map(float,b)
     m=trimesh.creation.box(extents=((x2-x1)*FT,(y2-y1)*FT,h*FT))
     m.apply_translation((((x1+x2)/2)*FT,((y1+y2)/2)*FT,(z+h/2)*FT))
@@ -39,6 +48,7 @@ def box(name,b,h,z=0,color=None,inv=None):
     scene.add_geometry(m,node_name=name,geom_name=name); mark(inv); return m
 
 def cyl(name,xy,r,h,z=0,color=None,inv=None,sections=28):
+    if name.split("::")[0] in _REALIZED: return None
     m=trimesh.creation.cylinder(radius=r*FT,height=h*FT,sections=sections)
     m.apply_translation((xy[0]*FT,xy[1]*FT,(z+h/2)*FT)); m.visual.face_colors=color or C["part"]
     scene.add_geometry(m,node_name=name,geom_name=name); mark(inv); return m
@@ -128,12 +138,17 @@ box("north_wall",(0,71.25,72,72),H,0,C["wall"]); box("west_wall",(0,0,.75,60),H,
 
 # South glazing
 for k in range(8): box(f"F4-SOUTH-GLAZING-01::pane-{k+1}",(k*9,.22,(k+1)*9,.42),H,0,C["glass"],"F4-SOUTH-GLAZING-01")
+
+# v3 interior furnishing layer (shared catalog + floor-04-interior-layout-v3.json)
+KIT=FurnitureKit(scene,LAYOUT["palette"],"F4",0.0,mark)
+KIT.build_layout(LAYOUT)
 for x in range(0,73,9): box(f"south_mullion_{x}",(max(0,x-.08),0,min(72,x+.08),.68),H,0,C["core"])
 
 # Media wall / central listening
 box("F4-MEDIA-WALL-01::wall",(22,52.1,50,52.85),10.55,0,C["stone"],"F4-MEDIA-WALL-01")
 for i in ("F4-DISPLAY-LISTEN","F4-DISPLAY-WATCH","F4-DISPLAY-ARCHIVE"): screen(i,bounds(i),3.2,4.8)
-box("F4-IDENTITY-SIGN-01::sign",(30,52.0,42,52.16),1.2,8.9,C["stone_top"],"F4-IDENTITY-SIGN-01")
+# Identity: runtime brand slot only (no plate, no drawn mark).
+BRAND_SLOTS=add_brand_slots(scene,slots_for("interior/F4/"),40.5,mark)
 # Architectural finish around playback wall so it reads as a room, not three floating screens.
 box("media_wall_plinth",(22,51.72,50,52.05),.55,0,C["black"])
 for n,x0 in enumerate((22.6,25.1,27.6,47.4,49.0),1):
@@ -168,7 +183,9 @@ for name,x1,x2,doorid,glassid in [
     box(name+"_east",(x2-.2,4,x2+.2,16),H,0,C["part"])
     db=INV[doorid]["placement"]["bounds_ft"]
     wh(glassid+"::north",x1,x2,16,.18,H,[(db["x1"],db["x2"])],C["glass"])
-    box(glassid+"::privacy",(x1,15.82,x2,15.98),1.7,3.3,C["glass_priv"],glassid)
+    # privacy band stops at the door jambs (it used to run straight across the doorway)
+    box(glassid+"::privacy-w",(x1,15.82,db["x1"],15.98),1.7,3.3,C["glass_priv"],glassid)
+    box(glassid+"::privacy-e",(db["x2"],15.82,x2,15.98),1.7,3.3,C["glass_priv"],glassid)
     box(doorid+"::door",bounds(doorid),8.5,0,C["core"],doorid)
 
 table("F4-RECORDING-WORKSURFACE-01",bounds("F4-RECORDING-WORKSURFACE-01"),2.3,.2)
@@ -273,6 +290,10 @@ def ck(n,p,a=None,e=None): checks.append({"name":n,"passed":bool(p),"actual":a,"
 ck("72ft width",abs(ext[0]-72)<.05,ext[0],72); ck("72ft depth",abs(ext[1]-72)<.05,ext[1],72)
 ck("inventory summary matches records",inventory["summary"]["object_records"]==len(INV),len(INV),inventory["summary"]["object_records"])
 ck("all inventory records modeled",not missing,len(modeled),len(INV))
+ck("feature-wall identity is a brand slot",len(BRAND_SLOTS)==1)
+_lay_inv={i.get("realizes_inventory_id") for i in LAYOUT["items"]}-{None}
+_furn={k for k,o in INV.items() if o["category"] in ("furniture","decorative_functional")}
+ck("v3 layout realizes every inventory furniture record",_furn<=_lay_inv,sorted(_furn-_lay_inv))
 ck("media wall modeled","F4-MEDIA-WALL-01" in modeled); ck("listening zone modeled","F4-LISTENING-SECTIONAL-01" in modeled)
 ck("six gallery frames",all(f"F4-GALLERY-FRAME-{i:02d}" in modeled for i in range(1,7)))
 ck("recording room modeled",all(x in modeled for x in ("F4-RECORDING-GLAZING-01","F4-MIC-STAND-01","F4-RECORDING-WORKSURFACE-01")))
@@ -291,6 +312,6 @@ ck("media IT rack visibly equipped",sum("media_it_device_" in x for x in gkeys)>
 ck("support and corridor ceilings modeled",all(any(tag in x for x in gkeys) for tag in ("support_ceiling_west","support_ceiling_east","north_corridor_ceiling")))
 ck("gallery and elevator-lobby ceilings modeled",all(any(tag in x for x in gkeys) for tag in ("gallery_ceiling","elevator_lobby_ceiling")))
 failed=[x for x in checks if not x["passed"]]
-report={"scene_id":"equity-uprise-floor-04","version":"media-culture-hybrid-v2","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"visual_completion_gate":"architectural-room-and-support-detail-v1","checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
+report={"scene_id":"equity-uprise-floor-04","interior_layout":"floor-04-interior-layout-v3.json","furniture":KIT.summary(),"furniture_placements":KIT.placed,"brand_slots":BRAND_SLOTS,"triangles":int(sum(len(scene.geometry[scene.graph[_n][1]].faces) for _n in scene.graph.nodes_geometry)),"version":"media-culture-hybrid-v2","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"visual_completion_gate":"architectural-room-and-support-detail-v1","checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
 REPORT.write_text(json.dumps(report,indent=2)+"\n"); print(json.dumps({k:report[k] for k in ("version","mesh_count","inventory_records","inventory_records_modeled","checks_passed","checks_total","passed")},indent=2))
 if failed: raise SystemExit(1)

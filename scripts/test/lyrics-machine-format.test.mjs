@@ -48,13 +48,13 @@ test('machine-made lyrics say so: unreviewed, with the engine, and word times in
   assert.ok(machine >= 9, `the Whip Equipped tracks and the two plain files carry machine timing (saw ${machine})`);
 });
 
-test('Whip Equipped: the story order, every track playable, timed, metadata stripped', () => {
+test('Whip Equipped: shipped catalog order, every track playable, timed, metadata stripped', () => {
   const we = albums.albums.find((a) => a.slug === 'whip-equipped');
   assert.deepEqual(we.tracks.map((t) => t.title), [
     'Test Drive', 'Salvage Title (B-Side)', 'Repo Guy (B-Side)', 'Hundun (B-Side)',
     'Dealer Plates (A-Side)', 'Dealer Plates (B-Side)', 'Towyard Killer', 'Mr. Lock Changer (Remix)',
     'Lana (B-Side)', 'Stand On Business (B-Side)', 'All in the Details',
-  ], 'docs/music/WHIP-EQUIPPED-STORY.md is the order');
+  ], 'shipped audio inventory order; current narrative order is documented separately in docs/music/WHIP-EQUIPPED-STORY.md');
   for (const t of we.tracks) {
     assert.ok(existsSync(join(ROOT, t.src)), `${t.title}: ${t.src} exists`);
     assert.ok(t.seconds > 30, `${t.title}: measured length`);
@@ -148,3 +148,4 @@ test('the upload trigger keys lyrics to their inputs and never lets a running jo
   assert.match(q.slice(0, 1200), /\.eq\("status", "queued"\)/, 'Control re-run is suppressed only by a queued job');
   assert.match(read('core/src/executors/lyrics-align.mjs'), /lyrics_input_rev=eq\./);
 });
+

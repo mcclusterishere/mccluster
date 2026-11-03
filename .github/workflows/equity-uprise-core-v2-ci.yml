@@ -73,6 +73,12 @@ jobs:
       - name: Build detailed B1 in workspace
         run: python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
 
+      - name: Build detailed Floors 1-6 in workspace (v3 interior furnishing layer)
+        run: |
+          for n in 01 02 03 04 05 06; do
+            python docs/design/equity-uprise-building/production/floor-${n}/build_equity_uprise_floor_${n}_v2.py
+          done
+
       - name: Build detailed Level 7 roof in workspace
         run: python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
 
@@ -153,6 +159,9 @@ jobs:
 
       - name: Verify combined model
         run: python docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py
+
+      - name: Verify model consistency (furniture, doors, egress, walkability, brand slots, distinct floors)
+        run: python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
 
       - name: Verify Floor 1 / B1 authority boundary
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
