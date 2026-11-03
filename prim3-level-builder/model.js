@@ -1,5 +1,6 @@
-/* PRIM3 Level Forge: data-only levels -> the existing Black Signal game contract.
- * No executable imports, arbitrary URLs, eval, or per-cell rendering meshes. */
+/* PRIM3 Level Forge: the data-only level document, its structural checks, and the editor's preview compiler.
+ * Playability is not decided here: js/prim3-tactics/levels/forge.mjs exports the document into the game's level
+ * shape and checks it with the canonical resolver. No executable imports, arbitrary URLs, eval, or per-cell meshes. */
 (function (root, factory) {
   const api = factory(root.PRIM3_ASSET_CATALOG);
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -112,38 +113,7 @@
       if(!isRecord(c)||!idOK(c.id)||!validNode(c.from,b)||!validNode(c.to,b)||!['stairs','ladder'].includes(c.type||'stairs')||!integer(c.cost??1,1,128))errors.push('Traversal connections need valid endpoints and an integer cost of 1–128.');
     }
     if(errors.length)return {ok:false,errors:[...new Set(errors)],warnings:[...new Set(warnings)]};
-    if(playable){
-      const L=compile(d,{skipValidation:true});
-      for(const s of d.spawns)if(!L.canStand(s,false))errors.push(`${s.id} spawns on blocked or unsupported terrain.`);
-      for(const s of L.stairs){
-        if(!L.canStand(s.from,false)||!L.canStand(s.to,false))errors.push(`Traversal ${s.id} has a blocked or unsupported endpoint.`);
-        const min=Math.ceil(Math.abs(s.from.x-s.to.x)+Math.abs(s.from.y-s.to.y)+Math.abs(L.heightAt(s.from)-L.heightAt(s.to)));
-        if(s.cost<min)errors.push(`Traversal ${s.id} costs less than its travel distance (${min}).`);
-      }
-      if(!L.canStand({...d.extraction,layer:0},false))errors.push('The extraction center is blocked.');
-      if(!errors.length){
-        // Each link is one indivisible movement edge. An operative can wait for
-        // another turn between cells, but cannot pay part of a link on one turn
-        // and finish it later. Match the engine's full two-AP dash allowances.
-        const dashBudgets={E:24,R:28,T:20};
-        const start=d.spawns.find(s=>s.id==='T'),seen=new Set([key(start)]),queue=[start];
-        for(let i=0;i<queue.length;i++)for(const n of L.neighbors(queue[i],false))if(n.cost<=dashBudgets.T&&!seen.has(key(n))){seen.add(key(n));queue.push(n);}
-        if(!queue.some(p=>!p.layer&&Math.abs(p.x)+Math.abs(p.y)<=2))errors.push('Technical has no walkable route to the relay.');
-        if(!queue.some(p=>!p.layer&&Math.hypot(p.x-d.extraction.x,p.y-d.extraction.y)<=d.extraction.radius))errors.push('Technical cannot reach extraction.');
-        for(const s of d.spawns.filter(s=>s.team==='player'&&s.id!=='T')){
-          if(seen.has(key(s)))continue;
-          const visited=new Set([key(s)]),route=[s];let connected=false;
-          for(let i=0;i<route.length&&!connected;i++)for(const n of L.neighbors(route[i],false)){
-            if(n.cost>dashBudgets[s.role]||visited.has(key(n)))continue;
-            if(seen.has(key(n))){connected=true;break;}
-            visited.add(key(n));route.push(n);
-          }
-          if(!connected)errors.push(`${s.id} cannot reach the mission route within their movement allowance.`);
-        }
-        if(d.objects.some(o=>['stairs-8','ladder-8'].includes(o.assetId))&&!L.stairs.length)warnings.push('Stair/ladder props have no supported rooftop connection. Add a traversal link.');
-      }
-      for(const b of L.buildings)if(!L.stairs.some(s=>inside(s.to,b)||inside(s.from,b)))warnings.push(`${b.name||'A roof'} has no stair or ladder access.`);
-    }
+    // playable: the E/R/T presence check above; reachability and footing are the canonical resolver's (forge.mjs)
     return {ok:errors.length===0,errors:[...new Set(errors)],warnings:[...new Set(warnings)]};
   }
   function compile(d,{skipValidation=false}={}){

@@ -112,7 +112,7 @@
         v("schedule", "Schedule", "create.schedule", ["#create:schedule", "Create · Schedule", "calendar", "published", "publishing queue"])
       ] }),
       v("front-page", "Front page", "create.front-page", ["#create:front-page", "Create · Front page", "homepage", "site"]),
-      v("prim3-levels", "PRIM3 levels", "slot", ["level builder", "sector editor", "tactical map"], { module: "prim3Levels" }),
+      v("level-forge", "PRIM3 Level Forge", "slot", ["level builder", "level forge", "prim3 levels", "sector editor", "tactical map"], { module: "prim3Levels" }),
       v("clipping", "Clipping", "create.clipping", ["#create:clipping", "Create · Clipping", "clips"]),
       v("song-test", "Song test", "create.song-test", ["#create:song-test", "Create · Song test", "song testing", "listening test"])
     ] },

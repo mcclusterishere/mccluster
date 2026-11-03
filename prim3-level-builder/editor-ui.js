@@ -8,8 +8,18 @@
   const fmt = n => n > 0 ? `+${n}` : String(n).replace('-', '−');
   const LOCAL_ACTIVE = 'prim3.forge.active.v1';
   const LOCAL_DRAFTS = 'prim3.forge.drafts.v1';
-  const TEST_LEVEL = 'prim3.builder.test.v1';
+  // The play test hands the document to the canonical game (prim3-transit.html?level=forge), which reads this key
+  // through js/prim3-tactics/levels/forge.mjs. There is no second engine: the Forge only authors.
+  const PLAYTEST_KEY = 'prim3.forge.playtest.v1';
+  const PLAY_URL = '../prim3-transit.html?level=forge&new=1';
   const model = window.P3LevelModel;
+  // One copy of the White Industrial kit: the game's (assets/3d/prim3-kit/white-industrial/); the Forge reads it in place.
+  const KIT = '../assets/3d/prim3-kit/white-industrial/';
+  // The game's own rules: forge.mjs exports the document into the levels/*.mjs shape and checks it with the
+  // vendored resolver (computeReach). Loaded once; until it arrives a playable check reports that it is loading.
+  let rules = window.PRIM3ForgeRules || null;
+  const rulesReady = rules ? Promise.resolve(rules)
+    : import('../js/prim3-tactics/levels/forge.mjs').then(m => { rules = m; if (state.doc) renderValidation(); return m; }).catch(() => null);
   const state = {
     doc: null, selected: null, assetId: null, tool: 'select', category: 'All', search: '',
     undo: [], redo: [], linkStart: null, savedAt: null, draftDirty: false, drag: null
@@ -42,8 +52,13 @@
     return (Array.isArray(result) ? result : []).map(item => typeof item === 'string' ? item : item.message || item.reason || JSON.stringify(item));
   }
   function validate(playable = false) {
-    try { return model.validate(state.doc, { playable }); }
+    let result;
+    try { result = model.validate(state.doc, { playable }); }
     catch (error) { return { ok: false, errors: [error.message], warnings: [] }; }
+    if (!playable || !result.ok) return result;
+    if (!rules) return { ok: false, errors: ['The PRIM3 game rules are still loading.'], warnings: result.warnings };
+    const verdict = rules.validateForgeLevel(state.doc);
+    return { ok: verdict.ok, errors: verdict.errors, warnings: [...new Set([...result.warnings, ...verdict.warnings])] };
   }
   function bounds() {
     const b = state.doc.bounds;
@@ -257,7 +272,7 @@
         if (asset.id === 'mission:hostile') { glyph.style.color = '#a55348'; glyph.style.borderColor = '#c39d8e'; glyph.style.background = '#fff5ed'; }
         preview.append(glyph);
       } else {
-        const img = document.createElement('img'); img.src = `assets/previews/${encodeURIComponent(asset.id)}.png`; img.alt = ''; img.loading = 'lazy';
+        const img = document.createElement('img'); img.src = `${KIT}previews/${encodeURIComponent(asset.id)}.png`; img.alt = ''; img.loading = 'lazy';
         img.onerror = () => { img.remove(); preview.append(icon('box')); }; preview.append(img);
       }
       const add = document.createElement('span'); add.className = 'asset-add'; add.textContent = '+';
@@ -296,7 +311,7 @@
     $('selection-description').textContent = asset ? `${asset.description || 'Reusable environment asset.'} Position locates the lower-left footprint corner.` : kind === 'spawn' ? 'Place the operative on a clear ground cell or a supported rooftop. Player roles E, R, and T are required to test the mission.' : kind === 'connection' ? 'Connects two playable surfaces. Check both endpoints and movement cost before testing.' : 'Every surviving operative must reach this zone after Technical connects the relay.';
     const validModel = asset?.model && !/^(?:[a-z]+:|\/\/|\/|.*\.\.)/i.test(asset.model);
     $('model-download').hidden = !validModel;
-    if (validModel) { $('model-download').href = `assets/${asset.model}`; $('model-download').download = asset.model.split('/').pop(); }
+    if (validModel) { $('model-download').href = `${KIT}${asset.model}`; $('model-download').download = asset.model.split('/').pop(); }
   }
   function renderObjects() {
     const filter = $('scene-filter').value;
@@ -515,14 +530,15 @@
         list.forEach(text => { const li = document.createElement('li'); li.className = cls; li.textContent = text; ul.append(li); }); body.append(ul);
       }
       if (!errors.length && !warnings.length) paragraph(body, `${state.doc.objects.length} placed assets · ${state.doc.spawns.length} deployments · ${state.doc.connections.length} traversal links.`);
-    }, errors.length ? [{ label: 'Back to editing', action: closeDialog }] : [{ label: 'Keep editing', action: closeDialog }, { label: 'Test level', primary: true, action: testLevel }]);
+    }, errors.length ? [{ label: 'Back to editing', action: closeDialog }] : [{ label: 'Keep editing', action: closeDialog }, { label: 'Play test', primary: true, action: testLevel }]);
   }
-  function testLevel() {
+  async function testLevel() {
+    await rulesReady;
     const check = validate(true); if (!check.ok) return checkDialog();
-    saveDraft(false);
-    try { sessionStorage.setItem(TEST_LEVEL, JSON.stringify(state.doc)); }
-    catch (_) { notice('This browser cannot transfer the test level. Export JSON to keep your work.', true); return; }
-    location.assign('play/index.html?customLevel=1');
+    if (!saveDraft(false)) return;
+    try { localStorage.setItem(PLAYTEST_KEY, JSON.stringify(state.doc)); }
+    catch (_) { notice('This browser cannot hand the level to the game. Export JSON to keep your work.', true); return; }
+    location.assign(PLAY_URL); // the game's settings sheet links back here; this draft reopens from this device
   }
   function confirmNew(starter) {
     dialog(starter ? 'Load the transit starter?' : 'Create a blank level?', body => paragraph(body, 'Save the current draft on this device before opening a new level. You can reopen saved drafts from the level menu.'), [
@@ -699,7 +715,7 @@
       paragraph(body, 'Drag empty ground to orbit. Use two fingers to pan or pinch to zoom. Top switches to an overhead planning view. Tap the sector map to focus a coordinate.');
       paragraph(body, 'Mission tools place the E, R, T and hostile deployment markers. The relay stays at (0, 0). Use Link to connect a ground cell with a supported roof, then inspect the movement cost.');
       paragraph(body, 'V Select · G Move · R Rotate · Delete Remove · Ctrl/⌘ D Copy · Ctrl/⌘ Z Undo · Ctrl/⌘ Shift Z Redo · Escape Finish placement.');
-      paragraph(body, 'Save draft keeps your work on this device. Export produces a reusable level file. Test level runs the actual mission rules on your custom map.');
+      paragraph(body, 'Save draft keeps your work on this device. Export produces a reusable level file. Play test opens your level in the PRIM3 game itself (the canonical rules, on 3.54 m tiles); its settings link back here.');
     });
   }
   function bindUI() {

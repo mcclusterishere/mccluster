@@ -1,19 +1,59 @@
 # PRIM3 level builder: canonical integration
 
-Status: implementation prepared against `mccluster` main at
+Status: integrated onto `mccluster` main after #706 (2026-11-03); first prepared against main at
 `53cdfefbf3f99e7f18945ebb10f8c987b2636dd4`. The SQL is **pending**, not applied.
 No Worker deployment or hosted database change is part of this patch.
 
 ## Control and identity
 
-The shared Control navigation adds **Create → PRIM3 levels** at
-`control.html#create:prim3-levels`. Its existing `slot` renderer loads
+The shared Control navigation adds **Create → PRIM3 Level Forge** at
+`control.html#create:level-forge`. Its existing `slot` renderer loads
 `window.CR.prim3Levels`, which opens `/prim3-level-builder/index.html` as a full
 workspace. Control refreshes therefore do not recreate an editing iframe.
-The integrated package includes the editor at that path, the dedicated Black
-Signal mission-test runtime under `prim3-level-builder/play/`, and the 24-model
-asset kit with thumbnails, metadata, and a repeatable generator under
-`prim3-level-builder/assets/`.
+
+The Forge page is **owner-only and unindexed**, like every PRIM3 game page
+(`js/owner-only.mjs`, `noindex, nofollow`): until `GET /v1/status` says the
+signed-in account is the house owner, the page is the gate panel alone, its
+markup stays in an inert template and none of its scripts load.
+
+### One game, one format, one kit (2026-11-03 integration)
+
+- **Play test opens the canonical game.** The Forge writes the open document to
+  `localStorage['prim3.forge.playtest.v1']` and goes to
+  `prim3-transit.html?level=forge&new=1`. `js/prim3-tactics/levels/index.mjs`
+  routes `forge` to `js/prim3-tactics/levels/forge.mjs`, which exports the
+  document into the same level-module shape every level in `levels/` has
+  (`W, H, FLOORS, FRAME, toDisplay, SCENE, MISSION, surfaces(), engineConfig()`)
+  on 3.54 m tiles (`scale.mjs`). The page, the three.js renderer
+  (`level3d.mjs`) and the vendored resolver play it like Transit / Relay. The
+  page's settings sheet links back to the Forge, which reopens the draft it
+  saved before leaving.
+- **No second engine, no Black Signal balance.** The former `play/` runtime and
+  its movement budgets are gone. The squad's and the hostiles' numbers are
+  Transit / Relay's own `engineConfig()` units; cover is Transit's `buildCover`
+  rule (`deriveCover`); stairs and ladders are resolver links.
+- **Playability is the resolver's.** `validateForgeLevel` runs `computeReach`
+  from `tactical-resolver.mjs` on the exported state: Technical must reach a
+  tile beside the relay, every operative must reach extraction, and a link a
+  unit could not cross in one dash (cost > 2 × moveRange) does not count. The
+  editor's check, Play test and the Worker's publish all call this one
+  function. `prim3-level-builder/model.js` keeps only structural checks and the
+  editor's own preview compiler.
+- **One White Industrial kit.** The editor reads
+  `assets/3d/prim3-kit/white-industrial/` in place (previews, GLBs; its embedded
+  `catalog.js` is that `catalog.json`). The duplicate
+  `prim3-level-builder/assets/` copy was removed (53 files byte-identical by
+  SHA-256, plus three operator portraits only the removed `play/` runtime used).
+
+Mapping, cells to tiles: the Forge's cells are metres, +Y north; the engine's y
+runs north → south, so engine y is measured from the Forge's north edge and
+`FRAME.yUp` gives the Forge's signs back (the relay at Forge (0, 0) reads (0, 0)).
+A rectangle covers the tiles it overlaps by at least half a tile; a point takes
+the tile it is in; a spawn the snap lands on a blocked tile or a teammate moves
+to the nearest open tile (a warning says so). A stair's landing steps on, at
+most two tiles, to the first tile its roof covers. Pieces with no stand-in in
+the renderer (terrain, water, walls, fences, gates, pipes, rocks, HVAC) are
+drawn from the kit at their exact authored place (`SCENE.props`).
 
 On the canonical site, load `../js/backend.js` in the builder and obtain a fresh
 token through `await window.MCC_SUPA.token()`. Requests go to
@@ -119,17 +159,15 @@ digits, `_` or `-`, starting with a letter or digit; `assets` is reserved.
 - Optional metadata is closed to `description` (up to 1,000 characters),
   `theme:'white-industrial'`, and `tags` (up to 12 strings of 40 characters).
 
-Drafts may have incomplete operative placement. Publication uses the exact
-editor compiler adapted from its UMD wrapper to Worker ESM in `level-model.js`.
-It requires all three operatives, valid support/collision at every spawn,
-valid traversal, an accessible relay interaction position, an accessible
-extraction region, and a route connecting each operative to the mission.
-Reachability respects each operative’s movement budget, so an indivisible
-traversal above that budget cannot make an otherwise blocked mission pass.
-Keep this factory synchronized with the editor when rules change; the source
-SHA-256 is recorded in its header. The backend asset registry stores nominal
-`footprint`, `surfaceHeight`, and collision metadata, never decorative mesh
-extents or remote model URLs.
+Drafts may have incomplete operative placement. Publication requires all three
+operatives and then the same `validateForgeLevel` the editor's Play test runs
+(see "One game, one format, one kit" above): the document exported to the game's
+level shape and checked with the vendored resolver. The Worker imports it from
+`js/prim3-tactics/levels/forge.mjs`, as it already imports `js/travel/route-core.mjs`.
+`workers/mccluster/src/prim3/level-model.js` is the editor's `model.js` as an ES
+module, structural checks only; a test holds the two bodies equal. The backend
+asset registry stores nominal `footprint`, `surfaceHeight`, and collision
+metadata, never decorative mesh extents or remote model URLs.
 
 ## Storage and rollout
 
@@ -163,13 +201,14 @@ From the repository root:
 ```sh
 node --import ./workers/mccluster/test/support/offline-network.mjs workers/mccluster/test/prim3-levels.test.mjs
 node prim3-level-builder/tests/storage-cloud.test.cjs
+node --test scripts/test/prim3-forge-level.test.mjs   # the round trip: author, resolver check, play, back
 npm install --prefix .tools --ignore-scripts --no-audit --no-fund @electric-sql/pglite@0.3.14
 node supabase/tests/prim3_level_builder.db.mjs
 ```
 
-The Worker suite checks 17 authorization, input-boundary, optimistic-save,
+The Worker suite checks 19 authorization, input-boundary, optimistic-save,
 publication-race, and API response cases without network access. The bundled
-client suite runs 13 checks against the shipped editor and client: recovery
+client suite runs 15 checks against the shipped editor and client: recovery
 copies, storage failures, invalid imports, create/update revision ownership,
 late save/freeze responses, unsaved edits, and current bearer-token handling.
 

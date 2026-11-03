@@ -7,31 +7,38 @@ The entry point is `/prim3-level-builder/index.html`.
 
 - A portrait-phone-compatible drag-and-drop editor, numbered signed-coordinate grid,
   JSON import/export, exact transforms, deployments, traversal links, and undo/redo.
-- Twenty-four reusable static GLB environment meshes, rendered thumbnail previews,
-  collision/surface metadata, and a repeatable generator under `assets/`.
-- A dedicated **Black Signal** mission-test runtime under `play/`, with the same
-  data-only level compiler used by the editor.
+- No asset copies: the editor reads the game's White Industrial kit in place,
+  `../assets/3d/prim3-kit/white-industrial/` (24 GLBs, previews, catalog, generator).
+- **Play test** opens the level in the PRIM3 game itself:
+  `../prim3-transit.html?level=forge&new=1`, through
+  `js/prim3-tactics/levels/forge.mjs`, which exports the document into the game's
+  level shape on 3.54 m tiles and checks it with the canonical resolver. The game's
+  settings sheet links back here; the draft reopens from this device.
 - An optional client for the canonical owner-authorized
   `https://api.mccluster.org/v1/prim3/levels` API.
 
 The assets are starter static meshes. They are not final photorealistic assets,
 rigged actors, or replacements for the owner-supplied operator references. The
-play view retains its existing procedural animated characters and exact supplied
-portrait files. The complete PRIM3 header mark comes from the existing canonical
+complete PRIM3 header mark comes from the existing canonical
 `assets/img/prim3-lockup-512.png`, proportionally scaled without cropping.
 
 ## Runtime boundary
 
-This is the dedicated Black Signal preview runtime, not a replacement or local
-edit of the separately vendored canonical tactical resolver. The builder shares
-data through a versioned document; gameplay rules remain separate from rendering.
-It adds no universe portal, new auth stack, alternative backend, or database.
-It does not modify the canonical Site 0 geometry or Uprise World.
+The Forge authors; it does not play. There is one game: the canonical PRIM3 tactics
+page and the vendored resolver (`js/prim3-tactics/`, `SOURCE.json`). The former
+Black Signal mission-test runtime and its movement budgets were removed when this
+was integrated (2026-11-03). `model.js` holds the document's structural checks and
+the editor's own preview compiler; whether a level can be played is
+`validateForgeLevel` in `forge.mjs`, the same function the Worker runs before a
+version is frozen. It adds no universe portal, new auth stack, alternative backend,
+or database. It does not modify the canonical Site 0 geometry or Uprise World.
 
-The canonical Control navigation owns discovery and return navigation. The editor
-loads the existing `../js/backend.js` M Account integration. Every cloud request
-obtains a current bearer token and the server enforces house-owner authorization.
-No token is stored in an exported level or in browser draft metadata.
+The page is owner-only (`../js/owner-only.mjs`) and `noindex`, like every PRIM3 game
+page. The canonical Control navigation (`control.html#create:level-forge`) owns
+discovery and return navigation. The editor loads the existing `../js/backend.js`
+M Account integration. Every cloud request obtains a current bearer token and the
+server enforces house-owner authorization. No token is stored in an exported level
+or in browser draft metadata.
 
 ## Storage and private versions
 
@@ -49,30 +56,22 @@ denied permission, sign-in, network, and revision-conflict failures remain visib
 
 ## Files and dependencies
 
-`model.js` compiles the signed-grid level document. `render.js` provides PlayCanvas
-WebGL and the projected Canvas2D compatibility renderer. All editor models and
-previews are local files. The bundled PlayCanvas license is in
-`vendor/LICENSE-playcanvas.txt`. `play/standalone-export.js` embeds local runtime
-scripts, styles, supplied portraits, and the selected custom level when saving an
-offline playable HTML.
-
-The current environment kit metadata and actual-mesh overview are available in
-`assets/README.md`, `assets/catalog.json`, and `assets/asset-kit-overview.png`.
+`model.js` holds the signed-grid level document and its structural checks.
+`render.js` provides the editor's PlayCanvas WebGL view and the projected Canvas2D
+compatibility renderer (an editor viewport, not a game). The bundled PlayCanvas
+license is in `vendor/LICENSE-playcanvas.txt`.
 
 ## Validation
 
-The merged source build was checked with level/compiler tests, mission-engine
-tests, original-map replay, browser editor interactions, and a portrait-width
-overflow measurement. The portrait Test Level view also completed a verified
-one-cell movement that consumed one action point.
+Run from the repository root:
 
-Run `node prim3-level-builder/tests/storage-cloud.test.cjs` from the repository
-root for 13 storage and cloud safety regressions. These tests execute the shipped
-editor, catalog, model, and client without rewriting their source; DOM and renderer
-test doubles isolate persistence and request races from browser rendering. The
-scenarios cover recovery copies, quota failures, invalid imports, create/update
-revision ownership, late save/freeze responses, unsaved edits, and token handling.
+```sh
+node prim3-level-builder/tests/storage-cloud.test.cjs     # storage, cloud and Play test hand-over
+node --test scripts/test/prim3-forge-level.test.mjs       # export, resolver check, a played round trip
+```
 
-Live cloud behavior requires the canonical migration and Worker
-deployment; it must not be described as already live merely because this directory
-exists.
+The client suite executes the shipped editor, catalog, model, and client without
+rewriting their source; DOM and renderer test doubles isolate persistence and
+request races from browser rendering. Live cloud behavior requires the canonical
+migration and Worker deployment; it must not be described as already live merely
+because this directory exists.

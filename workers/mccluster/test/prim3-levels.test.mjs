@@ -148,7 +148,7 @@ test('publishing requires E/R/T and actual routes to the relay and extraction', 
   }
 });
 
-test('unsupported rooftop spawns and teleport traversal costs fail the shared playability compiler', () => {
+test('unsupported rooftop spawns and teleport traversal costs fail the canonical playability check', () => {
   const doc = make(); doc.spawns[0].layer = 1;
   assert.equal(validateLevelDocument(doc, { playable: true }).ok, false);
   const jump = make(); jump.connections = [{ id: 'jump', from: { x: -20, y: -40, layer: 0 }, to: { x: 20, y: 20, layer: 0 }, cost: 1 }];
@@ -191,4 +191,26 @@ test('an absent migration reports storage unavailable rather than a fictitious e
   const result = await handlePrim3Levels(req(), ENV, options(async () => response({ code: '42P01', message: 'private SQL' }, 404)));
   assert.equal(result.status, 503);
   const data = await result.json(); assert.equal(data.code, 'schema_not_installed'); assert.doesNotMatch(JSON.stringify(data), /private SQL/);
+});
+
+test('storage is asked without redirect: error (workerd throws on it); a redirect answer is storage unavailable', async () => {
+  const source = await readFile(new URL('../src/prim3/levels.js', import.meta.url), 'utf8');
+  assert.match(source, /redirect: 'manual'/);
+  let init;
+  const result = await handlePrim3Levels(req(), ENV, options(async (url, i) => { init = i; return new Response(null, { status: 302, headers: { location: 'https://elsewhere.invalid/' } }); }));
+  assert.equal(init.redirect, 'manual');
+  assert.equal(result.status, 503);
+  assert.equal((await result.json()).code, 'storage_unavailable');
+});
+
+test('publication is decided by the game itself: the Forge document exported to the level shape and run through the vendored resolver', async () => {
+  const source = await readFile(new URL('../src/prim3/level-validation.js', import.meta.url), 'utf8');
+  assert.match(source, /from '\.\.\/\.\.\/\.\.\/\.\.\/js\/prim3-tactics\/levels\/forge\.mjs'/);
+  const open = make();
+  assert.equal(validateLevelDocument(open, { playable: true }).ok, true);
+  const walled = make(); // a wall across the whole map between the squad and the relay
+  for (let x = -64; x < 64; x += 8) walled.objects.push({ id: `wall-${x + 64}`, assetId: 'wall-8', x, y: -20, rotation: 0, elevation: 0, scale: 1 });
+  const verdict = validateLevelDocument(walled, { playable: true });
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.errors.join(' '), /Technical has no walkable route to the relay/);
 });

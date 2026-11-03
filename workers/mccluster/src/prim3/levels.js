@@ -23,11 +23,13 @@ function database(env, fetchImpl) {
     let response;
     try {
       response = await fetchImpl(`${env.SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${path}`, {
-        method: body === undefined ? 'GET' : 'POST', redirect: 'error',
+        // workerd rejects redirect: 'error'; take redirects manually and treat any as an unavailable store
+        method: body === undefined ? 'GET' : 'POST', redirect: 'manual',
         headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json' },
         ...(body === undefined ? {} : { body: JSON.stringify(body) })
       });
     } catch { throw problem(503, 'storage_unavailable', 'Level storage is unavailable.'); }
+    if (response.status >= 300 && response.status < 400) throw problem(503, 'storage_unavailable', 'Level storage is unavailable.');
     let result;
     try { result = await response.json(); } catch { throw problem(503, 'storage_unavailable', 'Level storage returned an invalid response.'); }
     if (!response.ok) {

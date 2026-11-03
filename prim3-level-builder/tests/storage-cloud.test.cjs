@@ -6,6 +6,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const base = path.resolve(__dirname, '..');
+// The game's own export and resolver check (js/prim3-tactics/levels/forge.mjs), handed to the editor as the page's import would.
+let forgeRules = null;
+test.before(async () => { forgeRules = await import(require('node:url').pathToFileURL(path.resolve(base, '../js/prim3-tactics/levels/forge.mjs')).href); });
 const clone = value => JSON.parse(JSON.stringify(value));
 const flush = async () => { for (let n=0;n<6;n++) await Promise.resolve(); };
 function deferred() { let resolve, reject; const promise=new Promise((a,b)=>{resolve=a;reject=b});return {promise,resolve,reject}; }
@@ -34,10 +37,10 @@ class Renderer {
   setView(view){this.view=view;}
 }
 function harness(cloud={isConfigured:()=>true}) {
-  const elements=new Map(),storage=new Map(),timers=new Map();let serial=0,storageFails=false;
+  const elements=new Map(),storage=new Map(),timers=new Map(),assigned=[];let serial=0,storageFails=false;
   const element=id=>{if(!elements.has(id))elements.set(id,new Element(id.includes('canvas')?'canvas':'div'));return elements.get(id);};
   const document={getElementById:element,createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag),querySelectorAll:()=>[],addEventListener(){},body:new Element('body')};
-  const context=vm.createContext({console,Date,Math,document,P3Renderer:Renderer,P3LevelClient:cloud,requestAnimationFrame:fn=>fn(),addEventListener(){},
+  const context=vm.createContext({console,Date,Math,document,P3Renderer:Renderer,P3LevelClient:cloud,PRIM3ForgeRules:forgeRules,location:{assign:url=>assigned.push(url)},requestAnimationFrame:fn=>fn(),addEventListener(){},
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>{if(storageFails)throw new Error('Storage quota reached');storage.set(key,value);}},
     setTimeout:(fn,delay)=>{const id=++serial;timers.set(id,{fn,delay});return id;},clearTimeout:id=>timers.delete(id)});
   context.window=context;
@@ -46,7 +49,7 @@ function harness(cloud={isConfigured:()=>true}) {
   assert.ok(context.PRIM3Forge,'editor initialized through its real start function');
   const getDoc=()=>clone(context.PRIM3Forge.getDocument());
   const makeDoc=(id='level-a',title='Alpha')=>({...clone(context.P3LevelModel.createStarter()),id,title});
-  return {element,storage,getDoc,makeDoc,load:doc=>context.PRIM3Forge.loadDocument(doc),
+  return {element,storage,assigned,getDoc,makeDoc,load:doc=>context.PRIM3Forge.loadDocument(doc),
     failStorage:()=>{storageFails=true;},status:()=>element('status-message').textContent,
     title:value=>{element('level-title').value=value;element('level-title').fire('change');},
     click:id=>element(id).click(),flush,autosave:()=>{for(const [id,t]of timers)if(t.delay===550){timers.delete(id);t.fn();}},
@@ -96,4 +99,20 @@ test('invalid revisions are rejected before any network request',()=>{
 });
 test('a standalone preview without canonical auth remains local and never sends cloud requests',async()=>{
   let calls=0;const client=clientHarness(null,async()=>{calls++});assert.equal(client.isConfigured(),false);await assert.rejects(()=>client.create({id:'level-a'}),/available in McCluster Control/);assert.equal(calls,0);
+});
+
+// Play test: no second engine. The document goes to the canonical game page, which exports it with forge.mjs.
+test('Play test hands the checked document to prim3-transit.html?level=forge and keeps the draft for the way back',async()=>{
+  const h=harness(),a=h.makeDoc('level-play','Play me');h.load(a);h.click('test-level');await flush();
+  assert.deepEqual(h.assigned,['../prim3-transit.html?level=forge&new=1']);
+  assert.equal(JSON.parse(h.storage.get('prim3.forge.playtest.v1')).id,'level-play');
+  assert.equal(JSON.parse(h.storage.get('prim3.forge.active.v1')).document.id,'level-play','the editor reopens this level on return');
+});
+test('Play test refuses a level the canonical resolver cannot finish, and navigates nowhere',async()=>{
+  const h=harness(),a=h.makeDoc('level-walled','Walled');
+  for(let x=-64;x<64;x+=8)a.objects.push({id:`wall-${x+64}`,assetId:'wall-8',x,y:-20,rotation:0,elevation:0,scale:1});
+  a.objects=a.objects.filter(o=>o.assetId!=='bridge-16'&&o.assetId!=='stairs-8');
+  h.load(a);h.click('test-level');await flush();
+  assert.deepEqual(h.assigned,[]);assert.equal(h.storage.get('prim3.forge.playtest.v1'),undefined);
+  assert.equal(h.element('forge-dialog').open,true);
 });

@@ -5,17 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f3f3ed">
   <meta name="description" content="Build PRIM3 tactical levels with a modular 3D asset library, a numbered sector map, and playable mission testing.">
+  <meta name="robots" content="noindex, nofollow">
   <title>PRIM3 — Level Forge</title>
   <link rel="stylesheet" href="editor.css">
-  <script src="vendor/playcanvas-2.23.1.min.js" defer></script>
-  <script src="catalog.js" defer></script>
-  <script src="model.js" defer></script>
-  <script src="render.js" defer></script>
-  <script src="../js/backend.js" defer></script>
-  <script src="cloud-client.js" defer></script>
-  <script src="editor-ui.js" defer></script>
 </head>
 <body>
+<!-- Owner only, like every PRIM3 game page (js/owner-only.mjs; owner, 2026-11-03: "keep it on my private account").
+     Nothing below the gate exists and none of the editor's scripts load until the server says this is the house owner.
+     The level API repeats the check server-side (requireHouseOwner) on every route. -->
+<section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="forgeTpl"
+  data-owner-load="vendor/playcanvas-2.23.1.min.js catalog.js model.js render.js ../js/backend.js cloud-client.js editor-ui.js">
+  <img class="owner-gate__mark" src="../assets/img/prim3-logo.png" alt="PRIM3" width="40" height="40">
+  <h1>Owner only</h1>
+  <p data-owner-msg>Checking access with the server…</p>
+</section>
+<template id="forgeTpl">
 <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
   <symbol id="i-cursor" viewBox="0 0 24 24"><path d="m5 3 15 10-8 1-4 7z"/></symbol>
   <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18m-6-6-3-3-3 3m6 12-3 3-3-3M6 9l-3 3 3 3m12-6 3 3-3 3"/></symbol>
@@ -38,11 +42,11 @@
 
 <main class="forge" id="forge" data-panel="assets">
   <header class="topbar">
-    <a href="../control.html#create:prim3-levels" class="wordmark" aria-label="Back to Control, PRIM3 levels"><img src="../assets/img/prim3-lockup-512.png" alt="PRIM3" width="512" height="366"></a><a class="control-return" href="../control.html#create:prim3-levels">‹ Control</a>
+    <a href="../control.html#create:level-forge" class="wordmark" aria-label="Back to Control, PRIM3 Level Forge"><img src="../assets/img/prim3-lockup-512.png" alt="PRIM3" width="512" height="366"></a><a class="control-return" href="../control.html#create:level-forge">‹ Control</a>
     <div class="product-name"><span>LEVEL FORGE</span><small>BUILD YOUR BATTLEFIELD</small></div>
     <div class="top-actions">
       <button class="button quiet save-button" id="save-draft"><svg><use href="#i-save"/></svg><span>Save draft</span></button>
-      <button class="button primary" id="test-level"><svg><use href="#i-play"/></svg><span>Test level</span></button>
+      <button class="button primary" id="test-level"><svg><use href="#i-play"/></svg><span>Play test</span></button>
       <button class="button icon-button" id="more-menu" aria-label="Level menu" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-more"/></svg></button>
       <div class="popover level-menu" id="level-menu" role="menu" hidden>
         <button role="menuitem" id="new-level">New blank level</button>
@@ -135,11 +139,13 @@
     <aside class="objects-panel panel" aria-label="Objects in this level"><div class="panel-heading"><div><p class="eyebrow">SCENE COLLECTION</p><h2>Objects <span id="list-count">0</span></h2></div></div><div class="objects-filter"><label><span>Show</span><select id="scene-filter"><option value="all">Everything</option><option value="objects">Placed assets</option><option value="spawns">Deployments</option><option value="connections">Traversal links</option></select></label></div><div class="object-list" id="object-list"></div></aside>
   </div>
 
-  <footer class="statusbar"><span class="status-message" id="status-message" role="status">Select an asset and tap the battlefield to place it.</span><button id="desktop-objects" class="status-link">Scene objects</button><a href="play/index.html" class="status-link">Back to game ↗</a></footer>
+  <footer class="statusbar"><span class="status-message" id="status-message" role="status">Select an asset and tap the battlefield to place it.</span><button id="desktop-objects" class="status-link">Scene objects</button><a href="../game-hub.html" class="status-link">Game Hub ↗</a></footer>
 </main>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <input type="file" id="import-file" accept=".json,application/json" hidden>
 <dialog id="forge-dialog" class="forge-dialog"><header><h2 id="dialog-title">Level check</h2><button class="button icon-button" id="dialog-close" aria-label="Close dialog"><svg><use href="#i-close"/></svg></button></header><div id="dialog-body"></div><footer id="dialog-footer"></footer></dialog>
+</template>
+<script type="module" src="../js/owner-only.mjs"></script>
 </body>
 </html>

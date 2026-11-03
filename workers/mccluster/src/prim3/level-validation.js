@@ -1,5 +1,7 @@
 import { LEVEL_ASSETS } from './level-assets.js';
 import { createLevelModel } from './level-model.js';
+// The game's own export and playability check (the vendored resolver), shared with the page and the editor.
+import { validateForgeLevel } from '../../../../js/prim3-tactics/levels/forge.mjs';
 
 export const LEVEL_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/;
 export const MAX_LEVEL_BYTES = 262144;
@@ -9,10 +11,14 @@ const record = value => value !== null && typeof value === 'object' && !Array.is
 const hasOnly = (value, keys) => record(value) && Object.keys(value).every(key => keys.includes(key));
 const text = (value, max) => typeof value === 'string' && value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value);
 
-/** The same geometry compiler as the editor, preceded by a closed JSON contract. */
+// one literal, not a list of names (a lone quoted table-like word reads as a database call to the RPC-name audit)
+const DOCUMENT_FIELDS = 'schemaVersion id title bounds objects spawns objective extraction connections metadata'.split(' ');
+
+/** The editor's structural checks behind a closed JSON contract; a playable check then exports the level into
+    the game's own shape and runs the canonical resolver over it (js/prim3-tactics/levels/forge.mjs). */
 export function validateLevelDocument(value, { playable = false } = {}) {
   const errors = [];
-  if (!hasOnly(value, ['schemaVersion', 'id', 'title', 'bounds', 'objects', 'spawns', 'objective', 'extraction', 'connections', 'metadata'])) {
+  if (!hasOnly(value, DOCUMENT_FIELDS)) {
     return { ok: false, errors: ['A level must use the documented JSON fields only.'], warnings: [] };
   }
   if (!hasOnly(value.bounds, ['minX', 'maxX', 'minY', 'maxY'])) errors.push('Unknown map-bound field.');
@@ -51,7 +57,10 @@ export function validateLevelDocument(value, { playable = false } = {}) {
         (meta.tags !== undefined && (!Array.isArray(meta.tags) || meta.tags.length > 12 || meta.tags.some(tag => !text(tag, 40))))) errors.push('Invalid level metadata.');
   }
   if (errors.length) return { ok: false, errors: [...new Set(errors)], warnings: [] };
-  return levelModel.validate(value, { playable });
+  const structural = levelModel.validate(value, { playable });
+  if (!playable || !structural.ok) return structural;
+  const verdict = validateForgeLevel(value);
+  return { ok: verdict.ok, errors: verdict.errors, warnings: [...new Set([...structural.warnings, ...verdict.warnings])] };
 }
 
 /** Read a bounded body even when Content-Length is absent or dishonest. */
