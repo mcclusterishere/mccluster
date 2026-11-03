@@ -24,9 +24,10 @@ def add_brand_slots(scene, slots, origin_z_ft=0.0, mark=None):
     """Add one empty node per slot. ``origin_z_ft`` is the GLB's own Z datum in building feet."""
     names = []
     for s in slots:
-        x, y, z = s["center_ft"]
+        # Identity transform: the node carries its position in extras only, so every
+        # architecture node in the building GLBs stays translation-free (consumers
+        # such as the PRIM3 level read raw node bounds).
         T = np.eye(4)
-        T[:3, 3] = (x * FT, y * FT, (z - origin_z_ft) * FT)
         name = f"brand-slot::{s['id']}"
         scene.graph.update(frame_to=name, frame_from=scene.graph.base_frame, matrix=T,
                            metadata={"brand_slot": dict(s, manifest="production/brand/brand-manifest.json", glb_origin_z_ft=origin_z_ft)})

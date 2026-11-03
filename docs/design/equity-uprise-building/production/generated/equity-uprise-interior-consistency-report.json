@@ -22,42 +22,42 @@
    "furniture_types": 16,
    "furnished_zones": 4,
    "triangles": 10164,
-   "glb_bytes": 226096
+   "glb_bytes": 225996
   },
   "F2": {
    "items": 48,
    "furniture_types": 19,
    "furnished_zones": 4,
    "triangles": 11516,
-   "glb_bytes": 211628
+   "glb_bytes": 211528
   },
   "F3": {
    "items": 49,
    "furniture_types": 24,
    "furnished_zones": 5,
    "triangles": 11836,
-   "glb_bytes": 217780
+   "glb_bytes": 217672
   },
   "F4": {
    "items": 44,
    "furniture_types": 21,
    "furnished_zones": 6,
    "triangles": 10104,
-   "glb_bytes": 252280
+   "glb_bytes": 252172
   },
   "F5": {
    "items": 55,
    "furniture_types": 13,
    "furnished_zones": 5,
    "triangles": 13024,
-   "glb_bytes": 240680
+   "glb_bytes": 240572
   },
   "F6": {
    "items": 41,
    "furniture_types": 19,
    "furnished_zones": 6,
    "triangles": 15024,
-   "glb_bytes": 301664
+   "glb_bytes": 301556
   }
  },
  "vocabulary_similarity": {
@@ -309,7 +309,7 @@
    "scope": "F1",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 226096
+   "detail": 225996
   },
   {
    "scope": "F2",
@@ -399,7 +399,7 @@
    "scope": "F2",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 211628
+   "detail": 211528
   },
   {
    "scope": "F3",
@@ -489,7 +489,7 @@
    "scope": "F3",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 217780
+   "detail": 217672
   },
   {
    "scope": "F4",
@@ -579,7 +579,7 @@
    "scope": "F4",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 252280
+   "detail": 252172
   },
   {
    "scope": "F5",
@@ -669,7 +669,7 @@
    "scope": "F5",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 240680
+   "detail": 240572
   },
   {
    "scope": "F6",
@@ -759,7 +759,7 @@
    "scope": "F6",
    "name": "phone budget: <= 700000 bytes",
    "passed": true,
-   "detail": 301664
+   "detail": 301556
   },
   {
    "scope": "building",

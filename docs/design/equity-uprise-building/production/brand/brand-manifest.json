@@ -14,7 +14,7 @@
   "center_ft": "absolute building coordinates of the slot centre (Z is absolute, not floor-relative)",
   "normal": "outward face direction of the plane",
   "up": "plane up direction",
-  "glb_node": "brand-slot::<id> (empty node; translation in metres = center_ft x 0.3048 relative to the GLB's own origin; extras.brand_slot carries this record)"
+  "glb_node": "brand-slot::<id> (empty node at the GLB origin with an identity transform; extras.brand_slot carries this record plus glb_origin_z_ft; the runtime positions the artwork from center_ft)"
  },
  "artwork": {
   "default": {

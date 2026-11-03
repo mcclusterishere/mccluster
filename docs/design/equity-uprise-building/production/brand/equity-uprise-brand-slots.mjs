@@ -66,7 +66,9 @@ export async function applyBrandSlots(THREE, root, manifest, opts = {}) {
     const x = new THREE.Vector3().crossVectors(up, n).normalize();
     const y = new THREE.Vector3().crossVectors(n, x).normalize();
     plane.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, n));
-    plane.position.copy(n.clone().multiplyScalar(0.006));
+    // slot nodes sit at the GLB origin; the record carries the position (building feet, absolute Z)
+    const zOrigin = rec.glb_origin_z_ft || 0;
+    plane.position.set(live.center_ft[0] * FT, live.center_ft[1] * FT, (live.center_ft[2] - zOrigin) * FT).add(n.clone().multiplyScalar(0.006));
     node.add(plane);
     placed.push({ id: live.id, url, width_m: width, height_m: height });
   }
