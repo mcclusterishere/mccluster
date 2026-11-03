@@ -24,6 +24,18 @@ Core V2 is the active geometry authority:
 - Stair A X60–72 / Y54–72;
 - MEP/riser approximately X50–60 / Y66–72.
 
+## McCluster City expansion around the HQ — 2026-11-03
+
+The city grew four neighbourhoods around the unchanged HQ island (`docs/fictional-city/EXPANSION.md`). Its placement
+authority `core/data/fictional-city/places.v1.json` places the 72 ft plate rotated 180° at city (0, 88) so the Floor 1
+public entrance faces the footbridge; the island doorway still opens `prim3-transit.html?level=equity-uprise-hq`.
+Frames stay distinct (city metres Y-up, HQ GLBs metres Z-up, HQ adapter 12 ft cells, tactics 3.54 m tiles). No
+building source, package or program changed. New checks: an ordinary operative walks street → Stair B → B1 → Stair A
+→ Floor 1 on the real resolver with no role or unlock; the B1 mission's live camera outages now reach the screens'
+MISSION session (`HOOKS.screenFaults`), never WORKPLACE. Six support-only sources were added to the source map
+(598 sources, 2,290/2,290 checks). The #714 server lab is not integrated into the stacked HQ; its MDF location conflict
+recorded below is unchanged.
+
 ## Repo-source coverage — fictional-city integration, 2026-11-03
 
 The source ledger now classifies the nine new fictional-city and universe references as support-only, with no capability ownership. The regenerated `production/generated/equity-uprise-repo-source-coverage-report.json` covers **549 tracked-checkout sources: 102 capability sources and 447 support-only sources**. The city contributes a derived exterior/portal view and its documentation, navigation and tests; headquarters geometry, floor programs and existing capability mappings remain unchanged.

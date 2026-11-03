@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 592,
+  "candidate_count": 598,
   "capability_source_count": 104,
-  "support_only_count": 488,
-  "checks_total": 2266,
-  "checks_passed": 2266,
+  "support_only_count": 494,
+  "checks_total": 2290,
+  "checks_passed": 2290,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -77,6 +77,7 @@
     "cohort-profile.html",
     "control.html",
     "core/data/fictional-city/district.v1.json",
+    "core/data/fictional-city/places.v1.json",
     "create.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
@@ -192,6 +193,7 @@
     "docs/design/equity-uprise-development/verify_federal_training_catalog.py",
     "docs/design/redesign-before-after.html",
     "docs/equity-uprise-platform.md",
+    "docs/fictional-city/EXPANSION.md",
     "docs/fictional-city/LORE.md",
     "docs/fictional-city/README.md",
     "docs/gated-audio.md",
@@ -269,6 +271,7 @@
     "js/fictional-city/app.mjs",
     "js/fictional-city/scene.mjs",
     "js/fictional-city/spatial.mjs",
+    "js/fictional-city/tactical.mjs",
     "js/gateway.js",
     "js/hire-offers.js",
     "js/insights.js",
@@ -374,7 +377,10 @@
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/creator-action-distribution.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
+    "scripts/test/equity-uprise-mission-screens.test.mjs",
     "scripts/test/eu-screens.test.mjs",
+    "scripts/test/fictional-city-hq-b1.test.mjs",
+    "scripts/test/fictional-city-places.test.mjs",
     "scripts/test/fixtures/hq-drill-full-strength-win.json",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
@@ -606,7 +612,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "592 entries"
+      "detail": "598 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -11204,6 +11210,26 @@
       "detail": ""
     },
     {
+      "name": "docs/fictional-city/EXPANSION.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/EXPANSION.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/EXPANSION.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/EXPANSION.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/fictional-city/LORE.md capability ids known",
       "passed": true,
       "detail": ""
@@ -11360,6 +11386,106 @@
     },
     {
       "name": "scripts/e2e/fictional-city.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/fictional-city/places.v1.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/fictional-city/places.v1.json classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "core/data/fictional-city/places.v1.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/data/fictional-city/places.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/tactical.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/tactical.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/fictional-city/tactical.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fictional-city/tactical.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/equity-uprise-mission-screens.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/equity-uprise-mission-screens.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/equity-uprise-mission-screens.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/equity-uprise-mission-screens.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fictional-city-hq-b1.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fictional-city-hq-b1.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/fictional-city-hq-b1.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/fictional-city-hq-b1.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fictional-city-places.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fictional-city-places.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/fictional-city-places.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/fictional-city-places.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

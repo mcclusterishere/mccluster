@@ -4156,6 +4156,13 @@
       "rationale": "Canonical fictional-city content and portal data includes a simplified exterior derived from the existing Equity Uprise footprint and roof datum; it does not define building geometry, floor programs or a new building capability."
     },
     {
+      "path": "docs/fictional-city/EXPANSION.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City expansion plan and placement contract record the HQ's unchanged footprint, position, doorway, B1 access and frames; integration documentation, no building program, geometry or capability."
+    },
+    {
       "path": "docs/fictional-city/LORE.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4210,6 +4217,41 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser checks for the owner-only fictional city verify the existing Equity Uprise portal and game integration; verification support only, with no building program or geometry implementation."
+    },
+    {
+      "path": "core/data/fictional-city/places.v1.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+    },
+    {
+      "path": "js/fictional-city/tactical.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City-to-tactics adapter keeps the HQ adapter's 12 ft cells and the city's 3.54 m tiles distinct and maps HQ feet to city metres for placement checks; a derived projection that never resizes or edits the building."
+    },
+    {
+      "path": "scripts/test/equity-uprise-mission-screens.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies the B1 mission's real sandbox camera outages reach the building screens' MISSION session and never WORKPLACE; verification support only."
+    },
+    {
+      "path": "scripts/test/fictional-city-hq-b1.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Walks an ordinary operative from the street to B1 and back up on the existing HQ level and real resolver, proving B1 is an ordinary reachable floor; verification support only."
+    },
+    {
+      "path": "scripts/test/fictional-city-places.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Checks the city placement contract against the HQ footprint, roof datum, B1 elevation and public approach; verification support only, with no building geometry or capability."
     },
     {
       "path": "js/eu-screens/app-shell.mjs",

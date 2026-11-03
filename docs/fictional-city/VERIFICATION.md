@@ -95,3 +95,42 @@ The browser retains the identical static fiction whenever the deployed Core vers
 Current implementation limits: the connected situations are authored conversations, not persistent
 multi-stage quests. Inventory does not equip clothing or spawn a functional purchased vehicle.
 Driving, traffic, combat, recorded NPC performances and filmed song transitions are future work.
+
+## City expansion around the HQ — 2026-11-03
+
+Baseline: main `d4361152` (before), this branch with lore PR #720 merged (after). Plan, contract and counts:
+[`EXPANSION.md`](EXPANSION.md). Local verification only; release evidence comes from the normal Pages workflow.
+
+| Scope | Result |
+| --- | --- |
+| Root JavaScript suite | see PR body (all pass, 3 existing skips) |
+| Places contract, lore binding, chunks, save v2, tactical frame, #711 mapping, reserved area | `fictional-city-places.test.mjs` 16 tests |
+| B1 traversal on the HQ level (street → Stair B → B1 → Stair A → Floor 1) | `fictional-city-hq-b1.test.mjs` 2 tests |
+| B1 mission outages → building screens MISSION session | `equity-uprise-mission-screens.test.mjs` 2 tests |
+| Publication (places, chunk index, every chunk; #717 checks kept) | `fictional-city-publication.test.mjs` passes |
+| Browser walkthrough | 74 checks passed (`scripts/e2e/fictional-city.e2e.mjs`) |
+| Building context audit / repo sources / program coverage | PASS / 2,290 of 2,290 / 466 of 466 |
+
+The browser walkthrough adds: a real v1 save migrated intact; all eight original businesses entered and left; all
+27 established people opened; insufficient credits refused at a counter; the garage globe kiosk; the footbridge
+walked on foot; the HQ doorway and prefetch on approach; a walk from Civic Center into Northside across a chunk
+edge; far chunks unloading; a wharf business interior; the sea wall stopping a body; the HQ overlook; a failed
+chunk download falling back to massing and recovering; a lore bribe paid, persisted and refused when short; no
+paid interaction on a minor; owner/member/guest gating; 390/768/1440 px with no horizontal overflow.
+
+### Render measurements (headless Chromium, SwiftShader software WebGL, DPR 1; not a physical device)
+
+| View | Draw calls | Triangles | Active chunks | JS heap |
+| --- | ---: | ---: | ---: | ---: |
+| Before, opening, 390 / 768 / 1440 | 64 / 71 / 79 | 23,364 / 23,978 / 24,216 | — | 10.0 / 11.2 / 10.6 MB |
+| After, opening, 390 / 768 / 1440 | 69 / 81 / 90 | 37,324 / 39,314 / 39,564 | 8 | 21.7 / 21.7 / 12.7 MB |
+| After, island (1280) | 101 | 43,126 | 12 | 16.1 MB |
+| After, Civic Center (1280) | 93 | 40,368 | 8 | 18.2 MB |
+| After, Northside (1280) | 58 | 33,708 | 12 | 18.2 MB |
+| After, Workshop Wharf (1280) | 67 | 34,004 | 8 | 18.2 MB |
+| After, HQ Waterfront (1280) | 37 | 31,268 | 9 | 17.1 MB |
+
+Triangles rise mainly because 73 people now share the instanced body batches. Initial city data: lore 430 KB
+(PR #720), places 32 KB, chunk index 7 KB; the 32 chunks total 26 KB and load only near the player. Heap figures
+are single samples from `performance.memory`; long-session memory, frame rate and thermal behaviour on phones
+remain unmeasured.
