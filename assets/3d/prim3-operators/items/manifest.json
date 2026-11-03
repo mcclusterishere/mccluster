@@ -1,0 +1,35 @@
+{
+  "note": "Generated drafts of the operators' carried items for the PRIM3 level builder, made from the owner's loadout photos (Normal, PBR, 40,000 faces). Textures re-encoded to 1024/512 px JPEG and the generator's doubled specular removed; geometry unchanged. Not wired into the game. Paths are relative to this folder.",
+  "items": {
+    "E13-compact-carbine": {
+      "file": "E13-compact-carbine.glb",
+      "preview": "E13-compact-carbine-preview.png",
+      "media_job": "0cdda43c-9426-4e2c-a8f0-94265925a5cf",
+      "prompt": "PRIM3 Field E item 13: compact carbine with its sling, realistic black equipment, no marks.",
+      "reference": "assets/3d/prim3-operators/refs/items/E13-compact-carbine.png",
+      "generator": "fal-ai/hunyuan3d-v3/image-to-3d",
+      "cents": 67.5,
+      "review": "Black short carbine with collapsible stock, red-dot sight and sling matches the photo; front sling swivel fused into a lump that reads like a vertical grip under the handguard; no text or marks."
+    },
+    "R17-scoped-overwatch-rifle": {
+      "file": "R17-scoped-overwatch-rifle.glb",
+      "preview": "R17-scoped-overwatch-rifle-preview.png",
+      "media_job": "dc9521d1-42a1-448d-b863-7645c7a09955",
+      "prompt": "PRIM3 Field R item 17: scoped overwatch rifle, realistic black equipment, no marks.",
+      "reference": "assets/3d/prim3-operators/refs/items/R17-scoped-overwatch-rifle.png",
+      "generator": "fal-ai/hunyuan3d-v3/image-to-3d",
+      "cents": 67.5,
+      "review": "Bolt-action rifle with scope, adjustable cheek rest, magazine and vented fore-end closely matches the photo; very dark albedo; no text or marks."
+    },
+    "T-field-cyberdeck": {
+      "file": "T-field-cyberdeck.glb",
+      "preview": "T-field-cyberdeck-preview.png",
+      "media_job": "50393194-36f7-46dc-aa8d-4ca81749ffbe",
+      "prompt": "PRIM3 Field T: rugged clamshell field cyberdeck, open, realistic, no marks.",
+      "reference": "assets/3d/prim3-operators/refs/items/T-field-cyberdeck.png",
+      "generator": "fal-ai/hunyuan3d-v3/image-to-3d",
+      "cents": 67.5,
+      "review": "Rugged open clamshell with bumpered corners, keyboard, trackpad and red side latches matches the photo; screen carries an abstract UI (bars and a line graph, no legible text); keycaps blank."
+    }
+  }
+}
