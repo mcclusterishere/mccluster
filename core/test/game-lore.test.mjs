@@ -215,3 +215,71 @@ test('expansion lore fails closed on unbound parcels, unknown route anchors, unl
     assert.throws(() => snapshot(data), { code: 'GAME_LORE_UNAVAILABLE' });
   }
 });
+
+// Owner decisions 2026-11-03: real institutions keep their real identity and never host a payoff;
+// payoffs belong to fictional private middlemen; public-record scenes need a proven basis and sources.
+function realInstitutionFixture() {
+  const data = expansionFixture();
+  const talk = data.expansionNpcs[0].dialogue;
+  data.parcels[0].businessId = 'real-police';
+  data.parcels.push({ parcelId: 'civic-center/fixer', neighborhoodId: 'civic-center', businessId: 'fixer-desk' });
+  data.expansionBusinesses = [
+    { id: 'real-police', name: 'Example Police Department', parcelId: 'civic-center/police-station', staffIds: ['clerk'], itemIds: [],
+      realInstitution: { officialName: 'Example Police Department', address: '1 Main Street', sources: [{ title: 'City page', url: 'https://city.example/police', date: '2026-11-03' }] } },
+    { id: 'fixer-desk', name: 'Fixer desk', parcelId: 'civic-center/fixer', staffIds: ['fixer'], itemIds: [],
+      interactions: [{ type: 'bribe', id: 'bribe-motorcade', label: 'Rent a motorcade', price: 20, npcIds: ['fixer'], payee: 'private-middleman' }] }
+  ];
+  data.expansionNpcs = [
+    { id: 'clerk', name: 'Clerk', age: 50, businessId: 'real-police', placement: 'interior', homeParcelId: 'civic-center/police-station', dialogue: talk },
+    { id: 'fixer', name: 'Fixer', age: 58, businessId: 'fixer-desk', acceptsBribes: true, placement: 'interior', homeParcelId: 'civic-center/fixer', dialogue: talk },
+    data.expansionNpcs[1]
+  ];
+  data.publicRecordArcs = [{ id: 'record-arc', title: 'Record', cast: [{ id: 'real-official', name: 'A. Official', realPerson: true, basis: 'conviction' }],
+    beats: [{ id: 'record-beat', title: 'Verdict', basis: 'conviction', realPeople: ['real-official'],
+      sources: [{ title: 'Court release', url: 'https://court.example/verdict', date: '2003-03-19' }], paragraphs: ['A jury convicts.'] }] }];
+  data.idAliases = { note: 'replaced', precinct: 'real-police', 'bribe-police-escort': 'bribe-motorcade' };
+  return data;
+}
+
+test('real institutions, private-middleman payoffs and sourced public-record arcs parse, and replaced IDs still resolve', () => {
+  const source = snapshot(realInstitutionFixture());
+  assert.equal(queryGameLore(source, { section: 'businesses', id: 'precinct' }).records[0].id, 'real-police');
+  assert.equal(queryGameLore(source, { section: 'npcs', business_id: 'precinct' }).records[0].id, 'clerk');
+  assert.equal(queryGameLore(source, { section: 'businesses', id: 'fixer-desk' }).records[0].interactions[0].payee, 'private-middleman');
+});
+
+test('payoffs at real institutions or by real people, unsourced public-record scenes and dangling aliases fail closed', () => {
+  for (const mutate of [
+    (data) => { data.expansionBusinesses[0].interactions = [{ type: 'bribe', id: 'bribe-ticket', label: 'Ticket', price: 20, npcIds: ['clerk'] }]; },
+    (data) => { data.expansionNpcs[0].acceptsBribes = true; },
+    (data) => { data.expansionBusinesses[0].realInstitution.officialName = 'Precinct Zero'; },
+    (data) => { data.expansionBusinesses[0].realInstitution.sources = []; },
+    (data) => { data.expansionBusinesses[0].realInstitution.sources[0].url = 'http://city.example/police'; },
+    (data) => { data.expansionNpcs[1].realPerson = true; },
+    (data) => { data.expansionBusinesses[1].interactions[0].npcIds = ['clerk']; },
+    (data) => { data.publicRecordArcs[0].beats[0].sources = []; },
+    (data) => { delete data.publicRecordArcs[0].beats[0].basis; },
+    (data) => { data.publicRecordArcs[0].beats[0].basis = 'rumor'; },
+    (data) => { data.publicRecordArcs[0].beats[0].realPeople = ['someone-else']; },
+    (data) => { data.publicRecordArcs[0].cast[0].realPerson = false; },
+    (data) => { data.publicRecordArcs[0].cast[0].name = 'Fixer'; },
+    (data) => { data.idAliases.precinct = 'missing'; },
+    (data) => { data.idAliases['fixer-desk'] = 'real-police'; }
+  ]) {
+    const data = realInstitutionFixture(); mutate(data);
+    assert.throws(() => snapshot(data), { code: 'GAME_LORE_UNAVAILABLE' });
+  }
+});
+
+test('installed city canon keeps the real department and school, middleman payoffs and sourced public record', async () => {
+  const raw = await readFile(new URL('../data/fictional-city/district.v1.json', import.meta.url));
+  const source = parseGameLore(raw);
+  const police = queryGameLore(source, { section: 'businesses', id: 'precinct-zero' }).records[0];
+  assert.equal(police.name, 'Bridgeport Police Department'); assert.equal(police.interactions, undefined);
+  assert.equal(queryGameLore(source, { section: 'businesses', id: 'municipal-high-9' }).records[0].name, 'Warren Harding High School');
+  const desk = queryGameLore(source, { section: 'businesses', id: 'bail-mary-bonds' }).records[0];
+  assert.ok(desk.interactions.length >= 3 && desk.interactions.every((row) => row.payee === 'private-middleman'));
+  const data = JSON.parse(raw);
+  assert.ok(data.publicRecordArcs.length >= 3);
+  assert.doesNotMatch(raw.toString('utf8'), /Precinct Zero|529 Boyz|Municipal High/);
+});

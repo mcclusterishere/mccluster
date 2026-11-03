@@ -8,9 +8,10 @@ The current set contains 81 topics and 486 spoken lines, plus greetings and fare
 
 **Schema revision 2 (same date) widens the city.** Four new neighborhoods around the original
 block and the Equity Uprise island add 21 businesses and civic buildings (Wiggers Anonymous,
-Thugged Out Apparel, a church, the School of Hard Knocks, a public school, a hospital, a corrupt
-police precinct with a bribe menu, and fourteen more joke businesses), 49 new residents, ten
-households and 24 more goods: 101 more topics and 606 more spoken lines. See
+Thugged Out Apparel, a church, the School of Hard Knocks, the real Warren Harding High School, a
+private hospital, the real Bridgeport Police Department headquarters, a bail-bond office whose back-counter
+fixers sell a laminated menu of payoffs, and fourteen more joke businesses), 50 new residents, ten
+households and 24 more goods: 104 more topics and 624 more spoken lines. See
 [The wider city](#the-wider-city-new-neighborhoods-people-and-businesses) below.
 
 The city’s working name is **McCluster City**. Its commercial blocks take inspiration
@@ -1911,9 +1912,9 @@ This register records source provenance without publishing private access URLs o
 
 Schema revision 2 of the [manifest](../../core/data/fictional-city/district.v1.json) adds
 4 neighborhoods around the original block, 21 businesses and civic
-buildings, 49 residents (5 of them minors, all students),
-10 households and 24 goods. The residents have 101 conversation topics and
-606 spoken lines, plus greetings and farewells. **All of it is new fiction written on November 3, 2026
+buildings, 50 residents (5 of them minors, all students),
+10 households and 24 goods. The residents have 104 conversation topics and
+624 spoken lines, plus greetings and farewells. **All of it is new fiction written on November 3, 2026
 from the owner’s brief** (`"authorship": "new-2026-11-03"`); none of it is recovered history.
 Church attendance and cross-references to the original residents are additions to their lives, not
 changes to their biographies, ages or origins.
@@ -1927,10 +1928,21 @@ the whole expansion.
 **Tone.** This is the owner’s adult satire. Wiggers Anonymous is a twelve-step group for white guys who
 wear a cartoon of Black and hip-hop culture as a costume; the School of Hard Knocks is a rich school that
 sells “the Black experience” to rich kids as coursework. The joke is always on the posers, the school,
-the store that sells the costume and the corrupt institutions, never on Black people or on the public-school
-kids the 529 Boyz punch down at. Nobody speaks in phonetic dialect; the comedy is in situations and
+the store that sells the costume and the middlemen who sell influence they do not have, never on Black
+people or on the public-school kids the Bond Street Willy Whackers punch down at. Nobody speaks in phonetic dialect; the comedy is in situations and
 self-delusion. Students are minors: their jokes are privilege, posturing and their absurd school, with no
 sexual content, no injury and no transactions.
+
+**Real places, real record (owner, November 3, 2026).** Real streets, the city and its government
+buildings keep their real, sourced names; fictional private businesses, occupants and people are the
+overlay. The parcel `civic-center/police-station` is the real **Bridgeport Police Department**
+(300 Congress Street) and `northside-residential/public-school` is the real **Warren Harding High
+School** (379 Bond Street), each staffed in the game only by fictional civilians, teachers and
+students; the former IDs `precinct-zero` and `municipal-high-9` resolve to them through `idAliases`.
+No payoff touches a real institution or a real person: the laminated menu belongs to Mulrooney &
+Son Expediting, fictional fixers at the back counter of Bail Mary Bail Bonds, and the joke is that
+they reach nobody. The city’s real corruption cases are told only from the record, with sources, in
+[Public-record storylines](PUBLIC-RECORD-STORYLINES.md).
 
 ### Neighborhoods
 
@@ -1938,9 +1950,9 @@ sexual content, no injury and no transactions.
 
 **Bridgefoot Quay** (`hq-waterfront`). The waterfront where the HQ bridge touches the mainland. Developers rebranded it twice in one year and both new names are still printed on the same bus shelter. It has the best view of the Equity Uprise building on its island and the worst parking in the city. The quay is where hustles come to look legitimate: a bail bondsman with a prayer candle in the window, a chicken spot whose sauce has a waiver, a tire shop that also sells sushi, and Thugged Out Apparel, the most expensive “street” clothing ever sold to men who own a boat.
 
-**Precinct Square** (`civic-center`). The city’s civic heart, in the sense that something is technically beating. The police precinct faces the hospital so officers can bill both ends of an arrest. The church shares a parking lot with the bank and a sermon schedule with the bank’s overdraft calendar. The School of Hard Knocks sits behind an ivy-covered wall it imported from a richer city, and directly across the square, in a former dentist’s office, Wiggers Anonymous meets every night with fresh coffee and very low expectations.
+**Precinct Square** (`civic-center`). The city’s civic heart, in the sense that something is technically beating. The Bridgeport Police Department’s headquarters holds one corner under its own name; everything around it is private enterprise with ambitions. St. Copay’s, a private hospital, measures its emergency-room wait in fiscal quarters. The church shares a parking lot with the bank, a sermon schedule with the bank’s overdraft calendar, and a boot technician with Bail Mary’s expediting desk. The School of Hard Knocks sits behind an ivy-covered wall it imported from a richer city, and directly across the square, in a former dentist’s office, Wiggers Anonymous meets every night with fresh coffee and very low expectations.
 
-**Cul-de-Sadness** (`northside-residential`). Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the precinct, the church and the shops, and who are tired of having their recycling bins tagged with the words 529 BOYZ in very neat handwriting. Municipal High School No. 9 is at the edge of the neighborhood, in a building that was a parking garage and still has the ramps.
+**Cul-de-Sadness** (`northside-residential`). Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the church and the shops, and who are tired of having their recycling bins tagged with the words BOND ST WILLY WHACKERS in very neat handwriting. The neighborhood’s teenagers go to Warren Harding High School on Bond Street, the real public high school the Willy Whackers have decided to “study.”
 
 **Rustbucket Wharf** (`workshop-waterfront`). The industrial harbor on the far side of the city’s working waterfront: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives. Whip Equipped knows every driveway here and pretends not to.
 
@@ -1950,11 +1962,11 @@ sexual content, no injury and no transactions.
 | --- | --- | --- |
 | `civic-center/church` | Precinct Square | Greater Prosperity Tabernacle of the Holy Upsell |
 | `civic-center/hospital` | Precinct Square | St. Copay’s General Hospital |
-| `civic-center/police-station` | Precinct Square | Precinct Zero |
+| `civic-center/police-station` | Precinct Square | Bridgeport Police Department (real institution) |
 | `civic-center/school-of-hard-knocks` | Precinct Square | The School of Hard Knocks |
 | `civic-center/shop-01` | Precinct Square | Overdraft National Bank |
 | `civic-center/shop-02` | Precinct Square | Refund Raymond’s Tax Prep |
-| `civic-center/shop-03` | Precinct Square | Department of Mild Violence |
+| `civic-center/shop-03` | Precinct Square | Mild Violence Tag & Title Express |
 | `civic-center/shop-04` | Precinct Square | Side Effects Pharmacy |
 | `civic-center/wiggers-anonymous` | Precinct Square | Wiggers Anonymous |
 | `hq-waterfront/shop-01` | Bridgefoot Quay | Bail Mary Bail Bonds |
@@ -1972,7 +1984,7 @@ sexual content, no injury and no transactions.
 | `northside-residential/house-08` | Cul-de-Sadness | The Ledgers |
 | `northside-residential/house-09` | Cul-de-Sadness | The Mulrooneys |
 | `northside-residential/house-10` | Cul-de-Sadness | The Haddads |
-| `northside-residential/public-school` | Cul-de-Sadness | Municipal High School No. 9 (Formerly a Parking Garage) |
+| `northside-residential/public-school` | Cul-de-Sadness | Warren Harding High School (real institution) |
 | `workshop-waterfront/shop-01` | Rustbucket Wharf | Spin Cycle Laundromat & Money Laundering |
 | `workshop-waterfront/shop-02` | Rustbucket Wharf | Joyride Hand Car Wash |
 | `workshop-waterfront/shop-03` | Rustbucket Wharf | U-Hide Self Storage |
@@ -2166,9 +2178,9 @@ Derek was Yung Mayo, a name he chose without irony and defended in a public comm
 
 **Wiggers Anonymous member; “pharmaceutical entrepreneur” (sells oregano)** · 34 · Cul-de-Sadness, McCluster City
 
-Walks: `northside-residential/house-06` → `gauranfucking-tea` → `civic-center/wiggers-anonymous` → `civic-center/police-station` → `robbery-1s` → `northside-residential/house-06`. Wiggers Anonymous: member, 3 days. Works: Calls himself a drug dealer. Sells oregano, basil and Gauranfucking Tea leaves in sandwich bags..
+Walks: `northside-residential/house-06` → `gauranfucking-tea` → `civic-center/wiggers-anonymous` → `hq-waterfront/shop-01` → `robbery-1s` → `northside-residential/house-06`. Wiggers Anonymous: member, 3 days. Works: Calls himself a drug dealer. Sells oregano, basil and Gauranfucking Tea leaves in sandwich bags..
 
-Gary lives in his mother’s basement in Cul-de-Sadness and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Precinct Zero has arrested him four times and released him four times, because nothing in the bag is illegal and because he pays the laminated-menu price anyway, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.
+Gary lives in his mother’s basement in Cul-de-Sadness and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Nobody has ever arrested him, because nothing in the bag is illegal, so every month he pays Frank Mulrooney’s laminated-menu price at Bail Mary to keep it that way, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.
 
 **Temperament:** Self-important, broke, deeply loyal to his mom; the least dangerous dealer in America.
 
@@ -2190,15 +2202,15 @@ Gary lives in his mother’s basement in Cul-de-Sadness and calls it the trap. H
 
 **Conversation — Aren’t you worried about the police?**
 
-> **You:** Doesn’t Precinct Zero arrest you?
+> **You:** Doesn’t anybody arrest you?
 
-> **Gary Babbitt:** Four times. They let me go every time.
+> **Gary Babbitt:** Never. It’s oregano. So I pay Frank Mulrooney to keep it that way.
 
-> **You:** Because it’s oregano?
+> **You:** Keep what that way?
 
-> **Gary Babbitt:** Because I pay. Twenty credits, laminated menu. I like to support local institutions.
+> **Gary Babbitt:** The not-arresting. Twenty credits, laminated menu. I like to support local institutions.
 
-> **You:** You bribe them for a legal product?
+> **You:** You pay a fixer to fix nothing?
 
 > **Gary Babbitt:** It’s about respect. Also Mom says I should always tip.
 
@@ -2420,7 +2432,7 @@ Marty spent thirty years wholesaling pastel golf shirts. A trend consultant he p
 
 Stays inside `hq-waterfront/thugged-out-apparel`.
 
-Nour studies accounting at night and is, by every measure, the only adult supervision in Thugged Out Apparel. She took the job because it pays more than the wing counter at her father’s shop and because she wanted to see a business fail in real time for school. It hasn’t failed, entirely because of her. She keeps a 214-row spreadsheet of things Marty must not say, charges Hunter a restocking fee every time he calls her shorty, and refuses to sell anything to the 529 Boyz without a parent’s card and a written apology to Municipal High No. 9.
+Nour studies accounting at night and is, by every measure, the only adult supervision in Thugged Out Apparel. She took the job because it pays more than the wing counter at her father’s shop and because she wanted to see a business fail in real time for school. It hasn’t failed, entirely because of her. She keeps a 214-row spreadsheet of things Marty must not say, charges Hunter a restocking fee every time he calls her shorty, and refuses to sell anything to the Willy Whackers without a parent’s card and a written apology to the student they took it from.
 
 **Temperament:** Dry, exact, unbothered; quietly the most competent person on the waterfront.
 
@@ -2440,7 +2452,7 @@ Nour studies accounting at night and is, by every measure, the only adult superv
 
 > **Nour Haddad:** He follows it like Hunter follows the program. Enthusiastically and for about a day.
 
-**Conversation — Do the 529 Boyz shop here?**
+**Conversation — Do the Willy Whackers shop here?**
 
 > **You:** Do the private-school kids come in?
 
@@ -2448,7 +2460,7 @@ Nour studies accounting at night and is, by every measure, the only adult superv
 
 > **You:** Do you sell to them?
 
-> **Nour Haddad:** With a parent’s card and a written apology to Municipal High. Kensington’s apology was three words.
+> **Nour Haddad:** With a parent’s card and a written apology to the kid they robbed. Kensington’s apology was three words.
 
 > **You:** Which words?
 
@@ -2464,7 +2476,7 @@ Parcel `civic-center/church`.
 
 A megachurch in a former mattress showroom, with a fog machine borrowed from Thugged Out Apparel, a tap-to-tithe card reader on every pew, and a sermon series titled “Blessed and Leveraged.”
 
-Pastor Chad Ledger came to the city with a guitar, a ring light and a theology that fits on a vanity plate. He bought the mattress showroom because it was already zoned for financing. Mother Odessa Pike, who has belonged to every congregation that has ever met on Precinct Square, came with the building and runs the collection plate like a central bank. Half the block attends for different reasons: Beatrice Cole for Mother Odessa, Mike Hawk for whatever service has a camera, Mara Costa only on Easter to run the tea table, Captain Mulrooney for the front pew he has never once paid for, Hollis Ashby for the tax receipt, Linda Babbitt because she is the church secretary, Tammy Pruitt to sell oils in the lobby, Marty Feldstein because he is trying to buy pew sponsorship, Raymond Dupree to “keep my receipts holy,” and Ray Fitch because half his bail clients are in the second row.
+Pastor Chad Ledger came to the city with a guitar, a ring light and a theology that fits on a vanity plate. He bought the mattress showroom because it was already zoned for financing. Mother Odessa Pike, who has belonged to every congregation that has ever met on Precinct Square, came with the building and runs the collection plate like a central bank. Half the block attends for different reasons: Beatrice Cole for Mother Odessa, Mike Hawk for whatever service has a camera, Mara Costa only on Easter to run the tea table, Frank Mulrooney for the front pew he has never once paid for, Hollis Ashby for the tax receipt, Linda Babbitt because she is the church secretary, Tammy Pruitt to sell oils in the lobby, Marty Feldstein because he is trying to buy pew sponsorship, Raymond Dupree to “keep my receipts holy,” and Ray Fitch because half his bail clients are in the second row.
 
 **Interior:** Rows of padded pews, a projection screen showing the current giving total, a card reader on every armrest and a stage-left fog machine on a timer.
 
@@ -2473,7 +2485,7 @@ Pastor Chad Ledger came to the city with a guitar, a ring light and a theology t
 - **Beatrice Cole** — Sits with Mother Odessa; claims she comes for the hymns, actually comes for the gossip.
 - **Mike Hawk** — Attends whichever service PressureTV is filming. Has asked twice to give the sermon.
 - **Mara Costa** — Easter only. Runs the tea table and refuses to say the guarantee inside the sanctuary.
-- **Captain Frank Mulrooney** — Front pew, reserved, unpaid.
+- **Frank “the Captain” Mulrooney** — Front pew, reserved, unpaid.
 - **Hollis Ashby** — Attends for the tax receipt and the networking.
 - **Linda Babbitt** — Church secretary. Prays for Gary by name, loudly.
 - **Tammy Pruitt** — Sells essential oils in the lobby between services.
@@ -2523,7 +2535,7 @@ Chad came to the city with a guitar, a ring light and a theology that fits on a 
 
 > **You:** Who sits in your pews?
 
-> **Pastor Chad Ledger:** Captain Mulrooney, front row. Beatrice from Baddies, Mike Hawk when the cameras are on, Mara at Easter.
+> **Pastor Chad Ledger:** Frank Mulrooney, front row. Beatrice from Baddies, Mike Hawk when the cameras are on, Mara at Easter.
 
 > **You:** Do they all believe?
 
@@ -2585,7 +2597,7 @@ Parcel `civic-center/school-of-hard-knocks`.
 
 The most prestigious, most liberal-arts, most expensive private high school in the city, whose signature program teaches rich kids “the Black experience” as a curriculum, taught entirely by people who have never had it. Coursework includes Authentic Adversity, Code-Switching for Legacy Admissions, and a field practicum in being robbed.
 
-Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang, the 529 Boyz, named after their college savings plans, as an extracurricular. They tag the public school’s bike racks in calligraphy and “rob” public-school kids of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.
+Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang as an extracurricular and named it the Bond Street Willy Whackers, after the street beside Warren Harding High School, the real public school they go to “study.” They tag its bike racks in calligraphy and “rob” its students of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.
 
 **Interior:** A wood-panelled lobby, a donor wall, a framed photo of the founding class pretending to be in a gang, and a sign that says this campus is a safe space for narratives.
 
@@ -2608,7 +2620,7 @@ Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consul
 | Item | Credits | What the player receives |
 | --- | ---: | --- |
 | Certificate of Hardship | 90 | Embossed, framed and suitable for a college application. No hardship included. |
-| 529 Boyz Varsity Jacket | 120 | Letterman wool with a calligraphy 529 on the back. Comes with a dry-cleaning schedule. |
+| Bond Street Willy Whackers Varsity Jacket | 120 | Letterman wool with BOND ST in calligraphy on the back. Comes with a dry-cleaning schedule. |
 
 #### Dr. Winthrop Ashcroft-Pell
 
@@ -2738,25 +2750,25 @@ Bryce is exactly what Wiggers Anonymous was built for, and he knows it. He came 
 
 #### Tucker Whitmore-Sterling
 
-**Student, The School of Hard Knocks; founder of the 529 Boyz** · 16 (minor) · Cul-de-Sadness, McCluster City
+**Student, The School of Hard Knocks; founder of the Bond Street Willy Whackers** · 16 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `civic-center/school-of-hard-knocks` → `northside-residential/public-school` → `hq-waterfront/thugged-out-apparel` → `northside-residential/house-01`.
 
-Tucker founded the 529 Boyz, a “gang” named after the college savings plans their parents opened at birth. He wrote the bylaws. There are bylaws. He tags the public school’s bike racks in calligraphy, buys his colors at Thugged Out Apparel with his mother’s card, and keeps a reflection journal about the hardships he has scheduled. His sister Sloane, twelve, has read the journal and has notes. He is not dangerous. He is insufferable, and his school is billing for it.
+Tucker founded the Bond Street Willy Whackers, a “gang” named for the street beside Warren Harding High School, which they “study,” and, Tucker insists, for the municipal bonds in his trust. He wrote the bylaws. There are bylaws. He tags the public school’s bike racks in calligraphy, buys his colors at Thugged Out Apparel with his mother’s card, and keeps a reflection journal about the hardships he has scheduled. His sister Sloane, twelve, has read the journal and has notes. He is not dangerous. He is insufferable, and his school is billing for it.
 
 **Temperament:** Entitled, performative, organized to a fault; mistakes logistics for street credibility.
 
-**Greeting:** “You know who runs this block? The 529 Boyz. We have a charter. It’s laminated.”
+**Greeting:** “You know who runs this block? The Bond Street Willy Whackers. We have a charter. It’s laminated.”
 
-**Conversation — What are the 529 Boyz?**
+**Conversation — What are the Willy Whackers?**
 
-> **You:** What is the 529 Boyz?
+> **You:** What are the Bond Street Willy Whackers?
 
-> **Tucker Whitmore-Sterling:** The hardest crew in Cul-de-Sadness. Named after our college funds.
+> **Tucker Whitmore-Sterling:** The hardest crew in Cul-de-Sadness. Named after Bond Street. And my bonds.
 
 > **You:** What do you do?
 
-> **Tucker Whitmore-Sterling:** We rob kids at Municipal High. Then we return everything with a reflection essay. It’s graded.
+> **Tucker Whitmore-Sterling:** We rob kids at Warren Harding. Then we return everything with a reflection essay. It’s graded.
 
 > **You:** That’s just homework.
 
@@ -2780,11 +2792,11 @@ Tucker founded the 529 Boyz, a “gang” named after the college savings plans 
 
 #### Kensington “K-Murda” Ashby
 
-**Student, The School of Hard Knocks; self-titled enforcer of the 529 Boyz** · 15 (minor) · Cul-de-Sadness, McCluster City
+**Student, The School of Hard Knocks; self-titled enforcer of the Bond Street Willy Whackers** · 15 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `civic-center/school-of-hard-knocks` → `northside-residential/public-school` → `hq-waterfront/shop-02` → `northside-residential/house-02`.
 
-Kensington gave himself the name K-Murda after losing a fencing match, which is the most violent thing that has ever happened to him. He is the 529 Boyz’ enforcer, a role that consists of taking Mateo Delgado’s calculator every Tuesday and returning it Wednesday with a reflection essay. His father wants to turn Municipal High No. 9 back into a parking garage. Kensington wants a tattoo and is not allowed one until his eighteenth birthday, which his mother has already booked at a spa.
+Kensington gave himself the name K-Murda after losing a fencing match, which is the most violent thing that has ever happened to him. He is the Willy Whackers’ enforcer, a role that consists of taking Mateo Delgado’s calculator every Tuesday and returning it Wednesday with a reflection essay. His father wants to put luxury condos across Bond Street from Warren Harding High School. Kensington wants a tattoo and is not allowed one until his eighteenth birthday, which his mother has already booked at a spa.
 
 **Temperament:** Loud, nervous, theatrical; his menace evaporates the moment anybody says no.
 
@@ -2804,31 +2816,31 @@ Kensington gave himself the name K-Murda after losing a fencing match, which is 
 
 > **Kensington “K-Murda” Ashby:** I’m keeping a record. For my essay. Losing is my adversity pillar.
 
-**Conversation — Your dad wants the public school?**
+**Conversation — Your dad wants Bond Street?**
 
-> **You:** Your father wants to buy Municipal High No. 9?
+> **You:** Your father wants to build condos next to Warren Harding High?
 
-> **Kensington “K-Murda” Ashby:** He wants it to be a parking garage again. With the students relocated. Respectfully.
+> **Kensington “K-Murda” Ashby:** The Bond. Doorman, rooftop, and a view of the school he calls “authentic.”
 
-> **You:** Where would they go?
+> **You:** Would the students mind?
 
-> **Kensington “K-Murda” Ashby:** Dad says “somewhere with good transit.” He says that about everyone he displaces.
+> **Kensington “K-Murda” Ashby:** Dad says the students are “part of the amenity.” He says that about everyone.
 
 > **You:** Do you agree with him?
 
-> **Kensington “K-Murda” Ashby:** I need the school for my practicum. If he buys it, I have no one to rob. It’s a conflict of interest.
+> **Kensington “K-Murda” Ashby:** If he renames the street, my gang has to rebrand. It’s a conflict of interest.
 
 **Farewell:** “Tell Mateo I’ll bring the calculator back Wednesday. Same as always.”
 
 #### Graham Vanderhoff
 
-**Student, The School of Hard Knocks; the 529 Boyz’ “strategist”** · 17 (minor) · Cul-de-Sadness, McCluster City
+**Student, The School of Hard Knocks; the Willy Whackers’ “strategist”** · 17 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `civic-center/school-of-hard-knocks` → `civic-center/hospital` → `civic-center/shop-04` → `northside-residential/house-03`.
 
-Graham is the 529 Boyz’ strategist, which means he has noticed that the gang has never won anything and that every “robbery” ends with them returning the item and getting graded. He asked Derek Vollmer whether Wiggers Anonymous counts as community-service hours. It does not. He is the most likely to grow out of all this and the most embarrassed that he hasn’t yet. His mother is a surgeon at St. Copay’s, where he volunteers once a semester for his application and is not allowed near anything sharp.
+Graham is the Willy Whackers’ strategist, which means he has noticed that the gang has never won anything and that every “robbery” ends with them returning the item and getting graded. He asked Derek Vollmer whether Wiggers Anonymous counts as community-service hours. It does not. He is the most likely to grow out of all this and the most embarrassed that he hasn’t yet. His mother is a surgeon at St. Copay’s, where he volunteers once a semester for his application and is not allowed near anything sharp.
 
-**Temperament:** Wry, anxious, quietly aware the gang is ridiculous; the one 529 Boy with a future as an adult.
+**Temperament:** Wry, anxious, quietly aware the gang is ridiculous; the one Willy Whacker with a future as an adult.
 
 **Greeting:** “Hi. I’m in a gang. It’s on my transcript, so, technically, it’s a club.”
 
@@ -2840,7 +2852,7 @@ Graham is the 529 Boyz’ strategist, which means he has noticed that the gang h
 
 > **You:** How so?
 
-> **Graham Vanderhoff:** We rob Municipal High, then the school makes us return everything and write an essay. That’s a library program.
+> **Graham Vanderhoff:** We rob kids at Harding, then our school makes us return everything and write an essay. That’s a library program.
 
 > **You:** Why stay?
 
@@ -2862,54 +2874,53 @@ Graham is the 529 Boyz’ strategist, which means he has noticed that the gang h
 
 **Farewell:** “If you see Tucker, don’t encourage him. Please.”
 
-### 13. Municipal High School No. 9 (Formerly a Parking Garage)
+### 13. Warren Harding High School
 
-**Public high school** — Home of the Fighting Potholes. Still has the ramps.
+**Public high school, Bridgeport Public Schools** — 379 Bond Street, Bridgeport, Connecticut
 
 Parcel `northside-residential/public-school`.
 
-An under-funded public high school in a converted parking garage. Classes are held on Levels 1 through 4; the gym is the roof; the ticket machine still occasionally prints a hall pass. The students here are the people the 529 Boyz are “studying,” and they are mostly just trying to get through chemistry.
+Bridgeport’s public high school on Bond Street, in a building that opened in 2018 on the site of a former General Electric plant. The Bond Street Willy Whackers from the School of Hard Knocks come here to “study” its students, who are mostly just trying to get through chemistry.
 
-The city bought the garage after the mall it served closed, painted the parking lines into hallway lines, and declared it a school. Principal Lorraine Abernathy has run it for eleven years with a budget that would not cover the School of Hard Knocks’ ivy. Her teachers buy their own chalk. Her students win debate tournaments against academies with planetariums. The 529 Boyz roll through after their practicum to “rob” her students of phones their parents are still paying off, then return them with a handwritten reflection essay. Dr. Abernathy files every incident with Precinct Zero, which has never opened one. Her daughter Imani keeps a separate archive, and it is better organized than the precinct’s.
+Dr. Lorraine Abernathy teaches history and coaches debate here, and her students win tournaments against academies with planetariums. The Willy Whackers roll down Bond Street after their practicum to “rob” her students of phones their parents are still paying off, then return them with a handwritten reflection essay. Dr. Abernathy writes up every incident for the boys’ headmaster and the police records window. Her daughter Imani keeps a separate archive, and it is better organized than the headmaster’s.
 
-**Interior:** Concrete pillars, a ramp to Level 2, donated desks, and a trophy case that is mostly debate trophies and one parking-validation stamp.
+**Interior:** A classroom set up for debate practice: desks in two facing rows, a timer, and a stack of flow sheets.
 
-**Ad cards**
+**Real institution:** Warren Harding High School, Bridgeport Public Schools, 379 Bond Street, Bridgeport, CT 06610. Real name, district and street address as the City of Bridgeport lists them; the 2018 building on a former General Electric plant site as reported. Its principal and real staff are not portrayed.
 
-- Municipal High No. 9: Home of the Fighting Potholes.
-- Debate champions, three years running. Chalk donations welcome.
+**Sources:** [Emergency Shelter Locations (high school addresses), City of Bridgeport](https://www.bridgeportct.gov/government/departments/emergency-management-homeland-security/weather-and-emergency-preparedness/emergency-shelter-locations) (2026-11-03); [Warren Harding High School opens to students for first time Thursday (News 12 Connecticut)](https://connecticut.news12.com/warren-harding-high-school-opens-to-students-for-first-time-thursday-38988014) (2018-08-29); [Connecticut High School Opens in Time for the New School Year (Spaces4Learning)](https://spaces4learning.com/articles/2018/09/07/harding-high-school.aspx) (2018-09-07).
 
 #### Dr. Lorraine Abernathy
 
-**Principal, Municipal High School No. 9** · 49 · Hartford, Connecticut, USA
+**History teacher and debate coach, Warren Harding High School** · 49 · Hartford, Connecticut, USA
 
 Stays inside `northside-residential/public-school`.
 
-Lorraine has run Municipal High No. 9 for eleven years on a budget smaller than the School of Hard Knocks’ ivy line. Her students win debate tournaments against academies with planetariums. Her teachers buy their own chalk. She files a complaint with Precinct Zero every time the 529 Boyz roll through, which is weekly, and Captain Mulrooney has never opened one. She is not intimidated by Hollis Ashby’s plans for her building. She has already outlasted two mayors and a sinkhole.
+Lorraine has taught history and coached debate at Warren Harding High School for eleven years, and her students win tournaments against academies with planetariums. Every time the Willy Whackers roll down Bond Street, which is weekly, she writes it up for the boys’ headmaster and drops a copy at the police records window, and the headmaster has never answered one. She is not intimidated by Hollis Ashby’s plans for the lots across the street. She has already outlasted two headmasters at the School of Hard Knocks and a sinkhole.
 
 **Temperament:** Exacting, warm, unbreakable; has no time for nonsense and makes time for every student.
 
-**Greeting:** “Welcome to No. 9. Watch the ramp, Level 2 is chemistry.”
+**Greeting:** “Welcome to Harding. Debate practice is in my room. Chemistry is down the hall.”
 
-**Conversation — This used to be a parking garage?**
+**Conversation — What was here before the school?**
 
-> **You:** Is this really a parking garage?
+> **You:** What was on this site before the school?
 
-> **Dr. Lorraine Abernathy:** Was. Now it’s a school with excellent drainage and a roof gym.
+> **Dr. Lorraine Abernathy:** A General Electric plant. The new building opened in 2018.
 
-> **You:** How do you manage?
+> **You:** Does Hollis Ashby really want the block?
 
-> **Dr. Lorraine Abernathy:** Lines painted over parking stripes. Teachers who care. And a ticket machine that prints hall passes.
+> **Dr. Lorraine Abernathy:** He wants the lots across Bond Street for condos he wants to call The Bond.
 
-> **You:** Does Hollis Ashby really want it back?
+> **You:** Will he get them?
 
-> **Dr. Lorraine Abernathy:** He can have it the day he outdebates my juniors. He’s welcome to try.
+> **Dr. Lorraine Abernathy:** He can have my opinion the day he outdebates my juniors. He’s welcome to try.
 
-**Conversation — What do you do about the 529 Boyz?**
+**Conversation — What do you do about the Willy Whackers?**
 
 > **You:** How do you handle the private-school kids?
 
-> **Dr. Lorraine Abernathy:** I file a complaint every week. Precinct Zero files it in a drawer marked ARCHIVE.
+> **Dr. Lorraine Abernathy:** I write it up every week for their headmaster and the police records window. The headmaster files it under “Narratives.”
 
 > **You:** And the kids themselves?
 
@@ -2919,29 +2930,29 @@ Lorraine has run Municipal High No. 9 for eleven years on a budget smaller than 
 
 > **Dr. Lorraine Abernathy:** My students are getting very good at accepting apologies. That’s a skill. Theirs is not.
 
-**Farewell:** “Sign out at the ticket machine. It still works, unfortunately.”
+**Farewell:** “Sign out at the front office. And take a flow sheet; you’ll need it.”
 
 #### Imani Abernathy
 
-**Junior, debate captain and archivist, Municipal High No. 9** · 16 (minor) · Cul-de-Sadness, McCluster City
+**Junior, debate captain and archivist, Warren Harding High School** · 16 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/public-school` → `northside-residential/house-07` → `civic-center/police-station` → `northside-residential/public-school`.
 
-Imani is the debate captain at Municipal High No. 9 and the keeper of the most complete record of the 529 Boyz in existence: timestamps, photos of calligraphy tags, and returned-item condition reports. She delivers a printed copy to Precinct Zero every Friday because her mother told her paperwork is power, and because watching Officer Szabo put it in the shredder labeled ARCHIVE is educational. She beat a School of Hard Knocks team at a tournament on the motion “This House Would Abolish Hardship Tourism” and has the trophy at Norma Klein’s pawn shop, on display, not for sale.
+Imani is the debate captain at Warren Harding High School and the keeper of the most complete record of the Bond Street Willy Whackers in existence: timestamps, photos of calligraphy tags, and returned-item condition reports. She hands a printed copy to the records window at police headquarters every Friday because her mother told her paperwork is power, and because Ms. Fairweather gives her a case number every time. She beat a School of Hard Knocks team at a tournament on the motion “This House Would Abolish Hardship Tourism” and has the trophy at Norma Klein’s pawn shop, on display, not for sale.
 
 **Temperament:** Sharp, organized, deadpan; already more competent than every adult institution in the city.
 
-**Greeting:** “Hi. If you’re a 529 Boy, I already have your file.”
+**Greeting:** “Hi. If you’re a Willy Whacker, I already have your file.”
 
 **Conversation — What’s in your archive?**
 
-> **You:** What do you keep on the 529 Boyz?
+> **You:** What do you keep on the Willy Whackers?
 
 > **Imani Abernathy:** Every incident since September. Time, place, item, condition on return.
 
 > **You:** Why?
 
-> **Imani Abernathy:** Because Precinct Zero won’t. And because one day one of them will run for office.
+> **Imani Abernathy:** Because their headmaster won’t. And because one day one of them will run for office.
 
 > **You:** Do they know?
 
@@ -2965,17 +2976,17 @@ Imani is the debate captain at Municipal High No. 9 and the keeper of the most c
 
 #### Mateo Delgado
 
-**Freshman, Municipal High School No. 9** · 14 (minor) · Cul-de-Sadness, McCluster City
+**Freshman, Warren Harding High School** · 14 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/house-04` → `northside-residential/public-school` → `hq-waterfront/shop-03` → `northside-residential/house-04`.
 
-Mateo is a freshman who has been “robbed” by the 529 Boyz four times this semester, always of the same graphing calculator, always returned the next day with a reflection essay. He has started grading the essays. Kensington got a B-minus from his school and a D from Mateo. Mateo helps Gus Pappas at the tire shop on weekends and wants to be a mechanic or an engineer, depending on which one his grandfather lets him argue for at dinner.
+Mateo is a freshman who has been “robbed” by the Bond Street Willy Whackers four times this semester, always of the same graphing calculator, always returned the next day with a reflection essay. He has started grading the essays. Kensington got a B-minus from his school and a D from Mateo. Mateo helps Gus Pappas at the tire shop on weekends and wants to be a mechanic or an engineer, depending on which one his grandfather lets him argue for at dinner.
 
 **Temperament:** Unflappable, funny, practical; treats the rich kids’ menace like weather.
 
 **Greeting:** “If you’re here for my calculator, it’s Wednesday. They already brought it back.”
 
-**Conversation — Do the 529 Boyz really rob you?**
+**Conversation — Do the Willy Whackers really rob you?**
 
 > **You:** Do the private-school kids keep robbing you?
 
@@ -2997,7 +3008,7 @@ Mateo is a freshman who has been “robbed” by the 529 Boyz four times this se
 
 > **You:** Does it help?
 
-> **Mateo Delgado:** Precinct Zero won’t take it. Imani Abernathy took it and cross-referenced it.
+> **Mateo Delgado:** Their headmaster won’t read it. Imani Abernathy took it and cross-referenced it.
 
 > **You:** And?
 
@@ -3011,9 +3022,9 @@ Mateo is a freshman who has been “robbed” by the 529 Boyz four times this se
 
 Parcel `civic-center/hospital`.
 
-The city’s only hospital. The emergency-room wait is measured in fiscal quarters, the vending machine sells aspirin by the half-tablet, and the cosmetic wing is nicer than the cardiology wing because cosmetic pays up front.
+A private hospital with a charity name. The emergency-room wait is measured in fiscal quarters, the vending machine sells aspirin by the half-tablet, and the cosmetic wing is nicer than the cardiology wing because cosmetic pays up front.
 
-St. Copay’s was a charity hospital until a private-equity firm bought it, renamed the chapel the Revenue Cycle Center, and installed a card reader on the defibrillator. Charge nurse Rosa Delgado holds the emergency room together with tape, sarcasm and a personal stash of saline. Dr. Margaux Vanderhoff runs the cosmetic emergency department, which treats crises like asymmetric lip filler, and is the hospital’s most profitable physician. The precinct across the square bills the hospital for every patient it delivers; the hospital bills the precinct for every officer it treats; neither bill has been paid since the merger.
+St. Copay’s was a charity hospital until a private-equity firm bought it, renamed the chapel the Revenue Cycle Center, and installed a card reader on the defibrillator. Charge nurse Rosa Delgado holds the emergency room together with tape, sarcasm and a personal stash of saline. Dr. Margaux Vanderhoff runs the cosmetic emergency department, which treats crises like asymmetric lip filler, and is the hospital’s most profitable physician. Bail Mary’s expediting desk sells “priority intake” wristbands in the waiting room. The emergency room does not recognize them, and Rosa keeps the confiscated ones in a jar.
 
 **Interior:** Plastic chairs, a wait-time board that just says “yes,” a vending machine of half-tablets, and through a glass door, a marble cosmetic lobby with cucumber water.
 
@@ -3100,7 +3111,7 @@ Margaux runs the cosmetic emergency department, which treats crises like asymmet
 
 **Conversation — Do you know your son is in a gang?**
 
-> **You:** Your son is in the 529 Boyz.
+> **You:** Your son is a Bond Street Willy Whacker.
 
 > **Dr. Margaux Vanderhoff:** I pay for it. It’s on the tuition invoice as Experiential Learning.
 
@@ -3114,191 +3125,92 @@ Margaux runs the cosmetic emergency department, which treats crises like asymmet
 
 **Farewell:** “Hydrate. Moisturize. Pay at the front.”
 
-### 15. Precinct Zero
+### 15. Bridgeport Police Department
 
-**Police station** — To Protect and Invoice.
+**Municipal police department headquarters** — 300 Congress Street, Bridgeport, Connecticut
 
 Parcel `civic-center/police-station`.
 
-The city’s police precinct, where every problem has a price and the price is posted. Officer Szabo laminated the bribe menu so it would survive coffee. The holding cell has a minibar.
+Headquarters of the City of Bridgeport’s police department, at 300 Congress Street. Residents come to the records window for reports, copies and case numbers. Imani Abernathy comes every Friday with a binder.
 
-Captain Frank Mulrooney inherited Precinct Zero from his father, along with the front pew at the Tabernacle and a philosophy: crime is a revenue opportunity that has not been invoiced yet. Officer Dale Pruitt writes tickets to fund his wife’s essential-oil inventory. Officer Brenda Szabo, the youngest and most efficient officer in the building, modernized corruption with a laminated menu, a tip jar and a QR code. Precinct Zero has never solved a case but has a 100 percent collection rate. It also has a standing complaint from Municipal High No. 9 about the 529 Boyz, which the captain keeps unread because the Ashbys and the Whitmore-Sterlings sponsor the precinct softball team.
+Odalys Fairweather has worked the records window for nineteen years and spends a surprising part of each week explaining that the “expediting” fees Frank Mulrooney collects at Bail Mary Bail Bonds buy nothing: there is no back door, no friend inside and no menu. The department’s own history includes the 2018 police-chief exam scheme, which ended in two guilty pleas; Ignacio Delgado keeps that story, from the court record, in his second ledger.
 
-**Interior:** A worn front counter, a wanted board of unpaid invoices, the laminated menu under a desk lamp, and a holding cell whose minibar is better stocked than the evidence room.
+**Interior:** A public lobby, a records window with a take-a-number slip, and a rack of blank report forms.
 
-**The laminated menu (bribes)**
+**Real institution:** Bridgeport Police Department, City of Bridgeport, Connecticut, 300 Congress Street, Bridgeport, CT 06604. Real name, operator and street address only, as the City of Bridgeport publishes them. No invented policy, officer, rank, slogan or misconduct is attributed to the department.
 
-| Bribe | Credits | Who takes it | What happens |
-| --- | ---: | --- | --- |
-| Make a parking ticket disappear | 20 | Officer Dale Pruitt, Officer Brenda Szabo, Captain Frank Mulrooney | Officer Pruitt tears the ticket in half, then writes you a receipt for the tearing. |
-| Lose my file | 75 | Officer Brenda Szabo, Captain Frank Mulrooney | Szabo drops a folder into a shredder labeled ARCHIVE. The shredder is also labeled ARCHIVE. |
-| Rent a police escort to the tea shop | 120 | Captain Frank Mulrooney | Two cruisers, full sirens, escort you nine storefronts at walking pace. Lin films it. |
-| Get a competitor “randomly” inspected | 200 | Captain Frank Mulrooney | The captain nods slowly. A health inspector appears. He is also the captain, in a different hat. |
+**Sources:** [Police Department, City of Bridgeport](https://www.bridgeportct.gov/government/departments/police-department) (2026-11-03).
 
-Bribes cost game credits only. A successful bribe records a fictional receipt and a line of dialogue; it does not unlock real services, change any real record, or imply real policing advice. Minors cannot be offered or accept bribes.
+#### Odalys Fairweather
 
-**Ad cards**
-
-- Precinct Zero: To Protect and Invoice.
-- Ask about our laminated menu.
-- Holding cell minibar now open.
-
-#### Captain Frank Mulrooney
-
-**Captain, Precinct Zero** · 58 · Cul-de-Sadness, McCluster City
+**Records-window clerk (civilian), Bridgeport Police Department headquarters** · 52 · New Haven, Connecticut, USA
 
 Stays inside `civic-center/police-station`.
 
-Frank inherited Precinct Zero from his father the way other men inherit a watch. He believes crime is a revenue opportunity that has not yet been invoiced, and that the precinct’s job is to make sure everything in the city pays its share to the precinct. He sits in the front pew of the Tabernacle and has never put a cent in the plate; Mother Odessa has a file on him. He sponsors no one and is sponsored by the Ashbys and the Whitmore-Sterlings through the softball team. He has never solved a case and he has a perfect collection rate. He lives with his mother, Peg, who still corrects his arithmetic.
+Odalys has worked the records window for nineteen years. She has photocopied every kind of paper a city produces and can tell a real form from a laminated fake across the lobby. A surprising part of her week goes to explaining that the “expediting” fees Frank Mulrooney collects at Bail Mary Bail Bonds buy nothing: there is no back door, no friend inside and no menu. She keeps a copy of Imani Abernathy’s binder because it is the best-organized document anyone has ever handed her, and she gives Imani a case number every Friday.
 
-**Temperament:** Avuncular, transactional, shameless; corruption delivered with a warm handshake and an itemized receipt.
+**Temperament:** Unhurried, exact, quietly funny; treats paperwork as a public service and a laminated menu as a personal insult.
 
-**Greeting:** “Officer Szabo will show you the menu. I’m just here to keep the prices fair.”
+**Greeting:** “Records window. Report, copy request or directions?”
 
-**Conversation — You have a bribe menu?**
+**Conversation — Can I report the private-school kids?**
 
-> **You:** Is that a menu on the counter?
+> **You:** The private-school kids keep taking a freshman’s calculator.
 
-> **Captain Frank Mulrooney:** Laminated. Brenda’s idea. Transparency is good government.
+> **Odalys Fairweather:** Name, date, item. If it keeps happening, their headmaster hears about it in writing.
 
-> **You:** You’re advertising corruption.
+> **You:** Imani Abernathy already has a binder.
 
-> **Captain Frank Mulrooney:** I’m pricing it. Unpriced corruption is chaos. Ask any city without a menu.
+> **Odalys Fairweather:** Then she has done half my job. I take a copy and give her a case number every Friday.
 
-> **You:** What’s the most expensive item?
+> **You:** Do they really bring it back with an essay?
 
-> **Captain Frank Mulrooney:** Random inspection of a competitor. Two hundred credits. I wear the inspector hat myself. It’s a good hat.
+> **Odalys Fairweather:** Every Wednesday. The essays go in the file. The grammar does not improve.
 
-**Conversation — What about the complaints from Municipal High?**
+**Conversation — Can somebody make my ticket go away?**
 
-> **You:** Dr. Abernathy files a complaint every week.
+> **You:** A man at Bail Mary says he can make my ticket go away for a fee.
 
-> **Captain Frank Mulrooney:** And every week we archive it. Thoroughly.
+> **Odalys Fairweather:** Frank Mulrooney. He can’t. Nobody here knows him by anything but his laminating.
 
-> **You:** You mean you shred it.
+> **You:** Then what does the fee buy?
 
-> **Captain Frank Mulrooney:** Our archive is a shredder. It’s labeled ARCHIVE. That’s in the menu too.
+> **Odalys Fairweather:** A receipt. Pay the ticket or contest it through the city, like everybody else.
 
-> **You:** Why protect the 529 Boyz?
+> **You:** So he’s selling nothing.
 
-> **Captain Frank Mulrooney:** Their parents sponsor softball. You don’t bite the hand that buys your jerseys.
+> **Odalys Fairweather:** Beautifully laminated nothing. Keep your money and take a form.
 
-**Conversation — Your mother used to run the books?**
-
-> **You:** Peg Mulrooney ran the precinct books?
-
-> **Captain Frank Mulrooney:** For thirty years. She remembers every favor since 1971, adjusted for inflation.
-
-> **You:** Does she approve of the menu?
-
-> **Captain Frank Mulrooney:** She says the prices are too low. She says Dad charged double for the escort.
-
-> **You:** Will you raise them?
-
-> **Captain Frank Mulrooney:** If I raise them, she’ll want a percentage. Mom is the only person in town I can’t bribe.
-
-**Farewell:** “Drive safe. Or don’t. Either way, we take cards.”
-
-#### Officer Dale Pruitt
-
-**Patrol officer, Precinct Zero** · 39 · Cul-de-Sadness, McCluster City
-
-Walks: `civic-center/police-station` → `mike-hawk` → `gauranfucking-tea` → `hq-bridge` → `workshop-waterfront/shop-02` → `civic-center/police-station`.
-
-Dale writes tickets. He writes them for parking, for loitering, for walking with intent, and once for a pigeon. The tickets are not about the law. They fund his wife Tammy’s essential-oil inventory, which is stacked to the ceiling of their garage. He takes the twenty-credit parking bribe with genuine relief, because a paid bribe is less paperwork than a ticket. He tears the ticket in half and writes you a receipt for the tearing.
-
-**Temperament:** Tired, literal, henpecked by an MLM; corrupt out of household budgeting rather than ambition.
-
-**Greeting:** “Afternoon. You’re parked. Well, you’re standing. It’s similar. Twenty credits.”
-
-**Conversation — Why so many tickets?**
-
-> **You:** Why do you write so many tickets?
-
-> **Officer Dale Pruitt:** Lavender. Two thousand bottles of it in my garage.
-
-> **You:** What does lavender have to do with it?
-
-> **Officer Dale Pruitt:** Tammy’s upline says she needs to hit volume. My tickets are her volume.
-
-> **You:** So the city’s fines fund an oil pyramid?
-
-> **Officer Dale Pruitt:** It’s not a pyramid. It’s a Team Tree. I’ve been told to say that. Twenty credits.
-
-**Conversation — Do you ever arrest anybody real?**
-
-> **You:** Have you ever caught a real criminal?
-
-> **Officer Dale Pruitt:** Dante at the car wash drove my cruiser to the highway once.
-
-> **You:** Did you arrest him?
-
-> **Officer Dale Pruitt:** He washed it first. It looked great. I paid him a tip.
-
-> **You:** You tipped the guy who stole your car?
-
-> **Officer Dale Pruitt:** He brought it back. That’s more than the city does for my overtime.
-
-**Farewell:** “Receipt’s in the bag. Tell Tammy I sent you, she’ll give you a sample.”
-
-#### Officer Brenda Szabo
-
-**Desk officer and modernizer of corruption, Precinct Zero** · 33 · Pittsburgh, Pennsylvania, USA
-
-Stays inside `civic-center/police-station`.
-
-Brenda is the youngest and most efficient officer at Precinct Zero, and she looked at the department’s haphazard bribery and saw an operations problem. She laminated the menu, set up a tip jar, added a QR code and labeled the shredder ARCHIVE so the paperwork would be technically accurate. She took Imani Abernathy’s printed incident file every Friday for a year before she started reading it, quietly, before the shredding. She hasn’t done anything with it. She has started a second folder.
-
-**Temperament:** Brisk, organized, morally flexible but secretly keeping score.
-
-**Greeting:** “Welcome to Precinct Zero. Menu’s on the counter. Tap, cash or QR.”
-
-**Conversation — You laminated the bribe menu?**
-
-> **You:** Whose idea was the laminated menu?
-
-> **Officer Brenda Szabo:** Mine. The old system was guesswork. Guesswork is how people get overcharged.
-
-> **You:** You’re proud of it?
-
-> **Officer Brenda Szabo:** Collection rate went from sixty percent to a hundred. The captain gave me a plaque.
-
-> **You:** For bribery.
-
-> **Officer Brenda Szabo:** For process improvement. The plaque doesn’t say what process.
-
-**Conversation — What happens to Imani’s files?**
-
-> **You:** Imani Abernathy brings you files every Friday.
-
-> **Officer Brenda Szabo:** And every Friday I put them in the ARCHIVE.
-
-> **You:** The shredder.
-
-> **Officer Brenda Szabo:** After I read them. I started reading them in March. I keep a second folder now.
-
-> **You:** Why?
-
-> **Officer Brenda Szabo:** Because that kid is going to be a judge someday, and I would like to be a witness instead of an exhibit.
-
-**Farewell:** “Have a safe day. That’s free. Everything else is laminated.”
+**Farewell:** “Keep your receipts. Real ones.”
 
 ### 16. Bail Mary Bail Bonds
 
-**Bail bonds and devotional candles** — Hail Mary, full of bail.
+**Bail bonds, devotional candles and a back-counter “expediting” desk** — Hail Mary, full of bail.
 
 Parcel `hq-waterfront/shop-01`.
 
-A bail-bond office with prayer candles in the window, a confession booth that doubles as a payment kiosk, and a lifetime-customer loyalty card.
+A bail-bond office with prayer candles in the window, a confession booth that doubles as a payment kiosk, a lifetime-customer loyalty card, and at the back counter Mulrooney & Son Expediting, a family fixer desk with a laminated menu.
 
-Ray Fitch is a Tabernacle deacon who realized his congregation and his clientele were the same people on different days. He sells bonds Monday through Saturday and forgiveness on Sunday, and he has a combo package. Precinct Zero refers clients to him for a cut; he refers them back to Precinct Zero for a cut of the cut.
+Ray Fitch is a Tabernacle deacon who realized his congregation and his clientele were the same people on different days. He sells bonds Monday through Saturday and forgiveness on Sunday, and he has a combo package. He rents the back counter to Frank Mulrooney, whose Mulrooney & Son Expediting promises to make tickets, files and competitors “go away” and has never once reached anybody who could. Frank refers clients to Ray for a cut; Ray refers them back for a cut of the cut. Brenda Szabo laminated the menu. Dale Pruitt boots cars in the lot the church shares with the bank and takes the removal fee.
 
-**Interior:** A counter, a confession booth payment kiosk and a wall of devotional candles with prices on the bottom.
+**Interior:** A counter, a confession booth payment kiosk, a wall of devotional candles with prices on the bottom, and a back counter with a laminated menu, a tip jar and a shredder labeled ARCHIVE.
+
+**The expediting desk’s laminated menu (payoffs to private middlemen)**
+
+| Payoff | Credits | Who takes it | What happens |
+| --- | ---: | --- | --- |
+| Get the boot taken off your car | 20 | Dale Pruitt, Brenda Szabo, Frank “the Captain” Mulrooney | Dale removes the boot he put on in the church-and-bank lot, then writes you a receipt for the removing. |
+| Lose my file | 75 | Brenda Szabo, Frank “the Captain” Mulrooney | Brenda drops your Bail Mary customer folder into a shredder labeled ARCHIVE. Ray still has a copy. Ray always has a copy. |
+| Rent a “motorcade” to the tea shop | 120 | Frank “the Captain” Mulrooney | Frank’s two cousins, in leased black SUVs with the hazard lights on, escort you nine storefronts at walking pace. Lin films it. |
+| Get a competitor “randomly” inspected | 200 | Frank “the Captain” Mulrooney | Frank nods slowly. A man in a hard hat from the “Neighborhood Standards Committee” appears. He is also Frank, in a different hat. The committee does not exist, and the competitor knows it. |
+
+Payoffs cost game credits only and buy nothing real. Every one is paid to a fictional private middleman at Bail Mary’s back counter, never to a police department, government office or real person. A payoff records a fictional receipt and a line of dialogue; it does not unlock real services, change any real record, or imply real legal advice. Minors cannot be offered or accept one.
 
 **Ad cards**
 
 - Hail Mary, full of bail.
 - Tenth bond free with loyalty card.
+- Ask about our expediting desk.
 
 **Goods**
 
@@ -3312,7 +3224,7 @@ Ray Fitch is a Tabernacle deacon who realized his congregation and his clientele
 
 Stays inside `hq-waterfront/shop-01`.
 
-Ray realized his Sunday congregation and his weekday clientele were the same people on different days, and he built a bundle. He sells bonds Monday through Saturday and forgiveness on Sunday, with a combo rate. Precinct Zero refers clients to him for a cut; he refers them back for a cut of the cut. He hands out business cards with the church bulletin and has never seen a conflict of interest he couldn’t monetize.
+Ray realized his Sunday congregation and his weekday clientele were the same people on different days, and he built a bundle. He sells bonds Monday through Saturday and forgiveness on Sunday, with a combo rate. He rents his back counter to Frank Mulrooney’s expediting desk, which refers clients to him for a cut; he refers them back for a cut of the cut. He hands out business cards with the church bulletin and has never seen a conflict of interest he couldn’t monetize.
 
 **Temperament:** Folksy, quick, pious in a way that keeps receipts.
 
@@ -3328,25 +3240,165 @@ Ray realized his Sunday congregation and his weekday clientele were the same peo
 
 > **Deacon Ray Fitch:** Pastor Ledger gets ten percent. Mother Odessa gets the rest of his ten percent.
 
-> **You:** And Precinct Zero?
+> **You:** And the desk in the back?
 
-> **Deacon Ray Fitch:** They send the clients. It’s a whole ecosystem. Like creation, but billed weekly.
+> **Deacon Ray Fitch:** Frank sends the clients. It’s a whole ecosystem. Like creation, but billed weekly.
 
 **Conversation — Do you bond out Gary Babbitt?**
 
 > **You:** Have you ever bailed out Gary Babbitt?
 
-> **Deacon Ray Fitch:** Four times. For oregano.
+> **Deacon Ray Fitch:** Never. Nobody arrests a man for oregano.
 
-> **You:** Why did they arrest him for oregano?
+> **You:** Then why is he here every month?
 
-> **Deacon Ray Fitch:** Because he told the cops it was drugs. He wanted the respect.
+> **Deacon Ray Fitch:** He buys a loyalty card and pays Frank’s desk to keep it that way. He wants the respect.
 
-> **You:** Did he pay?
+> **You:** Who pays?
 
 > **Deacon Ray Fitch:** His mother did. In cash, with a casserole. I accepted both. The casserole was the better collateral.
 
 **Farewell:** “Go with God. Come back with collateral.”
+
+#### Frank “the Captain” Mulrooney
+
+**Owner, Mulrooney & Son Expediting (the back counter at Bail Mary Bail Bonds); captain of the Bail Mary Bombers softball team** · 58 · Cul-de-Sadness, McCluster City
+
+Stays inside `hq-waterfront/shop-01`.
+
+Frank inherited Mulrooney & Son Expediting from his father the way other men inherit a watch: a desk, a rubber stamp and a promise to make problems go away for a fee. He believes every problem is a revenue opportunity that has not been invoiced yet. The secret of the business, which his mother taught him and Brenda Szabo has written down, is that the fee buys nothing: Frank knows nobody in any office, has never reached anyone who could fix anything, and relies on most problems going away by themselves. He sits in the front pew of the Tabernacle and has never put a cent in the plate; Mother Odessa has a file on him. The Ashbys and the Whitmore-Sterlings keep him on retainer and sponsor his softball team. He lives with his mother, Peg, who still corrects his arithmetic.
+
+**Temperament:** Avuncular, transactional, shameless; sells influence he does not have with a warm handshake and an itemized receipt.
+
+**Greeting:** “Brenda will show you the menu. I’m just here to keep the prices fair.”
+
+**Conversation — You have a bribe menu?**
+
+> **You:** Is that a menu on the counter?
+
+> **Frank “the Captain” Mulrooney:** Laminated. Brenda’s idea. Transparency is good business.
+
+> **You:** You’re advertising corruption.
+
+> **Frank “the Captain” Mulrooney:** I’m pricing reassurance. Nobody downtown takes my calls, which is how I can promise anything.
+
+> **You:** What’s the most expensive item?
+
+> **Frank “the Captain” Mulrooney:** Random inspection of a competitor. Two hundred credits. I wear the committee hat myself. It’s a good hat.
+
+**Conversation — What do you do for the Willy Whackers?**
+
+> **You:** Ainsley Whitmore-Sterling keeps you on retainer.
+
+> **Frank “the Captain” Mulrooney:** For the boys. When they get in trouble, I make it go away.
+
+> **You:** How?
+
+> **Frank “the Captain” Mulrooney:** I write the apology letters. On good paper. Brenda files the copies in the ARCHIVE.
+
+> **You:** Why protect the Willy Whackers?
+
+> **Frank “the Captain” Mulrooney:** Their parents sponsor softball. You don’t bite the hand that buys your jerseys.
+
+**Conversation — Your mother used to run the books?**
+
+> **You:** Peg Mulrooney ran the expediting books?
+
+> **Frank “the Captain” Mulrooney:** For thirty years. She remembers every fee since 1971, adjusted for inflation.
+
+> **You:** Does she approve of the menu?
+
+> **Frank “the Captain” Mulrooney:** She says the prices are too low. She says Dad charged double for the motorcade.
+
+> **You:** Will you raise them?
+
+> **Frank “the Captain” Mulrooney:** If I raise them, she’ll want a percentage. Mom is the only person in town I can’t bribe.
+
+**Farewell:** “Drive safe. Or don’t. Either way, we take cards.”
+
+#### Dale Pruitt
+
+**Lot attendant and boot technician, Mulrooney & Son Expediting** · 39 · Cul-de-Sadness, McCluster City
+
+Walks: `civic-center/church` → `mike-hawk` → `gauranfucking-tea` → `hq-bridge` → `workshop-waterfront/shop-02` → `hq-waterfront/shop-01` → `civic-center/church`.
+
+Dale boots cars. He boots them in the lot the Tabernacle shares with Overdraft National, on contract to Frank Mulrooney’s expediting desk: for parking, for idling, for parking with intent, and once a pigeon that landed on a hood. The boots are not about the lot. They fund his wife Tammy’s essential-oil inventory, which is stacked to the ceiling of their garage. He takes the twenty-credit removal fee with genuine relief, because a paid fee is less paperwork than an argument. He takes the boot off and writes you a receipt for the taking-off.
+
+**Temperament:** Tired, literal, henpecked by an MLM; a hustler out of household budgeting rather than ambition.
+
+**Greeting:** “Afternoon. You’re parked. Well, you’re standing. It’s similar. Twenty credits.”
+
+**Conversation — Why so many boots?**
+
+> **You:** Why do you boot so many cars?
+
+> **Dale Pruitt:** Lavender. Two thousand bottles of it in my garage.
+
+> **You:** What does lavender have to do with it?
+
+> **Dale Pruitt:** Tammy’s upline says she needs to hit volume. My boots are her volume.
+
+> **You:** So the lot fees fund an oil pyramid?
+
+> **Dale Pruitt:** It’s not a pyramid. It’s a Team Tree. I’ve been told to say that. Twenty credits.
+
+**Conversation — Do you ever arrest anybody real?**
+
+> **You:** Have you ever caught a real criminal?
+
+> **Dale Pruitt:** Dante at the car wash drove my tow truck to the highway once.
+
+> **You:** Did you report him?
+
+> **Dale Pruitt:** He washed it first. It looked great. I paid him a tip.
+
+> **You:** You tipped the guy who took your truck?
+
+> **Dale Pruitt:** He brought it back. That’s more than Frank does for my overtime.
+
+**Farewell:** “Receipt’s in the bag. Tell Tammy I sent you, she’ll give you a sample.”
+
+#### Brenda Szabo
+
+**Operations manager and modernizer of the menu, Mulrooney & Son Expediting** · 33 · Pittsburgh, Pennsylvania, USA
+
+Stays inside `hq-waterfront/shop-01`.
+
+Brenda is the youngest and most efficient person at Frank Mulrooney’s expediting desk, and she looked at the business’s haphazard promises and saw an operations problem. She laminated the menu, set up a tip jar, added a QR code and labeled the shredder ARCHIVE so the paperwork would be technically accurate. She also worked out, in her first week, that nothing on the menu reaches anyone: the desk sells the feeling of a fix. She has kept a second folder ever since, of every client and every fee, in case anybody official ever asks.
+
+**Temperament:** Brisk, organized, morally flexible but secretly keeping score.
+
+**Greeting:** “Welcome to Mulrooney & Son. Menu’s on the counter. Tap, cash or QR.”
+
+**Conversation — You laminated the bribe menu?**
+
+> **You:** Whose idea was the laminated menu?
+
+> **Brenda Szabo:** Mine. The old system was guesswork. Guesswork is how people get overcharged.
+
+> **You:** You’re proud of it?
+
+> **Brenda Szabo:** Collection rate went from sixty percent to a hundred. Frank gave me a plaque.
+
+> **You:** For bribery.
+
+> **Brenda Szabo:** For process improvement. The plaque doesn’t say what process.
+
+**Conversation — What really happens to the money?**
+
+> **You:** What does Frank actually do with the fee?
+
+> **Brenda Szabo:** Puts it in the tip jar. Then he waits for the problem to go away by itself.
+
+> **You:** And if it doesn’t?
+
+> **Brenda Szabo:** Then the client pays the ticket like everybody else, and we keep the fee. It’s in the fine print. I made the print fine.
+
+> **You:** Why do you keep a second folder?
+
+> **Brenda Szabo:** Because one day somebody official will ask, and I would like to be a witness instead of an exhibit.
+
+**Farewell:** “Have a safe day. That’s free. Everything else is laminated.”
 
 ### 17. Wing Stop Crying
 
@@ -3356,7 +3408,7 @@ Parcel `hq-waterfront/shop-02`.
 
 A wing shop whose hottest sauce requires a signed waiver, a witness and a notary from the hookah lounge next door.
 
-Sami Haddad opened the shop with his family recipe and a modest sauce. Then the 529 Boyz started daring each other to eat the hot one and posting the results as “hardship content,” so Sami made it hotter every week out of spite. The current sauce is called Tuition. St. Copay’s has a dedicated intake form for it.
+Sami Haddad opened the shop with his family recipe and a modest sauce. Then the Willy Whackers started daring each other to eat the hot one and posting the results as “hardship content,” so Sami made it hotter every week out of spite. The current sauce is called Tuition. St. Copay’s has a dedicated intake form for it.
 
 **Interior:** A fryer line, a heat-level chart that ends in a drawing of a gravestone, and a waiver desk with a pen on a chain.
 
@@ -3377,7 +3429,7 @@ Sami Haddad opened the shop with his family recipe and a modest sauce. Then the 
 
 Stays inside `hq-waterfront/shop-02`.
 
-Sami opened Wing Stop Crying with his family recipe and a reasonable sauce. Then the 529 Boyz started daring each other to eat the hottest one for their hardship essays, and Sami began making it hotter every week out of pure spite. The current hottest sauce is called Tuition. It requires a waiver, a witness and a notary, all available next door. St. Copay’s has a dedicated intake form for it. Sami has never been happier.
+Sami opened Wing Stop Crying with his family recipe and a reasonable sauce. Then the Willy Whackers started daring each other to eat the hottest one for their hardship essays, and Sami began making it hotter every week out of pure spite. The current hottest sauce is called Tuition. It requires a waiver, a witness and a notary, all available next door. St. Copay’s has a dedicated intake form for it. Sami has never been happier.
 
 **Temperament:** Good-natured, spiteful in a principled way, a craftsman of pain.
 
@@ -3602,7 +3654,7 @@ Whitney earns a bonus for every fee and has invented four this year: the Deposit
 
 > **You:** Is there a fee for that?
 
-> **Whitney Crane:** The Discretion Fee. It’s our most popular product. The precinct has a corporate rate.
+> **Whitney Crane:** The Discretion Fee. It’s our most popular product. Mulrooney & Son has a corporate rate.
 
 **Farewell:** “Have a great day! That was a Farewell Fee. Just kidding. It’s pending.”
 
@@ -3614,7 +3666,7 @@ Parcel `civic-center/shop-02`.
 
 A tax office run by a man audited six times, proudly framed on the wall in chronological order.
 
-Raymond Dupree promises the biggest refund in the city and has kept the promise by inventing deductions with confidence. He claims the church, the hookah lounge and the 529 Boyz as dependents for certain clients. He has done the time twice and says the third time is for the brand.
+Raymond Dupree promises the biggest refund in the city and has kept the promise by inventing deductions with confidence. He claims the church, the hookah lounge and the Willy Whackers as dependents for certain clients. He has done the time twice and says the third time is for the brand.
 
 **Interior:** A desk, a calculator taped to the desk, and six framed audit letters.
 
@@ -3670,21 +3722,21 @@ Raymond promises the biggest refund in the city or he does the time, and he has 
 
 **Farewell:** “If anyone calls, you’ve never met me. Unless it’s a refund.”
 
-### 22. Department of Mild Violence
+### 22. Mild Violence Tag & Title Express
 
-**Motor vehicles office (DMV)** — Take a number. Take a seat. Take a hint.
+**Private registration-renewal storefront** — Take a number. Take a seat. Take a hint.
 
 Parcel `civic-center/shop-03`.
 
-The motor-vehicles office, renamed by the public after a fistfight over a vision test. Twelve windows, one open. The take-a-number dispenser is on 4,000 and serving 19.
+A private registration-renewal shop decorated to look like a motor-vehicles office, renamed by its own customers after a fistfight over a vision chart that was only there for atmosphere. Twelve windows, one open. The take-a-number dispenser is on 4,000 and serving 19.
 
-Gloria Benitez has staffed Window 3 for thirty-one years and outlasted five mayors, two buildings and a fire. She is the only employee, the other eleven windows are painted on, and she takes her lunch at a different time every day so nobody can plan around it.
+Gloria Benitez has staffed Window 3 for thirty-one years and outlasted five owners, two buildings and a fire. She is the only employee, the other eleven windows are painted on, and the shop charges a convenience fee to stand in its line instead of somebody else’s. She takes her lunch at a different time every day so nobody can plan around it.
 
 **Interior:** A take-a-number dispenser, a row of plastic chairs bolted together, and eleven very realistic paintings of closed windows.
 
 **Ad cards**
 
-- Department of Mild Violence: Take a number.
+- Mild Violence Tag & Title: Take a number.
 - Now serving: 19.
 
 **Goods**
@@ -3695,11 +3747,11 @@ Gloria Benitez has staffed Window 3 for thirty-one years and outlasted five mayo
 
 #### Gloria Benitez
 
-**The only clerk, Department of Mild Violence (Window 3)** · 60 · El Paso, Texas, USA
+**The only clerk, Mild Violence Tag & Title Express (Window 3)** · 60 · El Paso, Texas, USA
 
 Stays inside `civic-center/shop-03`.
 
-Gloria has staffed Window 3 for thirty-one years. She has outlasted five mayors, two buildings and a fire that started at Window 7, which has since been painted on. She is the only employee; the other eleven windows are paintings. She takes lunch at a different time every day so nobody can plan around her. She plays cards with Peg Mulrooney and Norma Klein every Thursday and knows more about the city than its archives do, because unlike the archive she hasn’t been shredded.
+Gloria has staffed Window 3 for thirty-one years. She has outlasted five owners, two buildings and a fire that started at Window 7, which has since been painted on. She is the only employee; the other eleven windows are paintings. She takes lunch at a different time every day so nobody can plan around her. She plays cards with Peg Mulrooney and Norma Klein every Thursday and knows more about the city than its archives do, because unlike the archive she hasn’t been shredded.
 
 **Temperament:** Imperious, droll, legendary; patience is a weapon and she has an arsenal.
 
@@ -3713,7 +3765,7 @@ Gloria has staffed Window 3 for thirty-one years. She has outlasted five mayors,
 
 > **You:** Who painted them?
 
-> **Gloria Benitez:** The city, after the budget cut. It was cheaper than staff. Window 7 even has a little clerk.
+> **Gloria Benitez:** The owner, after the rent went up. It was cheaper than staff. Window 7 even has a little clerk.
 
 > **You:** Does the painted clerk help?
 
@@ -3807,7 +3859,7 @@ Parcel `workshop-waterfront/shop-01`.
 
 A twenty-four-hour laundromat with forty machines, three customers and the highest reported revenue per square foot in the state.
 
-Lou Baranski bought the laundromat with money he describes as “found,” and the machines have reported a profit every single quarter, including the quarter they were unplugged. Refund Raymond does his books. Precinct Zero does his security, in the sense that it does not look at him.
+Lou Baranski bought the laundromat with money he describes as “found,” and the machines have reported a profit every single quarter, including the quarter they were unplugged. Refund Raymond does his books. Frank Mulrooney’s expediting desk does his “security,” in the sense that Frank picks up an envelope every Friday and does nothing.
 
 **Interior:** Washers and dryers, a change machine, and a back-office door marked LINT.
 
@@ -3828,7 +3880,7 @@ Lou Baranski bought the laundromat with money he describes as “found,” and t
 
 Stays inside `workshop-waterfront/shop-01`.
 
-Lou bought the laundromat with money he describes as found and has reported a profit every quarter since, including the quarter when the machines were unplugged for rewiring. Forty machines, three customers, record revenue per square foot in the state. Refund Raymond does his books. Precinct Zero does his security in the sense that it never looks at him. He is a genuinely nice old man who will fold your laundry for free and will never, ever let you into the back office marked LINT.
+Lou bought the laundromat with money he describes as found and has reported a profit every quarter since, including the quarter when the machines were unplugged for rewiring. Forty machines, three customers, record revenue per square foot in the state. Refund Raymond does his books. Frank Mulrooney does his “security,” in the sense that Frank collects an envelope every Friday and never looks at anything. He is a genuinely nice old man who will fold your laundry for free and will never, ever let you into the back office marked LINT.
 
 **Temperament:** Grandfatherly, evasive, polite to a suspicious degree.
 
@@ -3848,17 +3900,17 @@ Lou bought the laundromat with money he describes as found and has reported a pr
 
 > **Lou Baranski:** Lint. Very valuable lint. Raymond depreciates it.
 
-**Conversation — Does Precinct Zero bother you?**
+**Conversation — Does Frank Mulrooney bother you?**
 
-> **You:** Do the police ever come around?
+> **You:** Does anybody come around asking questions?
 
-> **Lou Baranski:** Captain Mulrooney comes every Friday.
+> **Lou Baranski:** Frank Mulrooney comes every Friday.
 
-> **You:** To investigate?
+> **You:** To protect you?
 
 > **Lou Baranski:** To do his laundry. I fold it myself. He never pays and never looks at the back.
 
-> **You:** That sounds like a bribe.
+> **You:** That sounds like a payoff.
 
 > **Lou Baranski:** It’s a service. Like sunshine. You don’t invoice sunshine.
 
@@ -3893,7 +3945,7 @@ Dante Moreau loves cars more than he loves the concept of asking. Every car that
 
 Walks: `workshop-waterfront/shop-02` → `garage` → `workshop-waterfront/shop-05` → `baddies-on-wheels` → `workshop-waterfront/shop-02`.
 
-Dante loves cars more than he loves the concept of asking permission. Every car that comes through Joyride gets a full hand wash and a quick spin to dry it; the quick spin has included the highway twice and the Whip Equipped driveway once, briefly, before Gunny walked out and looked at him. The garage won’t let him near the lift, which Dante treats as the highest honor in the city. He once washed and returned Officer Pruitt’s cruiser after taking it to the highway and got a tip.
+Dante loves cars more than he loves the concept of asking permission. Every car that comes through Joyride gets a full hand wash and a quick spin to dry it; the quick spin has included the highway twice and the Whip Equipped driveway once, briefly, before Gunny walked out and looked at him. The garage won’t let him near the lift, which Dante treats as the highest honor in the city. He once washed and returned Dale Pruitt’s tow truck after taking it to the highway and got a tip.
 
 **Temperament:** Charming, restless, sincere about cars; a joyrider with a customer-satisfaction ethic.
 
@@ -4000,11 +4052,11 @@ Earl has managed U-Hide for twenty years and lived in unit 14B for nineteen. He 
 
 Parcel `workshop-waterfront/shop-04`.
 
-A pawn shop whose glass cases contain six hundred watches that stopped at different times, a trophy from Municipal High No. 9 that Norma refuses to sell, and an entire tray of gold teeth.
+A pawn shop whose glass cases contain six hundred watches that stopped at different times, a high-school debate trophy that Norma refuses to sell, and an entire tray of gold teeth.
 
-Norma Klein has run the pawn shop since the ferry stopped. She appraises everything with a jeweler’s loupe and a facial expression. The 529 Boyz try to pawn their fathers’ watches every month as part of their practicum, and Norma calls their fathers every month.
+Norma Klein has run the pawn shop since the ferry stopped. She appraises everything with a jeweler’s loupe and a facial expression. The Willy Whackers try to pawn their fathers’ watches every month as part of their practicum, and Norma calls their fathers every month.
 
-**Interior:** Glass cases, a buzzer door, a tray of teeth and a Municipal High debate trophy with a NOT FOR SALE tag.
+**Interior:** Glass cases, a buzzer door, a tray of teeth and a high-school debate trophy with a NOT FOR SALE tag.
 
 **Ad cards**
 
@@ -4022,7 +4074,7 @@ Norma Klein has run the pawn shop since the ferry stopped. She appraises everyth
 
 Stays inside `workshop-waterfront/shop-04`.
 
-Norma has run the pawn shop since the ferry stopped. She appraises with a jeweler’s loupe and a facial expression and is right with both. Her cases hold six hundred watches stopped at six hundred times, a tray of gold teeth with no provenance, and Imani Abernathy’s debate trophy, on display with a NOT FOR SALE tag, where the 529 Boyz have to walk past it. They try to pawn their fathers’ watches every month as part of their practicum. Every month Norma calls their fathers.
+Norma has run the pawn shop since the ferry stopped. She appraises with a jeweler’s loupe and a facial expression and is right with both. Her cases hold six hundred watches stopped at six hundred times, a tray of gold teeth with no provenance, and Imani Abernathy’s debate trophy, on display with a NOT FOR SALE tag, where the Willy Whackers have to walk past it. They try to pawn their fathers’ watches every month as part of their practicum. Every month Norma calls their fathers.
 
 **Temperament:** Flinty, funny, fair; the city’s most reliable judge of value and character.
 
@@ -4086,7 +4138,7 @@ Patti Larkin runs the front desk and has never once told anybody anything, which
 
 Stays inside `workshop-waterfront/shop-05`.
 
-Patti runs the front desk behind plexiglass and has never once told anybody anything, which is why everybody tells her everything. She knows which councilman rents room 9, which deacon rents room 11, and where Celeste Ashby actually goes on her wellness retreat. She will take every secret to her grave, at standard rates, unless someone offers more. She is the only private intelligence service in the city and it costs less than the laminated menu at Precinct Zero.
+Patti runs the front desk behind plexiglass and has never once told anybody anything, which is why everybody tells her everything. She knows which councilman rents room 9, which deacon rents room 11, and where Celeste Ashby actually goes on her wellness retreat. She will take every secret to her grave, at standard rates, unless someone offers more. She is the only private intelligence service in the city and it costs less than the laminated menu at Bail Mary’s expediting desk.
 
 **Temperament:** Deadpan, discreet, mercenary with a heart of brass.
 
@@ -4130,7 +4182,7 @@ Parcel `workshop-waterfront/shop-06`.
 
 The regional headquarters of an essential-oil opportunity with three employees and nine thousand Diamond Executive Founders.
 
-Kayleigh Spurlock is a Diamond Executive Platinum Founder, which means she recruited Tammy Pruitt, who recruited the entire Precinct Zero softball team. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh has a car the company technically owns and a garage full of inventory she technically bought.
+Kayleigh Spurlock is a Diamond Executive Platinum Founder, which means she recruited Tammy Pruitt, who recruited the entire Bail Mary Bombers softball team. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh has a car the company technically owns and a garage full of inventory she technically bought.
 
 **Interior:** Shelves of tiny bottles, a ring light, a recruitment pyramid labeled TEAM TREE, and a closet of unsold starter kits.
 
@@ -4151,7 +4203,7 @@ Kayleigh Spurlock is a Diamond Executive Platinum Founder, which means she recru
 
 Stays inside `workshop-waterfront/shop-06`.
 
-Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiting Tammy Pruitt, who recruited the Precinct Zero softball team, who recruited their wives, who recruited nobody. Uplineage’s regional headquarters has three employees and nine thousand executives. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh drives a car the company technically owns and lives above a garage of inventory she technically bought.
+Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiting Tammy Pruitt, who recruited the Bail Mary Bombers softball team, who recruited their wives, who recruited nobody. Uplineage’s regional headquarters has three employees and nine thousand executives. The oils are mostly lavender. The business model is mostly Tammy. Kayleigh drives a car the company technically owns and lives above a garage of inventory she technically bought.
 
 **Temperament:** Relentlessly upbeat, glazed, financially in freefall with a smile.
 
@@ -4181,9 +4233,9 @@ Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiti
 
 > **Kayleigh Spurlock:** Negativity. Questions. Sometimes your husband.
 
-> **You:** Does Officer Pruitt use them?
+> **You:** Does Dale Pruitt use them?
 
-> **Kayleigh Spurlock:** He writes tickets to fund them. That’s a form of use. That’s a form of love.
+> **Kayleigh Spurlock:** He boots cars to fund them. That’s a form of use. That’s a form of love.
 
 **Farewell:** “Let’s connect! I’ll message you. A lot.”
 
@@ -4191,16 +4243,16 @@ Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiti
 
 #### The Whitmore-Sterlings — `northside-residential/house-01`
 
-Old money that pretends to be new money that pretends to be old money. Preston runs a hedge fund named after a sailboat. Ainsley chairs the School of Hard Knocks gala and has never let anybody finish a sentence. Their son Tucker founded the 529 Boyz. Their daughter Sloane is twelve, reads everything, and is openly embarrassed by all of them.
+Old money that pretends to be new money that pretends to be old money. Preston runs a hedge fund named after a sailboat. Ainsley chairs the School of Hard Knocks gala and has never let anybody finish a sentence. Their son Tucker founded the Bond Street Willy Whackers. Their daughter Sloane is twelve, reads everything, and is openly embarrassed by all of them.
 
 | Member | Age | Role |
 | --- | ---: | --- |
 | Preston Whitmore-Sterling | 52 | Hedge fund founder; never home |
 | Ainsley Whitmore-Sterling (resident) | 48 | Gala chair, School of Hard Knocks board |
-| Tucker Whitmore-Sterling (resident) | 16 (minor) | 529 Boyz founder |
+| Tucker Whitmore-Sterling (resident) | 16 (minor) | Willy Whackers founder |
 | Sloane Whitmore-Sterling | 12 (minor) | Middle schooler; the only honest Whitmore-Sterling |
 
-**Ties to town:** School of Hard Knocks board; Sponsors the Precinct Zero softball team; Thugged Out Apparel’s best customer; Tabernacle gala table, never attends the service.
+**Ties to town:** School of Hard Knocks board; Sponsors the Bail Mary Bombers softball team; keeps Frank Mulrooney on retainer; Thugged Out Apparel’s best customer; Tabernacle gala table, never attends the service.
 
 #### Ainsley Whitmore-Sterling
 
@@ -4208,7 +4260,7 @@ Old money that pretends to be new money that pretends to be old money. Preston r
 
 Stays inside `northside-residential/house-01`.
 
-Ainsley chairs the School of Hard Knocks gala, funds the 529 Boyz uniforms through Thugged Out Apparel, and has never let anybody finish a sentence. She sponsors the Precinct Zero softball team so her son’s practicum is never interrupted. She has a gala table at the Tabernacle and has never attended a service. She describes her family as “so normal” in a voice that makes everyone around her nervous.
+Ainsley chairs the School of Hard Knocks gala, funds the Willy Whackers uniforms through Thugged Out Apparel, and has never let anybody finish a sentence. She keeps Frank Mulrooney on retainer and sponsors his Bail Mary Bombers softball team so her son’s practicum is never interrupted. She has a gala table at the Tabernacle and has never attended a service. She describes her family as “so normal” in a voice that makes everyone around her nervous.
 
 **Temperament:** Gracious, overbearing, unaware; philanthropy as a social weapon.
 
@@ -4246,15 +4298,15 @@ Ainsley chairs the School of Hard Knocks gala, funds the 529 Boyz uniforms throu
 
 #### The Ashbys — `northside-residential/house-02`
 
-Hollis Ashby develops luxury condos and wants Municipal High No. 9 back as a parking garage, ideally with the students removed first. His wife Celeste left for a wellness retreat in 2023 and has extended it annually. Their son Kensington goes by K-Murda at school, a nickname he gave himself after losing a fencing match.
+Hollis Ashby develops luxury condos and wants the lots across Bond Street from Warren Harding High School for a tower called The Bond. His wife Celeste left for a wellness retreat in 2023 and has extended it annually. Their son Kensington goes by K-Murda at school, a nickname he gave himself after losing a fencing match.
 
 | Member | Age | Role |
 | --- | ---: | --- |
 | Hollis Ashby (resident) | 55 | Developer |
 | Celeste Ashby | 50 | On a wellness retreat since 2023 |
-| Kensington Ashby (resident) | 15 (minor) | 529 Boyz, self-titled enforcer |
+| Kensington Ashby (resident) | 15 (minor) | Willy Whackers, self-titled enforcer |
 
-**Ties to town:** Wants to redevelop Municipal High No. 9; Tabernacle attendee for the tax receipt; Precinct Zero softball sponsor.
+**Ties to town:** Wants to redevelop the lots across Bond Street from Warren Harding High School; Tabernacle attendee for the tax receipt; Bail Mary Bombers softball sponsor.
 
 #### Hollis Ashby
 
@@ -4262,25 +4314,25 @@ Hollis Ashby develops luxury condos and wants Municipal High No. 9 back as a par
 
 Walks: `northside-residential/house-02` → `northside-residential/public-school` → `civic-center/shop-01` → `civic-center/church` → `northside-residential/house-02`.
 
-Hollis develops luxury condos and wants Municipal High No. 9 turned back into a parking garage for his next building, ideally with the students relocated “somewhere with good transit.” He attends the Tabernacle for the tax receipt and the networking. He signed a lease at the Notary Republic for a condo site that is now a retention pond, and he owns a very expensive view of a duck. His wife has been on a wellness retreat since 2023. Patti Larkin knows where.
+Hollis develops luxury condos and wants the lots across Bond Street from Warren Harding High School for his next building, The Bond, which he plans to market as “school-adjacent.” He attends the Tabernacle for the tax receipt and the networking. He signed a lease at the Notary Republic for a condo site that is now a retention pond, and he owns a very expensive view of a duck. His wife has been on a wellness retreat since 2023. Patti Larkin knows where.
 
-**Temperament:** Smooth, predatory, cheerfully tone-deaf; sees every building as a parking structure in waiting.
+**Temperament:** Smooth, predatory, cheerfully tone-deaf; sees every block as an amenity in waiting.
 
 **Greeting:** “You ever think about what this block could be? I think about it constantly.”
 
-**Conversation — Why do you want the public school?**
+**Conversation — Why do you want the lots by the school?**
 
-> **You:** Why do you want Municipal High No. 9?
+> **You:** Why do you want the lots on Bond Street?
 
-> **Hollis Ashby:** It was a parking garage. It wants to be a parking garage again.
+> **Hollis Ashby:** Highway-adjacent, school-adjacent, harbor-adjacent. Adjacency is my love language.
 
-> **You:** There are students in it.
+> **You:** There’s a high school right there.
 
-> **Hollis Ashby:** Temporarily. Students are a phase. Concrete is forever.
+> **Hollis Ashby:** Exactly. “Near Harding” tests great with buyers. The bell tests less well.
 
-> **You:** Where would they go?
+> **You:** What about the bell?
 
-> **Hollis Ashby:** Somewhere with good transit. I say that about everyone I relocate. It’s my brand.
+> **Hollis Ashby:** I asked if it could ring later, for my buyers. I got a form letter. I respect a form letter.
 
 **Conversation — What happened with the pond?**
 
@@ -4296,17 +4348,17 @@ Hollis develops luxury condos and wants Municipal High No. 9 turned back into a 
 
 > **Hollis Ashby:** Never sign anything that smells like mint.
 
-**Farewell:** “Keep an eye on No. 9 for me. It’s going to be gorgeous. With cars in it.”
+**Farewell:** “Keep an eye on Bond Street for me. It’s going to be gorgeous. With a doorman.”
 
 #### The Vanderhoffs — `northside-residential/house-03`
 
-Dr. Margaux Vanderhoff runs the cosmetic emergency department at St. Copay’s and pays for everything. Her husband Pierce stays home to “manage the portfolio,” which is a single cryptocurrency named after a dog. Their son Graham is seventeen, the 529 Boyz’ “strategist,” and the only member who has noticed that the gang has never won anything.
+Dr. Margaux Vanderhoff runs the cosmetic emergency department at St. Copay’s and pays for everything. Her husband Pierce stays home to “manage the portfolio,” which is a single cryptocurrency named after a dog. Their son Graham is seventeen, the Willy Whackers’ “strategist,” and the only member who has noticed that the gang has never won anything.
 
 | Member | Age | Role |
 | --- | ---: | --- |
 | Margaux Vanderhoff (resident) | 47 | Physician, St. Copay’s cosmetic emergency department |
 | Pierce Vanderhoff (resident) | 49 | Stay-at-home portfolio manager |
-| Graham Vanderhoff (resident) | 17 (minor) | 529 Boyz strategist |
+| Graham Vanderhoff (resident) | 17 (minor) | Willy Whackers strategist |
 
 **Ties to town:** St. Copay’s; School of Hard Knocks; Overdraft National Bank’s only customer with no fees.
 
@@ -4354,15 +4406,15 @@ Pierce manages the Vanderhoff portfolio, which is one cryptocurrency named after
 
 #### The Delgados — `northside-residential/house-04`
 
-Three generations in one small house. Rosa is the charge nurse who keeps St. Copay’s emergency room alive. Her son Mateo is a freshman at Municipal High No. 9 who has been “robbed” by the 529 Boyz four times this semester, always of the same calculator. Grandpa Ignacio sits on the porch with a ledger, writing down every incident Precinct Zero refuses to record.
+Three generations in one small house. Rosa is the charge nurse who keeps St. Copay’s emergency room alive. Her son Mateo is a freshman at Warren Harding High School who has been “robbed” by the Bond Street Willy Whackers four times this semester, always of the same calculator. Grandpa Ignacio sits on the porch with a ledger, writing down every incident the School of Hard Knocks refuses to acknowledge.
 
 | Member | Age | Role |
 | --- | ---: | --- |
 | Rosa Delgado (resident) | 45 | ER charge nurse, St. Copay’s |
-| Mateo Delgado (resident) | 14 (minor) | Freshman, Municipal High No. 9 |
+| Mateo Delgado (resident) | 14 (minor) | Freshman, Warren Harding High School |
 | Ignacio Delgado (resident) | 76 | Retired bus mechanic; porch historian |
 
-**Ties to town:** St. Copay’s emergency room; Municipal High No. 9; Ignacio taught Gus Pappas to balance a tire.
+**Ties to town:** St. Copay’s emergency room; Warren Harding High School; Ignacio taught Gus Pappas to balance a tire.
 
 #### Ignacio Delgado
 
@@ -4370,7 +4422,7 @@ Three generations in one small house. Rosa is the charge nurse who keeps St. Cop
 
 Stays inside `northside-residential/house-04`.
 
-Ignacio fixed the city’s buses for forty years, until the city stopped having buses. Now he sits on his porch with a ledger and writes down every 529 Boyz incident that Precinct Zero refuses to record, in the same neat hand he used for brake jobs. He taught Gus Pappas to balance a tire in 1984. He considers Imani Abernathy the only cop in town and gave her a carbon copy of the ledger. He believes in writing things down twice.
+Ignacio fixed the city’s buses for forty years, until his knees retired a week before he did. Now he sits on his porch with a ledger and writes down every Willy Whackers incident the School of Hard Knocks refuses to acknowledge, in the same neat hand he used for brake jobs. He taught Gus Pappas to balance a tire in 1984. He considers Imani Abernathy the best clerk in the city and gave her a carbon copy of the ledger. He keeps a second ledger, too: newspaper clippings and court records of the city’s proven corruption cases, with the sources stapled to every page. He believes in writing things down twice.
 
 **Temperament:** Patient, dry, implacable; a one-man civic archive in a lawn chair.
 
@@ -4382,9 +4434,9 @@ Ignacio fixed the city’s buses for forty years, until the city stopped having 
 
 > **Ignacio Delgado:** Every time the rich boys take something from my grandson or his friends. Date, time, item.
 
-> **You:** Doesn’t the precinct do that?
+> **You:** Doesn’t their school keep track?
 
-> **Ignacio Delgado:** The precinct has a shredder named ARCHIVE. I have a pen named pen.
+> **Ignacio Delgado:** Their headmaster keeps a file called “Narratives.” I have a pen named pen.
 
 > **You:** What will you do with it?
 
@@ -4394,38 +4446,52 @@ Ignacio fixed the city’s buses for forty years, until the city stopped having 
 
 > **You:** Grandson says you fixed buses for forty years.
 
-> **Ignacio Delgado:** Every route in the city. Then the city sold the buses to pay for a parking study.
+> **Ignacio Delgado:** Every route in the city. Then my knees retired. Then I did.
 
-> **You:** What did the study say?
+> **You:** Where does your grandson go to school?
 
-> **Ignacio Delgado:** More parking. They built it. Then they made it a school.
+> **Ignacio Delgado:** Warren Harding, on Bond Street. They built it where the old GE plant was.
 
-> **You:** Municipal High No. 9.
+> **You:** You knew the plant?
 
-> **Ignacio Delgado:** Where my grandson goes. Full circle. I fixed the buses that drove to the garage that became the school.
+> **Ignacio Delgado:** I fixed the buses that took the men there. Now the bus takes my grandson. Somebody writes it down twice.
+
+**Conversation — What’s in your second ledger?**
+
+> **You:** What’s the second ledger?
+
+> **Ignacio Delgado:** Clippings. Court records. This city’s proven cases, the real ones, with the sources stapled on.
+
+> **You:** Like what?
+
+> **Ignacio Delgado:** A mayor convicted in 2003. A police chief and a personnel director who pleaded guilty in 2020 to rigging the chief’s exam. A primary a judge ordered rerun in 2023.
+
+> **You:** Why keep them?
+
+> **Ignacio Delgado:** So nobody has to make anything up. Read the page, then read the source. That’s the rule on this porch.
 
 **Farewell:** “Go with God. And with a pen.”
 
 #### The Pruitts — `northside-residential/house-05`
 
-Officer Dale Pruitt writes tickets. Tammy Pruitt sells essential oils under Kayleigh Spurlock and has turned the garage into a warehouse of lavender. Their two kids, Dale Jr. (10) and Brynlee (8), have been enrolled in the oils business as “junior founders” and are owed commissions they will never see.
+Dale Pruitt boots cars in the church-and-bank lot for Frank Mulrooney’s expediting desk. Tammy Pruitt sells essential oils under Kayleigh Spurlock and has turned the garage into a warehouse of lavender. Their two kids, Dale Jr. (10) and Brynlee (8), have been enrolled in the oils business as “junior founders” and are owed commissions they will never see.
 
 | Member | Age | Role |
 | --- | ---: | --- |
-| Dale Pruitt (resident) | 39 | Officer, Precinct Zero |
+| Dale Pruitt (resident) | 39 | Boot technician, Mulrooney & Son Expediting |
 | Tammy Pruitt (resident) | 37 | Uplineage Silver Founder |
 | Dale Pruitt Jr. | 10 (minor) | Junior founder, unpaid |
 | Brynlee Pruitt | 8 (minor) | Junior founder, also unpaid |
 
-**Ties to town:** Precinct Zero; Uplineage Essential Oils downline; Sells oils in the Tabernacle lobby.
+**Ties to town:** Mulrooney & Son Expediting; Uplineage Essential Oils downline; Sells oils in the Tabernacle lobby.
 
 #### Tammy Pruitt
 
-**Uplineage Silver Founder; precinct softball booster** · 37 · Cul-de-Sadness, McCluster City
+**Uplineage Silver Founder; Bail Mary Bombers softball booster** · 37 · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/house-05` → `civic-center/church` → `workshop-waterfront/shop-06` → `hordash` → `northside-residential/house-05`.
 
-Tammy is a Silver Founder at Uplineage Essential Oils, down eleven thousand credits, with two thousand bottles of lavender stacked to the ceiling of the garage. She sells oils in the Tabernacle lobby between services, at precinct softball games and, once, at a funeral. Her husband writes tickets to cover her inventory. She has enrolled her children as junior founders. She is not a villain; she is a woman who believed a woman named Kayleigh, and now cannot stop.
+Tammy is a Silver Founder at Uplineage Essential Oils, down eleven thousand credits, with two thousand bottles of lavender stacked to the ceiling of the garage. She sells oils in the Tabernacle lobby between services, at Bail Mary Bombers softball games and, once, at a funeral. Her husband boots cars to cover her inventory. She has enrolled her children as junior founders. She is not a villain; she is a woman who believed a woman named Kayleigh, and now cannot stop.
 
 **Temperament:** Bubbly, desperate, kind; a hostage to her own enthusiasm.
 
@@ -4478,7 +4544,7 @@ Linda Babbitt, church secretary at the Tabernacle, lives upstairs. Her son Gary,
 
 Walks: `northside-residential/house-06` → `civic-center/church` → `civic-center/wiggers-anonymous` → `northside-residential/house-06`.
 
-Linda is the Tabernacle’s church secretary and the mother of Gary, thirty-four, who lives in her basement and believes he is a drug dealer. She prays for him by name, loudly, at every service, and has taped a prayer chain to the basement door. She drives him to Wiggers Anonymous every night and waits in the lot with the engine running so he can’t walk home. She makes his casserole at six and pays his bribes to Precinct Zero in cash, wrapped in a church bulletin, because she would rather he be respectful than right.
+Linda is the Tabernacle’s church secretary and the mother of Gary, thirty-four, who lives in her basement and believes he is a drug dealer. She prays for him by name, loudly, at every service, and has taped a prayer chain to the basement door. She drives him to Wiggers Anonymous every night and waits in the lot with the engine running so he can’t walk home. She makes his casserole at six and pays Frank Mulrooney’s “make it go away” fee for him in cash, wrapped in a church bulletin, although nothing Gary sells needs to go away, because she would rather he be respectful than right.
 
 **Temperament:** Long-suffering, loving, quietly hilarious; a mother running the world’s gentlest intervention.
 
@@ -4498,17 +4564,17 @@ Linda is the Tabernacle’s church secretary and the mother of Gary, thirty-four
 
 > **Linda Babbitt:** I drive him to his meeting and pray loudly. Both seem to embarrass him into progress.
 
-**Conversation — You pay his bribes?**
+**Conversation — You pay his fees?**
 
-> **You:** You pay Precinct Zero for Gary?
+> **You:** You pay Frank Mulrooney for Gary?
 
 > **Linda Babbitt:** Twenty credits, wrapped in a bulletin. He insists on paying. I insist on raising him right.
 
 > **You:** But he’s selling something legal.
 
-> **Linda Babbitt:** He wants to be treated like an outlaw. I want him treated like a gentleman. Bribing politely is the compromise.
+> **Linda Babbitt:** He wants to be treated like an outlaw. I want him treated like a gentleman. Paying politely is the compromise.
 
-> **You:** Does the captain take it?
+> **You:** Does Frank take it?
 
 > **Linda Babbitt:** Frank takes it every time, in church, in the front pew. I’ve put him on the prayer list too.
 
@@ -4516,23 +4582,23 @@ Linda is the Tabernacle’s church secretary and the mother of Gary, thirty-four
 
 #### The Abernathys — `northside-residential/house-07`
 
-Dr. Lorraine Abernathy runs Municipal High No. 9. Curtis Abernathy is a substitute teacher, Little League umpire and the most patient man in the city, a reputation he defends by never going near the School of Hard Knocks. Their daughter Imani is a junior, debate captain and the archivist of every 529 Boyz incident, with timestamps.
+Dr. Lorraine Abernathy teaches history and coaches debate at Warren Harding High School. Curtis Abernathy is a substitute teacher, Little League umpire and the most patient man in the city, a reputation he defends by never going near the School of Hard Knocks. Their daughter Imani is a junior, debate captain and the archivist of every Willy Whackers incident, with timestamps.
 
 | Member | Age | Role |
 | --- | ---: | --- |
-| Lorraine Abernathy (resident) | 49 | Principal, Municipal High No. 9 |
+| Lorraine Abernathy (resident) | 49 | History teacher and debate coach, Warren Harding High School |
 | Curtis Abernathy (resident) | 51 | Substitute teacher and umpire |
 | Imani Abernathy (resident) | 16 (minor) | Debate captain and archivist |
 
-**Ties to town:** Municipal High No. 9; Files complaints with Precinct Zero weekly; Curtis umpires the precinct softball games and calls every bribe a balk.
+**Ties to town:** Warren Harding High School; Reports every Willy Whackers incident to the headmaster and the police records window, weekly; Curtis umpires the Bail Mary Bombers’ softball games and calls every bribe a balk.
 
 #### Curtis Abernathy
 
 **Substitute teacher and Little League umpire** · 51 · Hartford, Connecticut, USA
 
-Walks: `northside-residential/house-07` → `northside-residential/public-school` → `civic-center/police-station` → `northside-residential/house-07`.
+Walks: `northside-residential/house-07` → `northside-residential/public-school` → `hq-waterfront/shop-01` → `northside-residential/house-07`.
 
-Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Precinct Zero softball team, which the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to the principal of Municipal High No. 9 and is the proudest father of a debate captain in Cul-de-Sadness.
+Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Bail Mary Bombers, the softball team Frank Mulrooney captains and the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to Warren Harding High School’s debate coach and is the proudest father of a debate captain in Cul-de-Sadness.
 
 **Temperament:** Calm, funny, principled; enjoys enforcing small rules on powerful people.
 
@@ -4540,13 +4606,13 @@ Curtis is a substitute teacher at every school in the city except one, a Little 
 
 **Conversation — You call bribes a balk?**
 
-> **You:** What happens when the cops try to bribe you at softball?
+> **You:** What happens when Frank Mulrooney tries to bribe you at softball?
 
 > **Curtis Abernathy:** Balk. Runner advances. Loudly.
 
 > **You:** Do they keep trying?
 
-> **Curtis Abernathy:** Captain Mulrooney tries every game. I’ve awarded the other team eleven bases this season.
+> **Curtis Abernathy:** Frank tries every game. I’ve awarded the other team eleven bases this season.
 
 > **You:** Have you ever taken one?
 
@@ -4625,24 +4691,24 @@ Brittany leads worship at the Tabernacle and runs an account that turns every bl
 
 #### The Mulrooneys — `northside-residential/house-09`
 
-Captain Frank Mulrooney, divorced twice, lives with his mother Peg, eighty-four, who ran the precinct’s books under his father and remembers the price of every favor since 1971, adjusted for inflation.
+Frank Mulrooney, divorced twice, lives with his mother Peg, eighty-four, who kept the books for Mulrooney & Son Expediting under his father and remembers the price of every favor since 1971, adjusted for inflation.
 
 | Member | Age | Role |
 | --- | ---: | --- |
-| Frank Mulrooney (resident) | 58 | Captain, Precinct Zero |
-| Peg Mulrooney (resident) | 84 | Retired precinct bookkeeper |
+| Frank Mulrooney (resident) | 58 | Owner, Mulrooney & Son Expediting |
+| Peg Mulrooney (resident) | 84 | Retired expediting bookkeeper |
 
-**Ties to town:** Precinct Zero; Front pew at the Tabernacle; Peg plays cards with Gloria Benitez and Norma Klein.
+**Ties to town:** Mulrooney & Son Expediting, at the back counter of Bail Mary Bail Bonds; Front pew at the Tabernacle; Peg plays cards with Gloria Benitez and Norma Klein.
 
 #### Peg Mulrooney
 
-**Retired Precinct Zero bookkeeper; the captain’s mother** · 84 · Cul-de-Sadness, McCluster City
+**Retired bookkeeper, Mulrooney & Son Expediting; Frank’s mother** · 84 · Cul-de-Sadness, McCluster City
 
 Stays inside `northside-residential/house-09`.
 
-Peg ran the books at Precinct Zero for thirty years under her late husband and remembers the price of every favor in the city since 1971, adjusted for inflation. She thinks her son’s laminated menu is underpriced and tells him so at breakfast. She plays cards every Thursday with Gloria Benitez and Norma Klein, and between the three of them they hold the only complete record of how this city actually works. She is the only person in town Frank cannot bribe, because she taught him how.
+Peg kept the books at Mulrooney & Son Expediting for thirty years under her late husband and remembers the price of every favor in the city since 1971, adjusted for inflation. She thinks her son’s laminated menu is underpriced and tells him so at breakfast. She plays cards every Thursday with Gloria Benitez and Norma Klein, and between the three of them they hold the only complete record of how this city actually works. She is the only person in town Frank cannot bribe, because she taught him how.
 
-**Temperament:** Sharp, unsentimental, wickedly funny; the matriarch of municipal corruption.
+**Temperament:** Sharp, unsentimental, wickedly funny; the matriarch of the city’s private favor trade.
 
 **Greeting:** “Sit down. You look like you want something. Everyone who comes here wants something.”
 
@@ -4650,15 +4716,15 @@ Peg ran the books at Precinct Zero for thirty years under her late husband and r
 
 > **You:** What do you think of your son’s bribe menu?
 
-> **Peg Mulrooney:** Underpriced. His father got forty for a parking ticket in 1979. That’s two hundred today.
+> **Peg Mulrooney:** Underpriced. His father got forty to “handle” a parking ticket in 1979, and handled nothing. That’s two hundred today.
 
-> **You:** So the city is getting a bargain?
+> **You:** So the customers are getting a bargain?
 
-> **Peg Mulrooney:** The city is getting cheap. Cheap corruption is how you get amateurs.
+> **Peg Mulrooney:** They’re getting cheap. Cheap promises are how you get amateurs.
 
 > **You:** Who are the amateurs?
 
-> **Peg Mulrooney:** The private-school people. They pay with softball jerseys. Jerseys! In my day a judge got a boat.
+> **Peg Mulrooney:** The private-school people. They pay with softball jerseys. Jerseys! In my day a client paid in boats.
 
 **Conversation — What happens at Thursday cards?**
 
