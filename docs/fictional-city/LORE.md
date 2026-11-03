@@ -1942,7 +1942,9 @@ students. Their identity and address are verified against the City of Bridgeport
 Schools; their footprints and coordinates in this game are authored, not surveyed. The former IDs `precinct-zero` and `municipal-high-9` resolve to them through `idAliases`.
 No payoff touches a real institution or a real person: the laminated menu belongs to Mulrooney &
 Son Expediting, fictional fixers at the back counter of Bail Mary Bail Bonds, and the joke is that
-they reach nobody. The city’s real corruption cases are told only from the record, with sources, in
+they reach nobody. There is one Willy Whackers gang (owner, final): the School of Hard Knocks boys’ Bond
+Street Willy Whackers, named for the real school’s street and led by Bryce, the school’s adult hired
+extortionist; Mr. GREAT and Harold’s crew in The Robbery 1s stays unnamed. The city’s real corruption cases are told only from the record, with sources, in
 [Public-record storylines](PUBLIC-RECORD-STORYLINES.md).
 
 ### Neighborhoods
@@ -2598,7 +2600,7 @@ Parcel `civic-center/school-of-hard-knocks`.
 
 The most prestigious, most liberal-arts, most expensive private high school in the city, whose signature program teaches rich kids “the Black experience” as a curriculum, taught entirely by people who have never had it. Coursework includes Authentic Adversity, Code-Switching for Legacy Admissions, and a field practicum in being robbed.
 
-Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang as an extracurricular and named it the Bond Street Willy Whackers, after the street beside Harding High School, the real public school they go to “study.” They tag its bike racks in calligraphy and “rob” its students of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.
+Headmaster Winthrop Ashcroft-Pell founded the academy after an admissions consultant told him colleges wanted “narratives of hardship” and he realized his donors’ children had none. So he built one and charged for it. The ivy on the wall is imported. The “street” out front is private property. The school pays Bryce Lundqvist, a Wiggers Anonymous dropout, a full salary with dental to stand at the gate as the Experiential Adversity Facilitator and shake the students down for lunch money, which is then itemized back onto the tuition bill. The students formed a gang as an extracurricular and named it the Bond Street Willy Whackers, after the street beside Harding High School, the real public school they go to “study.” The school put Bryce in charge of it. They tag its bike racks in calligraphy and “rob” its students of things their parents already bought them twice. The satire’s target is exactly this: a school and a class of rich kids who turned other people’s lives into enrichment programming. The joke is never on the people they think they are studying.
 
 **Interior:** A wood-panelled lobby, a donor wall, a framed photo of the founding class pretending to be in a gang, and a sign that says this campus is a safe space for narratives.
 
@@ -2709,11 +2711,11 @@ Skyler has a master’s degree in Authenticity Studies from a program that no lo
 
 #### Bryce “B-Rex” Lundqvist
 
-**Experiential Adversity Facilitator (the school’s hired extortionist)** · 31 · Rochester, Minnesota, USA
+**Experiential Adversity Facilitator (the school’s hired extortionist) and paid leader of the Bond Street Willy Whackers** · 31 · Rochester, Minnesota, USA
 
 Walks: `civic-center/school-of-hard-knocks` → `civic-center/shop-01` → `civic-center/school-of-hard-knocks`. Wiggers Anonymous: refuses.
 
-Bryce is exactly what Wiggers Anonymous was built for, and he knows it. He came to three meetings. On the fourth day the School of Hard Knocks offered him a salary, dental and a title to stand at its gate and shake the students down for lunch money in the costume he was trying to quit. The school itemizes his collections back onto tuition; Bryce gets a W-2. He calls himself B-Rex. He is not a criminal, technically: he is a contractor with a performance review. Gordon still saves him a chair. Bryce walks the morning’s collections to Overdraft National Bank and pays the deposit fee, which he considers the only real violence in town.
+Bryce is exactly what Wiggers Anonymous was built for, and he knows it. He came to three meetings. On the fourth day the School of Hard Knocks offered him a salary, dental and a title to stand at its gate and shake the students down for lunch money in the costume he was trying to quit. The school itemizes his collections back onto tuition; Bryce gets a W-2. He calls himself B-Rex. He is not a criminal, technically: he is a contractor with a performance review. The school also pays him to lead the boys’ gang, the Bond Street Willy Whackers: he walks them down Bond Street on Tuesdays, holds the calculator they “rob,” and makes sure it goes back on Wednesday with an essay. He is the only adult member, and the only one who has ever read the bylaws to the end. Gordon still saves him a chair. Bryce walks the morning’s collections to Overdraft National Bank and pays the deposit fee, which he considers the only real violence in town.
 
 **Temperament:** Swaggering, cynical, surprisingly honest about the scam; knows he is a product and resents the price.
 

@@ -308,7 +308,7 @@ function drawMap(area) {
   shown.forEach((place, index) => {
     if (place.footprint) shape('polygon', { points: place.footprint.map(([x, z]) => `${mx(x)},${mz(z)}`).join(' '), fill: place.color, stroke: '#64766b', 'stroke-width': .7 });
     else rect({ minX: place.position[0] - place.size[0] / 2, maxX: place.position[0] + place.size[0] / 2, minZ: place.position[1] - place.size[1] / 2, maxZ: place.position[1] + place.size[1] / 2 }, place.color);
-    if (!area || place.storyArcId) {
+    if (!area || place.storyArcId || place.publicIdentity?.kind === 'government') {
       const cx = mx(place.entrance[0]), cy = mz(place.entrance[1]);
       shape('circle', { cx, cy, r: 10, fill: '#fffdf6', stroke: '#294d47', 'stroke-width': 1 });
       shape('text', { x: cx, y: cy + 4, style: 'font-size:12px' }, String(index + 1));
@@ -395,7 +395,7 @@ function openMap(areaId) {
   const grid = el('div', undefined, 'city-card-grid');
   const cards = area ? area.places : [...manifest.businesses, manifest.garage];
   cards.forEach((place, index) => {
-    if (area && !place.storyArcId) return;
+    if (area && !place.storyArcId && place.publicIdentity?.kind !== 'government') return;
     if (!area) { grid.append(placeCard(place)); return; }
     const card = el('article', undefined, 'city-place-card');
     card.append(el('p', `${index + 1} · ${place.category || 'Story location'}`, 'city-eyebrow'), el('h3', place.name), el('p', place.description));

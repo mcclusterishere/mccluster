@@ -330,6 +330,10 @@ test('the private-school gang is the Bond Street Willy Whackers, named for the r
   assert.match(everyone.get('tucker-whitmore-sterling').role, /founder of the Bond Street Willy Whackers/);
   assert.equal(city.expansionItems.find(i => i.id === 'sohk-varsity-gang-jacket').name, 'Bond Street Willy Whackers Varsity Jacket');
   assert.doesNotMatch(bytes.toString('utf8'), /529 ?Boy|529 BOYZ/i);
+  // One gang (owner, 2026-11-03, final): led by Bryce, the school's adult hired extortionist; the members are minors.
+  const leader = everyone.get('bryce-lundqvist');
+  assert.match(leader.role, /leader of the Bond Street Willy Whackers/); assert.ok(leader.age >= 18 && !leader.minor);
+  assert.doesNotMatch(bytes.toString('utf8'), /Elm Street Willy Whackers/);
 });
 
 test('public-record storylines depict real people only through sourced, proven records', () => {

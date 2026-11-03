@@ -42,6 +42,11 @@ export function validateCityExtensions(manifest) {
       assert(typeof place.name === 'string' && place.name.length > 0 && point(place.position) && point(place.entrance), 'place location');
       assert(Array.isArray(place.size) && place.size.length === 3 && place.size.every(v => Number.isFinite(v) && v > 0 && v < 1000), 'place size');
       assert(Array.isArray(place.staffIds) && Array.isArray(place.itemIds), 'place references');
+      if (place.sourceParcel?.ownershipClassification === 'government') assert(place.publicIdentity?.kind === 'government', 'government identity');
+      if (place.publicIdentity?.kind === 'government') {
+        assert(place.name === place.publicIdentity.officialName && typeof place.publicIdentity.publicFunction === 'string' &&
+          typeof place.publicIdentity.sourceUrl === 'string', 'government identity');
+      }
       if (place.footprint) assert(Array.isArray(place.footprint) && place.footprint.length >= 3 && place.footprint.length <= 3000 && place.footprint.every(point), 'footprint');
       if (place.footprintHoles) assert(Array.isArray(place.footprintHoles) && place.footprintHoles.every(r => Array.isArray(r) && r.length >= 3 && r.every(point)), 'footprint holes');
     }
