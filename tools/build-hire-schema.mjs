@@ -57,6 +57,10 @@ function offerFor(id, line) {
     description: [line.label, unit].filter(Boolean).join(" · "),
     url: `${SITE}/hire.html`
   };
+  if (line.minimum_hours) {
+    o.eligibleQuantity = { "@type": "QuantitativeValue", minValue: line.minimum_hours, unitCode: "HUR" };
+    o.description += ` · $${money(line.amount * line.minimum_hours)} base. ${line.service_area_note || ""} ${line.travel_note || ""}`;
+  }
   if (from) {
     o.priceSpecification = { "@type": "PriceSpecification", minPrice: money(line.amount), priceCurrency: "USD" };
   } else if (/per hour/i.test(unit)) {
