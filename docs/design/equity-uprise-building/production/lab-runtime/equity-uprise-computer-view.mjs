@@ -1,5 +1,14 @@
 /* Local-coordinate equipment inspection, not new room geometry. Canonical computer IDs and mm part envelopes
    drive picking; the view never changes simulation state. Three is supplied by the existing site vendor. */
+export function visibleComponent(object) {
+  let selected = null;
+  for (let node = object; node; node = node.parent) {
+    if (node.visible === false) return null;
+    if (selected === null && node.userData?.component) selected = node.userData.component;
+  }
+  return selected;
+}
+
 export function createComputerView(THREE, el, { device, onPick = () => {} }) {
   const renderer = new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5)); renderer.setClearColor(0xe5ebed);
@@ -22,7 +31,6 @@ export function createComputerView(THREE, el, { device, onPick = () => {} }) {
   box(0.002,H,D,body,0,H/2,-D/2,chassis);box(0.002,H,D,body,W,H/2,-D/2,chassis);
   box(W,H,0.002,body,W/2,H/2,-D,chassis);
   const lid=box(W,0.002,D,pale,W/2,H,-D/2,chassis,'COVER');
-  // Front panel vents, physical power button, status light, two USB sockets.
   const faceHeight=device.server?0.015:H;
   box(W,faceHeight,0.012,body,W/2,device.server?H-faceHeight/2:H/2,0,chassis);
   for(let n=0;n<14;n++)box(0.002,Math.min(H*0.5,0.08),0.013,dark,0.02+n*(W-0.13)/14,H/2,0.002,chassis);
@@ -67,7 +75,6 @@ export function createComputerView(THREE, el, { device, onPick = () => {} }) {
   const monitor=box(0.53,0.31,0.025,body,0,0.43,monitorZ);
   box(0.04,0.17,0.025,steel,0,0.2,monitorZ);box(0.2,0.015,0.13,body,0,0.1,monitorZ+0.03);
   const screen=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.282),new THREE.MeshBasicMaterial({map:tex}));screen.position.set(0,0.43,monitorZ+0.016);screen.userData.component='DISPLAY';group.add(screen);
-  // Keyboard: individually recognizable rows, not a painted rectangle.
   box(0.32,0.018,0.105,body,0,0.03,keyZ);
   for(let row=0;row<5;row++)for(let col=0;col<14;col++)box(0.018,0.006,0.014,pale,-0.145+col*0.022,0.042,keyZ-0.038+row*0.019);
   box(0.05,0.018,0.08,body,0.24,0.038,keyZ+0.02);
@@ -88,7 +95,7 @@ export function createComputerView(THREE, el, { device, onPick = () => {} }) {
   const ray=new THREE.Raycaster(),pt=new THREE.Vector2();
   function pointerdown(e){drag={x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY,moved:false};cv.setPointerCapture(e.pointerId);}
   function pointermove(e){if(!drag)return;const dx=e.clientX-drag.px,dy=e.clientY-drag.py;drag.moved ||= Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>6;angle-=dx*0.008;elevation=Math.min(1.35,Math.max(0.08,elevation+dy*0.006));drag.px=e.clientX;drag.py=e.clientY;cameraUpdate();}
-  function pointerup(e){if(!drag)return;const moved=drag.moved;drag=null;if(moved)return;const b=cv.getBoundingClientRect();pt.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);ray.setFromCamera(pt,camera);for(const hit of ray.intersectObject(group,true)){let o=hit.object;while(o&&!o.userData.component)o=o.parent;if(o){onPick(o.userData.component);break;}}}
+  function pointerup(e){if(!drag)return;const moved=drag.moved;drag=null;if(moved)return;const b=cv.getBoundingClientRect();pt.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);ray.setFromCamera(pt,camera);for(const hit of ray.intersectObject(group,true)){const part=visibleComponent(hit.object);if(part){onPick(part);break;}}}
   cv.addEventListener('pointerdown',pointerdown);cv.addEventListener('pointermove',pointermove);cv.addEventListener('pointerup',pointerup);cv.addEventListener('pointercancel',()=>{drag=null;});
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   function animate(){if(disposed)return;frame=requestAnimationFrame(animate);if(document.hidden)return;if(last&&!reduced&&last.st.ac&&last.st.stage!=='OFF')for(const f of fans)if(!last.s.faults.includes(f.id))f.rot.rotation.z+=0.12;renderer.render(scene,camera);}

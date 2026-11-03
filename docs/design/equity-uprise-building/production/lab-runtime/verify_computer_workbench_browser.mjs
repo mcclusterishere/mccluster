@@ -1,6 +1,6 @@
-/* Sealed browser fixture: exact checked-out app, real WebGL, mocked owner answer; never production login. */
+/* Sealed browser fixture: checked-out app and WebGL, mocked owner answer, no production login. */
 import {createRequire} from 'node:module';
-import {readFile, mkdir, writeFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
@@ -43,7 +43,8 @@ async function shot(page,name){await page.screenshot({path:join(OUT,name+'.png')
 try{
  for(const persona of ['guest','member']){const {page,context,calls}=await open(390,persona);await page.waitForFunction(()=>document.documentElement.dataset.ownerAccess==='closed');check(persona+' cannot mount equipment',await page.locator('.eq').count()===0);check(persona+' never loads hardware data',!calls.some(c=>c.includes('computer-hardware-profile')));await overflow(page,persona);await context.close();}
  for(const width of [390,1440]){
-  const {page,context,errors}=await open(width);await page.waitForSelector('[data-stage][data-ready="1"]',{timeout:90000});
+  // Isolate equipment behavior from Training's intentional, independent floor outage.
+  const {page,context,errors}=await open(width,'owner','MISSION');await page.waitForSelector('[data-stage][data-ready="1"]',{timeout:90000});
   check(width+' all registered computers in selector',await page.locator('[data-machine] option').count()===42);
   check(width+' real WebGL canvas',await page.locator('.eq-stage canvas').count()===1);
   check(width+' initial desktop ready',await page.locator('[data-desktop]').isEnabled());
@@ -71,6 +72,7 @@ try{
   check(width+' no application page errors',errors.length===0);
   await context.close();
  }
+ { const {page,context}=await open(390,'owner','TRAINING');await page.waitForSelector('[data-stage][data-ready="1"]',{timeout:90000});check('Training retains its intentional canonical floor outage',await page.locator('[data-desktop]').isDisabled());await context.close(); }
  const {page,context}=await open(390,'owner','WORKPLACE');await page.waitForSelector('[data-stage][data-ready="1"]',{timeout:90000});check('Workplace all mutation controls disabled',await page.locator('[data-ops] button:enabled').count()===0);await context.close();
 } finally {await writeFile(join(OUT,'results.json'),JSON.stringify({results},null,2));await browser.close();}
 console.log(JSON.stringify({checks:results.length,passed:results.filter(r=>r.pass).length}));
