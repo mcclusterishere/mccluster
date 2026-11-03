@@ -17,7 +17,8 @@
    Until the server says yes, the template stays inert (its images, scripts and styles are not fetched) and none of
    the listed scripts load. On yes: the gate goes, the template's markup takes its place, and the scripts load in the
    order listed (a classic script for .js, an ES module for .mjs). If a later check says no (signed out in another
-   tab, the session expired), the page reloads and shows the gate again, so nothing stays on screen. */
+   tab, the session expired), the document is concealed before reload. A restored page rechecks before revealing
+   its app. A session change invalidates old checks and stops the remaining script-load sequence. */
 
 export const API_ORIGIN = 'https://api.mccluster.org';
 export const SESSION_KEY = 'mccdb_session';
@@ -30,28 +31,46 @@ export function storedToken(storage) {
   } catch (e) { return null; }
 }
 
-/* resolves { owner: boolean, reason } and never throws */
+/* The deadline covers refresh as well as fetch. An answer belongs only to the token actually checked.
+   This browser gate is presentation, not authorization: every private API still enforces requireHouseOwner. */
 export async function checkOwner({ fetchImpl = globalThis.fetch, storage, timeoutMs = 5000, auth = globalThis.MCC } = {}) {
   let token = storedToken(storage);
   if (!token) return { owner: false, reason: 'signed-out' };
-  // the canonical auth helper refreshes an expired session when the page has it (js/mcc-auth.js, loaded by the bar)
-  if (auth && typeof auth.refreshIfNeeded === 'function') {
-    try { const s = await auth.refreshIfNeeded(); if (s && s.access_token) token = s.access_token; } catch (e) { /* keep the stored token */ }
-  }
+  const unavailable = { owner: false, reason: 'unavailable' };
   const ctl = typeof AbortController === 'function' ? new AbortController() : null;
-  const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
-  try {
-    const r = await fetchImpl(API_ORIGIN + '/v1/status', { headers: { authorization: 'Bearer ' + token }, cache: 'no-store', signal: ctl ? ctl.signal : undefined });
-    return r && r.ok ? { owner: true, reason: 'owner' } : { owner: false, reason: r && (r.status === 401 || r.status === 403) ? 'not-owner' : 'unavailable' };
-  } catch (e) {
-    return { owner: false, reason: 'unavailable' };
-  } finally { if (timer) clearTimeout(timer); }
+  const budget = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.min(timeoutMs, 30000) : 5000;
+  let expired = false, timer;
+  const deadline = new Promise((resolve) => {
+    timer = setTimeout(() => { expired = true; if (ctl) ctl.abort(); resolve(unavailable); }, budget);
+  });
+  const sessionChanged = () => ({ owner: false, reason: storedToken(storage) ? 'session-changed' : 'signed-out' });
+  const operation = (async () => {
+    // The canonical helper persists its refreshed token. Never fall back to a rejected/cleared session.
+    if (auth && typeof auth.refreshIfNeeded === 'function') {
+      const s = await auth.refreshIfNeeded();
+      if (!s || typeof s.access_token !== 'string' || !s.access_token) return { owner: false, reason: 'signed-out' };
+      token = s.access_token;
+    }
+    if (expired) return unavailable;
+    if (storedToken(storage) !== token) return sessionChanged();
+    const r = await fetchImpl(API_ORIGIN + '/v1/status', {
+      headers: { authorization: 'Bearer ' + token }, cache: 'no-store', redirect: 'error',
+      signal: ctl ? ctl.signal : undefined
+    });
+    if (expired) return unavailable;
+    if (storedToken(storage) !== token) return sessionChanged();
+    return r && r.ok ? { owner: true, reason: 'owner' }
+      : { owner: false, reason: r && (r.status === 401 || r.status === 403) ? 'not-owner' : 'unavailable' };
+  })().catch(() => unavailable);
+  try { return await Promise.race([operation, deadline]); }
+  finally { expired = true; clearTimeout(timer); if (ctl) ctl.abort(); }
 }
 
 export const GATE_TEXT = Object.freeze({
   'checking': 'Checking access with the server…',
   'signed-out': 'Sign in with the house owner’s account to open this.',
   'not-owner': 'This is the house owner’s.',
+  'session-changed': 'Your session changed. Reload to check the current account.',
   'unavailable': 'The owner check could not reach the server. Try again shortly.'
 });
 
@@ -78,40 +97,88 @@ function classic(doc, url) {
   });
 }
 
-/* run one gated page; resolves to the first answer. Exposed for tests; the page itself is wired at the bottom. */
+/* A check is single-flight only within one session generation. Auth/storage changes must never reuse an
+   older account's pending response. Revocation conceals the document synchronously, before reload starts. */
 export function guardPage(gate, { doc = globalThis.document, win = globalThis, check = checkOwner, reload = () => win.location.reload() } = {}) {
   const msg = gate.querySelector('[data-owner-msg]') || gate;
-  let open = false, checking = null;
-  doc.documentElement.dataset.ownerAccess = 'checking';
+  const root = doc.documentElement;
+  let open = false, ready = false, checking = null, generation = 0, revoked = false;
+  let suspended = false, reloadOnRestore = false, concealed = null;
+  root.dataset.ownerAccess = 'checking';
   msg.innerHTML = gateMessage('checking');
 
-  async function unlock() {
+  function conceal() {
+    if (!concealed) concealed = { display: root.style.display, inert: root.inert };
+    root.style.display = 'none';
+    root.inert = true;
+  }
+  function reveal() {
+    if (!concealed || revoked) return;
+    root.style.display = concealed.display;
+    root.inert = concealed.inert;
+    concealed = null;
+  }
+  function revoke() {
+    if (revoked) return;
+    revoked = true; generation++; checking = null;
+    root.dataset.ownerAccess = 'closed';
+    conceal();
+    // A navigation failure must not put the previously authorized app back on screen.
+    try { reload(); } catch (e) { /* remain concealed */ }
+  }
+  async function unlock(ticket) {
     open = true;
-    doc.documentElement.dataset.ownerAccess = 'open';
+    root.dataset.ownerAccess = 'open';
     const tpl = gate.dataset.ownerTemplate ? doc.getElementById(gate.dataset.ownerTemplate) : null;
     if (tpl && tpl.content) tpl.replaceWith(tpl.content.cloneNode(true));
     gate.remove();
     try {
       for (const item of loadList(gate.dataset.ownerLoad, doc.baseURI)) {
+        if (revoked || suspended || ticket !== generation) return;
         if (item.module) await import(item.url); else await classic(doc, item.url);
       }
+      if (revoked || suspended || ticket !== generation) return;
+      ready = true;
       win.dispatchEvent(new CustomEvent('mcc:owner-open'));
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      if (!revoked && ticket === generation) root.dataset.ownerAccess = 'error';
+      console.error(e);
+    }
   }
   function verify() {
+    if (revoked || suspended) return Promise.resolve({ owner: false, reason: 'session-changed' });
     if (checking) return checking;
-    checking = Promise.resolve(check()).then((r) => {
-      checking = null;
-      if (r && r.owner) { if (!open) unlock(); }
-      else if (open) reload();
-      else { doc.documentElement.dataset.ownerAccess = 'closed'; msg.innerHTML = gateMessage(r && r.reason); }
+    const ticket = generation;
+    const request = Promise.resolve().then(() => check()).catch(() => ({ owner: false, reason: 'unavailable' })).then((r) => {
+      if (checking === request) checking = null;
+      if (revoked || suspended || ticket !== generation) return { owner: false, reason: 'session-changed' };
+      if (r && r.owner === true) {
+        reveal();
+        if (!open) void unlock(ticket);
+      } else if (open) revoke();
+      else { reveal(); root.dataset.ownerAccess = 'closed'; msg.innerHTML = gateMessage(r && r.reason); }
       return r;
     });
-    return checking;
+    checking = request;
+    return request;
   }
-  win.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'visible') verify(); });
-  win.addEventListener('storage', (e) => { if (e.key === SESSION_KEY) verify(); });
-  win.addEventListener('mcc:auth-changed', () => verify());
+  function authChanged() {
+    generation++; checking = null;
+    if (open) revoke();
+    else if (!revoked && !suspended) void verify();
+  }
+  doc.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'visible') void verify(); });
+  win.addEventListener('storage', (e) => { if (e.key === SESSION_KEY || e.key === null) authChanged(); });
+  win.addEventListener('mcc:auth-changed', authChanged);
+  win.addEventListener('pagehide', () => {
+    suspended = true; generation++; checking = null;
+    if (open) { conceal(); reloadOnRestore = !ready; }
+  });
+  win.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    suspended = false;
+    if (reloadOnRestore) revoke(); else void verify();
+  });
   return verify();
 }
 
