@@ -76,7 +76,34 @@ export async function buildGamesWorld(root = ROOT) {
 
   /* the authored tree, copied; imports append real places to it */
   const countries = structuredClone(gw.places).map((c) => ({ ...c, states: c.states.map((st) => ({ ...st, towns: st.towns.map((t) => ({ storylines: [], ...t })) })) }));
+  const townAt = (path) => {
+    const [ci, si, ti] = String(path).split('/');
+    const t = countries.find((c) => c.id === ci)?.states.find((s) => s.id === si)?.towns.find((x) => x.id === ti);
+    return t || fail('import names an unknown town ' + path);
+  };
+  /* the first sentence of authored lore, quoted as it stands */
+  const firstSentence = (text) => { const m = /^[\s\S]*?[.!?](?=\s|$)/.exec(String(text || '').trim()); return m ? m[0] : String(text || '').trim(); };
   for (const imp of gw.imports || []) {
+    if (imp.kind === 'fictional-city-neighborhoods') {
+      const city = await json(root, imp.source), t = townAt(imp.town);
+      for (const n of city[imp.collection] || []) {
+        if (n.authorship !== imp.authorship) continue; // the original block is already the commercial district above
+        const blurb = { text: firstSentence(n.lore), source: imp.source };
+        t.neighborhoods.push({ id: n.id, name: n.name, blurb });
+        t.entries.push({ id: 'city-' + n.id, title: n.name, kind: 'place', neighborhood: n.id, universe: imp.universe, route: imp.route, blurb });
+      }
+      continue;
+    }
+    if (imp.kind === 'city-arcade') {
+      const catalog = await json(root, imp.source), t = townAt(imp.town);
+      if (catalog.schema !== 'here.city-arcade/v1') fail('unexpected arcade schema');
+      t.neighborhoods.push(structuredClone(imp.neighborhood));
+      for (const g of catalog.games) {
+        if (g.status !== imp.status) continue; // a planned game is omitted, never listed as coming soon
+        t.entries.push({ id: 'arcade-' + g.id, title: g.title, kind: 'game', neighborhood: imp.neighborhood.id, route: imp.route.replace('{id}', encodeURIComponent(g.id)), blurb: { text: g.blurb, source: imp.source } });
+      }
+      continue;
+    }
     if (imp.kind !== 'prim3-world-missions') fail('unknown import ' + imp.kind);
     const doc = await json(root, imp.source);
     for (const m of doc.missions) {

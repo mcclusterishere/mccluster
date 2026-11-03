@@ -99,6 +99,8 @@
         }
       ],
       "portalData": "core/data/fictional-city/district.v1.json#/portals",
+      "placesData": "core/data/fictional-city/places.v1.json",
+      "placesNote": "Geography authority: the original block and island plus Civic Center, HQ Waterfront, Northside and Workshop Wharf; lore binds by parcel/anchor ID. Save v2 keeps the v1 fields and adds discoveries and payments; the saved position stays a bounded local city position.",
       "portals": [
         {
           "id": "city.departure-desk",
@@ -373,6 +375,33 @@
             "town": "Pretoria"
           }
         }
+      },
+      {
+        "kind": "fictional-city-neighborhoods",
+        "source": "core/data/fictional-city/district.v1.json",
+        "collection": "expansionNeighborhoods",
+        "authorship": "new-2026-11-03",
+        "town": "us/connecticut/bridgeport",
+        "route": "fictional-city.html",
+        "universe": "mccluster-fictional-city",
+        "note": "The district expansion's playable neighbourhoods (owner, 2026-11-03: placed in the 3D city by #722). fictional-city.html has no per-neighbourhood entrance, so each opens the city itself. The blurb is the first sentence of the neighbourhood's own lore."
+      },
+      {
+        "kind": "city-arcade",
+        "source": "data/city-arcade/catalog.v1.json",
+        "page": "city-arcade.html",
+        "town": "us/connecticut/bridgeport",
+        "route": "city-arcade.html?game={id}",
+        "status": "playable",
+        "neighborhood": {
+          "id": "city-arcade",
+          "name": "City Arcade",
+          "blurb": {
+            "text": "The house owner's City Arcade: quick games from the storefronts of McCluster City.",
+            "source": "city-arcade.html"
+          }
+        },
+        "note": "Owner-only quick games from the city's storefronts (#725). Only games the catalogue marks playable are listed."
       }
     ],
     "storylines": [

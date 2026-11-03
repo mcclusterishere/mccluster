@@ -1,0 +1,1700 @@
+{
+  "schema": "mccluster.fictional-city.places/v1",
+  "id": "mccluster-fictional-city-places",
+  "revision": "2026-11-03",
+  "authority": "Geography and placement only. Authored lore (names, people, dialogue, items, interactions) stays in district.v1.json and binds here by stable ID.",
+  "frame": {
+    "units": "metres",
+    "axes": "+X east, +Z south (north is -Z), +Y up",
+    "origin": "Harbor Boulevard centreline at the original block centre",
+    "georeference": {
+      "status": "unanchored",
+      "originLocal": [
+        0,
+        0,
+        0
+      ],
+      "wgs84": null,
+      "headingDeg": null,
+      "enu": "local X = east, local Z = -north, Y = up",
+      "note": "Fill wgs84 [lon, lat, h] and headingDeg when a region anchors this district; do not move the local origin."
+    },
+    "distinctFrames": {
+      "city": "metres, Y-up (this file)",
+      "hqGlb": "metres, Z-up (canonical HQ GLBs)",
+      "hqGrid": "12 ft = 3.6576 m per cell (HQ adapter)",
+      "tactics": "3.54 m per tile (js/prim3-tactics/scale.mjs)",
+      "note": "Never resized to match each other. An engine floor index (B1 = z8) is not an altitude."
+    },
+    "groundY": 0.16,
+    "chunkMeters": 64,
+    "chunkId": "c{floor(x/chunkMeters)}_{floor(z/chunkMeters)}",
+    "bounds": {
+      "minX": -296,
+      "maxX": 168,
+      "minZ": -170,
+      "maxZ": 140
+    },
+    "reserved": [
+      {
+        "id": "bridgeport-neighborhood",
+        "minX": -165,
+        "maxX": 165,
+        "minZ": -345,
+        "maxZ": -58,
+        "links": [
+          [
+            -32,
+            -58
+          ],
+          [
+            32,
+            -58
+          ]
+        ],
+        "note": "Kept free of geography, parcels and collision for the separately built Bridgeport (Robbery 1s) neighbourhood; it joins the original block by walk links at X ±32, Z −58."
+      }
+    ],
+    "tactical": {
+      "tileSource": "js/prim3-tactics/scale.mjs TILE_M",
+      "origin": [
+        -296,
+        -170
+      ],
+      "note": "tile x = floor((X - originX) / TILE_M), tile y = floor((Z - originZ) / TILE_M); tactical y grows north→south exactly as city +Z does, so no axis flip"
+    },
+    "hq": {
+      "buildingFrame": "feet; +X east, +Y north; south-west plate corner (0, 0)",
+      "placement": "rotated 180° so the Floor 1 public entrance faces the bridge",
+      "center": [
+        0,
+        88
+      ],
+      "rotationDeg": 180,
+      "plateFeet": 72,
+      "feetToMetres": 0.3048,
+      "formula": "cityX = 0 - (xf - 36) * 0.3048; cityZ = 88 + (yf - 36) * 0.3048; cityY = groundY + elevationFt * 0.3048"
+    }
+  },
+  "geography": {
+    "source": "authored",
+    "basis": "Bridgeport-inspired harbor setting; not a reconstruction of any real place",
+    "realData": "none in the playable city. OSM-derived samples (ODbL 1.0, © OpenStreetMap contributors) are converted through the same contract only for converter verification (tools/prim3-city, Jersey City sample).",
+    "heights": "authored estimates in metres"
+  },
+  "neighborhoods": [
+    {
+      "id": "original-block",
+      "name": "Harbor Boulevard",
+      "kind": "commercial",
+      "bounds": {
+        "minX": -72,
+        "maxX": 72,
+        "minZ": -58,
+        "maxZ": 45
+      },
+      "status": "original"
+    },
+    {
+      "id": "hq-island",
+      "name": "Equity Uprise Island",
+      "kind": "landmark",
+      "bounds": {
+        "minX": -20,
+        "maxX": 20,
+        "minZ": 44,
+        "maxZ": 108
+      },
+      "status": "original"
+    },
+    {
+      "id": "civic-center",
+      "name": "Civic Center",
+      "kind": "civic",
+      "bounds": {
+        "minX": -168,
+        "maxX": -72,
+        "minZ": -58,
+        "maxZ": 45
+      },
+      "status": "new"
+    },
+    {
+      "id": "hq-waterfront",
+      "name": "HQ Waterfront",
+      "kind": "commercial-waterfront",
+      "bounds": {
+        "minX": 40,
+        "maxX": 168,
+        "minZ": -58,
+        "maxZ": 140
+      },
+      "status": "new"
+    },
+    {
+      "id": "northside-residential",
+      "name": "Northside",
+      "kind": "residential",
+      "bounds": {
+        "minX": -296,
+        "maxX": -168,
+        "minZ": -170,
+        "maxZ": 45
+      },
+      "status": "new"
+    },
+    {
+      "id": "workshop-waterfront",
+      "name": "Workshop Wharf",
+      "kind": "workshop-industrial",
+      "bounds": {
+        "minX": -168,
+        "maxX": -40,
+        "minZ": 45,
+        "maxZ": 140
+      },
+      "status": "new"
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "original-mainland",
+      "minX": -72,
+      "maxX": 72,
+      "minZ": -58,
+      "maxZ": 45,
+      "kind": "land"
+    },
+    {
+      "id": "hq-bridge-deck",
+      "minX": -5,
+      "maxX": 5,
+      "minZ": 44,
+      "maxZ": 70,
+      "kind": "bridge"
+    },
+    {
+      "id": "hq-island",
+      "minX": -20,
+      "maxX": 20,
+      "minZ": 68,
+      "maxZ": 108,
+      "kind": "land"
+    },
+    {
+      "id": "civic-land",
+      "minX": -168,
+      "maxX": -72,
+      "minZ": -58,
+      "maxZ": 45,
+      "kind": "land"
+    },
+    {
+      "id": "east-upland",
+      "minX": 72,
+      "maxX": 168,
+      "minZ": -58,
+      "maxZ": 45,
+      "kind": "land"
+    },
+    {
+      "id": "east-quay",
+      "minX": 40,
+      "maxX": 168,
+      "minZ": 45,
+      "maxZ": 140,
+      "kind": "quay"
+    },
+    {
+      "id": "west-quay",
+      "minX": -168,
+      "maxX": -40,
+      "minZ": 45,
+      "maxZ": 140,
+      "kind": "quay"
+    },
+    {
+      "id": "northside-land",
+      "minX": -296,
+      "maxX": -168,
+      "minZ": -170,
+      "maxZ": 45,
+      "kind": "land"
+    },
+    {
+      "id": "workshop-pier",
+      "minX": -40,
+      "maxX": -27,
+      "minZ": 112,
+      "maxZ": 120,
+      "kind": "pier"
+    },
+    {
+      "id": "hq-overlook-pier",
+      "minX": 27,
+      "maxX": 40,
+      "minZ": 84,
+      "maxZ": 92,
+      "kind": "pier"
+    }
+  ],
+  "streets": [
+    {
+      "id": "harbor-boulevard",
+      "name": "Harbor Boulevard",
+      "minX": -296,
+      "maxX": 168,
+      "minZ": -10,
+      "maxZ": 8,
+      "kind": "road"
+    },
+    {
+      "id": "northside-avenue",
+      "name": "Northside Avenue",
+      "minX": -183,
+      "maxX": -175,
+      "minZ": -170,
+      "maxZ": 45,
+      "kind": "road"
+    },
+    {
+      "id": "hillside-lane",
+      "name": "Hillside Lane",
+      "minX": -296,
+      "maxX": -183,
+      "minZ": -84,
+      "maxZ": -76,
+      "kind": "lane"
+    },
+    {
+      "id": "west-cross-south",
+      "name": "Quay Street",
+      "minX": -71,
+      "maxX": -61,
+      "minZ": 45,
+      "maxZ": 140,
+      "kind": "road"
+    },
+    {
+      "id": "east-cross-south",
+      "name": "Lantern Street",
+      "minX": 61,
+      "maxX": 71,
+      "minZ": 45,
+      "maxZ": 140,
+      "kind": "road"
+    },
+    {
+      "id": "foundry-wharf",
+      "name": "Foundry Wharf",
+      "minX": -168,
+      "maxX": -71,
+      "minZ": 60,
+      "maxZ": 68,
+      "kind": "road"
+    },
+    {
+      "id": "slip-lane",
+      "name": "Slip Lane",
+      "minX": -168,
+      "maxX": -71,
+      "minZ": 92,
+      "maxZ": 100,
+      "kind": "lane"
+    },
+    {
+      "id": "harbor-quay",
+      "name": "Harbor Quay",
+      "minX": 71,
+      "maxX": 168,
+      "minZ": 60,
+      "maxZ": 68,
+      "kind": "road"
+    },
+    {
+      "id": "civic-plaza",
+      "name": "Civic Plaza",
+      "minX": -130,
+      "maxX": -102,
+      "minZ": -31,
+      "maxZ": -12,
+      "kind": "plaza"
+    },
+    {
+      "id": "west-promenade",
+      "name": "Wharf Walk",
+      "minX": -56,
+      "maxX": -40,
+      "minZ": 45,
+      "maxZ": 140,
+      "kind": "promenade"
+    },
+    {
+      "id": "hq-promenade",
+      "name": "HQ Promenade",
+      "minX": 40,
+      "maxX": 56,
+      "minZ": 45,
+      "maxZ": 140,
+      "kind": "promenade"
+    }
+  ],
+  "legacyParcels": [
+    {
+      "id": "gauranfucking-tea",
+      "footprint": {
+        "center": [
+          -48,
+          -25
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 8,
+      "entrance": [
+        -48,
+        -14
+      ],
+      "chunk": "c-1_-1",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "hordash",
+      "footprint": {
+        "center": [
+          -16,
+          -25
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 9,
+      "entrance": [
+        -16,
+        -14
+      ],
+      "chunk": "c-1_-1",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "mike-hawk",
+      "footprint": {
+        "center": [
+          16,
+          -25
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 10,
+      "entrance": [
+        16,
+        -14
+      ],
+      "chunk": "c0_-1",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "robbery-1s",
+      "footprint": {
+        "center": [
+          48,
+          -25
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 8,
+      "entrance": [
+        48,
+        -14
+      ],
+      "chunk": "c0_-1",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "hitman-gear",
+      "footprint": {
+        "center": [
+          -48,
+          23
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 8,
+      "entrance": [
+        -48,
+        12
+      ],
+      "chunk": "c-1_0",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "real-camera-men",
+      "footprint": {
+        "center": [
+          -16,
+          23
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 9,
+      "entrance": [
+        -16,
+        12
+      ],
+      "chunk": "c-1_0",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "pressure-tv",
+      "footprint": {
+        "center": [
+          16,
+          23
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 13,
+      "entrance": [
+        16,
+        12
+      ],
+      "chunk": "c0_0",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "baddies-on-wheels",
+      "footprint": {
+        "center": [
+          48,
+          23
+        ],
+        "size": [
+          23,
+          19
+        ]
+      },
+      "height": 7,
+      "entrance": [
+        48,
+        12
+      ],
+      "chunk": "c0_0",
+      "source": "district.v1.json"
+    },
+    {
+      "id": "whip-equipped-garage",
+      "footprint": {
+        "center": [
+          0,
+          -52
+        ],
+        "size": [
+          30,
+          12
+        ]
+      },
+      "height": 8,
+      "entrance": [
+        0,
+        -44
+      ],
+      "chunk": "c0_-1",
+      "source": "district.v1.json"
+    }
+  ],
+  "parcels": [
+    {
+      "id": "civic-center/police-station",
+      "neighborhood": "civic-center",
+      "use": "police",
+      "footprint": {
+        "center": [
+          -90,
+          -30
+        ],
+        "size": [
+          22,
+          18
+        ]
+      },
+      "height": 10,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -90,
+            -19.4
+          ]
+        }
+      ],
+      "chunk": "c-2_-1",
+      "label": "Police",
+      "enterable": true,
+      "roof": "flat"
+    },
+    {
+      "id": "civic-center/hospital",
+      "neighborhood": "civic-center",
+      "use": "hospital",
+      "footprint": {
+        "center": [
+          -148,
+          -34
+        ],
+        "size": [
+          30,
+          24
+        ]
+      },
+      "height": 16,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -148,
+            -20.4
+          ]
+        }
+      ],
+      "chunk": "c-3_-1",
+      "label": "Hospital",
+      "enterable": true,
+      "roof": "flat"
+    },
+    {
+      "id": "civic-center/church",
+      "neighborhood": "civic-center",
+      "use": "church",
+      "footprint": {
+        "center": [
+          -116,
+          -44
+        ],
+        "size": [
+          14,
+          22
+        ]
+      },
+      "height": 11,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -116,
+            -31.4
+          ]
+        }
+      ],
+      "chunk": "c-2_-1",
+      "label": "Church",
+      "enterable": true,
+      "roof": "steeple"
+    },
+    {
+      "id": "civic-center/school-of-hard-knocks",
+      "neighborhood": "civic-center",
+      "use": "school",
+      "footprint": {
+        "center": [
+          -92,
+          24
+        ],
+        "size": [
+          24,
+          18
+        ]
+      },
+      "height": 9,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -92,
+            13.4
+          ]
+        }
+      ],
+      "chunk": "c-2_0",
+      "label": "Night school",
+      "enterable": true,
+      "roof": "flat"
+    },
+    {
+      "id": "civic-center/wiggers-anonymous",
+      "neighborhood": "civic-center",
+      "use": "meeting-hall",
+      "footprint": {
+        "center": [
+          -122,
+          22
+        ],
+        "size": [
+          14,
+          12
+        ]
+      },
+      "height": 6,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -122,
+            14.4
+          ]
+        }
+      ],
+      "chunk": "c-2_0",
+      "label": "Meeting hall",
+      "enterable": true,
+      "roof": "gable"
+    },
+    {
+      "id": "civic-center/shop-01",
+      "neighborhood": "civic-center",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          -144,
+          22
+        ],
+        "size": [
+          12,
+          11
+        ]
+      },
+      "height": 7,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -144,
+            14.9
+          ]
+        }
+      ],
+      "chunk": "c-3_0",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "civic-center/shop-02",
+      "neighborhood": "civic-center",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          -160,
+          22
+        ],
+        "size": [
+          12,
+          11
+        ]
+      },
+      "height": 6,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -160,
+            14.9
+          ]
+        }
+      ],
+      "chunk": "c-3_0",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "civic-center/shop-03",
+      "neighborhood": "civic-center",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          -150,
+          38
+        ],
+        "size": [
+          12,
+          11
+        ]
+      },
+      "height": 6,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -150,
+            45.1
+          ]
+        }
+      ],
+      "chunk": "c-3_0",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "civic-center/shop-04",
+      "neighborhood": "civic-center",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          -120,
+          38
+        ],
+        "size": [
+          12,
+          11
+        ]
+      },
+      "height": 7,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -120,
+            45.1
+          ]
+        }
+      ],
+      "chunk": "c-2_0",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "hq-waterfront/thugged-out-apparel",
+      "neighborhood": "hq-waterfront",
+      "use": "clothing",
+      "footprint": {
+        "center": [
+          100,
+          -30
+        ],
+        "size": [
+          24,
+          18
+        ]
+      },
+      "height": 9,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            100,
+            -19.4
+          ]
+        }
+      ],
+      "chunk": "c1_-1",
+      "label": "Clothing",
+      "enterable": true,
+      "roof": "flat"
+    },
+    {
+      "id": "hq-waterfront/shop-01",
+      "neighborhood": "hq-waterfront",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          130,
+          -28
+        ],
+        "size": [
+          14,
+          14
+        ]
+      },
+      "height": 8,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            130,
+            -19.4
+          ]
+        }
+      ],
+      "chunk": "c2_-1",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "hq-waterfront/shop-02",
+      "neighborhood": "hq-waterfront",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          154,
+          -28
+        ],
+        "size": [
+          14,
+          14
+        ]
+      },
+      "height": 7,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            154,
+            -19.4
+          ]
+        }
+      ],
+      "chunk": "c2_-1",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "hq-waterfront/shop-03",
+      "neighborhood": "hq-waterfront",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          100,
+          22
+        ],
+        "size": [
+          14,
+          12
+        ]
+      },
+      "height": 7,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            100,
+            14.4
+          ]
+        }
+      ],
+      "chunk": "c1_0",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "hq-waterfront/shop-04",
+      "neighborhood": "hq-waterfront",
+      "use": "shop",
+      "footprint": {
+        "center": [
+          130,
+          22
+        ],
+        "size": [
+          14,
+          12
+        ]
+      },
+      "height": 8,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            130,
+            14.4
+          ]
+        }
+      ],
+      "chunk": "c2_0",
+      "label": "For lease",
+      "enterable": true
+    },
+    {
+      "id": "hq-waterfront/harbor-hall",
+      "neighborhood": "hq-waterfront",
+      "use": "hall",
+      "footprint": {
+        "center": [
+          120,
+          100
+        ],
+        "size": [
+          30,
+          20
+        ]
+      },
+      "height": 10,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            120,
+            88.4
+          ]
+        }
+      ],
+      "chunk": "c1_1",
+      "label": "Harbor hall",
+      "enterable": false,
+      "role": "scenery"
+    },
+    {
+      "id": "northside-residential/public-school",
+      "neighborhood": "northside-residential",
+      "use": "school",
+      "footprint": {
+        "center": [
+          -236,
+          -32
+        ],
+        "size": [
+          60,
+          36
+        ]
+      },
+      "height": 10,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -236,
+            -12.4
+          ]
+        }
+      ],
+      "chunk": "c-4_-1",
+      "label": "Public school",
+      "enterable": true,
+      "roof": "flat"
+    },
+    {
+      "id": "northside-residential/house-01",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -284,
+          -95
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 6,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -284,
+            -88.4
+          ]
+        }
+      ],
+      "chunk": "c-5_-2",
+      "label": "101",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-02",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -262,
+          -95
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 7,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -262,
+            -88.4
+          ]
+        }
+      ],
+      "chunk": "c-5_-2",
+      "label": "103",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-03",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -240,
+          -95
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 8,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -240,
+            -88.4
+          ]
+        }
+      ],
+      "chunk": "c-4_-2",
+      "label": "105",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-04",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -218,
+          -95
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 6,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -218,
+            -88.4
+          ]
+        }
+      ],
+      "chunk": "c-4_-2",
+      "label": "107",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-05",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -196,
+          -95
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 7,
+      "front": "south",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -196,
+            -88.4
+          ]
+        }
+      ],
+      "chunk": "c-4_-2",
+      "label": "109",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-06",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -284,
+          -65
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 7,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -284,
+            -71.6
+          ]
+        }
+      ],
+      "chunk": "c-5_-2",
+      "label": "102",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-07",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -262,
+          -65
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 8,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -262,
+            -71.6
+          ]
+        }
+      ],
+      "chunk": "c-5_-2",
+      "label": "104",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-08",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -240,
+          -65
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 6,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -240,
+            -71.6
+          ]
+        }
+      ],
+      "chunk": "c-4_-2",
+      "label": "106",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-09",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -218,
+          -65
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 7,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -218,
+            -71.6
+          ]
+        }
+      ],
+      "chunk": "c-4_-2",
+      "label": "108",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "northside-residential/house-10",
+      "neighborhood": "northside-residential",
+      "use": "house",
+      "footprint": {
+        "center": [
+          -196,
+          -65
+        ],
+        "size": [
+          12,
+          10
+        ]
+      },
+      "height": 8,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -196,
+            -71.6
+          ]
+        }
+      ],
+      "chunk": "c-4_-2",
+      "label": "110",
+      "enterable": false,
+      "roof": "gable"
+    },
+    {
+      "id": "workshop-waterfront/shop-01",
+      "neighborhood": "workshop-waterfront",
+      "use": "workshop",
+      "footprint": {
+        "center": [
+          -150,
+          82
+        ],
+        "size": [
+          16,
+          14
+        ]
+      },
+      "height": 7,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -150,
+            73.4
+          ]
+        }
+      ],
+      "chunk": "c-3_1",
+      "label": "Workshop",
+      "enterable": true,
+      "roof": "saw"
+    },
+    {
+      "id": "workshop-waterfront/shop-02",
+      "neighborhood": "workshop-waterfront",
+      "use": "workshop",
+      "footprint": {
+        "center": [
+          -128,
+          82
+        ],
+        "size": [
+          16,
+          14
+        ]
+      },
+      "height": 8,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -128,
+            73.4
+          ]
+        }
+      ],
+      "chunk": "c-2_1",
+      "label": "Workshop",
+      "enterable": true,
+      "roof": "saw"
+    },
+    {
+      "id": "workshop-waterfront/shop-03",
+      "neighborhood": "workshop-waterfront",
+      "use": "workshop",
+      "footprint": {
+        "center": [
+          -106,
+          82
+        ],
+        "size": [
+          16,
+          14
+        ]
+      },
+      "height": 7,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -106,
+            73.4
+          ]
+        }
+      ],
+      "chunk": "c-2_1",
+      "label": "Workshop",
+      "enterable": true,
+      "roof": "saw"
+    },
+    {
+      "id": "workshop-waterfront/shop-04",
+      "neighborhood": "workshop-waterfront",
+      "use": "workshop",
+      "footprint": {
+        "center": [
+          -150,
+          112
+        ],
+        "size": [
+          16,
+          14
+        ]
+      },
+      "height": 8,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -150,
+            103.4
+          ]
+        }
+      ],
+      "chunk": "c-3_1",
+      "label": "Workshop",
+      "enterable": true,
+      "roof": "saw"
+    },
+    {
+      "id": "workshop-waterfront/shop-05",
+      "neighborhood": "workshop-waterfront",
+      "use": "workshop",
+      "footprint": {
+        "center": [
+          -128,
+          112
+        ],
+        "size": [
+          16,
+          14
+        ]
+      },
+      "height": 7,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -128,
+            103.4
+          ]
+        }
+      ],
+      "chunk": "c-2_1",
+      "label": "Workshop",
+      "enterable": true,
+      "roof": "saw"
+    },
+    {
+      "id": "workshop-waterfront/shop-06",
+      "neighborhood": "workshop-waterfront",
+      "use": "workshop",
+      "footprint": {
+        "center": [
+          -106,
+          112
+        ],
+        "size": [
+          16,
+          14
+        ]
+      },
+      "height": 8,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -106,
+            103.4
+          ]
+        }
+      ],
+      "chunk": "c-2_1",
+      "label": "Workshop",
+      "enterable": true,
+      "roof": "saw"
+    },
+    {
+      "id": "workshop-waterfront/warehouse-01",
+      "neighborhood": "workshop-waterfront",
+      "use": "warehouse",
+      "footprint": {
+        "center": [
+          -84,
+          128
+        ],
+        "size": [
+          22,
+          16
+        ]
+      },
+      "height": 9,
+      "front": "north",
+      "entrances": [
+        {
+          "id": "main",
+          "position": [
+            -84,
+            118.4
+          ]
+        }
+      ],
+      "chunk": "c-2_2",
+      "label": "Warehouse",
+      "enterable": false,
+      "role": "scenery"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "garage",
+      "position": [
+        0,
+        -44
+      ],
+      "neighborhood": "original-block",
+      "kind": "alias",
+      "aliasOf": "whip-equipped-garage",
+      "note": "The Whip Equipped garage door, by its short contract ID"
+    },
+    {
+      "id": "hq-bridge",
+      "position": [
+        0,
+        46
+      ],
+      "neighborhood": "original-block",
+      "kind": "bridge-foot",
+      "note": "Mainland foot of the island footbridge"
+    },
+    {
+      "id": "hq-doorway",
+      "position": [
+        0,
+        74
+      ],
+      "neighborhood": "hq-island",
+      "kind": "portal",
+      "portalId": "equity-uprise-hq",
+      "note": "Floor 1 public entrance approach (existing doorway to prim3-transit.html?level=equity-uprise-hq)"
+    },
+    {
+      "id": "junction/harbor-west",
+      "position": [
+        -66,
+        -1
+      ],
+      "neighborhood": "original-block",
+      "kind": "junction"
+    },
+    {
+      "id": "junction/harbor-east",
+      "position": [
+        66,
+        -1
+      ],
+      "neighborhood": "original-block",
+      "kind": "junction"
+    },
+    {
+      "id": "junction/garage-yard",
+      "position": [
+        0,
+        -40
+      ],
+      "neighborhood": "original-block",
+      "kind": "junction"
+    },
+    {
+      "id": "junction/northside-avenue",
+      "position": [
+        -179,
+        -1
+      ],
+      "neighborhood": "northside-residential",
+      "kind": "junction"
+    },
+    {
+      "id": "junction/hillside-lane",
+      "position": [
+        -236,
+        -80
+      ],
+      "neighborhood": "northside-residential",
+      "kind": "junction"
+    },
+    {
+      "id": "junction/wharf-west",
+      "position": [
+        -66,
+        64
+      ],
+      "neighborhood": "workshop-waterfront",
+      "kind": "junction"
+    },
+    {
+      "id": "junction/quay-east",
+      "position": [
+        66,
+        64
+      ],
+      "neighborhood": "hq-waterfront",
+      "kind": "junction"
+    },
+    {
+      "id": "junction/civic-plaza",
+      "position": [
+        -116,
+        -22
+      ],
+      "neighborhood": "civic-center",
+      "kind": "junction"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "civic-plaza",
+      "name": "Civic Plaza",
+      "position": [
+        -116,
+        -22
+      ],
+      "radius": 9,
+      "neighborhood": "civic-center",
+      "hqView": false
+    },
+    {
+      "id": "hq-overlook",
+      "name": "HQ Overlook",
+      "position": [
+        35,
+        88
+      ],
+      "radius": 6,
+      "neighborhood": "hq-waterfront",
+      "hqView": true,
+      "interaction": "hq-view"
+    },
+    {
+      "id": "hq-promenade",
+      "name": "HQ Promenade",
+      "position": [
+        48,
+        112
+      ],
+      "radius": 8,
+      "neighborhood": "hq-waterfront",
+      "hqView": true
+    },
+    {
+      "id": "workshop-pier",
+      "name": "Wharf pier",
+      "position": [
+        -33,
+        116
+      ],
+      "radius": 6,
+      "neighborhood": "workshop-waterfront",
+      "hqView": true,
+      "interaction": "hq-view"
+    },
+    {
+      "id": "northside-commons",
+      "name": "Northside Commons",
+      "position": [
+        -240,
+        -140
+      ],
+      "radius": 12,
+      "neighborhood": "northside-residential",
+      "hqView": false
+    },
+    {
+      "id": "harbor-promenade",
+      "name": "Harbor promenade",
+      "position": [
+        0,
+        40
+      ],
+      "radius": 8,
+      "neighborhood": "original-block",
+      "hqView": true
+    }
+  ],
+  "parks": [
+    {
+      "id": "northside-commons",
+      "minX": -296,
+      "maxX": -186,
+      "minZ": -170,
+      "maxZ": -110
+    },
+    {
+      "id": "northside-field",
+      "minX": -296,
+      "maxX": -186,
+      "minZ": 16,
+      "maxZ": 45
+    }
+  ]
+}

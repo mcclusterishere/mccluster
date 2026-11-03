@@ -23,6 +23,8 @@ jobs:
     outputs:
       city_manifest_sha256: ${{ steps.fictional_city.outputs.manifest_sha256 }}
       city_story_sha256: ${{ steps.fictional_city.outputs.story_sha256 }}
+      city_places_sha256: ${{ steps.fictional_city.outputs.places_sha256 }}
+      city_chunk_index_sha256: ${{ steps.fictional_city.outputs.chunk_index_sha256 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -221,10 +223,14 @@ jobs:
           set -euo pipefail
           node tools/publish-fictional-city.mjs
           # These derived files are ignored in source checkouts but required by the live city.
-          git add -f -- data/fictional-city/district.v1.json data/fictional-city/whip-story.v1.json
+          # The geography (places), the chunk index and every streamed chunk are generated alongside them.
+          git add -f -- data/fictional-city/district.v1.json data/fictional-city/whip-story.v1.json \
+            data/fictional-city/places.v1.json data/fictional-city/chunks
           {
             printf 'manifest_sha256=%s\n' "$(sha256sum data/fictional-city/district.v1.json | cut -d ' ' -f 1)"
             printf 'story_sha256=%s\n' "$(sha256sum data/fictional-city/whip-story.v1.json | cut -d ' ' -f 1)"
+            printf 'places_sha256=%s\n' "$(sha256sum data/fictional-city/places.v1.json | cut -d ' ' -f 1)"
+            printf 'chunk_index_sha256=%s\n' "$(sha256sum data/fictional-city/chunks/index.v1.json | cut -d ' ' -f 1)"
           } >> "$GITHUB_OUTPUT"
 
       - name: Strip the internals out of the published tree
@@ -303,6 +309,8 @@ jobs:
         env:
           CITY_MANIFEST_SHA256: ${{ needs.publish.outputs.city_manifest_sha256 }}
           CITY_STORY_SHA256: ${{ needs.publish.outputs.city_story_sha256 }}
+          CITY_PLACES_SHA256: ${{ needs.publish.outputs.city_places_sha256 }}
+          CITY_CHUNK_INDEX_SHA256: ${{ needs.publish.outputs.city_chunk_index_sha256 }}
         run: |
           set -euo pipefail
           stamp="${GITHUB_SHA::12}"
@@ -330,6 +338,20 @@ jobs:
           }
           verify_city_asset data/fictional-city/district.v1.json "$CITY_MANIFEST_SHA256"
           verify_city_asset data/fictional-city/whip-story.v1.json "$CITY_STORY_SHA256"
+          verify_city_asset data/fictional-city/places.v1.json "$CITY_PLACES_SHA256"
+          verify_city_asset data/fictional-city/chunks/index.v1.json "$CITY_CHUNK_INDEX_SHA256"
+          # The index's own bytes were just verified, so its per-chunk hashes are trusted: every chunk must serve.
+          cp "$city_verify_dir/body" "$city_verify_dir/index.json"
+          chunk_count=0
+          while read -r chunk_file chunk_sha; do
+            verify_city_asset "data/fictional-city/$chunk_file" "$chunk_sha"
+            chunk_count=$((chunk_count + 1))
+          done < <(jq -r '.chunks[] | "\(.file) \(.sha256)"' "$city_verify_dir/index.json")
+          if [ "$chunk_count" -lt 1 ]; then
+            echo "::error::The chunk index lists no chunks"
+            exit 1
+          fi
+          echo "$chunk_count city chunks -> HTTP 200 with matching SHA256"
 
       - name: Private paths answer 404
         run: |

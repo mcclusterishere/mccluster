@@ -53,7 +53,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const clock = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const mins = (ms) => { const m = Math.max(1, Math.round(ms / 60000)); return m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min'; };
-  const KIND = { place: 'Place', story: 'Story', mission: 'Mission' };
+  const KIND = { place: 'Place', story: 'Story', mission: 'Mission', game: 'Game' };
 
   function mount(opts) {
     const o = Object.assign({ dataUrl: 'data/games/world.v1.json', now: () => Date.now(), onFly: null, target: '', parent: document.body }, opts || {});

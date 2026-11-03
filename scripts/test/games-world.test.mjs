@@ -51,7 +51,7 @@ test('schema: country → state → town, each town with real coordinates and at
         assert.ok(Math.abs(t.lat) <= 90 && Math.abs(t.lon) <= 180, t.id);
         assert.ok(t.entries.length, t.id + ' has nothing to start');
         for (const e of t.entries) {
-          assert.ok(['place', 'story', 'mission'].includes(e.kind), e.id);
+          assert.ok(['place', 'story', 'mission', 'game'].includes(e.kind), e.id);
           assert.ok(e.title && e.route && e.blurb && e.blurb.text && e.blurb.source, e.id);
           if (e.neighborhood) assert.ok(t.neighborhoods.some((n) => n.id === e.neighborhood), e.id + ' names an unknown neighborhood');
         }
@@ -81,6 +81,8 @@ test('every link resolves to a file in this repository, and every query it carri
   const b1 = await read('js/prim3-tactics/missions/blind-the-floor.mjs');
   const city = await read('js/fictional-city/app.mjs');
   const prim3 = await readJson('data/prim3/world-missions.json');
+  const arcade = await readJson('data/city-arcade/catalog.v1.json');
+  assert.match(await read('js/city-arcade/app.mjs'), /get\('game'\)/, 'the arcade reads ?game=');
   const all = routes(world);
   assert.ok(all.length > 30);
   for (const r of all) {
@@ -93,6 +95,7 @@ test('every link resolves to a file in this repository, and every query it carri
       if (q.has('side')) assert.match(b1, new RegExp(`SIDES = \\[[^\\]]*'${q.get('side')}'`), r);
       if (q.has('mission')) assert.ok(prim3.missions.some((m) => m.id === q.get('mission')), r);
     }
+    if (u.pathname === '/city-arcade.html') assert.ok(arcade.games.some((g) => g.id === q.get('game') && g.status === 'playable'), r + ' is a playable arcade game');
     if (u.pathname === '/fictional-city.html' && q.has('entry')) assert.match(city, new RegExp(`entry === '${q.get('entry')}'`), r);
   }
 });
@@ -120,14 +123,26 @@ test('PRIM3 World missions that name a real place are listed there, each opening
   assert.ok(findTown(world, 'jp/aichi/kariya'));
 });
 
-test('authored but unplaced city businesses (the district expansion) are never offered as destinations', async () => {
+test('the city expansion: its playable neighbourhoods are places in Bridgeport; its businesses are not separate destinations', async () => {
   const city = await readJson('core/data/fictional-city/district.v1.json');
-  const unplaced = [...(city.expansionBusinesses || []), ...(city.expansionNeighborhoods || [])];
-  const text = JSON.stringify(world);
-  for (const b of unplaced) {
-    assert.ok(!text.includes('"' + b.id + '"'), b.id + ' is not placed in the playable city yet');
-    if (b.name) assert.ok(!text.includes(b.name), b.name + ' is not placed in the playable city yet');
+  const t = findTown(world, 'us/connecticut/bridgeport').town;
+  const fresh = city.expansionNeighborhoods.filter((n) => n.authorship === 'new-2026-11-03');
+  assert.ok(fresh.length >= 4);
+  for (const n of fresh) {
+    const e = t.entries.find((x) => x.id === 'city-' + n.id);
+    assert.ok(e && e.kind === 'place' && e.route === 'fictional-city.html' && e.title === n.name, n.id);
+    assert.ok(n.lore.startsWith(e.blurb.text), n.id + ' quotes its own lore');
   }
+  const text = JSON.stringify(world);
+  for (const b of city.expansionBusinesses || []) assert.ok(!text.includes('"' + b.id + '"'), b.id + ' is reached through its neighbourhood, not listed alone');
+});
+
+test('the City Arcade lists only its playable games, under Bridgeport', async () => {
+  const arcade = await readJson('data/city-arcade/catalog.v1.json');
+  const t = findTown(world, 'us/connecticut/bridgeport').town;
+  const listed = t.entries.filter((e) => e.kind === 'game').map((e) => e.id).sort();
+  assert.deepEqual(listed, arcade.games.filter((g) => g.status === 'playable').map((g) => 'arcade-' + g.id).sort());
+  assert.ok(t.neighborhoods.some((n) => n.id === 'city-arcade'));
 });
 
 test('storylines are seeded from their sources: Robbery 1s 13 scenes in 7 acts, Whip Equipped in canon order, B1 at its anchors', async () => {

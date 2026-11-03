@@ -46,6 +46,46 @@
                     "text": "Explicit island footbridge arrival; detailed HQ entrance remains on Floor 1.",
                     "source": "docs/universe/universe-registry.json"
                   }
+                },
+                {
+                  "id": "hq-waterfront",
+                  "name": "Bridgefoot Quay",
+                  "blurb": {
+                    "text": "The waterfront where the HQ bridge touches the mainland.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "civic-center",
+                  "name": "Precinct Square",
+                  "blurb": {
+                    "text": "The city’s civic heart, in the sense that something is technically beating.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "northside-residential",
+                  "name": "Cul-de-Sadness",
+                  "blurb": {
+                    "text": "Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "workshop-waterfront",
+                  "name": "Rustbucket Wharf",
+                  "blurb": {
+                    "text": "The industrial harbor on the far side of the city’s working waterfront: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "city-arcade",
+                  "name": "City Arcade",
+                  "blurb": {
+                    "text": "The house owner's City Arcade: quick games from the storefronts of McCluster City.",
+                    "source": "city-arcade.html"
+                  }
                 }
               ],
               "entries": [
@@ -128,6 +168,76 @@
                   "blurb": {
                     "text": "You are the red team, in through the tunnel transfer lock under concealment.",
                     "source": "js/prim3-tactics/missions/blind-the-floor.mjs"
+                  }
+                },
+                {
+                  "id": "city-hq-waterfront",
+                  "title": "Bridgefoot Quay",
+                  "kind": "place",
+                  "neighborhood": "hq-waterfront",
+                  "universe": "mccluster-fictional-city",
+                  "route": "fictional-city.html",
+                  "blurb": {
+                    "text": "The waterfront where the HQ bridge touches the mainland.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "city-civic-center",
+                  "title": "Precinct Square",
+                  "kind": "place",
+                  "neighborhood": "civic-center",
+                  "universe": "mccluster-fictional-city",
+                  "route": "fictional-city.html",
+                  "blurb": {
+                    "text": "The city’s civic heart, in the sense that something is technically beating.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "city-northside-residential",
+                  "title": "Cul-de-Sadness",
+                  "kind": "place",
+                  "neighborhood": "northside-residential",
+                  "universe": "mccluster-fictional-city",
+                  "route": "fictional-city.html",
+                  "blurb": {
+                    "text": "Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "city-workshop-waterfront",
+                  "title": "Rustbucket Wharf",
+                  "kind": "place",
+                  "neighborhood": "workshop-waterfront",
+                  "universe": "mccluster-fictional-city",
+                  "route": "fictional-city.html",
+                  "blurb": {
+                    "text": "The industrial harbor on the far side of the city’s working waterfront: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives.",
+                    "source": "core/data/fictional-city/district.v1.json"
+                  }
+                },
+                {
+                  "id": "arcade-designer-kicks-sole-run",
+                  "title": "Designer Kicks · Sole Run",
+                  "kind": "game",
+                  "neighborhood": "city-arcade",
+                  "route": "city-arcade.html?game=designer-kicks-sole-run",
+                  "blurb": {
+                    "text": "Collect four supernatural pairs, equip abilities and manage police heat. A distinct sandbox, not the scripted Robbery 1s episode.",
+                    "source": "data/city-arcade/catalog.v1.json"
+                  }
+                },
+                {
+                  "id": "arcade-gauranfucking-tea-tea-rush",
+                  "title": "Tea Rush",
+                  "kind": "game",
+                  "neighborhood": "city-arcade",
+                  "route": "city-arcade.html?game=gauranfucking-tea-tea-rush",
+                  "blurb": {
+                    "text": "Five customers, five blends, one streak. Serve the counter before everybody leaves.",
+                    "source": "data/city-arcade/catalog.v1.json"
                   }
                 }
               ]
