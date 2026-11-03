@@ -160,13 +160,13 @@ test('expansion keeps the v1 runtime contract and leaves every original record u
   const v1 = ['district', 'brands', 'businesses', 'npcs', 'items', 'garage', 'garageCrew', 'portals'].map(key => city[key]);
   assert.equal(createHash('sha256').update(JSON.stringify(v1)).digest('hex'), '760c27278ec63f12fd8ed33aefa91f03935f4d6d1f6d5d2d456278788c5b6a20');
   assert.equal(city.businesses.find(b => b.id === 'gauranfucking-tea').tagline, "We guarantee you'll like it, or else fuck you.");
-  for (const rows of [[...allBuildings, ...city.expansionBusinesses, ...city.families, ...city.neighborhoods], [...people, ...expansionPeople], [...city.items, ...city.expansionItems]]) {
+  for (const rows of [[...allBuildings, ...city.expansionBusinesses, ...city.families, ...city.expansionNeighborhoods, ...(city.neighborhoods || [])], [...people, ...expansionPeople], [...city.items, ...city.expansionItems]]) {
     assert.equal(new Set(rows.map(r => r.id)).size, rows.length, 'IDs are unique within each kind');
   }
 });
 
 test('expansion records carry parcel IDs, never coordinates, and every parcel binds to one owner', () => {
-  assert.deepEqual(city.neighborhoods.map(n => n.id), ['original-block', 'hq-waterfront', 'civic-center', 'northside-residential', 'workshop-waterfront']);
+  assert.deepEqual(city.expansionNeighborhoods.map(n => n.id), ['original-block', 'hq-waterfront', 'civic-center', 'northside-residential', 'workshop-waterfront']);
   const used = new Set();
   for (const p of city.parcels) {
     assert.ok(PARCELS.has(p.parcelId), p.parcelId); assert.ok(!used.has(p.parcelId)); used.add(p.parcelId);
@@ -200,7 +200,7 @@ test('expansion residents have biographies, appearance and playable conversation
     assert.equal(n.age < 18, n.minor === true, n.id);
     if (n.minor) assert.ok(['school-of-hard-knocks', 'municipal-high-9'].includes(n.businessId), n.id);
   }
-  const text = JSON.stringify([city.expansionBusinesses, expansionPeople, city.families, city.neighborhoods, city.expansionItems]);
+  const text = JSON.stringify([city.expansionBusinesses, expansionPeople, city.families, city.expansionNeighborhoods, city.expansionItems]);
   assert.doesNotMatch(text, /\bnigg/i);
   assert.doesNotMatch(text, /\b(bloods|crips|latin kings|ms-13)\b/i, 'no real gang names');
 });

@@ -4144,7 +4144,7 @@
       "description": "Open the existing album destination. The garage’s chapter desk carries the separate narrative reading experience."
     }
   ],
-  "neighborhoods": [
+  "expansionNeighborhoods": [
     {
       "id": "original-block",
       "name": "The Original Block",
@@ -10262,7 +10262,7 @@
     "quests": "Cross-business situations in the lore are conversation hooks. Mission progression and reward logic are not implied unless implemented separately.",
     "storyContinuity": "Garage conversations are framed before the finale. Preserve Tears Won’t Fall before Salvage Title, the Alana/Atlanta identity and sacrifice, and the simultaneous legitimate/cousin perspectives of Mr. Lock Changer.",
     "realFlipChronology": "Retain the source chronicle’s approximate prices, model-year uncertainty, separate van buyers, and unknown costs. Do not turn gross spread into verified profit or real recollections into proof of fictional crime.",
-    "expansionSchema": "Schema revision 2 adds neighborhoods, parcels, expansionBusinesses, expansionNpcs, families and expansionItems beside the unchanged v1 arrays. The original eight businesses, 24 residents, three garage characters and 24 items keep their IDs, bytes and runtime placement. Expansion records carry parcel IDs, never coordinates; the spatial layer binds parcelId, homeParcelId and routeAnchors to geometry. Existing anchors usable in routes are the eight original business IDs, garage, hq-bridge and hq-doorway.",
+    "expansionSchema": "Schema revision 2 adds expansionNeighborhoods (lore-only neighborhoods, bound by parcel ID; the top-level neighborhoods array is reserved for playable geographic areas), parcels, expansionBusinesses, expansionNpcs, families and expansionItems beside the unchanged v1 arrays. The original eight businesses, 24 residents, three garage characters and 24 items keep their IDs, bytes and runtime placement. Expansion records carry parcel IDs, never coordinates; the spatial layer binds parcelId, homeParcelId and routeAnchors to geometry. Existing anchors usable in routes are the eight original business IDs, garage, hq-bridge and hq-doorway.",
     "expansionAuthorship": "Every neighborhood (other than the original block), business, resident, family and item added in schema revision 2 is new fiction written on 2026-11-03 from the owner’s brief; none is recovered history. Church attendance and cross-references to original residents are additive and do not change their biographies.",
     "expansionSatire": "Owner-directed adult satire. Wiggers Anonymous targets white men who wear a caricature of Black and hip-hop culture as a costume; the School of Hard Knocks targets a rich school and its students who turn other people’s lives into enrichment programming. The joke is always on the posers, the school, the store that sells the costume and the corrupt institutions, never on Black people or public-school students. No slurs beyond the owner-chosen business name, no n-word, no phonetic racial accent or dialect spelling, no real gang names, no real people or real businesses.",
     "expansionMinors": "Students at the School of Hard Knocks and Municipal High No. 9, and listed children in families, are minors and carry minor: true where they are residents. Their comedy is privilege, posturing and their school. No sexual content, no graphic injury, no bribes, purchases or adult transactions involving them.",

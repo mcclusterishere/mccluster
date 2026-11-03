@@ -113,7 +113,8 @@ export function parseGameLore(bytes) {
   const npcs = collection([...collection(data.npcs, 256), ...collection(data.garageCrew, 16), ...expansionNpcs], 528);
   const items = collection([...collection(data.items, 256), ...collection(optional('expansionItems'), 256)], 512);
   const portals = collection(data.portals, 32);
-  const neighborhoods = collection(optional('neighborhoods'), 32);
+  // Playable areas (neighborhoods) and lore-only areas bound by parcel ID (expansionNeighborhoods) share one section.
+  const neighborhoods = collection([...optional('neighborhoods'), ...optional('expansionNeighborhoods')], 32);
   const families = collection(optional('families'), 64);
   const parcels = optional('parcels');
   if (!Array.isArray(parcels) || parcels.length > 256) throw invalidManifest();

@@ -148,7 +148,7 @@ test('owned capability resolves to the installed manifest without network, memor
     assert.equal(lore.counts.new_npcs, 24);
     assert.equal(lore.counts.garage_crew, 3);
     assert.equal(lore.counts.families, 10);
-    assert.equal(lore.counts.neighborhoods, 5);
+    assert.ok(lore.counts.neighborhoods >= 5);
     assert.ok(lore.counts.expansion_npcs >= 40 && lore.counts.expansion_businesses >= 17);
     const raw = await readFile(new URL('../data/fictional-city/district.v1.json', import.meta.url));
     assert.equal(lore.manifest.sha256, createHash('sha256').update(raw).digest('hex'));
@@ -172,7 +172,7 @@ test('reader works in an installed Core tree with no repository-root data direct
 function expansionFixture() {
   const data = fixture();
   data.schemaRevision = 2;
-  data.neighborhoods = [{ id: 'civic-center', name: 'Precinct Square' }, { id: 'northside-residential', name: 'Northside' }];
+  data.expansionNeighborhoods = [{ id: 'civic-center', name: 'Precinct Square' }, { id: 'northside-residential', name: 'Northside' }];
   data.parcels = [
     { parcelId: 'civic-center/police-station', neighborhoodId: 'civic-center', businessId: 'precinct' },
     { parcelId: 'northside-residential/house-01', neighborhoodId: 'northside-residential', familyId: 'smith-family' }

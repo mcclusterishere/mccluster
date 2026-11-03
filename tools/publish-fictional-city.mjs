@@ -13,7 +13,7 @@ export async function buildCityExport(root = ROOT) {
   const manifest = JSON.parse(bytes);
   if (manifest.schema !== 'mccluster.fictional-city/v1' || manifest.npcs.length !== 24 || manifest.businesses.length !== 8) throw new Error('Invalid city manifest');
   // Schema revision 2 adds parcel-bound expansion lore beside the unchanged v1 arrays.
-  if (manifest.schemaRevision === 2 && !(['neighborhoods', 'parcels', 'expansionBusinesses', 'expansionNpcs', 'families', 'expansionItems']
+  if (manifest.schemaRevision === 2 && !(['expansionNeighborhoods', 'parcels', 'expansionBusinesses', 'expansionNpcs', 'families', 'expansionItems']
     .every(key => Array.isArray(manifest[key]) && manifest[key].length) && manifest.families.length === 10)) throw new Error('Invalid city expansion');
   const canon = JSON.parse(await readFile(resolve(root, 'docs/music/whip-equipped/CANON.json'), 'utf8'));
   const screenplay = await readFile(resolve(root, 'docs/music/whip-equipped/SCREENPLAY.md'), 'utf8');
