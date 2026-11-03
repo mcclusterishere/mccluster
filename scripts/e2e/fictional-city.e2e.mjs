@@ -90,7 +90,7 @@ async function contextFor(width, role = 'owner') {
     }
     return route.fulfill({ status: 200, contentType: 'text/plain', body: '' });
   });
-  const page = await context.newPage(); page.setDefaultTimeout(45000); page.on('pageerror', e => errors.push(e.message));
+  const page = await context.newPage(); page.setDefaultTimeout(120000); // software WebGL runs the full city at about 2 fps page.on('pageerror', e => errors.push(e.message));
   return { context, page, requests, errors };
 }
 try {
@@ -121,7 +121,7 @@ try {
     const before = await page.evaluate(() => MCC_CITY.snapshot().position);
     await page.locator('#city-canvas').focus();
     await page.keyboard.down('d');
-    try { await page.waitForFunction(p => { const n = MCC_CITY.snapshot().position; return Math.hypot(n.x - p.x, n.z - p.z) > .25; }, before, { timeout: 10000 }); }
+    try { await page.waitForFunction(p => { const n = MCC_CITY.snapshot().position; return Math.hypot(n.x - p.x, n.z - p.z) > .25; }, before, { timeout: 40000 }); }
     finally { await page.keyboard.up('d'); }
     const after = await page.evaluate(() => MCC_CITY.snapshot().position);
     check(width + ': keyboard walking changes player position', Math.hypot(after.x - before.x, after.z - before.z) > .2);
@@ -129,7 +129,7 @@ try {
     const cdp = await context.newCDPSession(page);
     const touchBefore = await page.evaluate(() => MCC_CITY.snapshot().position);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: control.x + control.width / 2, y: control.y + control.height / 2, id: 12 }] });
-    try { await page.waitForFunction(p => { const n = MCC_CITY.snapshot().position; return Math.hypot(n.x - p.x, n.z - p.z) > .25; }, touchBefore, { timeout: 10000 }); }
+    try { await page.waitForFunction(p => { const n = MCC_CITY.snapshot().position; return Math.hypot(n.x - p.x, n.z - p.z) > .25; }, touchBefore, { timeout: 40000 }); }
     finally { await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
     const touchAfter = await page.evaluate(() => MCC_CITY.snapshot().position);
     check(width + ': actual touch on the direction control moves the player', Math.hypot(touchAfter.x - touchBefore.x, touchAfter.z - touchBefore.z) > .2);

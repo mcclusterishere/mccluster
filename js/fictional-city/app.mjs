@@ -303,8 +303,8 @@ function drawMap(area) {
     rect({ minX: -10.9728, maxX: 10.9728, minZ: 77.0272, maxZ: 98.9728 }, '#47676a');
     shape('text', { x: mx(0), y: mz(106), 'font-size': 11 }, 'EQUITY UPRISE');
   }
-  const places = area ? area.places : [...manifest.businesses, manifest.garage];
-  places.forEach((place, index) => {
+  const shown = area ? area.places : [...manifest.businesses, manifest.garage];
+  shown.forEach((place, index) => {
     if (place.footprint) shape('polygon', { points: place.footprint.map(([x, z]) => `${mx(x)},${mz(z)}`).join(' '), fill: place.color, stroke: '#64766b', 'stroke-width': .7 });
     else rect({ minX: place.position[0] - place.size[0] / 2, maxX: place.position[0] + place.size[0] / 2, minZ: place.position[1] - place.size[1] / 2, maxZ: place.position[1] + place.size[1] / 2 }, place.color);
     if (!area || place.storyArcId) {
@@ -320,7 +320,10 @@ function drawMap(area) {
 }
 /* The whole city at one scale: north up (−Z), land, streets, every parcel and the island HQ. */
 function drawCityMap(ns, svg) {
-  const b = places.frame.bounds, pad = 6, k = 1.05;
+  // the authored frame plus any neighbourhood built from other sources (Bridgeport, north of the original block)
+  const story = neighborhoods(manifest);
+  const b = [places.frame.bounds, ...story.map(n => n.bounds)].reduce((u, r) => ({ minX: Math.min(u.minX, r.minX), maxX: Math.max(u.maxX, r.maxX), minZ: Math.min(u.minZ, r.minZ), maxZ: Math.max(u.maxZ, r.maxZ) }));
+  const pad = 6, k = 1.05;
   const W = (b.maxX - b.minX) * k + pad * 2, H = (b.maxZ - b.minZ + 20) * k + pad * 2;
   svg.setAttribute('viewBox', `0 0 ${W.toFixed(0)} ${H.toFixed(0)}`); svg.setAttribute('class', 'city-map city-map-wide');
   svg.setAttribute('role', 'img');
@@ -330,6 +333,7 @@ function drawCityMap(ns, svg) {
   const rect = (r, fill, extra = {}) => shape('rect', { x: mx(r.minX), y: mz(r.minZ), width: (r.maxX - r.minX) * k, height: (r.maxZ - r.minZ) * k, fill, ...extra });
   shape('rect', { x: 0, y: 0, width: W, height: H, fill: '#9cc2c0', rx: 8 });
   for (const s of places.surfaces) rect(s, s.kind === 'pier' || s.kind === 'bridge' ? '#c9b48f' : s.kind === 'quay' ? '#e3d6b8' : '#e9e4cf');
+  for (const n of story) for (const sf of n.surfaces) rect(sf, '#e9e4cf');
   for (const p of places.parks || []) rect(p, '#bcd0a8');
   for (const s of places.streets) rect(s, s.kind === 'road' || s.kind === 'lane' ? '#8d9595' : s.kind === 'plaza' ? '#efe6cf' : '#d7b9a0');
   for (const p of [...buildings(), ...vacant]) {
@@ -337,6 +341,11 @@ function drawCityMap(ns, svg) {
     rect({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 }, p.generic ? '#b7a68c' : (p.color || '#7a8a7d'), { rx: 1.5, 'data-place': p.id });
   }
   rect({ minX: -10.97, maxX: 10.97, minZ: 77.03, maxZ: 98.97 }, '#47676a');
+  for (const n of story) {
+    for (const p of n.places || []) if (p.style !== 'yard') { const r = buildingBoundsOf(p); rect(r, p.storyArcId ? '#c98a5a' : '#b7a68c', { rx: 1 }); }
+    const t = shape('text', { x: mx((n.bounds.minX + n.bounds.maxX) / 2), y: mz(n.bounds.minZ + 24), class: 'city-map-area' }, n.name.toUpperCase());
+    t.setAttribute('text-anchor', 'middle');
+  }
   for (const n of places.neighborhoods) {
     const c = n.bounds;
     const t = shape('text', { x: mx((c.minX + c.maxX) / 2), y: mz(n.id === 'hq-island' ? 106 : n.id === 'northside-residential' ? -141 : n.id === 'original-block' ? 30 : (c.minZ + c.maxZ) / 2 + (n.id.includes('waterfront') ? 20 : 0)), class: 'city-map-area' }, n.name.toUpperCase());
@@ -344,6 +353,13 @@ function drawCityMap(ns, svg) {
   }
   if (!state.position.interior) shape('circle', { cx: mx(state.position.x), cy: mz(state.position.z), r: 4, fill: '#eb763e', stroke: '#fff', 'stroke-width': 1.5 });
   return svg;
+}
+function buildingBoundsOf(p) {
+  if (Array.isArray(p.footprint) && p.footprint.length >= 3) {
+    const xs = p.footprint.map(q => q[0]), zs = p.footprint.map(q => q[1]);
+    return { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
+  }
+  const [x, z] = p.position, [w, d] = p.size; return { minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 };
 }
 function placeCard(place) {
   const card = el('article', undefined, 'city-place-card');
