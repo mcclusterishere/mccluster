@@ -46,6 +46,9 @@
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
       {label:'Hitman’s Halo', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'World · Missions · People · Intelligence'},
       {label:'PRIM3', group:'Products', href:new URL('prim3.html', house).href, context:'Learning'},
+      /* the owner's mission globe and World builder (owner, 2026-11-02: "its own tab … only admin can see as its own app");
+         this panel is the owner's only, and the page checks the owner again itself */
+      {label:'PRIM3 World', group:'Products', href:new URL('prim3-world.html', house).href, context:'Missions · World builder'},
       {label:'Whip', group:'Products', href:new URL('whip.html', house).href, context:'Mobility'},
       {label:'WE Manufacture', group:'Products', href:new URL('we-manufacture.html', house).href, context:'Manufacturing'}
     ]);

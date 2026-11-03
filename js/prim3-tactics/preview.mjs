@@ -448,12 +448,22 @@ function bindGestures() {
 
 /* ---------- main menu ---------- */
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+/* World (prim3-world.html) is the house owner's mission globe: listed only while the shared bar's server owner check
+   (js/tabbar.js, GET /v1/status) says this is the owner, and withdrawn when it says otherwise. */
+let ownerWorld = !!(window.MCC_BAR && typeof window.MCC_BAR.admin === 'function' && window.MCC_BAR.admin());
+addEventListener('mcc:appbar-admin', (e) => {
+  const on = !!(e && e.detail && e.detail.admin === true);
+  if (on === ownerWorld) return;
+  ownerWorld = on;
+  if (menuOpen) renderMainMenu();
+});
 function menuOptions() {
   const saved = hasSave() && state.round >= 1;
   return [
     saved && { key: 'continue', label: 'Continue mission', sub: `Turn ${String(state.round).padStart(2, '0')} · saved in this browser`, go: 'Continue mission' },
     { key: 'new', label: saved ? 'New mission' : 'Deploy', sub: saved ? 'Secure the relay from the start (replaces your saved progress)' : 'Secure the relay · squad of three', go: saved ? 'Start a new mission' : 'Deploy' },
     { key: 'transit', label: 'Transit / Relay', sub: 'New level: canal compound at night · roofs, stairs, overwatch, hostile turns', go: 'Deploy to Transit / Relay' },
+    ownerWorld && { key: 'world', label: 'World', sub: 'Owner: a mission in every cast nation, on the globe', go: 'Open World' },
     { key: 'training', label: 'Training', sub: 'Optional grid-math hint on the live board; it never moves anyone', go: 'Start training' },
     { key: 'graphics', label: `Graphics: ${GFX_NAME[gfx]}`, sub: 'Tap again to change · Automatic, High, Balanced, Battery saver', go: saved ? 'Continue mission' : 'Deploy' }
   ].filter(Boolean);
@@ -501,6 +511,7 @@ $('pmList').addEventListener('click', (e) => {
 $('pmGo').addEventListener('click', () => {
   if (menuBusy) return;
   if (menuSel === 'transit') { location.href = 'prim3-transit.html'; return; }
+  if (menuSel === 'world' && ownerWorld) { location.href = 'prim3-world.html'; return; }
   const action = menuSel === 'graphics' ? (hasSave() ? 'continue' : 'new') : menuSel;
   menuBusy = true;
   if (menuScene) menuScene.dive(() => closeMainMenu(action)); else closeMainMenu(action);
