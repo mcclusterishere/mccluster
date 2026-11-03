@@ -344,6 +344,22 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     mesh.count = n; mesh.instanceMatrix.needsUpdate = true;
   }
 
+  /* ---------- the plotting grid: every tile edge on the ground and on each walkable roof ---------- */
+  const gridGroup = new THREE.Group(); scene.add(gridGroup);
+  const gridMat = new THREE.LineBasicMaterial({ color: 0x5fe6f2, transparent: true, opacity: 0.42, depthWrite: false, toneMapped: false });
+  const gridMajor = new THREE.LineBasicMaterial({ color: 0x9ff3fb, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false });
+  { const minor = [], major = [], put = (arr, ...v) => arr.push(...v);
+    const isMajorX = (x) => (x - level.FRAME.x0) % 8 === 0, isMajorY = (y) => (level.FRAME.y0 - y + 1) % 8 === 0;
+    const cut = (x, y) => y >= canal.y && y < canal.y + canal.d && !SCENE.bridges.some((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.d);
+    for (let x = 0; x <= W; x += 1) for (let y = 0; y < H; y += 1) { if (cut(x, y) && cut(x - 1, y)) continue; put(isMajorX(x) ? major : minor, x - 0.5, 0.03, y - 0.5, x - 0.5, 0.03, y + 0.5); }
+    for (let y = 0; y <= H; y += 1) for (let x = 0; x < W; x += 1) { if (cut(x, y) && cut(x, y - 1)) continue; put(isMajorY(y) ? major : minor, x - 0.5, 0.03, y - 0.5, x + 0.5, 0.03, y - 0.5); }
+    const roofsDef = [...SCENE.buildings.filter((b) => b.roof), ...(SCENE.skybridge ? [SCENE.skybridge] : [])];
+    for (const r of roofsDef) { const hh = M(r.h) + 0.1;
+      for (let x = r.x; x <= r.x + r.w; x += 1) put(minor, x - 0.5, hh, r.y - 0.5, x - 0.5, hh, r.y + r.d - 0.5);
+      for (let y = r.y; y <= r.y + r.d; y += 1) put(minor, r.x - 0.5, hh, y - 0.5, r.x + r.w - 0.5, hh, y - 0.5); }
+    const seg = (arr, m) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, m); l.renderOrder = 1; l.frustumCulled = false; gridGroup.add(l); };
+    seg(minor, gridMat); seg(major, gridMajor); }
+
   /* ---------- operatives ---------- */
   const haloTex = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 4, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(0.55, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
   const kit = createOperativeKit(THREE, { team: TEAMS[curLook], haloTex, reducedMotion });
@@ -405,6 +421,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     moon.color.set(studio ? 0xfffaf2 : 0xbfd2ff); moon.intensity = studio ? 2.0 : 1.7;
     for (const l of lampLights) l.visible = !studio; for (const s of lampSprites) s.visible = !studio;
     relayLight.visible = !studio; rain.visible = !studio && !reducedMotion;
+    gridMat.color.set(studio ? 0x2a3136 : 0x5fe6f2); gridMat.opacity = studio ? 0.28 : 0.42; gridMajor.color.set(studio ? 0x0e1113 : 0x9ff3fb); gridMajor.opacity = studio ? 0.5 : 0.7;
     if (bloomPass) bloomPass.enabled = !studio;
     const ov = OVER[curLook];
     reachMesh.material.color.set(ov.reach); reachEdge.material.color.set(ov.reach); pathMesh.material.color.set(ov.path);
@@ -496,7 +513,26 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       const p = project(lx, ly, lh); if (p.behind) continue;
       html += `<span class="b3-label b3-label--${l.kind}" style="transform:translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px)">${l.text}</span>`;
     }
-    labels.innerHTML = html;
+    labels.innerHTML = html + edgeRulers();
+  }
+  const rayR = new THREE.Raycaster(), ndcR = new THREE.Vector2(), hitR = new THREE.Vector3(), plane0 = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  function groundAt(px, py, r) { ndcR.set(px / r.width * 2 - 1, -(py / r.height) * 2 + 1); rayR.setFromCamera(ndcR, camera); return rayR.ray.intersectPlane(plane0, hitR) ? hitR.clone() : null; }
+  function edgeRulers() {
+    if (!rulersOn || showcase) return '';
+    const r = renderer.domElement.getBoundingClientRect(); if (r.width < 10) return '';
+    let out = '';
+    const along = (p0, p1, pick, label, place) => { // walk a screen edge, chip each grid line it crosses
+      const a = groundAt(p0[0], p0[1], r), b = groundAt(p1[0], p1[1], r); if (!a || !b) return;
+      const va = pick(a), vb = pick(b), lo = Math.ceil(Math.min(va, vb)), hi = Math.floor(Math.max(va, vb));
+      const step = Math.max(1, Math.ceil((hi - lo) / 7 / 5) * 5);
+      for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) { const t = (v - va) / ((vb - va) || 1e-6); const q = a.clone().lerp(b, t); const s2 = project(q.x, q.z, 0); out += place(s2, label(v)); }
+    };
+    // bottom edge: X values; left edge: Y values (engine x = X + x0, y = y0 − Y)
+    along([12, r.height - 30], [r.width - 12, r.height - 30], (q) => q.x + 0 - level.FRAME.x0, (v) => 'X ' + v,
+      (s2, t) => s2.x > 60 && s2.x < r.width - 60 ? `<span class="b3-ruler b3-ruler--x" style="transform:translate(${s2.x.toFixed(1)}px,${(r.height - 30).toFixed(1)}px)">${t}</span>` : '');
+    along([14, 70], [14, r.height - 70], (q) => level.FRAME.y0 - q.z, (v) => 'Y ' + v,
+      (s2, t) => s2.y > 60 && s2.y < r.height - 70 ? `<span class="b3-ruler b3-ruler--y" style="transform:translate(10px,${s2.y.toFixed(1)}px)">${t}</span>` : '');
+    return out;
   }
 
   /* ---------- camera ---------- */
@@ -519,6 +555,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
 
   /* ---------- frame loop ---------- */
   let model = null, needs = true, t0 = performance.now(), active = true, busy = false, raf = 0;
+  let rulersOn = true;
   const flashes = []; const fxGroup = new THREE.Group(); scene.add(fxGroup);
   let fireQueue = [], fireAnim = null;
   const lerpAngle = (a, b, k) => { const d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * k; };
@@ -711,6 +748,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     update, tier,
     get look() { return curLook; },
     setLook(lk) { applyLook(lk); },
+    setGrid(on) { gridGroup.visible = !!on; rulersOn = !!on; needs = true; },
+    get gridOn() { return gridGroup.visible; },
     setActive(on) { active = !!on; needs = true; },
     zoom(step) { setDist(view.distGoal * (step > 0 ? 0.8 : 1.25)); },
     zoomLevel() { return view.dist; },
