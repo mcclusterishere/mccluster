@@ -97,7 +97,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   const hasSurface = (x, y, z) => !z || !!surfaceAt(x, y, z);
   const surfaceHeight = (x, y, z) => { if (!z) return 0; const q = surfaceAt(x, y, z); return q ? M(q.height) : 0; };
   // a floor at grade height (a building's ground floor kept as its own engine floor) is what a ground tap means there
-  const groundFloorAt = (x, y) => { for (const q of SURF) if (q.height < 0.05 && x >= q.x && x < q.x + q.w && y >= q.y && y < q.y + q.d) return q.z; return 0; };
+  const groundFloorAt = (x, y) => { for (const q of SURF) if (Math.abs(q.height) < 0.05 && x >= q.x && x < q.x + q.w && y >= q.y && y < q.y + q.d) return q.z; return 0; };
   const SPAN = Math.max(W, H);
 
   const M_ASPHALT = mat({ color: 0x5b5f63, roughness: 0.62, metalness: 0.05 }, { pbr: { set: 'asphalt_02', repeat: [W / 3, H / 3] }, tone: 0xe7e8e8 });
@@ -306,11 +306,12 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   }
   if (!SCENE.relay && OBJ) { beacon.position.set(OBJ.x, beaconY(), OBJ.y); relayGroup.add(beacon); }
   const relayLight = new THREE.PointLight(0xffb547, LUX(6, 2), M(9), 2); if (OBJ) relayLight.position.set(OBJ.x, beaconY() - 0.2, OBJ.y); world.add(relayLight);
-  if (SCENE.extraction) { // the extraction pad: a painted hazard ring
-    const e = SCENE.extraction;
+  const extractionGroup = new THREE.Group(); world.add(extractionGroup);
+  if (SCENE.extraction && SCENE.showExtraction !== false) { // the extraction pad: a painted hazard ring (at its own floor)
+    const e = SCENE.extraction, ey = surfaceHeight(e.x, e.y, e.z || 0);
     const ring = new THREE.Mesh(new THREE.RingGeometry(e.r + 0.2, e.r + 0.5, 64), new THREE.MeshBasicMaterial({ color: 0xffd23a, toneMapped: false, transparent: true, opacity: 0.75, depthWrite: false }));
-    ring.rotation.x = -Math.PI / 2; ring.position.set(e.x, 0.02, e.y); world.add(ring);
-    const lab = decal(textTex(e.label || 'EXTRACT', { w: 512, font: '800 84px system-ui', color: 'rgba(255,210,58,.85)' }), e.r * 1.1, e.r * 0.275); lab.rotation.x = -Math.PI / 2; lab.position.set(e.x, 0.03, e.y); world.add(lab);
+    ring.rotation.x = -Math.PI / 2; ring.position.set(e.x, ey + 0.02, e.y); extractionGroup.add(ring);
+    const lab = decal(textTex(e.label || 'EXTRACT', { w: 512, font: '800 84px system-ui', color: 'rgba(255,210,58,.85)' }), e.r * 1.1, e.r * 0.275); lab.rotation.x = -Math.PI / 2; lab.position.set(e.x, ey + 0.03, e.y); extractionGroup.add(lab);
   }
   /* ---------- a building level (SCENE.kind 'building'): the plan's own rectangles, in feet ----------
      Drawn from the level's canonical plan data (levels/equity-uprise-hq.mjs → PLAN): the plate, its
@@ -389,6 +390,11 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       for (let z = 2; z <= 7; z += 1) for (const c of cells) { const y = M(SCENE.levels[z].height); const l = add(new THREE.BoxGeometry(0.86, M(0.2), 0.86), M_ROOM, c.x, y - M(0.1) + 0.003, c.y, { cast: false, parent: bproc }); l.userData.roofZ = z; roofs.push(l); pickOnly.push(l); }
     }
     for (const g of f1Glaze) world.add(g); // Floor 1's glass outlives the massing when the model has no facade
+    // floors below grade (B1): an invisible pick slab per raised grid, so a tap lands on the basement floor
+    for (const q of SCENE.gridSurfaces || []) if (q.height < -0.05) {
+      const y = M(q.height), pk = add(new THREE.BoxGeometry(q.w, M(0.2), q.d), M_ROOM, q.x + q.w / 2 - 0.5, y - M(0.1), q.y + q.d / 2 - 0.5, { cast: false, recv: false, parent: bproc });
+      pk.userData.roofZ = q.z; pk.visible = false; roofs.push(pk); pickOnly.push(pk);
+    }
   }
   for (const r of SCENE.rooftop || []) { // AC units and vents
     const hh = M(r.h), base = surfaceHeight(r.x, r.y, 1);
@@ -471,7 +477,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     for (let x = 0; x <= W; x += 1) for (let y = 0; y < H; y += 1) { if (cut(x, y) && cut(x - 1, y)) continue; put(isMajorX(x) ? major : minor, x - 0.5, 0.03, y - 0.5, x - 0.5, 0.03, y + 0.5); }
     for (let y = 0; y <= H; y += 1) for (let x = 0; x < W; x += 1) { if (cut(x, y) && cut(x, y - 1)) continue; put(isMajorY(y) ? major : minor, x - 0.5, 0.03, y - 0.5, x + 0.5, 0.03, y - 0.5); }
     // a grid on every raised walkable surface the level names (default: all of them)
-    const roofsDef = (SCENE.gridSurfaces || SURF).filter((q) => q.height > 0.05).map((q) => ({ ...q, h: q.height }));
+    const roofsDef = (SCENE.gridSurfaces || SURF).filter((q) => Math.abs(q.height) > 0.05).map((q) => ({ ...q, h: q.height }));
     // each floor's grid is its own line set, so a building cutaway can hide the floors above the cut
     const raised = new Map();
     for (const r of roofsDef) { const hh = M(r.h) + 0.02, arr = raised.get(r.z || 1) || []; raised.set(r.z || 1, arr);
@@ -772,7 +778,12 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     if (!MODEL) return;
     const st = cutStorey();
     cutPlane.constant = st == null ? 1e6 : M(((st - 1) * MODEL.storeyFt + MODEL.cutFt) * 0.3048);
-    for (const l of gridGroup.children) l.visible = !l.userData.gridZ || st == null || l.userData.gridZ <= st;
+    const storey = (z) => (level.storeyOf ? level.storeyOf(z) : z);
+    for (const l of gridGroup.children) l.visible = st == null ? true : l.userData.gridZ ? storey(l.userData.gridZ) <= st : st >= 1;
+    // below grade, everything above the cut goes (the ground, the site, the city): the basement is seen from above
+    const below = st != null && st < 1;
+    renderer.clippingPlanes = below ? [cutPlane] : [];
+    fogPlane.position.y = below && SCENE.basement ? M(SCENE.basement.height) + 0.06 : 0.06;
     // the storey in play brings its own detailed floor (Floors 2–6 load the first time the cutaway reaches them)
     if (modelReady && st != null) for (const p of MODEL.parts) if (p.lazy && p.storey === st && !partState.has(p.id)) loadPart(p);
     needs = true;
@@ -816,12 +827,12 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       const a = groundAt(p0[0], p0[1], r), b = groundAt(p1[0], p1[1], r); if (!a || !b) return;
       const va = pick(a), vb = pick(b), lo = Math.ceil(Math.min(va, vb)), hi = Math.floor(Math.max(va, vb));
       const step = Math.max(1, Math.ceil((hi - lo) / 7 / 5) * 5);
-      for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) { const t = (v - va) / ((vb - va) || 1e-6); const q = a.clone().lerp(b, t); const s2 = project(q.x, q.z, 0); out += place(s2, label(v)); }
+      for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) { if (!label.inBoard(v)) continue; const t = (v - va) / ((vb - va) || 1e-6); const q = a.clone().lerp(b, t); const s2 = project(q.x, q.z, 0); out += place(s2, label(v)); }
     };
     // bottom edge: X values; left edge: Y values (engine x = X + x0, y = y0 − Y)
-    along([12, r.height - 30], [r.width - 12, r.height - 30], (q) => q.x + 0 - level.FRAME.x0, (v) => 'X ' + v,
+    along([12, r.height - 30], [r.width - 12, r.height - 30], (q) => q.x + 0 - level.FRAME.x0, Object.assign((v) => 'X ' + v, { inBoard: (v) => v + level.FRAME.x0 >= -0.5 && v + level.FRAME.x0 <= W - 0.5 }),
       (s2, t) => s2.x > 60 && s2.x < r.width - 60 ? `<span class="b3-ruler b3-ruler--x" style="transform:translate(${s2.x.toFixed(1)}px,${(r.height - 30).toFixed(1)}px)">${t}</span>` : '');
-    along([14, 70], [14, r.height - 70], (q) => level.FRAME.y0 - q.z, (v) => 'Y ' + v,
+    along([14, 70], [14, r.height - 70], (q) => level.FRAME.y0 - q.z, Object.assign((v) => 'Y ' + v, { inBoard: (v) => level.FRAME.y0 - v >= -0.5 && level.FRAME.y0 - v <= H - 0.5 }),
       (s2, t) => s2.y > 60 && s2.y < r.height - 70 ? `<span class="b3-ruler b3-ruler--y" style="transform:translate(10px,${s2.y.toFixed(1)}px)">${t}</span>` : '');
     return out;
   }
@@ -867,6 +878,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     if (showcase && !reducedMotion) { view.yaw = view.yawGoal = 0.4 + Math.sin(now / 1000 * 0.05) * 0.8; moving = true; }
     if (view.target.distanceToSquared(view.goal) > 1e-5) { view.target.lerp(view.goal, reducedMotion ? 1 : 1 - Math.exp(-dt * 6)); moving = true; }
     if (Math.abs(view.dist - view.distGoal) > 1e-3) { view.dist += (view.distGoal - view.dist) * (reducedMotion ? 1 : 1 - Math.exp(-dt * 6)); moving = true; }
+    if (view.pitchGoal != null && Math.abs(view.pitch - view.pitchGoal) > 1e-4) { view.pitch += (view.pitchGoal - view.pitch) * (reducedMotion ? 1 : 1 - Math.exp(-dt * 5)); moving = true; }
     if (Math.abs(view.yaw - view.yawGoal) > 1e-4) { view.yaw = reducedMotion ? view.yawGoal : view.yaw + (view.yawGoal - view.yaw) * (1 - Math.exp(-dt * 7)); moving = true; }
     for (const [id, a] of actors) {
       if (a.walk) {
@@ -961,6 +973,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     // the page names the storey in play (null: the whole building); a new storey ends an overview
     if (m.cut !== undefined && m.cut !== lastCutKey) { lastCutKey = m.cut; wantCut = m.cut; showAll = false; applyCut(); }
     if (m.gateOpen !== gateKey) { gateKey = m.gateOpen; gateGroup.visible = !m.gateOpen; }
+    if (m.extraction === null) extractionGroup.visible = false;
     const seen = new Set();
     for (const u of m.units) {
       if (u.dead) continue;
@@ -1012,7 +1025,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     // lights wins (so a tap through a see-through roof can still mean the floor below)
     const cands = [];
     const cutZ = cutStorey();
-    for (const h of ray.intersectObjects(roofs, false)) { const z = h.object.userData.roofZ; if (cutZ != null && z > cutZ) continue; const x = Math.round(h.point.x), y = Math.round(h.point.z); if (z && hasSurface(x, y, z) && !cands.some((c) => c.x === x && c.y === y && c.z === z)) cands.push({ x, y, z }); }
+    for (const h of ray.intersectObjects(roofs, false)) { const z = h.object.userData.roofZ; if (cutZ != null && (level.storeyOf ? level.storeyOf(z) : z) > cutZ) continue; const x = Math.round(h.point.x), y = Math.round(h.point.z); if (z && hasSurface(x, y, z) && !cands.some((c) => c.x === x && c.y === y && c.z === z)) cands.push({ x, y, z }); }
     if (ray.ray.intersectPlane(ground, hit)) { const x = Math.round(hit.x), y = Math.round(hit.z); if (x >= 0 && y >= 0 && x < W && y < H) cands.push({ x, y, z: groundFloorAt(x, y) }); }
     if (!cands.length) return null;
     const lit = model && model.reach ? cands.find((c) => model.reach.some((t) => t.x === c.x && t.y === c.y && (t.z || 0) === c.z)) : null;
@@ -1063,14 +1076,16 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     canZoom() { return { in: view.distGoal > view.minDist + 0.01, out: view.distGoal < view.maxDist - 0.01 }; },
     rotate(step) { view.yawGoal += (step > 0 ? 1 : -1) * Math.PI / 2; needs = true; busy = true; },
     resetView() { view.distGoal = HOME.dist; view.yawGoal = 0; needs = true; },
-    overview() { view.goal.set(cx - 0.5, 0, cz - 0.5); view.distGoal = view.maxDist - 4; showAll = true; applyCut(); needs = true; },
+    overview() { view.pitchGoal = HOME.pitch; view.goal.set(cx - 0.5, 0, cz - 0.5); view.distGoal = view.maxDist - 4; showAll = true; applyCut(); needs = true; },
     // the building cutaway: the storey shown (null = the whole building), and whether the model is drawn
     setCut(st) { wantCut = st; lastCutKey = st; showAll = false; applyCut(); },
     get cut() { return cutStorey(); },
     get modelState() { return MODEL ? Object.fromEntries(partState) : null; },
     // fog of war from the page: alpha per tile, 0 = seen now, 1 = never seen (engine y rows)
     setFog(cells) { fogOn = !!cells; fogPlane.visible = fogOn; if (cells) { for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) fogData[((H - 1 - y) * W + x) * 4 + 1] = Math.round(255 * cells[y * W + x]); fogTex.needsUpdate = true; } needs = true; },
-    focus(x, y, z = 0, dist = 20) { focusTile(x, y, z, dist); },
+    focus(x, y, z = 0, dist = 20) { view.pitchGoal = HOME.pitch; focusTile(x, y, z, dist); },
+    // a level's opening shot: a point (tile x, y on floor z, raised by lift units), a distance and a pitch
+    frame({ x, y, z = 0, lift = 0, dist = 20, pitch = HOME.pitch }) { view.goal.set(x, surfaceHeight(Math.round(x), Math.round(y), z) + lift, y); clampGoal(); view.distGoal = dist; view.pitchGoal = pitch; needs = true; },
     // play shots the engine already resolved, in order; done() when this one has played
     fire(attackerId, targetId, result, done, { cinematic = true } = {}) { fireQueue.push({ attackerId, targetId, result: result || {}, done, cinematic }); needs = true; },
     // walk a unit along a path the engine already resolved; done() at the end

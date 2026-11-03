@@ -136,6 +136,12 @@ jobs:
       - name: Verify Server Lab (rack/server hardware, IT-LAB-041..051)
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_server_lab_v1.mjs
 
+      - name: Verify the building screen registry is current
+        run: node docs/design/equity-uprise-building/production/screens/build_screen_registry_v1.mjs --check
+
+      - name: Building screens and screen apps (registry, contract, shell, modes)
+        run: node --test scripts/test/eu-screens.test.mjs
+
       - name: Verify B1-to-roof human walkability
         run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 

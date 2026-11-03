@@ -76,7 +76,7 @@ test('the plan lands on the grid: a 6 × 6 plate, the shared cores where Core V2
   assert.ok(L.SCENE.zones.find((z) => z.id === 'assembly-a').cells.length === 4);
 });
 
-test('every unit spawns on a walkable, unoccupied tile, and B1 is not part of the drill', () => {
+test('every unit spawns on a walkable, unoccupied tile', () => {
   const s = start(), cfg = L.engineConfig();
   const blocked = new Set(cfg.blockers.map((b) => `${b.x}:${b.y}:${b.z}`));
   const seen = new Set();
@@ -163,4 +163,38 @@ test('the level is in the registry and the tactics menu, and the page loads it b
   // the level draws no mark: no image, logo or emblem reference anywhere in the level or its renderer path
   const lvl = await readFile(new URL('../../js/prim3-tactics/levels/equity-uprise-hq.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(lvl, /\.(png|jpe?g|svg|webp)\b|logo|emblem/i);
+});
+
+test('B1 is a normal floor: both protected stairs go down to it from Floor 1, its plant rooms are shut like Floor 1\'s', () => {
+  const s = start(), cfg = L.engineConfig();
+  assert.equal(L.floorName(8), 'B1'); assert.equal(L.storeyOf(8), 0);
+  assert.ok(Math.abs(L.floorHeight(8) + 13.5 * 0.3048) < 1e-9);
+  assert.deepEqual(cfg.links.filter((l) => l.from.z === 8 || l.to.z === 8).map((l) => l.id).sort(), ['stair-a-east-0-1', 'stair-b-west-0-1']);
+  const reach = R.computeReach(squadOnly(s), 'T1', Infinity);
+  assert.ok(Number.isFinite(reach.costAt(5, 4, 8)), 'the tunnel concourse'); assert.ok(Number.isFinite(reach.costAt(5, 5, 8)), 'the systems lab');
+  assert.ok(!Number.isFinite(reach.costAt(4, 7, 8)), 'the mechanical plant stays shut');
+});
+
+test('full strength (the roof shooters exactly as defined) is hard but winnable: a heuristic squad wins some, loses more', async () => {
+  const { hqRates, playHq } = await import('../prim3/hq-drill-sim.mjs');
+  const cfg = L.engineConfig(), roof = cfg.units.filter((u) => u.z === 7);
+  assert.deepEqual(roof.map((u) => [u.id, u.hp, u.aim, u.detectionRadius]), [['H3', 5, 62, 8], ['H4', 5, 58, 6]], 'the roof shooters are not weakened');
+  const r = hqRates(40, 'naive');
+  assert.ok(r.wins >= 1 && r.wins <= 30, `wins ${r.wins}/40`);
+  const fx = JSON.parse(await readFile(new URL('fixtures/hq-drill-full-strength-win.json', import.meta.url), 'utf8'));
+  const g = playHq(fx.seed, fx.policy);
+  assert.equal(g.outcome, 'win'); assert.deepEqual(g.trace, fx.trace, 'the recorded winning run replays exactly');
+});
+
+test('phone layout: the objective is a strip docked above the battlefield, never over it; mobile-first queries only', async () => {
+  const html = await readFile(new URL('../../prim3-transit.html', import.meta.url), 'utf8');
+  assert.ok(html.indexOf('id="txObj"') < html.indexOf('id="txStage"') && html.indexOf('id="txObj"') < html.indexOf('class="tx-3d"'), 'the strip comes before the stage');
+  assert.ok(!/<section class="tx-stage"[^]*id="txObj"[^]*<\/section>\s*<aside/.test(html.slice(html.indexOf('class="tx-stage"'), html.indexOf('<aside'))), 'the strip is not inside the stage');
+  const css = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
+  assert.doesNotMatch(css.match(/\.tx-obj\{[^}]*\}/)[0], /position:\s*absolute/);
+  assert.doesNotMatch(css, /@media\s*\(max-width/, 'min-width queries only');
+  assert.match(css, /grid-template-areas:"top top" "obj side" "stage side"/, 'desktop docks it above the stage too');
+  const page = await readFile(new URL('../../js/prim3-tactics/transit.mjs', import.meta.url), 'utf8');
+  assert.match(page, /r3\.frame\(LEVEL\.OPENING\)/, 'a level frames its own opening shot');
+  assert.ok(L.OPENING && L.OPENING.dist < L.OPENING_DIST && L.OPENING.pitch < 0.86, 'the HQ opening is closer and lower than the old one');
 });
