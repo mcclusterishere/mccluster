@@ -5,6 +5,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateCityExtensions } from '../js/fictional-city/content.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function buildCityExport(root = ROOT) {
@@ -12,6 +13,7 @@ export async function buildCityExport(root = ROOT) {
   const bytes = await readFile(resolve(root, source));
   const manifest = JSON.parse(bytes);
   if (manifest.schema !== 'mccluster.fictional-city/v1' || manifest.npcs.length !== 24 || manifest.businesses.length !== 8) throw new Error('Invalid city manifest');
+  validateCityExtensions(manifest);
   // Schema revision 2 adds parcel-bound expansion lore beside the unchanged v1 arrays.
   if (manifest.schemaRevision === 2 && !(['expansionNeighborhoods', 'parcels', 'expansionBusinesses', 'expansionNpcs', 'families', 'expansionItems']
     .every(key => Array.isArray(manifest[key]) && manifest[key].length) && manifest.families.length === 10)) throw new Error('Invalid city expansion');

@@ -3,7 +3,8 @@
    identity, authored lore/dialogue, fictional purchases, account saves and portal navigation. */
 import * as THREE from 'three';
 import { createGeometryKit } from './geometry.mjs';
-import { createSpatialWorld, interiorWorld, isWalkable, moveWithCollisions, findWalkingPath } from './spatial.mjs';
+import { buildingBounds, createSpatialWorld, interiorWorld, isWalkable, moveWithCollisions, findWalkingPath } from './spatial.mjs';
+import { buildNeighborhoodGround, buildNeighborhoodPlace, buildStoryInteriorFixtures, buildStoryProp } from './bridgeport-geometry.mjs';
 
 const FLOOR_Y = 0.16;
 const WALK_SPEED = 6.8;
@@ -17,11 +18,17 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
   const source = manifest.district || manifest;
   const shops = manifest.businesses || source.businesses || [];
   const garage = manifest.garage || source.garage || null;
-  const buildings = garage && !shops.some(b => b.id === garage.id) ? [...shops, garage] : [...shops];
+  const neighborhoods = manifest.neighborhoods || source.neighborhoods || [];
+  const neighborhoodPlaces = neighborhoods.flatMap(n => n.places || []);
+  const neighborhoodIds = new Set(neighborhoodPlaces.map(b => b.id));
+  const storyBeats = (manifest.storyArcs || source.storyArcs || []).flatMap(arc => arc.beats || [])
+    .filter(beat => Array.isArray(beat.position) && beat.position.length === 2);
+  const buildings = [...shops, ...(garage ? [garage] : []), ...neighborhoodPlaces]
+    .filter((b, i, all) => all.findIndex(other => other.id === b.id) === i);
   const byId = new Map(buildings.map(b => [b.id, b]));
   const garageId = garage?.id || buildings.find(b => /garage|whip-equipped/.test(b.id))?.id;
   const hq = { ...DEFAULT_HQ, ...(source.island?.hq || manifest.island?.hq || {}) };
-  const spatial = createSpatialWorld(buildings, hq);
+  const spatial = createSpatialWorld(buildings, hq, neighborhoods.flatMap(n => n.surfaces || []), storyBeats);
   const kit = createGeometryKit();
   let renderer;
   try {
@@ -117,6 +124,7 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
     for (const dx of [-1.2, 1.2]) box(COLORS.iron, x + dx, .45, 39.5, .1, .85, .6);
     tree(x + 6, 40, x);
   }
+  buildNeighborhoodGround({ neighborhoods, batch: B, parent: worldGroup, kit, tree, lamp });
 
   const buildingTargets = new Map();
   function storefront(b, index) {
@@ -127,7 +135,11 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
     const target = { kind: 'building', id: b.id };
     B.setTarget(target);
     buildingTargets.set(b.id, target);
-    worldTargets.push({ target, x: b.entrance[0], z: b.entrance[1], radius: 3.3, label: `Enter ${b.name}` });
+    worldTargets.push({ target, x: b.entrance[0], z: b.entrance[1], radius: 3.3, label: `${b.style === 'yard' || b.enterable === false ? 'Visit' : 'Enter'} ${b.name}` });
+    if (neighborhoodIds.has(b.id)) {
+      buildNeighborhoodPlace(b, { batch: B, parent: worldGroup, kit, target, pickables });
+      return;
+    }
     const color = b.color || ['#d3b48c', '#b87f73', '#c4b6a0', '#57656a'][index % 4];
     box(color, x, height / 2 + FLOOR_Y, z, w, height, d, null, target);
     box('#b9aa90', x, .48, z, w + .25, .6, d + .25);
@@ -198,6 +210,23 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
     B.setTarget(null);
   }
   buildings.forEach(storefront);
+  const storyMarkers = [];
+  let activeStoryId = storyBeats[0]?.id || null;
+  for (let i = 0; i < storyBeats.length; i++) {
+    const beat = storyBeats[i], [x, z] = beat.position, target = { kind: 'story', id: beat.id };
+    buildStoryProp(beat, { batch: B, parent: worldGroup, kit, target, pickables });
+    const material = new THREE.MeshBasicMaterial({ color: '#e8b253', transparent: true, opacity: .85, depthWrite: false });
+    const marker = new THREE.Mesh(kit.geometries.circle, material);
+    marker.rotation.x = -Math.PI / 2; marker.scale.set(2.7, 2.7, 1); marker.position.set(x, .28, z);
+    marker.userData.target = target; marker.userData.ownedMaterial = material; worldGroup.add(marker); pickables.push(marker);
+    // A short story placard sits directly above its walkable marker; it is a prompt, not a physical barrier.
+    const sign = kit.sign(worldGroup, String(i + 1).padStart(2, '0') + ' · ' + beat.title, 'ROBBERY 1s',
+      { x, y: 1.45, z, width: 5.2, height: .9, background: '#493f30', accent: '#f0c675' });
+    sign.userData.target = target; pickables.push(sign);
+    const promptTarget = { target, x, z, radius: 3.3, label: `Robbery 1s · ${beat.title}`, storyLocked: i !== 0 };
+    storyMarkers.push({ id: beat.id, marker, sign, promptTarget });
+    worldTargets.push(promptTarget);
+  }
   van(B, 57, -4, '#c4b6a2', .95);
   van(B, -49, 4, '#a5715f', .85, Math.PI);
 
@@ -226,7 +255,7 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
   kit.sign(worldGroup, 'THE COMMERCIAL DISTRICT', 'SHOP FRONTS · ROAD STORIES · HARBOUR WALK', { x: -39, y: 4.8, z: 43.5, width: 23, height: 2.7, yaw: Math.PI });
   const staticMeshes = B.finish();
   for (const m of staticMeshes) if (m.userData.instanceTargets.some(Boolean)) pickables.push(m);
-  const occluders = buildings.map(b => ({ id: b.id, minX: b.position[0] - b.size[0] / 2, maxX: b.position[0] + b.size[0] / 2, minZ: b.position[1] - b.size[1] / 2, maxZ: b.position[1] + b.size[1] / 2, height: b.size[2], fade: 1 }));
+  const occluders = buildings.filter(b => b.style !== 'yard').map(b => ({ ...buildingBounds(b), height: b.size[2], fade: 1 }));
   occluders.push({ id: hq.portalId, minX: -hqW / 2, maxX: hqW / 2, minZ: 88 - hqD / 2, maxZ: 88 + hqD / 2, height: roofH, fade: 1 });
   const occluderById = new Map(occluders.map(o => [o.id, o]));
 
@@ -295,7 +324,7 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
   function buildInterior(b) {
     kit.clearGroup(interiorGroup); interiorTargets.length = 0;
     const isGarage = b.id === garageId;
-    interiorSpatial = interiorWorld(isGarage);
+    interiorSpatial = interiorWorld(isGarage, b.style);
     const w = interiorSpatial.width, d = interiorSpatial.depth, ib = kit.batch(interiorGroup);
     const add = (...args) => ib.add(...args);
     add('box', isGarage ? '#aaa89b' : '#d9c3a1', 0, .05, 0, w, .2, d);
@@ -323,6 +352,12 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
         globeSign.userData.target = target;
         interiorTargets.push({ target, x: 5.8, z: 3.4, radius: 2.6, label: 'Open the transportation globe' });
       }
+    } else if (interiorSpatial.fixtures.length) {
+      buildStoryInteriorFixtures(interiorSpatial, ib);
+      if (interiorSpatial.layout === 'church') {
+        add('box', '#baaa7c', 0, 3.0, -d / 2 + .2, .12, 1.2, .12);
+        add('box', '#baaa7c', 0, 3.15, -d / 2 + .2, .7, .12, .12);
+      }
     } else {
       add('box', '#96795e', 0, .8, -2.35, 9.2, 1.5, 1.3);
       add('box', '#ede1c6', 0, 1.59, -2.35, 9.5, .16, 1.5);
@@ -336,12 +371,14 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
         }
       }
     }
-    const title = kit.sign(interiorGroup, b.name, isGarage ? 'THE SHOP · THE ROAD · THE STORIES' : 'COME IN. ASK A QUESTION. STAY A MINUTE.', { x: 0, y: 3.02, z: -d / 2 + .16, width: isGarage ? 15 : 12, height: 1.15 });
+    const title = kit.sign(interiorGroup, b.name, isGarage ? 'THE SHOP · THE ROAD · THE STORIES' : b.storyArcId ? 'ROBBERY 1s · A STORY ON THIS BLOCK' : 'COME IN. ASK A QUESTION. STAY A MINUTE.', { x: 0, y: 3.02, z: -d / 2 + .16, width: isGarage ? 15 : 12, height: 1.15 });
     title.userData.target = { kind: 'counter', id: b.id };
     kit.sign(interiorGroup, 'BACK TO THE STREET', '', { x: 0, y: .28, z: d / 2 - .75, width: 4.5, height: .7 });
     const roomMeshes = ib.finish();
     // Interior picking is range-checked just like the outside, with a dedicated counter/exit target.
-    interiorTargets.push({ target: { kind: 'counter', id: b.id }, x: isGarage ? 6 : 0, z: isGarage ? -2.2 : -.6, radius: 3.1, label: isGarage ? 'Open the garage counter' : `Browse ${b.name}` });
+    const storyPoint = interiorSpatial.storyPoint;
+    interiorTargets.push({ target: { kind: 'counter', id: b.id }, x: isGarage ? 6 : storyPoint.x, z: isGarage ? -2.2 : storyPoint.z,
+      radius: 3.1, label: isGarage ? 'Open the garage counter' : b.storyArcId ? `Read the story at ${b.name}` : `Browse ${b.name}` });
     interiorTargets.push({ target: { kind: 'exit', id: b.id }, x: 0, z: d / 2 - .65, radius: 2.2, label: 'Return to the street' });
     interiorGroup.userData.pickables = [...interiorGroup.children.filter(o => o.userData.target), ...roomMeshes];
   }
@@ -434,8 +471,10 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
     let best = null, bestScore = Infinity;
     const targets = currentInterior ? interiorTargets : worldTargets;
     for (let i = 0; i < targets.length; i++) {
+      if (targets[i].storyLocked) continue;
       const t = targets[i], distance = Math.hypot(t.x - player.x, t.z - player.z);
-      if (distance <= t.radius && distance < bestScore) { best = t; bestScore = distance; }
+      const score = distance - (t.target.kind === 'story' ? t.target.id === activeStoryId ? 4 : .35 : 0);
+      if (distance <= t.radius && score < bestScore) { best = t; bestScore = score; }
     }
     for (let i = 0; i < actors.length; i++) {
       const a = actors[i]; if (!a.visible) continue;
@@ -451,7 +490,7 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
     if (target.kind === 'npc') {
       const a = npcById.get(target.id); return a?.visible ? { x: a.drawX, z: a.drawZ } : null;
     }
-    return (currentInterior ? interiorTargets : worldTargets).find(t => t.target.kind === target.kind && t.target.id === target.id) || null;
+    return (currentInterior ? interiorTargets : worldTargets).find(t => !t.storyLocked && t.target.kind === target.kind && t.target.id === target.id) || null;
   }
   function interact(target) {
     if (!target || paused) return false;
@@ -460,15 +499,17 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
   }
   function interactNearest() { choosePrompt(); return currentPrompt ? interact(currentPrompt.target) : false; }
   function walkTo(point, target = null) {
-    if (paused) return;
+    if (paused) return false;
     path = findWalkingPath(player, point, activeWorld()); pathIndex = 0; approachTarget = target;
     if (path.length) {
       const end = path[path.length - 1]; destinationRing.position.set(end.x, FLOOR_Y + .04, end.z); destinationRing.visible = true;
     } else destinationRing.visible = false;
+    return path.length > 0;
   }
 
   function enterBuilding(id) {
     const b = byId.get(id); if (!b) return false;
+    if (b.style === 'yard' || b.enterable === false) { teleport({ x: b.entrance[0], z: b.entrance[1], interior: null }); return false; }
     clearInput(); currentInterior = id; player.interior = id;
     buildInterior(b); worldGroup.visible = false; interiorGroup.visible = true;
     player.x = 0; player.z = interiorSpatial.depth / 2 - 2.2; player.yaw = Math.PI;
@@ -480,12 +521,14 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
     clearInput(); currentInterior = null; player.interior = null;
     worldGroup.visible = true; interiorGroup.visible = false;
     const toward = b.entrance[1] > b.position[1] ? 1 : -1;
-    player.x = b.entrance[0]; player.z = b.entrance[1] + toward * .8; player.yaw = toward > 0 ? 0 : Math.PI;
+    player.x = b.entrance[0]; player.z = b.entrance[1] + toward * .8;
+    if (!isWalkable(player.x, player.z, spatial)) player.z = b.entrance[1];
+    player.yaw = toward > 0 ? 0 : Math.PI;
     cameraFocus.set(player.x, .4, player.z); prompt(null); updateActors(0); changed(true); return true;
   }
   function teleport(position = {}) {
     clearInput();
-    if (position.interior && byId.has(position.interior)) enterBuilding(position.interior);
+    if (position.interior && byId.has(position.interior) && byId.get(position.interior).style !== 'yard' && byId.get(position.interior).enterable !== false) enterBuilding(position.interior);
     else {
       currentInterior = null; player.interior = null; worldGroup.visible = true; interiorGroup.visible = false;
       player.x = 0; player.z = 2.5;
@@ -576,7 +619,7 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
     }
     for (let i = 0; i < pickables.length; i++) {
       const mesh = pickables[i], target = mesh.userData.target;
-      if (!target || !mesh.userData.ownedTexture) continue;
+      if (!target || (!mesh.userData.ownedTexture && !mesh.userData.solidBuilding)) continue;
       const alpha = occluderById.get(target.id)?.fade ?? 1;
       mesh.material.transparent = alpha < .999; mesh.material.opacity = alpha; mesh.material.depthWrite = alpha >= .999;
     }
@@ -635,10 +678,24 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
   function getStats() {
     return { engine: 'Three.js 0.180.0', drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
       geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
-      npcCount: actors.length, visibleNpcs, buildings: buildings.length, interior: currentInterior,
+      npcCount: actors.length, visibleNpcs, buildings: buildings.length, interior: currentInterior, storyStops: storyMarkers.length,
       fps: Math.round(fps * 10) / 10, dpr, viewport: [currentWidth, currentHeight],
       staticBatches: staticMeshes.length, animatedBatches: dynamicMeshes.length,
       staticInstances: staticMeshes.reduce((n, m) => n + m.count, 0), status: failed ? 'graphics-lost' : disposed ? 'disposed' : 'running' };
+  }
+
+  function setStoryProgress(completedIds = []) {
+    const completed = new Set(completedIds), next = storyMarkers.find(m => !completed.has(m.id));
+    activeStoryId = next?.id || null;
+    for (const record of storyMarkers) {
+      const done = completed.has(record.id), active = record === next;
+      const locked = !done && !active;
+      record.promptTarget.storyLocked = locked;
+      record.marker.visible = !locked; record.sign.visible = !locked;
+      record.marker.material.color.set(done ? '#7a9a85' : active ? '#f6c35f' : '#b8a77e');
+      record.marker.material.opacity = done ? .3 : active ? .95 : .45;
+      record.marker.scale.setScalar(active ? 3.4 : 2.7);
+    }
   }
 
   function frame(now) {
@@ -654,10 +711,10 @@ export function createCityScene({ canvas, manifest, onInteract = () => {}, onPro
       if (firstFrame) { firstFrame = false; onReady(getStats()); }
     } catch (error) { failed = true; clearInput(); onError(error); }
   }
-  updateActors(0); updateCamera(1); raf = requestAnimationFrame(frame);
+  setStoryProgress([]); updateActors(0); updateCamera(1); raf = requestAnimationFrame(frame);
   return {
     setInput(input = {}) { if (paused || disposed) return; externalInput.x = Number.isFinite(input.x) ? Math.max(-1, Math.min(1, input.x)) : 0; externalInput.z = Number.isFinite(input.z) ? Math.max(-1, Math.min(1, input.z)) : 0; },
-    interactNearest, enterBuilding, exitBuilding, teleport, getPlayer, getStats,
+    interactNearest, enterBuilding, exitBuilding, teleport, walkTo, getPlayer, getStats, setStoryProgress,
     zoomBy(factor) { if (Number.isFinite(factor) && factor > 0) desiredZoom = Math.max(.7, Math.min(2, desiredZoom * factor)); },
     resetView,
     setPaused(value) { paused = !!value; if (paused) { clearInput(); prompt(null); } },

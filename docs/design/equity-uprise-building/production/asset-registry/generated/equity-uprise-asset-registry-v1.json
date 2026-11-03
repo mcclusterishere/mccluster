@@ -344689,7 +344689,7 @@
       "routed_connections": 1330,
       "port_complete_connections": 1330,
       "wireless_links": 45,
-      "lab_scenarios": 40,
+      "lab_scenarios": 51,
       "overlay_glb": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb",
       "physical_routing_authority": "electronics-population-policy-v1.json::physical_routing"
     }

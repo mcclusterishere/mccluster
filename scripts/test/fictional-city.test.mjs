@@ -263,3 +263,11 @@ test('expansion goods resolve to their counters with bounded prices and are neve
     assert.match(item.kind, /^virtual_/);
   }
 });
+
+test('expansion lore stays off the Bridgeport neighborhood: no shared IDs and no claim on its ground', () => {
+  const places = (city.neighborhoods || []).flatMap(n => [n.id, ...(n.places || []).map(p => p.id)]);
+  const mine = new Set([...city.expansionBusinesses, ...expansionPeople, ...city.families, ...city.expansionNeighborhoods, ...city.expansionItems].map(r => r.id));
+  for (const id of places) assert.ok(!mine.has(id), id);
+  for (const p of city.parcels) assert.ok(!places.includes(p.parcelId.split('/')[0]), p.parcelId);
+  assert.doesNotMatch(JSON.stringify([city.expansionNeighborhoods, city.expansionBusinesses, city.families]), /bridgeport|north of the (original )?block/i);
+});

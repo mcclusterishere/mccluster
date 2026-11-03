@@ -1,0 +1,1740 @@
+{
+  "schema_version": "1.0.0",
+  "status": "server-lab-v1-sandbox-training-authority",
+  "title": "Equity Uprise Server Lab — rack and server hardware authority",
+  "not_for_construction": true,
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "credential_is_not_competency": true,
+  "owner_direction": "Owner, 2026-11-03: the building is a real test environment; walk to a rack, open a server, identify, rebuild and troubleshoot it, in levels. B1 is an open floor.",
+  "vendor_neutral": true,
+  "brand_policy": "Generic, unbranded hardware only. No manufacturer names, logos, marks or trade dress on any modeled part (CLAUDE.md rule 10).",
+  "units": "millimetres unless a key says otherwise",
+  "standards_basis": [
+    "EIA-310 / IEC 60297 19-inch rack: 482.6 mm panel width, 450 mm opening, 465.1 mm hole spacing, 1U = 44.45 mm",
+    "JEDEC DDR5 288-pin RDIMM: 133.35 mm long, 31.25 mm standard height",
+    "OCP NIC 3.0 small form factor: 76 × 115 mm",
+    "SFF-8639 (U.2) and SFF-8201 2.5-inch drive form factor: 69.85 × 100.45 mm",
+    "Common-redundant PSU class: 73.5 × 39 × 185 mm",
+    "PCIe CEM low-profile card: 68.9 × 167.65 mm",
+    "CR2032 coin cell: 20 × 3.2 mm, 3 V"
+  ],
+  "placement": {
+    "level_id": "B1",
+    "zone_id": "telecom",
+    "ffe_ft": -13.5,
+    "rack_asset_anchor": "B1-TELECOM-RACKS-01-I001",
+    "anchor_source": "electronics manifest physical_routing.floor_support_points_ft.data_rack (Step 4B MDF data rack)",
+    "anchor_ft": [
+      45,
+      62.8
+    ],
+    "registry_mdf_core_centres_ft": {
+      "B1-SRV-HYP-01-I001": [
+        48,
+        64
+      ],
+      "B1-SRV-NAS-01": [
+        48,
+        62
+      ],
+      "B1-NET-CORE-SW-01-I001": [
+        46,
+        64
+      ]
+    },
+    "orientation": "front faces south (−Y, the cold aisle); rear faces north",
+    "authority_gap": "The detailed B1 builder draws the Network / Telecom Core enclosure at X32–52 / Y22–34 with the four racks at Y26, while the Step 4B electronics manifest anchors the MDF data rack at (45, 62.8). This lab follows the electronics manifest as instructed and records the gap for the B1 owner to reconcile; it moves no geometry.",
+    "learner_access": "B1 is an open floor (owner, 2026-11-03: \"Everybody's welcome to B1\"). The lab rack is a SANDBOX clone of the MDF rack: learners act on simulated state only and LIVE control stays disabled."
+  },
+  "rack": {
+    "id": "B1-MDF-RACK-01",
+    "label": "MDF rack 01 (sandbox clone of B1-TELECOM-RACKS-01-I001)",
+    "standard": "EIA-310 19-inch, four-post",
+    "units": 42,
+    "u_mm": 44.45,
+    "panel_width_mm": 482.6,
+    "rail_opening_mm": 450,
+    "hole_spacing_mm": 465.1,
+    "usable_height_mm": 1866.9,
+    "external_mm": {
+      "w": 600,
+      "d": 1200,
+      "h": 2000
+    },
+    "rail_depth_mm": 760,
+    "u_numbering": "U1 at the bottom",
+    "elevation": [
+      {
+        "u_start": 42,
+        "u_size": 1,
+        "item_id": "RACK01-U42-FIBER",
+        "kind": "fiber_panel",
+        "registry_asset_id": "B1-NET-FIBER-PANEL-01"
+      },
+      {
+        "u_start": 41,
+        "u_size": 1,
+        "item_id": "RACK01-U41-PATCH",
+        "kind": "patch_panel",
+        "registry_asset_id": "B1-NET-PATCH-PANEL-01"
+      },
+      {
+        "u_start": 40,
+        "u_size": 1,
+        "item_id": "RACK01-U40-CM",
+        "kind": "cable_manager",
+        "registry_asset_id": null
+      },
+      {
+        "u_start": 39,
+        "u_size": 1,
+        "item_id": "RACK01-U39-CORE1",
+        "kind": "core_switch",
+        "registry_asset_id": "B1-NET-CORE-SW-01-I001"
+      },
+      {
+        "u_start": 38,
+        "u_size": 1,
+        "item_id": "RACK01-U38-CORE2",
+        "kind": "core_switch",
+        "registry_asset_id": "B1-NET-CORE-SW-01-I002"
+      },
+      {
+        "u_start": 37,
+        "u_size": 1,
+        "item_id": "RACK01-U37-CM",
+        "kind": "cable_manager",
+        "registry_asset_id": null
+      },
+      {
+        "u_start": 36,
+        "u_size": 1,
+        "item_id": "RACK01-U36-RTR",
+        "kind": "edge_router",
+        "registry_asset_id": "B1-NET-EDGE-RTR-01"
+      },
+      {
+        "u_start": 35,
+        "u_size": 1,
+        "item_id": "RACK01-U35-FW1",
+        "kind": "firewall",
+        "registry_asset_id": "B1-NET-FW-01-I001"
+      },
+      {
+        "u_start": 34,
+        "u_size": 1,
+        "item_id": "RACK01-U34-FW2",
+        "kind": "firewall",
+        "registry_asset_id": "B1-NET-FW-01-I002"
+      },
+      {
+        "u_start": 33,
+        "u_size": 1,
+        "item_id": "RACK01-U33-CPE",
+        "kind": "carrier_cpe",
+        "registry_asset_id": "B1-WAN-CPE-01"
+      },
+      {
+        "u_start": 32,
+        "u_size": 1,
+        "item_id": "RACK01-U32-BLANK",
+        "kind": "blank",
+        "registry_asset_id": null
+      },
+      {
+        "u_start": 30,
+        "u_size": 2,
+        "item_id": "RACK01-U30-NVR",
+        "kind": "nvr",
+        "registry_asset_id": "B1-SEC-NVR-01"
+      },
+      {
+        "u_start": 28,
+        "u_size": 2,
+        "item_id": "RACK01-U28-BACKUP",
+        "kind": "backup_appliance",
+        "registry_asset_id": "B1-SRV-BACKUP-01"
+      },
+      {
+        "u_start": 26,
+        "u_size": 2,
+        "item_id": "RACK01-U26-NAS",
+        "kind": "nas",
+        "registry_asset_id": "B1-SRV-NAS-01"
+      },
+      {
+        "u_start": 24,
+        "u_size": 2,
+        "item_id": "RACK01-U24-BLANK",
+        "kind": "blank",
+        "registry_asset_id": null
+      },
+      {
+        "u_start": 22,
+        "u_size": 2,
+        "item_id": "RACK01-U22-HYP3",
+        "kind": "server_2u",
+        "registry_asset_id": "B1-SRV-HYP-01-I003",
+        "server_model": "SRV-2U-GEN"
+      },
+      {
+        "u_start": 20,
+        "u_size": 2,
+        "item_id": "RACK01-U20-HYP2",
+        "kind": "server_2u",
+        "registry_asset_id": "B1-SRV-HYP-01-I002",
+        "server_model": "SRV-2U-GEN"
+      },
+      {
+        "u_start": 18,
+        "u_size": 2,
+        "item_id": "RACK01-U18-HYP1",
+        "kind": "server_2u",
+        "registry_asset_id": "B1-SRV-HYP-01-I001",
+        "server_model": "SRV-2U-GEN",
+        "lab_server": true
+      },
+      {
+        "u_start": 17,
+        "u_size": 1,
+        "item_id": "RACK01-U17-LAB1U",
+        "kind": "server_1u",
+        "registry_asset_id": null,
+        "server_model": "SRV-1U-GEN",
+        "training_only": true,
+        "note": "Training-bench 1U server: a sandbox teaching unit, not a registry asset."
+      },
+      {
+        "u_start": 7,
+        "u_size": 10,
+        "item_id": "RACK01-U07-BLANK",
+        "kind": "blank",
+        "registry_asset_id": null
+      },
+      {
+        "u_start": 3,
+        "u_size": 4,
+        "item_id": "RACK01-U03-UPSBAT",
+        "kind": "ups_battery",
+        "registry_asset_id": null,
+        "note": "Extended battery for the rack UPS below."
+      },
+      {
+        "u_start": 1,
+        "u_size": 2,
+        "item_id": "RACK01-U01-UPS",
+        "kind": "rack_ups",
+        "registry_asset_id": "B1-ICT-RACK-UPS-01"
+      }
+    ],
+    "zero_u": [
+      {
+        "item_id": "RACK01-0U-PDU-A",
+        "kind": "pdu",
+        "registry_asset_id": "B1-ICT-PDU-01-A",
+        "side": "rear-left",
+        "feed": "A",
+        "fed_from": "B1-ELEC-UPS-01-I001",
+        "outlets": 24
+      },
+      {
+        "item_id": "RACK01-0U-PDU-B",
+        "kind": "pdu",
+        "registry_asset_id": "B1-ICT-PDU-01-B",
+        "side": "rear-right",
+        "feed": "B",
+        "fed_from": "B1-ELEC-UPS-01-I002",
+        "outlets": 24
+      },
+      {
+        "item_id": "RACK01-0U-RACKPDU-A",
+        "kind": "pdu",
+        "registry_asset_id": "B1-ICT-RACK-PDU-A",
+        "side": "rear-left-inner",
+        "feed": "rack UPS",
+        "fed_from": "B1-ICT-RACK-UPS-01",
+        "outlets": 12
+      },
+      {
+        "item_id": "RACK01-0U-RACKPDU-B",
+        "kind": "pdu",
+        "registry_asset_id": "B1-ICT-RACK-PDU-B",
+        "side": "rear-right-inner",
+        "feed": "rack UPS",
+        "fed_from": "B1-ICT-RACK-UPS-01",
+        "outlets": 12
+      }
+    ]
+  },
+  "rack_item_types": {
+    "fiber_panel": {
+      "label": "Fibre patch panel",
+      "identify_hint": "LC duplex adapters where the OS2 backbone fibre from every floor lands."
+    },
+    "patch_panel": {
+      "label": "Copper patch panel (48-port Cat6A)",
+      "identify_hint": "Rows of RJ45 jacks where the horizontal cables from the floor terminate."
+    },
+    "cable_manager": {
+      "label": "Horizontal cable manager",
+      "identify_hint": "A 1U finger duct that keeps patch cords tidy between panels and switches."
+    },
+    "core_switch": {
+      "label": "Collapsed-core switch",
+      "identify_hint": "A 1U switch with many SFP+ cages; every floor's fibre uplink and every server lands here."
+    },
+    "edge_router": {
+      "label": "Edge router",
+      "identify_hint": "Hands traffic between the provider circuit and the firewall pair."
+    },
+    "firewall": {
+      "label": "Firewall (HA pair member)",
+      "identify_hint": "One of two identical 1U units that police traffic between networks."
+    },
+    "carrier_cpe": {
+      "label": "Provider demarcation device (CPE)",
+      "identify_hint": "The provider's handoff box: where the internet circuit enters the rack."
+    },
+    "nvr": {
+      "label": "Video recorder (VMS/NVR)",
+      "identify_hint": "A storage-heavy appliance that records the building's cameras."
+    },
+    "backup_appliance": {
+      "label": "Backup appliance",
+      "identify_hint": "Holds restore points for the hosts and configs."
+    },
+    "nas": {
+      "label": "Network storage (NAS)",
+      "identify_hint": "A drive-heavy 2U unit that serves file shares."
+    },
+    "server_2u": {
+      "label": "2U rack server (virtualization host)",
+      "identify_hint": "Two rack units tall, a row of drive bays across the front."
+    },
+    "server_1u": {
+      "label": "1U rack server",
+      "identify_hint": "One rack unit (44.45 mm) tall, drives across the front."
+    },
+    "rack_ups": {
+      "label": "Rack UPS",
+      "identify_hint": "Heavy unit at the bottom of the rack: batteries keep the rack running through short outages."
+    },
+    "ups_battery": {
+      "label": "UPS extended battery pack",
+      "identify_hint": "Extra battery modules next to the UPS for longer runtime."
+    },
+    "pdu": {
+      "label": "Rack PDU (0U, vertical)",
+      "identify_hint": "A vertical power strip on the rear rail with C13 outlets; A and B feeds on opposite sides."
+    },
+    "blank": {
+      "label": "Blanking panel",
+      "identify_hint": "Covers empty rack units so hot exhaust cannot loop back to the front."
+    }
+  },
+  "component_types": {
+    "chassis": {
+      "label": "Server chassis",
+      "category": "enclosure",
+      "identify_hint": "The steel enclosure that rides on the rack rails; the lid slides back after the release latch is lifted.",
+      "hot_swap": false,
+      "rules": [
+        "Mounts on tool-less sliding rails that clip into the 19-inch rack's square holes; extend the rails to service the server without unplugging it.",
+        "The lid must be closed before power-on: the chassis-intrusion switch and the air shroud keep airflow over the CPUs and DIMMs."
+      ],
+      "failure_modes": [
+        {
+          "id": "chassis_intrusion",
+          "label": "Lid opened while running",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber"
+            ],
+            "component_led": null,
+            "post": [],
+            "bmc_sel": [
+              "Physical Security: Chassis intrusion detected"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Thermal warnings within minutes (no air shroud, airflow bypasses the heatsinks)"
+            ]
+          },
+          "fix": "Close the lid, then clear the intrusion event in the management controller.",
+          "verify": "Health LED green; no new intrusion events."
+        }
+      ]
+    },
+    "motherboard": {
+      "label": "System board (motherboard)",
+      "category": "board",
+      "identify_hint": "The large circuit board on the chassis floor that everything plugs into: sockets, DIMM slots, risers, management controller.",
+      "hot_swap": false,
+      "rules": [
+        "Proprietary server form factor; replaced as a field-replaceable unit with the CPUs, DIMMs and TPM moved across.",
+        "After a board swap the service tag, firmware baseline and TPM ownership must be restored."
+      ],
+      "failure_modes": [
+        {
+          "id": "board_no_post",
+          "label": "Board fails to POST",
+          "symptoms": {
+            "front_panel": [
+              "Power LED green, health LED amber, no video"
+            ],
+            "component_led": null,
+            "post": [
+              "POST code display stops at the same early code on every attempt"
+            ],
+            "bmc_sel": [
+              "System Board: Fault detected"
+            ],
+            "beep_or_code": "Repeating POST code; no memory training messages",
+            "os": []
+          },
+          "fix": "Minimum-to-POST isolation (one CPU, one DIMM), then replace the board if it still stops.",
+          "verify": "Full POST completes with every installed device listed."
+        }
+      ]
+    },
+    "cpu": {
+      "label": "Processor (CPU)",
+      "category": "compute",
+      "dims_mm": {
+        "w": 56.5,
+        "d": 77.5,
+        "h": 7
+      },
+      "connector": "LGA server socket (land grid array, ~4,000 contacts; the pins are in the socket, not on the CPU)",
+      "identify_hint": "A flat square package with a metal lid, sitting in the socket under the heatsink.",
+      "hot_swap": false,
+      "rules": [
+        "Socket 1 (CPU1) must always be populated; the system will not POST without it.",
+        "Align the package's triangle (pin-1) marker with the socket's corner marker; it drops in with no force. Never touch or press on the socket contacts.",
+        "CPU2 enables its own memory channels and the PCIe lanes behind riser 2; DIMMs in CPU2 slots do nothing without CPU2.",
+        "Both CPUs must be the same model, stepping and core count."
+      ],
+      "failure_modes": [
+        {
+          "id": "cpu_bent_socket_pins",
+          "label": "Bent socket contacts",
+          "symptoms": {
+            "front_panel": [],
+            "component_led": null,
+            "post": [
+              "Memory channel(s) missing for CPU1",
+              "Reported memory lower than installed"
+            ],
+            "bmc_sel": [
+              "Memory: Configuration error on CPU1 channel D"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Fewer NUMA nodes or less memory than expected"
+            ]
+          },
+          "fix": "Power off, remove heatsink and CPU, inspect the socket with a light; replace the board if contacts are bent.",
+          "verify": "All channels train at POST; full memory reported."
+        },
+        {
+          "id": "cpu_ierr",
+          "label": "Internal processor error",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber"
+            ],
+            "component_led": null,
+            "post": [],
+            "bmc_sel": [
+              "Processor: CPU2 IERR"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Unexpected reset; machine-check exception in the OS log"
+            ]
+          },
+          "fix": "Update firmware to baseline, then swap CPUs between sockets to see if the error follows the part.",
+          "verify": "No IERR after a burn-in run."
+        }
+      ]
+    },
+    "heatsink": {
+      "label": "CPU heatsink",
+      "category": "cooling",
+      "dims_mm_by_form_factor": {
+        "1U": {
+          "w": 78,
+          "d": 108,
+          "h": 25.5
+        },
+        "2U": {
+          "w": 78,
+          "d": 108,
+          "h": 64
+        }
+      },
+      "identify_hint": "The finned aluminium/copper block bolted over each CPU; fins run front to back with the airflow.",
+      "hot_swap": false,
+      "rules": [
+        "Only install over a seated CPU, with a fresh thermal interface (paste or pad).",
+        "Tighten the four captive fasteners in the order printed on the heatsink label (1, 2, 3, 4, diagonal) so the pressure is even.",
+        "Fins must run front-to-back, parallel to the fan airflow."
+      ],
+      "failure_modes": [
+        {
+          "id": "heatsink_uneven_mount",
+          "label": "Uneven heatsink mounting",
+          "symptoms": {
+            "front_panel": [],
+            "component_led": null,
+            "post": [],
+            "bmc_sel": [
+              "Temperature: CPU1 Temp upper critical going high"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "CPU frequency throttled under load"
+            ]
+          },
+          "fix": "Power off, remove the heatsink, clean and re-apply the thermal interface, re-torque in label order.",
+          "verify": "CPU temperature under load returns to the normal band."
+        }
+      ]
+    },
+    "dimm": {
+      "label": "Memory module (DDR5 RDIMM)",
+      "category": "memory",
+      "dims_mm": {
+        "w": 133.35,
+        "h": 31.25,
+        "d": 7
+      },
+      "connector": "288-pin DIMM slot; the key notch is offset so DDR4 or the wrong module type cannot seat",
+      "identify_hint": "Long thin boards standing in rows beside each CPU, with a heat spreader over the memory chips.",
+      "hot_swap": false,
+      "rules": [
+        "Power off and unplug both PSUs before touching memory: DIMMs are not hot-swappable.",
+        "Only registered ECC DDR5 (RDIMM) modules of the same capacity, rank and speed in this configuration.",
+        "In each channel, fill slot 1 (white latch, farthest from the CPU) before slot 2 (black latch).",
+        "Fill channels per CPU in the board's order A, E, C, G, B, F, D, H; supported counts per CPU are 1, 2, 4, 6, 8 (one per channel) and 12 or 16 (two per channel).",
+        "With two CPUs, give both the same memory layout so each NUMA node is balanced."
+      ],
+      "failure_modes": [
+        {
+          "id": "dimm_uncorrectable_error",
+          "label": "Uncorrectable ECC error",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber"
+            ],
+            "component_led": "DIMM fault LED beside the slot lit amber (visible with the lid open)",
+            "post": [
+              "Memory error: uncorrectable ECC on {slot}; DIMM disabled",
+              "Memory detected: {reduced_gb} GB of {installed_gb} GB"
+            ],
+            "bmc_sel": [
+              "Memory: Uncorrectable ECC detected on {slot}",
+              "Memory: {slot} disabled at POST"
+            ],
+            "beep_or_code": "POST memory warning prompt (press a key to continue)",
+            "os": [
+              "Total memory {reduced_gb} GB instead of {installed_gb} GB",
+              "Hypervisor reports reduced host capacity"
+            ]
+          },
+          "fix": "Power off, unplug, replace the DIMM in {slot} with an identical module.",
+          "verify": "POST reports {installed_gb} GB with no memory errors; event cleared."
+        },
+        {
+          "id": "dimm_population_error",
+          "label": "Invalid memory population",
+          "symptoms": {
+            "front_panel": [],
+            "component_led": null,
+            "post": [
+              "Memory configuration warning: unbalanced population",
+              "Non-optimal memory configuration detected"
+            ],
+            "bmc_sel": [
+              "Memory: Configuration error"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Lower memory bandwidth than expected"
+            ]
+          },
+          "fix": "Re-seat modules per the population order.",
+          "verify": "No memory configuration warning at POST."
+        }
+      ]
+    },
+    "psu": {
+      "label": "Power supply (hot-swap, redundant)",
+      "category": "power",
+      "dims_mm": {
+        "w": 73.5,
+        "h": 39,
+        "d": 185
+      },
+      "rating": "800 W, 80 PLUS Titanium class, 100–240 VAC, C14 inlet",
+      "identify_hint": "Slide-out modules at the rear with a handle, a C14 power inlet and a single status LED.",
+      "hot_swap": true,
+      "rules": [
+        "Install as an identical pair (same wattage and efficiency); mixed models break 1+1 redundancy.",
+        "PSU1 cords to the rack's A-feed PDU and PSU2 to the B-feed PDU, so either feed can fail.",
+        "A failed PSU can be replaced with the server running if the other PSU is healthy."
+      ],
+      "failure_modes": [
+        {
+          "id": "psu_failed",
+          "label": "Power supply failure",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber"
+            ],
+            "component_led": "{slot} status LED amber (or off); the other PSU green",
+            "post": [],
+            "bmc_sel": [
+              "Power Supply: {slot} Failure detected",
+              "Power Supply: Redundancy lost"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "No outage; management alert only. The server now depends on one feed."
+            ]
+          },
+          "fix": "Confirm the cord and the B-feed PDU outlet are live, then hot-swap {slot}.",
+          "verify": "Both PSU LEDs green; management controller logs redundancy regained."
+        }
+      ]
+    },
+    "fan": {
+      "label": "System fan module (hot-swap)",
+      "category": "cooling",
+      "dims_mm_by_form_factor": {
+        "1U": {
+          "w": 40,
+          "h": 40,
+          "d": 56
+        },
+        "2U": {
+          "w": 60,
+          "h": 60,
+          "d": 38
+        }
+      },
+      "identify_hint": "The row of square fans across the chassis between the drive cage and the CPUs; each has its own fault LED.",
+      "hot_swap": true,
+      "rules": [
+        "N+1: the server keeps running with one fan failed, but the others spin up and the CPUs can throttle.",
+        "Replace a fan within the hot-swap window (about 60 seconds with the lid open) to avoid a thermal shutdown."
+      ],
+      "failure_modes": [
+        {
+          "id": "fan_failed",
+          "label": "Fan failure",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber"
+            ],
+            "component_led": "{slot} fault LED amber; rotor stopped",
+            "post": [],
+            "bmc_sel": [
+              "Fan: {slot} RPM lower critical going low (0 RPM)",
+              "Fan: Redundancy lost",
+              "Temperature: CPU1 Temp upper non-critical going high"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "CPU frequency throttled (thermal) under load",
+              "Remaining fans at high speed"
+            ]
+          },
+          "fix": "Hot-swap {slot} with the lid open, within the service window.",
+          "verify": "All fans report RPM in range; CPU temperature and clock speed back to normal."
+        }
+      ]
+    },
+    "drive_sff": {
+      "label": "2.5-inch drive in hot-swap carrier",
+      "category": "storage",
+      "dims_mm": {
+        "w": 69.85,
+        "h": 15,
+        "d": 100.45
+      },
+      "variants": [
+        "SAS 12G SSD",
+        "SATA 6G SSD",
+        "U.2 NVMe SSD (PCIe)"
+      ],
+      "identify_hint": "Front-loading carriers with a release lever; each has an activity LED (green) and a status LED (amber fault / blue locate).",
+      "hot_swap": true,
+      "rules": [
+        "Front bays 0–7 are SAS/SATA; bays 8–11 are universal (SAS, SATA or NVMe through the tri-mode controller).",
+        "Populate the RAID set in contiguous bays starting at bay 0.",
+        "Never pull a healthy member from a degraded array: a RAID 5 set that loses a second drive loses the volume."
+      ],
+      "failure_modes": [
+        {
+          "id": "raid_member_failed",
+          "label": "Failed RAID member drive",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber"
+            ],
+            "component_led": "{slot} status LED amber (others green, activity flashing)",
+            "post": [],
+            "bmc_sel": [
+              "Drive Slot: {slot} Drive fault",
+              "Storage: Virtual disk 0 degraded"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Volume online but degraded",
+              "Higher I/O latency; controller reports 1 failed physical disk"
+            ]
+          },
+          "fix": "Identify the failed bay (blue locate if unsure), hot-swap only that drive with an identical model; the controller starts the rebuild.",
+          "verify": "Rebuild completes; virtual disk 0 back to Optimal."
+        }
+      ]
+    },
+    "m2_boot_module": {
+      "label": "M.2 boot module (mirrored)",
+      "category": "storage",
+      "dims_mm": {
+        "w": 80,
+        "h": 18,
+        "d": 120
+      },
+      "identify_hint": "A small card at the rear carrying two M.2 SSDs mirrored for the operating system.",
+      "hot_swap": false,
+      "rules": [
+        "Holds the hypervisor boot volume (RAID 1 of two 480 GB M.2 SSDs), separate from the data array."
+      ],
+      "failure_modes": []
+    },
+    "raid_controller": {
+      "label": "RAID controller (tri-mode, PCIe)",
+      "category": "storage",
+      "dims_mm": {
+        "w": 68.9,
+        "h": 18,
+        "d": 167.65
+      },
+      "interface": "PCIe Gen4 x8, low-profile; 8 GB cache with supercapacitor backup; 2 internal x8 high-density SAS/NVMe ports",
+      "identify_hint": "A low-profile PCIe card in riser 1 with a cache module, a supercapacitor pack and two internal cables to the drive backplane.",
+      "hot_swap": false,
+      "rules": [
+        "Needs an electrical x8 (or wider) PCIe slot; riser 1 is wired to CPU1.",
+        "Cable controller port 0 to backplane connector A (bays 0–7).",
+        "Firmware must match the platform baseline with the BIOS and management controller."
+      ],
+      "failure_modes": [
+        {
+          "id": "firmware_mismatch",
+          "label": "Firmware below the platform baseline",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber"
+            ],
+            "component_led": null,
+            "post": [],
+            "bmc_sel": [
+              "Firmware: Inventory mismatch: BIOS 2.3.1, controller 51.20 vs baseline BIOS 2.4.0, controller 52.26",
+              "Storage: Controller firmware version not supported by installed driver"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Storage driver loads in degraded mode; cluster validation flags the host"
+            ]
+          },
+          "fix": "Apply the baseline bundle in dependency order: management controller, then BIOS, then RAID controller, then NIC.",
+          "verify": "Inventory matches the baseline; cluster validation passes."
+        }
+      ]
+    },
+    "backplane": {
+      "label": "Drive backplane",
+      "category": "storage",
+      "dims_mm": {
+        "w": 400,
+        "h": 70,
+        "d": 6
+      },
+      "identify_hint": "The vertical board behind the drive bays that every drive carrier plugs into.",
+      "hot_swap": false,
+      "rules": [
+        "Connector A serves bays 0–7, connector B bays 8–11."
+      ],
+      "failure_modes": []
+    },
+    "riser": {
+      "label": "PCIe riser",
+      "category": "expansion",
+      "dims_mm": {
+        "w": 110,
+        "h": 75,
+        "d": 160
+      },
+      "identify_hint": "A bracket at the rear that turns a board slot sideways so full- and low-profile cards fit in a 1U/2U height.",
+      "hot_swap": false,
+      "rules": [
+        "Riser 1 carries CPU1 lanes (slot 1 x16, slot 2 x8). Riser 2 carries CPU2 lanes and only works with CPU2 installed."
+      ],
+      "failure_modes": []
+    },
+    "ocp_nic": {
+      "label": "OCP 3.0 network adapter",
+      "category": "network",
+      "dims_mm": {
+        "w": 76,
+        "h": 11.5,
+        "d": 115
+      },
+      "interface": "OCP NIC 3.0 small form factor, PCIe Gen4 x8; 2 × SFP+/SFP28 cages",
+      "identify_hint": "A small network card that slides into its own bay at the rear (no riser), with two fibre/DAC cages.",
+      "hot_swap": false,
+      "rules": [
+        "Install with the server powered off.",
+        "Port 1 to core switch 1 and port 2 to core switch 2 (SFP+-IN-03 on each) with 10G DAC cables, so the bond survives a switch or cable failure."
+      ],
+      "failure_modes": [
+        {
+          "id": "server_nic_link_down",
+          "label": "NIC port link down",
+          "symptoms": {
+            "front_panel": [],
+            "component_led": "{slot} link LED off; the other port green",
+            "post": [],
+            "bmc_sel": [
+              "Network: NIC port 1 link down"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Bond degraded: one member down",
+              "Hosted services still reachable on the surviving path"
+            ]
+          },
+          "fix": "Check the switch-side port and the DAC; reseat or replace the cable on {slot}. Do not replace the NIC until the cable is ruled out.",
+          "verify": "Both links up at 10 Gb/s; bond healthy on both members."
+        }
+      ]
+    },
+    "bmc": {
+      "label": "Management controller (BMC) and dedicated management port",
+      "category": "management",
+      "dims_mm": {
+        "w": 20,
+        "h": 3,
+        "d": 20
+      },
+      "identify_hint": "A small chip on the board plus the separate RJ45 port at the rear marked for management, for out-of-band access.",
+      "hot_swap": false,
+      "rules": [
+        "The dedicated management port goes to the out-of-band management network (VLAN-MGMT), never the production bond.",
+        "Reads sensors and keeps the System Event Log (SEL) even when the server is off."
+      ],
+      "failure_modes": [
+        {
+          "id": "bmc_unreachable",
+          "label": "Management controller unreachable",
+          "symptoms": {
+            "front_panel": [],
+            "component_led": null,
+            "post": [],
+            "bmc_sel": [],
+            "beep_or_code": null,
+            "os": [
+              "Management address does not answer; no remote console"
+            ]
+          },
+          "fix": "Check the management-port cable and switch port, then reset the controller (does not affect the running host).",
+          "verify": "Management interface reachable; sensors readable."
+        }
+      ]
+    },
+    "tpm": {
+      "label": "TPM 2.0 module",
+      "category": "security",
+      "dims_mm": {
+        "w": 25,
+        "h": 6,
+        "d": 14
+      },
+      "identify_hint": "A tiny daughter card on a header on the system board; it holds keys for measured boot and disk encryption.",
+      "hot_swap": false,
+      "rules": [
+        "Bound to its board once installed; a moved TPM or board swap triggers encryption recovery."
+      ],
+      "failure_modes": [
+        {
+          "id": "tpm_measurement_change",
+          "label": "TPM measurements changed",
+          "symptoms": {
+            "front_panel": [],
+            "component_led": null,
+            "post": [],
+            "bmc_sel": [
+              "Security: TPM configuration changed"
+            ],
+            "beep_or_code": null,
+            "os": [
+              "Disk-encryption recovery key requested at boot"
+            ]
+          },
+          "fix": "Confirm the change was authorised, supply the recovery key, re-seal to the new measurements.",
+          "verify": "Boots without recovery prompt."
+        }
+      ]
+    },
+    "cmos_battery": {
+      "label": "CMOS / RTC battery (CR2032)",
+      "category": "board",
+      "dims_mm": {
+        "w": 20,
+        "h": 3.2,
+        "d": 20
+      },
+      "rating": "3 V lithium coin cell",
+      "identify_hint": "A coin cell in a holder on the system board; it keeps the real-time clock and firmware settings when the server has no power.",
+      "hot_swap": false,
+      "rules": [
+        "Replace with the server off and unplugged; firmware settings may need restoring afterwards."
+      ],
+      "failure_modes": [
+        {
+          "id": "cmos_battery_depleted",
+          "label": "Depleted CMOS battery",
+          "symptoms": {
+            "front_panel": [
+              "Health LED amber after a power loss"
+            ],
+            "component_led": null,
+            "post": [
+              "CMOS checksum error: defaults loaded",
+              "System time 2000-01-01 00:00"
+            ],
+            "bmc_sel": [
+              "Battery: System board CMOS battery low"
+            ],
+            "beep_or_code": "POST stops at a firmware setup prompt",
+            "os": [
+              "Clock wrong by years: TLS certificate validation fails",
+              "Directory sign-in fails (clock skew over 5 minutes)",
+              "Time service on this host reports a huge offset"
+            ]
+          },
+          "fix": "Power off, unplug, replace the CR2032, restore firmware settings (UEFI boot, virtualization on), set time and resync NTP.",
+          "verify": "Time within a second of the NTP source; settings persist across a power cycle."
+        }
+      ]
+    },
+    "front_panel": {
+      "label": "Front control panel and LEDs",
+      "category": "management",
+      "dims_mm": {
+        "w": 30,
+        "h": 80,
+        "d": 20
+      },
+      "identify_hint": "The rack-ear panel: power button and LED, unit-identify (blue) button, health LED, NIC activity LEDs.",
+      "hot_swap": false,
+      "rules": [
+        "Health LED: green = OK, amber = a fault is logged in the SEL. Identify LED (blue) marks the server you are working on."
+      ],
+      "failure_modes": []
+    },
+    "power_cord": {
+      "label": "Power cord (C13 to C14)",
+      "category": "cabling",
+      "dims_mm": {
+        "w": 10,
+        "h": 10,
+        "d": 1000
+      },
+      "identify_hint": "The cords from each PSU to the rack PDUs.",
+      "hot_swap": true,
+      "rules": [
+        "PSU1 to PDU A, PSU2 to PDU B."
+      ],
+      "failure_modes": []
+    },
+    "dac_cable": {
+      "label": "10G SFP+ direct-attach copper cable",
+      "category": "cabling",
+      "dims_mm": {
+        "w": 14,
+        "h": 9,
+        "d": 2000
+      },
+      "identify_hint": "A thick twinax cable with an SFP+ plug moulded on each end.",
+      "hot_swap": true,
+      "rules": [
+        "One cable per bond member, each to a different core switch."
+      ],
+      "failure_modes": []
+    }
+  },
+  "server_models": {
+    "SRV-2U-GEN": {
+      "label": "Generic 2U two-socket server",
+      "form_factor": "2U",
+      "chassis_mm": {
+        "w": 434,
+        "h": 86.8,
+        "d": 760
+      },
+      "front_ear_mm": 24.3,
+      "rail_kit": "tool-less sliding rails, 700–900 mm rack-depth range",
+      "sockets": [
+        {
+          "id": "CPU1",
+          "center_mm": [
+            112,
+            0,
+            330
+          ]
+        },
+        {
+          "id": "CPU2",
+          "center_mm": [
+            322,
+            0,
+            330
+          ]
+        }
+      ],
+      "memory": {
+        "channels_per_cpu": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G",
+          "H"
+        ],
+        "fill_order": [
+          "A",
+          "E",
+          "C",
+          "G",
+          "B",
+          "F",
+          "D",
+          "H"
+        ],
+        "dimms_per_channel": 2,
+        "supported_counts_per_cpu": [
+          1,
+          2,
+          4,
+          6,
+          8,
+          12,
+          16
+        ],
+        "supported_module": {
+          "type": "DDR5 RDIMM",
+          "ecc": true,
+          "speed_mts": 4800
+        },
+        "layout": {
+          "pitch_mm": 7,
+          "side_gap_mm": 44,
+          "channels_left": [
+            "D",
+            "C",
+            "B",
+            "A"
+          ],
+          "channels_right": [
+            "E",
+            "F",
+            "G",
+            "H"
+          ]
+        }
+      },
+      "drive_bays": {
+        "count": 12,
+        "form": "2.5in",
+        "start_x_mm": 26,
+        "pitch_mm": 19,
+        "z_mm": 0,
+        "sas_sata_bays": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "universal_bays": [
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      "backplane": {
+        "z_mm": 182,
+        "connectors": {
+          "A": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "B": [
+            8,
+            9,
+            10,
+            11
+          ]
+        }
+      },
+      "fans": {
+        "count": 6,
+        "z_mm": 200,
+        "start_x_mm": 26,
+        "pitch_mm": 66,
+        "size": "60mm"
+      },
+      "psus": [
+        {
+          "id": "PSU1",
+          "x_mm": 356,
+          "y_mm": 2,
+          "z_mm": 575,
+          "feed": "A"
+        },
+        {
+          "id": "PSU2",
+          "x_mm": 356,
+          "y_mm": 45,
+          "z_mm": 575,
+          "feed": "B"
+        }
+      ],
+      "risers": [
+        {
+          "id": "RISER1",
+          "cpu": "CPU1",
+          "x_mm": 20,
+          "z_mm": 600,
+          "slots": [
+            {
+              "id": "R1-S1",
+              "lanes": 16,
+              "profile": "full-height"
+            },
+            {
+              "id": "R1-S2",
+              "lanes": 8,
+              "profile": "low-profile"
+            }
+          ]
+        },
+        {
+          "id": "RISER2",
+          "cpu": "CPU2",
+          "x_mm": 150,
+          "z_mm": 600,
+          "slots": [
+            {
+              "id": "R2-S1",
+              "lanes": 16,
+              "profile": "full-height"
+            },
+            {
+              "id": "R2-S2",
+              "lanes": 8,
+              "profile": "low-profile"
+            }
+          ]
+        }
+      ],
+      "ocp_slot": {
+        "id": "OCP-SLOT",
+        "cpu": "CPU1",
+        "x_mm": 270,
+        "z_mm": 645,
+        "ports": [
+          "NIC-P1",
+          "NIC-P2"
+        ]
+      },
+      "bmc": {
+        "chip_mm": [
+          230,
+          0,
+          470
+        ],
+        "port": {
+          "id": "MGMT-PORT",
+          "x_mm": 270,
+          "y_mm": 46,
+          "z_mm": 750
+        }
+      },
+      "tpm_header_mm": [
+        200,
+        0,
+        520
+      ],
+      "cmos_battery_mm": [
+        250,
+        0,
+        520
+      ],
+      "m2_boot_module_mm": [
+        150,
+        0,
+        520
+      ],
+      "rear_io": [
+        "MGMT-PORT",
+        "USB-1",
+        "USB-2",
+        "VGA",
+        "SERIAL"
+      ],
+      "front_panel": {
+        "left_ear": [
+          "POWER",
+          "HEALTH_LED",
+          "UID",
+          "NIC_LEDS"
+        ],
+        "right_ear": [
+          "USB",
+          "VGA"
+        ]
+      },
+      "lid": {
+        "slides_back_mm": 120,
+        "release": "latch on the lid's front centre"
+      }
+    },
+    "SRV-1U-GEN": {
+      "label": "Generic 1U two-socket server",
+      "form_factor": "1U",
+      "chassis_mm": {
+        "w": 434,
+        "h": 43.2,
+        "d": 750
+      },
+      "front_ear_mm": 24.3,
+      "rail_kit": "tool-less sliding rails, 700–900 mm rack-depth range",
+      "sockets": [
+        {
+          "id": "CPU1",
+          "center_mm": [
+            112,
+            0,
+            330
+          ]
+        },
+        {
+          "id": "CPU2",
+          "center_mm": [
+            322,
+            0,
+            330
+          ]
+        }
+      ],
+      "memory": {
+        "channels_per_cpu": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G",
+          "H"
+        ],
+        "fill_order": [
+          "A",
+          "E",
+          "C",
+          "G",
+          "B",
+          "F",
+          "D",
+          "H"
+        ],
+        "dimms_per_channel": 1,
+        "supported_counts_per_cpu": [
+          1,
+          2,
+          4,
+          6,
+          8
+        ],
+        "supported_module": {
+          "type": "DDR5 RDIMM",
+          "ecc": true,
+          "speed_mts": 4800
+        },
+        "layout": {
+          "pitch_mm": 8.4,
+          "side_gap_mm": 44,
+          "channels_left": [
+            "D",
+            "C",
+            "B",
+            "A"
+          ],
+          "channels_right": [
+            "E",
+            "F",
+            "G",
+            "H"
+          ]
+        }
+      },
+      "drive_bays": {
+        "count": 10,
+        "form": "2.5in",
+        "start_x_mm": 30,
+        "pitch_mm": 20.5,
+        "z_mm": 0,
+        "sas_sata_bays": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "universal_bays": [
+          8,
+          9
+        ]
+      },
+      "backplane": {
+        "z_mm": 160,
+        "connectors": {
+          "A": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "B": [
+            8,
+            9
+          ]
+        }
+      },
+      "fans": {
+        "count": 8,
+        "z_mm": 190,
+        "start_x_mm": 22,
+        "pitch_mm": 50,
+        "size": "40mm"
+      },
+      "psus": [
+        {
+          "id": "PSU1",
+          "x_mm": 8,
+          "y_mm": 2,
+          "z_mm": 565,
+          "feed": "A"
+        },
+        {
+          "id": "PSU2",
+          "x_mm": 352,
+          "y_mm": 2,
+          "z_mm": 565,
+          "feed": "B"
+        }
+      ],
+      "risers": [
+        {
+          "id": "RISER1",
+          "cpu": "CPU1",
+          "x_mm": 100,
+          "z_mm": 600,
+          "slots": [
+            {
+              "id": "R1-S1",
+              "lanes": 16,
+              "profile": "low-profile"
+            }
+          ]
+        }
+      ],
+      "ocp_slot": {
+        "id": "OCP-SLOT",
+        "cpu": "CPU1",
+        "x_mm": 230,
+        "z_mm": 640,
+        "ports": [
+          "NIC-P1",
+          "NIC-P2"
+        ]
+      },
+      "bmc": {
+        "chip_mm": [
+          230,
+          0,
+          470
+        ],
+        "port": {
+          "id": "MGMT-PORT",
+          "x_mm": 200,
+          "y_mm": 22,
+          "z_mm": 740
+        }
+      },
+      "tpm_header_mm": [
+        200,
+        0,
+        520
+      ],
+      "cmos_battery_mm": [
+        250,
+        0,
+        520
+      ],
+      "m2_boot_module_mm": null,
+      "rear_io": [
+        "MGMT-PORT",
+        "USB-1",
+        "VGA"
+      ],
+      "front_panel": {
+        "left_ear": [
+          "POWER",
+          "HEALTH_LED",
+          "UID"
+        ],
+        "right_ear": [
+          "USB"
+        ]
+      },
+      "lid": {
+        "slides_back_mm": 100,
+        "release": "latch on the lid's front centre"
+      }
+    }
+  },
+  "lab_server": {
+    "rack_item_id": "RACK01-U18-HYP1",
+    "registry_asset_id": "B1-SRV-HYP-01-I001",
+    "server_model": "SRV-2U-GEN"
+  },
+  "rebuild_kit": {
+    "server_model": "SRV-2U-GEN",
+    "target": {
+      "cpus": 2,
+      "memory_gb": 256,
+      "dimms_per_cpu": 4,
+      "data_drives": {
+        "count": 4,
+        "bays": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "part_id": "PART-SSD-SAS-1T9"
+      },
+      "raid_controller_slot": "R1-S2",
+      "psus": 2
+    },
+    "heatsink_torque_order": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "cpu_orientations": [
+      "pin1-aligned",
+      "rotated-90",
+      "rotated-180"
+    ],
+    "parts": [
+      {
+        "part_id": "PART-CPU-A",
+        "type": "cpu",
+        "label": "CPU, 32-core server processor",
+        "qty": 2,
+        "correct": true
+      },
+      {
+        "part_id": "PART-HS-2U",
+        "type": "heatsink",
+        "label": "2U heatsink with pre-applied thermal pad",
+        "qty": 2,
+        "correct": true
+      },
+      {
+        "part_id": "PART-DIMM-32G",
+        "type": "dimm",
+        "label": "32 GB DDR5-4800 RDIMM, 2Rx8",
+        "capacity_gb": 32,
+        "module": "DDR5 RDIMM",
+        "qty": 8,
+        "correct": true
+      },
+      {
+        "part_id": "PART-DIMM-16G",
+        "type": "dimm",
+        "label": "16 GB DDR5-4800 RDIMM, 1Rx8",
+        "capacity_gb": 16,
+        "module": "DDR5 RDIMM",
+        "qty": 1,
+        "correct": false,
+        "distractor_reason": "Mixed capacity breaks the identical-module rule."
+      },
+      {
+        "part_id": "PART-DIMM-DDR4",
+        "type": "dimm",
+        "label": "32 GB DDR4-3200 UDIMM",
+        "capacity_gb": 32,
+        "module": "DDR4 UDIMM",
+        "qty": 1,
+        "correct": false,
+        "distractor_reason": "DDR4 key notch is in a different place: it will not seat."
+      },
+      {
+        "part_id": "PART-SSD-SAS-1T9",
+        "type": "drive_sff",
+        "label": "1.92 TB SAS 12G SSD",
+        "capacity_tb": 1.92,
+        "interface": "SAS",
+        "qty": 4,
+        "correct": true
+      },
+      {
+        "part_id": "PART-SSD-NVME-3T8",
+        "type": "drive_sff",
+        "label": "3.84 TB U.2 NVMe SSD",
+        "capacity_tb": 3.84,
+        "interface": "NVMe",
+        "qty": 1,
+        "correct": false,
+        "distractor_reason": "Not part of the SAS data array; NVMe only in bays 8–11."
+      },
+      {
+        "part_id": "PART-RISER1",
+        "type": "riser",
+        "label": "Riser 1 (CPU1: x16 + x8)",
+        "qty": 1,
+        "correct": true
+      },
+      {
+        "part_id": "PART-RAID",
+        "type": "raid_controller",
+        "label": "Tri-mode RAID controller, PCIe Gen4 x8, 8 GB cache",
+        "qty": 1,
+        "correct": true
+      },
+      {
+        "part_id": "PART-OCP-NIC",
+        "type": "ocp_nic",
+        "label": "OCP 3.0 dual-port 10/25 GbE adapter",
+        "qty": 1,
+        "correct": true
+      },
+      {
+        "part_id": "PART-PSU-800",
+        "type": "psu",
+        "label": "800 W hot-swap PSU",
+        "watts": 800,
+        "qty": 2,
+        "correct": true
+      },
+      {
+        "part_id": "PART-PSU-1400",
+        "type": "psu",
+        "label": "1400 W hot-swap PSU",
+        "watts": 1400,
+        "qty": 1,
+        "correct": false,
+        "distractor_reason": "Mixed PSU models break 1+1 redundancy."
+      }
+    ],
+    "cables": [
+      {
+        "cable_id": "CBL-RAID-BP-A",
+        "type": "backplane_cable",
+        "label": "Controller port 0 → backplane connector A",
+        "from": "RAID:PORT0",
+        "to": "BACKPLANE:A",
+        "required": true
+      },
+      {
+        "cable_id": "CBL-PWR-1",
+        "type": "power_cord",
+        "label": "PSU1 power cord",
+        "from": "PSU1",
+        "to_options": [
+          "PDU-A:PWR-OUT-07",
+          "PDU-B:PWR-OUT-07"
+        ],
+        "expected_to": "PDU-A:PWR-OUT-07",
+        "canonical_connection_id": "CABLE::STEP4A::00041",
+        "required": true
+      },
+      {
+        "cable_id": "CBL-PWR-2",
+        "type": "power_cord",
+        "label": "PSU2 power cord",
+        "from": "PSU2",
+        "to_options": [
+          "PDU-A:PWR-OUT-07",
+          "PDU-B:PWR-OUT-07"
+        ],
+        "expected_to": "PDU-B:PWR-OUT-07",
+        "canonical_connection_id": "CABLE::STEP4A::00042",
+        "required": true
+      },
+      {
+        "cable_id": "CBL-DAC-1",
+        "type": "dac_cable",
+        "label": "NIC port 1 DAC",
+        "from": "NIC-P1",
+        "to_options": [
+          "CORE1:SFP+-IN-03",
+          "CORE2:SFP+-IN-03"
+        ],
+        "expected_to": "CORE1:SFP+-IN-03",
+        "canonical_connection_id": "CABLE::STEP4A::00017",
+        "required": true
+      },
+      {
+        "cable_id": "CBL-DAC-2",
+        "type": "dac_cable",
+        "label": "NIC port 2 DAC",
+        "from": "NIC-P2",
+        "to_options": [
+          "CORE1:SFP+-IN-03",
+          "CORE2:SFP+-IN-03"
+        ],
+        "expected_to": "CORE2:SFP+-IN-03",
+        "canonical_connection_id": "CABLE::STEP4A::00018",
+        "required": true
+      },
+      {
+        "cable_id": "CBL-MGMT",
+        "type": "mgmt_patch",
+        "label": "Management port patch cord",
+        "from": "MGMT-PORT",
+        "to_options": [
+          "MGMT-SW:VLAN-MGMT",
+          "CORE1:SFP+-IN-03"
+        ],
+        "expected_to": "MGMT-SW:VLAN-MGMT",
+        "required": true
+      }
+    ]
+  },
+  "raid_requirement": {
+    "drives": {
+      "count": 4,
+      "capacity_tb": 1.92,
+      "bays": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "requirement": "VM datastore: at least 5.0 TB usable and must survive any single drive failure.",
+    "min_usable_tb": 5,
+    "min_fault_tolerance": 1,
+    "answer_tolerance_tb": 0.01,
+    "boot_volume": {
+      "level": "RAID1",
+      "drives": 2,
+      "capacity_tb": 0.48,
+      "note": "On the M.2 boot module; separate from the data array."
+    }
+  },
+  "curriculum_objectives": [
+    {
+      "id": "APLUS-C1-HW-MOBO-CPU",
+      "framework": "CompTIA A+ Core 1 (hardware)",
+      "objective": "Install and configure motherboards, CPUs and add-on cards"
+    },
+    {
+      "id": "APLUS-C1-HW-RAM",
+      "framework": "CompTIA A+ Core 1 (hardware)",
+      "objective": "Install memory: types, ECC, channels"
+    },
+    {
+      "id": "APLUS-C1-HW-STORAGE",
+      "framework": "CompTIA A+ Core 1 (hardware)",
+      "objective": "Install storage devices and configure RAID 0, 1, 5, 10"
+    },
+    {
+      "id": "APLUS-C1-HW-PSU",
+      "framework": "CompTIA A+ Core 1 (hardware)",
+      "objective": "Select and install power supplies, including redundant power"
+    },
+    {
+      "id": "APLUS-C1-TS-HW",
+      "framework": "CompTIA A+ Core 1 (hardware and network troubleshooting)",
+      "objective": "Troubleshoot motherboards, RAM, CPU, power and storage problems"
+    },
+    {
+      "id": "SERVERPLUS-D1-HW-INSTALL",
+      "framework": "CompTIA Server+ (SK0-005) server hardware installation and management",
+      "objective": "Install physical hardware: racking, power, cabling, components"
+    },
+    {
+      "id": "SERVERPLUS-D1-STORAGE",
+      "framework": "CompTIA Server+ (SK0-005) server hardware installation and management",
+      "objective": "Deploy and manage storage: RAID levels, capacity, controllers"
+    },
+    {
+      "id": "SERVERPLUS-D1-OOB",
+      "framework": "CompTIA Server+ (SK0-005) server hardware installation and management",
+      "objective": "Perform server hardware maintenance: out-of-band management, firmware, hot-swap"
+    },
+    {
+      "id": "SERVERPLUS-D4-TS-HW",
+      "framework": "CompTIA Server+ (SK0-005) troubleshooting",
+      "objective": "Troubleshoot hardware failures with a structured method"
+    },
+    {
+      "id": "SERVERPLUS-D4-TS-STORAGE",
+      "framework": "CompTIA Server+ (SK0-005) troubleshooting",
+      "objective": "Troubleshoot storage problems"
+    },
+    {
+      "id": "NETPLUS-PHYS",
+      "framework": "CompTIA Network+ (physical layer)",
+      "objective": "Cabling, transceivers and link verification"
+    },
+    {
+      "id": "SECPLUS-PHYS",
+      "framework": "CompTIA Security+ (physical and hardware security)",
+      "objective": "TPM, firmware integrity, physical access"
+    }
+  ],
+  "credential_boundary": "Objective references name the exam domains this lab practises. Passing a lab is simulation evidence; it is not a certification and not a Verified competency (credential_is_not_competency)."
+}

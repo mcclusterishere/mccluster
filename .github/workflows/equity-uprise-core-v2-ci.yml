@@ -133,6 +133,9 @@ jobs:
       - name: Verify Lab Runtime Step 8 3D viewer integration
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs
 
+      - name: Verify Server Lab (rack/server hardware, IT-LAB-041..051)
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_server_lab_v1.mjs
+
       - name: Verify the building screen registry is current
         run: node docs/design/equity-uprise-building/production/screens/build_screen_registry_v1.mjs --check
 

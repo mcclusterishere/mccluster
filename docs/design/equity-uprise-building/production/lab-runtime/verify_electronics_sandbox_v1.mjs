@@ -24,9 +24,9 @@ const connections = load("../electronics/generated/equity-uprise-electronics-con
 const manifest = load("../electronics/generated/equity-uprise-electronics-manifest-v1.json");
 
 const labs = catalog.labs;
-assert.equal(ELECTRONICS_SANDBOX_VERSION, "1.1.0");
+assert.equal(ELECTRONICS_SANDBOX_VERSION, "1.2.0");
 assert.ok(Array.isArray(labs));
-assert.equal(labs.length, 40);
+assert.equal(labs.length, 51, "40 Step 4A labs plus the 11 Server Lab labs (IT-LAB-041..051)");
 
 const sourceFaultIds = [...new Set(
   labs.flatMap((lab) => lab.fault_injection || []).filter((faultId) => faultId !== "none")
@@ -42,7 +42,7 @@ const selectorProbe = new ElectronicsSandbox({ registry, connections, manifest }
 const sourceSelectors = [...new Set(labs.flatMap((lab) => lab.target_selectors || []))].sort();
 const selectorCoverage = sourceSelectors.map((selector) => selectorProbe.resolveSelector(selector));
 
-assert.equal(sourceSelectors.length, 33);
+assert.equal(sourceSelectors.length, 36);
 assert.deepEqual(
   selectorCoverage.filter((entry) => !entry.resolved).map((entry) => entry.selector),
   [],
