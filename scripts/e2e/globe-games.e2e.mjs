@@ -98,6 +98,9 @@ try {
           stories: [...s.querySelectorAll('.games-story')].map((x) => ({ id: x.dataset.storyline, now: x.querySelector('.games-now').textContent, next: x.querySelector('.games-next').textContent, start: x.querySelector('.games-start').getAttribute('href') })),
           entries: [...s.querySelectorAll('.games-entry .games-start')].map((a) => a.getAttribute('href')) };
       });
+      await page.waitForFunction(() => { const v = window.HuGlobe && window.HuGlobe.viewer(); if (!v) return false; const c = v.camera.positionCartographic; return Math.abs(c.latitude * 180 / Math.PI - 41.1865) < 0.5 && Math.abs(c.longitude * 180 / Math.PI + 73.1952) < 0.5; }, null, { timeout: 15000 }).catch(() => {});
+      const cam = await page.evaluate(() => { const v = window.HuGlobe && window.HuGlobe.viewer(); if (!v) return null; const c = v.camera.positionCartographic; return { lat: +(c.latitude * 180 / Math.PI).toFixed(3), lon: +(c.longitude * 180 / Math.PI).toFixed(3), h: Math.round(c.height) }; });
+      check(scope, 'the globe flies to Bridgeport', !!cam && Math.abs(cam.lat - 41.1865) < 0.5 && Math.abs(cam.lon + 73.1952) < 0.5 && cam.h < 500000, cam);
       check(scope, 'United States → Connecticut → Bridgeport', town.title === 'Bridgeport' && /United States · Connecticut/.test(town.crumb), town);
       check(scope, 'Bridgeport shows its three storylines, each with what is playing now and what is next', town.stories.map((s) => s.id).join() === 'robbery-1s,whip-equipped,b1-blind-the-floor' && town.stories.every((s) => s.now.length > 3 && /then .+ in \d/.test(s.next)), town.stories);
       check(scope, 'and its missions: the city, Bridgeport, the garage, the HQ and both sides of B1', ['fictional-city.html', 'fictional-city.html?entry=bridgeport', 'fictional-city.html?entry=garage', 'prim3-transit.html?level=equity-uprise-hq', 'prim3-transit.html?level=equity-uprise-b1&side=defend', 'prim3-transit.html?level=equity-uprise-b1&side=attack'].every((h) => town.entries.includes(h)), town.entries);
@@ -121,9 +124,11 @@ try {
       await page.goto(BASE + '/action-globe.html?explore=1&games=us/connecticut/bridgeport', { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#gamesSheet .games-story', { timeout: 60000 }).catch(() => {});
       check(scope, '?games=us/connecticut/bridgeport opens Bridgeport', await page.evaluate(() => (document.querySelector('#gamesSheet h2') || {}).textContent === 'Bridgeport'));
+      /* errors are read before leaving: the site opts pages into cross-document view transitions (css/style.css) and the game
+         pages do not, so Chrome reports an aborted transition on the way out (see prim3-world.html) */
+      check(scope, 'no page errors', errors.length === 0, errors);
       await Promise.all([page.waitForURL(/side=attack$/, { timeout: 20000 }).catch(() => {}), page.click('#gamesSheet .games-entry[data-entry="b1-blind-the-floor"] .games-start')]);
       check(scope, 'B1 Blind the Floor starts on prim3-transit.html?level=equity-uprise-b1&side=attack', /\/prim3-transit\.html\?level=equity-uprise-b1&side=attack$/.test(page.url()), page.url());
-      check(scope, 'no page errors', errors.length === 0, errors);
       await ctx.close();
     }
     /* ---------- a member and a guest ---------- */
