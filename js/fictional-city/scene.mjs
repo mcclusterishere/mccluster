@@ -6,6 +6,7 @@ import { createGeometryKit } from './geometry.mjs';
 import { buildingBounds, createSpatialWorld, interiorWorld, isWalkable, moveWithCollisions, findWalkingPath } from './spatial.mjs';
 import { buildNeighborhoodGround, buildNeighborhoodPlace, buildStoryInteriorFixtures, buildStoryProp } from './bridgeport-geometry.mjs';
 import { chunkWanted } from './chunks.mjs';
+import { createCameraControls, safeCameraDistance } from './camera-controls.mjs';
 
 const FLOOR_Y = 0.16;
 const WALK_SPEED = 6.8;
@@ -20,7 +21,7 @@ const GENERIC_FACADES = ['#c9a27e', '#b5866d', '#9fb0a4', '#d4c29a', '#8fa3a8', 
 const editable = (target) => !!target?.closest?.('input, textarea, select, [contenteditable="true"], [role="dialog"], dialog[open]');
 const angleTo = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
 
-export function createCityScene({ canvas, manifest, places = null, vacant = [], loadChunk = null, chunkIndex = null, onInteract = () => {}, onPrompt = () => {}, onMove = () => {}, onReady = () => {}, onError = () => {}, onDiscover = () => {}, onApproachHq = () => {} }) {
+export function createCityScene({ canvas, manifest, places = null, vacant = [], loadChunk = null, chunkIndex = null, onInteract = () => {}, onPrompt = () => {}, onMove = () => {}, onReady = () => {}, onError = () => {}, onDiscover = () => {}, onApproachHq = () => {}, onView = () => {} }) {
   if (!canvas || !manifest) throw new TypeError('City scene needs its host canvas and district manifest.');
   const source = manifest.district || manifest;
   const shops = manifest.businesses || source.businesses || [];
@@ -54,13 +55,15 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#e0e9e7');
   scene.fog = new THREE.Fog('#e0e9e7', 115, 255);
-  const camera = new THREE.OrthographicCamera(-24, 24, 24, -24, 0.1, 400);
+  const overviewCamera = new THREE.OrthographicCamera(-24, 24, 24, -24, 0.1, 400);
+  const closeCamera = new THREE.PerspectiveCamera(58, 1, .08, 110);
+  let camera = closeCamera;
   const hemi = new THREE.HemisphereLight('#fff6de', '#697d78', 1.6); scene.add(hemi);
   const sun = new THREE.DirectionalLight('#ffe6bc', 1.6); sun.position.set(-55, 85, 20); scene.add(sun);
   const worldGroup = new THREE.Group(), interiorGroup = new THREE.Group(), actorsGroup = new THREE.Group();
   scene.add(worldGroup, interiorGroup, actorsGroup); interiorGroup.visible = false;
   const pickables = [], worldTargets = [], interiorTargets = [];
-  let interiorSpatial = null, currentInterior = null;
+  let interiorSpatial = null, currentInterior = null, interiorCameraBounds = [];
   const B = kit.batch(worldGroup);
 
   function box(color, x, y, z, w, h, d, rotation, target) { B.add('box', color, x, y, z, w, h, d, rotation, target); }
@@ -577,6 +580,17 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     title.userData.target = { kind: 'counter', id: b.id };
     kit.sign(interiorGroup, 'BACK TO THE STREET', '', { x: 0, y: .28, z: d / 2 - .75, width: 4.5, height: .7 });
     const roomMeshes = ib.finish();
+    // Walking bounds omit decorative shelves and equipment. Camera-only bounds come from
+    // the actual interior instances, so close views cannot end up inside those objects.
+    interiorCameraBounds = [];
+    const instance = new THREE.Matrix4();
+    for (const mesh of roomMeshes) {
+      mesh.geometry.computeBoundingBox();
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, instance);
+        interiorCameraBounds.push(mesh.geometry.boundingBox.clone().applyMatrix4(instance).expandByScalar(.15));
+      }
+    }
     // Interior picking is range-checked just like the outside, with a dedicated counter/exit target.
     const storyPoint = interiorSpatial.storyPoint;
     interiorTargets.push({ target: { kind: 'counter', id: b.id }, x: isGarage ? 6 : storyPoint.x, z: isGarage ? -2.2 : storyPoint.z,
@@ -587,7 +601,8 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
 
   let paused = false, disposed = false, failed = false, raf = 0, lastTime = 0, firstFrame = true;
   let currentPrompt = null, lastPromptKey = '', path = [], pathIndex = 0, approachTarget = null;
-  let cameraYaw = .68, desiredYaw = .68, zoom = 1, desiredZoom = 1, drag = null;
+  const view = createCameraControls();
+  let cameraYaw = view.yaw, cameraPitch = view.pitch, zoom = view.zoom, nextViewReport = 0;
   const cameraFocus = new THREE.Vector3(player.x, .4, player.z), cameraGoal = new THREE.Vector3();
   const externalInput = { x: 0, z: 0 }, keys = new Set(), movedPoint = { x: 0, z: 0 };
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), -FLOOR_Y), hit = new THREE.Vector3();
@@ -716,7 +731,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     clearInput(); currentInterior = id; player.interior = id;
     buildInterior(b); worldGroup.visible = false; interiorGroup.visible = true;
     player.x = 0; player.z = interiorSpatial.depth / 2 - 2.2; player.yaw = Math.PI;
-    cameraFocus.set(player.x, .4, player.z); desiredYaw = .68; zoom = desiredZoom = 1;
+    cameraFocus.set(player.x, 1.65, player.z); resetView(); cameraYaw = view.yaw; cameraPitch = view.pitch; zoom = view.zoom;
     prompt(null); updateActors(0); changed(true); return true;
   }
   function exitBuilding() {
@@ -726,7 +741,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     const ex = b.entrance[0] - b.position[0], ez = b.entrance[1] - b.position[1], len = Math.hypot(ex, ez) || 1;
     player.x = b.entrance[0] + ex / len * .8; player.z = b.entrance[1] + ez / len * .8; player.yaw = Math.atan2(ex, ez);
     if (!isWalkable(player.x, player.z, spatial)) { player.x = b.entrance[0]; player.z = b.entrance[1]; }
-    cameraFocus.set(player.x, .4, player.z); prompt(null); updateActors(0); changed(true); return true;
+    cameraFocus.set(player.x, 1.65, player.z); resetView(); cameraYaw = view.yaw; cameraPitch = view.pitch; prompt(null); updateActors(0); changed(true); return true;
   }
   function teleport(position = {}) {
     clearInput();
@@ -736,7 +751,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
       player.x = 0; player.z = 2.5;
     }
     if (isWalkable(position.x, position.z, activeWorld())) { player.x = position.x; player.z = position.z; }
-    cameraFocus.set(player.x, .4, player.z); prompt(null); updateActors(0); changed(true); return getPlayer();
+    cameraFocus.set(player.x, 1.65, player.z); resetView(); cameraYaw = view.yaw; cameraPitch = view.pitch; prompt(null); updateActors(0); changed(true); return getPlayer();
   }
 
   function updateMovement(dt) {
@@ -775,25 +790,51 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     const w = Math.max(1, canvas.clientWidth || canvas.width), h = Math.max(1, canvas.clientHeight || canvas.height);
     currentWidth = w; currentHeight = h; renderer.setSize(w, h, false);
     const span = currentInterior ? 10.7 : 16;
-    camera.left = -span * w / h; camera.right = span * w / h; camera.top = span; camera.bottom = -span; camera.updateProjectionMatrix();
+    overviewCamera.left = -span * w / h; overviewCamera.right = span * w / h;
+    overviewCamera.top = span; overviewCamera.bottom = -span; overviewCamera.updateProjectionMatrix();
+    closeCamera.aspect = w / h; closeCamera.updateProjectionMatrix();
   }
   const ro = new ResizeObserver(resize); ro.observe(canvas); resize();
   let previousInterior = null, islandView = false;
   function resetView() {
-    const island = !currentInterior && onIsland(player.x, player.z);
-    desiredYaw = island ? Math.PI + .35 : .68;
-    desiredZoom = island ? .7 : 1;
+    view.reset({ playerYaw: player.yaw, island: !currentInterior && onIsland(player.x, player.z) });
+  }
+  function setViewMode(mode) {
+    if (paused || disposed || !view.setMode(mode, { playerYaw: player.yaw, island: !currentInterior && onIsland(player.x, player.z) })) return;
+    clearInput(); clearPointers(); zoom = view.zoom; cameraPitch = view.pitch;
+    cameraYaw = view.yaw; cameraFocus.set(player.x, view.mode === 'close' ? 1.65 : .4, player.z);
+    updateCamera(1);
   }
   function updateCamera(dt) {
     if (previousInterior !== currentInterior) { previousInterior = currentInterior; resize(); }
-    const island = !currentInterior && onIsland(player.x, player.z);
-    if (island !== islandView) { islandView = island; resetView(); }
-    cameraGoal.set(player.x, currentInterior ? .8 : island ? 4 : .4, player.z + (island ? 5 : 0));
-    cameraFocus.lerp(cameraGoal, reducedMotion ? 1 : Math.min(1, dt * 9));
-    cameraYaw = angleTo(cameraYaw, desiredYaw, reducedMotion ? 1 : Math.min(1, dt * 10));
-    zoom += (desiredZoom - zoom) * (reducedMotion ? 1 : Math.min(1, dt * 10));
-    camera.position.set(cameraFocus.x + Math.sin(cameraYaw) * 39, cameraFocus.y + 31, cameraFocus.z + Math.cos(cameraYaw) * 39);
-    camera.lookAt(cameraFocus); camera.zoom = zoom; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    const island = !currentInterior && onIsland(player.x, player.z), close = view.mode === 'close';
+    if (island !== islandView) { islandView = island; if (!close) resetView(); }
+    camera = close ? closeCamera : overviewCamera;
+    cameraGoal.set(player.x, close ? 1.65 : currentInterior ? .8 : island ? 4 : .4, player.z + (!close && island ? 5 : 0));
+    // Close view stays attached to the player: lag would let the camera cross a wall on a turn.
+    cameraFocus.lerp(cameraGoal, close || reducedMotion ? 1 : Math.min(1, dt * 9));
+    cameraYaw = angleTo(cameraYaw, view.yaw, reducedMotion ? 1 : Math.min(1, dt * 10));
+    cameraPitch += (view.pitch - cameraPitch) * (reducedMotion ? 1 : Math.min(1, dt * 10));
+    zoom += (view.zoom - zoom) * (reducedMotion ? 1 : Math.min(1, dt * 10));
+    const requested = close ? 5 / zoom : 39;
+    const distance = close ? safeCameraDistance(player, cameraYaw, requested, (x, z) => {
+      if (!isWalkable(x, z, activeWorld(), .18)) return false;
+      if (!currentInterior) return true;
+      p3.set(x, 1.65 + Math.tan(cameraPitch) * Math.hypot(x - player.x, z - player.z), z);
+      return !interiorCameraBounds.some(bounds => bounds.containsPoint(p3));
+    }) : requested;
+    camera.position.set(cameraFocus.x + Math.sin(cameraYaw) * distance,
+      cameraFocus.y + Math.tan(cameraPitch) * distance, cameraFocus.z + Math.cos(cameraYaw) * distance);
+    if (close) cameraGoal.set(player.x - Math.sin(cameraYaw) * 1.4, 1.65, player.z - Math.cos(cameraYaw) * 1.4);
+    else cameraGoal.copy(cameraFocus);
+    camera.lookAt(cameraGoal); camera.zoom = close ? 1 : zoom; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    player.visible = !close || distance > 1.8;
+    scene.fog.near = close ? 55 : 115; scene.fog.far = close ? 105 : 255;
+    if (elapsed >= nextViewReport) {
+      nextViewReport = elapsed + .12;
+      onView({ mode: view.mode, yaw: cameraYaw, zoom, x: player.x, z: player.z, interior: currentInterior,
+        room: currentInterior ? { width: interiorSpatial.width, depth: interiorSpatial.depth } : null });
+    }
   }
 
   function updateOcclusion(dt) {
@@ -833,25 +874,35 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     else if (e.code === 'KeyE' && !e.repeat) { e.preventDefault(); interactNearest(); }
   };
   const keyup = e => keys.delete(e.code);
-  const blur = () => clearInput();
   const activePointers = new Set();
+  let drag = null;
+  function clearPointers() {
+    drag = null;
+    for (const id of activePointers) if (canvas.hasPointerCapture?.(id)) canvas.releasePointerCapture(id);
+    activePointers.clear();
+  }
+  const blur = () => { clearInput(); clearPointers(); };
   const pointerDown = e => {
     if (paused || (e.button != null && e.button !== 0)) return;
     activePointers.add(e.pointerId);
+    // Two fingers belong to browser accessibility zoom. Neither finger can become a walk tap.
     if (activePointers.size > 1) { drag = null; return; }
-    drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY, x: e.clientX, moved: false };
+    drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY, moved: false };
     canvas.setPointerCapture?.(e.pointerId);
   };
   const pointerMove = e => {
     if (!drag || drag.id !== e.pointerId || paused) return;
-    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 8) drag.moved = true;
-    if (drag.moved) desiredYaw -= (e.clientX - drag.x) * .006;
-    drag.x = e.clientX;
+    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 8) {
+      if (!drag.moved) clearInput();
+      drag.moved = true;
+    }
+    if (drag.moved) view.look(e.clientX - drag.x, e.clientY - drag.y);
+    drag.x = e.clientX; drag.y = e.clientY;
   };
   const pointerUp = e => {
     activePointers.delete(e.pointerId);
-    if (!drag || drag.id !== e.pointerId) return;
-    const tap = !drag.moved && e.type === 'pointerup'; drag = null;
+    const tap = drag?.id === e.pointerId && !drag.moved && e.type === 'pointerup';
+    if (drag?.id === e.pointerId) drag = null;
     if (canvas.hasPointerCapture?.(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
     if (!tap || paused) return;
     const rect = canvas.getBoundingClientRect();
@@ -867,12 +918,12 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     }
     if (ray.ray.intersectPlane(ground, hit)) walkTo({ x: hit.x, z: hit.z });
   };
-  const wheel = e => { e.preventDefault(); desiredZoom = Math.max(.7, Math.min(2, desiredZoom * (e.deltaY > 0 ? .9 : 1.1))); };
+  const wheel = e => { if (paused || e.ctrlKey || e.metaKey) return; e.preventDefault(); view.zoomBy(e.deltaY > 0 ? .9 : 1.1); };
   const contextLost = e => { e.preventDefault(); failed = true; clearInput(); onError(new Error('The 3D graphics context was lost. Reload the city to reconnect.')); };
   const listeners = [
     [globalThis, 'keydown', keydown], [globalThis, 'keyup', keyup], [globalThis, 'blur', blur],
     [canvas, 'pointerdown', pointerDown], [canvas, 'pointermove', pointerMove], [canvas, 'pointerup', pointerUp],
-    [canvas, 'pointercancel', pointerUp], [canvas, 'wheel', wheel, { passive: false }], [canvas, 'webglcontextlost', contextLost]
+    [canvas, 'lostpointercapture', pointerUp], [canvas, 'pointercancel', pointerUp], [canvas, 'wheel', wheel, { passive: false }], [canvas, 'webglcontextlost', contextLost]
   ];
   for (const [target, event, handler, options] of listeners) target.addEventListener(event, handler, options);
   const oldTouchAction = canvas.style.touchAction; canvas.style.touchAction = 'pinch-zoom';
@@ -884,7 +935,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
       fps: Math.round(fps * 10) / 10, dpr, viewport: [currentWidth, currentHeight],
       staticBatches: staticMeshes.length, animatedBatches: dynamicMeshes.length,
       staticInstances: staticMeshes.reduce((n, m) => n + m.count, 0), status: failed ? 'graphics-lost' : disposed ? 'disposed' : 'running',
-      parcels: parcelBuildings.length, hqLod,
+      parcels: parcelBuildings.length, hqLod, camera: { mode: view.mode, yaw: cameraYaw, pitch: cameraPitch, zoom },
       chunks: { total: chunkMeta.size, active: [...chunks.values()].filter(c => c.group).length,
         ready: [...chunks.entries()].filter(([, c]) => c.state === 'ready' && c.group).map(([id]) => id).sort(),
         fallback: [...chunks.entries()].filter(([, c]) => c.state === 'fallback').map(([id]) => id).sort(),
@@ -911,7 +962,7 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
     const frameSeconds = lastTime ? (now - lastTime) / 1000 : 1 / 60;
     const dt = Math.min(.05, frameSeconds); lastTime = now; elapsed += dt;
     try {
-      updateMovement(dt); updateActors(dt); updateChunks(dt); updateHqLod(); updateDiscovery(); updateCamera(dt); updateOcclusion(dt);
+      updateMovement(dt); updateCamera(dt); updateActors(dt); updateChunks(dt); updateHqLod(); updateDiscovery(); updateOcclusion(dt);
       playerRing.position.set(player.x, .267, player.z); contact.position.set(player.x, .261, player.z);
       choosePrompt(); renderer.render(scene, camera);
       frameCount++; fpsTime += frameSeconds; if (fpsTime >= 1) { fps = frameCount / fpsTime; frameCount = 0; fpsTime = 0; }
@@ -922,11 +973,12 @@ export function createCityScene({ canvas, manifest, places = null, vacant = [], 
   return {
     setInput(input = {}) { if (paused || disposed) return; externalInput.x = Number.isFinite(input.x) ? Math.max(-1, Math.min(1, input.x)) : 0; externalInput.z = Number.isFinite(input.z) ? Math.max(-1, Math.min(1, input.z)) : 0; },
     interactNearest, enterBuilding, exitBuilding, teleport, walkTo, getPlayer, getStats, setStoryProgress,
-    zoomBy(factor) { if (Number.isFinite(factor) && factor > 0) desiredZoom = Math.max(.7, Math.min(2, desiredZoom * factor)); },
-    resetView,
-    setPaused(value) { paused = !!value; if (paused) { clearInput(); prompt(null); } },
+    zoomBy(factor) { if (!paused && !disposed) view.zoomBy(factor); },
+    resetView() { if (!paused && !disposed) { clearInput(); clearPointers(); resetView(); } }, setViewMode,
+    getView() { return { mode: view.mode, yaw: cameraYaw, pitch: cameraPitch, zoom, position: camera.position.toArray() }; },
+    setPaused(value) { paused = !!value; if (paused) { clearInput(); clearPointers(); prompt(null); } },
     dispose() {
-      if (disposed) return; disposed = true; cancelAnimationFrame(raf); clearInput(); ro.disconnect();
+      if (disposed) return; disposed = true; cancelAnimationFrame(raf); clearInput(); clearPointers(); ro.disconnect();
       for (const [target, event, handler, options] of listeners) target.removeEventListener(event, handler, options);
       canvas.style.touchAction = oldTouchAction;
       for (const id of [...chunks.keys()]) detachChunk(id);
