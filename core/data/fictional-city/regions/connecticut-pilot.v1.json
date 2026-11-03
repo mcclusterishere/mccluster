@@ -1,0 +1,828 @@
+{
+  "schema": "mccluster.planet.region/v1",
+  "id": "connecticut-pilot",
+  "revision": "2026-11-03",
+  "status": "data contract and first bounded crop; not wired into the scene",
+  "authority": "Real geography supplies geometry and heights only. Every name, use, tenant, person and story in the game is invented and lives in the city lore, never in this region's data. The authored McCluster City district and its HQ island are fictional overlays, not surveyed geography.",
+  "docs": "docs/fictional-city/PLANET-CONNECTICUT.md",
+  "idNamespace": "ct2023",
+  "chunkPrefix": "ctp_",
+  "frame": {
+    "id": "mccluster-city.bridgeport-equirect.v1",
+    "module": "js/fictional-city/planet/georeference.mjs",
+    "axes": "metres; +X east, +Y up, +Z south (McCluster City frame)",
+    "horizontal": "x = (lon + 73.1903) * 111320 * cos(41.1798 deg); z = -(lat - 41.1798) * 111320 - 220",
+    "geodeticDatum": "NAD83(2011) treated as WGS84 for placement (~1-1.5 m offset in Connecticut)",
+    "vertical": "building and terrain Y values are NAVD88 orthometric metres as published; see authoredOverlay.verticalProposal for the proposed city-Y offset (not applied)",
+    "floatingOrigin": "createFloatingOrigin(): render origin follows the player in 128 m steps past 512 m; world positions stay double precision",
+    "enuCheck": "createEnuFrame({ lon: -73.1903, lat: 41.1798 }) is the measured reference; the equirect frame reads ~0.25 % long north-south (tested bound 0.35 %)"
+  },
+  "scaleContracts": {
+    "city": "1 unit = 1 metre, Y-up",
+    "hqModel": "metres, Z-up GLBs; HQ display cell 12 ft = 3.6576 m (the HQ tactical level module in js/prim3-tactics/levels/, WORLD_M)",
+    "tactics": "3.54 m rule tile (js/prim3-tactics/scale.mjs TILE_M)",
+    "rule": "distinct contracts; never resize the HQ or the tactics grid to match each other or the region"
+  },
+  "bounds": {
+    "statewide": {
+      "west": -73.753399,
+      "south": 40.973152,
+      "east": -71.774215,
+      "north": 42.06145,
+      "source": "CT 2023 3D Buildings FGDC metadata bounding coordinates"
+    },
+    "pilot": {
+      "west": -73.194,
+      "south": 41.1695,
+      "east": -73.183,
+      "north": 41.1745
+    }
+  },
+  "crops": [
+    {
+      "id": "bridgeport-harbor-west",
+      "source": "tools/fictional-city/data/connecticut-pilot/bridgeport-harbor-west.source.json",
+      "bbox": [
+        -73.194,
+        41.1695,
+        -73.183,
+        41.1745
+      ],
+      "selection": "complete CT 2023 footprints whose exterior area centroid lies inside bbox",
+      "why": "Downtown Bridgeport's west bank of the inner harbour: real waterfront massing, hydro-flattened water and a shoreline in one ~920 x 560 m box, 300 m south of the authored district's frame bounds so it overlaps neither the authored district nor the separately merged northern neighbourhood. Inside one 3D-buildings feature class (Block02_C2), so its lidar heights come from one bounded table.",
+      "cityBounds": {
+        "minX": -310.0033,
+        "maxX": 611.6281,
+        "minZ": 369.996,
+        "maxZ": 926.596
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "ct-gis-2023-buildings-2d",
+      "title": "2023 Connecticut Buildings (lidar-derived building footprints)",
+      "publisher": "State of Connecticut GIS Office",
+      "access": "ArcGIS feature service query by envelope, native EPSG:6434",
+      "url": "https://services3.arcgis.com/3FL1kr7L4LvwA2Kb/arcgis/rest/services/CT_Buildings/FeatureServer/0",
+      "catalog": "https://www.arcgis.com/home/item.html?id=1fc1468133cc4080a9cd8d64c49c8b2d",
+      "licence": "No explicit licence on this item (licenseInfo 'None'); FGDC metadata: access constraints 'No restrictions apply to these data', use constraints 'None' with temporal/accuracy caveats",
+      "capture": {
+        "begin": "2023-03-22",
+        "end": "2023-05-07"
+      },
+      "published": "2025-02-07 (FGDC pubdate)",
+      "metadata": "https://cteco.uconn.edu/download/metadata/CT_Statewide_BuildingFootprints_2023.xml",
+      "idStability": "OBJECTID of the hosted layer, recorded with its GlobalID. A republish can renumber OBJECTIDs: rebuilds must re-match by GlobalID before accepting a changed ID.",
+      "verified": "2026-11-03: query, fields (OBJECTID, Shape__Area, Shape__Length, GlobalID), licence text and dates read directly"
+    },
+    {
+      "id": "ct-eco-2023-3d-buildings",
+      "title": "Connecticut 3D Buildings (2023 lidar)",
+      "publisher": "CT State GIS Office, distributed by CT ECO (UConn / CT DEEP)",
+      "access": "HTTP range reads of one feature-class table (Block02_C2) from CT_3D_Buildings_Block2_2023.zip (503,546,483 bytes, Last-Modified 2025-02-19); no statewide or full-block download",
+      "url": "https://maps.cteco.uconn.edu/data/flight2023/",
+      "catalog": "https://www.arcgis.com/home/item.html?id=9b42059a29d041da83dd74ca258b7372",
+      "licence": "CC0 (licenseInfo of the official 'Connecticut 3D Buildings' web scene and its CT_Buildings scene service, owner ctgisoffice)",
+      "capture": {
+        "begin": "2023-03-22",
+        "end": "2023-05-07"
+      },
+      "published": "2025-02-07 (FGDC pubdate)",
+      "metadata": "https://cteco.uconn.edu/download/metadata/CT_Statewide_3DBuildings_2023.xml",
+      "crs": "NAD83(2011) / Connecticut (ftUS), EPSG:6434; heights NAVD88 GEOID18, US survey feet",
+      "notes": "Delivered as multipatch 'cells' with CAD attributes and no per-building identifier, so per-building identity comes from the 2D footprints and the 3D faces supply heights only. Sizes listed on the deliverables page: blocks 117/492/568/251 MB, statewide 1.4 GB.",
+      "verified": "2026-11-03: licence text, dates, CRS, block sizes and the layer schema read directly; one table opened with GDAL OpenFileGDB"
+    },
+    {
+      "id": "ct-2023-dem-noaa-mirror",
+      "title": "2023 CT GIS Office Hydro-Flattened Bare Earth DEM (NOAA Digital Coast mirror, dataset 10316)",
+      "publisher": "CT State GIS Office; mirrored by NOAA Office for Coastal Management",
+      "access": "windowed read of the public VRT over HTTP range requests, averaged to 4 m posts",
+      "url": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/dem/CT_Statewide_DEM_2023_10316/index.html",
+      "licence": "No licence statement; metadata 'Limitations of use: None' with temporal caveats, access constraints none; NOAA distribution liability disclaimer",
+      "capture": {
+        "begin": "2023-03-22",
+        "end": "2023-05-07"
+      },
+      "published": "2024-06-25",
+      "metadata": "https://cteco.uconn.edu/download/metadata/CT_DEM_2023_metadata.htm",
+      "crs": "mirror: EPSG:6433 metres, NAVD88 metres, 0.5 m grid (original: 2 ft cells, US survey feet)",
+      "notes": "CT metadata names GEOID18; the NOAA VRT's CRS name says Geoid12B. Hydro-flattened water reads about -1.17 m NAVD88 here, which matches Bridgeport MLLW (0.604 - 1.775 m on the station datum).",
+      "verified": "2026-11-03: VRT CRS/resolution, metadata dates and constraints read directly"
+    },
+    {
+      "id": "osm",
+      "title": "OpenStreetMap",
+      "licence": "ODbL 1.0, (c) OpenStreetMap contributors",
+      "use": "not used by this crop; street centrelines are the next layer and keep their ODbL credit and licence link in any derived file"
+    }
+  ],
+  "heightProvenance": {
+    "lidar": "lidar-2023-3d-buildings: roofY = area-weighted 95th percentile of 3D roof-face mean elevations inside the footprint (NAVD88 ft -> m); baseY = the multipatch bottom slab",
+    "ground": "median 4 m bare-earth DEM post inside the footprint, or bilinear at the centroid for footprints smaller than a post",
+    "estimated": "estimated-default: ground + fallbackHeightM when no lidar roof face lies inside the footprint",
+    "fallbackHeightM": 6,
+    "minimumHeightM": 2.5
+  },
+  "budgets": {
+    "firstDistrictCompressedBytes": 5000000,
+    "visualChunkCompressedBytes": 250000,
+    "drawCalls": 100,
+    "visibleTriangles": 250000,
+    "nearbyAnimatedNpcs": 16,
+    "geometryCacheBytes": 134217728,
+    "textureCacheBytes": 67108864,
+    "targetFps": 30,
+    "source": "planet handoff section 4 starting targets; to be tuned on a named physical phone, not yet measured"
+  },
+  "authoredOverlay": {
+    "status": "proposal, not implemented in the scene",
+    "statement": "The McCluster City district, its harbour basin and the HQ island are authored fiction. They are placed over real Bridgeport by the owner-adopted frame above; the real coastline does not contain this island.",
+    "anchor": {
+      "cityOrigin": {
+        "lon": -73.1903,
+        "lat": 41.177824
+      },
+      "hqIslandCentre": {
+        "x": 0,
+        "z": 88,
+        "lon": -73.1903,
+        "lat": 41.177033
+      },
+      "headingDeg": 0,
+      "headingNote": "city +X is true east and -Z true north; no rotation"
+    },
+    "mask": [
+      {
+        "id": "authored-district",
+        "minX": -168,
+        "maxX": 168,
+        "minZ": -150,
+        "maxZ": 140,
+        "lon": [
+          -73.192305,
+          -73.188295
+        ],
+        "lat": [
+          41.176566,
+          41.179171
+        ]
+      },
+      {
+        "id": "northern-neighbourhood",
+        "minX": -165,
+        "maxX": 165,
+        "minZ": -345,
+        "maxZ": -58,
+        "note": "merged separately; listed so real chunks never draw inside it"
+      }
+    ],
+    "maskRule": "real buildings whose centroid falls inside a mask (plus a 24 m skirt) are not drawn; real terrain inside the skirt is blended toward the authored ground",
+    "coastlineTransition": "The authored harbour basin south of the district (Z 45..140) opens east through an authored channel, about Z 90..140 from X 168 to X ~450, into the real inner harbour where the NOAA Bridgeport gauge stands (city X 530.4, Z 223.1). Real chunks yield to the channel; its banks are authored quays that step down to real DEM terrain over the 24 m skirt. Water everywhere is one plane at the snapshot water level.",
+    "verticalProposal": {
+      "cityYFromNavd88": "cityY = navd88M - 0.23",
+      "reason": "puts Bridgeport mean sea level (-0.067 m NAVD88, 1983-2001 epoch) on the authored water top (-0.3 m); real streets then sit ~3-5 m above the authored quay and meet it on the skirt ramp"
+    },
+    "realCropsRelation": {
+      "bridgeport-harbor-west": "south of the authored mask (city Z 370..927); the strip Z 140..370 is real geography to fill from the statewide overview"
+    }
+  },
+  "environment": {
+    "status": "read-only probe 2026-11-03; no ingestion job",
+    "nws": {
+      "points": "https://api.weather.gov/points/41.1720,-73.1885",
+      "grid": "OKX 58,67",
+      "stations": [
+        "KBDR",
+        "KHVN"
+      ],
+      "zone": "CTZ009",
+      "county": "CTC001",
+      "terms": "open data, free for any purpose; identifying User-Agent required, cache per response headers"
+    },
+    "noaaCoops": {
+      "station": "8467150",
+      "name": "Bridgeport",
+      "lat": 41.17582,
+      "lon": -73.18397,
+      "city": {
+        "x": 530.357,
+        "z": 223.0536
+      },
+      "products": [
+        "water_level (6-min, preliminary until verified)",
+        "predictions (hilo)"
+      ],
+      "datums": {
+        "epoch": "1983-2001",
+        "MLLW": 0.604,
+        "MSL": 1.708,
+        "MHHW": 2.835,
+        "NAVD88": 1.775,
+        "units": "metres above station datum"
+      },
+      "portsMember": false
+    }
+  },
+  "chunkIndex": {
+    "chunkSizeM": 128,
+    "terrainPostM": 4,
+    "lods": [
+      "lod0 Douglas–Peucker 0.15 m",
+      "lod1 Douglas–Peucker 1.5 m",
+      "lod2 minimum-area oriented rectangle"
+    ],
+    "builder": "tools/fictional-city/build-connecticut-region.mjs",
+    "sourceSha256": {
+      "bridgeport-harbor-west": "d16c8ac97ddf6e5c09443f7db2f37409ffe1cc0f93b33fcde0b8a517478305ad"
+    },
+    "chunks": [
+      {
+        "id": "ctp_-1_2",
+        "path": "ctp_-1_2.json",
+        "origin": [
+          -128,
+          256
+        ],
+        "buildings": 0,
+        "bytes": 5720,
+        "gzipBytes": 609,
+        "sha256": "175eabc747da4a01a3529dffec288a497d5ca6d84a3d6a39252f75fb24d6c232"
+      },
+      {
+        "id": "ctp_-1_3",
+        "path": "ctp_-1_3.json",
+        "origin": [
+          -128,
+          384
+        ],
+        "buildings": 1,
+        "bytes": 5147,
+        "gzipBytes": 2200,
+        "sha256": "3182bb1c8ac0d7ca7848b07085fff30fe5c50e3bdb116eb81c969f39b5849ba8"
+      },
+      {
+        "id": "ctp_-1_4",
+        "path": "ctp_-1_4.json",
+        "origin": [
+          -128,
+          512
+        ],
+        "buildings": 2,
+        "bytes": 5877,
+        "gzipBytes": 2472,
+        "sha256": "76ea659d73b831f957887973dce5d67f8a4f7f7b91a04607c711b36e58dfa64a"
+      },
+      {
+        "id": "ctp_-1_5",
+        "path": "ctp_-1_5.json",
+        "origin": [
+          -128,
+          640
+        ],
+        "buildings": 2,
+        "bytes": 5970,
+        "gzipBytes": 2578,
+        "sha256": "cfec0c1c6159a80ee976d49a670922168b03ccfd87f90ffcae37475c924a1346"
+      },
+      {
+        "id": "ctp_-1_6",
+        "path": "ctp_-1_6.json",
+        "origin": [
+          -128,
+          768
+        ],
+        "buildings": 1,
+        "bytes": 5755,
+        "gzipBytes": 2604,
+        "sha256": "35f1e53c0d48276d39f192d84d151410c05f8d77d7acc1a175185383fe21a2bc"
+      },
+      {
+        "id": "ctp_-1_7",
+        "path": "ctp_-1_7.json",
+        "origin": [
+          -128,
+          896
+        ],
+        "buildings": 0,
+        "bytes": 5588,
+        "gzipBytes": 809,
+        "sha256": "a07a88f401f547b572d509bcef4b873511f948603cd6c3fd242105c8bbc111c9"
+      },
+      {
+        "id": "ctp_-2_2",
+        "path": "ctp_-2_2.json",
+        "origin": [
+          -256,
+          256
+        ],
+        "buildings": 0,
+        "bytes": 5720,
+        "gzipBytes": 589,
+        "sha256": "a5418bb37bef4df4842e0a8bf70b2657012dd2ce0f36f7563ec98b92c9989c44"
+      },
+      {
+        "id": "ctp_-2_3",
+        "path": "ctp_-2_3.json",
+        "origin": [
+          -256,
+          384
+        ],
+        "buildings": 1,
+        "bytes": 5452,
+        "gzipBytes": 2131,
+        "sha256": "143db27c1efa507bfe1a9492b341c276d080fb598be576fabb33181241187418"
+      },
+      {
+        "id": "ctp_-2_4",
+        "path": "ctp_-2_4.json",
+        "origin": [
+          -256,
+          512
+        ],
+        "buildings": 0,
+        "bytes": 5197,
+        "gzipBytes": 2242,
+        "sha256": "e800f680c312543d4449edf0cbd3d9d4cdc8790024ace76b41f4319d791855ec"
+      },
+      {
+        "id": "ctp_-2_5",
+        "path": "ctp_-2_5.json",
+        "origin": [
+          -256,
+          640
+        ],
+        "buildings": 0,
+        "bytes": 5281,
+        "gzipBytes": 2245,
+        "sha256": "9e853d43d45b9fe1e8291a4b24c8213e05a2997121456610ba8868619177cff7"
+      },
+      {
+        "id": "ctp_-2_6",
+        "path": "ctp_-2_6.json",
+        "origin": [
+          -256,
+          768
+        ],
+        "buildings": 6,
+        "bytes": 7575,
+        "gzipBytes": 2894,
+        "sha256": "fa5137a0fa71e3ace0673942ead664d4d82d6a1e3214e1db0470fb7d6d8f3421"
+      },
+      {
+        "id": "ctp_-2_7",
+        "path": "ctp_-2_7.json",
+        "origin": [
+          -256,
+          896
+        ],
+        "buildings": 0,
+        "bytes": 5588,
+        "gzipBytes": 821,
+        "sha256": "c240b0afcf8c921df572831e1e2eaa9b0de46d9d9fa3c8e08d4afbc1cf30958d"
+      },
+      {
+        "id": "ctp_-3_2",
+        "path": "ctp_-3_2.json",
+        "origin": [
+          -384,
+          256
+        ],
+        "buildings": 0,
+        "bytes": 5796,
+        "gzipBytes": 446,
+        "sha256": "6f6f81eb1b902eeb06063298040b27727373a9f97e4da685f999373ef595a5b7"
+      },
+      {
+        "id": "ctp_-3_3",
+        "path": "ctp_-3_3.json",
+        "origin": [
+          -384,
+          384
+        ],
+        "buildings": 0,
+        "bytes": 5613,
+        "gzipBytes": 1205,
+        "sha256": "8cf66ac59d9ab973bfc11136e1348dff12df118966b0f1918fd03c817d9a147a"
+      },
+      {
+        "id": "ctp_-3_4",
+        "path": "ctp_-3_4.json",
+        "origin": [
+          -384,
+          512
+        ],
+        "buildings": 3,
+        "bytes": 7074,
+        "gzipBytes": 1815,
+        "sha256": "7c8f81a546ef5afd65ebda790fca462240dab3970cda2177850fada6854064a5"
+      },
+      {
+        "id": "ctp_-3_5",
+        "path": "ctp_-3_5.json",
+        "origin": [
+          -384,
+          640
+        ],
+        "buildings": 1,
+        "bytes": 5874,
+        "gzipBytes": 1346,
+        "sha256": "a068cf16627ef7ba5fe83444e73c95c7336ef9038891cd71742877e974e496b5"
+      },
+      {
+        "id": "ctp_-3_6",
+        "path": "ctp_-3_6.json",
+        "origin": [
+          -384,
+          768
+        ],
+        "buildings": 2,
+        "bytes": 6573,
+        "gzipBytes": 1610,
+        "sha256": "da0f91ceb5538423f24e0a0c13636ffe6f9ce03e1a28c848ae9759f1783b1e6e"
+      },
+      {
+        "id": "ctp_-3_7",
+        "path": "ctp_-3_7.json",
+        "origin": [
+          -384,
+          896
+        ],
+        "buildings": 1,
+        "bytes": 6111,
+        "gzipBytes": 768,
+        "sha256": "422e4ee5292fbb7899ff06df12ff3f090969db159b9b65a5273cb4339960264b"
+      },
+      {
+        "id": "ctp_0_2",
+        "path": "ctp_0_2.json",
+        "origin": [
+          0,
+          256
+        ],
+        "buildings": 0,
+        "bytes": 5716,
+        "gzipBytes": 566,
+        "sha256": "ad41e3f56d68e3479363141b6452198abef08b89d714b86aea0a14244e336134"
+      },
+      {
+        "id": "ctp_0_3",
+        "path": "ctp_0_3.json",
+        "origin": [
+          0,
+          384
+        ],
+        "buildings": 2,
+        "bytes": 6486,
+        "gzipBytes": 2687,
+        "sha256": "782f33360bf1b1d8dc4d37503f8b49e6ae00473094122f5695c919bc9b4a4657"
+      },
+      {
+        "id": "ctp_0_4",
+        "path": "ctp_0_4.json",
+        "origin": [
+          0,
+          512
+        ],
+        "buildings": 0,
+        "bytes": 5253,
+        "gzipBytes": 2247,
+        "sha256": "dcc45d55b87960e9d5058558826ead18a0e4096a86824587694251fb504eeeb7"
+      },
+      {
+        "id": "ctp_0_5",
+        "path": "ctp_0_5.json",
+        "origin": [
+          0,
+          640
+        ],
+        "buildings": 0,
+        "bytes": 4781,
+        "gzipBytes": 1802,
+        "sha256": "2ae1607fd34b379ebd1dce825abbe21c36c098e0adc4529a6d8dbff630f96616"
+      },
+      {
+        "id": "ctp_0_6",
+        "path": "ctp_0_6.json",
+        "origin": [
+          0,
+          768
+        ],
+        "buildings": 2,
+        "bytes": 5541,
+        "gzipBytes": 2110,
+        "sha256": "13be5d0e9f14feeebc8b9707223bddded54370d70b73330f69b31300fe990c58"
+      },
+      {
+        "id": "ctp_0_7",
+        "path": "ctp_0_7.json",
+        "origin": [
+          0,
+          896
+        ],
+        "buildings": 0,
+        "bytes": 5584,
+        "gzipBytes": 754,
+        "sha256": "802fee5eb4c5178a646b0310ef7f32d4ae17c4550e102db4259e28b02317e3e3"
+      },
+      {
+        "id": "ctp_1_2",
+        "path": "ctp_1_2.json",
+        "origin": [
+          128,
+          256
+        ],
+        "buildings": 0,
+        "bytes": 5726,
+        "gzipBytes": 594,
+        "sha256": "aa2b9927534bca26ab4c5430128f98883205a51105153c0fa23b999c74ecef57"
+      },
+      {
+        "id": "ctp_1_3",
+        "path": "ctp_1_3.json",
+        "origin": [
+          128,
+          384
+        ],
+        "buildings": 0,
+        "bytes": 5153,
+        "gzipBytes": 2064,
+        "sha256": "95058c08a9c6ae9f159205b6f66821d2d3b4b40bcd56a557ad76d8d96a8ec926"
+      },
+      {
+        "id": "ctp_1_4",
+        "path": "ctp_1_4.json",
+        "origin": [
+          128,
+          512
+        ],
+        "buildings": 1,
+        "bytes": 5521,
+        "gzipBytes": 2016,
+        "sha256": "f9a1a1f83243778510717731b3ab9e65e25083d933ae56e9a3924f35da6ea5ad"
+      },
+      {
+        "id": "ctp_1_5",
+        "path": "ctp_1_5.json",
+        "origin": [
+          128,
+          640
+        ],
+        "buildings": 2,
+        "bytes": 7296,
+        "gzipBytes": 2366,
+        "sha256": "9687ec79caead95211ea66e34c68ec1a976aeb35803f5ee965cc698c66f09b89"
+      },
+      {
+        "id": "ctp_1_6",
+        "path": "ctp_1_6.json",
+        "origin": [
+          128,
+          768
+        ],
+        "buildings": 0,
+        "bytes": 4761,
+        "gzipBytes": 1834,
+        "sha256": "56e7aa5a12a2c648ab0a9fdced446c4ae3b0d67fe398646cb86b10aed7a93e30"
+      },
+      {
+        "id": "ctp_1_7",
+        "path": "ctp_1_7.json",
+        "origin": [
+          128,
+          896
+        ],
+        "buildings": 1,
+        "bytes": 6863,
+        "gzipBytes": 1244,
+        "sha256": "0cbb56348f8336ca4590a003016679291ba7784ce49c6d28509b9bbbc0afbf37"
+      },
+      {
+        "id": "ctp_2_2",
+        "path": "ctp_2_2.json",
+        "origin": [
+          256,
+          256
+        ],
+        "buildings": 1,
+        "bytes": 6611,
+        "gzipBytes": 935,
+        "sha256": "f1bdb317a8d8ff4775d01a032c46b60d0d4ab7f0ac8b0ee3227a82e903392193"
+      },
+      {
+        "id": "ctp_2_3",
+        "path": "ctp_2_3.json",
+        "origin": [
+          256,
+          384
+        ],
+        "buildings": 0,
+        "bytes": 4761,
+        "gzipBytes": 1639,
+        "sha256": "74d8757db54893d6e67efa9371f8510219ff5ba43b571665a0e4c7812b254dd3"
+      },
+      {
+        "id": "ctp_2_4",
+        "path": "ctp_2_4.json",
+        "origin": [
+          256,
+          512
+        ],
+        "buildings": 1,
+        "bytes": 5996,
+        "gzipBytes": 2328,
+        "sha256": "d3b2ff4ebf48033dca34b4428e39d183a2620333d39be80e934d3a5282fe4266"
+      },
+      {
+        "id": "ctp_2_5",
+        "path": "ctp_2_5.json",
+        "origin": [
+          256,
+          640
+        ],
+        "buildings": 1,
+        "bytes": 5256,
+        "gzipBytes": 2180,
+        "sha256": "15cda58029b7ff0ebd758e6f0d2cde212c3a77d2cd4708d6f9cf7f97950f29eb"
+      },
+      {
+        "id": "ctp_2_6",
+        "path": "ctp_2_6.json",
+        "origin": [
+          256,
+          768
+        ],
+        "buildings": 3,
+        "bytes": 6717,
+        "gzipBytes": 2370,
+        "sha256": "99d430b4cca08765d937f6624f8bd4e0644aa9092d1d59d551de92ae80906685"
+      },
+      {
+        "id": "ctp_2_7",
+        "path": "ctp_2_7.json",
+        "origin": [
+          256,
+          896
+        ],
+        "buildings": 0,
+        "bytes": 5586,
+        "gzipBytes": 716,
+        "sha256": "de686712116463c4db7599ebf34cdf7e2e2a1dde64635bda1fc03e1a3b3b106f"
+      },
+      {
+        "id": "ctp_3_2",
+        "path": "ctp_3_2.json",
+        "origin": [
+          384,
+          256
+        ],
+        "buildings": 0,
+        "bytes": 5787,
+        "gzipBytes": 455,
+        "sha256": "f8a37bb155c5ac552a8597f33c65dec00ff1e0d609f6d69c2e1ca1d2207eee6f"
+      },
+      {
+        "id": "ctp_3_3",
+        "path": "ctp_3_3.json",
+        "origin": [
+          384,
+          384
+        ],
+        "buildings": 3,
+        "bytes": 6568,
+        "gzipBytes": 1936,
+        "sha256": "18fcc0b243951c9f47e75d290d15dcad68126d7fff84171d4d9b4a55def6b5a7"
+      },
+      {
+        "id": "ctp_3_4",
+        "path": "ctp_3_4.json",
+        "origin": [
+          384,
+          512
+        ],
+        "buildings": 2,
+        "bytes": 5678,
+        "gzipBytes": 2138,
+        "sha256": "dc7a7093e7db3db2394e5b32eb7e0d3c8d39c6a5f93a6e38f22187a30396d62f"
+      },
+      {
+        "id": "ctp_3_5",
+        "path": "ctp_3_5.json",
+        "origin": [
+          384,
+          640
+        ],
+        "buildings": 5,
+        "bytes": 7168,
+        "gzipBytes": 2634,
+        "sha256": "6a292d90e54b2b86f96fdbd1c52c0fe0c91972cb25548b6f6bef6703c9ad962d"
+      },
+      {
+        "id": "ctp_3_6",
+        "path": "ctp_3_6.json",
+        "origin": [
+          384,
+          768
+        ],
+        "buildings": 8,
+        "bytes": 8346,
+        "gzipBytes": 2881,
+        "sha256": "994ae63ad42b6e0d327e16f1819089cf25752d9fa2c8863aadc9ef65b3bbb8fc"
+      },
+      {
+        "id": "ctp_3_7",
+        "path": "ctp_3_7.json",
+        "origin": [
+          384,
+          896
+        ],
+        "buildings": 1,
+        "bytes": 6012,
+        "gzipBytes": 954,
+        "sha256": "d23c5764f15d87e3e1c4473b8a75eea867ad00c11f80a030cc639729e5336bd2"
+      },
+      {
+        "id": "ctp_4_2",
+        "path": "ctp_4_2.json",
+        "origin": [
+          512,
+          256
+        ],
+        "buildings": 0,
+        "bytes": 5850,
+        "gzipBytes": 338,
+        "sha256": "8124455c24fd640b8415ecf551e1a89f168e7faf6fa73eec0bae94e69b3dea69"
+      },
+      {
+        "id": "ctp_4_3",
+        "path": "ctp_4_3.json",
+        "origin": [
+          512,
+          384
+        ],
+        "buildings": 0,
+        "bytes": 5850,
+        "gzipBytes": 349,
+        "sha256": "12b32ea55c531ed215f4e54fffcb6a7bd9256d5219265aac772d6383fcd387f1"
+      },
+      {
+        "id": "ctp_4_4",
+        "path": "ctp_4_4.json",
+        "origin": [
+          512,
+          512
+        ],
+        "buildings": 0,
+        "bytes": 5709,
+        "gzipBytes": 663,
+        "sha256": "288269a5d15abadac11029734bdb65c4fb2ea51aa2e59b234ad081dc73f2dc46"
+      },
+      {
+        "id": "ctp_4_5",
+        "path": "ctp_4_5.json",
+        "origin": [
+          512,
+          640
+        ],
+        "buildings": 1,
+        "bytes": 6865,
+        "gzipBytes": 1928,
+        "sha256": "f142eded4b108d3cafc8c8290232ba8d09b7b22bc01a918ddef9ee35c7d356d6"
+      },
+      {
+        "id": "ctp_4_6",
+        "path": "ctp_4_6.json",
+        "origin": [
+          512,
+          768
+        ],
+        "buildings": 2,
+        "bytes": 5798,
+        "gzipBytes": 1724,
+        "sha256": "b1bc67fd96ef5d81cc9ccfe77109454a7bb4229fe92cd01c8d8b596c1bd95417"
+      },
+      {
+        "id": "ctp_4_7",
+        "path": "ctp_4_7.json",
+        "origin": [
+          512,
+          896
+        ],
+        "buildings": 3,
+        "bytes": 7027,
+        "gzipBytes": 1176,
+        "sha256": "7377032918476a1f118f7c8d1db20d3762f13d51f9bfc11bbd216076f932de76"
+      }
+    ],
+    "totals": {
+      "chunks": 48,
+      "buildings": 59,
+      "lidarHeights": 59,
+      "bytes": 286177,
+      "gzipBytes": 77012,
+      "lod0Triangles": 2258,
+      "lod2Triangles": 590
+    }
+  }
+}
