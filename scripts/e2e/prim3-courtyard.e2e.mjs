@@ -23,9 +23,11 @@ catch (e) { check('rules', 'rules.test.cjs passes', false, String(e.stdout || e.
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 async function open(vp, path) {
   const ctx = await browser.newContext({ viewport: vp, serviceWorkers: 'block', hasTouch: vp.width < 1000 });
-  await ctx.addInitScript(() => { try { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); } catch (e) {} });
+  /* the games are the house owner's (owner, 2026-11-03): a session, and GET /v1/status answering 200, open js/owner-only.mjs */
+  await ctx.addInitScript(() => { try { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'e2e-owner', expires_at: Math.floor(Date.now() / 1000) + 3600 })); } catch (e) {} });
   await ctx.route('**/*', async (route) => {
     const u = new URL(route.request().url());
+    if (u.href.startsWith('https://api.mccluster.org/v1/status')) return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"ok":true}' });
     if (u.origin !== BASE) return route.abort();
     const f = resolve(ROOT, decodeURIComponent(u.pathname).slice(1));
     if (!f.startsWith(ROOT + sep)) return route.abort();

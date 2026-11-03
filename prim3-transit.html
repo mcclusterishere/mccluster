@@ -8,6 +8,8 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0a0e12">
   <meta name="color-scheme" content="dark">
+  <!-- the shared bottom bar's styles (every page carrying js/tabbar.js links it); the level's own styles follow and win -->
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <style>
     :root{
       --bg:#080b0e;--panel:rgba(14,19,24,.88);--panel2:rgba(20,27,33,.92);--line:rgba(190,205,215,.16);--line2:rgba(190,205,215,.28);
@@ -22,8 +24,9 @@
     html,body{margin:0;background:var(--bg);color:var(--ink)}
     body{font:var(--font);min-height:100svh;letter-spacing:.02em}
     button{font:inherit;color:inherit}
-    .tx{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));max-width:1500px;margin:0 auto}
+    .tx{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(112px + env(safe-area-inset-bottom));max-width:1500px;margin:0 auto}
     h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+    .owner-gate h1{position:static;width:auto;height:auto;overflow:visible;clip:auto}
     /* top bar */
     .tx-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,var(--panel2),var(--panel))}
     .tx-logo{width:40px;height:40px;object-fit:contain}
@@ -166,6 +169,14 @@
   </style>
 </head>
 <body>
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); the level,
+       its rules and any mission load only after that yes (owner, 2026-11-03: "keep it on my private account"). -->
+  <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="txTpl" data-owner-load="js/prim3-tactics/transit.mjs">
+    <img class="owner-gate__mark" src="assets/img/prim3-logo.png" alt="PRIM3" width="40" height="40">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="txTpl">
   <main class="tx" id="tx">
     <h1>PRIM3 · Transit / Relay</h1>
     <header class="tx-top">
@@ -217,7 +228,9 @@
       <p>Coordinates: X grows east, Y grows north; the relay is near (−1, 1). Rules are the Prim3 canonical engine; this page only draws them. Progress is saved in this browser.</p>
     </details>
   </main>
+  </template>
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
-  <script type="module" src="js/prim3-tactics/transit.mjs"></script>
+  <script type="module" src="js/owner-only.mjs?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>
 </html>

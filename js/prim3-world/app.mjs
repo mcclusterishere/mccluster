@@ -1,9 +1,9 @@
 /* PRIM3 World (owner, 2026-11-02: "a world builder … its own tab … only admin can see as its own app … click on a
    region and find a mission in every single region … from America to every other country that there's a character in").
 
-   Order matters here: the owner check runs first and nothing else happens until the server says yes. Before that the
-   page holds only the "Owner only" panel; the mission file is not even requested. A no, at any later recheck, tears the
-   app down to that panel again. Missions open in the one playable level, prim3-transit.html?mission=<id>&new=1.
+   This module only loads after the shared owner gate (js/owner-only.mjs) has heard yes from the server; before that the
+   page holds only the "Owner only" panel and neither this module nor the mission file is requested. A no at any later
+   recheck reloads the page back to that panel. Missions open in the one playable level, prim3-transit.html?mission=<id>&new=1.
 
    No pins (owner, 2026-11-02): countries with a stationed agent are highlighted, and a tap on a country opens its card,
    which names the PRIM3 agent on assignment there from the one US HQ (the CAST-NATIONS character and role), marks the three featured
@@ -12,41 +12,17 @@
 
    The World builder (Edit) keeps drafts in this browser (localStorage) and exports or imports the JSON file. There is no
    database table and no Worker route for it: cloud storage will reuse the Level Forge backend later. */
-import { checkOwner } from './owner-gate.mjs';
 import { onCountryCard, emitCountryCard } from './hooks.mjs';
 import { DATA_URL, DRAFT_KEY, REGIONS, castOf, missionsIn, findMission, deployHref, validate, missionErrors, blankMission, levelsOf, DIFFICULTIES, parseImport, exportText, uniqueId } from './missions.mjs';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const gate = $('pwGate'), gateMsg = $('pwGateMsg'), appEl = $('pwApp');
+const appEl = $('pwApp');
 
 let open = false, shipped = null, doc = null, usingDraft = false, dirty = false;
 let ui = { mode: 'globe', region: 'All', sel: null, country: null, countryName: null, placing: false };
-let globe = null, globeLoading = null, checking = null;
-
-/* ---------- the gate ---------- */
-const GATE_TEXT = {
-  'signed-out': 'Sign in with the house owner’s account to open this app.',
-  'not-owner': 'This app is for the house owner.',
-  'unavailable': 'The owner check could not reach the server. Try again shortly.'
-};
-function lock(reason) {
-  open = false;
-  if (globe) { try { globe.destroy(); } catch (e) {} globe = null; }
-  globeLoading = null; shipped = null; doc = null;
-  appEl.innerHTML = ''; appEl.hidden = true; gate.hidden = false;
-  gateMsg.innerHTML = esc(GATE_TEXT[reason] || GATE_TEXT['not-owner']) + (reason === 'signed-out' ? ' <a href="account.html">Sign in</a>' : '');
-  document.body.dataset.pwGate = 'closed';
-}
-function verify() {
-  if (checking) return checking;
-  checking = checkOwner().then((r) => { checking = null; if (r.owner) { if (!open) unlock(); } else lock(r.reason); return r.owner; });
-  return checking;
-}
-addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && open) verify(); });
-addEventListener('storage', (e) => { if (e.key === 'mccdb_session') verify(); });
-addEventListener('mcc:auth-changed', () => verify());
+let globe = null, globeLoading = null;
 
 /* ---------- data ---------- */
 function readDraft() { try { const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); return d && Array.isArray(d.missions) ? d : null; } catch (e) { return null; } }
@@ -55,7 +31,7 @@ function dropDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} 
 
 async function unlock() {
   open = true;
-  gate.hidden = true; appEl.hidden = false; document.body.dataset.pwGate = 'open';
+  appEl.hidden = false; document.body.dataset.pwGate = 'open';
   appEl.innerHTML = '<p class="pw-empty">Loading missions…</p>';
   try {
     const r = await fetch(DATA_URL, { cache: 'no-cache' });
@@ -75,7 +51,7 @@ function build() {
   appEl.innerHTML = `
     <header class="pw-top">
       <img class="pw-lockup" src="assets/img/prim3-lockup-512.png" alt="PRIM3" width="62" height="44">
-      <span class="pw-title"><h1>World <span class="pw-fiction" title="PRIM3 is a story: its characters, missions and portrayals of McCluster Corp and Equity Uprise are fiction">Fiction</span></h1><small>Side operations by region · draft · owner</small></span>
+      <span class="pw-title"><h1>World</h1><small>Side operations by region · draft · owner</small></span>
       <nav class="pw-modes" aria-label="View">
         <button type="button" class="pw-seg" data-mode="globe">Globe</button>
         <button type="button" class="pw-seg" data-mode="list">List</button>
@@ -202,7 +178,7 @@ function renderSide() {
   const side = $('pwSide'); if (!side) return;
   if (ui.mode === 'edit') return renderEditor();
   if (!ui.country) {
-    side.innerHTML = `<section class="pw-card"><p class="pw-eye">${castOf(doc).length} agents · ${doc.missions.length} missions · draft</p><h2>Pick a country</h2><p class="pw-empty">Every highlighted country has a PRIM3 agent on assignment there from HQ in the United States, with a side operation drawn from their story. The three amber-edged countries hold the featured characters.</p><p class="pw-note">Fiction. PRIM3 is a story; its characters, missions and portrayals of McCluster Corp and Equity Uprise are fiction, not the real companies' operations. Side operations are drafts: they create no episodes and change no relationships.</p><div class="pw-row">${doc.missions.filter((x) => x.featured).map((x) => `<button type="button" class="pw-btn pw-btn--go" data-open="${esc(x.id)}">${esc(x.character.name)} · ${esc(x.country.name)}</button>`).join('')}</div></section>`;
+    side.innerHTML = `<section class="pw-card"><p class="pw-eye">${castOf(doc).length} agents · ${doc.missions.length} missions · draft</p><h2>Pick a country</h2><p class="pw-empty">Every highlighted country has a PRIM3 agent on assignment there from HQ in the United States, with a side operation drawn from their story. The three amber-edged countries hold the featured characters.</p><p class="pw-note">Side operations are drafts: they create no episodes and change no relationships.</p><div class="pw-row">${doc.missions.filter((x) => x.featured).map((x) => `<button type="button" class="pw-btn pw-btn--go" data-open="${esc(x.id)}">${esc(x.character.name)} · ${esc(x.country.name)}</button>`).join('')}</div></section>`;
     return;
   }
   const code = ui.country;
@@ -232,7 +208,7 @@ function missionBlock(m) {
     <p class="pw-sub">Side operation${m.featured ? ' · <b>featured character</b>' : ''}</p>
     <h3>${esc(m.title)}</h3>
     <p class="pw-who">${esc(m.character.name)}<small>${esc(m.character.role)}${m.place ? ' · ' + esc(m.place) : ''}</small></p>
-    <ul class="pw-meta"><li class="is-draft">Fiction · side operation · draft</li>${m.needs_owner_review ? '<li class="is-draft">Needs owner review</li>' : ''}<li>${esc(m.region)}</li><li>${esc(m.difficulty)}</li><li>${esc(lvl ? lvl.title : m.level)}</li>${m.episode ? `<li>${esc(m.episode)}</li>` : ''}</ul>
+    <ul class="pw-meta"><li class="is-draft">Side operation · draft</li>${m.needs_owner_review ? '<li class="is-draft">Needs owner review</li>' : ''}<li>${esc(m.region)}</li><li>${esc(m.difficulty)}</li><li>${esc(lvl ? lvl.title : m.level)}</li>${m.episode ? `<li>${esc(m.episode)}</li>` : ''}</ul>
     <p class="pw-brief">${esc(m.briefing)}</p>
     ${m.deployment === 'wildcard-call' ? `<p class="pw-obj pw-wild"><small>Wildcard call</small>${esc(m.character.name)} calls this in from HQ; he is not a deployable unit. The squad (Entry, Recon, Technical) deploys.</p>` : ''}
     <p class="pw-obj"><small>Objective</small>${esc(m.objective)}</p>
@@ -373,8 +349,8 @@ function discardDraft() {
 addEventListener('beforeunload', (e) => { if (open && dirty) { e.preventDefault(); e.returnValue = ''; } });
 
 /* test hooks, like window.__tx on the transit page: read-only views of the state */
-window.__pw = { get open() { return open; }, get ui() { return ui; }, get globe() { return globe; }, get doc() { return doc; }, select, setMode, setRegion, verify, openCountry: (code) => onCountry(code, null, null) };
+window.__pw = { get open() { return open; }, get ui() { return ui; }, get globe() { return globe; }, get doc() { return doc; }, select, setMode, setRegion, openCountry: (code) => onCountry(code, null, null) };
 /* for scripts that are not modules; modules import onCountryCard from js/prim3-world/hooks.mjs */
 window.PRIM3_WORLD = Object.freeze({ onCountryCard });
 
-verify();
+unlock();

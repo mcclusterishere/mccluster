@@ -7,11 +7,16 @@
   <meta name="description" content="A playable PRIM3 tactical courtyard. Select an operative, preview a route and move the team to the relay.">
   <title>PRIM3 — Courtyard</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="vendor/playcanvas-2.23.1.min.js" defer></script>
-  <script src="rules.js" defer></script>
-  <script src="game.js" defer></script>
+  <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); PlayCanvas,
+       the rules and the game load only after that yes (owner, 2026-11-03: "keep it on my private account"). -->
+  <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="gameTpl" data-owner-load="vendor/playcanvas-2.23.1.min.js rules.js game.js">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="gameTpl">
   <main class="game" id="prim3-game">
     <header class="topbar">
       <div class="page-title">PRIM3 / Courtyard</div>
@@ -77,5 +82,7 @@
     <footer class="build-footer"><span>Turn-based movement · procedural character models</span><button id="how-to" aria-expanded="false">Controls</button></footer>
     <div class="controls-note" id="controls-note" hidden>Tap a character or squad card, then a cyan tile. Confirm the move to spend 1 AP. Drag the board to rotate; use Top for an overhead view. Move Aya next to the relay, then Connect. End turn restores the squad’s AP. Arrow keys and Enter work while the board is focused.</div>
   </main>
+  </template>
+  <script type="module" src="../../js/owner-only.mjs"></script>
 </body>
 </html>
