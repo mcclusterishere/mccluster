@@ -61,6 +61,8 @@ export const HOOKS = {
   afterThreat: (s) => M.afterThreat(PKG, s),
   outcome: (s) => M.outcome(s),
   debrief: (s) => M.debrief(PKG, s),
+  // hands the mission's real camera outages to the building screens (MISSION mode only)
+  screenFaults: (s) => M.screenFaults(s),
   objective(s) {
     const eu = s.battlefield.eu, live = M.liveCameras(PKG, s).length;
     if (SIDE === 'defend') return { title: eu.verified ? 'Picture verified' : live ? 'Verify the picture' : 'Restore a camera link', line: `Cameras live ${live}/4 · ${eu.verified ? 'verified' : 'not verified'} · clock ${s.mission.clock}`, progress: `${live}/4` };
