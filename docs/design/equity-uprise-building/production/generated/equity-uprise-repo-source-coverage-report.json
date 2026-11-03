@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 545,
+  "candidate_count": 554,
   "capability_source_count": 102,
-  "support_only_count": 443,
-  "checks_total": 2080,
-  "checks_passed": 2080,
+  "support_only_count": 452,
+  "checks_total": 2116,
+  "checks_passed": 2116,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -76,6 +76,7 @@
     "catalogue.html",
     "cohort-profile.html",
     "control.html",
+    "core/data/fictional-city/district.v1.json",
     "create.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
@@ -191,6 +192,8 @@
     "docs/design/equity-uprise-development/verify_federal_training_catalog.py",
     "docs/design/redesign-before-after.html",
     "docs/equity-uprise-platform.md",
+    "docs/fictional-city/LORE.md",
+    "docs/fictional-city/README.md",
     "docs/gated-audio.md",
     "docs/here-inventory.md",
     "docs/here-url-migration-map.csv",
@@ -213,6 +216,8 @@
     "docs/stocksy-shot-list.md",
     "docs/the-mission-fund.md",
     "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
+    "docs/universe/UNIVERSE-SCHEMA.md",
+    "docs/universe/universe-registry.json",
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
     "engineering/mccluster-platform.html",
@@ -250,6 +255,9 @@
     "js/eu-api.js",
     "js/fan-intake.js",
     "js/fbi.js",
+    "js/fictional-city/app.mjs",
+    "js/fictional-city/scene.mjs",
+    "js/fictional-city/spatial.mjs",
     "js/gateway.js",
     "js/hire-offers.js",
     "js/insights.js",
@@ -310,6 +318,7 @@
     "production.html",
     "receipt.html",
     "resume-it-support.html",
+    "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/server-lab.e2e.mjs",
     "scripts/e2e/world-screen.e2e.mjs",
@@ -559,7 +568,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "545 entries"
+      "detail": "554 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -10853,6 +10862,186 @@
     },
     {
       "name": "js/control-room/nav.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/data/fictional-city/district.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/LORE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/LORE.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/LORE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/LORE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/README.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/README.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/README.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/universe/UNIVERSE-SCHEMA.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/universe-registry.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/universe/universe-registry.json classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "docs/universe/universe-registry.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/universe/universe-registry.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/app.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/app.mjs classified",
+      "passed": true,
+      "detail": "classification='navigation_support'"
+    },
+    {
+      "name": "js/fictional-city/app.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fictional-city/app.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/scene.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/scene.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/fictional-city/scene.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fictional-city/scene.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/fictional-city/spatial.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fictional-city.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

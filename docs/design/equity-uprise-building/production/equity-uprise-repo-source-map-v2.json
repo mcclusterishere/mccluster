@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 527,
+  "candidate_count": 549,
   "capability_source_count": 102,
-  "support_only_count": 425,
+  "support_only_count": 447,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4049,6 +4049,69 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "The one Control Room navigation definition; names the existing Equity Uprise operations views (missions, fellows, funding) as a System section entry and adds no distinct program capability."
+    },
+    {
+      "path": "core/data/fictional-city/district.v1.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical fictional-city content and portal data includes a simplified exterior derived from the existing Equity Uprise footprint and roof datum; it does not define building geometry, floor programs or a new building capability."
+    },
+    {
+      "path": "docs/fictional-city/LORE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fictional district lore distinguishes the Equity Uprise island landmark from the existing headquarters and preserves its authority boundary; narrative support only, with no building program or capability ownership."
+    },
+    {
+      "path": "docs/fictional-city/README.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only city implementation contract records the existing HQ destination, simplified exterior, source authority and validation limits; integration documentation rather than a building program capability."
+    },
+    {
+      "path": "docs/universe/UNIVERSE-SCHEMA.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Cross-universe registry, state and portal contract includes the fictional-city connection to the existing Equity Uprise HQ; it governs navigation boundaries and adds no headquarters capability or geometry authority."
+    },
+    {
+      "path": "docs/universe/universe-registry.json",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Universe registration declares the fictional-city entrance and existing Equity Uprise HQ destination as data-only navigation; no building capability, floor program or access policy is created."
+    },
+    {
+      "path": "js/fictional-city/app.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only fictional-city host opens the existing Equity Uprise HQ route through declared portal data; city dialogs and navigation do not implement or change headquarters capabilities."
+    },
+    {
+      "path": "js/fictional-city/scene.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Original fictional-city renderer displays a simplified Core V2 dimension-derived HQ exterior and portal on its island; the scene is a derived game projection, not building geometry or program authority."
+    },
+    {
+      "path": "js/fictional-city/spatial.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fictional-city walking and collision support treats the supplied HQ footprint as an exterior blocker; it does not change canonical building circulation, interior geometry or capabilities."
+    },
+    {
+      "path": "scripts/e2e/fictional-city.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser checks for the owner-only fictional city verify the existing Equity Uprise portal and game integration; verification support only, with no building program or geometry implementation."
     },
     {
       "path": "equity-uprise-server-lab-3d.html",
