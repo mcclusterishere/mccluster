@@ -15,7 +15,7 @@
     "underground_operations": {
       "type": "ui_state",
       "target": "underground_operations",
-      "access": "role-and-safety-authorized",
+      "access": "open-normal-floor",
       "known_floor": true,
       "sandbox_environment": true,
       "live_real_world_control": false

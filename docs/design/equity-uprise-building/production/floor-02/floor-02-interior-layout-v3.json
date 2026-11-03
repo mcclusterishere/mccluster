@@ -1,0 +1,606 @@
+{
+ "schema_version": "3.0.0",
+ "layout_id": "equity-uprise-f2-interior-layout-v3",
+ "status": "canonical-v3-interior-furnishing-layout",
+ "not_for_construction": true,
+ "level": 2,
+ "level_id": "F2",
+ "floor_identity": "Public Forum + Cohort Community",
+ "finished_floor_elevation_ft": 13.5,
+ "catalog_ref": "../interiors/furniture-catalog-v3.json",
+ "design_intent": "A civic room first: one round forum table under the halo fixture, a small listening circle by the west glass, and the cohort community working in the daylight along the south and east glazing. Lightest density in the building; warm cognac leather and oak.",
+ "authority_refs": [
+  "../../FLOOR-02-SCHEMATIC-PLAN-BASIS.md",
+  "../../FLOOR-02-PROGRAM-RECONCILIATION.md",
+  "floor-02-object-inventory.json",
+  "../workplace-occupancy-v1.json"
+ ],
+ "rules": [
+  "Furniture lives inside this floor's approved program zones; no function moves between levels.",
+  "Positions are feet in the shared Core V2 frame (origin SW exterior corner, X east, Y north).",
+  "Items that realize an existing object-inventory id keep that id; new pieces carry new stable ids and a program/occupancy source.",
+  "No logo, mark or lettering is furniture; identity walls carry runtime brand slots only."
+ ],
+ "palette": {
+  "upholstery": [
+   128,
+   84,
+   52,
+   255
+  ],
+  "upholstery_alt": [
+   146,
+   100,
+   64,
+   255
+  ],
+  "leather": [
+   118,
+   74,
+   44,
+   255
+  ],
+  "wood": [
+   150,
+   116,
+   80,
+   255
+  ],
+  "wood_dark": [
+   96,
+   70,
+   48,
+   255
+  ],
+  "rug": [
+   92,
+   74,
+   60,
+   255
+  ]
+ },
+ "zones": [
+  {
+   "id": "forum",
+   "label": "Public Forum",
+   "bounds_ft": {
+    "x1": 24,
+    "y1": 28,
+    "x2": 48,
+    "y2": 50
+   },
+   "purpose": "single 12 ft table, max eight seats",
+   "source": "FLOOR-02-SCHEMATIC-PLAN-BASIS.md \u00a75"
+  },
+  {
+   "id": "listening-lounge",
+   "label": "Conversation / Listening Lounge",
+   "bounds_ft": {
+    "x1": 2,
+    "y1": 14,
+    "x2": 18,
+    "y2": 30
+   },
+   "purpose": "4-6 seats: compact bench, two lounge chairs, one small table",
+   "source": "FLOOR-02-SCHEMATIC-PLAN-BASIS.md \u00a76"
+  },
+  {
+   "id": "cohort-workshop",
+   "label": "Cohort Workshop",
+   "bounds_ft": {
+    "x1": 20,
+    "y1": 3,
+    "x2": 47,
+    "y2": 25
+   },
+   "purpose": "facilitated cohort sessions; tables reconfigure",
+   "source": "workplace-occupancy-v1.json F2 archetypes: Instructor, Workshop Facilitator, Cohort-01..03"
+  },
+  {
+   "id": "cohort-desks",
+   "label": "Cohort Lead / Operator Desks",
+   "bounds_ft": {
+    "x1": 54,
+    "y1": 1,
+    "x2": 71.25,
+    "y2": 26
+   },
+   "purpose": "named recurring desks",
+   "source": "workplace-occupancy-v1.json F2 people"
+  }
+ ],
+ "keep_clear": [
+  {
+   "id": "north-support-corridor",
+   "bounds_ft": {
+    "x1": 18,
+    "y1": 54,
+    "x2": 60,
+    "y2": 60
+   },
+   "reason": "6 ft north public/support corridor (schematic basis 9)"
+  },
+  {
+   "id": "west-service-approach",
+   "bounds_ft": {
+    "x1": 0,
+    "y1": 54,
+    "x2": 18,
+    "y2": 60
+   },
+   "reason": "freight lift / Stair B service approach (schematic basis 9)"
+  },
+  {
+   "id": "passenger-elevator-approach",
+   "bounds_ft": {
+    "x1": 48,
+    "y1": 32,
+    "x2": 54,
+    "y2": 46
+   },
+   "reason": "clear landing in front of the west-facing passenger elevator door (X54 / Y37-41)"
+  }
+ ],
+ "items": [
+  {
+   "id": "F2-FORUM-TABLE-01",
+   "type": "table_round",
+   "x": 36,
+   "y": 39,
+   "rot_deg": 0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-TABLE-01",
+   "size": {
+    "w_in": 144,
+    "d_in": 144
+   },
+   "finish": {
+    "top": "wood"
+   }
+  },
+  {
+   "id": "F2-FORUM-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 36.0,
+   "y": 31.45,
+   "rot_deg": -0.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-01",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-FORUM-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 41.339,
+   "y": 33.661,
+   "rot_deg": 45.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-02",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-FORUM-CHAIR-03",
+   "type": "armchair_lounge",
+   "x": 43.55,
+   "y": 39.0,
+   "rot_deg": 90.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-03",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-FORUM-CHAIR-04",
+   "type": "armchair_lounge",
+   "x": 41.339,
+   "y": 44.339,
+   "rot_deg": 135.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-04",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-FORUM-CHAIR-05",
+   "type": "armchair_lounge",
+   "x": 36.0,
+   "y": 46.55,
+   "rot_deg": -180.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-05",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-FORUM-CHAIR-06",
+   "type": "armchair_lounge",
+   "x": 30.661,
+   "y": 44.339,
+   "rot_deg": -135.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-06",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-FORUM-CHAIR-07",
+   "type": "armchair_lounge",
+   "x": 28.45,
+   "y": 39.0,
+   "rot_deg": -90.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-07",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-FORUM-CHAIR-08",
+   "type": "armchair_lounge",
+   "x": 30.661,
+   "y": 33.661,
+   "rot_deg": -45.0,
+   "zone": "forum",
+   "realizes_inventory_id": "F2-FORUM-CHAIR-08",
+   "placement_override_reason": "seat pulled to the table edge (r 7.55 ft) with real lounge-chair depth so every seat faces the table"
+  },
+  {
+   "id": "F2-LOUNGE-SOFA-01",
+   "type": "bench_gallery",
+   "x": 4.3,
+   "y": 22,
+   "rot_deg": -90,
+   "zone": "listening-lounge",
+   "realizes_inventory_id": "F2-LOUNGE-SOFA-01",
+   "size": {
+    "w_in": 72,
+    "d_in": 22
+   },
+   "placement_override_reason": "compact upholstered bench along the west glass, facing into the circle (basis: 'one compact sofa/bench')"
+  },
+  {
+   "id": "F2-LOUNGE-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 12.6,
+   "y": 17.8,
+   "rot_deg": 43.6,
+   "zone": "listening-lounge",
+   "realizes_inventory_id": "F2-LOUNGE-CHAIR-01"
+  },
+  {
+   "id": "F2-LOUNGE-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 12.6,
+   "y": 26.2,
+   "rot_deg": 136.4,
+   "zone": "listening-lounge",
+   "realizes_inventory_id": "F2-LOUNGE-CHAIR-02"
+  },
+  {
+   "id": "F2-LOUNGE-TABLE-01",
+   "type": "coffee_table_round",
+   "x": 8.6,
+   "y": 22,
+   "rot_deg": 0,
+   "zone": "listening-lounge",
+   "realizes_inventory_id": "F2-LOUNGE-TABLE-01",
+   "size": {
+    "w_in": 40,
+    "d_in": 40
+   },
+   "placement_override_reason": "table moved to the circle centre so all seats reach it"
+  },
+  {
+   "id": "F2-LOUNGE-POUF-01",
+   "type": "pouf",
+   "x": 8.6,
+   "y": 26.9,
+   "rot_deg": 0,
+   "zone": "listening-lounge",
+   "source": "FLOOR-02-SCHEMATIC-PLAN-BASIS.md \u00a76 (4-6 seats)"
+  },
+  {
+   "id": "F2-LOUNGE-RUG-01",
+   "type": "rug",
+   "x": 9.6,
+   "y": 22,
+   "rot_deg": 0,
+   "zone": "listening-lounge",
+   "realizes_inventory_id": "F2-LOUNGE-RUG-01",
+   "size": {
+    "w_in": 168,
+    "d_in": 156
+   }
+  },
+  {
+   "id": "F2-LOUNGE-PLANT-01",
+   "type": "planter_tall",
+   "x": 3.0,
+   "y": 28.4,
+   "rot_deg": 0,
+   "zone": "listening-lounge",
+   "realizes_inventory_id": "F2-LOUNGE-PLANT-01"
+  },
+  {
+   "id": "F2-LOUNGE-PLANT-02",
+   "type": "planter_floor",
+   "x": 16.4,
+   "y": 15.4,
+   "rot_deg": 0,
+   "zone": "listening-lounge",
+   "realizes_inventory_id": "F2-LOUNGE-PLANT-02"
+  },
+  {
+   "id": "F2-WORKSHOP-TABLE-A",
+   "type": "table_rect",
+   "x": 28.5,
+   "y": 12.5,
+   "rot_deg": 90,
+   "zone": "cohort-workshop",
+   "size": {
+    "w_in": 96,
+    "d_in": 36
+   },
+   "finish": {
+    "top": "wood"
+   },
+   "source": "workplace-occupancy-v1.json F2 Workshop Facilitator"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-A1",
+   "type": "side_chair_wood",
+   "x": 25.75,
+   "y": 9.9,
+   "rot_deg": -90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-A2",
+   "type": "side_chair_wood",
+   "x": 25.75,
+   "y": 12.5,
+   "rot_deg": -90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-A3",
+   "type": "side_chair_wood",
+   "x": 25.75,
+   "y": 15.1,
+   "rot_deg": -90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-A4",
+   "type": "side_chair_wood",
+   "x": 31.25,
+   "y": 9.9,
+   "rot_deg": 90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-A5",
+   "type": "side_chair_wood",
+   "x": 31.25,
+   "y": 12.5,
+   "rot_deg": 90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-A6",
+   "type": "side_chair_wood",
+   "x": 31.25,
+   "y": 15.1,
+   "rot_deg": 90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-TABLE-B",
+   "type": "table_rect",
+   "x": 40.5,
+   "y": 12.5,
+   "rot_deg": 90,
+   "zone": "cohort-workshop",
+   "size": {
+    "w_in": 96,
+    "d_in": 36
+   },
+   "finish": {
+    "top": "wood"
+   },
+   "source": "workplace-occupancy-v1.json F2 Workshop Facilitator"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-B1",
+   "type": "side_chair_wood",
+   "x": 37.75,
+   "y": 9.9,
+   "rot_deg": -90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-B2",
+   "type": "side_chair_wood",
+   "x": 37.75,
+   "y": 12.5,
+   "rot_deg": -90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-B3",
+   "type": "side_chair_wood",
+   "x": 37.75,
+   "y": 15.1,
+   "rot_deg": -90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-B4",
+   "type": "side_chair_wood",
+   "x": 43.25,
+   "y": 9.9,
+   "rot_deg": 90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-B5",
+   "type": "side_chair_wood",
+   "x": 43.25,
+   "y": 12.5,
+   "rot_deg": 90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-CHAIR-B6",
+   "type": "side_chair_wood",
+   "x": 43.25,
+   "y": 15.1,
+   "rot_deg": 90.0,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-LECTERN-01",
+   "type": "lectern",
+   "x": 34.5,
+   "y": 21.6,
+   "rot_deg": -180.0,
+   "zone": "cohort-workshop",
+   "source": "workplace-occupancy-v1.json F2 Instructor"
+  },
+  {
+   "id": "F2-WORKSHOP-BOARD-01",
+   "type": "whiteboard_mobile",
+   "x": 22.2,
+   "y": 21.5,
+   "rot_deg": -146.45,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-WORKSHOP-BOARD-02",
+   "type": "pinboard_mobile",
+   "x": 46.6,
+   "y": 21.5,
+   "rot_deg": 147.3,
+   "zone": "cohort-workshop"
+  },
+  {
+   "id": "F2-DESK-CHIOMA-OKEKE",
+   "type": "desk_dual",
+   "x": 68.6,
+   "y": 8.0,
+   "rot_deg": 90,
+   "zone": "cohort-desks",
+   "occupant": "Chioma Okeke",
+   "source": "production/workplace-occupancy-v1.json F2",
+   "purpose": "Cohort-03 Lead Desk"
+  },
+  {
+   "id": "F2-DESK-CHIOMA-OKEKE-CHAIR",
+   "type": "task_chair",
+   "x": 65.6,
+   "y": 8.0,
+   "rot_deg": -90,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-DESK-THANDIWE-NKOSI",
+   "type": "desk_dual",
+   "x": 68.6,
+   "y": 14.0,
+   "rot_deg": 90,
+   "zone": "cohort-desks",
+   "occupant": "Thandiwe Nkosi",
+   "source": "production/workplace-occupancy-v1.json F2",
+   "purpose": "Cohort-03 Lead Peer Desk"
+  },
+  {
+   "id": "F2-DESK-THANDIWE-NKOSI-CHAIR",
+   "type": "task_chair",
+   "x": 65.6,
+   "y": 14.0,
+   "rot_deg": -90,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-DESK-SARI-WULANDARI",
+   "type": "desk_operator",
+   "x": 68.6,
+   "y": 20.4,
+   "rot_deg": 90,
+   "zone": "cohort-desks",
+   "occupant": "Sari Wulandari",
+   "source": "production/workplace-occupancy-v1.json F2",
+   "purpose": "Telecom / Cohort Operator Desk"
+  },
+  {
+   "id": "F2-DESK-SARI-WULANDARI-CHAIR",
+   "type": "task_chair",
+   "x": 65.6,
+   "y": 20.4,
+   "rot_deg": -90,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-COHORT-HUDDLE-TABLE-01",
+   "type": "high_table",
+   "x": 58.5,
+   "y": 10.5,
+   "rot_deg": 90,
+   "zone": "cohort-desks",
+   "size": {
+    "w_in": 60,
+    "d_in": 30
+   }
+  },
+  {
+   "id": "F2-COHORT-HUDDLE-STOOL-1",
+   "type": "stool_bar",
+   "x": 56.6,
+   "y": 9.2,
+   "rot_deg": -90.0,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-COHORT-HUDDLE-STOOL-2",
+   "type": "stool_bar",
+   "x": 56.6,
+   "y": 11.8,
+   "rot_deg": -90.0,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-COHORT-HUDDLE-STOOL-3",
+   "type": "stool_bar",
+   "x": 60.4,
+   "y": 9.2,
+   "rot_deg": 90.0,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-COHORT-HUDDLE-STOOL-4",
+   "type": "stool_bar",
+   "x": 60.4,
+   "y": 11.8,
+   "rot_deg": 90.0,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-COHORT-FILE-01",
+   "type": "lateral_file",
+   "x": 69.6,
+   "y": 2.4,
+   "rot_deg": 90,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-COHORT-PLANT-01",
+   "type": "planter_floor",
+   "x": 57.0,
+   "y": 3.0,
+   "rot_deg": 0,
+   "zone": "cohort-desks"
+  },
+  {
+   "id": "F2-COHORT-PLANT-02",
+   "type": "planter_tall",
+   "x": 46.8,
+   "y": 3.0,
+   "rot_deg": 0,
+   "zone": "cohort-workshop"
+  }
+ ]
+}

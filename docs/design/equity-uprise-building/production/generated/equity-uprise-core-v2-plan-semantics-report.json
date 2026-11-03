@@ -10,7 +10,7 @@
     {
       "name": "L0 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/basement-b1/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/basement-b1/README.md"
     },
     {
       "name": "L0 README authoritative title",
@@ -35,17 +35,17 @@
     {
       "name": "L0 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.svg"
     },
     {
       "name": "L0 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L0 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png"
     },
     {
       "name": "L0 SVG authoritative title",
@@ -220,12 +220,12 @@
     {
       "name": "L0 PNG signature",
       "passed": true,
-      "detail": "bytes=79338"
+      "detail": "bytes=80224"
     },
     {
       "name": "L0 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=79338"
+      "detail": "bytes=80224"
     },
     {
       "name": "L0 active plan triplet only",
@@ -235,7 +235,7 @@
     {
       "name": "L1 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01/README.md"
     },
     {
       "name": "L1 README authoritative title",
@@ -260,17 +260,17 @@
     {
       "name": "L1 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg"
     },
     {
       "name": "L1 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L1 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
     },
     {
       "name": "L1 SVG authoritative title",
@@ -500,7 +500,7 @@
     {
       "name": "L2 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-02/README.md"
     },
     {
       "name": "L2 README authoritative title",
@@ -525,17 +525,17 @@
     {
       "name": "L2 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg"
     },
     {
       "name": "L2 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L2 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
     },
     {
       "name": "L2 SVG authoritative title",
@@ -725,7 +725,7 @@
     {
       "name": "L3 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-03/README.md"
     },
     {
       "name": "L3 README authoritative title",
@@ -750,17 +750,17 @@
     {
       "name": "L3 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg"
     },
     {
       "name": "L3 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L3 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png"
     },
     {
       "name": "L3 SVG authoritative title",
@@ -980,7 +980,7 @@
     {
       "name": "L4 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-04/README.md"
     },
     {
       "name": "L4 README authoritative title",
@@ -1005,17 +1005,17 @@
     {
       "name": "L4 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg"
     },
     {
       "name": "L4 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L4 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png"
     },
     {
       "name": "L4 SVG authoritative title",
@@ -1235,7 +1235,7 @@
     {
       "name": "L5 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-05/README.md"
     },
     {
       "name": "L5 README authoritative title",
@@ -1260,17 +1260,17 @@
     {
       "name": "L5 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg"
     },
     {
       "name": "L5 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L5 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png"
     },
     {
       "name": "L5 SVG authoritative title",
@@ -1490,7 +1490,7 @@
     {
       "name": "L6 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-06/README.md"
     },
     {
       "name": "L6 README authoritative title",
@@ -1515,17 +1515,17 @@
     {
       "name": "L6 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg"
     },
     {
       "name": "L6 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L6 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png"
     },
     {
       "name": "L6 SVG authoritative title",
@@ -1755,7 +1755,7 @@
     {
       "name": "L7 README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-07/README.md"
     },
     {
       "name": "L7 README authoritative title",
@@ -1780,17 +1780,17 @@
     {
       "name": "L7 .svg exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg"
     },
     {
       "name": "L7 .dxf exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf"
     },
     {
       "name": "L7 .png exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png"
     },
     {
       "name": "L7 SVG authoritative title",
@@ -2180,32 +2180,32 @@
     {
       "name": "Floor 1 site plan README exists",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01-site/README.md"
     },
     {
       "name": "Floor 1 site artifact exists: equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg"
     },
     {
       "name": "Floor 1 site artifact exists: equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf"
     },
     {
       "name": "Floor 1 site artifact exists: equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png"
     },
     {
       "name": "Floor 1 site artifact exists: floor-01-site-plan-generation-manifest.json",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/floor-01-site-plan-generation-manifest.json"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01-site/floor-01-site-plan-generation-manifest.json"
     },
     {
       "name": "Floor 1 site README generated-only",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/README.md"
+      "detail": "/tmp/claude-0/-home-user/c395bc97-2ee2-5c19-801a-0f54fb5a8e29/scratchpad/bldg-v3/docs/design/equity-uprise-building/references/floor-01-site/README.md"
     },
     {
       "name": "Floor 1 site SVG label AED",
@@ -2286,16 +2286,6 @@
       "name": "Floor 1 site DXF label FIRST AID KIT",
       "passed": true,
       "detail": "FIRST AID KIT"
-    },
-    {
-      "name": "Floor 1 site SVG label NORTH / REAR EXIT DISCHARGE WALK",
-      "passed": true,
-      "detail": "NORTH / REAR EXIT DISCHARGE WALK"
-    },
-    {
-      "name": "Floor 1 site DXF label NORTH / REAR EXIT DISCHARGE WALK",
-      "passed": true,
-      "detail": "NORTH / REAR EXIT DISCHARGE WALK"
     },
     {
       "name": "Floor 1 site SVG label PUBLIC / ACCESSIBLE APPROACH",
@@ -2398,6 +2388,16 @@
       "detail": "STAIR B EXIT DISCHARGE"
     },
     {
+      "name": "Floor 1 site SVG label WEST EXIT DISCHARGE WALK (STAIR B)",
+      "passed": true,
+      "detail": "WEST EXIT DISCHARGE WALK (STAIR B)"
+    },
+    {
+      "name": "Floor 1 site DXF label WEST EXIT DISCHARGE WALK (STAIR B)",
+      "passed": true,
+      "detail": "WEST EXIT DISCHARGE WALK (STAIR B)"
+    },
+    {
       "name": "Floor 1 site SVG label YOU ARE HERE / EGRESS MAP",
       "passed": true,
       "detail": "YOU ARE HERE / EGRESS MAP"
@@ -2420,12 +2420,12 @@
     {
       "name": "Floor 1 site PNG signature",
       "passed": true,
-      "detail": "bytes=68918"
+      "detail": "bytes=67797"
     },
     {
       "name": "Floor 1 site PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=68918"
+      "detail": "bytes=67797"
     },
     {
       "name": "Floor 1 site active plan triplet only",
@@ -2445,7 +2445,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=134942"
+      "detail": "bytes=134894"
     }
   ]
 }
