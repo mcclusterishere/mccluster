@@ -103,13 +103,13 @@ Baseline: main `d4361152` (before), this branch with lore PR #720 merged (after)
 
 | Scope | Result |
 | --- | --- |
-| Root JavaScript suite | see PR body (all pass, 3 existing skips) |
+| Root JavaScript suite | 1,554 passed, 0 failed, 3 existing skips |
 | Places contract, lore binding, chunks, save v2, tactical frame, #711 mapping, reserved area | `fictional-city-places.test.mjs` 16 tests |
 | B1 traversal on the HQ level (street → Stair B → B1 → Stair A → Floor 1) | `fictional-city-hq-b1.test.mjs` 2 tests |
 | B1 mission outages → building screens MISSION session | `equity-uprise-mission-screens.test.mjs` 2 tests |
 | Publication (places, chunk index, every chunk; #717 checks kept) | `fictional-city-publication.test.mjs` passes |
 | Browser walkthrough | 74 checks passed (`scripts/e2e/fictional-city.e2e.mjs`) |
-| Building context audit / repo sources / program coverage | PASS / 2,290 of 2,290 / 466 of 466 |
+| Building context audit / repo sources / program coverage | PASS / 2,294 of 2,294 / 466 of 466 |
 
 The browser walkthrough adds: a real v1 save migrated intact; all eight original businesses entered and left; all
 27 established people opened; insufficient credits refused at a counter; the garage globe kiosk; the footbridge

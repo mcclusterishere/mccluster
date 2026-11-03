@@ -32,8 +32,8 @@ public entrance faces the footbridge; the island doorway still opens `prim3-tran
 Frames stay distinct (city metres Y-up, HQ GLBs metres Z-up, HQ adapter 12 ft cells, tactics 3.54 m tiles). No
 building source, package or program changed. New checks: an ordinary operative walks street → Stair B → B1 → Stair A
 → Floor 1 on the real resolver with no role or unlock; the B1 mission's live camera outages now reach the screens'
-MISSION session (`HOOKS.screenFaults`), never WORKPLACE. Six support-only sources were added to the source map
-(598 sources, 2,290/2,290 checks). The #714 server lab is not integrated into the stacked HQ; its MDF location conflict
+MISSION session (`HOOKS.screenFaults`), never WORKPLACE. Seven support-only sources were added to the source map
+(599 sources, 2,294/2,294 checks). The #714 server lab is not integrated into the stacked HQ; its MDF location conflict
 recorded below is unchanged.
 
 ## Repo-source coverage — fictional-city integration, 2026-11-03

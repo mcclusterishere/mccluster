@@ -4177,6 +4177,13 @@
       "rationale": "Owner-only city implementation contract records the existing HQ destination, simplified exterior, source authority and validation limits; integration documentation rather than a building program capability."
     },
     {
+      "path": "docs/fictional-city/VERIFICATION.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City verification record cites the HQ doorway, B1 traversal and building verifier results as evidence; verification documentation only, no building program, geometry or capability."
+    },
+    {
       "path": "docs/universe/UNIVERSE-SCHEMA.md",
       "classification": "governance_support",
       "capability_ids": [],

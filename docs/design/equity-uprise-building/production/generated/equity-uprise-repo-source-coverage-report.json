@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 598,
+  "candidate_count": 599,
   "capability_source_count": 104,
-  "support_only_count": 494,
-  "checks_total": 2290,
-  "checks_passed": 2290,
+  "support_only_count": 495,
+  "checks_total": 2294,
+  "checks_passed": 2294,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -196,6 +196,7 @@
     "docs/fictional-city/EXPANSION.md",
     "docs/fictional-city/LORE.md",
     "docs/fictional-city/README.md",
+    "docs/fictional-city/VERIFICATION.md",
     "docs/gated-audio.md",
     "docs/here-inventory.md",
     "docs/here-url-migration-map.csv",
@@ -612,7 +613,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "598 entries"
+      "detail": "599 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -11266,6 +11267,26 @@
     },
     {
       "name": "docs/fictional-city/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/VERIFICATION.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/fictional-city/VERIFICATION.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/fictional-city/VERIFICATION.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/fictional-city/VERIFICATION.md support rationale present",
       "passed": true,
       "detail": ""
     },
