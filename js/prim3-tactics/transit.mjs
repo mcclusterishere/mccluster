@@ -72,7 +72,16 @@ function fresh() { const seed = Number(PARAMS.get('seed')) || (Date.now() % 1e9)
 function load() {
   try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return s && s.v === 1 && s.state && Array.isArray(s.state.units) ? s.state : null; } catch (e) { return null; }
 }
-function save() { try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60) })); } catch (e) {} }
+function save() { try { localStorage.setItem(SAVE, JSON.stringify({ v: 1, at: Date.now(), state, log: log.slice(-60) })); } catch (e) {} syncScreens(); }
+// A level whose mission drives the building's sandbox (B1) mirrors its live outages into the screens' MISSION
+// session, so a camera the game cut shows no signal on the NOC/camera screens; WORKPLACE/TRAINING never see it.
+let screensState = null, lastScreenFaults = '';
+function syncScreens() {
+  if (!HOOKS || !HOOKS.screenFaults || !state) return;
+  const faults = HOOKS.screenFaults(state), key = JSON.stringify(faults);
+  if (key === lastScreenFaults) return; lastScreenFaults = key;
+  (screensState ||= import('../eu-screens/state.mjs')).then((m) => m.setMissionFaults(faults, { presetId: LEVEL.LEVEL_ID })).catch(() => {});
+}
 let state = (PARAMS.get('new') === '1' ? null : load()) || fresh();
 let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE) || 'null'); return (s && s.log) || []; } catch (e) { return []; } })();
 let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null, objOpen: false, briefed: false };
