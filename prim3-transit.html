@@ -14,6 +14,9 @@
       --ink:#e6edf1;--dim:rgba(230,237,241,.66);--squad:#2fe0f0;--squad-soft:rgba(47,224,240,.16);--threat:#ff3b3b;--amber:#ffb547;--amber-ink:#1b1206;--ok:#7be38a;
       --r:10px;--font:600 15px/1.25 "Rajdhani","Barlow Condensed",system-ui,-apple-system,"Segoe UI",sans-serif
     }
+    :root[data-look="day"]{--bg:#e9edef;--panel:rgba(250,251,251,.94);--panel2:rgba(241,244,245,.96);--line:rgba(20,30,36,.14);--line2:rgba(20,30,36,.26);--ink:#16202a;--dim:rgba(22,32,42,.62);--squad:#0fa9ba;--squad-soft:rgba(15,169,186,.18);--threat:#d81f2a;--amber:#d98a0a;--amber-ink:#1b1206}
+    :root[data-look="day"] .tx-stage{background:#cfdfe8}
+    :root[data-look="day"] .b3-ruler{background:rgba(250,251,251,.92);border-color:rgba(15,169,186,.55);color:#16202a}
     :root[data-look="studio"]{--bg:#d9dcde;--panel:rgba(244,245,246,.92);--panel2:rgba(236,238,239,.95);--line:rgba(20,26,30,.16);--line2:rgba(20,26,30,.3);--ink:#14191c;--dim:rgba(20,25,28,.64);--squad:#ff2a3a;--squad-soft:rgba(255,42,58,.14);--threat:#3d8bff;--amber:#2a3136;--amber-ink:#f4f5f6}
     *{box-sizing:border-box}
     html,body{margin:0;background:var(--bg);color:var(--ink)}
@@ -169,7 +172,7 @@
         <button type="button" class="ibtn" id="txSettings" aria-label="Settings" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></span>
     </header>
     <section class="tx-set" id="txSet" aria-label="Settings" hidden>
-      <div class="set-row"><span class="sh-eye">Look</span><div class="seg" id="setLook"><button type="button" data-look="field">Field (realistic)</button><button type="button" data-look="studio">Studio (grayscale)</button></div></div>
+      <div class="set-row"><span class="sh-eye">Look</span><div class="seg" id="setLook"><button type="button" data-look="day">Day</button><button type="button" data-look="field">Night (rain)</button><button type="button" data-look="studio">Studio (grayscale)</button></div></div>
       <div class="set-row"><span class="sh-eye">Graphics</span><div class="seg" id="setGfx"><button type="button" data-gfx="auto">Auto</button><button type="button" data-gfx="high">High</button><button type="button" data-gfx="mid">Balanced</button><button type="button" data-gfx="low">Battery</button></div></div>
       <div class="set-row"><span class="sh-eye">Mission</span><div class="seg"><button type="button" id="setRestart">Restart mission</button><a class="seg-a" href="prim3-tactics-preview.html">Main menu</a></div></div>
       <div class="set-row"><span class="sh-eye">Mission log</span><ol class="tx-log" id="txLog"></ol></div>

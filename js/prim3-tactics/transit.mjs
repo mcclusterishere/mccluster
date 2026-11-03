@@ -39,8 +39,10 @@ function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, at
 let state = (PARAMS.get('new') === '1' ? null : load()) || fresh();
 let log = (() => { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return (s && s.log) || []; } catch (e) { return []; } })();
 let ui = { sel: 'T1', mode: null, preview: null, busy: false, mapOpen: false, setOpen: false, ended: null };
-let look = (() => { try { return localStorage.getItem(LOOK_KEY) === 'studio' ? 'studio' : 'field'; } catch (e) { return 'field'; } })();
-if (PARAMS.get('look') === 'studio' || PARAMS.get('look') === 'field') look = PARAMS.get('look');
+// Day is the default (owner, 2026-11-02); Night ('field') and Studio stay selectable
+const LOOKS = ['day', 'field', 'studio'];
+let look = (() => { try { const v = localStorage.getItem(LOOK_KEY); return LOOKS.includes(v) ? v : 'day'; } catch (e) { return 'day'; } })();
+if (LOOKS.includes(PARAMS.get('look'))) look = PARAMS.get('look');
 const GRID_KEY = 'prim3.tactics.grid';
 let gridOn = (() => { try { return localStorage.getItem(GRID_KEY) !== 'off'; } catch (e) { return true; } })();
 let gfx = (() => { try { return localStorage.getItem(GFX_KEY) || 'auto'; } catch (e) { return 'auto'; } })();
@@ -196,8 +198,9 @@ function renderSheet() {
 const mini = $('txMini'), mctx = mini.getContext('2d');
 function drawMap() {
   if ($('txMap').hidden && matchMedia('(max-width: 1099px)').matches) return;
-  const S = mini.width / W, g = mctx, studio = look === 'studio';
-  const col = studio ? { bg: '#eef0f1', ground: '#e2e5e7', water: '#c9d3d8', bld: '#a9b0b5', roof: '#8e979d', prop: '#bcc2c6', grid: 'rgba(0,0,0,.08)', ink: '#14191c', sq: '#ff2a3a', th: '#3d8bff', amber: '#2a3136' }
+  const S = mini.width / W, g = mctx, studio = look === 'studio', day = look === 'day';
+  const col = day ? { bg: '#f4f6f6', ground: '#e7ebec', water: '#4fb3b8', bld: '#c2c8cb', roof: '#d3d8da', prop: '#cfd4d6', grid: 'rgba(20,40,50,.10)', ink: '#16202a', sq: '#0fa9ba', th: '#d81f2a', amber: '#d98a0a' }
+    : studio ? { bg: '#eef0f1', ground: '#e2e5e7', water: '#c9d3d8', bld: '#a9b0b5', roof: '#8e979d', prop: '#bcc2c6', grid: 'rgba(0,0,0,.08)', ink: '#14191c', sq: '#ff2a3a', th: '#3d8bff', amber: '#2a3136' }
     : { bg: '#0b1116', ground: '#121a20', water: '#0e3a44', bld: '#3a444c', roof: '#4b565f', prop: '#2a333a', grid: 'rgba(120,220,235,.08)', ink: '#cfe3ea', sq: '#2fe0f0', th: '#ff3b3b', amber: '#ffb547' };
   g.fillStyle = col.bg; g.fillRect(0, 0, mini.width, mini.height);
   g.fillStyle = col.ground; g.fillRect(0, 0, W * S, H * S);
@@ -220,7 +223,7 @@ function drawMap() {
   for (const u of view().units) {
     if (u.dead || extracted(u)) continue;
     const ally = u.faction === 'PLAYER', x = u.x * S, y = u.y * S;
-    g.strokeStyle = ally ? col.sq : col.th; g.lineWidth = 2; g.fillStyle = studio ? 'rgba(255,255,255,.9)' : 'rgba(5,8,11,.85)';
+    g.strokeStyle = ally ? col.sq : col.th; g.lineWidth = 2; g.fillStyle = studio || day ? 'rgba(255,255,255,.92)' : 'rgba(5,8,11,.85)';
     g.fillRect(x - S * 0.9, y - S * 0.9, S * 2.8, S * 2.8); g.strokeRect(x - S * 0.9, y - S * 0.9, S * 2.8, S * 2.8);
     g.fillStyle = ally ? col.sq : col.th; g.font = `800 ${S * 1.7}px system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(ally ? u.role : u.id, x + S * 0.5, y + S * 0.5); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
