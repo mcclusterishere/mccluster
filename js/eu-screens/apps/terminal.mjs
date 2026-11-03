@@ -4,6 +4,7 @@
 
 import { bootApp } from "../app-shell.mjs";
 import { createShell } from "../shell.mjs";
+import { loadComputerWorkbench } from "../sandbox-session.mjs";
 import { MAN } from "../man.mjs";
 import { getPref, setPref } from "../state.mjs";
 
@@ -106,11 +107,22 @@ async function render(ctx) {
   const { view, esc } = ctx;
   if (!ctx._ss) {
     ctx._ss = await ctx.session();
-    shell = createShell({ ss: ctx._ss, screen: ctx.screen, clock: () => Date.now() });
+    const machine = ctx._ss.hardware?.byId.get(ctx.screen?.network_asset_id);
+    const consoleScreen = machine && !machine.server ? { ...ctx.screen, app: { ...ctx.screen.app, variant: "workstation" } } : ctx.screen;
+    const baseShell = createShell({ ss: ctx._ss, screen: consoleScreen, clock: () => Date.now() });
+    shell = ctx._ss.wrapEquipmentShell ? ctx._ss.wrapEquipmentShell(baseShell, consoleScreen) : baseShell;
     globalThis.__euShell = shell; /* for the e2e suite and the curious */
     scrollKey = "scroll:" + (ctx.screen ? ctx.screen.screen_id : "noc") + ":" + ctx.mode;
   }
   const ss = ctx._ss;
+  const equipmentGeneration = ctx._equipmentGeneration = (ctx._equipmentGeneration || 0) + 1;
+  if (ctx._equipmentDispose) { ctx._equipmentDispose(); ctx._equipmentDispose = null; }
+  if (ctx.tab === "hardware") {
+    const mod = await loadComputerWorkbench();
+    if (ctx.tab !== "hardware" || ctx._equipmentGeneration !== equipmentGeneration) return;
+    ctx._equipmentDispose = mod.mountWorkbench(ctx, ss);
+    return;
+  }
   view.innerHTML = "";
   view.onclick = null;
   if (ctx.tab === "console") {
@@ -157,7 +169,7 @@ async function render(ctx) {
     const lv = ctx.screen ? (ctx.screen.floor === "L7" ? "F6" : ctx.screen.floor) : "B1";
     const pick = (ids) => ids.filter(Boolean).map((id) => net.deviceStatus(id));
     const groups = [
-      ["This floor", pick([`${lv}-NET-ACCESS-SW-01`, `${lv}-ICT-RACK-UPS-01`, ...net.ofType("wireless_ap").filter((x) => net.levelOf(x) === lv), ...net.ofType("camera").filter((x) => net.levelOf(x) === lv), ...net.ofType("workstation").filter((x) => net.levelOf(x) === lv).slice(0, 4)])],
+      ["This floor", pick([`${lv}-NET-ACCESS-SW-01`, `${lv}-ICT-RACK-UPS-01`, ...net.ofType("wireless_ap").filter((x) => net.levelOf(x) === lv), ...net.ofType("camera").filter((x) => net.levelOf(x) === lv), ...net.ofType("workstation").filter((x) => net.levelOf(x) === lv)])],
       ["Core and servers (B1)", pick(["B1-NET-CORE-SW-01-I001", "B1-NET-CORE-SW-01-I002", "B1-NET-FW-01-I001", "B1-SRV-HYP-01-I001", "B1-SRV-HYP-01-I002", "B1-SRV-HYP-01-I003", "B1-SRV-NAS-01", "B1-SEC-NVR-01"])],
       ["Services", pick(["LOGIC-SVC-DNS", "LOGIC-SVC-DHCP", "LOGIC-SVC-NTP", "LOGIC-SVC-VMS", "LOGIC-SVC-AAA-RADIUS"])],
     ];
@@ -180,5 +192,5 @@ async function render(ctx) {
 
 bootApp({
   id: "terminal", title: "Terminal", defaultTab: "console", render,
-  tabs: [{ id: "console", label: "Console", icon: "term" }, { id: "ticket", label: "Ticket", icon: "ticket" }, { id: "devices", label: "Devices", icon: "devices" }, { id: "manual", label: "Manual", icon: "book" }],
+  tabs: [{ id: "console", label: "Console", icon: "term" }, { id: "ticket", label: "Ticket", icon: "ticket" }, { id: "devices", label: "Devices", icon: "devices" }, { id: "manual", label: "Manual", icon: "book" }, { id: "hardware", label: "Hardware", icon: "devices" }],
 });

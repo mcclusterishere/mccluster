@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 353,
+  "tracked_count": 361,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -86,6 +86,7 @@
       "docs/design/equity-uprise-building/BUILDING-SERVICES-IMPLEMENTATION-PLAN.md",
       "docs/design/equity-uprise-building/BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md",
       "docs/design/equity-uprise-building/BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md",
+      "docs/design/equity-uprise-building/COMPUTER-HARDWARE-WORKBENCH.md",
       "docs/design/equity-uprise-building/DIGITAL-PHYSICAL-ASSET-REGISTRY-SPEC.md",
       "docs/design/equity-uprise-building/ELECTRONICS-IT-INFRASTRUCTURE-SPEC.md",
       "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
@@ -125,6 +126,7 @@
       "docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-07-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md",
+      "docs/design/equity-uprise-building/HIGGSFIELD-EQUIPMENT-EXPLAINERS.md",
       "docs/design/equity-uprise-building/INTERIOR-ENVELOPE-AND-GEOMETRY-UPGRADE-SPEC.md",
       "docs/design/equity-uprise-building/LAB-RUNTIME-SPEC.md",
       "docs/design/equity-uprise-building/PLAYABLE-BUILDING-SYSTEMS-AUDIT-2026-09-24.md",
@@ -353,10 +355,14 @@
       "docs/design/equity-uprise-building/production/interiors/furniture-catalog-v3.json",
       "docs/design/equity-uprise-building/production/lab-runtime/assessment-policy-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/cisa-itot-scenario-pack-v1.json",
+      "docs/design/equity-uprise-building/production/lab-runtime/computer-hardware-profile-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/difficulty-progression-policy-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/distributed-building-scenario-pack-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-assessment-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-building-ops-runtime.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-computer-hardware.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-computer-view.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-computer-workbench.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-difficulty-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-electronics-sandbox.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-guided-scenarios.mjs",
@@ -371,6 +377,8 @@
       "docs/design/equity-uprise-building/production/lab-runtime/server-lab-scenario-pack-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_assessment_runtime_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_cisa_itot_scenarios_v1.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/verify_computer_hardware_v1.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/verify_computer_workbench_browser.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_difficulty_progression_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_electronics_sandbox_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs",

@@ -16,7 +16,9 @@
         { "id": "prim3-transit", "kind": "link", "title": "Transit / Relay", "tag": "Tactics", "href": "prim3-transit.html", "blurb": "Lead Entry, Recon and Technical across a canal compound. Turn-based, on the canonical PRIM3 rules." },
         { "id": "prim3-equity-uprise-hq", "kind": "link", "title": "Equity Uprise HQ", "tag": "Drill", "href": "prim3-transit.html?level=equity-uprise-hq", "blurb": "An emergency exercise in the Equity Uprise building, laid out from its own floor plans: enter, report in, open the stair exit, assemble." },
         { "id": "prim3-course", "kind": "link", "title": "The PRIM3 course", "tag": "Course", "href": "prim3.html", "blurb": "Principles, Rhythm, Immersion, Missions: the full course, with progress on your M Account." },
-        { "id": "prim3-world", "kind": "link", "title": "PRIM3 World", "tag": "Owner", "href": "prim3-world.html", "gate": "owner", "blurb": "The mission globe and World builder. Shown to the house owner only; the page checks again itself." }
+        { "id": "prim3-world", "kind": "link", "title": "PRIM3 World", "tag": "Owner", "href": "prim3-world.html", "gate": "owner", "blurb": "The mission globe and World builder. Shown to the house owner only; the page checks again itself." },
+        {"id": "equity-uprise-server-lab", "kind": "link", "title": "Server Lab", "tag": "Hardware", "href": "equity-uprise-server-lab-3d.html", "gate": "owner", "blurb": "Identify, rebuild, boot and troubleshoot the B1 server training copy."},
+        {"id": "building-computers", "kind": "link", "title": "Computer Workbench", "tag": "Equipment", "href": "screens/terminal.html?tab=hardware&mode=TRAINING", "gate": "owner", "blurb": "Inspect registered workstations and servers, trace their actual modeled cables and operate the hardware simulation."}
       ]
     },
     {

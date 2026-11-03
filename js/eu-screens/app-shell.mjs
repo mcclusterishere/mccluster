@@ -68,6 +68,15 @@ export async function bootApp(app) {
     <main class="main" id="main">${modeNote ? `<p class="notice">${esc(modeNote)}</p>` : ""}<div data-view></div></main>
     ${app.tabs && app.tabs.length > 1 ? `<nav class="bottomnav" aria-label="${esc(app.title)}">${app.tabs.map((t) => `<button type="button" data-tab="${t.id}">${icon(t.icon)}<span>${esc(t.label)}</span></button>`).join("")}</nav>` : ""}
     <div class="boot" data-boot hidden><div class="box"><b>MOUNTING SANDBOX CLONE</b><div data-boot-log>digital twin · asset registry · connection graph</div><div class="bar"><i></i></div></div></div>`;
+  if (screen?.network_asset_id && registry.screens.some(s => s.network_asset_id === screen.network_asset_id && (s.kind === "workstation_monitor" || s.kind === "bmc_console"))) {
+    const equipment = document.createElement("a");
+    const target = new URL(siteRoot() + "screens/terminal.html", globalThis.location.href);
+    for (const key of ["screen", "mode", "return"]) { const value = new URLSearchParams(globalThis.location.search).get(key); if (value) target.searchParams.set(key, value); }
+    target.searchParams.set("tab", "hardware");
+    equipment.href = target.href; equipment.className = "btn"; equipment.textContent = "Inspect computer";
+    equipment.addEventListener("click", e => { e.preventDefault(); globalThis.location.replace(target.href); });
+    root.querySelector(".main").prepend(equipment);
+  }
   root.querySelector("[data-back]").addEventListener("click", () => backToBuilding(enter));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && e.altKey) backToBuilding(enter); });
 
@@ -101,7 +110,19 @@ export async function bootApp(app) {
     const u = new URL(globalThis.location.href);
     if (ctx.tab && ctx.tab !== (app.defaultTab || tabs[0].id)) u.searchParams.set("tab", ctx.tab); else u.searchParams.delete("tab");
     globalThis.history.replaceState(globalThis.history.state, "", u.pathname + u.search + u.hash);
-    try { await app.render(ctx); } catch (e) { console.error(e); view.innerHTML = `<p class="notice err">${esc(e.message || e)}</p>`; }
+    try {
+      if (app.id !== "terminal" && screen?.network_asset_id && screen.kind === "workstation_monitor") {
+        const ss = await session();
+        if (ss.hardware?.byId.has(screen.network_asset_id)) {
+          const machine = ss.hardware.status(screen.network_asset_id);
+          if (!machine.desktop_ready || !machine.display) {
+            view.innerHTML = `<p class="notice">Computer unavailable: ${esc(machine.reason || machine.stage)}. Use Inspect computer to check the physical equipment and complete its boot.</p>`;
+            return;
+          }
+        }
+      }
+      await app.render(ctx);
+    } catch (e) { console.error(e); view.innerHTML = `<p class="notice err">${esc(e.message || e)}</p>`; }
   }
   ctx.setTab = setTab;
   for (const b of root.querySelectorAll("[data-tab]")) b.addEventListener("click", () => setTab(b.dataset.tab));

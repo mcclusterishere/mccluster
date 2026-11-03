@@ -34,3 +34,17 @@ jobs:
         env:
           PW_MODULE: /tmp/smoke-qa/node_modules/playwright
         run: node scripts/smoke.mjs
+
+      - name: Verify physical computer workbench (sealed fixtures)
+        env:
+          PW_MODULE: /tmp/smoke-qa/node_modules/playwright
+          EQUIPMENT_PROOF_DIR: /tmp/equipment-proof
+          EQUIPMENT_BROWSER_QA: '1'
+        run: node --test scripts/test/server-lab.test.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: equipment-workbench-proof
+          path: /tmp/equipment-proof
+          retention-days: 7
+          if-no-files-found: warn

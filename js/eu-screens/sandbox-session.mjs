@@ -18,6 +18,11 @@ export const DATA_BASE = "/equity-uprise-preview";
 const STAMP = "__STAMP__";
 const v = (url) => url + (STAMP.startsWith("__") ? "" : "?v=" + STAMP);
 
+// Keep runtime asset URLs and cache stamps in one loader; apps do not own publication paths.
+export function loadComputerWorkbench(base = DATA_BASE) {
+  return import(v(base + "/lab-runtime/equity-uprise-computer-workbench.mjs"));
+}
+
 let datasetPromise = null;
 export function loadDatasets(base = DATA_BASE) {
   if (!datasetPromise) {
@@ -27,7 +32,10 @@ export function loadDatasets(base = DATA_BASE) {
       get("/equity-uprise-asset-registry-v1.json"),
       get("/equity-uprise-electronics-connections-v1.json"),
       get("/equity-uprise-electronics-manifest-v1.json"),
-    ]).then(([mod, registry, connections, manifest]) => ({ ElectronicsSandbox: mod.ElectronicsSandbox, registry, connections, manifest }))
+      import(v(base + "/lab-runtime/equity-uprise-computer-hardware.mjs")),
+      get("/lab-runtime/computer-hardware-profile-v1.json"),
+      get("/electronics/server-lab-hardware-v1.json"),
+    ]).then(([mod, registry, connections, manifest, hardware, profile, serverHardware]) => ({ ElectronicsSandbox: mod.ElectronicsSandbox, registry, connections, manifest, hardware, profile, serverHardware }))
       .catch((e) => { datasetPromise = null; throw e; });
   }
   return datasetPromise;
@@ -41,7 +49,7 @@ export function loadScreenRegistry(url = new URL("../../screens/data/screen-regi
 
 export class ScreenSandbox {
   /* sandbox: an ElectronicsSandbox; screens: the screen registry; storage: { load(mode), save(mode, s) } */
-  constructor({ sandbox, screens, mode, storage = { load: loadSession, save: saveSession } }) {
+  constructor({ sandbox, screens, mode, storage = { load: loadSession, save: saveSession }, hardwareFactory = null }) {
     this.sandbox = sandbox;
     this.screens = screens;
     this.mode = normalizeMode(mode);
@@ -49,6 +57,8 @@ export class ScreenSandbox {
     this.session = storage.load(this.mode) || blankSession(this.mode);
     this.errors = [];
     this.replay();
+    this.hardware = hardwareFactory ? hardwareFactory(this) : null;
+    this.wrapEquipmentShell = null;
   }
 
   get readOnly() { return this.mode === "WORKPLACE"; }
@@ -102,8 +112,8 @@ export class ScreenSandbox {
       (f.targets || []).some((a) => ids.has(a)) || (f.connections || []).some((c) => cons.has(c)) || (level && f.level === level)));
   }
 
-  state(assetId) { return this.sandbox.assetStates.get(assetId) || null; }
-  connState(id) { return this.sandbox.connectionStates.get(id) || null; }
+  state(assetId) { const base = this.sandbox.assetStates.get(assetId) || null; return this.hardware ? this.hardware.effectiveAsset(assetId, base) : base; }
+  connState(id) { const base = this.sandbox.connectionStates.get(id) || null; return this.hardware ? this.hardware.effectiveConnection(id, base) : base; }
   has(assetId, faultId) { const s = this.state(assetId); return Boolean(s && s.active_fault_ids.includes(faultId)); }
   available(assetId) { const s = this.state(assetId); return !s || s.availability !== "unavailable"; }
   summary() { return this.sandbox.summary(); }
@@ -138,6 +148,7 @@ export class ScreenSandbox {
 
   /* back to the canonical baseline for this mode; tickets stay closed until `lab start` */
   reset() {
+    delete this.session.hardware;
     this.session.faults = [];
     if (this.session.seeded && typeof this.session.seeded === "object") for (const k of Object.keys(this.session.seeded)) this.session.seeded[k] = "cleared";
     this.replay();
@@ -173,5 +184,10 @@ function levelOfSelectors(selectors, sandbox) {
 export async function openScreenSession(mode, { base = DATA_BASE } = {}) {
   const [data, screens] = await Promise.all([loadDatasets(base), loadScreenRegistry()]);
   const sandbox = new data.ElectronicsSandbox({ registry: data.registry, connections: data.connections, manifest: data.manifest });
-  return new ScreenSandbox({ sandbox, screens, mode });
+  const catalog = data.hardware.buildComputerCatalog({ ...data, screens });
+  const ss = new ScreenSandbox({ sandbox, screens, mode, hardwareFactory: ss => new data.hardware.ComputerFleet({
+    catalog, sandbox, mode: ss.mode, readSession: () => ss.session, persist: () => ss.persist(),
+  }) });
+  ss.wrapEquipmentShell = (shell, screen) => data.hardware.wrapEquipmentShell(shell, ss, screen);
+  return ss;
 }

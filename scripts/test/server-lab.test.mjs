@@ -71,3 +71,8 @@ test("unbranded hardware: no vendor names or marks in the lab's code or data, no
   for (const src of [app, scene, html, read("docs/design/equity-uprise-building/production/electronics/server-lab-hardware-v1.json")]) assert.doesNotMatch(src, brands);
   assert.doesNotMatch(css + scene, /purple|violet|#(8a2be2|800080|9b59b6|a855f7|7c3aed)/i);
 });
+
+// All registered computers share the existing screen sandbox; exercise the real registry, not a toy fixture.
+await import('../../docs/design/equity-uprise-building/production/lab-runtime/verify_computer_hardware_v1.mjs');
+
+if (process.env.EQUIPMENT_BROWSER_QA === "1") await import("../../docs/design/equity-uprise-building/production/lab-runtime/verify_computer_workbench_browser.mjs");

@@ -4,6 +4,15 @@ The owner authorized this private playable district on November 3, 2026: recover
 eight active businesses, three new adult staff per business, a Whip Equipped garage, and an Equity
 Uprise island. This is a new exploration universe, not a revival of the shelved Uprise World.
 
+The same day's Bridgeport expansion adds `neighborhoods` and `storyArcs` in that one source.
+Read `ROBBERY-1S.md` and `BRIDGEPORT-GEOGRAPHY.md` before changing its story or geography.
+Preserve the original eight commercial businesses, 24 adult staff, three garage characters,
+existing coordinates and save key. Neighborhood story cast and places are separate collections;
+Malik and Kiara retain their source ages and are not inserted into the adult staff roster.
+All 16 selected CT footprint polygons remain present. Building heights, doors, interiors,
+tenant names and the two connecting walks are authored adaptations, not surveyed attributes.
+Retain CT source metadata and visible OpenStreetMap attribution for derived road geometry.
+
 ## Source authority
 
 - Author city fiction once in `core/data/fictional-city/district.v1.json`.
@@ -25,7 +34,13 @@ Uprise island. This is a new exploration universe, not a revival of the shelved 
   are purchased by this experience.
 - Portals are data. Existing target routes enforce their own permissions. Never turn on the archived
   Uprise experience or modify Site 0 geometry to satisfy a city request.
-- All 24 newly authored residents are adults. Humor is in the businesses, interactions, wordplay
+- Schema revision 2 (2026-11-03) adds the wider city's lore beside the v1 arrays: `expansionNeighborhoods`,
+  `parcels`, `expansionBusinesses`, `expansionNpcs`, `families`, `expansionItems`. These records carry
+  parcel IDs and route anchors, never coordinates; the spatial layer binds them. Expansion students
+  are minors (`minor: true`): no sexual content, injury, purchases or bribes involving them. The
+  satire targets posers, the rich school and corrupt institutions, never Black people or public-school
+  kids, and uses no phonetic dialect.
+- All 24 v1 residents are adults. Humor is in the businesses, interactions, wordplay
   and unreliable pitches. Do not substitute a fake racial accent for character writing.
 - Preserve the existing shared navigation and private audience. Static authored fiction is public-safe
   source, not confidential account data; the browser gate does not make static assets secret.
@@ -47,3 +62,9 @@ routes, item prices and state restoration. Exercise keyboard and touch controls,
 dialogue topics, purchases, insufficient funds, story-reader order, owner/non-owner gating, and
 390 px overflow. Report measured render metrics with the test environment; never infer real-device
 frame rates from a software-rendered browser. New actors/shops should preserve the one-source export.
+
+For Bridgeport, run `scripts/test/bridgeport-story.test.mjs` plus city spatial/publication tests.
+Validate old-save migration, ordered scene progression, all story-stop walking routes, footprint
+parity with public source evidence, and exterior-only donation-bin custody. Later scene titles
+and cast outcomes must remain hidden until reached. Do not turn narrative completion into a
+shoe power, money payout, new canonical wearer, or explanation of the pastor's unresolved reveal.
