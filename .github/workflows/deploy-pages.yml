@@ -20,6 +20,11 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    outputs:
+      city_manifest_sha256: ${{ steps.fictional_city.outputs.manifest_sha256 }}
+      city_story_sha256: ${{ steps.fictional_city.outputs.story_sha256 }}
+      city_places_sha256: ${{ steps.fictional_city.outputs.places_sha256 }}
+      city_chunk_index_sha256: ${{ steps.fictional_city.outputs.chunk_index_sha256 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -88,6 +93,7 @@ jobs:
           python docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
+          python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
 
       - name: Verify Equity Uprise Services Step 8 deploy contract
         run: |
@@ -176,6 +182,9 @@ jobs:
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png equity-uprise-preview/floor-01-site-egress.png
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-site-egress.svg
           mkdir -p equity-uprise-preview/lab-runtime equity-uprise-preview/electronics
+          mkdir -p equity-uprise-preview/brand
+          cp docs/design/equity-uprise-building/production/brand/brand-manifest.json equity-uprise-preview/brand/brand-manifest.json
+          cp docs/design/equity-uprise-building/production/brand/equity-uprise-brand-slots.mjs equity-uprise-preview/brand/equity-uprise-brand-slots.mjs
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb
           cp docs/design/equity-uprise-building/production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs equity-uprise-preview/electronics/
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json equity-uprise-preview/equity-uprise-electronics-manifest-v1.json
@@ -203,6 +212,26 @@ jobs:
           cp docs/design/equity-uprise-building/production/lab-runtime/public-service-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/difficulty-progression-policy-v1.json equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/learner-experience-v1.json equity-uprise-preview/lab-runtime/
+          # Server Lab (equity-uprise-server-lab-3d.html): runtime, L4 scenario pack and hardware authority
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-server-lab-runtime.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/server-lab-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/electronics/server-lab-hardware-v1.json equity-uprise-preview/electronics/server-lab-hardware-v1.json
+
+      - name: Publish the fictional city and canonical story reader
+        id: fictional_city
+        run: |
+          set -euo pipefail
+          node tools/publish-fictional-city.mjs
+          # These derived files are ignored in source checkouts but required by the live city.
+          # The geography (places), the chunk index and every streamed chunk are generated alongside them.
+          git add -f -- data/fictional-city/district.v1.json data/fictional-city/whip-story.v1.json \
+            data/fictional-city/places.v1.json data/fictional-city/chunks
+          {
+            printf 'manifest_sha256=%s\n' "$(sha256sum data/fictional-city/district.v1.json | cut -d ' ' -f 1)"
+            printf 'story_sha256=%s\n' "$(sha256sum data/fictional-city/whip-story.v1.json | cut -d ' ' -f 1)"
+            printf 'places_sha256=%s\n' "$(sha256sum data/fictional-city/places.v1.json | cut -d ' ' -f 1)"
+            printf 'chunk_index_sha256=%s\n' "$(sha256sum data/fictional-city/chunks/index.v1.json | cut -d ' ' -f 1)"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Strip the internals out of the published tree
         run: |
@@ -275,6 +304,54 @@ jobs:
             exit 1
           fi
           echo "js/tabbar.js is stamped $stamp"
+
+      - name: Verify the published city manifest and story bytes
+        env:
+          CITY_MANIFEST_SHA256: ${{ needs.publish.outputs.city_manifest_sha256 }}
+          CITY_STORY_SHA256: ${{ needs.publish.outputs.city_story_sha256 }}
+          CITY_PLACES_SHA256: ${{ needs.publish.outputs.city_places_sha256 }}
+          CITY_CHUNK_INDEX_SHA256: ${{ needs.publish.outputs.city_chunk_index_sha256 }}
+        run: |
+          set -euo pipefail
+          stamp="${GITHUB_SHA::12}"
+          city_verify_dir="$(mktemp -d)"
+          trap 'rm -rf "$city_verify_dir"' EXIT
+          verify_city_asset() {
+            local path="$1" expected="$2" status actual
+            if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
+              echo "::error::Missing or invalid expected SHA256 for $path"
+              return 1
+            fi
+            status="$(curl --fail --silent --show-error --location --max-time 30 \
+              --output "$city_verify_dir/body" --write-out '%{http_code}' \
+              "$SITE/$path?verify=$stamp")"
+            if [ "$status" != "200" ]; then
+              echo "::error::$path answered $status, expected 200"
+              return 1
+            fi
+            actual="$(sha256sum "$city_verify_dir/body" | cut -d ' ' -f 1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "::error::$path SHA256 $actual differs from published $expected"
+              return 1
+            fi
+            echo "$path -> HTTP 200, SHA256 $actual"
+          }
+          verify_city_asset data/fictional-city/district.v1.json "$CITY_MANIFEST_SHA256"
+          verify_city_asset data/fictional-city/whip-story.v1.json "$CITY_STORY_SHA256"
+          verify_city_asset data/fictional-city/places.v1.json "$CITY_PLACES_SHA256"
+          verify_city_asset data/fictional-city/chunks/index.v1.json "$CITY_CHUNK_INDEX_SHA256"
+          # The index's own bytes were just verified, so its per-chunk hashes are trusted: every chunk must serve.
+          cp "$city_verify_dir/body" "$city_verify_dir/index.json"
+          chunk_count=0
+          while read -r chunk_file chunk_sha; do
+            verify_city_asset "data/fictional-city/$chunk_file" "$chunk_sha"
+            chunk_count=$((chunk_count + 1))
+          done < <(jq -r '.chunks[] | "\(.file) \(.sha256)"' "$city_verify_dir/index.json")
+          if [ "$chunk_count" -lt 1 ]; then
+            echo "::error::The chunk index lists no chunks"
+            exit 1
+          fi
+          echo "$chunk_count city chunks -> HTTP 200 with matching SHA256"
 
       - name: Private paths answer 404
         run: |

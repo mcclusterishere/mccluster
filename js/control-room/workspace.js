@@ -101,7 +101,7 @@
     });
     observer.observe(get('crSurface'),{childList:true,subtree:true});
     observer.observe(document.body,{attributes:true,attributeFilter:['data-cr-surface']});
-    if (!initialHash || ['#intelligence','#operations','#studio'].includes(initialHash)) go(initialHash?C.resolve(initialHash).hash:'#analytics');
+    if (!initialHash || ['#intelligence','#operations','#studio'].includes(initialHash)) go(initialHash?C.resolve(initialHash).hash:C.defaults.intelligence);
     sync();
   }
   function schedule(){if(queued||!active)return;queued=true;queueMicrotask(()=>{queued=false;sync();});}

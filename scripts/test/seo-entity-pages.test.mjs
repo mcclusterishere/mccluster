@@ -101,7 +101,32 @@ test("operator desks and frame shells are noindex", () => {
 test("one <h1> on each page whose headings this pass settled", () => {
   for (const f of ["album.html", "prim3.html", "prim3-range.html", "action/index.html", "mnet.html"]) {
     const html = read(f).replace(/<script[\s\S]*?<\/script>/g, "");
-    assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, f);
+    /* an owner-only page (owner, 2026-11-03) has two documents in one file: the gate panel, and the owner's page in an
+       inert <template> that replaces the panel on a yes (js/owner-only.mjs). Each has exactly one <h1>. */
+    const tpl = [...html.matchAll(/<template[\s\S]*?<\/template>/g)].map((m) => m[0]);
+    for (const part of [html.replace(/<template[\s\S]*?<\/template>/g, ""), ...tpl]) {
+      assert.equal((part.match(/<h1[\s>]/g) || []).length, 1, f);
+    }
+  }
+});
+
+test("the games and the PRIM3 learning management system are owner only: noindex, gated, out of the sitemap", () => {
+  const pages = ["prim3.html", "prim3-range.html", "game-hub.html", "prim3-world.html", "prim3-transit.html",
+    "prim3-tactics-preview.html", "prim3-courtyard.html", "demos/prim3-courtyard/index.html", "city-arcade.html"];
+  const listed = json("data/seo/sitemap-pages.json").pages.map((p) => p.url);
+  for (const f of pages) {
+    const html = read(f);
+    assert.match(html, NOINDEX, f);
+    assert.match(html, /<section class="[^"]*owner-gate[^"]*"[^>]*data-owner-gate/, `${f}: the gate panel`);
+    assert.match(html, /<script type="module" src="(?:\.\.\/\.\.\/)?js\/owner-only\.mjs(?:\?v=__STAMP__)?"><\/script>/, `${f}: the shared gate`);
+    assert.doesNotMatch(html, /<link rel="canonical"/, `${f}: no canonical on a page search engines are told to skip`);
+    assert.ok(!listed.some((u) => u.endsWith("/" + f)), `${f} is out of the sitemap`);
+    /* nothing the gate protects is a page script: lesson and game scripts are in data-owner-load only */
+    const outside = html.replace(/<template[\s\S]*?<\/template>/g, "");
+    assert.doesNotMatch(outside, /<script[^>]+src="[^"]*(prim3-lessons|prim3\.js|prim3-sync|prim3-tracking|prim3-range|game-hub\/|prim3-tactics\/|prim3-world\/|city-arcade\/|rules\.js|game\.js|playcanvas)/, f);
+  }
+  for (const f of ["matthew-mccluster.html", "mccluster-corp.html", "resume-digital-inclusion.html"]) {
+    assert.doesNotMatch(read(f), /href="prim3(-range)?\.html"|"https:\/\/matthew\.mccluster\.org\/prim3\.html"/, `${f}: no public door to the owner's course`);
   }
 });
 

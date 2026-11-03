@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../../js/control-room-v2.js', import.meta.url), 'utf8');
+const nav = await readFile(new URL('../../js/control-room/nav.js', import.meta.url), 'utf8');
 const voice = await readFile(new URL('../../js/control-room/voice.js', import.meta.url), 'utf8');
 const media = await readFile(new URL('../../js/control-room/media.js', import.meta.url), 'utf8');
 const controlHtml = await readFile(new URL('../../control.html', import.meta.url), 'utf8');
@@ -26,7 +27,10 @@ test('Operator OS commands the signed Core MCP surface, not the legacy task rout
 });
 
 test('Operator OS exposes a command-center system surface', () => {
-  assert.match(source, /SYSTEM_VIEWS = \["command", "overview", "workload", "observability", "resources"\]/);
+  /* System's views are NAV leaves; SYSTEM_VIEWS is derived from them */
+  assert.match(nav, /v\("command", "Command", "system\.command", \["#system:command"/);
+  for (const v of ["overview", "workload", "observability", "resources"]) assert.match(nav, new RegExp('"system\\.' + v + '", \\["#system:' + v + '"'));
+  assert.match(source, /var SYSTEM_VIEWS = rendererViews\("system"\)/);
   assert.match(source, /function renderCommandCenter\(\)/);
   assert.match(source, /Signed Cloudflare → Core MCP/);
   assert.match(source, /same capability bus used by agents/);
@@ -66,7 +70,9 @@ test('resident AI canonical name is McCluster', () => {
 });
 
 test('resident local AI chat is VPS-owned and survives browser loss', () => {
-  assert.match(source, /SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
+  /* the old AI surface is Home → Ask McCluster; #ai still lands there */
+  assert.match(nav, /v\("ask", "Ask McCluster", "home\.ask", \["#ai"/);
+  assert.match(source, /if \(r === "home\.ask"\) return renderAi\(\);/);
   assert.match(source, /ops_ai_threads/);
   assert.match(source, /ops_ai_messages/);
   assert.match(source, /function sendAiMessage\(/);

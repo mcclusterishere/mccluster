@@ -318,6 +318,13 @@
         "workers/mccluster/src/music/router.js"
       ]
     },
+    "music_stem_sets": {
+      "kind": "table",
+      "pending": "20261031190000_music_stem_sets_v1.sql",
+      "callers": [
+        "supabase/functions/music-access/index.ts"
+      ]
+    },
     "network_audio_assign_speaker": {
       "kind": "function",
       "pending": "20261019235000_network_sfu_audio_rooms.sql",
@@ -403,6 +410,27 @@
       "callers": [
         "js/control-room/action-network.js",
         "js/policy-fellowship-desk.js"
+      ]
+    },
+    "prim3_level_mutate": {
+      "kind": "function",
+      "pending": "prim3_level_builder_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/levels.js"
+      ]
+    },
+    "prim3_level_versions": {
+      "kind": "table",
+      "pending": "prim3_level_builder_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/levels.js"
+      ]
+    },
+    "prim3_levels": {
+      "kind": "table",
+      "pending": "prim3_level_builder_v1.sql",
+      "callers": [
+        "workers/mccluster/src/prim3/levels.js"
       ]
     },
     "profile_edit_review_decide": {

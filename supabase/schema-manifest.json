@@ -8,7 +8,7 @@
    ["private","postgres","anon=U;authenticated=U"],
    ["public","pg_database_owner","PUBLIC=U;anon=U;authenticated=U"]
   ]},
-  "relations": {"md5": "bd60b96fc2be5b1081a99787c26e2494", "rows": [
+  "relations": {"md5": "b92b6c835c204e28e5b9a513e6e6c44a", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -443,6 +443,8 @@
    ["public","platform_revenue_rules","r",true,false,"",11,"93d0b2eb0070","9fcd3d368c21","ad91457576ef","",""],
    ["public","platform_user_apps","r",true,false,"",7,"a628c070e1f7","949a97dd65f7","7df73b32dbac","","anon=damrw;authenticated=damrw"],
    ["public","platform_user_devices","r",true,false,"",8,"a7229d735ded","4c3362cd2059","c76c7b480d73","","authenticated=damrw"],
+   ["public","prim3_agent_news_briefs","r",true,false,"",11,"2e9b167daffb","321c778e22e5","61a174b01095","",""],
+   ["public","prim3_agent_news_comments","r",true,false,"",10,"0a0149c67b09","4d74953442fa","2d41eee15596","",""],
    ["public","prim3_course_progress","r",true,false,"",11,"e0479bacb297","0a180702832e","14353473d2eb","","anon=damrw;authenticated=damrw"],
    ["public","print_orders","r",true,false,"",12,"c774f6d07b7d","065fafefa8c2","88baedeb191d","","anon=damrw;authenticated=damrw"],
    ["public","private_song_asset_chunks","r",true,false,"",5,"f641d7e635c1","0daf6a6a3688","8d3df9162221","",""],
@@ -529,9 +531,10 @@
    ["public","work_relationships","r",true,true,"",15,"3cff34a13873","18f61a3850e2","7ab11f473a0d","",""],
    ["public","work_renewals","r",true,true,"",20,"bfa4fe3bcc1a","a5f42ab18872","5b6616c0c2db","",""],
    ["public","work_tasks","r",true,false,"",13,"2963669335e0","6159eb3b84f2","298029dd3cf8","",""],
+   ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "e92317f71af2a290993137cf4f8cf9d5", "rows": [
+  "functions": {"md5": "6bfbf2173c7f6a491fba8fedb5f015f2", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -980,6 +983,7 @@
    ["public","platform_sync_profile_from_auth","","trigger",true,"v","search_path=pg_catalog, public, auth","c12f1b087537",""],
    ["public","platform_touch_device","p_device_id uuid, p_app_key text, p_client_meta jsonb","platform_user_devices",false,"v","search_path=pg_catalog, public, auth","e222c185fad5","authenticated=X"],
    ["public","play_counts","","TABLE(track text, plays bigint)",true,"s","search_path=\"\"","c48afe643c64","anon=X;authenticated=X"],
+   ["public","prim3_agent_news_prune","","void",true,"v","search_path=public","dae05c242bfe",""],
    ["public","publish_antisocial_collaboration","p_assignment_id uuid, p_partner_m_uid uuid, p_title text, p_kind text, p_link text, p_media_asset_id uuid, p_statement text","jsonb",true,"v","search_path=\"\"","e371812ee8e8","authenticated=X"],
    ["public","request_account_deletion","p_reason text","jsonb",true,"v","search_path=\"\"","879f02de99d7","authenticated=X"],
    ["public","request_connection","p_target_m_uid uuid","jsonb",true,"v","search_path=\"\"","2067ed3912df","authenticated=X"],
@@ -1025,6 +1029,7 @@
    ["public","withdraw_connection","p_connection_id uuid","jsonb",true,"v","search_path=\"\"","d6c0ffa85fde","authenticated=X"],
    ["public","withdraw_fellowship_application","p_application_id uuid","jsonb",true,"v","search_path=\"\"","47b5a063ada0","authenticated=X"],
    ["public","work_touch_updated_at","","trigger",false,"v","search_path=\"\"","1c4318bee424","PUBLIC=X"],
+   ["public","world_news_pairs_prune","","void",true,"v","search_path=public","07b2033a2a95",""],
    ["public","world_public_member_counts","","TABLE(scope_key text, country_code text, subdivision_code text, member_count bigint)",true,"s","search_path=\"\"","fcabbef2cc5c","anon=X;authenticated=X"],
    ["public","world_region_sharing_clear","","boolean",true,"v","search_path=\"\"","7716de4c5613","authenticated=X"],
    ["public","world_region_sharing_get","","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"s","search_path=\"\"","8abf5cf315e3","authenticated=X"],

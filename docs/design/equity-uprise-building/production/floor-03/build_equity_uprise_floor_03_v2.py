@@ -16,6 +16,14 @@ REPORT=OUTDIR/"equity-uprise-floor-03-core-v2-report.json"
 INV_PATH=HERE/"floor-03-object-inventory.json"
 inventory=json.loads(INV_PATH.read_text()); INV={o["id"]:o for o in inventory["objects"]}
 scene=trimesh.Scene(); names=[]; modeled=set()
+import sys
+sys.path.insert(0,str(HERE.parent/"interiors")); sys.path.insert(0,str(HERE.parent/"brand"))
+from eu_furniture_kit import FurnitureKit, load_layout
+from eu_brand_slots import slots_for, add_brand_slots
+LAYOUT=load_layout(HERE/"floor-03-interior-layout-v3.json")
+# Inventory furniture realized by the v3 layout is built ONLY by the shared kit;
+# the legacy per-floor box furniture for those ids is suppressed here.
+_REALIZED={i["realizes_inventory_id"] for i in LAYOUT["items"] if i.get("realizes_inventory_id")}
 
 H=11.0
 PASS=(54.,34.,62.,44.); FREIGHT=(0.,60.,8.,72.); SB=(8.,54.,18.,72.); SA=(60.,54.,72.,72.); MEP=(50.,66.,60.,72.)
@@ -32,6 +40,7 @@ def mark(i):
         modeled.add(i)
 
 def box(name,b,h,z=0,color=None,inv=None):
+    if name.split("::")[0] in _REALIZED: return None
     x1,y1,x2,y2=map(float,b)
     m=trimesh.creation.box(extents=((x2-x1)*FT,(y2-y1)*FT,h*FT))
     m.apply_translation((((x1+x2)/2)*FT,((y1+y2)/2)*FT,(z+h/2)*FT))
@@ -39,6 +48,7 @@ def box(name,b,h,z=0,color=None,inv=None):
     scene.add_geometry(m,node_name=name,geom_name=name); names.append(name); mark(inv); return m
 
 def cyl(name,xy,r,h,z=0,color=None,inv=None,sections=28):
+    if name.split("::")[0] in _REALIZED: return None
     m=trimesh.creation.cylinder(radius=r*FT,height=h*FT,sections=sections)
     m.apply_translation((xy[0]*FT,xy[1]*FT,(z+h/2)*FT)); m.visual.face_colors=color or C["part"]
     scene.add_geometry(m,node_name=name,geom_name=name); names.append(name); mark(inv); return m
@@ -121,6 +131,10 @@ box("north_wall",(0,71.25,72,72),H,0,C["wall"]); box("west_wall",(0,0,.75,60),H,
 
 # South glazing
 for k in range(8): box(f"F3-SOUTH-GLAZING-01::pane-{k+1}",(k*9,.22,(k+1)*9,.42),H,0,C["glass"],"F3-SOUTH-GLAZING-01")
+
+# v3 interior furnishing layer (shared catalog + floor-03-interior-layout-v3.json)
+KIT=FurnitureKit(scene,LAYOUT["palette"],"F3",0.0,mark)
+KIT.build_layout(LAYOUT)
 for x in range(0,73,9): box(f"south_mullion_{x}",(max(0,x-.08),0,min(72,x+.08),.68),H,0,C["core"])
 
 # Opportunity Exchange
@@ -130,7 +144,8 @@ for k in range(1,7):
     i=f"F3-OPPORTUNITY-CHAIR-{k:02d}"; x,y=center(i); chair(i,x,y,(36,41))
 box("F3-IDENTITY-WALL-01::wall",(22,52.1,50,52.85),10.55,0,C["stone"],"F3-IDENTITY-WALL-01")
 for i in ("F3-DISPLAY-MATCH","F3-DISPLAY-PEOPLE","F3-DISPLAY-APPLICATIONS"): screen(i,bounds(i),3.2,4.8)
-box("F3-IDENTITY-SIGN-01::sign",(30,52.0,42,52.16),1.2,8.9,C["stone_top"],"F3-IDENTITY-SIGN-01")
+# Identity: runtime brand slot only (no plate, no drawn mark).
+BRAND_SLOTS=add_brand_slots(scene,slots_for("interior/F3/"),27,mark)
 
 # Lounge
 sofa("F3-LOUNGE-SOFA-01",bounds("F3-LOUNGE-SOFA-01"))
@@ -149,7 +164,9 @@ for S,x1,x2 in (("A",2,14),("B",16,28)):
     box(f"interview_{S}_east",(x2-.2,4,x2+.2,16),H,0,C["part"])
     door=INV[f"F3-INTERVIEW-{S}-DOOR-01"]["placement"]["bounds_ft"]
     wh(f"F3-INTERVIEW-{S}-GLAZING-01::north",x1,x2,16,.18,H,[(door["x1"],door["x2"])],C["glass"])
-    box(f"F3-INTERVIEW-{S}-GLAZING-01::privacy",(x1,15.82,x2,15.98),2.0,3.2,C["glass_priv"],f"F3-INTERVIEW-{S}-GLAZING-01")
+    # privacy band stops at the door jambs (it used to run straight across the doorway)
+    box(f"F3-INTERVIEW-{S}-GLAZING-01::privacy-w",(x1,15.82,door["x1"],15.98),2.0,3.2,C["glass_priv"],f"F3-INTERVIEW-{S}-GLAZING-01")
+    box(f"F3-INTERVIEW-{S}-GLAZING-01::privacy-e",(door["x2"],15.82,x2,15.98),2.0,3.2,C["glass_priv"],f"F3-INTERVIEW-{S}-GLAZING-01")
     box(f"F3-INTERVIEW-{S}-DOOR-01::door",bounds(f"F3-INTERVIEW-{S}-DOOR-01"),8.5,0,C["core"],f"F3-INTERVIEW-{S}-DOOR-01")
     tb=bounds(f"F3-INTERVIEW-{S}-TABLE-01"); table(f"F3-INTERVIEW-{S}-TABLE-01",tb,2.3,.2)
     cx=(tb[0]+tb[2])/2; cy=(tb[1]+tb[3])/2
@@ -204,12 +221,16 @@ checks=[]
 def ck(n,p,a=None,e=None): checks.append({"name":n,"passed":bool(p),"actual":a,"expected":e})
 ck("72ft width",abs(ext[0]-72)<.05,ext[0],72); ck("72ft depth",abs(ext[1]-72)<.05,ext[1],72)
 ck("63 inventory records",len(INV)==63,len(INV),63); ck("all inventory records modeled",not missing,len(modeled),len(INV))
+ck("feature-wall identity is a brand slot",len(BRAND_SLOTS)==1)
+_lay_inv={i.get("realizes_inventory_id") for i in LAYOUT["items"]}-{None}
+_furn={k for k,o in INV.items() if o["category"] in ("furniture","decorative_functional")}
+ck("v3 layout realizes every inventory furniture record",_furn<=_lay_inv,sorted(_furn-_lay_inv))
 ck("six opportunity chairs",all(f"F3-OPPORTUNITY-CHAIR-{i:02d}" in modeled for i in range(1,7)))
 ck("two interview rooms",all(f"F3-INTERVIEW-{s}-TABLE-01" in modeled for s in ("A","B")))
 ck("eight interview chairs",all(f"F3-INTERVIEW-{s}-CHAIR-{i:02d}" in modeled for s in ("A","B") for i in range(1,5)))
 ck("identity wall modeled","F3-IDENTITY-WALL-01" in modeled); ck("people lounge modeled","F3-LOUNGE-SOFA-01" in modeled); ck("checkin modeled","F3-MEMBER-CHECKIN-01" in modeled)
 ck("passenger interface","F3-PASS-ELEV-DOOR-01" in modeled); ck("freight interface","F3-FREIGHT-DOOR-01" in modeled); ck("both stair doors",all(x in modeled for x in ("F3-STAIR-A-DOOR-01","F3-STAIR-B-DOOR-01")))
 failed=[x for x in checks if not x["passed"]]
-report={"scene_id":"equity-uprise-floor-03","version":"fellowship-network-hybrid-v1","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
+report={"scene_id":"equity-uprise-floor-03","interior_layout":"floor-03-interior-layout-v3.json","furniture":KIT.summary(),"furniture_placements":KIT.placed,"brand_slots":BRAND_SLOTS,"triangles":int(sum(len(scene.geometry[scene.graph[_n][1]].faces) for _n in scene.graph.nodes_geometry)),"version":"fellowship-network-hybrid-v1","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
 REPORT.write_text(json.dumps(report,indent=2)+"\n"); print(json.dumps({k:report[k] for k in ("version","mesh_count","inventory_records","inventory_records_modeled","checks_passed","checks_total","passed")},indent=2))
 if failed: raise SystemExit(1)

@@ -1,0 +1,1423 @@
+{
+ "schema": "world-markets-exchanges/v1",
+ "version": "2026-11-02",
+ "description": "Stock exchanges placed at the city of their main venue, for the owner's Halo globe Markets layer. Static, checked-in reference data; no prices.",
+ "coordinates": "Approximate venue or head-office coordinates to about 0.01 degree; a pin marks where the exchange is, not where its listed companies operate.",
+ "hours": "Regular continuous trading sessions in local time (ISO weekdays, 1 = Monday). Auctions, pre/post-market, public holidays, half days and seasonal schedule changes are NOT modeled; an 'open' state is the regular schedule, not an exchange status feed.",
+ "provider_codes": "finnhub = Finnhub /stock/symbol exchange code; eodhd = EODHD exchange code. null means the configured provider has no reviewed code for this venue (listings are reported as not covered, never guessed). EODHD codes must be checked against EODHD /api/exchanges-list before that provider is switched on.",
+ "sources": [
+  "ISO 10383 Market Identifier Codes (https://www.iso20022.org/market-identifier-codes)",
+  "Each exchange's published trading hours",
+  "Finnhub supported exchanges (https://finnhub.io/docs/api/stock-symbols)"
+ ],
+ "exchanges": [
+  {
+   "mic": "XNYS",
+   "name": "New York Stock Exchange",
+   "short": "NYSE",
+   "city": "New York",
+   "country": "US",
+   "lat": 40.7069,
+   "lon": -74.0113,
+   "timezone": "America/New_York",
+   "sessions": [
+    [
+     "09:30",
+     "16:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "US",
+    "eodhd": "US"
+   },
+   "provider_mic_filter": "XNYS"
+  },
+  {
+   "mic": "XNAS",
+   "name": "Nasdaq Stock Market",
+   "short": "Nasdaq",
+   "city": "New York",
+   "country": "US",
+   "lat": 40.7568,
+   "lon": -73.986,
+   "timezone": "America/New_York",
+   "sessions": [
+    [
+     "09:30",
+     "16:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "US",
+    "eodhd": "US"
+   },
+   "provider_mic_filter": "XNAS"
+  },
+  {
+   "mic": "XTSE",
+   "name": "Toronto Stock Exchange",
+   "short": "TSX",
+   "city": "Toronto",
+   "country": "CA",
+   "lat": 43.6481,
+   "lon": -79.3817,
+   "timezone": "America/Toronto",
+   "sessions": [
+    [
+     "09:30",
+     "16:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "TO",
+    "eodhd": "TO"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XMEX",
+   "name": "Bolsa Mexicana de Valores",
+   "short": "BMV",
+   "city": "Mexico City",
+   "country": "MX",
+   "lat": 19.427,
+   "lon": -99.165,
+   "timezone": "America/Mexico_City",
+   "sessions": [
+    [
+     "08:30",
+     "15:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "MX",
+    "eodhd": "MX"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "BVMF",
+   "name": "B3 (Brasil Bolsa Balcao)",
+   "short": "B3",
+   "city": "Sao Paulo",
+   "country": "BR",
+   "lat": -23.5455,
+   "lon": -46.6339,
+   "timezone": "America/Sao_Paulo",
+   "sessions": [
+    [
+     "10:00",
+     "17:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "SA",
+    "eodhd": "SA"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XBUE",
+   "name": "Bolsas y Mercados Argentinos",
+   "short": "BYMA",
+   "city": "Buenos Aires",
+   "country": "AR",
+   "lat": -34.602,
+   "lon": -58.372,
+   "timezone": "America/Argentina/Buenos_Aires",
+   "sessions": [
+    [
+     "11:00",
+     "17:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "BA",
+    "eodhd": "BA"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XSGO",
+   "name": "Santiago Stock Exchange",
+   "short": "BCS",
+   "city": "Santiago",
+   "country": "CL",
+   "lat": -33.441,
+   "lon": -70.652,
+   "timezone": "America/Santiago",
+   "sessions": [
+    [
+     "09:30",
+     "16:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "SN",
+    "eodhd": "SN"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XLON",
+   "name": "London Stock Exchange",
+   "short": "LSE",
+   "city": "London",
+   "country": "GB",
+   "lat": 51.5154,
+   "lon": -0.099,
+   "timezone": "Europe/London",
+   "sessions": [
+    [
+     "08:00",
+     "16:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "L",
+    "eodhd": "LSE"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XPAR",
+   "name": "Euronext Paris",
+   "short": "Euronext Paris",
+   "city": "Paris",
+   "country": "FR",
+   "lat": 48.8897,
+   "lon": 2.2422,
+   "timezone": "Europe/Paris",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "PA",
+    "eodhd": "PA"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XAMS",
+   "name": "Euronext Amsterdam",
+   "short": "Euronext Amsterdam",
+   "city": "Amsterdam",
+   "country": "NL",
+   "lat": 52.374,
+   "lon": 4.8936,
+   "timezone": "Europe/Amsterdam",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "AS",
+    "eodhd": "AS"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XBRU",
+   "name": "Euronext Brussels",
+   "short": "Euronext Brussels",
+   "city": "Brussels",
+   "country": "BE",
+   "lat": 50.848,
+   "lon": 4.349,
+   "timezone": "Europe/Brussels",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "BR",
+    "eodhd": "BR"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XLIS",
+   "name": "Euronext Lisbon",
+   "short": "Euronext Lisbon",
+   "city": "Lisbon",
+   "country": "PT",
+   "lat": 38.7369,
+   "lon": -9.1427,
+   "timezone": "Europe/Lisbon",
+   "sessions": [
+    [
+     "08:00",
+     "16:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "LS",
+    "eodhd": "LS"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XMIL",
+   "name": "Euronext Milan (Borsa Italiana)",
+   "short": "Borsa Italiana",
+   "city": "Milan",
+   "country": "IT",
+   "lat": 45.4655,
+   "lon": 9.1865,
+   "timezone": "Europe/Rome",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "MI",
+    "eodhd": "MI"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XDUB",
+   "name": "Euronext Dublin",
+   "short": "Euronext Dublin",
+   "city": "Dublin",
+   "country": "IE",
+   "lat": 53.344,
+   "lon": -6.261,
+   "timezone": "Europe/Dublin",
+   "sessions": [
+    [
+     "08:00",
+     "16:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "IR",
+    "eodhd": "IR"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XOSL",
+   "name": "Euronext Oslo Bors",
+   "short": "Oslo Bors",
+   "city": "Oslo",
+   "country": "NO",
+   "lat": 59.911,
+   "lon": 10.745,
+   "timezone": "Europe/Oslo",
+   "sessions": [
+    [
+     "09:00",
+     "16:20"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "OL",
+    "eodhd": "OL"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XETR",
+   "name": "Deutsche Boerse Xetra",
+   "short": "Xetra",
+   "city": "Frankfurt",
+   "country": "DE",
+   "lat": 50.1152,
+   "lon": 8.677,
+   "timezone": "Europe/Berlin",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "DE",
+    "eodhd": "XETRA"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XSWX",
+   "name": "SIX Swiss Exchange",
+   "short": "SIX",
+   "city": "Zurich",
+   "country": "CH",
+   "lat": 47.3926,
+   "lon": 8.507,
+   "timezone": "Europe/Zurich",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "SW",
+    "eodhd": "SW"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XMAD",
+   "name": "Bolsa de Madrid",
+   "short": "BME",
+   "city": "Madrid",
+   "country": "ES",
+   "lat": 40.4162,
+   "lon": -3.6935,
+   "timezone": "Europe/Madrid",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "MC",
+    "eodhd": "MC"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XSTO",
+   "name": "Nasdaq Stockholm",
+   "short": "Nasdaq Stockholm",
+   "city": "Stockholm",
+   "country": "SE",
+   "lat": 59.3426,
+   "lon": 18.122,
+   "timezone": "Europe/Stockholm",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "ST",
+    "eodhd": "ST"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XCSE",
+   "name": "Nasdaq Copenhagen",
+   "short": "Nasdaq Copenhagen",
+   "city": "Copenhagen",
+   "country": "DK",
+   "lat": 55.679,
+   "lon": 12.58,
+   "timezone": "Europe/Copenhagen",
+   "sessions": [
+    [
+     "09:00",
+     "17:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "CO",
+    "eodhd": "CO"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XHEL",
+   "name": "Nasdaq Helsinki",
+   "short": "Nasdaq Helsinki",
+   "city": "Helsinki",
+   "country": "FI",
+   "lat": 60.168,
+   "lon": 24.945,
+   "timezone": "Europe/Helsinki",
+   "sessions": [
+    [
+     "10:00",
+     "18:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "HE",
+    "eodhd": "HE"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XWAR",
+   "name": "Warsaw Stock Exchange",
+   "short": "GPW",
+   "city": "Warsaw",
+   "country": "PL",
+   "lat": 52.23,
+   "lon": 21.025,
+   "timezone": "Europe/Warsaw",
+   "sessions": [
+    [
+     "09:00",
+     "17:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "WA",
+    "eodhd": "WAR"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XWBO",
+   "name": "Wiener Boerse",
+   "short": "Vienna",
+   "city": "Vienna",
+   "country": "AT",
+   "lat": 48.213,
+   "lon": 16.368,
+   "timezone": "Europe/Vienna",
+   "sessions": [
+    [
+     "09:00",
+     "17:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "VI",
+    "eodhd": "VI"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XIST",
+   "name": "Borsa Istanbul",
+   "short": "Borsa Istanbul",
+   "city": "Istanbul",
+   "country": "TR",
+   "lat": 41.11,
+   "lon": 29.057,
+   "timezone": "Europe/Istanbul",
+   "sessions": [
+    [
+     "10:00",
+     "18:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "IS",
+    "eodhd": "IS"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XATH",
+   "name": "Athens Stock Exchange",
+   "short": "ATHEX",
+   "city": "Athens",
+   "country": "GR",
+   "lat": 37.987,
+   "lon": 23.706,
+   "timezone": "Europe/Athens",
+   "sessions": [
+    [
+     "10:00",
+     "17:20"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "AT",
+    "eodhd": "AT"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XJSE",
+   "name": "Johannesburg Stock Exchange",
+   "short": "JSE",
+   "city": "Johannesburg",
+   "country": "ZA",
+   "lat": -26.103,
+   "lon": 28.056,
+   "timezone": "Africa/Johannesburg",
+   "sessions": [
+    [
+     "09:00",
+     "17:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "JO",
+    "eodhd": "JSE"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XCAI",
+   "name": "Egyptian Exchange",
+   "short": "EGX",
+   "city": "Cairo",
+   "country": "EG",
+   "lat": 30.048,
+   "lon": 31.24,
+   "timezone": "Africa/Cairo",
+   "sessions": [
+    [
+     "10:00",
+     "14:30"
+    ]
+   ],
+   "days": [
+    7,
+    1,
+    2,
+    3,
+    4
+   ],
+   "provider_codes": {
+    "finnhub": null,
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XNSA",
+   "name": "Nigerian Exchange",
+   "short": "NGX",
+   "city": "Lagos",
+   "country": "NG",
+   "lat": 6.455,
+   "lon": 3.394,
+   "timezone": "Africa/Lagos",
+   "sessions": [
+    [
+     "10:00",
+     "14:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": null,
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XNAI",
+   "name": "Nairobi Securities Exchange",
+   "short": "NSE Kenya",
+   "city": "Nairobi",
+   "country": "KE",
+   "lat": -1.259,
+   "lon": 36.788,
+   "timezone": "Africa/Nairobi",
+   "sessions": [
+    [
+     "09:30",
+     "15:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": null,
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XSAU",
+   "name": "Saudi Exchange (Tadawul)",
+   "short": "Tadawul",
+   "city": "Riyadh",
+   "country": "SA",
+   "lat": 24.765,
+   "lon": 46.64,
+   "timezone": "Asia/Riyadh",
+   "sessions": [
+    [
+     "10:00",
+     "15:00"
+    ]
+   ],
+   "days": [
+    7,
+    1,
+    2,
+    3,
+    4
+   ],
+   "provider_codes": {
+    "finnhub": "SR",
+    "eodhd": "SR"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XDFM",
+   "name": "Dubai Financial Market",
+   "short": "DFM",
+   "city": "Dubai",
+   "country": "AE",
+   "lat": 25.228,
+   "lon": 55.288,
+   "timezone": "Asia/Dubai",
+   "sessions": [
+    [
+     "10:00",
+     "15:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": null,
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XTAE",
+   "name": "Tel Aviv Stock Exchange",
+   "short": "TASE",
+   "city": "Tel Aviv",
+   "country": "IL",
+   "lat": 32.0636,
+   "lon": 34.77,
+   "timezone": "Asia/Jerusalem",
+   "sessions": [
+    [
+     "09:59",
+     "17:25"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "TA",
+    "eodhd": "TA"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XKAR",
+   "name": "Pakistan Stock Exchange",
+   "short": "PSX",
+   "city": "Karachi",
+   "country": "PK",
+   "lat": 24.848,
+   "lon": 67.005,
+   "timezone": "Asia/Karachi",
+   "sessions": [
+    [
+     "09:30",
+     "15:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": null,
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XNSE",
+   "name": "National Stock Exchange of India",
+   "short": "NSE",
+   "city": "Mumbai",
+   "country": "IN",
+   "lat": 19.06,
+   "lon": 72.86,
+   "timezone": "Asia/Kolkata",
+   "sessions": [
+    [
+     "09:15",
+     "15:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "NS",
+    "eodhd": "NSE"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XBOM",
+   "name": "BSE",
+   "short": "BSE",
+   "city": "Mumbai",
+   "country": "IN",
+   "lat": 18.93,
+   "lon": 72.834,
+   "timezone": "Asia/Kolkata",
+   "sessions": [
+    [
+     "09:15",
+     "15:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "BO",
+    "eodhd": "BSE"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XSHG",
+   "name": "Shanghai Stock Exchange",
+   "short": "SSE",
+   "city": "Shanghai",
+   "country": "CN",
+   "lat": 31.238,
+   "lon": 121.507,
+   "timezone": "Asia/Shanghai",
+   "sessions": [
+    [
+     "09:30",
+     "11:30"
+    ],
+    [
+     "13:00",
+     "15:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "SS",
+    "eodhd": "SHG"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XSHE",
+   "name": "Shenzhen Stock Exchange",
+   "short": "SZSE",
+   "city": "Shenzhen",
+   "country": "CN",
+   "lat": 22.537,
+   "lon": 114.056,
+   "timezone": "Asia/Shanghai",
+   "sessions": [
+    [
+     "09:30",
+     "11:30"
+    ],
+    [
+     "13:00",
+     "15:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "SZ",
+    "eodhd": "SHE"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XHKG",
+   "name": "Hong Kong Exchanges and Clearing",
+   "short": "HKEX",
+   "city": "Hong Kong",
+   "country": "HK",
+   "lat": 22.284,
+   "lon": 114.158,
+   "timezone": "Asia/Hong_Kong",
+   "sessions": [
+    [
+     "09:30",
+     "12:00"
+    ],
+    [
+     "13:00",
+     "16:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "HK",
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XTAI",
+   "name": "Taiwan Stock Exchange",
+   "short": "TWSE",
+   "city": "Taipei",
+   "country": "TW",
+   "lat": 25.033,
+   "lon": 121.564,
+   "timezone": "Asia/Taipei",
+   "sessions": [
+    [
+     "09:00",
+     "13:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "TW",
+    "eodhd": "TW"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XKRX",
+   "name": "Korea Exchange (KOSPI)",
+   "short": "KRX",
+   "city": "Seoul",
+   "country": "KR",
+   "lat": 37.523,
+   "lon": 126.927,
+   "timezone": "Asia/Seoul",
+   "sessions": [
+    [
+     "09:00",
+     "15:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "KS",
+    "eodhd": "KO"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XKOS",
+   "name": "Korea Exchange (KOSDAQ)",
+   "short": "KOSDAQ",
+   "city": "Seoul",
+   "country": "KR",
+   "lat": 37.5225,
+   "lon": 126.9262,
+   "timezone": "Asia/Seoul",
+   "sessions": [
+    [
+     "09:00",
+     "15:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "KQ",
+    "eodhd": "KQ"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XTKS",
+   "name": "Tokyo Stock Exchange",
+   "short": "TSE",
+   "city": "Tokyo",
+   "country": "JP",
+   "lat": 35.682,
+   "lon": 139.779,
+   "timezone": "Asia/Tokyo",
+   "sessions": [
+    [
+     "09:00",
+     "11:30"
+    ],
+    [
+     "12:30",
+     "15:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "T",
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XSES",
+   "name": "Singapore Exchange",
+   "short": "SGX",
+   "city": "Singapore",
+   "country": "SG",
+   "lat": 1.279,
+   "lon": 103.85,
+   "timezone": "Asia/Singapore",
+   "sessions": [
+    [
+     "09:00",
+     "12:00"
+    ],
+    [
+     "13:00",
+     "17:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "SI",
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XKLS",
+   "name": "Bursa Malaysia",
+   "short": "Bursa Malaysia",
+   "city": "Kuala Lumpur",
+   "country": "MY",
+   "lat": 3.148,
+   "lon": 101.693,
+   "timezone": "Asia/Kuala_Lumpur",
+   "sessions": [
+    [
+     "09:00",
+     "12:30"
+    ],
+    [
+     "14:30",
+     "17:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "KL",
+    "eodhd": "KLSE"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XIDX",
+   "name": "Indonesia Stock Exchange",
+   "short": "IDX",
+   "city": "Jakarta",
+   "country": "ID",
+   "lat": -6.224,
+   "lon": 106.808,
+   "timezone": "Asia/Jakarta",
+   "sessions": [
+    [
+     "09:00",
+     "12:00"
+    ],
+    [
+     "13:30",
+     "16:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "JK",
+    "eodhd": "JK"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XBKK",
+   "name": "Stock Exchange of Thailand",
+   "short": "SET",
+   "city": "Bangkok",
+   "country": "TH",
+   "lat": 13.765,
+   "lon": 100.569,
+   "timezone": "Asia/Bangkok",
+   "sessions": [
+    [
+     "10:00",
+     "12:30"
+    ],
+    [
+     "14:30",
+     "16:30"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "BK",
+    "eodhd": "BK"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XPHS",
+   "name": "Philippine Stock Exchange",
+   "short": "PSE",
+   "city": "Manila",
+   "country": "PH",
+   "lat": 14.553,
+   "lon": 121.049,
+   "timezone": "Asia/Manila",
+   "sessions": [
+    [
+     "09:30",
+     "12:00"
+    ],
+    [
+     "13:00",
+     "15:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": null,
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XASX",
+   "name": "Australian Securities Exchange",
+   "short": "ASX",
+   "city": "Sydney",
+   "country": "AU",
+   "lat": -33.8636,
+   "lon": 151.209,
+   "timezone": "Australia/Sydney",
+   "sessions": [
+    [
+     "10:00",
+     "16:00"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "AX",
+    "eodhd": "AU"
+   },
+   "provider_mic_filter": null
+  },
+  {
+   "mic": "XNZE",
+   "name": "NZX",
+   "short": "NZX",
+   "city": "Wellington",
+   "country": "NZ",
+   "lat": -41.284,
+   "lon": 174.777,
+   "timezone": "Pacific/Auckland",
+   "sessions": [
+    [
+     "10:00",
+     "16:45"
+    ]
+   ],
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "provider_codes": {
+    "finnhub": "NZ",
+    "eodhd": null
+   },
+   "provider_mic_filter": null
+  }
+ ]
+}

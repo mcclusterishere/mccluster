@@ -53,6 +53,7 @@ const REMOTE_CAPABILITIES = new Set([
   'media.model.recommend',
   'media.job.get',
   'repo.inspect',
+  'game.lore.read',
   'objective.plan',
   'ontology.schema',
   'ontology.query',

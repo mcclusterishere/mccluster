@@ -67,12 +67,12 @@
       "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
       "b1_access_policy": {
         "physical_stop": true,
-        "visible_in_normal_floor_selector": false,
+        "visible_in_normal_floor_selector": true,
         "authorized_roles": [
-          "mccluster_house_owner",
-          "underground_operations_admin"
+          "everyone"
         ],
-        "ordinary_equity_uprise_admin_sufficient": false
+        "ordinary_equity_uprise_admin_sufficient": true,
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "service_freight_elevator": {
@@ -159,8 +159,9 @@
       "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
       "b1_access_policy": {
         "physical_connection": true,
-        "floor1_downward_entry": "access-controlled-restricted",
-        "b1_to_floor1_egress": "preserved"
+        "floor1_downward_entry": "open-normal-use; discharge-direction barrier engages only in evacuation mode",
+        "b1_to_floor1_egress": "preserved",
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "stair_b": {
@@ -211,8 +212,9 @@
       "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
       "b1_access_policy": {
         "physical_connection": true,
-        "floor1_downward_entry": "access-controlled-restricted",
-        "b1_to_floor1_egress": "preserved"
+        "floor1_downward_entry": "open-normal-use; discharge-direction barrier engages only in evacuation mode",
+        "b1_to_floor1_egress": "preserved",
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "mep_riser": {
@@ -263,7 +265,7 @@
       "bounds_ft": {
         "x1": 32,
         "y1": 4,
-        "x2": 52,
+        "x2": 51,
         "y2": 20
       },
       "live_access": "qualified-staff-or-supervised-training",
@@ -280,7 +282,7 @@
       "label": "Fire Protection / Water",
       "type": "room",
       "bounds_ft": {
-        "x1": 54,
+        "x1": 55,
         "y1": 4,
         "x2": 70,
         "y2": 20
@@ -301,7 +303,7 @@
       "bounds_ft": {
         "x1": 32,
         "y1": 22,
-        "x2": 52,
+        "x2": 50,
         "y2": 34
       },
       "live_access": "qualified-staff-or-supervised-training",
@@ -319,7 +321,7 @@
       "label": "Sump / Flood Management",
       "type": "room",
       "bounds_ft": {
-        "x1": 54,
+        "x1": 55.5,
         "y1": 22,
         "x2": 70,
         "y2": 32
@@ -340,8 +342,8 @@
       "bounds_ft": {
         "x1": 2,
         "y1": 30,
-        "x2": 16,
-        "y2": 52
+        "x2": 14.5,
+        "y2": 50
       },
       "live_access": "role-authorized-staff-or-supervised-learner",
       "training_mode": "canonical_sandbox",
@@ -357,9 +359,9 @@
       "label": "Building Systems Lab / Observation",
       "type": "zone",
       "bounds_ft": {
-        "x1": 18,
-        "y1": 36,
-        "x2": 52,
+        "x1": 20,
+        "y1": 37.5,
+        "x2": 50.5,
         "y2": 54
       },
       "live_access": "equity-uprise-staff-instructor-supervised-learner",
@@ -433,10 +435,11 @@
   ],
   "live_access": {
     "allowed": [
-      "equity_uprise_staff",
+      "equity_uprise_facilities",
       "equity_uprise_instructor",
       "equity_uprise_security",
-      "equity_uprise_facilities",
+      "equity_uprise_staff",
+      "everyone",
       "field_t",
       "mobility_operations",
       "supervised_equity_uprise_learner"
@@ -444,7 +447,8 @@
     "floor_hidden": false,
     "room_level_restrictions": true,
     "competency_alone_sufficient": false,
-    "audit_required": true
+    "audit_required": true,
+    "note": "Open floor. Room-level safety doors remain on plant, electrical, fire/water, flood, telecom and transfer-lock rooms; that is life safety, not floor access."
   },
   "training_access": {
     "mode": "canonical_sandbox_same_geometry",

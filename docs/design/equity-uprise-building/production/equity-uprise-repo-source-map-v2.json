@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 532,
-  "capability_source_count": 102,
-  "support_only_count": 430,
+  "candidate_count": 587,
+  "capability_source_count": 104,
+  "support_only_count": 483,
   "entries": [
     {
       "path": ".cursorrules",
@@ -402,13 +402,6 @@
       "rationale": "Public profile for an organizer-confirmed Equity Uprise cohort participant, showing attributed completed work and the participant's separately controlled provider webpage. Extends the existing people directory and actual cohort record."
     },
     {
-      "path": "crm.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
       "path": "css/equity-uprise-app.css",
       "classification": "presentation_support",
       "capability_ids": [],
@@ -605,6 +598,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "data/game-hub/modules.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only Game Hub module list; names the PRIM3 Equity Uprise HQ drill as one game level and links to it. Game content, not a building capability."
+    },
+    {
       "path": "data/lyrics/money-or-the-power.json",
       "classification": "capability_source",
       "capability_ids": [
@@ -637,6 +637,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/prim3/world-missions.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only PRIM3 World draft missions (non-canon side operations); one entry cites a Prim3 canon section title that names Equity Uprise. Game content, not a building capability."
     },
     {
       "path": "data/product-context.json",
@@ -702,13 +709,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "desk.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Current operator outreach surface contains Equity Uprise references but does not define an independent program capability."
     },
     {
       "path": "docket-516.html",
@@ -1196,6 +1196,27 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Explains how the owner-only PRIM3 Equity Uprise HQ drill level is derived from the Core V2 building plans; a game projection that defers to REFERENCE-AUTHORITY.md and is never geometry authority."
+    },
+    {
+      "path": "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Review note for the owner-only PRIM3 Equity Uprise HQ drill: which building models the game reads and its open decisions; a derived game view that defers to REFERENCE-AUTHORITY.md, never geometry authority."
+    },
+    {
+      "path": "docs/prim3/EQUITY-UPRISE-X-PRIM3-INTEGRATION-MATRIX.md",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 x Equity Uprise integration matrix and the B1 vertical-slice spec; describes how the game reads the building authority read-only through its adapter. A game projection that defers to REFERENCE-AUTHORITY.md, never geometry authority."
+    },
+    {
       "path": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1533,13 +1554,6 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
-      "path": "js/office.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared office/operator frontend references Equity Uprise rooms but does not define an independent program capability."
-    },
-    {
       "path": "js/onboard.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -1565,6 +1579,90 @@
       "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
+      "path": "js/prim3-tactics/SOURCE.json",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the vendored Prim3 tactical engine files by sha256; its note names the Equity Uprise levels that use them. No building capability."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/adapter.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 game adapter: a reversible feet-to-grid frame, cells, traversal, cover and device placement derived read-only from the building package. A derived game view, never geometry authority."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/equity-uprise-package.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated, read-only extract of the building authority for the PRIM3 game, with the sha256 of every source; rebuilt by scripts/prim3/build-equity-uprise-package.mjs and checked for drift. Never authority."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/pipeline.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 gameplay pipeline: turns mission data plus the adapter's derived cells and cameras into a resolver config. Game runtime, no building capability."
+    },
+    {
+      "path": "js/prim3-tactics/adapters/equity-uprise/sandbox.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Binds a PRIM3 mission's fault ledger to the electronics SANDBOX's own packaged consequences (SANDBOX only, live control refused). It never writes the building or the sandbox baseline."
+    },
+    {
+      "path": "js/prim3-tactics/level3d.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 tactics level renderer; draws the Equity Uprise HQ drill from the level module's plan data, a derived game view of the Core V2 plate, not a source program capability."
+    },
+    {
+      "path": "js/prim3-tactics/levels/equity-uprise-b1.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only PRIM3 B1 level (Blind the Floor / Restore the Picture) drawn on the canonical B1 through the adapter; a derived game projection, adding no program capability."
+    },
+    {
+      "path": "js/prim3-tactics/levels/equity-uprise-hq.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only PRIM3 drill level built from the Core V2 Floor 1 plan and shared vertical systems; a derived game projection, never geometry authority, adding no program capability."
+    },
+    {
+      "path": "js/prim3-tactics/levels/index.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 level registry; names the Equity Uprise HQ drill level so the game can load it. No building program or physical capability is added."
+    },
+    {
+      "path": "js/prim3-tactics/missions/blind-the-floor.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 training mission data and rules on canonical B1 (cameras, patch panel, console from the registry); game content in SANDBOX, not a building capability."
+    },
+    {
+      "path": "js/prim3-tactics/preview.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 tactics menu lists the Equity Uprise HQ drill as a level to deploy to; game navigation only, no building capability."
+    },
+    {
+      "path": "js/prim3-tactics/transit.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 Transit loader comment names the Equity Uprise HQ level as one loadable level module; game runtime, not a building capability."
+    },
+    {
       "path": "js/tabbar.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1584,13 +1682,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared audio continuity across music and World; no separate building-specific capability."
-    },
-    {
-      "path": "lanes.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Current music distribution operator surface references Equity Uprise context but does not define an independent program capability."
     },
     {
       "path": "listen.html",
@@ -1762,7 +1853,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -1786,6 +1877,34 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "scripts/prim3/blind-the-floor-sim.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Plays the PRIM3 B1 mission with a heuristic squad against the threat AI to measure win rates; test tooling, no building capability."
+    },
+    {
+      "path": "scripts/prim3/build-equity-uprise-package.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Builds the read-only PRIM3 building package from the authority (reads only, records source hashes, runs the electronics sandbox for fault consequences). Never writes the authority."
+    },
+    {
+      "path": "scripts/prim3/check-tactics-layout.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser layout check for the PRIM3 tactics page on the Equity Uprise levels (phone widths); test tooling, no building capability."
+    },
+    {
+      "path": "scripts/prim3/hq-drill-sim.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Plays the PRIM3 Equity Uprise HQ drill at full strength with a heuristic squad; test tooling, no building capability."
     },
     {
       "path": "scripts/sites-buy-smoke.mjs",
@@ -1872,6 +1991,13 @@
       "rationale": "Tests that keep the company and personal properties and entities separate; checks Equity Uprise's parent organization. Not a building capability."
     },
     {
+      "path": "scripts/test/fixtures/hq-drill-full-strength-win.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Recorded full-strength PRIM3 HQ drill game replayed by the tests; test fixture, no building capability."
+    },
+    {
       "path": "scripts/test/homelessness-action.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1912,6 +2038,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-equity-uprise-adapter.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the PRIM3 adapter against the building authority (package drift, frame, placement, coverage, sandbox equivalence, authority files unchanged); adds no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-equity-uprise-level.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Checks that the PRIM3 Equity Uprise HQ drill level stays consistent with the Core V2 plan data it is derived from; adds no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-equity-uprise-model.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Checks that the PRIM3 HQ drill reads the building's own generated models within the Core V2 plan rectangles and that its manifest matches the publish workflow; adds no program capability."
+    },
+    {
+      "path": "scripts/test/prim3-transit-level.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 Transit level tests; names the Equity Uprise HQ drill only as one loadable level. Adds no program capability."
     },
     {
       "path": "scripts/test/product-context.test.mjs",
@@ -3120,13 +3274,6 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
-      "path": "vault.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Current music-rights operator surface references Equity Uprise context but does not define an independent program capability."
-    },
-    {
       "path": "vendor/supabase-js-2.57.0.mjs",
       "classification": "incidental_text_match",
       "capability_ids": [],
@@ -3398,6 +3545,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only production schema snapshot taken after music_direct_sales_v1 was applied on 2026-10-31 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-03.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken after prim3_agent_news_desk_v1 was applied on 2026-11-03 (catalog metadata and hashes) that includes eu_* objects among all others. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "supabase/schema-manifest.json",
@@ -3806,21 +3960,7 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
     },
     {
-      "path": "js/socials-room.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
-    },
-    {
       "path": "live-mission.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
-    },
-    {
-      "path": "management.html",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
@@ -4000,6 +4140,332 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Owner-authorized production content cleanup outcome; operational evidence, not a building capability or geometry change."
+    },
+    {
+      "path": "js/control-room/nav.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The one Control Room navigation definition; names the existing Equity Uprise operations views (missions, fellows, funding) as a System section entry and adds no distinct program capability."
+    },
+    {
+      "path": "core/data/fictional-city/district.v1.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical fictional-city content and portal data includes a simplified exterior derived from the existing Equity Uprise footprint and roof datum; it does not define building geometry, floor programs or a new building capability."
+    },
+    {
+      "path": "docs/fictional-city/EXPANSION.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City expansion plan and placement contract record the HQ's unchanged footprint, position, doorway, B1 access and frames; integration documentation, no building program, geometry or capability."
+    },
+    {
+      "path": "docs/fictional-city/LORE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fictional district lore distinguishes the Equity Uprise island landmark from the existing headquarters and preserves its authority boundary; narrative support only, with no building program or capability ownership."
+    },
+    {
+      "path": "docs/fictional-city/README.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only city implementation contract records the existing HQ destination, simplified exterior, source authority and validation limits; integration documentation rather than a building program capability."
+    },
+    {
+      "path": "docs/fictional-city/VERIFICATION.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City verification record cites the HQ doorway, B1 traversal and building verifier results as evidence; verification documentation only, no building program, geometry or capability."
+    },
+    {
+      "path": "docs/universe/UNIVERSE-SCHEMA.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Cross-universe registry, state and portal contract includes the fictional-city connection to the existing Equity Uprise HQ; it governs navigation boundaries and adds no headquarters capability or geometry authority."
+    },
+    {
+      "path": "docs/universe/universe-registry.json",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Universe registration declares the fictional-city entrance and existing Equity Uprise HQ destination as data-only navigation; no building capability, floor program or access policy is created."
+    },
+    {
+      "path": "js/fictional-city/app.mjs",
+      "classification": "navigation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-only fictional-city host opens the existing Equity Uprise HQ route through declared portal data; city dialogs and navigation do not implement or change headquarters capabilities."
+    },
+    {
+      "path": "js/fictional-city/scene.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Original fictional-city renderer displays a simplified Core V2 dimension-derived HQ exterior and portal on its island; the scene is a derived game projection, not building geometry or program authority."
+    },
+    {
+      "path": "js/fictional-city/spatial.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fictional-city walking and collision support treats the supplied HQ footprint as an exterior blocker; it does not change canonical building circulation, interior geometry or capabilities."
+    },
+    {
+      "path": "scripts/e2e/fictional-city.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser checks for the owner-only fictional city verify the existing Equity Uprise portal and game integration; verification support only, with no building program or geometry implementation."
+    },
+    {
+      "path": "core/data/fictional-city/places.v1.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+    },
+    {
+      "path": "js/fictional-city/tactical.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "City-to-tactics adapter keeps the HQ adapter's 12 ft cells and the city's 3.54 m tiles distinct and maps HQ feet to city metres for placement checks; a derived projection that never resizes or edits the building."
+    },
+    {
+      "path": "scripts/test/equity-uprise-mission-screens.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies the B1 mission's real sandbox camera outages reach the building screens' MISSION session and never WORKPLACE; verification support only."
+    },
+    {
+      "path": "scripts/test/fictional-city-hq-b1.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Walks an ordinary operative from the street to B1 and back up on the existing HQ level and real resolver, proving B1 is an ordinary reachable floor; verification support only."
+    },
+    {
+      "path": "scripts/test/fictional-city-places.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Checks the city placement contract against the HQ footprint, roof datum, B1 elevation and public approach; verification support only, with no building geometry or capability."
+    },
+    {
+      "path": "js/eu-screens/app-shell.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/apps/building.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/apps/evidence.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/contract.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/enter.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/man.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/net.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/sandbox-session.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/shell.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "js/eu-screens/state.mjs",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/building.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/data/roof-destination-registry-v1.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ecosystem-routing"
+      ],
+      "support_only": false,
+      "rationale": "Level 7 departure board / data-driven destination registry implementing FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md section 4 (derived from data/seo/domain-architecture.json)."
+    },
+    {
+      "path": "screens/data/screen-registry-v1.json",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/departures.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ecosystem-routing"
+      ],
+      "support_only": false,
+      "rationale": "Level 7 departure board / data-driven destination registry implementing FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md section 4 (derived from data/seo/domain-architecture.json)."
+    },
+    {
+      "path": "screens/evidence.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/kiosk.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/noc.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/screens.css",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/studio.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/terminal.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/vms.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "screens/wall.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
+    },
+    {
+      "path": "scripts/e2e/eu-screens.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests for the building screens and screen apps (SCREENS-AND-SCREEN-APPS-SPEC.md)."
+    },
+    {
+      "path": "scripts/test/eu-screens.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests for the building screens and screen apps (SCREENS-AND-SCREEN-APPS-SPEC.md)."
+    },
+    {
+      "path": "equity-uprise-server-lab-3d.html",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
+    },
+    {
+      "path": "js/server-lab/app.mjs",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
+    },
+    {
+      "path": "css/server-lab.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
+    },
+    {
+      "path": "scripts/e2e/server-lab.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser acceptance for the Server Lab page (owner gate, L1-L4 at 390 px and desktop)."
+    },
+    {
+      "path": "scripts/test/server-lab.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Server Lab page contract test (owner gate, published runtime files, mobile rules, unbranded hardware)."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

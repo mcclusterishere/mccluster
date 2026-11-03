@@ -1,3 +1,3634 @@
 {
- "plain": "[Intro]\nLike this, yeah.\nEnvironmental injustice\nI know some brothers who clutching\nThey might go mental and buck it\n(AGH!!)\n[Intro · The Survey]\nI'm tryna… have some reservations…\nBut I gotta serve the devil's dessert\nat the table 'cause\nHMM… it's an environmental injustice\nI know some brothers who clutching\n[Chorus]\nI'm clutching on it real tight.\nHomie this is my real life.\nIt's an environmental injustice\nI know some brothers who clutching..\n[Chorus · Operation Land Grab]\nAnd I'm clutching on for dear life.\nHomie this is my real life.\nDon't play with me.\n[Chorus]\nEnvironmental injustice\nI know some brothers who clutching\nWho might go mental and BUCK BUCK!\nMight go mental and BUCK!\n[Verse · Ocho]\nSaid, we just want it back.\nBack to the beginning\nWhen everybody cared.\nWhen everybody winning\nBefore they blamed the fruit,\nbefore we started sinning.\nWhen this land was my land\nif only you could dig it\n[Verse · Ocho]\nBut hold up let me pivot\nThey wanna take the church\n'prolly wanna build a prison.\nSo really what it's giving? Villain.\nThe future got me\nfighting for the feeling.\n[Verse · Ocho]\nAnd see my people moving\n'cause they able and they willing\nTo stand up like a building,\nfor these buildings got me building.\nPillar of my era\nand I'm daring him to kill him.\nNo reason to be scared,\nbe prepared for the healing.\nAnd leave it up to God, oh yeah,\nhe made me in his image. YAAH!\n[Bridge · Angel Kastro]\nThey can't take your home away\nif you're covered in blessings\nEvery yea every day. Every day yea every day\nLook up to the sky, no need for stressing\nJesus take these thoughts away\n[Bridge · Reprise: McCluster, Ocho & Angel Kastro]\nThey can't take your home away\nif you're covered in blessings\nThey can't do nothing to you,\nthey can't do nothing to you\nWe gon' stand here and fight\nfor what wrong and what is true\n[Bridge]\nThey can't do nothing to you,\nthey can't do nothing to you\nGon' stand here and fight\nfor what wrong and what is true\n[Song Switch · Hook 2]\n'Cause you lookin' like prey\nbut now I wanna pray for you,\nsee another day for you, yea yea\n'Cause ion got the time\nand I'm really on the chase,\ncame from GA for you, yeah yeah"
+ "duration_seconds": 163,
+ "language": "en",
+ "songTitle": "Environmental Injustice",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:31:06.000Z",
+  "confidence": 0.692,
+  "mismatched_lines": 26,
+  "sheet_lines": 66,
+  "heard_words": 447,
+  "ctc_aligned_lines": 79,
+  "timing": {
+   "align_seconds": 19.7,
+   "separate_seconds": 90.7,
+   "asr_seconds": 128.1,
+   "map_seconds": 0.4
+  }
+ },
+ "plain": "Like this, yeah.\nEnvironmental injustice\nI know some brothers who clutching\nThey might go mental and buck it\n(AGH!!)\nEnvironmental injustice\nI know some brothers who clutching\nThey might go mental and buck it\n\nI'm tryna… have some reservations…\nBut I gotta serve the devil's dessert\nat the table 'cause\nHMM… it's an environmental injustice\nI know some brothers who clutching\n\nI'm clutching on it real tight.\nHomie this is my real life.\nIt's an environmental injustice\nI know some brothers who clutching..\n\nAnd I'm clutching on for dear life.\nHomie this is my real life.\nDon't play with me.\n\nEnvironmental injustice\nI know some brothers who clutching\nWho might go mental and BUCK BUCK!\n\nThey can't take your home away\nif you're covered in blessings\nEvery yea every day. Every day yea every day\nLook up to the sky, no need for stressing\nJesus take these thoughts away\n\nThey can't take your home away\nif you're covered in blessings\nThey can't do nothing to you,\nthey can't do nothing to you\nWe gon' stand here and fight\n\nMight go mental and BUCK!\n\nWe gon' stand here and fight\nfor what wrong and what is true\n\nThey can't do nothing to you,\nthey can't do nothing to you\n\ngon' stand here and fight against what's wrong for what's true\nBack to the beginning\nWhen everybody cared.\nWhen everybody winning\nBefore they blamed the fruit,\nbefore we started sinning.\nWhen this land was my land\nif only you could dig it\n\nBut hold up let me pivot\nThey wanna take the church\n'prolly wanna build a prison.\nSo really what it's giving? Villain.\nThe future got me\nfighting for the feeling.\n\nAnd see my people moving\n'cause they able and they willing\nTo stand up like a building,\nfor these buildings got me building.\nPillar of my era\nand I'm daring him to kill him.\nNo reason to be scared,\nbe prepared for the healing.\nAnd leave it up to God, oh yeah,\nhe made me in his image. YAAH!\n\nI'm clutching on it real tight.\n\nThey can't take your home away\nthis is my real life It's an\ninjustice I know some brothers who clutching And I'm clutching on\nLook up to the sky, no need for stressing\nJesus take these thoughts away\n\nis my real life\nplay with me\nThey can't do nothing to you,\nI know some brothers who clutch\nWe gon' stand here and fight\nfor what wrong and what is true\n\nThey can't do nothing to you,\nthey can't do nothing to you\nGon' stand here and fight\nfor what wrong and what is true\n\n'Cause you lookin' like prey\nbut now I wanna pray for you,\nsee another day for you, yea yea\n'Cause ion got the time\nand I'm really on the chase,\ncame from GA for you, yeah yeah\n'Cause you lookin' like prey\nbut now I wanna pray for you,\nsee another day for you, yea yea\n'Cause ion got the time\nand I'm really on the chase,\ncame from GA for you, yeah yeah",
+ "timed": {
+  "line": [
+   {
+    "begin": 0.264,
+    "end": 1.36,
+    "content": "Like this, yeah.",
+    "confidence": 0.146,
+    "mismatch": true,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 0.264,
+      "end": 0.365,
+      "content": "Like"
+     },
+     {
+      "begin": 0.426,
+      "end": 0.568,
+      "content": "this,"
+     },
+     {
+      "begin": 1.238,
+      "end": 1.36,
+      "content": "yeah."
+     }
+    ],
+    "align_score": 0.749
+   },
+   {
+    "begin": 1.564,
+    "end": 2.923,
+    "content": "Environmental injustice",
+    "confidence": 0.948,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 1.564,
+      "end": 2.37,
+      "content": "Environmental"
+     },
+     {
+      "begin": 2.491,
+      "end": 2.923,
+      "content": "injustice"
+     }
+    ],
+    "align_score": 0.985
+   },
+   {
+    "begin": 2.923,
+    "end": 4.402,
+    "content": "I know some brothers who clutching",
+    "confidence": 0.944,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 2.923,
+      "end": 2.943,
+      "content": "I"
+     },
+     {
+      "begin": 3.185,
+      "end": 3.326,
+      "content": "know"
+     },
+     {
+      "begin": 3.407,
+      "end": 3.588,
+      "content": "some"
+     },
+     {
+      "begin": 3.649,
+      "end": 4.012,
+      "content": "brothers"
+     },
+     {
+      "begin": 4.072,
+      "end": 4.153,
+      "content": "who"
+     },
+     {
+      "begin": 4.274,
+      "end": 4.402,
+      "content": "clutching"
+     }
+    ],
+    "align_score": 0.913
+   },
+   {
+    "begin": 4.402,
+    "end": 6.002,
+    "content": "They might go mental and buck it",
+    "confidence": 0.707,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 4.402,
+      "end": 4.805,
+      "content": "They"
+     },
+     {
+      "begin": 4.865,
+      "end": 5.047,
+      "content": "might"
+     },
+     {
+      "begin": 5.067,
+      "end": 5.147,
+      "content": "go"
+     },
+     {
+      "begin": 5.349,
+      "end": 5.631,
+      "content": "mental"
+     },
+     {
+      "begin": 5.731,
+      "end": 5.812,
+      "content": "and"
+     },
+     {
+      "begin": 5.913,
+      "end": 6.002,
+      "content": "buck"
+     },
+     {
+      "begin": 6.002,
+      "end": 6.002,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.622
+   },
+   {
+    "begin": 6.002,
+    "end": 7.599,
+    "content": "(AGH!!)",
+    "confidence": 0.498,
+    "mismatch": true,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 6.002,
+      "end": 7.599,
+      "content": "(AGH!!)"
+     }
+    ],
+    "align_score": 0.129
+   },
+   {
+    "begin": 7.844,
+    "end": 9.403,
+    "content": "Environmental injustice",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 7.844,
+      "end": 8.871,
+      "content": "Environmental"
+     },
+     {
+      "begin": 8.972,
+      "end": 9.403,
+      "content": "injustice"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.96
+   },
+   {
+    "begin": 9.403,
+    "end": 10.922,
+    "content": "I know some brothers who clutching",
+    "confidence": 0.944,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 9.403,
+      "end": 9.423,
+      "content": "I"
+     },
+     {
+      "begin": 9.726,
+      "end": 9.846,
+      "content": "know"
+     },
+     {
+      "begin": 9.927,
+      "end": 10.088,
+      "content": "some"
+     },
+     {
+      "begin": 10.189,
+      "end": 10.532,
+      "content": "brothers"
+     },
+     {
+      "begin": 10.572,
+      "end": 10.632,
+      "content": "who"
+     },
+     {
+      "begin": 10.794,
+      "end": 10.922,
+      "content": "clutching"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.933
+   },
+   {
+    "begin": 10.922,
+    "end": 12.682,
+    "content": "They might go mental and buck it",
+    "confidence": 0.714,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 10.922,
+      "end": 11.144,
+      "content": "They"
+     },
+     {
+      "begin": 11.365,
+      "end": 11.587,
+      "content": "might"
+     },
+     {
+      "begin": 11.607,
+      "end": 11.668,
+      "content": "go"
+     },
+     {
+      "begin": 11.768,
+      "end": 12.091,
+      "content": "mental"
+     },
+     {
+      "begin": 12.211,
+      "end": 12.292,
+      "content": "and"
+     },
+     {
+      "begin": 12.413,
+      "end": 12.634,
+      "content": "buck"
+     },
+     {
+      "begin": 12.682,
+      "end": 12.682,
+      "content": "it"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.62
+   },
+   {
+    "begin": 12.682,
+    "end": 15.117,
+    "content": "I'm tryna… have some reservations…",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Intro · The Survey",
+    "words": [
+     {
+      "begin": 12.682,
+      "end": 12.884,
+      "content": "I'm"
+     },
+     {
+      "begin": 12.984,
+      "end": 13.306,
+      "content": "tryna…"
+     },
+     {
+      "begin": 13.829,
+      "end": 14.071,
+      "content": "have"
+     },
+     {
+      "begin": 14.111,
+      "end": 14.272,
+      "content": "some"
+     },
+     {
+      "begin": 14.332,
+      "end": 15.117,
+      "content": "reservations…"
+     }
+    ],
+    "align_score": 0.767
+   },
+   {
+    "begin": 15.443,
+    "end": 18.097,
+    "content": "But I gotta serve the devil's dessert",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Intro · The Survey",
+    "words": [
+     {
+      "begin": 15.443,
+      "end": 15.564,
+      "content": "But"
+     },
+     {
+      "begin": 16.066,
+      "end": 16.086,
+      "content": "I"
+     },
+     {
+      "begin": 16.207,
+      "end": 16.468,
+      "content": "gotta"
+     },
+     {
+      "begin": 16.81,
+      "end": 17.092,
+      "content": "serve"
+     },
+     {
+      "begin": 17.192,
+      "end": 17.273,
+      "content": "the"
+     },
+     {
+      "begin": 17.353,
+      "end": 17.695,
+      "content": "devil's"
+     },
+     {
+      "begin": 17.735,
+      "end": 18.097,
+      "content": "dessert"
+     }
+    ],
+    "align_score": 0.86
+   },
+   {
+    "begin": 18.287,
+    "end": 19.418,
+    "content": "at the table 'cause",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Intro · The Survey",
+    "words": [
+     {
+      "begin": 18.287,
+      "end": 18.348,
+      "content": "at"
+     },
+     {
+      "begin": 18.449,
+      "end": 18.53,
+      "content": "the"
+     },
+     {
+      "begin": 18.691,
+      "end": 19.075,
+      "content": "table"
+     },
+     {
+      "begin": 19.135,
+      "end": 19.418,
+      "content": "'cause"
+     }
+    ],
+    "align_score": 0.851
+   },
+   {
+    "begin": 20,
+    "end": 22.597,
+    "content": "HMM… it's an environmental injustice",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Intro · The Survey",
+    "words": [
+     {
+      "begin": 20,
+      "end": 20.081,
+      "content": "HMM…"
+     },
+     {
+      "begin": 20.664,
+      "end": 20.785,
+      "content": "it's"
+     },
+     {
+      "begin": 20.906,
+      "end": 21.006,
+      "content": "an"
+     },
+     {
+      "begin": 21.067,
+      "end": 21.892,
+      "content": "environmental"
+     },
+     {
+      "begin": 22.033,
+      "end": 22.597,
+      "content": "injustice"
+     }
+    ],
+    "align_score": 0.577
+   },
+   {
+    "begin": 22.686,
+    "end": 24.001,
+    "content": "I know some brothers who clutching",
+    "confidence": 0.667,
+    "mismatch": false,
+    "section": "Intro · The Survey",
+    "words": [
+     {
+      "begin": 22.686,
+      "end": 22.706,
+      "content": "I"
+     },
+     {
+      "begin": 22.787,
+      "end": 22.908,
+      "content": "know"
+     },
+     {
+      "begin": 22.989,
+      "end": 23.13,
+      "content": "some"
+     },
+     {
+      "begin": 23.211,
+      "end": 23.555,
+      "content": "brothers"
+     },
+     {
+      "begin": 23.595,
+      "end": 23.676,
+      "content": "who"
+     },
+     {
+      "begin": 23.797,
+      "end": 24.001,
+      "content": "clutching"
+     }
+    ],
+    "align_score": 0.872
+   },
+   {
+    "begin": 24.001,
+    "end": 26.696,
+    "content": "I'm clutching on it real tight.",
+    "confidence": 0.805,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 24.001,
+      "end": 24.121,
+      "content": "I'm"
+     },
+     {
+      "begin": 25.208,
+      "end": 25.63,
+      "content": "clutching"
+     },
+     {
+      "begin": 25.731,
+      "end": 25.851,
+      "content": "on"
+     },
+     {
+      "begin": 25.932,
+      "end": 25.972,
+      "content": "it"
+     },
+     {
+      "begin": 26.113,
+      "end": 26.314,
+      "content": "real"
+     },
+     {
+      "begin": 26.434,
+      "end": 26.696,
+      "content": "tight."
+     }
+    ],
+    "align_score": 0.482
+   },
+   {
+    "begin": 28.269,
+    "end": 29.937,
+    "content": "Homie this is my real life.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 28.269,
+      "end": 28.57,
+      "content": "Homie"
+     },
+     {
+      "begin": 28.671,
+      "end": 28.791,
+      "content": "this"
+     },
+     {
+      "begin": 28.912,
+      "end": 28.972,
+      "content": "is"
+     },
+     {
+      "begin": 29.053,
+      "end": 29.193,
+      "content": "my"
+     },
+     {
+      "begin": 29.354,
+      "end": 29.595,
+      "content": "real"
+     },
+     {
+      "begin": 29.716,
+      "end": 29.937,
+      "content": "life."
+     }
+    ],
+    "align_score": 0.887
+   },
+   {
+    "begin": 32.065,
+    "end": 33.924,
+    "content": "It's an environmental injustice",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 32.065,
+      "end": 32.145,
+      "content": "It's"
+     },
+     {
+      "begin": 32.266,
+      "end": 32.387,
+      "content": "an"
+     },
+     {
+      "begin": 32.427,
+      "end": 33.192,
+      "content": "environmental"
+     },
+     {
+      "begin": 33.313,
+      "end": 33.924,
+      "content": "injustice"
+     }
+    ],
+    "align_score": 0.47
+   },
+   {
+    "begin": 33.924,
+    "end": 35.454,
+    "content": "I know some brothers who clutching..",
+    "confidence": 0.981,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 33.924,
+      "end": 33.945,
+      "content": "I"
+     },
+     {
+      "begin": 34.045,
+      "end": 34.166,
+      "content": "know"
+     },
+     {
+      "begin": 34.267,
+      "end": 34.427,
+      "content": "some"
+     },
+     {
+      "begin": 34.508,
+      "end": 34.83,
+      "content": "brothers"
+     },
+     {
+      "begin": 34.87,
+      "end": 34.951,
+      "content": "who"
+     },
+     {
+      "begin": 35.112,
+      "end": 35.454,
+      "content": "clutching.."
+     }
+    ],
+    "align_score": 0.694
+   },
+   {
+    "begin": 37.864,
+    "end": 39.76,
+    "content": "And I'm clutching on for dear life.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus · Operation Land Grab",
+    "words": [
+     {
+      "begin": 37.864,
+      "end": 37.985,
+      "content": "And"
+     },
+     {
+      "begin": 38.025,
+      "end": 38.166,
+      "content": "I'm"
+     },
+     {
+      "begin": 38.226,
+      "end": 38.588,
+      "content": "clutching"
+     },
+     {
+      "begin": 38.729,
+      "end": 38.769,
+      "content": "on"
+     },
+     {
+      "begin": 38.809,
+      "end": 38.95,
+      "content": "for"
+     },
+     {
+      "begin": 39.03,
+      "end": 39.292,
+      "content": "dear"
+     },
+     {
+      "begin": 39.493,
+      "end": 39.76,
+      "content": "life."
+     }
+    ],
+    "align_score": 0.237
+   },
+   {
+    "begin": 39.76,
+    "end": 42.896,
+    "content": "Homie this is my real life.",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Chorus · Operation Land Grab",
+    "words": [
+     {
+      "begin": 39.76,
+      "end": 39.861,
+      "content": "Homie"
+     },
+     {
+      "begin": 41.589,
+      "end": 41.73,
+      "content": "this"
+     },
+     {
+      "begin": 41.891,
+      "end": 41.951,
+      "content": "is"
+     },
+     {
+      "begin": 42.032,
+      "end": 42.132,
+      "content": "my"
+     },
+     {
+      "begin": 42.313,
+      "end": 42.554,
+      "content": "real"
+     },
+     {
+      "begin": 42.675,
+      "end": 42.896,
+      "content": "life."
+     }
+    ],
+    "align_score": 0.693
+   },
+   {
+    "begin": 43.567,
+    "end": 45.407,
+    "content": "Don't play with me.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus · Operation Land Grab",
+    "words": [
+     {
+      "begin": 43.567,
+      "end": 43.769,
+      "content": "Don't"
+     },
+     {
+      "begin": 43.849,
+      "end": 44.111,
+      "content": "play"
+     },
+     {
+      "begin": 44.231,
+      "end": 44.533,
+      "content": "with"
+     },
+     {
+      "begin": 45.407,
+      "end": 45.407,
+      "content": "me."
+     }
+    ],
+    "align_score": 0.717
+   },
+   {
+    "begin": 45.407,
+    "end": 46.857,
+    "content": "Environmental injustice",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 45.407,
+      "end": 46.192,
+      "content": "Environmental"
+     },
+     {
+      "begin": 46.293,
+      "end": 46.857,
+      "content": "injustice"
+     }
+    ],
+    "align_score": 0.802
+   },
+   {
+    "begin": 46.925,
+    "end": 48.081,
+    "content": "I know some brothers who clutching",
+    "confidence": 0.981,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 46.925,
+      "end": 46.945,
+      "content": "I"
+     },
+     {
+      "begin": 47.046,
+      "end": 47.147,
+      "content": "know"
+     },
+     {
+      "begin": 47.267,
+      "end": 47.429,
+      "content": "some"
+     },
+     {
+      "begin": 47.509,
+      "end": 47.811,
+      "content": "brothers"
+     },
+     {
+      "begin": 47.851,
+      "end": 47.952,
+      "content": "who"
+     },
+     {
+      "begin": 48.081,
+      "end": 48.081,
+      "content": "clutching"
+     }
+    ],
+    "align_score": 0.669
+   },
+   {
+    "begin": 48.081,
+    "end": 50.902,
+    "content": "Who might go mental and BUCK BUCK!",
+    "confidence": 0.452,
+    "mismatch": true,
+    "section": "Chorus",
+    "heard": "Michael buck Michael Mentally They'll",
+    "words": [
+     {
+      "begin": 48.081,
+      "end": 48.423,
+      "content": "Who"
+     },
+     {
+      "begin": 48.684,
+      "end": 48.965,
+      "content": "might"
+     },
+     {
+      "begin": 49.247,
+      "end": 49.408,
+      "content": "go"
+     },
+     {
+      "begin": 50.352,
+      "end": 50.654,
+      "content": "mental"
+     },
+     {
+      "begin": 50.795,
+      "end": 50.875,
+      "content": "and"
+     },
+     {
+      "begin": 50.902,
+      "end": 50.902,
+      "content": "BUCK"
+     },
+     {
+      "begin": 50.902,
+      "end": 50.902,
+      "content": "BUCK!"
+     }
+    ],
+    "align_score": 0.212
+   },
+   {
+    "begin": 50.902,
+    "end": 52.04,
+    "content": "They can't take your home away",
+    "confidence": 0.738,
+    "mismatch": false,
+    "section": "Bridge · Angel Kastro",
+    "words": [
+     {
+      "begin": 50.902,
+      "end": 51.224,
+      "content": "They"
+     },
+     {
+      "begin": 51.305,
+      "end": 51.486,
+      "content": "can't"
+     },
+     {
+      "begin": 51.547,
+      "end": 51.708,
+      "content": "take"
+     },
+     {
+      "begin": 51.728,
+      "end": 51.869,
+      "content": "your"
+     },
+     {
+      "begin": 51.95,
+      "end": 52.04,
+      "content": "home"
+     },
+     {
+      "begin": 52.04,
+      "end": 52.04,
+      "content": "away"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.611
+   },
+   {
+    "begin": 52.04,
+    "end": 54.858,
+    "content": "if you're covered in blessings",
+    "confidence": 0.974,
+    "mismatch": false,
+    "section": "Bridge · Angel Kastro",
+    "words": [
+     {
+      "begin": 52.04,
+      "end": 52.342,
+      "content": "if"
+     },
+     {
+      "begin": 53.026,
+      "end": 53.147,
+      "content": "you're"
+     },
+     {
+      "begin": 53.167,
+      "end": 53.369,
+      "content": "covered"
+     },
+     {
+      "begin": 53.429,
+      "end": 53.489,
+      "content": "in"
+     },
+     {
+      "begin": 53.55,
+      "end": 54.858,
+      "content": "blessings"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.434
+   },
+   {
+    "begin": 55.266,
+    "end": 57.721,
+    "content": "Every yea every day. Every day yea every day",
+    "confidence": 0.745,
+    "mismatch": false,
+    "section": "Bridge · Angel Kastro",
+    "words": [
+     {
+      "begin": 55.266,
+      "end": 55.486,
+      "content": "Every"
+     },
+     {
+      "begin": 55.567,
+      "end": 55.707,
+      "content": "yea"
+     },
+     {
+      "begin": 56.089,
+      "end": 56.29,
+      "content": "every"
+     },
+     {
+      "begin": 56.37,
+      "end": 56.571,
+      "content": "day."
+     },
+     {
+      "begin": 56.953,
+      "end": 57.133,
+      "content": "Every"
+     },
+     {
+      "begin": 57.214,
+      "end": 57.415,
+      "content": "day"
+     },
+     {
+      "begin": 57.455,
+      "end": 57.515,
+      "content": "yea"
+     },
+     {
+      "begin": 57.716,
+      "end": 57.721,
+      "content": "every"
+     },
+     {
+      "begin": 57.721,
+      "end": 57.721,
+      "content": "day"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.807
+   },
+   {
+    "begin": 57.721,
+    "end": 61.645,
+    "content": "Look up to the sky, no need for stressing",
+    "confidence": 0.877,
+    "mismatch": false,
+    "section": "Bridge · Angel Kastro",
+    "words": [
+     {
+      "begin": 57.721,
+      "end": 57.902,
+      "content": "Look"
+     },
+     {
+      "begin": 58.123,
+      "end": 58.223,
+      "content": "up"
+     },
+     {
+      "begin": 58.404,
+      "end": 58.505,
+      "content": "to"
+     },
+     {
+      "begin": 58.605,
+      "end": 58.685,
+      "content": "the"
+     },
+     {
+      "begin": 58.766,
+      "end": 59.047,
+      "content": "sky,"
+     },
+     {
+      "begin": 59.429,
+      "end": 59.549,
+      "content": "no"
+     },
+     {
+      "begin": 59.61,
+      "end": 59.77,
+      "content": "need"
+     },
+     {
+      "begin": 59.81,
+      "end": 59.931,
+      "content": "for"
+     },
+     {
+      "begin": 59.991,
+      "end": 61.645,
+      "content": "stressing"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.378
+   },
+   {
+    "begin": 61.645,
+    "end": 63.035,
+    "content": "Jesus take these thoughts away",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Bridge · Angel Kastro",
+    "words": [
+     {
+      "begin": 61.645,
+      "end": 61.987,
+      "content": "Jesus"
+     },
+     {
+      "begin": 62.048,
+      "end": 62.249,
+      "content": "take"
+     },
+     {
+      "begin": 62.269,
+      "end": 62.39,
+      "content": "these"
+     },
+     {
+      "begin": 62.431,
+      "end": 62.672,
+      "content": "thoughts"
+     },
+     {
+      "begin": 62.713,
+      "end": 63.035,
+      "content": "away"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.506
+   },
+   {
+    "begin": 63.283,
+    "end": 64.063,
+    "content": "They can't take your home away",
+    "confidence": 0.333,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "heard": "these thoughts",
+    "words": [
+     {
+      "begin": 63.283,
+      "end": 63.586,
+      "content": "They"
+     },
+     {
+      "begin": 63.647,
+      "end": 63.991,
+      "content": "can't"
+     },
+     {
+      "begin": 64.063,
+      "end": 64.063,
+      "content": "take"
+     },
+     {
+      "begin": 64.063,
+      "end": 64.063,
+      "content": "your"
+     },
+     {
+      "begin": 64.063,
+      "end": 64.063,
+      "content": "home"
+     },
+     {
+      "begin": 64.063,
+      "end": 64.063,
+      "content": "away"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.232
+   },
+   {
+    "begin": 64.063,
+    "end": 64.3,
+    "content": "They can't do nothing to you,",
+    "confidence": 0.976,
+    "mismatch": false,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "words": [
+     {
+      "begin": 64.063,
+      "end": 64.3,
+      "content": "They"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "can't"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "do"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "nothing"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "to"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "you,"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.32
+   },
+   {
+    "begin": 64.3,
+    "end": 64.3,
+    "content": "if you're covered in blessings",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "words": [
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "if"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "you're"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "covered"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "in"
+     },
+     {
+      "begin": 64.3,
+      "end": 64.3,
+      "content": "blessings"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.077
+   },
+   {
+    "begin": 65.904,
+    "end": 67.18,
+    "content": "they can't do nothing to you",
+    "confidence": 0.976,
+    "mismatch": false,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "words": [
+     {
+      "begin": 65.904,
+      "end": 66.025,
+      "content": "they"
+     },
+     {
+      "begin": 66.105,
+      "end": 66.266,
+      "content": "can't"
+     },
+     {
+      "begin": 66.306,
+      "end": 66.387,
+      "content": "do"
+     },
+     {
+      "begin": 66.528,
+      "end": 66.83,
+      "content": "nothing"
+     },
+     {
+      "begin": 66.89,
+      "end": 66.991,
+      "content": "to"
+     },
+     {
+      "begin": 67.112,
+      "end": 67.18,
+      "content": "you"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.714
+   },
+   {
+    "begin": 67.18,
+    "end": 68.04,
+    "content": "We gon' stand here and fight",
+    "confidence": 0.167,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "words": [
+     {
+      "begin": 67.18,
+      "end": 67.261,
+      "content": "We"
+     },
+     {
+      "begin": 67.322,
+      "end": 67.606,
+      "content": "gon'"
+     },
+     {
+      "begin": 67.869,
+      "end": 67.991,
+      "content": "stand"
+     },
+     {
+      "begin": 68.032,
+      "end": 68.04,
+      "content": "here"
+     },
+     {
+      "begin": 68.04,
+      "end": 68.04,
+      "content": "and"
+     },
+     {
+      "begin": 68.04,
+      "end": 68.04,
+      "content": "fight"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.183
+   },
+   {
+    "begin": 68.04,
+    "end": 68.92,
+    "content": "Might go mental and BUCK!",
+    "confidence": 0.333,
+    "mismatch": true,
+    "section": "Chorus",
+    "heard": "stand here",
+    "words": [
+     {
+      "begin": 68.04,
+      "end": 68.04,
+      "content": "Might"
+     },
+     {
+      "begin": 68.04,
+      "end": 68.14,
+      "content": "go"
+     },
+     {
+      "begin": 68.14,
+      "end": 68.7,
+      "content": "mental"
+     },
+     {
+      "begin": 68.7,
+      "end": 68.92,
+      "content": "and"
+     },
+     {
+      "begin": 68.92,
+      "end": 68.92,
+      "content": "BUCK!"
+     }
+    ],
+    "align_score": 0.081
+   },
+   {
+    "begin": 68.92,
+    "end": 69.2,
+    "content": "We gon' stand here and fight",
+    "confidence": 0.167,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "words": [
+     {
+      "begin": 68.92,
+      "end": 68.92,
+      "content": "We"
+     },
+     {
+      "begin": 68.92,
+      "end": 68.92,
+      "content": "gon'"
+     },
+     {
+      "begin": 68.92,
+      "end": 68.92,
+      "content": "stand"
+     },
+     {
+      "begin": 68.92,
+      "end": 68.92,
+      "content": "here"
+     },
+     {
+      "begin": 68.92,
+      "end": 68.92,
+      "content": "and"
+     },
+     {
+      "begin": 68.92,
+      "end": 69.2,
+      "content": "fight"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.107
+   },
+   {
+    "begin": 69.503,
+    "end": 70.723,
+    "content": "for what wrong and what is true",
+    "confidence": 0.514,
+    "mismatch": false,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "words": [
+     {
+      "begin": 69.503,
+      "end": 69.624,
+      "content": "for"
+     },
+     {
+      "begin": 69.766,
+      "end": 69.907,
+      "content": "what"
+     },
+     {
+      "begin": 70.028,
+      "end": 70.209,
+      "content": "wrong"
+     },
+     {
+      "begin": 70.451,
+      "end": 70.552,
+      "content": "and"
+     },
+     {
+      "begin": 70.612,
+      "end": 70.723,
+      "content": "what"
+     },
+     {
+      "begin": 70.723,
+      "end": 70.723,
+      "content": "is"
+     },
+     {
+      "begin": 70.723,
+      "end": 70.723,
+      "content": "true"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.231
+   },
+   {
+    "begin": 70.723,
+    "end": 71.76,
+    "content": "They can't do nothing to you,",
+    "confidence": 0.976,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 70.723,
+      "end": 70.884,
+      "content": "They"
+     },
+     {
+      "begin": 70.944,
+      "end": 71.146,
+      "content": "can't"
+     },
+     {
+      "begin": 71.186,
+      "end": 71.247,
+      "content": "do"
+     },
+     {
+      "begin": 71.368,
+      "end": 71.711,
+      "content": "nothing"
+     },
+     {
+      "begin": 71.76,
+      "end": 71.76,
+      "content": "to"
+     },
+     {
+      "begin": 71.76,
+      "end": 71.76,
+      "content": "you,"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.458
+   },
+   {
+    "begin": 71.76,
+    "end": 73.713,
+    "content": "they can't do nothing to you",
+    "confidence": 0.976,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 71.76,
+      "end": 71.981,
+      "content": "they"
+     },
+     {
+      "begin": 72.585,
+      "end": 72.747,
+      "content": "can't"
+     },
+     {
+      "begin": 72.827,
+      "end": 72.887,
+      "content": "do"
+     },
+     {
+      "begin": 73.028,
+      "end": 73.351,
+      "content": "nothing"
+     },
+     {
+      "begin": 73.391,
+      "end": 73.491,
+      "content": "to"
+     },
+     {
+      "begin": 73.592,
+      "end": 73.713,
+      "content": "you"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.674
+   },
+   {
+    "begin": 74.201,
+    "end": 77.921,
+    "content": "gon' stand here and fight against what's wrong for what's true",
+    "confidence": 0.269,
+    "mismatch": true,
+    "section": "Verse · Ocho",
+    "heard": "gon' stand here and fight against what's wrong for what's true",
+    "sheet": "Said, we just want it back.",
+    "words": [
+     {
+      "begin": 74.201,
+      "end": 74.462,
+      "content": "gon'"
+     },
+     {
+      "begin": 74.583,
+      "end": 74.864,
+      "content": "stand"
+     },
+     {
+      "begin": 74.965,
+      "end": 75.125,
+      "content": "here"
+     },
+     {
+      "begin": 75.246,
+      "end": 75.346,
+      "content": "and"
+     },
+     {
+      "begin": 75.406,
+      "end": 75.668,
+      "content": "fight"
+     },
+     {
+      "begin": 75.748,
+      "end": 76.21,
+      "content": "against"
+     },
+     {
+      "begin": 76.31,
+      "end": 76.511,
+      "content": "what's"
+     },
+     {
+      "begin": 76.531,
+      "end": 76.993,
+      "content": "wrong"
+     },
+     {
+      "begin": 77.114,
+      "end": 77.455,
+      "content": "for"
+     },
+     {
+      "begin": 77.556,
+      "end": 77.817,
+      "content": "what's"
+     },
+     {
+      "begin": 77.921,
+      "end": 77.921,
+      "content": "true"
+     }
+    ],
+    "align_score": 0.351
+   },
+   {
+    "begin": 77.921,
+    "end": 79.957,
+    "content": "Back to the beginning",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 77.921,
+      "end": 78.848,
+      "content": "Back"
+     },
+     {
+      "begin": 78.909,
+      "end": 79.01,
+      "content": "to"
+     },
+     {
+      "begin": 79.11,
+      "end": 79.211,
+      "content": "the"
+     },
+     {
+      "begin": 79.292,
+      "end": 79.957,
+      "content": "beginning"
+     }
+    ],
+    "align_score": 0.552
+   },
+   {
+    "begin": 80.168,
+    "end": 81.499,
+    "content": "When everybody cared.",
+    "confidence": 0.608,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 80.168,
+      "end": 80.269,
+      "content": "When"
+     },
+     {
+      "begin": 80.431,
+      "end": 80.995,
+      "content": "everybody"
+     },
+     {
+      "begin": 81.116,
+      "end": 81.499,
+      "content": "cared."
+     }
+    ],
+    "align_score": 0.796
+   },
+   {
+    "begin": 81.784,
+    "end": 82.722,
+    "content": "When everybody winning",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 81.784,
+      "end": 81.905,
+      "content": "When"
+     },
+     {
+      "begin": 82.066,
+      "end": 82.631,
+      "content": "everybody"
+     },
+     {
+      "begin": 82.722,
+      "end": 82.722,
+      "content": "winning"
+     }
+    ],
+    "align_score": 0.787
+   },
+   {
+    "begin": 82.722,
+    "end": 84.12,
+    "content": "Before they blamed the fruit,",
+    "confidence": 0.967,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 82.722,
+      "end": 83.729,
+      "content": "Before"
+     },
+     {
+      "begin": 83.769,
+      "end": 83.85,
+      "content": "they"
+     },
+     {
+      "begin": 83.93,
+      "end": 84.12,
+      "content": "blamed"
+     },
+     {
+      "begin": 84.12,
+      "end": 84.12,
+      "content": "the"
+     },
+     {
+      "begin": 84.12,
+      "end": 84.12,
+      "content": "fruit,"
+     }
+    ],
+    "align_score": 0.454
+   },
+   {
+    "begin": 84.12,
+    "end": 86.605,
+    "content": "before we started sinning.",
+    "confidence": 0.893,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 84.12,
+      "end": 85.348,
+      "content": "before"
+     },
+     {
+      "begin": 85.389,
+      "end": 85.469,
+      "content": "we"
+     },
+     {
+      "begin": 85.55,
+      "end": 85.912,
+      "content": "started"
+     },
+     {
+      "begin": 85.993,
+      "end": 86.605,
+      "content": "sinning."
+     }
+    ],
+    "align_score": 0.362
+   },
+   {
+    "begin": 86.605,
+    "end": 87.821,
+    "content": "When this land was my land",
+    "confidence": 0.908,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 86.605,
+      "end": 86.806,
+      "content": "When"
+     },
+     {
+      "begin": 86.847,
+      "end": 86.988,
+      "content": "this"
+     },
+     {
+      "begin": 87.128,
+      "end": 87.35,
+      "content": "land"
+     },
+     {
+      "begin": 87.41,
+      "end": 87.531,
+      "content": "was"
+     },
+     {
+      "begin": 87.652,
+      "end": 87.821,
+      "content": "my"
+     },
+     {
+      "begin": 87.821,
+      "end": 87.821,
+      "content": "land"
+     }
+    ],
+    "align_score": 0.384
+   },
+   {
+    "begin": 87.821,
+    "end": 89.261,
+    "content": "if only you could dig it",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 87.821,
+      "end": 88.365,
+      "content": "if"
+     },
+     {
+      "begin": 88.547,
+      "end": 88.728,
+      "content": "only"
+     },
+     {
+      "begin": 88.849,
+      "end": 88.93,
+      "content": "you"
+     },
+     {
+      "begin": 89.01,
+      "end": 89.212,
+      "content": "could"
+     },
+     {
+      "begin": 89.252,
+      "end": 89.261,
+      "content": "dig"
+     },
+     {
+      "begin": 89.261,
+      "end": 89.261,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.688
+   },
+   {
+    "begin": 89.261,
+    "end": 91.104,
+    "content": "But hold up let me pivot",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 89.261,
+      "end": 89.664,
+      "content": "But"
+     },
+     {
+      "begin": 90.047,
+      "end": 90.249,
+      "content": "hold"
+     },
+     {
+      "begin": 90.349,
+      "end": 90.39,
+      "content": "up"
+     },
+     {
+      "begin": 90.47,
+      "end": 90.611,
+      "content": "let"
+     },
+     {
+      "begin": 90.692,
+      "end": 90.772,
+      "content": "me"
+     },
+     {
+      "begin": 90.873,
+      "end": 91.104,
+      "content": "pivot"
+     }
+    ],
+    "align_score": 0.349
+   },
+   {
+    "begin": 91.104,
+    "end": 92.341,
+    "content": "They wanna take the church",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 91.104,
+      "end": 91.587,
+      "content": "They"
+     },
+     {
+      "begin": 91.688,
+      "end": 91.97,
+      "content": "wanna"
+     },
+     {
+      "begin": 92.05,
+      "end": 92.232,
+      "content": "take"
+     },
+     {
+      "begin": 92.272,
+      "end": 92.341,
+      "content": "the"
+     },
+     {
+      "begin": 92.341,
+      "end": 92.341,
+      "content": "church"
+     }
+    ],
+    "align_score": 0.398
+   },
+   {
+    "begin": 92.341,
+    "end": 94.323,
+    "content": "'prolly wanna build a prison.",
+    "confidence": 0.896,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 92.341,
+      "end": 93.227,
+      "content": "'prolly"
+     },
+     {
+      "begin": 93.308,
+      "end": 93.61,
+      "content": "wanna"
+     },
+     {
+      "begin": 93.691,
+      "end": 93.872,
+      "content": "build"
+     },
+     {
+      "begin": 93.993,
+      "end": 94.013,
+      "content": "a"
+     },
+     {
+      "begin": 94.113,
+      "end": 94.323,
+      "content": "prison."
+     }
+    ],
+    "align_score": 0.565
+   },
+   {
+    "begin": 94.323,
+    "end": 96.482,
+    "content": "So really what it's giving? Villain.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 94.323,
+      "end": 94.443,
+      "content": "So"
+     },
+     {
+      "begin": 94.966,
+      "end": 95.187,
+      "content": "really"
+     },
+     {
+      "begin": 95.328,
+      "end": 95.469,
+      "content": "what"
+     },
+     {
+      "begin": 95.489,
+      "end": 95.63,
+      "content": "it's"
+     },
+     {
+      "begin": 95.71,
+      "end": 96.072,
+      "content": "giving?"
+     },
+     {
+      "begin": 96.482,
+      "end": 96.482,
+      "content": "Villain."
+     }
+    ],
+    "align_score": 0.579
+   },
+   {
+    "begin": 96.482,
+    "end": 98.014,
+    "content": "The future got me",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 96.482,
+      "end": 97.208,
+      "content": "The"
+     },
+     {
+      "begin": 97.309,
+      "end": 97.611,
+      "content": "future"
+     },
+     {
+      "begin": 97.732,
+      "end": 97.873,
+      "content": "got"
+     },
+     {
+      "begin": 97.934,
+      "end": 98.014,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.711
+   },
+   {
+    "begin": 98.105,
+    "end": 99.221,
+    "content": "fighting for the feeling.",
+    "confidence": 0.98,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 98.105,
+      "end": 98.448,
+      "content": "fighting"
+     },
+     {
+      "begin": 98.529,
+      "end": 98.65,
+      "content": "for"
+     },
+     {
+      "begin": 98.75,
+      "end": 98.831,
+      "content": "the"
+     },
+     {
+      "begin": 98.952,
+      "end": 99.221,
+      "content": "feeling."
+     }
+    ],
+    "align_score": 0.626
+   },
+   {
+    "begin": 99.221,
+    "end": 100.461,
+    "content": "And see my people moving",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 99.221,
+      "end": 99.382,
+      "content": "And"
+     },
+     {
+      "begin": 99.745,
+      "end": 99.846,
+      "content": "see"
+     },
+     {
+      "begin": 99.927,
+      "end": 100.008,
+      "content": "my"
+     },
+     {
+      "begin": 100.169,
+      "end": 100.461,
+      "content": "people"
+     },
+     {
+      "begin": 100.461,
+      "end": 100.461,
+      "content": "moving"
+     }
+    ],
+    "align_score": 0.29
+   },
+   {
+    "begin": 100.461,
+    "end": 102,
+    "content": "'cause they able and they willing",
+    "confidence": 0.924,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 100.461,
+      "end": 100.884,
+      "content": "'cause"
+     },
+     {
+      "begin": 101.005,
+      "end": 101.327,
+      "content": "they"
+     },
+     {
+      "begin": 101.508,
+      "end": 101.77,
+      "content": "able"
+     },
+     {
+      "begin": 101.931,
+      "end": 102,
+      "content": "and"
+     },
+     {
+      "begin": 102,
+      "end": 102,
+      "content": "they"
+     },
+     {
+      "begin": 102,
+      "end": 102,
+      "content": "willing"
+     }
+    ],
+    "align_score": 0.274
+   },
+   {
+    "begin": 102,
+    "end": 103.822,
+    "content": "To stand up like a building,",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 102,
+      "end": 102.101,
+      "content": "To"
+     },
+     {
+      "begin": 102.323,
+      "end": 103.249,
+      "content": "stand"
+     },
+     {
+      "begin": 103.31,
+      "end": 103.35,
+      "content": "up"
+     },
+     {
+      "begin": 103.451,
+      "end": 103.592,
+      "content": "like"
+     },
+     {
+      "begin": 103.713,
+      "end": 103.733,
+      "content": "a"
+     },
+     {
+      "begin": 103.822,
+      "end": 103.822,
+      "content": "building,"
+     }
+    ],
+    "align_score": 0.552
+   },
+   {
+    "begin": 103.822,
+    "end": 106.304,
+    "content": "for these buildings got me building.",
+    "confidence": 0.975,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 103.822,
+      "end": 103.963,
+      "content": "for"
+     },
+     {
+      "begin": 104.023,
+      "end": 104.366,
+      "content": "these"
+     },
+     {
+      "begin": 104.627,
+      "end": 105.01,
+      "content": "buildings"
+     },
+     {
+      "begin": 105.03,
+      "end": 105.171,
+      "content": "got"
+     },
+     {
+      "begin": 105.231,
+      "end": 105.352,
+      "content": "me"
+     },
+     {
+      "begin": 105.433,
+      "end": 106.304,
+      "content": "building."
+     }
+    ],
+    "align_score": 0.267
+   },
+   {
+    "begin": 106.304,
+    "end": 107.505,
+    "content": "Pillar of my era",
+    "confidence": 0.917,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 106.304,
+      "end": 106.586,
+      "content": "Pillar"
+     },
+     {
+      "begin": 106.748,
+      "end": 106.788,
+      "content": "of"
+     },
+     {
+      "begin": 106.889,
+      "end": 106.99,
+      "content": "my"
+     },
+     {
+      "begin": 107.192,
+      "end": 107.505,
+      "content": "era"
+     }
+    ],
+    "align_score": 0.306
+   },
+   {
+    "begin": 107.505,
+    "end": 109.345,
+    "content": "and I'm daring him to kill him.",
+    "confidence": 0.913,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 107.505,
+      "end": 107.585,
+      "content": "and"
+     },
+     {
+      "begin": 107.686,
+      "end": 107.766,
+      "content": "I'm"
+     },
+     {
+      "begin": 107.847,
+      "end": 108.25,
+      "content": "daring"
+     },
+     {
+      "begin": 108.31,
+      "end": 108.451,
+      "content": "him"
+     },
+     {
+      "begin": 108.511,
+      "end": 108.572,
+      "content": "to"
+     },
+     {
+      "begin": 108.652,
+      "end": 108.934,
+      "content": "kill"
+     },
+     {
+      "begin": 109.035,
+      "end": 109.345,
+      "content": "him."
+     }
+    ],
+    "align_score": 0.251
+   },
+   {
+    "begin": 109.345,
+    "end": 110.101,
+    "content": "No reason to be scared,",
+    "confidence": 0.956,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 109.345,
+      "end": 109.426,
+      "content": "No"
+     },
+     {
+      "begin": 109.547,
+      "end": 109.809,
+      "content": "reason"
+     },
+     {
+      "begin": 109.91,
+      "end": 109.99,
+      "content": "to"
+     },
+     {
+      "begin": 110.101,
+      "end": 110.101,
+      "content": "be"
+     },
+     {
+      "begin": 110.101,
+      "end": 110.101,
+      "content": "scared,"
+     }
+    ],
+    "align_score": 0.827
+   },
+   {
+    "begin": 110.101,
+    "end": 111.982,
+    "content": "be prepared for the healing.",
+    "confidence": 0.98,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 110.101,
+      "end": 110.161,
+      "content": "be"
+     },
+     {
+      "begin": 110.282,
+      "end": 111.067,
+      "content": "prepared"
+     },
+     {
+      "begin": 111.148,
+      "end": 111.39,
+      "content": "for"
+     },
+     {
+      "begin": 111.551,
+      "end": 111.652,
+      "content": "the"
+     },
+     {
+      "begin": 111.934,
+      "end": 111.982,
+      "content": "healing."
+     }
+    ],
+    "align_score": 0.309
+   },
+   {
+    "begin": 111.982,
+    "end": 113.942,
+    "content": "And leave it up to God, oh yeah,",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 111.982,
+      "end": 112.526,
+      "content": "And"
+     },
+     {
+      "begin": 112.586,
+      "end": 112.848,
+      "content": "leave"
+     },
+     {
+      "begin": 113.029,
+      "end": 113.13,
+      "content": "it"
+     },
+     {
+      "begin": 113.23,
+      "end": 113.271,
+      "content": "up"
+     },
+     {
+      "begin": 113.351,
+      "end": 113.432,
+      "content": "to"
+     },
+     {
+      "begin": 113.552,
+      "end": 113.915,
+      "content": "God,"
+     },
+     {
+      "begin": 113.942,
+      "end": 113.942,
+      "content": "oh"
+     },
+     {
+      "begin": 113.942,
+      "end": 113.942,
+      "content": "yeah,"
+     }
+    ],
+    "align_score": 0.311
+   },
+   {
+    "begin": 113.942,
+    "end": 115.262,
+    "content": "he made me in his image. YAAH!",
+    "confidence": 0.857,
+    "mismatch": false,
+    "section": "Verse · Ocho",
+    "words": [
+     {
+      "begin": 113.942,
+      "end": 114.063,
+      "content": "he"
+     },
+     {
+      "begin": 114.345,
+      "end": 114.547,
+      "content": "made"
+     },
+     {
+      "begin": 114.567,
+      "end": 114.648,
+      "content": "me"
+     },
+     {
+      "begin": 114.809,
+      "end": 114.849,
+      "content": "in"
+     },
+     {
+      "begin": 114.95,
+      "end": 115.071,
+      "content": "his"
+     },
+     {
+      "begin": 115.192,
+      "end": 115.262,
+      "content": "image."
+     },
+     {
+      "begin": 115.262,
+      "end": 115.262,
+      "content": "YAAH!"
+     }
+    ],
+    "align_score": 0.342
+   },
+   {
+    "begin": 115.262,
+    "end": 117.516,
+    "content": "I'm clutching on it real tight.",
+    "confidence": 0.999,
+    "mismatch": false,
+    "section": "Chorus",
+    "words": [
+     {
+      "begin": 115.262,
+      "end": 115.705,
+      "content": "I'm"
+     },
+     {
+      "begin": 115.805,
+      "end": 116.449,
+      "content": "clutching"
+     },
+     {
+      "begin": 116.55,
+      "end": 116.65,
+      "content": "on"
+     },
+     {
+      "begin": 116.771,
+      "end": 116.811,
+      "content": "it"
+     },
+     {
+      "begin": 116.912,
+      "end": 117.133,
+      "content": "real"
+     },
+     {
+      "begin": 117.254,
+      "end": 117.516,
+      "content": "tight."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.395
+   },
+   {
+    "begin": 118.92,
+    "end": 119.44,
+    "content": "They can't take your home away",
+    "confidence": 0.133,
+    "mismatch": true,
+    "section": "Bridge · Angel Kastro",
+    "heard": "this",
+    "words": [
+     {
+      "begin": 118.92,
+      "end": 118.92,
+      "content": "They"
+     },
+     {
+      "begin": 118.92,
+      "end": 118.92,
+      "content": "can't"
+     },
+     {
+      "begin": 118.92,
+      "end": 118.92,
+      "content": "take"
+     },
+     {
+      "begin": 118.92,
+      "end": 118.92,
+      "content": "your"
+     },
+     {
+      "begin": 118.92,
+      "end": 119.44,
+      "content": "home"
+     },
+     {
+      "begin": 119.44,
+      "end": 119.44,
+      "content": "away"
+     }
+    ],
+    "align_score": 0.103
+   },
+   {
+    "begin": 119.462,
+    "end": 123.579,
+    "content": "this is my real life It's an",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge · Angel Kastro",
+    "heard": "this is my real life It's an",
+    "sheet": "if you're covered in blessings",
+    "words": [
+     {
+      "begin": 119.462,
+      "end": 119.583,
+      "content": "this"
+     },
+     {
+      "begin": 119.703,
+      "end": 119.764,
+      "content": "is"
+     },
+     {
+      "begin": 119.844,
+      "end": 120.005,
+      "content": "my"
+     },
+     {
+      "begin": 120.145,
+      "end": 120.406,
+      "content": "real"
+     },
+     {
+      "begin": 120.507,
+      "end": 120.748,
+      "content": "life"
+     },
+     {
+      "begin": 123.077,
+      "end": 123.298,
+      "content": "It's"
+     },
+     {
+      "begin": 123.519,
+      "end": 123.579,
+      "content": "an"
+     }
+    ],
+    "align_score": 0.79
+   },
+   {
+    "begin": 124.102,
+    "end": 129.64,
+    "content": "injustice I know some brothers who clutching And I'm clutching on",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge · Angel Kastro",
+    "heard": "injustice I know some brothers who clutching And I'm clutching on",
+    "sheet": "Every yea every day. Every day yea every day",
+    "words": [
+     {
+      "begin": 124.102,
+      "end": 124.664,
+      "content": "injustice"
+     },
+     {
+      "begin": 124.744,
+      "end": 124.764,
+      "content": "I"
+     },
+     {
+      "begin": 124.844,
+      "end": 124.965,
+      "content": "know"
+     },
+     {
+      "begin": 125.085,
+      "end": 125.225,
+      "content": "some"
+     },
+     {
+      "begin": 125.306,
+      "end": 125.647,
+      "content": "brothers"
+     },
+     {
+      "begin": 125.667,
+      "end": 125.767,
+      "content": "who"
+     },
+     {
+      "begin": 125.907,
+      "end": 126.228,
+      "content": "clutching"
+     },
+     {
+      "begin": 128.675,
+      "end": 128.756,
+      "content": "And"
+     },
+     {
+      "begin": 128.836,
+      "end": 128.916,
+      "content": "I'm"
+     },
+     {
+      "begin": 129.037,
+      "end": 129.438,
+      "content": "clutching"
+     },
+     {
+      "begin": 129.538,
+      "end": 129.64,
+      "content": "on"
+     }
+    ],
+    "align_score": 0.535
+   },
+   {
+    "begin": 129.64,
+    "end": 129.78,
+    "content": "Look up to the sky, no need for stressing",
+    "confidence": 0.111,
+    "mismatch": true,
+    "section": "Bridge · Angel Kastro",
+    "words": [
+     {
+      "begin": 129.64,
+      "end": 129.64,
+      "content": "Look"
+     },
+     {
+      "begin": 129.64,
+      "end": 129.64,
+      "content": "up"
+     },
+     {
+      "begin": 129.64,
+      "end": 129.64,
+      "content": "to"
+     },
+     {
+      "begin": 129.64,
+      "end": 129.64,
+      "content": "the"
+     },
+     {
+      "begin": 129.64,
+      "end": 129.64,
+      "content": "sky,"
+     },
+     {
+      "begin": 129.64,
+      "end": 129.64,
+      "content": "no"
+     },
+     {
+      "begin": 129.64,
+      "end": 129.64,
+      "content": "need"
+     },
+     {
+      "begin": 129.64,
+      "end": 129.78,
+      "content": "for"
+     },
+     {
+      "begin": 129.78,
+      "end": 129.78,
+      "content": "stressing"
+     }
+    ],
+    "align_score": 0.066
+   },
+   {
+    "begin": 132.04,
+    "end": 132.56,
+    "content": "Jesus take these thoughts away",
+    "confidence": 0.12,
+    "mismatch": true,
+    "section": "Bridge · Angel Kastro",
+    "heard": "is",
+    "words": [
+     {
+      "begin": 132.04,
+      "end": 132.04,
+      "content": "Jesus"
+     },
+     {
+      "begin": 132.04,
+      "end": 132.04,
+      "content": "take"
+     },
+     {
+      "begin": 132.04,
+      "end": 132.56,
+      "content": "these"
+     },
+     {
+      "begin": 132.56,
+      "end": 132.56,
+      "content": "thoughts"
+     },
+     {
+      "begin": 132.56,
+      "end": 132.56,
+      "content": "away"
+     }
+    ],
+    "align_score": 0.082
+   },
+   {
+    "begin": 132.686,
+    "end": 133.714,
+    "content": "is my real life",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "heard": "is my real life",
+    "sheet": "They can't take your home away",
+    "words": [
+     {
+      "begin": 132.686,
+      "end": 132.746,
+      "content": "is"
+     },
+     {
+      "begin": 132.827,
+      "end": 132.968,
+      "content": "my"
+     },
+     {
+      "begin": 133.13,
+      "end": 133.372,
+      "content": "real"
+     },
+     {
+      "begin": 133.472,
+      "end": 133.714,
+      "content": "life"
+     }
+    ],
+    "align_score": 0.989
+   },
+   {
+    "begin": 134.646,
+    "end": 136.059,
+    "content": "play with me",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "heard": "play with me",
+    "sheet": "if you're covered in blessings",
+    "words": [
+     {
+      "begin": 134.646,
+      "end": 134.928,
+      "content": "play"
+     },
+     {
+      "begin": 135.029,
+      "end": 135.352,
+      "content": "with"
+     },
+     {
+      "begin": 136.019,
+      "end": 136.059,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.544
+   },
+   {
+    "begin": 136.23,
+    "end": 137.724,
+    "content": "They can't do nothing to you,",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "heard": "Environmental injustice, I",
+    "words": [
+     {
+      "begin": 136.23,
+      "end": 136.652,
+      "content": "They"
+     },
+     {
+      "begin": 136.713,
+      "end": 136.874,
+      "content": "can't"
+     },
+     {
+      "begin": 136.914,
+      "end": 136.974,
+      "content": "do"
+     },
+     {
+      "begin": 137.115,
+      "end": 137.724,
+      "content": "nothing"
+     },
+     {
+      "begin": 137.724,
+      "end": 137.724,
+      "content": "to"
+     },
+     {
+      "begin": 137.724,
+      "end": 137.724,
+      "content": "you,"
+     }
+    ],
+    "align_score": 0.207
+   },
+   {
+    "begin": 137.724,
+    "end": 138.681,
+    "content": "I know some brothers who clutch",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "heard": "I know some brothers who clutch",
+    "sheet": "they can't do nothing to you",
+    "words": [
+     {
+      "begin": 137.724,
+      "end": 137.744,
+      "content": "I"
+     },
+     {
+      "begin": 137.845,
+      "end": 137.966,
+      "content": "know"
+     },
+     {
+      "begin": 138.067,
+      "end": 138.248,
+      "content": "some"
+     },
+     {
+      "begin": 138.329,
+      "end": 138.631,
+      "content": "brothers"
+     },
+     {
+      "begin": 138.671,
+      "end": 138.681,
+      "content": "who"
+     },
+     {
+      "begin": 138.681,
+      "end": 138.681,
+      "content": "clutch"
+     }
+    ],
+    "align_score": 0.744
+   },
+   {
+    "begin": 138.681,
+    "end": 140.098,
+    "content": "We gon' stand here and fight",
+    "confidence": 0.217,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "heard": "who go",
+    "words": [
+     {
+      "begin": 138.681,
+      "end": 138.762,
+      "content": "We"
+     },
+     {
+      "begin": 138.884,
+      "end": 139.106,
+      "content": "gon'"
+     },
+     {
+      "begin": 139.127,
+      "end": 139.288,
+      "content": "stand"
+     },
+     {
+      "begin": 139.349,
+      "end": 139.693,
+      "content": "here"
+     },
+     {
+      "begin": 139.794,
+      "end": 139.875,
+      "content": "and"
+     },
+     {
+      "begin": 139.936,
+      "end": 140.098,
+      "content": "fight"
+     }
+    ],
+    "align_score": 0.181
+   },
+   {
+    "begin": 140.28,
+    "end": 140.54,
+    "content": "for what wrong and what is true",
+    "confidence": 0.138,
+    "mismatch": true,
+    "section": "Bridge · Reprise: McCluster, Ocho & Angel Kastro",
+    "heard": "buck,",
+    "words": [
+     {
+      "begin": 140.28,
+      "end": 140.28,
+      "content": "for"
+     },
+     {
+      "begin": 140.28,
+      "end": 140.28,
+      "content": "what"
+     },
+     {
+      "begin": 140.28,
+      "end": 140.28,
+      "content": "wrong"
+     },
+     {
+      "begin": 140.28,
+      "end": 140.54,
+      "content": "and"
+     },
+     {
+      "begin": 140.54,
+      "end": 140.54,
+      "content": "what"
+     },
+     {
+      "begin": 140.54,
+      "end": 140.54,
+      "content": "is"
+     },
+     {
+      "begin": 140.54,
+      "end": 140.54,
+      "content": "true"
+     }
+    ],
+    "align_score": 0.039
+   },
+   {
+    "begin": 140.54,
+    "end": 140.876,
+    "content": "They can't do nothing to you,",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge",
+    "heard": "buck, buck,",
+    "words": [
+     {
+      "begin": 140.54,
+      "end": 140.596,
+      "content": "They"
+     },
+     {
+      "begin": 140.596,
+      "end": 140.652,
+      "content": "can't"
+     },
+     {
+      "begin": 140.652,
+      "end": 140.708,
+      "content": "do"
+     },
+     {
+      "begin": 140.708,
+      "end": 140.764,
+      "content": "nothing"
+     },
+     {
+      "begin": 140.764,
+      "end": 140.82,
+      "content": "to"
+     },
+     {
+      "begin": 140.82,
+      "end": 140.876,
+      "content": "you,"
+     }
+    ],
+    "align_score": 0.081
+   },
+   {
+    "begin": 140.876,
+    "end": 141.2,
+    "content": "they can't do nothing to you",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Bridge",
+    "heard": "buck,",
+    "words": [
+     {
+      "begin": 140.876,
+      "end": 140.93,
+      "content": "they"
+     },
+     {
+      "begin": 140.93,
+      "end": 140.984,
+      "content": "can't"
+     },
+     {
+      "begin": 140.984,
+      "end": 141.038,
+      "content": "do"
+     },
+     {
+      "begin": 141.038,
+      "end": 141.092,
+      "content": "nothing"
+     },
+     {
+      "begin": 141.092,
+      "end": 141.146,
+      "content": "to"
+     },
+     {
+      "begin": 141.146,
+      "end": 141.2,
+      "content": "you"
+     }
+    ],
+    "align_score": 0.067
+   },
+   {
+    "begin": 141.2,
+    "end": 141.34,
+    "content": "Gon' stand here and fight",
+    "confidence": 0.125,
+    "mismatch": true,
+    "section": "Bridge",
+    "heard": "go",
+    "words": [
+     {
+      "begin": 141.2,
+      "end": 141.2,
+      "content": "Gon'"
+     },
+     {
+      "begin": 141.2,
+      "end": 141.2,
+      "content": "stand"
+     },
+     {
+      "begin": 141.2,
+      "end": 141.2,
+      "content": "here"
+     },
+     {
+      "begin": 141.2,
+      "end": 141.2,
+      "content": "and"
+     },
+     {
+      "begin": 141.2,
+      "end": 141.34,
+      "content": "fight"
+     }
+    ],
+    "align_score": 0.116
+   },
+   {
+    "begin": 141.341,
+    "end": 142.444,
+    "content": "for what wrong and what is true",
+    "confidence": 0.143,
+    "mismatch": true,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 141.341,
+      "end": 141.443,
+      "content": "for"
+     },
+     {
+      "begin": 141.544,
+      "end": 141.645,
+      "content": "what"
+     },
+     {
+      "begin": 141.706,
+      "end": 141.868,
+      "content": "wrong"
+     },
+     {
+      "begin": 141.99,
+      "end": 142.071,
+      "content": "and"
+     },
+     {
+      "begin": 142.173,
+      "end": 142.355,
+      "content": "what"
+     },
+     {
+      "begin": 142.375,
+      "end": 142.416,
+      "content": "is"
+     },
+     {
+      "begin": 142.436,
+      "end": 142.444,
+      "content": "true"
+     }
+    ],
+    "align_score": 0.134
+   },
+   {
+    "begin": 142.444,
+    "end": 144.176,
+    "content": "'Cause you lookin' like prey",
+    "confidence": 0.834,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 142.444,
+      "end": 143.189,
+      "content": "'Cause"
+     },
+     {
+      "begin": 143.23,
+      "end": 143.29,
+      "content": "you"
+     },
+     {
+      "begin": 143.391,
+      "end": 143.632,
+      "content": "lookin'"
+     },
+     {
+      "begin": 143.693,
+      "end": 143.854,
+      "content": "like"
+     },
+     {
+      "begin": 143.995,
+      "end": 144.176,
+      "content": "prey"
+     }
+    ],
+    "align_score": 0.832
+   },
+   {
+    "begin": 144.285,
+    "end": 145.736,
+    "content": "but now I wanna pray for you,",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 144.285,
+      "end": 144.466,
+      "content": "but"
+     },
+     {
+      "begin": 144.567,
+      "end": 144.708,
+      "content": "now"
+     },
+     {
+      "begin": 144.789,
+      "end": 144.809,
+      "content": "I"
+     },
+     {
+      "begin": 144.869,
+      "end": 145.111,
+      "content": "wanna"
+     },
+     {
+      "begin": 145.192,
+      "end": 145.373,
+      "content": "pray"
+     },
+     {
+      "begin": 145.474,
+      "end": 145.595,
+      "content": "for"
+     },
+     {
+      "begin": 145.655,
+      "end": 145.736,
+      "content": "you,"
+     }
+    ],
+    "align_score": 0.836
+   },
+   {
+    "begin": 145.863,
+    "end": 147.32,
+    "content": "see another day for you, yea yea",
+    "confidence": 0.915,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 145.863,
+      "end": 146.004,
+      "content": "see"
+     },
+     {
+      "begin": 146.085,
+      "end": 146.326,
+      "content": "another"
+     },
+     {
+      "begin": 146.427,
+      "end": 146.608,
+      "content": "day"
+     },
+     {
+      "begin": 146.689,
+      "end": 146.809,
+      "content": "for"
+     },
+     {
+      "begin": 146.89,
+      "end": 146.97,
+      "content": "you,"
+     },
+     {
+      "begin": 147.051,
+      "end": 147.272,
+      "content": "yea"
+     },
+     {
+      "begin": 147.32,
+      "end": 147.32,
+      "content": "yea"
+     }
+    ],
+    "align_score": 0.72
+   },
+   {
+    "begin": 147.32,
+    "end": 148.621,
+    "content": "'Cause ion got the time",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 147.32,
+      "end": 147.441,
+      "content": "'Cause"
+     },
+     {
+      "begin": 148.127,
+      "end": 148.49,
+      "content": "ion"
+     },
+     {
+      "begin": 148.55,
+      "end": 148.621,
+      "content": "got"
+     },
+     {
+      "begin": 148.621,
+      "end": 148.621,
+      "content": "the"
+     },
+     {
+      "begin": 148.621,
+      "end": 148.621,
+      "content": "time"
+     }
+    ],
+    "align_score": 0.243
+   },
+   {
+    "begin": 148.621,
+    "end": 150.022,
+    "content": "and I'm really on the chase,",
+    "confidence": 0.986,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 148.621,
+      "end": 148.701,
+      "content": "and"
+     },
+     {
+      "begin": 149.064,
+      "end": 149.125,
+      "content": "I'm"
+     },
+     {
+      "begin": 149.246,
+      "end": 149.67,
+      "content": "really"
+     },
+     {
+      "begin": 149.77,
+      "end": 149.831,
+      "content": "on"
+     },
+     {
+      "begin": 150.022,
+      "end": 150.022,
+      "content": "the"
+     },
+     {
+      "begin": 150.022,
+      "end": 150.022,
+      "content": "chase,"
+     }
+    ],
+    "align_score": 0.502
+   },
+   {
+    "begin": 150.022,
+    "end": 152.202,
+    "content": "came from GA for you, yeah yeah",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 150.022,
+      "end": 150.625,
+      "content": "came"
+     },
+     {
+      "begin": 150.726,
+      "end": 150.887,
+      "content": "from"
+     },
+     {
+      "begin": 151.008,
+      "end": 151.169,
+      "content": "GA"
+     },
+     {
+      "begin": 151.491,
+      "end": 151.692,
+      "content": "for"
+     },
+     {
+      "begin": 151.752,
+      "end": 151.833,
+      "content": "you,"
+     },
+     {
+      "begin": 151.893,
+      "end": 152.202,
+      "content": "yeah"
+     },
+     {
+      "begin": 152.202,
+      "end": 152.202,
+      "content": "yeah"
+     }
+    ],
+    "align_score": 0.459
+   },
+   {
+    "begin": 152.202,
+    "end": 153.935,
+    "content": "'Cause you lookin' like prey",
+    "confidence": 0.95,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 152.202,
+      "end": 152.928,
+      "content": "'Cause"
+     },
+     {
+      "begin": 152.968,
+      "end": 153.028,
+      "content": "you"
+     },
+     {
+      "begin": 153.129,
+      "end": 153.411,
+      "content": "lookin'"
+     },
+     {
+      "begin": 153.472,
+      "end": 153.633,
+      "content": "like"
+     },
+     {
+      "begin": 153.734,
+      "end": 153.935,
+      "content": "prey"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.737
+   },
+   {
+    "begin": 154.024,
+    "end": 154.701,
+    "content": "but now I wanna pray for you,",
+    "confidence": 0.714,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 154.024,
+      "end": 154.206,
+      "content": "but"
+     },
+     {
+      "begin": 154.307,
+      "end": 154.509,
+      "content": "now"
+     },
+     {
+      "begin": 154.569,
+      "end": 154.589,
+      "content": "I"
+     },
+     {
+      "begin": 154.67,
+      "end": 154.701,
+      "content": "wanna"
+     },
+     {
+      "begin": 154.701,
+      "end": 154.701,
+      "content": "pray"
+     },
+     {
+      "begin": 154.701,
+      "end": 154.701,
+      "content": "for"
+     },
+     {
+      "begin": 154.701,
+      "end": 154.701,
+      "content": "you,"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.807
+   },
+   {
+    "begin": 154.701,
+    "end": 156.118,
+    "content": "see another day for you, yea yea",
+    "confidence": 0.286,
+    "mismatch": true,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 154.701,
+      "end": 154.802,
+      "content": "see"
+     },
+     {
+      "begin": 154.822,
+      "end": 155.065,
+      "content": "another"
+     },
+     {
+      "begin": 155.146,
+      "end": 155.227,
+      "content": "day"
+     },
+     {
+      "begin": 155.328,
+      "end": 155.45,
+      "content": "for"
+     },
+     {
+      "begin": 155.531,
+      "end": 155.632,
+      "content": "you,"
+     },
+     {
+      "begin": 155.672,
+      "end": 155.733,
+      "content": "yea"
+     },
+     {
+      "begin": 155.753,
+      "end": 156.118,
+      "content": "yea"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.385
+   },
+   {
+    "begin": 157.867,
+    "end": 158.3,
+    "content": "'Cause ion got the time",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 157.867,
+      "end": 158.008,
+      "content": "'Cause"
+     },
+     {
+      "begin": 158.028,
+      "end": 158.19,
+      "content": "ion"
+     },
+     {
+      "begin": 158.27,
+      "end": 158.3,
+      "content": "got"
+     },
+     {
+      "begin": 158.3,
+      "end": 158.3,
+      "content": "the"
+     },
+     {
+      "begin": 158.3,
+      "end": 158.3,
+      "content": "time"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.379
+   },
+   {
+    "begin": 158.3,
+    "end": 160.174,
+    "content": "and I'm really on the chase,",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 158.3,
+      "end": 158.441,
+      "content": "and"
+     },
+     {
+      "begin": 158.744,
+      "end": 158.804,
+      "content": "I'm"
+     },
+     {
+      "begin": 158.965,
+      "end": 159.449,
+      "content": "really"
+     },
+     {
+      "begin": 159.53,
+      "end": 159.59,
+      "content": "on"
+     },
+     {
+      "begin": 159.691,
+      "end": 159.751,
+      "content": "the"
+     },
+     {
+      "begin": 159.812,
+      "end": 160.174,
+      "content": "chase,"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.532
+   },
+   {
+    "begin": 161.12,
+    "end": 161.96,
+    "content": "came from GA for you, yeah yeah",
+    "confidence": 0.429,
+    "mismatch": true,
+    "section": "Song Switch · Hook 2",
+    "words": [
+     {
+      "begin": 161.12,
+      "end": 161.26,
+      "content": "came"
+     },
+     {
+      "begin": 161.26,
+      "end": 161.5,
+      "content": "from"
+     },
+     {
+      "begin": 161.5,
+      "end": 161.96,
+      "content": "GA"
+     },
+     {
+      "begin": 161.96,
+      "end": 161.96,
+      "content": "for"
+     },
+     {
+      "begin": 161.96,
+      "end": 161.96,
+      "content": "you,"
+     },
+     {
+      "begin": 161.96,
+      "end": 161.96,
+      "content": "yeah"
+     },
+     {
+      "begin": 161.96,
+      "end": 161.96,
+      "content": "yeah"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.074
+   }
+  ]
+ }
 }

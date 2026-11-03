@@ -4,9 +4,16 @@ import {
   createSessionFromCatalogLab,
 } from "./equity-uprise-lab-runtime.mjs";
 
-export const ELECTRONICS_SANDBOX_VERSION = "1.1.0";
+export const ELECTRONICS_SANDBOX_VERSION = "1.2.0";
 
 const REQUIRED_FAULT_IDS = Object.freeze([
+  "server_nic_link_down",
+  "raid_member_failed",
+  "psu_failed",
+  "firmware_mismatch",
+  "fan_failed",
+  "dimm_uncorrectable_error",
+  "cmos_battery_depleted",
   "access_switch_failed",
   "acl_deny_error",
   "ap_link_down",
@@ -78,6 +85,21 @@ const DIRECT_ASSET_FAULTS = Object.freeze({
   bas_controller_offline: { availability: "unavailable", condition: "bas_controller_offline" },
   access_switch_failed: { availability: "unavailable", condition: "access_switch_failed" },
 });
+
+/* Server Lab hardware faults (IT-LAB-044..051). The component-level symptoms (LEDs, POST, SEL, OS)
+   live in equity-uprise-server-lab-runtime.mjs; here each fault degrades the canonical host asset and,
+   where the building graph carries it, the exact connection or hosted service it touches. */
+const SERVER_HARDWARE_FAULTS = Object.freeze({
+  dimm_uncorrectable_error: { availability: "degraded", condition: "memory_dimm_disabled" },
+  raid_member_failed: { availability: "degraded", condition: "raid_virtual_disk_degraded" },
+  psu_failed: { availability: "degraded", condition: "power_redundancy_lost" },
+  fan_failed: { availability: "degraded", condition: "thermal_throttle" },
+  server_nic_link_down: { availability: "degraded", condition: "nic_bond_degraded" },
+  cmos_battery_depleted: { availability: "degraded", condition: "rtc_clock_drift" },
+  firmware_mismatch: { availability: "degraded", condition: "firmware_baseline_mismatch" },
+});
+
+const SERVER_ASSET_TYPES = Object.freeze(["virtualization_host", "nas_storage", "backup_appliance", "vms_nvr"]);
 
 const SERVICE_FAULTS = Object.freeze({
   dhcp_service_down: { availability: "unavailable", condition: "service_down" },
@@ -757,6 +779,34 @@ export class ElectronicsSandbox {
 
       if (faultId === "access_switch_failed") {
         for (const assetId of selectedAssets) this._impactEndpointsBehindAccessSwitch(assetId, faultId, changedAssets, changedConnections);
+      }
+    } else if (SERVER_HARDWARE_FAULTS[faultId]) {
+      const profile = SERVER_HARDWARE_FAULTS[faultId];
+      const servers = selectedAssets.filter((id) => {
+        const state = this.assetStates.get(id);
+        return state && SERVER_ASSET_TYPES.includes(state.asset_type);
+      });
+      for (const serverId of servers) {
+        this._recordChangedAsset(changedAssets, serverId, faultId, profile);
+        if (faultId === "server_nic_link_down") {
+          const link = (this.outgoingConnectionIds.get(serverId) || [])
+            .map((id) => this.connectionsById.get(id))
+            .filter((connection) => connection && ["10G-DAC", "OS2-SM-DUPLEX", "CAT6A-PATCH"].includes(connection.cable_type) && connection.layer === "data")
+            .sort((a, b) => String(a.from_port || "").localeCompare(String(b.from_port || "")) || a.connection_id.localeCompare(b.connection_id))[0];
+          if (link) this._recordChangedConnection(changedConnections, link.connection_id, faultId, {
+            availability: "unavailable",
+            condition: "link_down",
+          });
+        }
+        if (faultId === "cmos_battery_depleted") {
+          for (const serviceId of this.containedAssets.get(serverId) || []) {
+            if (!/NTP/.test(serviceId)) continue;
+            this._recordChangedAsset(changedAssets, serviceId, faultId, {
+              availability: "degraded",
+              condition: "host_clock_drift",
+            });
+          }
+        }
       }
     } else if (SERVICE_FAULTS[faultId]) {
       const profile = SERVICE_FAULTS[faultId];

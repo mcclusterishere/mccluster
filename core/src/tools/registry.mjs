@@ -12,6 +12,10 @@ const BUILTIN_MCP_SERVERS = [
     namespace: 'mccluster',
     url: 'https://api.mccluster.org/v1/media/mcp',
     protocolVersion: '2026-07-28',
+    // The Worker accepts a Core signature on this route and acts as the house
+    // owner. MCCLUSTER_API_BEARER is a legacy fallback: it holds a Supabase user
+    // token, which expires within the hour, so it cannot be the standing path.
+    signEnv: 'CORE_EDGE_SIGNING_KEY',
     bearerEnv: 'MCCLUSTER_API_BEARER'
   }
 ];

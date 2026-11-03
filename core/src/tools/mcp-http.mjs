@@ -1,3 +1,5 @@
+import { signCoreRequest } from '../broker-edge-auth.mjs';
+
 const DEFAULT_PROTOCOL_VERSION = '2026-07-28';
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -109,10 +111,24 @@ export async function mcpRpc(server, method, params = {}, { timeoutMs = DEFAULT_
   }
 
   const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const body = JSON.stringify({ jsonrpc: '2.0', id, method, params: enriched });
+  // A server marked with signEnv gets a per-request signature over these exact
+  // bytes instead of relying on a stored user token, which expires.
+  if (server.signEnv) {
+    const secret = process.env[server.signEnv];
+    if (secret) {
+      Object.assign(headers, signCoreRequest({
+        secret,
+        method: 'POST',
+        path: url.pathname,
+        bodyBytes: Buffer.from(body)
+      }));
+    }
+  }
   const res = await fetch(url, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ jsonrpc: '2.0', id, method, params: enriched }),
+    body,
     signal: AbortSignal.timeout(timeoutMs)
   });
   return parseRpcResponse(res);

@@ -1,0 +1,519 @@
+{
+ "schema_version": "3.0.0",
+ "layout_id": "equity-uprise-f1-interior-layout-v3",
+ "status": "canonical-v3-interior-furnishing-layout",
+ "not_for_construction": true,
+ "level": 1,
+ "level_id": "F1",
+ "floor_identity": "Arrival + Intake + Access",
+ "finished_floor_elevation_ft": 0.0,
+ "catalog_ref": "../interiors/furniture-catalog-v3.json",
+ "design_intent": "The V1 lobby, corrected: the orientation lounge (sofa, two lounge chairs, low round table, rug, plant) now faces its own table; intake is a private four-seat consultation room; the Development Passport Studio is a real two-table workroom; reception is staffed; participant-services desks sit in the south-east daylight. Charcoal upholstery, warm wood, dark stone.",
+ "authority_refs": [
+  "../../FLOOR-01-V1-V2-MERGE-MAP.md",
+  "../../FLOOR-01-V1-V2-PRESERVATION-MAP.md",
+  "floor-01-object-inventory.json",
+  "../workplace-occupancy-v1.json"
+ ],
+ "rules": [
+  "Furniture lives inside this floor's approved program zones; no function moves between levels.",
+  "Positions are feet in the shared Core V2 frame (origin SW exterior corner, X east, Y north).",
+  "Items that realize an existing object-inventory id keep that id; new pieces carry new stable ids and a program/occupancy source.",
+  "No logo, mark or lettering is furniture; identity walls carry runtime brand slots only."
+ ],
+ "palette": {
+  "upholstery": [
+   62,
+   61,
+   60,
+   255
+  ],
+  "upholstery_alt": [
+   78,
+   76,
+   74,
+   255
+  ],
+  "wood": [
+   128,
+   96,
+   68,
+   255
+  ],
+  "wood_dark": [
+   96,
+   72,
+   52,
+   255
+  ],
+  "rug": [
+   58,
+   56,
+   55,
+   255
+  ]
+ },
+ "zones": [
+  {
+   "id": "orientation-lounge",
+   "label": "Orientation Lounge",
+   "bounds_ft": {
+    "x1": 2.5,
+    "y1": 12.5,
+    "x2": 17.2,
+    "y2": 27.4
+   },
+   "purpose": "V1 lounge composition",
+   "source": "FLOOR-01-V1-V2-MERGE-MAP.md \u00a72 Lounge"
+  },
+  {
+   "id": "intake",
+   "label": "Intake / Verification",
+   "bounds_ft": {
+    "x1": 2,
+    "y1": 32,
+    "x2": 16,
+    "y2": 44
+   },
+   "purpose": "private consultation",
+   "source": "merge map \u00a72 Intake"
+  },
+  {
+   "id": "passport-studio",
+   "label": "Development Passport Studio",
+   "bounds_ft": {
+    "x1": 21,
+    "y1": 31,
+    "x2": 47,
+    "y2": 44
+   },
+   "purpose": "two worktables + kiosks",
+   "source": "merge map \u00a74"
+  },
+  {
+   "id": "reception",
+   "label": "Reception / Concierge / Security",
+   "bounds_ft": {
+    "x1": 28,
+    "y1": 43,
+    "x2": 44,
+    "y2": 51
+   },
+   "purpose": "staffed desk",
+   "source": "merge map \u00a72 Reception"
+  },
+  {
+   "id": "participant-services",
+   "label": "Participant Services",
+   "bounds_ft": {
+    "x1": 54,
+    "y1": 2,
+    "x2": 71,
+    "y2": 31
+   },
+   "purpose": "Grace Mbala desk + hot desks",
+   "source": "production/workplace-occupancy-v1.json F1"
+  }
+ ],
+ "keep_clear": [
+  {
+   "id": "arrival-atrium",
+   "bounds_ft": {
+    "x1": 20,
+    "y1": 10,
+    "x2": 52,
+    "y2": 30
+   },
+   "reason": "Arrival Atrium inset stays open (merge map \u00a76)"
+  },
+  {
+   "id": "north-support-corridor",
+   "bounds_ft": {
+    "x1": 18,
+    "y1": 54,
+    "x2": 60,
+    "y2": 60
+   },
+   "reason": "6 ft north corridor"
+  },
+  {
+   "id": "west-service-approach",
+   "bounds_ft": {
+    "x1": 0,
+    "y1": 54,
+    "x2": 18,
+    "y2": 60
+   },
+   "reason": "Stair B door + freight + west exit path"
+  },
+  {
+   "id": "passenger-elevator-approach",
+   "bounds_ft": {
+    "x1": 48,
+    "y1": 32,
+    "x2": 54,
+    "y2": 46
+   },
+   "reason": "elevator landing"
+  }
+ ],
+ "items": [
+  {
+   "id": "F1-LOUNGE-SOFA-01",
+   "type": "sofa_3",
+   "x": 6.5,
+   "y": 15.5,
+   "rot_deg": 0,
+   "zone": "orientation-lounge",
+   "realizes_inventory_id": "F1-LOUNGE-SOFA-01",
+   "placement_override_reason": "sofa now faces north to its own table (V1 composition)"
+  },
+  {
+   "id": "F1-LOUNGE-CHAIR-01",
+   "type": "armchair_lounge",
+   "x": 13.1,
+   "y": 17.0,
+   "rot_deg": 48.72,
+   "zone": "orientation-lounge",
+   "realizes_inventory_id": "F1-LOUNGE-CHAIR-01",
+   "placement_override_reason": "faces the lounge table (was facing away)"
+  },
+  {
+   "id": "F1-LOUNGE-CHAIR-02",
+   "type": "armchair_lounge",
+   "x": 13.1,
+   "y": 23.6,
+   "rot_deg": 126.19,
+   "zone": "orientation-lounge",
+   "realizes_inventory_id": "F1-LOUNGE-CHAIR-02",
+   "placement_override_reason": "faces the lounge table (was facing away)"
+  },
+  {
+   "id": "F1-LOUNGE-TABLE-01",
+   "type": "coffee_table_round",
+   "x": 8.4,
+   "y": 20.6,
+   "rot_deg": 0,
+   "zone": "orientation-lounge",
+   "realizes_inventory_id": "F1-LOUNGE-TABLE-01",
+   "size": {
+    "w_in": 48,
+    "d_in": 48
+   }
+  },
+  {
+   "id": "F1-LOUNGE-RUG-01",
+   "type": "rug",
+   "x": 9.85,
+   "y": 19.95,
+   "rot_deg": 0,
+   "zone": "orientation-lounge",
+   "realizes_inventory_id": "F1-LOUNGE-RUG-01",
+   "size": {
+    "w_in": 176,
+    "d_in": 179
+   }
+  },
+  {
+   "id": "F1-LOUNGE-PLANT-01",
+   "type": "planter_tall",
+   "x": 3.4,
+   "y": 25.6,
+   "rot_deg": 0,
+   "zone": "orientation-lounge",
+   "realizes_inventory_id": "F1-LOUNGE-PLANT-01"
+  },
+  {
+   "id": "F1-LOUNGE-SIDE-TABLE-01",
+   "type": "side_table",
+   "x": 11.5,
+   "y": 14.9,
+   "rot_deg": 0,
+   "zone": "orientation-lounge"
+  },
+  {
+   "id": "F1-INTAKE-TABLE-01",
+   "type": "table_rect",
+   "x": 9.0,
+   "y": 38.0,
+   "rot_deg": 0,
+   "zone": "intake",
+   "realizes_inventory_id": "F1-INTAKE-TABLE-01",
+   "size": {
+    "w_in": 72,
+    "d_in": 36
+   }
+  },
+  {
+   "id": "F1-INTAKE-CHAIR-01",
+   "type": "side_chair",
+   "x": 6.0,
+   "y": 35.8,
+   "rot_deg": -0.0,
+   "zone": "intake",
+   "realizes_inventory_id": "F1-INTAKE-CHAIR-01",
+   "placement_override_reason": "seats face the table (two had their backs to it)"
+  },
+  {
+   "id": "F1-INTAKE-CHAIR-02",
+   "type": "side_chair",
+   "x": 12.0,
+   "y": 35.8,
+   "rot_deg": -0.0,
+   "zone": "intake",
+   "realizes_inventory_id": "F1-INTAKE-CHAIR-02",
+   "placement_override_reason": "seats face the table (two had their backs to it)"
+  },
+  {
+   "id": "F1-INTAKE-CHAIR-03",
+   "type": "side_chair",
+   "x": 6.0,
+   "y": 40.2,
+   "rot_deg": -180.0,
+   "zone": "intake",
+   "realizes_inventory_id": "F1-INTAKE-CHAIR-03",
+   "placement_override_reason": "seats face the table (two had their backs to it)"
+  },
+  {
+   "id": "F1-INTAKE-CHAIR-04",
+   "type": "side_chair",
+   "x": 12.0,
+   "y": 40.2,
+   "rot_deg": -180.0,
+   "zone": "intake",
+   "realizes_inventory_id": "F1-INTAKE-CHAIR-04",
+   "placement_override_reason": "seats face the table (two had their backs to it)"
+  },
+  {
+   "id": "F1-INTAKE-CREDENZA-01",
+   "type": "credenza",
+   "x": 4.6,
+   "y": 42.9,
+   "rot_deg": 180,
+   "zone": "intake",
+   "realizes_inventory_id": "F1-INTAKE-CREDENZA-01",
+   "size": {
+    "w_in": 48,
+    "d_in": 18
+   }
+  },
+  {
+   "id": "F1-PASSPORT-TABLE-01",
+   "type": "table_rect",
+   "x": 26.75,
+   "y": 35.6,
+   "rot_deg": 0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-TABLE-01",
+   "size": {
+    "w_in": 114,
+    "d_in": 38,
+    "base": "panel"
+   }
+  },
+  {
+   "id": "F1-PASSPORT-TABLE-02",
+   "type": "table_rect",
+   "x": 39.75,
+   "y": 40.8,
+   "rot_deg": 0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-TABLE-02",
+   "size": {
+    "w_in": 114,
+    "d_in": 38,
+    "base": "panel"
+   }
+  },
+  {
+   "id": "F1-PASSPORT-CHAIR-01",
+   "type": "task_chair",
+   "x": 23.6,
+   "y": 38.3,
+   "rot_deg": -180.0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-CHAIR-01",
+   "placement_override_reason": "task chairs face their worktable and sit clear of the kiosks (table 1) and the reception desk (table 2)"
+  },
+  {
+   "id": "F1-PASSPORT-CHAIR-02",
+   "type": "task_chair",
+   "x": 27.0,
+   "y": 38.3,
+   "rot_deg": -180.0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-CHAIR-02",
+   "placement_override_reason": "task chairs face their worktable and sit clear of the kiosks (table 1) and the reception desk (table 2)"
+  },
+  {
+   "id": "F1-PASSPORT-CHAIR-03",
+   "type": "task_chair",
+   "x": 30.4,
+   "y": 38.3,
+   "rot_deg": -180.0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-CHAIR-03",
+   "placement_override_reason": "task chairs face their worktable and sit clear of the kiosks (table 1) and the reception desk (table 2)"
+  },
+  {
+   "id": "F1-PASSPORT-CHAIR-04",
+   "type": "task_chair",
+   "x": 36.6,
+   "y": 38.1,
+   "rot_deg": -0.0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-CHAIR-04",
+   "placement_override_reason": "task chairs face their worktable and sit clear of the kiosks (table 1) and the reception desk (table 2)"
+  },
+  {
+   "id": "F1-PASSPORT-CHAIR-05",
+   "type": "task_chair",
+   "x": 40.0,
+   "y": 38.1,
+   "rot_deg": -0.0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-CHAIR-05",
+   "placement_override_reason": "task chairs face their worktable and sit clear of the kiosks (table 1) and the reception desk (table 2)"
+  },
+  {
+   "id": "F1-PASSPORT-CHAIR-06",
+   "type": "task_chair",
+   "x": 43.4,
+   "y": 38.1,
+   "rot_deg": -0.0,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-CHAIR-06",
+   "placement_override_reason": "task chairs face their worktable and sit clear of the kiosks (table 1) and the reception desk (table 2)"
+  },
+  {
+   "id": "F1-PASSPORT-DOC-01",
+   "type": "high_table",
+   "x": 46.2,
+   "y": 35.8,
+   "rot_deg": 90,
+   "zone": "passport-studio",
+   "realizes_inventory_id": "F1-PASSPORT-DOC-01",
+   "size": {
+    "w_in": 48,
+    "d_in": 24
+   },
+   "placement_override_reason": "document station moved out of the elevator landing (it sat at X47-51 / Y39-42, inside the lift approach)"
+  },
+  {
+   "id": "F1-RECEPTION-CHAIR-01",
+   "type": "task_chair",
+   "x": 32.6,
+   "y": 48.6,
+   "rot_deg": 180,
+   "zone": "reception",
+   "occupant": "Miguel Santos",
+   "source": "production/workplace-occupancy-v1.json F1",
+   "purpose": "Access / Welcome Security Desk"
+  },
+  {
+   "id": "F1-RECEPTION-CHAIR-02",
+   "type": "task_chair",
+   "x": 35.8,
+   "y": 48.6,
+   "rot_deg": 180,
+   "zone": "reception"
+  },
+  {
+   "id": "F1-DESK-GRACE-MBALA",
+   "type": "desk_dual",
+   "x": 68.6,
+   "y": 22.0,
+   "rot_deg": 90,
+   "zone": "participant-services",
+   "occupant": "Grace Mbala",
+   "source": "production/workplace-occupancy-v1.json F1",
+   "purpose": "Cohort Support / Participant Services Desk"
+  },
+  {
+   "id": "F1-DESK-GRACE-MBALA-CHAIR",
+   "type": "task_chair",
+   "x": 66.0,
+   "y": 22.0,
+   "rot_deg": -90,
+   "zone": "participant-services"
+  },
+  {
+   "id": "F1-DESK-GRACE-VISITOR-01",
+   "type": "side_chair",
+   "x": 62.8,
+   "y": 20.6,
+   "rot_deg": -66.37,
+   "zone": "participant-services"
+  },
+  {
+   "id": "F1-DESK-GRACE-VISITOR-02",
+   "type": "side_chair",
+   "x": 62.8,
+   "y": 23.4,
+   "rot_deg": -113.63,
+   "zone": "participant-services"
+  },
+  {
+   "id": "F1-HOTDESK-VALERIA-SOTO",
+   "type": "desk",
+   "x": 68.6,
+   "y": 9.0,
+   "rot_deg": 90,
+   "zone": "participant-services",
+   "occupant": "Valeria Soto",
+   "source": "production/workplace-occupancy-v1.json F1",
+   "purpose": "Cohort-02 Trainee / Support Hot Desk"
+  },
+  {
+   "id": "F1-HOTDESK-VALERIA-SOTO-CHAIR",
+   "type": "task_chair",
+   "x": 66.0,
+   "y": 9.0,
+   "rot_deg": -90,
+   "zone": "participant-services"
+  },
+  {
+   "id": "F1-HOTDESK-MCCLUSTER",
+   "type": "desk",
+   "x": 68.6,
+   "y": 14.6,
+   "rot_deg": 90,
+   "zone": "participant-services",
+   "occupant": "McCluster",
+   "source": "production/workplace-occupancy-v1.json F1",
+   "purpose": "Opening-phase Onboarding / Hot Desk"
+  },
+  {
+   "id": "F1-HOTDESK-MCCLUSTER-CHAIR",
+   "type": "task_chair",
+   "x": 66.0,
+   "y": 14.6,
+   "rot_deg": -90,
+   "zone": "participant-services"
+  },
+  {
+   "id": "F1-SERVICES-FILE-01",
+   "type": "lateral_file",
+   "x": 69.6,
+   "y": 28.4,
+   "rot_deg": 90,
+   "zone": "participant-services"
+  },
+  {
+   "id": "F1-SERVICES-MFP-01",
+   "type": "mfp",
+   "x": 69.8,
+   "y": 3.0,
+   "rot_deg": 90,
+   "zone": "participant-services"
+  },
+  {
+   "id": "F1-SERVICES-PLANT-01",
+   "type": "planter_floor",
+   "x": 56.5,
+   "y": 3.0,
+   "rot_deg": 0,
+   "zone": "participant-services"
+  }
+ ]
+}
