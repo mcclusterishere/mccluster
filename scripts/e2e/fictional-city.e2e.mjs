@@ -114,6 +114,8 @@ try {
     check(width + ': all ' + PEOPLE + ' people, the original and Bridgeport places and ' + places.parcels.length + ' parcels are instantiated', stats.npcCount === PEOPLE && stats.buildings === expectedPlaces && stats.parcels === places.parcels.length, stats);
     check(width + ': all 13 Robbery 1s scene stops are instantiated', stats.storyStops === 13, stats);
     check(width + ': measured scene stays inside the preview geometry budget', stats.triangles < 150000 && stats.drawCalls < 300, stats);
+    // Bridgeport streams: from the original block no surveyed building is built or drawn (bodies, windows, signs)
+    check(width + ': no surveyed-neighbourhood building is drawn from the opening view', !Object.keys(stats.breakdown || {}).some(k => /^neighborhood:(bodies|windows|massing)/.test(k)) && stats.triangles < 70000, stats.breakdown);
     await page.screenshot({ path: join(out, 'city-' + width + '.png'), fullPage: false });
     await page.locator('.city-garage-card').scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(out, 'neighbors-' + width + '.png') });
