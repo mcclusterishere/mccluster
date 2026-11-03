@@ -295,3 +295,15 @@ test('the runner, the seeder, the timer and the deploy agree', async () => {
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
   for (const file of ['src/world/news-pairing.mjs', 'src/executors/world-news-pairing.mjs', 'src/seed-world-news-pairing.mjs']) assert.ok(pkg.scripts.check.includes(file), file);
 });
+
+test('confirmations cut off by the output budget keep every complete answer', async () => {
+  const { parseConfirmations } = await import('../src/world/news-pairing.mjs');
+  const batch = [{}, {}, {}];
+  const cut = '{\n  "pairs": [\n    {"n": 1, "same": true, "why": "names the \\"same\\" storm"},\n    {"n": 2, "same": false},\n    {"n": 3, "same": tr';
+  const answers = parseConfirmations(cut, batch);
+  assert.equal(answers.size, 2);
+  assert.equal(answers.get(1).same, true);
+  assert.equal(answers.get(1).why, 'names the "same" storm');
+  assert.equal(answers.get(2).same, false);
+  assert.equal(answers.has(3), false);
+});

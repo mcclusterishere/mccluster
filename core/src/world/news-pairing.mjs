@@ -492,11 +492,27 @@ export function confirmPrompt(batch) {
   });
 }
 
+// Every complete {"n":..,"same":..,"why":..} object in the text, so an answer
+// cut off by the output budget still yields the pairs before the cut.
+const ANSWER_RE = /\{\s*"n"\s*:\s*(\d+)\s*,\s*"same"\s*:\s*(true|false)\s*(?:,\s*"why"\s*:\s*"((?:[^"\\]|\\.)*)"\s*)?\}/g;
+function salvageAnswers(text) {
+  const items = [];
+  for (const m of String(text || '').matchAll(ANSWER_RE)) {
+    let why = '';
+    try { why = m[3] === undefined ? '' : JSON.parse(`"${m[3]}"`); } catch { why = ''; }
+    items.push({ n: Number(m[1]), same: m[2] === 'true', why });
+  }
+  return items;
+}
+
 export function parseConfirmations(content, batch) {
-  let data;
-  try { data = JSON.parse(String(content || '{}')); } catch { return new Map(); }
+  let items;
+  try {
+    const data = JSON.parse(String(content || '{}'));
+    items = Array.isArray(data?.pairs) ? data.pairs : [];
+  } catch { items = salvageAnswers(content); }
   const answers = new Map();
-  for (const item of Array.isArray(data?.pairs) ? data.pairs : []) {
+  for (const item of items) {
     const n = Number(item?.n);
     if (!Number.isInteger(n) || n < 1 || n > batch.length || answers.has(n) || typeof item?.same !== 'boolean') continue;
     const why = clip(String(item?.why ?? '').replace(/https?:\/\/\S+|<[^>]*>/g, ''), 160);

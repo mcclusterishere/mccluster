@@ -149,7 +149,7 @@ export async function worldNewsPairing(job, {
     try {
       response = await chat({
         messages: [{ role: 'system', content: CONFIRM_SYSTEM }, { role: 'user', content: confirmPrompt(batch) }],
-        schema: CONFIRM_SCHEMA, model: PAIRING_MODEL, think: false, temperature: 0, numPredict: 28 * batch.length + 40, priority: MODEL_PRIORITY,
+        schema: CONFIRM_SCHEMA, model: PAIRING_MODEL, think: false, temperature: 0, numPredict: 64 * batch.length + 60, priority: MODEL_PRIORITY,
         metadata: { job_type: JOB_TYPE, job_id: job.id },
       });
     } catch (error) {
