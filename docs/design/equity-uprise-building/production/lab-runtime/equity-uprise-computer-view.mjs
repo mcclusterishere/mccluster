@@ -72,12 +72,14 @@ export function createComputerView(THREE, el, { device, onPick = () => {} }) {
   const canvas=document.createElement('canvas');canvas.width=800;canvas.height=450;const ctx=canvas.getContext('2d');
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   const monitorZ=-D/2-0.16, keyZ=D/2+0.1;
+  if (device.ports.some(p => p.kind === 'video')) {
   const monitor=box(0.53,0.31,0.025,body,0,0.43,monitorZ);
   box(0.04,0.17,0.025,steel,0,0.2,monitorZ);box(0.2,0.015,0.13,body,0,0.1,monitorZ+0.03);
   const screen=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.282),new THREE.MeshBasicMaterial({map:tex}));screen.position.set(0,0.43,monitorZ+0.016);screen.userData.component='DISPLAY';group.add(screen);
   box(0.32,0.018,0.105,body,0,0.03,keyZ);
   for(let row=0;row<5;row++)for(let col=0;col<14;col++)box(0.018,0.006,0.014,pale,-0.145+col*0.022,0.042,keyZ-0.038+row*0.019);
   box(0.05,0.018,0.08,body,0.24,0.038,keyZ+0.02);
+  }
   let angle=0.62,elevation=0.65,zoom=device.server?1.65:1.45,exploded=false,inspection=false,disposed=false,last=null,frame=0,drag=null;
   function cameraUpdate(){camera.position.set(Math.sin(angle)*zoom,Math.sin(elevation)*zoom+0.15,Math.cos(angle)*Math.cos(elevation)*zoom);camera.lookAt(0,0.19,-0.09);}
   function resize(){const w=el.clientWidth,h=Math.max(320,el.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}

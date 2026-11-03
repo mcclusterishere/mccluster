@@ -5,6 +5,7 @@
 import { bootApp } from "../app-shell.mjs";
 import { createShell } from "../shell.mjs";
 import { loadComputerWorkbench } from "../sandbox-session.mjs";
+import { mountObjectInspector } from "../object-inspector.mjs";
 import { MAN } from "../man.mjs";
 import { getPref, setPref } from "../state.mjs";
 
@@ -117,6 +118,10 @@ async function render(ctx) {
   const ss = ctx._ss;
   const equipmentGeneration = ctx._equipmentGeneration = (ctx._equipmentGeneration || 0) + 1;
   if (ctx._equipmentDispose) { ctx._equipmentDispose(); ctx._equipmentDispose = null; }
+  if (ctx.tab === "object") {
+    ctx._equipmentDispose = mountObjectInspector(ctx, ss);
+    return;
+  }
   if (ctx.tab === "hardware") {
     const mod = await loadComputerWorkbench();
     if (ctx.tab !== "hardware" || ctx._equipmentGeneration !== equipmentGeneration) return;
@@ -192,5 +197,5 @@ async function render(ctx) {
 
 bootApp({
   id: "terminal", title: "Terminal", defaultTab: "console", render,
-  tabs: [{ id: "console", label: "Console", icon: "term" }, { id: "ticket", label: "Ticket", icon: "ticket" }, { id: "devices", label: "Devices", icon: "devices" }, { id: "manual", label: "Manual", icon: "book" }, { id: "hardware", label: "Hardware", icon: "devices" }],
+  tabs: [{ id: "console", label: "Console", icon: "term" }, { id: "ticket", label: "Ticket", icon: "ticket" }, { id: "devices", label: "Devices", icon: "devices" }, { id: "manual", label: "Manual", icon: "book" }, { id: "hardware", label: "Hardware", icon: "devices" }, { id: "object", label: "Object", icon: "devices" }],
 });

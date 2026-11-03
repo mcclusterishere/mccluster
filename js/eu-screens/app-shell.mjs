@@ -57,7 +57,7 @@ export async function bootApp(app) {
   document.documentElement.dataset.mode = mode;
 
   const root = document.getElementById("app");
-  const sub = screen ? `${screen.floor} · ${screen.room.label}` : "Equity Uprise · building systems";
+  const sub = screen ? `${screen.floor} · ${screen.room.label} · ${screen.asset_id}${screen.host ? " → " + screen.host : " · device binding unverified"}` : "Equity Uprise · building systems";
   root.className = "app";
   root.innerHTML = `
     <header class="topbar">
@@ -68,12 +68,21 @@ export async function bootApp(app) {
     <main class="main" id="main">${modeNote ? `<p class="notice">${esc(modeNote)}</p>` : ""}<div data-view></div></main>
     ${app.tabs && app.tabs.length > 1 ? `<nav class="bottomnav" aria-label="${esc(app.title)}">${app.tabs.map((t) => `<button type="button" data-tab="${t.id}">${icon(t.icon)}<span>${esc(t.label)}</span></button>`).join("")}</nav>` : ""}
     <div class="boot" data-boot hidden><div class="box"><b>MOUNTING SANDBOX CLONE</b><div data-boot-log>digital twin · asset registry · connection graph</div><div class="bar"><i></i></div></div></div>`;
-  if (screen?.network_asset_id && registry.screens.some(s => s.network_asset_id === screen.network_asset_id && (s.kind === "workstation_monitor" || s.kind === "bmc_console"))) {
+  if (screen?.network_asset_id && registry.screens.some(s => s.network_asset_id === screen.network_asset_id && (s.asset_type === "monitor" || s.kind === "bmc_console"))) {
     const equipment = document.createElement("a");
     const target = new URL(siteRoot() + "screens/terminal.html", globalThis.location.href);
     for (const key of ["screen", "mode", "return"]) { const value = new URLSearchParams(globalThis.location.search).get(key); if (value) target.searchParams.set(key, value); }
     target.searchParams.set("tab", "hardware");
-    equipment.href = target.href; equipment.className = "btn"; equipment.textContent = "Inspect computer";
+    equipment.href = target.href; equipment.className = "btn"; equipment.textContent = "Inspect computer · " + (screen.host || screen.network_asset_id);
+    equipment.addEventListener("click", e => { e.preventDefault(); globalThis.location.replace(target.href); });
+    root.querySelector(".main").prepend(equipment);
+  }
+  if (screen?.asset_id && screen.asset_type !== "monitor" && screen.kind !== "bmc_console") {
+    const equipment = document.createElement("a");
+    const target = new URL(siteRoot() + "screens/terminal.html", globalThis.location.href);
+    for (const key of ["screen", "mode", "return"]) { const value = new URLSearchParams(globalThis.location.search).get(key); if (value) target.searchParams.set(key, value); }
+    target.searchParams.set("tab", "object"); target.searchParams.set("object", screen.asset_id);
+    equipment.href = target.href; equipment.className = "btn"; equipment.textContent = "Inspect object · " + screen.asset_id;
     equipment.addEventListener("click", e => { e.preventDefault(); globalThis.location.replace(target.href); });
     root.querySelector(".main").prepend(equipment);
   }
@@ -111,14 +120,17 @@ export async function bootApp(app) {
     if (ctx.tab && ctx.tab !== (app.defaultTab || tabs[0].id)) u.searchParams.set("tab", ctx.tab); else u.searchParams.delete("tab");
     globalThis.history.replaceState(globalThis.history.state, "", u.pathname + u.search + u.hash);
     try {
-      if (app.id !== "terminal" && screen?.network_asset_id && screen.kind === "workstation_monitor") {
+      if (app.id !== "terminal" && screen?.asset_type === "monitor") {
         const ss = await session();
         if (ss.hardware?.byId.has(screen.network_asset_id)) {
-          const machine = ss.hardware.status(screen.network_asset_id);
+          const machine = ss.hardware.monitorStatus(screen.network_asset_id, screen.asset_id);
           if (!machine.desktop_ready || !machine.display) {
             view.innerHTML = `<p class="notice">Computer unavailable: ${esc(machine.reason || machine.stage)}. Use Inspect computer to check the physical equipment and complete its boot.</p>`;
             return;
           }
+        } else {
+          view.innerHTML = `<p class="notice">Monitor host binding is unresolved. Inspect equipment before opening this display.</p>`;
+          return;
         }
       }
       await app.render(ctx);
