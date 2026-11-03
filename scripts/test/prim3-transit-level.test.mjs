@@ -123,3 +123,33 @@ test('the page offers the level from the tactics menu, is noindex and never ship
   const man = JSON.parse(await readFile(new URL('../../assets/3d/prim3-operators/manifest.json', import.meta.url), 'utf8'));
   for (const r of ['E', 'R', 'T']) assert.ok(man.models[r] && man.sources[r], `manifest lists ${r} with its source`);
 });
+
+test('the grid is 3.54 m a tile (owner, 2026-11-03) and real things keep their real size on it', async () => {
+  const S = await import('../../js/prim3-tactics/scale.mjs');
+  assert.equal(S.TILE_M, 3.54);
+  assert.equal(L.TILE_M, S.TILE_M, 'the level uses the shared grid');
+  assert.equal(S.OPERATOR_HEIGHT_M, 1.75);
+  assert.ok(Math.abs(S.operatorHeight() - 1.75 / 3.54) < 1e-9, 'an operative is about half a tile tall');
+  // a 40 ft container (12.19 × 2.44 m) covers the fewest whole tiles that hold it
+  const tiles = (m) => Math.ceil(m / L.TILE_M);
+  for (const c of L.SCENE.containers) {
+    assert.equal(Math.max(c.w, c.d), tiles(12.19), `${c.id} is a 40 ft box long`);
+    assert.equal(Math.min(c.w, c.d), tiles(2.44), `${c.id} is one box wide`);
+  }
+  for (const r of [...L.SCENE.crates, ...L.SCENE.rooftop]) assert.ok(Math.min(r.w, r.d) === 1, 'crate stacks and AC units are one tile deep');
+  assert.ok(L.SCENE.skybridge.d * L.TILE_M < 4 && L.SCENE.bridges.find((b) => b.id === 'footbridge').w * L.TILE_M < 4, 'walkways are a walkway wide, not a road');
+  // buildings keep their tile footprints: real yard buildings between 25 and 55 m on a side
+  for (const b of L.SCENE.buildings) for (const side of [b.w, b.d]) assert.ok(side * L.TILE_M >= 25 && side * L.TILE_M <= 55, `${b.id} side ${side * L.TILE_M} m`);
+});
+
+test('every renderer stands an operative at the one real height, never its own scale', async () => {
+  const read = (f) => readFile(new URL('../../js/prim3-tactics/' + f, import.meta.url), 'utf8');
+  const [lvl, board, kit, page] = await Promise.all(['level3d.mjs', 'board3d.mjs', 'operatives3d.mjs', 'transit.mjs'].map(read));
+  for (const [name, src] of [['level3d', lvl], ['board3d', board]]) {
+    assert.match(src, /operatorHeight\(/, `${name} takes the figure height from scale.mjs`);
+    assert.doesNotMatch(src, /BODY_SCALE|scale\.setScalar\(1\.18\)|2\.15 \//, `${name} has no private figure scale`);
+  }
+  assert.doesNotMatch(kit, /setScalar\(1\.18\)/);
+  assert.match(lvl, /const M = \(m\) => m \/ TILE_M/);
+  assert.match(page, /operatorHeight\(LEVEL\.TILE_M\)/, 'unit labels sit just above a real-height head');
+});

@@ -12,6 +12,7 @@ import { createState, beginPlayerPhase, beginThreatPhase, resolveClockStatePhase
 import { playerProjection, knownPaths } from './tactical-hints.mjs';
 import { runThreatPhase } from './tactical-threat-ai.mjs';
 import * as LEVEL from './levels/transit-relay.mjs';
+import { operatorHeight } from './scale.mjs';
 import { DATA_URL as WORLD_MISSIONS, DRAFT_KEY as WORLD_DRAFTS, findMission } from '../prim3-world/missions.mjs';
 
 const { SCENE, W, H, toDisplay } = LEVEL;
@@ -140,7 +141,7 @@ function ensure3d() {
     r3 = mod.createLevel3D($('tx3d'), { level: LEVEL, look, fx: PARAMS.get('fx') || (gfx === 'auto' ? null : gfx), reducedMotion: REDUCED, onTap, onView: null });
     r3loading = null; fogKey = ''; // a new board needs its fog
     r3.setGrid(gridOn);
-    const s = unitOf(ui.sel); if (s) r3.focus((s.x + SCENE.relay.x) / 2, (s.y + SCENE.relay.y) / 2 + 4, 0, 46);
+    const s = unitOf(ui.sel); if (s) r3.focus((s.x + SCENE.relay.x) / 2, (s.y + SCENE.relay.y) / 2 + 4, 0, 30);
     render();
   }).catch((e) => { r3loading = null; toast('The 3D view could not load here. ' + esc(e.message || '')); });
 }
@@ -152,7 +153,7 @@ function boardModel() {
   if (ui.mode === 'move' || ui.mode === 'dash') { m.reach = ui.reach.tiles; }
   if (ui.preview && ui.preview.kind === 'move') { m.path = ui.preview.path.slice(0, -1); m.dest = ui.preview.dest; m.pathLine = [{ x: sel.x, y: sel.y, z: sel.z }, ...ui.preview.path]; }
   if (ui.preview && ui.preview.kind === 'fire') m.target = ui.preview.target;
-  for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: 1.55, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
+  for (const u of units) if (!u.dead) m.labels.push({ id: u.id, x: u.x, y: u.y, z: u.z, h: operatorHeight(LEVEL.TILE_M) + 0.3, kind: u.faction === 'PLAYER' ? 'ally' : 'hostile', text: u.faction === 'PLAYER' ? u.role : esc(u.id) });
   m.labels.push({ x: SCENE.relay.x, y: SCENE.relay.y, h: 2.6, kind: 'obj', text: `Relay ${relayLinks()}/2` });
   if (nodeState('RELAY') === 'VERIFIED') m.labels.push({ x: SCENE.extraction.x, y: SCENE.extraction.y, h: 0.4, kind: 'obj', text: 'Extract' });
   if (ui.preview && ui.preview.kind === 'move') { const d = ui.preview.dest; m.labels.push({ x: d.x, y: d.y, z: d.z, h: 0.1, kind: 'info', text: `${D(d.x, d.y)} · ${ui.preview.steps} steps` }); }
@@ -267,7 +268,7 @@ function drawMap() {
 }
 mini.addEventListener('click', (e) => {
   const r = mini.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * W), y = Math.floor((e.clientY - r.top) / r.height * H);
-  if (r3) r3.focus(x, y, 0, 34);
+  if (r3) r3.focus(x, y, 0, 22);
   $('txCursor').textContent = `Look ${D(x, y)}`;
 });
 
@@ -294,7 +295,7 @@ function onTap(t) {
   if (hostile && sel) { const tg = targetsFor(sel).find((x) => x.e.id === hostile.id); if (tg && sel.ap >= 1) { ui.mode = 'fire'; aim(hostile.id); return; } toast(`${hostile.id}: no shot from ${sel.role}'s position.`); }
 }
 function tryPreview(st, a, b) { try { const p = shotPreview(st, a, b); return p.legal ? p : null; } catch (e) { return null; } }
-function select(id) { ui.sel = id; ui.mode = null; ui.preview = null; toastMsg = ''; const u = unitOf(id); if (r3 && u) r3.focus(u.x, u.y, u.z, 42); render(); }
+function select(id) { ui.sel = id; ui.mode = null; ui.preview = null; toastMsg = ''; const u = unitOf(id); if (r3 && u) r3.focus(u.x, u.y, u.z, 22); render(); }
 function cancel() { ui.mode = null; ui.preview = null; ui.reach = null; toastMsg = ''; render(); }
 function aim(id) {
   const sel = unitOf(ui.sel), pv = shotPreview(state, sel.id, id);

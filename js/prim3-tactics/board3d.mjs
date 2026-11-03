@@ -18,6 +18,7 @@
    an authored GLB is listed in assets/3d/prim3-operators/manifest.json it replaces the stand-in for
    that role (E, R, T, or H for a known hostile). */
 import * as THREE from 'three';
+import { operatorHeight } from './scale.mjs';
 
 const C = {
   grout: 0x0d1215, grid: 0x5fd7e6, brick: 0x6e3d2d, concrete: 0x83868a, planter: 0x4f5458, leaf: 0x37522a,
@@ -94,7 +95,10 @@ function pickTier(renderer, fx) {
   return matchMedia('(pointer: coarse)').matches ? 'mid' : 'high';
 }
 
-export function createBoard3D(host, { width, height, onTap, onView = null, reducedMotion = false, fx = null, showcase = false }) {
+export function createBoard3D(host, { width, height, onTap, onView = null, reducedMotion = false, fx = null, showcase = false, tileM = 1 }) {
+  // the preview courtyard is modelled in metres with one tile per world unit (tileM = 1 m); an operative
+  // stands at the one real height every PRIM3 renderer uses (scale.mjs), never a per-renderer guess
+  const FIGURE_H = operatorHeight(tileM);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
   const tier = pickTier(renderer, fx);
   renderer.setPixelRatio(Math.min(tier === 'high' ? 2 : 1.5, window.devicePixelRatio || 1));
@@ -471,18 +475,19 @@ export function createBoard3D(host, { width, height, onTap, onView = null, reduc
     for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.012, 0.05, 0.05), accent, sx * 0.19, 0.17, 0.05, { parent: chest, cast: false });   // side tabs
     add(new THREE.BoxGeometry(0.04, 0.012, 0.012), accent, 0.12, 0.43, 0.02, { parent: chest, cast: false });                                 // shoulder
     for (const sh of [shinL, shinR]) add(new THREE.BoxGeometry(0.03, 0.03, 0.012), accent, 0, -0.39, -0.045, { parent: sh, cast: false });  // boot heels
-    const halo = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40), new THREE.MeshBasicMaterial({ map: haloTex, color: teamColor, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
-    halo.rotation.x = -Math.PI / 2; halo.position.y = 0.015; halo.renderOrder = 3; g.add(halo);
+    const s = FIGURE_H / Math.max(0.001, new THREE.Box3().setFromObject(g).max.y); // modelled in metres
+    const halo = new THREE.Mesh(new THREE.CircleGeometry(0.5 / s, 40), new THREE.MeshBasicMaterial({ map: haloTex, color: teamColor, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    halo.rotation.x = -Math.PI / 2; halo.position.y = 0.015 / s; halo.renderOrder = 3; g.add(halo);
     Object.assign(rig, { accent, halo });
-    g.scale.setScalar(1.18);
+    g.scale.setScalar(s);
     return { g, rig };
   }
   function glbOperative(u) { // an authored model, when present for this role
     const src = glbs[u.faction === 'PLAYER' ? u.role : 'H']; if (!src) return null;
     const g = new THREE.Group(); g.userData.unitId = u.id;
     const m = src.scene.clone(true); m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-    // generated models arrive at their own scale: stand them at the stand-in's height, feet at the origin
-    const box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3()), s = 2.15 / Math.max(0.001, size.y);
+    // generated models arrive at their own scale: stand them at the operative height, feet at the origin
+    const box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3()), s = FIGURE_H / Math.max(0.001, size.y);
     m.scale.setScalar(s); m.position.set(-(box.min.x + size.x / 2) * s, -box.min.y * s, -(box.min.z + size.z / 2) * s);
     g.add(m); return { g, rig: null, mixer: null };
   }
