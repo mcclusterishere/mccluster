@@ -88,12 +88,14 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     m.userData.tone = tone; m.userData.keepColor = keep; m.userData.pbr = pbr;
     envMats.push(m); if (pbr) pbrQueue.push(m); return m;
   }
-  const surfaceHeight = (x, y, z) => {
-    if (!z) return 0;
-    const s = SCENE.buildings.find((b) => b.roof && x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.d)
-      || (SCENE.skybridge && x >= SCENE.skybridge.x && x < SCENE.skybridge.x + SCENE.skybridge.w && y >= SCENE.skybridge.y && y < SCENE.skybridge.y + SCENE.skybridge.d ? SCENE.skybridge : null);
-    return s ? M(s.h) : 0;
-  };
+  // walkable surfaces come from the level's rules data (the same list the engine gets): z → [{x,y,w,d,height m}]
+  const SURF = (typeof level.surfaces === 'function' ? level.surfaces() : []).filter((q) => q.z > 0);
+  const surfaceAt = (x, y, z) => { let best = null; for (const q of SURF) if (q.z === z && x >= q.x && x < q.x + q.w && y >= q.y && y < q.y + q.d && (!best || q.height > best.height)) best = q; return best; };
+  const hasSurface = (x, y, z) => !z || !!surfaceAt(x, y, z);
+  const surfaceHeight = (x, y, z) => { if (!z) return 0; const q = surfaceAt(x, y, z); return q ? M(q.height) : 0; };
+  // a floor at grade height (a building's ground floor kept as its own engine floor) is what a ground tap means there
+  const groundFloorAt = (x, y) => { for (const q of SURF) if (q.height < 0.05 && x >= q.x && x < q.x + q.w && y >= q.y && y < q.y + q.d) return q.z; return 0; };
+  const SPAN = Math.max(W, H);
 
   const M_ASPHALT = mat({ color: 0x5b5f63, roughness: 0.62, metalness: 0.05 }, { pbr: { set: 'asphalt_02', repeat: [W / 3, H / 3] }, tone: 0xe7e8e8 });
   const M_CONC = mat({ color: 0x8b8d8f, roughness: 0.85 }, { pbr: { set: 'concrete_wall_006' }, tone: 0xeeeeec });
@@ -132,7 +134,11 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   /* ---------- ground, canal, bridges ---------- */
   const canal = SCENE.canal;
   const margin = 18;
-  { // ground north and south of the canal (the canal is a real cut, not a texture)
+  if (!canal) { // one ground plane
+    const g = new THREE.PlaneGeometry(W + margin * 2, H + margin * 2); g.rotateX(-Math.PI / 2);
+    const uv = g.attributes.uv; for (let i = 0; i < uv.count; i += 1) uv.setXY(i, uv.getX(i) * (W + margin * 2) / 3, uv.getY(i) * (H + margin * 2) / 3);
+    add(g, M_ASPHALT, cx - 0.5, 0, cz - 0.5, { cast: false });
+  } else { // ground north and south of the canal (the canal is a real cut, not a texture)
     const north = canal.y, south = H - (canal.y + canal.d);
     const gN = new THREE.PlaneGeometry(W + margin * 2, north + margin); gN.rotateX(-Math.PI / 2);
     add(gN, M_ASPHALT, cx - 0.5, 0, (north - margin) / 2 - 0.5, { cast: false });
@@ -148,7 +154,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     // curb lines along the canal (concrete lips)
     for (const zEdge of [canal.y - 0.62, canal.y + canal.d - 0.38]) add(boxUV(len, M(0.18), M(0.4)), M_CONC, cx - 0.5, M(0.09), zEdge);
   }
-  for (const b of SCENE.bridges) {
+  for (const b of SCENE.bridges || []) {
     const deckM = b.kind === 'grate' ? M_GRATE : M_CONC;
     add(boxUV(b.w, M(0.35), canal.d + 0.6, 1.5), deckM, b.x + b.w / 2 - 0.5, -M(0.17), canal.y + canal.d / 2 - 0.5);
     for (const sx of [b.x - 0.45, b.x + b.w - 0.55]) { // railings
@@ -166,7 +172,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   /* ---------- buildings: walls, windows, doors, parapets, roof slabs ---------- */
   const roofs = []; // pickable roof slabs: { mesh, z: 1 }
   const winR = rng(17);
-  for (const b of SCENE.buildings) {
+  for (const b of SCENE.buildings || []) {
     const hh = M(b.h), wallM = b.wall === 'corrugated' ? M_CORR : M_CONC;
     const bx = b.x + b.w / 2 - 0.5, bz = b.y + b.d / 2 - 0.5;
     add(boxUV(b.w, hh, b.d, 2.2), wallM, bx, hh / 2, bz);
@@ -206,7 +212,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     for (const px of [s.x + 2, s.x + s.w - 3]) add(new THREE.BoxGeometry(M(0.6), hh, M(0.6)), M_CONC, px, hh / 2, s.y + s.d);
     add(new THREE.BoxGeometry(s.w, M(0.6), M(0.3)), M_IRON, s.x + s.w / 2 - 0.5, hh - M(0.6), s.y + s.d - 0.5);
   }
-  for (const st of SCENE.stairs) { // a steel flight from the foot tile up to the roof landing
+  for (const st of SCENE.stairs || []) { // a steel flight from the foot tile up to the roof landing
     const a = st.from, b = st.to, h1 = surfaceHeight(b.x, b.y, 1);
     const steps = Math.max(12, Math.round(h1 / M(0.6))), dx = (b.x - a.x), dz = (b.y - a.y);
     for (let i = 0; i < steps; i += 1) {
@@ -226,7 +232,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   // a container is a real 40 ft box (12.19 × 2.44 m) standing in the middle of its 4 × 1 tile footprint
   const BOX_L = M(12.19), BOX_W = M(2.44);
   const boxDims = (c) => { const long = c.w >= c.d; return { long, w: long ? Math.min(BOX_L, c.w) : Math.min(BOX_W, c.w), d: long ? Math.min(BOX_W, c.d) : Math.min(BOX_L, c.d) }; };
-  for (const c of SCENE.containers) {
+  for (const c of SCENE.containers || []) {
     const hh = M(c.h), m = containerMat(c.color), { long, w, d } = boxDims(c);
     add(boxUV(w, hh, d, M(3.8)), m, c.x + c.w / 2 - 0.5, hh / 2, c.y + c.d / 2 - 0.5, { parent: proc.container });
     for (const e of [-1, 1]) { // corner posts
@@ -234,7 +240,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     }
   }
   const jersey = (() => { const s = new THREE.Shape(); s.moveTo(-M(0.3), 0); s.lineTo(M(0.3), 0); s.lineTo(M(0.12), M(0.4)); s.lineTo(M(0.1), M(1.1)); s.lineTo(-M(0.1), M(1.1)); s.lineTo(-M(0.12), M(0.4)); s.closePath(); return s; })(); // a 0.6 m-wide, 1.1 m concrete barrier
-  for (const b of SCENE.barricades) {
+  for (const b of SCENE.barricades || []) {
     const long = b.w >= b.d, n = long ? b.w : b.d;
     for (let i = 0; i < n; i += 1) {
       const geo = new THREE.ExtrudeGeometry(jersey, { depth: 0.96, bevelEnabled: false }); geo.translate(0, 0, -0.48);
@@ -243,7 +249,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     }
   }
   const cr = rng(31);
-  for (const c of SCENE.crates) for (let y = c.y; y < c.y + c.d; y += 1) for (let x = c.x; x < c.x + c.w; x += 1) {
+  for (const c of SCENE.crates || []) for (let y = c.y; y < c.y + c.d; y += 1) for (let x = c.x; x < c.x + c.w; x += 1) {
     const s1 = M(1.6), s2 = M(1.1); // a pallet stack of crates, 1.8 m high, in the middle of its tile
     add(boxUV(s1, M(1.0), s1, M(1.2)), M_WOOD, x, M(0.5), y, { parent: proc.crate }).rotation.y = (cr() - 0.5) * 0.3;
     add(boxUV(s2, M(0.8), s2, M(1.2)), M_WOOD, x + (cr() - 0.5) * M(0.3), M(1.0) + M(0.4), y + (cr() - 0.5) * M(0.3), { parent: proc.crate }).rotation.y = (cr() - 0.5) * 0.8;
@@ -273,6 +279,8 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   }
   const relayGroup = new THREE.Group(); world.add(relayGroup);
   const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.28), new THREE.MeshBasicMaterial({ color: 0xffb547, toneMapped: false, wireframe: false }));
+  const OBJ = SCENE.relay || SCENE.objective || null; // the objective the beacon floats over
+  const beaconY = () => (OBJ ? surfaceHeight(OBJ.x, OBJ.y, OBJ.z || 0) + M(1.5) + 1.0 : 0);
   if (SCENE.relay) {
     const r = SCENE.relay;
     const cab = new THREE.Mesh(boxUV(M(1.1), M(1.5), M(0.95), M(1.6)), M_IRON); cab.position.set(r.x, M(0.75), r.y); cab.castShadow = true; relayGroup.add(cab);
@@ -282,12 +290,83 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     const pad = new THREE.Mesh(new THREE.RingGeometry(0.75, 0.86, 4), new THREE.MeshBasicMaterial({ color: 0xffb547, toneMapped: false, transparent: true, opacity: 0.85, depthWrite: false }));
     pad.rotation.x = -Math.PI / 2; pad.rotation.z = Math.PI / 4; pad.position.set(r.x, 0.03, r.y); relayGroup.add(pad); pad.userData.overlay = true;
   }
-  const relayLight = new THREE.PointLight(0xffb547, LUX(6, 2), M(9), 2); if (SCENE.relay) relayLight.position.set(SCENE.relay.x, M(1.5) + 0.8, SCENE.relay.y); world.add(relayLight);
+  if (!SCENE.relay && OBJ) { beacon.position.set(OBJ.x, beaconY(), OBJ.y); relayGroup.add(beacon); }
+  const relayLight = new THREE.PointLight(0xffb547, LUX(6, 2), M(9), 2); if (OBJ) relayLight.position.set(OBJ.x, beaconY() - 0.2, OBJ.y); world.add(relayLight);
   if (SCENE.extraction) { // the extraction pad: a painted hazard ring
     const e = SCENE.extraction;
     const ring = new THREE.Mesh(new THREE.RingGeometry(e.r + 0.2, e.r + 0.5, 64), new THREE.MeshBasicMaterial({ color: 0xffd23a, toneMapped: false, transparent: true, opacity: 0.75, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2; ring.position.set(e.x, 0.02, e.y); world.add(ring);
-    const lab = decal(textTex('EXTRACT', { w: 512, font: '800 84px system-ui', color: 'rgba(255,210,58,.85)' }), e.r * 1.1, e.r * 0.275); lab.rotation.x = -Math.PI / 2; lab.position.set(e.x, 0.03, e.y); world.add(lab);
+    const lab = decal(textTex(e.label || 'EXTRACT', { w: 512, font: '800 84px system-ui', color: 'rgba(255,210,58,.85)' }), e.r * 1.1, e.r * 0.275); lab.rotation.x = -Math.PI / 2; lab.position.set(e.x, 0.03, e.y); world.add(lab);
+  }
+  /* ---------- a building level (SCENE.kind 'building'): the plan's own rectangles, in feet ----------
+     Drawn from the level's canonical plan data (levels/equity-uprise-hq.mjs → PLAN): the plate, its
+     storeys at their real finished-floor heights, the shared cores, Floor 1's closed rooms and
+     reception, the roof's headhouses, overruns, screens and routing beacon, and the site zones. The
+     storeys above Floor 1 are drawn see-through, so the drill on Floor 1 stays visible from above.
+     No mark, sign or lettering of the building is drawn. */
+  if (SCENE.kind === 'building') {
+    const P = SCENE.plan, FT_M = 0.3048, FTT = (f) => f / 12; // feet → tiles (the plan is laid at 12 ft a tile)
+    const fx = (xf) => SCENE.ftToTile(xf, 0).x, fz = (yf) => SCENE.ftToTile(0, yf).y;
+    const box = (r, y0, y1, m, opts) => add(new THREE.BoxGeometry(Math.max(0.01, FTT(r.x2 - r.x1)), Math.max(0.002, y1 - y0), Math.max(0.01, FTT(r.y2 - r.y1))), m, (fx(r.x1) + fx(r.x2)) / 2, (y0 + y1) / 2, (fz(r.y1) + fz(r.y2)) / 2, opts);
+    const cellBox = (c, y0, y1, m, opts) => add(new THREE.BoxGeometry(1, y1 - y0, 1), m, c.x, (y0 + y1) / 2, c.y, opts);
+    const glassMat = (o, op) => { const m = mat({ color: 0x9fb4bf, roughness: 0.1, metalness: 0.3, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide, ...o }, { tone: 0xe9eef1 }); m.userData.keepMap = true; return m; };
+    const M_GLAZE = glassMat({}, 0.16), M_GHOST = glassMat({ color: 0xc9d3d8 }, 0.1), M_SLAB = mat({ color: 0xd9d6cf, roughness: 0.8, transparent: true, opacity: 0.22, depthWrite: false }, { tone: 0xf2f2ef });
+    const M_FLOOR = mat({ color: 0xcfcac1, roughness: 0.55 }, { pbr: { set: 'concrete_floor_worn_001' }, tone: 0xf4f3f0 });
+    const M_CORE = mat({ color: 0xb9b6b0, roughness: 0.85, transparent: true, opacity: 0.42, depthWrite: false }, { tone: 0xeeeeec });
+    const M_ROOM = mat({ color: 0xe9e7e2, roughness: 0.9, transparent: true, opacity: 0.88 }, { tone: 0xf3f3f1 });
+    const M_STONE = mat({ color: 0x24262a, roughness: 0.35, metalness: 0.1 }, { tone: 0xcfd1d3 }); // "dark stone" (floor-01 object inventory)
+    const M_PAVE = mat({ color: 0xb7b4ad, roughness: 0.9 }, { tone: 0xefefec }), M_STREET = mat({ color: 0x3d4145, roughness: 0.7 }, { tone: 0xdedfdf });
+    const EDGE = new THREE.LineBasicMaterial({ color: 0x40494f, transparent: true, opacity: 0.55, depthWrite: false });
+    const edges = (r, y0, y1) => { const g = new THREE.EdgesGeometry(new THREE.BoxGeometry(FTT(r.x2 - r.x1), y1 - y0, FTT(r.y2 - r.y1))); const l = new THREE.LineSegments(g, EDGE); l.position.set((fx(r.x1) + fx(r.x2)) / 2, (y0 + y1) / 2, (fz(r.y1) + fz(r.y2)) / 2); world.add(l); return l; };
+    const storey = M(SCENE.levels[2].height), roofY = M(SCENE.levels[7].height), slabT = M(0.3);
+    // site: the public way, walks, service apron and the two assembly areas (painted, at grade)
+    const zoneM = { street: M_STREET, walk: M_PAVE, service: M_PAVE };
+    for (const [k, r] of Object.entries(P.site)) {
+      const kind = k.startsWith('assembly') ? 'assembly' : k === 'publicWay' ? 'street' : k === 'serviceApron' ? 'service' : 'walk';
+      if (kind === 'assembly') { const o = box(r, 0.004, 0.012, new THREE.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.22, depthWrite: false, toneMapped: false }), { cast: false }); o.renderOrder = 1; edges(r, 0.004, 0.02).material = new THREE.LineBasicMaterial({ color: 0xd9a400 }); continue; }
+      box(r, 0, 0.006, zoneM[kind], { cast: false });
+    }
+    // Floor 1: the finished floor (pickable as engine floor 1), glazing to Floor 2, closed rooms, reception
+    const f1 = box(P.plate, -slabT, 0.006, M_FLOOR, { cast: false }); f1.userData.roofZ = 1; roofs.push(f1);
+    const door = P.doors.publicOuter;
+    for (const [x1, x2] of [[0, door.x1], [door.x2, 72]]) box({ x1, x2, y1: -0.25, y2: 0.25 }, 0, storey - slabT, M_GLAZE, { cast: false });
+    box({ x1: -0.25, x2: 0.25, y1: 0, y2: 72 }, 0, storey - slabT, M_GLAZE, { cast: false });
+    box({ x1: 71.75, x2: 72.25, y1: 0, y2: 72 }, 0, storey - slabT, M_GLAZE, { cast: false });
+    box({ x1: 0, x2: 72, y1: 71.75, y2: 72.25 }, 0, storey - slabT, M_GLAZE, { cast: false });
+    for (const xf of [door.x1, door.x2]) box({ x1: xf - 0.4, x2: xf + 0.4, y1: -0.4, y2: 0.4 }, 0, M(2.6), M_IRON); // the entrance frame
+    box({ x1: door.x1 - 0.4, x2: door.x2 + 0.4, y1: -0.4, y2: 0.4 }, M(2.5), M(2.75), M_IRON);
+    // Stair A exit discharge (east facade): a door that opens when Entry opens it from inside
+    const dd = P.doors.stairADischarge;
+    const dPanel = box({ x1: 71.6, x2: 72.4, y1: dd.y1, y2: dd.y2 }, 0, M(2.3), M_DOOR, { cast: false }); world.remove(dPanel); gateGroup.add(dPanel);
+    // structural grid posts on the facade (18 ft), full height
+    for (const g of [0, 18, 36, 54, 72]) for (const [xf, yf] of [[g, 0], [g, 72], [0, g], [72, g]]) box({ x1: xf - 0.35, x2: xf + 0.35, y1: yf - 0.35, y2: yf + 0.35 }, 0, roofY, M_IRON, { cast: false });
+    for (const c of SCENE.floor1Rooms) cellBox(c, 0.006, storey - slabT, M_ROOM, { cast: false });
+    box(P.floor1.reception, 0.006, M(1.1), M_STONE);
+    { const scr = new THREE.Mesh(new THREE.PlaneGeometry(FTT(1.8), M(0.4)), new THREE.MeshBasicMaterial({ color: 0x0f3a40, toneMapped: false })); scr.position.set(fx(36.1), M(1.25), fz(44.2)); world.add(scr); } // the reception monitor
+    // Floors 2–6: see-through slabs and glazing; Level 7: the roof deck (pickable as engine floor 7)
+    for (let z = 2; z <= 6; z += 1) { const y = M(SCENE.levels[z].height); box(P.plate, y - slabT, y, M_SLAB, { cast: false, recv: false }); edges(P.plate, y - slabT, y); }
+    box({ x1: 0, x2: 72, y1: 0, y2: 72 }, storey, roofY - slabT, M_GHOST, { cast: false, recv: false });
+    const roof = box(P.plate, roofY - slabT, roofY + 0.004, M_ROOF, { cast: true }); roof.material = roof.material.clone(); roof.material.transparent = true; roof.material.opacity = 0.7; roof.material.depthWrite = false; envMats.push(roof.material);
+    roof.userData.roofZ = 7; roofs.push(roof);
+    for (const r of [{ x1: 0, x2: 72, y1: 0, y2: 0.5 }, { x1: 0, x2: 72, y1: 71.5, y2: 72 }, { x1: 0, x2: 0.5, y1: 0, y2: 72 }, { x1: 71.5, x2: 72, y1: 0, y2: 72 }]) box(r, roofY, roofY + M(1.1), M_CONC); // parapets
+    box(P.roof.overlookDeck, roofY, roofY + 0.01, M_WOOD, { cast: false });
+    { const m = P.roof.mobilityRing, ring = new THREE.Mesh(new THREE.RingGeometry(FTT(m.r) - 0.05, FTT(m.r), 64), new THREE.MeshBasicMaterial({ color: 0xd9a136, transparent: true, opacity: 0.8, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.set(fx(m.cx), roofY + 0.012, fz(m.cy)); world.add(ring); }
+    for (const k of ['passengerOverrun', 'freightOverrun', 'mepScreen', 'mechUnit1', 'mechUnit2']) { const r = P.roof[k]; box(r, roofY, roofY + M(r.h_ft * FT_M), k.startsWith('mech') ? M_CORR : M_CONC); }
+    { const b = P.roof.beacon; box({ x1: b.cx - b.w / 2, x2: b.cx + b.w / 2, y1: b.cy - b.d / 2, y2: b.cy + b.d / 2 }, roofY, roofY + M(2 * b.z_ft * FT_M), M_CONC); } // the routing beacon (plain: no mark)
+    // shared cores, full height: shafts and riser as solid volumes, the two protected stairs see-through
+    for (const k of ['passengerElevator', 'freightElevator', 'mepRiser']) { box(P.core[k], 0.006, roofY - slabT, M_CORE, { cast: false }); edges(P.core[k], 0.006, roofY - slabT); }
+    for (const k of ['stairA', 'stairB']) {
+      const r = P.core[k], head = roofY + M(3.0); // roof headhouse (10 ft, a drawing assumption: the inventory gives its door, not its height)
+      box(r, 0.006, head, M_CORE, { cast: false }); edges(r, 0.006, head);
+      // switchback flights: one storey per link, between the enclosure's two tiles (as the rules walk them)
+      const cells = SCENE.core[k].slice().sort((a, b) => b.y - a.y);
+      for (let z = 1; z < 7; z += 1) {
+        const a = cells[(z - 1) % 2], b = cells[z % 2], y0 = M(SCENE.levels[z].height), y1 = M(SCENE.levels[z + 1].height);
+        const len = Math.hypot(b.y - a.y, y1 - y0), flight = add(new THREE.BoxGeometry(M(1.3), M(0.25), len), M_GRATE, a.x, (y0 + y1) / 2, (a.y + b.y) / 2, { cast: false });
+        flight.lookAt(a.x, y1, b.y);
+      }
+      for (let z = 2; z <= 7; z += 1) for (const c of cells) { const y = M(SCENE.levels[z].height); const l = add(new THREE.BoxGeometry(0.86, M(0.2), 0.86), M_ROOM, c.x, y - M(0.1) + 0.003, c.y, { cast: false }); l.userData.roofZ = z; roofs.push(l); }
+    }
   }
   for (const r of SCENE.rooftop || []) { // AC units and vents
     const hh = M(r.h), base = surfaceHeight(r.x, r.y, 1);
@@ -318,7 +397,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   const moon = new THREE.DirectionalLight(0xbfd2ff, 1.1);
   moon.position.set(cx - 30, 50, cz - 25); moon.target.position.set(cx, 0, cz);
   moon.castShadow = tier !== 'low'; moon.shadow.mapSize.set(tier === 'high' ? 4096 : 2048, tier === 'high' ? 4096 : 2048);
-  Object.assign(moon.shadow.camera, { left: -44, right: 44, top: 44, bottom: -44, near: 1, far: 140 });
+  { const e = Math.min(44, SPAN * 0.7 + 8); Object.assign(moon.shadow.camera, { left: -e, right: e, top: e, bottom: -e, near: 1, far: 140 }); }
   moon.shadow.bias = -0.0005; moon.shadow.normalBias = 0.03; scene.add(moon, moon.target);
   const glowTex = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,220,150,.6)'); gr.addColorStop(1, 'rgba(255,160,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
   const lampLights = [], lampSprites = [];
@@ -366,11 +445,12 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   const gridMajor = new THREE.LineBasicMaterial({ color: 0x9ff3fb, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false });
   { const minor = [], major = [], put = (arr, ...v) => arr.push(...v);
     const isMajorX = (x) => (x - level.FRAME.x0) % 8 === 0, isMajorY = (y) => (level.FRAME.y0 - y + 1) % 8 === 0;
-    const cut = (x, y) => y >= canal.y && y < canal.y + canal.d && !SCENE.bridges.some((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.d);
+    const cut = (x, y) => !!canal && y >= canal.y && y < canal.y + canal.d && !SCENE.bridges.some((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.d);
     for (let x = 0; x <= W; x += 1) for (let y = 0; y < H; y += 1) { if (cut(x, y) && cut(x - 1, y)) continue; put(isMajorX(x) ? major : minor, x - 0.5, 0.03, y - 0.5, x - 0.5, 0.03, y + 0.5); }
     for (let y = 0; y <= H; y += 1) for (let x = 0; x < W; x += 1) { if (cut(x, y) && cut(x, y - 1)) continue; put(isMajorY(y) ? major : minor, x - 0.5, 0.03, y - 0.5, x + 0.5, 0.03, y - 0.5); }
-    const roofsDef = [...SCENE.buildings.filter((b) => b.roof), ...(SCENE.skybridge ? [SCENE.skybridge] : [])];
-    for (const r of roofsDef) { const hh = M(r.h) + 0.1;
+    // a grid on every raised walkable surface the level names (default: all of them)
+    const roofsDef = (SCENE.gridSurfaces || SURF).filter((q) => q.height > 0.05).map((q) => ({ ...q, h: q.height }));
+    for (const r of roofsDef) { const hh = M(r.h) + 0.02;
       for (let x = r.x; x <= r.x + r.w; x += 1) put(minor, x - 0.5, hh, r.y - 0.5, x - 0.5, hh, r.y + r.d - 0.5);
       for (let y = r.y; y <= r.y + r.d; y += 1) put(minor, r.x - 0.5, hh, y - 0.5, r.x + r.w - 0.5, hh, y - 0.5); }
     const seg = (arr, m) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, m); l.renderOrder = 1; l.frustumCulled = false; gridGroup.add(l); };
@@ -553,14 +633,14 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
       }
       const jobs = [];
       // sizes are real metres (M); a model never grows to fill a 3.54 m tile
-      for (const c of SCENE.containers) { const { long, w, d } = boxDims(c); jobs.push(place('container-12', c.x + c.w / 2 - 0.5, c.y + c.d / 2 - 0.5, long ? w : d, long ? d : w, M(c.h), 0, long ? 0 : Math.PI / 2)); }
-      for (const b of SCENE.barricades) { const long = b.w >= b.d; jobs.push(place('low-barrier-4', b.x + b.w / 2 - 0.5, b.y + b.d / 2 - 0.5, (long ? b.w : b.d) - 0.04, M(0.6), M(1.1), 0, long ? 0 : Math.PI / 2)); }
-      for (const c of SCENE.crates) for (let y = c.y; y < c.y + c.d; y += 1) for (let x = c.x; x < c.x + c.w; x += 1) jobs.push(place('crate-2', x, y, M(2), M(2), M(1.8)));
+      for (const c of SCENE.containers || []) { const { long, w, d } = boxDims(c); jobs.push(place('container-12', c.x + c.w / 2 - 0.5, c.y + c.d / 2 - 0.5, long ? w : d, long ? d : w, M(c.h), 0, long ? 0 : Math.PI / 2)); }
+      for (const b of SCENE.barricades || []) { const long = b.w >= b.d; jobs.push(place('low-barrier-4', b.x + b.w / 2 - 0.5, b.y + b.d / 2 - 0.5, (long ? b.w : b.d) - 0.04, M(0.6), M(1.1), 0, long ? 0 : Math.PI / 2)); }
+      for (const c of SCENE.crates || []) for (let y = c.y; y < c.y + c.d; y += 1) for (let x = c.x; x < c.x + c.w; x += 1) jobs.push(place('crate-2', x, y, M(2), M(2), M(1.8)));
       for (const r of SCENE.rooftop || []) jobs.push(place('hvac-3', r.x + r.w / 2 - 0.5, r.y + r.d / 2 - 0.5, Math.min(r.w - 0.1, M(3)), Math.min(r.d - 0.1, M(3)), M(r.h), surfaceHeight(r.x, r.y, 1)));
       for (const t of SCENE.trees || []) jobs.push(place('tree-8', t.x, t.y, M(4.2), M(4.2), M(6.5)));
       if (SCENE.relay) jobs.push(place('relay-terminal', SCENE.relay.x, SCENE.relay.y, M(1.44), M(1.44), M(2.2)));
       // dressing beyond the playable edge only (never on a tile the rules use); [id, x, z, w m, d m, h m, yaw]
-      for (const [id, x, z, w, d, h, yaw] of [['pipe-stack-6', -4, 18, 3.2, 6.4, 1.8, 0], ['rock-cluster', 67, 38, 4.8, 3.2, 1.8, 0.4], ['rock-cluster', -5, 52, 4.2, 2.7, 1.4, 1.2], ['pipe-stack-6', 68, 12, 3.2, 6.4, 1.8, Math.PI / 2], ['tree-8', -6, 30, 4.5, 4.5, 6.7, 0], ['tree-8', 70, 56, 4.8, 4.8, 7.4, 0]]) jobs.push(place(id, x, z, M(w), M(d), M(h), 0, yaw));
+      if (SCENE.canal) for (const [id, x, z, w, d, h, yaw] of [['pipe-stack-6', -4, 18, 3.2, 6.4, 1.8, 0], ['rock-cluster', 67, 38, 4.8, 3.2, 1.8, 0.4], ['rock-cluster', -5, 52, 4.2, 2.7, 1.4, 1.2], ['pipe-stack-6', 68, 12, 3.2, 6.4, 1.8, Math.PI / 2], ['tree-8', -6, 30, 4.5, 4.5, 6.7, 0], ['tree-8', 70, 56, 4.8, 4.8, 7.4, 0]]) jobs.push(place(id, x, z, M(w), M(d), M(h), 0, yaw));
       await Promise.all(jobs);
       if (destroyed) return;
       for (const g of [proc.container, proc.barrier, proc.crate, proc.hvac, proc.tree]) g.visible = false;
@@ -611,8 +691,9 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
   // The board is 64 world units across whatever a tile measures, so the overview distance (maxDist) and
   // the fog stay as they were; the home view sits closer (owner, 2026-11-03: bigger squares) and the
   // closest zoom reaches a 1.75 m operative on a 3.54 m tile.
-  const HOME = { dist: 32, pitch: 0.86 };
-  const view = { dist: HOME.dist, minDist: 4.5, maxDist: 118, target: new THREE.Vector3(cx, 0, cz), goal: new THREE.Vector3(cx, 0, cz), pitch: HOME.pitch, yaw: 0, yawGoal: 0, distGoal: HOME.dist };
+  // (a small map — a single building's site — gets the same framing scaled to its size)
+  const HOME = { dist: Math.min(32, SPAN * 1.25 + 2), pitch: 0.86 };
+  const view = { dist: HOME.dist, minDist: 4.5, maxDist: Math.min(118, Math.max(30, SPAN * 1.85)), target: new THREE.Vector3(cx, 0, cz), goal: new THREE.Vector3(cx, 0, cz), pitch: HOME.pitch, yaw: 0, yawGoal: 0, distGoal: HOME.dist };
   let shotCam = null;
   const camPos = new THREE.Vector3(), lookAt = new THREE.Vector3();
   function placeCamera() {
@@ -620,7 +701,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); if (composer) composer.setSize(w, h); }
     camera.aspect = w / h; camera.fov = h > w * 1.05 ? 46 : 34; camera.updateProjectionMatrix();
     // zooming out tilts toward a top-down tactical map, so the whole compound fits on a phone
-    const zt = Math.min(1, Math.max(0, (view.dist - 44) / (view.maxDist - 6 - 44))), pitch = view.pitch + (1.3 - view.pitch) * zt * zt * (3 - 2 * zt);
+    const tiltFrom = Math.min(44, view.maxDist * 0.55), zt = Math.min(1, Math.max(0, (view.dist - tiltFrom) / (view.maxDist - 6 - tiltFrom))), pitch = view.pitch + (1.3 - view.pitch) * zt * zt * (3 - 2 * zt);
     const hd = Math.cos(pitch) * view.dist;
     camPos.set(view.target.x + Math.sin(view.yaw) * hd, view.target.y + Math.sin(pitch) * view.dist, view.target.z + Math.cos(view.yaw) * hd);
     if (scene.fog && scene.fog.isFog) { scene.fog.near = Math.max(scene.userData.fogNear || 80, view.dist * 0.8 + 40); scene.fog.far = Math.max(scene.userData.fogFar || 200, view.dist * 1.4 + 150); }
@@ -669,7 +750,7 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     for (let i = flashes.length - 1; i >= 0; i -= 1) { const f = flashes[i]; f.life -= dt; f.obj.visible = f.life > 0; if (f.update) f.update(f, dt); if (f.life <= 0) { fxGroup.remove(f.obj); flashes.splice(i, 1); } }
     if (!reducedMotion) {
       waterNormal.offset.x += dt * 0.02; waterNormal.offset.y += dt * 0.006;
-      beacon.rotation.y += dt * 1.2; if (SCENE.relay) beacon.position.y = M(1.5) + 1.0 + Math.sin(now / 600) * 0.08;
+      beacon.rotation.y += dt * 1.2; if (OBJ) beacon.position.y = beaconY() + Math.sin(now / 600) * 0.08;
       if (rain.visible) { rain.position.y -= dt * 22; if (rain.position.y < -14) rain.position.y += 14; rain.position.x = view.target.x - cx; rain.position.z = view.target.z - cz; }
       needs = true;
     }
@@ -786,11 +867,14 @@ export function createLevel3D(host, { level, onTap, onView = null, reducedMotion
     placeCamera(); ray.setFromCamera(ndc, camera);
     const bodies = ray.intersectObjects(unitsGroup.children, true);
     if (bodies.length) { let o = bodies[0].object; while (o && !o.userData.unitId) o = o.parent; const a = o && actors.get(o.userData.unitId); if (a) return { x: a.unit.x, y: a.unit.y, z: a.unit.z, unitId: a.unit.id }; }
-    const rh = ray.intersectObjects(roofs, false);
-    if (rh.length) { const p = rh[0].point; const x = Math.round(p.x), y = Math.round(p.z); if (surfaceHeight(x, y, 1) > 0) return { x, y, z: 1 }; }
-    if (!ray.ray.intersectPlane(ground, hit)) return null;
-    const x = Math.round(hit.x), y = Math.round(hit.z);
-    return x >= 0 && y >= 0 && x < W && y < H ? { x, y, z: 0 } : null;
+    // every walkable surface the ray crosses, top first, then the ground; a tile the current reach
+    // lights wins (so a tap through a see-through roof can still mean the floor below)
+    const cands = [];
+    for (const h of ray.intersectObjects(roofs, false)) { const z = h.object.userData.roofZ, x = Math.round(h.point.x), y = Math.round(h.point.z); if (z && hasSurface(x, y, z) && !cands.some((c) => c.x === x && c.y === y && c.z === z)) cands.push({ x, y, z }); }
+    if (ray.ray.intersectPlane(ground, hit)) { const x = Math.round(hit.x), y = Math.round(hit.z); if (x >= 0 && y >= 0 && x < W && y < H) cands.push({ x, y, z: groundFloorAt(x, y) }); }
+    if (!cands.length) return null;
+    const lit = model && model.reach ? cands.find((c) => model.reach.some((t) => t.x === c.x && t.y === c.y && (t.z || 0) === c.z)) : null;
+    return lit || cands[0];
   }
   const pointers = new Map(); let pinch = null, pan = null, moved = false;
   const el = renderer.domElement;
