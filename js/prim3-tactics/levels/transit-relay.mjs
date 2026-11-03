@@ -7,7 +7,11 @@
    Grid: 64 × 64 tiles, engine x grows west→east, y grows north→south (the engine's convention).
    Players read signed coordinates through battlefield.coordinateFrame: X = x − 32, Y = 31 − y, so
    north is +Y, the relay sits near (0, 0) and the map spans −32…31 on both axes.
-   Units: one tile ≈ 1.6 m. Heights (blocker h, surface height) are metres, as the resolver expects.
+   Units: one tile = TILE_M = 3.54 m (scale.mjs; owner, 2026-11-03: the grid doubled from 1.6 m).
+   Heights (blocker h, surface height) are metres, as the resolver expects. Props keep real sizes,
+   so their footprints are what they cover on this grid: a 40 ft container (12.2 × 2.4 m) is 4 × 1
+   tiles, a crate stack, an AC unit and a jersey-barrier segment are one tile each. Buildings kept
+   their tile footprints: at 3.54 m they are 28–50 m warehouses and blocks, real yard sizes.
 
    An original layout: a canal compound at night. The squad starts south of the canal; the relay is
    in the central yard; Warehouse B-1 has an external stair to its roof and a skybridge to A-1;
@@ -16,7 +20,7 @@
 
 export const LEVEL_ID = 'transit-relay';
 export const W = 64, H = 64, FLOORS = 2;
-export const TILE_M = 1.6;
+export { TILE_M } from '../scale.mjs';
 export const FRAME = { x0: 32, y0: 31, yUp: true };
 export const toDisplay = (x, y) => ({ X: x - FRAME.x0, Y: FRAME.y0 - y });
 
@@ -25,7 +29,7 @@ export const SCENE = {
   canal: { x: 0, y: 44, w: 64, d: 4 },
   bridges: [
     { id: 'west-bridge', x: 10, y: 43, w: 3, d: 6, kind: 'road' },
-    { id: 'footbridge', x: 30, y: 43, w: 2, d: 6, kind: 'grate' },
+    { id: 'footbridge', x: 30, y: 43, w: 1, d: 6, kind: 'grate' },
     { id: 'east-bridge', x: 50, y: 43, w: 3, d: 6, kind: 'road' }
   ],
   buildings: [
@@ -35,7 +39,7 @@ export const SCENE = {
     { id: 'C-3', label: 'C-3', x: 46, y: 3, w: 14, d: 14, h: 13, roof: true, wall: 'concrete' },
     { id: 'D-4', label: 'D-4', x: 54, y: 51, w: 9, d: 10, h: 6, roof: true, wall: 'corrugated' }
   ],
-  skybridge: { id: 'skybridge', x: 14, y: 10, w: 8, d: 2, h: 9 },
+  skybridge: { id: 'skybridge', x: 14, y: 10, w: 8, d: 1, h: 9 },
   // stairs: ground foot (z0) ↔ roof landing (z1); cost = movement steps, the climb included
   stairs: [
     { id: 'b1-stair', from: { x: 38, y: 18, z: 0 }, to: { x: 36, y: 15, z: 1 }, cost: 6, side: 'E' },
@@ -44,31 +48,31 @@ export const SCENE = {
     { id: 'c3-ladder', from: { x: 44, y: 12, z: 0 }, to: { x: 46, y: 12, z: 1 }, cost: 7, side: 'W', kind: 'ladder' },
     { id: 'd4-stair', from: { x: 52, y: 57, z: 0 }, to: { x: 54, y: 57, z: 1 }, cost: 5, side: 'W' }
   ],
-  containers: [
-    { id: 'c-west', x: 16, y: 37, w: 5, d: 2, h: 2.6, color: 0x8e4a33 },
-    { id: 'c-yard', x: 41, y: 23, w: 5, d: 2, h: 2.6, color: 0x4f6166 },
-    { id: 'c-mid', x: 24, y: 24, w: 2, d: 5, h: 2.6, color: 0x8e4a33 },
-    { id: 'c-east', x: 50, y: 34, w: 5, d: 2, h: 2.6, color: 0x7a3b2b },
-    { id: 'c-south', x: 3, y: 51, w: 5, d: 2, h: 2.6, color: 0x5b6b4a },
-    { id: 'c-stack', x: 56, y: 22, w: 5, d: 2, h: 5.2, color: 0x8e4a33 }
+  containers: [ // 40 ft boxes (12.2 × 2.4 × 2.6 m) on 4 × 1 tiles; c-stack is two high
+    { id: 'c-west', x: 16, y: 37, w: 4, d: 1, h: 2.6, color: 0x8e4a33 },
+    { id: 'c-yard', x: 41, y: 23, w: 4, d: 1, h: 2.6, color: 0x4f6166 },
+    { id: 'c-mid', x: 24, y: 24, w: 1, d: 4, h: 2.6, color: 0x8e4a33 },
+    { id: 'c-east', x: 50, y: 34, w: 4, d: 1, h: 2.6, color: 0x7a3b2b },
+    { id: 'c-south', x: 3, y: 51, w: 4, d: 1, h: 2.6, color: 0x5b6b4a },
+    { id: 'c-stack', x: 56, y: 22, w: 4, d: 1, h: 5.2, color: 0x8e4a33 }
   ],
   barricades: [ // jersey barriers: low cover (1.1 m)
     { x: 28, y: 36, w: 3, d: 1 }, { x: 34, y: 34, w: 2, d: 1 }, { x: 20, y: 30, w: 1, d: 2 },
     { x: 40, y: 30, w: 1, d: 3 }, { x: 27, y: 22, w: 2, d: 1 }, { x: 35, y: 26, w: 2, d: 1 },
     { x: 14, y: 42, w: 3, d: 1 }, { x: 44, y: 49, w: 2, d: 1 }, { x: 36, y: 52, w: 1, d: 2 }
   ],
-  crates: [ // stacked crates: high cover (1.8 m)
-    { x: 18, y: 26, w: 2, d: 2 }, { x: 44, y: 30, w: 1, d: 1 }, { x: 33, y: 40, w: 1, d: 1 },
-    { x: 9, y: 18, w: 2, d: 1 }, { x: 47, y: 55, w: 1, d: 2 }, { x: 22, y: 52, w: 2, d: 1 }
+  crates: [ // stacked crates: high cover (1.8 m), one stack per tile
+    { x: 18, y: 26, w: 2, d: 1 }, { x: 44, y: 30, w: 1, d: 1 }, { x: 33, y: 40, w: 1, d: 1 },
+    { x: 9, y: 18, w: 1, d: 1 }, { x: 47, y: 55, w: 1, d: 1 }, { x: 22, y: 52, w: 1, d: 1 }
   ],
-  tent: { id: 'med-tent', x: 41, y: 38, w: 4, d: 3, h: 2.6 },
+  tent: { id: 'med-tent', x: 41, y: 38, w: 2, d: 2, h: 2.6 }, // a 7 × 7 m field tent
   fence: { y: 40, x0: 22, x1: 40, h: 2.2, gate: [30, 31, 32] },
   relay: { id: 'RELAY', x: 31, y: 30, h: 1.5 },
   extraction: { x: 8, y: 57, r: 3 },
   lamps: [ { x: 21, y: 20 }, { x: 39, y: 21 }, { x: 15, y: 39 }, { x: 45, y: 39 }, { x: 26, y: 49 }, { x: 47, y: 51 }, { x: 12, y: 54 } ],
   trees: [ { x: 18, y: 2 }, { x: 42, y: 1 }, { x: 62, y: 30 }, { x: 1, y: 40 }, { x: 25, y: 61 }, { x: 40, y: 61 } ],
-  rooftop: [ // AC units and vents on roofs (scenery on blocked roof tiles)
-    { x: 25, y: 8, w: 2, d: 2, h: 1.6, z: 1 }, { x: 28, y: 8, w: 2, d: 2, h: 1.6, z: 1 }, { x: 5, y: 6, w: 2, d: 1, h: 1.2, z: 1 }, { x: 9, y: 31, w: 2, d: 2, h: 1.4, z: 1 }
+  rooftop: [ // AC units and vents on roofs (scenery on blocked roof tiles; one 3.5 m unit per tile)
+    { x: 25, y: 8, w: 1, d: 1, h: 1.6, z: 1 }, { x: 28, y: 8, w: 1, d: 1, h: 1.6, z: 1 }, { x: 5, y: 6, w: 1, d: 1, h: 1.2, z: 1 }, { x: 9, y: 31, w: 1, d: 1, h: 1.4, z: 1 }
   ]
 };
 
