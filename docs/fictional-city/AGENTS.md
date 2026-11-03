@@ -34,7 +34,13 @@ Retain CT source metadata and visible OpenStreetMap attribution for derived road
   are purchased by this experience.
 - Portals are data. Existing target routes enforce their own permissions. Never turn on the archived
   Uprise experience or modify Site 0 geometry to satisfy a city request.
-- All 24 newly authored residents are adults. Humor is in the businesses, interactions, wordplay
+- Schema revision 2 (2026-11-03) adds the wider city's lore beside the v1 arrays: `expansionNeighborhoods`,
+  `parcels`, `expansionBusinesses`, `expansionNpcs`, `families`, `expansionItems`. These records carry
+  parcel IDs and route anchors, never coordinates; the spatial layer binds them. Expansion students
+  are minors (`minor: true`): no sexual content, injury, purchases or bribes involving them. The
+  satire targets posers, the rich school and corrupt institutions, never Black people or public-school
+  kids, and uses no phonetic dialect.
+- All 24 v1 residents are adults. Humor is in the businesses, interactions, wordplay
   and unreliable pitches. Do not substitute a fake racial accent for character writing.
 - Preserve the existing shared navigation and private audience. Static authored fiction is public-safe
   source, not confidential account data; the browser gate does not make static assets secret.
