@@ -43,6 +43,11 @@ if (LEVEL.LEVEL_ID !== 'transit-relay') { // the page's own headings follow the 
   const help = document.querySelectorAll('.tx-about p'); // the level's own objective and coordinate lines
   if (LM.help && help.length >= 4) { help[2].innerHTML = LM.help[0]; help[3].innerHTML = LM.help[1]; }
 }
+if (LEVEL.RETURN) { // a Level Forge play test: one tap back to the editor, with the level still open there
+  const back = document.createElement('a'); back.className = 'seg-a'; back.href = LEVEL.RETURN.href; back.textContent = `Back to ${LEVEL.RETURN.label}`; back.id = 'txForge';
+  const row = document.querySelector('#setRestart'); if (row && row.parentElement) row.parentElement.append(back);
+  const sub = document.querySelector('.tx-title small'); if (sub) sub.textContent = `${LEVEL.RETURN.label} play test`;
+}
 const LOOK_KEY = 'prim3.tactics.look';
 const GFX_KEY = 'prim3.tactics.preview.gfx';
 const PARAMS = new URLSearchParams(location.search);
@@ -279,12 +284,14 @@ function drawMap() {
   for (let i = 0; i <= W; i += 4) { g.beginPath(); g.moveTo(i * S, 0); g.lineTo(i * S, H * S); g.stroke(); g.beginPath(); g.moveTo(0, i * S); g.lineTo(W * S, i * S); g.stroke(); }
   if (SCENE.kind === 'building') drawBuildingMap(g, S, col);
   else {
-  g.fillStyle = col.water; g.fillRect(SCENE.canal.x * S, SCENE.canal.y * S, SCENE.canal.w * S, SCENE.canal.d * S);
-  g.fillStyle = col.prop; for (const b of SCENE.bridges) g.fillRect(b.x * S, b.y * S, b.w * S, b.d * S);
-  for (const b of SCENE.buildings) { g.fillStyle = b.roof ? col.roof : col.bld; g.fillRect(b.x * S, b.y * S, b.w * S, b.d * S); g.fillStyle = col.ink; g.font = `700 ${S * 1.8}px system-ui`; g.fillText(b.label, (b.x + 0.6) * S, (b.y + 2) * S); }
-  const sb = SCENE.skybridge; g.fillStyle = col.roof; g.fillRect(sb.x * S, sb.y * S, sb.w * S, sb.d * S);
-  g.fillStyle = col.prop; for (const c of [...SCENE.containers, ...SCENE.barricades, ...SCENE.crates, SCENE.tent]) g.fillRect(c.x * S, c.y * S, c.w * S, c.d * S);
-  g.strokeStyle = gateOpen() ? col.prop : col.ink; g.lineWidth = 2; g.beginPath(); g.moveTo(SCENE.fence.x0 * S, (SCENE.fence.y + 0.5) * S); g.lineTo((SCENE.fence.x1 + 1) * S, (SCENE.fence.y + 0.5) * S); g.stroke();
+  // every part optional: a Level Forge level (levels/forge.mjs) has no canal, skybridge, tent or fence
+  g.fillStyle = col.water; if (SCENE.canal) g.fillRect(SCENE.canal.x * S, SCENE.canal.y * S, SCENE.canal.w * S, SCENE.canal.d * S);
+  for (const p of SCENE.props || []) if (p.kind === 'water') g.fillRect((p.x + 0.5 - p.w / 2) * S, (p.z + 0.5 - p.d / 2) * S, p.w * S, p.d * S);
+  g.fillStyle = col.prop; for (const b of SCENE.bridges || []) g.fillRect(b.x * S, b.y * S, b.w * S, b.d * S);
+  for (const b of SCENE.buildings || []) { g.fillStyle = b.roof ? col.roof : col.bld; g.fillRect(b.x * S, b.y * S, b.w * S, b.d * S); g.fillStyle = col.ink; g.font = `700 ${S * 1.8}px system-ui`; g.fillText(b.label, (b.x + 0.6) * S, (b.y + 2) * S); }
+  g.fillStyle = col.roof; for (const sb of [SCENE.skybridge, ...(SCENE.decks || [])].filter(Boolean)) g.fillRect(sb.x * S, sb.y * S, sb.w * S, sb.d * S);
+  g.fillStyle = col.prop; for (const c of [...(SCENE.containers || []), ...(SCENE.barricades || []), ...(SCENE.crates || []), SCENE.tent].filter(Boolean)) g.fillRect(c.x * S, c.y * S, c.w * S, c.d * S);
+  if (SCENE.fence) { g.strokeStyle = gateOpen() ? col.prop : col.ink; g.lineWidth = 2; g.beginPath(); g.moveTo(SCENE.fence.x0 * S, (SCENE.fence.y + 0.5) * S); g.lineTo((SCENE.fence.x1 + 1) * S, (SCENE.fence.y + 0.5) * S); g.stroke(); }
   }
   // extraction, objective
   g.strokeStyle = '#ffd23a'; g.lineWidth = 2; g.beginPath(); g.arc((SCENE.extraction.x + 0.5) * S, (SCENE.extraction.y + 0.5) * S, (SCENE.extraction.r + 0.5) * S, 0, Math.PI * 2); g.stroke();
