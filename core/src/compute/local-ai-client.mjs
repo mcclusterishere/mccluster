@@ -26,6 +26,8 @@ export async function localAiChat({
   think = false,
   numPredict = 1024,
   tools,
+  schema,
+  model,
   priority = -20,
   timeoutMs = Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000),
   metadata = {},
@@ -53,6 +55,8 @@ export async function localAiChat({
           think: think === true,
           ...(Array.isArray(tools) && tools.length ? { tools } : {}),
           json: Boolean(json),
+          ...(schema && typeof schema === 'object' ? { schema, json: true } : {}),
+          ...(model ? { model: String(model) } : {}),
         },
         metadata: {
           source: 'core-local-ai-client',

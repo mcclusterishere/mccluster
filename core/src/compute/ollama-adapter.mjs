@@ -5,6 +5,10 @@ const HOST = '127.0.0.1';
 const PORT = Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_PORT || 4790);
 const OLLAMA = String(process.env.MCCLUSTER_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
+// Extra local models a caller may name (comma-separated allowlist). Anything
+// else, or an extra model that is not installed yet, runs on MODEL instead.
+const EXTRA_MODELS = String(process.env.MCCLUSTER_OLLAMA_EXTRA_MODELS || '').split(',').map(s => s.trim()).filter(Boolean);
+function pickModel(requested) { return requested && EXTRA_MODELS.includes(String(requested)) ? String(requested) : MODEL; }
 const MAX_QUEUE = Math.max(1, Math.min(256, Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_MAX_QUEUE || 32)));
 
 let active = null;
@@ -65,21 +69,26 @@ async function execute(body, queuedAt, callerSignal) {
     throw Object.assign(new Error('messages or prompt is required'), { status: 400, code: 'INPUT_REQUIRED' });
   }
 
-  const response = await fetch(`${OLLAMA}/api/chat`, {
+  const requestedModel = pickModel(input.model);
+  const callOllama = (model) => fetch(`${OLLAMA}/api/chat`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       stream: false,
       messages,
-      think: settings.think,
+      // Only the default model is a thinking model; instruct-only models reject the flag.
+      ...(model === MODEL ? { think: settings.think } : {}),
       keep_alive: settings.keep_alive,
       tools: Array.isArray(input.tools) ? input.tools.slice(0, 16) : undefined,
-      format: input.json === true ? 'json' : undefined,
+      // A JSON Schema object constrains decoding to that shape (Ollama structured
+      // outputs); plain json:true keeps the old free-form JSON mode.
+      format: input.schema && typeof input.schema === 'object' ? input.schema : (input.json === true ? 'json' : undefined),
       options: {
         temperature: settings.temperature,
         num_ctx: settings.num_ctx,
         num_predict: settings.num_predict,
+        ...(settings.num_thread ? { num_thread: settings.num_thread } : {}),
       },
     }),
     signal: callerSignal
@@ -90,7 +99,15 @@ async function execute(body, queuedAt, callerSignal) {
       : AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
   });
 
-  const data = await response.json().catch(() => null);
+  let usedModel = requestedModel;
+  let fallbackFrom = null;
+  let response = await callOllama(usedModel);
+  let data = await response.json().catch(() => null);
+  if (!response.ok && usedModel !== MODEL && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
+    fallbackFrom = usedModel; usedModel = MODEL;
+    response = await callOllama(usedModel);
+    data = await response.json().catch(() => null);
+  }
   if (!response.ok) {
     throw Object.assign(new Error(data?.error || `Ollama returned HTTP ${response.status}`), {
       status: response.status,
@@ -99,7 +116,8 @@ async function execute(body, queuedAt, callerSignal) {
   }
 
   return {
-    model: MODEL,
+    model: usedModel,
+    ...(fallbackFrom ? { fallback_from: fallbackFrom } : {}),
     implementation: body.implementation || null,
     content: String(data?.message?.content || ''),
     tool_calls: Array.isArray(data?.message?.tool_calls) ? data.message.tool_calls : [],
@@ -203,6 +221,7 @@ const server = http.createServer(async (req, res) => {
         model_info: show.model_info || {}, model_parameters: show.parameters || null,
         thinking_support: show.thinking || null,
         running: (running.models || []).filter(item => item.name === MODEL || item.model === MODEL),
+        extra_models: EXTRA_MODELS.map(name => ({ name, installed: Boolean(tags.models?.some(item => item.name === name || item.model === name)), running: Boolean((running.models || []).some(item => item.name === name || item.model === name)) })),
         defaults: inferenceSettings(), busy: Boolean(active), queue_depth: pending.length,
         max_concurrency: 1,
       });

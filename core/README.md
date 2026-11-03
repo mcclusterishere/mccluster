@@ -51,7 +51,7 @@ Canonical conversation/memory truth remains in Supabase (`ops_ai_threads`, `ops_
 
 ## Local model
 
-The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` caps the host at one loaded model and one parallel request, with a 16k default context and a 10 GB service memory ceiling.
+The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` (installed and kept current by `scripts/deploy-ovh-core.sh`) allows two loaded models (the default `qwen3:8b` for owner chat and reasoning, and the fast `qwen3:4b-instruct-2507-q4_K_M` named in `MCCLUSTER_OLLAMA_EXTRA_MODELS` for high-volume desk work), one parallel request each, a 16k default context, models kept warm for 24h, and a 14 GB service memory ceiling. The deploy pulls a missing extra model; until it is present the adapter runs those requests on the default model.
 
 A larger model can be tested later, but do not make a ~19–20 GB model the always-loaded default on a 24 GB VPS: it leaves too little recovery and OS headroom.
 

@@ -99,6 +99,12 @@ function policyEvidence(job, output) {
       }
       break;
     }
+    case 'prim3_agent_news': {
+      requireValue(job, text(output.agent_key) === text(job.target_id), 'PRIM3 news receipt must match its agent');
+      requireValue(job, Number.isInteger(output.commented) && output.commented >= 0 && typeof output.briefed === 'boolean', 'PRIM3 news desk must report comment and brief counts');
+      records.push({ kind: 'prim3_news_desk', agent_key: output.agent_key, country_iso: output.country_iso || null, commented: output.commented, briefed: output.briefed, backlog: Number(output.backlog || 0) });
+      break;
+    }
     case 'ai_diagnostics': {
       requireValue(job, Boolean(text(output.installed?.ollama_version)) && Boolean(text(output.installed?.digest)), 'AI diagnostics require an installed version and model digest');
       if (job.input?.benchmark === true) requireValue(job, output.benchmarks?.length === 4 && output.benchmarks.every(sample => sample.exact_match && Number(sample.usage?.total_duration_ns) > 0), 'AI benchmarks require four correct timed results');
