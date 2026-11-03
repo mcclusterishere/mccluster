@@ -50,9 +50,12 @@ chat waits behind at most one batch (~60 s), never a whole country.
   Ollama's `format`, so the 8B model's JSON always parses.
 - **Cacheable prompts.** The desk's fixed instructions come first and the agent
   card comes after, so consecutive batches reuse the cached prefix.
-- **Threads.** `num_thread` is now settable per request and by
-  `MCCLUSTER_OLLAMA_NUM_THREAD`; it stays unset until a benchmark on the box
-  shows 6 (matching the 6-CPU quota) beats Ollama's own choice.
+- **Threads: 6.** Measured on the box 2026-11-03 (8B, same 8-headline batch,
+  each setting twice): 6 threads 10.2 / 9.8 tokens/s generated, 8 threads
+  7.3 / 7.7 (Ollama's own default here, same as the live desk jobs at 7.2–7.5).
+  Eight threads oversubscribe Ollama's 6-CPU quota. The adapter now sends
+  `num_thread: 6` on every request (`MCCLUSTER_OLLAMA_NUM_THREAD`), one value
+  for every caller so the runner is never reloaded for a thread change.
 
 - **Two resident models** (owner, 2026-11-03: "if we need ... a 4B model, like
   that's twice as fast. Let's try to max out this box"). The desk runs on

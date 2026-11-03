@@ -250,17 +250,22 @@ if [[ ${OLLAMA_RESTART} -eq 1 ]]; then
   mcc_wait_ollama
 fi
 
-# Extra local models named by the adapter unit are pulled when missing. A pull
-# that fails is not fatal: the adapter runs those requests on the default model.
-if command -v ollama >/dev/null 2>&1; then
-  EXTRA_MODELS="$(sed -n 's/^Environment=MCCLUSTER_OLLAMA_EXTRA_MODELS=//p' "${SOURCE_DIR}/core/systemd/mccluster-ollama-adapter.service" | tail -n 1 | tr ',' ' ')"
-  for model in ${EXTRA_MODELS}; do
-    [[ "${model}" =~ ^[a-z0-9][a-z0-9._:-]{1,80}$ ]] || continue
-    if ! ollama list 2>/dev/null | awk 'NR>1 {print $1}' | grep -qxF "${model}"; then
-      timeout 1500 ollama pull "${model}" >/dev/null 2>&1 || mcc_log "extra model ${model} not pulled; the adapter falls back to the default model"
+# Extra local models named by the adapter unit are pulled when missing. The
+# Ollama daemon downloads them itself (POST /api/pull), the same path that
+# installed the default model; the CLI is not required. A pull that fails is
+# not fatal: the adapter runs those requests on the default model. Ten minutes
+# per attempt keeps the release inside the reconciler's 20-minute limit;
+# Ollama keeps downloaded layers, so the next release resumes the pull.
+EXTRA_MODELS="$(sed -n 's/^Environment=MCCLUSTER_OLLAMA_EXTRA_MODELS=//p' "${SOURCE_DIR}/core/systemd/mccluster-ollama-adapter.service" | tail -n 1 | tr ',' ' ')"
+for model in ${EXTRA_MODELS}; do
+  [[ "${model}" =~ ^[a-z0-9][a-z0-9._:-]{1,80}$ ]] || continue
+  if ! curl -fsS --max-time 5 http://127.0.0.1:11434/api/tags 2>/dev/null | grep -qF "\"name\":\"${model}\""; then
+    if ! curl -fsS --max-time 600 -X POST http://127.0.0.1:11434/api/pull \
+        -H 'content-type: application/json' -d "{\"model\":\"${model}\",\"stream\":false}" >/dev/null 2>&1; then
+      mcc_log "extra model ${model} not pulled; the adapter falls back to the default model"
     fi
-  done
-fi
+  fi
+done
 
 # Keep timers enabled; restart only services that already exist on this host.
 for timer in mccluster-core-actors.timer mccluster-core-prim3-news.timer mccluster-core-knowledge.timer mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mccluster-core-reflection.timer mccluster-core-system-health.timer mccluster-vps-reconcile.timer; do
