@@ -91,15 +91,24 @@ export class ComputerFleet {
       up: os_ready && !s.disconnected.includes(p.id) && this.baseUp(p.peer) && this.sandbox.connectionStates.get(p.id)?.availability !== 'unavailable',
     }));
     const video = c.ports.filter(p => p.kind === 'video');
-    const display = ac && stage !== 'OFF' && (video.length === 0 || video.some(p => !s.disconnected.includes(p.id) && this.baseUp(p.peer) && this.sandbox.connectionStates.get(p.id)?.availability !== 'unavailable'));
+    const displays = video.map(p => ({ ...p, signal: ac && stage !== 'OFF' && !s.disconnected.includes(p.id) && this.baseUp(p.peer) && this.sandbox.connectionStates.get(p.id)?.availability === 'available' }));
+    const display = displays.some(p => p.signal);
     return { id, stage, ac, power, post, memory_gb:memory, memory_expected_gb:memoryMax, cooling, boot_disk:bootDisk,
-      os_ready, desktop_ready:os_ready && stage === 'DESKTOP' && Boolean(s.user), display,
+      os_ready, desktop_ready:os_ready && stage === 'DESKTOP' && Boolean(s.user), display, displays, headless:video.length === 0,
       network_up:links.length > 0 && links.some(p => p.up), links, base_available:baseAvailable,
       reason:reason || (!baseAvailable ? 'CANONICAL_GRAPH_FAULT' : null),
       degraded:!cooling || memory < memoryMax || power.some(p => !p.connected || !p.healthy) || s.faults.length > 0,
       bmc_power:c.server && ac, bmc_network:'not independently wired in this reference',
       cover:s.cover, esd:s.esd, safety_model:'cold-service-only; #714 retains dedicated hot-swap exercises',
     };
+  }
+  monitorStatus(id, monitorId) {
+    const status = this.status(id);
+    const cables = status.displays.filter(p => p.peer === monitorId);
+    const signal = cables.length === 1 && cables[0].signal;
+    return { ...status, display: signal, desktop_ready: status.desktop_ready && signal,
+      monitor_id: monitorId, video_connection: cables.length === 1 ? cables[0] : null,
+      reason: cables.length !== 1 ? 'MONITOR_BINDING_UNRESOLVED' : !signal ? 'MONITOR_NO_SIGNAL' : status.reason };
   }
   record(id, action, result) {
     const session=this.readSession();
@@ -222,7 +231,8 @@ export function wrapEquipmentShell(shell, ss, screen = null) {
     const raw=String(line||'').trim(), c=shell.context;
     const tokens=raw.split(/\s+/), command=tokens[0].toLowerCase();
     if (c.asset && fleet.byId.has(c.asset) && !['help','man','exit','logout','reset','clear'].includes(command)) {
-      const hw=fleet.status(c.asset), local=c.type==='bash'&&c.asset===screen?.network_asset_id&&c.user==='staff';
+      const local=c.type==='bash'&&c.asset===screen?.network_asset_id&&c.user==='staff';
+      const hw=local && screen?.asset_type === 'monitor' ? fleet.monitorStatus(c.asset,screen.asset_id) : fleet.status(c.asset);
       const ready=c.type==='bmc'?hw.bmc_power:local?hw.desktop_ready&&hw.display:hw.os_ready&&hw.network_up;
       if (!ready) return response([text('[equipment] '+(hw.reason||hw.stage)+': inspect power, display and boot in Hardware.','warn')]);
     }
