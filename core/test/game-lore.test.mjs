@@ -105,7 +105,10 @@ test('invalid pagination, paths, private-context arguments and ambiguous queries
 
 test('malformed or oversized releases fail closed instead of becoming partial canon', () => {
   assert.throws(() => parseGameLore('{broken'), { code: 'GAME_LORE_UNAVAILABLE' });
-  assert.throws(() => parseGameLore('x'.repeat(512 * 1024 + 1)), { code: 'GAME_LORE_UNAVAILABLE' });
+  assert.throws(() => parseGameLore('x'.repeat(1024 * 1024 + 1)), { code: 'GAME_LORE_UNAVAILABLE' });
+  // A canon above the former 512 KiB cap still parses; only the 64 KiB response cap bounds a read.
+  const large = fixture(); large.constraints.padding = 'p'.repeat(600 * 1024);
+  assert.equal(parseGameLore(Buffer.from(JSON.stringify(large))).counts.npcs, 2);
   for (const mutate of [
     (data) => { data.schema = 'other'; },
     (data) => { data.npcs.push(data.npcs[0]); },

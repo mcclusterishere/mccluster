@@ -1940,9 +1940,9 @@ sexual content, no injury and no transactions.
 
 **Precinct Square** (`civic-center`). The city’s civic heart, in the sense that something is technically beating. The police precinct faces the hospital so officers can bill both ends of an arrest. The church shares a parking lot with the bank and a sermon schedule with the bank’s overdraft calendar. The School of Hard Knocks sits behind an ivy-covered wall it imported from a richer city, and directly across the square, in a former dentist’s office, Wiggers Anonymous meets every night with fresh coffee and very low expectations.
 
-**Northside Cul-de-Sadness** (`northside-residential`). Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the precinct, the church and the shops, and who are tired of having their recycling bins tagged with the words 529 BOYZ in very neat handwriting. Municipal High School No. 9 is at the edge of the neighborhood, in a building that was a parking garage and still has the ramps.
+**Cul-de-Sadness** (`northside-residential`). Ten households on curving streets that were supposed to become a golf community until the golf course became a retention pond. Three enormous houses at the end of the loop belong to families who send their sons to the School of Hard Knocks; seven ordinary houses belong to people who work at the hospital, the precinct, the church and the shops, and who are tired of having their recycling bins tagged with the words 529 BOYZ in very neat handwriting. Municipal High School No. 9 is at the edge of the neighborhood, in a building that was a parking garage and still has the ramps.
 
-**Rustbucket Wharf** (`workshop-waterfront`). The industrial harbor past the garage: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives. Whip Equipped knows every driveway here and pretends not to.
+**Rustbucket Wharf** (`workshop-waterfront`). The industrial harbor on the far side of the city’s working waterfront: cranes nobody operates, a laundromat with an unusually clean cash flow, a car wash that returns most of its cars, a self-storage complex where several units have mailboxes, a pawn shop that buys gold teeth, a motel that rents by the hour and judges by the minute, and the regional headquarters of an essential-oil pyramid with three employees and nine thousand executives. Whip Equipped knows every driveway here and pretends not to.
 
 ### Parcel register
 
@@ -1962,17 +1962,17 @@ sexual content, no injury and no transactions.
 | `hq-waterfront/shop-03` | Bridgefoot Quay | Sushi & Tire Center |
 | `hq-waterfront/shop-04` | Bridgefoot Quay | Notary Republic Hookah Lounge |
 | `hq-waterfront/thugged-out-apparel` | Bridgefoot Quay | Thugged Out Apparel |
-| `northside-residential/house-01` | Northside Cul-de-Sadness | The Whitmore-Sterlings |
-| `northside-residential/house-02` | Northside Cul-de-Sadness | The Ashbys |
-| `northside-residential/house-03` | Northside Cul-de-Sadness | The Vanderhoffs |
-| `northside-residential/house-04` | Northside Cul-de-Sadness | The Delgados |
-| `northside-residential/house-05` | Northside Cul-de-Sadness | The Pruitts |
-| `northside-residential/house-06` | Northside Cul-de-Sadness | The Babbitts |
-| `northside-residential/house-07` | Northside Cul-de-Sadness | The Abernathys |
-| `northside-residential/house-08` | Northside Cul-de-Sadness | The Ledgers |
-| `northside-residential/house-09` | Northside Cul-de-Sadness | The Mulrooneys |
-| `northside-residential/house-10` | Northside Cul-de-Sadness | The Haddads |
-| `northside-residential/public-school` | Northside Cul-de-Sadness | Municipal High School No. 9 (Formerly a Parking Garage) |
+| `northside-residential/house-01` | Cul-de-Sadness | The Whitmore-Sterlings |
+| `northside-residential/house-02` | Cul-de-Sadness | The Ashbys |
+| `northside-residential/house-03` | Cul-de-Sadness | The Vanderhoffs |
+| `northside-residential/house-04` | Cul-de-Sadness | The Delgados |
+| `northside-residential/house-05` | Cul-de-Sadness | The Pruitts |
+| `northside-residential/house-06` | Cul-de-Sadness | The Babbitts |
+| `northside-residential/house-07` | Cul-de-Sadness | The Abernathys |
+| `northside-residential/house-08` | Cul-de-Sadness | The Ledgers |
+| `northside-residential/house-09` | Cul-de-Sadness | The Mulrooneys |
+| `northside-residential/house-10` | Cul-de-Sadness | The Haddads |
+| `northside-residential/public-school` | Cul-de-Sadness | Municipal High School No. 9 (Formerly a Parking Garage) |
 | `workshop-waterfront/shop-01` | Rustbucket Wharf | Spin Cycle Laundromat & Money Laundering |
 | `workshop-waterfront/shop-02` | Rustbucket Wharf | Joyride Hand Car Wash |
 | `workshop-waterfront/shop-03` | Rustbucket Wharf | U-Hide Self Storage |
@@ -2164,11 +2164,11 @@ Derek was Yung Mayo, a name he chose without irony and defended in a public comm
 
 #### Gary Babbitt
 
-**Wiggers Anonymous member; “pharmaceutical entrepreneur” (sells oregano)** · 34 · The city’s Northside
+**Wiggers Anonymous member; “pharmaceutical entrepreneur” (sells oregano)** · 34 · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/house-06` → `gauranfucking-tea` → `civic-center/wiggers-anonymous` → `civic-center/police-station` → `robbery-1s` → `northside-residential/house-06`. Wiggers Anonymous: member, 3 days. Works: Calls himself a drug dealer. Sells oregano, basil and Gauranfucking Tea leaves in sandwich bags..
 
-Gary lives in his mother’s basement on the Northside and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Precinct Zero has arrested him four times and released him four times, because nothing in the bag is illegal and because he pays the laminated-menu price anyway, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.
+Gary lives in his mother’s basement in Cul-de-Sadness and calls it the trap. He calls himself G-Babb$ and says he is a drug dealer, which would be serious if anything he sold were a drug. His supplier is the spice aisle. His bestseller is oregano. His premium product is loose tea he buys retail at GAURANFUCKING TEA and resells in sandwich bags at a loss. Precinct Zero has arrested him four times and released him four times, because nothing in the bag is illegal and because he pays the laminated-menu price anyway, out of respect for the process. His mother, Linda, prays for him by name at the Tabernacle. He comes to Wiggers Anonymous because she drives him. He has three days.
 
 **Temperament:** Self-important, broke, deeply loyal to his mom; the least dangerous dealer in America.
 
@@ -2416,7 +2416,7 @@ Marty spent thirty years wholesaling pastel golf shirts. A trend consultant he p
 
 #### Nour Haddad
 
-**Register and actual management, Thugged Out Apparel** · 19 · The city’s Northside
+**Register and actual management, Thugged Out Apparel** · 19 · Cul-de-Sadness, McCluster City
 
 Stays inside `hq-waterfront/thugged-out-apparel`.
 
@@ -2738,7 +2738,7 @@ Bryce is exactly what Wiggers Anonymous was built for, and he knows it. He came 
 
 #### Tucker Whitmore-Sterling
 
-**Student, The School of Hard Knocks; founder of the 529 Boyz** · 16 (minor) · The city’s Northside
+**Student, The School of Hard Knocks; founder of the 529 Boyz** · 16 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `civic-center/school-of-hard-knocks` → `northside-residential/public-school` → `hq-waterfront/thugged-out-apparel` → `northside-residential/house-01`.
 
@@ -2752,7 +2752,7 @@ Tucker founded the 529 Boyz, a “gang” named after the college savings plans 
 
 > **You:** What is the 529 Boyz?
 
-> **Tucker Whitmore-Sterling:** The hardest crew on the Northside. Named after our college funds.
+> **Tucker Whitmore-Sterling:** The hardest crew in Cul-de-Sadness. Named after our college funds.
 
 > **You:** What do you do?
 
@@ -2780,7 +2780,7 @@ Tucker founded the 529 Boyz, a “gang” named after the college savings plans 
 
 #### Kensington “K-Murda” Ashby
 
-**Student, The School of Hard Knocks; self-titled enforcer of the 529 Boyz** · 15 (minor) · The city’s Northside
+**Student, The School of Hard Knocks; self-titled enforcer of the 529 Boyz** · 15 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `civic-center/school-of-hard-knocks` → `northside-residential/public-school` → `hq-waterfront/shop-02` → `northside-residential/house-02`.
 
@@ -2822,7 +2822,7 @@ Kensington gave himself the name K-Murda after losing a fencing match, which is 
 
 #### Graham Vanderhoff
 
-**Student, The School of Hard Knocks; the 529 Boyz’ “strategist”** · 17 (minor) · The city’s Northside
+**Student, The School of Hard Knocks; the 529 Boyz’ “strategist”** · 17 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `civic-center/school-of-hard-knocks` → `civic-center/hospital` → `civic-center/shop-04` → `northside-residential/house-03`.
 
@@ -2923,7 +2923,7 @@ Lorraine has run Municipal High No. 9 for eleven years on a budget smaller than 
 
 #### Imani Abernathy
 
-**Junior, debate captain and archivist, Municipal High No. 9** · 16 (minor) · The city’s Northside
+**Junior, debate captain and archivist, Municipal High No. 9** · 16 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/public-school` → `northside-residential/house-07` → `civic-center/police-station` → `northside-residential/public-school`.
 
@@ -2965,7 +2965,7 @@ Imani is the debate captain at Municipal High No. 9 and the keeper of the most c
 
 #### Mateo Delgado
 
-**Freshman, Municipal High School No. 9** · 14 (minor) · The city’s Northside
+**Freshman, Municipal High School No. 9** · 14 (minor) · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/house-04` → `northside-residential/public-school` → `hq-waterfront/shop-03` → `northside-residential/house-04`.
 
@@ -3145,7 +3145,7 @@ Bribes cost game credits only. A successful bribe records a fictional receipt an
 
 #### Captain Frank Mulrooney
 
-**Captain, Precinct Zero** · 58 · The city’s Northside
+**Captain, Precinct Zero** · 58 · Cul-de-Sadness, McCluster City
 
 Stays inside `civic-center/police-station`.
 
@@ -3201,7 +3201,7 @@ Frank inherited Precinct Zero from his father the way other men inherit a watch.
 
 #### Officer Dale Pruitt
 
-**Patrol officer, Precinct Zero** · 39 · The city’s Northside
+**Patrol officer, Precinct Zero** · 39 · Cul-de-Sadness, McCluster City
 
 Walks: `civic-center/police-station` → `mike-hawk` → `gauranfucking-tea` → `hq-bridge` → `workshop-waterfront/shop-02` → `civic-center/police-station`.
 
@@ -4169,7 +4169,7 @@ Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiti
 
 > **You:** Down?
 
-> **Kayleigh Spurlock:** Invested. In her future. Her future is in a garage in the Northside, in boxes.
+> **Kayleigh Spurlock:** Invested. In her future. Her future is in a garage in Cul-de-Sadness, in boxes.
 
 **Conversation — What do the oils do?**
 
@@ -4187,7 +4187,7 @@ Kayleigh is a Diamond Executive Platinum Founder, a title she earned by recruiti
 
 **Farewell:** “Let’s connect! I’ll message you. A lot.”
 
-### The ten households of Northside Cul-de-Sadness
+### The ten households of Cul-de-Sadness
 
 #### The Whitmore-Sterlings — `northside-residential/house-01`
 
@@ -4421,7 +4421,7 @@ Officer Dale Pruitt writes tickets. Tammy Pruitt sells essential oils under Kayl
 
 #### Tammy Pruitt
 
-**Uplineage Silver Founder; precinct softball booster** · 37 · The city’s Northside
+**Uplineage Silver Founder; precinct softball booster** · 37 · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/house-05` → `civic-center/church` → `workshop-waterfront/shop-06` → `hordash` → `northside-residential/house-05`.
 
@@ -4474,7 +4474,7 @@ Linda Babbitt, church secretary at the Tabernacle, lives upstairs. Her son Gary,
 
 #### Linda Babbitt
 
-**Church secretary, Greater Prosperity Tabernacle; Gary’s mother** · 63 · The city’s Northside
+**Church secretary, Greater Prosperity Tabernacle; Gary’s mother** · 63 · Cul-de-Sadness, McCluster City
 
 Walks: `northside-residential/house-06` → `civic-center/church` → `civic-center/wiggers-anonymous` → `northside-residential/house-06`.
 
@@ -4532,7 +4532,7 @@ Dr. Lorraine Abernathy runs Municipal High No. 9. Curtis Abernathy is a substitu
 
 Walks: `northside-residential/house-07` → `northside-residential/public-school` → `civic-center/police-station` → `northside-residential/house-07`.
 
-Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Precinct Zero softball team, which the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to the principal of Municipal High No. 9 and is the proudest father of a debate captain on the Northside.
+Curtis is a substitute teacher at every school in the city except one, a Little League umpire, and the most patient man in the city, a reputation he protects by never going near the School of Hard Knocks. He umpires the Precinct Zero softball team, which the Ashbys and Whitmore-Sterlings sponsor, and he calls every attempted bribe a balk, loudly, in front of the bleachers. He is married to the principal of Municipal High No. 9 and is the proudest father of a debate captain in Cul-de-Sadness.
 
 **Temperament:** Calm, funny, principled; enjoys enforcing small rules on powerful people.
 
@@ -4636,7 +4636,7 @@ Captain Frank Mulrooney, divorced twice, lives with his mother Peg, eighty-four,
 
 #### Peg Mulrooney
 
-**Retired Precinct Zero bookkeeper; the captain’s mother** · 84 · The city’s Northside
+**Retired Precinct Zero bookkeeper; the captain’s mother** · 84 · Cul-de-Sadness, McCluster City
 
 Stays inside `northside-residential/house-09`.
 
