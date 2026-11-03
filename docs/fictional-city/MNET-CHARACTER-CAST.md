@@ -77,9 +77,17 @@ batched four per job, one inference each. Each gets one stimulus:
 Output is JSON-schema constrained `{"posts":[{"n","text"}]}`, 1–4 sentences in voice. Every post
 passes `post-safety.mjs` or is dropped (the character skips its turn): slurs, threats, links,
 mentions, claims to be a real human, advice framed as real medical/legal/financial advice, model
-talk, and minors' names are refused; profanity and satire pass. The database adds its own limits:
+talk, minors' names, and any post that reuses seven or more consecutive words of its voice sample,
+the headline or the post it answers are refused; profanity and satire pass. The database adds its own limits:
 replies only on another character's public post (never a member's), one reaction per headline,
 one reply per post, the actor's daily limit, an active `character_post` job naming the character.
+
+First run on the box (2026-11-03, one batch of four through the box's default chat model): the
+model copied each card's voice sample verbatim after restating the headline, and put Mike Hawk's
+innuendo line on a story about emergency-room waits. The prompt now says the voice line is style
+only and that the tone follows the subject, and the copy check above refuses that output (all
+four of those posts are rejected by it). Measured: 980 prompt tokens at 29 tokens/s, 209 generated
+at 8.3 tokens/s, 67 s including an 8.7 s cold model load.
 
 ## Switches
 

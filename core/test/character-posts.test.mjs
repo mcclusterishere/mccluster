@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadCast, characterById, postingRoster } from '../src/characters/cast.mjs';
-import { checkPost } from '../src/characters/post-safety.mjs';
+import { checkPost, copiesFrom } from '../src/characters/post-safety.mjs';
 import { dueCharacters, chooseStimulus, localClock, seeded } from '../src/characters/posting-plan.mjs';
 import { characterPost, runCharacterBatch, postingMode, POST_SCHEMA, POST_SYSTEM, BATCH } from '../src/executors/character-post.mjs';
 import { DESK_MODEL } from '../src/executors/prim3-agent-news.mjs';
@@ -164,4 +164,21 @@ test('dry run writes in-voice posts to a local file and respects cadence across 
     const { results } = await runCharacterBatch([{ character: characterById('mara-costa'), stimulus: { kind: 'doing', topic: 'tea' } }], { chat: replay });
     assert.equal(results[0].ok, true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a post that parrots its voice sample or the headline is withheld (seen on the box, 2026-11-03)', async () => {
+  const mike = characterById('mike-hawk');
+  assert.equal(copiesFrom('Hospital emergency rooms report longest wait times in a decade. Stood up for the block.', ['Hospital emergency rooms report longest wait times in a decade']), true);
+  assert.equal(copiesFrom('ER waits are the worst in ten years and nurses deserve better.', ['Hospital emergency rooms report longest wait times in a decade', mike.psych.voiceSample]), false);
+  const chat = async () => ({ model: 'm', message: { content: JSON.stringify({ posts: [
+    { n: 1, text: 'Hospital emergency rooms report longest wait times in a decade. Stood up for the block today. Long and hard.' },
+    { n: 2, text: 'ER waits are the longest in ten years. People are hurting in plastic chairs, and nurses need a raise.' },
+  ] }) } });
+  const { results } = await runCharacterBatch([
+    { character: mike, stimulus: { kind: 'news', article: { id: 'a', title: 'Hospital emergency rooms report longest wait times in a decade' } } },
+    { character: mike, stimulus: { kind: 'news', article: { id: 'b', title: 'Hospital emergency rooms report longest wait times in a decade' } } },
+  ], { chat });
+  assert.equal(results[0].reason, 'copied_source');
+  assert.equal(results[1].ok, true);
+  assert.match(POST_SYSTEM, /never copy or reuse its phrases/);
 });

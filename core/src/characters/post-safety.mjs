@@ -23,6 +23,22 @@ export function sentenceCount(text) {
   return String(text).split(/(?<=[.!?…])\s+(?=[A-Z0-9"“'‘(])/).filter(s => s.trim()).length;
 }
 
+const tokens = text => String(text || '').toLowerCase().match(/[\p{L}\p{N}']+/gu) || [];
+
+/* True when text reuses any run of n (default 7) consecutive words from one of the sources:
+   a post that parrots its voice sample, the headline or the post it answers. A short
+   catchphrase ("Sit. The lift is busy.") is character; a whole borrowed sentence is not. */
+export function copiesFrom(text, sources = [], n = 7) {
+  const words = tokens(text);
+  const grams = new Set();
+  for (let i = 0; i + n <= words.length; i += 1) grams.add(words.slice(i, i + n).join(' '));
+  for (const source of sources) {
+    const w = tokens(source);
+    for (let i = 0; i + n <= w.length; i += 1) if (grams.has(w.slice(i, i + n).join(' '))) return true;
+  }
+  return false;
+}
+
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /* -> { ok: true, body } | { ok: false, reason } */
