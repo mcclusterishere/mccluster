@@ -5,6 +5,7 @@ import whip from './whip/booking-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import { handlePrim3Levels, PRIM3_LEVELS_PREFIX } from './prim3/levels.js';
+import { handleNewsDesk, NEWS_DESK_PATH } from './prim3/news-desk.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
@@ -18,6 +19,7 @@ import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
+import { handleWorldNewsPairs, NEWS_PAIRS_PATH } from './world-news-pairs.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -153,6 +155,11 @@ export default {
         return handlePrim3Levels(request, env, { requireHouseOwner });
       }
 
+      /* PRIM3 news desk: the 24 agents' briefs and reactions, owner only (./prim3/news-desk.js) */
+      if (path === NEWS_DESK_PATH) {
+        return handleNewsDesk(request, env, { requireHouseOwner });
+      }
+
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
         return prim3.fetch(request, env);
       }
@@ -166,6 +173,11 @@ export default {
       if (path === NEWS_HEAT_PATH) {
         const heat = await handleWorldNewsHeat(request, env);
         if (heat) return heat;
+      }
+      /* headlines paired with Halo map items by McCluster Core, house owner only (./world-news-pairs.js) */
+      if (path === NEWS_PAIRS_PATH) {
+        const pairs = await handleWorldNewsPairs(request, env);
+        if (pairs) return pairs;
       }
       /* accounts by the IP place of their latest signed-in visit: exact for the house owner, countries of five or more for
          everyone else (./world-members.js) */

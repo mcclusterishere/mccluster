@@ -48,6 +48,14 @@
           },
           "tools": {
             "type": "array"
+          },
+          "schema": {
+            "type": "object"
+          },
+          "num_thread": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
           }
         }
       },

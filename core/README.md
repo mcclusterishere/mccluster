@@ -51,7 +51,17 @@ Canonical conversation/memory truth remains in Supabase (`ops_ai_threads`, `ops_
 
 ## Local model
 
-The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` caps the host at one loaded model and one parallel request, with a 16k default context and a 10 GB service memory ceiling.
+The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` (installed and kept current by `scripts/deploy-ovh-core.sh`) allows four loaded models within a 19 GB service memory ceiling (the box has 24 GB), one parallel request each, a 16k default context and 6 CPU threads. Models (owner, 2026-11-03: "add an embedding model and a coding model loaded on demand and a small vision model on demand"):
+
+| Model | Use | Kept loaded |
+| --- | --- | --- |
+| `qwen3:8b` (default) | owner chat, reasoning | 24 h |
+| `qwen3:4b-instruct-2507-q4_K_M` | high-volume desk work (news desk, pairing checks) | 24 h |
+| `nomic-embed-text:v1.5` | embeddings: `POST /embed` on the adapter, `localAiEmbed()` in Core | 24 h |
+| `qwen2.5-coder:7b` | code jobs, by `model:` on a chat request | on demand, unloads after 5 min idle |
+| `qwen2.5vl:3b` | images, by `model:` plus `messages[].images` (base64) | on demand, unloads after 5 min idle |
+
+Only allowlisted models (`MCCLUSTER_OLLAMA_EXTRA_MODELS`) can be named; anything else, or one not yet installed, runs on the default model. The deploy pulls only the small resident models (`MCCLUSTER_OLLAMA_DEPLOY_PULL`) inside its 20-minute limit; the larger on-demand ones are installed by an `ai_diagnostics` job with `pull_missing: true`. The CPU is shared: more models add abilities, not throughput.
 
 A larger model can be tested later, but do not make a ~19–20 GB model the always-loaded default on a 24 GB VPS: it leaves too little recovery and OS headroom.
 

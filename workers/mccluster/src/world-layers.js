@@ -321,6 +321,15 @@ function cached(layer, env, fetchImpl, cacheImpl) {
   return cachedLayer({ layer, ttl: spec.ttl, base: { attribution: spec.attribution }, rows: layer === 'flights' ? 'aircraft' : layer, fetcher: FETCHERS[layer] }, env, fetchImpl, cacheImpl);
 }
 
+/* The same answer without the members check, for a caller the Worker has
+   already authorized as the house owner (McCluster Core's signed read,
+   ./world-core-reads.js). Never routed on its own. */
+export async function worldLayerAnswer(layer, env, { fetchImpl = fetch, cacheImpl = null } = {}) {
+  if (!Object.prototype.hasOwnProperty.call(LAYERS, layer)) return null;
+  const { body, stale } = await cached(layer, env, fetchImpl, cacheImpl);
+  return { ...body, stale: !!stale };
+}
+
 export async function handleWorldLayers(request, env, { fetchImpl = fetch, cacheImpl = null } = {}) {
   const url = new URL(request.url);
   const m = url.pathname.match(/^\/v1\/world\/layers\/(flights|satellites|launches)$/);
