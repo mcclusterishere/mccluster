@@ -13,6 +13,7 @@ REG=ROOT/"docs/design/equity-uprise-building/production/asset-registry/generated
 F1=ROOT/"docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json"
 F1OBJ=ROOT/"docs/design/equity-uprise-building/production/floor-01/floor-01-simulation-objects.json"
 SITE=ROOT/"docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json"
+HSEEP=ROOT/"docs/design/equity-uprise-building/production/lab-runtime/hseep-building-safety-scenario-pack-v1.json"
 
 def load(p): return json.loads(p.read_text())
 def fail(msg): raise SystemExit("FEDERAL TRAINING CATALOG: FAIL\n"+msg)
@@ -74,7 +75,7 @@ if {b["catalog_id"] for b in brows}!=set(ids): fail("binding catalog IDs do not 
 for b in brows:
     if b.get("live_control_allowed") is not False: fail(f"{b['binding_id']} enables live control")
     r=next(x for x in records if x["catalog_id"]==b["catalog_id"])
-    for k in ("competency_ids","floor_ids","building_asset_ids","building_space_ids","scenario_ids","lab_ids"):
+    for k in ("competency_ids","floor_ids","building_asset_ids","building_space_ids","scenario_ids","lab_ids","hseep_scenario_ids"):
         if b.get(k)!=r.get(k): fail(f"{b['binding_id']} drifted from catalog field {k}")
 
 agencies=set()
@@ -92,9 +93,50 @@ if not is100 or is100["course_code"]!="IS-100.C": fail("FEMA IS-100.C normalizat
 is238=next((r for r in records if r["catalog_id"]=="FEMA-IS-238"),None)
 if not is238 or is238["official_title"]!="Critical Concepts of Supply Chain Flow and Resilience": fail("FEMA IS-238 title not normalized")
 
+# --- 2026-11-03 cleanup invariants (HSEEP drills, rebinding, currency) ---
+hseep=load(HSEEP)
+hseep_ids={x["scenario_id"] for x in hseep["scenarios"]}
+by_id={r["catalog_id"]:r for r in records}
+for r in records:
+    if not isinstance(r.get("hseep_scenario_ids"),list): fail(f"{r['catalog_id']} missing hseep_scenario_ids")
+    unknown=set(r["hseep_scenario_ids"])-hseep_ids
+    if unknown: fail(f"{r['catalog_id']} unknown HSEEP scenario IDs: {sorted(unknown)}")
+for sc in hseep["scenarios"]:
+    for cid in sc["federal_training_ids"]:
+        if cid not in by_id: fail(f"{sc['scenario_id']} cites unknown catalog ID {cid}")
+for r in records:
+    for sid in r["hseep_scenario_ids"]:
+        sc=next(x for x in hseep["scenarios"] if x["scenario_id"]==sid)
+        if r["catalog_id"] not in sc["federal_training_ids"]: fail(f"{r['catalog_id']} binds {sid} but the pack does not cite it")
+    for sc in hseep["scenarios"]:
+        if r["catalog_id"] in sc["federal_training_ids"] and sc["scenario_id"] not in r["hseep_scenario_ids"]:
+            fail(f"{sc['scenario_id']} cites {r['catalog_id']} but the binding is missing")
+blob=json.dumps(cat)
+retired={x["course_code"] for x in cat.get("retired_do_not_cite",[])}
+if "IS-139.A" not in retired: fail("IS-139.A must be listed as retired_do_not_cite")
+for r in records:
+    if (r["course_code"] or "").upper() in retired: fail(f"{r['catalog_id']} cites a retired course")
+if "network_checkin_outage" in sum((by_id[c]["scenario_ids"] for c in by_id if c.startswith("CISA-")),[]):
+    fail("CISA Industrial Control Systems courses must not bind the IT check-in outage")
+if "public_service_surge" in by_id["FEMA-IS-238"]["scenario_ids"]: fail("IS-238 (supply chain) must not bind the queue surge")
+if set(by_id["FEMA-IS-235-C"]["scenario_ids"]) & {"basic_evacuation","blocked_stair_a","passenger_elevator_outage"}:
+    fail("IS-235.C is community EOP planning; it must not be presented as workplace evacuation training")
+for need in ("FEMA-IS-700-B","FEMA-IS-800-D","FEMA-IS-317-A","FEMA-IS-907-A","CISA-ICS-100W","CISA-ICS-210W"):
+    if need not in by_id: fail(f"missing required course record {need}")
+pds=next((p for p in cat.get("credential_programs",[]) if p["program_id"]=="FEMA-PDS"),None)
+if not pds or len(pds["required_catalog_ids"])!=7 or any(c not in by_id for c in pds["required_catalog_ids"]):
+    fail("FEMA PDS program must list its seven courses, all cataloged")
+nfpa=refs.get("REF-NFPA-1660")
+if not nfpa or "NFPA 1600" not in nfpa.get("stale_retired_aliases",[]): fail("NFPA 1660 (2024) must supersede NFPA 1600")
+for r in records:
+    if r["catalog_id"].startswith("IRS-VITA-") and not r.get("refresh_due"): fail(f"{r['catalog_id']} needs an annual refresh flag")
+for r in records:
+    if re.search(r"(?i)\bcertified\b",r.get("binding_notes","")): fail(f"{r['catalog_id']} binding note claims certification")
+
 print("FEDERAL TRAINING CATALOG: PASS")
 print(" records:",len(records))
 print(" bindings:",len(brows))
 print(" reference-only items:",len(refs))
 print(" bound Step 4A labs:",len(set(x for r in records for x in r["lab_ids"])))
 print(" bound competencies:",len(set(x for r in records for x in r["competency_ids"])))
+print(" bound HSEEP scenarios:",len(set(x for r in records for x in r["hseep_scenario_ids"])))
