@@ -9,8 +9,8 @@
    GET /v1/prim3/news-desk               -> { briefs: [{ agent_key, country_iso, brief, headline_count, created_at }] }
    GET /v1/prim3/news-desk?country=JP    -> { country_iso, brief|null, comments: [{ headline, comment, url|null, created_at }] }
 
-   Comments are fiction voiced by McCluster about real headlines (the headline
-   only, never the article). Headlines link out to their publisher. */
+   Each agent comments in its own voice on real headlines (the headline only,
+   never the article). Headlines link out to their publisher. */
 import { fail, reply } from '../lib/http.js';
 
 export const NEWS_DESK_PATH = '/v1/prim3/news-desk';
@@ -39,7 +39,6 @@ export async function readCountry(env, iso) {
     country_iso: iso,
     brief: briefs[0] ? { agent_key: briefs[0].agent_key, text: briefs[0].brief, headline_count: briefs[0].headline_count, created_at: briefs[0].created_at } : null,
     comments: comments.map(row => ({ agent_key: row.agent_key, headline: row.headline, comment: row.comment, url: urlBy.get(row.article_id) || null, created_at: row.created_at })),
-    label: 'Fiction voiced by McCluster about real headlines.',
   };
 }
 
@@ -49,7 +48,7 @@ export async function readLatestBriefs(env) {
   const seen = new Set();
   const briefs = [];
   for (const row of rows) { if (seen.has(row.agent_key)) continue; seen.add(row.agent_key); briefs.push(row); }
-  return { briefs, label: 'Fiction voiced by McCluster about real headlines.' };
+  return { briefs };
 }
 
 export async function handleNewsDesk(request, env, options = {}) {
