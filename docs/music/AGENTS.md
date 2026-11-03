@@ -14,6 +14,8 @@ Before changing Whip Equipped creative continuity, read:
 
 For song meaning, double meanings, or lyric-dependent staging, consult [LYRIC-SOURCES.md](./whip-equipped/LYRIC-SOURCES.md) and the relevant owner sheet or repository lyric file it identifies.
 
+For real car-flip recollections, read [CAR-FLIP-CHRONICLE.md](./whip-equipped/CAR-FLIP-CHRONICLE.md) before its [ROAD-YEARS.md](./whip-equipped/ROAD-YEARS.md) dramatization. Preserve uncertain dates, prices, vehicle identification, source attribution, and the separation between the recalled legitimate sales and fictional criminal events. The extended scenes have separate, currently unlocked timing; do not absorb them into existing song-scene allowances.
+
 Use the [original treatment](./whip-equipped/archive/2026-10-31-original-treatment.md) to understand source material and history. Never silently replace current approved facts with a conflicting archived passage. Newer explicit owner choices govern creative continuity; propagate an authorized change to the affected current documents rather than treating an older manifest as a barrier to it.
 
 ## Preserve provenance and scope

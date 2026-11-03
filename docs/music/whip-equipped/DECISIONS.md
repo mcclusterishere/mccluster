@@ -36,7 +36,7 @@ Owner-confirmed outcomes and meanings should remain stable through ordinary edit
 
 ## Production basis and unresolved choices
 
-The core has 12 songs, 24 dialogue scenes, and 12 video treatments. Optional Jet adds two scenes and one treatment: **26 dialogue scenes and 13 treatments** in total. The current text has **11,868 spoken words**. These are screenplay counts, not a claim of finished media assets.
+The core has 12 songs, 24 dialogue scenes, and 12 video treatments. Optional Jet adds two scenes and one treatment: **26 dialogue scenes and 13 treatments** in total. The current text has **11,872 spoken words**. These are screenplay counts, not a claim of finished media assets.
 
 Current 5T targets are **107:18.3 core**, **6:17.6 optional Jet**, and **113:35.9 combined**. The [timing manifest](./TIMING.json) retains precise values and per-track bases.
 
@@ -51,9 +51,15 @@ Current 5T targets are **107:18.3 core**, **6:17.6 optional Jet**, and **113:35.
 
 Ten selected lengths are catalog metadata; three selected files have measured-duration evidence. Measurement does not establish a final master or complete lyric alignment. Owner lyric sheets and treatment outrank faulty automatic transcriptions when determining song meaning.
 
-## Forthcoming real car-flip history
+## Real car-flip history — first batch received
 
-The owner intends to assemble at least two or three years of used-car history from photographs and approximate recollections. A complete supporting chronology has not yet been received. Future records must distinguish remembered events, verified records, approximate dates, and fictional additions. Do not populate real purchase/sale facts or quoted conversations from the screenplay.
+On 2026-11-03 the owner supplied three oral-history entries, placed approximately in 2024: the towable camper taken to Georgia, the G20 from Michigan through Georgia and Connecticut to its Long Island sale, and the green Econoline sold around Boston to a lead from the G20. [CAR-FLIP-CHRONICLE.md](./CAR-FLIP-CHRONICLE.md) retains the uncertainty and conditional cost arithmetic. The first batch has been received; the wider two-to-three-year history and supporting photographs/records remain incomplete.
+
+[ROAD-YEARS.md](./ROAD-YEARS.md) adds three extended fictionalized scene groups. Test Drive now briefly recalls living in the G20; Hundun recalls the camper, G20, and Majid's support; All in the Details uses the G20-to-Econoline customer connection. The adapted Boston episode preserves surprise, racist remarks, an apologetic gift, the sister's location check, the ordinary shed demonstration, and the owner's tentative sense that the encounter changed the buyer's heart. It does not establish lasting reform or an attempted attack.
+
+The current song order and 2T/T/2T targets remain intact. The extended Road Years scenes have no assigned recording or locked duration and are excluded from the existing 5T and dialogue totals. Alana remains the first Test Drive romantic lead, with no invented presence in the real-source transactions. The G20 buyer, Econoline buyer, and fictional Cadillac client remain distinct.
+
+Do not select an exact Econoline year or sale price, price the unrecorded AAA tow, treat remembered fuel as a verified maximum, count the gift as sale proceeds, or infer net profit from incomplete costs. Keep remembered events, corroborating records, and newly written dialogue distinct. The buyer is anonymized; private source-access links and raw conversation transcripts are unnecessary.
 
 ## Maintenance
 
