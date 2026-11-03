@@ -5,6 +5,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateCityExtensions } from '../js/fictional-city/content.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function buildCityExport(root = ROOT) {
@@ -12,6 +13,7 @@ export async function buildCityExport(root = ROOT) {
   const bytes = await readFile(resolve(root, source));
   const manifest = JSON.parse(bytes);
   if (manifest.schema !== 'mccluster.fictional-city/v1' || manifest.npcs.length !== 24 || manifest.businesses.length !== 8) throw new Error('Invalid city manifest');
+  validateCityExtensions(manifest);
   const canon = JSON.parse(await readFile(resolve(root, 'docs/music/whip-equipped/CANON.json'), 'utf8'));
   const screenplay = await readFile(resolve(root, 'docs/music/whip-equipped/SCREENPLAY.md'), 'utf8');
   const roadYears = await readFile(resolve(root, 'docs/music/whip-equipped/ROAD-YEARS.md'), 'utf8');
