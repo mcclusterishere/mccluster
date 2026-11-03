@@ -142,3 +142,124 @@ test('Core timeouts, older releases and owner-session changes cannot replace loc
   const changing = createCoreLoreLink({ expected, session: () => session, api: async () => { session = 'somebody-else'; return envelope(lore); } });
   assert.equal(await changing.connect(), false); assert.equal(await changing.resident(people[0].id), null);
 });
+
+// Schema revision 2: expansion lore bound to the spatial layer only by parcel/anchor IDs.
+const PARCELS = new Set([
+  ...['police-station', 'hospital', 'church', 'school-of-hard-knocks', 'wiggers-anonymous', 'shop-01', 'shop-02', 'shop-03', 'shop-04'].map(p => 'civic-center/' + p),
+  ...['thugged-out-apparel', 'shop-01', 'shop-02', 'shop-03', 'shop-04'].map(p => 'hq-waterfront/' + p),
+  'northside-residential/public-school', ...Array.from({ length: 10 }, (_, i) => `northside-residential/house-${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 6 }, (_, i) => `workshop-waterfront/shop-0${i + 1}`)
+]);
+const expansionPeople = city.expansionNpcs, everyone = new Map([...people, ...expansionPeople].map(n => [n.id, n]));
+const expansionBusiness = id => city.expansionBusinesses.find(b => b.id === id);
+
+test('expansion keeps the v1 runtime contract and leaves every original record unchanged', () => {
+  assert.equal(city.schema, 'mccluster.fictional-city/v1'); assert.equal(city.schemaRevision, 2);
+  assert.equal(city.businesses.length, 8); assert.equal(city.npcs.length, 24); assert.equal(city.items.length, 24);
+  // Digest of the shipped v1 sections (PR #716/#719). The expansion may add beside them, never edit them.
+  const v1 = ['district', 'brands', 'businesses', 'npcs', 'items', 'garage', 'garageCrew', 'portals'].map(key => city[key]);
+  assert.equal(createHash('sha256').update(JSON.stringify(v1)).digest('hex'), '760c27278ec63f12fd8ed33aefa91f03935f4d6d1f6d5d2d456278788c5b6a20');
+  assert.equal(city.businesses.find(b => b.id === 'gauranfucking-tea').tagline, "We guarantee you'll like it, or else fuck you.");
+  for (const rows of [[...allBuildings, ...city.expansionBusinesses, ...city.families, ...city.neighborhoods], [...people, ...expansionPeople], [...city.items, ...city.expansionItems]]) {
+    assert.equal(new Set(rows.map(r => r.id)).size, rows.length, 'IDs are unique within each kind');
+  }
+});
+
+test('expansion records carry parcel IDs, never coordinates, and every parcel binds to one owner', () => {
+  assert.deepEqual(city.neighborhoods.map(n => n.id), ['original-block', 'hq-waterfront', 'civic-center', 'northside-residential', 'workshop-waterfront']);
+  const used = new Set();
+  for (const p of city.parcels) {
+    assert.ok(PARCELS.has(p.parcelId), p.parcelId); assert.ok(!used.has(p.parcelId)); used.add(p.parcelId);
+    assert.ok(p.parcelId.startsWith(p.neighborhoodId + '/'));
+    assert.ok(p.businessId ? expansionBusiness(p.businessId)?.parcelId === p.parcelId : city.families.find(f => f.id === p.familyId)?.parcelId === p.parcelId);
+  }
+  const anchors = new Set([...used, ...city.businesses.map(b => b.id), 'garage', 'hq-bridge', 'hq-doorway']);
+  for (const r of [...city.expansionBusinesses, ...expansionPeople, ...city.families]) {
+    for (const key of ['position', 'size', 'entrance', 'route']) assert.equal(r[key], undefined, `${r.id}.${key}`);
+    assert.equal(r.authorship, 'new-2026-11-03', r.id);
+  }
+  for (const b of city.expansionBusinesses) assert.ok(used.has(b.parcelId), b.id);
+  for (const n of expansionPeople) {
+    assert.ok(used.has(n.homeParcelId), n.id); assert.ok(['interior', 'route'].includes(n.placement), n.id);
+    if (n.placement === 'route') { assert.ok(n.routeAnchors.length >= 2, n.id); for (const a of n.routeAnchors) assert.ok(anchors.has(a), `${n.id} → ${a}`); }
+  }
+});
+
+test('expansion residents have biographies, appearance and playable conversations; minors are explicit and protected', () => {
+  assert.equal(expansionPeople.length, 49);
+  for (const n of expansionPeople) {
+    assert.ok(n.backstory.length > 200, n.id); assert.ok(n.personality && n.origin && n.role, n.id);
+    assert.ok(n.businessId ? [...allBuildings, ...city.expansionBusinesses].some(b => b.id === n.businessId) : city.families.some(f => f.id === n.familyId), n.id);
+    for (const c of Object.values(n.appearance)) assert.match(c, /^#[0-9a-f]{6}$/);
+    assert.ok(n.dialogue.greeting && n.dialogue.farewell);
+    assert.ok(n.dialogue.topics.length >= 2, n.id);
+    for (const t of n.dialogue.topics) {
+      assert.ok(t.lines.length >= 4 && t.id.startsWith(n.id + '-'));
+      t.lines.forEach((l, i) => assert.equal(l.speaker, i % 2 ? n.name : 'You'));
+    }
+    assert.equal(n.age < 18, n.minor === true, n.id);
+    if (n.minor) assert.ok(['school-of-hard-knocks', 'municipal-high-9'].includes(n.businessId), n.id);
+  }
+  const text = JSON.stringify([city.expansionBusinesses, expansionPeople, city.families, city.neighborhoods, city.expansionItems]);
+  assert.doesNotMatch(text, /\bnigg/i);
+  assert.doesNotMatch(text, /\b(bloods|crips|latin kings|ms-13)\b/i, 'no real gang names');
+});
+
+test('Wiggers Anonymous has three reformed staff (one inside, two walking) and four suffering members with the four owner-named jobs', () => {
+  const wa = expansionBusiness('wiggers-anonymous');
+  const staff = wa.staffIds.map(id => everyone.get(id));
+  assert.equal(staff.length, 3); assert.ok(staff.every(n => n.group.status === 'reformed-staff'));
+  assert.deepEqual(staff.map(n => n.placement).sort(), ['interior', 'route', 'route']);
+  const members = wa.memberIds.map(id => everyone.get(id));
+  assert.equal(members.length, 4); assert.ok(members.every(n => n.group.status === 'member'));
+  // Three members walk routes; the Thugged Out Apparel member works the shop floor.
+  for (const n of members) assert.equal(n.placement, n.workplace.businessId === 'thugged-out-apparel' ? 'interior' : 'route', n.id);
+  const jobs = members.map(n => n.workplace);
+  assert.ok(jobs.some(w => w.kind === 'self-employed' && /drug dealer/i.test(w.description)));
+  assert.ok(jobs.some(w => w.businessId === 'hitman-gear'));
+  assert.ok(jobs.some(w => w.portalId === city.district.island.hq.portalId && city.portals.some(p => p.id === w.portalId)), 'the courier works at the HQ island');
+  assert.ok(jobs.some(w => w.businessId === 'thugged-out-apparel'));
+  assert.equal(wa.twelveSteps.length, 12); assert.match(wa.memberNote, /four/);
+  const toa = expansionBusiness('thugged-out-apparel');
+  assert.equal(toa.staffIds.length, 2); assert.deepEqual(toa.affiliatedStaffIds, members.filter(n => n.workplace.businessId === 'thugged-out-apparel').map(n => n.id));
+});
+
+test('church, schools, hospital and corrupt police are wired with attendees, students and a priced bribe hook', () => {
+  const church = expansionBusiness('greater-prosperity-tabernacle');
+  assert.ok(church.staffIds.includes('chad-ledger'));
+  const owners = church.attendees.map(a => a.npcId).filter(id => city.npcs.some(n => n.id === id));
+  assert.ok(owners.length >= 3, 'original-block residents attend'); assert.ok(church.attendees.every(a => everyone.has(a.npcId)));
+  const sohk = expansionBusiness('school-of-hard-knocks');
+  const extortionist = everyone.get('bryce-lundqvist');
+  assert.ok(sohk.staffIds.includes(extortionist.id)); assert.equal(extortionist.group.status, 'refuses'); assert.ok(extortionist.age >= 18);
+  assert.equal(sohk.studentIds.length, 3); assert.ok(sohk.studentIds.every(id => everyone.get(id).minor));
+  assert.ok(expansionBusiness('municipal-high-9').studentIds.every(id => everyone.get(id).minor));
+  assert.ok(expansionBusiness('st-copays-general').staffIds.length >= 2);
+  const police = expansionBusiness('precinct-zero');
+  assert.ok(police.interactions.length >= 3);
+  for (const i of police.interactions) {
+    assert.equal(i.type, 'bribe'); assert.ok(Number.isSafeInteger(i.price) && i.price > 0 && i.price <= 250);
+    assert.ok(i.npcIds.every(id => everyone.get(id).businessId === 'precinct-zero' && everyone.get(id).acceptsBribes && !everyone.get(id).minor));
+  }
+  const civic = new Set(['wiggers-anonymous', 'thugged-out-apparel', 'greater-prosperity-tabernacle', 'school-of-hard-knocks', 'municipal-high-9', 'st-copays-general', 'precinct-zero']);
+  assert.ok(city.expansionBusinesses.filter(b => !civic.has(b.id)).length >= 10, 'extra joke businesses');
+});
+
+test('ten families live on ten houses with lore, members and ties to the town', () => {
+  assert.equal(city.families.length, 10);
+  assert.equal(new Set(city.families.map(f => f.parcelId)).size, 10);
+  for (const f of city.families) {
+    assert.match(f.parcelId, /^northside-residential\/house-\d\d$/); assert.ok(f.lore.length > 150 && f.ties.length >= 2, f.id);
+    assert.ok(f.members.some(m => m.npcId === f.representativeNpcId));
+    for (const m of f.members) { if (m.npcId) assert.equal(everyone.get(m.npcId).familyId, f.id, m.npcId); if (m.age < 18) assert.equal(m.minor, true, m.name); }
+  }
+});
+
+test('expansion goods resolve to their counters with bounded prices and are never sold by a minor-only place', () => {
+  const all = [...allBuildings, ...city.expansionBusinesses];
+  for (const item of city.expansionItems) {
+    const b = all.find(b => b.id === item.businessId);
+    assert.ok(b?.itemIds.includes(item.id), item.id); assert.ok(Number.isSafeInteger(item.price) && item.price > 0 && item.price <= 250);
+    assert.match(item.kind, /^virtual_/);
+  }
+});

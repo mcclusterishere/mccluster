@@ -106,39 +106,55 @@ function simplify(points) {
   return out;
 }
 
-/* Lore → runtime view. Returns a manifest whose businesses all carry position/size/entrance (lore entries
-   that name a parcelId take the parcel's geometry), plus the parcels no lore has claimed yet, which the
-   scene renders as plausible generic buildings. The source lore object is never mutated. */
+/* Lore → runtime view. Lore schema revision 2 keeps the original arrays unchanged and adds parcel-bound records
+   in separate arrays (expansionBusinesses, expansionNpcs, expansionItems, families); this merges them into one
+   runtime manifest. Every business ends up with position/size/entrance (lore that names a parcelId takes the
+   parcel's geometry); parcels no lore has claimed stay generic. Residents get a placement the scene understands:
+     'route' (walks routeAnchors)        → 'patrol', starting at the first anchor
+     'interior' at a parcel business     → drawn inside that business
+     at home (homeParcelId, no business) → standing by their front door ('door')
+   The source lore object is never mutated. */
 export function bindCity(manifest, places) {
   const index = createPlacesIndex(places, manifest);
   const claimed = new Set();
-  const businesses = (manifest.businesses || []).map(b => {
+  const loreBusinesses = [...(manifest.businesses || []), ...(manifest.expansionBusinesses || [])];
+  const businesses = loreBusinesses.map(b => {
     if (!b.parcelId || (Array.isArray(b.position) && Array.isArray(b.entrance))) return b;
     const parcel = index.parcels.get(b.parcelId);
-    if (!parcel) return null; // a lore entry naming an unknown parcel is not placed (reported by the tests)
+    // an unknown parcel, or one another business already holds, is never placed (reported by the publisher and tests)
+    if (!parcel || claimed.has(parcel.id)) return null;
     claimed.add(parcel.id);
-    return { ...b, position: parcel.footprint.center.slice(), size: [...parcel.footprint.size, parcel.height], entrance: parcel.entrances[0].position.slice(), neighborhood: parcel.neighborhood, front: parcel.front };
+    return { ...b, position: parcel.footprint.center.slice(), size: [...parcel.footprint.size, parcel.height], entrance: parcel.entrances[0].position.slice(), neighborhood: parcel.neighborhood, front: parcel.front, roof: parcel.roof, use: parcel.use };
   }).filter(Boolean);
-  for (const b of manifest.businesses || []) if (b.parcelId) claimed.add(b.parcelId);
+  const businessIds = new Set(businesses.map(b => b.id));
+  // a household is not a business: its house stays a generic parcel that carries the family's name and lore
+  const households = new Map((manifest.families || []).filter(f => f.parcelId).map(f => [f.parcelId, f]));
   const vacant = places.parcels.filter(p => !claimed.has(p.id)).map(p => ({
-    id: p.id, name: p.label || p.use, generic: true, use: p.use, neighborhood: p.neighborhood, enterable: !!p.enterable,
+    id: p.id, name: households.get(p.id)?.name || p.label || p.use, familyId: households.get(p.id)?.id || null, generic: true, use: p.use, neighborhood: p.neighborhood, enterable: !!p.enterable,
     role: p.role || 'parcel', position: p.footprint.center.slice(), size: [...p.footprint.size, p.height], entrance: p.entrances[0].position.slice(), front: p.front, roof: p.roof || 'flat', staffIds: [], itemIds: []
   }));
-  const npcs = (manifest.npcs || []).map(n => {
+  // a household's front door is its house parcel; residents stand a step to one side of it
+  const homeDoor = (id, k) => { const r = index.resolve(id); return r ? [[Math.round((r.x + (k % 2 ? 1.6 : -1.6)) * 100) / 100, r.z]] : []; };
+  const npcs = [...(manifest.npcs || []), ...(manifest.expansionNpcs || [])].map((n, k) => {
     const out = { ...n };
     if (!n.businessId && n.parcelId) {
       const owner = businesses.find(b => b.parcelId === n.parcelId);
       if (owner) out.businessId = owner.id;
     }
-    if ((!Array.isArray(n.route) || !n.route.length) && (n.routeAnchors?.length || n.homeParcelId)) {
-      const ids = n.routeAnchors?.length ? n.routeAnchors : [n.homeParcelId];
-      const first = index.resolve(ids[0]);
-      out.route = first ? [[first.x, first.z]] : [];
-      out.placement = n.placement || (ids.length > 1 ? 'patrol' : 'door');
+    if (Array.isArray(n.route) && n.route.length) return out; // the original 24 keep their authored routes
+    const anchors = (n.routeAnchors || []).filter(Boolean);
+    if (n.placement === 'route' || (!n.placement && anchors.length > 1)) {
+      const first = index.resolve(anchors[0] || n.homeParcelId);
+      out.placement = 'patrol'; out.route = first ? [[first.x, first.z]] : [];
+    } else if (n.placement === 'interior' && out.businessId && businessIds.has(out.businessId)) {
+      out.route = [];
+    } else if (n.homeParcelId || n.residenceParcelId) {
+      out.placement = 'door'; out.route = homeDoor(n.homeParcelId || n.residenceParcelId, k);
     }
     return out;
   });
-  return { manifest: { ...manifest, businesses, npcs }, vacant, index };
+  const items = [...(manifest.items || []), ...(manifest.expansionItems || [])];
+  return { manifest: { ...manifest, businesses, npcs, items }, vacant, index };
 }
 
 /* Patrol polylines for residents who walk between route anchors, resolved against the collision world. */

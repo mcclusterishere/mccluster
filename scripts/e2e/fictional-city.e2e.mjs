@@ -20,6 +20,10 @@ await publishCity(root); await mkdir(out, { recursive: true });
 const city = JSON.parse(await readFile(join(root, 'core/data/fictional-city/district.v1.json'), 'utf8'));
 const places = JSON.parse(await readFile(join(root, 'core/data/fictional-city/places.v1.json'), 'utf8'));
 const STATE_KEY = 'here.universe.mccluster-fictional-city.state';
+// the original 27 plus any parcel-bound residents from lore revision 2 (PR #720)
+const PEOPLE = city.npcs.length + city.garageCrew.length + (city.expansionNpcs?.length || 0);
+const LORE_PARCELS = new Set((city.expansionBusinesses || []).map(b => b.parcelId));
+const PLACES_SUMMARY = JSON.stringify({ neighborhoods: 6, parcels: places.parcels.length, vacant: places.parcels.filter(p => !LORE_PARCELS.has(p.id)).length, chunks: 36 });
 const metrics = [];
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
@@ -105,7 +109,7 @@ try {
     const dimensions = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, canvas: document.querySelector('#city-canvas').getBoundingClientRect().width }));
     check(width + ': no horizontal page overflow', dimensions.width === dimensions.scroll, dimensions);
     const stats = await page.evaluate(() => MCC_CITY.stats());
-    check(width + ': all 27 people and nine businesses are instantiated', stats.npcCount === 27 && stats.buildings === 9, stats);
+    check(width + ': all ' + PEOPLE + ' people, the nine original buildings and ' + places.parcels.length + ' parcels are instantiated', stats.npcCount === PEOPLE && stats.buildings === 9 && stats.parcels === places.parcels.length, stats);
     check(width + ': measured scene stays inside the preview geometry budget', stats.triangles < 150000 && stats.drawCalls < 300, stats);
     await page.screenshot({ path: join(out, 'city-' + width + '.png'), fullPage: false });
     await page.locator('.city-garage-card').scrollIntoViewIfNeeded();
@@ -215,7 +219,7 @@ try {
     const s = await page.evaluate(() => MCC_CITY.snapshot());
     check('v1 save migrates to v2 keeping credits, inventory, receipts, met, visited, chapter and position',
       s.version === 2 && s.credits === 199 && s.inventory[item.id] === 1 && s.receipts.length === 1 && s.receipts[0].at === v1.receipts[0].at && s.met[0] === 'mike-hawk' && s.visited.includes('hordash') && s.story.chapter === 'tears-wont-fall' && s.position.x === -16 && Array.isArray(s.discoveries), s);
-    check('the city reports its geography: 5+1 neighbourhoods, 33 parcels, 36 chunks', JSON.stringify(await page.evaluate(() => MCC_CITY.places())) === JSON.stringify({ neighborhoods: 6, parcels: 33, vacant: 33, chunks: 36 }));
+    check('the city reports its geography: 5 neighbourhoods + the island, every parcel, 36 chunks; lore claims its parcels', JSON.stringify(await page.evaluate(() => MCC_CITY.places())) === PLACES_SUMMARY);
     // all eight original businesses: enter and leave each one
     for (const b of city.businesses) {
       await page.getByRole('button', { name: 'District map' }).click();
@@ -351,30 +355,41 @@ try {
     await measure(page, 'civic center (1280)');
     await context.close();
   }
-  {
-    // lore that names parcels lights up without code changes; a bribe spends city credits; refusal when short
-    const { context, page } = await contextFor(390);
-    const lore = structuredClone(city);
-    lore.businesses.push({ id: 'fixture-precinct', name: 'Fixture Precinct', category: 'Civic Center', parcelId: 'civic-center/police-station', staffIds: ['fixture-officer'], itemIds: [], tagline: '', description: 'Fixture lore for the binding test.', backstory: '' });
-    lore.npcs.push({ id: 'fixture-officer', name: 'Fixture Officer', role: 'Desk', age: 40, businessId: 'fixture-precinct', homeParcelId: 'northside-residential/house-02', routeAnchors: ['civic-center/police-station', 'junction/civic-plaza'], dialogue: { greeting: 'Evening.', topics: [] }, backstory: 'Fixture.', personality: 'Fixture.', interactions: [{ type: 'bribe', id: 'fixture-officer:look-away', cost: 40, label: 'Offer 40 credits' }] });
-    await context.route(url => url.pathname.endsWith('/data/fictional-city/district.v1.json'), route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(lore) }));
+  if (city.expansionBusinesses?.length) {
+    // lore revision 2: a parcel-bound business is enterable at its parcel; a bribe spends city credits; refusal when short
+    const bribe = city.expansionBusinesses.flatMap(b => (b.interactions || []).filter(i => i.type === 'bribe').map(i => ({ ...i, businessId: b.id }))).sort((a, b) => a.price - b.price)[0];
+    const officer = city.expansionNpcs.find(n => n.id === bribe.npcIds[0]);
+    const { context, page, errors } = await contextFor(390);
     await page.goto(site + '/fictional-city.html'); await ready(page);
-    check('lore bound to a parcel claims it (no longer generic)', JSON.stringify(await page.evaluate(() => MCC_CITY.places())) === JSON.stringify({ neighborhoods: 6, parcels: 33, vacant: 32, chunks: 36 }));
     await page.getByRole('button', { name: 'Open the city directory' }).click();
-    await page.locator('#city-dialog-body button.city-person').filter({ hasText: 'Fixture Officer' }).click();
-    await page.getByRole('button', { name: 'Offer 40 credits' }).click();
+    await page.locator('#city-dialog-body button.city-person').filter({ hasText: officer.name }).first().click();
+    const before = await page.evaluate(() => MCC_CITY.snapshot().credits);
+    await page.locator(`[data-interaction="${bribe.id}"]`).click();
     const paid = await page.evaluate(() => MCC_CITY.snapshot());
-    check('bribe interaction deducts city credits and records the payment', paid.credits === 210 && paid.payments.length === 1);
+    check('a lore bribe deducts its price in city credits and records the payment', paid.credits === before - bribe.price && paid.payments.length === 1 && paid.payments[0].interactionId === bribe.id);
+    check('the bribe outcome is shown', (await page.locator('#city-dialog-body').textContent()).includes(bribe.outcome));
     await page.reload(); await ready(page);
     check('payment survives reload', (await page.evaluate(() => MCC_CITY.snapshot().payments.length)) === 1);
+    const minor = city.expansionNpcs.find(n => n.minor === true);
+    await page.getByRole('button', { name: 'Open the city directory' }).click();
+    await page.locator('#city-dialog-body button.city-person').filter({ hasText: minor.name }).first().click();
+    check('a minor never offers a paid interaction', await page.locator('#city-dialog-body [data-interaction]').count() === 0);
+    await page.getByRole('button', { name: 'Close panel' }).click();
+    const biz = city.expansionBusinesses.find(b => b.id === bribe.businessId);
+    await page.getByRole('button', { name: 'District map' }).click();
+    await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: biz.name, exact: true }) }).first().getByRole('button', { name: 'About this spot' }).click();
+    await page.getByRole('button', { name: 'Walk inside', exact: true }).click();
+    await page.waitForFunction(id => MCC_CITY.snapshot().position.interior === id, biz.id);
+    check('a parcel-bound lore business is an entered interior', true);
+    await page.locator('.city-stage').screenshot({ path: join(out, 'after-lore-interior-390.png') });
+    check('lore binding: no uncaught errors', errors.length === 0, { errors });
     await context.close();
     const broke = await contextFor(390);
-    await broke.context.route(url => url.pathname.endsWith('/data/fictional-city/district.v1.json'), route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(lore) }));
-    await withSave(broke.context, v2({ x: 0, z: 2.5, interior: null }, { credits: 12 }));
+    await withSave(broke.context, v2({ x: 0, z: 2.5, interior: null }, { credits: bribe.price - 1 }));
     await broke.page.goto(site + '/fictional-city.html'); await ready(broke.page);
     await broke.page.getByRole('button', { name: 'Open the city directory' }).click();
-    await broke.page.locator('#city-dialog-body button.city-person').filter({ hasText: 'Fixture Officer' }).click();
-    check('bribe refused when short of credits', await broke.page.getByRole('button', { name: 'Offer 40 credits' }).isDisabled() && (await broke.page.evaluate(() => MCC_CITY.snapshot().credits)) === 12);
+    await broke.page.locator('#city-dialog-body button.city-person').filter({ hasText: officer.name }).first().click();
+    check('a bribe is refused when short of credits', await broke.page.locator(`[data-interaction="${bribe.id}"]`).isDisabled() && (await broke.page.evaluate(() => MCC_CITY.snapshot().credits)) === bribe.price - 1);
     await broke.context.close();
   }
   for (const width of [390, 768, 1440]) {

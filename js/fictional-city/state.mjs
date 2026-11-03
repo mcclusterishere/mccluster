@@ -26,18 +26,24 @@ function knownPlaces(manifest, places) {
   const discoverable = new Set([...(places?.landmarks || []).map(l => l.id), ...(places?.neighborhoods || []).map(n => n.id)]);
   return { buildings, discoverable };
 }
+/* Authored interactions from lore: `{ type, id, label, price, npcIds?, outcome? }` on a business or a resident.
+   `price` is in city credits (lore schema revision 2). Minors never carry a paid interaction: an npcIds list is
+   filtered to adults and an interaction that would only be offered by minors is dropped. */
 export function interactionsOf(manifest) {
   const out = new Map();
+  const minors = new Set([...(manifest.npcs || [])].filter(n => n.minor === true).map(n => n.id));
   for (const entity of [...(manifest.businesses || []), ...(manifest.npcs || []), ...(manifest.garageCrew || [])]) {
+    if (minors.has(entity.id)) continue;
     (entity.interactions || []).forEach((it, i) => {
-      if (!it || typeof it.type !== 'string') return;
+      if (!it || typeof it.type !== 'string' || !Number.isSafeInteger(it.price)) return;
       const id = typeof it.id === 'string' ? it.id : `${entity.id}:${it.type}:${i}`;
-      out.set(id, { ...it, id, ownerId: entity.id });
+      const npcIds = Array.isArray(it.npcIds) ? it.npcIds.filter(n => !minors.has(n)) : null;
+      if (npcIds && !npcIds.length) return;
+      out.set(id, { ...it, id, ownerId: entity.id, npcIds });
     });
   }
   return out;
 }
-
 export function sanitizeState(raw, manifest, places = null) {
   const state = initialState(manifest);
   if (!raw || !(raw.version === 1 || raw.version === STATE_VERSION)) return state;
@@ -66,8 +72,8 @@ export function sanitizeState(raw, manifest, places = null) {
     state.discoveries = unique(raw.discoveries, discoverable);
     const interactions = interactionsOf(manifest);
     state.payments = (Array.isArray(raw.payments) ? raw.payments : []).filter(r =>
-      r && interactions.has(r.interactionId) && r.cost === interactions.get(r.interactionId).cost && Number.isSafeInteger(r.at) && r.at >= 0
-    ).slice(-50).map(r => ({ interactionId: r.interactionId, cost: r.cost, at: r.at }));
+      r && interactions.has(r.interactionId) && r.price === interactions.get(r.interactionId).price && Number.isSafeInteger(r.at) && r.at >= 0
+    ).slice(-50).map(r => ({ interactionId: r.interactionId, price: r.price, at: r.at }));
   }
   return state;
 }
@@ -81,8 +87,8 @@ export function saveState(storage, state) {
   catch { return false; }
 }
 // The one credit check every spend uses (shop counters and authored interactions).
-function affordable(state, cost) {
-  return Number.isSafeInteger(cost) && cost >= 0 && Number.isSafeInteger(state.credits) && state.credits >= cost;
+function affordable(state, price) {
+  return Number.isSafeInteger(price) && price >= 0 && Number.isSafeInteger(state.credits) && state.credits >= price;
 }
 export function purchase(state, itemId, manifest, now = Date.now()) {
   const item = manifest.items.find(i => i.id === itemId);
@@ -104,15 +110,15 @@ export function recordVisit(state, id, manifest, places = null) {
   return { ...state, visited: [...state.visited, id] };
 }
 
-/* Generic authored-interaction payment (a bribe today; any `{ type, cost }` interaction tomorrow).
+/* Generic authored-interaction payment (a bribe today; any `{ type, price }` interaction tomorrow).
    Same game-credit rules as a purchase: integral, bounded, never below zero, logged, no real money. */
 export function payInteraction(state, interactionId, manifest, now = Date.now()) {
   const it = interactionsOf(manifest).get(interactionId);
-  if (!it || !Number.isSafeInteger(it.cost) || it.cost < 0 || it.cost > 100000) return { ok: false, reason: 'unknown-interaction', state };
-  if (!affordable(state, it.cost)) return { ok: false, reason: 'insufficient-credits', state };
+  if (!it || !Number.isSafeInteger(it.price) || it.price < 0 || it.price > 100000) return { ok: false, reason: 'unknown-interaction', state };
+  if (!affordable(state, it.price)) return { ok: false, reason: 'insufficient-credits', state };
   return { ok: true, interaction: it, state: {
-    ...state, credits: state.credits - it.cost,
-    payments: [...(state.payments || []), { interactionId: it.id, cost: it.cost, at: now }].slice(-50)
+    ...state, credits: state.credits - it.price,
+    payments: [...(state.payments || []), { interactionId: it.id, price: it.price, at: now }].slice(-50)
   }};
 }
 export function recordDiscovery(state, id, places) {

@@ -10,7 +10,7 @@ import * as EU from '../../js/prim3-tactics/adapters/equity-uprise/adapter.mjs';
 import { createSpatialWorld, isWalkable, findWalkingPath, moveWithCollisions } from '../../js/fictional-city/spatial.mjs';
 import { createPlacesIndex, bindCity, resolveRoute, resolveResidentRoutes, walkableArea, footprintBounds, chunkIdAt, ORIGINAL_BUSINESS_IDS, NEIGHBORHOOD_IDS } from '../../js/fictional-city/places.mjs';
 import { buildChunks, chunkWanted } from '../../js/fictional-city/chunks.mjs';
-import { initialState, sanitizeState, loadState, saveState, payInteraction, recordDiscovery, purchase, STATE_KEY, STATE_VERSION } from '../../js/fictional-city/state.mjs';
+import { initialState, sanitizeState, loadState, saveState, payInteraction, recordDiscovery, purchase, interactionsOf, STATE_KEY, STATE_VERSION } from '../../js/fictional-city/state.mjs';
 import { CITY_TILE_M, HQ_CELL_M, hqFtToCity, cityToHqFt, tacticalRegion } from '../../js/fictional-city/tactical.mjs';
 import { buildCityLevel } from '../../tools/prim3-city/city-grid.mjs';
 import { osmLevelToPlaces } from '../../tools/prim3-city/places-adapter.mjs';
@@ -109,11 +109,14 @@ test('route anchors resolve to a walkable path through neighbourhoods and over t
 });
 
 /* Lore that has not landed yet, in the shape the lore PR binds with. The places resolver lights it up. */
+// the original lore only (revision-2 arrays removed), so the fixture's parcel is free to claim
+const base = { ...city, expansionBusinesses: [], expansionNpcs: [], expansionItems: [], families: [] };
 const lore = {
-  ...city,
-  businesses: [...city.businesses, { id: 'fixture-precinct', name: 'Fixture Precinct', parcelId: 'civic-center/police-station', staffIds: ['fixture-officer'], itemIds: [], description: 'Fixture.', interactions: [{ type: 'bribe', id: 'fixture-officer:look-away', cost: 40, label: 'Offer 40 credits' }] }],
-  npcs: [...city.npcs,
-    { id: 'fixture-officer', name: 'Fixture Officer', role: 'Desk', parcelId: 'civic-center/police-station', homeParcelId: 'northside-residential/house-02', routeAnchors: ['civic-center/police-station', 'junction/civic-plaza', 'hq-bridge'], dialogue: { greeting: 'Hi', topics: [] }, interactions: [{ type: 'bribe', cost: 15 }] },
+  ...base,
+  businesses: [...base.businesses, { id: 'fixture-precinct', name: 'Fixture Precinct', parcelId: 'civic-center/police-station', staffIds: ['fixture-officer'], itemIds: [], description: 'Fixture.', interactions: [{ type: 'bribe', id: 'fixture-officer:look-away', price: 40, label: 'Offer 40 credits', npcIds: ['fixture-officer'] }] }],
+  npcs: [...base.npcs,
+    { id: 'fixture-officer', name: 'Fixture Officer', role: 'Desk', parcelId: 'civic-center/police-station', homeParcelId: 'northside-residential/house-02', routeAnchors: ['civic-center/police-station', 'junction/civic-plaza', 'hq-bridge'], dialogue: { greeting: 'Hi', topics: [] }, interactions: [{ type: 'bribe', price: 15 }] },
+    { id: 'fixture-minor', name: 'Fixture Student', role: 'Student', minor: true, homeParcelId: 'northside-residential/house-05', dialogue: { greeting: 'Hi', topics: [] }, interactions: [{ type: 'bribe', id: 'fixture-minor:never', price: 1 }] },
     { id: 'fixture-neighbor', name: 'Fixture Neighbor', role: 'Resident', homeParcelId: 'northside-residential/house-07', dialogue: { greeting: 'Hi', topics: [] } }]
 };
 
@@ -126,12 +129,13 @@ test('lore binds by parcelId/homeParcelId/routeAnchors; unclaimed parcels render
   assert.equal(b.vacant.length, places.parcels.length - 1);
   assert.equal(b.manifest.npcs.find(n => n.id === 'fixture-officer').businessId, 'fixture-precinct');
   const neighbor = b.manifest.npcs.find(n => n.id === 'fixture-neighbor');
-  assert.deepEqual(neighbor.route[0], [index.resolve('northside-residential/house-07').x, index.resolve('northside-residential/house-07').z]);
+  const home = index.resolve('northside-residential/house-07');
+  assert.equal(neighbor.placement, 'door'); assert.ok(Math.hypot(neighbor.route[0][0] - home.x, neighbor.route[0][1] - home.z) <= 1.6, 'stands by the front door');
   const routes = resolveResidentRoutes(b, world);
   assert.ok(routes.get('fixture-officer').length >= 3);
   assert.equal(lore.businesses.at(-1).position, undefined, 'binding never writes into the lore object');
   for (const o of ORIGINAL_BUSINESS_IDS) assert.deepEqual(b.manifest.businesses.find(x => x.id === o).position, city.businesses.find(x => x.id === o).position);
-  const unknown = bindCity({ ...city, businesses: [...city.businesses, { id: 'x', name: 'X', parcelId: 'civic-center/nowhere', staffIds: [], itemIds: [] }] }, places);
+  const unknown = bindCity({ ...base, businesses: [...base.businesses, { id: 'x', name: 'X', parcelId: 'civic-center/nowhere', staffIds: [], itemIds: [] }] }, places);
   assert.ok(!unknown.manifest.businesses.some(x => x.id === 'x'), 'an unknown parcel is never placed at the origin');
 });
 
@@ -157,7 +161,8 @@ test('bribe interactions spend city credits through the purchase rules; insuffic
   const b = bindCity(lore, places).manifest;
   let s = initialState(b);
   const paid = payInteraction(s, 'fixture-officer:look-away', b, 99);
-  assert.ok(paid.ok); assert.equal(paid.state.credits, 210); assert.deepEqual(paid.state.payments, [{ interactionId: 'fixture-officer:look-away', cost: 40, at: 99 }]);
+  assert.ok(paid.ok); assert.equal(paid.state.credits, 210); assert.deepEqual(paid.state.payments, [{ interactionId: 'fixture-officer:look-away', price: 40, at: 99 }]);
+  assert.equal(payInteraction(s, 'fixture-minor:never', b).ok, false, 'a minor never offers a paid interaction');
   const generated = payInteraction(s, 'fixture-officer:bribe:0', b);
   assert.ok(generated.ok && generated.state.credits === 235, 'an id-less interaction gets a stable generated id');
   assert.equal(s.credits, 250, 'paying never mutates the previous state');
@@ -165,7 +170,7 @@ test('bribe interactions spend city credits through the purchase rules; insuffic
   assert.deepEqual(payInteraction(broke, 'fixture-officer:look-away', b), { ok: false, reason: 'insufficient-credits', state: broke });
   assert.equal(payInteraction(s, 'nope', b).ok, false);
   // forged or re-priced payments are dropped on load
-  const clean = sanitizeState({ ...paid.state, payments: [...paid.state.payments, { interactionId: 'fixture-officer:look-away', cost: 1, at: 5 }] }, b, places);
+  const clean = sanitizeState({ ...paid.state, payments: [...paid.state.payments, { interactionId: 'fixture-officer:look-away', price: 1, at: 5 }] }, b, places);
   assert.equal(clean.payments.length, 1);
   s = recordDiscovery(s, 'hq-overlook', places); s = recordDiscovery(s, 'hq-overlook', places); s = recordDiscovery(s, 'forged', places);
   assert.deepEqual(s.discoveries, ['hq-overlook']);
@@ -242,4 +247,23 @@ test('#711 converter output speaks the same contract: Jersey City sample → pla
   const w = createSpatialWorld([], null, p);
   const r = tacticalRegion(p, w, { minX: p.frame.bounds.minX, maxX: p.frame.bounds.minX + 120, minZ: p.frame.bounds.minZ, maxZ: p.frame.bounds.minZ + 120 });
   assert.ok(r.engineConfig.blockers.length > 0 && r.W === Math.floor(120 / TILE_M) + 1);
+});
+
+test('lore revision 2 (PR #720 arrays) binds completely: every expansion business on its parcel, every resident placed, no bribe on a minor', () => {
+  if (city.schemaRevision !== 2) return;
+  const b = bindCity(city, places);
+  assert.equal(b.manifest.businesses.length, city.businesses.length + city.expansionBusinesses.length, 'every expansion business is placed');
+  assert.equal(b.manifest.npcs.length, city.npcs.length + city.expansionNpcs.length);
+  assert.equal(b.manifest.items.length, city.items.length + city.expansionItems.length);
+  for (const n of b.manifest.npcs) {
+    assert.ok(['interior', 'patrol', 'door'].includes(n.placement), n.id + ' ' + n.placement);
+    if (n.placement !== 'interior') { assert.ok(n.route?.length, n.id + ' has a place to stand'); for (const [x, z] of n.route) assert.ok(isWalkable(x, z, world, .2), n.id); }
+    else assert.ok(b.manifest.businesses.some(x => x.id === n.businessId) || n.businessId === city.garage.id, n.id + ' works somewhere');
+  }
+  const routes = resolveResidentRoutes(b, world);
+  for (const n of city.expansionNpcs.filter(n => n.placement === 'route')) assert.ok(routes.get(n.id)?.length >= 2, n.id + ' walks its route');
+  const minors = new Set(b.manifest.npcs.filter(n => n.minor === true).map(n => n.id));
+  for (const it of interactionsOf(b.manifest).values()) { assert.ok(!minors.has(it.ownerId)); assert.ok(!(it.npcIds || []).some(id => minors.has(id))); assert.ok(Number.isSafeInteger(it.price)); }
+  for (const f of city.families) assert.ok(b.vacant.find(v => v.id === f.parcelId)?.familyId === f.id, f.id + ' lives in its house');
+  assert.doesNotMatch(JSON.stringify(places), /"cost"\s*:/, 'public geography carries no "cost" fields');
 });

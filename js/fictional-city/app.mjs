@@ -112,7 +112,7 @@ function openBuilding(id) {
   if (place.itemIds?.length) actions.append(button('Browse the counter', () => openShop(id)));
   if (id === manifest.garage.id) actions.append(button('Open the story desk', () => openStory()), button('Open the transportation globe', () => openTravel()));
   root.append(actions, el('h3', 'The people here'));
-  for (const personId of place.staffIds) {
+  for (const personId of peopleOf(place)) {
     const person = findResident(personId);
     if (person) root.append(personButton(person));
   }
@@ -157,33 +157,48 @@ function openResident(id, topicId) {
   if (person.businessId === manifest.garage.id) actions.append(button('Whip Equipped story desk', openStory, 'city-primary'));
   actions.append(button('See you around', closePanel)); root.append(actions);
 }
-/* Authored interactions bind generically: lore declares `interactions: [{ type, cost, ... }]` on a business or a
-   resident and this host renders it. `bribe` spends city credits through the same rules as a purchase.
-   Unknown types are ignored, so newer lore never breaks an older host. */
+/* Authored interactions bind generically: lore declares `interactions: [{ type, id, label, price, npcIds, outcome }]`
+   on a business (offered there and by each listed resident) or on a resident. `bribe` spends city credits through
+   the same rules as a purchase. Minors never offer one. Unknown types are ignored, so newer lore never breaks an
+   older host. */
 const INTERACTIONS = {
   bribe(it) {
-    return button(it.label || ('Offer ' + it.cost + ' credits'), () => {
+    return button((it.label || 'Make an offer') + ' · ' + it.price + ' cr', () => {
       const result = payInteraction(state, it.id, manifest);
-      if (!result.ok) { notify(it.refusal || (result.reason === 'insufficient-credits' ? 'You need more city credits for that.' : 'That offer is not available.')); return; }
+      if (!result.ok) { notify(result.reason === 'insufficient-credits' ? 'You need more city credits for that.' : 'That offer is not available.'); return; }
       state = result.state; persist(); stats();
-      notify((it.success || 'Paid.') + ' ' + it.cost + ' credits spent.');
+      const root = panel('Paid · ' + it.price + ' city credits', it.label || 'Done');
+      root.append(el('p', it.outcome || 'Done.', 'city-quote'), el('p', state.credits + ' city credits left in your pocket.', 'city-bio-meta'));
+      root.append(button('Back to the street', closePanel));
     }, 'city-primary');
   }
 };
 function appendInteractions(actions, entity) {
-  const all = interactionsOf(manifest);
-  for (const it of all.values()) {
-    if (it.ownerId !== entity.id || !INTERACTIONS[it.type] || !Number.isSafeInteger(it.cost)) continue;
+  if (entity.minor === true) return;
+  for (const it of interactionsOf(manifest).values()) {
+    const offered = it.ownerId === entity.id || (it.npcIds || []).includes(entity.id);
+    if (!offered || !INTERACTIONS[it.type]) continue;
     const node = INTERACTIONS[it.type](it);
     node.dataset.interaction = it.id;
-    node.disabled = state.credits < it.cost;
+    node.disabled = state.credits < it.price;
+    node.setAttribute('aria-label', (it.label || 'Make an offer') + ' for ' + it.price + ' city credits');
     actions.append(node);
   }
 }
+// everyone attached to a place: staff first, then members, students and affiliates (lore revision 2)
+const peopleOf = place => [...new Set([...(place.staffIds || []), ...(place.affiliatedStaffIds || []), ...(place.memberIds || []), ...(place.studentIds || [])])];
 function openParcel(id) {
   const place = vacant.find(p => p.id === id); if (!place) return;
   const root = panel(neighborhoodName(place.neighborhood), place.name);
   const actions = el('div', undefined, 'city-dialog-actions');
+  const family = place.familyId && (manifest.families || []).find(f => f.id === place.familyId);
+  if (family) {
+    if (family.lore) root.append(el('p', family.lore));
+    const home = (family.members || []).map(m => m.npcId && findResident(m.npcId)).filter(Boolean);
+    for (const person of home) root.append(personButton(person));
+    actions.append(button('Back to the street', closePanel)); root.append(actions);
+    return;
+  }
   if (place.enterable) {
     root.append(el('p', 'The door is open. Nobody is behind the counter yet.'));
     actions.append(button('Walk inside', () => moveToBuilding(id, true), 'city-primary'));
@@ -333,11 +348,22 @@ function openMap() {
   }, 'city-primary'));
 }
 function openResidents() {
-  const root = panel('24 new neighbors + the 3-person garage crew', 'City directory');
+  const root = panel(residents().length + ' neighbors, including the 3-person garage crew', 'City directory');
+  const listed = new Set();
   for (const place of buildings()) {
+    const ids = peopleOf(place).filter(id => findResident(id));
+    if (!ids.length) continue;
     root.append(el('h3', place.name));
-    for (const id of place.staffIds) { const p = findResident(id); if (p) root.append(personButton(p)); }
+    for (const id of ids) { listed.add(id); root.append(personButton(findResident(id))); }
   }
+  for (const family of manifest.families || []) {
+    const ids = (family.members || []).map(m => m.npcId).filter(id => id && findResident(id) && !listed.has(id));
+    if (!ids.length) continue;
+    root.append(el('h3', family.name));
+    for (const id of ids) { listed.add(id); root.append(personButton(findResident(id))); }
+  }
+  const rest = residents().filter(n => !listed.has(n.id));
+  if (rest.length) { root.append(el('h3', 'Around town')); for (const n of rest) root.append(personButton(n)); }
 }
 function safeRoute(route) {
   if (typeof route !== 'string') return null;

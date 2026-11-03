@@ -19,8 +19,10 @@ export async function buildCityExport(root = ROOT) {
   const placesSource = 'core/data/fictional-city/places.v1.json';
   const placesBytes = await readFile(resolve(root, placesSource));
   const places = validatePlaces(JSON.parse(placesBytes));
-  const unresolved = [...manifest.businesses, ...manifest.npcs].flatMap(e => [e.parcelId, e.homeParcelId, ...(e.routeAnchors || [])].filter(Boolean))
-    .filter(id => !bindCity(manifest, places).index.resolve(id));
+  const runtime = bindCity(manifest, places);
+  const unresolved = [...runtime.manifest.businesses, ...runtime.manifest.npcs, ...(manifest.parcels || []), ...(manifest.families || [])]
+    .flatMap(e => [e.parcelId, e.homeParcelId, e.residenceParcelId, ...(e.routeAnchors || [])].filter(Boolean))
+    .filter(id => !runtime.index.resolve(id));
   if (unresolved.length) throw new Error('Lore names unknown places: ' + [...new Set(unresolved)].join(', '));
   const { index, chunks: cityChunks } = buildChunks(places);
   const chunkFiles = [...cityChunks.values()].map(c => {
@@ -29,6 +31,9 @@ export async function buildCityExport(root = ROOT) {
   });
   for (const entry of index.chunks) { const f = chunkFiles.find(x => x.id === entry.id); entry.bytes = f.body.length; entry.sha256 = f.sha256; }
   const indexBytes = Buffer.from(JSON.stringify(index) + '\n');
+  // Schema revision 2 adds parcel-bound expansion lore beside the unchanged v1 arrays.
+  if (manifest.schemaRevision === 2 && !(['neighborhoods', 'parcels', 'expansionBusinesses', 'expansionNpcs', 'families', 'expansionItems']
+    .every(key => Array.isArray(manifest[key]) && manifest[key].length) && manifest.families.length === 10)) throw new Error('Invalid city expansion');
   const canon = JSON.parse(await readFile(resolve(root, 'docs/music/whip-equipped/CANON.json'), 'utf8'));
   const screenplay = await readFile(resolve(root, 'docs/music/whip-equipped/SCREENPLAY.md'), 'utf8');
   const roadYears = await readFile(resolve(root, 'docs/music/whip-equipped/ROAD-YEARS.md'), 'utf8');
@@ -72,8 +77,11 @@ export async function publishCity(root = ROOT) {
   await mkdir(resolve(out, 'chunks'), { recursive: true });
   for (const f of result.chunkFiles) await writeFile(resolve(out, f.path), f.body);
   await writeFile(resolve(out, 'chunks/index.v1.json'), result.chunkIndexBytes);
+  const m = result.manifest;
   return { manifestSha256: result.sha256, placesSha256: result.placesSha256, chunkIndexSha256: result.chunkIndexSha256, chunks: result.chunkFiles.length,
-    businesses: result.manifest.businesses.length, newResidents: result.manifest.npcs.length, chapters: result.story.chapters.length };
+    businesses: m.businesses.length, newResidents: m.npcs.length,
+    expansionBusinesses: m.expansionBusinesses?.length || 0, expansionResidents: m.expansionNpcs?.length || 0,
+    families: m.families?.length || 0, parcels: m.parcels?.length || 0, chapters: result.story.chapters.length };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   console.log(JSON.stringify(await publishCity()));

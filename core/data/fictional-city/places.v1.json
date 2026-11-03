@@ -1477,6 +1477,17 @@
   ],
   "anchors": [
     {
+      "id": "garage",
+      "position": [
+        0,
+        -44
+      ],
+      "neighborhood": "original-block",
+      "kind": "alias",
+      "aliasOf": "whip-equipped-garage",
+      "note": "The Whip Equipped garage door, by its short contract ID"
+    },
+    {
       "id": "hq-bridge",
       "position": [
         0,
