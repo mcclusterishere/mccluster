@@ -31,6 +31,7 @@ test('a country returns its latest brief and reactions with publisher links', as
     assert.equal(body.country_iso, 'JP');
     assert.equal(body.brief.text, 'Japan was mostly space and games today.');
     assert.equal(body.comments[0].url, 'https://news.example/a');
+    assert.equal('label' in body, false, 'no disclaimer label: the agents speak as themselves (owner, 2026-11-03)');
   });
 });
 
