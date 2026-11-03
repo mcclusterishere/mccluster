@@ -90,7 +90,7 @@ async function contextFor(width, role = 'owner') {
     }
     return route.fulfill({ status: 200, contentType: 'text/plain', body: '' });
   });
-  const page = await context.newPage(); page.setDefaultTimeout(120000); // software WebGL runs the full city at about 2 fps page.on('pageerror', e => errors.push(e.message));
+  const page = await context.newPage(); page.setDefaultTimeout(120000); page.on('pageerror', e => errors.push(e.message)); // software WebGL runs the full city at about 2 fps
   return { context, page, requests, errors };
 }
 try {
@@ -398,6 +398,33 @@ try {
     await broke.page.locator('#city-dialog-body button.city-person').filter({ hasText: officer.name }).first().click();
     check('a bribe is refused when short of credits', await broke.page.locator(`[data-interaction="${bribe.id}"]`).isDisabled() && (await broke.page.evaluate(() => MCC_CITY.snapshot().credits)) === bribe.price - 1);
     await broke.context.close();
+  }
+  {
+    // no WebGL: the full city map, its places, the directory and the Bridgeport story route still work
+    const { context, page, errors } = await contextFor(390);
+    await context.addInitScript(() => {
+      const original = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type, ...rest) { return /webgl/i.test(type) ? null : original.call(this, type, ...rest); };
+    });
+    await page.goto(site + '/fictional-city.html');
+    await page.waitForFunction(() => document.documentElement.dataset.cityReady === 'true' && window.MCC_CITY);
+    check('no WebGL: the city starts without a 3D scene', (await page.evaluate(() => MCC_CITY.stats())) === null);
+    await page.getByRole('button', { name: 'District map' }).click();
+    check('no WebGL: the whole-city map draws every parcel', await page.locator('.city-map rect[data-place]').count() >= places.parcels.length);
+    const biz = (city.expansionBusinesses || [])[0];
+    if (biz) {
+      await page.locator('.city-place-card').filter({ has: page.getByRole('heading', { name: biz.name, exact: true }) }).first().getByRole('button', { name: 'About this spot' }).click();
+      check('no WebGL: a new-neighbourhood business opens from the map', (await page.locator('#city-dialog-title').textContent()) === biz.name);
+      await page.getByRole('button', { name: 'Close panel' }).click();
+    }
+    if ((city.neighborhoods || []).length) {
+      await page.getByRole('button', { name: 'District map' }).click();
+      await page.getByRole('button', { name: 'Bridgeport · Robbery 1s' }).click();
+      check('no WebGL: the Bridgeport map and its story route remain', await page.getByRole('button', { name: 'Open The Robbery 1s' }).count() === 1);
+      await page.getByRole('button', { name: 'Close panel' }).click();
+    }
+    check('no WebGL: no uncaught errors', errors.length === 0, { errors });
+    await context.close();
   }
   for (const width of [390, 768, 1440]) {
     const { context, page } = await contextFor(width);

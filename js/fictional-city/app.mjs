@@ -384,6 +384,11 @@ function openMap(areaId) {
     root.append(credits, button('Open The Robbery 1s', () => openArc('robbery-1s'), 'city-primary'));
   }
   if (!area && places) {
+    // authored versus surveyed ground, stated where the map is read
+    const legend = el('p', 'The harbor, the island, the wharves and the neighborhoods around them are an authored plan, not a survey. The Bridgeport block uses surveyed building footprints (CT State GIS Office, 2023) and streets (', 'city-bio-meta');
+    const osm = el('a', '© OpenStreetMap contributors'); osm.href = 'https://www.openstreetmap.org/copyright'; osm.target = '_blank'; osm.rel = 'noopener';
+    legend.append(osm, document.createTextNode(', ODbL).'));
+    root.append(legend);
     const found = (state.discoveries || []).filter(id => places.landmarks.some(l => l.id === id) || places.neighborhoods.some(n => n.id === id)).length;
     root.append(el('p', found + ' of ' + (places.landmarks.length + places.neighborhoods.length) + ' places found on foot.', 'city-bio-meta'));
   }
